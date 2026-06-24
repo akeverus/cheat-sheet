@@ -39,7 +39,7 @@
               "correct": true,
               "sections": {
                 "explanation": "Согласно тексту, `LangChain4j` появилась в 2023 году как порт идей Python-библиотеки `LangChain` на JVM с идиоматичным для Java дизайном. Она закрывает типовые задачи AI-приложения: один интерфейс к десяткам провайдеров, декларативные AI Services, память диалога, инструменты (function calling), `RAG` и извлечение типизированных объектов. Это и есть «батарейки в комплекте» для AI на Java.",
-                "example": "Низкоуровневый вызов модели через готовый билдер:\n\n```java\nChatLanguageModel model = OpenAiChatModel.builder()\n    .apiKey(System.getenv(\"OPENAI_API_KEY\"))\n    .modelName(\"gpt-4o-mini\")\n    .build();\n\nString answer = model.chat(\"Объясни, что такое идемпотентность за одно предложение\");\n```",
+                "example": "Низкоуровневый вызов модели через готовый билдер:\n\n```java\nChatModel model = OpenAiChatModel.builder()\n    .apiKey(System.getenv(\"OPENAI_API_KEY\"))\n    .modelName(\"gpt-4o-mini\")\n    .build();\n\nString answer = model.chat(\"Объясни, что такое идемпотентность за одно предложение\");\n```",
                 "when_to_apply": "Применяйте, когда строите AI-функциональность на JVM: от простого вызова модели до RAG-чатбота с памятью диалога и вызовом ваших Java-методов как инструментов. Особенно удобно, если нужен единый интерфейс сразу к нескольким провайдерам (`OpenAI`, `Ollama`, `Anthropic` и др.).",
                 "edge_cases": "`LangChain4j` — это не сама модель и не провайдер, а слой абстракции над ними: ключ и доступ к конкретному провайдеру (например, `OPENAI_API_KEY`) всё равно нужны. Это и не замена JVM-фреймворку приложения — библиотека закрывает именно AI-задачи, а не общую инфраструктуру сервиса.",
                 "related": "Декларативные AI Services описываются как аналог `Feign`/`Spring Data`, но для моделей. RAG-компоненты (загрузка документов, эмбеддинги, векторный поиск, аугментация промпта) и structured output надстраиваются поверх того же унифицированного доступа к моделям."
@@ -126,55 +126,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое ChatLanguageModel и StreamingChatLanguageModel?",
+          "question_text": "Что такое ChatModel и StreamingChatModel?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`ChatLanguageModel` делает потоковый вызов с токенами через callback, а `StreamingChatLanguageModel` возвращает полный ответ синхронно одним блоком.",
+              "text": "`ChatModel` делает потоковый вызов с токенами через callback, а `StreamingChatModel` возвращает полный ответ синхронно одним блоком.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё ровно наоборот: синхронный вызов с полным ответом — это `ChatLanguageModel`, а потоковая доставка токенов через callback — это `StreamingChatLanguageModel`. Названия интерфейсов прямо отражают их поведение.",
+                "what_actually": "Всё ровно наоборот: синхронный вызов с полным ответом — это `ChatModel`, а потоковая доставка токенов через callback — это `StreamingChatModel`. Названия интерфейсов прямо отражают их поведение.",
                 "source_of_confusion": "Заблуждение возникает из-за зеркальной перестановки двух интерфейсов местами — оба факта верны по отдельности, но привязаны не к тем именам.",
-                "if_it_were_true": "Тогда префикс `Streaming` в имени `StreamingChatLanguageModel` ничего бы не значил, а обычный `ChatLanguageModel` нельзя было бы использовать для простого блокирующего запроса-ответа.",
-                "how_it_should_be": "Синхронный полный ответ — `ChatLanguageModel`; потоковая выдача токенов через callback — `StreamingChatLanguageModel`."
+                "if_it_were_true": "Тогда префикс `Streaming` в имени `StreamingChatModel` ничего бы не значил, а обычный `ChatModel` нельзя было бы использовать для простого блокирующего запроса-ответа.",
+                "how_it_should_be": "Синхронный полный ответ — `ChatModel`; потоковая выдача токенов через callback — `StreamingChatModel`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`ChatLanguageModel` и `StreamingChatLanguageModel` различаются только провайдером: первый работает с OpenAI, а второй — с другими моделями.",
+              "text": "`ChatModel` и `StreamingChatModel` различаются только провайдером: первый работает с OpenAI, а второй — с другими моделями.",
               "correct": false,
               "sections": {
-                "what_actually": "Различие между ними не в провайдере, а в способе доставки ответа: синхронно целиком против потока токенов. Оба интерфейса не привязаны к конкретному провайдеру, например `OpenAiChatModel` реализует именно `ChatLanguageModel`.",
+                "what_actually": "Различие между ними не в провайдере, а в способе доставки ответа: синхронно целиком против потока токенов. Оба интерфейса не привязаны к конкретному провайдеру, например `OpenAiChatModel` реализует именно `ChatModel`.",
                 "source_of_confusion": "Путаница из-за того, что в примере фигурирует `OpenAiChatModel.builder()`, и кажется, будто имя интерфейса завязано на вендора.",
                 "if_it_were_true": "Тогда нельзя было бы сделать синхронный и потоковый вызов к одной и той же модели одного провайдера, а выбор стриминга диктовался бы выбором вендора, а не задачей UX.",
-                "how_it_should_be": "Различие — в синхронном (`ChatLanguageModel`) против потокового (`StreamingChatLanguageModel`) вызове; провайдер тут ни при чём."
+                "how_it_should_be": "Различие — в синхронном (`ChatModel`) против потокового (`StreamingChatModel`) вызове; провайдер тут ни при чём."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`ChatLanguageModel` и `StreamingChatLanguageModel` — это высокоуровневые абстракции `AI Services`, поверх которых строятся низкоуровневые вызовы модели.",
+              "text": "`ChatModel` и `StreamingChatModel` — это высокоуровневые абстракции `AI Services`, поверх которых строятся низкоуровневые вызовы модели.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё наоборот по уровню: это два базовых низкоуровневых интерфейса для общения с моделью, а высокоуровневый `AI Services` строится поверх `ChatLanguageModel`, а не под ним.",
+                "what_actually": "Всё наоборот по уровню: это два базовых низкоуровневых интерфейса для общения с моделью, а высокоуровневый `AI Services` строится поверх `ChatModel`, а не под ним.",
                 "source_of_confusion": "Заблуждение из-за упоминания `AI Services` рядом с этими интерфейсами — кажется, что раз они в одном ряду, то это слои одного уровня или AI Services ниже.",
-                "if_it_were_true": "Тогда нельзя было бы в простых случаях работать с моделью напрямую через `ChatLanguageModel`, а любой вызов обязательно проходил бы через ещё более низкий слой под AI Services.",
-                "how_it_should_be": "`ChatLanguageModel` и `StreamingChatLanguageModel` — низкоуровневый фундамент; высокоуровневый `AI Services` (Q5) строится поверх них."
+                "if_it_were_true": "Тогда нельзя было бы в простых случаях работать с моделью напрямую через `ChatModel`, а любой вызов обязательно проходил бы через ещё более низкий слой под AI Services.",
+                "how_it_should_be": "`ChatModel` и `StreamingChatModel` — низкоуровневый фундамент; высокоуровневый `AI Services` (Q5) строится поверх них."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`ChatLanguageModel` делает синхронный вызов и возвращает полный ответ целиком, а `StreamingChatLanguageModel` отдаёт токены по мере генерации через callback.",
+              "text": "`ChatModel` делает синхронный вызов и возвращает полный ответ целиком, а `StreamingChatModel` отдаёт токены по мере генерации через callback.",
               "correct": true,
               "sections": {
-                "explanation": "Это два базовых низкоуровневых интерфейса для общения с моделью. `ChatLanguageModel` работает синхронно: отправили сообщения и дождались полного ответа. `StreamingChatLanguageModel` работает потоково: токены приходят по мере генерации через callback. Различие именно в способе доставки ответа, а не в назначении.",
-                "example": "```java\nChatLanguageModel model = OpenAiChatModel.builder()\n    .apiKey(key)\n    .modelName(\"gpt-4o-mini\")\n    .temperature(0.7)\n    .build();\n\nChatResponse response = model.chat(ChatRequest.builder()\n    .messages(\n        SystemMessage.from(\"Ты — лаконичный технический ассистент.\"),\n        UserMessage.from(\"Что такое CAP-теорема?\"))\n    .build());\n\nSystem.out.println(response.aiMessage().text());\n```\nЗдесь синхронный `ChatLanguageModel` блокируется до полного ответа; стриминговый вариант вместо этого вызывал бы callback на каждый токен.",
-                "when_to_apply": "Берите `ChatLanguageModel`, когда нужен простой блокирующий запрос-ответ и полный текст сразу. Берите `StreamingChatLanguageModel`, когда строите UX чата и хотите показывать ответ по мере печати — пользователь видит токены сразу, не дожидаясь окончания генерации.",
-                "edge_cases": "Высокоуровневый `AI Services` строится поверх `ChatLanguageModel`, поэтому в простых случаях можно работать с моделью напрямую, минуя абстракцию AI Services. Стриминг полезен именно для UX, но усложняет обработку — токены надо собирать через callback, а не получать готовую строку.",
-                "related": "`ChatLanguageModel` — это фундамент, на котором строится высокоуровневый `AI Services` (см. Q5). Стриминг детальнее разбирается в Q16. У синхронного ответа доступен `response.tokenUsage()` для учёта расхода токенов."
+                "explanation": "Это два базовых низкоуровневых интерфейса для общения с моделью. `ChatModel` работает синхронно: отправили сообщения и дождались полного ответа. `StreamingChatModel` работает потоково: токены приходят по мере генерации через callback. Различие именно в способе доставки ответа, а не в назначении.",
+                "example": "```java\nChatModel model = OpenAiChatModel.builder()\n    .apiKey(key)\n    .modelName(\"gpt-4o-mini\")\n    .temperature(0.7)\n    .build();\n\nChatResponse response = model.chat(ChatRequest.builder()\n    .messages(\n        SystemMessage.from(\"Ты — лаконичный технический ассистент.\"),\n        UserMessage.from(\"Что такое CAP-теорема?\"))\n    .build());\n\nSystem.out.println(response.aiMessage().text());\n```\nЗдесь синхронный `ChatModel` блокируется до полного ответа; стриминговый вариант вместо этого вызывал бы callback на каждый токен.",
+                "when_to_apply": "Берите `ChatModel`, когда нужен простой блокирующий запрос-ответ и полный текст сразу. Берите `StreamingChatModel`, когда строите UX чата и хотите показывать ответ по мере печати — пользователь видит токены сразу, не дожидаясь окончания генерации.",
+                "edge_cases": "Высокоуровневый `AI Services` строится поверх `ChatModel`, поэтому в простых случаях можно работать с моделью напрямую, минуя абстракцию AI Services. Стриминг полезен именно для UX, но усложняет обработку — токены надо собирать через callback, а не получать готовую строку.",
+                "related": "`ChatModel` — это фундамент, на котором строится высокоуровневый `AI Services` (см. Q5). Стриминг детальнее разбирается в Q16. У синхронного ответа доступен `response.tokenUsage()` для учёта расхода токенов."
               }
             }
           ]
@@ -191,24 +191,24 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Каждый провайдер — это отдельный модуль, реализующий общий интерфейс `ChatLanguageModel`, но код приложения должен напрямую зависеть от конкретного класса вроде `OpenAiChatModel`.",
+              "text": "Каждый провайдер — это отдельный модуль, реализующий общий интерфейс `ChatModel`, но код приложения должен напрямую зависеть от конкретного класса вроде `OpenAiChatModel`.",
               "correct": false,
               "sections": {
-                "what_actually": "Код приложения зависит именно от интерфейса `ChatLanguageModel`, а не от конкретного класса. Конкретная реализация подставляется через builder, поэтому бизнес-логика остаётся независимой от провайдера.",
+                "what_actually": "Код приложения зависит именно от интерфейса `ChatModel`, а не от конкретного класса. Конкретная реализация подставляется через builder, поэтому бизнес-логика остаётся независимой от провайдера.",
                 "source_of_confusion": "Builder вызывается на конкретном классе (`OpenAiChatModel.builder()`), и кажется, что прикладной код тоже должен знать этот класс повсюду.",
                 "if_it_were_true": "Тогда смена провайдера требовала бы правок по всему коду, и переносимость, ради которой нужна абстракция, просто исчезла бы.",
-                "how_it_should_be": "Поля и параметры объявляются как `ChatLanguageModel`, а имя конкретного класса встречается только в одном месте — в builder при создании модели."
+                "how_it_should_be": "Поля и параметры объявляются как `ChatModel`, а имя конкретного класса встречается только в одном месте — в builder при создании модели."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Каждый провайдер — это отдельный модуль, реализующий общий интерфейс `ChatLanguageModel`, и код приложения зависит только от этого интерфейса.",
+              "text": "Каждый провайдер — это отдельный модуль, реализующий общий интерфейс `ChatModel`, и код приложения зависит только от этого интерфейса.",
               "correct": true,
               "sections": {
-                "explanation": "В LangChain4j каждый провайдер (`langchain4j-open-ai`, `langchain4j-ollama`, `langchain4j-anthropic`) поставляется отдельным модулем, но все они реализуют один и тот же интерфейс `ChatLanguageModel`. Бизнес-логика работает с типом интерфейса, а конкретная реализация подставляется через builder. Это даёт переносимость: смена провайдера — это смена одного builder, а не правка прикладного кода.",
-                "example": "ChatLanguageModel openai = OpenAiChatModel.builder()\n    .apiKey(key).modelName(\"gpt-4o-mini\").build();\n\n// Локальная Ollama — тот же интерфейс\nChatLanguageModel ollama = OllamaChatModel.builder()\n    .baseUrl(\"http://localhost:11434\").modelName(\"llama3.1\").build();",
-                "when_to_apply": "Применяйте, когда хотите тестировать на дешёвой или локальной модели (Ollama), а в проде использовать мощную: объявляйте поля и параметры как `ChatLanguageModel`, а выбор реализации выносите в конфигурацию.",
+                "explanation": "В LangChain4j каждый провайдер (`langchain4j-open-ai`, `langchain4j-ollama`, `langchain4j-anthropic`) поставляется отдельным модулем, но все они реализуют один и тот же интерфейс `ChatModel`. Бизнес-логика работает с типом интерфейса, а конкретная реализация подставляется через builder. Это даёт переносимость: смена провайдера — это смена одного builder, а не правка прикладного кода.",
+                "example": "ChatModel openai = OpenAiChatModel.builder()\n    .apiKey(key).modelName(\"gpt-4o-mini\").build();\n\n// Локальная Ollama — тот же интерфейс\nChatModel ollama = OllamaChatModel.builder()\n    .baseUrl(\"http://localhost:11434\").modelName(\"llama3.1\").build();",
+                "when_to_apply": "Применяйте, когда хотите тестировать на дешёвой или локальной модели (Ollama), а в проде использовать мощную: объявляйте поля и параметры как `ChatModel`, а выбор реализации выносите в конфигурацию.",
                 "edge_cases": "Полностью прозрачной замены не бывает: промпты и поведение разных моделей различаются, поэтому при смене провайдера стоит перепроверять качество ответов, даже если интерфейс не меняется.",
                 "related": "Связано с паттерном программирования к интерфейсу и с dependency injection: провайдер становится деталью конфигурации, а не частью архитектуры приложения."
               }
@@ -216,7 +216,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Каждый провайдер — это отдельный модуль, реализующий общий интерфейс `ChatLanguageModel`, благодаря чему замена провайдера полностью прозрачна и не влияет на поведение модели.",
+              "text": "Каждый провайдер — это отдельный модуль, реализующий общий интерфейс `ChatModel`, благодаря чему замена провайдера полностью прозрачна и не влияет на поведение модели.",
               "correct": false,
               "sections": {
                 "what_actually": "Единый интерфейс даёт переносимость кода, но не идентичность поведения: промпты и ответы разных моделей различаются, поэтому полностью прозрачной замены не бывает.",
@@ -228,10 +228,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Каждый провайдер — это отдельный модуль, реализующий общий интерфейс `ChatLanguageModel`, а выбор конкретной модели задаётся переключением Spring-профиля, а не через builder.",
+              "text": "Каждый провайдер — это отдельный модуль, реализующий общий интерфейс `ChatModel`, а выбор конкретной модели задаётся переключением Spring-профиля, а не через builder.",
               "correct": false,
               "sections": {
-                "what_actually": "Конкретная модель подставляется через builder соответствующего класса (`OpenAiChatModel.builder()`, `OllamaChatModel.builder()`), который и возвращает реализацию `ChatLanguageModel`.",
+                "what_actually": "Конкретная модель подставляется через builder соответствующего класса (`OpenAiChatModel.builder()`, `OllamaChatModel.builder()`), который и возвращает реализацию `ChatModel`.",
                 "source_of_confusion": "В Spring-приложениях конфигурацию часто привязывают к профилям, поэтому кажется, что и выбор LLM-провайдера работает так же.",
                 "if_it_were_true": "Тогда нельзя было бы создать модель напрямую в коде без Spring-инфраструктуры, а builder из примеров был бы бесполезен.",
                 "how_it_should_be": "Модель строится через builder конкретного провайдера; где именно вызвать этот builder (в конфиге, в фабрике) — отдельный вопрос, но сам механизм абстракции — это builder, возвращающий интерфейс."
@@ -255,8 +255,8 @@
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `AI Services` — высокоуровневый декларативный API, реализацию генерирует `LangChain4j`, а не разработчик. Именно поэтому он убирает boilerplate.",
-                "source_of_confusion": "Путаница возникает из-за того, что ручной императивный вызов через `ChatLanguageModel` действительно существует — но это как раз то, что `AI Services` заменяют, а не то, чем они являются.",
-                "if_it_were_true": "Если бы это было правдой, `AI Services` не давали бы никакой экономии кода и не имели бы смысла — пришлось бы вручную писать сборку промпта и парсинг, как при прямой работе с `ChatLanguageModel`.",
+                "source_of_confusion": "Путаница возникает из-за того, что ручной императивный вызов через `ChatModel` действительно существует — но это как раз то, что `AI Services` заменяют, а не то, чем они являются.",
+                "if_it_were_true": "Если бы это было правдой, `AI Services` не давали бы никакой экономии кода и не имели бы смысла — пришлось бы вручную писать сборку промпта и парсинг, как при прямой работе с `ChatModel`.",
                 "how_it_should_be": "Вы лишь описываете интерфейс с аннотациями, а реализацию (сборку промпта, вызов модели, парсинг ответа) автоматически создаёт `LangChain4j`."
               }
             },
@@ -282,7 +282,7 @@
                 "example": "interface Assistant {\n    @SystemMessage(\"Ты — вежливый ассистент службы поддержки.\")\n    String chat(String userMessage);\n}\n\nAssistant assistant = AiServices.create(Assistant.class, model);\nString reply = assistant.chat(\"Где мой заказ?\");",
                 "when_to_apply": "Применяйте `AI Services` в подавляющем большинстве приложений (в тексте — 90%), когда нужно убрать boilerplate вокруг вызова модели. Через builder туда же подключаются память (`MessageWindowChatMemory`), инструменты (`tools`) и RAG (`contentRetriever`).",
                 "edge_cases": "Если нужно обернуть аргументы метода в шаблон пользовательского сообщения, используйте `@UserMessage`. Память, инструменты и RAG подключаются только через `AiServices.builder(...)`, а не через короткий `AiServices.create(...)`.",
-                "related": "Альтернатива — работа с `ChatLanguageModel` напрямую, но к ней прибегают лишь в оставшихся ~10% случаев. Концептуально `AI Services` родственны `Spring Data` и `Feign` — генерация реализации по интерфейсу."
+                "related": "Альтернатива — работа с `ChatModel` напрямую, но к ней прибегают лишь в оставшихся ~10% случаев. Концептуально `AI Services` родственны `Spring Data` и `Feign` — генерация реализации по интерфейсу."
               }
             },
             {
@@ -519,7 +519,7 @@
               "correct": true,
               "sections": {
                 "explanation": "Один экземпляр `AI Service` обслуживает многих пользователей, поэтому общая `ChatMemory` смешала бы их диалоги. Аннотация `@MemoryId` сообщает LangChain4j, какой идентификатор разделяет память, а `ChatMemoryProvider` лениво создаёт отдельный экземпляр памяти под каждый такой идентификатор. В результате история одного пользователя не утекает в контекст другого.",
-                "example": "interface Assistant {\n    String chat(@MemoryId String userId, @UserMessage String message);\n}\n\nAssistant assistant = AiServices.builder(Assistant.class)\n    .chatLanguageModel(model)\n    .chatMemoryProvider(userId ->\n        MessageWindowChatMemory.withMaxMessages(20))\n    .build();\n\nassistant.chat(\"alice\", \"Привет, меня зовут Алиса\");\nassistant.chat(\"bob\", \"Как меня зовут?\"); // не знает про Алису",
+                "example": "interface Assistant {\n    String chat(@MemoryId String userId, @UserMessage String message);\n}\n\nAssistant assistant = AiServices.builder(Assistant.class)\n    .chatModel(model)\n    .chatMemoryProvider(userId ->\n        MessageWindowChatMemory.withMaxMessages(20))\n    .build();\n\nassistant.chat(\"alice\", \"Привет, меня зовут Алиса\");\nassistant.chat(\"bob\", \"Как меня зовут?\"); // не знает про Алису",
                 "when_to_apply": "Применяйте в любом многопользовательском приложении: чат-бот, поддержка, ассистент с несколькими сессиями. Как только один `AI Service` обслуживает больше одного собеседника, добавляйте `@MemoryId` и `ChatMemoryProvider`.",
                 "edge_cases": "Если забыть `@MemoryId` и оставить одну общую `ChatMemory`, диалоги перемешаются — это классический баг продакшн-чатботов. Идентификатор должен быть стабильным и уникальным для пользователя/сессии, иначе память либо склеится, либо потеряется.",
                 "related": "Связано с управлением контекстом через `MessageWindowChatMemory` (ограничение числа сообщений) и общим устройством `AiServices.builder(...)`, где память подключается рядом с `chatLanguageModel`."
@@ -555,7 +555,7 @@
               "correct": true,
               "sections": {
                 "explanation": "Согласно тексту, `@Tool` помечает Java-метод, а `LangChain4j` передаёт его описание модели и оркестрирует вызов. Цикл происходит автоматически внутри одного вызова `AI Service`: модель решает вызвать метод, фреймворк исполняет его, результат уходит обратно в модель, и та формирует финальный ответ.",
-                "example": "class OrderTools {\n    @Tool(\"Возвращает статус заказа по его номеру\")\n    String orderStatus(@P(\"номер заказа\") String orderId) {\n        return orderRepository.findStatus(orderId);\n    }\n}\n\nAssistant assistant = AiServices.builder(Assistant.class)\n    .chatLanguageModel(model)\n    .tools(new OrderTools())\n    .build();\n\nassistant.chat(\"Где мой заказ 12345?\");\n// Модель сама решает вызвать orderStatus(\"12345\")",
+                "example": "class OrderTools {\n    @Tool(\"Возвращает статус заказа по его номеру\")\n    String orderStatus(@P(\"номер заказа\") String orderId) {\n        return orderRepository.findStatus(orderId);\n    }\n}\n\nAssistant assistant = AiServices.builder(Assistant.class)\n    .chatModel(model)\n    .tools(new OrderTools())\n    .build();\n\nassistant.chat(\"Где мой заказ 12345?\");\n// Модель сама решает вызвать orderStatus(\"12345\")",
                 "when_to_apply": "Когда модели нужно действовать, а не только генерировать текст: получить данные из БД, дёрнуть внешний API, выполнить расчёт. Регистрируйте инструмент через `.tools(new OrderTools())` в `AiServices.builder`.",
                 "edge_cases": "Описание в `@Tool` и `@P` — это «документация для модели», по которой она решает, вызывать ли метод; если оно невнятное, модель выберет инструмент неправильно или не выберет вовсе. Поэтому описание нужно писать осмысленно.",
                 "related": "Превращает `LLM` из «генератора текста» в агента: function calling — основа агентных сценариев, где модель сама выбирает и комбинирует доступные ей инструменты для решения задачи."
@@ -617,7 +617,7 @@
                 "what_actually": "Поиск похожих фрагментов по запросу выполняет `ContentRetriever`, а не `ChatMemory`. В тексте именно `ContentRetriever` стоит на этапе запроса между `EmbeddingStore` и аугментированным промптом.",
                 "source_of_confusion": "`ChatMemory` — реальный компонент `LangChain4j`, и его легко перепутать с retrieval-частью, потому что оба «подкладывают» что-то в промпт перед вызовом модели.",
                 "if_it_were_true": "Тогда контекст для ответа брался бы из истории диалога, а не из ваших проиндексированных документов — это была бы не RAG, а просто память разговора.",
-                "how_it_should_be": "За поиск релевантных фрагментов в `EmbeddingStore` по запросу отвечает `ContentRetriever`; его результат подставляется в промпт перед `ChatLanguageModel`."
+                "how_it_should_be": "За поиск релевантных фрагментов в `EmbeddingStore` по запросу отвечает `ContentRetriever`; его результат подставляется в промпт перед `ChatModel`."
               }
             },
             {
@@ -629,7 +629,7 @@
                 "what_actually": "`ContentRetriever` ничего не дообучает: он лишь находит похожие фрагменты и подставляет их в промпт. RAG добавляет контекст в промпт, а не меняет веса модели.",
                 "source_of_confusion": "Слово «Augmented» в RAG ошибочно читают как «дообучение/fine-tuning», хотя усиливается именно промпт, а не сама модель.",
                 "if_it_were_true": "Тогда на каждый запрос приходилось бы переобучать модель — дорого, медленно и противоречило бы идее «явной цепочки заменяемых компонентов» из текста.",
-                "how_it_should_be": "`ContentRetriever` находит похожие фрагменты в `EmbeddingStore`, и они подставляются в аугментированный промпт для `ChatLanguageModel` без какого-либо изменения весов модели."
+                "how_it_should_be": "`ContentRetriever` находит похожие фрагменты в `EmbeddingStore`, и они подставляются в аугментированный промпт для `ChatModel` без какого-либо изменения весов модели."
               }
             },
             {
@@ -652,9 +652,9 @@
               "sections": {
                 "explanation": "Текст прямо перечисляет эти компоненты как звенья цепочки: документы разбиваются `DocumentSplitter`, превращаются в векторы через `EmbeddingModel`, складываются в `EmbeddingStore`, а на этапе запроса `ContentRetriever` достаёт релевантные фрагменты. Каждый компонент явный и заменяемый. Именно эта цепочка отличает RAG от «магии» — она собирается из чётко названных частей.",
                 "example": "Индексация (offline):\nList<TextSegment> segments = splitter.split(document);\nList<Embedding> embeddings = embeddingModel.embedAll(segments).content();\nembeddingStore.addAll(embeddings, segments);\n\nЗапрос (online):\nContentRetriever retriever = EmbeddingStoreContentRetriever.from(embeddingStore);\nList<Content> relevant = retriever.retrieve(Query.from(\"вопрос пользователя\"));",
-                "when_to_apply": "Когда нужно, чтобы модель отвечала по вашим фактическим данным, а не по «памяти»: собираете offline-индексацию (split → embed → store) и online-запрос (embed вопроса → retrieve → подстановка в промпт → `ChatLanguageModel`).",
+                "when_to_apply": "Когда нужно, чтобы модель отвечала по вашим фактическим данным, а не по «памяти»: собираете offline-индексацию (split → embed → store) и online-запрос (embed вопроса → retrieve → подстановка в промпт → `ChatModel`).",
                 "edge_cases": "Этап индексации (offline) и этап запроса (online) разделены: эмбеддинги в `EmbeddingStore` пишутся заранее, а `ContentRetriever` использует тот же `EmbeddingModel`, чтобы векторизовать вопрос для поиска. Если на запросе взять другую модель эмбеддингов, чем при индексации, векторы окажутся несопоставимыми.",
-                "related": "Финальное звено цепочки — `ChatLanguageModel`, которому уходит аугментированный промпт с подставленными фрагментами; именно подстановка найденного контекста и есть «Augmented» в RAG."
+                "related": "Финальное звено цепочки — `ChatModel`, которому уходит аугментированный промпт с подставленными фрагментами; именно подстановка найденного контекста и есть «Augmented» в RAG."
               }
             }
           ]
@@ -928,9 +928,9 @@
               "sections": {
                 "explanation": "Согласно тексту, в `AI Services` стриминг включается объявлением метода с типом `TokenStream` (либо реактивный `Flux` в reactive-стеке). На полученном `TokenStream` навешивают обработчики `onPartialResponse` для токенов, `onCompleteResponse` для финала и `onError` для ошибок, после чего обязательно вызывают `start()` для запуска генерации.",
                 "example": "interface Assistant {\n    TokenStream chat(String message);\n}\n\nTokenStream stream = assistant.chat(\"Объясни event sourcing\");\nstream.onPartialResponse(token -> System.out.print(token))\n      .onCompleteResponse(response -> log.info(\"Готово: {}\", response.tokenUsage()))\n      .onError(Throwable::printStackTrace)\n      .start();",
-                "when_to_apply": "Применяйте, когда нужно улучшить воспринимаемую скорость в чатах — отдавать пользователю токены по мере генерации, а не ждать полного ответа. Для низкоуровневого доступа берите `StreamingChatLanguageModel` с `StreamingChatResponseHandler`.",
+                "when_to_apply": "Применяйте, когда нужно улучшить воспринимаемую скорость в чатах — отдавать пользователю токены по мере генерации, а не ждать полного ответа. Для низкоуровневого доступа берите `StreamingChatModel` с `StreamingChatResponseHandler`.",
                 "edge_cases": "Подсчёт токенов доступен только в `onCompleteResponse` через `response.tokenUsage()` — во время `onPartialResponse` итоговое число токенов ещё неизвестно. Стриминг усложняет обработку ошибок: их нужно ловить отдельно в `onError`.",
-                "related": "В реактивном стеке вместо `TokenStream` метод может возвращать `Flux`. Низкоуровневая альтернатива — `StreamingChatLanguageModel` + `StreamingChatResponseHandler`."
+                "related": "В реактивном стеке вместо `TokenStream` метод может возвращать `Flux`. Низкоуровневая альтернатива — `StreamingChatModel` + `StreamingChatResponseHandler`."
               }
             },
             {
@@ -974,16 +974,16 @@
               "text": "Для unit-тестов поднимают реальную `Ollama` через `Testcontainers`, а в проде вешают `ChatModelListener`, который перехватывает запросы, ответы и ошибки для логирования латентности и расхода токенов.",
               "correct": false,
               "sections": {
-                "what_actually": "`Ollama` через `Testcontainers` — это инструмент интеграционных, а не unit-тестов. Для unit-тестов `ChatLanguageModel` мокают через `Mockito` или подменяют детерминированной заглушкой, чтобы вообще не звать модель.",
+                "what_actually": "`Ollama` через `Testcontainers` — это инструмент интеграционных, а не unit-тестов. Для unit-тестов `ChatModel` мокают через `Mockito` или подменяют детерминированной заглушкой, чтобы вообще не звать модель.",
                 "source_of_confusion": "И мок, и `Ollama` относятся к тестированию из того же абзаца текста, поэтому легко перепутать, какой подход для какого уровня тестов предназначен.",
                 "if_it_were_true": "Каждый unit-тест тянул бы Docker-контейнер с реальной моделью — тесты стали бы медленными, флакающими и недетерминированными, теряя весь смысл изоляции бизнес-логики.",
-                "how_it_should_be": "Unit-тесты используют мок `ChatLanguageModel`, а локальную `Ollama` через `Testcontainers` оставляют для интеграционных тестов."
+                "how_it_should_be": "Unit-тесты используют мок `ChatModel`, а локальную `Ollama` через `Testcontainers` оставляют для интеграционных тестов."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Для unit-тестов мокают `ChatLanguageModel` через `Mockito`, а в проде вешают `ChatModelListener`, который перехватывает только успешные ответы и не видит ошибок и запросов.",
+              "text": "Для unit-тестов мокают `ChatModel` через `Mockito`, а в проде вешают `ChatModelListener`, который перехватывает только успешные ответы и не видит ошибок и запросов.",
               "correct": false,
               "sections": {
                 "what_actually": "По тексту `ChatModelListener` перехватывает запросы, ответы И ошибки — то есть полный жизненный цикл вызова, а не только успешные ответы. Именно поэтому через него можно считать частоту ошибок.",
@@ -995,12 +995,12 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для unit-тестов мокают `ChatLanguageModel` через `Mockito`, а в проде вешают `ChatModelListener`, который перехватывает запросы, ответы и ошибки для логирования латентности и расхода токенов.",
+              "text": "Для unit-тестов мокают `ChatModel` через `Mockito`, а в проде вешают `ChatModelListener`, который перехватывает запросы, ответы и ошибки для логирования латентности и расхода токенов.",
               "correct": true,
               "sections": {
-                "explanation": "Это прямо следует из текста: бизнес-логику изолируют от модели, мокая интерфейс `ChatLanguageModel` (или подменяя детерминированной заглушкой), а наблюдаемость строят на `ChatModelListener`, который перехватывает запросы/ответы/ошибки. Через listener логируют метрики латентности, расхода токенов и частоты ошибок — LLM-вызов мониторят так же, как любой другой внешний вызов.",
-                "example": "ChatLanguageModel model = mock(ChatLanguageModel.class);\nwhen(model.chat(anyString())).thenReturn(\"замоканный ответ\");\n\nChatModelListener listener = new ChatModelListener() {\n    public void onResponse(ChatModelResponseContext ctx) {\n        meterRegistry.counter(\"llm.tokens\", \"model\", modelName)\n            .increment(ctx.chatResponse().tokenUsage().totalTokenCount());\n    }\n};",
-                "when_to_apply": "Мокайте `ChatLanguageModel` в unit-тестах, где нужно проверить бизнес-логику без реального вызова LLM. Вешайте `ChatModelListener` в продакшене, чтобы считать токены, латентность и частоту ошибок в метриках.",
+                "explanation": "Это прямо следует из текста: бизнес-логику изолируют от модели, мокая интерфейс `ChatModel` (или подменяя детерминированной заглушкой), а наблюдаемость строят на `ChatModelListener`, который перехватывает запросы/ответы/ошибки. Через listener логируют метрики латентности, расхода токенов и частоты ошибок — LLM-вызов мониторят так же, как любой другой внешний вызов.",
+                "example": "ChatModel model = mock(ChatModel.class);\nwhen(model.chat(anyString())).thenReturn(\"замоканный ответ\");\n\nChatModelListener listener = new ChatModelListener() {\n    public void onResponse(ChatModelResponseContext ctx) {\n        meterRegistry.counter(\"llm.tokens\", \"model\", modelName)\n            .increment(ctx.chatResponse().tokenUsage().totalTokenCount());\n    }\n};",
+                "when_to_apply": "Мокайте `ChatModel` в unit-тестах, где нужно проверить бизнес-логику без реального вызова LLM. Вешайте `ChatModelListener` в продакшене, чтобы считать токены, латентность и частоту ошибок в метриках.",
                 "edge_cases": "Для интеграционных тестов мока недостаточно — берут локальную `Ollama` (часто через `Testcontainers`) или `InMemoryEmbeddingStore` для проверки RAG. В Quarkus `ChatModelListener` уже завёрнут во встроенную интеграцию с `Micrometer`/`OpenTelemetry`, так что ручной счётчик может дублировать готовые метрики.",
                 "related": "Связано с общим принципом изоляции внешних зависимостей в тестах и с подходом «мониторить LLM как любой внешний вызов» — латентность и расход токенов попадают в те же дашборды, что и обычные HTTP-зависимости."
               }
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для unit-тестов мокают `ChatLanguageModel` через `Mockito`, а в проде вешают `InMemoryEmbeddingStore`, который перехватывает запросы, ответы и ошибки для логирования латентности и расхода токенов.",
+              "text": "Для unit-тестов мокают `ChatModel` через `Mockito`, а в проде вешают `InMemoryEmbeddingStore`, который перехватывает запросы, ответы и ошибки для логирования латентности и расхода токенов.",
               "correct": false,
               "sections": {
                 "what_actually": "`InMemoryEmbeddingStore` — это in-memory хранилище эмбеддингов для интеграционного тестирования RAG, а не инструмент наблюдаемости. За перехват запросов/ответов/ошибок и метрики отвечает `ChatModelListener`.",

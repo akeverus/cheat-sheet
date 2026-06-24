@@ -2655,10 +2655,10 @@
               "correct": true,
               "sections": {
                 "explanation": "Согласно тексту, One-Time Token Login — это вход без пароля по схеме «magic link»: сервер не хранит пароль, а выпускает одноразовый токен и доставляет его пользователю (как правило, по email). Пользователь переходит по ссылке с токеном и тем самым проходит аутентификацию. Включается такой вход через DSL `http.oneTimeTokenLogin()`.",
-                "example": "Пользователь вводит логин на странице входа, бэкенд через `GeneratedOneTimeTokenHandler` отправляет ему письмо со ссылкой вида `https://app/login/ott?token=abc123`. Кликнув по ней, пользователь аутентифицируется без ввода пароля.",
-                "when_to_apply": "Применяйте, когда нужен passwordless-сценарий: вход по «magic link» из письма, восстановление доступа без пароля или сокращение хранимых на сервере секретов. Подключается через `http.oneTimeTokenLogin(...)` с настройкой `tokenGeneratingUrl` и `generatedOneTimeTokenHandler` для доставки токена.",
+                "example": "Пользователь вводит логин на странице входа, бэкенд через `OneTimeTokenGenerationSuccessHandler` отправляет ему письмо со ссылкой вида `https://app/login/ott?token=abc123`. Кликнув по ней, пользователь аутентифицируется без ввода пароля.",
+                "when_to_apply": "Применяйте, когда нужен passwordless-сценарий: вход по «magic link» из письма, восстановление доступа без пароля или сокращение хранимых на сервере секретов. Подключается через `http.oneTimeTokenLogin(...)` с настройкой `tokenGeneratingUrl` и `tokenGenerationSuccessHandler` для доставки токена.",
                 "edge_cases": "Безопасность держится на коротком TTL токена и защищённости канала доставки: если почта пользователя скомпрометирована, скомпрометирован и вход. Токен одноразовый — повторное использование должно отвергаться `OneTimeTokenService`.",
-                "related": "Связан с `OneTimeTokenService` (генерация и проверка одноразовости/TTL) и `GeneratedOneTimeTokenHandler` (доставка токена письмом/SMS, есть готовый редирект-handler и кастомные реализации, например через Redis-хранилище токенов)."
+                "related": "Связан с `OneTimeTokenService` (генерация и проверка одноразовости/TTL) и `OneTimeTokenGenerationSuccessHandler` (доставка токена письмом/SMS, есть готовый редирект-handler и кастомные реализации, например через Redis-хранилище токенов)."
               }
             },
             {
@@ -2693,8 +2693,8 @@
               "sections": {
                 "what_actually": "Функциональность включается методом `http.oneTimeTokenLogin()`, а за генерацию и проверку токена отвечает `OneTimeTokenService` — метода `magicLinkLogin()` и класса `MagicLinkService` в описании нет.",
                 "source_of_confusion": "Схему неформально называют «magic link», поэтому возникает ложное ожидание, что и API названо по этому термину.",
-                "if_it_were_true": "Тогда конфигурация выглядела бы как `http.magicLinkLogin(...)`, а компоненты назывались бы `MagicLinkService`/`MagicLinkHandler` вместо `OneTimeTokenService`/`GeneratedOneTimeTokenHandler`.",
-                "how_it_should_be": "Включение делается через `http.oneTimeTokenLogin(ott -> ott.tokenGeneratingUrl(...).generatedOneTimeTokenHandler(...))`, а ключевые компоненты — `OneTimeTokenService` и `GeneratedOneTimeTokenHandler`."
+                "if_it_were_true": "Тогда конфигурация выглядела бы как `http.magicLinkLogin(...)`, а компоненты назывались бы `MagicLinkService`/`MagicLinkHandler` вместо `OneTimeTokenService`/`OneTimeTokenGenerationSuccessHandler`.",
+                "how_it_should_be": "Включение делается через `http.oneTimeTokenLogin(ott -> ott.tokenGeneratingUrl(...).tokenGenerationSuccessHandler(...))`, а ключевые компоненты — `OneTimeTokenService` и `OneTimeTokenGenerationSuccessHandler`."
               }
             }
           ]

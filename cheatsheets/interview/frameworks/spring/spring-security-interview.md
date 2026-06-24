@@ -2355,13 +2355,13 @@ http.webAuthn(webAuthn -> webAuthn
 ```java
 http.oneTimeTokenLogin(ott -> ott
     .tokenGeneratingUrl("/ott/generate")
-    .generatedOneTimeTokenHandler(emailSendingHandler)); // доставка токена
+    .tokenGenerationSuccessHandler(emailSendingHandler)); // доставка токена
 ```
 
 Ключевые компоненты:
 
 - `OneTimeTokenService` — генерация и проверка токена (одноразовость, TTL).
-- `GeneratedOneTimeTokenHandler` — что сделать с выпущенным токеном (отправить письмо/SMS). Есть готовый редирект-handler и кастомные реализации (например, через Redis-хранилище токенов).
+- `OneTimeTokenGenerationSuccessHandler` — что сделать с выпущенным токеном (отправить письмо/SMS). Есть готовый редирект-handler и кастомные реализации (например, через Redis-хранилище токенов).
 
 **Итог:** passwordless-вход без хранения паролей на сервере. Безопасность держится на коротком TTL и защищённости канала доставки (email) — если почта скомпрометирована, скомпрометирован и вход.
 

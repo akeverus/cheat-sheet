@@ -339,7 +339,7 @@ FFM API (`java.lang.foreign`) позволяет вызывать нативны
 
 ```java
 try (Arena arena = Arena.ofConfined()) {
-    MemorySegment cString = arena.allocateUtf8String("hello");
+    MemorySegment cString = arena.allocateFrom("hello");
     MethodHandle strlen = Linker.nativeLinker().downcallHandle(
         Linker.nativeLinker().defaultLookup().find("strlen").get(),
         FunctionDescriptor.of(JAVA_LONG, ADDRESS));

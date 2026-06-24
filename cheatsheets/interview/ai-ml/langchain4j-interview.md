@@ -1,6 +1,6 @@
 ---
 title: "Вопросы на собеседовании: LangChain4j"
-description: "Руководство по вопросам собеседования на тему LangChain4j: AI Services, ChatLanguageModel, ChatMemory, инструменты (@Tool), RAG, structured output, интеграция со Spring Boot и Quarkus."
+description: "Руководство по вопросам собеседования на тему LangChain4j: AI Services, ChatModel, ChatMemory, инструменты (@Tool), RAG, structured output, интеграция со Spring Boot и Quarkus."
 tags:
   - interview
   - ai-ml
@@ -44,7 +44,7 @@ updated: "2026-06-24"
 - [Q2. (!) Чем LangChain4j отличается от Spring AI? Когда выбирать каждый?](#q2--чем-langchain4j-отличается-от-spring-ai-когда-выбирать-каждый)
 
 **Низкоуровневый API: модели**
-- [Q3. (!) Что такое ChatLanguageModel и StreamingChatLanguageModel?](#q3--что-такое-chatlanguagemodel-и-streamingchatlanguagemodel)
+- [Q3. (!) Что такое ChatModel и StreamingChatModel?](#q3--что-такое-chatmodel-и-streamingchatmodel)
 - [Q4. Как LangChain4j абстрагирует разных провайдеров?](#q4-как-langchain4j-абстрагирует-разных-провайдеров)
 
 **Высокоуровневый API: AI Services**
@@ -86,7 +86,7 @@ updated: "2026-06-24"
 
 ```java
 // Низкоуровневый вызов модели
-ChatLanguageModel model = OpenAiChatModel.builder()
+ChatModel model = OpenAiChatModel.builder()
     .apiKey(System.getenv("OPENAI_API_KEY"))
     .modelName("gpt-4o-mini")
     .build();
@@ -121,15 +121,17 @@ String answer = model.chat("Объясни, что такое идемпотен
 
 **Итог:** выбор не про «лучше/хуже», а про стек. На чистом `Spring Boot` берите `Spring AI`; на `Quarkus`/нейтральном стеке — `LangChain4j`. API-концепции (память, инструменты, RAG) у них очень похожи.
 
-## Q3. (!) Что такое ChatLanguageModel и StreamingChatLanguageModel?
+## Q3. (!) Что такое ChatModel и StreamingChatModel?
 
 Это два базовых низкоуровневых интерфейса для общения с моделью.
 
-- **`ChatLanguageModel`** — синхронный вызов: отправили сообщения, дождались полного ответа.
-- **`StreamingChatLanguageModel`** — потоковый вызов: токены приходят по мере генерации через callback.
+- **`ChatModel`** — синхронный вызов: отправили сообщения, дождались полного ответа.
+- **`StreamingChatModel`** — потоковый вызов: токены приходят по мере генерации через callback.
+
+До версии `LangChain4j 1.0` эти интерфейсы назывались `ChatLanguageModel` и `StreamingChatLanguageModel`; старые имена оставлены как deprecated-алиасы, в новом коде используют `ChatModel`/`StreamingChatModel` (и builder-метод `.chatModel(...)` вместо `.chatLanguageModel(...)`).
 
 ```java
-ChatLanguageModel model = OpenAiChatModel.builder()
+ChatModel model = OpenAiChatModel.builder()
     .apiKey(key)
     .modelName("gpt-4o-mini")
     .temperature(0.7)
@@ -148,19 +150,19 @@ System.out.println(response.tokenUsage()); // расход токенов
 
 Стриминг (см. Q16) полезен для UX чатов — пользователь видит ответ по мере печати.
 
-**Итог:** `ChatLanguageModel` — фундамент. Высокоуровневый `AI Services` (Q5) строится поверх него, но в простых случаях можно работать с моделью напрямую.
+**Итог:** `ChatModel` — фундамент. Высокоуровневый `AI Services` (Q5) строится поверх него, но в простых случаях можно работать с моделью напрямую.
 
 ## Q4. Как LangChain4j абстрагирует разных провайдеров?
 
-Каждый провайдер — это отдельный модуль (`langchain4j-open-ai`, `langchain4j-ollama`, `langchain4j-anthropic` и т.д.), реализующий общий интерфейс `ChatLanguageModel`. Код приложения зависит только от интерфейса, а конкретная модель подставляется через builder.
+Каждый провайдер — это отдельный модуль (`langchain4j-open-ai`, `langchain4j-ollama`, `langchain4j-anthropic` и т.д.), реализующий общий интерфейс `ChatModel`. Код приложения зависит только от интерфейса, а конкретная модель подставляется через builder.
 
 ```java
 // OpenAI
-ChatLanguageModel openai = OpenAiChatModel.builder()
+ChatModel openai = OpenAiChatModel.builder()
     .apiKey(key).modelName("gpt-4o-mini").build();
 
 // Локальная Ollama — тот же интерфейс
-ChatLanguageModel ollama = OllamaChatModel.builder()
+ChatModel ollama = OllamaChatModel.builder()
     .baseUrl("http://localhost:11434").modelName("llama3.1").build();
 ```
 
@@ -189,14 +191,14 @@ String reply = assistant.chat("Где мой заказ?");
 
 ```java
 Assistant assistant = AiServices.builder(Assistant.class)
-    .chatLanguageModel(model)
+    .chatModel(model)
     .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
     .tools(new OrderTools())
     .contentRetriever(retriever)
     .build();
 ```
 
-**Итог:** `AI Services` убирают boilerplate. В 90% приложений работают именно с ними, а не с `ChatLanguageModel` напрямую.
+**Итог:** `AI Services` убирают boilerplate. В 90% приложений работают именно с ними, а не с `ChatModel` напрямую.
 
 ## Q6. Как работают prompt-шаблоны и переменные @V?
 
@@ -283,7 +285,7 @@ interface Assistant {
 }
 
 Assistant assistant = AiServices.builder(Assistant.class)
-    .chatLanguageModel(model)
+    .chatModel(model)
     .chatMemoryProvider(userId ->
         MessageWindowChatMemory.withMaxMessages(20))
     .build();
@@ -307,7 +309,7 @@ class OrderTools {
 }
 
 Assistant assistant = AiServices.builder(Assistant.class)
-    .chatLanguageModel(model)
+    .chatModel(model)
     .tools(new OrderTools())
     .build();
 
@@ -331,7 +333,7 @@ graph LR
     E[Вопрос] --> F[ContentRetriever]
     D --> F
     F --> G[Аугментированный промпт]
-    G --> H[ChatLanguageModel]
+    G --> H[ChatModel]
 ```
 
 Два этапа:
@@ -392,7 +394,7 @@ ContentRetriever retriever = EmbeddingStoreContentRetriever.builder()
     .build();
 
 Assistant assistant = AiServices.builder(Assistant.class)
-    .chatLanguageModel(model)
+    .chatModel(model)
     .contentRetriever(retriever)
     .build();
 ```
@@ -435,16 +437,16 @@ stream.onPartialResponse(token -> System.out.print(token))
       .start();
 ```
 
-Для низкоуровневого API используется `StreamingChatLanguageModel` с `StreamingChatResponseHandler`.
+Для низкоуровневого API используется `StreamingChatModel` с `StreamingChatResponseHandler`.
 
 **Итог:** стриминг улучшает UX, но усложняет обработку ошибок и подсчёт токенов — токены известны только в `onCompleteResponse`.
 
 ## Q17. (!) Как тестировать и наблюдать за LangChain4j-приложениями?
 
-**Тестирование.** Бизнес-логику изолируют от модели: интерфейс `ChatLanguageModel` легко замокать (`Mockito`) или подменить детерминированной заглушкой. Для интеграционных тестов берут локальную `Ollama` (часто через `Testcontainers`) или `InMemoryEmbeddingStore` для RAG.
+**Тестирование.** Бизнес-логику изолируют от модели: интерфейс `ChatModel` легко замокать (`Mockito`) или подменить детерминированной заглушкой. Для интеграционных тестов берут локальную `Ollama` (часто через `Testcontainers`) или `InMemoryEmbeddingStore` для RAG.
 
 ```java
-ChatLanguageModel model = mock(ChatLanguageModel.class);
+ChatModel model = mock(ChatModel.class);
 when(model.chat(anyString())).thenReturn("замоканный ответ");
 ```
 
@@ -459,7 +461,7 @@ ChatModelListener listener = new ChatModelListener() {
 };
 ```
 
-**Итог:** мокайте `ChatLanguageModel` для unit-тестов и логируйте через `ChatModelListener` в проде — токены и латентность `LLM` нужно мониторить так же, как и любой внешний вызов.
+**Итог:** мокайте `ChatModel` для unit-тестов и логируйте через `ChatModelListener` в проде — токены и латентность `LLM` нужно мониторить так же, как и любой внешний вызов.
 
 ## Q18. Что такое guardrails и как их применять?
 

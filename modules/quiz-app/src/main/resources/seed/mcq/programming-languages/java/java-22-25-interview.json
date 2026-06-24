@@ -769,7 +769,7 @@
               "correct": true,
               "sections": {
                 "explanation": "Это и есть суть FFM API, финализированного в `Java 22`. В отличие от JNI он не требует ни строчки C-кода: связывание с нативной библиотекой описывается декларативно через `FunctionDescriptor`, а доступ к памяти контролируется границами `MemorySegment` и детерминированным закрытием `Arena`. Результат — безопаснее, быстрее и без boilerplate-обвязки.",
-                "example": "try (Arena arena = Arena.ofConfined()) {\n    MemorySegment cString = arena.allocateUtf8String(\"hello\");\n    MethodHandle strlen = Linker.nativeLinker().downcallHandle(\n        Linker.nativeLinker().defaultLookup().find(\"strlen\").get(),\n        FunctionDescriptor.of(JAVA_LONG, ADDRESS));\n    long len = (long) strlen.invoke(cString); // 5\n}",
+                "example": "try (Arena arena = Arena.ofConfined()) {\n    MemorySegment cString = arena.allocateFrom(\"hello\");\n    MethodHandle strlen = Linker.nativeLinker().downcallHandle(\n        Linker.nativeLinker().defaultLookup().find(\"strlen\").get(),\n        FunctionDescriptor.of(JAVA_LONG, ADDRESS));\n    long len = (long) strlen.invoke(cString); // 5\n}",
                 "when_to_apply": "Интеграция с нативными библиотеками (OpenSSL, SQLite, CUDA, графические/ML-библиотеки), работа с большими буферами off-heap вне GC-кучи, замена устаревшего и небезопасного `sun.misc.Unsafe`, доступ к данным через memory-mapped файлы без копирования в heap.",
                 "edge_cases": "`Arena.ofConfined()` привязывает сегмент к одному потоку — доступ из другого бросит исключение; для разделяемой памяти нужен `Arena.ofShared()`. Downcall-вызовы могут требовать флага `--enable-native-access` (иначе предупреждение в рантайме). Неверно описанный `FunctionDescriptor` ведёт к UB на стороне C, как и в JNI.",
                 "related": "`sun.misc.Unsafe` (что FFM призван заменить), JNI и JNA, виртуальные потоки `Java 21`, паттерн try-with-resources для `Arena`; смежные превью/финализации платформы в `Java 22-25`."
@@ -1119,7 +1119,7 @@
                 "explanation": "`ML-KEM` (Module-Lattice Key Encapsulation Mechanism) реализует NIST FIPS 203 и служит постквантовой заменой обмену ключами вместо/в дополнение к `ECDH`. `ML-DSA` (Module-Lattice Digital Signature Algorithm) реализует NIST FIPS 204 и даёт постквантовые подписи. Оба строятся на стойкости задач в модульных решётках, которую квантовые компьютеры взломать не умеют, и закрывают угрозу harvest now, decrypt later.",
                 "example": "Подпись через стандартный JCA-API: `KeyPairGenerator kpg = KeyPairGenerator.getInstance(\"ML-DSA\"); KeyPair kp = kpg.generateKeyPair(); Signature sig = Signature.getInstance(\"ML-DSA\"); sig.initSign(kp.getPrivate());`. Инкапсуляция ключа аналогично через `KeyPairGenerator.getInstance(\"ML-KEM\")` и класс `KEM`.",
                 "when_to_apply": "Защита долгоживущих секретов и TLS-сессий, перехваченный трафик которых злоумышленник может сохранить сегодня и расшифровать позже квантовым компьютером; гибридные key-exchange схемы (классический + постквантовый); подпись артефактов и документов, которым нужна валидность на десятилетия вперёд.",
-                "edge_cases": "Это превью/инкубация в JEP 496/497, поэтому API и поведение ещё могут меняться между релизами. `ML-KEM` инкапсулирует ключ, а не шифрует произвольные данные — это KEM, а не KEM+DEM целиком, симметричный слой делается отдельно. Постквантовые ключи и подписи заметно крупнее классических ECDSA/RSA, что влияет на размер сертификатов и пакетов.",
+                "edge_cases": "В отличие от большинства фич линейки 22–25, JEP 496/497 вышли сразу как финальные стандартные фичи `Java 24` (не preview/incubator), поскольку алгоритмы уже стандартизированы NIST (FIPS 203/204). `ML-KEM` инкапсулирует ключ, а не шифрует произвольные данные — это KEM, а не KEM+DEM целиком, симметричный слой делается отдельно. Постквантовые ключи и подписи заметно крупнее классических ECDSA/RSA, что влияет на размер сертификатов и пакетов.",
                 "related": "FIPS 203/204 и NIST PQC; гибридный обмен ключами с `ECDH`; класс `KEM` из `java.security`; смежные фичи Java 22-25 — Stream Gatherers, Structured Concurrency, Scoped Values, которые тоже шли через цепочку preview-JEP."
               },
               "order": 2,
@@ -1266,26 +1266,26 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "При миграции с `Java 21` на `Java 25` (LTS): что нужно сделать с флагами ZGC, чтобы JVM вообще запустилась?",
+          "question_text": "При миграции с `Java 21` на `Java 25` (LTS): что делать с флагами ZGC и что будет, если оставить старый `-XX:±ZGenerational`?",
           "options": [
             {
               "text": "Нужно явно добавить флаг `-XX:+ZGenerational`, потому что в `Java 24` генерационный ZGC ещё опциональный, и без этого флага JVM на 25 не стартует.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: генерационный ZGC давно стал режимом по умолчанию, а сам переключатель `ZGenerational` в 24 удалён вместе с non-generational режимом. Добавлять его не нужно и нельзя — на 25 он вообще не распознаётся и сам уронит запуск.",
+                "what_actually": "Наоборот: генерационный ZGC давно стал режимом по умолчанию, а сам переключатель `ZGenerational` в 24 (JEP 490) переведён в obsolete вместе с удалением non-generational режима. Добавлять его не нужно: на 25 он лишь вызовет предупреждение об устаревшей опции (JVM при этом стартует), а генерационный режим и так включён по умолчанию.",
                 "source_of_confusion": "Путают период, когда ген-ZGC был ещё за флагом-переключателем (вокруг 21–23), с состоянием на 25, где выбора режима уже нет. Кажется логичным «включить новую фичу флагом».",
-                "if_it_were_true": "Команды копировали бы `-XX:+ZGenerational` в продакшен-конфиги при переходе на 25 и получали бы падение JVM на старте именно из-за нераспознанной опции — ровно ту проблему, которую якобы хотели предотвратить.",
+                "if_it_were_true": "Команды копировали бы `-XX:+ZGenerational` в продакшен-конфиги при переходе на 25 и тащили бы устаревший флаг, который засоряет лог предупреждением и однажды протухнет окончательно — ровно ту проблему, которую якобы хотели предотвратить.",
                 "how_it_should_be": "Флаг `-XX:±ZGenerational` нужно убрать совсем; генерационный ZGC включается дефолтно одним только `-XX:+UseZGC`."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "Нужно убрать флаг `-XX:±ZGenerational`, потому что в `Java 24` non-generational режим ZGC был удалён, и с этим флагом JVM на 25 просто не стартует.",
+              "text": "Нужно убрать флаг `-XX:±ZGenerational`: в `Java 24` (JEP 490) non-generational режим ZGC удалён, а сам флаг переведён в obsolete — на 25 JVM печатает предупреждение об устаревшей опции и стартует штатно (ZGC и так генерационный), но флаг стоит вычистить.",
               "correct": true,
               "sections": {
-                "explanation": "С `Java 23` генерационный ZGC стал режимом по умолчанию, а в `Java 24` старый non-generational режим выпилили целиком. Флаг `-XX:±ZGenerational`, который раньше переключал режимы, в 25 уже не распознаётся как валидная опция, и JVM падает на старте. Поэтому при апгрейде его надо просто вычистить из строки запуска.",
-                "example": "Было на 21: `java -XX:+UseZGC -XX:-ZGenerational -jar app.jar`. На 25 это даёт ошибку запуска вида «Unrecognized VM option 'ZGenerational'». Чинится удалением флага: `java -XX:+UseZGC -jar app.jar` — генерационный ZGC и так включён по умолчанию.",
+                "explanation": "С `Java 23` генерационный ZGC стал режимом по умолчанию, а в `Java 24` (JEP 490) старый non-generational режим убрали целиком. Сам флаг `-XX:±ZGenerational` при этом не удалили жёстко, а пометили как obsolete: на `Java 24/25` JVM печатает предупреждение вида «Ignoring option ZGenerational; support was removed in 24.0» и стартует штатно — ZGC и так работает в генерационном режиме. Флаг всё равно стоит вычистить из строки запуска: чтобы убрать шумное предупреждение и не словить отказ старта в будущем релизе, где опция окончательно «протухнет» (станет нераспознанной, и JVM откажется стартовать).",
+                "example": "Было на 21: `java -XX:+UseZGC -XX:-ZGenerational -jar app.jar`. На 25 JVM печатает предупреждение «Ignoring option ZGenerational; support was removed in 24.0» и продолжает запуск. Чисто: `java -XX:+UseZGC -jar app.jar` — генерационный ZGC и так включён по умолчанию.",
                 "when_to_apply": "Любой сервис, который на 21 явно задавал `-XX:±ZGenerational` (часто это делали, чтобы либо принудительно включить новый ген-режим, либо остаться на старом). Проверять все скрипты запуска, Dockerfile, JAVA_OPTS в k8s-манифестах и CI перед переходом на 25.",
                 "edge_cases": "Если флаг ZGenerational нигде не задавался явно — апгрейд по части ZGC проходит бесшумно, ничего трогать не надо. Подвох: флаг может прятаться в унаследованных `JAVA_TOOL_OPTIONS` или базовом образе, а не в явной команде запуска, поэтому грепать стоит всю цепочку конфигурации.",
                 "related": "Смежные шаги того же чек-листа 21→25: удаление preview-интерполяции `STR.\"...\"` String Templates, откат обходных путей пиннинга виртуальных потоков (JEP 491), проверка зависимостей на deprecated-методы `sun.misc.Unsafe` через `jdeprscan --release 25` и `jdeps --jdk-internals`."

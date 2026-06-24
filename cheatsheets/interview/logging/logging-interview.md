@@ -2171,11 +2171,11 @@ logging.structured.format.file=ecs
 - `logstash` — формат Logstash.
 - `gelf` — Graylog Extended Log Format.
 
-Свой формат подключается через интерфейс `StructuredLogFormatter` — реализация регистрируется по полному имени класса в том же property. Статические и контекстные поля добавляются декларативно:
+Свой формат подключается через интерфейс `StructuredLogFormatter` — реализация регистрируется по полному имени класса в том же property. Статические поля добавляются декларативно фиксированной строкой, а MDC-поля (`traceId`, `spanId` и т.п.) попадают в JSON автоматически:
 
 ```properties
 logging.structured.ecs.service.name=orders
-logging.structured.json.add[trace_id]=%mdc{traceId}
+logging.structured.json.add.corpname=mycorp
 ```
 
 **Чем отличается от ручной настройки (Q10):** там JSON собирался сторонним `LogstashEncoder` через XML-конфиг `Logback`; здесь — нативно, одним property, без зависимостей и без правки `logback-spring.xml`.
