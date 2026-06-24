@@ -275,6 +275,14 @@ html[data-design] .sr-only {
   padding: var(--space-6) var(--page-gutter) var(--space-9);
 }
 
+/* Шапка (chrome) — ОДНА ширина на всех страницах (--max-width-page, дефолт 75rem):
+   при навигации хедер не прыгает по ширине, бренд-тайтл (≈665px) всегда умещается
+   с навигацией в один ряд (на узкой 60rem-мере он переносил nav на 2-ю строку —
+   выглядело незавершённо). Ширину КОНТЕНТА держим уже и per-page — через
+   --max-width-focus/-reading/-result/-settings/-data на самих слоях страниц
+   (см. tokens.css + .focus-training/.app-layout/.main-content). Контент центрирован
+   под шапкой: фокус-квиз узкий и собранный, дашборд — во всю меру страницы. */
+
 /* Eyebrow — mono caps подпись (FOCUS, Q14/50, лейблы) */
 .ed-eyebrow {
   font-family: var(--font-family-mono);
@@ -454,6 +462,29 @@ html[data-design] .ed-masthead-title {
      не совпадал по краям с брендом/нав. Приводим жёлоб к тем же 16px. */
   .ed-masthead-progress { padding-inline: var(--space-4); }
   .ed-nav-link { padding-inline: var(--space-2); }
+}
+
+/* 601–1239px: бренд-тайтл (≈665px серифом) + nav + тогглы НЕ влезают в один ряд —
+   прежде nav с тогглами переносились вместе и липли влево, оставляя мёртвую зону
+   справа (видно на 768: «иконки/взаимное расположение» — претензия пользователя).
+   Тот же чистый 2-рядный грид, что и на мобиле (брэнд + тогглы в правом верхнем
+   углу, nav — полноширинным баром ниже), но с десктоп-жёлобом (page-gutter, не
+   ужатый мобильный). Один ряд оставляем только ≥1240px, где бренд+nav реально
+   умещаются. display:contents поднимает nav/тогглы в грид — разметка фрагмента и
+   контракт-тест целы. */
+@media (min-width: 601px) and (max-width: 1239px) {
+  .ed-masthead-inner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "brand toggles" "nav nav";
+    align-items: start;
+    column-gap: var(--space-4);
+    row-gap: var(--space-3);
+  }
+  .ed-masthead-brand { grid-area: brand; }
+  .ed-masthead-actions { display: contents; }
+  .ed-nav { grid-area: nav; }
+  .ed-masthead-toggles { grid-area: toggles; justify-self: end; }
 }
 
 /* ===========================================================================
@@ -666,6 +697,23 @@ html[data-design] .focus-page #interview-submit:disabled,
 html[data-design] .focus-page #interview-submit.is-disabled {
   background: var(--color-bg-tertiary); color: var(--color-text-secondary);
   border-color: var(--color-border-primary); opacity: 1; cursor: not-allowed;
+}
+
+/* Зона действия как СОБРАННЫЙ футер сцены, а не сиротливая кнопка в нижнем левом
+   углу широкого поля. На ≥768px обёртка training-actions — ряд во всю ширину
+   сцены: главное действие слева ↔ клавиатурная подсказка справа. Кнопка и хинт
+   держат края меры, действие читается завершением композиции. На узких — штатный
+   стек (кнопка над подсказкой; на ≤600px сабмит full-width, см. ниже). После
+   ответа app.js прячет submit и показывает #next-question в той же .action-footer —
+   баланс «действие слева / хинт справа» сохраняется. */
+@media (min-width: 768px) {
+  html[data-design] .focus-page [data-ui-fragment="training-actions"] {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: var(--space-3) var(--space-6);
+    margin-top: var(--space-6);
+  }
+  html[data-design] .focus-page [data-ui-fragment="training-actions"] .action-footer { margin: 0; }
+  html[data-design] .focus-page [data-ui-fragment="training-actions"] .keyboard-hint { margin: 0; text-align: right; }
 }
 
 html[data-design] .btn,
