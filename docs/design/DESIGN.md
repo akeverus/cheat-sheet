@@ -248,14 +248,23 @@ pre code` — селектор highlight.js.
 | **notion** | тёплый минимализм, near-black, whisper-рамки, soft | blue `#0075DE` | Inter · Inter · JetBrains Mono | `#FFFFFF` / `#191919` | notion |
 | **mintlify** | docs-as-product, воздух, крупные радиусы, mono-CAPS лейблы | green `#18E299`/`#0FA76E` | Inter · Inter · Geist Mono | `#FFFFFF` / `#0D0D0D` | mintlify |
 | **broadsheet** | газетный editorial, Source Serif, фолио-детали, сдержанно | ink + 1 тон | Source Serif 4 · Inter · JetBrains Mono | `#FEFFFC` / `#15151D` | theverge, wired, publication |
+| **superhuman** | премиум-инструмент, тёплая бумага, аметистовый акцент, mysteria-purple dark | amethyst `#714CB6` / lavender-fill `#CBB7FB` | Inter(460/540) · Inter · JetBrains Mono | `#FFFFFF` / `#1B1938` | superhuman |
+| **stripe** | инженерная ясность, navy-ink, сине-подкрашенные тени (signature) | indigo-violet `#533AFD` / link `#4434D4` | Inter · Inter · JetBrains Mono | `#FFFFFF` / `#0A2540` | stripe |
+| **claude** | пергамент, серифный display (Lora), синий focus-ring — отстройка от editorial | terracotta `#D97757` / strong `#C16040` | Lora · Inter · JetBrains Mono | `#F5F4ED` / `#141413` | claude / anthropic |
+| **theverge** | bold tech-media, jelly-mint neon, pill-радиусы 20/24, heavy 800, zero-shadow | jelly-mint `#3CFFD0` / dark-mint `#157A52` | Inter(800) · Inter · Geist Mono | `#FFFFFF` / `#131313` | theverge |
 
 **Решение по id (минимум churn):** дефолтный warm-paper дизайн оставляем под id
 `editorial` (он = `:root` в tokens.css; уже зашит в head SSR, base.css signature,
 `data-design` шаблонов, NAMES-map тоггла, seg-control). НЕ переименовываем в
-`anthropic`. Итоговый роестр id: `editorial` (default), `swiss`, `linear`,
-`notion`, `mintlify`, `broadsheet`. `swiss`/`linear`/`broadsheet` переоснащаются
-полноценными токен-наборами (вместо тонких рекрасок-оверлеев); `notion`/`mintlify`
-— новые. Спека warm-paper лежит как `systems/editorial.md` (Anthropic/claude-якорь).
+`anthropic`. Итоговый роестр id (10 дизайнов): `editorial` (default), `swiss`,
+`linear`, `notion`, `mintlify`, `broadsheet`, плюс волна 2026-06-23 —
+`superhuman`, `stripe`, `claude`, `theverge`. `swiss`/`linear`/`broadsheet`
+переоснащены полноценными токен-наборами (вместо тонких рекрасок-оверлеев);
+`notion`/`mintlify` и 4 дизайна второй волны — новые. Спека warm-paper лежит как
+`systems/editorial.md` (Anthropic/claude-якорь); вторая волна — `systems/{superhuman,
+stripe,claude,theverge}.md`. Примечание: `claude` ≠ `editorial` — оба
+Anthropic-производные, но `claude` берёт более тёплый пергамент `#F5F4ED`,
+серифный Lora-display и **синий** focus-ring (`#2476C4`) как точку отстройки.
 
 ---
 
