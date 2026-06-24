@@ -955,6 +955,13 @@ html[data-design] .empty-actions { display: flex; gap: var(--space-3); justify-c
 
 @media (max-width: 600px) {
   html[data-design] .flashcard-grade-buttons { grid-template-columns: 1fr 1fr; }
+  /* На мобиле главное действие — full-width (крупная цель тапа, явный primary).
+     Спецификой добиваем #interview-submit (1,2,0) и .flashcard-reveal-btn (0,2,0):
+     раньше generic `.action-footer button[submit]` (0,2,1) проигрывал
+     `.focus-page #interview-submit{width:auto}` (1,2,0) → правило-намерение
+     молча не работало, мобильный сабмит оставался узким слева. */
+  html[data-design] .focus-page #interview-submit,
+  html[data-design] .flashcard-reveal-btn,
   html[data-design] .action-footer button[type="submit"] { width: 100%; }
 }
 
@@ -1543,7 +1550,15 @@ html[data-design] .summary-page .summary-recommendation-item { color: var(--colo
    сериф-заголовок, reading-тело, dev-подробности (details), действия-чипы.
    Старый styles.css даёт .error-card как карточку с тенью/лавандой — приводим
    к плоской editorial-композиции (объявляем фон/границу/цвет явно). ========== */
-html[data-design] .error-page .ed-page { max-width: var(--max-width-focus); }
+/* Карточку ошибки центрируем по вертикали в области под шапкой, а не вешаем в
+   верхней трети с огромной пустотой ниже (читалось как недогруженная страница).
+   min-height (а не фикс.) — при раскрытых dev-«Подробностях» блок растёт штатно,
+   без обрезки; 9rem ≈ компенсация editorial-шапки (одно/двухрядной). */
+html[data-design] .error-page .ed-page {
+  max-width: var(--max-width-focus);
+  min-height: calc(100dvh - 9rem);
+  display: flex; flex-direction: column; justify-content: center;
+}
 
 html[data-design] .error-page .error-card {
   display: flex; flex-direction: column; align-items: center; text-align: center;
