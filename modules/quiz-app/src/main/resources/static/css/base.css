@@ -1130,7 +1130,18 @@ html[data-design] .stats-page .stats-filter-row { display: flex; flex-wrap: wrap
 html[data-design] .stats-page .stats-filter-pane { flex: 2 1 360px; min-width: 0; border: 0; padding: 0; }
 html[data-design] .stats-page .stats-search-pane { flex: 1 1 240px; min-width: 0; border: 0; padding: 0; }
 @media (min-width: 761px) {
-  html[data-design] .stats-page .stats-search-pane { border-left: var(--rule-weight) solid var(--color-border-primary); padding-left: var(--space-6); }
+  /* «Поиск» — одно поле, а «Фильтры» высокие. При stretch правая колонка
+     top-align'илась, под полем зияла пустота (~250px) — «накидали и забыли
+     заполнить». Центрируем содержимое поиска по вертикали: панель и hairline-
+     разделитель остаются на всю высоту, но поле «плавает» в середине — пустота
+     читается как намеренный воздух, а не дыра. */
+  html[data-design] .stats-page .stats-search-pane {
+    border-left: var(--rule-weight) solid var(--color-border-primary); padding-left: var(--space-6);
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  /* Форма поиска несёт класс flex-1 — в колоночном пане она бы РОСЛА и оторвала
+     поле от своего лейбла «ПОИСК». Глушим рост: лейбл+поле центрируются ГРУППОЙ. */
+  html[data-design] .stats-page .stats-search-pane > .stats-search-form { flex: 0 0 auto; }
 }
 /* .stats-pane-label теперь <h2> (семантический outline /stats — критика C30):
    перебиваем рецепт секционных заголовков `.stats-page .card h2` (L1294, 0,3,2),
