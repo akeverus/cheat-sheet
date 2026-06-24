@@ -1705,6 +1705,21 @@
       attachConfidenceButtons(data);
     }
     nextLink.classList.remove('hidden');
+    // IA-фикс: после ответа «Следующий вопрос» переезжает в САМЫЙ низ пост-разбора —
+    // под вердикт, пояснения и доп. анализ. Иначе primary-CTA «дальше» стоит ВЫШЕ
+    // итога/объяснения (во всех трёх раскладках: в форме, над зоной разбора), и
+    // вопрос можно перескочить, не прочитав разбор — прямой повод к «забыли про
+    // удобство». Узел (со слушателями onclick/onkeydown) просто перемещаем: это
+    // JS-only состояние (no-JS уходит POST-ом на /answer → result.html), id и стили
+    // (.next-btn глобальный) сохраняются. Действие читается завершением сцены.
+    const postAnswerZone = document.querySelector('[data-ui-fragment="post-answer-controls"]');
+    if (postAnswerZone && nextLink.parentElement !== postAnswerZone) {
+      postAnswerZone.appendChild(nextLink);
+      // Клавиатурная подсказка «1–9 — выбор…» после ответа неактуальна (выбор
+      // закрыт) и осталась бы висеть на месте уехавшей кнопки — прячем.
+      const answeredHint = document.querySelector('[data-ui-fragment="training-actions"] .keyboard-hint');
+      if (answeredHint) answeredHint.classList.add('hidden');
+    }
     setInteractionBusy(false);
     feedbackDiv.setAttribute('tabindex', '-1');
     feedbackDiv.focus();
