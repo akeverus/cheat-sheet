@@ -144,7 +144,16 @@
          Swiss 520/650. На дискретных ступенях (…;500;600;700) они снапались к
          ближайшей; вариативный диапазон (wght@400..700/..800) рендерит их точно.
          Бонус: один variable-файл на семейство обычно легче набора инстансов. -->
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Inter:wght@400..800&family=JetBrains+Mono:wght@400..600&family=Lora:ital,wght@0,400..700;1,400..700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&display=swap" rel="stylesheet">
+    <!-- НЕ render-blocking: media="print" → стиль не применяется к screen на этапе
+         загрузки, поэтому браузер НЕ блокирует первый кадр в ожидании этого CSS;
+         onload флипает media на 'all', когда файл пришёл. Критично для устойчивости:
+         если шрифт-CDN недоступен (корпоративный proxy/VPN, geo-блок, offline),
+         страница рендерится СРАЗУ в fallback-шрифтах вместо многосекундного белого
+         экрана (render-blocking <link> ждёт таймаута недоступного хоста). display=swap
+         и так допускает FOUT — поведение консистентно. CSP script-src содержит
+         'unsafe-inline' → инлайновый onload разрешён. <noscript> — фоллбэк для no-JS. -->
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Inter:wght@400..800&family=JetBrains+Mono:wght@400..600&family=Lora:ital,wght@0,400..700;1,400..700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Inter:wght@400..800&family=JetBrains+Mono:wght@400..600&family=Lora:ital,wght@0,400..700;1,400..700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&display=swap" rel="stylesheet"></noscript>
     <!-- Двухслойная архитектура switchable-дизайнов:
          tokens.css — ВСЕ токены: дефолт :root = editorial + блоки
            html[data-design="X"] для linear/swiss/notion/mintlify/broadsheet
@@ -165,9 +174,17 @@
          версию с immutable-URL (cache-control: immutable) → SRI стабилен, хэш не
          «плывёт» при обновлении CDN. highlight.js — cdnjs; chart.js —
          jsdelivr (оба отдают access-control-allow-origin:* для crossorigin). -->
+    <!-- НЕ render-blocking (см. шрифты выше): подсветка кода — прогрессивное
+         улучшение, atom-one-dark красит только .hljs-токены, FOUT на коде незаметен.
+         Если cdnjs недоступен — код просто без подсветки (guard typeof hljs ниже).
+         integrity/crossorigin/referrerpolicy сохранены, SRI проверяется до onload. -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
           integrity="sha512-Jk4AqjWsdSzSWCSuQTfYRIF84Rq/eV0G2+tu07byYwHcbTGfdmLrHjUSwvzp5HvbiqK4ibmNwdcG49Y5RGYPTg=="
-          crossorigin="anonymous" referrerpolicy="no-referrer">
+          crossorigin="anonymous" referrerpolicy="no-referrer"
+          media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
+          integrity="sha512-Jk4AqjWsdSzSWCSuQTfYRIF84Rq/eV0G2+tu07byYwHcbTGfdmLrHjUSwvzp5HvbiqK4ibmNwdcG49Y5RGYPTg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
     <!-- defer: highlight.js нужен только в DOMContentLoaded-листенере ниже (и в
          app.js на AJAX-контенте) — оба срабатывают ПОСЛЕ парсинга. defer-скрипты
          исполняются по порядку до DOMContentLoaded, поэтому hljs гарантированно
