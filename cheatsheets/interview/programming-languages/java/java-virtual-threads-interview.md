@@ -368,3 +368,4 @@ Thread.ofPlatform().start(() -> {
 - [Reactive Patterns](../../reactive/reactive-patterns-interview.md) — reactive streams как альтернатива VT
 - [JVM Performance Tuning](../../performance/jvm-performance-tuning-interview.md) — настройка JVM при использовании VT
 - [Thread Pools](java-concurrency-interview.md) — ThreadPoolExecutor концепции (почему не нужны для VT)
+- [Java 22–25](java-22-25-interview.md) — что нового после LTS 21: FFM, gatherers, scoped values, generational ZGC, PQC.

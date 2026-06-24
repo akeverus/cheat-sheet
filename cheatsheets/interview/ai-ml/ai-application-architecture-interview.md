@@ -838,3 +838,4 @@ flowchart LR
 - [Inference Optimization](inference-optimization-interview.md) — latency и throughput
 - [System Design Interview](../system-design/system-design-interview.md) — общий фреймворк
 - [Scalability Patterns](../architecture/scalability-patterns-interview.md) — горизонтальное масштабирование
+- [LangChain4j](langchain4j-interview.md) — фреймворк-нейтральная альтернатива Spring AI для LLM на JVM (AI Services, RAG, @Tool).

@@ -729,3 +729,4 @@ assertThat(response.isPass()).isTrue();
 - [Spring Boot](spring-boot-interview.md) — auto-configuration для Spring AI
 - [Spring WebFlux](spring-webflux-interview.md) — streaming ответов через Flux
 - [PostgreSQL](../../databases/postgresql-interview.md) — pgvector как VectorStore
+- [LangChain4j](../../ai-ml/langchain4j-interview.md) — фреймворк-нейтральная альтернатива Spring AI для LLM на JVM (AI Services, RAG, @Tool).

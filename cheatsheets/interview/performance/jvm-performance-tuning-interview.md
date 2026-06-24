@@ -1253,3 +1253,4 @@ numactl --hardware
 - [Memory Management](memory-management-interview.md)
 - [Network Performance](network-performance-interview.md)
 - [Performance Testing](performance-testing-interview.md)
+- [CRaC](../jvm/crac-interview.md) — checkpoint/restore JVM для мгновенного старта (снимок прогретого процесса).

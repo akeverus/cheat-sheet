@@ -853,3 +853,4 @@ Lambda хороша там, где нагрузка событийная, нер
 - [GCP (Google Cloud Platform)](gcp-interview.md)
 - [Serverless](serverless-interview.md)
 - [AI Agents](../ai-ml/ai-agents-interview.md)
+- [CRaC](../jvm/crac-interview.md) — checkpoint/restore JVM для мгновенного старта (снимок прогретого процесса).

@@ -1195,3 +1195,4 @@ MCP не изобретает свою систему ошибок, а пере�
 - [OAuth 2.0](../security/oauth2-interview.md) — auth для remote MCP-серверов
 - [Application Security](../security/application-security-interview.md) — sandboxing, supply chain, prompt injection
 - [System Design Interview](../system-design/system-design-interview.md) — как проектировать LLM-системы с MCP
+- [LangChain4j](langchain4j-interview.md) — фреймворк-нейтральная альтернатива Spring AI для LLM на JVM (AI Services, RAG, @Tool).

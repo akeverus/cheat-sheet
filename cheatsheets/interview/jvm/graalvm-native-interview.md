@@ -548,3 +548,4 @@ class MyRuntimeHintsTest {
 - [Docker](../devops/docker-interview.md) — minimal Docker images для native executables
 - [Cloud Native Patterns](../cloud/cloud-native-patterns-interview.md) — паттерны для cloud где native image выигрывает
 - [Micrometer](../monitoring/micrometer-interview.md) — observability в native Spring Boot приложениях
+- [CRaC](crac-interview.md) — checkpoint/restore JVM для мгновенного старта (снимок прогретого процесса).

@@ -588,3 +588,4 @@ record Circle(double radius) implements Shape {
 - [Kotlin](../kotlin/kotlin-interview.md) — сравнение с Kotlin when expression и sealed classes
 - [Scala](../scala/scala-interview.md) — оригинальный pattern matching, откуда позаимствовано
 - [Java Core](java-core-interview.md) — базовые концепции
+- [Java 22–25](java-22-25-interview.md) — что нового после LTS 21: FFM, gatherers, scoped values, generational ZGC, PQC.

@@ -756,3 +756,4 @@ result = evaluate(
 - [Caching](../architecture/caching-strategies-interview.md) — для embeddings cache
 - [Микросервисы](../architecture/microservices-interview.md) — где RAG живёт
 - [Elasticsearch](../databases/elasticsearch-interview.md) — для hybrid search
+- [LangChain4j](langchain4j-interview.md) — фреймворк-нейтральная альтернатива Spring AI для LLM на JVM (AI Services, RAG, @Tool).

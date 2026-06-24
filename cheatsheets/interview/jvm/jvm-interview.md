@@ -1280,3 +1280,5 @@ Non-tiered C2 (при -XX:-TieredCompilation):              -XX:CompileThreshold
 - [LLM Integration Patterns](../ai-ml/llm-integration-patterns-interview.md)
 - [MLOps](../ai-ml/mlops-interview.md)
 - [Model Serving](../ai-ml/model-serving-interview.md)
+- [CRaC](crac-interview.md) — checkpoint/restore JVM для мгновенного старта (снимок прогретого процесса).
+- [Java 22–25](../programming-languages/java/java-22-25-interview.md) — что нового после LTS 21: FFM, gatherers, scoped values, generational ZGC, PQC.

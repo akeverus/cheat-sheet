@@ -2029,3 +2029,4 @@ java --enable-preview --source 21 hello.java
 - [Java Types](java-types-interview.md) — `records`, `sealed classes`, `var` — ключевые нововведения Java 16-21
 - [Java Generics](java-generics-interview.md) — обобщения и `type inference`, взаимодействие с `records`
 - [JVM](../../jvm/jvm-interview.md) — устройство JVM, влияние `Virtual Threads` на планировщик, `GC` и `Project Loom`
+- [Java 22–25](java-22-25-interview.md) — что нового после LTS 21: FFM, gatherers, scoped values, generational ZGC, PQC.
