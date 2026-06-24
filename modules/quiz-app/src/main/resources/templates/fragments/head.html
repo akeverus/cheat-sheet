@@ -96,6 +96,37 @@
           set: setDesign
         };
 
+        // Раскладка страниц (ортогональна дизайну/теме): flow | split | grid.
+        // Применяем выбранный data-layout на <html> ДО первого кадра (как тему и
+        // дизайн) — без вспышки чужой композиции. Каждая страница (focus/settings)
+        // интерпретирует режим по-своему (см. base.css, секция [data-layout]):
+        //   flow  — одноколоночный поток чтения (ДЕФОЛТ): focus вопрос-герой +
+        //           ответы единым полноширинным столбцом; settings одна колонка.
+        //   split — два пейна: focus вопрос/мета слева ↔ ответы справа;
+        //           settings конфиг-сессии слева ↔ управление/оформление справа.
+        //   grid  — плотная сетка (прежняя композиция): focus 2×2 экзамен-бланк,
+        //           settings асимметричная панель. Сохранена, не потеряна.
+        // No-JS: атрибут не ставится → CSS [data-layout]-оверрайды не применяются,
+        // страница падает на негейтнутые wide-правила (= grid) — рабочий фоллбэк.
+        var LAYOUTS = ['flow', 'split', 'grid'];
+        function readLayout() {
+          try { var l = localStorage.getItem('layout'); return LAYOUTS.indexOf(l) >= 0 ? l : 'flow'; }
+          catch (e) { return 'flow'; }
+        }
+        var layout = readLayout();
+        root.setAttribute('data-layout', layout);
+        function setLayout(next) {
+          layout = (LAYOUTS.indexOf(next) >= 0) ? next : 'flow';
+          try { if (layout === 'flow') localStorage.removeItem('layout'); else localStorage.setItem('layout', layout); } catch (e) {}
+          root.setAttribute('data-layout', layout);
+          try { document.dispatchEvent(new CustomEvent('layoutchange', { detail: { layout: layout } })); } catch (e) {}
+        }
+        window.__layout = {
+          current: function () { return layout; },
+          list: LAYOUTS.slice(),
+          set: setLayout
+        };
+
         // Размер шрифта: масштаб root font-size (токены в rem → тянется весь UI).
         var FONT_MIN = 0.85, FONT_MAX = 1.4, FONT_STEP = 0.1;
         function clampFont(v) { v = Math.round(v * 100) / 100; return Math.min(FONT_MAX, Math.max(FONT_MIN, v)); }
@@ -169,10 +200,10 @@
          Порядок строгий: tokens ПЕРЕД base (переменные определены до
          использования). Preload обоих — параллельно с парсингом head → меньше
          FOUC. См. docs/design/DESIGN.md + docs/design/systems/*.md. -->
-    <link rel="preload" as="style" th:href="@{/css/tokens.css(v=22)}">
-    <link rel="preload" as="style" th:href="@{/css/base.css(v=22)}">
-    <link rel="stylesheet" th:href="@{/css/tokens.css(v=22)}">
-    <link rel="stylesheet" th:href="@{/css/base.css(v=22)}">
+    <link rel="preload" as="style" th:href="@{/css/tokens.css(v=23)}">
+    <link rel="preload" as="style" th:href="@{/css/base.css(v=23)}">
+    <link rel="stylesheet" th:href="@{/css/tokens.css(v=23)}">
+    <link rel="stylesheet" th:href="@{/css/base.css(v=23)}">
     <!-- SRI (integrity) + crossorigin: защита от компрометации CDN — браузер
          выполнит ресурс, только если его sha512 совпадает. Хэши пересчитаны из
          самих файлов (openssl dgst -sha512). ВСЕ CDN-ресурсы пиннятся на ТОЧНУЮ

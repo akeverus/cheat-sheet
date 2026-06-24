@@ -41,6 +41,14 @@
                  на узких экранах не разъезжались по разным строкам (flex-wrap), а
                  всегда оставались парой. На десктопе расстояния не меняются. -->
             <div class="ed-masthead-toggles">
+                <!-- Переключатель раскладки: тот же 44px-тоггл. Клик циклит
+                     flow→split→grid через window.__layout (head.html). Полный выбор —
+                     в «Персонализации» на /settings; обе точки синхронятся событием
+                     layoutchange. -->
+                <button type="button" class="ed-theme-toggle ed-layout-toggle" id="layout-toggle"
+                        aria-label="Сменить раскладку" title="Раскладка страниц">
+                    <svg class="ed-icon" aria-hidden="true" focusable="false"><use href="#i-layout"></use></svg>
+                </button>
                 <!-- Переключатель дизайна: иконка-близнец тоггла темы (та же 44px-оболочка
                      .ed-theme-toggle). Клик циклит Editorial→Swiss→Linear→Broadsheet
                      через window.__design (head.html). Полный выбор — на /settings; обе
@@ -110,6 +118,35 @@
         sync();
         btn.addEventListener('click', function () { window.__design.set(nextOf(window.__design.current())); });
         document.addEventListener('designchange', sync);
+      })();
+    </script>
+    <!-- Переключатель раскладки: тот же паттерн, что тогглы темы/дизайна. Циклит
+         по window.__layout.list (flow→split→grid); tooltip/aria называют текущую →
+         следующую раскладку. Пере-синхрон по layoutchange держит шапку и
+         seg-control на /settings в одном состоянии. -->
+    <script>
+      (function () {
+        var btn = document.getElementById('layout-toggle');
+        if (!btn || !window.__layout) return;
+        var NAMES = { flow: 'Поток', split: 'Два пейна', grid: 'Сетка' };
+        function label(id) { return NAMES[id] || id; }
+        function order() {
+          var list = window.__layout.list;
+          return (list && list.length) ? list : ['flow', 'split', 'grid'];
+        }
+        function nextOf(cur) {
+          var list = order();
+          var i = list.indexOf(cur);
+          return list[(i + 1) % list.length];
+        }
+        function sync() {
+          var cur = window.__layout.current();
+          btn.setAttribute('aria-label', 'Сменить раскладку (сейчас: ' + label(cur) + ')');
+          btn.setAttribute('title', 'Раскладка: ' + label(cur) + ' → ' + label(nextOf(cur)));
+        }
+        sync();
+        btn.addEventListener('click', function () { window.__layout.set(nextOf(window.__layout.current())); });
+        document.addEventListener('layoutchange', sync);
       })();
     </script>
     <!-- Кнопка «наверх»: инжектится здесь (header есть на КАЖДОЙ странице, в т.ч.

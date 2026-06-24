@@ -595,6 +595,37 @@
       syncDesign();
     }
 
+    // Выбор раскладки (flow/split/grid) — radiogroup, как сегменты темы/дизайна.
+    // Источник истины — window.__layout (head.html); флип data-layout на <html>
+    // мгновенно перекомпонует focus/settings (CSS [data-layout]-ветки в base.css).
+    const layoutCtl = document.getElementById('layout-pref-control');
+    if (layoutCtl && window.__layout) {
+      const layoutBtns = Array.from(layoutCtl.querySelectorAll('[data-layout-pref]'));
+      const syncLayout = () => {
+        const cur = window.__layout.current();
+        layoutBtns.forEach((b) => {
+          const on = b.getAttribute('data-layout-pref') === cur;
+          b.setAttribute('aria-checked', on ? 'true' : 'false');
+          b.classList.toggle('is-active', on);
+          b.tabIndex = on ? 0 : -1;
+        });
+      };
+      layoutBtns.forEach((b, i) => {
+        b.addEventListener('click', () => window.__layout.set(b.getAttribute('data-layout-pref')));
+        b.addEventListener('keydown', (e) => {
+          let idx = -1;
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') idx = (i + 1) % layoutBtns.length;
+          else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') idx = (i - 1 + layoutBtns.length) % layoutBtns.length;
+          if (idx < 0) return;
+          e.preventDefault();
+          window.__layout.set(layoutBtns[idx].getAttribute('data-layout-pref'));
+          layoutBtns[idx].focus();
+        });
+      });
+      document.addEventListener('layoutchange', syncLayout);
+      syncLayout();
+    }
+
     const valEl = document.getElementById('font-scale-value');
     const decBtn = document.getElementById('font-decrease');
     const incBtn = document.getElementById('font-increase');

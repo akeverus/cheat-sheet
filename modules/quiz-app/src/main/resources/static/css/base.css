@@ -2497,6 +2497,117 @@ html[data-design] .summary-tools-status {
   html[data-design] .summary-page .ed-page > section.summary-recommendations { grid-column: 1 / -1; }
 }
 
+/* ===========================================================================
+   РАСКЛАДКИ СТРАНИЦ (data-layout: flow | split | grid) — переключаемая композиция
+   focus и settings. Ортогональна дизайну/теме. Движок: window.__layout (head.html);
+   контролы: тоггл в шапке (#layout-toggle) + сегмент «Раскладка» в Персонализации
+   (/settings). Запрос пользователя: «реализуй все форматы с переключением».
+
+   Стратегия — АДДИТИВНАЯ (никаких правок в секции WIDE LAYOUT выше): негейтнутые
+   wide-правила остаются «grid»-композицией и срабатывают, когда активна раскладка
+   grid ЛИБО когда атрибута нет вовсе (no-JS → рабочий фоллбэк). Блоки flow/split
+   ниже перебивают их бóльшей специфичностью ([data-layout="X"] добавляет +0,1,0).
+   Ниже 1200px все три раскладки совпадают — общий вертикальный стек (базовые
+   правила focus/settings). Дефолт — flow (см. head.html): спокойный одноколоночный
+   поток чтения, прямой ответ на претензию «ответы расположены плохо» (2×2 жали
+   длинные варианты) и «настройки — накидали блоков».
+   =========================================================================== */
+@media (min-width: 1200px) {
+  /* ---- FOCUS / flow: ответы единым полноширинным столбцом (не 2×2). Мета-бар
+     сверху горизонтальный (наследуется из WIDE LAYOUT — не трогаем). Длинные
+     варианты (с кодом) дышат на всю ширину колонки чтения, а не зажаты вдвое. */
+  html[data-design][data-layout="flow"] .focus-page #interview-options {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: var(--max-width-options);
+  }
+
+  /* ---- FOCUS / split: два пейна. Слева — мета-рейка + вопрос-герой (липкий,
+     остаётся на виду при длинном разборе справа); справа — ответы единым столбцом
+     и кнопка действия. Пост-ответный вердикт/анализ — полноширинной лентой внизу. */
+  html[data-design][data-layout="split"] .focus-page .focus-training {
+    display: grid;
+    grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+    column-gap: var(--space-8);
+    align-items: start;
+    max-width: var(--max-width-result);
+  }
+  /* Мета сверху-слева — вертикальная рейка (перебиваем горизонтальный WIDE-бар). */
+  html[data-design][data-layout="split"] .focus-page .focus-topbar {
+    grid-column: 1; grid-row: 1;
+    flex-direction: column; align-items: stretch; justify-content: flex-start;
+    gap: var(--space-3);
+    border-bottom: 0; padding-bottom: 0; margin-bottom: 0;
+  }
+  html[data-design][data-layout="split"] .focus-page .focus-topbar > .focus-session-rail {
+    flex-direction: column; align-items: stretch; margin-left: 0; gap: var(--space-3);
+  }
+  html[data-design][data-layout="split"] .focus-page .focus-topbar .session-progress-track { width: auto; }
+  /* Вопрос — в левой колонке под метой, липкий; рамку-снизу убираем (в узкой
+     рейке она висела бы поперёк колонки). */
+  html[data-design][data-layout="split"] .focus-page .focus-question {
+    grid-column: 1; grid-row: 2;
+    position: sticky; top: var(--space-5);
+    border-bottom: 0; padding-bottom: 0; margin-bottom: 0;
+  }
+  html[data-design][data-layout="split"] .focus-page .question-code-wrap {
+    grid-column: 1; grid-row: 3; margin-top: var(--space-4);
+  }
+  /* Правый пейн: форма/флешкарта (ответы + действие) во всю высоту. */
+  html[data-design][data-layout="split"] .focus-page #interview-form,
+  html[data-design][data-layout="split"] .focus-page .flashcard-phase {
+    grid-column: 2; grid-row: 1 / span 3; align-self: start;
+  }
+  /* Ответы — один столбец на всю ширину правого пейна (не 2×2). */
+  html[data-design][data-layout="split"] .focus-page #interview-options {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: none;
+  }
+  /* Вердикт/разбор и его «голова» — полноширинной лентой ПОД обоими пейнами. */
+  html[data-design][data-layout="split"] .focus-page [data-ui-fragment="result-zone-head"],
+  html[data-design][data-layout="split"] .focus-page [data-ui-fragment="post-answer-controls"] {
+    grid-column: 1 / -1;
+  }
+
+  /* ---- SETTINGS / flow: одна контейнированная колонка (читаемо, без асимметрии).
+     Перебиваем wide-grid обратно в блок; секции — стопкой с hairline-разделителями. */
+  html[data-design][data-layout="flow"] .settings-page #left-sidebar-content { display: block; }
+  html[data-design][data-layout="flow"] .settings-page #left-sidebar-content > .control-section {
+    border-top: var(--rule-weight) solid var(--color-border-primary);
+    padding-top: var(--space-6);
+  }
+  html[data-design][data-layout="flow"] .settings-page #left-sidebar-filters { border-top: 0; padding-top: 0; }
+  html[data-design][data-layout="flow"] .settings-page #left-sidebar-session,
+  html[data-design][data-layout="flow"] .settings-page #left-sidebar-progress { border-left: 0; padding-left: 0; }
+  html[data-design][data-layout="flow"] .settings-page .filters-fields { grid-template-columns: 1fr 1fr; }
+  html[data-design][data-layout="flow"] .settings-page .app-layout:has(> .personalization-card:not(.hidden)) { display: block; }
+
+  /* ---- SETTINGS / split: два сбалансированных столбца — слева вся конфигурация
+     сессии (фильтры+режим+старт стопкой), справа управление данными и оформление.
+     Разводит «настроить и начать» ↔ «настройки приложения». */
+  html[data-design][data-layout="split"] .settings-page .app-layout:has(> .personalization-card:not(.hidden)) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    column-gap: var(--space-8);
+    align-items: start;
+  }
+  html[data-design][data-layout="split"] .settings-page .app-layout:has(> .personalization-card:not(.hidden)) > .main-content {
+    grid-column: 1; grid-row: 1 / span 2;
+  }
+  html[data-design][data-layout="split"] .settings-page .app-layout:has(> .personalization-card:not(.hidden)) > .card {
+    grid-column: 2;
+  }
+  /* Внутри control-card левого столбца — секции стопкой (не асимметрия grid),
+     с hairline-разделителями. */
+  html[data-design][data-layout="split"] .settings-page #left-sidebar-content { display: block; }
+  html[data-design][data-layout="split"] .settings-page #left-sidebar-content > .control-section {
+    border-top: var(--rule-weight) solid var(--color-border-primary);
+    padding-top: var(--space-6);
+  }
+  html[data-design][data-layout="split"] .settings-page #left-sidebar-filters { border-top: 0; padding-top: 0; }
+  html[data-design][data-layout="split"] .settings-page #left-sidebar-session,
+  html[data-design][data-layout="split"] .settings-page #left-sidebar-progress { border-left: 0; padding-left: 0; }
+}
+
 /* Печать / сохранение в PDF: прячем навигацию/кнопки/хром, лист — чистый.
    Браузеры по умолчанию не печатают фоновые цвета — поэтому форсим белый фон и
    тёмный текст, чтобы тёмная тема не давала серую кашу с потерей контраста. */
