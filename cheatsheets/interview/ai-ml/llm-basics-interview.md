@@ -384,7 +384,7 @@ Context = system_prompt + chat_history + user_message + model_response
 
 | Год | Модель | Context |
 |-----|--------|---------|
-| 2020 | GPT-3 | 4K |
+| 2020 | GPT-3 | 2K |
 | 2023 | GPT-3.5 | 16K |
 | 2023 | GPT-4 | 8K-32K |
 | 2023 | Claude 2 | 100K |
