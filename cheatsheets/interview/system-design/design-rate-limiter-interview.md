@@ -1260,6 +1260,6 @@ Limiter без наблюдаемости опасен: он молча отби
 - [Resilience Patterns](../architecture/resilience-patterns-interview.md) — circuit breaker, bulkhead, fail-open
 - [Distributed Systems](../architecture/distributed-systems-interview.md) — eventual consistency, clock drift
 - [Redis](../databases/redis-interview.md) — Lua atomic, cluster sharding, AOF
-- [API Security](../security/api-security-interview.md) — DDoS, bot detection, CAPTCHA
+- [API Security](../security/application-security-interview.md) — DDoS, bot detection, CAPTCHA
 - [Microservices](../architecture/microservices-interview.md) — edge / gateway / service layering
 - [Load Balancing](../architecture/load-balancing-interview.md) — sticky vs random routing

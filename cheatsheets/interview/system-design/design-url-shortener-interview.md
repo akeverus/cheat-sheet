@@ -1299,7 +1299,7 @@ def get_url(short_code):
 - [Distributed Systems](../architecture/distributed-systems-interview.md) — eventual consistency, CAP
 - [Redis](../databases/redis-interview.md) — cluster, eviction, AOF/RDB
 - [Resilience Patterns](../architecture/resilience-patterns-interview.md) — circuit breaker, graceful degradation
-- [API Security](../security/api-security-interview.md) — Safe Browsing, rate limiting, CAPTCHA
+- [API Security](../security/application-security-interview.md) — Safe Browsing, rate limiting, CAPTCHA
 - [Load Balancing](../architecture/load-balancing-interview.md) — ELB Multi-AZ, DNS routing
 - [Kafka](../messaging/kafka-interview.md) — async analytics pipeline
 - [Design Pastebin](design-pastebin-interview.md) — парный канонический кейс: хранение пасты, генерация short-code, TTL-экспирация.

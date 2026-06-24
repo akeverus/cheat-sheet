@@ -1226,5 +1226,5 @@ state AUTHORIZED
 - [Database Replication](../databases/database-replication-interview.md) — multi-region ledger
 - [Database Sharding](../databases/database-sharding-interview.md) — ledger sharding by merchant_id
 - [Kafka](../messaging/kafka-interview.md) — outbox publisher, events backbone
-- [API Security](../security/api-security-interview.md) — webhook signing, mTLS, secrets
+- [API Security](../security/application-security-interview.md) — webhook signing, mTLS, secrets
 - [Microservices](../architecture/microservices-interview.md) — service boundaries

@@ -30,7 +30,7 @@ updated: "2026-05-22"
 - [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — `BlockingQueue`, `AtomicReference`, `ReentrantLock`.
 - [Clean Architecture](../architecture/clean-architecture-interview.md) — слои, dependency inversion.
 - [Algorithms](../algorithms/algorithms-interview.md) — disk scheduling (SCAN/LOOK как ОС-аналог).
-- [Design Patterns](../design-patterns-interview.md) — State, Strategy, Observer, Command, Singleton.
+- [Design Patterns](../design-patterns/design-patterns-interview.md) — State, Strategy, Observer, Command, Singleton.
 
 ## Содержание
 
@@ -1024,4 +1024,4 @@ public class ElevatorSimulator {
 - [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — Atomic, BlockingQueue, executors.
 - [Clean Architecture](../architecture/clean-architecture-interview.md) — слои и dependency inversion.
 - [Algorithms](../algorithms/algorithms-interview.md) — disk scheduling (SCAN/LOOK) аналог.
-- [Design Patterns](../design-patterns-interview.md) — State, Strategy, Observer, Command, Singleton.
+- [Design Patterns](../design-patterns/design-patterns-interview.md) — State, Strategy, Observer, Command, Singleton.

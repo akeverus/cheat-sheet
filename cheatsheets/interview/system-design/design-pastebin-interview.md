@@ -1379,5 +1379,5 @@ X-RateLimit-Reset: 1716832800
 - [Database Sharding](../databases/database-sharding-interview.md) — sharding metadata
 - [Redis](../databases/redis-interview.md) — hot paste cache
 - [Elasticsearch](../databases/elasticsearch-interview.md) — paste full-text search
-- [API Security](../security/api-security-interview.md) — OAuth, API tokens, rate limiting
+- [API Security](../security/application-security-interview.md) — OAuth, API tokens, rate limiting
 - [Resilience Patterns](../architecture/resilience-patterns-interview.md) — circuit breaker для blob storage
