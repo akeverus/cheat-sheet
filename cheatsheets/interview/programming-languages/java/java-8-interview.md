@@ -146,8 +146,8 @@ graph LR
 | **Java 10** | `var` для локальных переменных, `List.copyOf()` |
 | **Java 11** | `String.isBlank()`/`strip()`/`lines()`, `Optional.isEmpty()`, `HttpClient` |
 | **Java 14** | `switch`-выражения, `instanceof` pattern matching (preview) |
-| **Java 16** | `record`, `Stream.toList()` |
-| **Java 17** | `sealed` классы, pattern matching for `instanceof` |
+| **Java 16** | `record`, `Stream.toList()`, pattern matching for `instanceof` |
+| **Java 17** | `sealed` классы |
 | **Java 21** | Виртуальные потоки, `SequencedCollection`, record patterns |
 
 ```java
