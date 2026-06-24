@@ -1715,10 +1715,12 @@
     const postAnswerZone = document.querySelector('[data-ui-fragment="post-answer-controls"]');
     if (postAnswerZone && nextLink.parentElement !== postAnswerZone) {
       postAnswerZone.appendChild(nextLink);
-      // Клавиатурная подсказка «1–9 — выбор…» после ответа неактуальна (выбор
-      // закрыт) и осталась бы висеть на месте уехавшей кнопки — прячем.
-      const answeredHint = document.querySelector('[data-ui-fragment="training-actions"] .keyboard-hint');
-      if (answeredHint) answeredHint.classList.add('hidden');
+      // После переноса next блок training-actions полностью опустел (submit скрыт,
+      // клавиатурная подсказка «1–9 — выбор…» уже неактуальна). Помечаем его
+      // is-answered и прячем целиком (CSS): иначе пустой flex-контейнер со своим
+      // margin-top оставил бы фантомный ~37px зазор между вариантами и зоной разбора.
+      const trainingActions = document.querySelector('[data-ui-fragment="training-actions"]');
+      if (trainingActions) trainingActions.classList.add('is-answered');
     }
     setInteractionBusy(false);
     feedbackDiv.setAttribute('tabindex', '-1');
