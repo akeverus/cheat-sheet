@@ -586,6 +586,25 @@ Optional<User> findActiveByEmail(@Param("email") String email);
 
 10. **Не забывайте `@Modifying` + `@Transactional`** для UPDATE/DELETE.
 
+## Q16. (!) Что HQL 6 добавляет поверх стандартного JPQL (set-операции, оконные функции, CTE)?
+
+`HQL` (язык запросов Hibernate) — надмножество `JPQL`. В `Hibernate 6` он получил возможности, которых в стандартном `JPQL` нет:
+
+- **Set-операции** — `UNION`/`UNION ALL`, `INTERSECT`, `EXCEPT` между подзапросами.
+- **Оконные функции** — `over()` с `row_number()`, `rank()`, `dense_rank()`, агрегатами и т.д.
+- **CTE** — общие табличные выражения `with x as (...)`, включая **рекурсивные** (`with recursive`).
+
+```java
+// Оконная функция в HQL 6
+List<?> rows = session.createQuery(
+    "select e.name, rank() over (partition by e.dept order by e.salary desc) " +
+    "from Employee e", Object[].class).getResultList();
+```
+
+Это снимает прежнее ограничение: раньше для `CTE`, `UNION` и оконных функций приходилось уходить в native SQL.
+
+**Итог:** в `Hibernate 6` многое из «БД-специфичного SQL» (set-операции, window-функции, рекурсивные CTE) доступно прямо в `HQL` — переносимо между диалектами и без падения в native query. Стандартный `JPQL` этого по-прежнему не умеет.
+
 ## See also
 
 - [Hibernate](hibernate-interview.md) — основы Hibernate, Session, entity states

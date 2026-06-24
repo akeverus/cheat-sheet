@@ -2460,6 +2460,66 @@
           ]
         }
       ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое нативное структурированное логирование в Spring Boot 3.4 (`logging.structured.format`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это встроенная в `Spring Boot 3.4` поддержка структурированных логов, которая включается одним property `logging.structured.format.console=ecs` только после добавления зависимости `LogstashEncoder`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл нативного логирования именно в том, что сторонние энкодеры вроде `LogstashEncoder` не нужны — форматы `ecs`/`logstash`/`gelf` встроены во фреймворк, и хватает одного property.",
+                "source_of_confusion": "До `Spring Boot 3.4` структурированный JSON действительно собирали через сторонний `LogstashEncoder`, и из текста про Q10 кажется, что эта зависимость всё ещё обязательна.",
+                "if_it_were_true": "Тогда нативная фича не давала бы выигрыша: пришлось бы тянуть ту же зависимость, что и раньше, и встроенность форматов теряла бы смысл.",
+                "how_it_should_be": "Никакой зависимости не нужно: `logging.structured.format.console=ecs` работает само по себе, а сторонний энкодер требуется только для форматов вне встроенного набора."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это встроенная в `Spring Boot 3.4` поддержка структурированных логов, которая включается одним property `logging.structured.format.console=ecs` без сторонних энкодеров вроде `LogstashEncoder`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `Spring Boot 3.4` структурированное логирование встроено прямо во фреймворк: достаточно задать `logging.structured.format.console=ecs` (или `.file=ecs`), и логи начинают писаться в выбранном формате. Сторонние зависимости и правка `logback-spring.xml` не требуются. Из коробки поддерживаются форматы `ecs`, `logstash` и `gelf`.",
+                "example": "logging.structured.format.console=ecs\nlogging.structured.format.file=ecs\nlogging.structured.ecs.service.name=orders\nlogging.structured.json.add[trace_id]=%mdc{traceId}",
+                "when_to_apply": "Когда вы на `Spring Boot 3.4+` и хотите отдавать JSON-логи в `Elasticsearch`/`ELK`, Logstash или Graylog без подключения сторонних энкодеров и без XML-конфигурации — просто выставив property в `application.properties`.",
+                "edge_cases": "Из коробки доступны только `ecs`, `logstash` и `gelf`. Для формата вне этого набора нужен свой `StructuredLogFormatter`, регистрируемый по полному имени класса в том же property, либо сторонний энкодер.",
+                "related": "Противопоставляется ручной настройке из Q10, где JSON собирал сторонний `LogstashEncoder` через XML-конфиг `Logback` (`logback-spring.xml`); здесь то же достигается нативно одной строкой property."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это встроенная в `Spring Boot 3.4` поддержка структурированных логов, которая включается одним property `logging.structured.format.console=ecs` и из коробки поддерживает форматы `ecs`, `logstash`, `gelf` и `json-schema`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из коробки поддерживаются ровно три формата — `ecs`, `logstash` и `gelf`; формата `json-schema` среди встроенных нет.",
+                "source_of_confusion": "В конфиге фигурирует ключ `logging.structured.json.add[...]`, из-за чего кажется, что есть отдельный встроенный формат `json` или `json-schema`.",
+                "if_it_were_true": "Тогда можно было бы написать `logging.structured.format.console=json-schema` и получить готовый формат без своего `StructuredLogFormatter`.",
+                "how_it_should_be": "Встроенный набор — это `ecs`, `logstash`, `gelf`; для любого другого формата подключается своя реализация `StructuredLogFormatter` по полному имени класса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это встроенная в `Spring Boot 3.4` поддержка структурированных логов, которая включается одним property `logging.structured.format.console=ecs`, а свой формат подключается через интерфейс `LayoutBase` из `Logback`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Свой формат подключается через интерфейс `StructuredLogFormatter`, реализация которого регистрируется по полному имени класса в том же property; `LayoutBase` к этому механизму не относится.",
+                "source_of_confusion": "`LayoutBase` — реальный класс `Logback` для кастомных лейаутов, и его легко спутать с точкой расширения нативного структурированного логирования.",
+                "if_it_were_true": "Тогда кастомизация была бы привязана к `Logback`-API и XML-конфигурации, а не делалась бы декларативно одним property через абстракцию Spring Boot.",
+                "how_it_should_be": "Для своего формата реализуют `StructuredLogFormatter` и указывают полное имя класса в `logging.structured.format.console`, оставаясь в рамках нативного механизма Spring Boot."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

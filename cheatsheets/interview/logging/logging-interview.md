@@ -91,6 +91,7 @@ updated: "2026-04-25"
 - [Q39. Как работает Log4j2 garbage-free logging?](#q39-как-работает-log4j2-garbage-free-logging)
 - [Q40. Как настроить Graylog / GELF для приёма логов из Java?](#q40-как-настроить-graylog--gelf-для-приёма-логов-из-java)
 - [Q41. Что такое Log Appender для Kafka и когда его применять?](#q41-что-такое-log-appender-для-kafka-и-когда-его-применять)
+- [Q42. (!) Что такое нативное структурированное логирование в Spring Boot 3.4 (`logging.structured.format`)?](#q42--что-такое-нативное-структурированное-логирование-в-spring-boot-34-loggingstructuredformat)
 
 ## Q1. (!) Какие существуют фреймворки логирования в `Java`?
 
@@ -2152,6 +2153,34 @@ implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 | Простота настройки | Сложнее | Проще |
 
 Риски: `Kafka Appender` с `acks=0` — это fire-and-forget; потеря логов при перегрузке брокера возможна. Для критичных аудит-логов используйте `acks=1` или стандартный подход через агент.
+
+---
+
+## Q42. (!) Что такое нативное структурированное логирование в Spring Boot 3.4 (`logging.structured.format`)?
+
+`Spring Boot 3.4` встроил структурированное логирование прямо в фреймворк — без сторонних энкодеров вроде `LogstashEncoder` (см. Q10). Достаточно property:
+
+```properties
+logging.structured.format.console=ecs
+logging.structured.format.file=ecs
+```
+
+Поддерживаемые форматы «из коробки»:
+
+- `ecs` — Elastic Common Schema (для `Elasticsearch`/`ELK`).
+- `logstash` — формат Logstash.
+- `gelf` — Graylog Extended Log Format.
+
+Свой формат подключается через интерфейс `StructuredLogFormatter` — реализация регистрируется по полному имени класса в том же property. Статические и контекстные поля добавляются декларативно:
+
+```properties
+logging.structured.ecs.service.name=orders
+logging.structured.json.add[trace_id]=%mdc{traceId}
+```
+
+**Чем отличается от ручной настройки (Q10):** там JSON собирался сторонним `LogstashEncoder` через XML-конфиг `Logback`; здесь — нативно, одним property, без зависимостей и без правки `logback-spring.xml`.
+
+**Итог:** на `Spring Boot 3.4+` структурированные логи включаются одной строкой `logging.structured.format.console=ecs`. Сторонний энкодер нужен только для форматов вне встроенного набора (`ecs`/`logstash`/`gelf`).
 
 ---
 

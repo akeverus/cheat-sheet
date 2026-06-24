@@ -2820,6 +2820,66 @@
           ]
         }
       ]
+    },
+    {
+      "q_number": 48,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как пробросить `ThreadLocal`-контекст в реактивную цепочку (context-propagation)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подключить библиотеку `io.micrometer:context-propagation` и захватить `ThreadLocal` в `Reactor Context` через оператор `subscribeOn(Schedulers.boundedElastic())`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "За захват `ThreadLocal` отвечает оператор `contextCapture()` (или глобальный `Hooks.enableAutomaticContextPropagation()`), а не `subscribeOn`. `subscribeOn` лишь задаёт, на каком `Scheduler` выполнять подписку, и сам по себе значения `ThreadLocal` в `Reactor Context` не переносит.",
+                "source_of_confusion": "И `subscribeOn`, и проблема пропагации связаны с переключением потоков в реактивной цепочке, поэтому легко смешать управление потоком выполнения с переносом контекста между потоками.",
+                "if_it_were_true": "Тогда любой реактивный код с `subscribeOn` автоматически сохранял бы MDC и `SecurityContext`, и библиотека `context-propagation` была бы не нужна.",
+                "how_it_should_be": "После подключения `context-propagation` нужно вызвать `contextCapture()` на цепочке либо один раз включить `Hooks.enableAutomaticContextPropagation()` на старте приложения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подключить библиотеку `io.micrometer:context-propagation` и захватить `ThreadLocal` в `Reactor Context` через оператор `contextWrite()` с явной передачей каждого значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоматический захват зарегистрированных `ThreadLocal` делает `contextCapture()`, опираясь на `ContextSnapshot`. `contextWrite()` лишь кладёт переданные вручную значения в `Reactor Context` и не умеет сам подхватывать `ThreadLocal` через `ThreadLocalAccessor`.",
+                "source_of_confusion": "`contextWrite()` действительно пишет данные в `Reactor Context`, поэтому кажется естественным кандидатом и для переноса `ThreadLocal` — но это ручная запись произвольных ключей, а не мост к `ThreadLocal`.",
+                "if_it_were_true": "Тогда `ThreadLocalAccessor` и `ContextSnapshot` были бы лишними: достаточно было бы перечислить каждый `ThreadLocal` руками в `contextWrite()`.",
+                "how_it_should_be": "Зарегистрировать `ThreadLocalAccessor` в `ContextRegistry` и использовать `contextCapture()`, который через `ContextSnapshot` сам захватит зарегистрированные значения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подключить библиотеку `io.micrometer:context-propagation` и захватить `ThreadLocal` в `Reactor Context` через регистрацию `ContextSnapshot` в `ContextRegistry`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `ContextRegistry` регистрируется `ThreadLocalAccessor` (он описывает, как читать/писать конкретный `ThreadLocal`). `ContextSnapshot` же — это объект, который захватывает значения зарегистрированных `ThreadLocal` и восстанавливает их вокруг выполнения, а не то, что регистрируют в реестре.",
+                "source_of_confusion": "`ThreadLocalAccessor` и `ContextSnapshot` — два центральных типа `context-propagation` из одного механизма, и их роли (описание доступа vs. захват значений) легко перепутать местами.",
+                "if_it_were_true": "Тогда в `ContextRegistry` хранились бы готовые снимки значений, а не описания доступа, и реестр пришлось бы обновлять при каждом изменении `ThreadLocal`.",
+                "how_it_should_be": "В `ContextRegistry` регистрируют `ThreadLocalAccessor`, а `ContextSnapshot` создаётся для захвата и восстановления значений вокруг выполнения шага."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключить библиотеку `io.micrometer:context-propagation` и захватить `ThreadLocal` в `Reactor Context` через оператор `contextCapture()` (или глобально `Hooks.enableAutomaticContextPropagation()`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`context-propagation` — это мост между императивным `ThreadLocal`-миром и `Reactor Context`. `ThreadLocalAccessor` описывает, как читать/писать конкретный `ThreadLocal`, и регистрируется в `ContextRegistry`, а `ContextSnapshot` захватывает зарегистрированные значения и восстанавливает их вокруг выполнения. Оператор `contextCapture()` захватывает эти значения в `Reactor Context`, благодаря чему MDC и `SecurityContext` не теряются при переключении потоков.",
+                "example": "Hooks.enableAutomaticContextPropagation(); // один раз на старте приложения\n\nMono.deferContextual(ctx -> service.call())\n    .contextCapture(); // захватит зарегистрированные ThreadLocal в Reactor Context",
+                "when_to_apply": "Когда нужно протащить `traceId` в MDC через всю цепочку логов, `SecurityContext` Spring Security в WebFlux или спаны Micrometer/OpenTelemetry через async-границы реактивного кода.",
+                "edge_cases": "Чтобы конкретный `ThreadLocal` подхватился, под него должен быть зарегистрирован `ThreadLocalAccessor` в `ContextRegistry` — без регистрации `contextCapture()` его не увидит. Без подключения библиотеки MDC и `SecurityContext` пропадают при первом же переключении потока.",
+                "related": "`contextCapture()` — точечная альтернатива глобальному `Hooks.enableAutomaticContextPropagation()`, который включается один раз на старте приложения; оба опираются на пару `ThreadLocalAccessor` + `ContextSnapshot`."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

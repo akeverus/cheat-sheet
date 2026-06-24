@@ -124,6 +124,7 @@ updated: "2026-04-25"
 **Интеграция со Spring WebFlux**
 - [Q46. (!) Как Project Reactor интегрируется со Spring WebFlux?](#q46--как-project-reactor-интегрируется-со-spring-webflux)
 - [Q47. Почему нельзя вызывать block() в WebFlux-приложении?](#q47-почему-нельзя-вызывать-block-в-webflux-приложении)
+- [Q48. (!) Как пробросить `ThreadLocal`-контекст в реактивную цепочку (context-propagation)?](#q48--как-пробросить-threadlocal-контекст-в-реактивную-цепочку-context-propagation)
 
 ---
 
@@ -1679,6 +1680,30 @@ Mono<Result> result = Mono.fromCallable(() -> blockingOperation())
 ```
 
 Именно поэтому `Spring WebFlux` выбрасывает `IllegalStateException: block()/blockFirst()/blockLast() are blocking, which is not supported in thread xxx` — это встроенная защита, которая ловит случайный `block()` на event-loop-потоке. Если же блокирующий вызов действительно неизбежен (legacy-API, JDBC), его нужно изолировать на `Schedulers.boundedElastic()`, как показано выше, чтобы он не трогал потоки `Netty`.
+
+---
+
+## Q48. (!) Как пробросить `ThreadLocal`-контекст в реактивную цепочку (context-propagation)?
+
+В реактивном коде операторы выполняются на разных потоках, поэтому обычный `ThreadLocal` (MDC для логов, `SecurityContext`, контекст трейсинга) «теряется» между шагами. Решение — библиотека `io.micrometer:context-propagation`, мост между `ThreadLocal` и `Reactor Context`.
+
+Механизм:
+
+- `ThreadLocalAccessor` — описывает, как читать/писать конкретный `ThreadLocal`; регистрируется в `ContextRegistry`.
+- `ContextSnapshot` — захватывает значения зарегистрированных `ThreadLocal` и восстанавливает их вокруг выполнения.
+
+В `Reactor` это подключается оператором `contextCapture()` или глобально:
+
+```java
+Hooks.enableAutomaticContextPropagation(); // один раз на старте приложения
+
+Mono.deferContextual(ctx -> service.call())
+    .contextCapture(); // захватит зарегистрированные ThreadLocal в Reactor Context
+```
+
+Типовые применения: `traceId` в MDC через всю цепочку логов, `SecurityContext` Spring Security в WebFlux, спаны Micrometer/OpenTelemetry через async-границы.
+
+**Итог:** `context-propagation` связывает императивный `ThreadLocal`-мир с `Reactor Context`. Без неё MDC и `SecurityContext` пропадают при первом же переключении потока в реактивной цепочке.
 
 ---
 

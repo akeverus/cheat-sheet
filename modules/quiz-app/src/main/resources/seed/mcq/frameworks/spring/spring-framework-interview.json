@@ -2400,6 +2400,66 @@
           ]
         }
       ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `BeanRegistrar` и чем он лучше `BeanDefinitionRegistryPostProcessor` (Spring Framework 7)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`BeanRegistrar` подключается через `@Import`, обнаруживается на этапе обработки конфигурации, регистрирует бины высокоуровневым API `BeanRegistry` и дружелюбен к AOT/native image.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это ровно то, что описывает текст: `BeanRegistrar` (Spring Framework 7 / Spring Boot 4) — first-class механизм программной регистрации бинов, который подключается через `@Import` и обнаруживается на этапе обработки конфигурации. Он использует высокоуровневый API `BeanRegistry` без ручного конструирования `BeanDefinition` и, в отличие от `BeanDefinitionRegistryPostProcessor`, дружелюбен к AOT/native image. Это и есть совокупность его ключевых преимуществ.",
+                "example": "class MyBeanRegistrar implements BeanRegistrar {\n    @Override\n    public void register(BeanRegistry registry, Environment env) {\n        registry.registerBean(\"paymentService\", PaymentService.class);\n        if (env.matchesProfiles(\"cloud\")) {\n            registry.registerBean(CloudClient.class);\n        }\n    }\n}\n\n@Configuration\n@Import(MyBeanRegistrar.class)\nclass AppConfig {}",
+                "when_to_apply": "На Spring Framework 7+ / Spring Boot 4, когда нужна программная регистрация бинов — особенно с условной логикой по `Environment`/профилям и с прицелом на native image через AOT.",
+                "edge_cases": "Условную регистрацию можно делать прямо в `register(...)`, проверяя `env.matchesProfiles(\"cloud\")`. В Kotlin вместо реализации интерфейса доступен DSL `BeanRegistrarDsl`. Класс должен быть именно подключён через `@Import`, иначе он не будет обнаружен на этапе обработки конфигурации.",
+                "related": "Заменяет verbose и AOT-недружелюбный `BeanDefinitionRegistryPostProcessor`; опирается на `Environment` для условной регистрации и на механизм `@Import` для обнаружения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`BeanRegistrar` подключается через `@Import`, обнаруживается на этапе обработки конфигурации, регистрирует бины высокоуровневым API `BeanRegistry`, но при этом несовместим с AOT/native image.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `BeanRegistrar` AOT/native-friendly — это одно из его ключевых преимуществ перед низкоуровневым `BeanDefinitionRegistryPostProcessor`.",
+                "source_of_confusion": "Программная регистрация бинов исторически ассоциируется с динамикой, которая мешает AOT; кажется, что любой такой механизм недружелюбен к native image.",
+                "if_it_were_true": "Если бы `BeanRegistrar` был несовместим с AOT, у него не осталось бы главного аргумента против старого post-processor'а, и переходить на него ради native image не имело бы смысла.",
+                "how_it_should_be": "`BeanRegistrar` именно дружелюбен к AOT/native image, в отличие от низкоуровневого `BeanDefinitionRegistryPostProcessor`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`BeanRegistrar` подключается через `@Import`, обнаруживается на этапе обработки конфигурации, дружелюбен к AOT/native image, но требует ручного конструирования объектов `BeanDefinition` внутри метода `register`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BeanRegistrar` предоставляет высокоуровневый API `BeanRegistry` (например `registry.registerBean(...)`) именно для того, чтобы избежать ручного конструирования `BeanDefinition`.",
+                "source_of_confusion": "Ручное конструирование `BeanDefinition` — это признак старого `BeanDefinitionRegistryPostProcessor`; его по инерции приписывают и новому механизму.",
+                "if_it_were_true": "Если бы пришлось вручную собирать `BeanDefinition`, исчезло бы преимущество лаконичности и читаемости, и `BeanRegistrar` мало чем отличался бы от post-processor'а.",
+                "how_it_should_be": "Регистрация идёт через высокоуровневый API `BeanRegistry` без ручного конструирования `BeanDefinition`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`BeanRegistrar` подключается через `@ComponentScan` и обнаруживается как обычный `@Component`, регистрирует бины высокоуровневым API `BeanRegistry` и дружелюбен к AOT/native image.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BeanRegistrar` подключается через `@Import` и обнаруживается на этапе обработки конфигурации, а не как сканируемый `@Component`.",
+                "source_of_confusion": "В Spring многое подхватывается через component scanning, поэтому кажется, что и `BeanRegistrar` достаточно пометить как компонент и просканировать.",
+                "if_it_were_true": "Если бы он подхватывался через `@ComponentScan`, пример с `@Import(MyBeanRegistrar.class)` в `@Configuration` был бы лишним, а регистрация зависела бы от попадания класса в сканируемые пакеты.",
+                "how_it_should_be": "Класс подключается явно через `@Import(MyBeanRegistrar.class)` и обнаруживается на этапе обработки конфигурации."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

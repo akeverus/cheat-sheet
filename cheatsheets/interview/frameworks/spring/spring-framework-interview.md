@@ -99,6 +99,7 @@ updated: "2026-05-05"
 - [Q38. (!) Как работает `@Async` и что нужно настроить для асинхронных методов?](#q38--как-работает-async-и-что-нужно-настроить-для-асинхронных-методов)
 - [Q39. (!) Что такое `@EventListener` и как публиковать события асинхронно?](#q39--что-такое-eventlistener-и-как-публиковать-события-асинхронно)
 - [Q40. Как настроить несколько реализаций одного бина с разными профилями?](#q40-как-настроить-несколько-реализаций-одного-бина-с-разными-профилями)
+- [Q41. Что такое `BeanRegistrar` и чем он лучше `BeanDefinitionRegistryPostProcessor` (Spring Framework 7)?](#q41-что-такое-beanregistrar-и-чем-он-лучше-beandefinitionregistrypostprocessor-spring-framework-7)
 
 ## Q1. Что такое `Spring Framework`?
 
@@ -1822,6 +1823,37 @@ public PaymentGateway stubGateway() {
     return new StubPaymentGateway();
 }
 ```
+
+---
+
+## Q41. Что такое `BeanRegistrar` и чем он лучше `BeanDefinitionRegistryPostProcessor` (Spring Framework 7)?
+
+`BeanRegistrar` (`Spring Framework 7.0` / `Spring Boot 4`) — first-class механизм программной регистрации бинов. Вы реализуете метод `register(BeanRegistry, Environment)` и подключаете класс через `@Import` (он обнаруживается на этапе обработки конфигурации).
+
+```java
+class MyBeanRegistrar implements BeanRegistrar {
+    @Override
+    public void register(BeanRegistry registry, Environment env) {
+        registry.registerBean("paymentService", PaymentService.class);
+        if (env.matchesProfiles("cloud")) {
+            registry.registerBean(CloudClient.class);
+        }
+    }
+}
+
+@Configuration
+@Import(MyBeanRegistrar.class)
+class AppConfig {}
+```
+
+Чем лучше старого `BeanDefinitionRegistryPostProcessor`:
+
+- **Лаконичнее и читаемее** — высокоуровневый API `BeanRegistry`, без ручного конструирования `BeanDefinition`.
+- **Условная регистрация** по `Environment`/профилям прямо в коде.
+- **AOT/native-friendly** — дружелюбен к native image, в отличие от низкоуровневого post-processor'а.
+- В `Kotlin` есть DSL `BeanRegistrarDsl`.
+
+**Итог:** на `Spring Framework 7+` для программной регистрации бинов берите `BeanRegistrar` (через `@Import`) — он заменяет verbose и AOT-недружелюбный `BeanDefinitionRegistryPostProcessor`.
 
 ---
 

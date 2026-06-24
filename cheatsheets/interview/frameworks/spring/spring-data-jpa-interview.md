@@ -121,6 +121,7 @@ updated: "2026-05-05"
 - [Q40. (!) Как интегрировать `Flyway` со Spring Data JPA?](#q40--как-интегрировать-flyway-со-spring-data-jpa)
 - [Q41. (!) Как работает `@EntityGraph` и когда он предпочтительнее `JOIN FETCH`?](#q41--как-работает-entitygraph-и-когда-он-предпочтительнее-join-fetch)
 - [Q42. Как корректно использовать `@Modifying` с `@Query` для bulk-операций?](#q42-как-корректно-использовать-modifying-с-query-для-bulk-операций)
+- [Q43. (!) Что такое Scroll API и keyset-пагинация в Spring Data (`ScrollPosition`)?](#q43--что-такое-scroll-api-и-keyset-пагинация-в-spring-data-scrollposition)
 
 ---
 
@@ -2611,6 +2612,32 @@ int auditAndUpdatePrices(
 ```
 
 **Возвращаемые типы:** `int`/`Integer` — число затронутых строк (полезно для проверки «обновилось ли что-то»), `void` — когда результат не нужен. Для асинхронного выполнения — `@Async` + `Future<Integer>`.
+
+---
+
+## Q43. (!) Что такое Scroll API и keyset-пагинация в Spring Data (`ScrollPosition`)?
+
+Scroll API (`Spring Data 3.1+`, `Spring Boot 3.1+`) — современная замена `Pageable` для последовательного «пролистывания» больших результатов. Метод репозитория возвращает `Window<T>`, а позиция передаётся через `ScrollPosition`.
+
+Два режима:
+
+| Режим | Как | Глубокие страницы |
+|-------|-----|-------------------|
+| Offset-based | `ScrollPosition.offset()` | `OFFSET N` деградирует на больших N (БД отбрасывает N строк) |
+| Keyset-based (seek) | `ScrollPosition.keyset()` | стабильно — фильтрует по последнему ключу |
+
+```java
+interface OrderRepository extends Repository<Order, Long> {
+    Window<Order> findFirst20ByOrderByIdAsc(ScrollPosition position);
+}
+
+Window<Order> window = repo.findFirst20ByOrderByIdAsc(ScrollPosition.keyset());
+ScrollPosition next = window.positionAt(window.size() - 1); // курсор на следующее окно
+```
+
+**Keyset-пагинация** не использует `OFFSET`: следующая страница берётся через `WHERE id > :lastId ORDER BY id` — скорость не падает на глубоких страницах (в отличие от offset/`Pageable`). `WindowIterator` упрощает итерацию по всем окнам.
+
+**Итог:** для бесконечной прокрутки и глубоких выборок берите keyset-режим Scroll API — он стабилен по скорости. Offset-режим и `Page`/`Pageable` удобны для нумерованных страниц с известным total, но деградируют на больших смещениях.
 
 ---
 

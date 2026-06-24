@@ -900,6 +900,66 @@
           ]
         }
       ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `RestTestClient` в Spring Framework 7 и когда он лучше `MockMvc`/`WebTestClient`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`RestTestClient` — это тестовый HTTP-клиент из `Spring Framework 7.0`, который внутри использует `WebClient` и потому всегда тянет реактивные зависимости, как `WebTestClient`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутри `RestTestClient` использует `RestClient`, а не `WebClient`, и именно поэтому он не тянет реактивные зависимости — это его ключевое преимущество перед `WebTestClient`.",
+                "source_of_confusion": "И `WebClient`, и `RestClient` — fluent HTTP-клиенты Spring с похожим API, поэтому легко перепутать, какой из них лежит в основе тестового клиента.",
+                "if_it_were_true": "Тогда `RestTestClient` ничем не отличался бы от `WebTestClient` по зависимостям и не имел бы смысла для нереактивного стека.",
+                "how_it_should_be": "`RestTestClient` построен на блокирующем `RestClient` и не требует реактивных зависимостей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RestTestClient` — это тестовый HTTP-клиент из `Spring Framework 7.0`, который умеет привязываться только к live-серверу по реальному HTTP и не поддерживает mock-режим без сети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RestTestClient` умеет привязываться не только к live-серверу: его можно привязать к `MockMvc` (mock-запрос/ответ без сети), к `WebApplicationContext`, к отдельным контроллерам или к `RouterFunction`.",
+                "source_of_confusion": "Раз клиент называется HTTP-клиентом и умеет работать через полный сетевой стек, кажется, что иных способов привязки у него нет.",
+                "if_it_were_true": "Тогда каждый тест поднимал бы реальный сервер и сеть, что лишило бы смысла лёгкую mock-привязку к контроллеру.",
+                "how_it_should_be": "Привязка к `MockMvc` или к контроллеру даёт mock-запрос/ответ вообще без сети."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`RestTestClient` — это тестовый HTTP-клиент из `Spring Framework 7.0`, у которого при пустом теле `returnResult().getResponseBody()` возвращает пустой `byte[]`, как и у `WebTestClient`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При пустом теле у `RestTestClient` метод `returnResult().getResponseBody()` возвращает `null`; пустой `byte[]` в этой ситуации отдаёт именно `WebTestClient`. Для проверки пустого ответа используйте `expectBody().isEmpty()`.",
+                "source_of_confusion": "Оба клиента дают похожий fluent-API проверок, и можно ожидать, что и поведение при пустом теле у них одинаковое.",
+                "if_it_were_true": "Тогда проверки пустого ответа через сравнение с пустым `byte[]` работали бы одинаково в обоих клиентах и подвоха бы не было.",
+                "how_it_should_be": "У `RestTestClient` тело пустого ответа — `null`, поэтому проверяйте пустоту через `expectBody().isEmpty()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`RestTestClient` — это тестовый HTTP-клиент из `Spring Framework 7.0` с fluent builder-API, который читаемее `MockMvc` и не тянет реактивные зависимости, как `WebTestClient`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`RestTestClient` появился в `Spring Framework 7.0` и внутри использует `RestClient`, давая снаружи fluent-цепочку проверок ответа. Его выигрыш против `MockMvc` — более читаемый fluent-API (как у `WebTestClient`), но для блокирующего стека. Против `WebTestClient` он выигрывает тем, что тот тянет реактивные зависимости, а `RestTestClient` нужен именно для нереактивного стека.",
+                "example": "RestTestClient client = RestTestClient.bindToController(new OrderController()).build();\n\nclient.get().uri(\"/orders/1\")\n    .exchange()\n    .expectStatus().isOk()\n    .expectBody(Order.class);",
+                "when_to_apply": "Берите `RestTestClient`, когда тестируете блокирующий (нереактивный) стек и хотите fluent-проверки в стиле `WebTestClient`, но без подтягивания реактивных зависимостей. Можно привязываться к live-серверу по HTTP, к `MockMvc`, к `WebApplicationContext`, к отдельным контроллерам или `RouterFunction`.",
+                "edge_cases": "При пустом теле `returnResult().getResponseBody()` у `RestTestClient` возвращает `null` (у `WebTestClient` — пустой `byte[]`). Чтобы проверить пустой ответ, используйте `expectBody().isEmpty()`, а не сравнение с `byte[]`.",
+                "related": "Дополняет `MockMvc` (привязка через `bindToMockMvc` даёт mock-запрос/ответ без сети) и `WebTestClient` (тот же стиль fluent-проверок, но для реактивного стека); под капотом построен на `RestClient`."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

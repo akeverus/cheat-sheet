@@ -106,6 +106,7 @@ updated: "2026-05-08"
 - [Q40. (!) Как настроить кастомный `HealthIndicator` для Actuator?](#q40--как-настроить-кастомный-healthindicator-для-actuator)
 - [Q41. (!) Как работает Spring Boot с несколькими профилями одновременно?](#q41--как-работает-spring-boot-с-несколькими-профилями-одновременно)
 - [Q42. Как ограничить экспозицию Actuator endpoints в production?](#q42-как-ограничить-экспозицию-actuator-endpoints-в-production)
+- [Q43. (!) Что такое SSL Bundles в Spring Boot и зачем они нужны?](#q43--что-такое-ssl-bundles-в-spring-boot-и-зачем-они-нужны)
 
 ---
 
@@ -1625,6 +1626,34 @@ management:
 ```
 
 > **На собеседовании:** упомяните, что `/actuator/heapdump` и `/actuator/env` особенно чувствительны — первый даёт доступ к памяти процесса, второй раскрывает переменные окружения включая секреты.
+
+---
+
+## Q43. (!) Что такое SSL Bundles в Spring Boot и зачем они нужны?
+
+SSL Bundles (`Spring Boot 3.1+`) — способ сгруппировать связанные TLS-материалы (keystore, truststore, сертификат, ключ) в именованный «бандл» и переиспользовать его и на сервере, и в клиентах, не дублируя конфигурацию.
+
+```yaml
+spring:
+  ssl:
+    bundle:
+      pem:
+        myservice:
+          keystore:
+            certificate: "classpath:cert.pem"
+            private-key: "classpath:key.pem"
+```
+
+Бандл применяется по имени:
+
+- встроенный сервер — `server.ssl.bundle=myservice`;
+- клиенты (`RestClient`/`WebClient`/`RestTemplate`), `DataSource`, `Kafka` — через свойство `*.ssl.bundle`.
+
+За бандлом стоит абстракция `SslBundle`, которая сама строит `KeyStore`/`KeyManager`/`SSLContext` — руками их создавать не нужно.
+
+Ключевая фича — **hot-reload** (`reload-on-update`, `Spring Boot 3.2+`): при обновлении файлов сертификатов бандл перечитывается без рестарта приложения. Это критично для коротко-живущих сертификатов (`cert-manager`, `Vault`). Actuator показывает информацию об истечении сертификатов бандла.
+
+**Итог:** SSL Bundles убирают дублирование TLS-конфигурации и дают ротацию сертификатов без рестарта. Для `jks`-хранилищ — `spring.ssl.bundle.jks.*`, для PEM — `spring.ssl.bundle.pem.*`.
 
 ---
 

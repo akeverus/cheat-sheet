@@ -68,6 +68,7 @@ Spring Boot предоставляет мощную тестовую инфра�
 **Security и интеграция**
 - [Q14. Как тестировать Spring Security (аутентификацию/авторизацию)?](#q14-как-тестировать-spring-security-аутентификациюавторизацию)
 - [Q15. Как использовать Testcontainers с Spring Boot?](#q15-как-использовать-testcontainers-с-spring-boot)
+- [Q16. Что такое `RestTestClient` в Spring Framework 7 и когда он лучше `MockMvc`/`WebTestClient`?](#q16-что-такое-resttestclient-в-spring-framework-7-и-когда-он-лучше-mockmvcwebtestclient)
 
 ---
 
@@ -688,6 +689,34 @@ class LegacyIntegrationTest {
 ```
 
 **Итог:** `@ServiceConnection` (Spring Boot 3.1+) по типу контейнера сам настраивает нужные свойства — datasource, Redis, Kafka и др., — избавляя от ручного `@DynamicPropertySource`. На новых версиях это предпочтительный путь; старый способ остаётся для legacy-проектов и контейнеров, которые `@ServiceConnection` ещё не поддерживает.
+
+## Q16. Что такое `RestTestClient` в Spring Framework 7 и когда он лучше `MockMvc`/`WebTestClient`?
+
+`RestTestClient` (`Spring Framework 7.0`) — новый тестовый HTTP-клиент с fluent builder-API; внутри использует `RestClient`, а снаружи даёт цепочку проверок ответа.
+
+Умеет привязываться к разным целям:
+
+- к live-серверу по HTTP (полный сетевой стек и конвертация сообщений);
+- к `MockMvc` (mock-запрос/ответ, без сети);
+- к `WebApplicationContext`, к отдельным контроллерам или `RouterFunction`.
+
+```java
+RestTestClient client = RestTestClient.bindToController(new OrderController()).build();
+
+client.get().uri("/orders/1")
+    .exchange()
+    .expectStatus().isOk()
+    .expectBody(Order.class);
+```
+
+Когда лучше:
+
+- против `MockMvc` — более читаемый fluent-API проверок (как у `WebTestClient`), но для **блокирующего** стека.
+- против `WebTestClient` — тот тянет реактивные зависимости; `RestTestClient` нужен, когда стек не реактивный.
+
+**Подвох:** при пустом теле `returnResult().getResponseBody()` возвращает `null` (у `WebTestClient` — пустой `byte[]`); для проверки пустого ответа используйте `expectBody().isEmpty()`.
+
+**Итог:** `RestTestClient` — лёгкий fluent-клиент для тестов блокирующего стека на `Spring Framework 7+`: читаемее `MockMvc` и без реактивных зависимостей `WebTestClient`.
 
 ## See also
 

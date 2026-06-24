@@ -187,7 +187,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Hibernate`](databases/hibernate-interview.md) — `50` вопросов
 - [Вопросы на собеседовании: `Hibernate Caching`](databases/hibernate-caching-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Hibernate Relationships`](databases/hibernate-relationships-interview.md) — `15` вопросов
-- [Вопросы на собеседовании: `Hibernate JPQL & Criteria`](databases/hibernate-jpql-criteria-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Hibernate JPQL & Criteria`](databases/hibernate-jpql-criteria-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `MongoDB`](databases/mongodb-interview.md) — `46` вопросов
 - [Вопросы на собеседовании: `PostgreSQL`](databases/postgresql-interview.md) — `55` вопросов
 - [Вопросы на собеседовании: `Redis`](databases/redis-interview.md) — `43` вопроса
@@ -229,16 +229,16 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Spring Events`](frameworks/spring/spring-events-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring Batch`](frameworks/spring/spring-batch-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Boot Actuator`](frameworks/spring/spring-boot-actuator-interview.md) — `43` вопроса
-- [Вопросы на собеседовании: `Spring Boot`](frameworks/spring/spring-boot-interview.md) — `42` вопроса
+- [Вопросы на собеседовании: `Spring Boot`](frameworks/spring/spring-boot-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Cloud`](frameworks/spring/spring-cloud-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Data JDBC`](frameworks/spring/spring-data-jdbc-interview.md) — `16` вопросов
-- [Вопросы на собеседовании: `Spring Data JPA`](frameworks/spring/spring-data-jpa-interview.md) — `42` вопроса
-- [Вопросы на собеседовании: `Spring Framework`](frameworks/spring/spring-framework-interview.md) — `40` вопросов
+- [Вопросы на собеседовании: `Spring Data JPA`](frameworks/spring/spring-data-jpa-interview.md) — `43` вопроса
+- [Вопросы на собеседовании: `Spring Framework`](frameworks/spring/spring-framework-interview.md) — `41` вопрос
 - [Вопросы на собеседовании: `Spring MVC`](frameworks/spring/spring-mvc-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring REST Clients`](frameworks/spring/spring-rest-client-interview.md) — `13` вопросов
 - [Вопросы на собеседовании: `Spring Security`](frameworks/spring/spring-security-interview.md) — `46` вопросов
 - [Вопросы на собеседовании: `Spring Scheduling`](frameworks/spring/spring-scheduling-interview.md) — `16` вопросов
-- [Вопросы на собеседовании: `Spring Testing`](frameworks/spring/spring-testing-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring Testing`](frameworks/spring/spring-testing-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring Transactions`](frameworks/spring/spring-transaction-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Spring Validation`](frameworks/spring/spring-validation-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring WebFlux`](frameworks/spring/spring-webflux-interview.md) — `43` вопроса
@@ -275,7 +275,7 @@ updated: "2026-04-20"
 
 ## logging
 
-- [Вопросы на собеседовании: `Logging`](logging/logging-interview.md) — `41` вопрос
+- [Вопросы на собеседовании: `Logging`](logging/logging-interview.md) — `42` вопроса
 
 ## messaging
 
@@ -382,7 +382,7 @@ updated: "2026-04-20"
 
 ## reactive
 
-- [Вопросы на собеседовании: `Project Reactor`](reactive/project-reactor-interview.md) — `47` вопросов
+- [Вопросы на собеседовании: `Project Reactor`](reactive/project-reactor-interview.md) — `48` вопросов
 - [Вопросы на собеседовании: `Reactive Streams`](reactive/reactive-streams-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `RxJava`](reactive/rxjava-interview.md) — `46` вопросов
 - [Вопросы на собеседовании: `Spring WebFlux`](reactive/webflux-interview.md) — `28` вопросов

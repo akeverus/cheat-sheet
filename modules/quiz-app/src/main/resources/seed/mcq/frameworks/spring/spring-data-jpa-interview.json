@@ -2520,6 +2520,66 @@
           ]
         }
       ]
+    },
+    {
+      "q_number": 43,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Scroll API и keyset-пагинация в Spring Data (`ScrollPosition`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В keyset-режиме `ScrollPosition.keyset()` следующая страница берётся через `OFFSET N ORDER BY id`, поэтому скорость не падает на глубоких выборках.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно `OFFSET N` и деградирует на больших N, потому что СУБД отбрасывает N строк перед нужным окном. Keyset-режим как раз НЕ использует `OFFSET`: он фильтрует по последнему ключу через `WHERE id > :lastId`. `OFFSET` характерен для offset-режима, а не для keyset.",
+                "source_of_confusion": "Оба режима относятся к одному Scroll API и оба отдают `Window<T>`, поэтому легко перепутать, какой именно режим использует `OFFSET`, а какой — фильтрацию по ключу.",
+                "if_it_were_true": "Если бы keyset действительно опирался на `OFFSET N`, то его производительность на глубоких страницах была бы такой же деградирующей, как у `Pageable`, и весь смысл seek-метода (стабильная скорость) исчез бы.",
+                "how_it_should_be": "Keyset-режим берёт следующую страницу через `WHERE id > :lastId ORDER BY id` без `OFFSET`, поэтому скорость остаётся стабильной на глубоких выборках."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В keyset-режиме `ScrollPosition.keyset()` метод репозитория возвращает `Page<T>`, поэтому скорость не падает на глубоких выборках.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Методы Scroll API возвращают `Window<T>`, а не `Page<T>`. `Page` относится к старому подходу `Page`/`Pageable` с подсчётом общего количества; он удобен для нумерованных страниц, но деградирует на больших смещениях. Стабильность keyset обеспечивается не типом возврата, а фильтрацией по последнему ключу.",
+                "source_of_confusion": "`Page<T>` — самый знакомый тип пагинации в Spring Data, поэтому его по привычке приписывают и новому Scroll API.",
+                "if_it_were_true": "Если бы keyset-методы возвращали `Page<T>`, пришлось бы каждый раз считать `total` и опираться на `OFFSET`, что вернуло бы ту самую деградацию на глубоких страницах, от которой keyset и уходит.",
+                "how_it_should_be": "Метод репозитория в Scroll API возвращает `Window<T>`, а позиция передаётся через `ScrollPosition`; стабильность keyset обеспечивает фильтрация `WHERE id > :lastId`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В keyset-режиме `ScrollPosition.keyset()` следующая страница берётся через `WHERE id > :lastId ORDER BY id`, поэтому скорость не падает на глубоких выборках.",
+              "correct": true,
+              "sections": {
+                "explanation": "Keyset-пагинация (seek-метод) фильтрует строки по последнему виденному ключу, а не отбрасывает их через `OFFSET`. Поэтому СУБД не приходится сканировать и выбрасывать N строк перед нужным окном, и время отклика остаётся стабильным даже на глубоких страницах. Это ключевое отличие keyset-режима Scroll API от offset-режима и от классического `Page`/`Pageable`.",
+                "example": "Метод репозитория возвращает `Window<T>`, а курсор для следующего окна берётся из позиции последнего элемента:\n\n```java\ninterface OrderRepository extends Repository<Order, Long> {\n    Window<Order> findFirst20ByOrderByIdAsc(ScrollPosition position);\n}\n\nWindow<Order> window = repo.findFirst20ByOrderByIdAsc(ScrollPosition.keyset());\nScrollPosition next = window.positionAt(window.size() - 1); // курсор на следующее окно\n```\n\nПод капотом следующий запрос превращается в `WHERE id > :lastId ORDER BY id` вместо `OFFSET N`.",
+                "when_to_apply": "Берите keyset-режим Scroll API для бесконечной прокрутки (infinite scroll) и глубоких выборок больших результатов, где важна стабильная скорость и не нужен общий `total`. Доступно начиная с `Spring Data 3.1+` / `Spring Boot 3.1+`.",
+                "edge_cases": "Keyset требует стабильной сортировки по ключу (`ORDER BY id`), иначе курсор `positionAt(...)` будет некорректным. Если нужны нумерованные страницы с известным общим количеством — keyset тут неудобен, для этого остаются offset-режим и `Page`/`Pageable`. Для прохода по всем окнам подряд удобно использовать `WindowIterator`.",
+                "related": "Scroll API (`Window<T>` + `ScrollPosition`) — современная замена `Pageable` для последовательного пролистывания. У него два режима: offset-based (`ScrollPosition.offset()`) и keyset-based (`ScrollPosition.keyset()`). Offset-режим и `Page`/`Pageable` удобны для нумерованных страниц с total, но деградируют на больших смещениях."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В keyset-режиме `ScrollPosition.keyset()` следующая страница берётся через `WHERE id > :lastId ORDER BY id`, но скорость всё равно деградирует на глубоких выборках так же, как у `Pageable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запрос `WHERE id > :lastId` как раз и даёт стабильную скорость: СУБД сразу переходит к нужному диапазону по индексу, не отбрасывая предыдущие строки. Деградация на глубоких страницах — свойство offset/`Pageable`, а не keyset.",
+                "source_of_confusion": "Кажется, что любая пагинация по большому набору данных «должна» замедляться с глубиной, и эту общую интуицию ошибочно переносят и на keyset.",
+                "if_it_were_true": "Если бы keyset деградировал так же, как `Pageable`, то не было бы причины вводить его в Scroll API — он не давал бы никакого выигрыша для бесконечной прокрутки и глубоких выборок.",
+                "how_it_should_be": "Keyset не использует `OFFSET`, поэтому его скорость стабильна на глубоких выборках — в отличие от offset-режима и `Page`/`Pageable`."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
