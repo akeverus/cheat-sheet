@@ -31,15 +31,15 @@ updated: "2026-04-20"
 ## ai-ml
 
 - [Вопросы на собеседовании: `LLM Basics`](ai-ml/llm-basics-interview.md) — `30` вопросов
-- [Вопросы на собеседовании: `RAG (Retrieval-Augmented Generation)`](ai-ml/rag-interview.md) — `40` вопросов
+- [Вопросы на собеседовании: `RAG (Retrieval-Augmented Generation)`](ai-ml/rag-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Vector Databases`](ai-ml/vector-databases-interview.md) — `28` вопросов
-- [Вопросы на собеседовании: `Embeddings`](ai-ml/embeddings-interview.md) — `39` вопросов
-- [Вопросы на собеседовании: `Prompt Engineering`](ai-ml/prompt-engineering-interview.md) — `38` вопросов
-- [Вопросы на собеседовании: `LLM Integration Patterns`](ai-ml/llm-integration-patterns-interview.md) — `38` вопросов
+- [Вопросы на собеседовании: `Embeddings`](ai-ml/embeddings-interview.md) — `29` вопросов
+- [Вопросы на собеседовании: `Prompt Engineering`](ai-ml/prompt-engineering-interview.md) — `28` вопросов
+- [Вопросы на собеседовании: `LLM Integration Patterns`](ai-ml/llm-integration-patterns-interview.md) — `28` вопросов
 - [Вопросы на собеседовании: `LangChain4j`](ai-ml/langchain4j-interview.md) — `18` вопросов
-- [Вопросы на собеседовании: `AI Agents`](ai-ml/ai-agents-interview.md) — `38` вопросов
-- [Вопросы на собеседовании: `MLOps`](ai-ml/mlops-interview.md) — `38` вопросов
-- [Вопросы на собеседовании: `Model Serving`](ai-ml/model-serving-interview.md) — `38` вопросов
+- [Вопросы на собеседовании: `AI Agents`](ai-ml/ai-agents-interview.md) — `28` вопросов
+- [Вопросы на собеседовании: `MLOps`](ai-ml/mlops-interview.md) — `28` вопросов
+- [Вопросы на собеседовании: `Model Serving`](ai-ml/model-serving-interview.md) — `28` вопросов
 - [Вопросы на собеседовании: `MCP (Model Context Protocol)`](ai-ml/mcp-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Function Calling / Tool Use`](ai-ml/function-calling-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Reasoning Models (o1/o3/R1)`](ai-ml/reasoning-models-interview.md) — `30` вопросов
@@ -97,7 +97,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `GraphQL`](api/graphql-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `gRPC`](api/grpc-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `HTTP` & `REST`](api/http-rest-interview.md) — `43` вопроса
-- [Вопросы на собеседовании: `OpenAPI` / `Swagger`](api/openapi-swagger-interview.md) — `33` вопроса
+- [Вопросы на собеседовании: `OpenAPI` / `Swagger`](api/openapi-swagger-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: `REST Maturity` (модель Ричардсона)](api/rest-maturity-interview.md) — `17` вопросов
 - [Вопросы на собеседовании: `WebSocket`](api/websocket-interview.md) — `38` вопросов
 
