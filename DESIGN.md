@@ -1,5 +1,20 @@
 # Design
 
+> [!IMPORTANT]
+> **Этот файл устарел в части архитектуры и реестра. Актуальный master-спек —
+> [`docs/design/DESIGN.md`](docs/design/DESIGN.md)** (+ per-design спеки в
+> [`docs/design/systems/`](docs/design/systems/)). Что изменилось с момента
+> написания этого файла:
+> - **Архитектура CSS:** уже НЕ `editorial.css` + тонкие оверлеи. Теперь два слоя —
+>   `static/css/tokens.css` (все токены: `:root`=editorial-default + блоки
+>   `html[data-design="X"]` light/dark) и `static/css/base.css` (design-agnostic
+>   структура, потребляет `var(--token)`). Версии в `head.html` — `?v=10`.
+> - **Реестр — 10 дизайнов** (не 4): `editorial` (default), `linear`, `swiss`,
+>   `notion`, `mintlify`, `broadsheet`, `superhuman`, `stripe`, `claude`, `theverge`.
+> - Гейт контраста — `scripts/design-token-audit.py` (WCAG по реальному каскаду).
+>
+> Ниже — исторический спек (refero-якоря и крафт-правила всё ещё полезны).
+
 > Визуальная система quiz-app. Это **мульти-дизайн система с переключателем**
 > (`window.__design`): общая структура + дизайн «Editorial» (default) в
 > `editorial.css`, плюс дизайн-оверлеи `swiss.css`, `linear.css`, `broadsheet.css`.
