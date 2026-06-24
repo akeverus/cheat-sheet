@@ -428,12 +428,31 @@ html[data-design] .ed-masthead-title {
 }
 
 @media (max-width: 600px) {
-  .ed-masthead-inner { padding: var(--space-3) var(--space-4); gap: var(--space-3); }
+  /* Двухрядная шапка: бренд + утилит-тогглы в ПЕРВОМ ряду (тогглы в правом
+     верхнем углу — там, где у утилит-хрома и место), навигация — полноширинным
+     рядом НИЖЕ. Прежде nav+тогглы делили один flex-ряд и не влезали
+     (263+104+16 > 358 на 390px): тогглы переносились на отдельную строку И
+     прижимались влево → выглядели осиротевшими (прямая претензия пользователя
+     про «иконки / взаимное расположение блоков»). display:contents на
+     .ed-masthead-actions поднимает nav и тогглы в грид .ed-masthead-inner —
+     БЕЗ правки разметки (сигнатура фрагмента и контракт-тест целы). */
+  .ed-masthead-inner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "brand toggles" "nav nav";
+    align-items: start;
+    column-gap: var(--space-3);
+    row-gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+  .ed-masthead-brand { grid-area: brand; }
+  .ed-masthead-actions { display: contents; }
+  .ed-nav { grid-area: nav; }
+  .ed-masthead-toggles { grid-area: toggles; justify-self: end; }
   /* На мобиле .ed-masthead-inner ужимает горизонталь до --space-4 (16px), а полоса
      прогресса под шапкой осталась на базовом --space-5 (24px) → её accent-fill
      не совпадал по краям с брендом/нав. Приводим жёлоб к тем же 16px. */
   .ed-masthead-progress { padding-inline: var(--space-4); }
-  .ed-masthead-actions { width: 100%; justify-content: space-between; }
   .ed-nav-link { padding-inline: var(--space-2); }
 }
 
