@@ -605,6 +605,14 @@ html[data-design] #interview-options label {
   font-size: var(--font-size-md);
   color: var(--color-text-primary);
 }
+/* Текст варианта живёт в читательской колонке: карточка остаётся широкой
+   (визуальный hit-target), но текстовый run капается на ~68ch. Иначе в
+   одноколоночных раскладках (flow/split на ≥1200px) строки тянулись край-в-край
+   до ~88ch и хуже сканировались в момент выбора — прямое попадание в претензию
+   «ответы расположены плохо» (адверсари-ревью p1 focus-flow). В 2×2 (grid) кап не
+   срабатывает: ячейка уже 68ch. :not([class]) бьёт только по тексту, не по
+   добавляемым app.js .option-status-label/.option-explanation. */
+html[data-design] #interview-options label > span:not([class]) { max-width: 68ch; }
 html[data-design] #interview-options label::before {
   content: counter(opt, upper-latin);
   font-family: var(--font-family-mono);
@@ -651,6 +659,18 @@ html[data-design] .option-dimmed { opacity: 0.55; }
    до 109px и не зажимала текст в узкую колонку на мобиле. */
 html[data-design] #interview-options label .option-status-label,
 html[data-design] #interview-options label .option-explanation { grid-column: 1 / -1; min-width: 0; }
+
+/* Stripe: карточки ответов получают фирменную сине-тинтовую тень — единственное
+   структурное исключение для token-only-дизайна. Stripe строит сепарацию на
+   тенях, НЕ на рамках: его --color-border-primary (#E5EDF5) на белом — ~1.08:1,
+   а bg карточки (#F6F9FC) — 1.05:1, поэтому без тени варианты читались как
+   обычные абзацы, а не выбираемые карточки (адверсари-ревью p1 focus-split-stripe:
+   «нет аффорданса кликабельности»). Тень даёт явный «приподнятый» вид; hover/checked
+   усиливают её. Источник по порядку — после base :has(checked){box-shadow:none}
+   (L628), одинаковая специфичность → побеждает. */
+html[data-design="stripe"] #interview-options label { box-shadow: var(--shadow-sm); }
+html[data-design="stripe"] #interview-options label:hover { box-shadow: var(--shadow-md); }
+html[data-design="stripe"] #interview-options label:has(input:checked) { box-shadow: var(--shadow-md); }
 
 /* Объяснения вариантов (app.js/result.html: .option-explanation +
    .explanation-correct/.explanation-wrong). Старые правила тянут холодный
@@ -1077,20 +1097,27 @@ html[data-design] .settings-page .btn-finish-small {
 }
 html[data-design] .settings-page #filters-form button[type="submit"]:hover,
 html[data-design] .settings-page .btn-finish-small:hover { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
+/* «Начать тренировку/сессию» — accent-ОБВОДКА (ghost), НЕ вторая сплошная заливка.
+   Раньше она была filled-accent, как и геройский «Начать повторение →» в
+   today-hero → два идентичных оранжевых primary конкурировали на одном экране
+   (адверсари-ревью p0 settings-grid). Теперь единственный filled-primary — hero
+   (быстрый путь к due-карточкам), а «собрать свою сессию» — акцент-ринг: прозрачный
+   фон + чернильный текст (AA-safe в любом дизайне) + accent-рамка, на hover
+   заливается акцентом. Чёткое «go», но визуально подчинён hero. */
 html[data-design] .settings-page #session-form button[type="submit"] {
   display: inline-flex; align-items: center; justify-content: center;
   min-height: 48px; padding: var(--space-3) var(--space-6); margin-top: var(--space-2);
   font-family: var(--font-family-body); font-size: var(--font-size-md); font-weight: var(--font-weight-medium);
-  background: var(--color-accent-primary); color: var(--color-accent-on);
+  background: transparent; color: var(--color-text-primary);
   /* Симметричный радиус токена в design-agnostic слое (как у всех кнопок).
      Асимметричная «Try Claude»-форма — editorial-сигнатура, вынесена в
      html[data-design="editorial"]-блок (иначе под linear/notion/mintlify CTA
      получал чужую «вкладочную» форму flat-верх+скруглённый-низ). */
   border: var(--rule-weight) solid var(--color-accent-primary); border-radius: var(--border-radius-md);
   cursor: pointer; box-shadow: none; text-transform: none; letter-spacing: 0; touch-action: manipulation;
-  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default), color var(--duration-fast) var(--easing-default);
 }
-html[data-design] .settings-page #session-form button[type="submit"]:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
+html[data-design] .settings-page #session-form button[type="submit"]:hover { background: var(--color-accent-primary); border-color: var(--color-accent-primary); color: var(--color-accent-on); }
 html[data-design] .settings-page .btn-finish-small { margin-top: var(--space-3); }
 
 /* Данные: экспорт + опасный сброс */
@@ -2186,15 +2213,23 @@ html[data-design] .today-hero-head {
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
   margin-bottom: var(--space-4);
 }
+/* Тело hero — КОНТЕЙНИРОВАННЫЙ левый кластер (число+подпись ↔ CTA), НЕ space-between
+   край-в-край: на широкой карточке (=ширине настроек) space-between разрывал hero
+   на два осиротевших края с ~700px мёртвой зоны между ними (адверсари-ревью p1:
+   settings-flow/split/grid). Кластеризуем слева у читательской кромки, воздух
+   справа — спокойно и намеренно, без «дыры». */
 html[data-design] .today-hero-body {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: var(--space-5); flex-wrap: wrap;
+  display: flex; align-items: center; justify-content: flex-start;
+  gap: var(--space-6) var(--space-8); flex-wrap: wrap;
 }
 html[data-design] .today-hero-figure { display: flex; align-items: baseline; gap: var(--space-3); }
+/* Число due понижено с hero-кегля (4xl) до стат-кегля (2xl): на странице НАСТРОЕК
+   гигантское «9676» перебивало и H1 «Настройки сессии», и сами контролы —
+   инверсия иерархии (адверсари-ревью p0 ×2). Теперь информативная стат-цифра,
+   подчинённая заголовку страницы, не «дашборд-герой». accent-strong (не primary):
+   Clay на ivory — 2.96:1 < 3.0 (AA large). */
 html[data-design] .today-hero-due {
-  font-family: var(--font-family-display); font-size: var(--font-size-4xl);
-  /* accent-strong, не accent-primary: Clay на ivory — 2.96:1 < 3.0 (AA large).
-     Критика round-01 A2. */
+  font-family: var(--font-family-display); font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold); line-height: 1; color: var(--color-accent-strong);
   font-variant-numeric: tabular-nums;
 }
@@ -2206,7 +2241,8 @@ html[data-design] .today-hero-hint { margin: 0; font-size: var(--font-size-sm); 
 
 @media (max-width: 600px) {
   html[data-design] .today-hero-body { flex-direction: column; align-items: flex-start; gap: var(--space-4); }
-  html[data-design] .today-hero-due { font-size: var(--font-size-3xl); }
+  /* Число НЕ переопределяем — наследует стат-кегль 2xl (раньше тут стоял 3xl/48px,
+     что после понижения десктопа до 2xl/36px давало мобайл КРУПНЕЕ десктопа). */
   html[data-design] .today-hero-cta { align-self: stretch; }
   html[data-design] .today-hero-cta .btn { width: 100%; text-align: center; }
 }
@@ -2524,16 +2560,24 @@ html[data-design] .summary-tools-status {
   /* ---- FOCUS / split: два пейна. Слева — мета-рейка + вопрос-герой (липкий,
      остаётся на виду при длинном разборе справа); справа — ответы единым столбцом
      и кнопка действия. Пост-ответный вердикт/анализ — полноширинной лентой внизу. */
+  /* grid-template-rows: гибкие 1fr-спейсеры сверху и снизу обрамляют ПЛОТНУЮ
+     группу мета→вопрос→код (auto-ряды). Иначе высокий правый пейн (ответы+кнопка)
+     раздавал свою высоту в auto-ряды левой колонки и раздувал ряд меты → между
+     метой и вопросом зиял ~115px (адверсари-ревью p1). Теперь излишек высоты
+     уходит в спейсеры, а группа держится вместе и центрируется по вертикали
+     относительно ответов (вторая претензия того же ревью: «левый пейн верх-тяжёлый,
+     40% пустоты внизу»). */
   html[data-design][data-layout="split"] .focus-page .focus-training {
     display: grid;
     grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
     column-gap: var(--space-8);
     align-items: start;
     max-width: var(--max-width-result);
   }
-  /* Мета сверху-слева — вертикальная рейка (перебиваем горизонтальный WIDE-бар). */
+  /* Мета — вертикальная рейка во 2-м ряду (под верхним спейсером). */
   html[data-design][data-layout="split"] .focus-page .focus-topbar {
-    grid-column: 1; grid-row: 1;
+    grid-column: 1; grid-row: 2;
     flex-direction: column; align-items: stretch; justify-content: flex-start;
     gap: var(--space-3);
     border-bottom: 0; padding-bottom: 0; margin-bottom: 0;
@@ -2545,17 +2589,22 @@ html[data-design] .summary-tools-status {
   /* Вопрос — в левой колонке под метой, липкий; рамку-снизу убираем (в узкой
      рейке она висела бы поперёк колонки). */
   html[data-design][data-layout="split"] .focus-page .focus-question {
-    grid-column: 1; grid-row: 2;
+    grid-column: 1; grid-row: 3;
     position: sticky; top: var(--space-5);
-    border-bottom: 0; padding-bottom: 0; margin-bottom: 0;
+    /* Один ритм-юнит к мете (не разрыв) — eyebrow→подсказка→вопрос читаются единой
+       сгруппированной шапкой героя, а не осиротевшим блоком (адверсари-ревью p1
+       focus-split: «зияющий gap между метой и вопросом»). */
+    border-bottom: 0; padding-bottom: 0; margin: var(--space-5) 0 0;
   }
   html[data-design][data-layout="split"] .focus-page .question-code-wrap {
-    grid-column: 1; grid-row: 3; margin-top: var(--space-4);
+    grid-column: 1; grid-row: 4; margin-top: var(--space-4);
   }
-  /* Правый пейн: форма/флешкарта (ответы + действие) во всю высоту. */
+  /* Правый пейн: форма/флешкарта (ответы + действие). Спан 1/-1 = во всю высоту
+     (включая спейсеры) — это «высокий» элемент, задающий рост сетки; align-self:start
+     держит ответы у верха правого пейна, пока левая группа центрируется спейсерами. */
   html[data-design][data-layout="split"] .focus-page #interview-form,
   html[data-design][data-layout="split"] .focus-page .flashcard-phase {
-    grid-column: 2; grid-row: 1 / span 3; align-self: start;
+    grid-column: 2; grid-row: 1 / -1; align-self: start;
   }
   /* Ответы — один столбец на всю ширину правого пейна (не 2×2). */
   html[data-design][data-layout="split"] .focus-page #interview-options {
