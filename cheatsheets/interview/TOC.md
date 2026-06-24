@@ -17,7 +17,7 @@ updated: "2026-04-20"
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **303**.
+Всего файлов: **305**.
 
 ## Быстрые маршруты подготовки
 
@@ -36,6 +36,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Embeddings`](ai-ml/embeddings-interview.md) — `39` вопросов
 - [Вопросы на собеседовании: `Prompt Engineering`](ai-ml/prompt-engineering-interview.md) — `38` вопросов
 - [Вопросы на собеседовании: `LLM Integration Patterns`](ai-ml/llm-integration-patterns-interview.md) — `38` вопросов
+- [Вопросы на собеседовании: `LangChain4j`](ai-ml/langchain4j-interview.md) — `18` вопросов
 - [Вопросы на собеседовании: `AI Agents`](ai-ml/ai-agents-interview.md) — `38` вопросов
 - [Вопросы на собеседовании: `MLOps`](ai-ml/mlops-interview.md) — `38` вопросов
 - [Вопросы на собеседовании: `Model Serving`](ai-ml/model-serving-interview.md) — `38` вопросов
@@ -260,6 +261,7 @@ updated: "2026-04-20"
 
 - [Вопросы на собеседовании: `JVM`](jvm/jvm-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `GraalVM Native Image`](jvm/graalvm-native-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `CRaC (Coordinated Restore at Checkpoint)`](jvm/crac-interview.md) — `16` вопросов
 
 ## leadership
 
