@@ -2200,6 +2200,42 @@ html[data-design] .kbd-help-close {
 }
 html[data-design] .kbd-help-close:hover { color: var(--color-text-primary); background: var(--color-bg-secondary); }
 
+/* Модалка ввода (promptModal в app.js) — доступная замена window.prompt для
+   admin-токена (native prompt() при вводе учётных данных выглядит фишингово и
+   не стилизуется). Отдельные классы (не kbd-help), тот же визуальный язык/токены.
+   Фокус-кольцо инпута — от глобального :focus-visible. */
+html[data-design] .prompt-overlay {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-4); background: var(--color-surface-overlay);
+}
+html[data-design] .prompt-modal {
+  position: relative; width: 100%; max-width: 420px;
+  max-height: calc(100dvh - var(--space-7)); overflow-y: auto;
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--color-bg-primary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg); box-shadow: var(--shadow-lg);
+}
+html[data-design] .prompt-modal-title {
+  font-family: var(--font-family-display); font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold); color: var(--color-text-primary); margin: 0;
+}
+html[data-design] .prompt-modal-label {
+  color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: 0;
+}
+html[data-design] .prompt-modal-input {
+  width: 100%; padding: var(--space-3);
+  font-family: var(--font-family-mono); font-size: var(--font-size-base);
+  color: var(--color-text-primary); background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+}
+html[data-design] .prompt-modal-actions {
+  display: flex; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-2);
+}
+
 /* Кнопки самооценки уверенности (app.js attachConfidenceButtons — показываются
    ПОСЛЕ верного ответа в обычном режиме, шлют grade в /api/confidence для SM-2;
    это не AI-вызов, поэтому доступны и без AI). Классов confidence-* в CSS не было
@@ -2770,6 +2806,7 @@ html[data-design] .summary-tools-status {
   html[data-design] .summary-actions,
   html[data-design] .summary-tools,
   html[data-design] .kbd-help-overlay,
+  html[data-design] .prompt-overlay,
   html[data-design] noscript { display: none !important; }
   html[data-design] .ed-masthead { border-bottom: 1px solid #ccc; }
   html[data-design] .card {

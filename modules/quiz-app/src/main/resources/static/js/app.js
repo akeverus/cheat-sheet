@@ -422,10 +422,77 @@
   function storeToken(t) { try { localStorage.setItem(ADMIN_TOKEN_KEY, t); } catch (_) { /* ignore */ } }
   function clearStoredToken() { try { localStorage.removeItem(ADMIN_TOKEN_KEY); } catch (_) { /* ignore */ } }
 
-  function obtainAdminToken() {
+  // Доступная замена window.prompt для ввода admin-токена. native prompt() при
+  // вводе учётных данных выглядит как фишинг-диалог («localhost:8080 says…») и не
+  // стилизуется — для токена это плохо. Здесь — внутри-приложенческая модалка
+  // (role=dialog/aria-modal, focus-trap, Esc/Отмена, возврат фокуса, type=password).
+  // Возвращает Promise<string|null> (null = отмена). Классы .prompt-* — отдельная
+  // модалка (НЕ kbd-help), стилизована теми же токенами (base.css).
+  function promptModal(opts) {
+    opts = opts || {};
+    return new Promise((resolve) => {
+      const lastFocused = document.activeElement;
+      const overlay = document.createElement('div');
+      overlay.className = 'prompt-overlay';
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-modal', 'true');
+      overlay.setAttribute('aria-labelledby', 'prompt-modal-title');
+      overlay.innerHTML =
+        '<form class="prompt-modal" novalidate>' +
+        '<h3 id="prompt-modal-title" class="prompt-modal-title"></h3>' +
+        '<label class="prompt-modal-label" for="prompt-modal-input"></label>' +
+        '<input id="prompt-modal-input" class="prompt-modal-input" autocomplete="off" spellcheck="false" type="' +
+          (opts.inputType === 'password' ? 'password' : 'text') + '">' +
+        '<div class="prompt-modal-actions">' +
+        '<button type="button" class="btn secondary-btn" data-prompt-cancel></button>' +
+        '<button type="submit" class="btn" data-prompt-ok></button>' +
+        '</div>' +
+        '</form>';
+      // textContent (не innerHTML): opts не доверяем — защита от инъекции.
+      overlay.querySelector('.prompt-modal-title').textContent = opts.title || 'Ввод';
+      overlay.querySelector('.prompt-modal-label').textContent = opts.label || '';
+      overlay.querySelector('[data-prompt-ok]').textContent = opts.okText || 'OK';
+      overlay.querySelector('[data-prompt-cancel]').textContent = opts.cancelText || 'Отмена';
+      const form = overlay.querySelector('.prompt-modal');
+      const input = overlay.querySelector('#prompt-modal-input');
+      document.body.appendChild(overlay);
+      window.requestAnimationFrame(() => input.focus());
+
+      let done = false;
+      function settle(value) {
+        if (done) return;
+        done = true;
+        overlay.remove();
+        if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+        resolve(value);
+      }
+      // submit (Enter / кнопка OK) → значение; Отмена / Esc / клик по фону → null.
+      form.addEventListener('submit', (e) => { e.preventDefault(); settle(input.value); });
+      overlay.querySelector('[data-prompt-cancel]').addEventListener('click', () => settle(null));
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) settle(null); });
+      overlay.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); settle(null); return; }
+        if (e.key !== 'Tab') return;
+        const f = overlay.querySelectorAll('button, input, [href], [tabindex]:not([tabindex="-1"])');
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      });
+    });
+  }
+
+  async function obtainAdminToken() {
     let token = readStoredToken();
     if (!token) {
-      token = (window.prompt('Введи admin-токен (APP_ADMIN_TOKEN) для экспорта:') || '').trim();
+      const entered = await promptModal({
+        title: 'Admin-токен',
+        label: 'Введи admin-токен (APP_ADMIN_TOKEN) — нужен для экспорта прогресса и регенерации вариантов:',
+        inputType: 'password',
+        okText: 'Продолжить',
+        cancelText: 'Отмена'
+      });
+      token = (entered || '').trim();
       if (token) storeToken(token);
     }
     return token;
@@ -458,7 +525,7 @@
   // канал фидбэка (inline-статус на /settings, alert в шапке /stats).
   async function runExport(format, buttons, notify) {
     if (exportInFlight) return;
-    const token = obtainAdminToken();
+    const token = await obtainAdminToken();
     if (!token) return; // пользователь отменил ввод — молча выходим
     exportInFlight = true;
     notify('Готовлю экспорт…', false);
@@ -910,7 +977,7 @@
     // X-Admin-Token всегда 403. Тот же токен, что и для экспорта (один кэш).
     // В seed-first dev кнопка скрыта (th:if=aiEnabled=false), но при включённом
     // AI это рабочий путь только для админа — фикс того же класса, что экспорт.
-    const token = obtainAdminToken();
+    const token = await obtainAdminToken();
     if (!token) return; // пользователь отменил ввод
     button.classList.add('regenerating');
     button.title = 'Удаляю варианты…';
