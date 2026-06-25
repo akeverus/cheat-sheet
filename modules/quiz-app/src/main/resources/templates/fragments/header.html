@@ -152,8 +152,8 @@
     <!-- Кнопка «наверх»: инжектится здесь (header есть на КАЖДОЙ странице, в т.ч.
          /stats, где app.js не подключён). PE: без JS кнопки нет — мёртвого контрола
          не остаётся. Появляется только после прокрутки на ~1.5 экрана; скролл
-         throttled через rAF; smooth уважает prefers-reduced-motion (берётся из CSS
-         scroll-behavior, поэтому используем 'smooth' только когда движение разрешено). -->
+         throttled через rAF; smooth уважает И системную prefers-reduced-motion, И явную
+         ось «Движение» (<html data-motion>: off→мгновенно, on→smooth, auto→по системе). -->
     <script>
       (function () {
         if (!document.body) return;
@@ -164,7 +164,16 @@
         btn.setAttribute('title', 'Наверх');
         btn.innerHTML = '<svg class="ed-icon" aria-hidden="true"><use href="#i-arrow-up"></use></svg>';
         document.body.appendChild(btn);
-        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        // Уважает И системную prefers-reduced-motion, И явную ось «Движение»
+        // (<html data-motion>): off → всегда мгновенно, on → всегда smooth,
+        // auto/нет атрибута → по системе. Читаем на каждый клик — чтобы смена
+        // настройки в /settings подхватывалась без перезагрузки.
+        function motionReduced() {
+          var dm = document.documentElement.getAttribute('data-motion');
+          if (dm === 'off') return true;
+          if (dm === 'on') return false;
+          return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
         var shown = false, ticking = false;
         function threshold() { return Math.max(400, window.innerHeight * 1.5); }
         function update() {
@@ -180,7 +189,7 @@
           window.requestAnimationFrame(update);
         }, { passive: true });
         btn.addEventListener('click', function () {
-          window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+          window.scrollTo({ top: 0, behavior: motionReduced() ? 'auto' : 'smooth' });
           // Фокус на skip-link/первый заголовок — чтобы клавиатура не осталась внизу.
           var anchor = document.getElementById('main-content') || document.querySelector('h1, h2');
           if (anchor && typeof anchor.focus === 'function') {
