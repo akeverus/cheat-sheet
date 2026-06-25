@@ -17,7 +17,7 @@ updated: "2026-04-20"
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **305**.
+Всего файлов: **313**.
 
 ## Быстрые маршруты подготовки
 
@@ -194,6 +194,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `SQL`](databases/sql-interview.md) — `53` вопроса
 - [Вопросы на собеседовании: `Database Replication`](databases/database-replication-interview.md) — `31` вопрос
 - [Вопросы на собеседовании: `Database Sharding`](databases/database-sharding-interview.md) — `34` вопроса
+- [Вопросы на собеседовании: `jOOQ`](databases/jooq-interview.md) — `18` вопросов
 
 ## design-patterns
 
@@ -286,6 +287,8 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `AWS SQS` и `SNS`](messaging/aws-sqs-sns-interview.md) — `22` вопроса
 - [Вопросы на собеседовании: `Redpanda`](messaging/redpanda-interview.md) — `20` вопросов
 - [Вопросы на собеседовании: Сравнение `Message Brokers`](messaging/message-brokers-comparison-interview.md) — `26` вопросов
+- [Вопросы на собеседовании: `Apache Camel`](messaging/apache-camel-interview.md) — `16` вопросов
+- [Вопросы на собеседовании: `JMS` и `ActiveMQ`](messaging/jms-activemq-interview.md) — `16` вопросов
 
 ## monitoring
 
@@ -308,6 +311,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Database Performance`](performance/database-performance-interview.md) — `27` вопросов
 - [Вопросы на собеседовании: `Caching Performance`](performance/caching-performance-interview.md) — `23` вопроса
 - [Вопросы на собеседовании: `Network Performance`](performance/network-performance-interview.md) — `24` вопроса
+- [Вопросы на собеседовании: `JMH (Java Microbenchmark Harness)`](performance/jmh-microbenchmarking-interview.md) — `18` вопросов
 
 ## preparation
 
@@ -347,6 +351,7 @@ updated: "2026-04-20"
 ## programming-languages/scala
 
 - [Вопросы на собеседовании: `Scala`](programming-languages/scala/scala-interview.md) — `40` вопросов
+- [Вопросы на собеседовании: эффект-системы в `Scala` (`Cats Effect`, `ZIO`)](programming-languages/scala/scala-effects-interview.md) — `16` вопросов
 
 ## programming-languages/go
 
@@ -371,6 +376,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Kotlin Sealed Classes`](programming-languages/kotlin/kotlin-sealed-classes-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Kotlin + Spring`](programming-languages/kotlin/kotlin-spring-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Kotlin Value Classes`](programming-languages/kotlin/kotlin-value-classes-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: тестирование на `Kotlin` (`MockK`, `Kotest`)](programming-languages/kotlin/kotlin-testing-interview.md) — `20` вопросов
 
 ## programming-languages/typescript
 
@@ -443,3 +449,5 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: Стратегии тестирования](testing/test-strategies-interview.md) — `45` вопросов
 - [Вопросы на собеседовании: `Testcontainers`](testing/testcontainers-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Unit Testing`](testing/unit-testing-interview.md) — `45` вопросов
+- [Вопросы на собеседовании: `ArchUnit`](testing/archunit-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Cucumber` и BDD](testing/cucumber-bdd-interview.md) — `15` вопросов

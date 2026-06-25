@@ -1,0 +1,1205 @@
+{
+  "topic_slug": "kotlin-testing-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая особенность классов Kotlin по умолчанию ломает Mockito и заставляет предпочесть MockK?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Классы в Kotlin по умолчанию `open`, поэтому Mockito без `mockito-inline` их не мокает, а MockK — из коробки",
+              "correct": false,
+              "sections": {
+                "what_actually": "`open` — это явный модификатор, который РАЗРЕШАЕТ наследование класса или метода; он снимает финальность, а не добавляет её. Open-класс Mockito как раз мокает без проблем.",
+                "source_of_confusion": "`open` постоянно упоминается рядом с темой мокинга («чтобы Mockito смог, добавьте open»), поэтому слово легко перепутать с дефолтным состоянием класса.",
+                "if_it_were_true": "Если бы классы были `open` по умолчанию, Mockito работал бы из коробки, как в Java, и весь смысл преимущества MockK по `final`-классам исчез бы.",
+                "how_it_should_be": "По умолчанию классы `final`; `open` пишут вручную именно для того, чтобы разрешить наследование (и заодно классический мокинг)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Классы в Kotlin по умолчанию `abstract`, поэтому Mockito без `mockito-inline` их не мокает, а MockK — из коробки",
+              "correct": false,
+              "sections": {
+                "what_actually": "`abstract` означает класс, который нельзя инстанцировать и который обязан иметь наследников; такой класс не финальный, и Mockito его мокает штатно через подкласс.",
+                "source_of_confusion": "`abstract` — тоже модификатор класса из той же группы, что и `final`/`open`, и звучит «технически», поэтому подставляется как правдоподобный дефолт.",
+                "if_it_were_true": "Если бы все классы были `abstract` по умолчанию, их нельзя было бы создавать обычным `new`/конструктором, и язык был бы непригоден для большинства POJO-подобных типов.",
+                "how_it_should_be": "Дефолт — `final` (создаётся, но не наследуется); `abstract` ставят явно для базовых типов, и финальность тут ни при чём."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Классы в Kotlin по умолчанию `final`, поэтому Mockito без `mockito-inline` их не мокает, а MockK — из коробки",
+              "correct": true,
+              "sections": {
+                "explanation": "Mockito исторически мокал через генерацию подкласса в рантайме, а от `final`-класса подкласс создать нельзя. Поскольку в Kotlin классы и методы `final` по умолчанию (для наследования нужен `open`), «голый» Mockito такие классы не мокает, тогда как MockK построен на инструментации байткода и `final` ему не мешает.",
+                "example": "`val gateway = mockk<PaymentGateway>()` работает на `class PaymentGateway` без `open`; тот же класс под Mockito без mock-maker-inline даёт «Cannot mock/spy class ... it is a final class».",
+                "when_to_apply": "Когда тестируешь обычный Kotlin-код: доменные классы, сервисы, репозитории почти всегда `final`, и MockK мокает их без правки продакшен-кода и без лишних зависимостей.",
+                "edge_cases": "Mockito лечится подключением `mockito-inline` (mock-maker-inline), который через инструментацию байткода умеет подменять и `final`; тогда разница в этом пункте стирается, но остаются suspend-функции, top-level и extension.",
+                "related": "Это часть более широкого списка проблем Mockito на Kotlin: отсутствие нативной поддержки `suspend` (`coEvery`/`coVerify`), top-level/extension как статика (`mockkStatic`), `object` (`mockkObject`) и чужеродный DSL с бэктиками на `when`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Классы в Kotlin по умолчанию `sealed`, поэтому Mockito без `mockito-inline` их не мокает, а MockK — из коробки",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sealed` — модификатор для закрытой иерархии: все наследники известны на этапе компиляции и лежат в том же модуле; это специальная конструкция, а не поведение по умолчанию.",
+                "source_of_confusion": "`sealed` ассоциируется с «закрытостью» и ограничением наследования, что по смыслу близко к `final`, поэтому кажется похожим объяснением.",
+                "if_it_were_true": "Если бы классы были `sealed` по умолчанию, каждый класс требовал бы явного перечня наследников в одном модуле, и обычные независимые классы были бы невозможны.",
+                "how_it_should_be": "Дефолт — простой `final`-класс; `sealed` применяют осознанно для алгебраических типов и `when`-исчерпываемости."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В MockK вы хотите проверить, что метод `calc.add(2, 3)` был вызван РОВНО один раз. Какой вызов `verify` это выражает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`verify(exactly = 1) { calc.add(2, 3) }`",
+              "correct": true,
+              "sections": {
+                "explanation": "Параметр `exactly` задаёт точную кратность вызова: `exactly = 1` означает «вызван ровно один раз, ни больше ни меньше». Без параметра `verify { ... }` проверяет лишь «хотя бы раз», поэтому для точного числа нужен именно `exactly`.",
+                "example": "`verify(exactly = 1) { calc.add(2, 3) }` упадёт, если `add(2, 3)` вызвали 0 или 2 раза; `verify(exactly = 0) { calc.reset() }` проверяет, что метод НЕ вызывался.",
+                "when_to_apply": "Когда важно, что побочный эффект случился единожды: одно сохранение в БД, одна отправка письма, один HTTP-запрос — частый случай защиты от случайного дублирования вызова.",
+                "edge_cases": "`exactly = 0` — это идиома «не вызывался»; её удобнее читать, чем отдельную функцию. Параметры `exactly`, `atLeast`, `atMost` можно комбинировать в одном `verify` для диапазона кратности.",
+                "related": "Для `suspend`-методов тот же параметр работает в `coVerify(exactly = 1) { ... }`. Порядок нескольких вызовов проверяет `verifyOrder`, а полноту покрытия — `confirmVerified`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`verify(atLeast = 1) { calc.add(2, 3) }`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`atLeast = 1` проверяет «вызван минимум один раз» — то есть один, два или больше раз все пройдут. Это нижняя граница, а не точное число.",
+                "source_of_confusion": "Для одиночного ожидаемого вызова `atLeast = 1` и `exactly = 1` дают одинаковый результат, пока вызов ровно один, поэтому их легко перепутать; разница вылезает только при повторном вызове.",
+                "if_it_were_true": "Если бы `atLeast = 1` означало «ровно один», то лишний (второй) вызов `add(2, 3)` тоже валил бы тест — но он его пропустит, и дублирование останется незамеченным.",
+                "how_it_should_be": "Для строго одного вызова берут `exactly = 1`. `atLeast` уместен, когда нижняя граница известна, а верхняя не важна (например, `atLeast = 2` для цикла)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`verify(atMost = 1) { calc.add(2, 3) }`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`atMost = 1` проверяет «вызван не более одного раза» — то есть 0 или 1 вызов пройдут проверку. Это верхняя граница кратности.",
+                "source_of_confusion": "Слово «не более одного» звучит почти как «ровно один», и для случая единственного вызова проверка тоже зелёная; провал виден, лишь если метод не вызвали вовсе.",
+                "if_it_were_true": "Если бы `atMost = 1` значило «ровно один», то полное отсутствие вызова валило бы тест — но `atMost = 1` спокойно пропустит ноль вызовов, скрыв, что код вообще не дошёл до `add`.",
+                "how_it_should_be": "Точную единицу даёт `exactly = 1`. `atMost` нужен, когда важно не превысить лимит, но допускается и меньшее число вызовов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`verify(count = 1) { calc.add(2, 3) }`",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметра `count` у `verify` в MockK нет — компилятор такой вызов не примет. Точную кратность задаёт `exactly`, а не `count`.",
+                "source_of_confusion": "`count` — интуитивно напрашивающееся имя для «сколько раз», и в других фреймворках встречаются похожие термины, поэтому его легко подставить по аналогии.",
+                "if_it_were_true": "Если бы `count = 1` существовал и означал точную кратность, он дублировал бы уже имеющийся `exactly` — MockK намеренно держит один канонический параметр, чтобы DSL не разрастался синонимами.",
+                "how_it_should_be": "Используйте реальный параметр `exactly = 1`. Для границ есть `atLeast`/`atMost`, но отдельного `count` в API нет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что relaxed mock в MockK возвращает на незастабленный вызов метода, возвращающего `Boolean`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`true` — дефолтную пустышку для типа `Boolean`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`true` — это не дефолт relaxed-мока, а значение, которое нужно задать явно через `every { repo.isActive() } returns true`.",
+                "source_of_confusion": "Кажется логичным, что мок «по умолчанию разрешает» операцию, поэтому `true` интуитивно выглядит «безопасным» дефолтом.",
+                "if_it_were_true": "Тогда любой непрописанный флаг считался бы включённым, и тесты молча проходили бы условия, которые на самом деле не настраивались — массовые ложноположительные.",
+                "how_it_should_be": "Дефолт для `Boolean` в relaxed-моке — `false`; `true` появляется только при явном `every ... returns true`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`null` — дефолтную пустышку для типа `Boolean`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`null` relaxed-мок отдаёт для nullable-ссылочных типов, но не для непримитивного `Boolean`, у которого есть конкретное дефолтное значение.",
+                "source_of_confusion": "В Mockito незастабленный метод часто возвращает `null`, и эту привычку переносят на relaxed-мок MockK.",
+                "if_it_were_true": "Тогда `repo.isActive()` в Kotlin выдал бы `NullPointerException` при попытке использовать как `Boolean`, ведь тип невыводимо nullable.",
+                "how_it_should_be": "Для `Boolean` relaxed-мок возвращает `false`; `null` — это дефолт только для подходящих nullable-ссылок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`MockKException` — отказ на незастабленный вызов",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MockKException: no answer found` бросает строгий (не-relaxed) мок на вызов без `every` — это поведение ровно противоположного режима.",
+                "source_of_confusion": "Строгий и relaxed моки создаются одной функцией `mockk()`, и легко перепутать, какой именно режим падает на незастабленном вызове.",
+                "if_it_were_true": "Тогда relaxed-мок ничем не отличался бы от строгого и терял смысл — не пришлось бы прописывать поведение каждого метода вручную.",
+                "how_it_should_be": "Relaxed-мок не бросает исключение, а возвращает дефолт (`false` для `Boolean`); исключение — это поведение строгого мока."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`false` — дефолтную пустышку для типа `Boolean`",
+              "correct": true,
+              "sections": {
+                "explanation": "Relaxed mock не требует описывать каждый метод: на незастабленные вызовы он отдаёт «разумные пустышки» по типу возврата. Для `Boolean` такая пустышка — `false` (дефолтное значение примитива), а не `null` и не исключение.",
+                "example": "`val repo = mockk<UserRepository>(relaxed = true)`; вызов `repo.isActive()` без `every` вернёт `false`, метод с `Int` вернёт `0`, со `String` — пустую строку, с объектом — вложенный relaxed-мок.",
+                "when_to_apply": "Когда у зависимости много методов, а тест интересует поведение лишь пары из них: лишние `every` зашумляют тест, а дефолтный `false`/`0`/пустая строка не мешают.",
+                "edge_cases": "Полный `relaxed = true` снижает строгость: «забытый» вызов молча вернёт дефолт вместо падения. Поэтому `relaxUnitFun = true` (дефолты только для `Unit`-функций) — разумный компромисс для логгеров.",
+                "related": "Противоположность — строгий мок без `relaxed`: незастабленный вызов бросает `MockKException: no answer found`, форсируя явный `every`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что создаёт `spyk` в MockK и как незастабленные методы такого объекта ведут себя по умолчанию?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Спай создаёт пустышку, и незастабленные методы возвращают разумные дефолты вместо реальной логики",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описанное поведение — это relaxed mock (`mockk(relaxed = true)`): пустышка, отдающая `0`, `false`, пустые коллекции на незастабленные вызовы. Спай же оборачивает настоящий объект.",
+                "source_of_confusion": "И спай, и relaxed mock «не падают» на незастабленных вызовах, поэтому их легко перепутать — но причины разные: спай зовёт реальный код, relaxed отдаёт заглушки.",
+                "if_it_were_true": "Тогда `spyk(RealService()).compute(5)` возвращал бы дефолт вместо настоящего результата, и частичный мок терял бы весь смысл — нечего было бы «частично» сохранять.",
+                "how_it_should_be": "Спай вызывает реальную логику незастабленных методов; за «разумные дефолты» отвечает `relaxed = true`, а не `spyk`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Спай оборачивает настоящий объект, и незастабленные методы вызывают реальную логику",
+              "correct": true,
+              "sections": {
+                "explanation": "`spyk` создаёт частичный мок — реальный объект, у которого подменяются лишь отдельные методы через `every`, а все прочие выполняют настоящую реализацию. Это и отличает спай от обычного мока: у `mockk()` базовое поведение застаблено или падает, а спай по умолчанию работает «по-настоящему».",
+                "example": "`val service = spyk(RealService())`; вызов `service.compute(5)` выполнит настоящую логику, а после `every { service.getFromDb(any()) } returns \"Замоканный результат\"` подменится только `getFromDb`. `verify { service.getFromDb(1) }` работает так же, как у мока.",
+                "when_to_apply": "Когда нужно подменить один-два метода в реальном классе, оставив остальные рабочими — например, замокать поход в БД, но сохранить настоящие вычисления вокруг него.",
+                "edge_cases": "При стабинге `every { spy.foo() }` метод `foo()` реально вызовется один раз в фазе записи заглушки; при тяжёлых сайд-эффектах используйте `answers { callOriginal() }` осознанно.",
+                "related": "Частая нужда в спае — «запах»: класс делает слишком много и его стоит разбить. Противоположность — `mockk()`, дающий полностью изолированную пустышку."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Спай оборачивает настоящий объект, и незастабленные методы бросают `MockKException` про отсутствие ответа",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MockKException: no answer found` бросает строгий `mockk()` без relaxed на незастабленный вызов. Спай в этой ситуации не падает, а исполняет настоящую реализацию.",
+                "source_of_confusion": "И у спая, и у строгого мока в основе один движок MockK, поэтому ошибочно переносят правило «нет every — исключение» со строгого мока на спай.",
+                "if_it_were_true": "Тогда спай требовал бы `every` на каждый метод, как строгий мок, и ничем не отличался бы от него — частичность исчезла бы.",
+                "how_it_should_be": "Незастабленный метод спая выполняет реальный код; исключение `no answer found` — поведение строгого `mockk()`, а не спая."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Спай оборачивает настоящий объект, но незастабленные методы остаются полностью застабленными до явного `every`",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полностью застаблено базовое поведение у обычного `mockk()`: пока нет `every`, метод не имеет ответа. У спая же незастабленные методы изначально привязаны к реальной реализации.",
+                "source_of_confusion": "Формулировка «оборачивает настоящий объект» верна, и кажется логичным, что обёртка тоже всё стабит — но спай наследует поведение оборачиваемого объекта, а не глушит его.",
+                "if_it_were_true": "Тогда смысл «обернуть настоящий объект» пропадал бы: реальная логика была бы недоступна без ручного `every` на каждый метод.",
+                "how_it_should_be": "У спая по умолчанию работают реальные методы; «всё застаблено до `every`» — это про обычный `mockk()`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В MockK нужно захватить аргумент, с которым тестируемый код вызвал мок, и затем сделать ассерты по его полям. Каким вызовом создают держатель для одного захваченного значения, чтобы потом обернуть аргумент в `capture(...)` внутри `every`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`val holder = CapturingSlot<User>()`, затем `every { repo.save(capture(holder)) } returns Unit` и читают `holder.captured`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CapturingSlot` — это внутренний тип, который возвращает фабрика `slot()`; прямой вызов конструктора `CapturingSlot<User>()` не является идиоматичным публичным API захвата в MockK.",
+                "source_of_confusion": "IDE действительно покажет тип переменной как `CapturingSlot<User>`, поэтому кажется, что и создавать держатель нужно через этот класс.",
+                "if_it_were_true": "Тогда канонический способ объявить слот был бы через конструктор класса, а функции-хелпера `slot<T>()` в API бы не существовало.",
+                "how_it_should_be": "Держатель заводят функцией `slot<User>()`, которая внутри и возвращает `CapturingSlot`; конструктор класса напрямую не дёргают."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`val holder = ArgumentCaptor<User>()`, затем `every { repo.save(capture(holder)) } returns Unit` и читают `holder.captured`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ArgumentCaptor` — механизм захвата аргументов из Mockito (создаётся через `ArgumentCaptor.forClass(...)`, значение читается `captor.value`), а не из MockK.",
+                "source_of_confusion": "Слот в MockK решает ту же задачу, что `ArgumentCaptor` в Mockito, поэтому имя из соседнего фреймворка легко подставить вместо `slot`.",
+                "if_it_were_true": "Тогда MockK переиспользовал бы Mockito-класс и его API чтения (`.value`), а собственного `slot`/`captured` бы не имел.",
+                "how_it_should_be": "В MockK держатель — это `slot<User>()`, а захваченное значение читают через `.captured`, не через `ArgumentCaptor`/`.value`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`val holder = slot<User>()`, затем `every { repo.save(capture(holder)) } returns Unit` и читают `holder.captured`",
+              "correct": true,
+              "sections": {
+                "explanation": "Для захвата одного аргумента в MockK заводят держатель функцией `slot<T>()`, оборачивают параметр в `capture(slot)` внутри `every`, а после вызова читают захваченное значение через `slot.captured`. Это превращает мок из «проверки факта вызова» в «проверку содержимого аргумента».",
+                "example": "`val s = slot<User>(); every { repo.save(capture(s)) } returns Unit; service.register(\"Алиса\", \"alice@example.com\"); assertEquals(\"Алиса\", s.captured.name)` — проверяем именно тот объект, что собрал тестируемый код.",
+                "when_to_apply": "Когда аргумент собирается внутри SUT (например, билдер User или Event) и важен не факт вызова, а конкретные поля переданного объекта; особенно когда по одному аргументу нужно несколько ассертов.",
+                "edge_cases": "`slot.captured` хранит только последний захваченный вызов — для истории нескольких вызовов берут `mutableListOf<T>()` и `capture(list)`. `capture` работает и внутри `coEvery` для `suspend`-функций.",
+                "related": "Альтернатива слоту — матчер `match { it.name == \"Алиса\" }` прямо в `verify`; слот удобнее, когда нужно несколько ассертов по одному аргументу. Связано с `every`/`verify` (Q2) и `coEvery` (Q6)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`val holder = slotList<User>()`, затем `every { repo.save(capture(holder)) } returns Unit` и читают `holder.captured`",
+              "correct": false,
+              "sections": {
+                "what_actually": "Функции `slotList<T>()` в MockK нет: для серии захваченных значений используют обычный `mutableListOf<T>()` и тот же `capture(list)`.",
+                "source_of_confusion": "Раз для нескольких вызовов берут список, кажется логичным, что существует специализированная фабрика «слот-список», по аналогии со `slot()`.",
+                "if_it_were_true": "Тогда у API была бы отдельная фабрика для множественного захвата, и `holder.captured` возвращал бы коллекцию вместо одного значения.",
+                "how_it_should_be": "Для одного значения — `slot<User>()`, для нескольких — `mutableListOf<User>()` с `capture(list)`; отдельного `slotList` не существует."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую пару функций MockK нужно использовать, чтобы застабить и проверить вызов suspend-функции мока?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`coEvery` для стаба и `coVerify` для проверки",
+              "correct": true,
+              "sections": {
+                "explanation": "`suspend`-функцию нельзя вызвать вне корутины, поэтому MockK даёт co-префиксные аналоги, открывающие корутинный контекст внутри блока: `coEvery` задаёт поведение, `coVerify` проверяет факт вызова.",
+                "example": "`coEvery { repo.fetchUser(1) } returns User(1, \"Алиса\")`, а после прогона в `runTest` — `coVerify(exactly = 1) { repo.fetchUser(1) }`.",
+                "when_to_apply": "Всегда, когда мокаемый метод объявлен как `suspend`: репозитории с сетевыми/IO-вызовами, suspend-обёртки над БД, любые корутинные зависимости тестируемого сервиса.",
+                "edge_cases": "Сам тест при этом должен запускаться в `runTest`, чтобы было где исполнять suspend-вызовы тестируемого кода; `capture` работает и внутри `coEvery`. Для порядка и динамических ответов есть `coVerifyOrder` и `coAnswers`.",
+                "related": "Параллель обычным `every`/`verify` (Q2): co-варианты — это их корутинная версия из той же таблицы соответствия (`verifyOrder`→`coVerifyOrder`, `answers`→`coAnswers`)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`coEvery` для стаба и `verify` для проверки",
+              "correct": false,
+              "sections": {
+                "what_actually": "`coEvery` корректно стабит suspend-функцию, но `verify` открывает обычный, не-корутинный блок и не годится для проверки suspend-вызова.",
+                "source_of_confusion": "Половина пары верна, и кажется, что проверка вызова — операция «попроще», для которой co-префикс не нужен; на деле проверка suspend-метода так же требует корутинного контекста.",
+                "if_it_were_true": "Тогда verification-фаза не смогла бы войти в suspend-метод мока и проверка либо не компилировалась бы, либо вела себя некорректно.",
+                "how_it_should_be": "Для проверки suspend-вызова берут `coVerify` — co-аналог `verify`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`every` для стаба и `coVerify` для проверки",
+              "correct": false,
+              "sections": {
+                "what_actually": "`coVerify` корректно проверяет suspend-вызов, но `every` открывает не-корутинный блок и не подходит для стаба suspend-функции.",
+                "source_of_confusion": "Симметрично предыдущему: легко перепутать, какая именно фаза требует co-префикса, и оставить обычный `every` на стабе.",
+                "if_it_were_true": "Тогда внутри лямбды `every` не было бы корутинного контекста для вызова suspend-метода — код не скомпилируется или поведёт себя некорректно.",
+                "how_it_should_be": "Для стаба suspend-функции берут `coEvery` — co-аналог `every`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`suspendEvery` для стаба и `suspendVerify` для проверки",
+              "correct": false,
+              "sections": {
+                "what_actually": "Таких функций в MockK нет: API использует приставку `co` (`coEvery`/`coVerify`), а не `suspend`.",
+                "source_of_confusion": "Логично предположить, что префикс повторяет ключевое слово `suspend` из объявления метода, но MockK назвал семейство по «coroutine» — `co`.",
+                "if_it_were_true": "Будь это правдой, в API существовали бы `suspendEvery`/`suspendVerify`/`suspendAnswers`, но их нет — компиляция упадёт на неразрешённой ссылке.",
+                "how_it_should_be": "Правильные имена — `coEvery` и `coVerify` с префиксом `co`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чтобы MockK сам инициализировал моки по аннотациям (@MockK, @InjectMockKs) и чистил их после тестов в JUnit 5, какую запись ставят над тест-классом?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@ExtendWith(MockKAnnotations::class)`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MockKAnnotations` — это не расширение JUnit, а утилита с методом `init(testInstance)`, которым моки инициализируют вручную в `@BeforeEach`, если расширение не подключают.",
+                "source_of_confusion": "Имя действительно связано с обработкой аннотаций MockK, и его реально используют для инициализации полей — легко принять за класс расширения.",
+                "if_it_were_true": "Тогда `MockKAnnotations` реализовывал бы интерфейс `Extension` и сам цеплялся к жизненному циклу JUnit 5, делая ручной `init(this)` ненужным.",
+                "how_it_should_be": "В `@ExtendWith` передают `MockKExtension::class`, а `MockKAnnotations.init(this)` — это отдельный ручной путь без расширения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@ExtendWith(MockitoExtension::class)`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MockitoExtension` — расширение из библиотеки Mockito; оно инициализирует мокито-моки (`@Mock`, `@InjectMocks`), но ничего не знает про аннотации MockK.",
+                "source_of_confusion": "Оба расширения подключаются одинаково через `@ExtendWith` и решают похожую задачу (инициализация моков по аннотациям), а имена различаются лишь продуктом.",
+                "if_it_were_true": "Тогда `@MockK` и `@InjectMockKs` обрабатывались бы расширением Mockito, что невозможно — оно ищет только свои `@Mock`/`@InjectMocks`.",
+                "how_it_should_be": "Для MockK ставят `MockKExtension::class`; `MockitoExtension::class` — для Java-моков на Mockito."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@ExtendWith(MockKRule::class)`",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого `MockKRule` в MockK нет: `Rule` — это механизм JUnit 4 (`@Rule`/`TestRule`), а JUnit 5 заменил его на расширения (`Extension`).",
+                "source_of_confusion": "В JUnit 4 моки часто подключали именно правилами (например, `MockitoRule`), поэтому по аналогии легко придумать несуществующий `MockKRule`.",
+                "if_it_were_true": "Тогда это был бы `TestRule` для JUnit 4, и подключался бы он через `@Rule`-поле, а не через `@ExtendWith` из JUnit 5.",
+                "how_it_should_be": "В JUnit 5 интеграцию даёт класс-расширение `MockKExtension`, подключаемый через `@ExtendWith`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@ExtendWith(MockKExtension::class)`",
+              "correct": true,
+              "sections": {
+                "explanation": "`MockKExtension` интегрируется с жизненным циклом JUnit 5: инициализирует поля по аннотациям и в `@AfterAll` сам вызывает `unmockkAll` и `clearAllMocks`. Подключается оно стандартным для JUnit 5 механизмом расширений через `@ExtendWith`.",
+                "example": "@ExtendWith(MockKExtension::class) class UserServiceTest { @MockK lateinit var repo: UserRepository; @InjectMockKs lateinit var service: UserService }. Без расширения пришлось бы звать MockKAnnotations.init(this) в @BeforeEach.",
+                "when_to_apply": "Когда в JUnit 5 хочется объявлять моки полями через @MockK/@RelaxedMockK/@SpyK и внедрять их в SUT через @InjectMockKs, не выписывая mockk<>() вручную и не заботясь об очистке.",
+                "edge_cases": "Моки можно объявлять и как параметры тест-функций. Альтернатива без расширения — MockKAnnotations.init(this) в @BeforeEach, но тогда очистку придётся делать самому.",
+                "related": "@ExtendWith — это стандартный JUnit 5 API подключения расширений (Extension), тот же, что и для SpringExtension; MockKExtension просто реализует интерфейс Extension."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В Kotlin классы по умолчанию `final`. MockK мокает их без настройки, а «голый» Mockito падает с ошибкой про final-класс. Что нужно сделать, чтобы Mockito смог мокать такой класс?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подключить зависимость `mockito-kotlin` — она через инструментацию байткода умеет подменять `final`-классы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`mockito-kotlin` — это обёртка с Kotlin-friendly DSL (`mock()`, `whenever`, `verify`), которая делает API Mockito идиоматичным в Kotlin. Она не меняет механизм создания моков.",
+                "source_of_confusion": "Слово «kotlin» в названии наводит на мысль, что библиотека решает именно Kotlin-специфичную проблему final-классов, хотя она лишь синтаксический сахар поверх того же ядра.",
+                "if_it_were_true": "Тогда достаточно было бы поставить `mockito-kotlin`, и final-классы мокались бы сами собой даже на старом mock-maker через подклассы — что технически невозможно.",
+                "how_it_should_be": "За мокинг `final` отвечает `mockito-inline` (mock-maker-inline); `mockito-kotlin` можно ставить дополнительно, но только ради удобного DSL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подключить зависимость `mockito-inline` — она через инструментацию байткода умеет подменять `final`-классы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Mockito исторически мокает через генерацию подкласса в рантайме, а от `final`-класса подкласс создать нельзя. `mockito-inline` ставит mock-maker-inline, который вместо наследования инструментирует байткод и потому подменяет даже `final`. MockK так устроен изначально, поэтому ему ничего подключать не надо.",
+                "example": "В build.gradle вместо `mockito-core` добавляют `org.mockito:mockito-inline`. После этого `mock(PaymentGateway::class.java)` для final-класса перестаёт падать с «Cannot mock/spy ... it is a final class».",
+                "when_to_apply": "Когда в Kotlin-проекте уже есть тесты на Mockito и переписывать их на MockK не хочется, но появился final-класс (то есть почти любой обычный Kotlin-класс без `open`), который нужно замокать.",
+                "edge_cases": "С Mockito 5+ inline-mock-maker включён по умолчанию даже в `mockito-core`, так что отдельная зависимость уже не нужна. Альтернатива без inline — пометить класс `open`, но менять прод-код ради теста считается плохой практикой.",
+                "related": "Тот же приём через инструментацию байткода в MockK работает «из коробки»; это объясняет, почему в Kotlin-проектах MockK предпочитают Mockito (см. Q1)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Пометить тестируемый класс аннотацией `@Open` — она через инструментацию байткода открывает `final`-классы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации `@Open` в Mockito нет. Открыть класс для наследования в Kotlin можно ключевым словом `open` или плагином all-open, но это правка исходников, а не настройка Mockito.",
+                "source_of_confusion": "Логика «класс final → надо сделать его open» подсказывает существование некой аннотации, и легко спутать это с реальным плагином all-open для Spring.",
+                "if_it_were_true": "Тогда Mockito на старом mock-maker мокал бы класс через подкласс — но менять модификатор пришлось бы в прод-коде ради теста, что и так считается антипаттерном.",
+                "how_it_should_be": "Ничего в классе помечать не нужно: `mockito-inline` подменяет `final` без правок исходников, инструментируя байткод."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Включить флаг `MockMaker.subclass` в конфиге — он через инструментацию байткода умеет подменять `final`-классы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`mock-maker-subclass` — это как раз СТАРЫЙ режим Mockito, который мокает через генерацию подкласса. Именно он не справляется с `final` и даёт исходную ошибку.",
+                "source_of_confusion": "Имя похоже на реальную настройку mock-maker через файл `org.mockito.plugins.MockMaker`, и легко перепутать рабочий inline-режим с дефолтным subclass-режимом.",
+                "if_it_were_true": "Если бы subclass-режим умел в `final`, то отдельный inline-mock-maker был бы вообще не нужен и проблема final-классов в Mockito не существовала бы.",
+                "how_it_should_be": "В конфиге mock-maker указывают значение `inline` (то есть подключают `mockito-inline`), а не `subclass`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Top-level и extension-функции в Kotlin компилируются в статические методы JVM (класс-обёртка `<ИмяФайла>Kt`). Какой функцией MockK их мокать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`mockkObject` — она подменяет статические методы класса-обёртки `<ИмяФайла>Kt`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`mockkObject` мокает методы Kotlin-`object` (синглтона), передавая в неё сам экземпляр объекта: `mockkObject(FeatureFlags); every { FeatureFlags.isEnabled(\"new-ui\") } returns true`.",
+                "source_of_confusion": "Обе функции создают глобальную подмену и обе требуют последующего `unmockk*`, поэтому их легко перепутать. Различие в цели: `object` против класса-обёртки top-level/extension-функций.",
+                "if_it_were_true": "Тогда любую top-level-функцию можно было бы мокать, передав строку с именем файла прямо в `mockkObject` — но она принимает экземпляр `object`, а не FQN класса-обёртки, и на top-level-функцию её не натравить.",
+                "how_it_should_be": "Top-level и extension мокают через `mockkStatic` по классу-обёртке `<ИмяФайла>Kt`, а `mockkObject` оставляют для синглтонов-`object`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`mockkConstructor` — она подменяет статические методы класса-обёртки `<ИмяФайла>Kt`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`mockkConstructor(SomeClass::class)` перехватывает создание экземпляров класса через `new`, чтобы любой свежесозданный объект внутри тестируемого кода был моком.",
+                "source_of_confusion": "Имя в том же семействе глобальных `mockk*`-подмен, и кажется, что она про «статику класса». На деле она про конструкторы, а не про статические методы класса-обёртки.",
+                "if_it_were_true": "Тогда `mockkConstructor` ловила бы вызовы top-level-функций — но она привязана к инстанцированию класса, а у статического метода никакого `new` нет, перехватывать нечего.",
+                "how_it_should_be": "Статические методы класса-обёртки top-level/extension мокают через `mockkStatic`, а `mockkConstructor` — только для подмены создаваемых экземпляров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`mockkStatic` — она подменяет статические методы класса-обёртки `<ИмяФайла>Kt`",
+              "correct": true,
+              "sections": {
+                "explanation": "Top-level и extension-функции на JVM становятся статическими методами в синтетическом классе `<ИмяФайла>Kt`. Обычный `mockk<>()` мокает только инстанс-методы конкретного объекта, статику он не перехватывает. `mockkStatic` инструментирует именно класс-обёртку и потому подменяет такие функции.",
+                "example": "Для top-level `currentTimeMillis()` из `Utils.kt`: `mockkStatic(\"com.example.UtilsKt\")`, затем `every { currentTimeMillis() } returns 1_700_000_000_000L`. Для Java-статики — `mockkStatic(UUID::class)` и `every { UUID.randomUUID() } returns ...`.",
+                "when_to_apply": "Когда тестируемый код дёргает top-level- или extension-функцию (например, утилиту времени, парсинг, форматирование) или Java-статику вроде `UUID.randomUUID()`, и нужно зафиксировать её результат.",
+                "edge_cases": "Аргумент `mockkStatic` — строка с FQN класса-обёртки (имя файла + суффикс `Kt`) либо `KClass` для Java-статики. Подмена глобальна, поэтому после теста её обязательно снимают через `unmockkStatic` или `unmockkAll`, иначе мок протечёт в соседние тесты.",
+                "related": "Для `object`-синглтонов используют родственную `mockkObject`; обе создают глобальную подмену и требуют последующего `unmockk*`. В Mockito это почти не покрывается (нужен PowerMock), что и делает MockK предпочтительным для Kotlin."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`spyk` — она подменяет статические методы класса-обёртки `<ИмяФайла>Kt`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`spyk(RealObject())` создаёт частичный мок: оборачивает реальный экземпляр, реальные методы работают, а отдельные подменяются через `every`.",
+                "source_of_confusion": "`spyk` тоже из MockK и тоже комбинируется с `every`, поэтому кажется универсальной заменой. Но она работает с конкретным инстансом объекта, а не с классом-обёрткой статических функций.",
+                "if_it_were_true": "Тогда `spyk` перехватывала бы top-level-вызовы без всякого инстанса — но спай оборачивает существующий объект, а у статического метода объекта-носителя нет, оборачивать нечего.",
+                "how_it_should_be": "Для top-level/extension берут `mockkStatic` по классу-обёртке `<ИмяФайла>Kt`, а `spyk` — для частичной подмены методов реального экземпляра."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В MockK есть три похожих по имени функции: `clearAllMocks`, `unmockkAll` и `confirmVerified`. Какая из них снимает глобальную подмену от `mockkStatic` / `mockkObject` и возвращает настоящие реализации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`unmockkAll()` снимает глобальные подмены `mockkStatic` / `mockkObject` и возвращает настоящие реализации",
+              "correct": true,
+              "sections": {
+                "explanation": "`mockkStatic` и `mockkObject` подменяют top-level/extension- и object-функции глобально, на уровне байткода. Снять именно факт этой подмены умеет только `unmockkAll` (или точечные `unmockkStatic`/`unmockkObject`) — он возвращает настоящие реализации.",
+                "example": "После `mockkObject(FeatureFlags)` вызов `unmockkAll()` в `@AfterEach` вернёт реальный `FeatureFlags.isEnabled(...)`, иначе мок «протечёт» в соседние тесты.",
+                "when_to_apply": "Обязательно вызывать после любого `mockkStatic`/`mockkObject`, чтобы глобальная подмена не утекла в следующие тесты класса или JVM.",
+                "edge_cases": "`clearAllMocks` глобальную подмену НЕ снимет — он чистит только состояние моков; поэтому после static/object-мока нужен именно `unmockkAll` или точечный `unmockk*`.",
+                "related": "`MockKExtension` в JUnit 5 сам вызывает `unmockkAll` и `clearAllMocks` в `@AfterAll`, освобождая от ручной очистки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`clearAllMocks()` снимает глобальные подмены `mockkStatic` / `mockkObject` и возвращает настоящие реализации",
+              "correct": false,
+              "sections": {
+                "what_actually": "`clearAllMocks()` сбрасывает у моков застабленное поведение (`every`) и историю вызовов, но объект остаётся моком — глобальную подмену он не трогает.",
+                "source_of_confusion": "Обе функции часто стоят рядом в `@AfterEach`/`@AfterAll` и обе «чистят», поэтому их роли легко перепутать.",
+                "if_it_were_true": "Тогда после `clearAllMocks()` static/object-функции снова выполняли бы настоящий код, и `unmockkAll` был бы не нужен.",
+                "how_it_should_be": "Подмену снимает `unmockkAll` (или `unmockkStatic`/`unmockkObject`); `clearAllMocks` отвечает только за состояние моков."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`confirmVerified(mock)` снимает глобальные подмены `mockkStatic` / `mockkObject` и возвращает настоящие реализации",
+              "correct": false,
+              "sections": {
+                "what_actually": "`confirmVerified(mock)` проверяет, что все вызовы мока были покрыты `verify`, и падает, если остался непроверенный вызов — он ничего не подменяет и не восстанавливает.",
+                "source_of_confusion": "Имя на `*Verified`/`*All` звучит как финальный «закрывающий» шаг очистки, хотя это проверка строгости, а не сброс.",
+                "if_it_were_true": "Тогда `confirmVerified` восстанавливал бы реальные реализации вместо того, чтобы валить тест на непокрытых вызовах.",
+                "how_it_should_be": "Глобальную подмену снимает `unmockkAll`; `confirmVerified` лишь усиливает строгость проверки вызовов вместе с `verify`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`mockkObject(obj)` снимает глобальные подмены `mockkStatic` / `mockkObject` и возвращает настоящие реализации",
+              "correct": false,
+              "sections": {
+                "what_actually": "`mockkObject(obj)` наоборот УСТАНАВЛИВАЕТ глобальную подмену методов синглтона-`object`, превращая его в мок.",
+                "source_of_confusion": "Это парная функция к `unmockkObject`, и по симметрии имён легко спутать установку подмены с её снятием.",
+                "if_it_were_true": "Тогда не было бы способа замокать `object` — функция установки и снятия совпадали бы в одной.",
+                "how_it_should_be": "`mockkObject` ставит подмену, а снимает её `unmockkObject` или общий `unmockkAll`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой стиль спецификаций Kotest строит тест в BDD-формате через вложенные блоки `given` / `when` / `then`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`DescribeSpec` — тест описывают блоками `given` / `when` / `then`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DescribeSpec` тоже BDD-стиль, но строит тест блоками `describe` / `it` / `context` в духе Jest, RSpec и Mocha.",
+                "source_of_confusion": "Оба стиля BDD и оба дают вложенные блоки, поэтому given/when/then легко по ошибке приписать `DescribeSpec`.",
+                "if_it_were_true": "Тогда `DescribeSpec` и `BehaviorSpec` были бы синонимами с одинаковыми ключевыми словами, и второй стиль не имел бы смысла.",
+                "how_it_should_be": "given/when/then принадлежат `BehaviorSpec`; в `DescribeSpec` пишут describe/it/context."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ShouldSpec` — тест описывают блоками `given` / `when` / `then`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ShouldSpec` похож на FunSpec, но объявляет проверки ключевым словом `should(\"...\")` для читаемых «should …» формулировок.",
+                "source_of_confusion": "`ShouldSpec` тоже даёт человекочитаемые названия тестов, и его легко спутать с полноценным given/when/then сценарием.",
+                "if_it_were_true": "Тогда `ShouldSpec` дублировал бы `BehaviorSpec`, а отдельное ключевое слово `should` было бы лишним.",
+                "how_it_should_be": "given/when/then даёт `BehaviorSpec`; в `ShouldSpec` тест объявляют через `should(\"...\")`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`FunSpec` — тест описывают блоками `given` / `when` / `then`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FunSpec` объявляет тесты функцией `test(\"...\")` и группирует их через `context(\"...\")`, что привычно выходцам из JUnit и ScalaTest.",
+                "source_of_confusion": "`FunSpec` тоже поддерживает вложенность через `context`, и эту группировку можно принять за given/when/then.",
+                "if_it_were_true": "Тогда `FunSpec` имел бы BDD-семантику, а отдельный `BehaviorSpec` был бы не нужен.",
+                "how_it_should_be": "given/when/then даёт `BehaviorSpec`; в `FunSpec` тест объявляют через `test(\"...\")` и `context(\"...\")`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`BehaviorSpec` — тест описывают блоками `given` / `when` / `then`",
+              "correct": true,
+              "sections": {
+                "explanation": "Именно `BehaviorSpec` задаёт BDD-структуру через тройку `given` / `when` / `then`, где каждый уровень вкладывается в предыдущий. Это делает тест читаемым как сценарий поведения и удобным для обсуждения с аналитиками.",
+                "example": "class CalcBehaviorSpec : BehaviorSpec({ given(\"калькулятор\") { `when`(\"складываем 1 и 2\") { then(\"получаем 3\") { (1 + 2) shouldBe 3 } } } }).",
+                "when_to_apply": "BDD given/when/then удобен, когда тест должен читаться как пользовательский сценарий и служить общим языком с аналитиками и QA.",
+                "edge_cases": "Слово `when` в Kotlin зарезервировано, поэтому в `BehaviorSpec` его экранируют обратными кавычками: `` `when` ``. Функциональной разницы со стилями нет — это только форма записи.",
+                "related": "Соседний BDD-стиль `DescribeSpec` использует describe/it/context (как Jest/RSpec); оба дают вложенность, но разными ключевыми словами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что `shouldThrow<IllegalArgumentException> { ... }` в Kotest возвращает как результат вызова?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Значение `Boolean` — `true`, если исключение нужного типа было брошено",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Boolean` из проверки возвращает property-функция `forAll` в property-based тестах, где свойство само по себе булево; matcher-функции исключений так не работают.",
+                "source_of_confusion": "Многие assertion-API мысленно ассоциируются с «истина/ложь», и кажется, что matcher просто сообщает факт срабатывания.",
+                "if_it_were_true": "Тогда после `shouldThrow` нельзя было бы напрямую обращаться к `ex.message`, а пришлось бы ловить исключение отдельно через try/catch.",
+                "how_it_should_be": "`shouldThrow<T>` возвращает именно объект исключения типа `T`, а не флаг успеха."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Само пойманное исключение — для дальнейших проверок его `message` и полей",
+              "correct": true,
+              "sections": {
+                "explanation": "`shouldThrow<T>` одновременно утверждает, что блок бросил исключение указанного типа, и возвращает сам объект исключения. Поэтому результат присваивают переменной и продолжают ассерты по нему, например `ex.message shouldBe \"...\"`.",
+                "example": "`val ex = shouldThrow<IllegalArgumentException> { parseAge(\"-5\") }` затем `ex.message shouldBe \"Возраст не может быть отрицательным\"`.",
+                "when_to_apply": "Когда мало проверить тип исключения и нужно ещё убедиться в тексте сообщения, коде ошибки или вложенной причине.",
+                "edge_cases": "Если блок не бросит исключение или бросит другой тип, `shouldThrow` сам провалит тест. Для «любого» исключения есть `shouldThrowAny`, а `shouldNotThrowAny` проверяет, что код не падает.",
+                "related": "Прямой аналог JUnit 5 `assertThrows` и `kotlin.test` `assertFailsWith`, которые тоже возвращают пойманное исключение; читается линейнее, чем try/catch."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Значение `Unit` — matcher только утверждает факт и ничего полезного не отдаёт",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Unit` возвращают matchers-утверждения вроде `result shouldBe 42`, которые лишь проверяют условие и не дают объекта для дальнейшей работы.",
+                "source_of_confusion": "Большинство обычных matchers Kotest действительно возвращают `Unit`, и легко распространить это правило на `shouldThrow`.",
+                "if_it_were_true": "Тогда проверку текста сообщения пришлось бы делать отдельным перехватом, а идиома `val ex = shouldThrow { ... }` не имела бы смысла.",
+                "how_it_should_be": "`shouldThrow` намеренно возвращает пойманное исключение, чтобы продолжить ассерты по его полям."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Объект-обёртку `Result`, из которой исключение достают через `exceptionOrNull()`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Result<T>` — стандартный котлиновский контейнер для `runCatching`, где успех или ошибку извлекают через `getOrNull` / `exceptionOrNull`; к matchers Kotest он отношения не имеет.",
+                "source_of_confusion": "Идиома `runCatching { ... }` тоже «ловит» исключение и возвращает контейнер, поэтому её механику путают с `shouldThrow`.",
+                "if_it_were_true": "Тогда вместо `ex.message` пришлось бы писать `result.exceptionOrNull()?.message`, теряя прямой и читаемый доступ к исключению.",
+                "how_it_should_be": "`shouldThrow` отдаёт само исключение напрямую, без обёртки `Result`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сколько сгенерированных примеров по умолчанию прогоняет каждый property-тест Kotest при использовании checkAll и Arb?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "По умолчанию каждый property-тест Kotest прогоняет `100` сгенерированных примеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100 — это типичный дефолт у других PBT-фреймворков (например, ScalaCheck/QuickCheck), но не у Kotest.",
+                "source_of_confusion": "Число 100 закрепилось как «канонический» дефолт PBT из мира QuickCheck, и его легко по привычке приписать Kotest.",
+                "if_it_were_true": "Property-тесты ловили бы заметно меньше редких краевых случаев, и при той же надёжности пришлось бы чаще вручную поднимать iterations.",
+                "how_it_should_be": "Дефолт Kotest — 1000 примеров на property-тест."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "По умолчанию каждый property-тест Kotest прогоняет `200` сгенерированных примеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "200 — это просто правдоподобное промежуточное число итераций, которое можно задать вручную, но оно не является дефолтом Kotest.",
+                "source_of_confusion": "200 выглядит «достаточно большим, но не круглой тысячей», поэтому кажется компромиссным значением по умолчанию.",
+                "if_it_were_true": "Прогон был бы в пять раз короче реального, а покрытие пространства входов — заметно беднее без явного увеличения iterations.",
+                "how_it_should_be": "Дефолт Kotest — 1000 примеров на property-тест."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "По умолчанию каждый property-тест Kotest прогоняет `1000` сгенерированных примеров.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Kotest дефолтное число итераций property-теста равно 1000: на каждый прогон `checkAll`/`forAll` генератор `Arb` выдаёт новый набор входов, и свойство проверяется ровно 1000 раз, если значение не переопределено явно.",
+                "example": "`checkAll(Arb.int(), Arb.int()) { a, b -> (a + b) shouldBe (b + a) }` без указания iterations выполнит блок 1000 раз с разными парами a, b.",
+                "when_to_apply": "Дефолт 1000 — разумный баланс для проверки инвариантов алгоритмов, парсеров и round-trip сериализации; число повышают для редких краевых распределений и понижают, когда каждый прогон дорогой.",
+                "edge_cases": "Количество переопределяется через `checkAll(iterations) { ... }` или `PropTestConfig`; при провале включается shrinking, который ужимает упавший вход до минимального контрпримера (например, до 0 или -1).",
+                "related": "Связано с `forAll` (свойство возвращает `Boolean`) против `checkAll` (внутри обычные ассерты) и с фабриками `Arb`: `Arb.int(2..10)`, `Arb.string()`, `Arb.list(...)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "По умолчанию каждый property-тест Kotest прогоняет `10000` сгенерированных примеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "10000 — это значение, которое разумно выставить вручную для особо тщательной проверки редких распределений, но не дефолт.",
+                "source_of_confusion": "Кажется, что «чем больше, тем надёжнее», поэтому большое круглое число легко принять за встроенный дефолт.",
+                "if_it_were_true": "Каждый property-тест выполнялся бы в десять раз дольше дефолтного, и быстрые тестовые наборы заметно тормозили бы без видимой причины.",
+                "how_it_should_be": "Дефолт Kotest — 1000 примеров на property-тест."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая функция Kotest прогоняет один сценарий на наборе входных данных, превращая каждый элемент в отдельный тест-узел в отчёте (аналог JUnit 5 `@ParameterizedTest`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`withData` — каждый элемент набора становится отдельным тест-узлом в отчёте",
+              "correct": true,
+              "sections": {
+                "explanation": "`withData` — это data-driven (table-driven) механизм Kotest: один и тот же блок ассертов прогоняется на наборе фиксированных входов, и каждый элемент превращается в самостоятельный узел в отчёте со своим результатом. Поэтому видно, какой именно вход упал, а остальные кейсы продолжают выполняться — в отличие от `forEach` внутри одного теста, который падает на первом неверном кейсе и скрывает остальные.",
+                "example": "`context(\"чётность\") { withData(2, 4, 6, 100) { n -> (n % 2 == 0) shouldBe true } }` создаст четыре отдельных узла. Для именованных кейсов передают `map`: `withData(mapOf(\"обычный\" to (\"a@b.com\" to true), \"пустой\" to (\"\" to false))) { (email, expected) -> isValidEmail(email) shouldBe expected }`.",
+                "when_to_apply": "Когда нужно проверить одну логику на множестве комбинаций вход→ожидание (валидация email, граничные числа, парсинг форматов) без копипасты похожих тестов и с гранулярной отчётностью по каждому кейсу.",
+                "edge_cases": "Имена узлов берутся из ключей `map` или из data-класса; их можно задать явно через `withData(nameFn = ...)`. Это прямой аналог JUnit 5 `@ParameterizedTest`, но без аннотаций и провайдеров аргументов — весь набор данных описан в коде теста.",
+                "related": "Соседствует с property-based `checkAll`/`Arb` (Q13): `withData` гоняет фиксированный конечный набор, а `checkAll` — случайно сгенерированные входы со shrinking. Оба дают отдельные результаты вместо одного непрозрачного цикла."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`forAll` — каждый элемент набора становится отдельным тест-узлом в отчёте",
+              "correct": false,
+              "sections": {
+                "what_actually": "`forAll` в Kotest — это property-based проверка, где свойство возвращает `Boolean` и прогоняется на случайно сгенерированных входах от `Arb`; отдельных узлов в отчёте на каждый вход она не создаёт.",
+                "source_of_confusion": "И `forAll`, и `withData` принимают «много входов» и выглядят как перебор, поэтому их легко перепутать как два способа табличного теста.",
+                "if_it_were_true": "Если бы `forAll` порождал узел на элемент, отчёт раздувался бы на 1000 узлов (дефолтное число прогонов property-теста), а смысл лаконичной property-проверки терялся бы.",
+                "how_it_should_be": "Для фиксированного набора с узлом на кейс берут `withData`; `forAll` оставляют для проверки свойств на случайных данных, где важен не отчёт по кейсам, а инвариант."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`checkAll` — каждый элемент набора становится отдельным тест-узлом в отчёте",
+              "correct": false,
+              "sections": {
+                "what_actually": "`checkAll` — это property-based функция Kotest: внутри неё пишут обычные ассерты, а данные поставляют генераторы `Arb`; при провале она делает shrinking до минимального контрпримера, но узлов на каждый вход не плодит.",
+                "source_of_confusion": "`checkAll(Arb.int(), Arb.int()) { a, b -> ... }` синтаксически похож на `withData` — тоже лямбда, прогоняемая много раз на разных значениях.",
+                "if_it_were_true": "Если бы `checkAll` делал узел на каждый сгенерированный вход, тест порождал бы тысячу узлов на прогон, а shrinking-диагностика по единому контрпримеру стала бы бессмысленной.",
+                "how_it_should_be": "`checkAll` применяют для свойств на случайных входах (коммутативность, round-trip); для конечной таблицы вход→ожидание с отчётом по кейсам используют `withData`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`forEach` — каждый элемент набора становится отдельным тест-узлом в отчёте",
+              "correct": false,
+              "sections": {
+                "what_actually": "`forEach` — это обычная функция коллекций Kotlin: она проходит по элементам внутри тела одного теста, не создавая отдельных тест-узлов и не интегрируясь в отчёт Kotest.",
+                "source_of_confusion": "`forEach` — самый очевидный «ручной» способ прогнать ассерт по списку входов, поэтому его принимают за встроенный табличный тест.",
+                "if_it_were_true": "Если бы `forEach` давал узел на элемент, не понадобился бы `withData`; на деле `forEach` падает на первом же неверном кейсе и скрывает остальные внутри единственного теста.",
+                "how_it_should_be": "Чтобы каждый кейс был отдельным узлом и видеть все провалы сразу, перебор `forEach` заменяют на `withData`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В Kotest какой lifecycle hook вызывается ровно один раз перед всеми тестами спецификации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`beforeTest` — выполняется один раз перед всеми тестами спеки",
+              "correct": false,
+              "sections": {
+                "what_actually": "`beforeTest` срабатывает перед каждым листовым тестом (`TestType.Test`), то есть столько раз, сколько в спеке тестов, а не единожды.",
+                "source_of_confusion": "Оба хука начинаются с `before` и оба относятся к одной спеке, поэтому легко перепутать «перед спекой» и «перед тестом».",
+                "if_it_were_true": "Тогда тяжёлую инициализацию можно было бы класть в `beforeTest` без штрафа, и поднятие контейнера происходило бы один раз — но на деле оно повторялось бы на каждом тесте.",
+                "how_it_should_be": "Однократную инициализацию ставят в `beforeSpec`; `beforeTest` оставляют для подготовки, которая нужна каждому тесту отдельно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`beforeEach` — выполняется один раз перед всеми тестами спеки",
+              "correct": false,
+              "sections": {
+                "what_actually": "`beforeEach` запускается перед каждым leaf-тестом (и контейнерами), повторяясь на каждом тесте, а не один раз на спеку.",
+                "source_of_confusion": "Слово «each» путают с «однократно для всей спеки», хотя именно `each` означает «на каждый».",
+                "if_it_were_true": "Тогда `beforeEach` нельзя было бы использовать для пере-инициализации состояния между тестами, ведь оно отработало бы лишь раз.",
+                "how_it_should_be": "Для однократного на спеку берут `beforeSpec`; `beforeEach` применяют, когда нужно сбрасывать состояние перед каждым тестом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`afterSpec` — выполняется один раз перед всеми тестами спеки",
+              "correct": false,
+              "sections": {
+                "what_actually": "`afterSpec` действительно выполняется один раз на спеку, но после всех тестов, а не перед ними — это хук завершения, а не инициализации.",
+                "source_of_confusion": "И `beforeSpec`, и `afterSpec` единократны и относятся к спеке, поэтому путают момент срабатывания — до или после тестов.",
+                "if_it_were_true": "Тогда очистку и закрытие ресурсов пришлось бы делать до того, как тесты ими воспользуются, и тесты падали бы на освобождённом ресурсе.",
+                "how_it_should_be": "Инициализацию до тестов кладут в `beforeSpec`, а `afterSpec` оставляют для финального освобождения ресурсов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`beforeSpec` — выполняется один раз перед всеми тестами спеки",
+              "correct": true,
+              "sections": {
+                "explanation": "`beforeSpec` привязан к жизненному циклу всей спецификации, поэтому его тело отрабатывает единожды до запуска любого теста класса, а не на каждом тесте. Это и делает его местом для дорогой однократной инициализации.",
+                "example": "class RepoSpec : FunSpec({ beforeSpec { startContainer() }; test(\"a\") { 1 shouldBe 1 }; test(\"b\") { 2 shouldBe 2 } }) — startContainer() вызовется один раз, хотя тестов два.",
+                "when_to_apply": "Поднятие Testcontainers-контейнера, открытие пула соединений, прогрев общего ресурса — всё, за что не хочется платить на каждом тесте.",
+                "edge_cases": "Если тест внутри спеки помечен как отключённый, `beforeSpec` всё равно может отработать; парный `afterSpec` выполняется один раз после всех тестов, в том числе при падении.",
+                "related": "Зеркальная пара `afterSpec` закрывает то, что открыл `beforeSpec`; для сброса изменяемого состояния между тестами берут `beforeTest`/`beforeEach`, а не spec-уровневые хуки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое отличие Kotest от JUnit 5 названо верно: что именно есть в Kotest «из коробки», тогда как в JUnit 5 этого нативно нет?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Data-driven testing встроено в Kotest (`checkAll`, `Arb`, shrinking), а JUnit 5 этого нативно не имеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Data-driven тесты в Kotest делает `withData`, а не `checkAll`/`Arb`; в JUnit 5 они есть нативно через `@ParameterizedTest` с провайдерами аргументов.",
+                "source_of_confusion": "И data-driven, и property-based прогоняют один сценарий на множестве входов, поэтому их легко перепутать, а имена `checkAll`/`Arb` кажутся подходящими к обоим.",
+                "if_it_were_true": "Тогда JUnit 5 не умел бы табличные тесты без сторонних библиотек, но `@ParameterizedTest` входит в стандарт JUnit 5.",
+                "how_it_should_be": "`checkAll`/`Arb`/shrinking — это про property-based testing; data-driven в Kotest — это `withData`, а в JUnit 5 — встроенный `@ParameterizedTest`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Property-based testing встроено в Kotest (`checkAll`, `Arb`, shrinking), а JUnit 5 этого нативно не имеет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Kotest поставляет property-based testing как часть фреймворка: генераторы `Arb`, раннеры `checkAll`/`forAll` и автоматический shrinking упавшего входа до минимального контрпримера. В JUnit 5 такого механизма нет — для property-тестов подключают сторонний jqwik.",
+                "example": "`checkAll(Arb.int(), Arb.int()) { a, b -> (a + b) shouldBe (b + a) }` прогонит свойство на 1000 случайных пар; при провале Kotest сожмёт вход до «0» или «-1».",
+                "when_to_apply": "Когда нужно проверять инварианты алгоритмов, парсеров или round-trip сериализации, а не отдельные примеры — и хочется встроенный shrinking без дополнительных библиотек.",
+                "edge_cases": "Property-тесты сложнее в отладке из-за случайности: для воспроизводимости фиксируют seed. Это не замена example-based тестам для конкретных бизнес-кейсов.",
+                "related": "Смежно с data-driven тестами (`withData` в Kotest против `@ParameterizedTest` в JUnit 5): оба прогоняют сценарий на множестве входов, но property-тесты генерируют входы случайно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Property-based testing встроено в JUnit 5 (`checkAll`, `Arb`, shrinking), а Kotest этого нативно не имеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `checkAll`, `Arb` и shrinking — это API Kotest; в JUnit 5 нативного property-based нет, для него берут jqwik.",
+                "source_of_confusion": "JUnit 5 — стандарт индустрии с максимумом возможностей, поэтому легко приписать ему и property-тесты, которых у него на самом деле нет.",
+                "if_it_were_true": "Тогда `checkAll(Arb.int())` компилировался бы в чистом JUnit-проекте без Kotest-зависимостей, чего не происходит.",
+                "how_it_should_be": "Property-based встроено именно в Kotest; JUnit 5 для этого требует стороннего jqwik."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Property-based testing встроено в Kotest (`withData`, `Arb`, shrinking), а JUnit 5 этого нативно не имеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`withData` — это функция data-driven тестов Kotest, а не property-based; за property-тесты отвечают `checkAll`/`forAll` вместе с `Arb`.",
+                "source_of_confusion": "`withData` и `checkAll` оба генерируют много тест-узлов и живут в Kotest рядом, поэтому подмена одного имени выглядит правдоподобно.",
+                "if_it_were_true": "Тогда `withData` делал бы shrinking случайных входов, но он лишь разворачивает фиксированный набор данных в отдельные тесты.",
+                "how_it_should_be": "Property-based раннер в Kotest — это `checkAll` (или `forAll`) с `Arb`; `withData` относится к data-driven тестам."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая функция из `kotlin.test` проверяет, что блок бросит исключение заданного типа, и возвращает само исключение для дальнейших ассертов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`assertFails { ... }` — утверждает, что блок бросит исключение типа `T`, и возвращает это исключение",
+              "correct": false,
+              "sections": {
+                "what_actually": "`assertFails` из `kotlin.test` действительно существует и возвращает пойманное исключение, но НЕ принимает параметр-тип: она лишь проверяет, что блок бросил хоть какое-то исключение, и возвращает `Throwable`.",
+                "source_of_confusion": "Имя почти совпадает с `assertFailsWith`, и обе возвращают исключение — кажется, что это одно и то же с разным синтаксисом.",
+                "if_it_were_true": "Тогда нельзя было бы указать ожидаемый тип, и тест прошёл бы даже при «не том» исключении, теряя точность проверки.",
+                "how_it_should_be": "Для проверки конкретного типа берут `assertFailsWith<T>`; `assertFails` уместен лишь когда важен сам факт падения, а не его тип."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`assertThrows<T> { ... }` — утверждает, что блок бросит исключение типа `T`, и возвращает это исключение",
+              "correct": false,
+              "sections": {
+                "what_actually": "`assertThrows` — функция JUnit 5 (`org.junit.jupiter.api`), а не `kotlin.test`. Она тоже проверяет тип и возвращает исключение, но привязана к платформе JUnit и не работает на JS/Native.",
+                "source_of_confusion": "Поведение идентично, и в ответе `assertThrows` прямо назван JUnit-аналогом — легко перепутать, из какой именно библиотеки функция.",
+                "if_it_were_true": "Тогда `kotlin.test` потерял бы свою мультиплатформенность, ради которой её и берут вместо JUnit-специфичных ассертов.",
+                "how_it_should_be": "В `kotlin.test` кроссплатформенный аналог называется `assertFailsWith`; `assertThrows` остаётся в коде, привязанном к JUnit 5."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`assertFailsWith<T> { ... }` — утверждает, что блок бросит исключение типа `T`, и возвращает это исключение",
+              "correct": true,
+              "sections": {
+                "explanation": "`assertFailsWith` — идиоматичный способ проверки исключений в `kotlin.test`: он одновременно фиксирует ожидаемый тип через параметр-тип и возвращает пойманный объект, чтобы дальше проверить его сообщение или поля. Тест не пройдёт молча, если исключение не бросилось, а читается линейно — без ручного try/catch.",
+                "example": "val ex = assertFailsWith<IllegalArgumentException> { parseAge(\"-5\") }; assertEquals(\"Возраст не может быть отрицательным\", ex.message) — ловим тип и проверяем сообщение в две строки.",
+                "when_to_apply": "Лёгкие или KMP-проекты, где не нужен богатый DSL Kotest, но нужны кроссплатформенные ассерты поверх любого раннера (JUnit, TestNG, JS, Native).",
+                "edge_cases": "Если блок не бросит исключение или бросит исключение другого типа, ассерт провалится; возвращённый объект имеет статический тип `T`, что позволяет сразу обращаться к его специфичным полям.",
+                "related": "Это Kotlin-аналог JUnit 5 `assertThrows` и Kotest `shouldThrow`: все три проверяют тип и возвращают исключение, отличаясь библиотекой и DSL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`shouldThrow<T> { ... }` — утверждает, что блок бросит исключение типа `T`, и возвращает это исключение",
+              "correct": false,
+              "sections": {
+                "what_actually": "`shouldThrow` — matcher из Kotest-assertions, а не из `kotlin.test`. Он проверяет тип и возвращает исключение, но это инфикс-DSL Kotest, требующий его зависимости.",
+                "source_of_confusion": "В ответе `shouldThrow` назван Kotest-аналогом с тем же поведением — границу между «стандартным» `kotlin.test` и Kotest легко стереть.",
+                "if_it_were_true": "Тогда для лёгких проектов пришлось бы тянуть зависимость Kotest ради одной проверки исключения, теряя смысл тонкой стандартной библиотеки.",
+                "how_it_should_be": "Без Kotest используют `assertFailsWith` из `kotlin.test`; `shouldThrow` берут только когда уже подключены matchers Kotest."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой диспетчер `runTest` из `kotlinx-coroutines-test` использует по умолчанию, из-за чего дочерние корутины не стартуют сразу и их нужно явно прокручивать через `advanceUntilIdle()`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`StandardTestDispatcher` — дочерние корутины планируются, но не выполняются сразу",
+              "correct": true,
+              "sections": {
+                "explanation": "По умолчанию `runTest` создаёт `TestScope` именно со `StandardTestDispatcher`. Он откладывает выполнение дочерних корутин (launch/async): они попадают в очередь планировщика, но не запускаются, пока время явно не прокрутят. Поэтому fire-and-forget код требует `advanceUntilIdle()` или `runCurrent()`.",
+                "example": "В тесте `runTest { vm.startBackgroundWork(); advanceUntilIdle(); assertTrue(vm.isDone) }` сам `launch` внутри `startBackgroundWork()` до `advanceUntilIdle()` ещё не выполнен — флаг `isDone` станет true только после прокрутки.",
+                "when_to_apply": "Подходит, когда нужно детерминированно проверять порядок выполнения и промежуточные состояния: продвигать время точечно через `advanceTimeBy`, выполнять запланированное на текущий момент через `runCurrent`, доводить всё до конца через `advanceUntilIdle`.",
+                "edge_cases": "Все `TestDispatcher` в одном тесте обязаны делить единый `TestCoroutineScheduler` (берётся из `testScheduler`), иначе виртуальное время не синхронизируется. Продакшен-код не должен хардкодить `Dispatchers.IO`/`Default` — диспетчер внедряют, чтобы подставить тестовый.",
+                "related": "Альтернатива — `UnconfinedTestDispatcher`, который стартует дочерние корутины немедленно (eager). Старый API `runBlockingTest`/`TestCoroutineDispatcher` устарел; актуально `runTest` + `TestScope` (coroutines 1.6+)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`UnconfinedTestDispatcher` — дочерние корутины планируются, но не выполняются сразу",
+              "correct": false,
+              "sections": {
+                "what_actually": "`UnconfinedTestDispatcher` существует и доступен в `kotlinx-coroutines-test`, но запускает дочерние корутины немедленно (eager): тело `launch`/`async` исполняется сразу до первой точки приостановки, без явной прокрутки времени.",
+                "source_of_confusion": "Оба диспетчера — тестовые и оба делят один `TestCoroutineScheduler`, поэтому их легко перепутать; описание поведения «не стартуют сразу» из вопроса на самом деле относится к `StandardTestDispatcher`, а не к этому.",
+                "if_it_were_true": "Если бы `runTest` по умолчанию использовал `UnconfinedTestDispatcher`, вызывать `advanceUntilIdle()` для fire-and-forget кода почти не приходилось бы — фоновые корутины завершались бы сами по ходу теста.",
+                "how_it_should_be": "`UnconfinedTestDispatcher` подключают вручную, когда удобно eager-выполнение простых тестов; по умолчанию же `runTest` ставит `StandardTestDispatcher`, требующий ручной прокрутки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Dispatchers.Default` — дочерние корутины планируются, но не выполняются сразу",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Dispatchers.Default` — это реальный продакшен-диспетчер на пуле потоков для CPU-задач; он выполняет корутины на настоящих потоках и не управляет виртуальным временем.",
+                "source_of_confusion": "Его легко назвать «дефолтным» по имени Default, спутав со значением «по умолчанию у runTest»; но runTest специально не использует продакшен-диспетчеры, чтобы контролировать время.",
+                "if_it_were_true": "Если бы `runTest` работал на `Dispatchers.Default`, `delay()` ждал бы по-настоящему и виртуальное время не работало — тест с `delay(10_000)` реально висел бы десять секунд.",
+                "how_it_should_be": "`Dispatchers.Default` не должен хардкодиться в тестируемом коде; в тесте его подменяют на `TestDispatcher`, а `runTest` по умолчанию даёт `StandardTestDispatcher`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`StandardTestDispatcher` — дочерние корутины стартуют немедленно и не требуют прокрутки",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя `StandardTestDispatcher` названо верно, но описание поведения перепутано: на самом деле он именно откладывает запуск дочерних корутин, а не стартует их немедленно.",
+                "source_of_confusion": "Здесь подменён не диспетчер, а его поведение — кажется логичным, что «стандартный» диспетчер ведёт себя «просто и сразу», тогда как eager-поведение — это про `UnconfinedTestDispatcher`.",
+                "if_it_were_true": "Будь это правдой, пример с `vm.startBackgroundWork()` проходил бы без `advanceUntilIdle()` — фоновый `launch` выполнялся бы сразу, и флаг `isDone` был бы true немедленно.",
+                "how_it_should_be": "`StandardTestDispatcher` планирует, но не выполняет дочерние корутины сразу; чтобы их прогнать, нужен `advanceUntilIdle()`, `advanceTimeBy()` или `runCurrent()`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "При тестировании `Flow` через Turbine: какой вызов внутри блока `test { }` дожидается следующего эмитированного значения и возвращает его?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Внутри блока `test { }` дождаться следующего эмитированного значения и вернуть его позволяет вызов `awaitComplete()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`awaitComplete()` дожидается нормального завершения потока (события complete) и ничего не возвращает — он лишь проверяет, что Flow закрылся без ошибки.",
+                "source_of_confusion": "Обе функции начинаются с `await` и обе ожидают событие потока, поэтому их легко перепутать; в примере они стоят рядом — несколько `awaitItem()`, а в конце `awaitComplete()`.",
+                "if_it_were_true": "Тогда после `awaitComplete()` можно было бы делать `assertEquals(value, awaitComplete())`, и завершение потока несло бы полезное значение — но событие complete по своей природе пустое.",
+                "how_it_should_be": "Значение достаёт `awaitItem()`; `awaitComplete()` ставят последним, чтобы убедиться, что после ожидаемых элементов поток завершился."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Внутри блока `test { }` дождаться следующего эмитированного значения и вернуть его позволяет вызов `awaitError()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`awaitError()` дожидается аварийного завершения потока и возвращает выброшенное исключение — его применяют, когда проверяют, что Flow упал с конкретной ошибкой.",
+                "source_of_confusion": "`awaitError()` тоже возвращает объект (исключение), что создаёт иллюзию, будто он отдаёт очередное значение потока, как `awaitItem()`.",
+                "if_it_were_true": "Тогда `awaitError()` возвращал бы обычные элементы, и нельзя было бы отличить нормальную эмиссию от ошибки — тест на «поток упал» стал бы неотличим от теста на значения.",
+                "how_it_should_be": "Очередное значение возвращает `awaitItem()`; `awaitError()` оставляют для веток, где ожидается исключение, и сравнивают тип/сообщение полученного throwable."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Внутри блока `test { }` дождаться следующего эмитированного значения и вернуть его позволяет вызов `expectNoEvents()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`expectNoEvents()` утверждает обратное — что на текущий момент никаких эмиссий, завершения или ошибки не было; он ничего не возвращает и падает, если событие всё же пришло.",
+                "source_of_confusion": "Функция тоже относится к API Turbine внутри `test { }` и работает с теми же событиями потока, поэтому её роль легко спутать с получением значения.",
+                "if_it_were_true": "Тогда `expectNoEvents()` возвращал бы следующее значение, и assert «эмиссий пока нет» был бы невозможен — а именно эта проверка нужна, чтобы убедиться, что поток молчит до триггера.",
+                "how_it_should_be": "Следующее значение достаёт `awaitItem()`; `expectNoEvents()` используют, чтобы зафиксировать отсутствие эмиссий до наступления нужного события."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Внутри блока `test { }` дождаться следующего эмитированного значения и вернуть его позволяет вызов `awaitItem()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`awaitItem()` приостанавливает выполнение до прихода очередной эмиссии потока и возвращает само значение, превращая push-модель Flow в удобную pull-модель suspend-функций. Именно это значение потом сравнивают через `assertEquals`.",
+                "example": "`flowOf(\"один\", \"два\").test { assertEquals(\"один\", awaitItem()); assertEquals(\"два\", awaitItem()); awaitComplete() }` — два `awaitItem()` достают по одному значению, затем `awaitComplete()` фиксирует завершение.",
+                "when_to_apply": "Когда нужно проверить конкретные значения, которые поток эмитит по очереди: элементы холодного `Flow`, последовательность состояний `StateFlow` после событий ViewModel, кадры `SharedFlow`.",
+                "edge_cases": "Если за таймаут (по умолчанию 3 секунды) значение не пришло — `awaitItem()` роняет тест с `AssertionError`. Для бесконечных потоков вроде `StateFlow` после нужных `awaitItem()` подписку обрывают через `cancelAndIgnoreRemainingEvents()`, иначе тест зависнет на хвосте.",
+                "related": "Дополняет `awaitComplete()` (нормальное завершение) и `awaitError()` (исключение); в связке с `runTest` контролирует виртуальное время, делая проверку Flow детерминированной."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В Kotlin-тесте с Testcontainers и JUnit 5 поле контейнера объявлено в `companion object`. Какую аннотацию нужно добавить к `@Container`, чтобы получить один контейнер на весь класс (запуск однократно, переиспользование тестами)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@JvmField` — делает поле `companion object` настоящим static-полем JVM",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@JvmField` убирает геттер/сеттер и экспонирует поле как публичное, но для поля компаньона оно остаётся привязанным к инстансу объекта-компаньона, а не становится static в смысле, нужном JUnit/Testcontainers.",
+                "source_of_confusion": "Оба аннотации из `kotlin.jvm` и оба влияют на то, как поле компаньона выглядит в байткоде JVM, поэтому легко перепутать их роли.",
+                "if_it_were_true": "Если бы `@JvmField` давал static-семантику для JUnit, `@Container` сработал бы как «один контейнер на класс» — но в реальности JUnit не увидит поле как static и попытается обработать его на уровне инстанса.",
+                "how_it_should_be": "Для «один контейнер на класс» нужен именно `@JvmStatic`; `@JvmField` решает другую задачу — прямой доступ к полю без аксессоров."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@JvmStatic` — делает поле `companion object` настоящим static-полем JVM",
+              "correct": true,
+              "sections": {
+                "explanation": "В Kotlin статика живёт в `companion object`, но по умолчанию компилируется в инстанс-поле объекта-компаньона. JUnit 5 и Testcontainers поднимают «один контейнер на класс» только для static-полей, поэтому к `@Container` нужно добавить `@JvmStatic` — иначе контейнер будет пересоздаваться на каждый тест.",
+                "example": "companion object { @Container @JvmStatic val postgres = PostgreSQLContainer(\"postgres:16-alpine\") } — контейнер стартует один раз и переиспользуется всеми тестами класса.",
+                "when_to_apply": "Любой интеграционный тест на JUnit 5, где дорого поднимать контейнер на каждый тест: общая БД/Kafka/Redis на класс, состояние сбрасывается между тестами через TRUNCATE.",
+                "edge_cases": "Если убрать `@JvmStatic` и оставить `@Container` на instance-поле, контейнер пересоздаётся для каждого теста — это валидно, но медленнее. Для одного контейнера на всю JVM заводят абстрактный базовый класс.",
+                "related": "Перекликается с альтернативой `jdbc:tc:postgresql:16-alpine:///dbname` (Spring Boot поднимает контейнер по URL без явного `@Container`) и с паттерном `AbstractPostgresRepositoryTest` в этом проекте."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Static` — делает поле `companion object` настоящим static-полем JVM",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации `@Static` в Kotlin/JUnit/Testcontainers не существует — это выдуманное имя; компилятор такого не знает.",
+                "source_of_confusion": "Слово «static» интуитивно ассоциируется с «один на класс», поэтому кажется, что должна быть и одноимённая аннотация.",
+                "if_it_were_true": "Если бы `@Static` существовала и давала static-поле, `@Container` поднял бы один контейнер на класс — но такой аннотации нет, код не скомпилируется.",
+                "how_it_should_be": "Правильное имя — `@JvmStatic` из пакета `kotlin.jvm`; именно она превращает поле компаньона в static-поле JVM."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@BeforeAll` — делает поле `companion object` настоящим static-полем JVM",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@BeforeAll` — это JUnit 5 аннотация для метода, который выполняется один раз перед всеми тестами класса; она не имеет отношения к static-семантике поля.",
+                "source_of_confusion": "`@BeforeAll` тоже про «один раз на класс» и в Kotlin её обычно вешают на метод в `companion object` с `@JvmStatic`, поэтому она мелькает рядом с контейнерами.",
+                "if_it_were_true": "Если бы `@BeforeAll` делала поле static, контейнер запускался бы один раз на класс — но она применяется к методам, а не к полям, и на поле просто не сработает.",
+                "how_it_should_be": "Для static-поля контейнера нужен `@JvmStatic`; `@BeforeAll` уместна для метода однократной инициализации, и сама требует `@JvmStatic` в Kotlin."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
