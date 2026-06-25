@@ -604,6 +604,56 @@
     syncFont();
   }
 
+  // Вкладки /settings (Сессия | Оформление | Данные). PE: tablist скрыт без JS,
+  // здесь раскрываем и ставим .js-tabs на <body> (CSS прячет неактивные панели).
+  // Полный ARIA tabs-паттерн: roving tabindex, ←→↑↓/Home/End, aria-selected.
+  // Последний раздел запоминаем в localStorage (по умолчанию — Сессия).
+  function initSettingsTabs() {
+    const tablist = document.getElementById('settings-tablist');
+    if (!tablist) return;
+    const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
+    if (!tabs.length) return;
+    const panels = tabs.map((t) => document.getElementById(t.getAttribute('aria-controls')));
+    if (panels.some((p) => !p)) return;
+
+    document.body.classList.add('js-tabs');
+    tablist.classList.remove('hidden');
+
+    const STORAGE_KEY = 'settingsTab';
+    const activate = (idx, focusTab) => {
+      tabs.forEach((t, i) => {
+        const on = i === idx;
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        t.tabIndex = on ? 0 : -1;
+        panels[i].classList.toggle('is-active', on);
+      });
+      if (focusTab) tabs[idx].focus();
+      try { localStorage.setItem(STORAGE_KEY, tabs[idx].id); } catch (e) { /* приватный режим */ }
+    };
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => activate(i, false));
+      tab.addEventListener('keydown', (e) => {
+        let idx = -1;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') idx = (i + 1) % tabs.length;
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') idx = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') idx = 0;
+        else if (e.key === 'End') idx = tabs.length - 1;
+        if (idx < 0) return;
+        e.preventDefault();
+        activate(idx, true);
+      });
+    });
+
+    // Восстанавливаем последнюю вкладку (или первую — Сессия).
+    let initial = 0;
+    try {
+      const savedIdx = tabs.findIndex((t) => t.id === localStorage.getItem(STORAGE_KEY));
+      if (savedIdx >= 0) initial = savedIdx;
+    } catch (e) { /* приватный режим */ }
+    activate(initial, false);
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     hydrateProgressBarsFromData();
     document.querySelectorAll('.btn-favorite').forEach((button) => {
@@ -618,6 +668,7 @@
     initResultPageExtraAnalysis();
     initExportButtons();
     initPersonalization();
+    initSettingsTabs();
     initDangerousFormGuard();
     initSubmitOnceGuard();
     initFlashcardShortcuts();

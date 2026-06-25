@@ -588,6 +588,16 @@ html[data-design] .focus-question {
   padding-bottom: var(--space-5);
   border-bottom: var(--rule-weight) solid var(--color-border-primary);
   text-wrap: balance;
+  /* Одинаковый размер «окна вопроса» (прямая просьба пользователя). Резервируем
+     место под --focus-question-lines строк героя, чтобы короткий и длинный вопрос
+     давали одинаковый вертикальный след: блок вариантов начинается на одной и той
+     же высоте и не прыгает при переходе между вопросами. em → масштаб вместе с
+     размером шрифта/scale; вопросы длиннее резерва растут (текст не обрезаем).
+     Текст прижат к верху (читаем сверху вниз), короткий вопрос оставляет
+     воздушный зазор до подчёркивания. box-sizing border-box → min-height учитывает
+     padding-bottom + бордюр. */
+  box-sizing: border-box;
+  min-height: calc(var(--focus-question-lines, 2) * var(--line-height-tight) * 1em + var(--space-5) + var(--rule-weight));
 }
 
 /* Код-блок — нативный <details> (PE: раскрытие без JS) */
@@ -1036,25 +1046,78 @@ html[data-design] .empty-actions { display: flex; gap: var(--space-3); justify-c
    Гейт под .settings-page, чтобы не задеть .app-layout на ещё не мигрированных
    страницах (stats/result, если используют).
    ========================================================================== */
-html[data-design] .settings-page .app-layout {
-  display: block; grid-template-columns: none;
-  max-width: var(--max-width-settings); margin: 0 auto; padding: 0; gap: 0;
-}
-html[data-design] .settings-page .main-content,
-html[data-design] .settings-page .settings-content { width: auto; max-width: none; margin: 0; padding: 0; }
+/* --------------------------------------------------------------------------
+   Вкладочный каркас (редизайн 2026-06-25). Прежняя одноколоночная стопка из 4
+   разнородных карточек давала ~3.6 экрана вертикального скролла и «кашу»
+   (прямая претензия пользователя). Теперь — ARIA-вкладки: Сессия | Оформление |
+   Данные, видна одна за раз. Структура/ID форм сохранены (relayout, не смена
+   поведения). PE: tablist скрыт без JS, app.js (initSettingsTabs) раскрывает его
+   и ставит .js-tabs на <body> → панели переключаемы; без JS все три в стопке.
+   -------------------------------------------------------------------------- */
+html[data-design] .settings-page .settings-shell { max-width: var(--max-width-settings); margin: 0 auto; }
 
-/* Карточки-секции: убираем rail-хром, делаем editorial-блоки */
-html[data-design] .settings-page .control-card,
-html[data-design] .settings-page .card {
-  width: auto; max-width: none; position: static;
-  background: transparent; border: 0; border-radius: 0;
-  box-shadow: none; backdrop-filter: none; padding: 0; margin: 0 0 var(--space-7);
+/* Tablist — нижняя линейка с акцент-подчёркиванием активной вкладки (editorial). */
+html[data-design] .settings-page .settings-tablist {
+  display: flex; flex-wrap: wrap; gap: var(--space-1);
+  margin: 0 0 var(--space-7);
+  border-bottom: var(--rule-weight) solid var(--color-border-primary);
 }
-/* Кнопка «свернуть-панель» удалена (round-01 C20) — в одной колонке не нужна.
-   #left-sidebar-content просто блок; на >=1200px медиазапрос ниже по исходнику
-   делает его grid'ом (та же специфичность → выигрывает каскадом, без !important,
-   round-01 C10). */
-html[data-design] .settings-page #left-sidebar-content { display: block; }
+html[data-design] .settings-page .settings-tab {
+  appearance: none; -webkit-appearance: none;
+  min-height: 44px; padding: var(--space-3) var(--space-5);
+  font-family: var(--font-family-body); font-size: var(--font-size-md); font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary); background: transparent;
+  border: 0; border-bottom: 2px solid transparent;
+  margin-bottom: calc(-1 * var(--rule-weight)); /* подчёркивание садится на линейку tablist */
+  cursor: pointer; touch-action: manipulation;
+  transition: color var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .settings-page .settings-tab:hover { color: var(--color-text-primary); }
+html[data-design] .settings-page .settings-tab[aria-selected="true"] {
+  color: var(--color-text-primary); border-bottom-color: var(--color-accent-primary);
+}
+html[data-design] .settings-page .settings-tab:focus-visible {
+  outline: none; box-shadow: var(--shadow-focus); border-radius: var(--border-radius-sm);
+}
+
+/* Панели. Без JS все display:block (стопка); под .js-tabs видна только .is-active. */
+html[data-design] .settings-page .settings-panel { margin: 0 0 var(--space-9); }
+html[data-design] .settings-page .settings-panel:last-child { margin-bottom: 0; }
+html[data-design] .settings-page .settings-panel:focus { outline: none; }
+html[data-design] .settings-page.js-tabs .settings-panel { display: none; margin: 0; }
+html[data-design] .settings-page.js-tabs .settings-panel.is-active { display: block; }
+/* Заголовок панели дублирует активную вкладку → под js-tabs прячем визуально,
+   но оставляем в a11y-дереве (sr-only): без JS он — заголовок секции в стопке. */
+html[data-design] .settings-page .settings-panel-title {
+  font-family: var(--font-family-display); font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold); color: var(--color-text-primary);
+  margin: 0 0 var(--space-6); overflow-wrap: break-word; word-break: break-word;
+}
+html[data-design] .settings-page.js-tabs .settings-panel-title {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Лаунчер сессии: Фильтры | Режим в две адаптивные колонки (стопка на узких). */
+html[data-design] .settings-page .session-launcher {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: var(--space-7) var(--space-8); align-items: start;
+}
+html[data-design] .settings-page .launcher-col { min-width: 0; }
+html[data-design] .settings-page .launcher-subtitle {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-secondary); margin: 0 0 var(--space-4);
+}
+html[data-design] .settings-page .launcher-progress { margin-top: var(--space-8); }
+
+/* Сетка персонализации: 7 настроек в адаптивных колонках вместо стопки 1410px. */
+html[data-design] .settings-page .personalization-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: var(--space-6) var(--space-7); align-items: start;
+}
+html[data-design] .settings-page .personalization-grid .personalization-row { margin-bottom: 0; min-width: 0; }
+html[data-design] .settings-page .personalization-row--wide { grid-column: 1 / -1; }
 
 html[data-design] .settings-page .control-section {
   padding: var(--space-6) 0 0; margin: 0;
@@ -1220,6 +1283,8 @@ html[data-design] .settings-page .toast-success { background: var(--color-status
   html[data-design] .settings-page .filters-fields,
   html[data-design] .settings-page .filters-toggles { grid-template-columns: 1fr; }
   html[data-design] .settings-page #session-form button[type="submit"] { width: 100%; }
+  /* Узкие вкладки садятся в один ряд (3 шт), а не переносятся на две строки. */
+  html[data-design] .settings-page .settings-tab { padding-left: var(--space-3); padding-right: var(--space-3); font-size: var(--font-size-base); }
 }
 
 /* ==========================================================================
@@ -2673,44 +2738,10 @@ html[data-design] .summary-tools-status {
     grid-column: 1 / -1; grid-row: 7;
   }
 
-  /* ---- SETTINGS / flow: одна контейнированная колонка (читаемо, без асимметрии).
-     Перебиваем wide-grid обратно в блок; секции — стопкой с hairline-разделителями. */
-  html[data-design][data-layout="flow"] .settings-page #left-sidebar-content { display: block; }
-  html[data-design][data-layout="flow"] .settings-page #left-sidebar-content > .control-section {
-    border-top: var(--rule-weight) solid var(--color-border-primary);
-    padding-top: var(--space-6);
-  }
-  html[data-design][data-layout="flow"] .settings-page #left-sidebar-filters { border-top: 0; padding-top: 0; }
-  html[data-design][data-layout="flow"] .settings-page #left-sidebar-session,
-  html[data-design][data-layout="flow"] .settings-page #left-sidebar-progress { border-left: 0; padding-left: 0; }
-  html[data-design][data-layout="flow"] .settings-page .filters-fields { grid-template-columns: 1fr 1fr; }
-  html[data-design][data-layout="flow"] .settings-page .app-layout:has(> .personalization-card:not(.hidden)) { display: block; }
-
-  /* ---- SETTINGS / split: два сбалансированных столбца — слева вся конфигурация
-     сессии (фильтры+режим+старт стопкой), справа управление данными и оформление.
-     Разводит «настроить и начать» ↔ «настройки приложения». */
-  html[data-design][data-layout="split"] .settings-page .app-layout:has(> .personalization-card:not(.hidden)) {
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    column-gap: var(--space-8);
-    align-items: start;
-  }
-  html[data-design][data-layout="split"] .settings-page .app-layout:has(> .personalization-card:not(.hidden)) > .main-content {
-    grid-column: 1; grid-row: 1 / span 2;
-  }
-  html[data-design][data-layout="split"] .settings-page .app-layout:has(> .personalization-card:not(.hidden)) > .card {
-    grid-column: 2;
-  }
-  /* Внутри control-card левого столбца — секции стопкой (не асимметрия grid),
-     с hairline-разделителями. */
-  html[data-design][data-layout="split"] .settings-page #left-sidebar-content { display: block; }
-  html[data-design][data-layout="split"] .settings-page #left-sidebar-content > .control-section {
-    border-top: var(--rule-weight) solid var(--color-border-primary);
-    padding-top: var(--space-6);
-  }
-  html[data-design][data-layout="split"] .settings-page #left-sidebar-filters { border-top: 0; padding-top: 0; }
-  html[data-design][data-layout="split"] .settings-page #left-sidebar-session,
-  html[data-design][data-layout="split"] .settings-page #left-sidebar-progress { border-left: 0; padding-left: 0; }
+  /* ---- SETTINGS: композицией теперь управляют ВКЛАДКИ (редизайн 2026-06-25), а
+     не ось data-layout. Прежние flow/split-правила настройки таргетили удалённый
+     sidebar-каркас (#left-sidebar-*, .app-layout) и стали мёртвыми — убраны.
+     Ось «Раскладка» по-прежнему меняет композицию страницы «Фокус» (правила выше). */
 }
 
 /* Печать / сохранение в PDF: прячем навигацию/кнопки/хром, лист — чистый.

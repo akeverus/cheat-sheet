@@ -5,17 +5,42 @@
 <a class="skip-link" href="#main-content">Перейти к настройкам</a>
 <header th:replace="~{fragments/header :: header(pageTitle='Настройки сессии', statsPage=false, activePage='settings', showPrimaryNav=true)}"></header>
 <main id="main-content" class="ed-page">
-    <!-- Виджет «Сегодня к повтору»: due серверный, стрик догружает app.js. -->
+    <!-- Виджет «Сегодня к повтору»: due серверный, стрик догружает app.js. Над
+         вкладками — он гланс-герой, не зависит от активного раздела. -->
     <div th:replace="~{fragments/today-widget :: today-hero(stats=${stats})}"></div>
-    <div class="app-layout">
-        <div class="main-content settings-content">
-            <section class="card control-card compact-sidebar" id="left-sidebar-card" aria-label="Панель управления квизом">
-                <!-- Кнопка «Свернуть панель» удалена (round-01 C20): в editorial
-                     панель развёрнута в одну колонку, кнопка всё равно была
-                     display:none, а её JS-обработчик — мёртвым. -->
-                <div id="left-sidebar-content">
-                <div class="control-section" id="left-sidebar-filters">
-                    <h2 class="control-title">Фильтры</h2>
+
+    <!-- Подтверждение сброса банка — на уровне страницы (над вкладками), чтобы было
+         видно независимо от того, какая вкладка активна после редиректа /reset-options. -->
+    <p th:if="${resetDeleted != null}" class="toast toast-success"
+       th:text="'Удалено ' + ${resetDeleted} + ' вариантов. Они будут сгенерированы заново при следующем показе вопросов.'">
+        Удалено N вариантов.
+    </p>
+
+    <!-- Вкладочные настройки. PE: tablist скрыт без JS (.hidden), app.js
+         (initSettingsTabs) раскрывает его и добавляет .js-tabs на shell → панели
+         становятся переключаемыми (видна одна). Без JS .js-tabs нет → все три
+         панели в потоке стопкой со своими заголовками (всё доступно, просто длинно).
+         Так убираем «3.6 экрана скролла»: один раздел за раз. -->
+    <div class="settings-shell" id="settings-shell">
+        <div class="settings-tablist hidden" role="tablist" aria-label="Разделы настроек" id="settings-tablist">
+            <button type="button" class="settings-tab" role="tab" id="tab-session"
+                    aria-controls="panel-session" aria-selected="true" tabindex="0">Сессия</button>
+            <button type="button" class="settings-tab" role="tab" id="tab-appearance"
+                    aria-controls="panel-appearance" aria-selected="false" tabindex="-1">Оформление</button>
+            <button type="button" class="settings-tab" role="tab" id="tab-data"
+                    aria-controls="panel-data" aria-selected="false" tabindex="-1">Данные</button>
+        </div>
+
+        <!-- ============================ ПАНЕЛЬ: СЕССИЯ ============================ -->
+        <section class="settings-panel is-active" role="tabpanel" id="panel-session"
+                 aria-labelledby="tab-session" tabindex="0">
+            <h2 class="settings-panel-title">Сессия</h2>
+
+            <!-- Лаунчер: две колонки — слева фильтры выборки вопросов, справа режим
+                 и запуск. На узких экранах колонки складываются в стопку. -->
+            <div class="session-launcher">
+                <div class="launcher-col" id="launcher-filters">
+                    <h3 class="launcher-subtitle">Фильтры</h3>
                     <form method="get" th:action="@{/settings}" class="filters-form" id="filters-form" data-sidebar-form="filters">
                         <div class="filters-fields">
                             <label class="field">
@@ -72,8 +97,8 @@
                     <p class="control-inline-hint" id="filter-mode-hint">Учебный порядок: от базовых тем к сложным.</p>
                 </div>
 
-                <div class="control-section" id="left-sidebar-session">
-                    <h2 class="control-title">Сессия</h2>
+                <div class="launcher-col" id="launcher-session">
+                    <h3 class="launcher-subtitle">Режим</h3>
                     <form method="post" th:action="@{/start}" class="session-form" id="session-form" data-sidebar-form="session">
                         <input type="hidden" name="topic" th:value="${filter?.topic}">
                         <input type="hidden" name="group" th:value="${selectedGroup}">
@@ -93,10 +118,8 @@
                             </select>
                         </label>
                         <!-- ТРЕНИРОВКА — бесконечный режим без сессии (SessionFlowService.startSession:
-                             TRAINING → clearSession). Раньше поле «Кол-во» и кнопка «Начать сессию»
-                             обещали сессию из N вопросов, а сервер молча игнорировал и то и другое.
-                             app.js (initSessionModeForm) скрывает счётчик и переименовывает CTA
-                             в «Начать тренировку» при TRAINING. Критика round-01 B1. -->
+                             TRAINING → clearSession). app.js (initSessionModeForm) скрывает счётчик
+                             и переименовывает CTA в «Начать тренировку» при TRAINING. -->
                         <label class="field field-inline" id="session-count-field">
                             <span class="field-label">Вопросов:</span>
                             <input type="number" name="count" min="1" max="200" value="20">
@@ -107,48 +130,128 @@
                         <button type="submit" class="btn-finish-small">Завершить текущую сессию</button>
                     </form>
                 </div>
+            </div>
 
-                <div class="control-section" id="left-sidebar-progress">
-                    <h2 class="control-title">Прогресс</h2>
-                    <div class="streak-bar hidden" id="streak-bar" data-streak-bar>
-                        <span class="streak-fire"><svg class="ed-icon" aria-hidden="true"><use href="#i-flame"></use></svg></span>
-                        <span class="streak-days" id="streak-days" data-streak-days>0 дней</span>
-                        <div class="streak-progress">
-                            <div class="streak-progress-fill" id="streak-progress-fill" data-streak-fill></div>
-                        </div>
-                        <span id="streak-count" class="streak-count-text" data-streak-count>0/10</span>
+            <!-- Прогресс: компактная полоса под лаунчером. -->
+            <div class="launcher-progress" id="launcher-progress">
+                <h3 class="launcher-subtitle">Прогресс</h3>
+                <div class="streak-bar hidden" id="streak-bar" data-streak-bar>
+                    <span class="streak-fire"><svg class="ed-icon" aria-hidden="true"><use href="#i-flame"></use></svg></span>
+                    <span class="streak-days" id="streak-days" data-streak-days>0 дней</span>
+                    <div class="streak-progress">
+                        <div class="streak-progress-fill" id="streak-progress-fill" data-streak-fill></div>
                     </div>
-                    <div th:replace="~{fragments/stats-grid :: stats-grid-content(stats=${stats})}"></div>
+                    <span id="streak-count" class="streak-count-text" data-streak-count>0/10</span>
                 </div>
+                <div th:replace="~{fragments/stats-grid :: stats-grid-content(stats=${stats})}"></div>
+            </div>
 
-                <div class="control-section control-section-tips" id="left-sidebar-tips">
-                    <p class="control-inline-hint">После настройки переходи во вкладку «Фокус» и отвечай без отвлечений.</p>
-                </div>
-                </div>
-            </section>
-        </div>
-        <section class="card" aria-labelledby="data-management-title">
-            <h2 id="data-management-title" class="control-title">Управление данными</h2>
+            <p class="control-inline-hint">После настройки переходи во вкладку «Фокус» и отвечай без отвлечений.</p>
+        </section>
 
-            <p th:if="${resetDeleted != null}" class="toast toast-success"
-               th:text="'Удалено ' + ${resetDeleted} + ' вариантов. Они будут сгенерированы заново при следующем показе вопросов.'">
-                Удалено N вариантов.
-            </p>
+        <!-- ========================== ПАНЕЛЬ: ОФОРМЛЕНИЕ ========================== -->
+        <!-- Персонализация — клиентский блок (localStorage через window.__*). Сам
+             #personalization-card скрыт без JS (.hidden) и раскрывается app.js
+             (initPersonalization): без скриптов сегмент-контролы мертвы, поэтому их
+             не показываем. Панель присутствует всегда (под js-tabs прячется как
+             вкладка; без JS — секция «Оформление» в стопке). -->
+        <section class="settings-panel" role="tabpanel" id="panel-appearance"
+                 aria-labelledby="tab-appearance" tabindex="0">
+            <h2 class="settings-panel-title">Оформление</h2>
+            <div class="personalization-card hidden" id="personalization-card" aria-labelledby="tab-appearance">
+                <div class="personalization-grid">
+                    <!-- Дизайн (10 кнопок) — во всю ширину, чтобы сегмент-контрол дышал. -->
+                    <div class="personalization-row personalization-row--wide">
+                        <span class="field-label" id="design-pref-label">Дизайн</span>
+                        <div class="seg-control" role="radiogroup" aria-labelledby="design-pref-label" id="design-pref-control">
+                            <button type="button" class="seg-btn" role="radio" data-design-pref="editorial" aria-checked="false" tabindex="-1">Editorial</button>
+                            <button type="button" class="seg-btn" role="radio" data-design-pref="linear" aria-checked="false" tabindex="-1">Linear</button>
+                            <button type="button" class="seg-btn" role="radio" data-design-pref="swiss" aria-checked="false" tabindex="-1">Swiss</button>
+                            <button type="button" class="seg-btn" role="radio" data-design-pref="notion" aria-checked="false" tabindex="-1">Notion</button>
+                            <button type="button" class="seg-btn" role="radio" data-design-pref="mintlify" aria-checked="false" tabindex="-1">Mintlify</button>
+                            <button type="button" class="seg-btn" role="radio" data-design-pref="broadsheet" aria-checked="false" tabindex="-1">Broadsheet</button>
+                            <button type="button" class="seg-btn" role="radio" data-design-pref="superhuman" aria-checked="false" tabindex="-1">Superhuman</button>
+                            <button type="button" class="seg-btn" role="radio" data-design-pref="stripe" aria-checked="false" tabindex="-1">Stripe</button>
+                            <button type="button" class="seg-btn" role="radio" data-design-pref="claude" aria-checked="false" tabindex="-1">Claude</button>
+                            <button type="button" class="seg-btn" role="radio" data-design-pref="theverge" aria-checked="false" tabindex="-1">The Verge</button>
+                        </div>
+                        <p class="control-inline-hint">Цветовая система и типографика интерфейса. Превью применяется сразу.</p>
+                    </div>
+
+                    <div class="personalization-row">
+                        <span class="field-label" id="theme-pref-label">Тема оформления</span>
+                        <div class="seg-control" role="radiogroup" aria-labelledby="theme-pref-label" id="theme-pref-control">
+                            <button type="button" class="seg-btn" role="radio" data-theme-pref="auto" aria-checked="false" tabindex="-1">Авто</button>
+                            <button type="button" class="seg-btn" role="radio" data-theme-pref="light" aria-checked="false" tabindex="-1">Светлая</button>
+                            <button type="button" class="seg-btn" role="radio" data-theme-pref="dark" aria-checked="false" tabindex="-1">Тёмная</button>
+                        </div>
+                        <p class="control-inline-hint">«Авто» подстраивается под системную тему устройства.</p>
+                    </div>
+
+                    <div class="personalization-row">
+                        <span class="field-label" id="font-scale-label">Размер шрифта</span>
+                        <div class="font-stepper" role="group" aria-labelledby="font-scale-label">
+                            <button type="button" class="btn secondary-btn font-step-btn" id="font-decrease" aria-label="Уменьшить размер шрифта">A−</button>
+                            <span class="font-scale-value" id="font-scale-value" role="status" aria-live="polite">100%</span>
+                            <button type="button" class="btn secondary-btn font-step-btn" id="font-increase" aria-label="Увеличить размер шрифта">A+</button>
+                            <button type="button" class="btn secondary-btn font-reset-btn" id="font-reset">Сбросить</button>
+                        </div>
+                        <p class="control-inline-hint">Масштабирует весь интерфейс. Сохраняется на устройстве.</p>
+                    </div>
+
+                    <div class="personalization-row">
+                        <span class="field-label" id="layout-pref-label">Раскладка</span>
+                        <div class="seg-control" role="radiogroup" aria-labelledby="layout-pref-label" id="layout-pref-control">
+                            <button type="button" class="seg-btn" role="radio" data-layout-pref="flow" aria-checked="false" tabindex="-1">Поток</button>
+                            <button type="button" class="seg-btn" role="radio" data-layout-pref="split" aria-checked="false" tabindex="-1">Два&nbsp;пейна</button>
+                            <button type="button" class="seg-btn" role="radio" data-layout-pref="grid" aria-checked="false" tabindex="-1">Сетка</button>
+                        </div>
+                        <p class="control-inline-hint">Композиция страницы «Фокус»: поток, два пейна или сетка.</p>
+                    </div>
+
+                    <div class="personalization-row">
+                        <span class="field-label" id="reading-width-pref-label">Ширина чтения</span>
+                        <div class="seg-control" role="radiogroup" aria-labelledby="reading-width-pref-label" id="reading-width-pref-control">
+                            <button type="button" class="seg-btn" role="radio" data-reading-width-pref="standard" aria-checked="false" tabindex="-1">Стандартная</button>
+                            <button type="button" class="seg-btn" role="radio" data-reading-width-pref="wide" aria-checked="false" tabindex="-1">Широкая</button>
+                        </div>
+                        <p class="control-inline-hint">Длина строки в текстовых блоках (ответы, пояснения).</p>
+                    </div>
+
+                    <div class="personalization-row">
+                        <span class="field-label" id="density-pref-label">Плотность</span>
+                        <div class="seg-control" role="radiogroup" aria-labelledby="density-pref-label" id="density-pref-control">
+                            <button type="button" class="seg-btn" role="radio" data-density-pref="spacious" aria-checked="false" tabindex="-1">Просторно</button>
+                            <button type="button" class="seg-btn" role="radio" data-density-pref="compact" aria-checked="false" tabindex="-1">Компактно</button>
+                        </div>
+                        <p class="control-inline-hint">Сжатость отступов. Размер текста и кнопок не меняется.</p>
+                    </div>
+
+                    <div class="personalization-row">
+                        <span class="field-label" id="motion-pref-label">Движение</span>
+                        <div class="seg-control" role="radiogroup" aria-labelledby="motion-pref-label" id="motion-pref-control">
+                            <button type="button" class="seg-btn" role="radio" data-motion-pref="auto" aria-checked="false" tabindex="-1">Авто</button>
+                            <button type="button" class="seg-btn" role="radio" data-motion-pref="on" aria-checked="false" tabindex="-1">Включено</button>
+                            <button type="button" class="seg-btn" role="radio" data-motion-pref="off" aria-checked="false" tabindex="-1">Выключено</button>
+                        </div>
+                        <p class="control-inline-hint">«Авто» следует системной настройке «Уменьшить движение».</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================ ПАНЕЛЬ: ДАННЫЕ ============================ -->
+        <section class="settings-panel" role="tabpanel" id="panel-data"
+                 aria-labelledby="tab-data" tabindex="0">
+            <h2 class="settings-panel-title">Данные</h2>
 
             <!-- /export защищён admin-токеном через ЗАГОЛОВОК X-Admin-Token
-                 (SecurityConfig). Обычная <a>-навигация заголовок отправить не
-                 может — раньше клик всегда отдавал raw-JSON 403. Поэтому кнопки,
-                 а не ссылки: app.js (initExportButtons) делает fetch с заголовком,
-                 спрашивает токен один раз и кэширует, ответ скачивает как файл.
-                 Блок скрыт без JS (.hidden) — без скриптов экспорт физически
-                 невозможен (заголовок не отправить), мёртвый контрол не нужен. -->
+                 (SecurityConfig). Обычная <a>-навигация заголовок не отправит → кнопки,
+                 а не ссылки: app.js (initExportButtons) делает fetch с заголовком.
+                 Блок скрыт без JS (.hidden) — без скриптов экспорт невозможен. -->
             <div class="data-export-block hidden" id="data-export-block">
                 <p class="control-inline-hint">Экспорт прогресса и статистики:</p>
                 <div class="data-export-actions">
-                    <!-- aria-label начинается с видимого текста («Экспорт JSON»/«Экспорт CSV»):
-                         WCAG 2.5.3 Label in Name — голосовой пользователь произносит видимую
-                         надпись и попадает в имя. Раньше имя было «Экспорт прогресса в JSON»
-                         (видимого «Экспорт JSON» не содержало). Критика round-01 C32. -->
                     <button type="button" class="btn secondary-btn" data-export-format="json" aria-label="Экспорт JSON — прогресс и статистика">Экспорт JSON ↓</button>
                     <button type="button" class="btn secondary-btn" data-export-format="csv" aria-label="Экспорт CSV — прогресс и статистика">Экспорт CSV ↓</button>
                 </div>
@@ -161,92 +264,8 @@
                         data-confirm="Удалить все сгенерированные варианты? Они будут перегенерированы заново. Это нельзя отменить.">Сбросить банк вариантов</button>
             </form>
         </section>
-
-        <!-- Персонализация: тема (авто/светлая/тёмная) + размер шрифта. Чисто
-             клиентский блок (localStorage через window.__theme/__fontScale), поэтому
-             скрыт без JS (.hidden) — app.js (initPersonalization) раскрывает и
-             оживляет контролы. PE: без скриптов мёртвых кнопок не остаётся. -->
-        <section class="card personalization-card hidden" id="personalization-card" aria-labelledby="personalization-title">
-            <h2 id="personalization-title" class="control-title">Персонализация</h2>
-
-            <div class="personalization-row">
-                <span class="field-label" id="layout-pref-label">Раскладка</span>
-                <div class="seg-control" role="radiogroup" aria-labelledby="layout-pref-label" id="layout-pref-control">
-                    <button type="button" class="seg-btn" role="radio" data-layout-pref="flow" aria-checked="false" tabindex="-1">Поток</button>
-                    <button type="button" class="seg-btn" role="radio" data-layout-pref="split" aria-checked="false" tabindex="-1">Два&nbsp;пейна</button>
-                    <button type="button" class="seg-btn" role="radio" data-layout-pref="grid" aria-checked="false" tabindex="-1">Сетка</button>
-                </div>
-                <p class="control-inline-hint">Композиция страниц «Фокус» и «Настройки». Поток — одна колонка чтения (ответы во всю ширину). Два пейна — вопрос слева, ответы справа. Сетка — плотная раскладка (ответы 2×2, панель настроек). Применяется сразу ко всем страницам.</p>
-            </div>
-
-            <div class="personalization-row">
-                <span class="field-label" id="design-pref-label">Дизайн</span>
-                <div class="seg-control" role="radiogroup" aria-labelledby="design-pref-label" id="design-pref-control">
-                    <button type="button" class="seg-btn" role="radio" data-design-pref="editorial" aria-checked="false" tabindex="-1">Editorial</button>
-                    <button type="button" class="seg-btn" role="radio" data-design-pref="linear" aria-checked="false" tabindex="-1">Linear</button>
-                    <button type="button" class="seg-btn" role="radio" data-design-pref="swiss" aria-checked="false" tabindex="-1">Swiss</button>
-                    <button type="button" class="seg-btn" role="radio" data-design-pref="notion" aria-checked="false" tabindex="-1">Notion</button>
-                    <button type="button" class="seg-btn" role="radio" data-design-pref="mintlify" aria-checked="false" tabindex="-1">Mintlify</button>
-                    <button type="button" class="seg-btn" role="radio" data-design-pref="broadsheet" aria-checked="false" tabindex="-1">Broadsheet</button>
-                    <button type="button" class="seg-btn" role="radio" data-design-pref="superhuman" aria-checked="false" tabindex="-1">Superhuman</button>
-                    <button type="button" class="seg-btn" role="radio" data-design-pref="stripe" aria-checked="false" tabindex="-1">Stripe</button>
-                    <button type="button" class="seg-btn" role="radio" data-design-pref="claude" aria-checked="false" tabindex="-1">Claude</button>
-                    <button type="button" class="seg-btn" role="radio" data-design-pref="theverge" aria-checked="false" tabindex="-1">The Verge</button>
-                </div>
-                <p class="control-inline-hint">Editorial — тёплый ivory-пергамент с терракотой (по умолчанию). Linear — индиго-акцент на чистом холсте, «командный пульт» (ярче в тёмной теме). Swiss — ахроматический графит с алым на белом, без теней. Notion — спокойный документ-интерфейс с синим акцентом. Mintlify — docs-стиль с мятным акцентом и мягкими пилюлями. Broadsheet — cream-публикация с серифными заголовками и винно-красным акцентом. Superhuman — премиальный крем со светящимся аметистом, тёмная тема — «mysteria purple». Stripe — инженерная чистота, deep-navy и фиолетовый бренд, сине-тинтовые тени. Claude — тёплый пергамент с холодным focus-кольцом, near-black тёмная тема. The Verge — неон «hazard-tape»: мята и ультрафиолет, пилюли-карты, тяжёлый дисплей.</p>
-            </div>
-
-            <div class="personalization-row">
-                <span class="field-label" id="theme-pref-label">Тема оформления</span>
-                <div class="seg-control" role="radiogroup" aria-labelledby="theme-pref-label" id="theme-pref-control">
-                    <button type="button" class="seg-btn" role="radio" data-theme-pref="auto" aria-checked="false" tabindex="-1">Авто</button>
-                    <button type="button" class="seg-btn" role="radio" data-theme-pref="light" aria-checked="false" tabindex="-1">Светлая</button>
-                    <button type="button" class="seg-btn" role="radio" data-theme-pref="dark" aria-checked="false" tabindex="-1">Тёмная</button>
-                </div>
-                <p class="control-inline-hint">«Авто» подстраивается под системную тему устройства и меняется вместе с ней.</p>
-            </div>
-
-            <div class="personalization-row">
-                <span class="field-label" id="font-scale-label">Размер шрифта</span>
-                <div class="font-stepper" role="group" aria-labelledby="font-scale-label">
-                    <button type="button" class="btn secondary-btn font-step-btn" id="font-decrease" aria-label="Уменьшить размер шрифта">A−</button>
-                    <span class="font-scale-value" id="font-scale-value" role="status" aria-live="polite">100%</span>
-                    <button type="button" class="btn secondary-btn font-step-btn" id="font-increase" aria-label="Увеличить размер шрифта">A+</button>
-                    <button type="button" class="btn secondary-btn font-reset-btn" id="font-reset">Сбросить</button>
-                </div>
-                <p class="control-inline-hint">Масштабирует весь интерфейс. Выбор сохраняется на этом устройстве.</p>
-            </div>
-
-            <div class="personalization-row">
-                <span class="field-label" id="reading-width-pref-label">Ширина чтения</span>
-                <div class="seg-control" role="radiogroup" aria-labelledby="reading-width-pref-label" id="reading-width-pref-control">
-                    <button type="button" class="seg-btn" role="radio" data-reading-width-pref="standard" aria-checked="false" tabindex="-1">Стандартная</button>
-                    <button type="button" class="seg-btn" role="radio" data-reading-width-pref="wide" aria-checked="false" tabindex="-1">Широкая</button>
-                </div>
-                <p class="control-inline-hint">Длина строки в текстовых блоках (ответы, пояснения). «Стандартная» держит комфортные ~72 символа на строку. «Широкая» растягивает текст шире — больше видно на крупных экранах. Не путать с раскладкой: та меняет композицию страницы, эта — только длину строки.</p>
-            </div>
-
-            <div class="personalization-row">
-                <span class="field-label" id="density-pref-label">Плотность интерфейса</span>
-                <div class="seg-control" role="radiogroup" aria-labelledby="density-pref-label" id="density-pref-control">
-                    <button type="button" class="seg-btn" role="radio" data-density-pref="spacious" aria-checked="false" tabindex="-1">Просторно</button>
-                    <button type="button" class="seg-btn" role="radio" data-density-pref="compact" aria-checked="false" tabindex="-1">Компактно</button>
-                </div>
-                <p class="control-inline-hint">Отступы и плотность вёрстки. «Просторно» — воздушный ритм по умолчанию. «Компактно» сжимает отступы и паддинги — больше контента помещается на экране, меньше прокрутки. Размер текста и кнопок не меняется.</p>
-            </div>
-
-            <div class="personalization-row">
-                <span class="field-label" id="motion-pref-label">Движение</span>
-                <div class="seg-control" role="radiogroup" aria-labelledby="motion-pref-label" id="motion-pref-control">
-                    <button type="button" class="seg-btn" role="radio" data-motion-pref="auto" aria-checked="false" tabindex="-1">Авто</button>
-                    <button type="button" class="seg-btn" role="radio" data-motion-pref="on" aria-checked="false" tabindex="-1">Включено</button>
-                    <button type="button" class="seg-btn" role="radio" data-motion-pref="off" aria-checked="false" tabindex="-1">Выключено</button>
-                </div>
-                <p class="control-inline-hint">Анимации и плавные переходы. «Авто» следует системной настройке «Уменьшить движение». «Выключено» убирает все анимации (меньше отвлечений, вестибулярный комфорт). «Включено» оставляет движение, даже если система просит его уменьшить.</p>
-            </div>
-        </section>
     </div>
 </main>
-<script th:src="@{/js/app.js(v=42)}"></script>
+<script th:src="@{/js/app.js(v=43)}"></script>
 </body>
 </html>

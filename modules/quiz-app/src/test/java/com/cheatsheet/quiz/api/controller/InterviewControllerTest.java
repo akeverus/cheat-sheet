@@ -166,17 +166,16 @@ class InterviewControllerTest {
                 .getResponse();
         assertThat(result.getStatus()).isEqualTo(200);
         String body = result.getContentAsString();
-
-        assertThat(body).contains("id=\"left-sidebar-card\"");
-        assertThat(body).contains("id=\"left-sidebar-filters\"");
-        assertThat(body).contains("id=\"left-sidebar-session\"");
-        assertThat(body).contains("id=\"left-sidebar-progress\"");
+        // Редизайн на вкладки: лаунчер сессии живёт в панели «Сессия».
+        assertThat(body).contains("id=\"panel-session\"");
+        assertThat(body).contains("id=\"filters-form\"");
+        assertThat(body).contains("id=\"session-form\"");
         assertThat(body).contains("Применить");
         assertThat(body).contains("Начать сессию");
     }
 
     @Test
-    void settingsSidebarStructureKeepsAccessibilityContract() throws Exception {
+    void settingsTabStructureKeepsAccessibilityContract() throws Exception {
         String body = mockMvc.perform(get("/settings"))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -185,12 +184,15 @@ class InterviewControllerTest {
 
         assertThat(body).contains("type=\"button\"");
         assertThat(body).contains("id=\"main-content\"");
-        assertThat(body).contains("class=\"app-layout\"");
-        assertThat(body).contains("class=\"main-content settings-content\"");
-        assertThat(body).contains("id=\"left-sidebar-content\"");
-        assertThat(body).contains("id=\"left-sidebar-card\"");
-        // Тоггл «свернуть панель» удалён (round-01 C20): был мёртвым контролом
-        // (display:none + мёртвый JS-обработчик). Контент панели всегда виден.
+        // Вкладки с корректным ARIA: tablist + три tabpanel.
+        assertThat(body).contains("role=\"tablist\"");
+        assertThat(body).contains("role=\"tab\"");
+        assertThat(body).contains("role=\"tabpanel\"");
+        assertThat(body).contains("aria-controls=\"panel-session\"");
+        assertThat(body).contains("id=\"panel-appearance\"");
+        assertThat(body).contains("id=\"panel-data\"");
+        // Старый sidebar-каркас и мёртвый тоггл сворачивания убраны редизайном.
+        assertThat(body).doesNotContain("id=\"left-sidebar-card\"");
         assertThat(body).doesNotContain("id=\"sidebar-collapse-toggle\"");
     }
 

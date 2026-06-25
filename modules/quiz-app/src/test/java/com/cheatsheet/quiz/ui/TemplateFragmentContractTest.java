@@ -122,16 +122,29 @@ class TemplateFragmentContractTest {
     }
 
     @Test
-    void settingsTemplateKeepsSidebarStructure() throws IOException {
+    void settingsTemplateUsesTabStructure() throws IOException {
         String settings = readTemplate("templates/settings.html");
-        assertThat(settings).contains("id=\"left-sidebar-card\"");
-        assertThat(settings).contains("type=\"button\"");
-        assertThat(settings).contains("id=\"left-sidebar-content\"");
+        // Редизайн: 4-карточная стопка заменена вкладками (Сессия | Оформление |
+        // Данные). Один раздел за раз вместо ~3.6 экрана скролла. PE: tablist скрыт
+        // без JS, app.js (initSettingsTabs) раскрывает + ставит .js-tabs.
         assertThat(settings).contains("id=\"main-content\"");
-        assertThat(settings).contains("class=\"app-layout\"");
-        assertThat(settings).contains("class=\"main-content settings-content\"");
-        // Тоггл сворачивания панели удалён (round-01 C20): мёртвый контрол
-        // (display:none + мёртвый обработчик в app.js). Структура панели цела.
+        assertThat(settings).contains("id=\"settings-tablist\"");
+        assertThat(settings).contains("role=\"tablist\"");
+        assertThat(settings).contains("class=\"settings-tablist hidden\"");
+        assertThat(settings).contains("type=\"button\"");
+        // Три панели-tabpanel.
+        assertThat(settings).contains("id=\"panel-session\"");
+        assertThat(settings).contains("id=\"panel-appearance\"");
+        assertThat(settings).contains("id=\"panel-data\"");
+        assertThat(settings).contains("role=\"tabpanel\"");
+        // Функциональные ID форм/контролов сохранены (relayout, не смена поведения).
+        assertThat(settings).contains("id=\"filters-form\"");
+        assertThat(settings).contains("id=\"session-form\"");
+        assertThat(settings).contains("id=\"session-mode-select\"");
+        assertThat(settings).contains("id=\"personalization-card\"");
+        assertThat(settings).contains("id=\"data-export-block\"");
+        // Старый sidebar-каркас и его мёртвый тоггл сворачивания убраны редизайном.
+        assertThat(settings).doesNotContain("id=\"left-sidebar-card\"");
         assertThat(settings).doesNotContain("id=\"sidebar-collapse-toggle\"");
     }
 

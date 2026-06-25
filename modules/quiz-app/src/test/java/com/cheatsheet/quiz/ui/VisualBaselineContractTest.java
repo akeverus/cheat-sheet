@@ -96,7 +96,8 @@ class VisualBaselineContractTest {
                 "title=" + firstGroup(body, "<title>([^<]+)</title>"),
                 "bodyClass=" + firstGroup(body, "<body class=\"([^\"]+)\""),
                 "navLabels=" + String.join("|", allGroups(body, "<nav[^>]*aria-label=\"([^\"]+)\"")),
-                "hasSidebarCard=" + body.contains("id=\"left-sidebar-card\""),
+                "hasTablist=" + body.contains("id=\"settings-tablist\""),
+                "hasSessionPanel=" + body.contains("id=\"panel-session\""),
                 "hasSidebarToggle=" + body.contains("id=\"sidebar-collapse-toggle\""),
                 "hasMainContent=" + body.contains("id=\"main-content\""),
                 "hasSessionModeSelect=" + body.contains("name=\"mode\"")
