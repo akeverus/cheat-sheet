@@ -935,6 +935,18 @@ html[data-design] #extra-analysis-toggle-result[aria-disabled="true"] { opacity:
    карты и не сплющиваются в узкую прозо-колонку. */
 html[data-design] .markdown-content { font-size: var(--font-size-md); line-height: var(--line-height-relaxed); }
 html[data-design] .markdown-content > *:first-child { margin-top: 0; }
+/* Защита от горизонтального переполнения на узких экранах. Длинный неразрывный
+   токен в ПРОЗЕ — FQCN (org.springframework.boot.autoconfigure...), package-path,
+   URL — при overflow-wrap:normal расталкивает вёрстку вширь: на 375px любой такой
+   токен даёт ~390-750px горизонтального скролла во ВСЕХ дизайнах (замерено live в
+   .markdown-content/.focus-question/#interview-options). break-word ломает токен
+   ТОЛЬКО когда он иначе вышел бы за строку — обычные слова не трогает. Инлайн-`code`
+   уже защищён (overflow-wrap:anywhere, см. выше), блочный <pre> скроллится
+   (overflow-x:auto) — здесь добираем именно прозу/заголовок/вариант. overflow-wrap
+   наследуется, поэтому на контейнере покрывает и вложенные p/li/td/span. */
+html[data-design] .markdown-content,
+html[data-design] .focus-question,
+html[data-design] #interview-options label { overflow-wrap: break-word; }
 html[data-design] .markdown-content table { width: 100%; border-collapse: collapse; margin: var(--space-4) 0; font-size: var(--font-size-sm); display: block; overflow-x: auto; }
 html[data-design] .markdown-content th, html[data-design] .markdown-content td { border: var(--rule-weight) solid var(--color-border-primary); padding: var(--space-2) var(--space-3); text-align: left; }
 html[data-design] .markdown-content th { background: var(--color-bg-tertiary); font-family: var(--font-family-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-wide); }
