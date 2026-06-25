@@ -548,3 +548,4 @@ public class OrderService {
 - [Flyway / Liquibase](../../databases/flyway-liquibase-interview.md) — миграции схемы (обязательны для Spring Data JDBC)
 - [DDD](../../architecture/ddd-interview.md) — агрегаты, bounded contexts, aggregate root
 - [Шпаргалка: Spring Data JDBC: Полное руководство по](../../../frameworks/java-frameworks/spring/spring-data-jdbc.md) — теория
+- [jOOQ](../../databases/jooq-interview.md) — type-safe SQL-DSL поверх plain SQL, более мощная альтернатива `@Query` в Spring Data JDBC

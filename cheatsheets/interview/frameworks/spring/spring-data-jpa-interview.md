@@ -2661,3 +2661,4 @@ ScrollPosition next = window.positionAt(window.size() - 1); // курсор на
 - [Spring Cloud](spring-cloud-interview.md)
 - [Spring Framework](spring-framework-interview.md)
 - [Шпаргалка: Spring Data JPA/Hibernate](../../../frameworks/java-frameworks/spring/spring-data-jpa.md) — теория
+- [jOOQ](../../databases/jooq-interview.md) — типобезопасный SQL-DSL как альтернатива ORM, часто комбинируется с JPA для сложных запросов

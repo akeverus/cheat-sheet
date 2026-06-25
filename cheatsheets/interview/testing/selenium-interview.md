@@ -616,3 +616,4 @@ assertThat(response.jsonPath().getList("items")).hasSize(5);
 - [Contract Testing](contract-testing-interview.md) — альтернатива UI-тестам для contract validation
 - [Performance Testing](../performance/performance-testing-interview.md) — UI performance через Selenium + Lighthouse
 - [Chaos Engineering](chaos-engineering-interview.md) — отдельная область тестирования устойчивости
+- [Cucumber и BDD](cucumber-bdd-interview.md) — Gherkin-сценарии, step definitions которых под капотом дёргают `Selenium WebDriver` (см. Q13)

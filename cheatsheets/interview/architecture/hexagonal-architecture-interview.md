@@ -2327,3 +2327,4 @@ public Mono<OrderId> placeOrder(PlaceOrderCommand cmd) {
 - [Паттерны масштабируемости](scalability-patterns-interview.md) -- горизонтальное масштабирование гексагональных сервисов
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) -- практическая реализация гексагональной архитектуры со Spring IoC, Spring Data, Spring Web
 - [Шпаргалка: Hexagonal Architecture (Ports & Adapters](../../architecture/hexagonal-architecture.md) — теория
+- [ArchUnit](../testing/archunit-interview.md) — автоматическая проверка правил гексагона через `onionArchitecture()` и кастомные `ArchCondition` (см. Q42)

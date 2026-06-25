@@ -391,3 +391,4 @@ Spring Modulith — это **технический механизм для гр
 - [Spring Testing](spring-testing-interview.md) — @ApplicationModuleTest изоляция при тестировании
 - [Clean Architecture](../../architecture/clean-architecture-interview.md) — separation of concerns на уровне пакетов
 - [Spring Kafka](spring-kafka-interview.md) — Kafka как замена ApplicationEvents при переходе к микросервисам
+- [ArchUnit](../../testing/archunit-interview.md) — движок проверки модульных границ, который Spring Modulith использует под капотом в `verify()`

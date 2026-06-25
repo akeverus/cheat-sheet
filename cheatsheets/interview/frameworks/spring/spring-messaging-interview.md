@@ -681,3 +681,4 @@ Kafka подходит когда:
 - [Event-Driven Patterns](../../architecture/event-driven-patterns-interview.md) — паттерны асинхронной коммуникации
 - [Resilience4j](resilience4j-interview.md) — circuit breaker для message consumers
 - [Spring Retry](spring-retry-interview.md) — retry для message listeners
+- [JMS и ActiveMQ](../../messaging/jms-activemq-interview.md) — низкоуровневый JMS-API и брокер ActiveMQ, поверх которого работает Spring JMS (`@JmsListener`, `JmsTemplate`)

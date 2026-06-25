@@ -724,3 +724,4 @@ void validateUserCreation(String email, int expectedStatus) {
 - [Test Automation](test-automation-interview.md) — CI/CD integration
 - [Unit Testing](unit-testing-interview.md) — различия с юнит-тестированием
 - [Selenium WebDriver](selenium-interview.md) — локаторы (By), ожидания (implicit/explicit/fluent), Page Object Model,…
+- [Cucumber и BDD](cucumber-bdd-interview.md) — REST Assured как проверка API внутри step definitions BDD-сценариев; общий словарь given/when/then
