@@ -225,7 +225,7 @@ updated: "2026-04-20"
 
 ## frameworks/spring
 
-- [Вопросы на собеседовании: `Spring AOP`](frameworks/spring/spring-aop-interview.md)
+- [Вопросы на собеседовании: `Spring AOP`](frameworks/spring/spring-aop-interview.md) — `22` вопросов
 - [Вопросы на собеседовании: `Spring Cache`](frameworks/spring/spring-cache-interview.md) — `18` вопросов
 - [Вопросы на собеседовании: `Spring Events`](frameworks/spring/spring-events-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring Batch`](frameworks/spring/spring-batch-interview.md) — `43` вопроса
@@ -332,8 +332,8 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Java IO / NIO`](programming-languages/java/java-io-nio-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Jackson` (JSON)](programming-languages/java/java-jackson-interview.md) — `31` вопрос
 - [Вопросы на собеседовании: `Lombok`](programming-languages/java/java-lombok-interview.md) — `27` вопросов
-- [Вопросы на собеседовании: `MapStruct`](programming-languages/java/java-mapstruct-interview.md)
-- [Вопросы на собеседовании: `Java Reflection`](programming-languages/java/java-reflection-interview.md) — `16` вопросов — `28` вопросов
+- [Вопросы на собеседовании: `MapStruct`](programming-languages/java/java-mapstruct-interview.md) — `28` вопросов
+- [Вопросы на собеседовании: `Java Reflection`](programming-languages/java/java-reflection-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Java Functional Interfaces`](programming-languages/java/java-functional-interface-interview.md) — `14` вопросов
 - [Вопросы на собеседовании: `Java Modules` (JPMS)](programming-languages/java/java-modules-interview.md) — `38` вопросов
 - [Вопросы на собеседовании: `Java Optional`](programming-languages/java/java-optional-interview.md) — `15` вопросов
