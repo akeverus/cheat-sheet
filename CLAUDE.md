@@ -60,8 +60,8 @@ com.cheatsheet.quiz
 
 - **Seed-first by default.** MCQ-варианты грузятся из `modules/quiz-app/src/main/resources/seed/mcq/<category>/<topic>.json` через `McqJsonLoader` на старте. AI в рантайме НЕ зовётся, даже если API-ключ задан.
 - AI вызывается только когда выставлен `app.ai.fallback-enabled=true` (env `AI_FALLBACK_ENABLED`) И есть ключ. Поведение нужно сохранять — пользователь явно сказал «AI в совсем крайнем случае».
-- Three supported providers: `deepseek`, `openai`, `spring-ai` (configured via `app.aiProvider`)
-- `AiQuestionClient` is the entry point; `AbstractAiClient` handles retry logic (429/5xx, up to `app.ai.maxRetries`)
+- Two supported providers: `openai`, `deepseek` (configured via `app.aiProvider`; the `AiProvider` enum has only these two — there is no `spring-ai` provider)
+- `AiQuestionClient` is the entry point; `AbstractAiClient` issues a **single attempt** (no auto-retry) and unwraps the provider's root error cause
 - Question generation uses a **prompt-first single-call** approach: `QuestionPromptBuilder` assembles the prompt → AI returns strict JSON → `QuestionGeneratedJsonMapper` parses it
 - `AIQuestionService` generates multiple-choice options ТОЛЬКО когда `AppProperties.isAiFallbackAllowed()` = true; иначе возвращает пустой список (флешкарт-режим)
 - Prompts live in `src/main/resources/prompts/` (consolidated into `general.txt`)
@@ -72,10 +72,8 @@ com.cheatsheet.quiz
 | Property | Default |
 |----------|---------|
 | `app.aiProvider` | `openai` |
-| `app.aiFallbackProvider` | `spring-ai` |
 | `app.interview.optionsCount` | `4` |
-| `app.ai.timeoutSeconds` | `30` |
-| `app.ai.maxRetries` | `3` |
+| `app.ai.timeoutSeconds` | `60` |
 | `app.preload.startupPreload` | `false` |
 | `app.preload.fullWarmup` | `false` |
 | `app.ai.fallback-enabled` | `false` (env `AI_FALLBACK_ENABLED`) |

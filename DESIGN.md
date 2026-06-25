@@ -8,7 +8,9 @@
 > - **Архитектура CSS:** уже НЕ `editorial.css` + тонкие оверлеи. Теперь два слоя —
 >   `static/css/tokens.css` (все токены: `:root`=editorial-default + блоки
 >   `html[data-design="X"]` light/dark) и `static/css/base.css` (design-agnostic
->   структура, потребляет `var(--token)`). Версии в `head.html` — `?v=10`.
+>   структура, потребляет `var(--token)`). Обе подключаются в `head.html` с общим
+>   cache-bust параметром `?v=N` — бампать ОБА файла синхронно при каждом изменении CSS
+>   (актуальное значение смотри прямо в `head.html`, не дублируй число здесь).
 > - **Реестр — 10 дизайнов** (не 4): `editorial` (default), `linear`, `swiss`,
 >   `notion`, `mintlify`, `broadsheet`, `superhuman`, `stripe`, `claude`, `theverge`.
 > - Гейт контраста — `scripts/design-token-audit.py` (WCAG по реальному каскаду).
