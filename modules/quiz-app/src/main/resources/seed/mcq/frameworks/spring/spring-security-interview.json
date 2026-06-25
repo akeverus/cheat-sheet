@@ -2688,13 +2688,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Это вход по одноразовому токену, который включается через DSL-метод `http.magicLinkLogin()` и настраивается отдельным компонентом `MagicLinkService`.",
+              "text": "Это вход по одноразовому коду из приложения-аутентификатора (TOTP): пользователь вводит логин и пароль, а затем 6-значный код, который генерируется по времени в приложении и нигде не доставляется по email.",
               "correct": false,
               "sections": {
-                "what_actually": "Функциональность включается методом `http.oneTimeTokenLogin()`, а за генерацию и проверку токена отвечает `OneTimeTokenService` — метода `magicLinkLogin()` и класса `MagicLinkService` в описании нет.",
-                "source_of_confusion": "Схему неформально называют «magic link», поэтому возникает ложное ожидание, что и API названо по этому термину.",
-                "if_it_were_true": "Тогда конфигурация выглядела бы как `http.magicLinkLogin(...)`, а компоненты назывались бы `MagicLinkService`/`MagicLinkHandler` вместо `OneTimeTokenService`/`OneTimeTokenGenerationSuccessHandler`.",
-                "how_it_should_be": "Включение делается через `http.oneTimeTokenLogin(ott -> ott.tokenGeneratingUrl(...).tokenGenerationSuccessHandler(...))`, а ключевые компоненты — `OneTimeTokenService` и `OneTimeTokenGenerationSuccessHandler`."
+                "what_actually": "One-Time Token Login — это passwordless-вход по одноразовой ссылке/токену, который сервер выпускает и доставляет пользователю (обычно по email). Это не TOTP: код не генерируется на стороне пользователя по времени и не вводится как добавочный шаг поверх пароля.",
+                "source_of_confusion": "Оба механизма используют «одноразовый код/токен», поэтому One-Time Token Login легко спутать с TOTP-кодами из приложения-аутентификатора.",
+                "if_it_were_true": "Тогда пользователь сам генерировал бы код по времени в приложении и вводил его поверх пароля — но в One-Time Token Login токен выпускает сервер и доставляет его по каналу (email), а пароль вообще не используется.",
+                "how_it_should_be": "Пользователь вводит только логин, сервер через `OneTimeTokenGenerationSuccessHandler` доставляет одноразовую ссылку (обычно по email), и переход по ней аутентифицирует пользователя без пароля; включается через `http.oneTimeTokenLogin()`."
               }
             }
           ]
@@ -2723,7 +2723,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Обмен одного токена на другой у Authorization Server через grant `urn:ietf:params:oauth:grant-type:token-exchange`, чтобы пробросить identity по цепочке сервисов с сужением прав.",
+              "text": "Обмен одного токена на другой у Authorization Server по специальному grant-type token-exchange, чтобы пробросить identity по цепочке сервисов с сужением прав.",
               "correct": true,
               "sections": {
                 "explanation": "Token Exchange — это grant-тип из `RFC 8693`, при котором сервис A обменивает полученный токен пользователя на новый токен, специально выписанный для сервиса B. Новый токен имеет нужную аудиторию (`audience`) и суженный набор `scope`, в отличие от слепого проброса исходного «всемогущего» токена. Это корректный способ передать identity по цепочке микросервисов вместо раздачи лишних прав.",
