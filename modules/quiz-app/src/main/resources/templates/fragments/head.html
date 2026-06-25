@@ -189,6 +189,36 @@
           set: setReadingWidth
         };
 
+        // Плотность интерфейса (ортогональна дизайну/теме/раскладке): spacious | compact.
+        //   spacious (ДЕФОЛТ) — текущий «воздушный» ритм; атрибут не ставится.
+        //   compact — сжатая шкала отступов --space-* (см. tokens.css): плотнее
+        //     вертикальный ритм и паддинги, больше контента на экране. Меняет ТОЛЬКО
+        //     spacing (не межстрочный — за длину строки отвечает reading-width).
+        // Применяем data-density на <html> ДО первого кадра (как тему/дизайн) — без
+        // вспышки прежней плотности. No-JS → атрибута нет → spacious.
+        var DENSITIES = ['spacious', 'compact'];
+        function readDensity() {
+          try { var d = localStorage.getItem('density'); return DENSITIES.indexOf(d) >= 0 ? d : 'spacious'; }
+          catch (e) { return 'spacious'; }
+        }
+        var density = readDensity();
+        function applyDensity(d) {
+          if (d === 'spacious') root.removeAttribute('data-density');
+          else root.setAttribute('data-density', d);
+        }
+        applyDensity(density);
+        function setDensity(next) {
+          density = (DENSITIES.indexOf(next) >= 0) ? next : 'spacious';
+          try { if (density === 'spacious') localStorage.removeItem('density'); else localStorage.setItem('density', density); } catch (e) {}
+          applyDensity(density);
+          try { document.dispatchEvent(new CustomEvent('densitychange', { detail: { density: density } })); } catch (e) {}
+        }
+        window.__density = {
+          current: function () { return density; },
+          list: DENSITIES.slice(),
+          set: setDensity
+        };
+
         // Размер шрифта: масштаб root font-size (токены в rem → тянется весь UI).
         var FONT_MIN = 0.85, FONT_MAX = 1.4, FONT_STEP = 0.1;
         function clampFont(v) { v = Math.round(v * 100) / 100; return Math.min(FONT_MAX, Math.max(FONT_MIN, v)); }
@@ -262,10 +292,10 @@
          Порядок строгий: tokens ПЕРЕД base (переменные определены до
          использования). Preload обоих — параллельно с парсингом head → меньше
          FOUC. См. docs/design/DESIGN.md + docs/design/systems/*.md. -->
-    <link rel="preload" as="style" th:href="@{/css/tokens.css(v=30)}">
-    <link rel="preload" as="style" th:href="@{/css/base.css(v=30)}">
-    <link rel="stylesheet" th:href="@{/css/tokens.css(v=30)}">
-    <link rel="stylesheet" th:href="@{/css/base.css(v=30)}">
+    <link rel="preload" as="style" th:href="@{/css/tokens.css(v=31)}">
+    <link rel="preload" as="style" th:href="@{/css/base.css(v=31)}">
+    <link rel="stylesheet" th:href="@{/css/tokens.css(v=31)}">
+    <link rel="stylesheet" th:href="@{/css/base.css(v=31)}">
     <!-- SRI (integrity) + crossorigin: защита от компрометации CDN — браузер
          выполнит ресурс, только если его sha512 совпадает. Хэши пересчитаны из
          самих файлов (openssl dgst -sha512). ВСЕ CDN-ресурсы пиннятся на ТОЧНУЮ

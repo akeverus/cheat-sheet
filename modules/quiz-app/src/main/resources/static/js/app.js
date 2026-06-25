@@ -582,6 +582,8 @@
       () => window.__motion.current(), (v) => window.__motion.set(v), 'motionchange');
     if (window.__readingWidth) wireSegControl('reading-width-pref-control', 'data-reading-width-pref',
       () => window.__readingWidth.current(), (v) => window.__readingWidth.set(v), 'readingwidthchange');
+    if (window.__density) wireSegControl('density-pref-control', 'data-density-pref',
+      () => window.__density.current(), (v) => window.__density.set(v), 'densitychange');
 
     const valEl = document.getElementById('font-scale-value');
     const decBtn = document.getElementById('font-decrease');
