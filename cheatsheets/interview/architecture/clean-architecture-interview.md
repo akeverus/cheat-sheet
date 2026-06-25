@@ -2358,3 +2358,4 @@ src/main/java/com/example/ordering/
 - [Паттерны масштабируемости](scalability-patterns-interview.md) — горизонтальное масштабирование модулей чистой архитектуры
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — практическая реализация Clean Architecture со Spring IoC и Spring Data
 - [Шпаргалка: Clean Architecture](../../architecture/clean-architecture.md) — теория
+- [ArchUnit](../testing/archunit-interview.md) — автоматическая проверка зависимостей между слоями в тестах

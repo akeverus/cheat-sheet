@@ -622,3 +622,4 @@ IoT devices → MQTT broker / NATS leaf → Central NATS / Kafka
 - [Распределённые системы](../architecture/distributed-systems-interview.md)
 - [CAP Theorem](../architecture/cap-theorem-interview.md)
 - [Scalability Patterns](../architecture/scalability-patterns-interview.md)
+- [Apache Camel](apache-camel-interview.md) — интеграционный фреймворк (EIP) поверх брокеров и протоколов

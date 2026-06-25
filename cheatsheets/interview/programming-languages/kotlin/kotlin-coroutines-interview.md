@@ -1595,3 +1595,4 @@ ids.flatMapMerge { id ->
 - [интероп Kotlin и Java](kotlin-interop-java-interview.md)
 - [Kotlin](kotlin-interview.md)
 - [сериализация в Kotlin](kotlin-serialization-interview.md)
+- [Тестирование на Kotlin](kotlin-testing-interview.md) — `runTest`, `TestDispatcher`, MockK `coEvery`, Turbine для `Flow`

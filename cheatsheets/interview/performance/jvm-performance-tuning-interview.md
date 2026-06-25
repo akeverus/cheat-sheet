@@ -1254,3 +1254,4 @@ numactl --hardware
 - [Network Performance](network-performance-interview.md)
 - [Performance Testing](performance-testing-interview.md)
 - [CRaC](../jvm/crac-interview.md) — checkpoint/restore JVM для мгновенного старта (снимок прогретого процесса).
+- [JMH](jmh-microbenchmarking-interview.md) — измерение эффекта тюнинга на микроуровне без артефактов JIT

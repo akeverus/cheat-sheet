@@ -1126,3 +1126,4 @@ val grouped = users.groupBy("age").count()
 - [Go Memory и GC](../go/go-memory-gc-interview.md)
 - [Go Modules](../go/go-modules-interview.md)
 - [Go Standard Library](../go/go-stdlib-interview.md)
+- [Эффект-системы в Scala](scala-effects-interview.md) — Cats Effect `IO`, `ZIO`, fibers, `Resource`, Tagless Final

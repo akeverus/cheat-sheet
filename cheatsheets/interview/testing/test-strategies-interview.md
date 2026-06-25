@@ -1907,3 +1907,4 @@ class OrderComponentTest {
 - [Code Review](../code-quality/code-review-interview.md) — ревью кода и тестов
 - [CI/CD Pipeline](../cicd/pipeline-design-interview.md) — проектирование pipeline с тестами
 - [Микросервисы](../architecture/microservices-interview.md) — тестирование микросервисной архитектуры
+- [Cucumber и BDD](cucumber-bdd-interview.md) — исполняемые спецификации на Gherkin (Given-When-Then)

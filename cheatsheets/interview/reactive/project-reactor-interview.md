@@ -1726,3 +1726,4 @@ Mono.deferContextual(ctx -> service.call())
 - [RxJava](rxjava-interview.md)
 - [Spring WebFlux](webflux-interview.md)
 - [AI Agents](../ai-ml/ai-agents-interview.md)
+- [Cats Effect и ZIO](../programming-languages/scala/scala-effects-interview.md) — эффект-системы Scala с fibers и structured concurrency

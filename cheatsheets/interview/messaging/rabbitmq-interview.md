@@ -1128,3 +1128,4 @@ rabbitmqadmin export config.json
 - [Apache Pulsar](pulsar-interview.md)
 - [Redpanda](redpanda-interview.md)
 - [Шпаргалка: RabbitMQ для Java](../../development/messaging/rabbitmq/rabbitmq.md) — теория
+- [JMS и ActiveMQ](jms-activemq-interview.md) — брокерный messaging со стандартным Java API (queue/topic)

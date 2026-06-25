@@ -2132,3 +2132,4 @@ public record Address(String street, String city, String zip) {}
 - [Транзакции и уровни изоляции](database-transactions-interview.md)
 - [DynamoDB](dynamodb-interview.md)
 - [Hibernate JPQL & Criteria API](hibernate-jpql-criteria-interview.md) — синтаксис, subqueries, Criteria Query, JPA Metamodel, Spring Data…
+- [jOOQ](jooq-interview.md) — SQL-centric альтернатива ORM с генерацией кода из схемы

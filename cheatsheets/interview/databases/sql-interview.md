@@ -2051,3 +2051,4 @@ TRUNCATE orders;     -- быстро, но нельзя откатить час�
 - [Database Architecture](database-architecture-interview.md)
 - [Транзакции и уровни изоляции](database-transactions-interview.md)
 - [DynamoDB](dynamodb-interview.md)
+- [jOOQ](jooq-interview.md) — типобезопасный SQL-DSL на Java/Kotlin поверх обычного SQL

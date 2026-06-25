@@ -1728,3 +1728,4 @@ graph LR
 - [JVM Performance Tuning](jvm-performance-tuning-interview.md)
 - [Memory Management](memory-management-interview.md)
 - [Network Performance](network-performance-interview.md)
+- [JMH](jmh-microbenchmarking-interview.md) — корректные микробенчмарки JVM: warmup, forks, `Blackhole` против dead-code elimination

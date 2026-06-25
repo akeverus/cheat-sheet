@@ -1371,3 +1371,4 @@ class MyTest { ... }
 - [Mutation Testing](mutation-testing-interview.md)
 - [Property-based Testing](property-based-testing-interview.md)
 - [Шпаргалка: Mockito](../../testing/unit-testing/junit/mockito.md) — теория
+- [MockK и Kotest](../programming-languages/kotlin/kotlin-testing-interview.md) — мокинг для Kotlin: final-классы, `suspend`-функции, top-level

@@ -2445,3 +2445,4 @@ class PaymentGatewayClientTest {
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — конфигурация, профили, auto-configuration
 - [Docker](../devops/docker-interview.md) — контейнеризация, на которой построен Testcontainers
 - [Kafka](../messaging/kafka-interview.md) — тестирование event-driven архитектуры
+- [Cucumber и BDD](cucumber-bdd-interview.md) — приёмочные тесты в стиле BDD с `@CucumberContextConfiguration`

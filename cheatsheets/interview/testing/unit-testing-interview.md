@@ -2140,3 +2140,4 @@ class OrderEventHandlerTest {
 - [Load Testing](load-testing-interview.md) — нагрузочное тестирование, JMeter/Gatling
 - [Mockito](mockito-interview.md) — глубокое погружение в Mockito API
 - [Mutation Testing](mutation-testing-interview.md) — PIT и оценка качества тестов
+- [ArchUnit](archunit-interview.md) — юнит-тесты на архитектурные правила и границы слоёв

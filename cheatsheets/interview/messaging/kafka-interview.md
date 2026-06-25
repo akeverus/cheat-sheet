@@ -1616,3 +1616,4 @@ groups:
 - [RabbitMQ](rabbitmq-interview.md)
 - [Redpanda](redpanda-interview.md)
 - [Шпаргалка: Apache Kafka для Java](../../development/messaging/kafka/kafka.md) — теория
+- [JMS и ActiveMQ](jms-activemq-interview.md) — классический брокерный обмен с ack/transacted-session против лога Kafka
