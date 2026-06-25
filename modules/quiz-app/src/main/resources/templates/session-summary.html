@@ -44,27 +44,32 @@
 <!-- Результаты по темам -->
 <section class="card" th:if="${!summary.topicResults.isEmpty()}">
     <h2 class="summary-section-title">Результаты по темам</h2>
-    <table class="summary-table">
+    <!-- ARIA-роли + tabindex здесь НЕ избыточны: CSS даёт таблице display:block
+         (горизонтальный скролл на узких экранах), а это в Safari/VoiceOver сбрасывает
+         нативную семантику таблицы. Явные role=table/rowgroup/row/columnheader/cell
+         её восстанавливают; tabindex=0 делает скролл-контейнер доступным с клавиатуры
+         (WCAG 2.1.11 scrollable-region-focusable). Чисто аддитивно — отрисовку не меняет. -->
+    <table class="summary-table" role="table" tabindex="0">
         <caption class="visually-hidden">Результаты по темам</caption>
-        <thead>
-        <tr>
-            <th>Тема</th>
-            <th class="summary-th-center">Всего</th>
-            <th class="summary-th-center">Верно</th>
-            <th class="summary-th-center">Ошибки</th>
-            <th class="summary-th-center">Точность</th>
+        <thead role="rowgroup">
+        <tr role="row">
+            <th scope="col" role="columnheader">Тема</th>
+            <th scope="col" role="columnheader" class="summary-th-center">Всего</th>
+            <th scope="col" role="columnheader" class="summary-th-center">Верно</th>
+            <th scope="col" role="columnheader" class="summary-th-center">Ошибки</th>
+            <th scope="col" role="columnheader" class="summary-th-center">Точность</th>
         </tr>
         </thead>
-        <tbody>
-        <tr th:each="tr : ${summary.topicResults}">
-            <td>
+        <tbody role="rowgroup">
+        <tr th:each="tr : ${summary.topicResults}" role="row">
+            <td role="rowheader">
                 <a class="summary-topic-link" th:href="@{/(topic=${tr.topic()})}"
                    th:text="${@topicUtils.displayName(tr.topic())}" th:title="${tr.topic()}">topic</a>
             </td>
-            <td class="summary-td-center" th:text="${tr.total()}">0</td>
-            <td class="summary-td-center summary-td-correct" th:text="${tr.correct()}">0</td>
-            <td class="summary-td-center summary-td-wrong" th:text="${tr.wrong()}">0</td>
-            <td class="summary-td-center summary-td-accuracy"
+            <td class="summary-td-center" role="cell" th:text="${tr.total()}">0</td>
+            <td class="summary-td-center summary-td-correct" role="cell" th:text="${tr.correct()}">0</td>
+            <td class="summary-td-center summary-td-wrong" role="cell" th:text="${tr.wrong()}">0</td>
+            <td class="summary-td-center summary-td-accuracy" role="cell"
                 th:classappend="${tr.accuracy() >= 80} ? 'text-success' : (${tr.accuracy() >= 50} ? 'text-warning' : 'text-danger')"
                 th:text="${#numbers.formatDecimal(tr.accuracy(), 1, 0) + '%'}">0%</td>
         </tr>
