@@ -250,6 +250,15 @@ html[data-design] .skip-link {
   transition: transform var(--duration-fast) var(--easing-out);
 }
 html[data-design] .skip-link:focus { transform: translateY(0); }
+/* Цель skip-link — <main id=main-content tabindex=-1>. tabindex=-1 делает <main>
+   программно фокусируемым: без него клавиатурная активация skip-link ПРОКРУЧИВАЛА
+   к контенту, но фокус оставался на ссылке → следующий Tab возвращал в шапку (то,
+   что хотели пропустить) = провал WCAG 2.4.1 Bypass Blocks (замерено live: main.focus()
+   не двигал фокус). Кольцо на целом регионе глушим — это точка приземления навигации,
+   а не интерактивный контрол; визуальный фидбэк = сам скролл к контенту (тот же
+   приём, что .settings-panel:focus / .settings-tab-panel). */
+html[data-design] #main-content:focus,
+html[data-design] #main-content:focus-visible { outline: none; }
 
 html[data-design] .visually-hidden,
 html[data-design] .sr-only {
