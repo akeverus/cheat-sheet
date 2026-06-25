@@ -535,96 +535,53 @@
     if (!card || !window.__theme || !window.__fontScale) return;
     card.classList.remove('hidden');
 
-    const themeCtl = document.getElementById('theme-pref-control');
-    if (themeCtl) {
-      const themeBtns = Array.from(themeCtl.querySelectorAll('[data-theme-pref]'));
-      const syncTheme = () => {
-        const pref = window.__theme.pref();
-        themeBtns.forEach((b) => {
-          const on = b.getAttribute('data-theme-pref') === pref;
+    // Универсальная привязка seg-control (radiogroup персонализации) к
+    // window.__X-API. Заменяет 5 почти одинаковых блоков (тема/дизайн/раскладка/
+    // движение/ширина-чтения): подсветка активной кнопки + aria-checked + roving
+    // tabindex, клик = set, ←→↑↓ = переход и set, ре-синк по событию X-change.
+    // Единый контракт клавиатуры/a11y — меньше копипасты и мест для рассинхрона.
+    const wireSegControl = (controlId, attr, getCurrent, setValue, eventName) => {
+      const ctl = document.getElementById(controlId);
+      if (!ctl) return;
+      const btns = Array.from(ctl.querySelectorAll('[' + attr + ']'));
+      if (!btns.length) return;
+      const sync = () => {
+        const cur = getCurrent();
+        btns.forEach((b) => {
+          const on = b.getAttribute(attr) === cur;
           b.setAttribute('aria-checked', on ? 'true' : 'false');
           b.classList.toggle('is-active', on);
           b.tabIndex = on ? 0 : -1;
         });
       };
-      themeBtns.forEach((b, i) => {
-        b.addEventListener('click', () => window.__theme.set(b.getAttribute('data-theme-pref')));
+      btns.forEach((b, i) => {
+        b.addEventListener('click', () => setValue(b.getAttribute(attr)));
         b.addEventListener('keydown', (e) => {
           let idx = -1;
-          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') idx = (i + 1) % themeBtns.length;
-          else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') idx = (i - 1 + themeBtns.length) % themeBtns.length;
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') idx = (i + 1) % btns.length;
+          else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') idx = (i - 1 + btns.length) % btns.length;
           if (idx < 0) return;
           e.preventDefault();
-          window.__theme.set(themeBtns[idx].getAttribute('data-theme-pref'));
-          themeBtns[idx].focus();
+          setValue(btns[idx].getAttribute(attr));
+          btns[idx].focus();
         });
       });
-      document.addEventListener('themechange', syncTheme);
-      syncTheme();
-    }
+      if (eventName) document.addEventListener(eventName, sync);
+      sync();
+    };
 
-    // Выбор дизайна (editorial/linear/swiss/notion/mintlify/broadsheet) —
-    // radiogroup, как сегмент темы. Кнопки читаются из DOM по [data-design-pref],
-    // роестр не захардкожен здесь. Источник истины — window.__design (head.html),
-    // переключение мгновенное (флип data-design на <html>, без перезагрузки).
-    const designCtl = document.getElementById('design-pref-control');
-    if (designCtl && window.__design) {
-      const designBtns = Array.from(designCtl.querySelectorAll('[data-design-pref]'));
-      const syncDesign = () => {
-        const cur = window.__design.current();
-        designBtns.forEach((b) => {
-          const on = b.getAttribute('data-design-pref') === cur;
-          b.setAttribute('aria-checked', on ? 'true' : 'false');
-          b.classList.toggle('is-active', on);
-          b.tabIndex = on ? 0 : -1;
-        });
-      };
-      designBtns.forEach((b, i) => {
-        b.addEventListener('click', () => window.__design.set(b.getAttribute('data-design-pref')));
-        b.addEventListener('keydown', (e) => {
-          let idx = -1;
-          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') idx = (i + 1) % designBtns.length;
-          else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') idx = (i - 1 + designBtns.length) % designBtns.length;
-          if (idx < 0) return;
-          e.preventDefault();
-          window.__design.set(designBtns[idx].getAttribute('data-design-pref'));
-          designBtns[idx].focus();
-        });
-      });
-      document.addEventListener('designchange', syncDesign);
-      syncDesign();
-    }
-
-    // Выбор раскладки (flow/split/grid) — radiogroup, как сегменты темы/дизайна.
-    // Источник истины — window.__layout (head.html); флип data-layout на <html>
-    // мгновенно перекомпонует focus/settings (CSS [data-layout]-ветки в base.css).
-    const layoutCtl = document.getElementById('layout-pref-control');
-    if (layoutCtl && window.__layout) {
-      const layoutBtns = Array.from(layoutCtl.querySelectorAll('[data-layout-pref]'));
-      const syncLayout = () => {
-        const cur = window.__layout.current();
-        layoutBtns.forEach((b) => {
-          const on = b.getAttribute('data-layout-pref') === cur;
-          b.setAttribute('aria-checked', on ? 'true' : 'false');
-          b.classList.toggle('is-active', on);
-          b.tabIndex = on ? 0 : -1;
-        });
-      };
-      layoutBtns.forEach((b, i) => {
-        b.addEventListener('click', () => window.__layout.set(b.getAttribute('data-layout-pref')));
-        b.addEventListener('keydown', (e) => {
-          let idx = -1;
-          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') idx = (i + 1) % layoutBtns.length;
-          else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') idx = (i - 1 + layoutBtns.length) % layoutBtns.length;
-          if (idx < 0) return;
-          e.preventDefault();
-          window.__layout.set(layoutBtns[idx].getAttribute('data-layout-pref'));
-          layoutBtns[idx].focus();
-        });
-      });
-      document.addEventListener('layoutchange', syncLayout);
-      syncLayout();
-    }
+    // Источник истины каждого сегмента — соответствующий window.__X (head.html);
+    // переключение мгновенное (флип data-* на <html>, без перезагрузки).
+    wireSegControl('theme-pref-control', 'data-theme-pref',
+      () => window.__theme.pref(), (v) => window.__theme.set(v), 'themechange');
+    if (window.__design) wireSegControl('design-pref-control', 'data-design-pref',
+      () => window.__design.current(), (v) => window.__design.set(v), 'designchange');
+    if (window.__layout) wireSegControl('layout-pref-control', 'data-layout-pref',
+      () => window.__layout.current(), (v) => window.__layout.set(v), 'layoutchange');
+    if (window.__motion) wireSegControl('motion-pref-control', 'data-motion-pref',
+      () => window.__motion.current(), (v) => window.__motion.set(v), 'motionchange');
+    if (window.__readingWidth) wireSegControl('reading-width-pref-control', 'data-reading-width-pref',
+      () => window.__readingWidth.current(), (v) => window.__readingWidth.set(v), 'readingwidthchange');
 
     const valEl = document.getElementById('font-scale-value');
     const decBtn = document.getElementById('font-decrease');

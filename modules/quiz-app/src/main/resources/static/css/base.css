@@ -253,16 +253,32 @@ html[data-design] .sr-only {
   white-space: nowrap; border: 0;
 }
 
+/* Управление движением (data-motion на <html>, ставит head.html):
+   - auto (атрибута нет) — уважаем системный prefers-reduced-motion (media ниже);
+   - on  — пользователь ПРИНУДИТЕЛЬНО оставил движение → media-правило его НЕ
+           гасит (селектор :not([data-motion="on"]));
+   - off — пользователь ПРИНУДИТЕЛЬНО убрал движение → отдельный always-on kill-блок,
+           вне media (работает даже когда система движение разрешает).
+   Один и тот же набор «гасящих» деклараций, два пути активации. */
 @media (prefers-reduced-motion: reduce) {
-  html[data-design] { scroll-behavior: auto; }
-  html[data-design] *,
-  html[data-design] *::before,
-  html[data-design] *::after {
+  html[data-design]:not([data-motion="on"]) { scroll-behavior: auto; }
+  html[data-design]:not([data-motion="on"]) *,
+  html[data-design]:not([data-motion="on"]) *::before,
+  html[data-design]:not([data-motion="on"]) *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+html[data-design][data-motion="off"] { scroll-behavior: auto; }
+html[data-design][data-motion="off"] *,
+html[data-design][data-motion="off"] *::before,
+html[data-design][data-motion="off"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
 }
 
 /* ===========================================================================

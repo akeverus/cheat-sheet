@@ -127,6 +127,68 @@
           set: setLayout
         };
 
+        // Движение интерфейса (ортогонально дизайну/теме/раскладке): auto | on | off.
+        //   auto (ДЕФОЛТ) — уважать системную «Уменьшить движение»
+        //     (prefers-reduced-motion); атрибут не ставится, работает @media в base.css.
+        //   off — принудительно гасить анимации/переходы даже если система их разрешает
+        //     (меньше отвлечений, вестибулярный комфорт).
+        //   on — принудительно ОСТАВИТЬ движение, даже когда система просит уменьшить.
+        // Применяем data-motion на <html> ДО первого кадра (как тему/дизайн) — без
+        // вспышки лишней анимации. No-JS → атрибута нет → поведение = auto.
+        var MOTIONS = ['auto', 'on', 'off'];
+        function readMotion() {
+          try { var m = localStorage.getItem('motion'); return MOTIONS.indexOf(m) >= 0 ? m : 'auto'; }
+          catch (e) { return 'auto'; }
+        }
+        var motion = readMotion();
+        function applyMotion(m) {
+          if (m === 'auto') root.removeAttribute('data-motion');
+          else root.setAttribute('data-motion', m);
+        }
+        applyMotion(motion);
+        function setMotion(next) {
+          motion = (MOTIONS.indexOf(next) >= 0) ? next : 'auto';
+          try { if (motion === 'auto') localStorage.removeItem('motion'); else localStorage.setItem('motion', motion); } catch (e) {}
+          applyMotion(motion);
+          try { document.dispatchEvent(new CustomEvent('motionchange', { detail: { motion: motion } })); } catch (e) {}
+        }
+        window.__motion = {
+          current: function () { return motion; },
+          list: MOTIONS.slice(),
+          set: setMotion
+        };
+
+        // Ширина колонки чтения (ортогонально дизайну/теме): standard | wide.
+        //   standard (ДЕФОЛТ) — мера прозы 72ch (комфортная длина строки); атрибут
+        //     не ставится.
+        //   wide — расширенная мера (см. tokens.css, --measure override): текст прозы
+        //     тянется шире для больших экранов / личных предпочтений.
+        // Ортогонально раскладке: layout управляет КОМПОЗИЦИЕЙ страницы, reading-width —
+        // длиной строки внутри текстовых блоков (абзацы ответов/пояснений). No-JS →
+        // атрибута нет → standard.
+        var READING_WIDTHS = ['standard', 'wide'];
+        function readReadingWidth() {
+          try { var w = localStorage.getItem('readingWidth'); return READING_WIDTHS.indexOf(w) >= 0 ? w : 'standard'; }
+          catch (e) { return 'standard'; }
+        }
+        var readingWidth = readReadingWidth();
+        function applyReadingWidth(w) {
+          if (w === 'standard') root.removeAttribute('data-reading-width');
+          else root.setAttribute('data-reading-width', w);
+        }
+        applyReadingWidth(readingWidth);
+        function setReadingWidth(next) {
+          readingWidth = (READING_WIDTHS.indexOf(next) >= 0) ? next : 'standard';
+          try { if (readingWidth === 'standard') localStorage.removeItem('readingWidth'); else localStorage.setItem('readingWidth', readingWidth); } catch (e) {}
+          applyReadingWidth(readingWidth);
+          try { document.dispatchEvent(new CustomEvent('readingwidthchange', { detail: { readingWidth: readingWidth } })); } catch (e) {}
+        }
+        window.__readingWidth = {
+          current: function () { return readingWidth; },
+          list: READING_WIDTHS.slice(),
+          set: setReadingWidth
+        };
+
         // Размер шрифта: масштаб root font-size (токены в rem → тянется весь UI).
         var FONT_MIN = 0.85, FONT_MAX = 1.4, FONT_STEP = 0.1;
         function clampFont(v) { v = Math.round(v * 100) / 100; return Math.min(FONT_MAX, Math.max(FONT_MIN, v)); }
@@ -200,10 +262,10 @@
          Порядок строгий: tokens ПЕРЕД base (переменные определены до
          использования). Preload обоих — параллельно с парсингом head → меньше
          FOUC. См. docs/design/DESIGN.md + docs/design/systems/*.md. -->
-    <link rel="preload" as="style" th:href="@{/css/tokens.css(v=29)}">
-    <link rel="preload" as="style" th:href="@{/css/base.css(v=29)}">
-    <link rel="stylesheet" th:href="@{/css/tokens.css(v=29)}">
-    <link rel="stylesheet" th:href="@{/css/base.css(v=29)}">
+    <link rel="preload" as="style" th:href="@{/css/tokens.css(v=30)}">
+    <link rel="preload" as="style" th:href="@{/css/base.css(v=30)}">
+    <link rel="stylesheet" th:href="@{/css/tokens.css(v=30)}">
+    <link rel="stylesheet" th:href="@{/css/base.css(v=30)}">
     <!-- SRI (integrity) + crossorigin: защита от компрометации CDN — браузер
          выполнит ресурс, только если его sha512 совпадает. Хэши пересчитаны из
          самих файлов (openssl dgst -sha512). ВСЕ CDN-ресурсы пиннятся на ТОЧНУЮ
