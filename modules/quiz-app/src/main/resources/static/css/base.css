@@ -297,6 +297,35 @@ html[data-design][data-motion="off"] *::after {
   scroll-behavior: auto !important;
 }
 
+/* Усиление контраста (OS-настройка «Increase contrast» / «Увеличить контраст» в
+   macOS·iOS·Windows·браузере → prefers-contrast: more). До этого приложение её
+   игнорировало: пользователь явно просит больше контраста, а получал тот же AA.
+   Блок ТОЛЬКО усиливает и срабатывает лишь когда ОС просит → дефолтный рендер
+   нетронут, сдержанные пер-дизайн палитры не конфликтуют. Алиасим блёклые токены
+   на уже определённые (пер-дизайн × пер-тема) более контрастные — один блок
+   покрывает все 10 дизайнов и обе темы, остаётся theme-correct (не хардкодим цвет).
+   Парный к prefers-reduced-motion выше: ещё один OS-pref, который теперь уважаем. */
+@media (prefers-contrast: more) {
+  /* !important обязателен: токены задаются пер-дизайн×пер-тема селекторами вида
+     html[data-design="x"][data-theme="dark"] (специфичность 0,2,1) — они бьют
+     обобщённый html[data-design] (0,1,1) по специфичности, и без !important
+     наш override молча не сработал бы в тёмной теме (проверено live). Тот же
+     приём, что в блоке prefers-reduced-motion выше — это OS-pref-перебивка. */
+  html[data-design] {
+    --color-text-tertiary:    var(--color-text-secondary) !important; /* блёклые маркеры/лейблы → как вторичный текст */
+    --color-border-primary:   var(--color-text-secondary) !important; /* hairline-рамки/shadow-ring → отчётливо видимы */
+    --color-border-secondary: var(--color-text-secondary) !important;
+  }
+  /* Кольцо фокуса заметно толще (цвет --color-border-focus уже ≥3:1, не трогаем) */
+  html[data-design] :focus-visible {
+    outline-width: 3px !important;
+    outline-offset: 3px !important;
+  }
+  /* Все ссылки подчёркнуты, не только прозовые: убираем опору на цвет/контекст.
+     .btn-ссылки (кнопки-as-<a>) исключаем — подчёркивание кнопки выглядит чужеродно. */
+  html[data-design] a:not(.btn) { text-decoration: underline !important; }
+}
+
 /* ===========================================================================
    ПРИМИТИВЫ ВЁРСТКИ (ed-*) — стилизуются глобально (новые имена, без коллизий
    со старым styles.css). Используются и в shell, и в страницах.
