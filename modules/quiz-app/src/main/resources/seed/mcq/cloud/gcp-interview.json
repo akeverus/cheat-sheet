@@ -11,10 +11,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`GCP (Google Cloud Platform)` — облако Google с 2008 года, 3-е место по доле рынка (~12% в 2025) после `AWS` и `Azure`. Сильные стороны: `BigQuery` (лучший cloud-DWH), `Kubernetes` (Google создал `K8s`, `GKE` самый зрелый), `AI/ML` (`Gemini`, `Vertex AI`, `TPU`) и best-in-class глобальная сеть.",
+              "text": "`GCP (Google Cloud Platform)` — облако Google с 2008 года, 3-е место по доле рынка после `AWS` и `Azure`. Сила — в `BigQuery`, `Kubernetes` и `AI/ML`.",
               "correct": true,
               "sections": {
-                "explanation": "Отличия `GCP` определяются его наследием: `BigQuery` и `Bigtable` выросли из внутренних систем поиска, а `GKE` — из `Borg`, на котором Google гоняет свои сервисы. Слабые места: меньше сервисов и регионов, чем у `AWS`, и меньшее enterprise-проникновение.",
+                "explanation": "Доля рынка `GCP` — около 12% в 2025; он 3-й после `AWS` и `Azure`. Сильные стороны: `BigQuery` (лучший cloud-DWH), `Kubernetes` (Google создал `K8s`, `GKE` самый зрелый), `AI/ML` (`Gemini`, `Vertex AI`, `TPU`) и best-in-class глобальная сеть. Эти отличия определяются наследием: `BigQuery` и `Bigtable` выросли из внутренних систем поиска, а `GKE` — из `Borg`. Слабые места: меньше сервисов и регионов, чем у `AWS`, и меньшее enterprise-проникновение.",
                 "example": "Команда переходит на `GCP` ради `BigQuery`-аналитики: терабайтные запросы выполняются за секунды без управления кластерами, тогда как на `AWS` тот же сценарий требует прогрева `Redshift` или настройки `Athena` с партиционированием.",
                 "when_to_apply": "Сильные стороны выбирают, когда главное — данные, `Kubernetes` или сеть: data-heavy стартап берёт `GCP` ради `BigQuery` и `GKE`, а не ради ширины каталога сервисов.",
                 "edge_cases": "Доля рынка и зрелость не равны качеству: `GCP` 3-й по выручке, но по конкретным продуктам (`BigQuery`, networking) часто впереди лидера; при этом third-party tooling и community у него меньше.",
@@ -24,7 +24,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`GCP` — это в первую очередь хостинг сайтов на `Blogger` и `Google Sites`, а enterprise-облачные сервисы у Google появились только в 2020-х.",
+              "text": "`GCP` — это в первую очередь хостинг сайтов на `Blogger` и `Google Sites`, а enterprise-облачные сервисы у Google появились только в начале 2020-х с запуском `Compute Engine`.",
               "correct": false,
               "sections": {
                 "what_actually": "`GCP` запущен в 2008 (`App Engine`) и давно предлагает полноценный IaaS/PaaS: `Compute Engine`, `GKE`, `BigQuery`; `Blogger`/`Sites` — потребительские продукты, не часть облачной платформы.",
@@ -36,7 +36,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`GCP` — лидер облачного рынка с ~40% доли, обогнавший `AWS` за счёт `Gemini` и `TPU`.",
+              "text": "`GCP` — лидер облачного рынка с ~40% доли, обогнавший `AWS` за счёт `Gemini`, `TPU` и самой широкой сети регионов.",
               "correct": false,
               "sections": {
                 "what_actually": "`GCP` стабильно 3-й (~12%) после `AWS` (~31%) и `Azure` (~25%); лидерства по доле у него нет, хотя по отдельным продуктам он силён.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Zone` — это географический макрорегион (например, Европа целиком), а `Region` — отдельная стойка серверов внутри него.",
+              "text": "`Zone` — это географический макрорегион (например, Европа целиком), а `Region` — отдельная стойка серверов внутри него, к которой привязаны инстансы.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `Region` — географическая локация (`us-central1`, Iowa), а `Zone` — физический ЦОД внутри региона (3+ зоны на регион, `us-central1-a/b/c`).",
@@ -83,10 +83,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Region` — географическая локация (`us-central1` = Iowa); `Zone` — физический дата-центр внутри региона (минимум 3 зоны: `us-central1-a/b/c`); `Multi-region` — сервисы, автоматически реплицируемые между несколькими регионами (`Cloud Storage`, `Spanner`).",
+              "text": "`Region` — географическая локация (`us-central1` = Iowa); `Zone` — физический дата-центр внутри региона; `Multi-region` — сервисы с авто-репликацией между регионами.",
               "correct": true,
               "sections": {
-                "explanation": "Иерархия `region → zone` нужна для high availability: размещая инстансы в разных зонах одного региона, переживаешь отказ одного ЦОД, а multi-region защищает от отказа целого региона.",
+                "explanation": "В регионе минимум 3 зоны (`us-central1-a/b/c`), а multi-region — это автоматически реплицируемые между несколькими регионами сервисы (`Cloud Storage`, `Spanner`). Иерархия `region → zone` нужна для high availability: размещая инстансы в разных зонах одного региона, переживаешь отказ одного ЦОД, а multi-region защищает от отказа целого региона.",
                 "example": "`Multi-region`-бакет `Cloud Storage` (например, `US` или `EU`) хранит данные в едином namespace, прозрачно реплицируя их между регионами; у `S3` прямого аналога нет (есть `Cross-Region Replication`, но это явная настройка).",
                 "when_to_apply": "Зоны выбирают для отказоустойчивости внутри региона, регион — по близости к пользователям и комплаенсу, а multi-region — для глобальной доступности данных и низкого RPO.",
                 "edge_cases": "`Multi-region` ≠ просто «несколько регионов вручную»: это managed-репликация под единым namespace; не все сервисы её поддерживают — у `Spanner` и `Cloud Storage` есть, у `Compute Engine` нет.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В каждом регионе `GCP` ровно одна зона, поэтому отказ зоны всегда означает недоступность всего региона.",
+              "text": "В каждом регионе `GCP` ровно одна зона (`us-central1-a`), поэтому отказ зоны всегда означает недоступность всего региона.",
               "correct": false,
               "sections": {
                 "what_actually": "В регионе минимум 3 зоны (`-a/-b/-c`) — именно это даёт HA внутри региона: отказ одной зоны не роняет остальные.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Multi-region` означает ручное создание копий ресурсов в разных регионах через `gcloud` без какой-либо автоматической репликации.",
+              "text": "`Multi-region` означает ручное создание копий ресурсов в разных регионах через `gcloud` и `cron`-скрипты без какой-либо автоматической репликации.",
               "correct": false,
               "sections": {
                 "what_actually": "`Multi-region` — это managed-репликация под единым namespace (`Cloud Storage`, `Spanner`), а не ручное копирование инстансов скриптами.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Project` в `GCP` — это то же, что `Region` в `AWS`: способ выбрать географию размещения ресурсов.",
+              "text": "`Project` в `GCP` — это то же, что `Region` в `AWS`: способ выбрать географию размещения ресурсов и тарифную зону.",
               "correct": false,
               "sections": {
                 "what_actually": "`Project` — это изолированный контейнер ресурсов (аналог `AWS`-аккаунта), а не география; регион выбирается отдельно при создании ресурса.",
@@ -155,10 +155,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`GCP` использует проектную организацию ресурсов: `Project` — изолированный контейнер (аналог `AWS`-аккаунта), а иерархия `Organization → Folder → Project → Resource` позволяет группировать проекты и наследовать IAM-политики.",
+              "text": "`GCP` использует проектную организацию: `Project` — изолированный контейнер, а иерархия `Organization → Folder → Project` даёт наследование IAM.",
               "correct": true,
               "sections": {
-                "explanation": "Проект — единица изоляции, квот и биллинга: ресурсы одного проекта по умолчанию не видят ресурсы другого, а папки (`Folder: Production`, `Folder: Development`) дают структуру по средам или командам.",
+                "explanation": "`Project` — аналог `AWS`-аккаунта: единица изоляции, квот и биллинга, ресурсы одного проекта по умолчанию не видят ресурсы другого. Полная иерархия — `Organization → Folder → Project → Resource`. Папки (`Folder: Production`, `Folder: Development`) дают структуру по средам или командам, а IAM-политики наследуются по этой иерархии сверху вниз.",
                 "example": "Организация заводит folder `Production` с проектами `my-app-prod` и `my-app-prod-data`, и folder `Development` с `my-app-dev`; роль `roles/owner`, выданная на folder, наследуется всеми проектами внутри.",
                 "when_to_apply": "Проектную модель применяют для чёткой изоляции окружений и биллинга: prod и dev — разные проекты, чтобы случайный `terraform apply` в dev не затронул прод.",
                 "edge_cases": "`AWS` исторически не имел org-структуры (потом добавили `AWS Organizations`); в `GCP` иерархия была с самого начала, и удаление проекта удаляет все его ресурсы разом.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `GCP` один `Project` обязан содержать ровно один ресурс, поэтому под каждую VM создаётся отдельный проект.",
+              "text": "В `GCP` один `Project` обязан содержать ровно один ресурс, поэтому под каждую VM, каждый бакет и каждую БД создаётся отдельный изолированный проект.",
               "correct": false,
               "sections": {
                 "what_actually": "Проект — контейнер для множества ресурсов (VM, бакеты, БД); ограничения «один ресурс на проект» не существует.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Compute Engine` — это serverless FaaS-платформа, где код запускается по событию без управления виртуальными машинами.",
+              "text": "`Compute Engine` — это serverless FaaS-платформа, где код запускается по событию без управления виртуальными машинами и без выбора ОС.",
               "correct": false,
               "sections": {
                 "what_actually": "`Compute Engine` — это IaaS (аналог `AWS EC2`): ты управляешь виртуальными машинами; serverless FaaS в `GCP` — это `Cloud Functions`.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `Compute Engine` нельзя выбрать произвольное число vCPU и RAM — доступны только фиксированные размеры, как у `AWS`.",
+              "text": "В `Compute Engine` нельзя выбрать произвольное число vCPU и RAM — доступны только фиксированные размеры (`n2-standard-4`), как у `AWS`.",
               "correct": false,
               "sections": {
                 "what_actually": "`GCE` поддерживает `Custom machine types`: ты задаёшь точное количество vCPU и RAM, в отличие от фиксированных размеров `AWS`.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Скидки `Sustained Use` нужно вручную покупать заранее на 1-3 года, иначе они не применяются.",
+              "text": "Скидки `Sustained Use` нужно вручную покупать заранее на 1-3 года через консоль биллинга, иначе они не применяются к инстансу.",
               "correct": false,
               "sections": {
                 "what_actually": "`Sustained Use Discounts` применяются автоматически (до 30%) за длительную работу инстанса; заранее на 1-3 года покупаются `Committed Use Discounts`.",
@@ -227,10 +227,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Compute Engine` — это IaaS (аналог `AWS EC2`) с виртуальными машинами; есть семейства general-purpose (`N1/N2/E2`), compute-optimized (`C2/C3`), memory-optimized (`M1/M2/M3`) и GPU/TPU (`A2/G2`), а также `Custom machine types`. Скидки: автоматические `Sustained Use` (до 30%), `Committed Use` (1-3 года) и `Spot/Preemptible VMs` (до 91% off, могут прерываться).",
+              "text": "`Compute Engine` — это IaaS (аналог `AWS EC2`) с виртуальными машинами; есть предопределённые семейства и `Custom machine types`, плюс три механизма скидок.",
               "correct": true,
               "sections": {
-                "explanation": "Гибкость `GCE` в том, что помимо предопределённых семейств можно задать точные vCPU и RAM, а три механизма скидок покрывают разные паттерны: переменная нагрузка, стабильная и прерываемая.",
+                "explanation": "Семейства: general-purpose (`N1/N2/E2`), compute-optimized (`C2/C3`), memory-optimized (`M1/M2/M3`) и GPU/TPU (`A2/G2`); помимо них `Custom machine types` позволяют задать точные vCPU и RAM. Скидки: автоматические `Sustained Use` (до 30%), `Committed Use` (1-3 года) и `Spot/Preemptible VMs` (до 91% off, могут прерываться). Три механизма покрывают разные паттерны: переменная нагрузка, стабильная и прерываемая.",
                 "example": "Batch-обработка на `Spot VMs` экономит до 91%, но воркер должен переживать прерывание (checkpoint/retry); стабильный prod-сервис лучше держать на `Committed Use` ради предсказуемой 30-50% скидки.",
                 "when_to_apply": "`GCE` берут, когда нужен полный контроль над ОС, специфичное ядро или lift-and-shift legacy-приложения, не вписывающиеся в контейнеры или serverless.",
                 "edge_cases": "`Sustained Use` начисляется автоматически за uptime и не суммируется с `Committed Use`; `Spot VMs` нельзя использовать для нагрузок, не переживающих внезапное завершение.",
@@ -251,10 +251,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`GKE` — managed Kubernetes от Google (создателя `K8s`). Режимы: `Standard` (полный контроль, ты управляешь нодами) и `Autopilot` (с 2021, полностью managed, оплата за под, без управления нодами). Особенности: auto-upgrade версий `K8s`, авто-скейлинг кластера и подов, `Workload Identity` для интеграции с IAM, multi-cluster mesh (`Anthos`).",
+              "text": "`GKE` — managed Kubernetes от Google (создателя `K8s`). Режимы: `Standard` (полный контроль над нодами) и `Autopilot` (полностью managed).",
               "correct": true,
               "sections": {
-                "explanation": "`GKE` считается gold standard среди managed-`K8s`, потому что Google гоняет контейнеры на `Borg` (предок `K8s`) больше десяти лет; `EKS` и `AKS` догоняют, но `GKE` пионер и самый зрелый.",
+                "explanation": "`Autopilot` (с 2021) — полностью managed: оплата за под, без управления нодами; `Standard` — ты сам управляешь нодами. Особенности: auto-upgrade версий `K8s`, авто-скейлинг кластера и подов, `Workload Identity` для интеграции с IAM, multi-cluster mesh (`Anthos`). `GKE` считается gold standard среди managed-`K8s`, потому что Google гоняет контейнеры на `Borg` (предок `K8s`) больше десяти лет; `EKS` и `AKS` догоняют, но `GKE` пионер и самый зрелый.",
                 "example": "В режиме `Autopilot` ты описываешь только поды с их requests/limits, а `GKE` сам провижинит и масштабирует ноды и платишь именно за поды; в `Standard` ты выбираешь machine type нод-пулов и управляешь их числом.",
                 "when_to_apply": "`GKE` берут, когда нужен полноценный `Kubernetes` с автоматизацией ops: `Autopilot` — для команд без выделенного platform-инженера, `Standard` — когда нужен тонкий контроль над нодами (GPU, спец-таинты).",
                 "edge_cases": "`Workload Identity` позволяет подам аутентифицироваться в IAM без JSON-ключей service account в контейнере — это закрывает классический вектор утечки ключей; без него пришлось бы монтировать секреты вручную.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`GKE` — это self-managed Kubernetes: ты сам ставишь control plane, etcd и обновляешь версии вручную.",
+              "text": "`GKE` — это self-managed Kubernetes: ты сам ставишь control plane, `etcd` и обновляешь версии вручную через `kubeadm`.",
               "correct": false,
               "sections": {
                 "what_actually": "`GKE` управляет control plane и etcd за тебя; auto-upgrade версий `K8s` встроен — это и есть смысл «managed».",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Режим `Autopilot` означает ручное масштабирование: ты сам добавляешь ноды, а `GKE` лишь следит за их здоровьем.",
+              "text": "Режим `Autopilot` означает ручное масштабирование: ты сам добавляешь ноды в пул, а `GKE` лишь следит за их здоровьем.",
               "correct": false,
               "sections": {
                 "what_actually": "`Autopilot` — полностью managed-режим: ноды провижинятся автоматически, оплата за поды, ручного управления нодами нет.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`GKE` поддерживает только один кластер на проект и не умеет multi-cluster сценарии.",
+              "text": "`GKE` поддерживает только один кластер на проект и не умеет multi-cluster сценарии даже через `Anthos`.",
               "correct": false,
               "sections": {
                 "what_actually": "`GKE` поддерживает multi-cluster mesh через `Anthos`, и в проекте может быть много кластеров.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cloud Run` запускает только код на поддерживаемых рантаймах (Python, Node) и не умеет произвольные Docker-образы.",
+              "text": "`Cloud Run` запускает только код на поддерживаемых рантаймах (Python, Node, Go) и не умеет произвольные Docker-образы из приватного registry.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cloud Run` запускает любой Docker-образ: ты деплоишь контейнер, `GCP` его исполняет — рантайм и язык любые.",
@@ -323,10 +323,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Cloud Run` — serverless-контейнеры: деплоишь Docker-образ, `GCP` его запускает. Auto-scaling до нуля (как `Lambda`), HTTP- или event-триггеры, request timeout до 60 минут (vs 15 у `Lambda`), до 32 GB и 8 vCPU, несколько concurrent-запросов на инстанс (vs 1 у `Lambda`), поддержка WebSocket, HTTP/2 и gRPC. В 2025 — самый популярный serverless-вариант `GCP`.",
+              "text": "`Cloud Run` — serverless-контейнеры: деплоишь Docker-образ, `GCP` его сам запускает и масштабирует. В 2025 — самый популярный serverless `GCP`.",
               "correct": true,
               "sections": {
-                "explanation": "Ключевые отличия от `Lambda` — concurrency на инстанс и длинный таймаут: `Cloud Run` обрабатывает много запросов одним контейнером (дешевле под нагрузкой), а 60-минутный лимит позволяет долгие задачи, недоступные `Lambda`.",
+                "explanation": "`Cloud Run` тарифицирует только время обработки запросов. Auto-scaling до нуля (как `Lambda`), HTTP- или event-триггеры, request timeout до 60 минут (vs 15 у `Lambda`), до 32 GB и 8 vCPU, несколько concurrent-запросов на инстанс (vs 1 у `Lambda`), поддержка WebSocket, HTTP/2 и gRPC. Ключевые отличия от `Lambda` — concurrency на инстанс и длинный таймаут: `Cloud Run` обрабатывает много запросов одним контейнером (дешевле под нагрузкой), а 60-минутный лимит позволяет долгие задачи, недоступные `Lambda`.",
                 "example": "Сервис с `gcloud run deploy my-service --image gcr.io/my-project/my-image --port 8080` масштабируется до нуля в простое и обрабатывает, скажем, 80 одновременных запросов одним инстансом, экономя на холодных стартах.",
                 "when_to_apply": "`Cloud Run` берут как дефолтный serverless для HTTP-сервисов и API: не нужно управлять инфраструктурой, а concurrency делает его эффективнее `Cloud Functions` для большинства веб-нагрузок.",
                 "edge_cases": "Для batch-задач без HTTP есть `Cloud Run Jobs`; а scale-to-zero означает холодный старт первого запроса — для latency-критичных сервисов держат `min-instances > 0`.",
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Request timeout у `Cloud Run` такой же, как у `Lambda`, — 15 минут, поэтому долгие задачи невозможны.",
+              "text": "Request timeout у `Cloud Run` такой же, как у `Lambda`, — 15 минут, поэтому долгие задачи и стриминг невозможны.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Cloud Run` timeout до 60 минут — вчетверо больше 15-минутного лимита `Lambda`, что и позволяет более долгие запросы.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Каждый инстанс `Cloud Run` обрабатывает ровно один запрос за раз, как `Lambda`, без concurrency.",
+              "text": "Каждый инстанс `Cloud Run` обрабатывает ровно один запрос за раз, как `Lambda`, без настройки `--concurrency`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cloud Run` поддерживает несколько concurrent-запросов на инстанс (настраивается `--concurrency`), в отличие от модели «1 запрос = 1 инстанс» у `Lambda`.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cloud Functions` поддерживает только HTTP-триггеры и не умеет реагировать на события из других сервисов.",
+              "text": "`Cloud Functions` поддерживает только HTTP-триггеры и не умеет реагировать на события из `Pub/Sub`, `Storage` или `Firestore`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cloud Functions` триггерится по HTTP, `Pub/Sub`, `Cloud Storage`, `Firestore` и `Eventarc` — событийных источников много.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Gen 2` и `Gen 1` `Cloud Functions` идентичны по возможностям, разница только в номере версии рантайма.",
+              "text": "`Gen 2` и `Gen 1` `Cloud Functions` идентичны по возможностям, разница только в номере версии рантайма и формате логов.",
               "correct": false,
               "sections": {
                 "what_actually": "`Gen 2` построен поверх `Cloud Run` и заметно мощнее `Gen 1`: больше ресурсов, concurrency и дольше выполнение.",
@@ -395,10 +395,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Cloud Functions` — FaaS-аналог `AWS Lambda`. Поколения: `Gen 1` (оригинальный FaaS, ограниченный) и `Gen 2` (с 2022, построен поверх `Cloud Run`, мощнее). Триггеры: HTTP, `Pub/Sub`, `Cloud Storage`, `Firestore`, `Eventarc`. В 2025 теряет долю в пользу `Cloud Run` как более гибкого варианта.",
+              "text": "`Cloud Functions` — FaaS-аналог `AWS Lambda` с двумя поколениями и набором событийных триггеров. В 2025 теряет долю в пользу `Cloud Run`.",
               "correct": true,
               "sections": {
-                "explanation": "`Gen 2` наследует от `Cloud Run` concurrency, большие лимиты ресурсов и долгое выполнение, поэтому грань между `Cloud Functions Gen 2` и `Cloud Run` стирается, а новые проекты часто берут сразу `Cloud Run`.",
+                "explanation": "Поколения: `Gen 1` (оригинальный FaaS, ограниченный) и `Gen 2` (с 2022, построен поверх `Cloud Run`, мощнее). Триггеры: HTTP, `Pub/Sub`, `Cloud Storage`, `Firestore`, `Eventarc`. `Gen 2` наследует от `Cloud Run` concurrency, большие лимиты ресурсов и долгое выполнение, поэтому грань между `Cloud Functions Gen 2` и `Cloud Run` стирается, а новые проекты часто берут сразу `Cloud Run` как более гибкий вариант.",
                 "example": "Функция-обработчик `def hello_http(request): return \"Hello\"` деплоится как `gcloud functions deploy hello-http --gen2 --runtime=python311 --trigger-http`; для реакции на сообщение можно указать `--trigger-topic` с `Pub/Sub`.",
                 "when_to_apply": "`Cloud Functions` берут для маленьких изолированных обработчиков события (загрузка файла, сообщение в очередь), когда не хочется паковать Docker-образ, как для `Cloud Run`.",
                 "edge_cases": "Для сложных сервисов с собственным образом и тонким контролем гибче `Cloud Run`; именно поэтому в 2025 нагрузка перетекает туда, а `Cloud Functions` остаётся для простых glue-функций.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Cloud Functions` не имеет аналога в `AWS` и реализует уникальную модель, отсутствующую у конкурентов.",
+              "text": "`Cloud Functions` не имеет аналога в `AWS` и реализует уникальную модель «функция на событие», отсутствующую у конкурентов.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cloud Functions` — прямой аналог `AWS Lambda`: тот же FaaS-паттерн «функция на событие».",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`App Engine` — это IaaS: ты получаешь голые VM и сам ставишь ОС, рантайм и зависимости.",
+              "text": "`App Engine` — это IaaS: ты получаешь голые VM и сам ставишь ОС, рантайм и зависимости, как в `Compute Engine`.",
               "correct": false,
               "sections": {
                 "what_actually": "`App Engine` — это PaaS: деплоишь код, а `GCP` управляет инфраструктурой, ОС и масштабированием за тебя.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`App Engine` появился позже `Cloud Run` и является рекомендованным выбором для всех новых проектов.",
+              "text": "`App Engine` появился позже `Cloud Run` (с 2008) и является рекомендованным выбором для всех новых проектов на платформе.",
               "correct": false,
               "sections": {
                 "what_actually": "`App Engine` — старейший PaaS `GCP` (с 2008), а в 2025 считается legacy; новые проекты выбирают `Cloud Run`.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "У `App Engine` единственное окружение, без разделения на быстрые и гибкие варианты.",
+              "text": "У `App Engine` единственное окружение, без разделения на быстрые `Standard` и гибкие `Flexible` варианты.",
               "correct": false,
               "sections": {
                 "what_actually": "У `App Engine` два окружения: `Standard` (ограниченный рантайм, быстрый cold start) и `Flexible` (на Docker, больше контроля).",
@@ -467,10 +467,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`App Engine` (с 2008) — оригинальный PaaS `GCP`: деплоишь код, а `GCP` управляет всем остальным. Окружения: `Standard` (ограниченный рантайм, самый быстрый cold start) и `Flexible` (на Docker, больше контроля). В 2025 считается legacy — новые проекты выбирают `Cloud Run`.",
+              "text": "`App Engine` (с 2008) — оригинальный PaaS `GCP`: деплоишь код, а `GCP` управляет всем остальным. В 2025 считается legacy.",
               "correct": true,
               "sections": {
-                "explanation": "`App Engine` был первым serverless-PaaS Google и задал модель «push code, we run it», но `Cloud Run` (контейнеры) вытеснил его гибкостью и переносимостью, поэтому новые системы стартуют на `Cloud Run`.",
+                "explanation": "Окружения: `Standard` (ограниченный рантайм, самый быстрый cold start) и `Flexible` (на Docker, больше контроля). Новые проекты выбирают `Cloud Run`. `App Engine` был первым serverless-PaaS Google и задал модель «push code, we run it», но `Cloud Run` (контейнеры) вытеснил его гибкостью и переносимостью, поэтому новые системы стартуют на `Cloud Run`.",
                 "example": "`Standard`-окружение даёт почти мгновенный холодный старт для поддерживаемых рантаймов (Python, Go, Java), а `Flexible` гоняет произвольный Docker-образ ценой более долгого старта и большей стоимости.",
                 "when_to_apply": "`App Engine` встречается в основном в существующих/legacy-системах, мигрировать которые дорого; для новых сервисов выбирают `Cloud Run`, а `App Engine` трогают только при поддержке старого кода.",
                 "edge_cases": "`Standard` ограничивает рантаймы и сетевой доступ ради скорости и дешевизны, `Flexible` снимает ограничения, но теряет мгновенный cold start; смешивать их ожидания — частая ошибка.",
@@ -491,10 +491,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cloud Storage` — объектное хранилище, аналог `S3`. Storage-классы: `Standard` (горячие данные), `Nearline` (доступ <1 раза/мес, $0.01/GB), `Coldline` (<1 раза/квартал), `Archive` (долгое хранение, $0.0012/GB). Отличия от `S3`: единый namespace в multi-region с авто-репликацией, версионирование и lifecycle, strong consistency, per-object permissions, HMAC-ключи для S3-совместимого API; egress обычно дешевле, чем у `AWS`.",
+              "text": "`Cloud Storage` — объектное хранилище, аналог `S3`, с холодными storage-классами и единым namespace в multi-region.",
               "correct": true,
               "sections": {
-                "explanation": "Ключевая особенность — multi-region single namespace: один бакет (`US`, `EU`) прозрачно реплицируется между регионами, тогда как у `S3` для этого нужно явно настраивать Cross-Region Replication между разными бакетами.",
+                "explanation": "Storage-классы: `Standard` (горячие данные), `Nearline` (доступ <1 раза/мес, $0.01/GB), `Coldline` (<1 раза/квартал), `Archive` (долгое хранение, $0.0012/GB). Отличия от `S3`: единый namespace в multi-region с авто-репликацией, версионирование и lifecycle, strong consistency, per-object permissions, HMAC-ключи для S3-совместимого API; egress обычно дешевле, чем у `AWS`. Один бакет (`US`, `EU`) прозрачно реплицируется между регионами, тогда как у `S3` для этого нужно явно настраивать Cross-Region Replication между разными бакетами.",
                 "example": "Архив логов: горячие за 30 дней лежат в `Standard`, дальше lifecycle-правило переводит их в `Coldline` ($/GB в разы дешевле), а годовалые — в `Archive` за $0.0012/GB; HMAC-ключи позволяют переиспользовать S3-SDK без переписывания кода.",
                 "when_to_apply": "`Cloud Storage` берут для бэкапов, статики, data lake и логов; класс выбирают по частоте доступа, а egress-выгода делает его привлекательным для отдачи большого трафика.",
                 "edge_cases": "Strong consistency означает, что после записи объект сразу читается консистентно (в отличие от исторической eventual consistency старого `S3`); но Archive-класс имеет минимальный срок хранения, и ранний удаление тарифицируется.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Cloud Storage` — это block storage для подключения к VM как диск, аналог `AWS EBS`.",
+              "text": "`Cloud Storage` — это block storage для подключения к VM как диск с метрикой IOPS, прямой аналог `AWS EBS`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cloud Storage` — объектное хранилище (аналог `S3`); block storage для VM в `GCP` — это `Persistent Disks`.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "У `Cloud Storage` нет storage-классов: все данные хранятся по единому горячему тарифу.",
+              "text": "У `Cloud Storage` нет storage-классов: все данные хранятся по единому горячему тарифу `Standard` без холодных уровней.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть четыре класса — `Standard`, `Nearline`, `Coldline`, `Archive` — с разной ценой за хранение и доступ.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Egress-трафик у `Cloud Storage` всегда дороже, чем у `AWS S3`, что делает его невыгодным для отдачи данных.",
+              "text": "Egress-трафик у `Cloud Storage` всегда дороже, чем у `AWS S3`, что делает его невыгодным для отдачи больших объёмов данных.",
               "correct": false,
               "sections": {
                 "what_actually": "У `GCP` egress обычно дешевле, чем у `AWS`, для большинства сценариев — это как раз преимущество `Cloud Storage`.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Persistent Disks` — объектное хранилище для файлов, доступное по HTTP, как `Cloud Storage`.",
+              "text": "`Persistent Disks` — объектное хранилище для файлов, доступное по HTTP и адресуемое по URL, как `Cloud Storage`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Persistent Disks` — block storage для `GCE` (аналог `EBS`): подключается к VM как диск, а не адресуется по URL.",
@@ -563,10 +563,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Persistent Disks` — block storage для `Compute Engine` (аналог `EBS`). Типы: `pd-standard` (HDD, дешёвый), `pd-balanced` (SSD, баланс), `pd-ssd` (SSD, производительность), `pd-extreme` (максимальный IOPS); новее — `Hyperdisk`. Преимущества над `EBS`: встроенное расписание авто-снапшотов, снапшот живого диска без consistency-проблем, regional disks (репликация между 2 зонами).",
+              "text": "`Persistent Disks` — block storage для `Compute Engine` (аналог `EBS`) с несколькими типами дисков и преимуществами по снапшотам и HA.",
               "correct": true,
               "sections": {
-                "explanation": "Главное отличие от `EBS` — regional disks и снапшоты живого диска: данные реплицируются между двумя зонами для HA, а консистентный снапшот снимается без остановки нагрузки, что упрощает бэкапы.",
+                "explanation": "Типы: `pd-standard` (HDD, дешёвый), `pd-balanced` (SSD, баланс), `pd-ssd` (SSD, производительность), `pd-extreme` (максимальный IOPS); новее — `Hyperdisk`. Преимущества над `EBS`: встроенное расписание авто-снапшотов, снапшот живого диска без consistency-проблем, regional disks (репликация между 2 зонами). Главное отличие — regional disks и снапшоты живого диска: данные реплицируются между двумя зонами для HA, а консистентный снапшот снимается без остановки нагрузки.",
                 "example": "Под БД на VM берут `pd-ssd` ради IOPS, включают встроенное расписание снапшотов раз в час и при отказе зоны regional disk остаётся доступен из второй зоны без ручного восстановления.",
                 "when_to_apply": "`Persistent Disks` нужны, когда нагрузке требуется блочный диск с файловой системой: БД, файловое состояние сервиса, ОС-диск VM — всё, что не ложится в объектное хранилище.",
                 "edge_cases": "`pd-standard` дёшев, но медленный (HDD) — не для latency-критичных БД; regional disk дороже зонального, зато переживает отказ зоны без миграции данных.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Persistent Disks` нельзя снапшотить во время работы VM — для бэкапа диск нужно отмонтировать.",
+              "text": "`Persistent Disks` нельзя снапшотить во время работы VM — для бэкапа диск нужно отмонтировать и остановить нагрузку.",
               "correct": false,
               "sections": {
                 "what_actually": "`GCP` позволяет снапшотить живой диск без consistency-проблем — это как раз преимущество над `EBS`.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Persistent Disks` всегда привязаны к одной зоне и не умеют реплицироваться между зонами.",
+              "text": "`Persistent Disks` всегда привязаны к одной зоне и не умеют реплицироваться между зонами даже в режиме regional disks.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть regional disks с репликацией между 2 зонами — это даёт HA на уровне диска, чего нет у обычного `EBS`.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Filestore` — это объектное хранилище, аналог `Cloud Storage`/`S3`, для статики и бэкапов.",
+              "text": "`Filestore` — это объектное хранилище, аналог `Cloud Storage`/`S3`, для статики, медиа и бэкапов по HTTP.",
               "correct": false,
               "sections": {
                 "what_actually": "`Filestore` — managed NFS (аналог `AWS EFS`): сетевая файловая система, монтируемая в несколько VM, а не объектное хранилище.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Filestore` — block storage для одной VM, аналог `Persistent Disk`, и не разделяется между машинами.",
+              "text": "`Filestore` — block storage для одной VM, аналог `Persistent Disk` с метрикой IOPS, и не разделяется между машинами.",
               "correct": false,
               "sections": {
                 "what_actually": "`Filestore` — это shared NFS: одна файловая система монтируется сразу в несколько VM; block-диск на одну VM — это `Persistent Disk`.",
@@ -635,10 +635,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Filestore` — managed NFS (аналог `AWS EFS`) для shared-файловых систем между VM. Tiers: `Basic` (малый, до 1 TB), `Enterprise` (high availability), `High Scale` (петабайтный масштаб), `Zonal` (одна зона).",
+              "text": "`Filestore` — managed NFS (аналог `AWS EFS`) для shared-файловых систем между VM, с несколькими tiers под доступность и масштаб.",
               "correct": true,
               "sections": {
-                "explanation": "`Filestore` даёт POSIX-файловую систему по NFS, которую одновременно монтируют несколько VM — это нужно legacy-приложениям и workload'ам, ожидающим shared mount, а не объектный API.",
+                "explanation": "Tiers: `Basic` (малый, до 1 TB), `Enterprise` (high availability), `High Scale` (петабайтный масштаб), `Zonal` (одна зона). `Filestore` даёт POSIX-файловую систему по NFS, которую одновременно монтируют несколько VM — это нужно legacy-приложениям и workload'ам, ожидающим shared mount, а не объектный API.",
                 "example": "Кластер из 5 VM с общим каталогом (рендер-ферма, CMS с общими медиа) монтирует один `Filestore`-инстанс tier `Enterprise` для HA; все машины видят одни и те же файлы по обычным путям.",
                 "when_to_apply": "`Filestore` берут, когда нескольким VM нужен общий POSIX-доступ к файлам: миграция on-prem NFS, shared-конфиги, media-обработка — там, где объектное хранилище не подходит.",
                 "edge_cases": "Tier выбирают по требованиям: `Basic` дёшев, но без HA и до 1 TB; `Enterprise` даёт высокую доступность; `High Scale` — петабайты; смешивать их ожидания (HA от `Basic`) — ошибка.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Filestore` существует только в одном tier, без вариантов под HA или петабайтный масштаб.",
+              "text": "`Filestore` существует только в одном tier `Basic`, без вариантов под HA, `Zonal` или петабайтный масштаб.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Filestore` несколько tiers (`Basic`, `Enterprise`, `High Scale`, `Zonal`) под разные требования к доступности и объёму.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cloud SQL` — это NoSQL-документная БД, аналог `Firestore`/`DynamoDB`.",
+              "text": "`Cloud SQL` — это NoSQL-документная БД с коллекциями документов, прямой аналог `Firestore`/`DynamoDB`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cloud SQL` — managed реляционная БД (`PostgreSQL`, `MySQL`, `SQL Server`); NoSQL-документную модель даёт `Firestore`.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Cloud SQL` не умеет реплики для чтения и масштабируется только вертикально, увеличением инстанса.",
+              "text": "`Cloud SQL` не умеет read replicas для масштабирования чтения и растёт только вертикально, увеличением размера одного инстанса.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cloud SQL` поддерживает read replicas для масштабирования чтения, помимо вертикального роста.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`AlloyDB` — это MySQL-совместимая БД, прямой конкурент `AWS RDS for MySQL`.",
+              "text": "`AlloyDB` — это MySQL-совместимая БД с ~4x производительностью, прямой конкурент `AWS RDS for MySQL`.",
               "correct": false,
               "sections": {
                 "what_actually": "`AlloyDB` — `PostgreSQL`-совместимая БД с ~4x производительностью, конкурент `AWS Aurora`, а не MySQL-аналог `RDS`.",
@@ -707,10 +707,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Cloud SQL` — managed реляционные БД с движками `PostgreSQL`, `MySQL` и `SQL Server`. Возможности: автоматические бэкапы и PITR, High Availability через multi-zone репликацию, read replicas, IAM-аутентификация, доступ по private IP через `VPC`. Дополнительно в `GCP` есть `AlloyDB` (с 2022) — `PostgreSQL`-совместимая БД с ~4x производительностью, конкурент `AWS Aurora`.",
+              "text": "`Cloud SQL` — managed реляционные БД (`PostgreSQL`, `MySQL`, `SQL Server`); рядом есть `AlloyDB` — Postgres-совместимый конкурент `Aurora`.",
               "correct": true,
               "sections": {
-                "explanation": "`Cloud SQL` снимает рутину администрирования (бэкапы, патчи, failover), а `AlloyDB` решает проблему производительности и масштаба Postgres, оставаясь совместимым по протоколу, поэтому миграция с обычного Postgres минимальна.",
+                "explanation": "Возможности `Cloud SQL`: автоматические бэкапы и PITR, High Availability через multi-zone репликацию, read replicas, IAM-аутентификация, доступ по private IP через `VPC`. `AlloyDB` (с 2022) — `PostgreSQL`-совместимая БД с ~4x производительностью, конкурент `AWS Aurora`. `Cloud SQL` снимает рутину администрирования (бэкапы, патчи, failover), а `AlloyDB` решает проблему производительности и масштаба Postgres, оставаясь совместимым по протоколу, поэтому миграция минимальна.",
                 "example": "Prod-сервис на `Cloud SQL PostgreSQL` включает HA (синхронная реплика в другой зоне) и PITR, чтобы откатиться на момент до инцидента; при упоре в производительность одиночного Postgres команда переезжает на `AlloyDB` ради ~4x.",
                 "when_to_apply": "`Cloud SQL` берут для стандартных реляционных нагрузок, которые помещаются в одну БД; `AlloyDB` — когда нужен Postgres-протокол, но не хватает производительности обычного `Cloud SQL`.",
                 "edge_cases": "`Cloud SQL` не предназначен для глобального горизонтального масштабирования — для этого есть `Cloud Spanner`; HA защищает от отказа зоны, но не заменяет шардинг при экстремальном объёме записи.",
@@ -731,10 +731,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cloud Spanner` — глобально распределённая, строго консистентная SQL-БД, уникальная для `GCP`. Особенности: горизонтальное масштабирование SQL, strong external consistency через `TrueTime` (атомные часы), 5 nines availability (multi-region), ACID-транзакции между регионами, `PostgreSQL`-совместимый интерфейс, serverless-режим. Use cases: глобальные финансовые системы, multi-region apps, требующие согласованности.",
+              "text": "`Cloud Spanner` — глобально распределённая, строго консистентная SQL-БД, уникальная для `GCP`, с ACID-транзакциями между регионами.",
               "correct": true,
               "sections": {
-                "explanation": "Уникальность `Spanner` в том, что он совмещает горизонтальное масштабирование (как NoSQL) со strong consistency и ACID между регионами — компромисс, который раньше считался невозможным; основа — `TrueTime`, дающий глобально согласованный порядок транзакций.",
+                "explanation": "Особенности: горизонтальное масштабирование SQL, strong external consistency через `TrueTime` (атомные часы), 5 nines availability (multi-region), ACID-транзакции между регионами, `PostgreSQL`-совместимый интерфейс, serverless-режим. Use cases: глобальные финансовые системы, multi-region apps, требующие согласованности. Уникальность в том, что он совмещает горизонтальное масштабирование (как NoSQL) со strong consistency и ACID между регионами — компромисс, который раньше считался невозможным; основа — `TrueTime`, дающий глобально согласованный порядок транзакций.",
                 "example": "Глобальный платёжный сервис на `Spanner` проводит ACID-транзакцию, затрагивающую данные в `us` и `eu`, с гарантией внешней согласованности; при росте нагрузки добавляются ноды без ручного шардинга и без потери consistency.",
                 "when_to_apply": "`Spanner` берут, когда приложение переросло один `PostgreSQL` и нужна глобальная согласованность: финтех, биллинг, multi-region системы с жёсткими требованиями к корректности.",
                 "edge_cases": "`Spanner` стоит дорого ($$$$) и оправдан только на реальном масштабе; для небольших нагрузок это переплата, и обычный `Cloud SQL` или `AlloyDB` дешевле и проще.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Cloud Spanner` — это NoSQL key-value хранилище без поддержки SQL и транзакций.",
+              "text": "`Cloud Spanner` — это NoSQL key-value хранилище без поддержки SQL, JOIN'ов и ACID-транзакций, аналог `Bigtable`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spanner` — это SQL-БД с ACID-транзакциями и `PostgreSQL`-совместимым интерфейсом, а не key-value NoSQL.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Strong consistency в `Spanner` достигается тем, что запись разрешена только в один регион, а остальные read-only.",
+              "text": "Strong consistency в `Spanner` достигается тем, что запись разрешена только в один регион, а остальные регионы работают read-only.",
               "correct": false,
               "sections": {
                 "what_actually": "Consistency обеспечивает `TrueTime` (атомные часы) с глобально согласованным порядком, а ACID-транзакции работают между регионами, не ограничиваясь одним writer-регионом.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Cloud Spanner` есть у всех крупных облаков под тем же именем — это отраслевой стандарт, а не продукт `GCP`.",
+              "text": "`Cloud Spanner` есть у всех крупных облаков под тем же именем — это открытый отраслевой стандарт, а не продукт только `GCP`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spanner` уникален для `GCP`; конкуренты (`CockroachDB`, `YugabyteDB`, `TiDB`) — отдельные open-source проекты, а не тот же сервис.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Firestore` — реляционная SQL-БД с таблицами и JOIN'ами, аналог `Cloud SQL`.",
+              "text": "`Firestore` — реляционная SQL-БД с таблицами, схемой и JOIN'ами, прямой аналог `Cloud SQL`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Firestore` — NoSQL документная БД (иерархия collections → documents → subcollections), а не реляционная SQL-БД с JOIN'ами.",
@@ -803,10 +803,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Firestore` — NoSQL документная БД (аналог `DynamoDB`/`MongoDB`). Особенности: realtime-синхронизация (клиенты получают updates автоматически), mobile/web SDK с offline-поддержкой, strong consistency, иерархические данные (collections → documents → subcollections), авто-скейлинг. Режимы: `Native mode` (рекомендуемый, realtime, mobile) и `Datastore mode` (обратная совместимость со старым `Datastore`).",
+              "text": "`Firestore` — NoSQL документная БД (аналог `DynamoDB`/`MongoDB`) с realtime-синхронизацией, offline-SDK и двумя режимами.",
               "correct": true,
               "sections": {
-                "explanation": "Главная фишка `Firestore` — realtime-синхронизация и offline: клиент подписывается на документ и мгновенно получает изменения, а SDK кеширует данные локально и синхронит при восстановлении сети, что идеально для интерактивных приложений.",
+                "explanation": "Особенности: realtime-синхронизация (клиенты получают updates автоматически), mobile/web SDK с offline-поддержкой, strong consistency, иерархические данные (collections → documents → subcollections), авто-скейлинг. Режимы: `Native mode` (рекомендуемый, realtime, mobile) и `Datastore mode` (обратная совместимость со старым `Datastore`). Главная фишка — realtime и offline: клиент подписывается на документ и мгновенно получает изменения, а SDK кеширует данные локально и синхронит при восстановлении сети.",
                 "example": "Чат или коллаборативный редактор хранит сообщения в `collection` `messages`; все участники подписаны на неё, и новое сообщение появляется у всех мгновенно без поллинга, а при offline отправка ставится в очередь и доезжает позже.",
                 "when_to_apply": "`Firestore` берут для mobile/web приложений с realtime-обновлениями: чаты, коллаборативные доски, приложения с offline-режимом, где важна синхронизация состояния между клиентами.",
                 "edge_cases": "`Native mode` рекомендуется для нового; `Datastore mode` существует только ради совместимости со старым `Datastore` и не даёт realtime-фич; выбор режима необратим на уровне базы.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Firestore` работает только онлайн и не имеет offline-поддержки на клиентах.",
+              "text": "`Firestore` работает только онлайн и не имеет offline-поддержки на клиентах даже через mobile/web SDK.",
               "correct": false,
               "sections": {
                 "what_actually": "SDK `Firestore` поддерживают offline: данные кешируются локально и синхронизируются при появлении сети.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Firestore` использует eventual consistency, поэтому только что записанный документ может прочитаться устаревшим.",
+              "text": "`Firestore` использует eventual consistency, поэтому только что записанный документ может прочитаться устаревшим у других клиентов.",
               "correct": false,
               "sections": {
                 "what_actually": "`Firestore` даёт strong consistency: после записи документ читается в актуальном состоянии.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cloud Bigtable` — реляционная SQL-БД для транзакционных приложений, аналог `Cloud SQL`.",
+              "text": "`Cloud Bigtable` — реляционная SQL-БД с поддержкой JOIN, foreign keys и multi-row транзакций для OLTP-приложений, прямой аналог `Cloud SQL`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Bigtable` — wide-column NoSQL (аналог `HBase`/`Cassandra`), а не реляционная SQL-БД для OLTP.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Bigtable` экономичен для маленьких проектов и стоит копейки на старте, как managed Redis.",
+              "text": "`Bigtable` экономичен для маленьких проектов и стоит копейки на старте даже на минимальном кластере, как managed `Redis`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Bigtable` оправдан на large scale: минимум ~$700/month за базовый кластер, для небольших нагрузок это дорого.",
@@ -875,10 +875,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Cloud Bigtable` — wide-column NoSQL (аналог `HBase`/`Cassandra`). Особенности: петабайтный масштаб (миллионы reads/writes в секунду), низкая задержка (~10ms), `HBase`-совместимый API, транзакции на уровне строки (single-cell row level). Use cases: time-series данные (финансы, IoT, monitoring), AdTech-аналитика, персонализация, ML feature serving.",
+              "text": "`Cloud Bigtable` — wide-column NoSQL для high-throughput нагрузок (аналог `HBase`/`Cassandra`), с масштабом до петабайт и низкой latency.",
               "correct": true,
               "sections": {
-                "explanation": "`Bigtable` оптимизирован под огромный объём записей с предсказуемой низкой задержкой и линейным масштабированием по нодам — это делает его идеальным для потоковых time-series и high-throughput workload'ов, где `Cloud SQL` не вытягивает.",
+                "explanation": "`Bigtable` оптимизирован под огромный объём записей с предсказуемой низкой задержкой (~10ms) и линейным масштабированием по нодам — это делает его идеальным для потоковых time-series и high-throughput workload'ов, где `Cloud SQL` не вытягивает. API совместим с `HBase`, что упрощает миграцию существующих `HBase`-нагрузок без переписывания.",
                 "example": "Система мониторинга пишет миллионы метрик в секунду в `Bigtable` с ключом строки `metric#timestamp`; чтение диапазона за период отдаёт ~10ms, а кластер масштабируется добавлением нод под рост нагрузки.",
                 "when_to_apply": "`Bigtable` берут для time-series, IoT, AdTech, персонализации и ML feature serving — там, где нужны миллионы операций в секунду и низкая latency на large scale.",
                 "edge_cases": "`Bigtable` дорог (минимум ~$700/month за базовый кластер) и оправдан только на большом масштабе; транзакции ограничены уровнем строки — multi-row ACID здесь нет, для этого нужен `Spanner`.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Memorystore` — managed реляционная БД, аналог `Cloud SQL`.",
+              "text": "`Memorystore` — managed реляционная БД с SQL-движком и durable-хранением, прямой аналог `Cloud SQL`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Memorystore` — managed in-memory кеш (`Redis` или `Memcached`), аналог `AWS ElastiCache`, а не реляционная БД.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Memorystore` поддерживает только `Memcached` и не умеет `Redis`.",
+              "text": "`Memorystore` поддерживает только `Memcached` и принципиально не умеет работать с протоколом `Redis`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Memorystore` предлагает оба движка — и `Redis`, и `Memcached` — на выбор под задачу.",
@@ -947,7 +947,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Memorystore` — managed `Redis` или `Memcached`, аналог `AWS ElastiCache` со стандартным набором возможностей managed-кеша.",
+              "text": "`Memorystore` — managed `Redis` или `Memcached`, аналог `AWS ElastiCache`.",
               "correct": true,
               "sections": {
                 "explanation": "`Memorystore` снимает с команды управление кластером кеша: провижининг, патчи, failover и мониторинг берёт на себя `GCP`, а ты получаешь привычный протокол `Redis`/`Memcached`.",
@@ -971,10 +971,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`BigQuery` — serverless DWH, crown jewel `GCP`. Особенности: serverless (нет инфраструктуры), петабайтные запросы за секунды, оплата per query (по scanned bytes) или flat-rate, стандартный ANSI SQL, встроенный ML (`BigQuery ML`, `CREATE MODEL ... USING SQL`), native multi-cloud (`BigQuery Omni` — query `S3`/`Azure`), streaming inserts, geospatial-функции. Ценовая ловушка: оплата за scanned bytes — без partitioning/clustering можно случайно «сжечь» $1000.",
+              "text": "`BigQuery` — serverless DWH, флагман `GCP`; ценовая ловушка — оплата за scanned bytes.",
               "correct": true,
               "sections": {
-                "explanation": "Сила `BigQuery` в полном отсутствии управления кластером и в разделении storage/compute: запрос по петабайтам выполняется за секунды на эфемерных слотах, а оплата идёт за объём просканированных данных, а не за время аренды кластера.",
+                "explanation": "Сила `BigQuery` в полном отсутствии управления кластером и в разделении storage/compute: запрос по петабайтам выполняется за секунды на эфемерных слотах, а оплата идёт за объём просканированных данных, а не за время аренды кластера. Поверх этого — стандартный ANSI SQL, встроенный `BigQuery ML` (`CREATE MODEL ... USING SQL`), multi-cloud через `BigQuery Omni` (запросы к `S3`/`Azure` без копирования), streaming inserts и geospatial-функции.",
                 "example": "`SELECT * FROM huge_table` без фильтра по partition-полю сканирует весь датасет и стоит дорого; правильный запрос с `WHERE date = '2025-01-01'` по партиционированной таблице читает только нужный день и обходится в копейки.",
                 "when_to_apply": "`BigQuery` берут для аналитики и DWH: ad-hoc запросы по большим объёмам, дашборды, ML прямо на данных через `BigQuery ML` без выгрузки в отдельную систему.",
                 "edge_cases": "Главный риск — pay-per-byte-scanned: без partitioning/clustering и при `SELECT *` легко случайно «сжечь» $1000; для OLTP `BigQuery` не предназначен — это аналитическая, а не транзакционная БД.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`BigQuery` требует заранее провижинить и администрировать кластер, как `Redshift`.",
+              "text": "`BigQuery` требует заранее провижинить и администрировать кластер фиксированного размера, как `Redshift`.",
               "correct": false,
               "sections": {
                 "what_actually": "`BigQuery` serverless: инфраструктуры нет вообще, слоты выделяются автоматически под запрос.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `BigQuery` нельзя обучать ML-модели — для этого данные надо выгружать в `Vertex AI`.",
+              "text": "В `BigQuery` нельзя обучать ML-модели прямо в SQL — для этого данные надо выгружать в `Vertex AI`.",
               "correct": false,
               "sections": {
                 "what_actually": "`BigQuery ML` позволяет обучать модели прямо в SQL: `CREATE MODEL ... OPTIONS(model_type='linear_reg')` без выгрузки данных.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Dataflow` — это только batch-движок, не умеющий обрабатывать потоковые данные.",
+              "text": "`Dataflow` — это только batch-движок без поддержки потоковой обработки и оконных агрегаций в реальном времени.",
               "correct": false,
               "sections": {
                 "what_actually": "`Dataflow` даёт unified batch + streaming на одном движке — это его ключевая особенность.",
@@ -1043,10 +1043,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Dataflow` — managed-рантайм `Apache Beam`. Особенности: unified batch + streaming, авто-скейлинг воркеров, exactly-once processing, интеграция с `BigQuery`, `Pub/Sub`, `GCS`. По сравнению с `AWS Kinesis Data Analytics` и `Azure Stream Analytics` более зрелый; конкурирует со `Spark Streaming`/`Flink`, но managed-природа упрощает ops.",
+              "text": "`Dataflow` — managed-рантайм `Apache Beam` с единой моделью batch + streaming.",
               "correct": true,
               "sections": {
-                "explanation": "`Dataflow` исполняет пайплайны, написанные на `Apache Beam`, и сам управляет воркерами: масштабирует их под нагрузку и гарантирует exactly-once, поэтому одна и та же модель кода работает и для batch, и для streaming.",
+                "explanation": "`Dataflow` исполняет пайплайны, написанные на `Apache Beam`, и сам управляет воркерами: масштабирует их под нагрузку и гарантирует exactly-once, поэтому одна и та же модель кода работает и для batch, и для streaming. Готовая интеграция с `BigQuery`, `Pub/Sub`, `GCS`. По сравнению с `AWS Kinesis Data Analytics` и `Azure Stream Analytics` считается более зрелым; конкурирует со `Spark Streaming`/`Flink`, но managed-природа упрощает ops.",
                 "example": "Pipeline читает из `Pub/Sub`, окнирует поток `FixedWindows.of(60s)`, считает `Count.perElement()` и пишет результат в `BigQuery` — всё на `Apache Beam`, а `Dataflow` сам поднимает и скейлит воркеров.",
                 "when_to_apply": "`Dataflow` берут для ETL и стриминговой обработки, когда не хочется самим управлять `Spark`/`Flink`-кластером: unified-модель и managed-ops упрощают эксплуатацию пайплайнов.",
                 "edge_cases": "Exactly-once упрощает корректность, но `Apache Beam` — отдельная модель программирования с кривой обучения; для legacy `Spark`-джоб чаще берут `Dataproc`, а не переписывают на `Beam`.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Dataflow` написан на проприетарном API Google, несовместимом с `Apache Beam`.",
+              "text": "`Dataflow` написан на проприетарном API Google и принципиально несовместим с пайплайнами `Apache Beam`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Dataflow` — это именно managed-рантайм `Apache Beam`; пайплайны пишутся на открытом `Beam SDK`.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Pub/Sub` требует ручного планирования партиций и числа брокеров, как `Kafka`.",
+              "text": "`Pub/Sub` требует ручного планирования числа партиций и брокеров под нагрузку, точно как `Kafka`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Pub/Sub` полностью managed и авто-скейлится — планировать партиции и кластеры не нужно, в отличие от `Kafka`.",
@@ -1115,10 +1115,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Pub/Sub` — managed messaging (аналог `AWS SNS/SQS` и `Kafka`). Возможности: global single endpoint (multi-region), at-least-once delivery, push- или pull-подписки, dead letter topics, фильтрация, ordering keys (FIFO per key), schema validation. Отличия от `Kafka`: fully managed (без кластеров), авто-скейлинг, без планирования партиций, но выше latency (50-200 ms) и меньше контроля. `Pub/Sub` — для простого managed messaging; `Kafka` — для low latency, throughput >> 10K msg/sec, replay из исторических offset и экосистемы (Streams, Connect).",
+              "text": "`Pub/Sub` — fully managed messaging (аналог `SNS/SQS` и `Kafka`); компромисс — выше latency, меньше контроля.",
               "correct": true,
               "sections": {
-                "explanation": "`Pub/Sub` снимает операционную нагрузку: глобальный эндпоинт и авто-скейлинг без управления брокерами, ценой более высокой задержки и меньшего контроля, тогда как `Kafka` даёт low latency, replay по offset и богатую экосистему ценой ops.",
+                "explanation": "`Pub/Sub` снимает операционную нагрузку: глобальный эндпоинт и авто-скейлинг без управления брокерами, ценой более высокой задержки и меньшего контроля, тогда как `Kafka` даёт low latency, replay по offset и богатую экосистему ценой ops. Из коробки: push- или pull-подписки, dead letter topics, фильтрация по атрибутам, ordering keys (FIFO per key) и schema validation.",
                 "example": "Событийная интеграция микросервисов с умеренным трафиком и без жёстких latency-требований ложится на `Pub/Sub` (никаких кластеров), а stream-processing с `Kafka Streams`, replay истории и throughput сотни тысяч msg/sec остаётся за `Kafka`.",
                 "when_to_apply": "`Pub/Sub` выбирают, когда нужен простой managed-обмен сообщениями без эксплуатации кластера; `Kafka` — когда критичны низкая задержка, очень высокий throughput, replay из исторических offset или экосистема Streams/Connect.",
                 "edge_cases": "`Pub/Sub` имеет ordering keys для FIFO per key, но это не глобальный порядок; latency 50-200 ms делает его непригодным для жёсткого realtime, где `Kafka` даёт единицы миллисекунд.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Pub/Sub` работает только в одном регионе и не имеет глобального эндпоинта.",
+              "text": "`Pub/Sub` работает строго в пределах одного региона и не имеет глобального anycast-эндпоинта для multi-region доставки сообщений.",
               "correct": false,
               "sections": {
                 "what_actually": "`Pub/Sub` глобален: единый endpoint обслуживает multi-region без региональной привязки.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Dataproc` умеет запускать только `Hadoop`, без поддержки `Spark`, `Hive` или `Presto`.",
+              "text": "`Dataproc` умеет запускать только `Hadoop` MapReduce, без поддержки `Spark`, `Hive` или `Presto`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Dataproc` — managed `Hadoop`, `Spark`, `Hive`, `Presto` и `Flink`; это широкий набор движков, а не только `Hadoop`.",
@@ -1187,10 +1187,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Dataproc` — managed `Hadoop`, `Spark`, `Hive`, `Presto`, `Flink`. Особенности: поднятие кластера за ~90 секунд, авто-скейлинг, per-second pricing, эфемерные кластеры (spin up → run job → destroy). Когда: legacy `Hadoop`/`Spark`-нагрузки, которые не хочется self-host. В 2025 для новых workload'ов чаще выбирают `Dataflow` или `Spark` в `Databricks`.",
+              "text": "`Dataproc` — managed `Hadoop`/`Spark`/`Hive`/`Presto`/`Flink`; берут под legacy lift-and-shift.",
               "correct": true,
               "sections": {
-                "explanation": "`Dataproc` — это lift-and-shift для существующих `Spark`/`Hadoop`-джоб: тот же код запускается без переписывания на `Beam`, а managed-кластер и per-second billing позволяют гонять задачи на эфемерных кластерах дёшево.",
+                "explanation": "`Dataproc` — это lift-and-shift для существующих `Spark`/`Hadoop`-джоб: тот же код запускается без переписывания на `Beam`, а managed-кластер поднимается за ~90 секунд. Per-second pricing и эфемерные кластеры (spin up → run job → destroy) позволяют гонять задачи дёшево. В 2025 для новых workload'ов чаще выбирают `Dataflow` (unified) или `Spark` в `Databricks`.",
                 "example": "Ночной ETL на `Spark` поднимает `Dataproc`-кластер за 90 секунд, отрабатывает джобу и сразу удаляется; платишь только за минуты работы, а не за постоянно живой кластер.",
                 "when_to_apply": "`Dataproc` берут для миграции legacy `Hadoop`/`Spark`-нагрузок без self-host и переписывания кода; для новых пайплайнов чаще выбирают `Dataflow` (unified) или `Databricks`.",
                 "edge_cases": "Для нового кода `Apache Beam`/`Dataflow` часто предпочтительнее из-за unified-модели и managed-ops, поэтому `Dataproc` остаётся в основном для уже написанных `Spark`/`Hadoop`-джоб.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`GCP VPC` уникальна тем, что **глобальна** по умолчанию: одна VPC охватывает все регионы (vs региональная VPC у `AWS`). Subnets создаются per region автоматически внутри VPC, а firewall rules глобальны и применяются across regions.",
+              "text": "`GCP VPC` уникальна тем, что **глобальна** по умолчанию: одна VPC на все регионы (vs региональная у `AWS`).",
               "correct": true,
               "sections": {
                 "explanation": "Глобальная VPC — следствие глобальной сети Google: один логический VPC объединяет subnet'ы в разных регионах под общим адресным пространством, поэтому межрегиональное взаимодействие не требует VPC peering, как в `AWS`.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Subnet'ы в `GCP` создаются глобально и не привязаны к конкретному региону.",
+              "text": "Subnet'ы в `GCP` создаются глобально, охватывают сразу все регионы одним диапазоном IP и не привязаны к конкретному региону.",
               "correct": false,
               "sections": {
                 "what_actually": "Subnet'ы привязаны к региону (per region), а глобальна сама VPC, объединяющая эти региональные subnet'ы.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cloud Load Balancing` региональный: для распределения трафика между регионами нужен отдельный балансировщик в каждом регионе и `Route53`-подобная маршрутизация.",
+              "text": "`Cloud Load Balancing` региональный: для трафика между регионами нужен отдельный балансировщик в каждом регионе.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cloud Load Balancing` глобальный с единым anycast IP: один балансировщик распределяет трафик к ближайшему региону без отдельных региональных LB.",
@@ -1283,10 +1283,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Cloud Load Balancing` — глобальный, с единым anycast IP: автоматически распределяет трафик к ближайшему региону, работает на L4 (TCP/UDP) и L7 (HTTP), авто-скейлится, имеет встроенную DDoS-защиту. `Cloud CDN` — глобальный CDN, интегрированный с Load Balancing. Главное преимущество — single global IP для multi-region сервиса (в `AWS` для аналога нужен `Route53` latency-based routing).",
+              "text": "`Cloud Load Balancing` — глобальный, с единым anycast IP; `Cloud CDN` интегрирован с ним.",
               "correct": true,
               "sections": {
-                "explanation": "Единый anycast IP — наследие глобальной сети Google: один публичный IP анонсируется из всех точек присутствия, и трафик пользователя автоматически идёт к ближайшему здоровому бэкенду, без DNS-трюков для маршрутизации.",
+                "explanation": "Единый anycast IP — наследие глобальной сети Google: один публичный IP анонсируется из всех точек присутствия, и трафик пользователя автоматически идёт к ближайшему здоровому бэкенду, без DNS-трюков для маршрутизации. Балансировщик работает на L4 (TCP/UDP) и L7 (HTTP), авто-скейлится и имеет встроенную DDoS-защиту. В `AWS` для аналога нужен `Route53` latency-based routing и отдельные балансировщики по регионам.",
                 "example": "Multi-region сервис в `us` и `eu` публикуется под одним IP `Cloud Load Balancing`; европейский пользователь попадает на европейский бэкенд, американский — на американский, а при отказе региона трафик переключается без смены IP.",
                 "when_to_apply": "Связку берут для глобальных публичных сервисов: один IP, автоматическая близость к пользователю, L7-роутинг и DDoS-защита, а `Cloud CDN` кеширует статику на edge для снижения latency.",
                 "edge_cases": "Single global IP упрощает DNS и failover, но это управляемый сервис без тонкого контроля над маршрутизацией, как у self-hosted решений; кеширование `Cloud CDN` требует корректных cache-заголовков, иначе динамика закешируется ошибочно.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Cloud Load Balancing` работает только на L7 (HTTP) и не умеет балансировать TCP/UDP-трафик.",
+              "text": "`Cloud Load Balancing` работает только на L7 (HTTP) и принципиально не умеет балансировать TCP/UDP-трафик.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cloud Load Balancing` поддерживает и L4 (TCP/UDP), и L7 (HTTP) — это два режима, а не только HTTP.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `GCP IAM` нет иерархии и наследования: права выдаются только напрямую на каждый отдельный ресурс.",
+              "text": "В `GCP IAM` нет иерархии и наследования: права выдаются только напрямую на каждый отдельный ресурс вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "В `GCP IAM` есть иерархия `Organization → Folder → Project → Resource` с наследованием прав сверху вниз.",
@@ -1355,10 +1355,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`GCP IAM`: роли (`Roles`) = набор permissions (vs Policies в `AWS`); members = users, groups, service accounts; binding на ресурсе = `member + role`. Типы ролей: `Basic` (`Owner`/`Editor`/`Viewer`, legacy, широкие права), `Predefined` (granular per-service, `roles/storage.objectViewer`), `Custom` (свои комбинации). Иерархия `Organization → Folder → Project → Resource` с наследованием прав. По сравнению с `AWS`: `GCP` проще для большинства случаев, `AWS` гранулярнее, но сложнее.",
+              "text": "`GCP IAM`: binding `member + role` на ресурсе; иерархия `Org → Folder → Project` с наследованием.",
               "correct": true,
               "sections": {
-                "explanation": "Модель `GCP` строится на binding'ах «member + role» на узле иерархии: ты привязываешь роль к пользователю/группе/SA на проекте или folder, и право наследуется вниз, что проще политик `AWS` с их явными `Allow/Deny` и условиями.",
+                "explanation": "Модель `GCP` строится на binding'ах «member + role» на узле иерархии: ты привязываешь роль к пользователю/группе/SA на проекте или folder, и право наследуется вниз, что проще политик `AWS` с их явными `Allow/Deny` и условиями. Типы ролей: `Basic` (`Owner`/`Editor`/`Viewer`, legacy, широкие), `Predefined` (granular per-service, `roles/storage.objectViewer`) и `Custom` (свои комбинации); `AWS` гранулярнее, но сложнее.",
                 "example": "Чтобы дать `alice@example.com` доступ к объектам в бакетах, ей биндят `roles/storage.objectAdmin` на уровне проекта (`gcp set-iam-policy --member=user:alice@example.com --role=roles/storage.objectAdmin`); право автоматически действует на все бакеты проекта.",
                 "when_to_apply": "Эту модель применяют для управления доступом по least privilege: `Predefined`-роли на нужном уровне иерархии вместо широких `Basic`-ролей, плюс группы для масштабируемой выдачи.",
                 "edge_cases": "`Basic`-роли (`Owner`/`Editor`) дают слишком много и считаются legacy; `AWS` гранулярнее за счёт явных policy с условиями, но и сложнее в сопровождении — это trade-off простоты против тонкости.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Service account` — это обычный человеческий аккаунт для входа сотрудников через браузер.",
+              "text": "`Service account` — это обычный человеческий аккаунт для входа сотрудников в консоль `GCP` через браузер с паролем.",
               "correct": false,
               "sections": {
                 "what_actually": "`Service account` — non-human identity для сервисов (apps, workloads), а не аккаунт для людей.",
@@ -1427,7 +1427,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Service account` — non-human identity для сервисов (apps, workloads). Создаётся через `gcloud iam service-accounts create my-sa` и привязывается, например, к VM (`--service-account=my-sa@project.iam.gserviceaccount.com`). Best practices: одна SA на workload (least privilege), `Workload Identity` для `GKE` (без JSON-ключей в подах), federated identities для cross-cloud (`AWS EKS → GCP` через OIDC).",
+              "text": "`Service account` — non-human identity для нагрузок; SA на workload + `Workload Identity` для `GKE`.",
               "correct": true,
               "sections": {
                 "explanation": "SA позволяет нагрузке аутентифицироваться в API `GCP` без хардкода учёток: VM, под или функция действуют от имени SA, а права выдаются через IAM-биндинги, поэтому ключи в идеале вообще не нужны.",
@@ -1451,10 +1451,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Vertex AI` — unified ML-платформа `GCP`, собирающая все ML-сервисы в одном месте: `Vertex AI Studio` (playground для `Gemini`), `Model Garden` (предобученные модели — `Gemini`, `Llama`, `Anthropic`), `Pipelines` (managed Kubeflow), `Model Registry`, `Feature Store`, `Workbench` (managed Jupyter), `Endpoints` (serving), `AutoML` (no-code обучение). В 2025 — один из лидеров managed ML наряду с `SageMaker` и `Azure ML`.",
+              "text": "`Vertex AI` — unified ML-платформа `GCP`, собирающая все ML-сервисы в одном месте.",
               "correct": true,
               "sections": {
-                "explanation": "`Vertex AI` объединяет весь ML-жизненный цикл — от экспериментов в Jupyter и тренировки до registry, feature store и serving — в одной платформе, убирая зоопарк разрозненных инструментов.",
+                "explanation": "`Vertex AI` объединяет весь ML-жизненный цикл — от экспериментов в Jupyter и тренировки до registry, feature store и serving — в одной платформе, убирая зоопарк разрозненных инструментов. Компоненты: `Vertex AI Studio` (playground для `Gemini`), `Model Garden` (предобученные модели — `Gemini`, `Llama`, `Anthropic`), `Pipelines` (managed Kubeflow), `Model Registry`, `Feature Store`, `Workbench` (managed Jupyter), `Endpoints` (serving), `AutoML`. В 2025 — один из лидеров managed ML наряду с `SageMaker` и `Azure ML`.",
                 "example": "Команда обучает модель через `AutoML` или `Pipelines`, версионирует её в `Model Registry`, а затем разворачивает на `Endpoints` для онлайн-инференса — всё внутри `Vertex AI` без склейки внешних сервисов.",
                 "when_to_apply": "`Vertex AI` выбирают, когда нужна единая платформа под полный MLOps-цикл на `GCP`: эксперименты, обучение, реестр моделей, feature store и serving в одном контуре.",
                 "edge_cases": "`AutoML` удобен для no-code задач, но даёт меньше контроля, чем кастомное обучение в `Pipelines`; для production-нагрузок чаще берут управляемые pipelines и собственный код.",
@@ -1523,10 +1523,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Gemini` — frontier-LLM от Google (бывшие `Bard`, `PaLM 2`), конкурент `GPT-4` и `Claude`. Линейка: `Gemini 2.0 Flash` (быстрый, дешёвый), `2.0 Pro` (баланс), `2.0 Ultra` (топ-качество), `2.5 Pro` (новейший в 2025). Особенности: native multimodal (text+image+video+audio), рекордное окно контекста 1M-2M токенов, встроенное `Code execution`, grounding через `Google Search`.",
+              "text": "`Gemini` — frontier-LLM от Google (бывшие `Bard`, `PaLM 2`), конкурент `GPT-4` и `Claude`.",
               "correct": true,
               "sections": {
-                "explanation": "`Gemini` сочетает мультимодальность, гигантское окно контекста и встроенные инструменты (исполнение кода, поиск), поэтому годится и для длинных документов, и для задач с картинками/видео.",
+                "explanation": "`Gemini` сочетает мультимодальность, гигантское окно контекста и встроенные инструменты (исполнение кода, поиск), поэтому годится и для длинных документов, и для задач с картинками/видео. Линейка строится по компромиссу «скорость/цена против качества»: `Flash`-уровень (быстрый, дешёвый), `Pro`-уровень (баланс, флагман) и более тяжёлые поколения (`2.x`, `2.5 Pro` и новее) — конкретные версии стоит сверять с актуальной документацией. Особенности: native multimodal (text+image+video+audio), окно 1M-2M токенов, `Code execution`, grounding через `Google Search`.",
                 "example": "Через `genai.GenerativeModel('gemini-2.5-pro').generate_content('Hello')` приложение отправляет промпт; благодаря окну в 1M-2M токенов в него целиком влезает большая кодовая база или книга.",
                 "when_to_apply": "`Gemini` берут, когда нужны мультимодальность, очень длинный контекст или grounding ответов фактами из `Google Search` прямо в API.",
                 "edge_cases": "Окно в 1M-2M токенов мощно, но дорого и медленнее на огромных промптах; для коротких запросов выбирают `Flash` ради скорости и цены.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Окно контекста `Gemini` — стандартные ~8K токенов, как у ранних LLM, без встроенного исполнения кода и grounding через поиск.",
+              "text": "Окно контекста `Gemini` — стандартные ~8K токенов, как у ранних LLM, без code execution и grounding через поиск.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Gemini` рекордное окно 1M-2M токенов плюс встроенные `Code execution` и grounding через `Google Search`, а не скромные 8K без инструментов.",
@@ -1595,10 +1595,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Сильные стороны `GCP`: `BigQuery` (лучший DWH), `Kubernetes` (родина K8s, `GKE` самый зрелый), networking (best-in-class global), AI/ML (`TPU`, `Gemini`), цена (часто чуть дешевле) и лучшие defaults (multi-zone по умолчанию). Слабые: меньше сервисов и регионов, меньше enterprise-tooling, меньше community и сторонней экосистемы. Сильные стороны `AWS`: крупнейший каталог, зрелость, большое сообщество, документация, enterprise-контракты.",
+              "text": "Сила `GCP`: data (`BigQuery`), `K8s` (`GKE`), сеть и AI/ML; слабее — широта каталога и экосистема (тут силён `AWS`).",
               "correct": true,
               "sections": {
-                "explanation": "Сравнение сводится к trade-off «глубина против широты»: `GCP` выигрывает в data-analytics, `K8s` и AI/ML и часто в цене, а `AWS` — в широте каталога, зрелости и enterprise-охвате.",
+                "explanation": "Сравнение сводится к trade-off «глубина против широты»: `GCP` выигрывает в data-analytics, `K8s` и AI/ML и часто в цене, а `AWS` — в широте каталога, зрелости и enterprise-охвате. Сильные стороны `GCP` детально: `BigQuery` (лучший DWH), `GKE` (родина K8s, самый зрелый), networking (best-in-class global), AI/ML (`TPU`, `Gemini`), цена (часто чуть дешевле), удачные defaults (multi-zone по умолчанию). Слабые: меньше сервисов и регионов, меньше enterprise-tooling, меньше community и сторонней экосистемы — здесь зеркально силён `AWS`.",
                 "example": "Под data-heavy или `K8s`-native проект берут `GCP` ради `BigQuery` и `GKE`; под проект с редкими nichevye-сервисами или большим существующим AWS-контрактом — `AWS`.",
                 "when_to_apply": "Эти strengths/weaknesses используют при выборе провайдера и обосновании архитектурных решений на интервью и в design-доках.",
                 "edge_cases": "Преимущества `GCP` сильнее всего на data/K8s/AI-нагрузках; для legacy enterprise-стека с редкими сервисами выгода `GCP` может исчезать.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`GCP` стоит выбирать всегда и для любых задач, поскольку он превосходит `AWS` и `Azure` по всем без исключения метрикам.",
+              "text": "`GCP` стоит выбирать всегда и для любых задач без исключения, поскольку он превосходит `AWS` и `Azure` по всем без исключения метрикам.",
               "correct": false,
               "sections": {
                 "what_actually": "`GCP` хорош для конкретных сценариев (data-analytics, `K8s`, AI/ML), но не универсально лучше: по ширине каталога и enterprise-охвату он уступает `AWS`.",
@@ -1667,10 +1667,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Выбирать `GCP` стоит при heavy data-analytics (`BigQuery` лучший), `Kubernetes`-first подходе (`GKE` excellent), AI/ML (`Vertex AI`, `Gemini`, `TPU`), глобальных приложениях (сильный networking), для cost-conscious steady-нагрузок и если уже в экосистеме Google (`Workspace`). Не выбирать: если вы уже крупный `AWS`-shop с большими инвестициями, нужны nichevye сервисы только из `AWS`, или compliance/региональные требования не покрыты `GCP`.",
+              "text": "Выбирать `GCP` стоит под data-analytics, `K8s`-first, AI/ML и глобальные приложения; не стоит — при крупных AWS-инвестициях.",
               "correct": true,
               "sections": {
-                "explanation": "Решение опирается на профиль нагрузки и текущие инвестиции: data/K8s/AI и глобальные сети тянут к `GCP`, а большой существующий AWS-стек, редкие сервисы или непокрытый регион — против.",
+                "explanation": "Решение опирается на профиль нагрузки и текущие инвестиции: data/K8s/AI и глобальные сети тянут к `GCP`, а большой существующий AWS-стек, редкие сервисы или непокрытый регион — против. Выбирать `GCP`: heavy data-analytics (`BigQuery` лучший), `Kubernetes`-first (`GKE` excellent), AI/ML (`Vertex AI`, `Gemini`, `TPU`), глобальные приложения (сильный networking), cost-conscious steady-нагрузки и если уже в экосистеме Google (`Workspace`). Не выбирать: крупный `AWS`-shop с инвестициями, нужны nichevye сервисы только из `AWS`, или compliance/региональные требования не покрыты.",
                 "example": "Стартап с упором на аналитику и контейнеры разворачивает всё на `GCP` (`BigQuery` + `GKE`), а компания с многолетним AWS-контрактом и зависимостью от nichevyh AWS-сервисов остаётся на `AWS`.",
                 "when_to_apply": "Этот чек-лист применяют при выборе облака под новый проект или при оценке миграции, взвешивая сильные стороны `GCP` против стоимости переключения.",
                 "edge_cases": "`GCP` — отличный выбор для data-heavy и `K8s`-native проектов, но для крупного legacy AWS-стека с редкими сервисами и жёсткими региональными требованиями он может не подойти.",
