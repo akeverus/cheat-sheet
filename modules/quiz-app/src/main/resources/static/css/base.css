@@ -2398,6 +2398,32 @@ html[data-design] .prompt-modal-input {
   border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md);
 }
+/* Браузер/менеджер паролей перекрашивает автозаполненный input своим бледным фоном
+   (UA-стили :-webkit-autofill бьют author background/color) → в тёмной теме
+   token-поле превращается в яркую коробку с инверсным контрастом. autocomplete=off
+   на type=password браузеры ИГНОРИРУЮТ + предлагают сохранить токен → при повторном
+   открытии модалки (obtainAdminToken) срабатывает autofill. Перекрашиваем inset-тенью
+   (UA её не перебивает) на token-фон + -webkit-text-fill-color; transition 600000s
+   гасит вспышку UA-цвета. Каждое поле — на СВОЁМ фоне (prompt = bg-secondary,
+   search = bg-primary). Покрывает все 10 дизайнов × 2 темы. */
+html[data-design] .prompt-modal-input:-webkit-autofill,
+html[data-design] .prompt-modal-input:-webkit-autofill:hover,
+html[data-design] .prompt-modal-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-secondary) inset;
+  box-shadow: 0 0 0 1000px var(--color-bg-secondary) inset;
+  -webkit-text-fill-color: var(--color-text-primary);
+  caret-color: var(--color-text-primary);
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+html[data-design] .stats-page .search-input:-webkit-autofill,
+html[data-design] .stats-page .search-input:-webkit-autofill:hover,
+html[data-design] .stats-page .search-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-primary) inset;
+  box-shadow: 0 0 0 1000px var(--color-bg-primary) inset;
+  -webkit-text-fill-color: var(--color-text-primary);
+  caret-color: var(--color-text-primary);
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
 html[data-design] .prompt-modal-actions {
   display: flex; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-2);
 }
