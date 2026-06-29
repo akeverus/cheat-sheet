@@ -11,10 +11,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`DWH` — централизованное хранилище для аналитики и репортинга: subject-oriented, integrated, time-variant и non-volatile. Хранит исторические данные из множества источников, приведённые к единому виду, и оптимизировано под сложные аналитические `SELECT` на миллиардах строк.",
+              "text": "`DWH` — централизованное хранилище для аналитики и репортинга: subject-oriented, integrated, time-variant и non-volatile.",
               "correct": true,
               "sections": {
-                "explanation": "Четыре свойства по Инмону: данные организованы по бизнес-доменам, интегрированы из разных систем, историчны (снапшоты во времени) и не меняются после записи (append-only). Это противоположность транзакционной БД.",
+                "explanation": "Четыре свойства по Инмону: данные организованы по бизнес-доменам, интегрированы из разных систем, историчны (снапшоты во времени) и не меняются после записи (append-only) — это противоположность транзакционной БД. DWH хранит исторические данные из множества источников, приведённые к единому виду, и оптимизировано под сложные аналитические `SELECT` на миллиардах строк.",
                 "example": "В DWH витрина `fact_sales` собирает продажи за пять лет из `CRM`, `ERP` и сайта, и аналитик одним запросом считает выручку по странам — на OLTP такой scan убил бы prod.",
                 "when_to_apply": "Когда нужны BI, executive dashboards, ad-hoc анализ или feature engineering для ML, а историю изменений важно сохранять, а не затирать текущим состоянием.",
                 "edge_cases": "DWH не равен пассивной реплике prod-БД и не равен data lake: lake хранит raw данные schema-on-read, а DWH — структурированные таблицы schema-on-write.",
@@ -24,7 +24,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`DWH` хранит current state и поддерживает high-throughput `INSERT`/`UPDATE`/`DELETE` отдельных строк с millisecond latency.",
+              "text": "`DWH` хранит current state и поддерживает high-throughput `INSERT`/`UPDATE`/`DELETE` отдельных строк на нормализованной 3NF-схеме с millisecond latency.",
               "correct": false,
               "sections": {
                 "what_actually": "Это описание OLTP-системы; DWH non-volatile (append-only) и оптимизирован под аналитические `SELECT`, а не под частые точечные записи.",
@@ -36,7 +36,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`DWH` — это real-time реплика production-БД с тем же самым нормализованным schema и теми же таблицами.",
+              "text": "`DWH` — это real-time реплика production-БД с тем же нормализованным schema, теми же таблицами и тем же row-store движком.",
               "correct": false,
               "sections": {
                 "what_actually": "Реплика лишь копирует prod 1:1, а DWH интегрирует 10+ источников, денормализует данные под аналитику и хранит историю.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`DWH` и `data lake` на `S3` — это синонимы: оба просто складывают сырые файлы для последующего анализа.",
+              "text": "`DWH` и `data lake` на `S3` — синонимы: оба просто складывают сырые файлы schema-on-read для последующего ad-hoc анализа.",
               "correct": false,
               "sections": {
                 "what_actually": "Lake — это schema-on-read хранилище raw-данных, а DWH — schema-on-write структурированные таблицы с заранее заданными типами и связями.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OLTP` использует column-oriented storage для скорости, а `OLAP` — row-oriented, потому что аналитике важна целостность строки.",
+              "text": "`OLTP` использует column-oriented storage для скорости агрегатов, а `OLAP` — row-oriented, потому что аналитике важна целостность каждой строки.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: OLTP — row-store для быстрого single-row `INSERT`/`UPDATE`, OLAP — column-store для агрегатов по нескольким колонкам.",
@@ -83,10 +83,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`OLTP` — это `INSERT`/`UPDATE` отдельных строк на нормализованной 3NF-схеме в row-store с millisecond latency. `OLAP` — это агрегации миллионов строк на денормализованной star schema в column-store с latency секунды-минуты на объёмах TB-PB.",
+              "text": "`OLTP` — single-row `INSERT`/`UPDATE` на 3NF-схеме в row-store с millisecond latency. `OLAP` — агрегации миллионов строк на star schema в column-store.",
               "correct": true,
               "sections": {
-                "explanation": "Одна БД не может одинаково хорошо делать оба: write throughput и query performance конфликтуют по storage layout, схеме и concurrency. Поэтому транзакции и аналитику разносят.",
+                "explanation": "Одна БД не может одинаково хорошо делать оба: write throughput и query performance конфликтуют по storage layout, схеме и concurrency, поэтому транзакции и аналитику разносят. OLTP работает на объёмах GB-TB с latency в миллисекунды, а OLAP — на денормализованной star schema в column-store на объёмах TB-PB с latency секунды-минуты.",
                 "example": "`PostgreSQL` обслуживает тысячи параллельных оформлений заказов (OLTP), а `Snowflake` считает годовую выручку по миллиардам строк для дашборда (OLAP).",
                 "when_to_apply": "Понимать разницу нужно при выборе хранилища: транзакционный backend — на row-store, аналитику и BI — на column-store DWH.",
                 "edge_cases": "Разница не только в размере данных: отличаются schema (denorm), storage (columnar), concurrency (десятки vs тысячи) и latency — всё по-разному.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`OLTP` и `OLAP` — это два названия одной и той же системы, выбираемые маркетингом вендора.",
+              "text": "`OLTP` и `OLAP` — два названия одной и той же системы, выбираемые маркетингом вендора под разные сегменты рынка.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные классы нагрузки с разными оптимизациями; одна БД не может хорошо обслуживать оба одновременно.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`OLAP` отличается от `OLTP` исключительно объёмом данных: при тех же гигабайтах разницы между ними нет.",
+              "text": "`OLAP` отличается от `OLTP` исключительно объёмом данных: при тех же гигабайтах в одной row-store схеме разницы между ними нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Кроме объёма различаются schema (denormalized star), storage (columnar), concurrency и latency — это фундаментальные, а не размерные различия.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Отдельный DWH не нужен — достаточно поднять read replica `PostgreSQL`, и аналитические запросы перестанут мешать prod.",
+              "text": "Отдельный DWH не нужен — достаточно поднять read replica `PostgreSQL`, и аналитические агрегаты по миллиардам строк перестанут мешать prod.",
               "correct": false,
               "sections": {
                 "what_actually": "Read replica остаётся row-store без денормализации: агрегаты по миллиардам строк всё равно медленные, а интеграция 10+ источников не решается.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Heavy аналитические запросы на prod-БД никак не влияют на latency транзакций, так как читают и пишут разные таблицы.",
+              "text": "Heavy аналитические запросы на prod-БД никак не влияют на latency транзакций, так как читают и пишут совершенно разные таблицы и индексы.",
               "correct": false,
               "sections": {
                 "what_actually": "Они делят buffer cache, IO и CPU: тяжёлые analytical scans убивают p99 OLTP даже при чтении других таблиц.",
@@ -155,10 +155,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Отдельный DWH даёт performance (column-store под агрегаты), не нагружает prod heavy-запросами, хранит историю вместо current state, интегрирует 10+ источников, денормализует схему и масштабирует compute независимо от storage.",
+              "text": "Отдельный DWH даёт performance column-store под агрегаты, не нагружает prod, хранит историю, интегрирует 10+ источников и масштабирует compute отдельно от storage.",
               "correct": true,
               "sections": {
-                "explanation": "OLTP не оптимизирован под агрегации по миллиардам строк, а аналитические scans конкурируют с транзакциями за buffer cache, IO и CPU. Разнесение разделяет write-heavy и read-heavy нагрузки.",
+                "explanation": "OLTP не оптимизирован под агрегации по миллиардам строк, а аналитические scans конкурируют с транзакциями за buffer cache, IO и CPU — разнесение разделяет write-heavy и read-heavy нагрузки. DWH использует column-store под агрегаты, хранит историю вместо current state, денормализует схему и масштабирует compute независимо от storage.",
                 "example": "Аналитик строит когортный отчёт за три года: на DWH это column-scan нужных колонок, а тот же запрос на prod-`PostgreSQL` поднял бы p99 latency оформления заказов.",
                 "when_to_apply": "Когда аналитические запросы начинают замедлять prod, нужна историчность (SCD Type 2) или требуется объединить данные из множества систем в одном месте.",
                 "edge_cases": "Read replica `PostgreSQL` не заменяет DWH: это всё ещё row-store без денормализации, а интеграция 10+ источников на ней не решается.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "DWH хранит только current snapshot, ровно как OLTP, поэтому отдельная система не даёт ничего нового по истории.",
+              "text": "DWH хранит только current snapshot, ровно как OLTP, поэтому отдельная система не даёт ничего нового по истории и динамике данных.",
               "correct": false,
               "sections": {
                 "what_actually": "DWH time-variant: он хранит историю изменений (например через SCD Type 2), что и даёт ценность анализа эволюции данных.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`MPP` — это одна большая SMP-машина с 256 cores и общей памятью, которая обрабатывает запрос быстрее за счёт мощного железа.",
+              "text": "`MPP` — это одна большая SMP-машина с 256 cores и общей памятью, которая обрабатывает запрос быстрее за счёт мощного вертикального железа.",
               "correct": false,
               "sections": {
                 "what_actually": "MPP — это shared-nothing distributed архитектура из множества нод, а не вертикально масштабируемый один сервер SMP.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`PostgreSQL` — это классический пример MPP-системы, так как умеет parallel query на нескольких ядрах.",
+              "text": "`PostgreSQL` — классический пример MPP-системы, так как умеет parallel query на нескольких ядрах и масштабируется добавлением нод.",
               "correct": false,
               "sections": {
                 "what_actually": "`PostgreSQL` обрабатывает запрос на одном CPU (с ограниченным parallel query на одной машине), а MPP — это `Redshift`, `Snowflake`, `BigQuery`, `Greenplum`.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`MPP` плохо масштабируется на больших данных, поэтому его применяют только для маленьких datasets.",
+              "text": "`MPP` плохо масштабируется на больших данных из-за overhead координации нод, поэтому его применяют только для маленьких datasets.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: главный use case MPP — именно PB-scale данные с linear scaling по нодам.",
@@ -227,10 +227,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`MPP` — архитектура, где coordinator разбивает запрос на части и раздаёт их 100+ worker-нодам по shared-nothing принципу; каждая нода параллельно обрабатывает свою partition, результаты агрегируются. Даёт linear scaling по нодам на PB-данных.",
+              "text": "`MPP` — shared-nothing архитектура: coordinator разбивает запрос и раздаёт его 100+ worker-нодам, каждая обрабатывает свою partition параллельно.",
               "correct": true,
               "sections": {
-                "explanation": "В отличие от обычной БД, которая обрабатывает запрос на одном CPU (или ограниченно через parallel query), MPP распределяет scans, joins и aggregations по множеству независимых нод горизонтально.",
+                "explanation": "В отличие от обычной БД, которая обрабатывает запрос на одном CPU (или ограниченно через parallel query), MPP распределяет scans, joins и aggregations по множеству независимых нод горизонтально. Частичные результаты с нод агрегируются в coordinator, что даёт linear scaling по нодам на PB-данных.",
                 "example": "`Redshift`-кластер из 32 нод параллельно сканирует свои куски `fact_sales` и сводит частичные суммы в coordinator — добавили нод, запрос стал быстрее.",
                 "when_to_apply": "Когда нужны агрегации, joins и scans на огромных datasets (терабайты-петабайты), которые не помещаются и не считаются на одной машине.",
                 "edge_cases": "MPP — это shared-nothing distributed, а не одна большая SMP-машина: масштабируется горизонтально (добавлением нод), а не вертикально.",
@@ -251,10 +251,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Column storage хранит значения одной колонки рядом на диске, что даёт compression до 10x (одинаковые типы вместе), vectorized SIMD-обработку батчами, чтение только нужных колонок и пропуск блоков по min/max-метаданным (skip blocks).",
+              "text": "Column storage хранит значения одной колонки рядом на диске, что даёт высокий compression, чтение только нужных колонок и skip-блоков по метаданным.",
               "correct": true,
               "sections": {
-                "explanation": "Аналитика читает 5-10 колонок из широкой таблицы на 200 столбцов — column-store читает только их, а не целые строки. Похожие значения рядом сжимаются в разы лучше, чем разнотипные поля строки.",
+                "explanation": "Аналитика читает 5-10 колонок из широкой таблицы на 200 столбцов — column-store читает только их, а не целые строки. Похожие значения рядом сжимаются в разы лучше (до 10x), чем разнотипные поля строки, плюс возможна vectorized SIMD-обработка батчами и пропуск блоков по min/max-метаданным (skip blocks).",
                 "example": "Запрос `SELECT country, SUM(amount)` на column-store читает лишь колонки `country` и `amount`, пропуская остальные 198; на row-store пришлось бы тянуть строки целиком.",
                 "when_to_apply": "Для аналитических агрегаций по немногим колонкам широкой таблицы; форматы `Parquet`/`ORC` и движки `Snowflake`, `BigQuery`, `Redshift`, `ClickHouse`.",
                 "edge_cases": "Column-store медленнее на single-row запросах (`SELECT *` по одному id нужно собирать из всех колонок) и на частых updates — это осознанный trade-off.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Columnar storage быстрее row-store даже для запросов вида `SELECT * WHERE id = 5`, потому что любая операция чтения в нём оптимальнее.",
+              "text": "Columnar storage быстрее row-store даже для запросов вида `SELECT * WHERE id = 5`, потому что любая операция чтения в нём по определению оптимальнее.",
               "correct": false,
               "sections": {
                 "what_actually": "Single-row запросы в column-store медленнее: нужно собирать значение из всех колонок; row-store с index здесь быстрее.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Columnar storage — это просто другое расширение файла `Parquet`, деталь формата без влияния на производительность.",
+              "text": "Columnar storage — это просто другое расширение файла `Parquet`, косметическая деталь формата без всякого влияния на производительность запросов.",
               "correct": false,
               "sections": {
                 "what_actually": "Column storage — фундаментальная организация данных на диске (значения колонки вместе), а не косметическая деталь формата.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Updates в column-store такие же быстрые, как в row-store, поэтому он одинаково хорош и для аналитики, и для частых изменений.",
+              "text": "Updates в column-store такие же быстрые, как в row-store, поэтому он одинаково хорош и для аналитики, и для частых точечных изменений строк.",
               "correct": false,
               "sections": {
                 "what_actually": "Column updates требуют переписывания всей колонки, что делает их медленными — это намеренный trade-off в пользу чтения агрегатов.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Compression в DWH замедляет queries, поэтому в аналитических хранилищах его лучше отключать ради скорости.",
+              "text": "Compression в DWH замедляет queries из-за CPU на распаковку, поэтому в аналитических хранилищах его лучше отключать ради чистой скорости.",
               "correct": false,
               "sections": {
                 "what_actually": "Меньший объём данных снижает IO, и на современном железе это перекрывает CPU на распаковку — compression обычно ускоряет, а не замедляет.",
@@ -323,10 +323,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В column-store применяют `RLE` (`AAAA → A×4`), dictionary encoding (словарь уникальных значений), bit-packing (числа с малым диапазоном) и delta encoding (отсортированные числа). `Parquet` даёт 2-10x меньше CSV, `ClickHouse` — 10-50x.",
+              "text": "В column-store применяют `RLE`, dictionary encoding, bit-packing и delta encoding — специализированные per-column кодеки.",
               "correct": true,
               "sections": {
-                "explanation": "Колоночное хранение кладёт похожие значения рядом, что резко повышает эффективность кодирования. Trade-off — CPU на сжатие/распаковку, но на современном железе экономия IO с лихвой это компенсирует.",
+                "explanation": "Колоночное хранение кладёт похожие значения рядом, что резко повышает эффективность кодирования. `RLE` свёртывает повторы (`AAAA → A×4`), dictionary хранит словарь уникальных значений, bit-packing пакует числа с малым диапазоном, delta encoding — отсортированные числа. На практике `Parquet` даёт 2-10x меньше CSV, `ClickHouse` — 10-50x. Trade-off — CPU на сжатие/распаковку, но экономия IO с лихвой компенсирует.",
                 "example": "Колонка `country` с десятком уникальных значений на миллионах строк через dictionary encoding сжимается в десятки раз — словарь хранит коды, а не повторяющиеся строки.",
                 "when_to_apply": "Compression стоит включать в DWH всегда: column-store и compression идут в паре, экономия IO перевешивает CPU overhead на современном hardware.",
                 "edge_cases": "Ratio не фиксирован: на repetitive данных низкой cardinality достижимо 50x, на высокой cardinality и случайных значениях — заметно меньше.",
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`gzip` — лучший выбор сжатия для аналитического DWH, поскольку даёт максимальный универсальный ratio.",
+              "text": "`gzip` — лучший выбор сжатия для аналитического DWH, поскольку как универсальный архиватор даёт максимальный ratio на любых колонках.",
               "correct": false,
               "sections": {
                 "what_actually": "`gzip` не columnar-aware: для лучшего ratio нужны per-column `RLE`/dictionary/bit-packing, учитывающие тип и распределение колонки.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Compression всегда даёт ровно 2x во всех системах и на любых данных, независимо от распределения значений.",
+              "text": "Compression всегда даёт ровно 2x во всех системах и на любых данных, независимо от cardinality и распределения значений в колонке.",
               "correct": false,
               "sections": {
                 "what_actually": "Ratio зависит от cardinality и распределения: на repetitive данных достижимо 50x, на случайных — меньше.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Vectorized execution — это тот же row-by-row проход, просто завёрнутый в асинхронный loop для конкурентности.",
+              "text": "Vectorized execution — это тот же row-by-row проход, просто завёрнутый в асинхронный event-loop для конкурентности и параллелизма.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл обратный: обрабатывать батч из 1000+ строк за одну итерацию, а не строку за раз; async тут ни при чём.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Vectorized execution работает только на GPU, поэтому без видеокарты движок переходит обратно на row-by-row.",
+              "text": "Vectorized execution работает только на GPU через CUDA-ядра, поэтому без видеокарты движок переходит обратно на медленный row-by-row.",
               "correct": false,
               "sections": {
                 "what_actually": "Основной target — SIMD на CPU (AVX2/AVX-512); `ClickHouse` и `DuckDB` вообще CPU-only и при этом векторизованы.",
@@ -395,10 +395,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Vectorized execution — обработка данных батчами по 1000+ строк за итерацию вместо row-by-row, с использованием SIMD-инструкций и cache-friendly доступа. Реализуют `ClickHouse`, `DuckDB`, `Arrow`, `Snowflake`, `BigQuery`.",
+              "text": "Vectorized execution — обработка данных батчами по 1000+ строк за итерацию вместо row-by-row, с SIMD-инструкциями и cache-friendly доступом.",
               "correct": true,
               "sections": {
-                "explanation": "Вместо вызова функции на каждую строку движок применяет операцию к целому батчу колоночных значений сразу: это лучше использует CPU caches, задействует SIMD (AVX2/AVX-512) и минимизирует overhead интерпретации.",
+                "explanation": "Вместо вызова функции на каждую строку движок применяет операцию к целому батчу колоночных значений сразу: это лучше использует CPU caches, задействует SIMD (AVX2/AVX-512) и минимизирует overhead интерпретации. Реализуют этот паттерн `ClickHouse`, `DuckDB`, `Arrow`, `Snowflake`, `BigQuery`.",
                 "example": "Суммирование колонки на 10М строк идёт батчами по 1024 значения: одна SIMD-инструкция складывает несколько чисел за такт, вместо миллионов отдельных скалярных операций.",
                 "when_to_apply": "Это основной execution-паттерн современных OLAP-движков; особенно эффективен поверх columnar storage на больших агрегациях.",
                 "edge_cases": "Vectorized и columnar — разные концепты: columnar — это storage layout, vectorized — execution model; они усиливают друг друга, но не синонимы.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Vectorized execution и columnar storage — это одно и то же, два названия одной техники хранения.",
+              "text": "Vectorized execution и columnar storage — это одно и то же, два названия одной техники физического хранения данных на диске.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные концепты: columnar — storage layout на диске, vectorized — execution model в рантайме; они дополняют, но не равны друг другу.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Dimensional modeling — это проектирование DWH в строгой 3NF-нормализации, ровно как в OLTP-базе.",
+              "text": "Dimensional modeling — это проектирование DWH в строгой 3NF-нормализации, ровно как в OLTP-базе, с минимумом дублирования данных.",
               "correct": false,
               "sections": {
                 "what_actually": "3NF top-down — это подход Инмона, а не Kimball; dimensional model сознательно денормализует данные в star schema.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В dimensional model fact tables хранят descriptive атрибуты, а dimension tables — числовые measurements.",
+              "text": "В dimensional model fact tables хранят descriptive атрибуты (клиент, продукт), а dimension tables — числовые measurements бизнеса в разрезе.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: fact = measurement (сумма продажи), dimension = context (клиент, продукт, дата).",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Star schema требует нормализации dimension-таблиц, разбивая их на иерархии справочников.",
+              "text": "Star schema требует строгой нормализации dimension-таблиц, разбивая их на иерархии связанных справочников ради экономии storage.",
               "correct": false,
               "sections": {
                 "what_actually": "Star использует денормализованные dimensions (одна таблица на concept); нормализованный вариант с иерархиями — это snowflake schema.",
@@ -467,10 +467,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Dimensional modeling (Ralph Kimball) — подход к проектированию DWH под аналитику: данные делятся на fact tables (числовые measurements бизнеса — sales, clicks) и dimension tables (descriptive context — customer, product, date). Образует star schema с fact в центре.",
+              "text": "Dimensional modeling (Ralph Kimball) делит данные на fact tables (числовые measurements бизнеса) и dimension tables (descriptive context).",
               "correct": true,
               "sections": {
-                "explanation": "Факты отвечают на «что измеряем» (сумма продажи, количество), а dimensions — «в каком контексте» (какой клиент, продукт, дата). Денормализация в звезду минимизирует joins и ускоряет аналитические запросы.",
+                "explanation": "Факты отвечают на «что измеряем» (сумма продажи, количество), а dimensions — «в каком контексте» (какой клиент, продукт, дата). Денормализация в звезду минимизирует joins и ускоряет аналитические запросы: fact в центре образует star schema, к которой dimensions подключены по FK.",
                 "example": "`fact_sales` со ссылками на `dim_customer`, `dim_product`, `dim_date`, `dim_store` — аналитик группирует выручку по любому измерению одним join к нужной dimension.",
                 "when_to_apply": "При проектировании нового DWH под BI: dimensional model — стандарт для дашбордов и ad-hoc анализа в современных хранилищах.",
                 "edge_cases": "Это не 3NF-нормализация (то подход Инмона): dimensional model сознательно денормализует dimensions ради скорости, а star schema не требует нормализации.",
@@ -491,10 +491,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Star schema использует денормализованные dimensions (одна таблица на concept, меньше joins, быстрее queries). Snowflake schema нормализует dimensions в иерархии (`Product → Category → Brand`, больше joins, экономия места). В современных DWH доминирует star — storage дешёвый, скорость важнее.",
+              "text": "Star schema использует денормализованные dimensions (одна таблица на concept, меньше joins, быстрее queries); snowflake нормализует их в иерархии.",
               "correct": true,
               "sections": {
-                "explanation": "Star проще и быстрее за счёт минимума joins; snowflake экономит storage, но добавляет соединения по справочникам-иерархиям. На дешёвом облачном storage выигрыш по месту перестал оправдывать лишние joins.",
+                "explanation": "Star проще и быстрее за счёт минимума joins; snowflake экономит storage, но добавляет соединения по справочникам-иерархиям (`Product → Category → Brand`). В современных DWH доминирует star — storage дешёвый, и выигрыш по месту перестал оправдывать лишние joins, поэтому скорость важнее экономии места.",
                 "example": "В star `dim_product` содержит `category` и `brand` прямо в строке; в snowflake они вынесены в `dim_category` и `dim_brand`, и запрос делает два дополнительных join.",
                 "when_to_apply": "Star — по умолчанию; snowflake — только если storage действительно дорогой или нужны глубокие переиспользуемые иерархии справочников.",
                 "edge_cases": "Fact table в обоих случаях одинакова и нормализована по FK; различие касается только нормализации dimensions, а не фактов.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Snowflake schema даёт более быстрые queries, чем star, потому что нормализация уменьшает объём сканируемых данных.",
+              "text": "Snowflake schema даёт более быстрые queries, чем star, потому что нормализация уменьшает объём сканируемых данных и число строк в dimensions.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: нормализация добавляет joins по иерархиям справочников, что замедляет queries относительно star.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Star schema требует именно DWH-вендора `Snowflake` (Snowflake Inc.), иначе её нельзя реализовать.",
+              "text": "Star schema требует именно DWH-вендора `Snowflake` (Snowflake Inc.), иначе её нельзя реализовать ни в `BigQuery`, ни в `Redshift`.",
               "correct": false,
               "sections": {
                 "what_actually": "Star schema — это паттерн дизайна данных и работает в любом DWH; snowflake schema никак не связана с компанией Snowflake Inc.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В обоих случаях, и в star, и в snowflake, fact table тоже нормализуется и разбивается на части.",
+              "text": "В обоих случаях, и в star, и в snowflake, fact table тоже нормализуется, разбивается на части и выносит measures в отдельные таблицы.",
               "correct": false,
               "sections": {
                 "what_actually": "Fact table одинакова в обоих подходах и нормализована по FK; различие только в нормализации dimensions.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все fact tables устроены одинаково — единый тип, без деления на разновидности по способу учёта.",
+              "text": "Все fact tables устроены одинаково — единый тип, без деления на разновидности по способу учёта и связи зерна (grain) со временем.",
               "correct": false,
               "sections": {
                 "what_actually": "Существуют четыре типа (transactional, periodic snapshot, accumulating snapshot, factless) под разные паттерны процессов.",
@@ -563,10 +563,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Четыре типа: transactional (одна строка на event, каждая продажа), periodic snapshot (снимок на регулярный интервал, дневной баланс счёта), accumulating snapshot (трекинг lifecycle, заявка от подачи до закрытия) и factless (только foreign keys, события без measures — студент посетил лекцию).",
+              "text": "Четыре типа: transactional (строка на event), periodic snapshot (снимок на интервал), accumulating snapshot (lifecycle) и factless (FK без measures).",
               "correct": true,
               "sections": {
-                "explanation": "Тип fact table выбирают по характеру измеряемого процесса: события — transactional, состояние на момент — snapshot, прохождение этапов — accumulating, факт наступления без чисел — factless.",
+                "explanation": "Тип fact table выбирают по характеру измеряемого процесса: события — transactional (каждая продажа), состояние на момент — periodic snapshot (дневной баланс счёта), прохождение этапов — accumulating snapshot (заявка от подачи до закрытия), факт наступления без чисел — factless (студент посетил лекцию).",
                 "example": "`fact_sales` (transactional) хранит каждую продажу; periodic snapshot ежедневно фиксирует баланс; accumulating snapshot обновляет даты этапов заявки по мере прохождения lifecycle.",
                 "when_to_apply": "Выбирать тип по природе процесса: discrete-события vs регулярное состояние vs многоэтапный pipeline vs просто occurrences без числовых мер.",
                 "edge_cases": "Factless table — не то же, что dimension: она хранит события (FK без measures) для подсчёта occurrences, тогда как dimension хранит descriptive атрибуты.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Factless fact table — это по сути обычная dimension table, просто без числовых атрибутов.",
+              "text": "Factless fact table — это по сути обычная dimension table, просто без числовых атрибутов и с одними только foreign keys.",
               "correct": false,
               "sections": {
                 "what_actually": "Factless хранит события через FK без measures (студент посетил лекцию) для подсчёта occurrences, а dimension хранит descriptive контекст.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Periodic snapshot fact хранит только последний период, перезаписывая предыдущие снимки.",
+              "text": "Periodic snapshot fact хранит только последний актуальный период, перезаписывая предыдущие снимки и теряя всю историю состояния во времени.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: snapshot сохраняется за каждый период (день, месяц) для исторического анализа динамики.",
@@ -611,34 +611,34 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Natural key (например `customer_id` из источника) — рекомендуемый PK для dimension-таблиц.",
+              "text": "Natural key из источника (`customer_id`) — рекомендуемый стабильный PK для dimension-таблиц, в отличие от хрупких surrogate.",
               "correct": false,
               "sections": {
-                "what_actually": "Natural keys могут меняться (rename, merge), поэтому PK делают surrogate (synthetic auto-increment): он стабилен и быстрее в join.",
+                "what_actually": "Natural keys могут меняться (rename, merge) и конфликтовать между источниками, поэтому PK делают surrogate (synthetic auto-increment): он стабилен и быстрее в join.",
                 "source_of_confusion": "Natural key уже уникален в источнике, поэтому кажется готовым первичным ключом.",
                 "if_it_were_true": "Тогда смена `customer_id` ломала бы все исторические ссылки fact, но surrogate key защищает от этого.",
-                "how_it_should_be": "PK dimension — surrogate key; natural key хранят как атрибут для связи с источником."
+                "how_it_should_be": "PK dimension — surrogate key; natural key хранят как отдельный атрибут для связи с источником, но не как PK."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Date dimension избыточна — достаточно использовать обычную колонку `DATE` напрямую в запросах.",
+              "text": "Date dimension избыточна — обычная колонка `DATE` напрямую в запросах быстрее и не плодит лишних join к календарю.",
               "correct": false,
               "sections": {
-                "what_actually": "Без date dimension придётся каждый раз вычислять `EXTRACT(YEAR)` и `is_weekend` через `CASE` — медленно и многословно; pre-computed dimension быстрее.",
+                "what_actually": "Без date dimension придётся каждый раз считать `EXTRACT(YEAR)` и `is_weekend` через `CASE`, что медленно; pre-computed dimension с готовыми атрибутами быстрее.",
                 "source_of_confusion": "`DATE`-колонка уже содержит дату, поэтому отдельная таблица кажется лишней.",
                 "if_it_were_true": "Тогда никто не строил бы `dim_date`, но она стандарт именно ради готовых атрибутов времени.",
-                "how_it_should_be": "Date dimension хранит готовые `year`/`quarter`/`is_weekend`, упрощая и ускоряя агрегацию."
+                "how_it_should_be": "Date dimension хранит готовые `year`/`quarter`/`is_weekend`/`fiscal_year`, упрощая и ускоряя агрегацию по периодам."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Dimension — таблица с descriptive context (customer, product, date): атрибуты для группировки и фильтрации. Использует surrogate key (синтетический auto-increment PK) плюс natural key. Date dimension — отдельная таблица с `year`/`month`/`quarter`/`is_weekend` для удобной агрегации по времени.",
+              "text": "Dimension — таблица с descriptive context (customer, product, date) для группировки и фильтрации; PK — surrogate key плюс natural key.",
               "correct": true,
               "sections": {
-                "explanation": "Surrogate key стабилен и быстр в join, в отличие от natural key, который может меняться (rename, merge). Поля `valid_from`/`valid_to` поддерживают SCD Type 2. Date dimension избавляет от вычисления `EXTRACT`/`CASE` в каждом запросе.",
+                "explanation": "Surrogate key (синтетический auto-increment) стабилен и быстр в join, в отличие от natural key, который может меняться (rename, merge). Поля `valid_from`/`valid_to`/`is_current` поддерживают SCD Type 2. Date dimension — отдельная таблица с `year`/`month`/`quarter`/`is_weekend`, чтобы не вычислять `EXTRACT`/`CASE` в каждом запросе и одинаково агрегировать по периодам.",
                 "example": "`dim_customer` с `customer_key` (surrogate), `customer_id` (natural), `country`, `age_group` и `valid_from`/`valid_to`/`is_current` для истории переездов клиента.",
                 "when_to_apply": "Для фильтрации и группировки в аналитических queries; surrogate PK + `valid_from`/`valid_to` закладывают основу под SCD Type 2.",
                 "edge_cases": "Natural key как PK — ошибка: он может меняться при rename/merge; surrogate key стабилен и быстрее в join. Dimension денормализуют (Kimball), а не держат в 3NF.",
@@ -648,13 +648,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Dimension-таблицы должны проектироваться строго в 3NF, как нормализованные справочники.",
+              "text": "Dimension-таблицы проектируют строго в 3NF, как нормализованные справочники с минимумом дублирования атрибутов.",
               "correct": false,
               "sections": {
-                "what_actually": "Денормализация dimensions — основа подхода Kimball; нормализация применяется только в snowflake schema.",
+                "what_actually": "Денормализация dimensions — основа подхода Kimball; нормализация в иерархии справочников применяется только в snowflake schema.",
                 "source_of_confusion": "3NF считается каноном дизайна БД, поэтому его по привычке применяют и к dimensions.",
                 "if_it_were_true": "Тогда star schema была бы невозможна, но она строится именно на денормализованных dimensions.",
-                "how_it_should_be": "Dimensions денормализуют ради скорости; 3NF — это про snowflake или подход Инмона."
+                "how_it_should_be": "Dimensions денормализуют ради скорости и меньшего числа join; 3NF — это про snowflake schema или подход Инмона."
               }
             }
           ]
@@ -671,46 +671,46 @@
             {
               "order": 0,
               "label": "A",
-              "text": "SCD Type 1 сохраняет полную историю изменений dimension, добавляя версии записей.",
+              "text": "SCD Type 1 сохраняет полную историю изменений dimension, добавляя версии-строки с `valid_from`/`valid_to`.",
               "correct": false,
               "sections": {
-                "what_actually": "Type 1 перезаписывает (overwrites) значение и теряет историю; для истории нужен Type 2.",
+                "what_actually": "Type 1 перезаписывает (overwrites) значение и теряет историю; версии-строки с `valid_from`/`valid_to` — это Type 2.",
                 "source_of_confusion": "Type 1 — «первый» тип, поэтому кажется базовым полнофункциональным вариантом с историей.",
                 "if_it_were_true": "Тогда не понадобился бы Type 2, но он существует именно потому, что Type 1 историю не хранит.",
-                "how_it_should_be": "Type 1 затирает старое значение; историю обеспечивает Type 2 через новые строки."
+                "how_it_should_be": "Type 1 затирает старое значение без следа; историю обеспечивает Type 2 через новые строки-версии."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "SCD Type 2 хранит только current state записи, как и Type 1, лишь с дополнительными флагами.",
+              "text": "SCD Type 2 хранит только current state записи, как и Type 1, лишь добавляя флаг `is_current` для отметки.",
               "correct": false,
               "sections": {
-                "what_actually": "Type 2 хранит ВСЕ версии с `valid_from`/`valid_to`; только current state держит Type 1.",
+                "what_actually": "Type 2 хранит ВСЕ версии с `valid_from`/`valid_to` и `is_current`; только current state держит Type 1.",
                 "source_of_confusion": "Наличие `is_current` создаёт впечатление, что хранится лишь текущая строка.",
                 "if_it_were_true": "Тогда исторический анализ был бы невозможен, но именно для него Type 2 копит версии.",
-                "how_it_should_be": "Type 2 хранит все версии строки во времени, а не только актуальную."
+                "how_it_should_be": "Type 2 копит все версии строки во времени, а не только актуальную; `is_current` лишь помечает последнюю."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "SCD Type 0 означает удаление старых значений dimension при каждом изменении.",
+              "text": "SCD Type 0 означает удаление старых значений dimension при каждом изменении атрибута записи.",
               "correct": false,
               "sections": {
-                "what_actually": "Type 0 = immutable: значение никогда не меняется (пример — birth date), а не удаляется.",
+                "what_actually": "Type 0 = immutable: значение никогда не меняется (пример — birth date), оно не удаляется и не перезаписывается.",
                 "source_of_confusion": "Цифра 0 ассоциируется с «обнулением» или удалением, а не с неизменностью.",
                 "if_it_were_true": "Тогда birth date пропадал бы при апдейте, но Type 0 как раз гарантирует его сохранность.",
-                "how_it_should_be": "Type 0 — immutable атрибут, который не меняется и не удаляется."
+                "how_it_should_be": "Type 0 — immutable атрибут, который не меняется и не удаляется на всём жизненном цикле записи."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "SCD — стратегия обработки изменений в dimension. Самый частый — Type 2: при изменении создаётся новая строка с `valid_from`/`valid_to`/`is_current`, история полностью сохраняется. dbt `snapshot` реализует именно SCD Type 2.",
+              "text": "SCD — стратегия обработки изменений в dimension. Самый частый — Type 2: новая строка-версия с историей.",
               "correct": true,
               "sections": {
-                "explanation": "Type 0 — immutable, Type 1 — перезапись без истории, Type 2 — новая версия-строка, Type 3 — доп. колонка previous, Type 4 — отдельная history-таблица, Type 6 — комбинация 1+2+3. Type 2 даёт полную историю изменений.",
+                "explanation": "Type 0 — immutable, Type 1 — перезапись без истории, Type 2 — новая строка с `valid_from`/`valid_to`/`is_current` (история полностью сохраняется), Type 3 — доп. колонка previous, Type 4 — отдельная history-таблица, Type 6 — комбинация 1+2+3. dbt `snapshot` реализует именно SCD Type 2.",
                 "example": "Клиент переехал из London в Berlin: старая строка получает `valid_to`, заводится новая с `is_current = true`; запрос current использует `WHERE is_current = true`, исторический — временное окно по `valid_from`/`valid_to`.",
                 "when_to_apply": "Когда нужна история для корректного исторического анализа — например связать продажи с тем городом клиента, который был актуален на момент продажи.",
                 "edge_cases": "Type 1 хранит только current state и теряет историю; путать его с Type 2 нельзя. Type 0 — immutable (birth date), а не удаление старых записей.",
@@ -731,10 +731,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Inmon — top-down: сначала нормализованный 3NF Enterprise DWH, потом data marts для отделов. Kimball — bottom-up: data marts со star schema, объединяемые через conformed dimensions. В 2024 доминирует Kimball, Inmon чаще встречается в legacy и financial services.",
+              "text": "Inmon — top-down: нормализованный 3NF Enterprise DWH, затем data marts. Kimball — bottom-up: star-витрины через conformed dimensions.",
               "correct": true,
               "sections": {
-                "explanation": "Inmon строит единое нормализованное ядро (сложно строить, легко расширять), Kimball — набор денормализованных витрин (легко строить, нужно следить за конформностью dimensions). Star Kimball даёт меньше joins и быстрее BI.",
+                "explanation": "Inmon строит единое нормализованное ядро (сложно строить, легко расширять), Kimball — набор денормализованных витрин (легко строить, нужно следить за конформностью dimensions). Star Kimball даёт меньше joins и быстрее BI. В 2024 доминирует Kimball, Inmon чаще встречается в legacy и financial services.",
                 "example": "Для нового аналитического стека выбирают Kimball — быстро поднять star-витрину; legacy банковский DWH остаётся в Inmon 3NF из-за исторической архитектуры и требований compliance.",
                 "when_to_apply": "Новый DWH под BI — обычно Kimball; рефакторинг legacy или строгие enterprise-требования к нормализованному ядру — Inmon.",
                 "edge_cases": "Kimball не запрещает нормализацию везде: fact tables по-прежнему нормализованы по FK, денормализуются только dimensions. Inmon не быстрее на аналитике — больше joins в 3NF.",
@@ -744,10 +744,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Kimball — это top-down 3NF Enterprise DWH, а Inmon — bottom-up star schema из data marts.",
+              "text": "Kimball — это top-down 3NF Enterprise DWH с conformed dimensions, а Inmon — bottom-up star schema из независимых data marts.",
               "correct": false,
               "sections": {
-                "what_actually": "Ровно наоборот: Kimball = bottom-up dimensional (star), Inmon = top-down 3NF Enterprise DWH.",
+                "what_actually": "Ровно наоборот: Kimball = bottom-up dimensional (star), Inmon = top-down 3NF Enterprise DWH с последующей нарезкой marts.",
                 "source_of_confusion": "Имена авторов и их подходы легко перепутать местами, если не закрепить «Kimball = star».",
                 "if_it_were_true": "Тогда Kimball был бы про нормализацию, но его метод именно денормализует данные в звезду.",
                 "how_it_should_be": "Inmon = top-down 3NF, Kimball = bottom-up star — это база различия подходов."
@@ -756,25 +756,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Подход Kimball полностью запрещает нормализацию в любой части DWH.",
+              "text": "Подход Kimball полностью запрещает нормализацию в любой части DWH, включая fact tables и их ключи.",
               "correct": false,
               "sections": {
-                "what_actually": "Fact tables в Kimball всё ещё нормализованы по FK; денормализуются только dimensions.",
+                "what_actually": "Fact tables в Kimball всё ещё нормализованы по FK; денормализуются только dimensions, а не вся схема.",
                 "source_of_confusion": "Лозунг «Kimball = денормализация» преувеличивают до полного запрета нормализации.",
                 "if_it_were_true": "Тогда факты дублировали бы все атрибуты dimensions, но они ссылаются на них через FK.",
-                "how_it_should_be": "Kimball денормализует dimensions, но fact tables остаются нормализованными по ключам."
+                "how_it_should_be": "Kimball денормализует dimensions, но fact tables остаются нормализованными по ключам (FK)."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Подход Inmon обеспечивает более быстрые аналитические queries, чем Kimball.",
+              "text": "Подход Inmon обеспечивает более быстрые аналитические queries, чем Kimball, благодаря строгому 3NF-ядру.",
               "correct": false,
               "sections": {
                 "what_actually": "Больше joins в 3NF означает более медленные queries; именно поэтому Kimball выигрывает на BI.",
                 "source_of_confusion": "Inmon как «enterprise-grade» подход кажется более производительным по умолчанию.",
                 "if_it_were_true": "Тогда BI-стек выбирал бы Inmon ради скорости, но в 2024 доминирует Kimball.",
-                "how_it_should_be": "Kimball быстрее на аналитике за счёт меньшего числа joins; Inmon тяжелее из-за 3NF."
+                "how_it_should_be": "Kimball быстрее на аналитике за счёт меньшего числа joins; Inmon тяжелее из-за 3NF-нормализации."
               }
             }
           ]
@@ -791,22 +791,22 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Data Vault — это ровно то же самое, что star schema, только под другим названием.",
+              "text": "Data Vault — это ровно то же самое, что star schema, только под другим названием и от другого автора.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные концепции: DV — гибрид из Hubs/Links/Satellites, а не fact в центре с dimensions вокруг.",
                 "source_of_confusion": "Оба — методологии моделирования DWH, поэтому их сваливают в одну категорию.",
                 "if_it_were_true": "Тогда не было бы нужды строить Kimball marts поверх DV, но их строят из-за разной структуры.",
-                "how_it_should_be": "Data Vault — Hub-Link-Satellite модель; star schema — это отдельный денормализованный подход."
+                "how_it_should_be": "Data Vault — Hub-Link-Satellite модель под аудит и историю; star schema — отдельный денормализованный подход."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Data Vault (Dan Linstedt) — гибридный подход из трёх типов сущностей: Hub (business keys вроде `customer_id`), Link (связи между hubs) и Satellite (атрибуты с историей). Auditable, гибкий, compliance-friendly; обычно используется как enterprise layer, поверх которого строят Kimball marts для BI.",
+              "text": "Data Vault (Dan Linstedt) — гибрид из трёх сущностей: Hub (business keys), Link (связи) и Satellite (атрибуты с историей).",
               "correct": true,
               "sections": {
-                "explanation": "Разделение ключей (Hub), связей (Link) и атрибутов (Satellite) даёт полную историю и гибкость к изменениям источников. Цена — много joins при запросах, поэтому BI-слой выносят в star-витрины.",
+                "explanation": "Разделение ключей (Hub, например `customer_id`), связей (Link между hubs) и атрибутов (Satellite с `valid_from`/`valid_to`) даёт полную историю, auditability и гибкость к изменениям источников. Цена — много joins при запросах, поэтому DV используют как enterprise layer, а BI-слой выносят в star-витрины Kimball поверх.",
                 "example": "`HUB_CUSTOMER(customer_id)`, `LINK_ORDER(customer_id, product_id)`, `SAT_CUSTOMER(name, address, valid_from, valid_to)` — атрибуты и связи эволюционируют независимо, история сохраняется в сателлитах.",
                 "when_to_apply": "Когда критичны full history, auditability и гибкость к изменениям — GDPR, banking, регулируемые домены с жёсткими требованиями compliance.",
                 "edge_cases": "Data Vault не заменяет Kimball marts: BI-инструментам нужен денормализованный star, поэтому поверх DV-ядра почти всегда строят витрины Kimball.",
@@ -816,25 +816,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Data Vault прост для запросов и почти не требует joins благодаря компактной структуре.",
+              "text": "Data Vault прост для запросов и почти не требует joins благодаря компактной Hub-Link-Satellite структуре.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот — много joins (Hub + Link + Satellite), поэтому поверх DV обычно строят Kimball marts для BI.",
+                "what_actually": "Наоборот — разнесение на Hub + Link + Satellite порождает много joins, поэтому поверх DV обычно строят Kimball marts для BI.",
                 "source_of_confusion": "Разбиение на простые сущности создаёт ложное впечатление лёгкости запросов.",
                 "if_it_were_true": "Тогда BI-инструменты работали бы прямо по DV, но им нужен денормализованный star.",
-                "how_it_should_be": "DV требует множества joins; для удобных запросов поверх него кладут Kimball marts."
+                "how_it_should_be": "DV требует множества joins; для удобных запросов поверх него кладут денормализованные Kimball marts."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Data Vault полностью заменяет потребность в Kimball marts для BI-аналитики.",
+              "text": "Data Vault полностью заменяет потребность в Kimball marts для BI-аналитики и дашбордов конечных пользователей.",
               "correct": false,
               "sections": {
-                "what_actually": "DV — это enterprise layer для compliance; BI-инструментам нужен денормализованный star, поэтому поверх часто строят Kimball marts.",
+                "what_actually": "DV — это enterprise layer для compliance и истории; BI-инструментам нужен денормализованный star, поэтому поверх часто строят Kimball marts.",
                 "source_of_confusion": "DV хранит все данные с историей, отсюда вывод, что отдельные витрины уже не нужны.",
                 "if_it_were_true": "Тогда дашборды работали бы по сырому DV, но множество joins делает это медленным.",
-                "how_it_should_be": "DV — ядро для аудита и истории; BI-слой реализуют через Kimball marts поверх."
+                "how_it_should_be": "DV — ядро для аудита и истории; BI-слой реализуют через Kimball marts поверх него."
               }
             }
           ]
@@ -851,34 +851,34 @@
             {
               "order": 0,
               "label": "A",
-              "text": "OBT противоречит современным best practices DWH и считается антипаттерном.",
+              "text": "OBT противоречит современным best practices DWH и считается антипаттерном из-за дублирования атрибутов.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот — в 2024 OBT популярен в BI-слое dbt marts; столбцовая компрессия компенсирует увеличение storage.",
                 "source_of_confusion": "Денормализация интуитивно кажется нарушением канонов моделирования данных.",
                 "if_it_were_true": "Тогда dbt-сообщество не рекомендовало бы OBT для marts, но оно активно его применяет.",
-                "how_it_should_be": "OBT — признанная практика для BI-слоя на дешёвом columnar storage."
+                "how_it_should_be": "OBT — признанная практика для финального BI-слоя на дешёвом columnar storage, а не антипаттерн."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "OBT требует множества joins при каждом запросе, объединяя широкую таблицу со справочниками.",
+              "text": "OBT требует множества joins при каждом запросе, постоянно объединяя широкую таблицу с внешними справочниками.",
               "correct": false,
               "sections": {
-                "what_actually": "Вся суть OBT — отсутствие joins: одна wide-таблица уже содержит все атрибуты внутри себя.",
+                "what_actually": "Вся суть OBT — отсутствие joins: одна wide-таблица уже содержит все атрибуты dimensions внутри себя.",
                 "source_of_confusion": "Привычка к star schema заставляет ожидать joins даже там, где их специально устранили.",
                 "if_it_were_true": "Тогда OBT не давал бы выигрыша в скорости, но он быстрее именно из-за single-scan без joins.",
-                "how_it_should_be": "OBT не требует joins — все атрибуты уже денормализованы в одну таблицу."
+                "how_it_should_be": "OBT не требует joins — все атрибуты заранее денормализованы в одну таблицу, запрос делает один scan."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "One Big Table — денормализованная широкая таблица со всеми атрибутами сразу: нет joins при запросе, быстрее (один scan), проще конфигурировать BI-инструменты. Trade-off — больше storage и сложнее ETL. В 2024 OBT популярен для последнего слоя dbt marts под BI.",
+              "text": "One Big Table — денормализованная широкая таблица со всеми атрибутами сразу: нет joins, быстрее (один scan).",
               "correct": true,
               "sections": {
-                "explanation": "На дешёвом облачном storage с columnar-компрессией дублирование атрибутов dimensions перестало быть проблемой, а отсутствие joins резко упрощает и ускоряет аналитические запросы для BI.",
+                "explanation": "На дешёвом облачном storage с columnar-компрессией дублирование атрибутов dimensions перестало быть проблемой, а отсутствие joins резко упрощает и ускоряет аналитические запросы и настройку BI-инструментов. Trade-off — больше storage и сложнее ETL (денормализацию пересобирают при изменениях источников). В 2024 OBT популярен для последнего слоя dbt marts под BI.",
                 "example": "`fact_sales_wide` собирает все факты плюс `customer_name`, `customer_country`, `product_name`, `product_category` — дашборд читает её одним scan без единого join.",
                 "when_to_apply": "Для marts-слоя dbt, готового под BI-инструменты: когда нужна простота запросов и быстрый single-scan важнее экономии места.",
                 "edge_cases": "OBT не экономит storage относительно star (атрибуты dimensions дублируются); выигрыш — в простоте запросов и удобстве BI-tooling, а не в объёме.",
@@ -888,13 +888,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "OBT экономит storage по сравнению со star schema за счёт компактного хранения.",
+              "text": "OBT экономит storage по сравнению со star schema за счёт компактного хранения одной таблицы вместо звезды.",
               "correct": false,
               "sections": {
                 "what_actually": "Storage больше из-за дублирования атрибутов dimensions; экономия — в query simplicity и BI-tooling, а не в объёме.",
                 "source_of_confusion": "Одна таблица интуитивно кажется «компактнее», чем звезда из множества таблиц.",
                 "if_it_were_true": "Тогда OBT был бы выбором ради экономии места, но его берут ради простоты запросов.",
-                "how_it_should_be": "OBT тратит больше storage; его ценность — в скорости и простоте, а не в экономии."
+                "how_it_should_be": "OBT тратит больше storage; его ценность — в скорости single-scan и простоте, а не в экономии места."
               }
             }
           ]
@@ -911,31 +911,31 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Snowflake` использует tightly coupled storage и compute: чтобы добавить вычислений, нужно увеличить и хранилище.",
+              "text": "`Snowflake` использует tightly coupled storage и compute: чтобы добавить вычислений, нужно увеличить и хранилище пропорционально.",
               "correct": false,
               "sections": {
                 "what_actually": "Главная инновация `Snowflake` — decoupling: compute масштабируется независимо от storage, и наоборот.",
                 "source_of_confusion": "В классических MPP storage и compute действительно сцеплены, поэтому это переносят на `Snowflake`.",
                 "if_it_were_true": "Тогда нельзя было бы поднять второй warehouse на тех же данных, но `Snowflake` именно это и позволяет.",
-                "how_it_should_be": "`Snowflake` разделяет storage и compute — это его ключевое архитектурное отличие."
+                "how_it_should_be": "`Snowflake` разделяет storage и compute — это его ключевое архитектурное отличие и источник остальных фишек."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Zero-copy clone в `Snowflake` требует двойного storage, физически копируя всю таблицу.",
+              "text": "Zero-copy clone в `Snowflake` требует двойного storage, физически копируя всю таблицу со всеми её блоками данных.",
               "correct": false,
               "sections": {
                 "what_actually": "Clone использует metadata-указатели (copy-on-write) и не дублирует данные до их изменения — отсюда «zero-copy».",
                 "source_of_confusion": "Слово «clone» ассоциируется с полным физическим копированием данных.",
                 "if_it_were_true": "Тогда копия prod-таблицы для dev стоила бы как ещё одна таблица, но clone почти бесплатен по storage.",
-                "how_it_should_be": "Zero-copy clone делит блоки через metadata и расходует storage только на изменённые данные."
+                "how_it_should_be": "Zero-copy clone делит блоки через metadata и расходует storage только на изменённые после клонирования данные."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Snowflake` работает исключительно на `AWS` и не поддерживает другие облака.",
+              "text": "`Snowflake` работает исключительно на `AWS` и не поддерживает другие облачные платформы вроде Azure или GCP.",
               "correct": false,
               "sections": {
                 "what_actually": "`Snowflake` multi-cloud (AWS + Azure + GCP), что отличает его от AWS-only `Redshift` и GCP-only `BigQuery`.",
@@ -947,10 +947,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Snowflake` (2012) — облачный DWH с decoupled storage и compute (масштабируются независимо), multi-cluster compute на одних данных, auto-suspend, Time Travel (запрос прошлых версий), zero-copy cloning, multi-cloud (AWS/Azure/GCP) и native semi-structured (JSON/Avro/Parquet). В 2024 — рыночный лидер cloud DWH.",
+              "text": "`Snowflake` (2012) — облачный DWH с decoupled storage и compute, Time Travel, zero-copy cloning и multi-cloud.",
               "correct": true,
               "sections": {
-                "explanation": "Главная инновация — decoupling storage и compute: можно масштабировать вычисления независимо от хранения и платить только за usage. Zero-copy clone и Time Travel реализованы через metadata-указатели поверх immutable storage.",
+                "explanation": "Главная инновация — decoupling storage и compute: вычисления масштабируются независимо от хранения, платишь только за usage, а несколько изолированных warehouses (multi-cluster) работают на одних данных параллельно. Auto-suspend гасит idle-кластер. Zero-copy clone и Time Travel (запрос прошлых версий) реализованы через metadata-указатели поверх immutable storage. Multi-cloud (AWS/Azure/GCP) и native semi-structured (JSON/Avro/Parquet). В 2024 — рыночный лидер cloud DWH.",
                 "example": "`CREATE TABLE users_dev CLONE users` создаёт мгновенную копию без дублирования данных; `SELECT ... AT (TIMESTAMP => ...)` читает таблицу на момент в прошлом; `AUTO_SUSPEND = 300` гасит idle-warehouse.",
                 "when_to_apply": "Общий cloud DWH с pay-per-use, когда нужны независимое масштабирование compute, удобные dev/test-копии и работа в нескольких облаках.",
                 "edge_cases": "Storage и compute в `Snowflake` именно decoupled, а не tightly coupled; zero-copy clone не удваивает storage (copy-on-write через metadata pointers).",
@@ -971,10 +971,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`BigQuery` (2010, Google) — serverless DWH без warehouses to manage, с pay-per-scanned-bytes (или flat-rate slots), petabyte scale, built-in ML (`CREATE MODEL` прямо в SQL), архитектурой Dremel для параллельного выполнения и тесной интеграцией с GCP. Всегда нужны partitioning/clustering, чтобы не сжечь budget.",
+              "text": "`BigQuery` (2010, Google) — serverless DWH без warehouses to manage, с pay-per-scanned-bytes, petabyte scale и built-in ML.",
               "correct": true,
               "sections": {
-                "explanation": "Serverless означает отсутствие провижининга кластеров — Google сам выделяет ресурсы. Оплата по сканированным байтам делает фильтры и partition pruning критичными для контроля стоимости.",
+                "explanation": "Serverless означает отсутствие провижининга кластеров — Google сам выделяет ресурсы под запрос. Оплата по сканированным байтам (или flat-rate slots) делает фильтры и partition pruning критичными для контроля стоимости. Built-in ML обучает модели через `CREATE MODEL` прямо в SQL без экспорта. Под капотом — архитектура Dremel для параллельного выполнения и тесная интеграция с GCP. `SELECT *` без partition-фильтра может сжечь budget.",
                 "example": "`CREATE MODEL my_dataset.my_model OPTIONS(model_type='linear_reg') AS SELECT ...` обучает модель прямо в SQL; `--dry-run` показывает, сколько байт просканирует запрос до его выполнения.",
                 "when_to_apply": "GCP-стек с petabyte BI и ad-hoc аналитикой; обязательно partitioning/clustering и фильтры, чтобы scan-based pricing не привёл к огромным счетам.",
                 "edge_cases": "`SELECT *` по огромной таблице без partition-фильтра при pay-per-byte может сжечь $1000+; `BigQuery ML` работает прямо в SQL без экспорта в Vertex AI.",
@@ -984,19 +984,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`BigQuery` требует провижинить warehouses перед каждым запросом, выбирая размер вычислительного кластера.",
+              "text": "`BigQuery` требует провижинить warehouses перед каждым запросом, заранее выбирая размер вычислительного кластера и число нод.",
               "correct": false,
               "sections": {
                 "what_actually": "`BigQuery` serverless — warehouses не нужны; оплата идёт per scanned bytes либо через flat-rate slots.",
                 "source_of_confusion": "Опыт `Snowflake`/`Redshift` с warehouses переносят на `BigQuery`, ожидая того же.",
                 "if_it_were_true": "Тогда нельзя было бы запустить запрос без настройки кластера, но `BigQuery` выполняет его сразу.",
-                "how_it_should_be": "`BigQuery` serverless: ресурсы выделяются автоматически, ничего провижинить не нужно."
+                "how_it_should_be": "`BigQuery` serverless: ресурсы выделяются автоматически под запрос, ничего провижинить и выбирать не нужно."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`BigQuery ML` требует экспорта данных в `Vertex AI` для обучения и инференса моделей.",
+              "text": "`BigQuery ML` требует экспорта данных в `Vertex AI` для обучения моделей и последующего инференса по ним.",
               "correct": false,
               "sections": {
                 "what_actually": "`BQ ML` работает прямо в SQL без экспорта: обучение и inference выполняются на месте через `CREATE MODEL`.",
@@ -1008,13 +1008,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`SELECT * FROM huge_table` в `BigQuery` безопасен — оплата всё равно flat fee, объём данных не важен.",
+              "text": "`SELECT * FROM huge_table` в `BigQuery` безопасен — оплата всё равно flat fee, а объём сканируемых данных на счёт не влияет.",
               "correct": false,
               "sections": {
                 "what_actually": "При pay-per-byte одна `SELECT *` без partition-фильтра может сжечь $1000+, так как сканирует всю таблицу.",
                 "source_of_confusion": "Привычка к фиксированной цене инстанса заставляет думать, что объём scan не влияет на счёт.",
                 "if_it_were_true": "Тогда советы про partitioning и `--dry-run` были бы лишними, но они нужны именно из-за scan-pricing.",
-                "how_it_should_be": "В `BigQuery` объём сканирования напрямую влияет на стоимость; `SELECT *` без фильтра опасен."
+                "how_it_should_be": "В `BigQuery` объём сканирования напрямую влияет на стоимость; `SELECT *` без фильтра опасен, помогает `--dry-run`."
               }
             }
           ]
@@ -1031,22 +1031,22 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Redshift` всегда работает в serverless-режиме и не требует выбора размера кластера.",
+              "text": "`Redshift` всегда работает в serverless-режиме и не требует выбора размера кластера или числа узлов.",
               "correct": false,
               "sections": {
                 "what_actually": "Classic `Redshift` — provisioned cluster с выбором размера нод; Redshift Serverless — отдельный продукт, появившийся в 2022.",
                 "source_of_confusion": "Современный тренд на serverless заставляет считать его дефолтным для всех cloud-DWH.",
                 "if_it_were_true": "Тогда не существовало бы понятия node size в `Redshift`, но в classic-режиме его задают вручную.",
-                "how_it_should_be": "`Redshift` бывает provisioned (с выбором нод) и Serverless; serverless — не единственный режим."
+                "how_it_should_be": "`Redshift` бывает provisioned (с ручным выбором нод) и Serverless; serverless — не единственный и не дефолтный режим."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Amazon Redshift` (2013) — старейший cloud DWH от Amazon: MPP на cluster nodes, provisioned (нужно выбрать размер нод) или Redshift Serverless (с 2022, pay-per-use), тесная интеграция с AWS (S3, Glue, EMR). В 2024 теряет долю `Snowflake`/`BigQuery`, Serverless — попытка догнать.",
+              "text": "`Amazon Redshift` (2013) — старейший cloud DWH от Amazon: MPP на cluster nodes, provisioned или Serverless (с 2022).",
               "correct": true,
               "sections": {
-                "explanation": "Redshift первым принёс MPP в облако, но классический режим требует ручного выбора размера кластера. Serverless снимает провижининг и приближает модель к pay-per-use конкурентов.",
+                "explanation": "Redshift первым принёс MPP в облако, но классический provisioned-режим требует ручного выбора размера кластера. Redshift Serverless (с 2022) снимает провижининг и приближает модель к pay-per-use конкурентов. Тесная интеграция с AWS (S3, Glue, EMR). В 2024 теряет долю `Snowflake`/`BigQuery`, Serverless — попытка догнать.",
                 "example": "Команда на AWS-стеке грузит данные из `S3` через `Glue` в `Redshift` и считает витрины на MPP-кластере; для нерегулярной нагрузки переходит на Redshift Serverless.",
                 "when_to_apply": "AWS-центрированный (часто legacy) стек с интеграцией S3 + Glue + EMR, когда важна нативность в экосистеме Amazon.",
                 "edge_cases": "Classic Redshift — provisioned cluster, а не всегда serverless; Serverless появился отдельным продуктом в 2022. Redshift AWS-only, multi-cloud только у `Snowflake`.",
@@ -1056,19 +1056,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Redshift` — это multi-cloud DWH, работающий на AWS, Azure и GCP одновременно.",
+              "text": "`Redshift` — это multi-cloud DWH, работающий на AWS, Azure и GCP одновременно поверх единого хранилища.",
               "correct": false,
               "sections": {
                 "what_actually": "`Redshift` AWS-only; multi-cloud (AWS + Azure + GCP) — это особенность `Snowflake`, а не Redshift.",
                 "source_of_confusion": "`Snowflake` сделал multi-cloud нормой ожиданий, и это приписывают конкурентам.",
                 "if_it_were_true": "Тогда `Redshift` запускался бы в Azure, но он привязан к экосистеме AWS.",
-                "how_it_should_be": "`Redshift` работает только в AWS; multi-cloud предлагает `Snowflake`."
+                "how_it_should_be": "`Redshift` работает только в AWS и интегрирован с его экосистемой; multi-cloud предлагает `Snowflake`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Redshift` растёт по market share быстрее `Snowflake` и возвращает себе лидерство.",
+              "text": "`Redshift` растёт по market share быстрее `Snowflake` и возвращает себе утраченное лидерство на рынке cloud DWH.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `Snowflake`/`BigQuery` обгоняют, а `Redshift` пытается догнать через Serverless.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Databricks SQL` — это обычный `Spark SQL` без каких-либо нововведений, просто переименованный.",
+              "text": "`Databricks SQL` — это обычный `Spark SQL` без каких-либо нововведений, просто переименованный под DWH-маркетинг.",
               "correct": false,
               "sections": {
                 "what_actually": "`Databricks SQL` использует движок `Photon` (vectorized C++) поверх `Delta Lake` плюс `Unity Catalog` — он оптимизирован под DWH-нагрузку, а не просто Spark SQL.",
@@ -1103,22 +1103,22 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Движок `Photon` реализован на Python, что и делает `Databricks SQL` гибким.",
+              "text": "Движок `Photon` реализован на Python, что и делает `Databricks SQL` гибким и совместимым с PySpark-экосистемой.",
               "correct": false,
               "sections": {
                 "what_actually": "`Photon` — native C++ vectorized engine, а не Python; на C++ он и достигает высокой скорости.",
                 "source_of_confusion": "Экосистема `Databricks` ассоциируется с Python/PySpark, отсюда вывод про язык движка.",
                 "if_it_were_true": "Тогда `Photon` был бы ограничен скоростью интерпретатора Python, но он компилируемый C++.",
-                "how_it_should_be": "`Photon` написан на C++ с SIMD-векторизацией; Python — это API-слой, а не движок."
+                "how_it_should_be": "`Photon` написан на C++ с SIMD-векторизацией; Python — это API-слой, а не движок выполнения."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Databricks SQL` — DWH-нагрузка поверх `Delta Lake` (на S3/ADLS) с движком `Photon` (vectorized C++), `Unity Catalog` для governance и ML+SQL в одной платформе. Реализует lakehouse-парадигму, объединяя возможности DWH и Data Lake.",
+              "text": "`Databricks SQL` — DWH-нагрузка поверх `Delta Lake` (на S3/ADLS) с движком `Photon` (vectorized C++).",
               "correct": true,
               "sections": {
-                "explanation": "`Databricks` вырос из Spark-платформы в lakehouse: открытые форматы (`Delta`) на дешёвом object storage плюс быстрый аналитический движок дают и BI, и ML на одних данных без копирования между системами.",
+                "explanation": "`Databricks` вырос из Spark-платформы в lakehouse: открытые форматы (`Delta`) на дешёвом object storage плюс быстрый аналитический движок `Photon` дают и BI, и ML на одних данных без копирования между системами. `Unity Catalog` отвечает за governance (управление доступом и каталогизацию). Реализует lakehouse-парадигму, объединяя DWH и Data Lake.",
                 "example": "Аналитик пишет SQL-дашборд по `Delta`-таблицам на `S3`, а ML-команда тренирует модель на тех же данных в том же workspace — без выгрузки в отдельный DWH.",
                 "when_to_apply": "Когда нужны и ML, и BI на одной платформе с открытыми форматами, и важно избежать разделения данных между Lake и DWH.",
                 "edge_cases": "`Photon` — native C++ vectorized engine, а не Python; данные хранятся в `Delta Lake` на S3/ADLS, а не в `Snowflake`.",
@@ -1128,13 +1128,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Databricks SQL` хранит данные в `Snowflake`, используя его как backend-хранилище.",
+              "text": "`Databricks SQL` хранит данные в `Snowflake`, используя его как внешнее backend-хранилище для своих таблиц.",
               "correct": false,
               "sections": {
                 "what_actually": "Хранение — в `Delta Lake` на S3/ADLS, собственная инфраструктура `Databricks`, а не `Snowflake`.",
                 "source_of_confusion": "`Snowflake` — самый известный cloud DWH, поэтому его считают универсальным backend.",
                 "if_it_were_true": "Тогда `Databricks` зависел бы от конкурента, но он строит lakehouse на открытом `Delta` формате.",
-                "how_it_should_be": "Данные `Databricks SQL` лежат в `Delta Lake` на object storage, а не в `Snowflake`."
+                "how_it_should_be": "Данные `Databricks SQL` лежат в `Delta Lake` на object storage (S3/ADLS), а не в `Snowflake`."
               }
             }
           ]
@@ -1151,46 +1151,46 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ClickHouse` — лучший выбор для transactional workloads с частыми `INSERT`/`UPDATE` отдельных строк.",
+              "text": "`ClickHouse` — лучший выбор для transactional workloads с частыми `INSERT`/`UPDATE` отдельных строк в реальном времени.",
               "correct": false,
               "sections": {
                 "what_actually": "`ClickHouse` оптимизирован под read-heavy аналитику; transactions и частые updates — антипаттерн для column-store.",
                 "source_of_confusion": "Высокая скорость `ClickHouse` создаёт впечатление, что он быстр во всех сценариях, включая запись.",
                 "if_it_were_true": "Тогда его использовали бы как OLTP backend, но частые updates переписывают колонки и медленны.",
-                "how_it_should_be": "`ClickHouse` — для read-heavy аналитики; транзакции и частые updates ведут на row-store OLTP."
+                "how_it_should_be": "`ClickHouse` — для read-heavy аналитики; транзакции и частые точечные updates ведут на row-store OLTP."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`ClickHouse` быстрее `Snowflake` на сложных multi-table joins благодаря своему движку.",
+              "text": "`ClickHouse` быстрее `Snowflake` на сложных multi-table joins благодаря своему vectorized-движку и компрессии.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `ClickHouse` слабее на complex joins и сильнее на single-table aggregations.",
                 "source_of_confusion": "Репутация «ультра-быстрого» переносят на все типы запросов, включая joins.",
                 "if_it_were_true": "Тогда его выбирали бы для звёздных схем с множеством joins, но там сильнее `Snowflake`.",
-                "how_it_should_be": "`ClickHouse` блистает на агрегатах одной таблицы; сложные joins лучше делает `Snowflake`."
+                "how_it_should_be": "`ClickHouse` блистает на агрегатах одной таблицы; сложные multi-table joins лучше делает `Snowflake`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`ClickHouse` требует архитектуры с раздельными storage и compute, как cloud-native DWH.",
+              "text": "`ClickHouse` требует архитектуры с раздельными storage и compute, как cloud-native DWH вроде `Snowflake`.",
               "correct": false,
               "sections": {
                 "what_actually": "`ClickHouse` — НЕ cloud-native: storage и compute сцеплены (тренд меняется в Cloud-версии).",
                 "source_of_confusion": "Decoupling стал нормой у `Snowflake`/`BigQuery`, и это приписывают `ClickHouse`.",
                 "if_it_were_true": "Тогда compute масштабировался бы независимо в классическом `ClickHouse`, но там они связаны.",
-                "how_it_should_be": "Классический `ClickHouse` имеет coupled storage+compute; decoupling появляется в Cloud-версии."
+                "how_it_should_be": "Классический `ClickHouse` имеет coupled storage+compute; decoupling появляется только в Cloud-версии."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`ClickHouse` — open-source columnar DWH от Yandex, ультра-быстрый на single-table aggregations с огромной компрессией и vectorized execution. Идеален для real-time analytics (clickstream, IoT), time-series (logs, metrics, observability) и marketing analytics. Слаб на complex joins и не для transactions/частых updates.",
+              "text": "`ClickHouse` — open-source columnar DWH от Yandex, ультра-быстрый на single-table aggregations.",
               "correct": true,
               "sections": {
-                "explanation": "`ClickHouse` оптимизирован под read-heavy аналитику на одной широкой таблице: column storage + vectorized engine дают экстремальную скорость агрегаций. Это не cloud-native в традиционном смысле — storage и compute сцеплены (меняется в Cloud-версии).",
+                "explanation": "`ClickHouse` оптимизирован под read-heavy аналитику на одной широкой таблице: column storage, огромная компрессия и vectorized execution дают экстремальную скорость агрегаций. Идеален для real-time analytics (clickstream, IoT), time-series (logs, metrics, observability) и marketing analytics. Слаб на complex joins (уступает `Snowflake`) и не для transactions/частых updates. Не cloud-native: storage и compute сцеплены (меняется в Cloud-версии).",
                 "example": "Дашборд real-time метрик считает аптайм и latency по миллиардам событий observability за миллисекунды; тот же объём на row-store или с тяжёлыми join был бы заметно медленнее.",
                 "when_to_apply": "Read-heavy аналитика: clickstream/IoT, логи и метрики, observability, быстрые ad-hoc marketing-queries на одной большой таблице.",
                 "edge_cases": "`ClickHouse` слабее `Snowflake` на complex joins и сильнее на single-table aggregations; transactions и частые updates — антипаттерн для него.",
@@ -1211,10 +1211,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "ETL трансформирует данные до загрузки в warehouse внешним инструментом (`Spark`, `Informatica`) — это legacy-подход для дорогих хранилищ. ELT грузит сырые данные в warehouse и трансформирует их внутри через SQL (`Snowflake`/`BigQuery`) — современный подход на дешёвом compute. `dbt` — символ ELT-эры.",
+              "text": "ETL трансформирует данные внешним движком до загрузки; ELT грузит сырьё в warehouse и трансформирует внутри SQL.",
               "correct": true,
               "sections": {
-                "explanation": "С появлением дешёвого облачного warehouse-compute нет смысла платить отдельно за внешний кластер трансформаций: проще загрузить как есть и преобразовать SQL внутри. Поэтому ELT вытеснил ETL в modern stack.",
+                "explanation": "С появлением дешёвого облачного warehouse-compute нет смысла платить отдельно за внешний кластер трансформаций: проще загрузить как есть и преобразовать SQL внутри. Поэтому ELT вытеснил ETL в modern stack. ETL — это legacy-подход на внешних движках (`Spark`, `Informatica`) для дорогих хранилищ; ELT — современный подход на дешёвом compute облачных DWH (`Snowflake`/`BigQuery`), и его символ — `dbt`.",
                 "example": "`Fivetran` грузит сырые таблицы `Stripe` в `Snowflake` (E+L), затем `dbt`-модели на SQL строят витрины прямо в warehouse (T) — без отдельного Spark-кластера.",
                 "when_to_apply": "ELT — по умолчанию в современном стеке; ETL оправдан, только если warehouse-compute дорогой или трансформация требует возможностей вне SQL.",
                 "edge_cases": "ELT не быстрее за счёт магии — он использует cheap warehouse compute вместо external Spark; `dbt` — это T в ELT, он не extract-ит данные сам.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "ETL быстрее ELT в современном cloud DWH, потому что трансформация снаружи разгружает warehouse.",
+              "text": "ETL быстрее ELT в современном cloud DWH, потому что трансформация снаружи разгружает warehouse от лишнего compute.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: ELT использует cheap warehouse compute и не платит за внешний `Spark`-кластер, что эффективнее в modern stack.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`dbt` — это ETL-инструмент: он extract-ит данные из источников и грузит их в warehouse.",
+              "text": "`dbt` — это ETL-инструмент: он сам extract-ит данные из источников и грузит их в warehouse перед трансформацией.",
               "correct": false,
               "sections": {
                 "what_actually": "`dbt` — это T в ELT (transform внутри warehouse через SQL); он не extract-ит данные из источников.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "ELT всё равно требует отдельной ETL-платформы вроде `Spark` для выполнения трансформаций.",
+              "text": "ELT всё равно требует отдельной ETL-платформы вроде `Spark` для выполнения тяжёлых трансформаций вне warehouse.",
               "correct": false,
               "sections": {
                 "what_actually": "ELT использует сам warehouse как compute-движок для трансформаций — `Spark`/`Informatica` для этого не нужны.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Polling по условию `WHERE updated_at > last_sync` — это best practice CDC и рекомендуемый подход.",
+              "text": "Polling по условию `WHERE updated_at > last_sync` — это best practice CDC и рекомендуемый log-based подход.",
               "correct": false,
               "sections": {
                 "what_actually": "Polling не ловит deletes, нагружает источник запросами и лагает; log-based чтение WAL/binlog лучше.",
@@ -1283,10 +1283,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "CDC — захват изменений в OLTP-БД и near-real-time репликация в DWH. Лучший подход — log-based (чтение WAL/binlog: `PostgreSQL` logical replication, `MySQL` binlog). Инструменты: `Debezium` (open-source), `Fivetran`/`Airbyte` (managed). Даёт latency в секунды, а не часы.",
+              "text": "CDC захватывает изменения в OLTP-БД и near-real-time реплицирует их в DWH; лучший вариант — log-based.",
               "correct": true,
               "sections": {
-                "explanation": "Вместо периодических full-load CDC передаёт только изменения. Log-based читает журнал транзакций вне критического пути writes, поэтому не нагружает источник и почти не лагает.",
+                "explanation": "Вместо периодических full-load CDC передаёт только изменения. Log-based читает журнал транзакций (`PostgreSQL` logical replication из WAL, `MySQL` binlog) вне критического пути writes, поэтому не нагружает источник и почти не лагает. Инструменты: `Debezium` (open-source), `Fivetran`/`Airbyte` (managed); latency измеряется секундами, а не часами.",
                 "example": "`Debezium` читает WAL `PostgreSQL` и стримит inserts/updates/deletes в `Snowflake` через Kafka — витрина обновляется через секунды после изменения в проде, без bulk-перезаливок.",
                 "when_to_apply": "Real-time репликация `PostgreSQL`/`MySQL` в `Snowflake`/`BigQuery` без тяжёлых full-load, когда нужна свежесть данных в DWH.",
                 "edge_cases": "Polling (`WHERE updated_at > last_sync`) не ловит deletes и нагружает источник; triggers замедляют OLTP writes. Log-based лучше обоих и даёт секунды latency, а не часы.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "CDC через database triggers — самый быстрый и предпочтительный подход к захвату изменений.",
+              "text": "CDC через database triggers — самый быстрый и предпочтительный подход к захвату изменений без нагрузки на OLTP.",
               "correct": false,
               "sections": {
                 "what_actually": "Triggers замедляют OLTP writes, так как срабатывают в транзакции; log-based читает WAL вне критического пути.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "CDC всегда даёт latency в часы, ровно как обычный batch ETL по расписанию.",
+              "text": "CDC всегда даёт latency в часы, ровно как обычный batch ETL по ночному расписанию полной перезаливки.",
               "correct": false,
               "sections": {
                 "what_actually": "Log-based CDC обеспечивает latency в секунды; ради этого его и применяют вместо batch.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Fivetran` и `Airbyte` — это transformation-инструменты, которые преобразуют данные внутри warehouse.",
+              "text": "`Fivetran` и `Airbyte` — это transformation-инструменты, которые преобразуют данные внутри warehouse через SQL.",
               "correct": false,
               "sections": {
                 "what_actually": "Это ingestion-инструменты (Extract + Load); трансформацию выполняет `dbt`, а не загрузчики.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Airbyte` существует только как managed-сервис и не имеет open-source версии.",
+              "text": "`Airbyte` существует только как managed-сервис от Talend и не имеет open-source версии с коннекторами.",
               "correct": false,
               "sections": {
                 "what_actually": "`Airbyte` — open-source проект с managed cloud-версией; это его и отличает как альтернативу `Fivetran`.",
@@ -1355,10 +1355,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Это ingestion-инструменты (Extract + Load) modern data stack: `Fivetran` (managed, дорогой, простой), `Stitch` (классика от Talend), `Airbyte` (open-source с managed-версией). Поток: source → ingestion tool → warehouse → `dbt` → marts → BI. Трансформацию делает `dbt`, а не сами загрузчики.",
+              "text": "Это ingestion-инструменты (Extract + Load) modern data stack; трансформацию делает `dbt`, а не они.",
               "correct": true,
               "sections": {
-                "explanation": "Загрузчики берут данные из источников (Salesforce, Stripe, Postgres) и кладут в warehouse через готовые коннекторы. `Fivetran` имеет 300+ pre-built connectors, настройка — это клики в UI, без написания кода под каждый источник.",
+                "explanation": "Загрузчики берут данные из источников (Salesforce, Stripe, Postgres) и кладут в warehouse через готовые коннекторы. `Fivetran` имеет 300+ pre-built connectors, настройка — это клики в UI, без написания кода под каждый источник. Состав: `Fivetran` (managed, дорогой, простой), `Stitch` (классика от Talend), `Airbyte` (open-source с managed-версией). Поток: source → ingestion → warehouse → `dbt` → marts → BI.",
                 "example": "`Fivetran` через готовый коннектор тянет объекты `Salesforce` в `Snowflake`, дальше `dbt`-модели строят витрины, а `Looker` визуализирует — стандартная связка modern data stack.",
                 "when_to_apply": "Когда нужно завести данные из SaaS и БД (Salesforce/Stripe/Postgres) в `Snowflake`/`BigQuery` без написания и поддержки custom-ETL.",
                 "edge_cases": "`Fivetran`/`Airbyte` — это ingestion, а не transformation (transform делает `dbt`); `Airbyte` есть и open-source, и managed; `Fivetran` не требует писать коннекторы вручную (300+ готовых).",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для `Fivetran` нужно писать custom-коннекторы под каждый источник данных вручную.",
+              "text": "Для `Fivetran` нужно писать custom-коннекторы под каждый источник данных вручную, готовых из коробки нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`Fivetran` предоставляет 300+ pre-built connectors; настройка источника — это клики в UI, а не код.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Partitioning и clustering — это одно и то же, два названия для одной оптимизации скана.",
+              "text": "Partitioning и clustering — это одно и то же, два разных названия для одной и той же оптимизации скана таблицы.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные оптимизации: partitioning — физическое разделение по column (date), clustering — порядок строк внутри partition.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Partition по `customer_id` с миллионами уникальных значений — это лучшая практика.",
+              "text": "Partition по `customer_id` с миллионами уникальных значений — это лучшая практика для fact-таблиц.",
               "correct": false,
               "sections": {
                 "what_actually": "High-cardinality partition создаёт миллионы мелких partitions и ломает метаданные; партиционируют по low-cardinality, например date.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Без partitioning queries стоят ровно столько же — оптимизатор сам пропустит лишние данные.",
+              "text": "Без partitioning queries стоят ровно столько же — оптимизатор сам пропустит лишние данные по фильтру.",
               "correct": false,
               "sections": {
                 "what_actually": "Без partitioning идёт full scan вместо pruning; в pay-per-byte `BigQuery` разница в стоимости достигает x100.",
@@ -1427,10 +1427,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Partitioning — физическое разделение таблицы по column (обычно date), дающее partition pruning (скан одного дня вместо года). Clustering/sort key — порядок строк внутри partition для data skipping на range-queries. Без них queries в pay-per-byte могут стоить в 100x больше.",
+              "text": "Partitioning — физическое деление таблицы по колонке (дата) для pruning; clustering — порядок строк внутри.",
               "correct": true,
               "sections": {
-                "explanation": "Partition pruning отсекает целые куски данных по фильтру, а clustering сортирует строки внутри partition, ускоряя диапазонные фильтры. Вместе они радикально снижают объём scan и стоимость.",
+                "explanation": "Partition pruning отсекает целые куски данных по фильтру (скан одного дня вместо года), а clustering сортирует строки внутри partition, ускоряя диапазонные фильтры через data skipping. Вместе они радикально снижают объём scan и стоимость: без partitioning тот же запрос в pay-per-byte может стоить в 100x больше.",
                 "example": "`PARTITION BY DATE(sale_date) CLUSTER BY (customer_id, product_id)`: запрос за один день читает только его partition, а фильтр по `customer_id` пропускает несортированные блоки внутри.",
                 "when_to_apply": "Всегда partition по date в больших fact tables; cluster по часто-фильтруемым колонкам как secondary-фильтр для дополнительного data skipping.",
                 "edge_cases": "Partition по high-cardinality колонке (`customer_id` с миллионами значений) создаёт миллионы мелких partitions и ломает метаданные; партиционируют по low-cardinality (date).",
@@ -1451,10 +1451,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Materialized view — pre-computed результат запроса, хранимый как таблица: ускоряет часто читаемые aggregations за счёт заранее вычисленных данных. Trade-off — storage cost и refresh latency (обычно asynchronous). В `Snowflake`/`BigQuery` MV auto-refreshing, в `Redshift` — manual refresh.",
+              "text": "Materialized view — pre-computed результат запроса, хранимый как таблица: ускоряет частые aggregations.",
               "correct": true,
               "sections": {
-                "explanation": "В отличие от обычного `VIEW` (stored query, пересчёт при каждом обращении), MV хранит готовый результат. Это меняет storage на query speed: дорогие повторяющиеся агрегаты считаются один раз.",
+                "explanation": "В отличие от обычного `VIEW` (stored query, пересчёт при каждом обращении), MV хранит готовый результат. Это меняет storage на query speed: дорогие повторяющиеся агрегаты считаются один раз. Trade-off — storage cost и refresh latency (обычно asynchronous): в `Snowflake`/`BigQuery` MV auto-refreshing, в `Redshift` — manual refresh.",
                 "example": "`CREATE MATERIALIZED VIEW daily_revenue AS SELECT date_trunc('day', order_date), SUM(amount) ...` — дашборд читает готовую дневную выручку мгновенно, а не агрегирует `orders` заново каждый раз.",
                 "when_to_apply": "Для дорогих повторяющихся aggregate-запросов (daily revenue, rollups), которые читаются часто, а исходные данные меняются относительно редко.",
                 "edge_cases": "MV отличается от обычного `VIEW` (тот пересчитывается каждый раз); не все queries поддерживаются для MV — у каждого warehouse свои limitations (no joins, no UDFs), нужно сверяться с docs.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Materialized view — это то же самое, что обычный `VIEW`, просто другое название.",
+              "text": "Materialized view — это то же самое, что обычный `VIEW`, просто другое название без сохранения результата.",
               "correct": false,
               "sections": {
                 "what_actually": "`VIEW` — это stored query (пересчёт при каждом обращении), а MV хранит pre-computed результат как таблицу.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Materialized view полезен прежде всего для часто-меняющихся single-row queries по одному id.",
+              "text": "Materialized view полезен прежде всего для часто-меняющихся single-row queries по одному первичному id.",
               "correct": false,
               "sections": {
                 "what_actually": "MV оптимизирован под aggregate-запросы; для single-row выборок быстрее index в OLTP-БД.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Любой запрос можно положить в materialized view — ограничений на поддерживаемые конструкции нет.",
+              "text": "Любой запрос можно положить в materialized view — ограничений на поддерживаемые конструкции и join-ы нет.",
               "correct": false,
               "sections": {
                 "what_actually": "У каждого warehouse есть limitations для MV (no joins, no UDFs и т.п.) — нужно сверяться с vendor docs.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SELECT * FROM huge_table` — нормально, result cache всё равно спасёт от больших затрат.",
+              "text": "`SELECT * FROM huge_table` — нормально, result cache всё равно спасёт от больших затрат на повторный scan.",
               "correct": false,
               "sections": {
                 "what_actually": "В pay-per-byte `BigQuery` одна `SELECT *` может стоить $10K; result cache работает только на идентичные queries, а не на первый прогон.",
@@ -1523,10 +1523,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Ключевые техники: partitioning + clustering, auto-suspend warehouses, right-sizing, query optimization (фильтры рано, не `SELECT *`), материализация часто-используемого, result cache, reserved capacity для предсказуемой нагрузки и мониторинг `QUERY_HISTORY`. Ошибка в `WHERE` в pay-per-byte `BigQuery` может стоить $10K за один запрос.",
+              "text": "Читать меньше и не платить за idle: partitioning, auto-suspend, right-sizing, фильтры, result cache.",
               "correct": true,
               "sections": {
-                "explanation": "Стоимость в cloud DWH складывается из объёма scan и времени работы compute. Partition pruning и фильтры режут scan, auto-suspend и right-sizing — оплату compute, result cache отдаёт идентичные запросы бесплатно.",
+                "explanation": "Стоимость в cloud DWH складывается из объёма scan и времени работы compute. Partition pruning и фильтры (рано, не `SELECT *`) режут scan, auto-suspend и right-sizing — оплату compute, result cache отдаёт идентичные запросы бесплатно, reserved capacity дешевле on-demand для предсказуемой нагрузки, а `QUERY_HISTORY` ловит дорогие запросы. Цена ошибки высока: забытый фильтр в `WHERE` pay-per-byte `BigQuery` может стоить $10K за один запрос.",
                 "example": "Ежемесячный ревью top-cost запросов в `QUERY_HISTORY` выявляет `SELECT *` без partition-фильтра; добавление partitioning и фильтра по дате снижает стоимость запроса в десятки раз.",
                 "when_to_apply": "Регулярно (например ежемесячно) ревьюить дорогие queries в `QUERY_HISTORY` и применять partition+cluster+suspend+cache как базовый набор экономии.",
                 "edge_cases": "`SELECT *` на огромной таблице не спасает result cache (он работает лишь на идентичные queries); auto-suspend важен — idle warehouse платит как активный; XL не всегда лучше (он стоит x16 от XS).",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Auto-suspend warehouses не влияет на стоимость, так как idle-кластер ничего не потребляет.",
+              "text": "Auto-suspend warehouses не влияет на стоимость, так как idle-кластер в облаке ничего не потребляет и так.",
               "correct": false,
               "sections": {
                 "what_actually": "Idle warehouse платит как активный; auto-suspend через ~5 минут экономит до 70% на нерегулярных нагрузках.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "XL warehouse всегда лучше — раз быстрее, значит и дешевле на любой нагрузке.",
+              "text": "XL warehouse всегда лучше — раз быстрее, значит и дешевле на любой нагрузке за счёт меньшего времени.",
               "correct": false,
               "sections": {
                 "what_actually": "XL стоит x16 от XS; для маленьких queries экономия времени не компенсирует цену — right-sizing критичен.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Tableau` — это open-source BI-инструмент, бесплатная альтернатива коммерческим решениям.",
+              "text": "`Tableau` — это open-source BI-инструмент, бесплатная альтернатива коммерческим решениям вроде `Looker`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Tableau` — коммерческий продукт от Salesforce; open-source альтернативы — это `Metabase` и `Superset`.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Looker` не имеет semantic layer — метрики в нём задаются прямо в каждом дашборде.",
+              "text": "`Looker` не имеет semantic layer — метрики в нём задаются прямо в каждом дашборде отдельно вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "LookML — родоначальник semantic layer в BI и основная фича `Looker`; метрики определяются централизованно.",
@@ -1595,10 +1595,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Modern BI: `Looker` (LookML semantic layer), `Tableau` (самый популярный, Salesforce), `Power BI` (для MS-стека), `Metabase`/`Superset` (open-source), `Mode`/`Hex`/`Sigma` (SQL-first), `Lightdash` (dbt-native). Типичный стек analytics engineering — `dbt` + `Looker`/`Lightdash`.",
+              "text": "Modern BI: `Looker`, `Tableau`, `Power BI`, `Metabase`/`Superset` (open-source); выбор по экосистеме.",
               "correct": true,
               "sections": {
-                "explanation": "Выбор BI-инструмента обычно диктуется экосистемой: Salesforce → `Tableau`, GCP → `Looker`, Microsoft → `Power BI`. Semantic layer (LookML или dbt) задаёт единые определения метрик поверх warehouse.",
+                "explanation": "Выбор BI-инструмента обычно диктуется экосистемой: Salesforce → `Tableau` (самый популярный), GCP → `Looker` (LookML semantic layer), Microsoft → `Power BI`. Open-source — `Metabase`/`Superset`; SQL-first — `Mode`/`Hex`/`Sigma`; dbt-native — `Lightdash`. Типичный стек analytics engineering — `dbt` + `Looker`/`Lightdash`, где метрики задаются один раз через semantic layer (LookML или dbt).",
                 "example": "Команда на GCP берёт `Looker` с LookML для семантики метрик; стартап на open-source выбирает `Metabase` или `Superset`; data-команда с `dbt` подключает `Lightdash` для dbt-native метрик.",
                 "when_to_apply": "Выбирать BI по экосистеме компании и зрелости data-команды; semantic layer выносить в `dbt`/LookML для единых определений.",
                 "edge_cases": "`Tableau` — commercial (Salesforce), а не open-source (open — `Metabase`/`Superset`); `Looker` как раз родоначальник semantic layer; SQL поддерживают все modern BI, не только `Power BI`.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Power BI` — единственный BI-инструмент с поддержкой SQL; остальные работают только через UI.",
+              "text": "`Power BI` — единственный BI-инструмент с поддержкой SQL; остальные работают только через визуальный UI.",
               "correct": false,
               "sections": {
                 "what_actually": "Все modern BI поддерживают SQL; `Mode`, `Hex`, `Sigma` вообще SQL-first.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Semantic layer избыточен — пусть каждый BI-dashboard считает свои метрики самостоятельно.",
+              "text": "Semantic layer избыточен — пусть каждый BI-dashboard считает свои метрики самостоятельно по своей формуле.",
               "correct": false,
               "sections": {
                 "what_actually": "Без semantic layer разные дашборды дают разный «revenue» → конфликты в отчётах executive board.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "LookML работает только внутри `Looker` и не имеет vendor-neutral аналогов.",
+              "text": "LookML работает только внутри `Looker` и не имеет vendor-neutral аналогов вроде `dbt` или `Cube.js`.",
               "correct": false,
               "sections": {
                 "what_actually": "Исторически да, но `dbt Semantic Layer` и `Cube.js` — vendor-neutral альтернативы LookML.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Semantic layer — это просто database `VIEW`, обёрнутый поверх таблиц.",
+              "text": "Semantic layer — это просто database `VIEW`, обёрнутый SQL-запросом поверх сырых таблиц warehouse.",
               "correct": false,
               "sections": {
                 "what_actually": "`VIEW` — это SQL-запрос, а semantic layer — декларативные метрики и dimensions с metadata для BI-инструментов.",
@@ -1667,10 +1667,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Semantic layer — single source of truth для метрик (revenue, MAU): метрика определяется один раз и используется во всех BI-инструментах. Реализации: `dbt Semantic Layer` (с 2023), `Looker` LookML (классика), `Cube.js`, `MetricFlow`. Без него каждый dashboard может считать «revenue» по-своему.",
+              "text": "Semantic layer — single source of truth для метрик: определены раз, считаются одинаково во всех BI.",
               "correct": true,
               "sections": {
-                "explanation": "Semantic layer выносит определения метрик и dimensions в декларативный слой с metadata поверх warehouse. Это устраняет расхождения, когда разные BI-инструменты дают разные числа для одной и той же метрики.",
+                "explanation": "Semantic layer выносит определения метрик (revenue, MAU) и dimensions в декларативный слой с metadata поверх warehouse. Это устраняет расхождения, когда разные BI-инструменты дают разные числа для одной метрики. Реализации: `dbt Semantic Layer` (с 2023), `Looker` LookML (классика), `Cube.js`, `MetricFlow`.",
                 "example": "Метрика `monthly_revenue = sum(orders.amount) WHERE status = 'paid'` определена раз в semantic layer; `Looker` и `Tableau` берут её оттуда и показывают одинаковую цифру на executive board.",
                 "when_to_apply": "Чтобы устранить конфликты определений между BI-инструментами на одной БД и гарантировать, что все отчёты считают метрику одинаково.",
                 "edge_cases": "Это не то же, что database `VIEW` (тот — SQL-запрос); semantic layer — декларативные метрики и dimensions с metadata для BI. LookML исторически в `Looker`, но `dbt`/`Cube.js` — vendor-neutral.",
@@ -1691,10 +1691,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Modern Data Stack (с 2018): Source → Loader (`Fivetran`/`Airbyte`) → Warehouse (`Snowflake`/`BigQuery`) → Transformer (`dbt`) → BI (`Looker`/`Tableau`) → Reverse ETL (`Hightouch`/`Census`). Принципы: cloud-native, ELT вместо ETL, SQL-first, composable (best-in-class tools вместо мега-платформы).",
+              "text": "Modern Data Stack — cloud-native конвейер из best-of-breed ELT-инструментов: source → loader → DWH → BI.",
               "correct": true,
               "sections": {
-                "explanation": "MDS — это набор специализированных managed-сервисов, собранных в пайплайн. Вместо одной монолитной платформы берут лучший инструмент на каждом этапе, связывая их вокруг облачного warehouse и ELT.",
+                "explanation": "MDS (с 2018) — это набор специализированных managed-сервисов, собранных в пайплайн. Вместо одной монолитной платформы берут лучший инструмент на каждом этапе, связывая их вокруг облачного warehouse и ELT. Полный поток: Source → Loader (`Fivetran`/`Airbyte`) → Warehouse (`Snowflake`/`BigQuery`) → Transformer (`dbt`) → BI (`Looker`/`Tableau`) → Reverse ETL (`Hightouch`/`Census`). Принципы: cloud-native, ELT вместо ETL, SQL-first, composable.",
                 "example": "`Airbyte` грузит источники в `Snowflake`, `dbt` строит витрины, `Looker` визуализирует, а `Hightouch` через Reverse ETL отправляет сегменты обратно в `Salesforce` для активации.",
                 "when_to_apply": "Для нового analytics-стека без legacy ETL-платформ, когда хочется собрать пайплайн из best-of-breed cloud-инструментов.",
                 "edge_cases": "MDS — это composable best-in-class tools, а не одна мега-платформа (`Informatica`); фундамент — ELT, не ETL; Reverse ETL идёт warehouse → operational tools, а не обратно в DWH.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Modern Data Stack — это одна интегрированная платформа вроде `Informatica`, закрывающая весь пайплайн.",
+              "text": "Modern Data Stack — это одна интегрированная платформа вроде `Informatica`, закрывающая сразу весь пайплайн.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот — MDS это composable best-in-class tools, а не одна мега-платформа.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Modern Data Stack использует ETL, а не ELT — трансформации идут до загрузки в warehouse.",
+              "text": "Modern Data Stack использует ETL, а не ELT — трансформации идут до загрузки в warehouse через `Spark`.",
               "correct": false,
               "sections": {
                 "what_actually": "ELT — фундамент MDS: трансформация выполняется внутри warehouse через `dbt`, а не до загрузки.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Reverse ETL в Modern Data Stack — это classic ETL, направленный обратно в DWH.",
+              "text": "Reverse ETL в Modern Data Stack — это classic ETL, направленный обратно в DWH из operational-систем.",
               "correct": false,
               "sections": {
                 "what_actually": "Reverse ETL идёт warehouse → operational tools (`Salesforce`, `HubSpot`); `Hightouch`/`Census` закрывают активацию данных.",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "DWH и Data Lake — это синонимы: оба хранят структурированные данные для аналитики одинаково.",
+              "text": "DWH и Data Lake — это синонимы: оба хранят структурированные данные для аналитики одинаково и одинаково дорого.",
               "correct": false,
               "sections": {
                 "what_actually": "DWH structured + schema-on-write + дорогой + быстрый; Lake raw + schema-on-read + дешёвый + медленный — это разные слои.",
@@ -1763,10 +1763,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "DWH — structured, schema-on-write, дорогой storage, быстрые queries. Data Lake — raw, schema-on-read, дешёвый storage, медленные queries. Lakehouse — Lake плюс DWH-фичи (ACID, time travel, schema enforcement через `Delta`/`Iceberg`/`Hudi`). В 2024 идёт конвергенция: `Snowflake` external tables, `Databricks` Lakehouse.",
+              "text": "DWH — schema-on-write, быстро; Lake — schema-on-read, дёшево; Lakehouse совмещает оба через open-форматы.",
               "correct": true,
               "sections": {
-                "explanation": "DWH навязывает схему при записи и хранит структурированные таблицы; Lake принимает любой формат и применяет схему при чтении; Lakehouse добавляет к дешёвому object storage транзакционные гарантии DWH через открытые форматы.",
+                "explanation": "DWH навязывает схему при записи и хранит структурированные таблицы (дорогой storage, быстрые queries); Lake принимает любой raw-формат и применяет схему при чтении (дешёвый storage, медленные queries); Lakehouse добавляет к дешёвому object storage транзакционные гарантии DWH (ACID, time travel, schema enforcement) через `Delta`/`Iceberg`/`Hudi`. В 2024 идёт конвергенция: `Snowflake` external tables, `Databricks` Lakehouse.",
                 "example": "Сырые JSON-логи кладут в Lake на `S3` (schema-on-read), очищенные витрины — в DWH (schema-on-write), а `Databricks` Lakehouse поверх `Delta` даёт ACID и time travel на тех же файлах.",
                 "when_to_apply": "Выбор архитектуры под mix нагрузок: чистый BI — DWH, сырые данные и ML — Lake, потребность в обоих с транзакционностью — Lakehouse.",
                 "edge_cases": "DWH не равен Lake (structured+schema-on-write+fast vs raw+schema-on-read+cheap); Lakehouse — не просто Lake: он добавляет ACID, time travel и schema enforcement через `Delta`/`Iceberg`/`Hudi`.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Lakehouse — это просто Data Lake без каких-либо новых возможностей, переименованный из маркетинга.",
+              "text": "Lakehouse — это просто Data Lake без каких-либо новых возможностей, переименованный отделом маркетинга.",
               "correct": false,
               "sections": {
                 "what_actually": "Lakehouse добавляет ACID, time travel и schema enforcement через `Delta`/`Iceberg`/`Hudi` — это DWH-фичи поверх Lake.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Data Lake поддерживает schema-on-write, проверяя структуру данных при их записи.",
+              "text": "Data Lake поддерживает schema-on-write, проверяя структуру и типы данных при их записи на дешёвый storage.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключевое отличие Lake — schema-on-read: запись любого формата без enforcement, схема применяется при чтении.",
