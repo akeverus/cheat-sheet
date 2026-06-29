@@ -47,7 +47,12 @@
                 <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
                 <input type="hidden" name="important" th:value="${filter?.importantOnly != null ? filter.importantOnly : false}">
                 <input type="hidden" name="onlyWrong" th:value="${filter?.onlyWrong != null ? filter.onlyWrong : false}">
-                <input type="text" name="q" placeholder="Поиск по вопросам…" th:value="${searchQuery}" class="search-input" aria-label="Поиск по вопросам">
+                <!-- type=search → нативный крестик-очистка + семантика поиска; enterkeyhint=search —
+                     клавиша Enter экранной клавы как «Поиск»; spellcheck/autocorrect/autocapitalize off —
+                     ищут по слагам/техтерминам (spring-boot, hikaricp), не словарным словам.
+                     CSS уже целит .search-input (input[type=search] перечислен в base.css:1456/1654). -->
+                <input type="search" name="q" placeholder="Поиск по вопросам…" th:value="${searchQuery}" class="search-input" aria-label="Поиск по вопросам"
+                       enterkeyhint="search" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">
                 <button type="submit" class="stats-action-btn stats-search-action" aria-label="Искать по вопросам">Искать</button>
             </form>
         </div>

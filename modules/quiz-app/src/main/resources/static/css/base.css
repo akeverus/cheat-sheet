@@ -332,6 +332,41 @@ html[data-design][data-motion="off"] *::after {
   html[data-design] a:not(.btn) { text-decoration: underline !important; }
 }
 
+/* Windows High Contrast / forced-colors: active (CSS MQ5) — браузер заменяет
+   авторские цвета системными и УБИРАЕТ box-shadow. Парный к prefers-contrast выше:
+   ещё один OS-pref, который теперь уважаем. Без блока: (1) фокус-кольца
+   .settings-tab/.seg-btn/селектов — box-shadow-only (outline:none) → в High Contrast
+   невидимы; возвращаем системный outline (Highlight — системный цвет, не стрипается).
+   (2) активный сегмент .seg-btn.is-active помечен ТОЛЬКО фоном accent → перетирается
+   системным цветом, выбранный дизайн/тема/раскладка неразличимы; кодируем системной
+   парой Highlight/HighlightText (гарантированный контраст). !important — как в
+   prefers-contrast: бьём более поздние по источнику не-!important правила
+   (outline:none на 1167/1249/1484/2577, background accent на 2574). */
+@media (forced-colors: active) {
+  html[data-design] .settings-page .settings-tab:focus-visible,
+  html[data-design] .settings-page select:focus,
+  html[data-design] .settings-page input[type="number"]:focus,
+  html[data-design] .stats-page select:focus,
+  html[data-design] .stats-page input:focus,
+  html[data-design] .seg-btn:focus-visible {
+    outline: 2px solid Highlight !important; outline-offset: 2px !important;
+  }
+  html[data-design] .seg-btn.is-active {
+    background: Highlight !important; color: HighlightText !important;
+  }
+}
+
+/* prefers-reduced-transparency: reduce (CSS MQ5) — OS-настройка «Уменьшить
+   прозрачность». Единственная значимая полупрозрачность — скрим модалок
+   (--color-surface-overlay, alpha до 0.32 в superhuman/stripe): сквозь него видна
+   страница за диалогом, что эта настройка просит убрать. Делаем скрим практически
+   непрозрачным. Декоративные *-wash/тени/фокус-кольца не трогаем — они не заслоняют
+   контент. !important — пер-дизайн×тема токены (0,2,1)/(0,3,1) бьют обобщённый
+   html[data-design] (0,1,1), как и в prefers-contrast. Парный к OS-prefs выше. */
+@media (prefers-reduced-transparency: reduce) {
+  html[data-design] { --color-surface-overlay: rgba(0, 0, 0, 0.95) !important; }
+}
+
 /* ===========================================================================
    ПРИМИТИВЫ ВЁРСТКИ (ed-*) — стилизуются глобально (новые имена, без коллизий
    со старым styles.css). Используются и в shell, и в страницах.
