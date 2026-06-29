@@ -284,15 +284,28 @@
     document.body.appendChild(overlay);
     var closeBtn = overlay.querySelector('.kbd-help-close');
     var lastFocused = null;
+    // Фон под модалкой inert+aria-hidden (aria-modal не держит SR-курсор в
+    // browse-mode). Храним проставленные, чтобы снять ровно их при закрытии.
+    var inerted = [];
     function close() {
       if (overlay.classList.contains('hidden')) return;
       overlay.classList.add('hidden');
+      inerted.forEach(function (el) { el.removeAttribute('inert'); el.removeAttribute('aria-hidden'); });
+      inerted = [];
       if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
       lastFocused = null;
     }
     function open() {
       lastFocused = document.activeElement;
       overlay.classList.remove('hidden');
+      inerted = [];
+      Array.prototype.forEach.call(document.body.children, function (el) {
+        if (el === overlay || el.tagName === 'SCRIPT') return;
+        if (el.hasAttribute('inert') || el.getAttribute('aria-hidden') === 'true') return;
+        el.setAttribute('inert', '');
+        el.setAttribute('aria-hidden', 'true');
+        inerted.push(el);
+      });
       closeBtn.focus();
     }
     overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });

@@ -129,13 +129,27 @@
             || typeof d.goal !== 'number' || typeof d.today !== 'number') return;
         const pct = d.goal > 0 ? Math.min(100, (d.today / d.goal) * 100) : 0;
         bars.forEach((bar) => {
-          bar.classList.remove('hidden');
           const daysEl = bar.querySelector('[data-streak-days]');
-          if (daysEl) daysEl.textContent = daysText(d.streak);
           const fillEl = bar.querySelector('[data-streak-fill]');
-          if (fillEl) setProgressValue(fillEl, pct);
           const countEl = bar.querySelector('[data-streak-count]');
+          // Флейм-обёртка: .streak-fire в детальном баре, иначе сам .ed-icon в чипе.
+          const fireEl = bar.querySelector('.streak-fire, .ed-icon');
+          const hasGoalProgress = !!fillEl || !!countEl;
+          // Стрик 0 (новый пользователь): «🔥 0 дней» демотивирует и противоречит
+          // анти-дофаминовому тону виджета (см. today-widget.html). Прячем флейм+дни
+          // (через .hidden — у .streak-fire/.ed-icon явный display, атрибут hidden их
+          // не скрыл бы). Бар показываем только если в нём есть дневной goal-прогресс
+          // (детальный #streak-bar = «0/10» осмыслен и при нулевом стрике).
+          if (d.streak > 0) {
+            if (daysEl) { daysEl.textContent = daysText(d.streak); daysEl.classList.remove('hidden'); }
+            if (fireEl) fireEl.classList.remove('hidden');
+          } else {
+            if (daysEl) daysEl.classList.add('hidden');
+            if (fireEl) fireEl.classList.add('hidden');
+          }
+          if (fillEl) setProgressValue(fillEl, pct);
           if (countEl) countEl.textContent = d.today + '/' + d.goal;
+          if (d.streak > 0 || hasGoalProgress) bar.classList.remove('hidden');
           if (d.goalReached) bar.classList.add('streak-goal-reached');
         });
       })
@@ -456,12 +470,24 @@
       const form = overlay.querySelector('.prompt-modal');
       const input = overlay.querySelector('#prompt-modal-input');
       document.body.appendChild(overlay);
+      // Фон под модалкой делаем inert+aria-hidden: aria-modal сам по себе НЕ
+      // удерживает SR-курсор (browse-mode NVDA/VoiceOver читал бы шапку/контент за
+      // оверлеем). Снимаем ровно с тех, кому проставили, в settle.
+      const inerted = [];
+      for (const el of Array.from(document.body.children)) {
+        if (el === overlay || el.tagName === 'SCRIPT') continue;
+        if (el.hasAttribute('inert') || el.getAttribute('aria-hidden') === 'true') continue;
+        el.setAttribute('inert', '');
+        el.setAttribute('aria-hidden', 'true');
+        inerted.push(el);
+      }
       window.requestAnimationFrame(() => input.focus());
 
       let done = false;
       function settle(value) {
         if (done) return;
         done = true;
+        inerted.forEach((el) => { el.removeAttribute('inert'); el.removeAttribute('aria-hidden'); });
         overlay.remove();
         if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
         resolve(value);
@@ -2008,15 +2034,28 @@ function initKeyboardHelp() {
   // фокус внутрь и запоминаем откуда пришли; при закрытии возвращаем обратно;
   // Tab зациклен внутри (focus-trap), чтобы фокус не уходил под оверлей.
   let lastFocused = null;
+  // Фон под модалкой inert+aria-hidden (см. promptModal: aria-modal не держит
+  // SR-курсор). Храним проставленные, чтобы снять ровно их при закрытии.
+  let inerted = [];
   const close = () => {
     if (overlay.classList.contains('hidden')) return;
     overlay.classList.add('hidden');
+    inerted.forEach((el) => { el.removeAttribute('inert'); el.removeAttribute('aria-hidden'); });
+    inerted = [];
     if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
     lastFocused = null;
   };
   const open = () => {
     lastFocused = document.activeElement;
     overlay.classList.remove('hidden');
+    inerted = [];
+    for (const el of Array.from(document.body.children)) {
+      if (el === overlay || el.tagName === 'SCRIPT') continue;
+      if (el.hasAttribute('inert') || el.getAttribute('aria-hidden') === 'true') continue;
+      el.setAttribute('inert', '');
+      el.setAttribute('aria-hidden', 'true');
+      inerted.push(el);
+    }
     closeBtn.focus();
   };
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
