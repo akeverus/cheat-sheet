@@ -685,7 +685,7 @@ html[data-design] #interview-options label {
   border-radius: var(--border-radius-md);
   background: var(--color-bg-secondary);
   cursor: pointer;
-  transition: border-color var(--duration-fast) var(--easing-default), background var(--duration-fast) var(--easing-default);
+  transition: border-color var(--duration-fast) var(--easing-default), background var(--duration-fast) var(--easing-default), box-shadow var(--duration-fast) var(--easing-default);
   font-size: var(--font-size-md);
   color: var(--color-text-primary);
 }
@@ -878,6 +878,11 @@ html[data-design] .flashcard-reveal-btn:active,
 html[data-design] .flashcard-grade-btn:active,
 html[data-design] .danger-btn:active,
 html[data-design] .stats-action-btn:active,
+html[data-design] .settings-page #session-form button[type="submit"]:active,
+html[data-design] .settings-page #filters-form button[type="submit"]:active,
+html[data-design] .settings-page .btn-finish-small:active,
+html[data-design] .result-page .btn-finish:active,
+html[data-design] .confidence-btn:active,
 html[data-design] .table-expander:active { transform: translateY(1px); }
 
 /* Иконки — монохромный Lucide-спрайт (см. fragments/icons.html). Цвет, толщина
@@ -1137,7 +1142,7 @@ html[data-design] .settings-page .settings-tab {
   min-height: 44px; padding: var(--space-3) var(--space-5);
   font-family: var(--font-family-body); font-size: var(--font-size-md); font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary); background: transparent;
-  border: 0; border-bottom: 2px solid transparent;
+  border: 0; border-bottom: var(--rule-weight-strong) solid transparent;
   margin-bottom: calc(-1 * var(--rule-weight)); /* подчёркивание садится на линейку tablist */
   cursor: pointer; touch-action: manipulation;
   transition: color var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
@@ -1605,7 +1610,7 @@ html[data-design] .stats-page .data-table thead th { font-family: var(--font-fam
 html[data-design] .stats-page .data-table .text-center { text-align: center; }
 
 /* Результаты поиска */
-html[data-design] .stats-page .search-results { display: flex; flex-direction: column; gap: var(--space-4); }
+html[data-design] .stats-page .search-results { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-4); }
 html[data-design] .stats-page .search-result-item { padding: var(--space-4); border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md); }
 html[data-design] .stats-page .search-question { margin-bottom: var(--space-2); }
 html[data-design] .stats-page .search-answer-preview { color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: var(--space-2) 0; }
@@ -1729,7 +1734,7 @@ html[data-design] .summary-page .text-danger { color: var(--color-status-error);
 
 /* Ошибки */
 html[data-design] .summary-page .summary-mistakes-hint { color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: 0 0 var(--space-4); }
-html[data-design] .summary-page .summary-mistakes { display: flex; flex-direction: column; gap: var(--space-3); }
+html[data-design] .summary-page .summary-mistakes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
 html[data-design] .summary-page .summary-mistake-item {
   display: block; padding: var(--space-4);
   border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
@@ -2888,6 +2893,36 @@ html[data-design] .summary-tools-status {
   }
   html[data-design] .stats-page .topic-table-wrap.is-collapsed::after { display: none !important; }
   html[data-design] .table-expander { display: none !important; }
+  /* Код-блоки печатаются на белом листе (браузер не печатает фоны). В тёмной теме
+     --color-text-primary = светлый крем (#F0EEE6) → светлый-по-белому, контраст
+     ~1.2:1, невидимо. Форсим серый фон + чернильный текст для pre/inline-code/
+     question-code и нейтрализуем токены подсветки atom-one-dark (.hljs + потомки).
+     Чинит печать вопроса-с-кодом (focus/result) для офлайн-изучения. */
+  html[data-design] pre,
+  html[data-design] code,
+  html[data-design] .result-page .question-code,
+  html[data-design] .result-page .question-code code,
+  html[data-design] .result-page .sm2-grid dd {
+    background: #f5f5f5 !important;
+    color: #141413 !important;
+    border-color: #ccc !important;
+  }
+  html[data-design] :not(pre) > code {
+    background: #f0f0f0 !important;
+    color: #141413 !important;
+  }
+  html[data-design] pre code.hljs,
+  html[data-design] pre code[class*="hljs"],
+  html[data-design] pre code.hljs * {
+    background: transparent !important;
+    color: #141413 !important;
+  }
+  /* /stats: графики Chart.js рисуются в <canvas>-битмап; в тёмной теме оси и
+     легенда запекаются светло-кремовым (--color-text-secondary #C5C1B4) — на
+     печати фон форсится белым, но битмап не перекрашивается → светлый текст на
+     белом (невидим). Таблица «Детализация по темам» ниже несёт те же данные и
+     при печати разворачивается полностью, поэтому графики на печать прячем. */
+  html[data-design] .stats-page .chart-card { display: none !important; }
 }
 
 /* ===========================================================================
