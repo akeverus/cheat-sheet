@@ -45,7 +45,7 @@
                      flow→split→grid через window.__layout (head.html). Полный выбор —
                      в «Персонализации» на /settings; обе точки синхронятся событием
                      layoutchange. -->
-                <button type="button" class="ed-theme-toggle ed-layout-toggle" id="layout-toggle"
+                <button type="button" class="ed-theme-toggle ed-layout-toggle hidden" id="layout-toggle"
                         aria-label="Сменить раскладку" title="Раскладка страниц">
                     <svg class="ed-icon" aria-hidden="true" focusable="false"><use href="#i-layout"></use></svg>
                 </button>
@@ -53,11 +53,11 @@
                      .ed-theme-toggle). Клик циклит Editorial→Swiss→Linear→Broadsheet
                      через window.__design (head.html). Полный выбор — на /settings; обе
                      точки синхронятся событием designchange. -->
-                <button type="button" class="ed-theme-toggle ed-design-toggle" id="design-toggle"
+                <button type="button" class="ed-theme-toggle ed-design-toggle hidden" id="design-toggle"
                         aria-label="Сменить дизайн" title="Дизайн оформления">
                     <svg class="ed-icon" aria-hidden="true" focusable="false"><use href="#i-shapes"></use></svg>
                 </button>
-                <button type="button" class="theme-toggle ed-theme-toggle" id="theme-toggle"
+                <button type="button" class="theme-toggle ed-theme-toggle hidden" id="theme-toggle"
                         aria-label="Переключить тему" aria-pressed="false" title="Светлая / тёмная тема">
                     <span class="theme-toggle-icon" aria-hidden="true"></span>
                 </button>
@@ -75,6 +75,9 @@
       (function () {
         var btn = document.getElementById('theme-toggle');
         if (!btn || !window.__theme) return;
+        // PE: тоггл рендерится hidden и раскрывается только здесь — без JS (этот
+        // скрипт не выполняется) кнопка не показывается, мёртвого контрола нет.
+        btn.classList.remove('hidden');
         function sync() {
           var resolved = window.__theme.resolved();
           var pref = window.__theme.pref();
@@ -97,6 +100,8 @@
       (function () {
         var btn = document.getElementById('design-toggle');
         if (!btn || !window.__design) return;
+        // PE: см. тоггл темы — раскрываем только при работающем JS.
+        btn.classList.remove('hidden');
         var NAMES = { editorial: 'Editorial', linear: 'Linear', swiss: 'Swiss', notion: 'Notion', mintlify: 'Mintlify', broadsheet: 'Broadsheet',
                       superhuman: 'Superhuman', stripe: 'Stripe', claude: 'Claude', theverge: 'The Verge' };
         function label(id) { return NAMES[id] || id; }
@@ -128,6 +133,8 @@
       (function () {
         var btn = document.getElementById('layout-toggle');
         if (!btn || !window.__layout) return;
+        // PE: см. тоггл темы — раскрываем только при работающем JS.
+        btn.classList.remove('hidden');
         var NAMES = { flow: 'Поток', split: 'Два пейна', grid: 'Сетка' };
         function label(id) { return NAMES[id] || id; }
         function order() {
