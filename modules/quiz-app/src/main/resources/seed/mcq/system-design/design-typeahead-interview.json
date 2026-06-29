@@ -9,10 +9,10 @@
           "question_text": "Какие functional и non-functional requirements у typeahead/autocomplete системы?",
           "options": [
             {
-              "text": "Functional: на каждый keystroke возвращать `top-N` подсказок (`N = 5..10`) по prefix-matching, ranking по popularity, personalization, spell correction, multi-locale, trending. Non-functional: `p99 < 100ms`, ~60K QPS, availability 99.99%, freshness в пределах часа, precision важнее recall.",
+              "text": "Functional: на каждый keystroke отдавать `top-N` подсказок prefix-matching с ranking по popularity. Non-functional: `p99 < 100ms`, ~60K QPS, precision важнее recall.",
               "correct": true,
               "sections": {
-                "explanation": "Пользователь печатает `goo` и за десятки миллисекунд видит `google`, `goosebumps`, `good morning` — отсортированные по частоте поисков из логов.",
+                "explanation": "Пользователь печатает `goo` и за десятки миллисекунд видит `google`, `goosebumps`, `good morning` — отсортированные по частоте поисков из логов. Полный список functional: `N = 5..10`, personalization, spell correction, multi-locale, trending; non-functional: availability 99.99%, freshness в пределах часа.",
                 "example": "Этот список фиксируют в начале system-design интервью, чтобы очертить scope и договориться, что сам поиск и web-crawler — отдельные подсистемы.",
                 "when_to_apply": "Scope (out): сам поиск (выдача результатов), web-crawler/indexing и deep ML-reranking выносят в отдельные подсистемы, чтобы не размывать дизайн typeahead.",
                 "edge_cases": "Quality важнее объёма: 5 точных подсказок лучше 10 шумных, поэтому precision приоритетнее recall, а latency p99 критичнее среднего.",
@@ -22,7 +22,7 @@
               "label": "A"
             },
             {
-              "text": "Главное functional requirement — мгновенно отдавать полную выдачу поиска (ранжированные документы), потому что autocomplete и поиск это одно и то же.",
+              "text": "Главное functional requirement — мгновенно отдавать полную ранжированную выдачу документов на каждый keystroke, потому что autocomplete и поиск это одна подсистема с общим индексом.",
               "correct": false,
               "sections": {
                 "what_actually": "Typeahead отдаёт только короткие подсказки-фразы, а выдача результатов поиска — отдельный design, явно вынесенный за scope.",
@@ -34,7 +34,7 @@
               "label": "B"
             },
             {
-              "text": "Non-functional requirement по latency здесь некритичен: пользователь подождёт пару секунд подсказок, поэтому p99 в районе 2-3 секунд допустим.",
+              "text": "Latency здесь некритична: подсказки вспомогательны, пользователь подождёт пару секунд, поэтому целевой `p99` в районе 2-3 секунд допустим, а debounce и кэш можно опустить.",
               "correct": false,
               "sections": {
                 "what_actually": "Latency критична именно потому, что подсказки обновляются на каждое нажатие: при p99 в секунды UI ощутимо «лагает».",
@@ -69,7 +69,7 @@
           "question_text": "Как оценить capacity (QPS, storage) typeahead при 5B запросов в день?",
           "options": [
             {
-              "text": "При 5B запросов в день и ~5-10 keystroke на запрос автокомплит обязан выдерживать ~600K QPS чтения, и под это закладывают серверы.",
+              "text": "При 5B запросов в день и ~5-10 keystroke на запрос autocomplete обязан выдерживать ~600K QPS чтения, и серверный парк закладывают именно под эту цифру без поправки на debounce.",
               "correct": false,
               "sections": {
                 "what_actually": "Реальная нагрузка чтения — 30-60K QPS, потому что клиентский debounce (50ms) гасит промежуточные нажатия; 600K было бы без него.",
@@ -81,10 +81,10 @@
               "label": "A"
             },
             {
-              "text": "Average QPS ≈ 60K (5B / 86400с), peak ×2-3 ≈ 150K. Чтения после client debounce — 30-60K QPS (без debounce было бы 600K). Trie storage 50-100 GB (~10M фраз × ~50 байт), Redis-кэш 5-10 GB на top-1M префиксов.",
+              "text": "Average QPS ≈ 60K (5B / 86400с), peak ×2-3 ≈ 150K, чтения после client debounce — 30-60K. Trie storage 50-100 GB, Redis-кэш 5-10 GB.",
               "correct": true,
               "sections": {
-                "explanation": "60K QPS делят на 10-20 trie-нод (~64GB box каждая, с резервом и репликами) плюс Redis-кластер 3-5 нод по 32GB.",
+                "explanation": "60K QPS делят на 10-20 trie-нод (~64GB box каждая, с резервом и репликами) плюс Redis-кластер 3-5 нод по 32GB. Без debounce было бы 600K QPS; trie storage ≈ ~10M фраз × ~50 байт, Redis держит top-1M префиксов.",
                 "example": "Эти оценки дают на интервью сразу после requirements, чтобы обосновать число серверов и выбор in-memory хранилища.",
                 "when_to_apply": "Ключевой нюанс: 60K × 5-10 символов ≠ 600K именно из-за debounce 50ms; ~100K новых фраз в день требуют hourly delta.",
                 "edge_cases": "Edge case: при пиковом ×3 трафике (~150K QPS) число trie-нод считают по пику, а не по среднему, иначе spike перегрузит кластер.",
@@ -141,7 +141,7 @@
               "label": "A"
             },
             {
-              "text": "Compressed (Radix) trie увеличивает потребление памяти в 2-3 раза из-за строковых меток, поэтому его избегают при больших словарях.",
+              "text": "Compressed (Radix) trie увеличивает потребление памяти в 2-3 раза из-за строковых меток на узлах, поэтому при больших словарях его избегают и берут обычный trie.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: Radix-trie схлопывает цепочки одиночных узлов и экономит память в 2-3 раза, давая 15-25 GB на реплику.",
@@ -153,10 +153,10 @@
               "label": "B"
             },
             {
-              "text": "Считают через узлы: ~10M фраз × ~10 уникальных узлов (благодаря shared prefixes) ≈ 100M узлов; каждый ~400-500 байт (символ + children + top-K из 10 фраз) → ~50 GB на реплику. С replication ×3 → 150 GB.",
+              "text": "Считают через узлы: ~10M фраз × ~10 узлов (shared prefixes) ≈ 100M узлов × ~500 байт ≈ 50 GB на реплику, с replication ×3 → 150 GB.",
               "correct": true,
               "sections": {
-                "explanation": "`nodes ≈ 10M × 10 = 100M`, `storage ≈ 100M × 500 байт = 50 GB`; средняя фраза ~20 символов, но shared-prefixes сильно сокращают число узлов.",
+                "explanation": "`nodes ≈ 10M × 10 = 100M`, `storage ≈ 100M × 500 байт = 50 GB`; средняя фраза ~20 символов, но shared-prefixes сильно сокращают число узлов. Каждый узел ~400-500 байт (символ + children + top-K из 10 фраз).",
                 "example": "Эту оценку дают, чтобы решить, влезает ли trie в RAM одного сервера и нужен ли compressed-вариант.",
                 "when_to_apply": "С compressed (Radix) trie экономия ×2-3 → 15-25 GB на реплику, и trie помещается в память среднего сервера.",
                 "edge_cases": "Edge case: для языков с длинными словами (немецкий) узлов на фразу больше, и оценку storage корректируют вверх относительно базовых ~10.",
@@ -189,7 +189,7 @@
           "question_text": "Почему trie, а не SQL `LIKE 'prefix%'` для prefix-поиска?",
           "options": [
             {
-              "text": "SQL `LIKE 'goo%'` с B-tree индексом не хуже trie: индекс уже хранит предвычисленный top-K, поэтому ORDER BY на каждый запрос не нужен.",
+              "text": "SQL `LIKE 'goo%'` с B-tree индексом не хуже trie: индекс уже хранит предвычисленный top-K по частоте, поэтому `ORDER BY freq DESC LIMIT 10` на каждый запрос исполнять не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "B-tree индекс ускоряет поиск диапазона, но top-K он не хранит — нужен `ORDER BY freq DESC LIMIT 10` на каждый запрос, и p99 уплывает за 100ms.",
@@ -225,10 +225,10 @@
               "label": "C"
             },
             {
-              "text": "Trie выигрывает, потому что lookup — O(p) (только длина префикса, независимо от размера словаря), top-K предвычислен в каждом узле (нет ORDER BY на runtime), и структура целиком in-memory. SQL `LIKE` даже с B-tree требует sort на каждый запрос и уплывает за 100ms.",
+              "text": "Trie выигрывает: lookup O(p) по длине префикса независимо от словаря, top-K предвычислен в узле (нет runtime ORDER BY), структура in-memory.",
               "correct": true,
               "sections": {
-                "explanation": "Для `p = 5` это 5 hash-lookup'ов (десятки наносекунд), тогда как `SELECT ... LIKE 'goo%' ORDER BY freq DESC LIMIT 10` сортирует на каждый запрос.",
+                "explanation": "Для `p = 5` это 5 hash-lookup'ов (десятки наносекунд), тогда как `SELECT ... LIKE 'goo%' ORDER BY freq DESC LIMIT 10` сортирует на каждый запрос и уплывает за 100ms на больших таблицах даже с B-tree.",
                 "example": "Этот сравнительный аргумент приводят, когда интервьюер спрашивает, почему не взять обычную БД для prefix-поиска.",
                 "when_to_apply": "Redis `ZRANGEBYLEX` работает для маленьких словарей, ES — overkill; trie с precomputed top-K — главный выбор при 10M фраз.",
                 "edge_cases": "Edge case: на очень больших таблицах даже covering-индекс не спасает — sort top-K на каждый запрос делает p99 нестабильным под нагрузкой.",
@@ -249,10 +249,10 @@
           "question_text": "Какова структура trie-узла с top-K?",
           "options": [
             {
-              "text": "Узел хранит `char`, `children` (`Map<Char, TrieNode>`), флаг `is_terminal` и `top_k` — предвычисленный массив топ-K фраз с весом, проходящих через узел. Lookup идёт по символам префикса к нужному узлу и возвращает его `topK` за O(1).",
+              "text": "Узел хранит `char`, `children` (`Map<Char, TrieNode>`), флаг `is_terminal` и `top_k` — предвычисленный массив топ-K фраз поддерева; lookup идёт по префиксу и отдаёт `topK` за O(1).",
               "correct": true,
               "sections": {
-                "explanation": "В Java: `Map<Character, TrieNode> children`, `List<Suggestion> topK` и `record Suggestion(String phrase, long score)`; query(`goo`) делает 5 hash-lookup'ов и отдаёт `node.topK`.",
+                "explanation": "В Java: `Map<Character, TrieNode> children`, `List<Suggestion> topK` и `record Suggestion(String phrase, long score)`; query(`goo`) делает 5 hash-lookup'ов и отдаёт `node.topK`. Каждый top-K хранит фразу с весом, проходящую через узел.",
                 "example": "Эту структуру описывают, чтобы показать, как O(p) lookup даёт готовый top-K без обхода поддерева на каждый запрос.",
                 "when_to_apply": "Альтернатива без top-K в узле — BFS/DFS по поддереву на каждый query: `O(subtree_size × log K)`, что катастрофически медленно для коротких префиксов вроде `a`.",
                 "edge_cases": "Edge case: для очень коротких префиксов (`a`) top-K в узле особенно ценен — обход поддерева был бы катастрофически дорог.",
@@ -262,7 +262,7 @@
               "label": "A"
             },
             {
-              "text": "В каждом trie-узле хранят полный отсортированный список ВСЕХ фраз поддерева, а не только top-K, чтобы при запросе отдать любое число подсказок.",
+              "text": "В каждом trie-узле хранят полный отсортированный список ВСЕХ фраз поддерева, а не только top-K, чтобы при запросе можно было отдать любое запрошенное число подсказок без обхода.",
               "correct": false,
               "sections": {
                 "what_actually": "Хранят именно top-K (10 фраз), а не весь список поддерева: для короткого префикса вроде `a` поддерево огромно и его полный список не влезет в память.",
@@ -321,10 +321,10 @@
               "label": "A"
             },
             {
-              "text": "При вставке фразы проходят весь путь префикса и на каждом узле делают `merge_topK(node.topK, Suggestion(phrase, freq))` (min-heap размера K или sort+take-K). Online писать на каждый поиск нельзя — `O(p × K log K)` × 60K QPS взрывается, поэтому trie строят батчево раз в час.",
+              "text": "При вставке проходят весь путь префикса и на каждом узле делают `merge_topK(node.topK, Suggestion(phrase, freq))`. Online писать на каждый поиск нельзя — trie строят батчево раз в час.",
               "correct": true,
               "sections": {
-                "explanation": "`for node in path: node.topK = merge_topK(node.topK, Suggestion(phrase, freq))`; а Flink/Spark агрегируют логи и перестраивают trie офлайн, см. Q9.",
+                "explanation": "`for node in path: node.topK = merge_topK(node.topK, Suggestion(phrase, freq))`; а Flink/Spark агрегируют логи и перестраивают trie офлайн, см. Q9. Online-запись `O(p × K log K)` × 60K QPS взрывается, поэтому merge делают min-heap размера K или sort+take-K.",
                 "example": "Этот lazy/batch-подход объясняют, когда интервьюер спрашивает, почему нельзя обновлять trie синхронно на каждый поиск.",
                 "when_to_apply": "Оптимизация: если `freq < node.topK.last().score`, узел можно не трогать — проверка дешёвая и часто отсекает работу.",
                 "edge_cases": "Edge case: если новая фраза не проходит в top-K узла (`freq < topK.last().score`), узел не трогают — это экономит большую часть работы на batch-build.",
@@ -334,7 +334,7 @@
               "label": "B"
             },
             {
-              "text": "Каждый поисковый запрос пользователя нужно сразу писать в trie (online insert), чтобы подсказки всегда отражали последний поиск в реальном времени.",
+              "text": "Каждый поисковый запрос пользователя нужно сразу синхронно писать в trie (online insert) с пересчётом top-K на пути, чтобы подсказки всегда отражали последний поиск в реальном времени.",
               "correct": false,
               "sections": {
                 "what_actually": "Online-запись на каждый поиск запрещена: `O(p × K log K)` × 60K QPS взрывается; trie строят батчево, а свежесть дают hourly delta.",
@@ -369,7 +369,7 @@
           "question_text": "Compressed trie / Radix tree — когда применять?",
           "options": [
             {
-              "text": "Radix tree меняет сложность prefix-lookup с O(p) на O(log N), поэтому его берут именно ради ускорения поиска.",
+              "text": "Radix tree меняет сложность prefix-lookup с O(p) на O(log N) за счёт строковых меток на прыжках, поэтому его берут именно ради ускорения поиска на больших словарях.",
               "correct": false,
               "sections": {
                 "what_actually": "Lookup в Radix всё равно O(p) (с string-comparison на каждом «прыжке»); его берут ради экономии памяти, а не ускорения.",
@@ -393,10 +393,10 @@
               "label": "B"
             },
             {
-              "text": "Radix tree (PATRICIA) применяют против длинных «коридоров» из узлов с одним ребёнком: он схлопывает цепочки (`g→o→o→g→l→e`) в узел со строковой меткой (`\"goo\"→\"gle\"`). Pros: -50-70% памяти, особенно для словарей с длинными словами. Cons: сложнее реализация (split/merge), string-comparison на каждом прыжке.",
+              "text": "Radix tree (PATRICIA) схлопывает цепочки одиночных узлов (`g→o→o→g→l→e`) в узел со строковой меткой. Pros: -50-70% памяти; cons: сложнее реализация (split/merge).",
               "correct": true,
               "sections": {
-                "explanation": "`plain: g→o→o→g→l→e`; `radix: \"goo\"→\"gle\"` и `→\"dbye\"` — цепочки одиночных узлов сворачиваются в один помеченный узел.",
+                "explanation": "`plain: g→o→o→g→l→e`; `radix: \"goo\"→\"gle\"` и `→\"dbye\"` — цепочки одиночных узлов сворачиваются в один помеченный узел. Его применяют против длинных «коридоров» из узлов с одним ребёнком; lookup остаётся O(p), но с string-comparison на каждом прыжке.",
                 "example": "Radix выбирают, когда trie не влезает в RAM целиком и нужна compact-репрезентация без потери O(p) lookup.",
                 "when_to_apply": "В проде Google/etc — комбинация: radix для compact storage + кэш на горячих узлах; lookup остаётся O(p), но с string-comparison.",
                 "edge_cases": "Edge case: на словарях с короткими словами выигрыш Radix скромнее — схлопывать почти нечего, и накладные расходы на метки могут не окупиться.",
@@ -406,7 +406,7 @@
               "label": "C"
             },
             {
-              "text": "Radix tree теряет способность к prefix-matching, потому что хранит фразы в сжатых строковых метках, а не посимвольно.",
+              "text": "Radix tree теряет способность к prefix-matching, потому что хранит фразы в сжатых строковых метках вместо посимвольных узлов, и спуск по одному символу префикса в нём больше невозможен.",
               "correct": false,
               "sections": {
                 "what_actually": "Radix полностью сохраняет prefix-matching: lookup идёт по меткам и остаётся O(p), просто с string-comparison на прыжках.",
@@ -429,7 +429,7 @@
           "question_text": "Как выглядит high-level architecture typeahead?",
           "options": [
             {
-              "text": "Read-path и write-path делят общий путь: API на каждый запрос пишет поиск в trie и тут же читает из него, поэтому они не разделены.",
+              "text": "Read-path и write-path делят общий путь: один и тот же API на каждый запрос синхронно пишет поиск в trie и тут же читает из него, поэтому отдельных online/offline сторон в архитектуре нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Read и write полностью разделены: write готовит новый trie в фоне и подменяет атомарно (blue-green), не блокируя read.",
@@ -465,10 +465,10 @@
               "label": "C"
             },
             {
-              "text": "Архитектура двусторонняя. Online (read): client → CDN edge → LB → Autocomplete API → Redis → Trie service (in-memory, ~50GB на ноду) + merge с User History. Offline (write): search queries → Kafka logs → Spark batch + Flink stream → Trie Builder → push shards в Trie service. Стороны разделены полностью, swap нового trie атомарный.",
+              "text": "Архитектура двусторонняя. Online (read): client → CDN → LB → API → Redis → Trie service + merge с User History. Offline (write): queries → Kafka → Spark/Flink → Trie Builder → push shards.",
               "correct": true,
               "sections": {
-                "explanation": "Read-path целит в sub-100ms p99 (CDN→API→Redis→Trie), а write-path (`logs → aggregation → ranked phrases → trie build → atomic swap`) работает в фоне как blue-green.",
+                "explanation": "Read-path целит в sub-100ms p99 (CDN→API→Redis→Trie), а write-path (`logs → aggregation → ranked phrases → trie build → atomic swap`) работает в фоне как blue-green. Trie service in-memory ~50GB на ноду; стороны разделены полностью, swap нового trie атомарный.",
                 "example": "Эту диаграмму рисуют первой на интервью, чтобы показать разделение read/write и место кэшей, пайплайнов и builder'а.",
                 "when_to_apply": "Write не блокирует read: новый trie готовится в shadow-структуре и подменяется указателем атомарно, без даунтайма.",
                 "edge_cases": "Edge case: при skew по первой букве (`s` много, `x` мало) build-воркеры балансируют по размеру shard, а не по числу букв.",
@@ -489,10 +489,10 @@
           "question_text": "Как строится trie в offline batch pipeline?",
           "options": [
             {
-              "text": "Шаги: aggregate (`SELECT query, COUNT(*) FROM logs GROUP BY query` за 7-30 дней, sliding window) → filter (count < 10, profanity/спам, PII) → decay (`weight = Σ occurrences × exp(-λ × days_ago)`) → shard по первой букве (26 shards) → build (каждый shard собирает sub-trie с top-K, pure-функция) → publish (атомарный swap указателя на новый trie).",
+              "text": "Шаги: aggregate (`GROUP BY query` за 7-30 дней) → filter (count < 10, profanity, PII) → decay (`exp(-λ × days_ago)`) → shard по первой букве → build sub-trie с top-K → publish (атомарный swap).",
               "correct": true,
               "sections": {
-                "explanation": "В Spark: `groupBy(\"query\").agg(count(\"*\").as(\"freq\"), max(\"ts\").as(\"last_seen\"))` затем `withColumn(\"score\", $\"freq\" * exp(-$\"days_ago\" * 0.1)).filter($\"freq\" >= 10)`.",
+                "explanation": "В Spark: `groupBy(\"query\").agg(count(\"*\").as(\"freq\"), max(\"ts\").as(\"last_seen\"))` затем `withColumn(\"score\", $\"freq\" * exp(-$\"days_ago\" * 0.1)).filter($\"freq\" >= 10)`. Aggregate идёт по sliding window, shard на 26 частей, build каждого shard — pure-функция.",
                 "example": "Этот пайплайн описывают как write-path: job длится десятки минут и обновляет trie раз в сутки плюс hourly delta.",
                 "when_to_apply": "Build параллелится тривиально (pure-функция на shard), а publish заливает shards в shadow-структуру и переключает pointer без даунтайма.",
                 "edge_cases": "Edge case: если publish прервётся на середине, atomic swap не выполняют — старый trie продолжает обслуживать запросы до полной готовности нового.",
@@ -502,7 +502,7 @@
               "label": "A"
             },
             {
-              "text": "Trie перестраивают синхронно на каждый поисковый запрос в Spark-job, чтобы подсказки всегда были максимально свежими.",
+              "text": "Trie перестраивают синхронно на каждый поисковый запрос отдельным Spark-job, чтобы подсказки всегда были максимально свежими и отражали только что введённый пользователем запрос немедленно.",
               "correct": false,
               "sections": {
                 "what_actually": "Spark-job — батчевый, идёт раз в сутки на агрегированных логах и длится десятки минут; на каждый запрос его не запускают.",
@@ -526,7 +526,7 @@
               "label": "C"
             },
             {
-              "text": "Decay не нужен в batch pipeline: достаточно просто посчитать `COUNT(*)`, потому что свежесть запросов на ранжирование не влияет.",
+              "text": "Decay в batch pipeline не нужен: достаточно посчитать голый `COUNT(*)` по логам за окно, потому что свежесть запросов на их ранжирование в top-K никак не влияет.",
               "correct": false,
               "sections": {
                 "what_actually": "Decay обязателен: `weight = Σ exp(-λ × days_ago)` делает свежие вхождения тяжелее, иначе старые эвергрин-запросы душат trending.",
@@ -549,7 +549,7 @@
           "question_text": "Как обслуживается online query path (latency budget ~100ms)?",
           "options": [
             {
-              "text": "Запрос всегда идёт до trie-сервиса: CDN и Redis в горячем пути не отвечают сами, а лишь логируют, поэтому каждый keystroke доходит до trie.",
+              "text": "Запрос всегда доходит до trie-сервиса: CDN и Redis в горячем пути сами не отвечают, а лишь логируют и пробрасывают дальше, поэтому каждый keystroke в итоге обслуживает именно trie.",
               "correct": false,
               "sections": {
                 "what_actually": "CDN edge и Redis отвечают сами при hit и обрывают путь раньше trie: большинство горячих префиксов вообще не доходят до trie-сервиса.",
@@ -561,10 +561,10 @@
               "label": "A"
             },
             {
-              "text": "Путь: client debounce 50ms → CDN edge (~5-15ms, hit → return) → API gateway → Redis GET (~1-2ms, hit → return + write-back в CDN) → Trie RPC O(p) (~1-5ms) → merge с user history (~2ms) → filter/ranking (~1ms) → response (total ~20-50ms). Кэш-иерархия: CDN 5s TTL (горячие `g`,`goo`), Redis 1h TTL (всё что запрашивали), trie — fallback.",
+              "text": "Путь: debounce 50ms → CDN edge (hit → return) → API → Redis GET (hit → return) → Trie RPC O(p) → merge с user history → filter/ranking → response (~20-50ms total).",
               "correct": true,
               "sections": {
-                "explanation": "`GET /autocomplete?q=goo&locale=en-US&user_id=42` возвращает `suggestions: [{text: \"google\", score: 0.98}, {text: \"good morning\", score: 0.85}, ...]`.",
+                "explanation": "`GET /autocomplete?q=goo&locale=en-US&user_id=42` возвращает `suggestions: [{text: \"google\", score: 0.98}, {text: \"good morning\", score: 0.85}, ...]`. Тайминги: CDN ~5-15ms, Redis ~1-2ms (+write-back в CDN), trie ~1-5ms, merge ~2ms, filter ~1ms. CDN 5s TTL (горячие `g`,`goo`), Redis 1h TTL, trie — fallback.",
                 "example": "Эту разбивку latency-бюджета приводят, чтобы показать, что 100ms p99 достигается за счёт debounce и многоуровневого кэша.",
                 "when_to_apply": "CDN с коротким 5s TTL даёт свежесть и защиту от viral-spike на один префикс, а Redis 1h ловит длинный хвост.",
                 "edge_cases": "Edge case: при холодном Redis после рестарта первые запросы идут в trie напрямую, поэтому warm-up горячих префиксов делают заранее.",
@@ -609,7 +609,7 @@
           "question_text": "Какие sharding-стратегии для trie существуют?",
           "options": [
             {
-              "text": "Лучшая стратегия — hash полного слова: она равномерно распределяет фразы по shards и устраняет skew.",
+              "text": "Лучшая стратегия — hash полного слова: она равномерно распределяет фразы по shards, устраняет skew и даёт естественный routing по первой букве префикса.",
               "correct": false,
               "sections": {
                 "what_actually": "Hash полного слова НЕ работает для trie: при хэшировании префиксы попадают в разные shards, и prefix-lookup становится невозможен.",
@@ -621,7 +621,7 @@
               "label": "A"
             },
             {
-              "text": "Шардинг для trie обязателен всегда, потому что 50-100GB-trie не помещается в RAM ни одного современного сервера.",
+              "text": "Шардинг для trie обязателен всегда: 50-100GB-trie не помещается в RAM ни одного современного сервера, а репликация полной копии лишь умножает эту проблему.",
               "correct": false,
               "sections": {
                 "what_actually": "50-100GB-trie помещается в RAM одного box (256GB не редкость), поэтому чаще берут replicate-full-trie, а шардинг нужен лишь при vocabulary > 1B или multi-locale.",
@@ -633,10 +633,10 @@
               "label": "B"
             },
             {
-              "text": "Варианты: (A) Replicate full trie everywhere — полная копия на каждой ноде, любой узел отвечает на любой query, проще routing, но память ×N; подходит при ≤100GB и до 50-100 нод. (B) Shard by first letter (26 shards) — экономия памяти, но skew (`s` много, `x` мало) и сложнее routing. (C) Shard by prefix range (a-c, d-g...) — минимизирует skew. (D) Hash full word — не работает, ломает prefix-lookup.",
+              "text": "Replicate full trie (полная копия на каждой ноде) — дефолт при ≤100GB; шардинг (first-letter / prefix-range / hash) нужен лишь при огромном vocabulary.",
               "correct": true,
               "sections": {
-                "explanation": "Реальный выбор в большинстве задач — replicate full trie (Variant A), потому что 50-100GB действительно влезает в RAM; routing тривиален.",
+                "explanation": "Реальный выбор в большинстве задач — replicate full trie (Variant A): полная копия на каждой из N нод, любой узел отвечает на любой query, routing тривиален, минус — память ×N; подходит при ≤100GB и до 50-100 нод. Variant B — shard by first letter (26 shards): экономит память, но даёт skew (`s` много, `x` мало) и сложнее routing. Variant C — shard by prefix range (a-c, d-g...): минимизирует skew, балансируя по размеру. Variant D — hash full word: не работает, ломает prefix-lookup (`google` и `goose` уходят в разные shards).",
                 "example": "Эти варианты разбирают, когда обсуждают надёжность и QPS: даже влезающий trie реплицируют ради отказоустойчивости.",
                 "when_to_apply": "Шардинг (Variant B/C) нужен только при vocabulary > 1B phrases или multi-locale, где много отдельных tries (см. Q18).",
                 "edge_cases": "Edge case: при multi-locale число отдельных tries растёт, и replicate-full на каждой ноде становится дорогим — тогда переходят к шардингу по locale.",
@@ -646,7 +646,7 @@
               "label": "C"
             },
             {
-              "text": "Shard by first letter даёт идеально равномерную нагрузку, потому что все 26 букв встречаются одинаково часто.",
+              "text": "Shard by first letter даёт идеально равномерную нагрузку, потому что все 26 букв встречаются одинаково часто и каждый shard получает ровно 1/26 трафика.",
               "correct": false,
               "sections": {
                 "what_actually": "Шардинг по первой букве даёт сильный skew: буква `s` собирает много слов, а `x` почти пустой shard — нагрузка неравномерна.",
@@ -669,7 +669,7 @@
           "question_text": "Как организовать replication и failover для trie?",
           "options": [
             {
-              "text": "Достаточно одной копии каждого shard: если нода падает, её просто перезапускают, а пока reads ждут восстановления.",
+              "text": "Достаточно одной копии каждого shard: если нода падает, её просто перезапускают из snapshot за секунды, а reads тем временем ждут восстановления без потери доступности.",
               "correct": false,
               "sections": {
                 "what_actually": "Держат 3+ active-active реплики каждого shard с round-robin reads, чтобы падение ноды не блокировало чтения.",
@@ -681,7 +681,7 @@
               "label": "A"
             },
             {
-              "text": "Deploy новой версии trie делают in-place поверх работающей структуры, поэтому короткий даунтайм на переключение неизбежен.",
+              "text": "Deploy новой версии trie делают in-place поверх работающей структуры под коротким write-lock'ом, поэтому секундный даунтайм на переключение указателя неизбежен.",
               "correct": false,
               "sections": {
                 "what_actually": "Deploy атомарный без даунтайма: новый trie льют в shadow-структуру, затем swap pointer и release старой — чтения не прерываются.",
@@ -693,7 +693,7 @@
               "label": "B"
             },
             {
-              "text": "Cold start новой ноды требует полного rebuild trie с нуля из сырых логов, поэтому занимает часы и блокирует ввод ноды в строй.",
+              "text": "Cold start новой ноды требует полного rebuild trie с нуля из сырых логов Kafka за 7-30 дней, поэтому занимает часы и блокирует ввод ноды в строй.",
               "correct": false,
               "sections": {
                 "what_actually": "Cold start идёт из последнего snapshot в S3 (~10 минут на 50GB), затем нода догоняет hourly deltas из Kafka — rebuild с нуля не нужен.",
@@ -705,10 +705,10 @@
               "label": "C"
             },
             {
-              "text": "Active-active replicas: 3+ копии каждого shard, reads балансируются round-robin. Health checks каждые 5s, unhealthy нода вынимается из ротации. Atomic deploy: новая версия льётся в shadow-структуру → swap pointer → release старой, без даунтайма. Rolling deploy по 1 ноде из 3 с проверкой health. Snapshot trie в S3 для cold start.",
+              "text": "Active-active реплики (3+ копии shard, round-robin reads), health checks каждые 5s, atomic deploy через shadow-swap и rolling по 1 ноде, snapshot в S3.",
               "correct": true,
               "sections": {
-                "explanation": "Cold start: новая нода грузит последний snapshot из S3 (~10 минут на 50GB), потом догоняет hourly deltas из Kafka.",
+                "explanation": "3+ копии каждого shard, reads балансируются round-robin. Health checks каждые 5s исключают unhealthy ноду из ротации. Atomic deploy: новая версия льётся в shadow-структуру → swap pointer → release старой, без даунтайма. Rolling deploy по 1 ноде из 3 с проверкой health между шагами. Cold start: новая нода грузит последний snapshot из S3 (~10 минут на 50GB), потом догоняет hourly deltas из Kafka — full rebuild из логов не нужен.",
                 "example": "Эту схему описывают, когда спрашивают про отказоустойчивость и деплой без простоя для in-memory trie.",
                 "when_to_apply": "Health checks каждые 5s исключают битую ноду из ротации, а rolling deploy обновляет по одной ноде, проверяя health между шагами.",
                 "edge_cases": "Edge case: во время rolling deploy одна из 3 реплик временно недоступна, поэтому оставшиеся должны держать пиковый QPS без неё.",
@@ -729,10 +729,10 @@
           "question_text": "Как hourly delta merge добавляет свежие запросы в trie?",
           "options": [
             {
-              "text": "Полный rebuild занимает часы, поэтому свежесть дают hourly delta: Flink с 1h tumbling window считает и дедуплицирует топ-N свежих фраз с count, затем для каждой — если фраза уже в trie, bump frequency и пересчёт top-K на пути; если новая — insert + update top-K. Операция дешёвая (десятки тысяч фраз в час, не миллионы).",
+              "text": "Hourly delta: Flink (1h tumbling window) считает топ-N свежих фраз, затем инкрементально мержит их в running trie — bump frequency или insert. Операция дешёвая.",
               "correct": true,
               "sections": {
-                "explanation": "Pipeline: `Kafka (search stream) → Flink (1h window, count + dedup) → Delta (phrase, new_count) → Merge into running trie`.",
+                "explanation": "Полный rebuild trie занимает часы, поэтому свежесть дают hourly delta. Pipeline: `Kafka (search stream) → Flink (1h window, count + dedup) → Delta (phrase, new_count) → Merge into running trie`. Для каждой фразы: если уже в trie — bump frequency и пересчёт top-K на пути; если новая — insert + update top-K. Операция дешёвая — десятки тысяч фраз в час, не миллионы, поэтому её делают прямо на горячем trie под коротким lock'ом / copy-on-write на затронутых узлах.",
                 "example": "Hourly delta применяют, когда нужно, чтобы вечерний news-event или тренд появился в подсказках в течение часа, а не суток.",
                 "when_to_apply": "Merge можно делать прямо на горячем trie под коротким lock'ом / copy-on-write на затронутых узлах — фраз мало, апдейт лёгкий.",
                 "edge_cases": "Edge case: если delta-поток из Kafka отстаёт, trending запаздывает — поэтому `trending_lag_seconds` мониторят и алертят при > 10 минут.",
@@ -742,7 +742,7 @@
               "label": "A"
             },
             {
-              "text": "Hourly delta делает полный rebuild всего trie каждый час, просто чаще, чем суточный — отсюда и название «delta».",
+              "text": "Hourly delta делает полный rebuild всего trie каждый час, просто чаще суточного — отсюда и название «delta»: меньшее окно логов даёт меньший trie за то же время.",
               "correct": false,
               "sections": {
                 "what_actually": "Delta НЕ перестраивает trie целиком: она инкрементально мержит лишь десятки тысяч свежих фраз в уже работающий trie.",
@@ -754,7 +754,7 @@
               "label": "B"
             },
             {
-              "text": "Merge в горячий trie невозможен из-за конкуренции с чтениями, поэтому delta всегда требует полной остановки trie-сервиса.",
+              "text": "Merge в горячий trie невозможен из-за конкуренции с 60K QPS чтениями, поэтому delta всегда требует полной остановки trie-сервиса на время слияния узлов.",
               "correct": false,
               "sections": {
                 "what_actually": "Merge делают прямо на горячем trie под коротким lock'ом или copy-on-write на затронутых узлах — останавливать сервис не нужно.",
@@ -766,7 +766,7 @@
               "label": "C"
             },
             {
-              "text": "Delta-merge тяжёлая операция: миллионы фраз в час, поэтому её выполняют на отдельном Spark-кластере, а не на trie-нодах.",
+              "text": "Delta-merge тяжёлая: миллионы свежих фраз в час, поэтому её выполняют на отдельном Spark-кластере с tumbling window, а не на trie-нодах, чтобы не съесть их CPU.",
               "correct": false,
               "sections": {
                 "what_actually": "Операция дешёвая — десятки тысяч свежих фраз в час, не миллионы, поэтому её делают прямо на trie-нодах без отдельного кластера.",
@@ -789,7 +789,7 @@
           "question_text": "Как работает popularity decay / trending через exponential decay?",
           "options": [
             {
-              "text": "Decay реализуют как жёсткий TTL: фраза старше N дней просто удаляется из trie, поэтому старые запросы исчезают мгновенно.",
+              "text": "Decay реализуют как жёсткий TTL: фраза старше N дней просто удаляется из trie, поэтому старые запросы исчезают мгновенно, освобождая место под свежие в top-K.",
               "correct": false,
               "sections": {
                 "what_actually": "Decay — это плавное затухание веса (`exp(-λ × Δt)`), а не удаление по TTL: старые фразы постепенно опускаются в top-K, но не пропадают резко.",
@@ -801,12 +801,12 @@
               "label": "A"
             },
             {
-              "text": "Exponential decay: `score(phrase, now) = Σ over events e: exp(-λ × (now - e.ts))`. `λ` задаёт half-life: `λ = ln(2)/7d` → half-life 7 дней (медленный decay для эвергрин), `λ = ln(2)/1d` → 1 день (для trending). В проде считают двухуровнево: `final = α × long_term + (1-α) × short_term`.",
+              "text": "Exponential decay: `score = Σ exp(-λ × (now - e.ts))`, где `λ` задаёт half-life (7d для эвергрин, 1d для trending); в проде считают двухуровнево через `α`.",
               "correct": true,
               "sections": {
-                "explanation": "`α` обычно 0.7 для baseline и 0.3-0.5 для locales с обилием новостей; trending detection: если `short_term / long_term > threshold`, фраза промоутится в top-K.",
+                "explanation": "`λ = ln(2)/7d` → half-life 7 дней (медленный decay для эвергрин), `λ = ln(2)/1d` → 1 день (для trending). В проде `final = α × long_term + (1-α) × short_term`: long_term считают с медленным decay (week/month) для базового ranking, short_term — для trending (часы). `α` обычно 0.7 для baseline и 0.3-0.5 для locales с обилием новостей. Trending detection: если `short_term / long_term > threshold`, фраза промоутится в top-K.",
                 "example": "Этот механизм применяют, чтобы старые популярные запросы плавно проигрывали свежим актуальным без ручного вмешательства.",
-                "when_to_apply": "long_term_score считают с медленным decay (week/month) для базового ranking, short_term — для trending (часы), и сочетают через `α`.",
+                "when_to_apply": "На практике берут два потока с разным `λ` и смешивают их весом `α` (≈0.7 для baseline, 0.3-0.5 для locales с обилием новостей), а не один универсальный decay.",
                 "edge_cases": "Edge case: слишком агрессивный `λ` (короткий half-life) делает подсказки дёрганными — эвергрин-запросы преждевременно проваливаются из top-K.",
                 "related": "[[design-typeahead-interview#Q13]] delta-merge, обновляющий частоты для decay; [[design-typeahead-interview#Q15]] real-time stream, питающий short_term trending."
               },
@@ -814,7 +814,7 @@
               "label": "B"
             },
             {
-              "text": "Decay применяют одинаково для всех locale: `α` и `λ` глобальные константы, потому что новостной фон везде одинаков.",
+              "text": "Decay применяют одинаково для всех locale: `α` и `λ` — глобальные константы, потому что новостной фон везде одинаков и short_term вес не зависит от региона.",
               "correct": false,
               "sections": {
                 "what_actually": "`α` подбирают per-locale (0.7 baseline, 0.3-0.5 для news-heavy locales) — где много новостей, вес short_term выше.",
@@ -826,7 +826,7 @@
               "label": "C"
             },
             {
-              "text": "Trending detection — это просто абсолютный порог частоты: если фраза за час набрала больше X запросов, она trending.",
+              "text": "Trending detection — это просто абсолютный порог частоты: если фраза за час набрала больше X запросов, она trending, независимо от своего долгосрочного базового уровня.",
               "correct": false,
               "sections": {
                 "what_actually": "Trending детектируют по относительному всплеску: `short_term / long_term > threshold`, а не по абсолютному count.",
@@ -849,7 +849,7 @@
           "question_text": "Как реализовать real-time trending через Flink / Kafka Streams?",
           "options": [
             {
-              "text": "Для подсчёта частот trending хранят точный counter на каждую уникальную фразу в памяти Flink — иначе цифры будут неточными.",
+              "text": "Для подсчёта частот trending хранят точный counter на каждую уникальную фразу в state store Flink — иначе цифры будут неточными и heavy hitters промахнутся.",
               "correct": false,
               "sections": {
                 "what_actually": "Точный counter на миллионы уникальных фраз не держат: используют Count-Min Sketch для приближённого подсчёта без хранения всех ключей.",
@@ -861,7 +861,7 @@
               "label": "A"
             },
             {
-              "text": "Trending обновляется только раз в час (1h tumbling window), потому что более частые окна перегружают trie.",
+              "text": "Trending обновляется только раз в час (1h tumbling window), потому что более частые минутные окна перегружают trie постоянными real-time апдейтами top-K.",
               "correct": false,
               "sections": {
                 "what_actually": "Для trending используют 1min tumbling window (а 1h — для merge в long-term); burst-фразы пушат в trie вне очереди за секунды.",
@@ -873,10 +873,10 @@
               "label": "B"
             },
             {
-              "text": "Pipeline: `search-events topic → Flink job → Heavy Hitters (Count-Min Sketch) → State store → Top-K phrases per minute → Trie real-time update`. Tricks: Count-Min Sketch для приближённого подсчёта частот без хранения миллионов фраз, HyperLogLog для unique count, tumbling window 1min для trending (1h для merge в long-term), Heavy Hitters (Misra-Gries) для топ-K за окно.",
+              "text": "Pipeline: `search-events → Flink → Heavy Hitters (Count-Min Sketch) → State store → Top-K/min → Trie update`; tumbling 1min для trending, burst пушат вне очереди.",
               "correct": true,
               "sections": {
-                "explanation": "При burst: если новая фраза за 30 секунд появилась 10K раз, её пушат в trie вне очереди, минуя batch — вирусное событие в подсказках за секунды.",
+                "explanation": "Tricks: Count-Min Sketch — приближённый подсчёт частот без хранения миллионов уникальных фраз; HyperLogLog — unique count; tumbling window 1min для trending (1h для merge в long-term); Heavy Hitters (Misra-Gries) — топ-K самых частых за окно без сортировки всего потока. При burst: если новая фраза за 30 секунд появилась 10K раз, её пушат в trie вне очереди, минуя batch — вирусное событие в подсказках за секунды.",
                 "example": "Этот стриминговый слой добавляют, когда trending-подсказки (новости, спорт, мемы) должны появляться за минуты, а не часы.",
                 "when_to_apply": "Count-Min Sketch экономит память (approximate частоты), HyperLogLog даёт unique-count, Misra-Gries — heavy hitters за окно.",
                 "edge_cases": "Edge case: Count-Min Sketch может переоценить частоту редкой фразы из-за коллизий, поэтому heavy-hitters порог берут с запасом.",
@@ -886,7 +886,7 @@
               "label": "C"
             },
             {
-              "text": "Burst-фразы проходят тот же batch-путь, что и обычные: ждут ближайшего суточного rebuild, чтобы не нарушать порядок обновления.",
+              "text": "Burst-фразы проходят тот же batch-путь, что и обычные: ждут ближайшего суточного rebuild, чтобы не нарушать единый порядок обновления top-K на затронутых узлах.",
               "correct": false,
               "sections": {
                 "what_actually": "Burst-фразы пушат в trie вне очереди (минуя batch): 10K вхождений за 30 секунд — сигнал для немедленного real-time update.",
@@ -909,7 +909,7 @@
           "question_text": "Как делать spell correction — BK-tree, Symspell, Levenshtein?",
           "options": [
             {
-              "text": "Naive Levenshtein до всех слов словаря работает: при 10M фраз это всего `O(N)` и укладывается в latency-бюджет.",
+              "text": "Naive Levenshtein до всех слов словаря работает: при 10M фраз это всего `O(N)` и укладывается в latency-бюджет, если distance считать инкрементально по строке.",
               "correct": false,
               "sections": {
                 "what_actually": "Naive-подход `O(N × m)` (N = 10M, m = длина) не работает — десятки миллионов сравнений на запрос не уложатся в бюджет.",
@@ -921,7 +921,7 @@
               "label": "A"
             },
             {
-              "text": "Symspell медленнее BK-tree, но требует меньше памяти, поэтому его выбирают для memory-constrained окружений.",
+              "text": "Symspell медленнее BK-tree, но требует меньше памяти (не хранит удалённые варианты), поэтому его выбирают для memory-constrained окружений с большим словарём.",
               "correct": false,
               "sections": {
                 "what_actually": "Symspell наоборот: ~в 1000× быстрее BK-tree, но в ~10× больше памяти (precompute удалённых вариантов словаря).",
@@ -933,7 +933,7 @@
               "label": "B"
             },
             {
-              "text": "Spell correction запускают ВСЕГДА вместо exact prefix match, потому что опечатки встречаются в большинстве запросов.",
+              "text": "Spell correction запускают ВСЕГДА вместо exact prefix match, потому что опечатки встречаются в большинстве запросов и точный trie-lookup чаще промахивается.",
               "correct": false,
               "sections": {
                 "what_actually": "Сначала делают точный prefix match в trie, и только если результатов меньше N — добавляют spell-corrected варианты через Symspell.",
@@ -945,10 +945,10 @@
               "label": "C"
             },
             {
-              "text": "Strategy: сначала точный prefix match в trie; если результатов меньше N — добавить spell-corrected варианты через Symspell; помечать их в response (`\"corrected\": true`) для UI «Did you mean…?». BK-tree даёт `O(log N)` для distance ≤ 2-3; Symspell ~1000× быстрее BK-tree ценой ~10× памяти (precompute удалённых вариантов).",
+              "text": "Strategy: сначала exact prefix match в trie; если результатов < N — Symspell-варианты с `\"corrected\": true` для «Did you mean…?». BK-tree `O(log N)`, Symspell быстрее.",
               "correct": true,
               "sections": {
-                "explanation": "Пользователь печатает `gooogle` → exact match пуст → Symspell генерит удалённые варианты query → hash-lookup → `google` с `corrected: true`.",
+                "explanation": "Пользователь печатает `gooogle` → exact match пуст → Symspell генерит удалённые варианты query → hash-lookup → `google` с `corrected: true` для UI «Возможно, вы имели в виду…?». BK-tree (Burkhard-Keller) даёт `O(log N)` для distance ≤ 2-3. Symspell заранее вычисляет удалённые варианты словаря: ~1000× быстрее BK-tree ценой ~10× памяти. Naive Levenshtein до всех слов (`O(N × m)`, N=10M) не годится — десятки миллионов сравнений на keystroke.",
                 "example": "Этот подход применяют, когда нужно прощать опечатки, не ломая latency и не зашумляя корректные запросы.",
                 "when_to_apply": "Edit distance ≤ 2 покрывает большинство опечаток без false positives; naive Levenshtein до всех слов (`O(N × m)`) не годится.",
                 "edge_cases": "Edge case: при distance ≥ 3 растёт число false positives, поэтому коррекцию обычно ограничивают edit distance ≤ 2.",
@@ -969,12 +969,12 @@
           "question_text": "Как мержить user-specific top-K при personalization?",
           "options": [
             {
-              "text": "Per user хранят recent search history (last 100 queries), click history и per-user phrase frequency в Redis `user:<id>:history` (ZSET phrase → click_count). Merge: берут global top-K из trie, для каждой фразы добавляют `boost = personal.get(phrase, 0) * 2.0` к score, и возвращают top_K(merged, K=10).",
+              "text": "Хранят per-user историю (last 100 queries, clicks) в Redis ZSET; merge — берут global top-K из trie и бустят свои фразы: `score + personal.get(phrase,0)*2.0`.",
               "correct": true,
               "sections": {
-                "explanation": "`for s in global: boost = personal.get(s.phrase,0)*2.0; merged.append((s.phrase, s.score + boost))` — персональные клики поднимают свои фразы выше глобальных.",
+                "explanation": "Per user в Redis `user:<id>:history` (ZSET phrase → click_count): recent search history (last 100 queries), click history и per-user phrase frequency. Merge: `for s in global: boost = personal.get(s.phrase,0)*2.0; merged.append((s.phrase, s.score + boost))`, затем `top_K(merged, K=10)` — персональные клики поднимают свои фразы выше глобальных. Cold start: новый пользователь получает только global top-K и постепенно набирает историю. Privacy: hash user_id, опция отключить, TTL 90 дней.",
                 "example": "Этот merge применяют, когда нужно учесть историю пользователя, не теряя глобальные популярные подсказки.",
-                "when_to_apply": "Cold start: новый пользователь получает только global top-K и постепенно набирает историю; privacy — hash user_id, опция отключить, TTL 90 дней.",
+                "when_to_apply": "Хранят per-user историю (last 100 queries, clicks) в Redis ZSET и применяют boost `×2.0` для залогиненных; вес подбирают так, чтобы личные клики поднимали фразы, но не перекрывали сильные глобальные подсказки.",
                 "edge_cases": "Edge case: если пользователь отключил personalization, merge пропускают и отдают чистый global top-K без boost'а.",
                 "related": "[[design-typeahead-interview#Q10]] где merge в query-path; [[design-typeahead-interview#Q24]] privacy/PII в хранении истории."
               },
@@ -982,7 +982,7 @@
               "label": "A"
             },
             {
-              "text": "Personalization заменяет global top-K персональным: пользователю показывают только его собственную историю поисков по префиксу.",
+              "text": "Personalization заменяет global top-K персональным: пользователю показывают только его собственную историю поисков по префиксу, отсортированную по числу его кликов.",
               "correct": false,
               "sections": {
                 "what_actually": "Personalization не заменяет, а boost'ит: global top-K берут за основу и лишь поднимают score фраз из истории пользователя.",
@@ -994,7 +994,7 @@
               "label": "B"
             },
             {
-              "text": "User history держат в самом global trie как отдельную ветку per user, чтобы merge был просто частью lookup.",
+              "text": "User history держат в самом global trie как отдельную ветку per user, чтобы merge стал просто частью обычного prefix-lookup и не требовал второго запроса в Redis.",
               "correct": false,
               "sections": {
                 "what_actually": "User history хранят отдельно (Redis ZSET `user:<id>:history`), а не в global trie — иначе PII утекал бы в общую структуру.",
@@ -1006,7 +1006,7 @@
               "label": "C"
             },
             {
-              "text": "Cold start для нового пользователя означает пустой список подсказок, пока он не накопит хотя бы 100 запросов истории.",
+              "text": "Cold start для нового пользователя означает пустой список подсказок, пока он не накопит хотя бы 100 запросов истории для построения персонального ZSET в Redis.",
               "correct": false,
               "sections": {
                 "what_actually": "Cold start отдаёт новому пользователю global top-K сразу; история набирается постепенно и лишь добавляет boost со временем.",
@@ -1029,7 +1029,7 @@
           "question_text": "Как сделать geo / locale personalization?",
           "options": [
             {
-              "text": "Locale решают одним global trie с фильтром по стране на выходе: фразы общие, просто скрываются нерелевантные регионам.",
+              "text": "Locale решают одним global trie с фильтром по стране на выходе: фразы общие, нерелевантные регионам просто скрываются, а popularity-ранжирование остаётся единым.",
               "correct": false,
               "sections": {
                 "what_actually": "Делают отдельные tries per locale (`trie_en_US`, `trie_ru_RU`, ...) с routing по `Accept-Language`/IP-geo, потому что popularity у запросов разная по регионам.",
@@ -1041,12 +1041,12 @@
               "label": "A"
             },
             {
-              "text": "Решение — отдельные tries per locale: `trie_en_US`, `trie_en_UK`, `trie_ru_RU`, ... Routing по `Accept-Language` header или IP-geo. Для редких locales — fallback на ближайший родственный (`en-NZ → en-AU → en-UK → en-US`). City-level обычно overkill, достаточно country.",
+              "text": "Отдельные tries per locale (`trie_en_US`, `trie_ru_RU`, ...), routing по `Accept-Language`/IP-geo, fallback на родственный для редких; city-level — overkill.",
               "correct": true,
               "sections": {
-                "explanation": "Запрос `apple` в США → подсказки про компанию; в России → возможно про фрукт; в Австралии → tech-контекст: разные locale дают разные suggestion-наборы.",
+                "explanation": "Запрос `apple` в США → подсказки про компанию; в России → возможно про фрукт; в Австралии → tech-контекст: разные locale дают разные suggestion-наборы. Routing по `Accept-Language` header или IP-geo. Для редких locales — fallback на ближайший родственный: `en-NZ → en-AU → en-UK → en-US`. City-level (Москва ≠ Питер по trending) обычно overkill, достаточно country. Стоимость: N locales × 50GB → 1-2 TB при 30+ locales, что распределяют по разным шардам (Variant B из Q11 наконец оправдан).",
                 "example": "Per-locale tries применяют, когда популярность запросов сильно различается по регионам и языкам.",
-                "when_to_apply": "Стоимость: N locales × 50GB → 1-2 TB при 30+ locales, что распределяют по разным шардам (тут Variant B из Q11 наконец оправдан).",
+                "when_to_apply": "Отдельный trie на locale заводят при реально мультиязычной аудитории; routing идёт по `Accept-Language` или IP-geo, а для близких языков добавляют fallback на родственный locale.",
                 "edge_cases": "Edge case: для locale без собственного trie fallback-цепочка (`en-NZ → en-AU → en-UK`) не должна зациклиться, поэтому её делают строго направленной.",
                 "related": "[[design-typeahead-interview#Q11]] sharding, который оправдывается при multi-locale; [[design-typeahead-interview#Q28]] shared trie vs per-locale + transliteration."
               },
@@ -1054,7 +1054,7 @@
               "label": "B"
             },
             {
-              "text": "City-level personalization обязательна: Москва и Питер настолько различаются по trending, что country-level недостаточно.",
+              "text": "City-level personalization обязательна: Москва и Питер настолько различаются по trending, что country-level недостаточно и требует отдельного trie на каждый крупный город.",
               "correct": false,
               "sections": {
                 "what_actually": "City-level обычно overkill — достаточно country: различия между городами редко оправдывают отдельные tries.",
@@ -1066,7 +1066,7 @@
               "label": "C"
             },
             {
-              "text": "Для редкого locale без своего trie подсказки просто не показывают, пока не накопится отдельный trie для него.",
+              "text": "Для редкого locale без своего trie подсказки просто не показывают, пока не накопится отдельный trie для него — fallback на родственный язык исказил бы релевантность.",
               "correct": false,
               "sections": {
                 "what_actually": "Для редких locales делают fallback на ближайший родственный (`en-NZ → en-AU → en-UK → en-US`), а не пустой ответ.",
@@ -1089,7 +1089,7 @@
           "question_text": "Как устроен cache layer (Redis / CDN edge)?",
           "options": [
             {
-              "text": "Достаточно одного уровня кэша — Redis: CDN edge для autocomplete не нужен, он только добавляет stale-данные.",
+              "text": "Достаточно одного уровня кэша — Redis с 1h TTL: CDN edge для autocomplete не нужен, он лишь добавляет stale-данные и не успевает прогреться на коротком TTL.",
               "correct": false,
               "sections": {
                 "what_actually": "Используют two-tier: CDN edge (5s TTL, hit 60-70% для горячих `g`,`go`,`goo`) + Redis (1h TTL, hit 90%+ overall); trie — 100% fallback.",
@@ -1101,7 +1101,7 @@
               "label": "A"
             },
             {
-              "text": "При hourly update trie нужно немедленно инвалидировать весь Redis-кэш, иначе пользователи увидят устаревшие подсказки.",
+              "text": "При hourly update trie нужно немедленно инвалидировать весь Redis-кэш целиком, иначе пользователи увидят устаревшие подсказки до естественного истечения TTL.",
               "correct": false,
               "sections": {
                 "what_actually": "Кэш НЕ инвалидируют целиком при update — ждут естественного TTL (или pub/sub на изменённые префиксы); массовая инвалидация дала бы cache stampede.",
@@ -1113,12 +1113,12 @@
               "label": "B"
             },
             {
-              "text": "Two-tier cache: CDN edge (5s TTL, key `prefix+locale`, hit 60-70% для hot `g`,`go`,`goo`), Redis cluster (1h TTL, key `prefix+locale+user_segment`, hit 90%+ overall), Trie service (fallback, 100%). CDN на 5s даёт свежесть + защиту от viral-spike, Redis 1h ловит длинный хвост. Invalidation — по TTL, не массовая.",
+              "text": "Two-tier: CDN edge с коротким 5s TTL ловит hot-префиксы вроде `go`, Redis cluster с 1h TTL держит длинный хвост, Trie — fallback. Invalidation по TTL, не массовая.",
               "correct": true,
               "sections": {
-                "explanation": "Cache stampede protection: request coalescing (один запрос в trie на префикс) + stale-while-revalidate (отдать чуть устаревший cached, фоном обновить).",
+                "explanation": "CDN edge: key `prefix+locale`, 5s TTL даёт свежесть + защиту от viral-spike на один префикс, hit 60-70% для горячих `g`,`go`,`goo`. Redis cluster: key `prefix+locale+user_segment`, 1h TTL ловит длинный хвост (hit 90%+ overall). Trie service — fallback на 100%. При update trie кэш не инвалидируют целиком — ждут TTL или шлют pub/sub `cache-invalidate` на изменённые префиксы. Cache stampede protection: request coalescing (один запрос в trie на префикс) + stale-while-revalidate (отдать чуть устаревший cached, фоном обновить).",
                 "example": "Эту иерархию описывают, когда обсуждают, как удержать `p99 < 100ms` при 60-150K QPS.",
-                "when_to_apply": "При update trie кэш не инвалидируют целиком — ждут TTL или шлют pub/sub `cache-invalidate` на изменённые префиксы.",
+                "when_to_apply": "Two-tier кэш ставят, когда узкий набор горячих префиксов (`g`, `go`, `goo`) даёт основную долю запросов: их держат на CDN edge с коротким TTL, а длинный хвост — в Redis cluster.",
                 "edge_cases": "Edge case: при cache stampede на один префикс request coalescing пропускает в trie только один запрос, остальные ждут его результата.",
                 "related": "[[design-typeahead-interview#Q10]] где кэши в query-path; [[design-typeahead-interview#Q21]] почему trie-fallback in-memory, а не Cassandra/ES."
               },
@@ -1126,7 +1126,7 @@
               "label": "C"
             },
             {
-              "text": "CDN edge и Redis должны иметь одинаковый TTL (например 1h), иначе данные между слоями рассинхронизируются.",
+              "text": "CDN edge и Redis должны иметь одинаковый TTL (например 1h), иначе данные между слоями рассинхронизируются и пользователь получит разные подсказки при повторе.",
               "correct": false,
               "sections": {
                 "what_actually": "TTL намеренно разные: CDN 5s (свежесть + защита от spike), Redis 1h (долгий hit для длинного хвоста) — слои решают разные задачи.",
@@ -1149,7 +1149,7 @@
           "question_text": "Зачем client-side debouncing и HTTP/2 multiplexing?",
           "options": [
             {
-              "text": "Debounce делают большим (500-1000ms), чтобы наверняка погасить лишние запросы — пользователь задержку не заметит.",
+              "text": "Debounce делают большим (500-1000ms), чтобы наверняка погасить лишние запросы и максимально снизить QPS — пользователь задержку подсказок всё равно не заметит.",
               "correct": false,
               "sections": {
                 "what_actually": "Debounce берут ~50ms: достаточно погасить промежуточные нажатия и незаметно для пользователя; 500ms ощущалось бы как лаг подсказок.",
@@ -1161,7 +1161,7 @@
               "label": "A"
             },
             {
-              "text": "HTTP/2 multiplexing здесь не нужен: autocomplete и так шлёт по одному запросу за раз, поэтому хватает HTTP/1.1.",
+              "text": "HTTP/2 multiplexing здесь не нужен: debounce оставляет один запрос за раз, поэтому хватает HTTP/1.1 с одним соединением и без отмены устаревших ответов.",
               "correct": false,
               "sections": {
                 "what_actually": "HTTP/2 multiplexing нужен: при быстрой печати много in-flight requests на одном TCP-соединении, а устаревшие отменяют через `AbortController`.",
@@ -1173,7 +1173,7 @@
               "label": "B"
             },
             {
-              "text": "Устаревший request (пользователь дописал префикс) нужно дожидаться и показывать его результат, чтобы не терять данные.",
+              "text": "Устаревший request (пользователь дописал префикс) нужно дожидаться и показывать его результат, чтобы не терять данные и не делать лишний повторный запрос к trie.",
               "correct": false,
               "sections": {
                 "what_actually": "Устаревший request отменяют (`AbortController`): если пользователь дописал `goog` поверх `goo`, ответ на `goo` уже не нужен.",
@@ -1185,12 +1185,12 @@
               "label": "C"
             },
             {
-              "text": "Client-side debounce (~50ms: `clearTimeout(timer); timer = setTimeout(() => fetchAutocomplete(value), 50)`) гасит промежуточные нажатия и снижает QPS в 5-10×, незаметно для пользователя. HTTP/2 multiplexing держит несколько in-flight requests на одном TCP-соединении, устаревшие отменяет через `AbortController`; keep-alive убирает TCP/TLS handshake на каждый запрос.",
+              "text": "Client debounce ~50ms (`setTimeout(fetch, 50)`) гасит промежуточные нажатия и режет QPS в 5-10×; HTTP/2 multiplexing держит in-flight на одном TCP, отменяет устаревшие.",
               "correct": true,
               "sections": {
-                "explanation": "При быстрой печати `g→go→goo` debounce шлёт лишь финальный запрос, а HTTP/2 отменяет устаревший `go`, если пользователь уже дописал `goo`.",
+                "explanation": "Debounce: `clearTimeout(timer); timer = setTimeout(() => fetchAutocomplete(value), 50)` — при наборе `g→go→goo` шлёт лишь финальный запрос, незаметно для пользователя. HTTP/2 multiplexing держит несколько in-flight requests на одном TCP-соединении, устаревшие отменяет через `AbortController` (если пользователь дописал `goo` поверх `go`). Keep-alive убирает TCP/TLS handshake на каждый запрос. Predictive pre-fetch: после `goo` фронт может предзагрузить `goog`,`good` — trade-off с трафиком.",
                 "example": "Эти оптимизации применяют на клиенте, чтобы вписаться в latency-бюджет и не заваливать backend лишними запросами.",
-                "when_to_apply": "Predictive pre-fetch: после `goo` фронт может предзагрузить `goog`,`good` — trade-off с трафиком; без HTTP/2 каждое нажатие открывало бы новый connection.",
+                "when_to_apply": "Весь набор клиентских приёмов — debounce (~50ms), отмена устаревших запросов через `AbortController`, HTTP/2 multiplexing и keep-alive — применяют вместе, чтобы уложиться в latency-бюджет typeahead.",
                 "edge_cases": "Edge case: слишком большой debounce (>150ms) экономит QPS, но делает подсказки заметно тормозными — баланс подбирают экспериментально.",
                 "related": "[[design-typeahead-interview#Q2]] debounce, дающий 60K вместо 600K QPS; [[design-typeahead-interview#Q10]] debounce как первый шаг query-path."
               },
@@ -1209,10 +1209,10 @@
           "question_text": "Почему in-memory trie, а не Cassandra/Elasticsearch для хранения?",
           "options": [
             {
-              "text": "In-memory trie даёт p99 1-5ms (sub-ms lookup, precomputed top-K), ценой требования RAM и reload при restart. ES (prefix query) — 10-50ms, overkill для prefix + hot shards. Cassandra — 10-30ms, нет нативного top-K по prefix. Redis ZRANGEBYLEX — 1-3ms, но плохо масштабируется на 10M фраз. Выбор — in-memory trie.",
+              "text": "In-memory trie: p99 1-5ms, precomputed top-K по префиксу. Остальные store медленнее или без нативного top-K.",
               "correct": true,
               "sections": {
-                "explanation": "Для small-scale (e-commerce site search, до 100K фраз) подходит Redis ZRANGEBYLEX ради простоты, но на 10M фраз с popularity-ranking берут trie.",
+                "explanation": "Сравнение по p99: in-memory trie 1-5ms (lookup за доли мс, precomputed top-K), ценой RAM и reload при restart. ES prefix query — 10-50ms, overkill для prefix + горячие шарды. Cassandra — 10-30ms, нет нативного top-K по префиксу, секции читаются целиком. Redis ZRANGEBYLEX — 1-3ms, но плохо масштабируется на 10M фраз. Выбор — in-memory trie; на small-scale (e-commerce site search, до 100K фраз) подходит Redis ZRANGEBYLEX ради простоты, но на 10M фраз с popularity-ranking берут trie.",
                 "example": "Это сравнение приводят, когда интервьюер предлагает «просто положить в ES/Cassandra» вместо специализированной структуры.",
                 "when_to_apply": "Elasticsearch как primary для typeahead — частая ошибка: ES хорош для основного поиска, но `p99 < 100ms` требует структуры под prefix + top-K.",
                 "edge_cases": "Edge case: для small-scale продуктового autocomplete (e-commerce, до 100K фраз) Redis ZRANGEBYLEX проще и достаточен — trie там избыточен.",
@@ -1222,7 +1222,7 @@
               "label": "A"
             },
             {
-              "text": "Elasticsearch — лучший primary store для typeahead: его prefix-query и full-text возможности перекрывают любой trie.",
+              "text": "Elasticsearch — лучший primary store для typeahead: prefix-query и full-text перекрывают любой trie, а p99 держится в пределах 1-5ms на горячих шардах.",
               "correct": false,
               "sections": {
                 "what_actually": "ES как primary для typeahead — частая ошибка: 10-50ms latency и hot shards делают его overkill; ES хорош для основного поиска, не для hot-path подсказок.",
@@ -1234,7 +1234,7 @@
               "label": "B"
             },
             {
-              "text": "Cassandra идеальна для typeahead: token-prefix даёт нативный top-K по префиксу с popularity-ранжированием из коробки.",
+              "text": "Cassandra идеальна для typeahead: token-prefix даёт нативный top-K по префиксу с popularity-ранжированием из коробки и p99 1-3ms без чтения секции целиком.",
               "correct": false,
               "sections": {
                 "what_actually": "У Cassandra нет нативного top-K по prefix — секции читаются полностью, latency 10-30ms; для autocomplete это не подходит.",
@@ -1246,7 +1246,7 @@
               "label": "C"
             },
             {
-              "text": "Redis ZRANGEBYLEX масштабируется на любые объёмы, поэтому его берут как primary даже для 10M+ фраз с popularity-ранжированием.",
+              "text": "Redis ZRANGEBYLEX масштабируется на любые объёмы, поэтому его берут как primary даже для 10M+ фраз с popularity-ранжированием и precomputed top-K без отдельной структуры.",
               "correct": false,
               "sections": {
                 "what_actually": "ZRANGEBYLEX хорош лишь для маленьких словарей: на 10M фраз он плохо масштабируется и слабо сочетает top-K с popularity.",
@@ -1269,7 +1269,7 @@
           "question_text": "Как фильтровать profanity, spam, copyright в подсказках?",
           "options": [
             {
-              "text": "Всю фильтрацию делают исключительно на runtime при ответе, потому что blocklist'ы постоянно меняются и build-time устарел бы.",
+              "text": "Всю фильтрацию делают исключительно на runtime при ответе: blocklist'ы постоянно меняются, build-time устарел бы, а Bloom filter здесь не даёт выигрыша.",
               "correct": false,
               "sections": {
                 "what_actually": "Основную фильтрацию делают build-time в offline pipeline (profanity, copyright, spam, PII-паттерны), а runtime лишь дополняет per-locale/per-user правилами.",
@@ -1281,10 +1281,10 @@
               "label": "A"
             },
             {
-              "text": "Build-time filter (offline pipeline): блоклист profanity/hate speech (multi-language), copyright-фильтр, spam detection (SEO spam, gibberish), personal data filter (email/phone/card-like не попадают в trie). Runtime filter: per-locale blocklist, per-user safety mode (kids), legal removals (right to be forgotten в EU).",
+              "text": "Build-time filter ловит profanity, copyright, spam и PII; runtime — per-locale, kids-mode и legal removals.",
               "correct": true,
               "sections": {
-                "explanation": "Side effect: blocklist надо обновлять в hot-path без полного rebuild — решение: отдельный Bloom filter с запрещёнными фразами, проверяется на response stage.",
+                "explanation": "Build-time filter (offline pipeline): блоклист profanity / hate speech (multi-language), copyright-фильтр известных защищённых названий, spam detection (SEO spam, gibberish), personal data filter (email / phone / card-like паттерны не попадают в trie). Runtime filter: per-locale blocklist (слово ок на en, не ок на ru), per-user safety mode (kids), legal removals — right to be forgotten в EU.",
                 "example": "Это разделение применяют, чтобы и не пускать мусор в trie заранее, и иметь быстрый runtime-механизм для срочных удалений.",
                 "when_to_apply": "Одно слово может быть ОК на en и запрещено на ru — поэтому есть per-locale blocklist; kids-mode и GDPR-removals работают на runtime.",
                 "edge_cases": "Edge case: срочное удаление фразы (legal removal) нельзя ждать суточного rebuild — его делают через Bloom-filter на response stage.",
@@ -1294,7 +1294,7 @@
               "label": "B"
             },
             {
-              "text": "Bloom filter здесь не нужен — для проверки запрещённых фраз на response stage достаточно линейного прохода по blocklist.",
+              "text": "Bloom filter здесь не нужен — для проверки запрещённых фраз на response stage достаточно линейного прохода по blocklist даже при срочных legal removals.",
               "correct": false,
               "sections": {
                 "what_actually": "Bloom filter применяют именно для быстрой проверки запрещённых фраз в hot-path без полного rebuild trie — линейный проход был бы дорог.",
@@ -1306,7 +1306,7 @@
               "label": "C"
             },
             {
-              "text": "Blocklist глобален: одно и то же слово запрещено или разрешено во всех locale одинаково, без региональных различий.",
+              "text": "Blocklist глобален: одно и то же слово запрещено или разрешено во всех locale одинаково, без региональных различий и без отдельного kids-mode.",
               "correct": false,
               "sections": {
                 "what_actually": "Blocklist per-locale: слово может быть нейтральным на en и оскорбительным на ru, поэтому фильтры зависят от языка/региона.",
@@ -1329,7 +1329,7 @@
           "question_text": "Как обрабатывать empty prefix, unicode, emoji?",
           "options": [
             {
-              "text": "При пустом префиксе показывают «топ всех времён» — самые популярные за всю историю фразы, потому что это стабильно и безопасно.",
+              "text": "При пустом префиксе показывают «топ всех времён» — самые популярные за всю историю фразы: это стабильно, безопасно и не требует trending-стрима.",
               "correct": false,
               "sections": {
                 "what_actually": "При пустом префиксе показывают trending (top phrases за последний час) или recent searches пользователя — «топ всех времён» слишком статичен.",
@@ -1341,7 +1341,7 @@
               "label": "A"
             },
             {
-              "text": "Trie работает на байтах строки, поэтому unicode-нормализация не нужна — байтовое сравнение само разрулит все варианты.",
+              "text": "Trie работает на байтах строки, поэтому unicode-нормализация не нужна — байтовое сравнение само разрулит все варианты, включая NFC и NFD формы.",
               "correct": false,
               "sections": {
                 "what_actually": "Trie работает не на байтах, а на code points / graphemes, и перед lookup делают NFC-нормализацию — иначе `café` (NFC) и `café` (NFD) — разные ключи.",
@@ -1353,10 +1353,10 @@
               "label": "B"
             },
             {
-              "text": "Empty prefix → trending (top за час) или recent searches пользователя, не «топ всех времён». Unicode: trie на code points/graphemes, NFC-нормализация перед lookup; для CJK — trie по hiragana/pinyin + отдельная по символам. Emoji — как обычные code points (`pizza 🍕`). Case-insensitivity: lowercase при build и query, original case в top-K для отображения.",
+              "text": "Empty prefix → trending или recent searches, не «топ всех времён». Unicode — code points + NFC, emoji как code points, lowercase.",
               "correct": true,
               "sections": {
-                "explanation": "Diacritics: опционально strip (`cafe` находит `café`), но locale-зависимо — в немецком ä, ö, ü отдельные буквы, а не варианты `a`, `o`, `u`.",
+                "explanation": "Empty prefix → trending (top за последний час) или recent searches пользователя, не «топ всех времён» (слишком статично). Unicode: trie на code points / графемах, NFC-нормализация перед lookup; для CJK — trie по hiragana / pinyin для романизированного ввода + отдельный trie по иероглифам. Emoji — как обычные code points (`pizza 🍕`). Case-insensitivity: lowercase при build и query, original case в top-K только для отображения.",
                 "example": "Эти edge cases разбирают, чтобы autocomplete корректно работал с любыми языками, регистром и спецсимволами.",
                 "when_to_apply": "`café` в NFC и NFD — разные строки в trie без нормализации, поэтому NFC/NFKC применяют и при indexing, и при query.",
                 "edge_cases": "Edge case: для немецкого strip диакритики недопустим (ä/ö/ü — отдельные буквы), поэтому нормализацию делают locale-зависимой.",
@@ -1366,7 +1366,7 @@
               "label": "C"
             },
             {
-              "text": "Diacritics всегда нужно strip'ать глобально: `café` → `cafe`, потому что диакритика — это просто украшение букв во всех языках.",
+              "text": "Diacritics всегда нужно strip'ать глобально: `café` → `cafe`, потому что диакритика — это просто украшение букв во всех языках, включая немецкий.",
               "correct": false,
               "sections": {
                 "what_actually": "Strip diacritics — locale-зависимо: в немецком ä, ö, ü — отдельные буквы, а не варианты, поэтому глобальный strip ломает язык.",
@@ -1389,7 +1389,7 @@
           "question_text": "Как обеспечить privacy и защиту PII в query logs?",
           "options": [
             {
-              "text": "Любую искомую фразу можно класть в global trie сразу — даже если её искал один человек, ведь сама фраза не содержит имени пользователя.",
+              "text": "Любую искомую фразу можно класть в global trie сразу, даже если её искал один человек: сама фраза не содержит имени, поэтому k-anonymity порог не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Применяют k-anonymity: фраза попадает в trie только если её искали ≥ K разных пользователей (K = 10-50); единичный поиск — это след конкретного человека.",
@@ -1401,7 +1401,7 @@
               "label": "A"
             },
             {
-              "text": "Raw query logs хранят бессрочно, потому что они нужны для постоянного переобучения ranking-моделей и аналитики.",
+              "text": "Raw query logs хранят бессрочно, потому что они нужны для постоянного переобучения ranking-моделей и аналитики, а PII-redaction делают только на чтении.",
               "correct": false,
               "sections": {
                 "what_actually": "Retention ограничен: raw logs хранят 30-90 дней и удаляют, а aggregated phrases остаются без user_id; бессрочное хранение нарушает privacy.",
@@ -1413,7 +1413,7 @@
               "label": "B"
             },
             {
-              "text": "Right to be forgotten реализуют только удалением raw-логов раз в квартал; отдельного API для пользователя не требуется.",
+              "text": "Right to be forgotten реализуют только удалением raw-логов раз в квартал; отдельного API для пользователя и per-user истории с TTL не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "GDPR-право реализуют через API `DELETE /history/me`, который стирает user-history в Redis и ставит flag в log pipeline — это on-demand, а не раз в квартал.",
@@ -1425,10 +1425,10 @@
               "label": "C"
             },
             {
-              "text": "Принципы: k-anonymity (фраза в trie только если её искали ≥ K = 10-50 пользователей); PII redaction (regex для email/phone/card/SSN до aggregation); retention (raw logs 30-90 дней, aggregated без user_id); per-user history отдельно, encrypted at rest, TTL 90 дней; right to be forgotten — API `DELETE /history/me`; cross-border compliance для EU.",
+              "text": "Защита: k-anonymity (≥ K=10-50 искавших), PII-redaction, ограниченный retention, per-user история с TTL, `DELETE /history/me`.",
               "correct": true,
               "sections": {
-                "explanation": "В global trie НЕ должны попадать: поиск собственного имени, email/телефона/адреса, а также controversial категории (health, lgbtq, political) фильтруются отдельно.",
+                "explanation": "Принципы: k-anonymity — фраза попадает в trie, только если её искали ≥ K = 10-50 разных пользователей, иначе это уникальный поиск конкретного человека. PII redaction — regex для email / phone / card / SSN до aggregation. Retention — raw logs 30-90 дней, затем удаляются; aggregated фразы без user_id. Per-user history — отдельно, encrypted at rest, TTL 90 дней. Right to be forgotten — API `DELETE /history/me` (стирает историю в Redis + flag в log-пайплайне). Cross-border compliance для EU.",
                 "example": "Эти правила описывают, когда обсуждают, как не превратить логи поисков в утечку персональных данных.",
                 "when_to_apply": "PII-redaction (email, phone, credit card, SSN) делают до aggregation; EU-трафик не сливают в US-only trie без compliance.",
                 "edge_cases": "Edge case: даже агрегированная фраза может деанонимизировать, если её искали < K пользователей, поэтому k-anonymity порог не понижают.",
@@ -1449,10 +1449,10 @@
           "question_text": "Как проводить A/B testing для ranking changes?",
           "options": [
             {
-              "text": "Setup: experiment infra (in-house или Optimizely/Split.io), bucketing по `user_id hash` на control/treatment. Метрики: Click-through rate (CTR) на suggestion — главный, time-to-click, abandonment rate, downstream search quality. Эксперименты: новая формула decay, top-K size (8/10/12), personalization boost, spell threshold. Significance — обычно 1-2 недели на 1% traffic.",
+              "text": "Setup: bucketing по hash `user_id` на control/treatment, метрики CTR / time-to-click / abandonment, значимость за 1-2 недели на 1% трафика.",
               "correct": true,
               "sections": {
-                "explanation": "Shadow traffic / dry-run: новая ranking-логика возвращает результат, но не показывается пользователю — сравнивают с production на логах, безопасно для радикальных изменений.",
+                "explanation": "Setup: experiment infra (in-house или Optimizely / Split.io), bucketing по `user_id hash` на control / treatment. Метрики: Click-through rate (CTR) на suggestion — главная, time-to-click, abandonment rate (печатал и закрыл без выбора), downstream search quality. Эксперименты: новая формула decay (λ=0.1 vs 0.2), top-K size (8/10/12), personalization boost, spell-correction threshold. Статзначимость — обычно 1-2 недели на 1% traffic; радикальные изменения сначала гоняют в shadow-режиме (результат считается, но не показывается).",
                 "example": "A/B-инфру описывают, когда обсуждают, как менять ранжирование без риска уронить CTR на всех пользователях.",
                 "when_to_apply": "CTR per suggestion — главная метрика, но смотрят и abandonment (печатал и закрыл без выбора), и downstream search quality; bucketing по hash user_id даёт стабильные группы.",
                 "edge_cases": "Edge case: на 1% трафика статзначимость по CTR набирается 1-2 недели, поэтому быстрые выводы по первым дням делать нельзя.",
@@ -1462,7 +1462,7 @@
               "label": "A"
             },
             {
-              "text": "Bucketing на control/treatment делают случайно на каждый запрос, чтобы группы были максимально перемешаны.",
+              "text": "Bucketing на control/treatment делают случайно на каждый запрос, чтобы группы были максимально перемешаны и значимость по CTR набиралась за пару дней.",
               "correct": false,
               "sections": {
                 "what_actually": "Bucketing делают по `user_id hash` (стабильно per user), а не на каждый запрос — иначе один пользователь видел бы обе версии и портил сигнал.",
@@ -1474,7 +1474,7 @@
               "label": "B"
             },
             {
-              "text": "Главная метрика A/B для autocomplete — средняя latency: если treatment не медленнее, изменение признают успешным.",
+              "text": "Главная метрика A/B для autocomplete — средняя latency: если treatment не медленнее, изменение признают успешным, а CTR и abandonment не смотрят.",
               "correct": false,
               "sections": {
                 "what_actually": "Главная метрика — CTR на suggestion (плюс time-to-click, abandonment, downstream quality), а не latency; latency — отдельный health-показатель.",
@@ -1486,7 +1486,7 @@
               "label": "C"
             },
             {
-              "text": "Радикальные изменения ranking сразу выкатывают на 50% трафика, чтобы быстрее набрать статистику и принять решение.",
+              "text": "Радикальные изменения ranking сразу выкатывают на 50% трафика, чтобы быстрее набрать статистику, минуя shadow-режим и dry-run на логах.",
               "correct": false,
               "sections": {
                 "what_actually": "Радикальные изменения сначала гоняют как shadow traffic / dry-run (результат не показывается, сравнивается на логах), а не сразу на 50%.",
@@ -1509,7 +1509,7 @@
           "question_text": "Как устроен ML ranking (Learning-to-Rank) поверх trie?",
           "options": [
             {
-              "text": "ML-ranker заменяет trie: модель сама генерирует кандидатов из запроса, поэтому trie в пайплайне больше не нужен.",
+              "text": "ML-ranker заменяет trie: модель сама генерирует кандидатов из запроса по top-50 popularity, поэтому trie в пайплайне больше не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Это two-stage: trie остаётся candidate generation (top-50 по popularity), а ML-ranker лишь переранжирует кандидатов в top-10; trie не заменяют.",
@@ -1521,10 +1521,10 @@
               "label": "A"
             },
             {
-              "text": "Two-stage pipeline: (1) candidate generation — trie lookup → top-50 by popularity (broad recall) + spell correction/query rewrites; (2) ML re-ranker (LambdaMART / DLRM / BERT-tiny) → top-10 by score. Features (~100): query (prefix length, has_typo), candidate (popularity, click_rate, completion_rate), user (country, history embeddings), context (time, device).",
+              "text": "Two-stage: (1) trie lookup → top-50 by popularity; (2) ML re-ranker → top-10 by score на ~100 фичах.",
               "correct": true,
               "sections": {
-                "explanation": "LambdaMART (gradient-boosted trees) — production-proven, inference < 5ms на CPU; обучают на click logs `(query, candidate, clicked)` с pairwise/listwise loss, retrain weekly + online learning.",
+                "explanation": "Two-stage pipeline: (1) candidate generation — trie lookup → top-50 by popularity (broad recall) + spell correction / query rewrites; (2) ML re-ranker (LambdaMART / DLRM / BERT-tiny) → top-10 by score. Features (~100): query (длина префикса, has_typo), candidate (popularity, click_rate, completion_rate), user (country, history embeddings), context (время суток, день недели, device).",
                 "example": "ML-ranker добавляют, когда pure popularity плохо работает на long-tail и personalization (Google: +10-20% CTR).",
                 "when_to_apply": "Latency budget: trie 5ms + feature retrieval 10ms + ML inference 5-15ms ≈ 25-30ms, укладывается в 100ms p99; trade-off — GPU/CPU inference и feature store.",
                 "edge_cases": "Edge case: если ML-inference таймаутит, система откатывается на trie-only ranking, чтобы подсказки всё равно вернулись в бюджет.",
@@ -1534,7 +1534,7 @@
               "label": "B"
             },
             {
-              "text": "ML re-ranker всегда требует GPU-инференса, поэтому LambdaMART и деревья для autocomplete не подходят — только нейросети.",
+              "text": "ML re-ranker всегда требует GPU-инференса, поэтому LambdaMART и gradient-boosted деревья для autocomplete не подходят — только нейросети с batch по 50.",
               "correct": false,
               "sections": {
                 "what_actually": "LambdaMART (gradient-boosted trees) — production-proven с inference < 5ms на CPU; GPU нужен лишь для DLRM/two-tower на high-volume платформах.",
@@ -1546,7 +1546,7 @@
               "label": "C"
             },
             {
-              "text": "ML re-ranker обучают на размеченных вручную парах `(query, candidate)`, потому что клики пользователей слишком зашумлены.",
+              "text": "ML re-ranker обучают на размеченных вручную парах `(query, candidate)`, потому что клики пользователей слишком зашумлены для pairwise / listwise loss.",
               "correct": false,
               "sections": {
                 "what_actually": "Ranker обучают на click logs `(query, candidate, clicked: 0/1)` — клики и есть label; ручная разметка не масштабируется на миллиарды запросов.",
@@ -1569,7 +1569,7 @@
           "question_text": "Что даёт query understanding (entity / intent / category)?",
           "options": [
             {
-              "text": "Query understanding запускают для всех запросов одинаково, включая короткие префиксы из 1-2 символов, чтобы покрыть максимум случаев.",
+              "text": "Query understanding запускают для всех запросов одинаково, включая короткие префиксы из 1-2 символов, не считаясь с дополнительной latency на инференс.",
               "correct": false,
               "sections": {
                 "what_actually": "Для коротких префиксов (< 3 chars) entity/intent inference часто skip — там слишком мало сигнала и +20-30ms latency не оправданы.",
@@ -1581,7 +1581,7 @@
               "label": "A"
             },
             {
-              "text": "Intent classification бинарна: запрос либо «поиск», либо «не поиск», других категорий intent не выделяют.",
+              "text": "Intent classification бинарна: запрос либо «поиск», либо «не поиск», других категорий intent (navigational, informational, transactional, local) не выделяют.",
               "correct": false,
               "sections": {
                 "what_actually": "Intent классифицируют на несколько типов: navigational / informational / transactional / local — это влияет на boost разных подсказок.",
@@ -1593,10 +1593,10 @@
               "label": "B"
             },
             {
-              "text": "Query understanding улучшает relevance: entity detection (knowledge graph lookup в Wikidata/ConceptNet → `obama` → entity `Barack Obama`), intent classification (navigational/informational/transactional/local → `pizza near me` → local → boost geo), category boost (shopping-сессия → boost product-completions). Pipeline: trie candidates → entity detector → intent classifier → re-ranker boosts.",
+              "text": "Сигналы: entity detection (knowledge graph), intent classification и category boost переранжируют trie-кандидатов релевантнее.",
               "correct": true,
               "sections": {
-                "explanation": "`client query \"java\"` → trie candidates → entity detector `[Java (programming), Java (island), Java (coffee)]` → intent `informational` → re-ranker boosts `Java tutorial`, `Java spring boot`.",
+                "explanation": "Query understanding улучшает relevance тремя сигналами. Entity detection — lookup в knowledge graph (Wikidata / ConceptNet): `obama` → entity `Barack Obama (politician)` → завершения `obama biography`, `obama age`. Intent classification (navigational / informational / transactional / local): `pizza near me` → local → boost geo; `how to tie a tie` → informational → boost how-to. Category boost: в shopping-сессии → boost product-completions. Pipeline: trie candidates → entity detector → intent classifier → re-ranker boosts.",
                 "example": "Query understanding добавляют, когда одинаковые префиксы имеют разный смысл и нужно учесть контекст/намерение.",
                 "when_to_apply": "Trade-off: quality растёт, но latency +20-30ms на entity/intent inference; для коротких префиксов (< 3 chars) часто skip.",
                 "edge_cases": "Edge case: knowledge-graph lookup добавляет latency, поэтому entity-detection на горячем пути кэшируют по самым частым префиксам.",
@@ -1606,7 +1606,7 @@
               "label": "C"
             },
             {
-              "text": "Entity detection строят на простом string-match по списку известных слов, без knowledge graph — это быстрее и точнее.",
+              "text": "Entity detection строят на простом string-match по списку известных слов, без knowledge graph — это быстрее, точнее и не добавляет latency на инференс.",
               "correct": false,
               "sections": {
                 "what_actually": "Entity detection использует knowledge graph lookup (Wikidata, ConceptNet), а не плоский string-match: нужно различать `Java (programming)` и `Java (island)`.",
@@ -1629,7 +1629,7 @@
           "question_text": "Multi-language: shared trie vs per-locale + transliteration?",
           "options": [
             {
-              "text": "Single global trie с Unicode keys — лучший вариант для 50+ языков: один trie проще и не имеет недостатков.",
+              "text": "Single global trie с Unicode keys — лучший вариант для 50+ языков: один trie проще и не даёт hot english вытеснять low-traffic locales.",
               "correct": false,
               "sections": {
                 "what_actually": "У single global trie есть серьёзный минус: hot english queries вытесняют low-traffic locales (страдают quality и privacy); поэтому рекомендуют per-locale.",
@@ -1641,7 +1641,7 @@
               "label": "A"
             },
             {
-              "text": "Transliteration не нужна: пользователь всегда печатает на родном алфавите, поэтому latin-ввод для cyrillic-результата не встречается.",
+              "text": "Transliteration не нужна: пользователь всегда печатает на родном алфавите, поэтому latin-ввод `pelmeni` для cyrillic-результата `пельмени` не встречается.",
               "correct": false,
               "sections": {
                 "what_actually": "Transliteration нужна часто: пользователь печатает `pelmeni`, ожидая `пельмени`, или `arigato` → `ありがとう` — latin-ввод для нелатинских результатов реален.",
@@ -1653,7 +1653,7 @@
               "label": "B"
             },
             {
-              "text": "CJK обрабатывают как latin: каждый байт символа — отдельный node, а IME с pinyin не поддерживают.",
+              "text": "CJK обрабатывают как latin: каждый байт символа — отдельный node, а IME с pinyin не поддерживают, поэтому ввод `zhong wen` → `中文` невозможен.",
               "correct": false,
               "sections": {
                 "what_actually": "CJK character-based: каждый символ = отдельный node (не байт), и IME-ввод pinyin (`zhong wen → 中文`) поддерживают через two-stage pinyin→characters.",
@@ -1665,10 +1665,10 @@
               "label": "C"
             },
             {
-              "text": "Варианты: (1) single global trie — просто, но hot english вытесняет low-traffic locales; (2) per-locale trie (recommended) — отдельный trie на `(language, country)`, routing по `Accept-Language`+geo-IP, нет cross-locale interference; (3) hybrid — base trie (`youtube`,`amazon`) + locale overlay. Transliteration: alias `pelmeni`↔`пельмени` через ICU. CJK character-based + IME pinyin. RTL: структура та же, UI reversed.",
+              "text": "Варианты: single trie, per-locale (recommended) и hybrid; сверху — transliteration через ICU, CJK character-based, RTL.",
               "correct": true,
               "sections": {
-                "explanation": "При query prefix `pelm` матчит и `pelmeni`, и `пельмени` cluster; mixed-script `iPhone 15` и `айфон 15` показывают оба с NFKC-нормализацией.",
+                "explanation": "Варианты: (1) single global trie — просто, но hot english вытесняет low-traffic locales; (2) per-locale trie (recommended) — отдельный trie на `(language, country)` (`en-US`, `ru-RU`, `ja-JP`), routing по `Accept-Language` + geo-IP, нет cross-locale interference, зато N tries в памяти меньше каждый; (3) hybrid — base trie (`youtube`, `amazon`) + locale overlay, подсказка = merge(global_top_K, locale_top_K). Transliteration: alias `pelmeni` ↔ `пельмени` через ICU (`Latin-Cyrillic`, `Latin-Hiragana`). CJK — character-based + IME pinyin (trie по pinyin → маппинг на иероглифы). RTL — структура та же, UI reversed.",
                 "example": "Эти варианты разбирают для глобального autocomplete на 50+ языков с разными алфавитами (latin, cyrillic, CJK, arabic).",
                 "when_to_apply": "CJK — character-based (символ = node) с two-stage pinyin→characters; RTL (arabic/hebrew) — UI reversed, но trie работает на logical order.",
                 "edge_cases": "Edge case: mixed-script запросы (`iPhone 15` и `айфон 15`) показывают оба варианта, нормализуя через NFKC перед сравнением.",
@@ -1689,10 +1689,10 @@
           "question_text": "Какие metrics обязательны для monitoring typeahead?",
           "options": [
             {
-              "text": "Core latency: `typeahead_latency_p50_ms` (< 30ms), `_p99_ms` (< 100ms, alert > 200ms 5 мин), `trie_node_lookup_ms` (< 5ms), `cache_hit_ratio_redis` (> 90%). Quality: CTR (> 35%), time-to-click_p50 (< 800ms), abandonment_rate (< 20%), suggestion_coverage (> 95%). Freshness: `trie_age_seconds` (< 1ч), `trending_lag_seconds` (< 10 мин). Failure: `trie_oom_total`, `cache_stampede_events`, `ml_inference_timeout_total`.",
+              "text": "Три группы: latency (p50/p99, lookup, cache hit), quality (CTR, time-to-click, abandonment) и freshness (trie_age, trending_lag).",
               "correct": true,
               "sections": {
-                "explanation": "Tracing: OpenTelemetry с trace ID через все sync calls, sample 1% traffic для full-trace и 100% для errors; alerting — page on-call при p99 > 200ms 5 мин подряд.",
+                "explanation": "Core latency: `typeahead_latency_p50_ms` (< 30ms), `typeahead_latency_p99_ms` (< 100ms, alert > 200ms 5 мин), `trie_node_lookup_ms` (< 5ms), `cache_hit_ratio_redis` (> 90%). Quality: CTR (> 35% на показанную подсказку), time-to-click_p50 (< 800ms), abandonment_rate (< 20%), suggestion_coverage (> 95%). Freshness: `trie_age_seconds` (< 1ч), `trending_lag_seconds` (< 10 мин). Failure: `trie_oom_total`, `cache_stampede_events`, `ml_inference_timeout_total`.",
                 "example": "Этот набор метрик описывают, когда обсуждают, как замечать деградацию latency, качества и свежести до жалоб пользователей.",
                 "when_to_apply": "Dashboards per-locale (latency/CTR выявляют regional issues) и per-suggestion impressions/clicks выявляют stale popularity; Slack-alert на CTR drop > 5%.",
                 "edge_cases": "Edge case: full-trace включают лишь для 1% трафика (и 100% ошибок), иначе объём трейсов сам станет проблемой производительности.",
@@ -1702,7 +1702,7 @@
               "label": "A"
             },
             {
-              "text": "Достаточно мониторить только среднюю latency (avg): p50/p99 для autocomplete избыточны, ведь среднее и так отражает скорость.",
+              "text": "Достаточно мониторить только среднюю latency (avg): p50/p99 для autocomplete избыточны, а cache_hit_ratio и lookup-метрики ничего не добавляют.",
               "correct": false,
               "sections": {
                 "what_actually": "Мониторят именно p50 и p99 (хвост важнее среднего), а не avg: одно медленное событие на keystroke ломает UX, и avg его прячет.",
@@ -1714,7 +1714,7 @@
               "label": "B"
             },
             {
-              "text": "Quality-метрики (CTR, abandonment) не мониторят в реальном времени — их смотрят только в офлайн-отчётах раз в квартал.",
+              "text": "Quality-метрики (CTR, abandonment, time-to-click) не мониторят в реальном времени — их смотрят только в офлайн-отчётах раз в квартал, без алертов на дрейф.",
               "correct": false,
               "sections": {
                 "what_actually": "CTR и abandonment мониторят постоянно с daily-алертами на drift > 5%: stale popularity или сломанная модель иначе остаются незамеченными неделями.",
@@ -1726,7 +1726,7 @@
               "label": "C"
             },
             {
-              "text": "Freshness-метрики не нужны: раз trie обновляется по расписанию, отслеживать его возраст и trending-lag незачем.",
+              "text": "Freshness-метрики не нужны: раз trie обновляется по расписанию, отслеживать `trie_age_seconds` и `trending_lag_seconds` незачем, как и failure-счётчики.",
               "correct": false,
               "sections": {
                 "what_actually": "Freshness обязателен: `trie_age_seconds` (target < 1ч) и `trending_lag_seconds` (< 10 мин) ловят залипший pipeline, когда обновления молча перестали идти.",
@@ -1749,7 +1749,7 @@
           "question_text": "Какие антипаттерны и подводные камни в typeahead?",
           "options": [
             {
-              "text": "Главный (и единственный серьёзный) антипаттерн — мало RAM на trie-нодах; остальные проблемы вторичны и решаются сами.",
+              "text": "Главный (и единственный серьёзный) антипаттерн — мало RAM на trie-нодах; SQL LIKE, sync counters и PII в trie вторичны и решаются сами.",
               "correct": false,
               "sections": {
                 "what_actually": "Антипаттернов много и они разноплановые: SQL LIKE на keystroke, отсутствие кэша, single global trie без sharding, sync-обновление счётчиков, ML без debounce, PII в global trie, и т.д.",
@@ -1761,10 +1761,10 @@
               "label": "A"
             },
             {
-              "text": "Ключевые антипаттерны: SQL `LIKE 'prefix%'` на каждый keystroke (p99 > 500ms), polling DB без кэша, single global trie без sharding (GC pauses 500ms+), sync-обновление popularity counters (row lock storm), ML inference без debouncing, PII в global trie (GDPR violation), игнор unicode normalization, нет фильтрации spam, single Redis (SPOF), нет monitoring CTR drift.",
+              "text": "Антипаттерны: SQL LIKE на keystroke, polling без кэша, single trie без sharding, sync counters, PII в trie, single Redis.",
               "correct": true,
               "sections": {
-                "explanation": "Пример: PII в global trie — leak и GDPR violation; решение — per-user personalization в отдельном store с merge на read (Q17, Q24).",
+                "explanation": "Ключевые антипаттерны: SQL `LIKE 'prefix%'` на каждый keystroke (p99 > 500ms, не масштабируется на 60K QPS), polling DB без кэша, single global trie без sharding (GC pauses 500ms+), sync-обновление popularity counters (row lock storm на hot key), ML inference без debouncing, PII в global trie (GDPR violation), игнор unicode normalization, нет фильтрации spam, single Redis (SPOF → DB-storm), нет monitoring CTR drift.",
                 "example": "Этот чек-лист проходят в конце интервью, чтобы показать, что знаешь типичные грабли реальных typeahead-систем.",
                 "when_to_apply": "Каждый антипаттерн имеет фикс: SQL LIKE → in-memory trie (Q4), нет кэша → multi-tier (Q19), sync counters → async Kafka→Flink (Q13), single Redis → cluster + circuit breaker fallback на Caffeine.",
                 "edge_cases": "Edge case: при отказе единственного Redis срабатывает circuit breaker с fallback на локальный Caffeine, чтобы не устроить DB-storm.",
@@ -1774,7 +1774,7 @@
               "label": "B"
             },
             {
-              "text": "Обновлять popularity counters синхронно на каждый поиск — нормально: это гарантирует точность частот без сложных пайплайнов.",
+              "text": "Обновлять popularity counters синхронно на каждый поиск — нормально: это гарантирует точность частот без async-пайплайна Kafka → Flink и без row lock storm.",
               "correct": false,
               "sections": {
                 "what_actually": "Sync-обновление counters — антипаттерн: hot key на популярный query даёт row lock storm; нужен async pipeline (search log → Kafka → Flink → batch trie update).",
@@ -1786,7 +1786,7 @@
               "label": "C"
             },
             {
-              "text": "Хранить полную user history в global trie — удобный антипаттерн без последствий: это лишь немного раздувает память.",
+              "text": "Хранить полную user history в global trie — удобный антипаттерн без последствий: это лишь немного раздувает память и не нарушает GDPR между пользователями.",
               "correct": false,
               "sections": {
                 "what_actually": "Полная user history в global trie — это PII leak и GDPR violation с cross-user privacy compromise, а не просто рост памяти.",
