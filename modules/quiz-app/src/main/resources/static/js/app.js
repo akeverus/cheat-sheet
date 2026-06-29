@@ -87,6 +87,17 @@
   function setInlineAlert(message, kind = 'error') {
     const alertEl = document.getElementById('interview-alert');
     if (!alertEl) return;
+    // Politeness по типу: success — статус-подтверждение, не должно ПРЕРЫВАТЬ речь
+    // скринридера → polite/status. Ошибки остаются assertive/alert (срочно). Шаблон
+    // inline-alert.html хардкодит alert/assertive — здесь управляем динамически.
+    // Ставим ДО textContent, чтобы озвучка ушла с новой вежливостью.
+    if (kind === 'success') {
+      alertEl.setAttribute('role', 'status');
+      alertEl.setAttribute('aria-live', 'polite');
+    } else {
+      alertEl.setAttribute('role', 'alert');
+      alertEl.setAttribute('aria-live', 'assertive');
+    }
     alertEl.textContent = message;
     alertEl.classList.remove('hidden', 'success');
     if (kind === 'success') {
