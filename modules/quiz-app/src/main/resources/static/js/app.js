@@ -1459,6 +1459,11 @@
         // (InterviewService 192/253/258) → утечка БД-id + dead-end. Фикс-строка
         // actionable и покрывает оба случая (устаревший вопрос/вариант).
         setInlineAlert('Не удалось проверить ответ — возможно, вопрос устарел. Обнови страницу и загрузи новый вопрос.');
+        // submitBtn.disabled=true (выше) при клавиатурной активации кнопки сбрасывает
+        // фокус на <body> (поэтому в других местах — aria-disabled). На success фокус
+        // переносит showResult; в error-ветках возвращаем его на кнопку, иначе keyboard/SR
+        // юзер осиротевает на <body> (WCAG 2.4.3). preventScroll бережёт скролл алерта.
+        if (document.activeElement === document.body) submitBtn.focus({ preventScroll: true });
         return;
       }
 
@@ -1475,6 +1480,8 @@
       updateSubmitAvailability();
       startQuestionTimer();
       setInlineAlert('Сервер недоступен. Проверь соединение и повтори отправку.');
+      // см. коммент в ветке !response.ok — возвращаем фокус на кнопку после re-enable.
+      if (document.activeElement === document.body) submitBtn.focus({ preventScroll: true });
     }
   }
 
