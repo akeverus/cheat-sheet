@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главное отличие в том, что `Vert.x` синхронный и блокирующий, а `Spring Boot` всегда полностью реактивный и non-blocking во всех своих частях.",
+              "text": "Главное отличие в том, что `Vert.x` синхронный и блокирующий с моделью «поток на запрос», а `Spring Boot` всегда полностью реактивный и non-blocking во всех своих частях, включая классический MVC.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `Vert.x` event-driven и non-blocking по своей сути, а классический `Spring MVC` как раз блокирующий (реактивен только `WebFlux`).",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Vert.x` — toolkit без встроенного DI, event-driven (callback/Promise), low-level control и быстрый старт; `Spring Boot` — полный фреймворк с DI-контейнером, аннотациями и фокусом на productivity.",
+              "text": "`Vert.x` — event-driven toolkit без встроенного DI; `Spring Boot` — полный фреймворк с DI-контейнером и аннотациями.",
               "correct": true,
               "sections": {
                 "explanation": "`Vert.x` — toolkit (набор библиотек) без встроенного DI, event-driven стиль (callback/Promise), фокус на low-level control и performance; `Spring Boot` — полный фреймворк с DI-контейнером, annotation-based стилем и упором на productivity и абстракции.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Разница только в логотипе и названии: внутри оба используют один и тот же `Spring`-контейнер и одинаковую annotation-based модель.",
+              "text": "Разница только в логотипе и названии: внутри оба используют один и тот же `Spring`-контейнер, одинаковую annotation-based модель и совпадающий по времени cold start.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Vert.x` нет встроенного DI-контейнера и нет annotation-based модели `Spring`; это разные архитектуры (event loop vs контейнер бинов).",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Vert.x` отличается тем, что работает только на Node.js и JavaScript, а `Spring Boot` — единственный из них, кто запускается на JVM.",
+              "text": "`Vert.x` отличается тем, что работает только на Node.js и JavaScript через V8-движок, а `Spring Boot` — единственный из них, кто запускается на JVM.",
               "correct": false,
               "sections": {
                 "what_actually": "`Vert.x` — это JVM-toolkit (Java/Kotlin/Scala и др.), он не требует Node.js; на JVM работают оба.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Event-driven означает, что под каждое входящее соединение создаётся отдельный поток ОС, а non-blocking — что эти потоки никогда не завершаются и живут вечно.",
+              "text": "Event-driven означает, что под каждое входящее соединение создаётся отдельный поток ОС, а non-blocking — что эти потоки никогда не завершаются и живут вечно в пуле.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Vert.x` соединения обслуживает малое число event loop потоков (~ число CPU cores), а не поток на соединение; non-blocking — про освобождение потока на время I/O, а не про вечную жизнь потоков.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Non-blocking — это когда поток всё равно ждёт ответа от БД внутри обработчика, но делает это «вежливо», уступая CPU другим потокам через `Thread.yield()`.",
+              "text": "Non-blocking — это когда поток всё равно ждёт ответа от БД внутри обработчика, но делает это «вежливо», уступая CPU другим потокам через `Thread.yield()` в цикле опроса.",
               "correct": false,
               "sections": {
                 "what_actually": "Non-blocking означает, что поток вообще не ждёт I/O: он регистрирует callback и сразу уходит обрабатывать другие события, а не уступает CPU в цикле ожидания.",
@@ -155,10 +155,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Event-driven — реакция на события через event loop. Non-blocking — обработчик не ждёт I/O в потоке, а вешает callback/promise и сразу освобождает поток. Итог: десятки тысяч соединений на нескольких потоках.",
+              "text": "Event-driven — реакция на события в event loop. Non-blocking — обработчик не ждёт I/O, а вешает callback/promise и сразу освобождает поток.",
               "correct": true,
               "sections": {
-                "explanation": "Event-driven — программа реагирует на события (HTTP-запросы, сообщения, таймеры), каждое обрабатывается в event loop. Non-blocking — обработчики не блокируют thread на ожидании I/O: они регистрируют callback/promise, и thread сразу свободен для других событий.",
+                "explanation": "Event-driven — программа реагирует на события (HTTP-запросы, сообщения, таймеры), каждое обрабатывается в event loop. Non-blocking — обработчики не блокируют thread на ожидании I/O: они регистрируют callback/promise, и thread сразу свободен для других событий. Итог: десятки тысяч соединений держатся на нескольких потоках (~ число CPU cores) вместо модели «1 поток на запрос».",
                 "example": "В блокирующем `Spring MVC` Thread1 ждёт ответа БД и простаивает; в non-blocking `Vert.x` Thread1 запускает запрос с callback и берёт следующий запрос, а продолжит первый, когда БД вернёт данные.",
                 "when_to_apply": "Эта модель окупается, когда нужно держать десятки тысяч одновременных соединений на горстке потоков (~ число CPU cores) вместо «1 поток на запрос».",
                 "edge_cases": "Цена — усложнение кода: callbacks, promises, async/await; одна случайная блокирующая операция останавливает обработку всех событий на этом потоке.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Event-driven и non-blocking — это синонимы кэширования: сервер заранее вычисляет все ответы и отдаёт их из памяти, не обращаясь к I/O.",
+              "text": "Event-driven и non-blocking — это синонимы кэширования: сервер заранее вычисляет все возможные ответы и отдаёт их из памяти, вообще не обращаясь к I/O и сети.",
               "correct": false,
               "sections": {
                 "what_actually": "Это про модель обработки событий и асинхронный I/O, а не про кэш: `Vert.x` всё так же ходит в БД и сеть, просто не блокируя поток.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Verticle — это аннотация уровня метода, помечающая контроллер для регистрации REST-эндпоинта, аналог `@RestController` в `Spring`.",
+              "text": "Verticle — это аннотация уровня метода, помечающая контроллер для регистрации REST-эндпоинта через сканирование пакетов, аналог `@RestController` в `Spring`.",
               "correct": false,
               "sections": {
                 "what_actually": "Verticle — это класс, единица деплоя (обычно `extends AbstractVerticle`), а не аннотация; в `Vert.x` нет annotation-based регистрации контроллеров.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Verticle — это отдельный микросервис в собственном процессе и контейнере, который общается с другими verticles по HTTP/REST через сеть.",
+              "text": "Verticle — это отдельный микросервис в собственном процессе и контейнере, который общается с другими verticles по HTTP/REST через сеть и service discovery.",
               "correct": false,
               "sections": {
                 "what_actually": "Verticle живёт внутри одного JVM-процесса и общается с другими через Event Bus, а не как отдельный сетевой микросервис по HTTP.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Verticle — это пул потоков ОС, который `Vert.x` создаёт под каждый HTTP-запрос и уничтожает после ответа.",
+              "text": "Verticle — это пул потоков ОС, который `Vert.x` создаёт под каждый входящий HTTP-запрос и уничтожает сразу после отправки ответа клиенту.",
               "correct": false,
               "sections": {
                 "what_actually": "Verticle — это компонент приложения, а не пул потоков; наоборот, каждый verticle закреплён за одним event loop потоком, а не порождает поток на запрос.",
@@ -227,10 +227,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Verticle — единица деплоя в `Vert.x` (аналог актора/сервиса, но в одном JVM). Verticles изолированы, общаются только через Event Bus, и каждый закреплён за одним event loop потоком.",
+              "text": "Verticle — единица деплоя в `Vert.x`, изолированная и закреплённая за одним event loop потоком, общается с другими только через Event Bus.",
               "correct": true,
               "sections": {
-                "explanation": "Verticle — единица деплоя в `Vert.x`, аналог «actor» в `Akka` или «service» в микросервисах, но внутри одного JVM. Verticles изолированы и общаются только через Event Bus; каждый назначен на конкретный thread (event loop).",
+                "explanation": "Verticle — единица деплоя в `Vert.x`, аналог «actor» в `Akka` или «service» в микросервисах, но внутри одного JVM. Verticles изолированы и общаются только через Event Bus; каждый назначен на конкретный thread (event loop). Жизненный цикл задают `start`/`stop` (`extends AbstractVerticle`), деплой — через `vertx.deployVerticle(...)`. Так как verticle всегда на одном потоке, его mutable-состояние потокобезопасно без locks.",
                 "example": "`MyVerticle extends AbstractVerticle` поднимает HTTP-сервер в `start(Promise)`, а деплоится через `vertx.deployVerticle(new MyVerticle())`; `start`/`stop` управляют жизненным циклом.",
                 "when_to_apply": "Разбивай приложение на verticles, чтобы получить изоляцию и потоковую модель «один verticle — один event loop», избавляющую от locks внутри verticle.",
                 "edge_cases": "Так как verticle всегда на одном потоке, нельзя делиться его mutable-состоянием с другими verticles напрямую — только через сообщения Event Bus.",
@@ -251,10 +251,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Standard — один event loop поток, только non-blocking. Worker — поток worker pool, можно блокировать, но сообщения обрабатываются последовательно. Multi-Threaded Worker (несколько потоков) deprecated в 4.0+.",
+              "text": "Standard — один event loop поток (только non-blocking). Worker — поток worker pool, можно блокировать, сообщения идут последовательно. Multi-Threaded Worker deprecated в 4.0+.",
               "correct": true,
               "sections": {
-                "explanation": "Standard verticle работает на одном event loop потоке (default, только non-blocking I/O). Worker verticle выполняется на потоке worker pool и допускает блокирующую работу (JDBC, file I/O), но обрабатывает сообщения последовательно. Multi-Threaded Worker использовал несколько потоков параллельно и deprecated в 4.0+.",
+                "explanation": "Standard verticle работает на одном event loop потоке (default, только non-blocking I/O). Worker verticle выполняется на потоке worker pool и допускает блокирующую работу (JDBC, file I/O), но обрабатывает сообщения последовательно, по одному за раз. Multi-Threaded Worker использовал несколько потоков параллельно и deprecated в 4.0+.",
                 "example": "Worker деплоят через `new DeploymentOptions().setWorker(true)`; туда выносят блокирующий JDBC, чтобы не остановить event loop.",
                 "when_to_apply": "Standard — для обычного async I/O; Worker — когда без блокирующего вызова не обойтись; Multi-Threaded Worker сейчас не используют (удалён/deprecated).",
                 "edge_cases": "В Standard блокировка вызывает warning `BlockedThreadChecker`; в Worker блокировать можно, но параллелизма внутри одного экземпляра нет — сообщения идут по очереди.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Все три типа работают только на event loop потоке и одинаково запрещают блокировку — разница лишь в приоритете планирования.",
+              "text": "Все три типа работают только на event loop потоке и одинаково запрещают блокировку — разница лишь в приоритете планирования и размере очереди сообщений.",
               "correct": false,
               "sections": {
                 "what_actually": "Worker verticle работает не на event loop, а на потоке worker pool, и в нём блокировка как раз разрешена; типы отличаются именно потоковой моделью.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Standard verticle — это тот, что можно безопасно блокировать `Thread.sleep`, а Worker — наоборот, строго non-blocking и для лёгких задач.",
+              "text": "Standard verticle — это тот, что можно безопасно блокировать `Thread.sleep` и JDBC, а Worker — наоборот, строго non-blocking и только для лёгких I/O-задач.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё ровно наоборот: блокировать нельзя в Standard (он на event loop), а Worker как раз для блокирующей работы на worker pool.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Multi-Threaded Worker — это рекомендуемый и активно развиваемый тип в `Vert.x` 4.x, заменивший устаревшие Standard и Worker.",
+              "text": "Multi-Threaded Worker — это рекомендуемый и активно развиваемый тип в `Vert.x` 4.x, заменивший собой устаревшие Standard и Worker verticles.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-Threaded Worker, наоборот, deprecated в 4.0+; основными остаются Standard и Worker.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Multi-reactor — это запуск нескольких физических серверов (нод) в кластере, между которыми балансируется нагрузка внешним load balancer.",
+              "text": "Multi-reactor — это запуск нескольких физических серверов (нод) в кластере, между которыми внешний load balancer распределяет входящий трафик по round-robin.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-reactor — про несколько event loop потоков внутри одного JVM по числу ядер, а не про несколько физических нод.",
@@ -323,10 +323,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Multi-reactor — это N event loops по числу CPU cores (а не один, как в классическом Reactor). Каждый verticle закреплён за своим event loop, события между ними идут через Event Bus, locks внутри verticle не нужны.",
+              "text": "Multi-reactor — это N event loops по числу CPU cores; каждый verticle закреплён за своим loop, события между ними идут через Event Bus, locks не нужны.",
               "correct": true,
               "sections": {
-                "explanation": "Классический Reactor pattern — один event loop поток обрабатывает все события, что упирается в один CPU. Multi-reactor (`Vert.x`) — это N event loops по числу CPU cores; каждый verticle назначен на конкретный event loop, а события между ними передаются через Event Bus.",
+                "explanation": "Классический Reactor pattern — один event loop поток обрабатывает все события, что упирается в один CPU. Multi-reactor (`Vert.x`) — это N event loops по числу CPU cores (по умолчанию по 2 на ядро); каждый verticle назначен на конкретный event loop, а события между ними передаются через Event Bus.",
                 "example": "На 4-ядерной машине поднимается 4 event loop потока (по одному на core), и verticles A/B/C/D распределяются между ними; общаются они через Event Bus.",
                 "when_to_apply": "Этот паттерн позволяет масштабировать обработку на все ядра без классических locks, потому что каждый verticle всегда выполняется на одном и том же потоке.",
                 "edge_cases": "Гарантия «один verticle — один поток» означает, что состояние внутри verticle потокобезопасно без синхронизации, но делиться им между event loops нельзя — только через сообщения.",
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Multi-reactor означает, что один и тот же verticle одновременно выполняется на всех event loops, поэтому внутри него обязательны `synchronized`-блоки.",
+              "text": "Multi-reactor означает, что один и тот же verticle одновременно выполняется на всех event loops сразу, поэтому внутри него обязательны `synchronized`-блоки и атомики.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый экземпляр verticle закреплён за одним event loop, поэтому именно locks и не нужны; на нескольких потоках один verticle одновременно не крутится.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Multi-reactor — это паттерн, где event loop динамически создаёт новый поток под каждое тяжёлое событие и уничтожает его после обработки.",
+              "text": "Multi-reactor — это паттерн, где event loop динамически создаёт новый поток под каждое тяжёлое событие и уничтожает его сразу после обработки, экономя память.",
               "correct": false,
               "sections": {
                 "what_actually": "Число event loops фиксировано (~ число ядер); под событие новые потоки не плодятся — в этом и смысл экономии потоков.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Golden rule запрещает использовать более одного event loop потока в приложении, чтобы избежать гонок данных между потоками.",
+              "text": "Golden rule запрещает использовать более одного event loop потока в приложении, чтобы избежать гонок данных между потоками и не плодить лишние context switches.",
               "correct": false,
               "sections": {
                 "what_actually": "Правило — про то, чтобы не блокировать event loop; число event loops, наоборот, обычно равно числу ядер (multi-reactor).",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Golden rule означает, что любой блокирующий код просто нужно обернуть в `synchronized`, и тогда event loop можно безопасно блокировать.",
+              "text": "Golden rule означает, что любой блокирующий код просто нужно обернуть в `synchronized`-блок, и тогда event loop можно безопасно блокировать без потери throughput.",
               "correct": false,
               "sections": {
                 "what_actually": "`synchronized` не делает блокирующий вызов безопасным для event loop — блокировка всё равно останавливает обработку событий; нужно выносить работу в worker pool или async API.",
@@ -395,10 +395,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Golden rule: standard verticle не должен блокировать event loop. Запрещены `Thread.sleep`, синхронный JDBC, `Files.read*`, sync HTTP-клиенты. `Vert.x` логирует warning через `BlockedThreadChecker` при блокировке дольше ~2 секунд.",
+              "text": "Golden rule: standard verticle не должен блокировать event loop. Запрещены `Thread.sleep`, синхронный JDBC, `Files.read*`, sync HTTP-клиенты.",
               "correct": true,
               "sections": {
-                "explanation": "Главное правило `Vert.x`: код в standard verticle никогда не должен блокировать event loop поток. Нельзя `Thread.sleep`, синхронный JDBC, `Files.read*`, синхронные HTTP-клиенты; можно — async API `Vert.x`, Kotlin-корутины, Reactor с правильными schedulers.",
+                "explanation": "Главное правило `Vert.x`: код в standard verticle никогда не должен блокировать event loop поток. Нельзя `Thread.sleep`, синхронный JDBC, `Files.read*`, синхронные HTTP-клиенты; можно — async API `Vert.x`, Kotlin-корутины, Reactor с правильными schedulers. `Vert.x` детектирует блокировки дольше ~2 секунд и логирует warning через `BlockedThreadChecker`, но более короткие блокировки тихо съедают производительность.",
                 "example": "Плохо: `DriverManager.getConnection` + синхронный `executeQuery` прямо в requestHandler блокируют loop. Хорошо: `pgPool.query(...).execute().onSuccess(...).onFailure(...)` — async.",
                 "when_to_apply": "Соблюдай правило в любом standard verticle: одна блокирующая операция останавливает обработку всех событий на этом event loop и роняет throughput.",
                 "edge_cases": "`Vert.x` детектирует блокировки дольше ~2 секунд и логирует warning через `BlockedThreadChecker`, но более короткие блокировки тихо съедают производительность и не всегда заметны.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Golden rule — это требование всегда вызывать `System.gc()` после каждого HTTP-запроса, чтобы event loop не засорялся объектами.",
+              "text": "Golden rule — это требование всегда вызывать `System.gc()` после каждого HTTP-запроса, чтобы event loop не засорялся объектами и не уходил в долгие паузы GC.",
               "correct": false,
               "sections": {
                 "what_actually": "Правило не имеет отношения к GC; оно про запрет блокирующих операций на event loop потоке.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`executeBlocking` выполняет переданный код прямо на event loop, но с повышенным приоритетом, чтобы он завершился быстрее остальных событий.",
+              "text": "`executeBlocking` выполняет переданный код прямо на event loop, но с повышенным приоритетом планирования, чтобы он завершился быстрее остальных событий в очереди.",
               "correct": false,
               "sections": {
                 "what_actually": "`executeBlocking` уводит код на worker pool поток, а не выполняет его на event loop; смысл как раз в том, чтобы не блокировать loop.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`executeBlocking` создаёт под каждую операцию отдельный новый поток ОС без всякого пула, поэтому ограничений по числу одновременных вызовов нет.",
+              "text": "`executeBlocking` создаёт под каждую операцию отдельный новый поток ОС без всякого пула, поэтому ограничений по числу одновременных вызовов и расходу памяти нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`executeBlocking` использует ограниченный worker pool (по умолчанию 20 потоков), а не безлимитное создание потоков под каждый вызов.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`executeBlocking` — это рекомендуемый основной способ доступа к БД в `Vert.x`, заменяющий собой async SQL клиенты.",
+              "text": "`executeBlocking` — это рекомендуемый основной способ доступа к БД в `Vert.x`, который полностью заменяет собой async SQL клиенты и пулы соединений.",
               "correct": false,
               "sections": {
                 "what_actually": "Для БД предпочтительны non-blocking SQL клиенты `Vert.x`; `executeBlocking` — крайняя мера для legacy, а не основной путь к БД.",
@@ -467,10 +467,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`executeBlocking` — escape hatch для обязательной блокирующей работы: код выполняется на worker pool потоке (по умолчанию 20), результат возвращается на event loop. Использовать как можно реже, для legacy-кода.",
+              "text": "`executeBlocking` — escape hatch для обязательной блокирующей работы: код идёт на worker pool (по умолчанию 20 потоков), результат — обратно на event loop.",
               "correct": true,
               "sections": {
-                "explanation": "`executeBlocking` — escape hatch, когда блокирующая работа обязательна: переданный код выполняется на worker pool потоке, а результат возвращается обратно на event loop. По умолчанию worker pool — 20 потоков, размер настраивается.",
+                "explanation": "`executeBlocking` — escape hatch, когда блокирующая работа обязательна: переданный код выполняется на worker pool потоке, а результат возвращается обратно на event loop. По умолчанию worker pool — 20 потоков, размер настраивается. Worker pool ограничен, поэтому злоупотребление исчерпывает его и создаёт новый bottleneck.",
                 "example": "`vertx.executeBlocking(promise -> { String r = doExpensiveOperation(); promise.complete(r); }, ar -> httpResponse.end(ar.result()));` — тяжёлая операция на worker pool, ответ — на event loop.",
                 "when_to_apply": "Применяй для legacy/блокирующего кода (старый синхронный SDK, тяжёлый CPU-расчёт), который нельзя переписать на async; чем реже используешь — тем лучше.",
                 "edge_cases": "Worker pool ограничен (по умолчанию 20 потоков), поэтому злоупотребление `executeBlocking` исчерпывает его и создаёт новый bottleneck; это не замена нормальному async API.",
@@ -491,10 +491,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Event Bus — внутренний messaging `Vert.x`: verticles шлют сообщения на строковые адреса. Даёт decoupling, request-reply и publish-subscribe, а в clustered-режиме работает между разными JVM.",
+              "text": "Event Bus — внутренний messaging `Vert.x`: verticles шлют сообщения на строковые адреса. Даёт decoupling, request-reply и publish-subscribe.",
               "correct": true,
               "sections": {
-                "explanation": "Event Bus — внутренняя messaging-система `Vert.x`: verticles общаются, отправляя сообщения на строковые адреса. Это даёт decoupling (отправитель не знает получателя), поддерживает request-reply (как RPC) и publish-subscribe, а в clustered-режиме работает между разными JVM.",
+                "explanation": "Event Bus — внутренняя messaging-система `Vert.x`: verticles общаются, отправляя сообщения на строковые адреса. Это даёт decoupling (отправитель не знает получателя), поддерживает request-reply (как RPC) и publish-subscribe, а в clustered-режиме работает между разными JVM. Пример: `vertx.eventBus().send(\"orders.create\", ...)` отправляет, `consumer(\"orders.create\", ...)` принимает по тому же адресу.",
                 "example": "`vertx.eventBus().send(\"orders.create\", JsonObject.of(\"id\", 1, \"amount\", 100))` отправляет, а `vertx.eventBus().consumer(\"orders.create\", message -> ...)` принимает сообщение по тому же адресу.",
                 "when_to_apply": "Используй Event Bus, чтобы развязать verticles и наладить лёгкий обмен сообщениями внутри JVM, а в кластере — простой межсервисный messaging без отдельного брокера.",
                 "edge_cases": "По умолчанию шина передаёт `String`, `Buffer`, `JsonObject`/`JsonArray` и примитивы; для custom-классов нужен свой `MessageCodec`, а в кластере доставка at-most-once.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Event Bus — это внешний брокер сообщений (как `Kafka`), который `Vert.x` обязательно требует развернуть отдельным сервисом для запуска приложения.",
+              "text": "Event Bus — это внешний брокер сообщений (как `Kafka`), который `Vert.x` обязательно требует развернуть отдельным сервисом и держать запущенным для старта приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "Event Bus встроен в `Vert.x` и работает внутри процесса; внешний брокер вроде `Kafka` не нужен и не требуется для старта.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Event Bus — это HTTP REST API, через который verticles вызывают друг друга по URL-эндпоинтам с методами GET/POST.",
+              "text": "Event Bus — это HTTP REST API, через который verticles вызывают друг друга по URL-эндпоинтам с методами GET/POST и стандартными статус-кодами ответа.",
               "correct": false,
               "sections": {
                 "what_actually": "Event Bus адресует сообщения по строковым адресам и работает как in-memory messaging, а не через HTTP REST вызовы по URL.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Event Bus — это пул соединений к базе данных, через который verticles делят между собой одно подключение к PostgreSQL.",
+              "text": "Event Bus — это пул соединений к базе данных, через который verticles делят между собой одно физическое подключение к PostgreSQL и общую транзакцию.",
               "correct": false,
               "sections": {
                 "what_actually": "Event Bus — про обмен сообщениями между verticles, а не про пул соединений к БД; за пулы отвечают SQL-клиенты `Vert.x`.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Любой Java-класс передаётся по Event Bus автоматически через стандартную Java-сериализацию, поэтому `MessageCodec` писать никогда не требуется.",
+              "text": "Любой Java-класс передаётся по Event Bus автоматически через стандартную Java-сериализацию `Serializable`, поэтому `MessageCodec` писать никогда не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Из коробки шина знает лишь ограниченный набор типов; для произвольного класса нужен явный `MessageCodec`, автоматической Java-сериализации тут нет.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`MessageCodec` нужен только для сжатия сообщений (gzip), а для сериализации custom-типов он не применяется.",
+              "text": "`MessageCodec` нужен только для сжатия сообщений (gzip) перед отправкой по шине, а для сериализации custom-типов он вообще не применяется и не вызывается.",
               "correct": false,
               "sections": {
                 "what_actually": "`MessageCodec` отвечает именно за сериализацию/десериализацию типа (`encodeToWire`/`decodeFromWire`), а не за сжатие трафика.",
@@ -635,7 +635,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "По умолчанию Event Bus передаёт `String`, `Buffer`, `JsonObject`/`JsonArray`, примитивы. Для своих классов пишут `MessageCodec` (`encodeToWire`/`decodeFromWire`/`transform`) и регистрируют через `registerDefaultCodec`.",
+              "text": "По умолчанию шина передаёт `String`, `Buffer`, `JsonObject`/`JsonArray`, примитивы. Для своих классов пишут `MessageCodec` и регистрируют через `registerDefaultCodec`.",
               "correct": true,
               "sections": {
                 "explanation": "По умолчанию Event Bus умеет передавать `String`, `Buffer`, `JsonObject`, `JsonArray` и примитивы. Для собственных классов нужен `MessageCodec`, описывающий сериализацию (`encodeToWire`/`decodeFromWire`) и локальную передачу (`transform`), который регистрируется через `registerDefaultCodec`.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`MessageCodec` обязателен даже для `String` и `JsonObject` — без него Event Bus не умеет передавать вообще ничего.",
+              "text": "`MessageCodec` обязателен даже для `String` и `JsonObject` — без него Event Bus не умеет передавать вообще ничего, включая примитивы и `Buffer`.",
               "correct": false,
               "sections": {
                 "what_actually": "`String`, `Buffer`, `JsonObject`, `JsonArray` и примитивы поддерживаются по умолчанию; codec нужен лишь для типов вне этого набора.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "HTTP-сервер в `Vert.x` поднимается аннотацией `@RestController` над классом, и `Vert.x` сам сканирует пакеты и регистрирует эндпоинты.",
+              "text": "HTTP-сервер в `Vert.x` поднимается аннотацией `@RestController` над классом, а `Vert.x` сам сканирует пакеты и регистрирует эндпоинты при старте контекста.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Vert.x` нет annotation-based контроллеров: сервер создают программно через `createHttpServer()` и `requestHandler`, без сканирования аннотаций.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "HTTP-сервер `Vert.x` построен поверх сервлет-контейнера `Tomcat`, обрабатывая запросы в режиме «поток на запрос».",
+              "text": "HTTP-сервер `Vert.x` построен поверх сервлет-контейнера `Tomcat`, обрабатывая каждый входящий запрос в режиме «поток на запрос» из общего пула потоков.",
               "correct": false,
               "sections": {
                 "what_actually": "Под капотом `Vert.x` — `Netty` с event loop моделью, а не `Tomcat` с thread-per-request; именно поэтому он non-blocking.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Метод `listen(port)` блокирует текущий поток до завершения работы сервера, поэтому его вызывают в отдельном потоке вручную.",
+              "text": "Метод `listen(port)` блокирует текущий поток до завершения работы сервера, поэтому его принято вызывать вручную в отдельном фоновом потоке приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "`listen` асинхронный и не блокирует: результат старта приходит в `onSuccess`/`onFailure`, а отдельный поток заводить не нужно.",
@@ -707,10 +707,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`vertx.createHttpServer()` → задаёшь `requestHandler` (формирует `HttpServerResponse`) → `listen(port)` с `onSuccess`/`onFailure`. Под капотом — `Netty`, а `Vert.x` даёт упрощённое API над ним.",
+              "text": "`vertx.createHttpServer()` → задаёшь `requestHandler` → `listen(port)` с `onSuccess`/`onFailure`. Под капотом — `Netty`, `Vert.x` даёт упрощённое API над ним.",
               "correct": true,
               "sections": {
-                "explanation": "HTTP-сервер создаётся через `vertx.createHttpServer()`, ему задают `requestHandler` (где формируется `HttpServerResponse`), а затем вызывают `listen(port)` с `onSuccess`/`onFailure`. Под капотом `Vert.x` использует `Netty` — это высокоуровневая обёртка над ним с упрощённым API.",
+                "explanation": "HTTP-сервер создаётся через `vertx.createHttpServer()`, ему задают `requestHandler` (где формируется `HttpServerResponse`), а затем вызывают `listen(port)` с `onSuccess`/`onFailure`. Под капотом `Vert.x` использует `Netty` — это высокоуровневая обёртка над ним с упрощённым API. `listen` асинхронный: успешный старт и порт приходят в `onSuccess(s -> s.actualPort())`, а ошибки (занятый порт) — в `onFailure`, поэтому полагаться на синхронный возврат нельзя.",
                 "example": "`server.requestHandler(req -> { req.response().putHeader(\"content-type\", \"text/plain\").end(\"Hello, World!\"); }); server.listen(8080).onSuccess(...).onFailure(...);`",
                 "when_to_apply": "Используй этот низкоуровневый API, когда нужен полный контроль над обработкой запросов; для роутинга/middleware поверх него берут `vertx-web`.",
                 "edge_cases": "`listen` асинхронный — успешный старт и порт приходят в `onSuccess(s -> s.actualPort())`, а ошибки (занятый порт) — в `onFailure`, поэтому полагаться на синхронный возврат нельзя.",
@@ -731,10 +731,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`vertx-web` даёт роутинг, body parsing, sessions, templates. `Router.router(vertx)` → маршруты (`get`/`post` с `pathParam`), `BodyHandler`, `StaticHandler`; роутер ставят `requestHandler`'ом сервера. Стиль как у `Express.js`.",
+              "text": "`vertx-web` даёт роутинг, body parsing, sessions, templates. `Router.router(vertx)` навешивает маршруты, роутер ставят `requestHandler`'ом. Стиль как у `Express.js`.",
               "correct": true,
               "sections": {
-                "explanation": "`vertx-web` даёт роутинг, body parsing, sessions и templates. Через `Router.router(vertx)` создаётся роутер, на него навешиваются маршруты (`router.get(\"/users/:id\")` с `ctx.pathParam(\"id\")`), `BodyHandler` для тела, `StaticHandler` для статики, а сам роутер ставится как `requestHandler` HTTP-сервера.",
+                "explanation": "`vertx-web` даёт роутинг, body parsing, sessions и templates. Через `Router.router(vertx)` создаётся роутер, на него навешиваются маршруты (`router.get(\"/users/:id\")` с `ctx.pathParam(\"id\")`), `BodyHandler` для тела, `StaticHandler` для статики, а сам роутер ставится как `requestHandler` HTTP-сервера. Цепочка handlers идёт сверху вниз, как middleware в `Express.js`.",
                 "example": "`router.post(\"/users\").handler(ctx -> { JsonObject body = ctx.body().asJsonObject(); ctx.response().setStatusCode(201).end(body.encode()); });` плюс `router.route().handler(BodyHandler.create())`.",
                 "when_to_apply": "Бери `vertx-web` поверх голого HTTP-сервера, когда нужны path-параметры, middleware-цепочки, разбор тела, статика или шаблоны — то есть для большинства веб-приложений.",
                 "edge_cases": "Чтобы `ctx.body()` был доступен, `BodyHandler` нужно подключить в цепочку раньше обработчиков, читающих тело; порядок навешивания handler'ов определяет middleware-цепочку, как в `Express.js`.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`vertx-web` — это отдельный внешний reverse-proxy (вроде `nginx`), который маршрутизирует запросы к разным JVM, а не библиотека внутри приложения.",
+              "text": "`vertx-web` — это отдельный внешний reverse-proxy (вроде `nginx`), который слушает на 80 порту, терминирует TLS и маршрутизирует запросы к разным JVM, а не библиотека внутри приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "`vertx-web` — это in-process библиотека роутинга поверх HTTP-сервера `Vert.x`, а не внешний reverse-proxy.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Path-параметры в `vertx-web` нельзя извлекать в коде — они доступны только через регулярные выражения в конфиге YAML.",
+              "text": "Path-параметры в `vertx-web` нельзя извлекать в коде — они доступны только через регулярные выражения в конфиге YAML, который `Router` парсит на старте при сканировании classpath.",
               "correct": false,
               "sections": {
                 "what_actually": "Path-параметры берут прямо в коде через `ctx.pathParam(\"id\")` для маршрута вроде `/users/:id`; YAML-конфиг для этого не нужен.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`BodyHandler` в `vertx-web` нужен только для отдачи статических файлов, а тело POST-запроса парсится автоматически без него.",
+              "text": "`BodyHandler` в `vertx-web` нужен только для отдачи статических файлов из `webroot`, а тело POST-запроса парсится автоматически без него и сразу доступно через `ctx.body()`.",
               "correct": false,
               "sections": {
                 "what_actually": "За статику отвечает `StaticHandler`, а `BodyHandler` как раз обеспечивает разбор тела запроса; без него `ctx.body()` будет недоступен.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "WebSocket в `Vert.x` поддерживается только как односторонний канал server→client; клиент не может отправлять сообщения серверу через тот же сокет.",
+              "text": "WebSocket в `Vert.x` поддерживается только как односторонний канал server→client; клиент не может отправлять сообщения серверу через тот же сокет, для этого поднимают второе соединение.",
               "correct": false,
               "sections": {
                 "what_actually": "WebSocket в `Vert.x` двунаправленный: `ws.handler` принимает сообщения от клиента, а `writeTextMessage` шлёт их обратно.",
@@ -803,7 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "WebSocket задаётся через `webSocketHandler` сервера (`ws.handler`, `writeTextMessage`, `closeHandler`). SockJS — fallback для старых браузеров; SockJS bridge даёт браузерному JS общаться с Event Bus по WebSocket.",
+              "text": "WebSocket задаётся через `webSocketHandler` сервера. SockJS — fallback для старых браузеров; SockJS bridge даёт браузерному JS общаться с Event Bus.",
               "correct": true,
               "sections": {
                 "explanation": "WebSocket задаётся через `webSocketHandler` HTTP-сервера: обрабатываются входящие сообщения (`ws.handler`), запись ответов (`ws.writeTextMessage`) и закрытие (`ws.closeHandler`). SockJS — fallback для старых браузеров (long polling и т.п.), а SockJS bridge позволяет браузерному JS общаться напрямую с Event Bus через WebSocket.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "SockJS bridge — это инструмент сжатия WebSocket-трафика по алгоритму gzip, не имеющий отношения к Event Bus.",
+              "text": "SockJS bridge — это инструмент сжатия WebSocket-трафика по алгоритму gzip с настройкой уровня компрессии, не имеющий отношения к Event Bus.",
               "correct": false,
               "sections": {
                 "what_actually": "SockJS bridge соединяет браузерный JS с Event Bus и даёт fallback-транспорты для старых браузеров, а не сжимает трафик.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "WebSocket в `Vert.x` требует развернуть отдельный STOMP-брокер, без которого `webSocketHandler` не запускается.",
+              "text": "WebSocket в `Vert.x` требует развернуть отдельный STOMP-брокер и зарегистрировать топики, без которого `webSocketHandler` не запускается и падает с ошибкой на старте.",
               "correct": false,
               "sections": {
                 "what_actually": "`webSocketHandler` работает прямо на HTTP-сервере `Vert.x` без внешнего STOMP-брокера.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "HTTP/2 в `Vert.x` включается автоматически без TLS и ALPN — достаточно поднять обычный `createHttpServer()` на любом порту.",
+              "text": "HTTP/2 в `Vert.x` включается автоматически без TLS и ALPN — достаточно поднять обычный `createHttpServer()` на любом порту, версия протокола согласуется на уровне TCP-handshake.",
               "correct": false,
               "sections": {
                 "what_actually": "Для HTTP/2 на практике нужны ALPN и TLS (`setUseAlpn(true)` + `setSsl(true)`); без них сервер останется на HTTP/1.1.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "gRPC в `Vert.x` работает поверх обычного HTTP/1.1 и текстового JSON, не используя HTTP/2 и protobuf.",
+              "text": "gRPC в `Vert.x` работает поверх обычного HTTP/1.1 и текстового JSON, не используя HTTP/2 и protobuf; `vertx-grpc` лишь добавляет валидацию схемы запросов.",
               "correct": false,
               "sections": {
                 "what_actually": "gRPC по своей природе работает поверх HTTP/2 и protobuf; `vertx-grpc` лишь даёт реактивную обёртку, не меняя транспорт.",
@@ -875,7 +875,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "HTTP/2 — через `HttpServerOptions` с `setUseAlpn(true)`, `setSsl(true)` и key store. gRPC — модуль `vertx-grpc` (`VertxServerBuilder...addService(...).build()`). Поддержка стандартная, но комьюнити меньше, чем у `grpc-java`.",
+              "text": "HTTP/2 — через `HttpServerOptions` (`setUseAlpn(true)`, `setSsl(true)`, key store). gRPC — модуль `vertx-grpc`. Поддержка стандартная, но комьюнити меньше, чем у `grpc-java`.",
               "correct": true,
               "sections": {
                 "explanation": "HTTP/2 включается через `HttpServerOptions` с `setUseAlpn(true)`, `setSsl(true)` и key store — затем обычный `createHttpServer(options)`. gRPC поддерживается модулем `vertx-grpc`: сервер собирается через `VertxServerBuilder.forAddress(...).addService(...).build()`. Поддержка стандартная, но сообщество меньше, чем у `grpc-java` напрямую.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "У `vertx-grpc` строго больше возможностей и крупнее сообщество, чем у нативного `grpc-java`, поэтому `grpc-java` считается устаревшим.",
+              "text": "У `vertx-grpc` строго больше возможностей и крупнее сообщество, чем у нативного `grpc-java`, поэтому `grpc-java` считается устаревшим и больше не получает обновлений.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: поддержка стандартная, но сообщество `vertx-grpc` меньше, чем у `grpc-java` напрямую.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Async DB-клиенты `Vert.x` — это тонкая обёртка над обычным блокирующим JDBC-драйвером, просто вызывающая его в фоновом потоке.",
+              "text": "Async DB-клиенты `Vert.x` — это тонкая обёртка над обычным блокирующим JDBC-драйвером, просто вызывающая его в фоновом потоке worker pool и возвращающая `Future`.",
               "correct": false,
               "sections": {
                 "what_actually": "Они не используют JDBC вообще: это собственные реализации сетевых протоколов БД, которые non-blocking по своей природе.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Async-клиенты `Vert.x` поддерживают только PostgreSQL — для MySQL, MongoDB и Redis приходится использовать сторонние JDBC-драйверы.",
+              "text": "Async-клиенты `Vert.x` поддерживают только PostgreSQL — для MySQL, MongoDB и Redis приходится использовать сторонние JDBC-драйверы, обёрнутые в `executeBlocking`.",
               "correct": false,
               "sections": {
                 "what_actually": "Набор шире: PostgreSQL, MySQL, MongoDB, Cassandra, Redis, SQL Server, Db2, Oracle — все через собственные async-клиенты.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Результат запроса возвращается синхронно прямо из `execute()`, поэтому строки можно перебрать сразу в следующей строке кода без callback.",
+              "text": "Результат запроса возвращается синхронно прямо из `execute()` как готовый `RowSet`, поэтому строки можно перебрать сразу в следующей строке кода без callback и без `Future`.",
               "correct": false,
               "sections": {
                 "what_actually": "`execute()` возвращает `Future`; строки доступны асинхронно в `onSuccess(rows -> ...)`, а не синхронно сразу после вызова.",
@@ -947,7 +947,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "У `Vert.x` свои non-blocking DB-клиенты без JDBC: они реализуют протоколы БД сами, поэтому асинхронны. Запрос — `client.query(...).execute().onSuccess(...).onFailure(...)`. Поддержаны PostgreSQL, MySQL, MongoDB, Redis и др.",
+              "text": "У `Vert.x` свои non-blocking DB-клиенты без JDBC: они реализуют протоколы БД сами. Запрос — `query(...).execute().onSuccess(...)`. Поддержаны PostgreSQL, MySQL, MongoDB, Redis и др.",
               "correct": true,
               "sections": {
                 "explanation": "`Vert.x` имеет собственные non-blocking DB-клиенты, не основанные на JDBC: они реализуют протоколы БД сами, поэтому работают асинхронно. Запрос строится через `SqlClient`/`PgPool`, выполняется `.query(...).execute()` и обрабатывается через `.onSuccess(rows -> ...)` / `.onFailure(...)`. Поддержаны PostgreSQL, MySQL, MongoDB, Cassandra, Redis, SQL Server, Db2, Oracle.",
@@ -971,10 +971,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Пул создаётся `PgPool.pool(vertx, connectOptions, poolOptions)`. Транзакции — через `pool.withTransaction(client -> ...)`: метод сам коммитит при успехе Future цепочки и откатывает при ошибке.",
+              "text": "Пул — `PgPool.pool(vertx, connectOptions, poolOptions)`. Транзакции — через `pool.withTransaction(client -> ...)`: коммит при успехе Future-цепочки, откат при ошибке.",
               "correct": true,
               "sections": {
-                "explanation": "Пул создаётся через `PgPool.pool(vertx, connectOptions, poolOptions)` и сам управляет соединениями. Транзакции делаются через `pool.withTransaction(client -> ...)`: метод выполняет переданную цепочку запросов и автоматически коммитит при успехе Future или откатывает при ошибке.",
+                "explanation": "Пул создаётся через `PgPool.pool(vertx, connectOptions, poolOptions)` и сам управляет соединениями. Транзакции делаются через `pool.withTransaction(client -> ...)`: метод выполняет переданную цепочку запросов на одном соединении и автоматически коммитит при успехе итогового Future или откатывает при ошибке.",
                 "example": "`pool.withTransaction(client -> client.preparedQuery(\"INSERT INTO users (name) VALUES ($1)\").execute(Tuple.of(\"Alice\")).compose(r -> client.preparedQuery(\"INSERT INTO audit ...\").execute(...)))` — обе вставки в одной транзакции.",
                 "when_to_apply": "Используй `withTransaction`, когда несколько запросов должны быть атомарны: успех всей цепочки даёт commit, любая ошибка — rollback, без ручного управления BEGIN/COMMIT.",
                 "edge_cases": "Решение commit/rollback завязано на исход Future цепочки внутри `withTransaction`: проглоченная ошибка (recover) может привести к нежелательному commit, поэтому ошибки нельзя «терять» внутри транзакции.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Транзакции в `Vert.x` управляются только вручную: нужно самому слать `BEGIN`, `COMMIT` и `ROLLBACK` строками, автоматического API нет.",
+              "text": "Транзакции в `Vert.x` управляются только вручную: нужно самому слать `BEGIN`, `COMMIT` и `ROLLBACK` строками и откатывать в `onFailure`, автоматического API вроде `withTransaction` нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`withTransaction` автоматизирует commit/rollback по исходу Future; ручные `BEGIN`/`COMMIT` писать не обязательно.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`withTransaction` всегда коммитит транзакцию независимо от того, упала цепочка запросов или нет, поэтому rollback в `Vert.x` невозможен.",
+              "text": "`withTransaction` всегда коммитит транзакцию независимо от того, упала цепочка запросов или нет, поэтому rollback в `Vert.x` приходится делать отдельным запросом `ROLLBACK` вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "`withTransaction` откатывает транзакцию при failed Future и коммитит только при успехе — rollback как раз поддержан.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Пул соединений в `Vert.x` создаёт новое TCP-подключение к БД на каждый запрос и закрывает его сразу после ответа.",
+              "text": "Пул соединений в `Vert.x` создаёт новое TCP-подключение к БД на каждый запрос и закрывает его сразу после ответа, а `PoolOptions.setMaxSize` лишь ограничивает частоту таких открытий.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл пула — переиспользовать соединения (`PoolOptions.setMaxSize`), а не открывать новое на каждый запрос.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Vert.x` напрямую использует `java.util.concurrent.CompletableFuture` из Java 8 в качестве основного async-типа, без собственных классов.",
+              "text": "`Vert.x` напрямую использует `java.util.concurrent.CompletableFuture` из Java 8 в качестве основного async-типа, без собственных классов, лишь добавляя свои методы-расширения поверх него.",
               "correct": false,
               "sections": {
                 "what_actually": "`Vert.x` намеренно вводит свои `io.vertx.core.Future`/`Promise` вместо `CompletableFuture`.",
@@ -1043,10 +1043,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Vert.x` использует свои `Future`/`Promise` (не `CompletableFuture`). `Future` — будущий результат (`onSuccess`/`onFailure`, chaining). `Promise` производит его: `promise.complete(...)`, `promise.future()`. API похоже на JavaScript Promise.",
+              "text": "`Vert.x` использует свои `Future`/`Promise`, не `CompletableFuture`. `Future` — будущий результат (`onSuccess`/`onFailure`); `Promise` производит его (`complete`, `future()`).",
               "correct": true,
               "sections": {
-                "explanation": "`Vert.x` использует свои `Future` и `Promise`, а не `CompletableFuture` из Java 8. `Future` представляет будущий результат с `onSuccess`/`onFailure`, поддерживает chaining и composition. `Promise` — «производитель» Future: его завершают через `complete(...)`, а `promise.future()` отдаёт связанный `Future`. API напоминает JavaScript Promise.",
+                "explanation": "`Vert.x` использует свои `Future` и `Promise` (`io.vertx.core.Future`/`Promise`), а не `CompletableFuture` из Java 8. `Future` представляет будущий результат с `onSuccess`/`onFailure`, поддерживает chaining и composition. `Promise` — «производитель» Future: его завершают через `complete(...)`, а `promise.future()` отдаёт связанный `Future`. API напоминает JavaScript Promise. Свой тип нужен, чтобы исполнять колбэки на правильном event loop (context-aware).",
                 "example": "`Promise<String> promise = Promise.promise(); promise.complete(\"hello\"); Future<String> f = promise.future();` а на стороне потребителя `future.onSuccess(r -> ...).onFailure(err -> ...)`.",
                 "when_to_apply": "Используй `Future` для возврата асинхронных результатов из методов и их композиции, а `Promise` — внутри своего async-кода, чтобы вручную завершать операцию по готовности.",
                 "edge_cases": "Это именно типы `Vert.x` (`io.vertx.core.Future`/`Promise`), их легко спутать с `java.util.concurrent.CompletableFuture`; смешивание API двух миров без конвертеров приводит к ошибкам компиляции и путанице.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Future` и `Promise` в `Vert.x` — это полные синонимы одного класса, и оба завершают сами себя методом `complete`.",
+              "text": "`Future` и `Promise` в `Vert.x` — это полные синонимы одного класса, и оба завершают сами себя методом `complete`, а `promise.future()` просто возвращает тот же объект.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные роли: `Promise` завершают (`complete`/`fail`), а `Future` — read-side, который только наблюдают через `onSuccess`/`onFailure`.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Future` в `Vert.x` блокирует поток до получения результата при вызове `onSuccess`, работая как `Future.get()` в Java.",
+              "text": "`Future` в `Vert.x` блокирует поток до получения результата при вызове `onSuccess`, работая как `Future.get()` в Java и снимая блокировку только после прихода данных от БД.",
               "correct": false,
               "sections": {
                 "what_actually": "`onSuccess` регистрирует callback и не блокирует поток; блокирующего `get()`-стиля у `Vert.x` `Future` нет — он событийный.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для последовательного связывания futures в `Vert.x` используют оператор `flatMap` из `Stream API`, а `compose` не существует.",
+              "text": "Для последовательного связывания futures в `Vert.x` используют оператор `flatMap` из `Stream API`, оборачивая каждый `Future` в `Stream.of(...)`, а метода `compose` у `Future` не существует.",
               "correct": false,
               "sections": {
                 "what_actually": "Последовательную композицию делает именно `compose` у `Future`; `Stream.flatMap` к асинхронным `Future` отношения не имеет.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`CompositeFuture.all` запускает переданные futures строго по очереди (одна за другой), а не параллельно, поэтому общее время — сумма их длительностей.",
+              "text": "`CompositeFuture.all` запускает переданные futures строго по очереди (одна за другой), а не параллельно, поэтому общее время — сумма их длительностей, а `resultAt(i)` отдаёт промежуточные значения.",
               "correct": false,
               "sections": {
                 "what_actually": "`CompositeFuture.all` ждёт уже параллельно стартовавшие futures одновременно; смысл — дождаться всех, а не выполнять их последовательно.",
@@ -1115,10 +1115,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`compose` — последовательная цепочка (результат → следующий Future). `CompositeFuture.all(...)` — параллельно, результаты через `resultAt(i)`. `recover` — fallback при ошибке; таймаут — через `vertx.setTimer`.",
+              "text": "`compose` — последовательная цепочка. `CompositeFuture.all(...)` — параллельно, результаты через `resultAt(i)`. `recover` — fallback при ошибке; таймаут — через `vertx.setTimer`.",
               "correct": true,
               "sections": {
-                "explanation": "Последовательную композицию делает `compose` (результат одного Future передаётся в следующий). Параллельную — `CompositeFuture.all(...)`, где после завершения всех Future доступны результаты через `resultAt(i)`. Ошибки обрабатывает `recover` (подстановка fallback-значения), а таймаут можно сделать через `vertx.setTimer`.",
+                "explanation": "Последовательную композицию делает `compose` (результат одного Future передаётся в следующий, аналог `flatMap`). Параллельную — `CompositeFuture.all(...)`, где после завершения всех Future доступны результаты через `resultAt(i)`. Ошибки обрабатывает `recover` (подстановка fallback-значения), а таймаут можно сделать через `vertx.setTimer`, проверяя `future.isComplete()`.",
                 "example": "`client.findUser(1).compose(user -> orderService.findOrders(user.id)).compose(orders -> emailService.send(...))` для цепочки; `CompositeFuture.all(userFuture, ordersFuture).onSuccess(cf -> { User u = cf.resultAt(0); ... })` для параллели.",
                 "when_to_apply": "`compose` — когда шаги зависят друг от друга по очереди; `CompositeFuture.all` — когда независимые операции можно запустить параллельно и дождаться всех; `recover` — для graceful fallback при ошибке.",
                 "edge_cases": "`CompositeFuture.all` завершается ошибкой, если упал хотя бы один из Future; для таймаута нет встроенного оператора в core — его эмулируют через `setTimer`, проверяя `future.isComplete()`.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Обработка ошибки с подстановкой fallback-значения в `Vert.x` делается методом `onFailure`, который возвращает новое значение в цепочку; отдельного `recover` нет.",
+              "text": "Обработка ошибки с подстановкой fallback-значения в `Vert.x` делается методом `onFailure`, который возвращает новое значение в цепочку и продолжает её; отдельного оператора `recover` для этого нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`onFailure` — это лишь callback для побочного эффекта; для подстановки fallback-значения в цепочку служит именно `recover`.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Vert.x` несовместим с RxJava, Mutiny и корутинами: работать можно только в нативном callback-стиле, мостов к другим reactive-библиотекам нет.",
+              "text": "`Vert.x` несовместим с RxJava, Mutiny и корутинами: работать можно только в нативном callback-стиле, мостов к другим reactive-библиотекам нет, их типы пришлось бы конвертировать руками.",
               "correct": false,
               "sections": {
                 "what_actually": "`Vert.x` как раз предоставляет официальные bridges к RxJava 3, Mutiny и Kotlin coroutines поверх callback-API.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Mutiny — это эксклюзивная библиотека `Spring WebFlux`, и с `Vert.x` она в принципе не стыкуется.",
+              "text": "Mutiny — это эксклюзивная библиотека `Spring WebFlux` поверх `Reactor`, и с `Vert.x` она в принципе не стыкуется без отдельного адаптера-моста.",
               "correct": false,
               "sections": {
                 "what_actually": "Mutiny интегрирован с `Vert.x` (пакеты `io.vertx.mutiny`, тип `Uni`) и активно используется в Quarkus, построенном на `Vert.x`; к `Spring WebFlux` он не относится.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Kotlin coroutines в `Vert.x` требуют ручного создания потоков под каждый `suspend`-вызов, иначе они блокируют event loop.",
+              "text": "Kotlin coroutines в `Vert.x` требуют ручного создания потоков под каждый `suspend`-вызов через `Dispatchers.IO`, иначе они блокируют event loop при приостановке.",
               "correct": false,
               "sections": {
                 "what_actually": "Корутины работают поверх event loop через `CoroutineVerticle`/`coAwait()` без создания потоков на вызов и без блокировки loop.",
@@ -1187,10 +1187,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Vert.x` даёт bridges: RxJava 3 (`io.vertx.rxjava3`, `rxEnd`), Mutiny (`Uni`, используется в Quarkus) и Kotlin Coroutines (`CoroutineVerticle`, `coAwait()`). Корутины — самый удобный способ писать последовательный async-код.",
+              "text": "`Vert.x` даёт bridges: RxJava 3 (`io.vertx.rxjava3`, `rxEnd`), Mutiny (`Uni`, в Quarkus) и Kotlin Coroutines (`CoroutineVerticle`, `coAwait()`). Корутины — самый удобный.",
               "correct": true,
               "sections": {
-                "explanation": "Callback-стиль нравится не всем, поэтому `Vert.x` даёт bridges к reactive-библиотекам: RxJava 3 (пакеты `io.vertx.rxjava3...`, методы вроде `rxEnd`), Mutiny (`io.vertx.mutiny...`, тип `Uni`, используется в Quarkus) и Kotlin Coroutines (`CoroutineVerticle`, suspend-функции и `coAwait()`). Корутины — самый удобный способ писать последовательный async-код на `Vert.x`.",
+                "explanation": "Callback-стиль нравится не всем, поэтому `Vert.x` даёт bridges к reactive-библиотекам: RxJava 3 (пакеты `io.vertx.rxjava3...`, методы вроде `rxEnd`), Mutiny (`io.vertx.mutiny...`, тип `Uni`, используется в Quarkus) и Kotlin Coroutines (`CoroutineVerticle`, suspend-функции и `coAwait()`). Корутины — самый удобный способ писать последовательный async-код на `Vert.x` без callback hell.",
                 "example": "Kotlin: `class MyVerticle : CoroutineVerticle() { override suspend fun start() { val data = pgPool.query(\"SELECT ...\").execute().coAwait(); ... } }` — async выглядит как обычный последовательный код.",
                 "when_to_apply": "Подключай нужный bridge под стек команды: RxJava/Mutiny — если уже используете эти библиотеки; Kotlin coroutines — для самого читаемого sequential-кода без callback hell.",
                 "edge_cases": "Bridges живут в отдельных пакетах (`io.vertx.rxjava3`, `io.vertx.mutiny`), и смешивать «голый» core API с обёрнутыми типами в одном месте чревато путаницей; `coAwait()` доступен только в suspend-контексте.",
@@ -1211,10 +1211,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Clustering объединяет несколько JVM `Vert.x`, и Event Bus начинает работать между ними как distributed messaging: `send(\"address\", ...)` доставит сообщение в любую инстанцию кластера с consumer'ом на этот адрес.",
+              "text": "Clustering объединяет несколько JVM `Vert.x`, и Event Bus начинает работать между ними как distributed messaging: `send(\"address\", ...)` доходит до consumer'а в любой инстанции.",
               "correct": true,
               "sections": {
-                "explanation": "Clustering объединяет несколько JVM-инстансов `Vert.x` так, что Event Bus работает между ними как распределённый messaging. После кластеризации `eventBus.send(\"address\", ...)` доставит сообщение в любую инстанцию кластера, где есть consumer на этот адрес.",
+                "explanation": "Clustering объединяет несколько JVM-инстансов `Vert.x` (разные машины) так, что Event Bus работает между ними как распределённый messaging прозрачно. После кластеризации `eventBus.send(\"address\", ...)` доставит сообщение в любую инстанцию кластера, где есть consumer на этот адрес. Код общения не меняется — тот же `send`/`publish`/`request`, что и локально.",
                 "example": "`Vertx.clusteredVertx(new VertxOptions(), ar -> { if (ar.succeeded()) { Vertx vertx = ar.result(); vertx.eventBus().send(\"cluster-address\", \"Hello cluster\"); } });`",
                 "when_to_apply": "Используй clustering, когда нужен простой распределённый messaging между своими сервисами без разворачивания полноценного `Kafka`/`RabbitMQ`.",
                 "edge_cases": "Создание кластера асинхронно (`clusteredVertx` с callback), а доставка распределённой шины — at-most-once без гарантий; для mission-critical задач этого недостаточно.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Clustering в `Vert.x` — это горизонтальное шардирование базы данных между нодами, не затрагивающее Event Bus.",
+              "text": "Clustering в `Vert.x` — это горизонтальное шардирование базы данных между нодами по ключу, не затрагивающее Event Bus, который остаётся строго локальным для каждой JVM.",
               "correct": false,
               "sections": {
                 "what_actually": "Clustering распространяет именно Event Bus на несколько JVM; к шардированию БД он отношения не имеет.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "После clustering `eventBus.send` рассылает сообщение сразу во все инстансы кластера, превращаясь в `publish`.",
+              "text": "После clustering `eventBus.send` рассылает сообщение сразу во все инстансы кластера, превращаясь в `publish`, потому что точечная доставка между JVM технически невозможна.",
               "correct": false,
               "sections": {
                 "what_actually": "`send` и в кластере доставляет одному consumer'у (в любой инстанции), а не всем сразу; «всем» — это `publish`.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Clustering требует переписать весь код на специальный clustered-API: обычные `send`/`publish`/`request` в кластере не работают.",
+              "text": "Clustering требует переписать весь код на специальный clustered-API с префиксом `cluster.`: обычные `send`/`publish`/`request` в кластере не работают и кидают исключение.",
               "correct": false,
               "sections": {
                 "what_actually": "Тот же API Event Bus (`send`/`publish`/`request`) прозрачно начинает работать между JVM после кластеризации; переписывать вызовы не нужно.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Cluster manager в `Vert.x` — это балансировщик HTTP-нагрузки уровня L7, распределяющий входящие веб-запросы между нодами.",
+              "text": "Cluster manager в `Vert.x` — это балансировщик HTTP-нагрузки уровня L7, распределяющий входящие веб-запросы между нодами по round-robin и проверяющий их health-check'ами.",
               "correct": false,
               "sections": {
                 "what_actually": "Cluster manager отвечает за discovery и членство в кластере (и распределённые структуры), а не за балансировку HTTP-трафика.",
@@ -1283,10 +1283,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Кластеру нужен cluster manager для discovery и членства. Варианты: `Hazelcast` (default), `Infinispan` (Red Hat), `Apache Ignite`, `ZooKeeper` (через `vertx-zookeeper`). Задаётся через `VertxOptions.setClusterManager(...)`.",
+              "text": "Кластеру нужен cluster manager для discovery и членства. Варианты: `Hazelcast` (default), `Infinispan`, `Apache Ignite`, `ZooKeeper`. Задаётся через `VertxOptions.setClusterManager(...)`.",
               "correct": true,
               "sections": {
-                "explanation": "Кластер `Vert.x` требует cluster manager — компонент для discovery, членства в кластере и распределённых структур данных. Варианты: `Hazelcast` (default, in-memory data grid), `Infinispan` (от Red Hat, аналог Hazelcast), `Apache Ignite` (high-performance) и `ZooKeeper` (через `vertx-zookeeper`). Менеджер подключается зависимостью и задаётся через `VertxOptions.setClusterManager(...)`.",
+                "explanation": "Кластер `Vert.x` требует cluster manager — компонент для discovery, членства в кластере, распределённых структур данных и реестра адресов Event Bus. Варианты: `Hazelcast` (default, in-memory data grid), `Infinispan` (от Red Hat, аналог Hazelcast), `Apache Ignite` (high-performance) и `ZooKeeper` (через `vertx-zookeeper`). Менеджер подключается зависимостью и задаётся через `VertxOptions.setClusterManager(...)`.",
                 "example": "Добавляешь зависимость `vertx-hazelcast`, затем `ClusterManager mgr = new HazelcastClusterManager(); VertxOptions options = new VertxOptions().setClusterManager(mgr); Vertx.clusteredVertx(options, ...)`.",
                 "when_to_apply": "Выбирай cluster manager под инфраструктуру: `Hazelcast` как default, `Infinispan`/`Ignite` под свои предпочтения, `ZooKeeper` если он уже есть в стеке для координации.",
                 "edge_cases": "Без подключённого cluster manager кластеризация не заработает; смена менеджера меняет механизм discovery и требования к сети/портам, что важно учитывать при деплое.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Vert.x`-кластер вообще не требует cluster manager: ноды находят друг друга сами через встроенный механизм без сторонних зависимостей.",
+              "text": "`Vert.x`-кластер вообще не требует cluster manager: ноды находят друг друга сами через встроенный UDP-multicast механизм без сторонних зависимостей и конфигурации.",
               "correct": false,
               "sections": {
                 "what_actually": "Кластер обязательно требует cluster manager (например `Hazelcast`); встроенного self-discovery без него нет.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Единственный поддерживаемый cluster manager — `ZooKeeper`; `Hazelcast` и `Infinispan` с `Vert.x` несовместимы.",
+              "text": "Единственный поддерживаемый cluster manager — `ZooKeeper` через `vertx-zookeeper`; `Hazelcast` и `Infinispan` с `Vert.x` несовместимы и были удалены в версии 4.x.",
               "correct": false,
               "sections": {
                 "what_actually": "Default — как раз `Hazelcast`, также поддержаны `Infinispan` и `Apache Ignite`; `ZooKeeper` — лишь один из вариантов.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Распределённый Event Bus гарантирует exactly-once доставку с подтверждениями и повторными попытками, поэтому полностью заменяет `Kafka`.",
+              "text": "Распределённый Event Bus гарантирует exactly-once доставку с подтверждениями и повторными попытками, поэтому полностью заменяет `Kafka` без отдельного брокера.",
               "correct": false,
               "sections": {
                 "what_actually": "Доставка распределённой шины — at-most-once без гарантий и повторов; для critical-задач она не заменяет `Kafka`/`RabbitMQ`.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Производительность распределённого Event Bus идентична локальному, ведь сериализация и сетевые задержки на скорость не влияют.",
+              "text": "Производительность распределённой шины идентична локальной: внутренний zero-copy-транспорт `Vert.x` устраняет затраты на сериализацию и сетевые задержки.",
               "correct": false,
               "sections": {
                 "what_actually": "Распределённая шина медленнее локальной из-за сериализации и network overhead — это её прямой подводный камень.",
@@ -1355,7 +1355,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "После clustering `send`/`publish`/`request` работают между JVM через сериализацию и TCP. Подводные камни: медленнее локальной шины, нужны `MessageCodec` для custom-типов, доставка at-most-once. Для critical — `Kafka`/`RabbitMQ`.",
+              "text": "После clustering `send`/`publish`/`request` работают между JVM по сети. Минусы: медленнее локальной шины, нужны `MessageCodec`, доставка at-most-once.",
               "correct": true,
               "sections": {
                 "explanation": "После clustering все `send`, `publish`, `request` работают между JVM: сообщения сериализуются и идут через TCP. Подводные камни — скорость ниже локальной шины (network overhead), необходимость `MessageCodec` для custom-типов и доставка at-most-once без гарантий. Для простой межсервисной связи это отлично, для mission-critical берут `Kafka`/`RabbitMQ`.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Custom-типы по распределённой шине передаются без всяких кодеков — `Vert.x` сам сериализует любой объект для отправки по сети.",
+              "text": "Custom-типы по распределённой шине идут без кодеков: `Vert.x` через reflection сам сериализует любой объект в JSON и шлёт его по сети.",
               "correct": false,
               "sections": {
                 "what_actually": "Для custom-типов в кластере обязателен `MessageCodec`, иначе сериализация для передачи по сети не выполнится.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для тестирования `Vert.x` достаточно обычного `@Test` без расширений: async-код корректно проверяется синхронными ассертами сразу после вызова.",
+              "text": "Для тестов `Vert.x` хватает обычного `@Test` без расширений: библиотека сама блокирует поток до конца колбэков, так что async проверяется синхронными ассертами сразу.",
               "correct": false,
               "sections": {
                 "what_actually": "Async-код требует `VertxExtension` и `VertxTestContext`: иначе тест завершится до выполнения callback и проверки не сработают.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`VertxTestContext` нужен только для измерения времени выполнения теста и вывода метрик производительности.",
+              "text": "`VertxTestContext` нужен только для измерения времени теста и вывода метрик производительности event loop в итоговый отчёт JUnit после прогона всех методов.",
               "correct": false,
               "sections": {
                 "what_actually": "`VertxTestContext` управляет завершением async-теста (`completeNow`/`failNow`) и оборачивает проверки, а не меряет производительность.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `Vert.x`-тестах ассерты можно писать где угодно в callback напрямую, и `testContext.verify(...)` обёртка бесполезна.",
+              "text": "Ассерты в `Vert.x`-тестах пишут прямо в callback без обёртки: контекст сам ловит исключения из любого потока, а `verify(...)` оставлен лишь для обратной совместимости.",
               "correct": false,
               "sections": {
                 "what_actually": "Ассерты в async-callback нужно оборачивать в `testContext.verify(...)`, иначе их падение может не зафейлить тест корректно.",
@@ -1427,7 +1427,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Тест помечают `@ExtendWith(VertxExtension.class)`, в метод инжектят `Vertx` и `VertxTestContext`. Контекст управляет async-тестом: проверки в `verify(...)`, успех — `completeNow()`, ошибка — `failNow(error)`.",
+              "text": "Тест помечают `@ExtendWith(VertxExtension.class)`, инжектят `Vertx` и `VertxTestContext`. Проверки — в `verify(...)`, успех — `completeNow()`, ошибка — `failNow(error)`.",
               "correct": true,
               "sections": {
                 "explanation": "Тесты подключают `@ExtendWith(VertxExtension.class)`, а в метод инжектятся `Vertx` и `VertxTestContext`. Контекст управляет асинхронным тестом: проверки оборачивают в `testContext.verify(() -> ...)`, успех помечают `completeNow()`, а ошибку — `failNow(error)`. Без этого тест завершился бы раньше, чем выполнится async-действие.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Async-сценарии тестируют через `VertxTestContext`: подписываешься на адрес, в обработчике проверяешь в `ctx.verify(...)` и зовёшь `ctx.completeNow()`, затем шлёшь сообщение. Поддержаны JUnit 5 (рекомендуется), TestNG, Spock.",
+              "text": "Async тестируют через `VertxTestContext`: подписка на адрес, проверки в `ctx.verify(...)`, затем `ctx.completeNow()` и отправка сообщения. Поддержаны JUnit 5, TestNG, Spock.",
               "correct": true,
               "sections": {
                 "explanation": "Асинхронные сценарии тестируют через `VertxTestContext`: подписываются на адрес Event Bus, в обработчике делают проверки внутри `ctx.verify(() -> ...)` и затем `ctx.completeNow()`, после чего отправляют сообщение. Это позволяет дождаться доставки и проверить тело. Поддерживаются JUnit 5 (рекомендуется), TestNG и Spock.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Event Bus в тестах проверяют синхронно: `send` возвращает доставленное тело напрямую, и его сразу сравнивают с ожидаемым без consumer'а и callback.",
+              "text": "Event Bus в тестах проверяют синхронно: `send` возвращает доставленное тело напрямую, и его сразу сравнивают с ожидаемым, без consumer'а, callback и тест-контекста.",
               "correct": false,
               "sections": {
                 "what_actually": "`send` не возвращает тело синхронно: проверку делают в consumer'е через `ctx.verify(...)` и затем `completeNow()`, дожидаясь доставки.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Сообщение можно отправлять до регистрации consumer'а — `Vert.x` буферизует все сообщения на адресе и доставит их подписчику позже.",
+              "text": "Сообщение можно слать до регистрации consumer'а: `Vert.x` буферизует все сообщения на адресе в очередь и гарантированно доставит их подписчику, как только он появится.",
               "correct": false,
               "sections": {
                 "what_actually": "Для `send`/`publish` без подписчика сообщение теряется; consumer надо зарегистрировать заранее, персистентного буфера у шины нет.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Из тест-фреймворков `Vert.x` поддерживает только JUnit 4, а JUnit 5, TestNG и Spock с ним работать не могут.",
+              "text": "Из тест-фреймворков `Vert.x` поддерживает только JUnit 4: у JUnit 5, TestNG и Spock нет совместимых расширений для инъекции `Vertx` и контекста в метод теста.",
               "correct": false,
               "sections": {
                 "what_actually": "`Vert.x` поддерживает JUnit 5 (рекомендуется), а также TestNG и Spock.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Vert.x` и `Netty` — конкурирующие независимые проекты: `Vert.x` написан с нуля и не использует `Netty` внутри.",
+              "text": "`Vert.x` и `Netty` — конкурирующие независимые проекты: `Vert.x` написан с нуля на своём NIO-движке и принципиально не использует `Netty` внутри.",
               "correct": false,
               "sections": {
                 "what_actually": "`Vert.x` построен поверх `Netty` и использует его как сетевой фундамент, а не конкурирует с ним «с нуля».",
@@ -1523,7 +1523,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Netty` — low-level NIO над сокетами (макс. control, сложно). `Vert.x` построен поверх `Netty` как high-level toolkit с удобным API и готовыми компонентами. `Netty` напрямую — для библиотек (gRPC, Cassandra) и специализированных серверов.",
+              "text": "`Netty` — low-level NIO над сокетами (макс. control). `Vert.x` построен поверх `Netty` как high-level toolkit. `Netty` напрямую — для библиотек (gRPC, Cassandra).",
               "correct": true,
               "sections": {
                 "explanation": "`Netty` — low-level NIO-фреймворк над сокетами: максимум control и гибкости, но сложно. `Vert.x` — high-level toolkit, построенный поверх `Netty`: даёт удобный API и много готовых компонентов. Большинство проектов выбирают `Vert.x`, а `Netty` напрямую берут для библиотек (gRPC, Cassandra driver) или специализированных серверов с custom-протоколами.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Netty` — это высокоуровневый toolkit с роутингом и Event Bus, а `Vert.x` — низкоуровневая библиотека работы с сокетами под ним.",
+              "text": "`Netty` — это высокоуровневый toolkit с роутингом и Event Bus поверх сокетов, а `Vert.x` — низкоуровневая библиотека работы с NIO-каналами под ним.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `Netty` низкоуровневый (NIO над сокетами), а `Vert.x` — высокоуровневый toolkit с роутингом и Event Bus поверх него.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Netty` напрямую никем не используется — все без исключения проекты работают только через `Vert.x`.",
+              "text": "`Netty` напрямую никем не используется: все библиотеки и серверы на JVM без исключения работают только через обёртку `Vert.x` над сокетами.",
               "correct": false,
               "sections": {
                 "what_actually": "`Netty` напрямую активно применяют библиотеки (gRPC, драйвер Cassandra) и специализированные серверы, которым нужен максимальный контроль.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Vert.x` и `Akka` используют одну и ту же actor model, разница только в названии классов акторов.",
+              "text": "`Vert.x` и `Akka` используют одну и ту же actor model и общий runtime акторов, разница лишь в названии классов и в стартовых настройках кластера.",
               "correct": false,
               "sections": {
                 "what_actually": "`Vert.x` построен на event-driven модели с verticles и event loop, а не на actor model `Akka`; это разные концепции.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Akka` распространяется по более свободной лицензии, чем `Vert.x`, поэтому разработчики массово уходят с `Vert.x` на `Akka`.",
+              "text": "`Akka` распространяется по более свободной лицензии Apache 2.0, чем закрытый `Vert.x`, поэтому разработчики массово уходят с `Vert.x` на `Akka`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `Vert.x` — Apache 2.0, а `Akka` с 2.7 перешёл на non-free BSL, из-за чего мигрируют как раз с `Akka` (на Pekko, `Vert.x`, корутины).",
@@ -1595,7 +1595,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Vert.x` — event-driven toolkit на verticles (Apache 2.0), проще вход. `Akka` — фреймворк на actor model (Lightbend), мощнее (Streams, Cluster), но крутая кривая и non-free лицензия BSL с 2.7 → многие мигрируют на Pekko/`Vert.x`/корутины.",
+              "text": "`Vert.x` — event-driven toolkit на verticles (Apache 2.0), проще вход. `Akka` — фреймворк на actor model (Lightbend), мощнее, но non-free лицензия BSL с 2.7.",
               "correct": true,
               "sections": {
                 "explanation": "`Vert.x` — event-driven toolkit на verticles (Eclipse Foundation, Apache 2.0), проще onboarding и меньше boilerplate. `Akka` — фреймворк на actor model (Lightbend), мощнее (Akka Streams, Akka Cluster), но крутая learning curve, и с Akka 2.7 — non-free лицензия (BSL) для большой выручки, из-за чего многие мигрируют на Pekko, `Vert.x` или Kotlin Coroutines.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "У `Akka` отсутствует поддержка распределённости — кластеризация есть только у `Vert.x`, а `Akka` работает строго в одном JVM.",
+              "text": "У `Akka` нет поддержки распределённости: кластеризация есть только у `Vert.x`, а `Akka` работает строго в одной JVM без cluster-расширений.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Akka` есть Akka Cluster (даже более мощный распределённый слой), а у `Vert.x` — clustering через cluster managers; распределённость есть у обоих.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Reactor Netty` радикально быстрее `Vert.x` на любой нагрузке, поэтому `Vert.x` для высоконагруженных сервисов не используют.",
+              "text": "`Reactor Netty` радикально быстрее `Vert.x` на любой нагрузке за счёт zero-allocation pipeline, поэтому для высоконагруженных сервисов `Vert.x` обычно не используют.",
               "correct": false,
               "sections": {
                 "what_actually": "Производительность у них близкая; решающим фактором выступает экосистема и стиль, а не разница в скорости.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Vert.x` использует точно те же типы `Mono` и `Flux` из Project Reactor, что и `Reactor Netty`, поэтому их API идентично.",
+              "text": "`Vert.x` использует те же типы `Mono` и `Flux` из Project Reactor, что и `Reactor Netty`, и тот же планировщик потоков, поэтому их публичное API полностью идентично.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Vert.x` свой стиль (Future, EventBus, Verticles) и своя терминология; `Mono`/`Flux` — это API Reactor, не нативное для `Vert.x`.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Reactor Netty` построен на `Tomcat` и сервлетах, а `Vert.x` — на `Netty`, поэтому общего сетевого фундамента у них нет.",
+              "text": "`Reactor Netty` построен на `Tomcat` и сервлетах, а `Vert.x` — на `Netty`, поэтому общего сетевого фундамента и совместимой thread-модели у этих стеков нет вовсе.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба построены на `Netty` (`Reactor Netty` — это и есть Reactor поверх `Netty`); общий низкоуровневый фундамент у них как раз есть.",
@@ -1667,7 +1667,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Reactor Netty` — реактивный стек под `Spring WebFlux`, стиль `Mono`/`Flux`, экосистема `Spring`/Reactor. `Vert.x` — свой стиль (Future, EventBus, Verticles), polyglot toolkit. Производительность близкая, выбор — по экосистеме и стилю.",
+              "text": "`Reactor Netty` — реактивный стек под `Spring WebFlux`, стиль `Mono`/`Flux`. `Vert.x` — свой стиль (Future, EventBus, Verticles), polyglot. Перф близкий, выбор по экосистеме.",
               "correct": true,
               "sections": {
                 "explanation": "`Reactor Netty` — реактивный HTTP-стек, на котором построен `Spring WebFlux`; стиль — `Mono`/`Flux` Project Reactor, знакомый WebFlux-разработчикам, экосистема `Spring`/Reactor. `Vert.x` — свой стиль (Future, EventBus, Verticles), своя терминология, polyglot microservices toolkit. Производительность у них близкая, так что выбор делают по экосистеме и стилю.",
@@ -1691,7 +1691,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "За `Vert.x`: низкоуровневый control, 10K+ соединений, polyglot-команда, простой distributed messaging через Event Bus, reactive-микросервисы без heavy `Spring`, custom-протоколы. Против: простой CRUD (хватит `Spring Boot`), команда новичков, нужны аннотации.",
+              "text": "За `Vert.x`: control, 10K+ соединений, polyglot, distributed messaging через Event Bus, reactive без heavy `Spring`. Против: простой CRUD, команда новичков, нужны аннотации.",
               "correct": true,
               "sections": {
                 "explanation": "Выбирай `Vert.x`, когда нужен низкоуровневый control над event-driven приложением, высокий concurrent connections (10K+), polyglot-команда, простой distributed messaging через Event Bus вместо `Kafka`, реактивные микросервисы без heavy `Spring` или custom HTTP/TCP-протоколы. Не выбирай для простого CRUD (хватит `Spring Boot`), для команды новичков (нужен опыт async) или когда нужны annotation-based подходы.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Vert.x` — оптимальный выбор для простого CRUD-сервиса с командой новичков, потому что он проще и требует меньше знаний, чем `Spring Boot`.",
+              "text": "`Vert.x` — оптимальный выбор для простого CRUD-сервиса с командой новичков, потому что он проще, легче в onboarding и требует заметно меньше знаний, чем `Spring Boot`.",
               "correct": false,
               "sections": {
                 "what_actually": "Для простого CRUD достаточно `Spring Boot`, а `Vert.x` требует понимания async и не рекомендуется команде новичков.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Vert.x` стоит брать именно тогда, когда команда хочет аннотационный декларативный стиль вроде `@RestController` и `@Autowired`.",
+              "text": "`Vert.x` стоит брать именно тогда, когда команда хочет аннотационный декларативный стиль вроде `@RestController`, `@Autowired` и автоконфигурацию бинов из коробки.",
               "correct": false,
               "sections": {
                 "what_actually": "Потребность в annotation-based подходе — аргумент против `Vert.x`; у него нет такой модели, и для этого берут `Spring`.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Vert.x` не подходит для большого числа одновременных соединений — при 10K+ активных коннектов он деградирует сильнее `Spring MVC`.",
+              "text": "`Vert.x` не годится для большого числа соединений: при 10K+ активных коннектов его event loop деградирует и упирается в пул потоков сильнее, чем `Spring MVC`.",
               "correct": false,
               "sections": {
                 "what_actually": "Высокий concurrent connections (10K+) — это как раз сильная сторона и аргумент ЗА `Vert.x` благодаря non-blocking event loop.",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главный минус `Vert.x` — он медленнее `Spring Boot` по cold start и потребляет больше памяти.",
+              "text": "Главный минус `Vert.x` — он заметно медленнее `Spring Boot` по cold start и стабильно потребляет больше памяти под одинаковой HTTP-нагрузкой.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: у `Vert.x` cold start ~500 мс и память ~50-100 MB против 3-15 сек и 150-300 MB у `Spring Boot` — это его плюс, а не минус.",
@@ -1763,7 +1763,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Минусы `Vert.x`: крутая learning curve (async, golden rule); мало готовых интеграций (нет ORM/security/batch из коробки); меньше материалов на StackOverflow; callback hell в Java; нужно следить за блокировками; сложнее отладка; нет официального DI; меньше IDE-поддержки.",
+              "text": "Минусы `Vert.x`: крутая learning curve (async, golden rule); мало готовых интеграций; callback hell в Java; сложнее отладка; нет официального DI; меньше IDE-поддержки.",
               "correct": true,
               "sections": {
                 "explanation": "Минусы `Vert.x`: крутая learning curve (async, callbacks/Promises, golden rule); меньше готовых интеграций (нет ORM из коробки, security, batch); меньше материалов на StackOverflow, чем у `Spring Boot`; callback hell в Java без RxJava/корутин; необходимость следить за блокировками (случайный блок ломает всё); сложнее отладка (async stack traces); нет официального DI (нужны `Spring`/`Guice`); меньше IDE-поддержки специфичных паттернов.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Vert.x` поставляется с полным встроенным DI-контейнером, ORM, security и batch-обработкой из коробки, поэтому интеграций ему хватает с избытком.",
+              "text": "`Vert.x` поставляется с полным встроенным DI-контейнером, ORM, security и batch-обработкой из коробки, поэтому готовых интеграций ему хватает с избытком.",
               "correct": false,
               "sections": {
                 "what_actually": "Как раз минус `Vert.x` в том, что официального DI нет, а ORM/security/batch из коробки отсутствуют — их приходится подключать отдельно.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "У `Vert.x` отладка проще, чем у синхронного кода, потому что async stack traces полностью линейны и читаемы.",
+              "text": "У `Vert.x` отладка проще, чем у синхронного кода: async stack traces полностью линейны и читаемы, а каждый callback хранит исходный кадр вызова.",
               "correct": false,
               "sections": {
                 "what_actually": "Async stack traces в `Vert.x`, наоборот, менее читаемы, что усложняет отладку — это указанный минус.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Vert.x` — это сырой экспериментальный проект последних пары лет без единого production-внедрения.",
+              "text": "`Vert.x` — это сырой экспериментальный проект последних пары лет без единого production-внедрения и без стабильного релиза, пригодного для боевой нагрузки.",
               "correct": false,
               "sections": {
                 "what_actually": "`Vert.x` существует с 2012, это зрелая технология с реальными внедрениями (eBay, Walmart, Bosch, FinTech) и роль фундамента `Quarkus`/`Hibernate Reactive`.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Ни `Quarkus`, ни `Hibernate Reactive` не используют `Vert.x` — они построены на собственных независимых движках.",
+              "text": "Ни `Quarkus`, ни `Hibernate Reactive` не используют `Vert.x` — оба построены на собственных независимых сетевых движках поверх чистого NIO без общего toolkit.",
               "correct": false,
               "sections": {
                 "what_actually": "`Quarkus` построен на `Vert.x` (HTTP/DB/EventBus), а `Hibernate Reactive` использует `Vert.x` SQL Client — это ключевые примеры его применения.",
@@ -1835,7 +1835,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Vert.x` зрелый (с 2012), но нишевее `Spring`/`Quarkus`. На нём построены `Quarkus` и `Hibernate Reactive`. Используют: часть сервисов GitHub, внутренние сервисы eBay/Walmart/GAP, IoT в Bosch, ряд FinTech (high-throughput trading).",
+              "text": "`Vert.x` зрелый (с 2012), но нишевее `Spring`/`Quarkus`. На нём построены `Quarkus` и `Hibernate Reactive`. Используют: GitHub, eBay, Walmart, Bosch, ряд FinTech.",
               "correct": true,
               "sections": {
                 "explanation": "`Vert.x` — зрелая технология (с 2012), но более нишевая, чем `Spring` или `Quarkus`. На нём построены `Quarkus` и `Hibernate Reactive` (использует `Vert.x` SQL Client). Среди пользователей — некоторые сервисы GitHub, внутренние сервисы eBay, Walmart, GAP, IoT в Bosch и ряд FinTech-компаний (high-throughput trading systems).",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Vert.x` популярнее и мейнстримнее, чем `Spring`, и считается стандартом де-факто для большинства JVM-приложений.",
+              "text": "`Vert.x` популярнее и мейнстримнее, чем `Spring`, и считается стандартом де-факто для большинства корпоративных JVM-приложений на современном рынке.",
               "correct": false,
               "sections": {
                 "what_actually": "`Vert.x` — более нишевый, чем `Spring` или `Quarkus`; стандартом де-факто для большинства JVM-приложений остаётся `Spring`.",
