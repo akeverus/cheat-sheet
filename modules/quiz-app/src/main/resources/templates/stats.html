@@ -13,6 +13,7 @@
         <div class="stats-filter-pane">
             <h2 class="stats-pane-label">Фильтры</h2>
             <form method="get" th:action="@{/stats}" class="filter-row stats-filters-form flex-1">
+                <input type="hidden" name="q" th:value="${searchQuery}">
                 <label>
                     Группа:
                     <select name="group">
@@ -199,7 +200,7 @@
     <ul class="forecast-list" th:with="maxCnt=${reviewForecastMax}">
         <li th:each="day : ${reviewForecast}" class="forecast-row">
             <span class="forecast-day" th:text="${day.day()}">2026-04-20</span>
-            <span class="forecast-bar" role="img" th:aria-label="${day.count() + ' вопросов'}">
+            <span class="forecast-bar" role="img" th:aria-label="${day.count() + ' ' + @plural.pick(day.count(), 'вопрос', 'вопроса', 'вопросов')}">
                 <span class="forecast-bar-fill"
                       th:attr="data-progress=${day.count() * 100 / (maxCnt > 0 ? maxCnt : 1)}"></span>
             </span>
