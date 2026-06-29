@@ -92,6 +92,19 @@
     if (kind === 'success') {
       alertEl.classList.add('success');
     }
+    // #interview-alert — единственный ВИДИМЫЙ канал ошибки, стоит выше вердикта и
+    // кнопки доп-анализа. При провале доп-анализа (юзер внизу у кнопки) он уходит за
+    // верхнюю кромку; при сабмите без выбора focus() уводит к первой опции и алерт
+    // остаётся ниже фолда. role=alert озвучивает его AT, но зрячий не видит —
+    // подтягиваем в кадр, если вне вьюпорта. Скролл уважает ось «Движение».
+    const r = alertEl.getBoundingClientRect();
+    if (r.top < 0 || r.bottom > window.innerHeight) {
+      const dm = document.documentElement.getAttribute('data-motion');
+      const reduced = dm === 'off' ? true
+        : dm === 'on' ? false
+        : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      alertEl.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+    }
   }
 
   function clearInlineAlert() {

@@ -1102,6 +1102,10 @@ html[data-design] .option-wrong .answer {
   background: transparent; border: 0; padding: 0; margin-top: var(--space-2);
 }
 html[data-design] .inline-alert { padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-status-error); border-radius: var(--border-radius-md); background: var(--color-status-error-wash); color: var(--color-text-primary); margin: var(--space-3) 0; }
+/* Успех (app.js setInlineAlert(..,'success'), напр. после перегенерации вариантов):
+   .success-модификатор красит в success-токен — иначе позитивное сообщение рисуется
+   в КРАСНОЙ error-рамке/фоне (success-uses-error semantics). Зеркалит .toast-success. */
+html[data-design] .inline-alert.success { border-color: var(--color-status-success); background: var(--color-status-success-wash); }
 
 /* Empty-state */
 html[data-design] .empty-card-inner { max-width: 560px; margin: var(--space-8) auto; text-align: center; padding: var(--space-7) var(--space-5); border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-lg); background: var(--color-bg-secondary); }
@@ -1558,6 +1562,11 @@ html[data-design] .stats-page .topic-table thead th {
 }
 html[data-design] .stats-page .topic-table th.sortable { cursor: pointer; white-space: nowrap; }
 html[data-design] .stats-page .topic-table th.sortable:hover { color: var(--color-text-primary); }
+/* Нейтральный glyph: сортируемость видна В ПОКОЕ, а не только на hover. JS ставит
+   aria-sort="none" на все sortable-th (stats.js:222) → ⇅ показывается; без JS
+   aria-sort нет → glyph не появляется (нет ложной аффордансы на неинтерактивных). */
+html[data-design] .stats-page .topic-table th.sortable[aria-sort="none"]::after { content: " ⇅"; color: var(--color-text-tertiary); font-size: 0.85em; }
+html[data-design] .stats-page .topic-table th.sortable[aria-sort="none"]:hover::after { color: var(--color-text-secondary); }
 html[data-design] .stats-page .topic-table th[aria-sort="ascending"]::after { content: " ▲"; }
 html[data-design] .stats-page .topic-table th[aria-sort="descending"]::after { content: " ▼"; }
 html[data-design] .stats-page .topic-table th.sortable:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: -2px; }
@@ -1969,6 +1978,11 @@ html[data-design] .result-page .btn-regenerate {
   background: transparent; border: 0; color: var(--color-text-tertiary); cursor: pointer;
   font-size: var(--font-size-md); line-height: 1; padding: var(--space-1);
   min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
+  /* Тот же fade, что у всех hover-меняющих-цвет контролов (a:145, back-to-top:2377,
+     code-copy:2401) — иначе эти две были единственными, кто РЕЗКО переключал цвет
+     на hover/.active среди визуально идентичных соседей. --duration-fast→0ms под
+     reduced-motion/data-motion=off, так что fade гаснет автоматически. */
+  transition: color var(--duration-fast) var(--easing-default);
 }
 html[data-design] .result-page .btn-favorite.active { color: var(--color-accent-primary); }
 /* Hover-аффорданс: иконки-кнопки избранного/перегенерации сидели статичным
@@ -2450,6 +2464,14 @@ html[data-design] .today-hero { margin-bottom: var(--space-5); }
    ширину main → левый/правый край не совпадал с контентом под ним (jut наружу). */
 html[data-design] .settings-page .today-hero {
   max-width: var(--max-width-settings); margin-left: auto; margin-right: auto;
+  /* Поверхность карты: на /stats/.summary/.result есть page-scoped `.card`, а
+     `.settings-page .card` НЕТ (generic `.card` выжил только под @media print при
+     split editorial.css→base.css). Без этого hero-блок «N к повтору / Начать» висел
+     голым текстом на фоне страницы. Те же 4 свойства, что у .stats/.summary/.result .card. */
+  background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-6);
 }
 html[data-design] .today-hero-head {
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
