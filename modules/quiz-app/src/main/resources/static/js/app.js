@@ -1009,8 +1009,11 @@
         const data = await resp.json();
         applyFavoriteButtonState(button, data.favorite);
       } else {
-        const err = await parseApiError(resp);
-        setInlineAlert(err.message || 'Не удалось обновить избранное.');
+        await parseApiError(resp);
+        // НЕ пробрасываем server-message: /api/favorite кидает QuestionNotFound
+        // с внутренним «id=N» (FavoriteService:32) → утечка БД-id. Фикс-строка
+        // actionable, как clean-фоллбэк в catch ниже (сеть).
+        setInlineAlert('Не удалось обновить избранное — возможно, вопрос устарел. Обнови страницу и повтори.');
       }
     } catch (err) {
       console.error('Favorite toggle failed:', err);
@@ -1451,7 +1454,11 @@
         setInteractionBusy(false);
         updateSubmitAvailability();
         startQuestionTimer();
-        setInlineAlert(err.message || 'Не удалось проверить ответ. Попробуй ещё раз.');
+        // НЕ пробрасываем err.message: для /api/answer единственные доменные
+        // ошибки — QuestionNotFound/OptionNotFound с внутренним «id=N» в тексте
+        // (InterviewService 192/253/258) → утечка БД-id + dead-end. Фикс-строка
+        // actionable и покрывает оба случая (устаревший вопрос/вариант).
+        setInlineAlert('Не удалось проверить ответ — возможно, вопрос устарел. Обнови страницу и загрузи новый вопрос.');
         return;
       }
 
