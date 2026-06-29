@@ -11,10 +11,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Reverse proxy` — серверный посредник, который принимает HTTP/TCP-запросы клиентов и пересылает их одному или нескольким backend-сервисам, отдавая ответ так, будто сам его сгенерировал. Публичный IP/DNS принадлежит только прокси, backend-ы прямого контакта с клиентом не имеют.",
+              "text": "`Reverse proxy` — серверный посредник: принимает запросы клиентов и пересылает их backend-сервисам, отдавая ответ от своего имени.",
               "correct": true,
               "sections": {
-                "explanation": "Прокси скрывает топологию бэкендов: клиент знает один URL, а порты, языки и K8s-pods за ним меняются без редеплоя клиентов. На прокси выносят TLS termination, кеш, compression, rate limiting и auth.",
+                "explanation": "Прокси принимает HTTP/TCP-запросы и проксирует их одному или нескольким backend-ам так, будто сам сгенерировал ответ. Публичный IP/DNS принадлежит только прокси — backend-ы прямого контакта с клиентом не имеют. Прокси скрывает топологию бэкендов: клиент знает один URL, а порты, языки и K8s-pods за ним меняются без редеплоя клиентов. На прокси выносят TLS termination, кеш, compression, rate limiting и auth.",
                 "example": "Один публичный endpoint `https://api.example.com`, за которым `service-api:8080`, `service-auth:9000`, `service-search:3000` — клиент видит только прокси на `:443`.",
                 "when_to_apply": "На прокси выносят кросс-функциональные требования и ради безопасности: WAF, фильтрация атак, защита от `Slowloris` и L7-DDoS, плюс единая точка для access-log.",
                 "edge_cases": "Граничный случай — один backend за прокси: балансировать нечего, но TLS termination, кеш и rate limiting всё равно работают, и это уже полноценный reverse proxy.",
@@ -24,7 +24,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Reverse proxy` стоит на стороне клиента и скрывает клиента от интернета, фильтруя его исходящий трафик и обходя блокировки.",
+              "text": "`Reverse proxy` стоит на стороне клиента, скрывает его от интернета и фильтрует исходящий трафик, явно настраиваясь в браузере или ОС клиента.",
               "correct": false,
               "sections": {
                 "what_actually": "Это описание forward proxy: он защищает клиента и стоит в его сети. Reverse proxy стоит перед серверами и скрывает backend от клиентов.",
@@ -36,7 +36,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Reverse proxy` — это исключительно L4 TCP-балансировщик, он не разбирает HTTP и не может делать TLS termination или роутинг по URL.",
+              "text": "`Reverse proxy` — это исключительно L4 TCP-балансировщик: он не разбирает HTTP и не способен ни на TLS termination, ни на роутинг по URL или host-заголовку.",
               "correct": false,
               "sections": {
                 "what_actually": "Reverse proxy всегда работает на L7: понимает HTTP-семантику, делает TLS termination, кеш, routing по URL/host/header. Чистый L4 — это отдельная роль load balancer.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Reverse proxy` — это CDN-кеш на edge, его единственная задача — хранить статику ближе к пользователю.",
+              "text": "`Reverse proxy` — это CDN-кеш на edge: его единственная задача — хранить статику ближе к пользователю, а балансировка и TLS к нему отношения не имеют.",
               "correct": false,
               "sections": {
                 "what_actually": "Кеширование — лишь одна из функций; reverse proxy ещё делает TLS termination, routing, балансировку, rate limiting и header rewriting. CDN — частный случай его применения.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Разницы по сути нет: оба термина — синонимы для одного и того же промежуточного HTTP-сервера, выбор слова зависит только от вендора.",
+              "text": "Разницы по сути нет: оба термина — синонимы для одного промежуточного HTTP-сервера, и выбор слова зависит лишь от вендора и его маркетинга.",
               "correct": false,
               "sections": {
                 "what_actually": "Направление и цель противоположны: forward proxy скрывает клиента от интернета и стоит у клиента, reverse proxy скрывает сервер от клиентов и стоит перед серверами.",
@@ -83,10 +83,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Forward proxy` стоит на стороне клиента, скрывает клиента от интернета (корпоративный фильтр, обход блокировок) и явно настраивается в клиенте. `Reverse proxy` стоит перед серверами, скрывает их от клиентов (TLS termination, балансировка, WAF), и клиент о нём не знает — видит публичный URL.",
+              "text": "`Forward proxy` стоит у клиента и скрывает его от интернета; `reverse proxy` стоит перед серверами и скрывает их от клиентов, оставаясь для клиента невидимым.",
               "correct": true,
               "sections": {
-                "explanation": "Ключевое различие — кто кого защищает и где находится конфигурация маршрутизации. Forward знает клиент и настроен у него; reverse прозрачен для клиента.",
+                "explanation": "`Forward proxy` явно настраивается в клиенте и решает задачи корпоративного фильтра или обхода блокировок. `Reverse proxy` делает TLS termination, балансировку, WAF, а клиент о нём не знает — видит лишь публичный URL. Ключевое различие — кто кого защищает и где находится конфигурация маршрутизации. Forward знает клиент и настроен у него; reverse прозрачен для клиента.",
                 "example": "`Squid` или корпоративный HTTP-proxy — forward; `Nginx`, `HAProxy`, `Cloudflare` перед бэкендами — reverse.",
                 "when_to_apply": "Аналогия: forward — «секретарь, звонящий за вас наружу», reverse — «ресепшн, принимающий посетителей и направляющий в кабинет».",
                 "edge_cases": "Пограничный случай — корпоративный gateway, который и фильтрует исходящий трафик, и публикует внутренние сервисы наружу: он совмещает обе роли, но конфиги маршрутизации у них разные.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Forward proxy` стоит перед серверами и делает TLS termination, а `reverse proxy` стоит у клиента и фильтрует его исходящий трафик.",
+              "text": "`Forward proxy` стоит перед серверами и делает TLS termination, а `reverse proxy` стоит у клиента и фильтрует его исходящий трафик в корпоративной сети.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны местами: перед серверами и с TLS termination работает reverse proxy, а у клиента с фильтрацией исходящего трафика — forward proxy.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Forward proxy работает только на L4, а reverse proxy — только на L7; это и есть единственное различие между ними.",
+              "text": "Forward proxy работает строго на L4, а reverse proxy — строго на L7; именно разница OSI-уровней и есть единственное отличие между ними.",
               "correct": false,
               "sections": {
                 "what_actually": "Различие не в OSI-уровне, а в стороне и цели: и forward, и reverse обычно работают на L7 (HTTP), отличаясь тем, кого они скрывают.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Это строго взаимоисключающие роли: один и тот же продукт не может быть одновременно reverse proxy и load balancer.",
+              "text": "Это строго взаимоисключающие роли: один продукт не может быть одновременно reverse proxy и load balancer — приходится ставить два отдельных сервиса.",
               "correct": false,
               "sections": {
                 "what_actually": "Грань размытая: `Nginx`, `HAProxy`, `Envoy` — это L7 reverse proxy с функцией балансировки. С несколькими бэкендами прокси одновременно играет роль L7 LB.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Чистый load balancer всегда работает на L7 и разбирает HTTP, а reverse proxy всегда на L4 и видит только TCP.",
+              "text": "Чистый load balancer всегда работает на L7 и разбирает HTTP, а reverse proxy всегда сидит на L4 и видит только TCP-пакеты без доступа к URL.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: чистый LB часто L4 (TCP/UDP, не разбирает HTTP), а reverse proxy всегда L7 и понимает HTTP-семантику (routing по URL/host).",
@@ -155,10 +155,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Грань размытая: на практике `Nginx`, `HAProxy`, `Envoy` — это L7 reverse proxy с функцией балансировки. Если за прокси один backend — это «чистый» reverse proxy; если несколько — он же играет роль L7 load balancer. Различие лишь в акценте: LB ставит цель распределить нагрузку, reverse proxy — добавить функции на L7.",
+              "text": "Грань размытая: `Nginx`, `HAProxy`, `Envoy` — это L7 reverse proxy с функцией балансировки; роль LB появляется, как только в пуле несколько бэкендов.",
               "correct": true,
               "sections": {
-                "explanation": "Чистый LB часто L4 (round-robin, least-conn, hash) и не разбирает HTTP; чистый reverse proxy всегда L7 (routing по URL/host/header). Современные продукты совмещают обе роли.",
+                "explanation": "Если за прокси один backend — это «чистый» reverse proxy; если несколько — он же играет роль L7 load balancer. Различие лишь в акценте: LB ставит цель распределить нагрузку, reverse proxy — добавить функции на L7. Чистый LB часто L4 (round-robin, least-conn, hash) и не разбирает HTTP; чистый reverse proxy всегда L7 (routing по URL/host/header). Современные продукты совмещают обе роли.",
                 "example": "На входе L4 LB (`AWS NLB`, `IPVS`) для масштабирования и DDoS-абсорбции, за ним пул L7 reverse proxy (`Nginx` pods) делает TLS termination, routing и кеш.",
                 "when_to_apply": "Когда backend один — балансировать нечего, и прокси «чистый» reverse proxy; роль LB появляется ровно когда в `upstream` несколько серверов.",
                 "edge_cases": "Грань проверяют на собеседовании и при дизайне входного слоя: важно понимать, что один продукт совмещает обе роли в зависимости от числа бэкендов.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Load balancer не умеет делать health checks, а reverse proxy умеет — в этом и состоит граница между ними.",
+              "text": "Load balancer не умеет делать health checks и слепо шлёт трафик на упавшие узлы, а reverse proxy умеет — в этом и состоит граница между ними.",
               "correct": false,
               "sections": {
                 "what_actually": "Health checks (active/passive) есть у обоих: и L4 LB исключает «упавшие» серверы, и L7 reverse proxy делает passive-проверки через `max_fails`.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Reverse proxy умеет только балансировать нагрузку между upstream-серверами; всё остальное (TLS, кеш, rate limit) делается строго в самих сервисах.",
+              "text": "Reverse proxy умеет только балансировать нагрузку между upstream-серверами; TLS, кеш и rate limit делаются строго внутри самих backend-сервисов.",
               "correct": false,
               "sections": {
                 "what_actually": "Балансировка — лишь одна из многих функций. На прокси выносят TLS termination, routing, кеш, compression, rate limiting, header injection, health checks и observability.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Reverse proxy выполняет бизнес-логику приложения: валидацию заказов, расчёт цен и работу с БД вместо backend-сервисов.",
+              "text": "Reverse proxy выполняет бизнес-логику приложения: валидацию заказов, расчёт цен и работу с БД, полностью разгружая от этого backend-сервисы.",
               "correct": false,
               "sections": {
                 "what_actually": "Прокси делает кросс-функциональные задачи (TLS, кеш, routing, rate limit), но не бизнес-логику — она остаётся в backend-сервисах.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Единственная функция reverse proxy — TLS termination; кеш, rate limiting и routing к прокси отношения не имеют.",
+              "text": "Единственная функция reverse proxy — TLS termination; кеш, rate limiting и routing к прокси не относятся и живут в отдельном API-gateway перед ним.",
               "correct": false,
               "sections": {
                 "what_actually": "TLS termination — важная, но одна из многих функций. Прокси также делает routing, кеш, compression, rate limiting, header injection и observability.",
@@ -227,10 +227,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "На reverse proxy в production выносят целый набор функций: TLS termination, routing (по host/path/header/cookie), load balancing, caching, compression (`gzip`/`brotli`), rate limiting, request/response transformation, auth/WAF, header injection (`X-Forwarded-For`, `X-Request-ID`), health checks, sticky session, protocol bridging и observability (access log, metrics, tracing).",
+              "text": "На прокси выносят целый набор L7-функций: TLS termination, routing, балансировку, кеш, compression, rate limiting, auth/WAF и observability.",
               "correct": true,
               "sections": {
-                "explanation": "Смысл — собрать кросс-функциональные требования в одной точке, чтобы не дублировать их (или, хуже, делать по-разному) в каждом сервисе.",
+                "explanation": "Полный список: TLS termination, routing (по host/path/header/cookie), load balancing, caching, compression (`gzip`/`brotli`), rate limiting, request/response transformation, auth/WAF, header injection (`X-Forwarded-For`, `X-Request-ID`), health checks, sticky session, protocol bridging и observability (access log, metrics, tracing). Смысл — собрать кросс-функциональные требования в одной точке, чтобы не дублировать их (или, хуже, делать по-разному) в каждом сервисе.",
                 "example": "Для `/static/` — кеш и compression, для `/api/v2/` — routing и rate limiting, для всего — TLS termination и `X-Forwarded-For`, и всё это в одном `Nginx`-конфиге.",
                 "when_to_apply": "В service mesh (`Istio`, `Linkerd`) большая часть этого делается на каждый pod через sidecar `Envoy`, а не на одном центральном прокси.",
                 "edge_cases": "Этот список используют как чек-лист при проектировании edge-слоя: что вынести на прокси, а что оставить в сервисах.",
@@ -251,10 +251,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Когда запрос проходит через прокси, backend видит IP прокси, а не клиента; forwarded-заголовки восстанавливают контекст. `X-Forwarded-For` несёт цепочку IP `client, proxy1, proxy2` (каждый прокси аппендит свой клиентский IP), `X-Real-IP` — IP клиента, `X-Forwarded-Proto` — оригинальную схему (`http`/`https`) от прокси, сделавшего TLS termination.",
+              "text": "Backend за прокси видит IP прокси, а не клиента; forwarded-заголовки восстанавливают исходный контекст запроса.",
               "correct": true,
               "sections": {
-                "explanation": "Главный подводный камень — spoofing: клиент может сам прислать `X-Forwarded-For: 1.2.3.4`, поэтому прокси должен затирать или дополнять заголовок, а не доверять. В Nginx это `real_ip_header` + `set_real_ip_from <trusted-net>`.",
+                "explanation": "`X-Forwarded-For` несёт цепочку IP `client, proxy1, proxy2` (каждый прокси аппендит свой клиентский IP), `X-Real-IP` — IP клиента, `X-Forwarded-Proto` — оригинальную схему (`http`/`https`) от прокси, сделавшего TLS termination. Главный подводный камень — spoofing: клиент может сам прислать `X-Forwarded-For: 1.2.3.4`, поэтому прокси должен затирать или дополнять заголовок, а не доверять. В Nginx это `real_ip_header` + `set_real_ip_from <trusted-net>`.",
                 "example": "Конфиг Nginx: `proxy_set_header X-Real-IP $remote_addr;` и `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` — переменная аппендит текущий клиентский IP к существующей цепочке.",
                 "when_to_apply": "В `Spring Boot` для корректного `request.getRemoteAddr()` нужен `server.forward-headers-strategy: native` или `framework`; а `request.isSecure()` после TLS termination требует именно `X-Forwarded-Proto: https`.",
                 "edge_cases": "Forwarded-заголовки настраивают при любом многоуровневом прокси-стеке, особенно когда бэкенду нужны реальный IP клиента, исходная схема и аудит источника.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`X-Forwarded-For` всегда содержит ровно один IP — IP самого первого прокси, а не клиента, и не меняется по цепочке.",
+              "text": "`X-Forwarded-For` всегда содержит ровно один IP — адрес самого первого прокси, а не клиента, и этот IP не меняется при прохождении по цепочке прокси.",
               "correct": false,
               "sections": {
                 "what_actually": "`X-Forwarded-For` — это цепочка `client, proxy1, proxy2`: каждый прокси аппендит клиентский IP. Реальный клиент — самый левый элемент, если все прокси корректно дополняли.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`X-Forwarded-Proto` сообщает версию HTTP-протокола клиента (`HTTP/1.1` или `HTTP/2`), а не схему `http`/`https`.",
+              "text": "`X-Forwarded-Proto` сообщает версию HTTP-протокола клиента (`HTTP/1.1` или `HTTP/2`), а не схему `http`/`https`, и нужен бэкенду для согласования ALPN.",
               "correct": false,
               "sections": {
                 "what_actually": "`X-Forwarded-Proto` несёт оригинальную схему — `http` или `https`, чтобы backend после TLS termination знал, что трафик был зашифрован. Версия протокола тут ни при чём.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Прокси обязан полностью доверять входящему `X-Forwarded-For` от клиента и пробрасывать его в backend без изменений.",
+              "text": "Прокси обязан полностью доверять входящему `X-Forwarded-For` от клиента и пробрасывать его в backend без изменений, чтобы не потерять исходный IP.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: доверять входящему `XFF` опасно (spoofing). Прокси должен затирать или дополнять его и доверять реальному IP только от trusted-сетей (`set_real_ip_from`).",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно одной директивы `proxy_pass http://10.0.1.10:8080;` без блока `upstream`; балансировка и keepalive включаются автоматически по умолчанию.",
+              "text": "Достаточно одной директивы `proxy_pass http://10.0.1.10:8080;` без блока `upstream`: балансировка и keepalive к бэкенду включаются автоматически по умолчанию.",
               "correct": false,
               "sections": {
                 "what_actually": "Для пула серверов и балансировки нужен блок `upstream`, а keepalive к upstream НЕ работает без `proxy_http_version 1.1` и `proxy_set_header Connection \"\";`.",
@@ -323,10 +323,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Блок `upstream backend { ... }` задаёт пул серверов и алгоритм (`least_conn`, `ip_hash`, `round-robin` по умолчанию), а `proxy_pass http://backend;` направляет туда трафик. Для keepalive обязательны `proxy_http_version 1.1;` и `proxy_set_header Connection \"\";`, иначе пул persistent-соединений не работает.",
+              "text": "Блок `upstream backend { ... }` задаёт пул серверов и алгоритм, а `proxy_pass http://backend;` направляет туда трафик; для keepalive нужны явные директивы.",
               "correct": true,
               "sections": {
-                "explanation": "В `upstream` настраивают `weight`, `max_fails`/`fail_timeout` (passive health-check), `backup` (резервный сервер) и `keepalive 32` (idle-пул на worker, резко снижающий latency).",
+                "explanation": "Алгоритм в `upstream`: `least_conn`, `ip_hash`, по умолчанию round-robin. Для keepalive обязательны `proxy_http_version 1.1;` и `proxy_set_header Connection \"\";`, иначе пул persistent-соединений не работает. В `upstream` настраивают `weight`, `max_fails`/`fail_timeout` (passive health-check), `backup` (резервный сервер) и `keepalive 32` (idle-пул на worker, резко снижающий latency).",
                 "example": "`server 10.0.1.10:8080 weight=3 max_fails=3 fail_timeout=30s;` плюс `keepalive 32;` — после 3 ошибок сервер исключается на 30 секунд.",
                 "when_to_apply": "`proxy_pass http://backend;` без слеша передаёт URI as-is; со слешем префикс location вырезается — это известный trailing-slash gotcha.",
                 "edge_cases": "Этот конфиг — отправная точка для любого Nginx-reverse-proxy: пул `upstream`, проброс заголовков и keepalive нужны почти всегда.",
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`proxy_pass` по умолчанию использует HTTP/2 к бэкенду, поэтому `proxy_http_version` указывать не нужно никогда.",
+              "text": "`proxy_pass` по умолчанию использует HTTP/2 к бэкенду с мультиплексированием, поэтому `proxy_http_version` указывать не нужно никогда и keepalive работает из коробки.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию Nginx проксирует upstream по HTTP/1.0; для keepalive нужен явный `proxy_http_version 1.1`. HTTP/2 к обычному бэкенду `proxy_pass` не использует.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Алгоритм балансировки в `upstream` задать нельзя — Nginx всегда использует только round-robin без возможности выбора.",
+              "text": "Алгоритм балансировки в `upstream` задать нельзя — Nginx всегда использует только round-robin и не поддерживает ни `least_conn`, ни `ip_hash`, ни `hash`.",
               "correct": false,
               "sections": {
                 "what_actually": "Алгоритм выбирается явно: `least_conn`, `ip_hash`, `hash <key>`; round-robin — лишь значение по умолчанию, которое можно переопределить.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`proxy_cache` хранит ответы целиком в оперативной памяти процесса Nginx; диск при этом не используется вообще.",
+              "text": "`proxy_cache` хранит ответы целиком в оперативной памяти процесса Nginx; диск при этом не используется вообще, а `max_size` лишь ограничивает RAM-зону.",
               "correct": false,
               "sections": {
                 "what_actually": "Кеш Nginx — это файлы на диске (или tmpfs/SSD), а в shared memory (`keys_zone`) лежит только индекс ключей. Сами тела ответов хранятся в файловой системе.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`proxy_cache_lock on;` ускоряет кеш тем, что при cache miss все запросы параллельно идут в backend, чтобы быстрее прогреть кеш.",
+              "text": "`proxy_cache_lock on;` ускоряет кеш тем, что при cache miss все запросы параллельно идут в backend, чтобы быстрее наполнить кеш свежими данными.",
               "correct": false,
               "sections": {
                 "what_actually": "`proxy_cache_lock on;` делает обратное — защищает от cache stampede: при miss в backend идёт один запрос, остальные ждут его ответа.",
@@ -395,10 +395,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Кеш Nginx — это файлы на диске (или tmpfs/SSD) с индексом в shared memory. `proxy_cache_path ... keys_zone=api_cache:100m max_size=10g` задаёт зону индекса (100MB RAM) и лимит на диске (10GB). Прокси кеширует ответы upstream и отдаёт их без обращения к бэкенду, статус доступен в `$upstream_cache_status` (`HIT`/`MISS`/`EXPIRED`/`STALE`/`UPDATING`/`BYPASS`).",
+              "text": "Кеш Nginx — это файлы на диске с индексом ключей в shared memory (`keys_zone`); статус доступен в `$upstream_cache_status` (`HIT`/`MISS`/`EXPIRED`/`STALE`).",
               "correct": true,
               "sections": {
-                "explanation": "`proxy_cache_key` определяет, что считается одинаковым запросом; `proxy_cache_valid 200 1h` — TTL по кодам ответа; `proxy_cache_use_stale` отдаёт устаревшую копию при ошибке upstream (как `stale-if-error`).",
+                "explanation": "`proxy_cache_path ... keys_zone=api_cache:100m max_size=10g` задаёт зону индекса (100MB RAM) и лимит на диске (10GB) — диск может быть tmpfs/SSD. Прокси кеширует ответы upstream и отдаёт их без обращения к бэкенду. `proxy_cache_key` определяет, что считается одинаковым запросом; `proxy_cache_valid 200 1h` — TTL по кодам ответа; `proxy_cache_use_stale` отдаёт устаревшую копию при ошибке upstream (как `stale-if-error`).",
                 "example": "`proxy_cache_key \"$scheme$request_method$host$request_uri\"` плюс `proxy_cache_valid 404 1m` — отрицательные ответы кешируются на минуту, чтобы не бить backend.",
                 "when_to_apply": "Из коробки Nginx НЕ умеет purge по тегу/паттерну — только по точному ключу (и то лишь в `nginx-plus` или с `ngx_cache_purge`); для CDN-уровня берут `Varnish`.",
                 "edge_cases": "`proxy_cache` включают для статики и медленных идемпотентных ответов, когда нужно разгрузить backend без внешнего CDN.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`proxy_cache_valid` задаёт TTL только для кода 200; ответы 404 и 302 Nginx кешировать не умеет в принципе.",
+              "text": "`proxy_cache_valid` задаёт TTL только для кода 200; ответы 404 и 302 Nginx кешировать не умеет в принципе, поэтому negative caching на нём недостижимо.",
               "correct": false,
               "sections": {
                 "what_actually": "`proxy_cache_valid` принимает список кодов: можно задать `proxy_cache_valid 200 302 1h;` и отдельно `proxy_cache_valid 404 1m;` — кешируются и редиректы, и negative-ответы.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`limit_req` реализует token bucket: накапливает «токены» со временем и пропускает столько запросов, сколько токенов накопилось, без понятия `rate`.",
+              "text": "`limit_req` реализует token bucket: накапливает «токены» со временем и пропускает столько запросов, сколько токенов накопилось, без понятия фиксированного `rate`.",
               "correct": false,
               "sections": {
                 "what_actually": "`limit_req` реализует именно leaky bucket: запросы утекают из ведра с фиксированной скоростью `rate` (например, `10r/s`), а `burst` задаёт ёмкость ведра поверх rate.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Счётчик `limit_req` глобален для всего кластера Nginx: несколько инстансов за L4 LB автоматически делят общий лимит.",
+              "text": "Счётчик `limit_req` глобален для всего кластера Nginx: несколько инстансов за L4 LB автоматически синхронизируют общий лимит через shared memory.",
               "correct": false,
               "sections": {
                 "what_actually": "Счётчик локальный — он живёт в shared memory одного Nginx. За L4 LB лимит НЕ глобальный; для общего нужен Redis-backed модуль или внешний RLS (`Envoy` + Ratelimit Service).",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Ключ `$binary_remote_addr` всегда содержит реальный IP клиента, даже если перед Nginx стоит ещё один прокси или L4 LB.",
+              "text": "Ключ `$binary_remote_addr` всегда содержит реальный IP клиента, даже если перед Nginx стоит ещё один прокси или L4 LB, подменяющий адрес источника.",
               "correct": false,
               "sections": {
                 "what_actually": "`$binary_remote_addr` — это IP относительно Nginx. Если перед ним прокси/LB, все запросы идут с одного IP; нужно настроить `real_ip` или брать ключ из `X-Forwarded-For`.",
@@ -467,10 +467,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`limit_req_zone $binary_remote_addr zone=api_per_ip:10m rate=10r/s;` плюс `limit_req zone=api_per_ip burst=20 nodelay;` реализуют leaky bucket: ведро ёмкостью `burst+1` (тут 21), запросы утекают со скоростью `rate` (10/сек), при переполнении возвращается HTTP 429 (`limit_req_status 429`), а `nodelay` отдаёт burst мгновенно, но накапливает его в счётчике.",
+              "text": "`limit_req_zone ... rate=10r/s;` плюс `limit_req zone=... burst=20 nodelay;` реализуют leaky bucket: ведро `burst+1`, утечка со скоростью `rate`, переполнение → HTTP 429.",
               "correct": true,
               "sections": {
-                "explanation": "Зону можно строить по разным ключам — `$binary_remote_addr` (per-IP) или `$http_authorization` (per-token) — и комбинировать несколько `limit_req` в одном location.",
+                "explanation": "Полные директивы: `limit_req_zone $binary_remote_addr zone=api_per_ip:10m rate=10r/s;` и `limit_req zone=api_per_ip burst=20 nodelay;`. Ведро ёмкостью `burst+1` (тут 21), запросы утекают со скоростью `rate` (10/сек), при переполнении возвращается HTTP 429 (`limit_req_status 429`), а `nodelay` отдаёт burst мгновенно, но накапливает его в счётчике. Зону можно строить по разным ключам — `$binary_remote_addr` (per-IP) или `$http_authorization` (per-token) — и комбинировать несколько `limit_req` в одном location.",
                 "example": "`rate=10r/s` с `burst=20 nodelay` пропускает всплеск из 20 запросов сразу, но дальше держит стабильные 10 req/s; зона `10m` вмещает ~160K уникальных IP.",
                 "when_to_apply": "Ключ `$binary_remote_addr` — это IP относительно Nginx: за внешним прокси/LB нужен `real_ip` или ключ из `X-Forwarded-For`, а счётчик локален и не глобален между инстансами.",
                 "edge_cases": "`limit_req` ставят на публичные API-эндпоинты, чтобы защитить backend от перегрузки и злоупотреблений ещё на прокси.",
@@ -491,10 +491,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Архитектура Nginx — master + N однопоточных worker-ов (event loop на epoll). `worker_processes auto;` приравнивает число воркеров к ядрам CPU, `worker_connections 10240;` задаёт max соединений на worker (клиентские + upstream), а `worker_rlimit_nofile 65535;` поднимает лимит файловых дескрипторов на воркер.",
+              "text": "Nginx — это master + N однопоточных worker-ов на event loop (epoll); `worker_processes auto;` приравнивает число воркеров к ядрам CPU.",
               "correct": true,
               "sections": {
-                "explanation": "Capacity считается как `max_clients = worker_processes × worker_connections / 2` — делим на 2, потому что каждое клиентское соединение тянет одно upstream-соединение.",
+                "explanation": "`worker_connections 10240;` задаёт max соединений на worker (клиентские + upstream), а `worker_rlimit_nofile 65535;` поднимает лимит файловых дескрипторов на воркер. Capacity считается как `max_clients = worker_processes × worker_connections / 2` — делим на 2, потому что каждое клиентское соединение тянет одно upstream-соединение.",
                 "example": "На 8-ядерной машине `worker_processes 1` оставляет 7 ядер простаивать, а низкий `worker_connections 1024` упрётся в лимит уже при 1K RPS.",
                 "when_to_apply": "Низкий `worker_rlimit_nofile` приводит к `EMFILE: Too many open files`, а маленький `keepalive_timeout 5s` заставляет клиентов дропать persistent-соединения и делать лишний TLS handshake на каждый запрос.",
                 "edge_cases": "Эти параметры тюнят при подготовке Nginx к высокому RPS, когда дефолты упираются в число ядер, соединений или дескрипторов.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`worker_processes` задаёт число потоков внутри одного процесса, а каждый воркер обрабатывает запросы в множестве потоков параллельно.",
+              "text": "`worker_processes` задаёт число потоков внутри одного процесса, и каждый воркер обрабатывает запросы в пуле потоков параллельно, как Tomcat thread-per-request.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый worker — отдельный процесс с одним потоком и event loop (epoll), а не пул потоков. Параллелизм даёт количество воркеров, равное числу ядер.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`worker_connections` считает только клиентские соединения и никак не связано с соединениями к upstream-серверам.",
+              "text": "`worker_connections` считает только клиентские соединения и никак не связано с соединениями к upstream-серверам, поэтому делить capacity на 2 не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "`worker_connections` лимитирует ВСЕ соединения воркера — и клиентские, и upstream. Поэтому реальная ёмкость клиентов делится на 2.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Значение `worker_rlimit_nofile` ни на что не влияет: Nginx сам управляет дескрипторами и игнорирует системный лимит.",
+              "text": "Значение `worker_rlimit_nofile` ни на что не влияет: Nginx сам управляет дескрипторами и полностью игнорирует системный `ulimit -n` под нагрузкой.",
               "correct": false,
               "sections": {
                 "what_actually": "`worker_rlimit_nofile` задаёт `ulimit -n` на воркер; при его нехватке новые соединения отвергаются с `EMFILE: Too many open files`.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Наличие или отсутствие слеша после backend в `proxy_pass` ни на что не влияет — Nginx всегда передаёт URI клиента без изменений.",
+              "text": "Наличие или отсутствие слеша после backend в `proxy_pass` ни на что не влияет — Nginx всегда передаёт URI клиента в backend без каких-либо изменений.",
               "correct": false,
               "sections": {
                 "what_actually": "Слеш меняет поведение кардинально: `proxy_pass http://backend;` (без слеша) передаёт URI as-is, а `proxy_pass http://backend/;` (со слешем) вырезает префикс location.",
@@ -563,10 +563,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Поведение зависит от слеша после backend. `location /api/ { proxy_pass http://backend; }` (БЕЗ слеша) передаёт URI as-is: `/api/users` → `http://backend/api/users`. `proxy_pass http://backend/;` (СО слешем) вырезает префикс location: `/api/users` → `http://backend/users`. С путём `http://backend/v2/` — `/api/users` → `http://backend/v2/users`.",
+              "text": "Поведение зависит от слеша. `proxy_pass http://backend;` (БЕЗ слеша) шлёт URI as-is; `proxy_pass http://backend/;` (СО слешем) вырезает префикс location.",
               "correct": true,
               "sections": {
-                "explanation": "Это одна из самых частых ошибок настройки Nginx: забыли слеш — backend получает `/api/...` вместо чистого пути, или наоборот теряет нужный префикс.",
+                "explanation": "Для `location /api/`: без слеша `/api/users` → `http://backend/api/users`; со слешем `/api/users` → `http://backend/users`; с путём `http://backend/v2/` — `/api/users` → `http://backend/v2/users`. Это одна из самых частых ошибок настройки Nginx: забыли слеш — backend получает `/api/...` вместо чистого пути, или наоборот теряет нужный префикс.",
                 "example": "`proxy_pass http://backend/;` для `location /api/` отдаёт бэкенду `/users` — удобно, когда сам сервис не знает про префикс `/api`.",
                 "when_to_apply": "Если в `proxy_pass` есть переменные (`proxy_pass http://$backend;`), правила переписывания НЕ применяются — URI всегда as-is, и нужен явный `rewrite ^/api/(.*)$ /$1 break;`.",
                 "edge_cases": "Правило про слеш применяют при каждой настройке `location` с `proxy_pass`, особенно когда backend не знает про префикс пути.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Слеш после backend в `proxy_pass` управляет тем, по какому протоколу (HTTP/1.1 или HTTP/2) Nginx общается с upstream.",
+              "text": "Слеш после backend в `proxy_pass` управляет тем, по какому протоколу — HTTP/1.1 или HTTP/2 — Nginx общается с upstream и нужно ли согласование ALPN.",
               "correct": false,
               "sections": {
                 "what_actually": "Слеш влияет на переписывание пути URI, а не на версию протокола. Версия задаётся отдельной директивой `proxy_http_version`.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Если в `proxy_pass` используется переменная (`proxy_pass http://$backend;`), Nginx применяет те же правила слеша и вырезает префикс location.",
+              "text": "Если в `proxy_pass` используется переменная (`proxy_pass http://$backend;`), Nginx применяет те же правила слеша и так же вырезает префикс location из URI.",
               "correct": false,
               "sections": {
                 "what_actually": "С переменной в `proxy_pass` правила переписывания НЕ работают — URI всегда передаётся as-is, и для изменения пути нужен явный `rewrite`.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "HAProxy не умеет роутить по URL или заголовкам — он только распределяет TCP-соединения round-robin, без L7-логики.",
+              "text": "HAProxy не умеет роутить по URL или заголовкам — он работает только на L4, распределяя TCP-соединения round-robin между серверами, без `acl`, `use_backend` и любой L7-логики маршрутизации.",
               "correct": false,
               "sections": {
                 "what_actually": "HAProxy полноценно работает на L7: `ACL` задают условия по path, header, cookie, src IP, query, а `use_backend ... if <acl>` маршрутизирует по ним.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`frontend` в HAProxy — это пул backend-серверов с health-check, а `backend` — слушающий порт с TLS; названия означают противоположное.",
+              "text": "`frontend` в HAProxy — это пул backend-серверов с health-check (`option httpchk`), а `backend` — слушающий порт с TLS и `bind *:443 ssl`; названия секций означают ровно противоположное их роли.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `frontend` — слушающий endpoint (порт + TLS + ACL + маршрутизация), а `backend` — пул серверов с алгоритмом балансировки и health-check.",
@@ -635,10 +635,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Конфиг строится из трёх блоков. `frontend` — слушающий endpoint (`bind *:443 ssl`, ACL, маршрутизация). `backend` — пул серверов с алгоритмом (`balance leastconn`) и health-check (`option httpchk`). `ACL` — именованное L7-условие (`acl is_admin path_beg /admin`). `use_backend admin_servers if is_admin` направляет по ACL, `default_backend` — fallback. Блок `defaults` задаёт наследуемые настройки.",
+              "text": "Три блока: `frontend` — слушающий endpoint с ACL; `backend` — пул серверов с health-check; `ACL` — L7-условие, по которому `use_backend` маршрутизирует.",
               "correct": true,
               "sections": {
-                "explanation": "`check inter 2s fall 3 rise 2` — active health-check: пробивать каждые 2 секунды, считать «down» после 3 fail, «up» после 2 success.",
+                "explanation": "`acl is_admin path_beg /admin` задаёт условие, `use_backend admin_servers if is_admin` направляет по нему, `default_backend` — fallback. `balance leastconn` выбирает алгоритм, `option httpchk` — health-check. Блок `defaults` задаёт настройки, наследуемые всеми frontend/backend. `check inter 2s fall 3 rise 2` — active health-check: пробивать каждые 2 секунды, считать «down» после 3 fail, «up» после 2 success.",
                 "example": "`acl is_grpc hdr(content-type) -i application/grpc` плюс `use_backend grpc_servers if is_grpc` маршрутизирует gRPC-трафик в отдельный пул с `proto h2 alpn h2`.",
                 "when_to_apply": "Преимущества HAProxy перед Nginx: богаче ACL и stick-tables, лучше performance на чистом проксировании, runtime API через admin socket (`disable server backend/srv1` без reload).",
                 "edge_cases": "Трёхблочную структуру используют при настройке HAProxy как L7-роутера: ACL во `frontend`, пулы и health-check в `backend`.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Блок `defaults` в HAProxy нельзя переопределить — все его настройки жёстко применяются ко всем frontend и backend без исключений.",
+              "text": "Блок `defaults` в HAProxy нельзя переопределить в `frontend`/`backend` — все его `timeout` и `mode` жёстко применяются ко всем секциям конфига без единого исключения.",
               "correct": false,
               "sections": {
                 "what_actually": "`defaults` задаёт настройки, наследуемые всеми frontend/backend, но каждую из них можно переопределить в конкретном блоке.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`stick-table` — это конфиг статического маршрута, привязывающий URL к фиксированному бэкенду; счётчиков и rate limit там нет.",
+              "text": "`stick-table` — это конфиг статического маршрута, привязывающий URL к фиксированному бэкенду через `use_backend`; счётчиков `conn_cur`, `http_req_rate` и rate limiting в нём нет вообще.",
               "correct": false,
               "sections": {
                 "what_actually": "`stick-table` — это in-memory key-value store с счётчиками (`conn_cur`, `http_req_rate(10s)`), доступный из ACL. Он даёт и sticky sessions, и rate limiting.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`stick-table` работает только локально на одном HAProxy и принципиально не может синхронизироваться между инстансами.",
+              "text": "`stick-table` работает только локально на одном HAProxy: директива `peers` к нему неприменима, и синхронизировать таблицу между инстансами кластера принципиально нельзя ни одним способом.",
               "correct": false,
               "sections": {
                 "what_actually": "Stick-tables реплицируются между инстансами через `peers` — это даёт распределённый rate limit на кластер прокси.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Ключом `stick-table` может быть только cookie; по IP или заголовку привязать клиента нельзя.",
+              "text": "Ключом `stick-table` может быть только cookie (`type string`); по `type ip` или заголовку, как в `stick on src`, привязать клиента к серверу нельзя — это ограничение синтаксиса HAProxy.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключ может быть любым: `type ip` (src IP), cookie, header. `stick on src` привязывает по IP, можно и по cookie/header.",
@@ -707,10 +707,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`stick-table` — in-memory key-value store, доступный из ACL: `stick-table type ip size 200k expire 30m store conn_cur,conn_rate(10s),http_req_rate(10s)`. `stick on src` запоминает, какой server обслуживал клиента (sticky session). Для rate limiting — `http-request track-sc0 src` плюс `http-request deny deny_status 429 if { sc_http_req_rate(0) gt 100 }` блокирует при >100 req за 10 сек.",
+              "text": "`stick-table` — in-memory key-value store из ACL: хранит счётчики per-key. `stick on src` даёт sticky session, `track-sc0` + `deny 429` — rate limiting.",
               "correct": true,
               "sections": {
-                "explanation": "Помимо sticky и rate limit умеет connection limiting (`conn_cur`), geo-аналитику через general-purpose counters (`gpc0_rate`) и репликацию между инстансами через `peers`.",
+                "explanation": "Полное объявление: `stick-table type ip size 200k expire 30m store conn_cur,conn_rate(10s),http_req_rate(10s)`. `stick on src` запоминает, какой server обслуживал клиента (sticky session). Для rate limiting — `http-request track-sc0 src` плюс `http-request deny deny_status 429 if { sc_http_req_rate(0) gt 100 }` блокирует при >100 req за 10 сек. Помимо этого умеет connection limiting (`conn_cur`), geo-аналитику через general-purpose counters (`gpc0_rate`) и репликацию между инстансами через `peers`.",
                 "example": "`store conn_cur,http_req_rate(10s)` ведёт счётчики per-key с временными окнами; `show table app_servers` в admin socket показывает их в рантайме.",
                 "when_to_apply": "Преимущества над Nginx `limit_req`: богаче условия (комбинируется с любым ACL), distributed через `peers` (глобальный лимит на кластер), runtime-инспекция таблицы.",
                 "edge_cases": "`stick-table` применяют, когда нужны sticky session, per-key rate limiting или connection limiting прямо на HAProxy, без внешнего хранилища.",
@@ -731,10 +731,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Active health-check — прокси сам пробивает backend по расписанию (`option httpchk GET /actuator/health`, `check inter 2s fall 3 rise 2`), замечая «упавший» сервер до первого клиентского запроса. Passive — прокси анализирует реальные клиентские запросы (`max_fails=3 fail_timeout=30s` в Nginx) и исключает сервер после N ошибок, реагируя мгновенно, но только когда трафик уже пошёл.",
+              "text": "Active — прокси сам пробивает backend по расписанию (`option httpchk`), замечая сбой до клиента. Passive — выводы из ошибок реальных запросов (`max_fails=3`), мгновенно, но только под трафиком.",
               "correct": true,
               "sections": {
-                "explanation": "Active стоит доп. трафика/нагрузки на backend, зато заметит «холодный» сбой заранее; passive бесплатен (на юзерском трафике), но может ошибочно исключить из-за случайного 5xx.",
+                "explanation": "Active стоит доп. трафика/нагрузки на backend, зато заметит «холодный» сбой заранее, до первого клиентского запроса. Passive бесплатен (работает на юзерском трафике), но реагирует только когда трафик уже пошёл, и может ошибочно исключить сервер из-за случайного 5xx.",
                 "example": "В Nginx OSS доступен только passive (`max_fails`/`fail_timeout`), а active — в Nginx Plus или HAProxy (`option httpchk` + `http-check expect status 200`).",
                 "when_to_apply": "Production-практика — комбинировать: active быстро ловит «упавший» pod, passive защищает от бэкенда, который проходит `/health`, но отвечает 5xx на реальных запросах.",
                 "edge_cases": "Комбинацию active и passive выбирают в любом production-пуле, где важны и быстрый детект сбоя, и отлов «полудохлых» бэкендов.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Passive health-check инициирует прокси по таймеру, отправляя пробы на `/health`, а active — это анализ реального клиентского трафика.",
+              "text": "Passive health-check инициирует прокси по таймеру, отправляя пробы `GET /health` каждые `inter` секунд, а active — это пассивный анализ реального клиентского трафика через `max_fails` и `fail_timeout`.",
               "correct": false,
               "sections": {
                 "what_actually": "Определения переставлены: active — это плановые пробы прокси, passive — анализ реальных клиентских запросов через `max_fails`.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Active health-check бесплатен и не создаёт нагрузки на backend, а passive, наоборот, генерирует дополнительный трафик проб.",
+              "text": "Active health-check бесплатен и не создаёт никакой нагрузки на backend, а passive, наоборот, сам генерирует дополнительный трафик периодических проб на `/actuator/health` по расписанию.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: active стоит доп. трафика (регулярные пробы), а passive бесплатен, так как использует уже идущий клиентский трафик.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В Nginx OSS из коробки доступен active health-check через `option httpchk`, как в HAProxy.",
+              "text": "В Nginx OSS из коробки доступен active health-check через `option httpchk` и `check inter 2s fall 3`, ровно как в HAProxy, без всякого перехода на платный Nginx Plus.",
               "correct": false,
               "sections": {
                 "what_actually": "`option httpchk` — директива HAProxy. В Nginx OSS доступен только passive (`max_fails`/`fail_timeout`); active появляется лишь в Nginx Plus.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Envoy конфигурируется только статическим YAML-файлом и требует полного рестарта процесса при любом изменении конфига.",
+              "text": "Envoy конфигурируется только статическим YAML-файлом, не поддерживает xDS по gRPC, а любое изменение конфига требует полного рестарта процесса с обрывом всех активных соединений.",
               "correct": false,
               "sections": {
                 "what_actually": "Главная фишка Envoy — динамическая конфигурация через `xDS` API (gRPC) и hot reload без drop соединений. Статический YAML — лишь один из режимов.",
@@ -803,10 +803,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Envoy` — L7-прокси от Lyft, основа `Istio`/`AWS App Mesh`/`Consul Connect`. Каждый запрос проходит через filter chain — цепочку независимых модулей (HTTP filters вроде `local_ratelimit` и `router`, network filters). xDS API — динамическая конфигурация по gRPC: `LDS` (listeners), `RDS` (routes), `CDS` (clusters), `EDS` (endpoints), `SDS` (secrets). Конфиг применяется hot reload, без drop соединений.",
+              "text": "`Envoy` (Lyft) — L7-прокси. Запрос идёт через filter chain из HTTP- и network-фильтров, а xDS API по gRPC даёт динамический конфиг с hot reload без drop соединений.",
               "correct": true,
               "sections": {
-                "explanation": "xDS превращает Envoy в platform-component: control plane (`Istio Pilot`, `Consul`) пушит конфиг через gRPC stream, и тысячи sidecar обновляются из одной точки.",
+                "explanation": "Filter chain — цепочка независимых модулей: HTTP filters вроде `local_ratelimit` и `router`, плюс network filters. xDS — динамическая конфигурация по gRPC: `LDS` (listeners), `RDS` (routes), `CDS` (clusters), `EDS` (endpoints), `SDS` (secrets); конфиг применяется hot reload, без обрыва соединений. Именно xDS превращает Envoy в platform-component: control plane (`Istio Pilot`, `Consul`) пушит конфиг через gRPC stream, и тысячи sidecar обновляются из одной точки.",
                 "example": "В listener фильтр `http_connection_manager` собирает chain: `local_ratelimit` с `token_bucket: {max_tokens: 100, fill_interval: 1s}`, затем `router`; clusters задают `lb_policy: LEAST_REQUEST` и `http2_protocol_options`.",
                 "when_to_apply": "Native HTTP/2 и HTTP/3 end-to-end плюс богатая observability (Prometheus, OpenTelemetry, structured access log) идут из коробки — без модулей, как в Nginx.",
                 "edge_cases": "Envoy с filter chain и xDS выбирают для service mesh и платформ, где конфиг тысяч прокси нужно менять централизованно и без рестартов.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Filter chain в Envoy — это статический список IP-адресов бэкендов, по которым прокси балансирует трафик round-robin.",
+              "text": "Filter chain в Envoy — это статический список IP-адресов бэкендов в `EDS`, по которым прокси балансирует трафик round-robin; HTTP- и network-фильтров в этой цепочке нет вообще.",
               "correct": false,
               "sections": {
                 "what_actually": "Filter chain — это цепочка обрабатывающих модулей (rate limit, auth, router) на каждый запрос, а не список бэкендов. Backend-эндпоинты задаются в clusters/EDS.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "xDS — это формат логов Envoy в JSON, который отправляется в систему мониторинга по gRPC.",
+              "text": "xDS — это формат structured access log Envoy в JSON, который по gRPC-stream отправляется в систему мониторинга вроде Prometheus и к управлению конфигурацией прокси отношения не имеет.",
               "correct": false,
               "sections": {
                 "what_actually": "xDS — это семейство API динамической конфигурации (`LDS`/`RDS`/`CDS`/`EDS`/`SDS`), по которым control plane пушит настройки, а не формат логов.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Sidecar Envoy ставится один на весь кластер и проксирует трафик всех pod-ов через единый центральный экземпляр.",
+              "text": "Sidecar Envoy ставится один на весь кластер и через `xDS` проксирует трафик всех pod-ов через единый центральный экземпляр, а не выделяется по одному контейнеру на каждый pod.",
               "correct": false,
               "sections": {
                 "what_actually": "В service mesh каждый pod получает СВОЙ Envoy-контейнер (sidecar); весь его входящий и исходящий трафик идёт через локальный прокси, а не через один центральный.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Sidecar-подход бесплатен по ресурсам и не добавляет задержки: Envoy работает в том же процессе, что и приложение.",
+              "text": "Sidecar-подход бесплатен по ресурсам и не добавляет никакой задержки: `Envoy` работает в том же процессе, что и приложение, без отдельного hop, без mTLS-оверхеда и без +RAM на pod.",
               "correct": false,
               "sections": {
                 "what_actually": "Цена реальна: +50-200 MB RAM/CPU на каждый pod и +1-3 ms latency на дополнительный hop. Envoy — отдельный контейнер, не тот же процесс.",
@@ -875,10 +875,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `Istio`/`Linkerd`/`Consul Connect` каждый pod получает свой `Envoy`-контейнер (sidecar); весь трафик pod-а (входящий и исходящий) идёт через него: `App → localhost → Envoy → mTLS → Envoy → localhost → App`. Control plane (`Istio Pilot`/`Citadel`) пушит конфиг через xDS gRPC.",
+              "text": "В `Istio`/`Linkerd` каждый pod получает свой `Envoy`-sidecar; весь трафик pod-а идёт через него (`App → Envoy → mTLS → Envoy → App`), а control plane пушит конфиг через xDS.",
               "correct": true,
               "sections": {
-                "explanation": "Sidecar даёт mTLS между сервисами автоматически (Citadel выдаёт сертификаты), retry/timeout/circuit breaker через `VirtualService` CRD, distributed tracing, traffic shifting (canary `10% → v2`) и language-agnostic набор фич без изменения кода сервиса.",
+                "explanation": "Полный путь: `App → localhost → Envoy → mTLS → Envoy → localhost → App`. Control plane (`Istio Pilot`/`Citadel`) пушит конфиг через xDS gRPC. Sidecar даёт mTLS между сервисами автоматически (Citadel выдаёт сертификаты), retry/timeout/circuit breaker через `VirtualService` CRD, distributed tracing, traffic shifting (canary `10% → v2`) и language-agnostic набор фич без изменения кода сервиса.",
                 "example": "Go-, Java- и Python-сервисы получают одинаковый mTLS и retry-политики просто по факту наличия sidecar, без правок в каждом приложении.",
                 "when_to_apply": "Цена: +50-200 MB RAM/CPU на pod, +1-3 ms latency на лишний hop, и сложность дебага (`istioctl proxy-config` для просмотра конфига sidecar).",
                 "edge_cases": "Sidecar-модель применяют, когда нужны mTLS, retry и tracing для разноязычных сервисов без правок в их коде.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Чтобы получить mTLS и retry в service mesh, нужно вписать соответствующий код в каждый сервис на каждом языке.",
+              "text": "Чтобы получить mTLS и retry в service mesh, sidecar ничем не помогает — нужно вписать соответствующий код в каждый сервис на каждом языке отдельно, дублируя логику повсюду.",
               "correct": false,
               "sections": {
                 "what_actually": "Главное преимущество sidecar — language-agnostic: mTLS, retry, timeout, circuit breaker даёт Envoy без изменения кода сервиса, через `VirtualService` CRD.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Traefik требует статический файл конфигурации и не умеет читать метаданные платформы — каждый маршрут прописывается вручную и применяется после reload.",
+              "text": "Traefik требует статический файл конфигурации и не умеет читать метаданные платформы вроде Docker-labels — каждый маршрут прописывается в файле вручную и применяется только после явного reload.",
               "correct": false,
               "sections": {
                 "what_actually": "Главная фишка Traefik — автоматическое чтение конфигурации из метаданных платформы (Docker labels, K8s CRD): добавил label → endpoint появился сразу, без reload.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Traefik читает конфигурацию из labels, но Let's Encrypt-сертификаты приходится получать и обновлять вручную внешним cron.",
+              "text": "Traefik читает конфигурацию из labels, но Let's Encrypt-сертификаты приходится получать и продлевать вручную внешним cron-скриптом — директивы `certresolver=letsencrypt` для автообновления у него нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Из коробки Traefik умеет Let's Encrypt с автообновлением (`certresolver=letsencrypt`); ручной cron не нужен.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Traefik быстрее Nginx, HAProxy и Envoy на high-RPS и поэтому рекомендуется именно для нагруженных production-шлюзов.",
+              "text": "Traefik быстрее Nginx, HAProxy и Envoy на high-RPS благодаря компилируемому Go-рантайму и поэтому рекомендуется именно для самых нагруженных production-шлюзов на входе кластера.",
               "correct": false,
               "sections": {
                 "what_actually": "Слабая сторона Traefik как раз performance: на high-RPS он уступает Nginx/HAProxy/Envoy. Его сила — developer experience и автоконфиг, а не пиковая пропускная способность.",
@@ -947,10 +947,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Traefik` спроектирован под динамические окружения и читает конфигурацию из метаданных платформы. В Docker через labels: `traefik.http.routers.api.rule=Host(\\`api.example.com\\`)`, `...tls.certresolver=letsencrypt`, `...services.api.loadbalancer.server.port=8080`, `...middlewares=api-ratelimit`. В Kubernetes — через CRD `IngressRoute` с `match: Host(...) && PathPrefix(/v2)` и `middlewares`.",
+              "text": "`Traefik` читает конфигурацию из метаданных платформы: в Docker — через labels (`...rule=Host(...)`, `...certresolver=letsencrypt`), в Kubernetes — через CRD `IngressRoute`.",
               "correct": true,
               "sections": {
-                "explanation": "Динамика — ключевое: добавил label на контейнер → endpoint появился сразу, без reload. Из коробки идёт Let's Encrypt с автообновлением и dashboard с Prometheus-метриками.",
+                "explanation": "В Docker через labels: `traefik.http.routers.api.rule=Host(`api.example.com`)`, `...tls.certresolver=letsencrypt`, `...services.api.loadbalancer.server.port=8080`, `...middlewares=api-ratelimit`. В Kubernetes — через CRD `IngressRoute` с `match: Host(...) && PathPrefix(/v2)` и `middlewares`. Динамика — ключевое: добавил label на контейнер → endpoint появился сразу, без reload; из коробки идёт Let's Encrypt с автообновлением и dashboard с Prometheus-метриками.",
                 "example": "`traefik.http.middlewares.api-ratelimit.ratelimit.average=100` плюс `...routers.api.middlewares=api-ratelimit` навешивает rate limit композицией middleware, без отдельного конфиг-файла.",
                 "when_to_apply": "Слабые стороны: хуже performance на high-RPS, чем у Nginx/HAProxy/Envoy; labels превращаются в кашу при сложной маршрутизации; меньше тонких L4-настроек.",
                 "edge_cases": "Traefik берут в Docker/Kubernetes-окружениях, где сервисы появляются и исчезают часто, а конфиг хочется держать в labels рядом с сервисом.",
@@ -971,10 +971,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Каждый прокси силён в своей нише. `Nginx` (2004, C) — универсал с богатым `proxy_cache`, статический конфиг с reload. `HAProxy` (2001, C) — L4+L7 с stick-table и runtime API, без встроенного кеша. `Envoy` (2016, C++) — xDS dynamic, first-class gRPC, default sidecar для service mesh. `Traefik` (2016, Go) — provider-based конфиг (Docker/K8s), auto на label change.",
+              "text": "Каждый прокси силён в своей нише: `Nginx` — универсал с `proxy_cache`; `HAProxy` — L4+L7 со stick-table; `Envoy` — xDS и first-class gRPC для mesh; `Traefik` — provider-based конфиг.",
               "correct": true,
               "sections": {
-                "explanation": "Выбор по задаче: `Nginx` для small-medium со статикой и кешем без mesh; `HAProxy` для high-performance L4/L7 LB с богатыми ACL; `Envoy` для service mesh и миллионов RPS с control plane; `Traefik` для Docker/K8s, где важен developer experience.",
+                "explanation": "`Nginx` (2004, C) — универсал с богатым `proxy_cache`, статический конфиг с reload. `HAProxy` (2001, C) — L4+L7 с stick-table и runtime API, без встроенного кеша. `Envoy` (2016, C++) — xDS dynamic, first-class gRPC, default sidecar для service mesh. `Traefik` (2016, Go) — provider-based конфиг (Docker/K8s), auto на label change.",
                 "example": "Для отдачи статики с кешем — `Nginx`; для тысяч sidecar с динамической конфигурацией из одной точки — `Envoy`; для авто-IngressRoute в K8s — `Traefik`.",
                 "when_to_apply": "Нюансы: rate limit у Nginx — leaky bucket per-zone, у HAProxy — stick-table+peers, у Envoy — local/global RLS; кеш встроен только у Nginx; WAF — `ModSecurity`/`Coraza` у Nginx, filter у Envoy, middleware у Traefik.",
                 "edge_cases": "Эту матрицу используют при выборе прокси под конкретную задачу: статика и кеш, high-RPS LB, service mesh или авто-конфиг в контейнерах.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Все четыре прокси одинаковы по возможностям, поэтому выбор полностью произволен и зависит только от привычки команды.",
+              "text": "Все четыре прокси полностью одинаковы по `proxy_cache`, языку ACL и поддержке xDS, поэтому выбор между ними произволен и зависит только от привычки команды, а не от конкретной задачи.",
               "correct": false,
               "sections": {
                 "what_actually": "Возможности различаются заметно: кеш встроен только у Nginx, sidecar для mesh — это Envoy, авто-конфиг из labels — Traefik, stick-table+peers — HAProxy.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Встроенный кеш ответов (`proxy_cache`) есть у всех четырёх прокси и работает одинаково в Nginx, HAProxy, Envoy и Traefik.",
+              "text": "Встроенный кеш ответов (`proxy_cache`) есть у всех четырёх прокси и работает абсолютно одинаково в Nginx, HAProxy, Envoy и Traefik, включая инвалидацию по тегу и паттерну.",
               "correct": false,
               "sections": {
                 "what_actually": "Богатый встроенный кеш есть только у Nginx (`proxy_cache`); у HAProxy, Envoy и Traefik встроенного кеша нет, для CDN-уровня берут `Varnish` или CDN.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Envoy и Traefik не поддерживают gRPC и HTTP/3, поэтому для современных протоколов годятся только Nginx и HAProxy.",
+              "text": "Envoy и Traefik не поддерживают ни gRPC, ни HTTP/3, поэтому для современных протоколов годятся только Nginx и HAProxy с их `grpc_pass` и `listen 443 quic` на входе.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: gRPC у Envoy first-class, HTTP/3 stable у всех четырёх; Envoy — один из лучших для gRPC и HTTP/2 end-to-end.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При SSL termination прокси не расшифровывает трафик и просто пробрасывает зашифрованный поток бэкенду, поэтому L7-функции недоступны.",
+              "text": "При SSL termination прокси не расшифровывает трафик, а просто пробрасывает зашифрованный TCP-поток бэкенду на L4, поэтому L7-функции — routing по path, кеш, header rewrite и WAF — недоступны.",
               "correct": false,
               "sections": {
                 "what_actually": "Это описание passthrough. При termination прокси как раз расшифровывает HTTPS, поэтому ему доступны routing, кеш, header rewrite и WAF; backend получает plain HTTP.",
@@ -1043,10 +1043,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "При SSL termination прокси расшифровывает HTTPS, сертификаты живут на нём, backend получает plain HTTP — доступны routing, кеш, header rewrite, WAF; end-to-end шифрования нет (внутри VPC plain). При SSL passthrough прокси работает на L4, форвардит зашифрованный TCP, сертификаты на бэкенде — L7-функции недоступны (max — роутинг по SNI), зато есть end-to-end шифрование.",
+              "text": "Termination: прокси расшифровывает HTTPS, backend получает plain HTTP — доступны routing, кеш, WAF, но e2e-шифрования нет. Passthrough: L4-форвард зашифрованного TCP, L7-функций нет.",
               "correct": true,
               "sections": {
-                "explanation": "Termination применяют в 99% web/API; passthrough — для compliance, e2e-шифрования или проксирования внешнего HTTPS-сервиса, который сам терминирует TLS.",
+                "explanation": "При termination сертификаты живут на прокси, end-to-end шифрования нет (внутри VPC plain HTTP). При passthrough прокси работает на L4 и форвардит зашифрованный TCP, сертификаты на бэкенде — L7-функции недоступны (максимум — роутинг по SNI), зато есть end-to-end шифрование. Termination применяют в 99% web/API; passthrough — для compliance, e2e-шифрования или проксирования внешнего HTTPS-сервиса, который сам терминирует TLS.",
                 "example": "Гибрид — re-encryption (SSL bridging): `proxy_pass https://backend; proxy_ssl_verify on;` — прокси расшифровывает для L7-функций, затем шифрует обратно к бэкенду (нужно для PCI-DSS/HIPAA).",
                 "when_to_apply": "При passthrough роутинг по path невозможен (HTTPS opaque), максимум — по SNI; CPU-нагрузка от расшифровки при termination ложится на прокси, при passthrough — на backend.",
                 "edge_cases": "Termination выбирают для большинства web/API, passthrough и re-encryption — когда compliance требует шифрования внутри периметра.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При SSL passthrough прокси видит расшифрованный HTTP и может роутить по URL path и переписывать заголовки.",
+              "text": "При SSL passthrough прокси видит расшифрованный HTTP и может роутить по URL path, переписывать заголовки и кешировать ответы точно так же, как при полноценном termination на L7.",
               "correct": false,
               "sections": {
                 "what_actually": "При passthrough прокси видит только зашифрованный TCP — роутинг по path невозможен, максимум по SNI; L7-функции недоступны.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Re-encryption (SSL bridging) невозможен: прокси либо терминирует TLS, либо пробрасывает его, третьего варианта нет.",
+              "text": "Re-encryption (SSL bridging) невозможен: прокси либо терминирует TLS, либо пробрасывает его на L4, и промежуточной схемы `proxy_pass https://backend` с расшифровкой и обратным шифрованием не существует.",
               "correct": false,
               "sections": {
                 "what_actually": "Re-encryption существует: прокси расшифровывает HTTPS для L7-функций, затем шифрует обратно к бэкенду (`proxy_pass https://backend; proxy_ssl_verify on;`) — компромисс для compliance.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`mTLS` означает, что только клиент проверяет сертификат сервера, как в обычном HTTPS, без сертификата со стороны клиента.",
+              "text": "`mTLS` означает, что только клиент проверяет сертификат сервера, как в обычном одностороннем HTTPS, а директива `ssl_verify_client on` для проверки сертификата клиента нигде не используется.",
               "correct": false,
               "sections": {
                 "what_actually": "`mTLS` (mutual TLS) — обе стороны handshake предъявляют сертификат: и сервер, и клиент. Прокси может валидировать клиентский сертификат (`ssl_verify_client on`).",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Прокси при mTLS не может передать бэкенду информацию о клиентском сертификате — backend никак не узнает, кто аутентифицировался.",
+              "text": "Прокси при mTLS не может передать бэкенду информацию о клиентском сертификате: заголовки вроде `X-Client-DN` со значением `$ssl_client_s_dn` не поддерживаются, и backend никак не узнает, кто аутентифицировался.",
               "correct": false,
               "sections": {
                 "what_actually": "Прокси проксирует identity клиента через заголовки: `proxy_set_header X-Client-DN $ssl_client_s_dn;` и `X-Client-Verify $ssl_client_verify;`.",
@@ -1115,10 +1115,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`mTLS` (mutual TLS) — обе стороны handshake предъявляют сертификат. Reverse proxy может быть и сервером (к внешнему клиенту), и клиентом (к бэкенду). В Nginx требование клиентского сертификата: `ssl_client_certificate /etc/nginx/certs/client-ca.crt; ssl_verify_client on; ssl_verify_depth 2;`, а CN/DN пробрасывается в backend через `proxy_set_header X-Client-DN $ssl_client_s_dn;`.",
+              "text": "`mTLS` (mutual TLS) — обе стороны handshake предъявляют сертификат; reverse proxy может быть и сервером (к клиенту), и клиентом (к бэкенду). В Nginx требование клиентского сертификата — `ssl_verify_client on`.",
               "correct": true,
               "sections": {
-                "explanation": "В Envoy это `DownstreamTlsContext` с `require_client_certificate: true` и `validation_context.trusted_ca` — sidecar валидирует identity вызывающего сервиса (SPIFFE ID).",
+                "explanation": "В Nginx требование клиентского сертификата задаётся так: `ssl_client_certificate /etc/nginx/certs/client-ca.crt; ssl_verify_client on; ssl_verify_depth 2;`, а CN/DN пробрасывается в backend через `proxy_set_header X-Client-DN $ssl_client_s_dn;`. В Envoy это `DownstreamTlsContext` с `require_client_certificate: true` и `validation_context.trusted_ca` — sidecar валидирует identity вызывающего сервиса (SPIFFE ID).",
                 "example": "B2B API используют клиентские сертификаты вместо API-ключей, IoT-устройства — по сертификату на устройство, а прокси проверяет CA через `ssl_verify_client`.",
                 "when_to_apply": "В service mesh sidecar Envoy автоматически валидирует SPIFFE ID, для internal admin endpoints применяют `kubectl`-стиль аутентификации по сертификату.",
                 "edge_cases": "mTLS включают для B2B-API, IoT и service mesh, где нужна взаимная аутентификация по сертификатам, а не по ключам или паролям.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "mTLS применяется исключительно внутри service mesh между sidecar-ами и не используется для внешних клиентов или B2B API.",
+              "text": "mTLS применяется исключительно внутри service mesh между sidecar-ами по SPIFFE ID и принципиально никогда не используется для внешних клиентов, B2B API или IoT-устройств со своими сертификатами.",
               "correct": false,
               "sections": {
                 "what_actually": "mTLS используют широко: B2B API (клиентские сертификаты вместо ключей), IoT-устройства, internal admin endpoints — не только в mesh между sidecar.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "IP-hash — самый надёжный способ sticky session, без подводных камней: hash от IP всегда стабильно держит клиента на одном бэкенде.",
+              "text": "IP-hash — самый надёжный способ sticky session, без единого подводного камня: hash от IP стабильно держит клиента на одном бэкенде даже за корпоративным NAT и мобильным CGNAT.",
               "correct": false,
               "sections": {
                 "what_actually": "IP-hash как раз проблемный: корпоративный NAT гонит всех сотрудников на один backend, CGNAT в mobile-сетях — десятки тысяч клиентов с одного IP, а добавление бэкенда перетасовывает всех (без consistent hash).",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Cookie-based sticky session работает в обычном Nginx OSS через директиву `sticky cookie` без дополнительных модулей.",
+              "text": "Cookie-based sticky session работает прямо в обычном Nginx OSS через директиву `sticky cookie srv_id`, без всякого перехода на платный Nginx Plus и без дополнительных сторонних модулей.",
               "correct": false,
               "sections": {
                 "what_actually": "Директива `sticky cookie ...` доступна только в Nginx Plus (платная). В OSS её нет; в HAProxy аналог — `cookie SERVERID insert indirect`.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "JWT-based sticky распределяет клиентов по их IP-адресу, поэтому страдает от тех же проблем с корпоративным NAT, что и IP-hash.",
+              "text": "JWT-based sticky распределяет клиентов по их IP-адресу через `hash $remote_addr`, поэтому страдает ровно от тех же проблем с корпоративным NAT и CGNAT, что и обычный IP-hash.",
               "correct": false,
               "sections": {
                 "what_actually": "JWT-based хеширует по claim из токена (например, `sub`/user_id) через `hash $jwt_claim_sub consistent;` — корпоративный NAT не влияет, так как ключ это user_id, а не IP.",
@@ -1187,10 +1187,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Три подхода. Cookie-based (самый надёжный): прокси вставляет cookie со значением «какой server» (`cookie SERVERID insert indirect nocache` в HAProxy; `sticky cookie` в Nginx Plus). IP-hash: `ip_hash;` — hash от IP, но ломается на корпоративном NAT и CGNAT. JWT-based: `hash $jwt_claim_sub consistent;` — распределение по user_id из токена, NAT не влияет.",
+              "text": "Три подхода. Cookie-based (надёжнее всех): прокси вставляет cookie «какой server» (`cookie SERVERID insert`). IP-hash (`ip_hash;`) ломается на NAT. JWT-based (`hash $jwt_claim_sub consistent;`) — по user_id.",
               "correct": true,
               "sections": {
-                "explanation": "Cookie надёжнее всех, IP-hash проще, но проблемнее, JWT-hash решает проблему NAT через consistent hash по claim.",
+                "explanation": "Cookie-based: `cookie SERVERID insert indirect nocache` в HAProxy, `sticky cookie` в Nginx Plus. IP-hash: `ip_hash;` — hash от IP, но ломается на корпоративном NAT и CGNAT (все за одним адресом идут на один backend). JWT-based: `hash $jwt_claim_sub consistent;` — распределение по user_id из токена, NAT не влияет.",
                 "example": "За корпоративным NAT IP-hash шлёт всех на один backend; JWT-hash по `sub` разводит тех же пользователей по разным pod-ам корректно.",
                 "when_to_apply": "Production-практика: sticky session — антипаттерн, лучше держать session в `Redis`/`JWT` и иметь stateless сервисы. Sticky оправдан лишь для WebSocket и устаревших монолитов.",
                 "edge_cases": "Sticky session настраивают только когда это вынужденно — для WebSocket или stateful-монолитов; для stateless-сервисов его избегают.",
@@ -1211,10 +1211,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Reverse proxy — протокольный мост: версии downstream (client→proxy) и upstream (proxy→backend) могут отличаться. Типичная схема Nginx: `listen 443 ssl http2;` (H2 к клиенту) и `proxy_pass http://backend; proxy_http_version 1.1;` (H1.1 к бэкенду). HTTP/3 (QUIC поверх UDP): `listen 443 quic reuseport; http3 on;` плюс `add_header Alt-Svc 'h3=\":443\"; ma=86400';` для объявления поддержки клиенту.",
+              "text": "Reverse proxy — протокольный мост: версии downstream (client→proxy) и upstream (proxy→backend) могут отличаться. Типичная схема Nginx — `listen 443 ssl http2;` к клиенту и `proxy_http_version 1.1;` к бэкенду.",
               "correct": true,
               "sections": {
-                "explanation": "HTTP/1.1 поддержан везде; HTTP/2 (бинарный, multiplexing, HPACK) — на downstream у всех, на upstream у Envoy/HAProxy (`proto h2`) и Nginx через `grpc_pass`; HTTP/3 (0-RTT, нет HOL-blocking на TCP) — у Nginx 1.25+, HAProxy, Envoy.",
+                "explanation": "HTTP/1.1 поддержан везде; HTTP/2 (бинарный, multiplexing, HPACK) — на downstream у всех, на upstream у Envoy/HAProxy (`proto h2`) и Nginx через `grpc_pass`; HTTP/3 (0-RTT, нет HOL-blocking на TCP) — у Nginx 1.25+, HAProxy, Envoy. HTTP/3 (QUIC поверх UDP) включают через `listen 443 quic reuseport; http3 on;` плюс `add_header Alt-Svc 'h3=\":443\"; ma=86400';` для объявления поддержки клиенту.",
                 "example": "Между прокси и Java/Spring бэкендом часто оставляют HTTP/1.1: Netty/Tomcat H2 настроить сложнее, а выигрыш внутри VPC минимален.",
                 "when_to_apply": "Подводные камни: HTTP/2 multiplexing нагружает backend несколькими streams — нужно повышать `keepalive`-пул и `max_concurrent_streams`; HTTP/3 поверх UDP часто блокируют middleboxes, поэтому `Alt-Svc` даёт fallback на H2.",
                 "edge_cases": "Протокольный мост настраивают на каждом прокси: версия к клиенту и к бэкенду выбирается отдельно под их возможности и нагрузку.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Версии HTTP на downstream и upstream обязаны совпадать: если клиент пришёл по HTTP/2, прокси обязан идти к бэкенду тоже по HTTP/2.",
+              "text": "Версии HTTP на downstream и upstream обязаны совпадать: если клиент пришёл по HTTP/2, прокси по стандарту RFC 7540 обязан идти к бэкенду тоже по HTTP/2, иначе ALPN-согласование сбрасывает соединение.",
               "correct": false,
               "sections": {
                 "what_actually": "Версии могут отличаться — это и есть протокольный мост: клиент по HTTP/2, backend по HTTP/1.1 (типичная схема `listen 443 http2` + `proxy_http_version 1.1`).",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "HTTP/3 работает поверх TCP, как и HTTP/2, и потому никогда не блокируется firewall-ами или middleboxes.",
+              "text": "HTTP/3 работает поверх TCP, как и HTTP/2, использует тот же механизм 0-RTT, и потому никогда не блокируется firewall-ами или middleboxes на пути от клиента к прокси.",
               "correct": false,
               "sections": {
                 "what_actually": "HTTP/3 работает поверх UDP (QUIC), а не TCP, и именно поэтому firewalls/middleboxes часто его блокируют; для fallback на H2 нужен `Alt-Svc`.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для проксирования к Java/Spring бэкенду всегда нужно настраивать HTTP/2 end-to-end, иначе keepalive и производительность ломаются.",
+              "text": "Для проксирования к Java/Spring бэкенду всегда нужно настраивать HTTP/2 end-to-end через `proxy_http_version 2.0;`, иначе keepalive-пул и производительность Netty/Tomcat ломаются.",
               "correct": false,
               "sections": {
                 "what_actually": "Между прокси и Java/Spring бэкендом обычно оставляют HTTP/1.1: H2 в Netty/Tomcat настроить сложнее, а выигрыш внутри VPC минимален.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для WebSocket достаточно обычного `proxy_pass` — никаких специальных заголовков `Upgrade`/`Connection` или версии HTTP указывать не нужно.",
+              "text": "Для WebSocket достаточно обычного `proxy_pass` — заголовки `Upgrade`/`Connection` прокси проставит сам по `$http_upgrade`, а версию HTTP и таймауты указывать не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "WebSocket требует явных `proxy_http_version 1.1;`, `proxy_set_header Upgrade $http_upgrade;` и `proxy_set_header Connection \"upgrade\";` — без них прокси разорвёт upgrade.",
@@ -1283,10 +1283,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "WebSocket — это HTTP/1.1 connection, который через `Upgrade: websocket` превращается в TCP-канал с WebSocket-фреймами. В Nginx обязательны `proxy_http_version 1.1;`, `proxy_set_header Upgrade $http_upgrade;` и `proxy_set_header Connection \"upgrade\";` — без них прокси разорвёт upgrade. Плюс `proxy_read_timeout 3600s;` для long-lived соединений.",
+              "text": "WebSocket — это HTTP/1.1 connection, который через `Upgrade: websocket` превращается в TCP-канал с фреймами. В Nginx обязательны `proxy_http_version 1.1;`, проброс `Upgrade` и `Connection \"upgrade\"`.",
               "correct": true,
               "sections": {
-                "explanation": "По умолчанию `proxy_read_timeout` 60 сек разрывает idle WebSocket; его поднимают до часа и выше, а на уровне приложения шлют ping/pong каждые 30 секунд.",
+                "explanation": "По умолчанию `proxy_read_timeout` 60 сек разрывает idle WebSocket; его поднимают до часа и выше (`proxy_read_timeout 3600s;`), а на уровне приложения шлют ping/pong каждые 30 секунд. Без `proxy_http_version 1.1;` и заголовков `Upgrade`/`Connection \"upgrade\"` прокси отправит бэкенду обычный HTTP-запрос и разорвёт upgrade на этапе рукопожатия.",
                 "example": "`location /ws/` с `proxy_read_timeout 3600s` держит соединение час; sticky session «прибивает» WS к одному backend pod, и при ребалансировке клиент переподключается.",
                 "when_to_apply": "HTTP/2 поверх WebSocket требует RFC 8441 (`SETTINGS_ENABLE_CONNECT_PROTOCOL`), поддерживается не везде — чаще для WS оставляют H1.1; WebSocket поверх H3 (RFC 9220) пока экспериментален.",
                 "edge_cases": "Эти директивы добавляют на каждый `location`, который проксирует WebSocket: real-time чат, нотификации, live-обновления.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "WebSocket поверх HTTP/2 поддерживается из коробки всеми прокси, поэтому для WS лучше всегда использовать H2, а не H1.1.",
+              "text": "WebSocket поверх HTTP/2 поддерживается из коробки всеми прокси без RFC 8441, поэтому для WS лучше всегда использовать H2 — он мультиплексирует несколько сокетов в одном соединении.",
               "correct": false,
               "sections": {
                 "what_actually": "HTTP/2 поверх WebSocket требует RFC 8441 (`SETTINGS_ENABLE_CONNECT_PROTOCOL`) и поддерживается не везде; чаще для WS оставляют HTTP/1.1.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Дефолтного `proxy_read_timeout` (60 сек) достаточно для WebSocket, и менять его не нужно — соединение держится бесконечно.",
+              "text": "Дефолтного `proxy_read_timeout` (60 сек) достаточно для WebSocket: при отсутствии данных Nginx автоматически продлевает таймаут, и idle-соединение держится бесконечно без ping/pong.",
               "correct": false,
               "sections": {
                 "what_actually": "Дефолтные 60 сек разрывают idle WebSocket; нужно поднять `proxy_read_timeout` до часа и слать ping/pong каждые 30 секунд на уровне приложения.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "gRPC работает поверх HTTP/1.1, поэтому его можно балансировать обычным L4 TCP-балансировщиком без поддержки HTTP/2 на прокси.",
+              "text": "gRPC работает поверх HTTP/1.1 с текстовыми фреймами, поэтому его можно балансировать обычным L4 TCP-балансировщиком без поддержки HTTP/2 и trailers на прокси.",
               "correct": false,
               "sections": {
                 "what_actually": "gRPC использует HTTP/2 (бинарные фреймы, trailers); L4-балансировка для него НЕ работает — multiplexing держит все RPC на одном TCP-соединении, и они уйдут на один pod. Нужен L7 (Envoy/Nginx/Linkerd).",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Прокси не обязан пропускать HTTP/2 trailers — gRPC передаёт status code в обычных заголовках, и старые прокси работают с gRPC без проблем.",
+              "text": "Прокси не обязан пропускать HTTP/2 trailers — gRPC передаёт status code в обычных заголовках ответа, и старые версии Nginx работают с gRPC без потери статуса.",
               "correct": false,
               "sections": {
                 "what_actually": "gRPC передаёт status code именно в trailers; прокси обязан их корректно пропускать. Старые версии Nginx этого не умели, что ломало gRPC.",
@@ -1355,10 +1355,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "gRPC использует HTTP/2 с trailers и бинарными фреймами, поэтому прокси должен поддерживать H2 на обоих концах. В Nginx — `grpc_pass grpc://grpc_backend;` (или `grpcs://` к TLS-бэкенду) с `listen 443 ssl http2;`. В HAProxy — `server grpc1 ... proto h2 alpn h2`. В Envoy gRPC native, без отдельных директив.",
+              "text": "gRPC использует HTTP/2 с trailers и бинарными фреймами, поэтому прокси должен поддерживать H2 на обоих концах. В Nginx — `grpc_pass grpc://grpc_backend;` с `listen 443 ssl http2;`.",
               "correct": true,
               "sections": {
-                "explanation": "Главный подводный камень: HTTP/2 multiplexing держит сотни RPC на одном TCP-соединении, поэтому L4-балансировка не работает — все запросы пойдут на один pod. Нужен L7-прокси.",
+                "explanation": "Главный подводный камень: HTTP/2 multiplexing держит сотни RPC на одном TCP-соединении, поэтому L4-балансировка не работает — все запросы пойдут на один pod. Нужен L7-прокси. В Nginx к TLS-бэкенду идут через `grpc_pass grpcs://grpc_backend;`; в HAProxy — `server grpc1 ... proto h2 alpn h2`; в Envoy gRPC native, без отдельных директив.",
                 "example": "`upstream grpc_backend { server 10.0.1.10:50051; keepalive 16; }` с `grpc_read_timeout 3600s` обслуживает streaming-вызовы; `gRPC-Web` для браузеров требует `Envoy grpc-web filter`.",
                 "when_to_apply": "gRPC передаёт status code в trailers — прокси обязан их пропускать (старые Nginx не умели); streaming (server/client/bidi) long-lived, поэтому `grpc_read_timeout` обязателен.",
                 "edge_cases": "`grpc_pass`/`proto h2` настраивают для любого gRPC-трафика через прокси, особенно когда нужна корректная L7-балансировка вызовов.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`gRPC-Web` — это просто gRPC поверх HTTP/2, и браузеры умеют его напрямую без дополнительного прокси-фильтра.",
+              "text": "`gRPC-Web` — это просто gRPC поверх HTTP/2 с бинарными trailers, и браузеры умеют его напрямую через `fetch`, без моста вроде `Envoy grpc-web filter`.",
               "correct": false,
               "sections": {
                 "what_actually": "`gRPC-Web` — это gRPC через HTTP/1.1 для браузеров (которые не дают прямого доступа к H2-фреймам), и для него нужен `Envoy grpc-web filter` или `grpcwebproxy`.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Keepalive к upstream вреден: переиспользование соединений мешает балансировке, поэтому лучше открывать новое TCP-соединение на каждый запрос.",
+              "text": "Keepalive к upstream вреден: переиспользование соединений мешает балансировке и привязывает трафик к одному pod, поэтому лучше открывать новое TCP-соединение на каждый запрос.",
               "correct": false,
               "sections": {
                 "what_actually": "Без keepalive каждый запрос — новый TCP+TLS handshake к бэкенду (+5-50 ms latency и кратная нагрузка). Keepalive-пул резко снижает и latency, и нагрузку на backend.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Keepalive к upstream в Nginx работает по умолчанию — никаких `proxy_http_version` или очистки `Connection` указывать не требуется.",
+              "text": "Keepalive к upstream в Nginx работает по умолчанию — директиву `keepalive 32;` в `upstream` и `proxy_http_version 1.1;` указывать не требуется, заголовок `Connection` чистится сам.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `proxy_http_version 1.1;` и `proxy_set_header Connection \"\";` keepalive к upstream НЕ работает: по умолчанию передаётся `Connection: close`, и соединение закрывается после ответа.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Размер keepalive-пула в Nginx — это глобальный лимит на весь процесс, не зависящий от числа worker-ов.",
+              "text": "Размер keepalive-пула в Nginx (`keepalive 32;`) — это глобальный лимит на весь процесс, общий для всех worker-ов, а не на каждый worker по отдельности, как ошибочно думают.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый worker держит свой пул, поэтому общий лимит на backend = `worker_processes × keepalive`; пул не глобальный.",
@@ -1427,10 +1427,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Без keepalive каждый запрос — новый TCP+TLS handshake к бэкенду: +5-50 ms latency и кратная нагрузка. В Nginx пул задают в `upstream`: `keepalive 32;` (max idle на worker), `keepalive_requests 1000;` (прогнать N запросов до закрытия), `keepalive_timeout 60s;`. Обязательны `proxy_http_version 1.1;` и `proxy_set_header Connection \"\";`, иначе передаётся `close`.",
+              "text": "Без keepalive каждый запрос — новый TCP+TLS handshake к бэкенду: +5-50 ms latency и кратная нагрузка. Пул задают в `upstream` через `keepalive 32;` плюс обязательные `proxy_http_version 1.1;` и очистку `Connection`.",
               "correct": true,
               "sections": {
-                "explanation": "В HAProxy — `option http-keep-alive` (default) или `option http-server-close`; `proto h2 alpn h2` даёт multiplexing, когда один backend-connection обслуживает несколько клиентских.",
+                "explanation": "В HAProxy — `option http-keep-alive` (default) или `option http-server-close`; `proto h2 alpn h2` даёт multiplexing, когда один backend-connection обслуживает несколько клиентских. У Nginx `keepalive_requests 1000;` прогоняет N запросов до закрытия, а `keepalive_timeout 60s;` задаёт idle-таймаут; без очистки `Connection` бэкенду передаётся `close`.",
                 "example": "Backend должен поддерживать keepalive: у Spring/Tomcat `server.tomcat.keep-alive-timeout` должен быть >= `proxy_read_timeout`, иначе соединение рвётся со стороны бэкенда.",
                 "when_to_apply": "`keepalive_requests` закрывает соединение после N запросов, чтобы перераспределить нагрузку (полезно после деплоя нового backend); общий лимит на backend = `worker_processes × keepalive`.",
                 "edge_cases": "Keepalive-пул к upstream включают всегда, когда прокси шлёт много запросов одному бэкенду и важна низкая latency.",
@@ -1451,10 +1451,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Статика (`.css`, `.js`, картинки) — идеальный кандидат: immutable URL с hash в имени (`app.a3f2b1.js`), `proxy_cache_valid 200 1y;`, `Cache-Control: public, immutable`. Динамика (`/api/products?...`) сложнее: короткий TTL (1-60 сек), `Vary: Accept-Encoding, Authorization`, только GET, и `proxy_cache_bypass $http_cache_control` для обхода кеша клиентом.",
+              "text": "Статика (`.css`, `.js`, картинки) — идеальный кандидат: immutable URL с hash в имени, `proxy_cache_valid 200 1y;`, `Cache-Control: public, immutable`. Динамика — короткий TTL, `Vary`, только GET.",
               "correct": true,
               "sections": {
-                "explanation": "Cache hit ratio считается как `HIT / (HIT + MISS + EXPIRED + STALE)` из `$upstream_cache_status` в access log; хорошие значения — >80% для статики и >40% для API.",
+                "explanation": "Cache hit ratio считается как `HIT / (HIT + MISS + EXPIRED + STALE)` из `$upstream_cache_status` в access log; хорошие значения — >80% для статики и >40% для API. Для динамики берут TTL 1-60 сек, `Vary: Accept-Encoding, Authorization` (кеш разных юзеров не пересекается) и `proxy_cache_bypass $http_cache_control`, чтобы клиент мог обойти кеш через `Cache-Control: no-cache`.",
                 "example": "Для динамики: `proxy_cache_methods GET HEAD; proxy_cache_valid 200 30s; proxy_no_cache $cookie_session_id;` — пользователи с сессией идут мимо кеша, чтобы не отдать чужие данные.",
                 "when_to_apply": "Низкий ratio → проверить `proxy_cache_key` (не слишком ли уникальный, например с `$http_authorization`), учёт `Vary` и рост объёма контента; POST/PUT/DELETE не кешируют никогда.",
                 "edge_cases": "Эти политики применяют, разделяя кеш на immutable-статику и короткоживущую динамику, чтобы поднять hit ratio без отдачи устаревших данных.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Кешировать можно любые HTTP-методы, включая POST и PUT — это ускоряет запись и снижает нагрузку на backend.",
+              "text": "Кешировать можно любые HTTP-методы, включая POST и PUT через `proxy_cache_methods POST;` — это ускоряет запись и снижает нагрузку на backend при повторных мутациях.",
               "correct": false,
               "sections": {
                 "what_actually": "Кешируют только идемпотентные чтения — GET/HEAD; POST/PUT/DELETE никогда не кешируют, иначе вернутся устаревшие или чужие результаты записи.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Заголовок `Vary` при кешировании динамики игнорируется прокси, поэтому ответы для разных пользователей всегда переиспользуются.",
+              "text": "Заголовок `Vary` при кешировании динамики игнорируется прокси и нужен лишь браузеру, поэтому ответы для разных пользователей с одним URL всегда переиспользуются из общего кеша.",
               "correct": false,
               "sections": {
                 "what_actually": "`Vary: Accept-Encoding, Authorization` как раз заставляет кеш не пересекаться между пользователями/кодировками; игнорировать его опасно — отдашь чужие данные.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Cache hit ratio считается как `HIT / total_requests`, включая запросы с `BYPASS` и некешируемые методы в знаменателе.",
+              "text": "Cache hit ratio считается как `HIT / total_requests`, включая запросы с `BYPASS` и некешируемые методы в знаменателе — поэтому даже для идеальной статики он редко превышает 50%.",
               "correct": false,
               "sections": {
                 "what_actually": "Hit ratio считают как `HIT / (HIT + MISS + EXPIRED + STALE)` по `$upstream_cache_status` — некешируемые `BYPASS`-запросы в формулу обычно не включают.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`brotli` сжимает хуже `gzip` и поддерживается лишь редкими браузерами, поэтому его почти не применяют на проде.",
+              "text": "`brotli` сжимает хуже `gzip` (~50% против ~70%) и поддерживается лишь редкими браузерами вроде Chrome, поэтому на проде его почти не применяют для текстовых ответов.",
               "correct": false,
               "sections": {
                 "what_actually": "`brotli` сжимает на ~15-20% лучше `gzip` (text ~75-80% vs ~70-75%) и поддержан всеми современными браузерами (Chrome 49+, FF 44+).",
@@ -1523,10 +1523,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`gzip` даёт ~70-75% сжатия текста при низком CPU и поддержан всеми. `brotli` (`br`) сжимает на ~15-20% лучше (~75-80%): дороже на динамике, но дешевле на статике (precompressed). В Nginx: `gzip on; gzip_comp_level 6; gzip_types ...;` и `brotli on; brotli_static on; brotli_comp_level 6;`.",
+              "text": "`gzip` даёт ~70-75% сжатия текста при низком CPU и поддержан всеми. `brotli` (`br`) сжимает на ~15-20% лучше: дороже на динамике, дешевле на статике (precompressed).",
               "correct": true,
               "sections": {
-                "explanation": "Главный production-приём — pre-compressed статика: CI кладёт `.gz` и `.br` рядом с `.js`/`.css`, а `gzip_static on; brotli_static on;` отдают уже сжатое с нулевой CPU-ценой.",
+                "explanation": "Главный production-приём — pre-compressed статика: CI кладёт `.gz` и `.br` рядом с `.js`/`.css`, а `gzip_static on; brotli_static on;` отдают уже сжатое с нулевой CPU-ценой. В Nginx настраивают `gzip on; gzip_comp_level 6; gzip_types ...;` для gzip и `brotli on; brotli_static on; brotli_comp_level 6;` для brotli.",
                 "example": "`brotli_static on;` отдаёт `.br` с диска, если файл есть; для динамики берут `gzip_comp_level 4-6` ради баланса CPU и ratio (level 9 редко окупается).",
                 "when_to_apply": "Не сжимать уже сжатое — JPEG/PNG/MP4/WebM не дают выигрыша, только тратят CPU; `zstd` сравним с brotli по ratio, но пока редок.",
                 "edge_cases": "Compression включают на текстовых ответах; для статики готовят pre-compressed файлы в CI, для динамики берут умеренный `comp_level`.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Сжимать нужно абсолютно весь контент, включая JPEG, PNG и MP4 — это всегда уменьшает размер ответа.",
+              "text": "Сжимать нужно абсолютно весь контент, включая JPEG, PNG и MP4, через `gzip_types *;` — это всегда уменьшает размер ответа и снижает исходящий трафик прокси.",
               "correct": false,
               "sections": {
                 "what_actually": "Уже сжатые форматы (JPEG/PNG/MP4/WebM) повторное сжатие не уменьшает, а только тратит CPU — их исключают из `gzip_types`/`brotli_types`.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Pre-compressed статика невозможна: прокси всегда сжимает файлы на лету при каждом запросе, тратя CPU.",
+              "text": "Pre-compressed статика невозможна: директивы `gzip_static`/`brotli_static` не существуют, прокси всегда сжимает файлы на лету при каждом запросе, тратя CPU.",
               "correct": false,
               "sections": {
                 "what_actually": "Pre-compressed практикуется: CI генерит `.gz`/`.br` рядом с файлом, и `gzip_static on; brotli_static on;` отдают готовое с нулевой CPU-ценой.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Прокси может только пробрасывать запрос без изменений — переписывать URL, заголовки или тело ответа он не способен.",
+              "text": "Прокси может только пробрасывать запрос без изменений — переписывать URL через `rewrite`, заголовки или тело ответа он на L7 не способен, для этого нужен отдельный application-сервис.",
               "correct": false,
               "sections": {
                 "what_actually": "Прокси активно трансформирует: `rewrite` переписывает URL, `proxy_set_header`/`add_header` меняют заголовки, `sub_filter` подменяет тело ответа.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Подмена тела ответа (`sub_filter`) применяется к любым форматам, включая бинарные файлы и изображения, без указания типа контента.",
+              "text": "Подмена тела ответа (`sub_filter`) применяется к любым форматам, включая бинарные файлы и изображения, без указания `sub_filter_types` — Nginx сам определяет текстовый контент.",
               "correct": false,
               "sections": {
                 "what_actually": "`sub_filter` работает только по текстовым типам, заданным в `sub_filter_types text/html application/json`; на бинарных данных он не применяется и не имеет смысла.",
@@ -1595,10 +1595,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Прокси модифицирует запрос/ответ на L7. URL: `rewrite ^/old-api/(.*)$ /api/v2/$1 break;`. Заголовки запроса: `proxy_set_header X-Internal-Token \"secret\"; proxy_hide_header Cookie;`. Заголовки ответа: `add_header Strict-Transport-Security \"max-age=31536000\"; proxy_hide_header X-Powered-By;`. Тело ответа: `sub_filter 'http://internal' 'https://api'; sub_filter_types text/html application/json;`.",
+              "text": "Прокси модифицирует запрос/ответ на L7. URL — `rewrite ^/old-api/(.*)$ /api/v2/$1 break;`; заголовки — `proxy_set_header`/`proxy_hide_header`; тело ответа — `sub_filter` по `sub_filter_types`.",
               "correct": true,
               "sections": {
-                "explanation": "В HAProxy аналоги — `http-request set-header`, `http-request replace-uri`, `http-response del-header`; в Envoy произвольную трансформацию дают `Lua`/`Wasm` фильтры.",
+                "explanation": "В HAProxy аналоги — `http-request set-header`, `http-request replace-uri`, `http-response del-header`; в Envoy произвольную трансформацию дают `Lua`/`Wasm` фильтры. Конкретно: запрос — `proxy_set_header X-Internal-Token \"secret\"; proxy_hide_header Cookie;`; ответ — `add_header Strict-Transport-Security \"max-age=31536000\"; proxy_hide_header X-Powered-By;`; тело — `sub_filter 'http://internal' 'https://api'; sub_filter_types text/html application/json;`.",
                 "example": "API versioning (старый клиент шлёт на `/v1/`, прокси переписывает на `/v2/`), security-заголовки (`HSTS`, `CSP`, `X-Frame-Options`) и удаление leak-заголовков (`Server`, `X-Powered-By`).",
                 "when_to_apply": "`sub_filter` работает только по `sub_filter_types`; `proxy_hide_header X-Powered-By` скрывает внутренний leak, а канонизация URL чинит trailing slash и регистр.",
                 "edge_cases": "L7-трансформацию применяют для API-versioning, навешивания security-заголовков и сокрытия внутренних leak-заголовков на каждый ответ.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Удаление leak-заголовков вроде `Server` и `X-Powered-By` невозможно — прокси не может убрать заголовки, которые добавил backend.",
+              "text": "Удаление leak-заголовков вроде `Server` и `X-Powered-By` невозможно: `proxy_hide_header` скрывает их только от лога, а клиенту прокси отдаёт всё, что добавил backend.",
               "correct": false,
               "sections": {
                 "what_actually": "Прокси штатно удаляет leak-заголовки: `proxy_hide_header X-Powered-By;` или `http-response del-header X-Powered-By` в HAProxy убирают их из ответа бэкенда.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Slowloris` — это объёмная атака, заваливающая прокси огромным числом быстрых запросов в секунду, как обычный flood.",
+              "text": "`Slowloris` — это объёмная атака, заваливающая прокси огромным числом быстрых запросов в секунду, как обычный flood; защита — поднять `worker_connections` и пропускную способность канала.",
               "correct": false,
               "sections": {
                 "what_actually": "`Slowloris` — наоборот, медленная атака: клиент очень медленно шлёт заголовки/тело, удерживая соединения и заполняя пул worker connections малым числом соединений.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Защититься от Slowloris можно только увеличив `worker_connections` до очень большого значения — таймауты тут не помогают.",
+              "text": "Защититься от Slowloris можно только увеличив `worker_connections` до очень большого значения — таймауты `client_header_timeout` тут не помогают, ведь клиент шлёт валидные заголовки.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключевая защита — короткие таймауты (`client_header_timeout 10s`, `timeout http-request 5s` в HAProxy) и `limit_conn` на IP; рост `worker_connections` лишь отодвигает порог.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Backend при Slowloris страдает напрямую: медленные клиенты доходят до него и заполняют его пулы соединений раньше, чем прокси.",
+              "text": "Backend при Slowloris страдает напрямую: медленные клиенты доходят до него сквозь прокси и заполняют его пулы соединений раньше, потому что прокси не буферизует медленный запрос.",
               "correct": false,
               "sections": {
                 "what_actually": "Reverse proxy буферизует запрос целиком перед отправкой бэкенду, поэтому от медленных клиентов страдает прокси, а backend защищён.",
@@ -1667,10 +1667,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Slowloris` — атака, где клиент очень медленно шлёт HTTP-заголовки или тело, удерживая соединение и заполняя пул прокси. Защита Nginx: `client_header_timeout 10s; client_body_timeout 10s; send_timeout 10s;` плюс `limit_conn_zone $binary_remote_addr zone=conn_per_ip:10m;` и `limit_conn conn_per_ip 20;`. В HAProxy ключевой `timeout http-request 5s` (таймаут на заголовки) и `http-request reject if { sc_conn_cur(0) gt 50 }`.",
+              "text": "`Slowloris` — атака, где клиент очень медленно шлёт HTTP-заголовки или тело, удерживая соединение и заполняя пул прокси. Защита Nginx — таймауты `client_header_timeout`/`client_body_timeout` и `limit_conn` на IP.",
               "correct": true,
               "sections": {
-                "explanation": "С 1000+ медленных соединений можно положить сервер с лимитом 1024 worker connections — поэтому таймауты на медленные фазы запроса критичны.",
+                "explanation": "С 1000+ медленных соединений можно положить сервер с лимитом 1024 worker connections — поэтому таймауты на медленные фазы запроса критичны. В Nginx ставят `client_header_timeout 10s; client_body_timeout 10s; send_timeout 10s;` плюс `limit_conn_zone $binary_remote_addr zone=conn_per_ip:10m;` и `limit_conn conn_per_ip 20;`. В HAProxy ключевой `timeout http-request 5s` (таймаут на заголовки) и `http-request reject if { sc_conn_cur(0) gt 50 }`.",
                 "example": "`limit_conn conn_per_ip 20` ограничивает 20 одновременных соединений с одного IP; `timeout http-request 5s` в HAProxy режет тех, кто тянет отправку заголовков.",
                 "when_to_apply": "Reverse proxy буферизует запрос целиком, защищая backend от медленных клиентов (страдает только прокси); managed-защита (`Cloudflare`/`AWS Shield`) и L4 LB на входе поглощают большую часть таких соединений.",
                 "edge_cases": "Эти таймауты и лимиты ставят на публично доступный прокси, чтобы медленные соединения не исчерпали пул worker connections.",
@@ -1691,10 +1691,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "HTTP/1.1 `Transfer-Encoding: chunked` — отправка тела порциями без заранее известного `Content-Length`; используется для streaming (SSE, large files, real-time API). По умолчанию Nginx буферизует ответ upstream (скачивает целиком во временный файл, потом отдаёт), что плохо для streaming. Для потоков — `proxy_buffering off; proxy_http_version 1.1; proxy_set_header Connection \"\";`.",
+              "text": "HTTP/1.1 `Transfer-Encoding: chunked` — отправка тела порциями без заранее известного `Content-Length`; для streaming. Nginx буферизует ответ upstream по умолчанию, для потоков нужен `proxy_buffering off;`.",
               "correct": true,
               "sections": {
-                "explanation": "Выключать буферизацию нужно для Server-Sent Events (`text/event-stream`), gRPC streaming (там это умолчание), больших файлов (иначе двойной диск read+write) и real-time API (chat, notifications).",
+                "explanation": "Выключать буферизацию нужно для Server-Sent Events (`text/event-stream`), gRPC streaming (там это умолчание), больших файлов (иначе двойной диск read+write) и real-time API (chat, notifications). По умолчанию Nginx скачивает ответ upstream целиком во временный файл и только потом отдаёт; для потоков добавляют `proxy_buffering off; proxy_http_version 1.1; proxy_set_header Connection \"\";`.",
                 "example": "`location /stream/` с `proxy_buffering off; proxy_read_timeout 24h; chunked_transfer_encoding on;` держит долгие SSE без буфера.",
                 "when_to_apply": "Включать буферизацию стоит для защиты бэкенда от медленных клиентов (прокси буферизует, backend быстро освобождается) и уменьшения числа TCP-сегментов клиенту; в HAProxy буферизация запроса — `http-buffer-request`.",
                 "edge_cases": "`proxy_buffering off` включают точечно на streaming-эндпоинтах (SSE, large files, real-time), оставляя буферизацию для обычных ответов.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "По умолчанию Nginx НЕ буферизует ответ upstream — он сразу стримит каждый байт клиенту, поэтому `proxy_buffering off` ничего не меняет.",
+              "text": "По умолчанию Nginx НЕ буферизует ответ upstream — он сразу стримит каждый байт клиенту, поэтому `proxy_buffering off` ничего не меняет, а нужен лишь `chunked_transfer_encoding on`.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию Nginx как раз буферизует ответ (скачивает целиком), что мешает streaming; `proxy_buffering off;` выключает это поведение для потоков.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Буферизацию ответа всегда нужно выключать (`proxy_buffering off`) — она только вредит и замедляет любые запросы.",
+              "text": "Буферизацию ответа всегда нужно выключать (`proxy_buffering off`) — она только вредит, замедляет любые запросы и держит backend занятым до конца отдачи клиенту.",
               "correct": false,
               "sections": {
                 "what_actually": "Буферизация полезна: она защищает backend от медленных клиентов (прокси держит ответ, backend быстро освобождается) и уменьшает число TCP-сегментов. Выключают её только для streaming.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Transfer-Encoding: chunked` требует заранее известного `Content-Length` и применяется только когда размер тела точно известен.",
+              "text": "`Transfer-Encoding: chunked` требует заранее известного `Content-Length` для подсчёта порций и применяется только когда размер тела точно известен, например при отдаче статических файлов.",
               "correct": false,
               "sections": {
                 "what_actually": "Chunked используется именно когда `Content-Length` НЕ известен заранее — тело шлётся порциями, что и нужно для streaming (SSE, real-time).",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Reverse proxy не подходит для observability: через него проходит лишь часть трафика, а метрики и трейсинг там собрать нельзя.",
+              "text": "Reverse proxy не подходит для observability: через него проходит лишь часть трафика, метрики искажены балансировкой, а трейсинг там собрать нельзя — нужен агент на каждом backend.",
               "correct": false,
               "sections": {
                 "what_actually": "Reverse proxy — естественная точка telemetry: через него идёт ВЕСЬ HTTP-трафик, и он даёт access log, Prometheus-метрики и distributed tracing.",
@@ -1763,10 +1763,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Reverse proxy — естественная точка telemetry, через него идёт весь HTTP-трафик. Access log (Nginx — JSON через `log_format json_combined`) с `request_time`, `upstream_response_time`, `upstream_cache_status`, `request_id`. Metrics: Nginx — `nginx-prometheus-exporter`, HAProxy — встроенный `/metrics`, Envoy — `/stats/prometheus`, Traefik — `/metrics`. Tracing: Envoy инжектит `traceparent` (W3C) и шлёт спаны в Jaeger/Tempo.",
+              "text": "Reverse proxy — естественная точка telemetry, через него идёт весь HTTP-трафик. Access log с `request_time`/`upstream_response_time`, metrics через exporter, tracing через `traceparent`.",
               "correct": true,
               "sections": {
-                "explanation": "Trace-id из прокси пробрасывается в backend через `traceparent` → корреляция в Jaeger/Tempo/Honeycomb; Nginx делает это через `nginx-otel-module` (1.25+), HAProxy — через SPOE-агенты.",
+                "explanation": "Trace-id из прокси пробрасывается в backend через `traceparent` → корреляция в Jaeger/Tempo/Honeycomb; Nginx делает это через `nginx-otel-module` (1.25+), HAProxy — через SPOE-агенты. Access log в Nginx настраивают как JSON через `log_format json_combined` с `upstream_cache_status` и `request_id`. Metrics: Nginx — `nginx-prometheus-exporter`, HAProxy — встроенный `/metrics`, Envoy — `/stats/prometheus`, Traefik — `/metrics`. Envoy инжектит `traceparent` (W3C) и шлёт спаны в Jaeger/Tempo.",
                 "example": "JSON access log с `upstream_response_time` и `upstream_cache_status` позволяет считать p50/p95/p99 latency и cache hit ratio прямо из логов.",
                 "when_to_apply": "В первую очередь собирают: p50/p95/p99 latency, RPS/error rate/5xx ratio, connection count (`active`/`reading`/`writing`), cache hit ratio, per-upstream метрики и rate-limit denials (429).",
                 "edge_cases": "Telemetry на прокси настраивают в первую очередь, потому что это единая точка, через которую виден весь HTTP-трафик системы.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Distributed tracing на прокси невозможен: прокси не умеет генерировать или пробрасывать trace-заголовки в backend.",
+              "text": "Distributed tracing на прокси невозможен: прокси не умеет генерировать или пробрасывать trace-заголовки `traceparent` в backend, поэтому корреляцию строят только по timestamp в логах.",
               "correct": false,
               "sections": {
                 "what_actually": "Прокси активно работает с трейсингом: Envoy инжектит `traceparent`/`x-b3-*`, Nginx — через `nginx-otel-module`, и trace-id корелирует прокси с бэкендом в Jaeger.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Prometheus-метрики доступны только у платного Nginx Plus; HAProxy, Envoy и Traefik экспортировать метрики в Prometheus не умеют.",
+              "text": "Prometheus-метрики доступны только у платного Nginx Plus через JSON status endpoint; HAProxy, Envoy и Traefik экспортировать метрики в Prometheus формате не умеют без сторонних exporter-ов.",
               "correct": false,
               "sections": {
                 "what_actually": "Prometheus-эндпоинты есть нативно у HAProxy (`/metrics` с 2.0), Envoy (`/stats/prometheus`) и Traefik (`/metrics`); для Nginx OSS — `nginx-prometheus-exporter`.",
