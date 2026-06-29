@@ -48,6 +48,17 @@
   function initCharts() {
     var topicStats = getTopicStats();
 
+    // Chart.js рисует в <canvas> bitmap — его JS-анимация вне досягаемости CSS,
+    // поэтому общий motion-kill (@media prefers-reduced-motion + html[data-motion=off])
+    // её НЕ гасит. Читаем ту же ось «Движение» вручную: off → нет анимации,
+    // on → форсим, auto (атрибут отсутствует) → по системной prefers-reduced-motion.
+    function motionAllowed() {
+      var attr = document.documentElement.getAttribute('data-motion');
+      if (attr === 'off') return false;
+      if (attr === 'on') return true;
+      return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+
     var progressFallback = document.getElementById('topicProgressChartFallback');
     var accuracyFallback = document.getElementById('topicAccuracyChartFallback');
     function showChartFallback(canvas, fallback, message) {
@@ -107,6 +118,7 @@
     // свежие токены, строим заново. Вызывается на старте и при смене темы.
     function render() {
       var p = themePalette();
+      var anim = motionAllowed();
       charts.forEach(function (c) { try { c.destroy(); } catch (_) {} });
       charts = [];
 
@@ -133,7 +145,7 @@
                 { label: 'Осталось', data: progressData.map(function (t) { return Math.max(0, t.total - t.learned); }), backgroundColor: p.remaining, borderRadius: 3 }
               ]
             },
-            options: { scales: { x: Object.assign({}, commonOpts.scales.x, { stacked: true }), y: Object.assign({}, commonOpts.scales.y, { stacked: true }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
+            options: { animation: anim, scales: { x: Object.assign({}, commonOpts.scales.x, { stacked: true }), y: Object.assign({}, commonOpts.scales.y, { stacked: true }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
           }));
         } catch (_) {
           showChartFallback(el1, progressFallback, 'Не удалось отрисовать график прогресса. Используй таблицу ниже.');
@@ -160,7 +172,7 @@
                 borderRadius: 3
               }]
             },
-            options: { scales: { x: commonOpts.scales.x, y: Object.assign({}, commonOpts.scales.y, { max: 100 }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
+            options: { animation: anim, scales: { x: commonOpts.scales.x, y: Object.assign({}, commonOpts.scales.y, { max: 100 }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
           }));
         } catch (_) {
           showChartFallback(el2, accuracyFallback, 'Не удалось отрисовать график точности. Используй таблицу ниже.');
@@ -188,6 +200,10 @@
         var key = paletteKey();
         if (key !== lastKey) { lastKey = key; render(); }
       }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-design'] });
+      // Чистая смена оси «Движение» (data-motion) не меняет paletteKey → графики
+      // не перерисовались бы. head.html шлёт motionchange — перерисуем под него,
+      // чтобы вкл/выкл анимации применялись сразу, без перезагрузки.
+      document.addEventListener('motionchange', render);
     }
   }
 

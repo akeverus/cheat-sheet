@@ -889,6 +889,8 @@ html[data-design] .settings-page #filters-form button[type="submit"]:active,
 html[data-design] .settings-page .btn-finish-small:active,
 html[data-design] .result-page .btn-finish:active,
 html[data-design] .confidence-btn:active,
+html[data-design] .result-page .btn-favorite:active,
+html[data-design] .result-page .btn-regenerate:active,
 html[data-design] .table-expander:active { transform: translateY(1px); }
 
 /* Иконки — монохромный Lucide-спрайт (см. fragments/icons.html). Цвет, толщина
@@ -1335,6 +1337,11 @@ html[data-design] .settings-page .streak-bar {
 }
 /* Иконка огонька серии — акцентом (тёплая терракота вместо нейтрального текста). */
 html[data-design] .settings-page .streak-fire { display: inline-flex; color: var(--color-accent-primary); font-size: var(--font-size-md); }
+/* Огонёк в launcher-баре уравниваем по размеру с hero-огоньком (.streak-inline
+   .ed-icon = 14px): без этого правила он наследовал .ed-icon 1em = 18px и был на
+   ~29% крупнее того же значка той же роли на той же странице. Цвет НЕ трогаем —
+   accent-primary специально матчит соседний .streak-progress-fill. */
+html[data-design] .settings-page .streak-fire .ed-icon { width: 0.875rem; height: 0.875rem; }
 html[data-design] .settings-page .streak-days,
 html[data-design] .settings-page .streak-count-text { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
 html[data-design] .settings-page .streak-progress { flex: 1; min-width: 80px; height: 4px; background: var(--color-bg-tertiary); border-radius: var(--border-radius-full); overflow: hidden; }
@@ -1959,6 +1966,12 @@ html[data-design] .result-page .btn-regenerate {
   min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
 }
 html[data-design] .result-page .btn-favorite.active { color: var(--color-accent-primary); }
+/* Hover-аффорданс: иконки-кнопки избранного/перегенерации сидели статичным
+   tertiary-серым без :hover — единственные интерактивные контролы без pre-click
+   сигнала (tap-highlight убран глобально, :active добавлен выше). Темним до
+   primary-чернил на hover; :not(.active) не трогает акцент активной звезды. */
+html[data-design] .result-page .btn-favorite:hover:not(.active),
+html[data-design] .result-page .btn-regenerate:hover { color: var(--color-text-primary); }
 html[data-design] .result-page .regen-badge { font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-secondary); }
 
 /* Вердикт. SVG-иконка (circle-check/x) в статус-цвете + слово несут смысл
@@ -1984,7 +1997,7 @@ html[data-design] .result-page .status.status-wrong { color: var(--color-status-
 
 /* Варианты-результат (.options[role=list], элементы — div[role=listitem],
    без #interview-options-маркера). */
-html[data-design] .result-page .options { display: flex; flex-direction: column; gap: var(--space-3); max-width: var(--max-width-options); }
+html[data-design] .result-page .options { display: flex; flex-direction: column; gap: var(--space-3); max-width: var(--max-width-options); margin-top: var(--space-5); }
 html[data-design] .result-page .options > div {
   display: block; padding: var(--space-4);
   border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
@@ -2200,6 +2213,15 @@ html[data-design] .result-page .comparison-table th {
   html[data-design] .result-page .result-actions { flex-direction: column; }
   html[data-design] .result-page .result-actions .btn { width: 100%; }
   html[data-design] .result-page .question-header h2 { flex-basis: 100%; }
+}
+
+/* Двухколоночный разбор (вопрос + code-сайдбар, AI-режим) держим side-by-side
+   только когда основной колонке хватает места: сайдбар 340 + gap 32 + ~440
+   комфортной меры + ~48 жёлоб ≈ 860px. Ниже — стек (код под вопросом), иначе на
+   планшете-портрете (601-859px) основная колонка с вопросом и MCQ ужималась до
+   ~180-350px рядом с фикс-340px сайдбаром. Селектор :has(.question-side) →
+   правило живёт только в AI-режиме (seed-first дефолт сайдбар не рендерит). */
+@media (max-width: 859px) {
   html[data-design] .result-page .question-layout:has(.question-side) { grid-template-columns: 1fr; }
 }
 
