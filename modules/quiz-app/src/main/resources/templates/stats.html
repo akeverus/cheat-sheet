@@ -230,7 +230,7 @@
     <p class="review-forecast-hint">Сколько вопросов прилетит в каждый день. Помогает распределить нагрузку.</p>
     <ul class="forecast-list" th:with="maxCnt=${reviewForecastMax}">
         <li th:each="day : ${reviewForecast}" class="forecast-row">
-            <span class="forecast-day" th:text="${day.day()}">2026-04-20</span>
+            <time class="forecast-day" th:datetime="${day.day()}" th:text="${day.day()}">2026-04-20</time>
             <span class="forecast-bar" role="img" th:aria-label="${day.count() + ' ' + @plural.pick(day.count(), 'вопрос', 'вопроса', 'вопросов')}">
                 <span class="forecast-bar-fill"
                       th:attr="data-progress=${day.count() * 100 / (maxCnt > 0 ? maxCnt : 1)}"></span>
@@ -239,6 +239,32 @@
         </li>
     </ul>
 </section>
+
+<!-- Гуманизация дат прогноза: сервер отдаёт ISO-строки («2026-07-01») — это
+     машинный формат, человеку он мало что говорит. Машинное значение остаётся в
+     <time datetime> (семантика + сортируемость для AT/парсеров), а видимый текст
+     превращаем в «Сегодня» / «Завтра» / «6 июля» через Intl с явной ru-RU локалью
+     (не зависим от локали сервера). title даёт полную дату с днём недели. PE: без
+     JS остаётся ISO — не идеально, но однозначно; ничего не ломается. -->
+<script>
+  (function () {
+    var days = document.querySelectorAll('.review-forecast .forecast-day');
+    if (!days.length || !window.Intl) return;
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var fmtDate = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
+    var fmtFull = new Intl.DateTimeFormat('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+    days.forEach(function (el) {
+      var iso = el.getAttribute('datetime') || el.textContent.trim();
+      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+      if (!m) return;
+      var d = new Date(+m[1], +m[2] - 1, +m[3]); d.setHours(0, 0, 0, 0);
+      if (isNaN(d.getTime())) return;
+      var diff = Math.round((d - today) / 86400000);
+      el.textContent = diff === 0 ? 'Сегодня' : diff === 1 ? 'Завтра' : fmtDate.format(d);
+      el.setAttribute('title', fmtFull.format(d));
+    });
+  })();
+</script>
 
 <section class="card coverage-gaps" th:if="${coverageGaps != null and !coverageGaps.isEmpty()}">
     <h2>Пробелы в банке вопросов</h2>
