@@ -11,10 +11,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Azure` — облако Microsoft (с 2010), №2 по market share (~24% в 2025). Сильные стороны: enterprise integration (`Entra ID`, `Office 365`), hybrid cloud (`Azure Arc`, `Stack`), эксклюзивный `Azure OpenAI Service` и лучшая площадка для `.NET`/`Windows`/`SQL Server`.",
+              "text": "`Azure` — облако Microsoft, №2 по market share после AWS; сильно в enterprise-интеграции, hybrid cloud и площадке для `.NET`/`Windows`.",
               "correct": true,
               "sections": {
-                "explanation": "Azure выигрывает там, где у компании уже есть Microsoft-стек: единый identity через `Entra ID`, бандлы лицензий и гибридные сценарии через `Azure Arc`. Партнёрство с OpenAI даёт enterprise-доступ к `GPT-4` с compliance-гарантиями.",
+                "explanation": "Запущено в 2010, ~24% рынка в 2025. Azure выигрывает там, где у компании уже есть Microsoft-стек: единый identity через `Entra ID` и `Office 365`, бандлы лицензий, гибридные сценарии через `Azure Arc` и `Stack`. Эксклюзивное партнёрство с OpenAI даёт enterprise-доступ к `GPT-4` через `Azure OpenAI Service` с compliance-гарантиями, а для `.NET`/`Windows`/`SQL Server` это исторически лучший дом.",
                 "example": "Банк на `Windows Server` и `Active Directory` переезжает в Azure: `Entra ID` синхронизируется с on-prem AD, `Azure SQL` заменяет локальный SQL Server, а `Hybrid Benefit` переносит уже купленные лицензии.",
                 "when_to_apply": "Учитывать сильные стороны Azure при выборе провайдера для enterprise с Microsoft-наследием, compliance-требованиями и потребностью в гибридном облаке.",
                 "edge_cases": "Слабые места — заметные outages (`DNS`, `Entra ID`), фрагментированная документация и confusing pricing (`DTU`, `RU`); для cloud-native стартапа Azure часто проигрывает AWS/GCP.",
@@ -24,7 +24,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Azure` — облако, которое существует исключительно для запуска `Linux`-контейнеров и не поддерживает `Windows`-нагрузки и `.NET`.",
+              "text": "`Azure` — облако исключительно для `Linux`-контейнеров, запущенное в 2008 как ответ на AWS; `Windows`-нагрузки и `.NET` в нём не поддерживаются принципиально.",
               "correct": false,
               "sections": {
                 "what_actually": "Azure — родное облако Microsoft: лучшая площадка именно для `Windows`, `.NET` и `SQL Server`, при этом Linux тоже полноценно поддерживается.",
@@ -36,7 +36,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Azure` — провайдер №1 по market share, обогнавший AWS, и его главная сила — самые низкие цены среди всех облаков.",
+              "text": "`Azure` — провайдер №1 по market share (~40% в 2025), обогнавший AWS; его главная сила — самые низкие цены среди всех публичных облаков.",
               "correct": false,
               "sections": {
                 "what_actually": "Azure — №2 (~24%), уступает AWS; его сила — enterprise-интеграция и compliance, а pricing наоборот считается запутанным и не самым дешёвым.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Azure` — это просто ребрендинг `Office 365`, и отдельной IaaS/PaaS-инфраструктуры (VM, базы, сети) в нём нет.",
+              "text": "`Azure` — это просто облачный ребрендинг `Office 365`; отдельной IaaS/PaaS-инфраструктуры (VM, базы, виртуальные сети) в нём по сути нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Azure — полноценная облачная платформа с IaaS/PaaS: VM, `AKS`, `Cosmos DB`, `VNet` и сотни сервисов; `Office 365` — отдельный SaaS-продукт.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Resource Group` — это billing boundary, а `Subscription` — это просто тег для группировки ресурсов внутри неё.",
+              "text": "`Resource Group` — это billing boundary и граница квот, а `Subscription` — просто тег для логической группировки ресурсов внутри неё.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: billing boundary — это `Subscription`, а `Resource Group` — логический контейнер ресурсов внутри подписки.",
@@ -83,10 +83,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Subscription` — billing boundary (аналог AWS account); `Resource Group` — логический контейнер ресурсов внутри subscription (каждый ресурс обязан лежать в RG); `Management Group` — группирует subscriptions для применения политик.",
+              "text": "`Subscription` — billing boundary (аналог AWS account); `Resource Group` — логический контейнер ресурсов внутри подписки; `Management Group` группирует subscriptions для политик.",
               "correct": true,
               "sections": {
-                "explanation": "Иерархия: `Tenant` (директория `Entra ID`) → `Management Group` → `Subscription` → `Resource Group` → ресурсы. RG позволяет удалить все связанные ресурсы одной командой и управлять ими как единым целым.",
+                "explanation": "Каждый ресурс обязан лежать в какой-то RG — ресурсов «вне группы» не бывает. Иерархия снизу вверх: ресурс → `Resource Group` → `Subscription` → `Management Group`, всё под одним `Tenant` (директория `Entra ID`). RG имеет общий жизненный цикл: удаление группы одной командой сносит все ресурсы внутри, что удобно для временных стендов и подсчёта стоимости по тегам.",
                 "example": "`webapp-rg` содержит `App Service` и `SQL Database` одного приложения; удаление RG сносит оба ресурса сразу, а Management Group `Production` навешивает policy на все prod-subscriptions.",
                 "when_to_apply": "Группировать ресурсы по жизненному циклу в одном RG (всё приложение/окружение вместе), а subscriptions делить по billing и изоляции команд.",
                 "edge_cases": "Ресурс нельзя создать вне RG; перемещение между RG/subscriptions поддерживается не всеми сервисами и может рвать зависимости, поэтому границы стоит продумывать заранее.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В Azure ресурсы можно создавать напрямую в subscription, без какого-либо `Resource Group`.",
+              "text": "В Azure ресурсы можно создавать напрямую в subscription без какого-либо `Resource Group` — группа нужна только для биллинга крупных enterprise-аккаунтов.",
               "correct": false,
               "sections": {
                 "what_actually": "Любой ресурс обязан принадлежать `Resource Group`; создать его прямо в subscription, минуя RG, нельзя.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Management Group` — это контейнер для отдельных ресурсов (VM, баз), позволяющий применять к ним RBAC напрямую.",
+              "text": "`Management Group` — это контейнер для отдельных ресурсов (VM, баз), позволяющий применять к каждому из них RBAC и Azure Policy напрямую, минуя подписки.",
               "correct": false,
               "sections": {
                 "what_actually": "`Management Group` группирует не ресурсы, а subscriptions, чтобы применять policy/RBAC к нескольким подпискам сразу.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Availability Zone` — это отдельный географический регион, а `Region` — это один физический дата-центр внутри зоны.",
+              "text": "`Availability Zone` — это отдельный географический регион, а `Region` — один физический дата-центр внутри такой зоны; их по 3 на каждую зону.",
               "correct": false,
               "sections": {
                 "what_actually": "Иерархия обратная: `Region` — географическая область, а `Availability Zone` — физический дата-центр (или их группа) внутри региона.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Все регионы Azure без исключения поддерживают `Availability Zones`, поэтому проверять их наличие не нужно.",
+              "text": "Все регионы Azure без исключения поддерживают `Availability Zones` с момента запуска в 2010 году, поэтому проверять их наличие перед zone-redundant-архитектурой никогда не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "AZ поддерживают не все регионы — старые часто без них; наличие AZ обязательно проверять перед проектированием HA.",
@@ -155,10 +155,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Region` — географическая область (`East US`, `West Europe`), их 60+; `Availability Zone` — физический дата-центр внутри региона (3+ в AZ-enabled регионах); `Region pair` — связанная пара регионов (`East US ↔ West US`) для disaster recovery.",
+              "text": "`Region` — географическая область размещения, их 60+; `Availability Zone` — отдельный дата-центр внутри региона; `Region pair` — связанная пара регионов для disaster recovery.",
               "correct": true,
               "sections": {
-                "explanation": "AZ дают отказоустойчивость внутри региона (разнесение по дата-центрам), а region pairs — защиту от регионального сбоя через парный регион, куда Azure реплицирует и поэтапно обновляет инфраструктуру.",
+                "explanation": "Регионы — например `East US`, `West Europe`; в AZ-enabled регионах зон минимум 3 (свои питание, охлаждение, сеть) — разнося реплики по зонам, переживаешь отказ целого ДЦ. `Region pair` (например `East US ↔ West US`) Azure связывает заранее: гео-реплицируемые сервисы по умолчанию копируют данные в парный регион, а обновления платформы катятся в паре по очереди. Подводный камень: старые регионы AZ не поддерживают — проверяй регион перед zone-redundant-дизайном.",
                 "example": "Развернув VM в трёх AZ региона `West Europe`, приложение переживёт отказ одного дата-центра; а гео-реплика в парный `North Europe` защитит от падения всего региона.",
                 "when_to_apply": "Использовать несколько AZ для HA внутри региона и region pairs для DR; выбирать регион с учётом latency, compliance (резидентность данных) и наличия AZ.",
                 "edge_cases": "Не все (особенно старые) регионы поддерживают AZ — там HA строится иначе; пары регионов фиксированы Azure и не выбираются произвольно.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Region pair` — это две `Availability Zones` внутри одного региона, объединённые для disaster recovery.",
+              "text": "`Region pair` — это две `Availability Zones` внутри одного региона, объединённые для disaster recovery; данные между ними реплицируются синхронно без потерь.",
               "correct": false,
               "sections": {
                 "what_actually": "Region pair — это пара разных регионов (например `East US` и `West US`), а не две AZ внутри одного региона.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Azure VMs` — это PaaS-сервис, где Microsoft полностью управляет ОС и патчит её за вас, как в `App Service`.",
+              "text": "`Azure VMs` — это PaaS-сервис, где Microsoft полностью управляет ОС и патчит её за вас, как в `App Service`; доступа к гостевой ОС у вас нет.",
               "correct": false,
               "sections": {
                 "what_actually": "VM — это IaaS: вы сами отвечаете за ОС, патчи и рантайм; managed-ОС — это уже PaaS вроде `App Service`.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spot VMs` дают фиксированную скидку и гарантируют, что инстанс никогда не будет вытеснен.",
+              "text": "`Spot VMs` дают фиксированную скидку 50% и контрактно гарантируют, что инстанс никогда не будет вытеснен, поэтому годятся для продакшен-нагрузок.",
               "correct": false,
               "sections": {
                 "what_actually": "Spot VMs дают скидку до 90% именно ценой прерываемости: Azure может вытеснить их при нехватке ёмкости.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Серия VM не влияет на профиль ресурсов: `B`, `E` и `N` отличаются только ценой, но дают одинаковый CPU/RAM/GPU.",
+              "text": "Серия VM не влияет на профиль ресурсов: `B`, `E` и `N` отличаются только ценой за час, но дают идентичный набор CPU/RAM/GPU на одной и той же платформе.",
               "correct": false,
               "sections": {
                 "what_actually": "Серии различаются профилем: `E` — память, `F` — CPU, `N` — GPU, `B` — burstable; это разные классы железа, а не только цена.",
@@ -227,10 +227,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Azure VMs` — IaaS-сервис (аналог AWS EC2). Серии под нагрузки: `B` (burstable), `D` (general purpose), `F` (compute), `E` (memory), `L` (storage), `N` (GPU), `H` (HPC). Pricing: pay-as-you-go, `Reserved Instances` (1-3 года, до 72% off), `Spot VMs` (до 90% off), `Hybrid Benefit`.",
+              "text": "`Azure VMs` — IaaS-сервис с полным контролем над ОС (аналог AWS EC2); серии под разные ресурсы, pricing — от pay-as-you-go до Reserved/Spot/Hybrid Benefit.",
               "correct": true,
               "sections": {
-                "explanation": "Серия выбирается под профиль нагрузки: память-интенсивные БД на `E`, CPU-bound — на `F`, переменные — на `B`. Pricing-модели позволяют экономить: reserved за коммит, spot за прерываемость, Hybrid Benefit за перенос Windows/SQL-лицензий.",
+                "explanation": "Серии под нагрузки: `B` (burstable, копит CPU-кредиты), `D` (general purpose), `F` (compute), `E` (memory), `L` (storage), `N` (GPU), `H` (HPC). Pricing: pay-as-you-go (гибко, дорого), `Reserved Instances` (коммит 1–3 года, до 72% off), `Spot VMs` (свободные мощности до 90% off, но Azure может забрать в любой момент), `Hybrid Benefit` (перенос уже купленных лицензий Windows/SQL).",
                 "example": "Большая in-memory БД ставится на `E`-серию с `Reserved Instance` на 3 года (−72%), а stateless batch-обработка — на `Spot VM` (−90%) с готовностью к eviction.",
                 "when_to_apply": "Брать VM, когда нужен полный контроль над ОС/рантаймом (lift-and-shift, специфичный софт); комбинировать pricing-модели под предсказуемость и допустимость прерываний.",
                 "edge_cases": "`Spot VMs` могут быть вытеснены в любой момент при дефиците ёмкости — не для stateful/критичных нагрузок; `Reserved` экономит только при стабильной утилизации, иначе деньги сгорают.",
@@ -251,10 +251,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`AKS` — managed Kubernetes в Azure: бесплатный control plane (платите только за ноды), интеграция с `Entra ID`, auto-scaling, networking через `Azure CNI` или `kubenet`, multi-zone кластеры и поддержка `Windows containers`.",
+              "text": "`AKS` — managed Kubernetes в Azure: бесплатный control plane (платите только за ноды), интеграция с `Entra ID`, auto-scaling и multi-zone кластеры.",
               "correct": true,
               "sections": {
-                "explanation": "Azure управляет master-нодами (control plane) бесплатно, оставляя вам worker-ноды как обычные VM. `Entra ID` даёт RBAC к кластеру и подам через managed identity, а выбор CNI/kubenet определяет модель IP-адресации.",
+                "explanation": "Azure управляет master-нодами (API-сервер, etcd, scheduler) бесплатно — платите только за worker-узлы, как обычные VM. `Entra ID` даёт RBAC к кластеру через корпоративные учётки поверх Kubernetes RBAC. Networking на выбор: `Azure CNI` (поды получают IP из VNet) или `kubenet` (экономнее по адресам). Поддержка `Windows containers` — редкая для managed Kubernetes возможность, важна для legacy `.NET Framework`.",
                 "example": "Команда деплоит микросервисы в AKS с `Cluster Autoscaler`: при росте нагрузки добавляются ноды, поды получают доступ к `Key Vault` через managed identity без секретов в коде.",
                 "when_to_apply": "Выбирать AKS, когда нужен полный контроль Kubernetes (сложные оркестрации, операторы, helm) и команда готова управлять кластером; для Microsoft-стека это естественный выбор.",
                 "edge_cases": "Control plane бесплатен, но за ноды, диски и сеть платите; `Azure CNI` расходует IP из VNet быстрее, чем `kubenet`, что важно при планировании адресного пространства.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `AKS` платить нужно и за control plane, и за ноды, поскольку Microsoft берёт деньги за управление master-узлами.",
+              "text": "В `AKS` платить нужно и за control plane, и за ноды, поскольку Microsoft берёт почасовую плату за управление master-узлами кластера, в отличие от GKE.",
               "correct": false,
               "sections": {
                 "what_actually": "Control plane в AKS бесплатен (в стандартном tier); вы платите только за worker-ноды и связанные ресурсы (диски, сеть).",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`AKS` не интегрируется с `Entra ID`: доступ к кластеру управляется только локальными Kubernetes-аккаунтами.",
+              "text": "`AKS` не интегрируется с `Entra ID`: доступ к кластеру управляется только локальными Kubernetes-аккаунтами и сертификатами, корпоративный SSO недоступен.",
               "correct": false,
               "sections": {
                 "what_actually": "AKS как раз интегрируется с `Entra ID` — RBAC к кластеру и managed identity для подов идут через identity Azure.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`AKS` поддерживает только `Linux`-контейнеры; запустить `Windows containers` в нём невозможно.",
+              "text": "`AKS` поддерживает только `Linux`-контейнеры на нодах с `kubenet`; запустить `Windows containers` или включить `Azure CNI` в нём невозможно.",
               "correct": false,
               "sections": {
                 "what_actually": "AKS поддерживает и Windows containers (через Windows node pools), что важно для legacy `.NET Framework`-нагрузок.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Azure Functions` работают только по HTTP-триггеру и не умеют реагировать на события очередей, таймеров или Blob Storage.",
+              "text": "`Azure Functions` работают только по HTTP-триггеру и не умеют реагировать на события очередей, таймеров, Blob Storage или изменения Cosmos DB.",
               "correct": false,
               "sections": {
                 "what_actually": "Functions поддерживают множество триггеров: HTTP, Timer, Blob, Queue/Service Bus, Event Hubs, изменения Cosmos DB.",
@@ -323,10 +323,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Azure Functions` — FaaS (аналог AWS Lambda). Hosting plans: `Consumption` (pay-per-execution, true serverless), `Premium` (pre-warmed, без cold start), `Dedicated` (на App Service Plan). Triggers: HTTP, Timer, Blob, Queue/Service Bus, Event Hubs, изменения Cosmos DB. `Durable Functions` — для stateful-workflow.",
+              "text": "`Azure Functions` — FaaS (аналог AWS Lambda); hosting plans `Consumption`/`Premium`/`Dedicated` трейдят цену против cold start, triggers — событийные.",
               "correct": true,
               "sections": {
-                "explanation": "Function запускается по триггеру и масштабируется автоматически. `Consumption` платит только за выполнения, но имеет cold start; `Premium` держит pre-warmed инстансы, убирая холодный старт ценой постоянной оплаты.",
+                "explanation": "`Consumption` (pay-per-execution, true serverless, есть cold start), `Premium` (pre-warmed инстансы, без cold start, постоянная оплата), `Dedicated` (на уже оплаченном App Service Plan). Triggers: HTTP, Timer, Blob, Queue/Service Bus, Event Hubs, изменения Cosmos DB. Языки: C#, JS, Python, Java, PowerShell. `Durable Functions` — расширение для stateful-workflow (оркестрация, fan-out/fan-in), аналог AWS Step Functions, но логика кодом.",
                 "example": "HTTP-триггер обрабатывает webhook, а Blob-триггер запускает обработку файла при загрузке в Storage; для длинной оркестрации шагов используют `Durable Functions` (аналог Step Functions).",
                 "when_to_apply": "Брать Functions для событийной, прерывистой нагрузки и интеграций; `Premium` — когда критичен отсутствующий cold start или нужен VNet-доступ.",
                 "edge_cases": "`Consumption`-план страдает от cold start и имеет лимит времени выполнения; долгие/stateful процессы решаются `Durable Functions`, а не одной длинной функцией.",
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "План `Consumption` держит инстансы постоянно прогретыми, поэтому cold start в нём отсутствует.",
+              "text": "План `Consumption` держит инстансы постоянно прогретыми за фиксированную месячную плату, поэтому cold start в нём полностью отсутствует, как в `Premium`.",
               "correct": false,
               "sections": {
                 "what_actually": "Именно `Consumption` подвержен cold start; pre-warmed инстансы без холодного старта даёт план `Premium`.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для долгих stateful-workflow в `Azure Functions` достаточно одной функции с большим таймаутом; `Durable Functions` не нужны.",
+              "text": "Для долгих stateful-workflow в `Azure Functions` достаточно одной функции с большим таймаутом и внешней БД для состояния; отдельные `Durable Functions` не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Долгие stateful-оркестрации делают через `Durable Functions`; обычная функция ограничена по времени и не хранит состояние.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`App Service` — это IaaS, где вы сами управляете ОС, устанавливаете патчи и настраиваете рантайм на голой VM.",
+              "text": "`App Service` — это IaaS, где вы сами управляете ОС, устанавливаете патчи и настраиваете рантайм на голой VM, как в `Azure Virtual Machines`.",
               "correct": false,
               "sections": {
                 "what_actually": "App Service — это PaaS: Microsoft управляет ОС и рантаймом, вы деплоите только код; голой VM с ручным управлением здесь нет.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Deployment slots` в App Service нужны только для логирования и не позволяют делать blue-green деплой.",
+              "text": "`Deployment slots` в App Service нужны только для сбора логов и метрик; делать через них blue-green деплой или swap версий нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Слоты — это и есть механизм blue-green: деплой в staging-слот и атомарный swap в production без даунтайма.",
@@ -395,10 +395,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`App Service` — managed PaaS для веб-приложений: auto-scaling, load balancing, CI/CD (`GitHub Actions`, `Azure DevOps`), custom domains/SSL, auth через `Entra ID`, deployment slots для blue-green. `App Service Plan` — это compute-ресурсы, на которых можно хостить несколько приложений.",
+              "text": "`App Service` — managed PaaS для веб-приложений: auto-scaling, CI/CD, custom domains/SSL, auth через `Entra ID`, deployment slots для blue-green деплоя.",
               "correct": true,
               "sections": {
-                "explanation": "App Service берёт на себя ОС, патчи и масштабирование, оставляя вам код. Deployment slots позволяют выкатить версию в staging-слот и атомарно swap-нуть в production, обеспечивая blue-green деплой без даунтайма.",
+                "explanation": "Платформа берёт на себя ОС, веб-сервер, патчи и масштабирование (по метрикам или расписанию); встроенный CI/CD — `GitHub Actions` и `Azure DevOps`. Вход через `Entra ID` без своего кода (Easy Auth). `Deployment slots` (staging) дают blue-green: прогреваешь версию в слоте и атомарно swap-аешь с прода, откат одним кликом. `App Service Plan` — это compute-ресурсы, на которых можно хостить несколько приложений, деля CPU и память.",
                 "example": "Веб-приложение на `.NET` деплоится в `staging`-слот, прогоняются smoke-тесты, затем `swap` мгновенно переключает прод на новую версию; при проблеме делается обратный swap.",
                 "when_to_apply": "Выбирать App Service для классических веб-приложений и API, когда не нужен полный контроль над инфраструктурой и важны быстрый деплой, slots и встроенная аутентификация.",
                 "edge_cases": "Несколько приложений на одном `App Service Plan` делят его compute — шумный сосед может влиять на остальные; tier (Free/Basic/Standard/Premium/Isolated) ограничивает scaling и фичи вроде slots.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Каждое приложение в App Service всегда получает изолированный выделенный сервер; несколько приложений на одном плане не размещаются.",
+              "text": "Каждое приложение в App Service всегда получает изолированный выделенный сервер; несколько приложений на одном `App Service Plan` физически не размещаются.",
               "correct": false,
               "sections": {
                 "what_actually": "Один `App Service Plan` может хостить несколько приложений, которые делят его compute; полная изоляция — только в Isolated-tier.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Container Apps` — это полный Kubernetes с прямым доступом к `kubectl`, нодам и кастомным CRD, как в `AKS`.",
+              "text": "`Container Apps` — это полный Kubernetes с прямым доступом к `kubectl`, нодам и кастомным CRD, как в `AKS`, только с автоматическим биллингом.",
               "correct": false,
               "sections": {
                 "what_actually": "Container Apps намеренно скрывают Kubernetes (это AKS-light): прямого доступа к API/нодам/CRD нет — это даёт `AKS`.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ACI` предоставляет полноценную оркестрацию: self-healing, rolling-update и автоматический rebalance подов между нодами.",
+              "text": "`ACI` предоставляет полноценную оркестрацию: self-healing, rolling-update и автоматический rebalance подов между нодами кластера, как managed Kubernetes.",
               "correct": false,
               "sections": {
                 "what_actually": "ACI — одиночные контейнеры без оркестрации: ни self-healing, ни rolling-update, ни rebalance он не делает.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Container Apps` подходят только для stateful баз данных и не предназначены для stateless-микросервисов с auto-scaling.",
+              "text": "`Container Apps` подходят только для stateful баз данных и долгоживущих процессов и не предназначены для stateless-микросервисов с auto-scaling и ingress.",
               "correct": false,
               "sections": {
                 "what_actually": "Container Apps как раз нацелены на stateless-микросервисы с auto-scaling (включая scale-to-zero через KEDA).",
@@ -467,10 +467,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ACI` — одиночный контейнер без оркестрации (быстрый запуск, batch-задачи); `Container Apps` (с 2022) — managed serverless-контейнеры (AKS-light на Kubernetes/KEDA/Dapr, аналог GCP Cloud Run) для микросервисов с auto-scaling; `AKS` — полный Kubernetes с максимальным контролем для сложных setup-ов.",
+              "text": "`ACI` — одиночный контейнер без оркестрации (batch-задачи); `Container Apps` — managed serverless-контейнеры для микросервисов; `AKS` — полный Kubernetes с максимальным контролем.",
               "correct": true,
               "sections": {
-                "explanation": "Это градация контроля vs простоты: ACI запускает контейнер за секунды без кластера; Container Apps добавляют scale-to-zero, ingress и event-driven через KEDA без управления нодами; AKS даёт полный доступ к Kubernetes API ценой операционной сложности.",
+                "explanation": "Это спектр «сколько Kubernetes тебе нужно». `ACI` стартует за секунды без накладных расходов на кластер. `Container Apps` (с 2022) — AKS-light на Kubernetes/KEDA/Dapr (аналог GCP Cloud Run): scale-to-zero, ingress, revision-деплой и event-driven масштабирование, но кластер ты не видишь и не обслуживаешь. `AKS` даёт полный доступ к Kubernetes API ценой операционной сложности — для сложных setup-ов.",
                 "example": "Разовый batch-джоб гоняют в `ACI`; набор HTTP-микросервисов с автоскейлом от нуля — в `Container Apps`; платформу с операторами, service mesh и кастомными CRD — в `AKS`.",
                 "when_to_apply": "ACI — для коротких изолированных задач; Container Apps — для микросервисов, когда не нужен полный Kubernetes; AKS — когда нужен полный контроль и экосистема Kubernetes.",
                 "edge_cases": "Container Apps скрывают Kubernetes — нет прямого доступа к API/нодам, что ограничивает кастомизацию; ACI без оркестрации не даёт self-healing и rolling-update, как полноценный кластер.",
@@ -491,10 +491,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Storage account` — единый namespace для `Blob` (объекты, как S3), `File` (SMB/NFS-шары), `Queue` (простой messaging), `Table` (NoSQL, legacy) и `Disk` (managed disks для VM). Типы аккаунтов: `Standard general-purpose v2` (самый частый), `Premium Block Blob`, `Premium File Shares`, `Premium Page Blobs`.",
+              "text": "`Storage account` — единый namespace для `Blob` (объекты как S3), `File`, `Queue`, `Table` и `Disk`; типы аккаунтов — Standard gpv2 и Premium-варианты.",
               "correct": true,
               "sections": {
-                "explanation": "Один storage account объединяет несколько типов хранилищ под общим namespace и ключами доступа. `general-purpose v2` покрывает большинство сценариев; Premium-варианты дают низкую latency через SSD для специфичных нагрузок (частые мелкие операции, файловые шары, диски VM).",
+                "explanation": "`Blob` — объектное хранилище (аналог S3), `File` — шары по SMB/NFS (монтируются как сетевой диск), `Queue` — простой messaging (не путать с богатым Service Bus), `Table` — NoSQL key-value (legacy, тот же API в Cosmos DB Table), `Disk` — managed disks для VM. Типы аккаунтов: `Standard general-purpose v2` (самый частый, HDD), `Premium Block Blob` (SSD, горячие блобы), `Premium File Shares`, `Premium Page Blobs` (диски VM с интенсивным I/O).",
                 "example": "Приложение в одном `gpv2`-аккаунте хранит загруженные пользователями файлы в `Blob`, очередь задач в `Queue` и общую SMB-шару в `File` — всё под единым namespace и RBAC.",
                 "when_to_apply": "Брать `Standard gpv2` по умолчанию; переходить на Premium-тип, когда нужна стабильно низкая latency (например, `Premium File Shares` под чувствительные к IO нагрузки).",
                 "edge_cases": "`Table Storage` считается legacy — для новых проектов берут `Cosmos DB Table API`; Premium-аккаунты дороже и заточены под конкретный тип данных, смешивать всё в одном Premium-аккаунте нельзя.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Storage account` хранит только `Blob`-объекты; для очередей, файловых шар и таблиц нужны отдельные сервисы вне storage account.",
+              "text": "`Storage account` хранит только `Blob`-объекты; для очередей, файловых шар и таблиц нужны отдельные сервисы с собственными namespace вне storage account.",
               "correct": false,
               "sections": {
                 "what_actually": "Один storage account объединяет `Blob`, `File`, `Queue`, `Table` и `Disk` под общим namespace — это не только Blob.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Table Storage` — это рекомендованный современный сервис для новых NoSQL-проектов в Azure, превосходящий Cosmos DB.",
+              "text": "`Table Storage` — это рекомендованный современный сервис для новых NoSQL-проектов в Azure, превосходящий Cosmos DB по latency и глобальной репликации.",
               "correct": false,
               "sections": {
                 "what_actually": "Table Storage — legacy; для новых NoSQL-нагрузок Microsoft рекомендует `Cosmos DB` (в т.ч. Table API).",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Тип аккаунта не влияет на производительность: `Standard gpv2` и `Premium Block Blob` дают одинаковую latency.",
+              "text": "Тип аккаунта не влияет на производительность: `Standard gpv2` на HDD и `Premium Block Blob` на SSD дают одинаковую latency и число транзакций в секунду.",
               "correct": false,
               "sections": {
                 "what_actually": "Premium-аккаунты на SSD дают заметно меньшую latency, чем Standard; тип напрямую определяет performance.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все tiers `Blob Storage` обеспечивают мгновенное чтение: данные из `Archive` доступны так же быстро, как из `Hot`.",
+              "text": "Все tiers `Blob Storage` обеспечивают мгновенное чтение: данные из `Archive` доступны так же быстро, как из `Hot`, без процедуры rehydrate.",
               "correct": false,
               "sections": {
                 "what_actually": "`Archive` требует rehydrate, который занимает часы; мгновенное чтение даёт только `Hot` (и с оговорками Cool/Cold).",
@@ -563,10 +563,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Tiers: `Hot` (частый доступ, дорогое хранение, дешёвый доступ), `Cool` (редкий, ≥30 дней), `Cold` (с 2023, ≥90 дней, ещё дешевле), `Archive` (почти никогда, самое дешёвое хранение, извлечение часами). `Lifecycle management` автоматически переводит блобы между tiers по правилам.",
+              "text": "Tiers по частоте доступа: `Hot`, `Cool` (≥30 дней), `Cold` (≥90 дней), `Archive` (оффлайн); `Lifecycle management` переводит блобы между ними автоматически.",
               "correct": true,
               "sections": {
-                "explanation": "Tiers — это trade-off между стоимостью хранения и стоимостью/скоростью доступа: чем холоднее tier, тем дешевле хранить, но дороже и медленнее читать. Lifecycle-политики переносят редко используемые данные в холодные tiers без ручной работы.",
+                "explanation": "Tier — это trade-off между ценой хранения и ценой/скоростью доступа: чем реже читаешь, тем дешевле хранить, но дороже каждое обращение. `Hot` — дорогое хранение, дешёвый доступ; `Cool` — дешевле хранение; `Cold` (с 2023) — ещё дешевле; `Archive` — самое дешёвое хранение, но оффлайн: извлечение (rehydrate) занимает часы. `Lifecycle management` по правилам возраста переносит блобы (например через 30 дней Hot→Cool) и удаляет старые без ручной работы.",
                 "example": "Lifecycle-правило держит свежие логи в `Hot`, через 30 дней переводит в `Cool`, через 90 — в `Archive`; восстановление из Archive занимает часы, поэтому туда кладут то, что почти не читают.",
                 "when_to_apply": "Назначать tier по частоте доступа: горячие данные — `Hot`, бэкапы и compliance-архивы — `Cool`/`Cold`/`Archive`; автоматизировать переходы через lifecycle.",
                 "edge_cases": "Из `Archive` нельзя читать напрямую — нужен rehydrate (часы); ранний доступ к данным в `Cool`/`Cold` штрафуется повышенной платой за чтение и early-deletion fee.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Hot`-tier — самый дешёвый по хранению, поэтому редко используемые архивы выгоднее всего держать именно в нём.",
+              "text": "`Hot`-tier — самый дешёвый по хранению из всех уровней, поэтому редко используемые архивы выгоднее всего держать именно в нём, а не в `Archive`.",
               "correct": false,
               "sections": {
                 "what_actually": "Hot — дорогой по хранению (но дешёвый по доступу); архивы выгоднее держать в `Cool`/`Cold`/`Archive`.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Переключать tiers можно только вручную для каждого блоба; автоматизации переходов в Azure нет.",
+              "text": "Переключать tiers можно только вручную для каждого блоба по очереди; автоматизации переходов по возрасту через какие-либо правила в Azure нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`Lifecycle management` автоматически переводит блобы между tiers по правилам (возраст, доступ) — ручная работа не нужна.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Azure SQL Database` — это самоуправляемая VM с установленным SQL Server, где вы сами патчите ОС и движок БД.",
+              "text": "`Azure SQL Database` — это самоуправляемая VM с установленным SQL Server, где вы сами патчите ОС и движок БД, как в варианте IaaS.",
               "correct": false,
               "sections": {
                 "what_actually": "Azure SQL Database — managed PaaS: Microsoft патчит и обслуживает движок; самоуправляемый SQL Server на VM — отдельный сценарий (IaaS).",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`DTU`-модель рекомендуется для всех новых баз, так как разделяет compute и storage прозрачнее, чем vCore.",
+              "text": "`DTU`-модель рекомендуется для всех новых баз, так как разделяет compute и storage прозрачнее, чем `vCore`, и позволяет применить Hybrid Benefit.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: разделяет compute и storage именно `vCore` (он и рекомендуется), а `DTU` — legacy с bundled-юнитом.",
@@ -635,10 +635,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Azure SQL Database` — managed Microsoft SQL Server. Deployment: `Single Database`, `Elastic Pool` (общие ресурсы между БД), `Managed Instance` (полная совместимость с SQL Server). Tiers: `DTU-based` (legacy) и `vCore-based` (рекомендуемый) с уровнями `General Purpose`, `Business Critical` (in-memory), `Hyperscale` (scale-out).",
+              "text": "`Azure SQL Database` — managed SQL Server; deployment: Single Database, Elastic Pool, Managed Instance; tiers — DTU (legacy) и рекомендуемый vCore.",
               "correct": true,
               "sections": {
-                "explanation": "`vCore` разделяет compute и storage, давая прозрачный биллинг и гибкость; `DTU` — старый bundled-юнит. `Managed Instance` нужен для lift-and-shift с фичами уровня инстанса (SQL Agent, cross-DB queries), а `Hyperscale` масштабирует storage до сотен ТБ.",
+                "explanation": "`Single Database` — одна изолированная БД со своими ресурсами; `Elastic Pool` — пул БС делит общие ресурсы (экономно при несовпадающих пиках); `Managed Instance` — почти полная совместимость с SQL Server (cross-database queries, SQL Agent, CLR), выбор для lift-and-shift legacy. `vCore` раздельно тарифицирует ядра и storage (можно применить Hybrid Benefit), уровни: `General Purpose`, `Business Critical` (in-memory, локальный SSD, HA-реплики), `Hyperscale` (storage scale-out до 100+ ТБ).",
                 "example": "SaaS с сотнями мелких БД клиентов кладут в `Elastic Pool`, чтобы делить ресурсы и сглаживать пики; крупную нагруженную БД переводят на `vCore Business Critical` ради in-memory и низкой latency.",
                 "when_to_apply": "Single Database — для отдельного приложения; Elastic Pool — для множества БД с переменной нагрузкой; Managed Instance — для миграции существующего SQL Server с минимальными изменениями.",
                 "edge_cases": "`DTU`-модель непрозрачна (compute и IO в одном юните) — для нового берут vCore; `Managed Instance` дороже и развёртывается дольше, его берут только когда нужна instance-level совместимость.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Elastic Pool` нужен для полной совместимости с on-prem SQL Server, включая SQL Agent и cross-database queries.",
+              "text": "`Elastic Pool` нужен для полной совместимости с on-prem SQL Server, включая SQL Agent, CLR и cross-database queries при миграции legacy-приложений.",
               "correct": false,
               "sections": {
                 "what_actually": "Полную instance-level совместимость даёт `Managed Instance`; `Elastic Pool` — это разделение ресурсов между множеством БД.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cosmos DB` — это исключительно документная БД (только JSON), и другие модели (Key-Value, Cassandra, Gremlin) она не поддерживает.",
+              "text": "`Cosmos DB` — это исключительно документная БД (только JSON через Mongo API), и другие модели (Key-Value, Cassandra, Gremlin) она принципиально не поддерживает.",
               "correct": false,
               "sections": {
                 "what_actually": "Cosmos DB — multi-model: помимо Document поддерживает Key-Value, Column (Cassandra API) и Graph (Gremlin API).",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Cosmos DB` предлагает только два уровня consistency — Strong и Eventual — без промежуточных вариантов.",
+              "text": "`Cosmos DB` предлагает только два уровня consistency — Strong и Eventual — без промежуточных вариантов вроде Session или Bounded staleness.",
               "correct": false,
               "sections": {
                 "what_actually": "Cosmos DB даёт 5 уровней: Strong, Bounded staleness, Session, Consistent prefix, Eventual — с тонкими промежуточными гарантиями.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Pricing `Cosmos DB` основан на количестве хранимых ГБ и не зависит от пропускной способности операций.",
+              "text": "Pricing `Cosmos DB` основан только на количестве хранимых ГБ и фиксированной месячной плате за регион, а от пропускной способности операций не зависит.",
               "correct": false,
               "sections": {
                 "what_actually": "Основная единица pricing — `RU/s` (пропускная способность операций); хранение — отдельная составляющая, но именно RU чаще создаёт счёт.",
@@ -707,10 +707,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Cosmos DB` — multi-model, глобально распределённая NoSQL-БД (crown jewel Azure): модели Document (Mongo/JSON), Key-Value, Column (Cassandra), Graph (Gremlin); multi-region репликация; 5 уровней consistency (Strong, Bounded staleness, Session, Consistent prefix, Eventual); single-digit ms latency; SLA 99.999% для multi-region writes. Pricing — `Request Units (RU/s)`.",
+              "text": "`Cosmos DB` — multi-model глобально распределённая NoSQL-БД: 4 модели данных, multi-region репликация, 5 уровней consistency, single-digit ms latency; pricing — `RU/s`.",
               "correct": true,
               "sections": {
-                "explanation": "Cosmos DB даёт глобальное распределение с гибким выбором между consistency и latency через 5 уровней. Производительность абстрагирована в `RU/s` — единицу, учитывающую CPU/IO/память на операцию; вы провизионите или платите serverless за фактический расход.",
+                "explanation": "Crown jewel Azure. Модели: Document (Mongo/JSON), Key-Value, Column (Cassandra), Graph (Gremlin) — одна СУБД под разные API. Глобальная распределённость с write в несколько регионов (multi-master). 5 уровней consistency: Strong, Bounded staleness, Session, Consistent prefix, Eventual — редкая для NoSQL гибкость на шкале «согласованность ↔ задержка». SLA 99,999% для multi-region writes. `Request Units (RU/s)` — абстрактная единица CPU/IOPS/память на операцию (чтение по ключу ~1 RU).",
                 "example": "Глобальное мобильное приложение реплицирует данные в регионы пользователей и читает с `Session`-consistency для своих записей, держа latency в единицы миллисекунд по всему миру.",
                 "when_to_apply": "Брать Cosmos DB для глобальных приложений, IoT, персонализации и real-time рекомендаций, где нужны низкая latency по всему миру и гибкая consistency.",
                 "edge_cases": "Главный cost trap — легко overprovision `RU/s` и получить дорогой счёт; неправильный partition key вызывает hot partitions и throttling (429) даже при достаточном суммарном RU.",
@@ -731,10 +731,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Azure Database for PostgreSQL/MySQL` — managed open-source БД. Tiers: `Burstable` (мелкие), `General Purpose`, `Memory Optimized`, а для PostgreSQL — `Hyperscale (Citus)` (распределённый/sharded). С 2024 основное предложение — `Azure Database for PostgreSQL Flexible Server`.",
+              "text": "`Azure Database for PostgreSQL/MySQL` — managed open-source БД; tiers: Burstable, General Purpose, Memory Optimized, для PostgreSQL — Hyperscale (Citus).",
               "correct": true,
               "sections": {
-                "explanation": "Сервис снимает администрирование open-source СУБД (бэкапы, патчи, HA). `Flexible Server` даёт больше контроля над maintenance-окнами и сетью, а `Hyperscale (Citus)` шардирует PostgreSQL для горизонтального масштабирования больших нагрузок.",
+                "explanation": "Сервис снимает администрирование (ОС, патчи, бэкапы, HA), отдавая стандартный PostgreSQL или MySQL без lock-in на движок. `Burstable` — мелкие/неравномерные нагрузки (dev); `General Purpose` — большинство прода; `Memory Optimized` — много RAM для тяжёлых запросов; `Hyperscale (Citus)` — только для PostgreSQL, горизонтально шардирует данные по узлам. С 2024 основное предложение — `Azure Database for PostgreSQL Flexible Server` (больше контроля над конфигом, окнами обслуживания и зональной отказоустойчивостью, чем у Single Server).",
                 "example": "Стартап на `PostgreSQL` берёт `Flexible Server` General Purpose с зональной HA; при росте до распределённой аналитики переходит на `Hyperscale (Citus)` для шардирования.",
                 "when_to_apply": "Выбирать managed PostgreSQL/MySQL, когда нужна знакомая open-source СУБД без операционных хлопот; `Hyperscale (Citus)` — при потребности в горизонтальном масштабировании PostgreSQL.",
                 "edge_cases": "`Burstable` копит CPU-кредиты и при их исчерпании режет производительность — не для стабильной нагрузки; `Hyperscale (Citus)` требует правильного выбора distribution column, иначе выгоды шардирования не будет.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Azure Database for PostgreSQL` поддерживает только проприетарный движок Microsoft и несовместима со стандартным open-source PostgreSQL.",
+              "text": "`Azure Database for PostgreSQL` поддерживает только проприетарный форк движка Microsoft и несовместима со стандартным open-source PostgreSQL и его расширениями.",
               "correct": false,
               "sections": {
                 "what_actually": "Это managed open-source PostgreSQL: совместим со стандартным движком и клиентами; собственного проприетарного форка здесь нет.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Hyperscale (Citus)` — это tier для MySQL, обеспечивающий вертикальное масштабирование одного узла.",
+              "text": "`Hyperscale (Citus)` — это tier для MySQL, обеспечивающий вертикальное масштабирование одного узла за счёт добавления CPU и RAM, а не шардирования.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hyperscale (Citus)` относится к PostgreSQL и даёт горизонтальное масштабирование через шардирование, а не вертикальное.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Основным предложением с 2024 года остаётся Single Server, а Flexible Server признан устаревшим.",
+              "text": "Основным предложением с 2024 года остаётся Single Server, а Flexible Server признан устаревшим и недоступен для новых развёртываний.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: с 2024 основное предложение — `Flexible Server`, дающий больше контроля над сетью и maintenance.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Azure Cache for Redis` — это самостоятельный движок Microsoft, несовместимый с протоколом open-source Redis.",
+              "text": "`Azure Cache for Redis` — самостоятельный движок Microsoft, несовместимый с протоколом open-source Redis: использует фирменный бинарный API и собственный набор команд.",
               "correct": false,
               "sections": {
                 "what_actually": "Это managed Redis, совместимый со стандартным Redis-протоколом и клиентами; собственного несовместимого движка тут нет.",
@@ -803,10 +803,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Azure Cache for Redis` — managed Redis (аналог AWS ElastiCache, GCP Memorystore). Tiers: `Basic` (один узел), `Standard` (репликация), `Premium` (clustering, persistence), `Enterprise` (фичи Redis Enterprise). С 2024 анонсирован `Azure Managed Redis` — preview новой версии.",
+              "text": "`Azure Cache for Redis` — managed Redis (аналог AWS ElastiCache): tiers `Basic`/`Standard`/`Premium`/`Enterprise` по росту надёжности.",
               "correct": true,
               "sections": {
-                "explanation": "Сервис убирает администрирование Redis (HA, патчи, масштабирование). Tiers растут по надёжности: `Basic` без SLA для dev, `Standard` добавляет реплику, `Premium` — кластеризацию и persistence, `Enterprise` — модули и активную гео-репликацию.",
+                "explanation": "Сервис убирает администрирование Redis (HA, патчи, масштабирование) — аналог AWS ElastiCache и GCP Memorystore. Tiers растут по надёжности: `Basic` без SLA для dev, `Standard` добавляет реплику, `Premium` — кластеризацию и persistence, `Enterprise` — модули и активную гео-репликацию. С 2024 в preview доступно отдельное поколение `Azure Managed Redis`.",
                 "example": "Веб-приложение кэширует сессии и горячие запросы в `Standard`-tier с репликой ради отказоустойчивости; при росте данных и потребности в persistence переходит на `Premium` с кластеризацией.",
                 "when_to_apply": "Брать managed Redis для кэширования, сессий, rate limiting и pub/sub, когда нужна низкая latency и не хочется самим админить кластер Redis.",
                 "edge_cases": "`Basic` — один узел без SLA и репликации, не для прода; persistence и clustering доступны только с `Premium`, поэтому tier выбирают под требования к надёжности заранее.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Persistence и clustering доступны уже в `Basic`-tier, поэтому он подходит для production-нагрузок.",
+              "text": "Persistence и clustering доступны уже в `Basic`-tier, который даёт SLA 99.9% и потому годится для production-нагрузок без оговорок.",
               "correct": false,
               "sections": {
                 "what_actually": "`Basic` — один узел без репликации и SLA; persistence и clustering появляются только начиная с `Premium`.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`NSG` — это глобальный DNS-сервис Azure, отвечающий за разрешение имён, а не за фильтрацию трафика.",
+              "text": "`NSG` — это глобальный DNS-сервис Azure, отвечающий за разрешение имён и геораспределение запросов, а не за фильтрацию трафика по портам.",
               "correct": false,
               "sections": {
                 "what_actually": "NSG — это firewall-правила (allow/deny по IP/порту/протоколу) на уровне subnet/NIC, а не DNS-сервис.",
@@ -875,7 +875,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`VNet (Virtual Network)` — изолированная виртуальная сеть (аналог AWS VPC), делится на subnets; `NSG (Network Security Group)` — firewall-правила на уровне subnet/NIC (аналог Security Groups + NACLs). `ASG (Application Security Group)` логически группирует VM для применения правил.",
+              "text": "`VNet` — изолированная сеть (аналог AWS VPC) из subnets; `NSG` — allow/deny firewall-правила на subnet/NIC.",
               "correct": true,
               "sections": {
                 "explanation": "VNet задаёт адресное пространство (например `10.0.0.0/16`) и сегментацию по subnets; NSG фильтрует трафик allow/deny правилами по IP/порту/протоколу. ASG позволяет писать правила в терминах ролей ('web', 'app'), а не конкретных IP.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Load Balancer` в Azure работает на уровне L7 и умеет path-based routing по URL, как Application Gateway.",
+              "text": "`Load Balancer` в Azure работает на уровне L7 и умеет path-based routing по URL и host-заголовку, как Application Gateway, плюс встроенный WAF.",
               "correct": false,
               "sections": {
                 "what_actually": "`Load Balancer` — это L4 (TCP/UDP) и не разбирает HTTP/URL; path-based routing на L7 делает Application Gateway.",
@@ -947,7 +947,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Application Gateway` — L7 (HTTP) балансировщик внутри региона (path-based routing, WAF, SSL termination); `Azure Front Door` — глобальный L7-балансировщик + CDN (global anycast, multi-region failover, WAF); `Load Balancer` — L4 (TCP/UDP); `Traffic Manager` — DNS-based балансировка.",
+              "text": "`Application Gateway` — региональный L7-балансировщик; `Front Door` — глобальный L7 + CDN; `Load Balancer` — L4; `Traffic Manager` — DNS.",
               "correct": true,
               "sections": {
                 "explanation": "Уровень и масштаб различают сервисы: Application Gateway работает на L7 в одном регионе с умной маршрутизацией по URL; Front Door — глобально, направляя пользователя в ближайший регион через anycast; Load Balancer — простой L4; Traffic Manager балансирует через DNS-ответы.",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Entra ID` (ребрендинг `Azure Active Directory` в 2023) — identity provider: SSO к тысячам SaaS-приложений, `Conditional Access` (granular-политики), встроенный MFA, passwordless (FIDO2), B2B/B2C-сценарии, Identity Governance. В Azure он управляет RBAC: доступ к ресурсам выдаётся через role assignments в Entra ID.",
+              "text": "`Entra ID` (ребрендинг `Azure AD` в 2023) — identity provider Azure: SSO, `Conditional Access`, MFA, RBAC к ресурсам.",
               "correct": true,
               "sections": {
                 "explanation": "Entra ID — crown jewel Microsoft Cloud и корень доступа: пользователи логинятся один раз и получают SSO, а Conditional Access решает (по устройству, локации, риску), пускать ли. RBAC к ресурсам Azure (`Storage Blob Data Reader` и т.д.) тоже завязан на identity Entra ID.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Entra ID` — это реляционная база данных для приложений, а identity и SSO он не предоставляет.",
+              "text": "`Entra ID` — это реляционная база данных для хранения таблиц приложений с поддержкой SQL-запросов, а identity и SSO он не предоставляет.",
               "correct": false,
               "sections": {
                 "what_actually": "Entra ID — это identity provider (SSO, MFA, RBAC), а не БД для хранения данных приложений.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Managed Identity` требует хранить логин и пароль в коде приложения, просто шифруя их в конфиге.",
+              "text": "`Managed Identity` требует хранить логин и пароль к сервису в коде приложения, просто шифруя их в конфиге своим customer-managed key.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл managed identity ровно в отсутствии секретов в коде: токен Entra ID выдаётся ресурсу автоматически, без логина/пароля.",
@@ -1043,7 +1043,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Managed Identity` — автоматически создаваемая identity в `Entra ID` для ресурса Azure (VM, App Service, Function), позволяющая обращаться к другим сервисам без секретов в коде. Типы: `System-assigned` (привязана к жизненному циклу ресурса) и `User-assigned` (независимая, можно шарить между ресурсами). Аналог AWS IAM Roles и GCP Service Accounts.",
+              "text": "`Managed Identity` — identity в `Entra ID` для ресурса (VM, Function), доступ без секретов; типы `System-assigned` и `User-assigned`.",
               "correct": true,
               "sections": {
                 "explanation": "Managed identity убирает хранение credentials: ресурс получает токен Entra ID автоматически (через `DefaultAzureCredential`) и аутентифицируется в `Key Vault`, `Storage`, БД по RBAC. Это снимает риск утечки ключей из кода и конфигов.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Synapse Analytics` — это только хранилище данных (DWH) без поддержки Spark и интеграции данных.",
+              "text": "`Synapse Analytics` — это только хранилище данных (DWH) без поддержки Spark и интеграции данных: чистый аналог Snowflake без оркестрации.",
               "correct": false,
               "sections": {
                 "what_actually": "Synapse — unified-платформа: помимо DWH включает `Apache Spark pools`, `Data Explorer` и `Pipelines` для интеграции данных.",
@@ -1115,7 +1115,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Synapse Analytics` — unified-платформа аналитики: `Synapse SQL` (DWH, аналог Snowflake), `Apache Spark pools`, `Data Explorer` (Kusto), `Pipelines` (data integration). Synapse SQL бывает `Dedicated SQL pool` (provisioned DWH) и `Serverless SQL pool` (запросы к данным в Storage без загрузки). Многие переходят на `Microsoft Fabric`.",
+              "text": "`Synapse Analytics` — unified-платформа: `Synapse SQL` (DWH), `Spark pools`, `Data Explorer`, `Pipelines`; многие переходят на `Fabric`.",
               "correct": true,
               "sections": {
                 "explanation": "Synapse объединяет DWH, Spark и интеграцию данных в одной среде. `Serverless SQL pool` позволяет запрашивать файлы прямо в `Azure Storage` (без ETL-загрузки), а `Dedicated pool` даёт выделенную мощность для стабильной аналитической нагрузки.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Mapping Data Flows` в ADF требуют ручного написания Spark-кода и не предлагают визуальных code-free трансформаций.",
+              "text": "`Mapping Data Flows` в ADF требуют ручного написания Spark-кода на Scala и не предлагают визуальных code-free трансформаций мышкой.",
               "correct": false,
               "sections": {
                 "what_actually": "Mapping Data Flows — это как раз визуальные code-free трансформации; Spark под капотом скрыт от пользователя.",
@@ -1187,7 +1187,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ADF` — managed ETL/ELT-сервис (аналог AWS Glue, GCP Cloud Data Fusion): визуальный UI для pipelines, 90+ коннекторов к данным, code-free трансформации через `Mapping Data Flows`, кастомные Python/Spark-активности, CI/CD-интеграция. В 2025 Microsoft продвигает `Microsoft Fabric`, но ADF всё ещё используется.",
+              "text": "`ADF` — managed ETL/ELT (аналог AWS Glue): визуальные pipelines, 90+ коннекторов, code-free `Mapping Data Flows`, CI/CD.",
               "correct": true,
               "sections": {
                 "explanation": "ADF оркеструет перемещение и трансформацию данных между источниками. Визуальные pipelines и Mapping Data Flows позволяют строить ETL без кода, а кастомные активности дают гибкость для сложной логики на Spark/Python.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Event Hubs` — high-throughput event streaming (аналог Kafka): миллионы событий/сек, partitions, consumer groups, совместимость с протоколом Kafka (со Standard tier, нет только в Basic). `Service Bus` — enterprise messaging (аналог RabbitMQ): queues и topics (pub/sub), транзакции, sessions, dead-letter, AMQP 1.0, ниже throughput. Event Hubs — для streaming/телеметрии/IoT, Service Bus — для business messaging.",
+              "text": "`Event Hubs` — high-throughput streaming (аналог Kafka, Kafka-совместим со Standard tier); `Service Bus` — enterprise messaging (queues/topics, транзакции, dead-letter).",
               "correct": true,
               "sections": {
                 "explanation": "Event Hubs оптимизирован под объём: партиционированный поток событий, который читают consumer groups (как Kafka). Service Bus — про надёжную бизнес-доставку: гарантии, транзакции, sessions для упорядочивания и dead-letter для проблемных сообщений.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Service Bus` создан для high-throughput стриминга миллионов событий в секунду и превосходит Event Hubs по пропускной способности.",
+              "text": "`Service Bus` создан для high-throughput стриминга миллионов событий в секунду через партиции и consumer groups и превосходит Event Hubs по пропускной способности.",
               "correct": false,
               "sections": {
                 "what_actually": "High-throughput стриминг — это `Event Hubs`; `Service Bus` имеет ниже throughput и заточен под надёжный business messaging.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Azure OpenAI Service` использует промпты и данные клиентов для дообучения публичных моделей OpenAI.",
+              "text": "`Azure OpenAI Service` использует промпты и данные клиентов для дообучения публичных моделей OpenAI, улучшая их качество для всех пользователей сервиса.",
               "correct": false,
               "sections": {
                 "what_actually": "Одно из ключевых обещаний Azure OpenAI — данные клиентов НЕ используются для обучения моделей OpenAI.",
@@ -1283,7 +1283,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Azure OpenAI Service` — эксклюзивное предложение Microsoft: хостинг моделей OpenAI (`GPT-4` и др.) на инфраструктуре Azure. Преимущества vs прямого OpenAI: enterprise compliance (GDPR, HIPAA, SOC), приватный сетевой доступ, customer-managed keys (BYOK), данные не используются для обучения OpenAI, SLA и поддержка через Microsoft.",
+              "text": "`Azure OpenAI Service` — хостинг моделей OpenAI на инфраструктуре Azure: enterprise compliance, приватная сеть, BYOK, данные не идут в обучение.",
               "correct": true,
               "sections": {
                 "explanation": "Сервис даёт те же модели OpenAI, но в enterprise-обёртке Azure: изоляция в `VNet`, соответствие регуляторике и гарантия, что промпты/данные не уходят в обучение. Это снимает блокеры для регулируемых индустрий, которым нельзя в публичный OpenAI API.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Azure ML` умеет только обучать модели и не предоставляет средств для их деплоя и обслуживания (serving).",
+              "text": "`Azure ML` умеет только обучать модели и трекать эксперименты, но не предоставляет средств для их деплоя и обслуживания (serving) — для этого нужен сторонний сервис.",
               "correct": false,
               "sections": {
                 "what_actually": "Azure ML покрывает и serving: endpoints (real-time и batch), model registry и обновление через pipelines — это полный lifecycle.",
@@ -1355,7 +1355,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Azure ML` — managed ML-платформа (аналог SageMaker, Vertex AI): workspace для проекта, compute clusters (CPU/GPU), AutoML, model registry, endpoints (real-time и batch), интеграция с MLflow, Designer (no-code). Тесно интегрирована с Azure DevOps и GitHub.",
+              "text": "`Azure ML` — managed ML-платформа (аналог SageMaker): workspace, compute clusters, AutoML, model registry, real-time/batch endpoints, MLflow.",
               "correct": true,
               "sections": {
                 "explanation": "Azure ML покрывает весь ML-lifecycle: от подготовки данных и обучения на масштабируемых compute-кластерах до регистрации модели и деплоя на endpoints. AutoML и Designer снижают порог входа, а MLflow и CI/CD-интеграция дают воспроизводимость и MLOps.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главная сила Azure — самое дешёвое и прозрачное ценообразование среди всех облаков, а слабостей у него нет.",
+              "text": "Главная сила Azure — самое дешёвое и прозрачное ценообразование с едиными понятными единицами биллинга среди всех облаков, а явных слабостей у него нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Pricing Azure как раз считается confusing (`DTU`, `RU`), а слабости реальны: outages, документация, UI/UX; дешевизна — не его конёк.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Azure превосходит AWS прежде всего в зрелости open-source-экосистемы и cloud-native инструментов для Linux.",
+              "text": "Azure превосходит AWS прежде всего в зрелости open-source-экосистемы и cloud-native инструментов для Linux, а также в широте marketplace сторонних решений.",
               "correct": false,
               "sections": {
                 "what_actually": "Open-source-экосистема — как раз слабость Azure относительно AWS; его сила в Microsoft-стеке (.NET, Windows, AD).",
@@ -1427,7 +1427,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Сильные стороны Azure: enterprise integration (`AD`, `Office 365`), hybrid cloud (`Azure Arc`, `Stack`), эксклюзивный `Azure OpenAI`, лучшая площадка для `.NET`/`Windows`/`SQL Server`, широкий compliance-portfolio, бандл-скидки в Microsoft-контрактах. Слабости: заметные outages (reliability), фрагментированная документация, inconsistent UI/UX (legacy), менее интегрированный open-source, confusing pricing (`DTU`, `RU`).",
+              "text": "Сила Azure: enterprise integration (`AD`, `Office 365`), hybrid (`Arc`), эксклюзив `Azure OpenAI`, compliance. Слабости: outages, фрагментированные docs, confusing pricing.",
               "correct": true,
               "sections": {
                 "explanation": "Azure выигрывает у AWS в enterprise-нишах с Microsoft-наследием, гибриде и compliance, плюс эксклюзив OpenAI. Но проигрывает в надёжности (известные outages identity/DNS), консистентности интерфейсов и прозрачности ценообразования.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Выбирать Azure когда: уже Microsoft-shop (`AD`, `Office 365`, `Windows`-серверы), нагрузки на `.NET`/`SQL Server`, enterprise-продажи с бандлами Microsoft, нужен hybrid cloud (`Azure Arc`), compliance-heavy индустрии (healthcare, government) или конкретно `Azure OpenAI`. Не выбирать: новый cloud-native проект (часто лучше AWS/GCP), heavy Linux/open-source, ML/Data-проекты (чаще GCP/AWS), стартапы (Azure дороже).",
+              "text": "Выбирать Azure когда: Microsoft-shop, `.NET`/`SQL Server`, hybrid, compliance, `Azure OpenAI`. Не выбирать: green-field cloud-native, Linux-heavy, ML/Data, стартапы.",
               "correct": true,
               "sections": {
                 "explanation": "Выбор Azure определяется существующим стеком и требованиями: при Microsoft-наследии, compliance и гибриде он естественен и даёт бандл-экономию. Для green-field cloud-native, Linux-heavy и data/ML-нагрузок AWS/GCP обычно зрелее и дешевле на старте.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Azure — оптимальный выбор по умолчанию для любого green-field cloud-native стартапа на Linux и open-source.",
+              "text": "Azure — оптимальный выбор по умолчанию для любого green-field cloud-native стартапа на Linux и open-source благодаря самому щедрому free-tier среди облаков.",
               "correct": false,
               "sections": {
                 "what_actually": "Для green-field cloud-native, Linux-heavy и стартапов чаще лучше AWS/GCP; Azure там дороже и менее естественен.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Azure стоит выбирать прежде всего для тяжёлых ML/Data-проектов, так как он лидер именно в этой нише.",
+              "text": "Azure стоит выбирать прежде всего для тяжёлых ML/Data-проектов, так как он признанный лидер именно в этой нише и опережает GCP/AWS по зрелости инструментов.",
               "correct": false,
               "sections": {
                 "what_actually": "В ML/Data чаще выбирают GCP/AWS; это не главная ниша Azure, хотя `Azure ML` и `Synapse` существуют.",
