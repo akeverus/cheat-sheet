@@ -218,7 +218,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
 | STA-1 | Метрики технические, не actionable | Top-insights «что делать» (слабая тема/повтор ошибок) — данные из модели, без новых API | H | M | M | M | 🌱 BACKLOG | AN-1 |
 | STA-2 | «К повтору 9887 из 9888» пугает | Пояснить семантику «к повтору» микрокопией | M | L | L | M | 🌱 BACKLOG | AN-2 |
-| STA-3 | Поиск отделён от фильтров линией | Объединить поиск+фильтры в одну панель | M | M | M | M | 🌱 BACKLOG | AN-3 |
+| STA-3 | Поиск отделён от фильтров линией | ~~Объединить поиск+фильтры~~ — НЕ дефект: вертикальный hairline + верт.центрирование поиска = осознанное решение с rationale `base.css:1476-1480` (одно поле vs высокий фильтр → пустота под полем как намеренный воздух). Форм-мердж рискован (2 cross-wired формы). Переоткрытие = churn | — | M | M | M | 🚫 WONTFIX (deliberate) | AN-3 |
 | STA-4 | Таблица тем — горизонтальный scroll | overflow-x:auto + tabindex/role/aria-label скролл-региона | — | M | L | L | H | ✅ DONE (р11) | AN-4 |
 | STA-5 | `stats.js` графики мелкие/слабые labels | Меньше decorative grid, крупнее labels, tooltips (Chart.js config) | M | M | M | M | 🌱 BACKLOG | AN-5 |
 | STA-6 | Сортировка не видна в покое | Glyph ⇅ на `sortable[aria-sort=none]` | — | M | L | L | H | ✅ DONE (р6) | AN-6 |
@@ -300,7 +300,8 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
 | SGR-1 | 6 метрик (Всего/К повтору/Выучено/Верно/Ошибки/Точность) + accuracy-bar | Общая сетка, переиспользуется sidebar/result | — | — | — | — | H | ✅ DONE | — |
-| SGR-2 | accuracy-bar-fill цвет/пороги | Проверить, что цвет не единственный носитель смысла (есть %-текст) | verify AA + дубль текстом | L | L | L | M | 🌱 BACKLOG | CO-4 |
+| SGR-2 | accuracy-bar-fill цвет/пороги | Цвет НЕ единственный носитель: значение дублируется текстовой плиткой «Точность N%» сразу выше (CSSOM-verify R20) | verify AA + дубль текстом — выполнено | L | L | L | M | ✅ DONE | CO-4, SGR-3 |
+| SGR-3 | accuracy-bar без accessible-семантики | Осмысленная data-viz (ширина=точность), но без role/aria/лейбла; заливка стоит слева (под «Всего»), не под лейблом «Точность» → безымянная сбивающая графика для AT | `aria-hidden="true"` на `.accuracy-bar` (декоративный дубль текста; не `role=progressbar` — дабл-озвучка). 1 правка фрагмента = 3 экрана | M | L | L | H | ✅ DONE R20 | AN-12 |
 
 ### 5.B.9 — `fragments/today-widget.html`
 
@@ -396,7 +397,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | **TR** тренировка | TR-1/HDR-1 (sticky header), TR-3 (hint), TR-4 (sticky CTA), TR-6 (микрокопия прогресса) | TR-2 (empty), TR-5 (zone-hint), TR-7 (kbd-гейт), TR-9 (post-answer) | TR-8 (48px) | — |
 | **TY** типографика | TY-1 (рус uppercase tracking), TY-2/AF-5 (code), TY-5 (helper) | — | TY-3 (prose measure), TY-4 (18px/1.7) | — |
 | **LO** layout | LO-6 (border-left 3px ⛔) | LO-1/2/3/4 | LO-5 (prose full-width) | — |
-| **AN** аналитика | AN-1 (insights), AN-2 (микрокопия), AN-3 (поиск+фильтр), AN-5 (графики), AN-10 (CTA ⛔), AN-11 (accuracy tooltip) | AN-4/6/7/9, AN-8 (data-empty, р19) | — | — |
+| **AN** аналитика | AN-1 (insights), AN-2 (микрокопия), AN-5 (графики), AN-10 (CTA ⛔), AN-11 (accuracy tooltip) | AN-4/6/7/9, AN-8 (data-empty, р19), AN-12 (accuracy-bar aria-hidden, р20); AN-3 (поиск+фильтр) = 🚫 WONTFIX deliberate | — | — |
 | **SE** настройки | SE-3 (preview), SE-5 (seg vs tabs), SE-6 (% reset), SE-7 (feedback), SE-9 (a11y-раздел) | SE-1/2/4/8/10/11 | — | — |
 | **CO** цвета | CO-1/TOK-2 (semantic split) | CO-2/3/4/5/6 | — | — |
 | **CM** компоненты | CM-2/5/6/7/8/9(part)/10(part) | CM-1/3/4/11/12, CM-9 (danger-zone done) | — | — |
