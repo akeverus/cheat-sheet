@@ -217,7 +217,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
 | STA-1 | Метрики технические, не actionable | Top-insights «что делать» (слабая тема/повтор ошибок) — данные из модели, без новых API | H | M | M | M | 🌱 BACKLOG | AN-1 |
-| STA-2 | «К повтору 9887 из 9888» пугает | Пояснить семантику «к повтору» микрокопией | M | L | L | M | 🌱 BACKLOG | AN-2 |
+| STA-2 | «К повтору 9886» пугает | today-hero получил «N из M вопросов к повтору» (паттерн+гард from today-chip line 57) → знаменатель = честная пропорция, не интимидирующая стена. Stats-tile «К повтору» в сетке оставлен (SRS-термин, dashboard-контекст; hero/chip несут пояснение) | — | M | L | L | H | ✅ DONE (р21) | AN-2 |
 | STA-3 | Поиск отделён от фильтров линией | ~~Объединить поиск+фильтры~~ — НЕ дефект: вертикальный hairline + верт.центрирование поиска = осознанное решение с rationale `base.css:1476-1480` (одно поле vs высокий фильтр → пустота под полем как намеренный воздух). Форм-мердж рискован (2 cross-wired формы). Переоткрытие = churn | — | M | M | M | 🚫 WONTFIX (deliberate) | AN-3 |
 | STA-4 | Таблица тем — горизонтальный scroll | overflow-x:auto + tabindex/role/aria-label скролл-региона | — | M | L | L | H | ✅ DONE (р11) | AN-4 |
 | STA-5 | `stats.js` графики мелкие/слабые labels | Меньше decorative grid, крупнее labels, tooltips (Chart.js config) | M | M | M | M | 🌱 BACKLOG | AN-5 |
@@ -310,6 +310,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | TDW-1 | `today-chip` «N из M к повтору» | Знаменатель даёт честную пропорцию вместо стены цифр; total==due → нейтральное «N к повтору» | — | M | L | L | M | ✅ DONE | TR-6/AN-2 |
 | TDW-2 | `today-hero` CTA (Начать повторение/Учить новое) + hint | Лэндинг сессии на /settings | — | M | L | L | H | ✅ DONE | — |
 | TDW-3 | streak-inline (🔥) без aria-live | Намеренно: наполняется при каждой загрузке, не state-change | НЕ добавлять live-region | — | — | — | H | 🚫 WONTFIX | — |
+| TDW-4 | `today-hero` figure-label показывал голое «N вопросов к повтору» | Hero — самая заметная поверхность, но имел МЕНЕЕ продуманный паттерн, чем chip (TDW-1); голое 4-5-значное число = интимидирующая стена | Тот же «N из M вопросов к повтору» + гард `total>due` (мирроринг chip line 57); существительное сохранено (есть место). Big number/`data-stat-field`/live не тронуты | M | L | L | H | ✅ DONE (р21) | AN-2 |
 
 ### 5.B.10 — `fragments/training-actions.html`
 
@@ -397,7 +398,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | **TR** тренировка | TR-1/HDR-1 (sticky header), TR-3 (hint), TR-4 (sticky CTA), TR-6 (микрокопия прогресса) | TR-2 (empty), TR-5 (zone-hint), TR-7 (kbd-гейт), TR-9 (post-answer) | TR-8 (48px) | — |
 | **TY** типографика | TY-1 (рус uppercase tracking), TY-2/AF-5 (code), TY-5 (helper) | — | TY-3 (prose measure), TY-4 (18px/1.7) | — |
 | **LO** layout | LO-6 (border-left 3px ⛔) | LO-1/2/3/4 | LO-5 (prose full-width) | — |
-| **AN** аналитика | AN-1 (insights), AN-2 (микрокопия), AN-5 (графики), AN-10 (CTA ⛔), AN-11 (accuracy tooltip) | AN-4/6/7/9, AN-8 (data-empty, р19), AN-12 (accuracy-bar aria-hidden, р20); AN-3 (поиск+фильтр) = 🚫 WONTFIX deliberate | — | — |
+| **AN** аналитика | AN-1 (insights), AN-5 (графики), AN-10 (CTA ⛔), AN-11 (accuracy tooltip) | AN-4/6/7/9, AN-8 (data-empty, р19), AN-12 (accuracy-bar aria-hidden, р20), AN-2 (микрокопия «N из M» в today-hero, р21); AN-3 (поиск+фильтр) = 🚫 WONTFIX deliberate | — | — |
 | **SE** настройки | SE-3 (preview), SE-5 (seg vs tabs), SE-6 (% reset), SE-7 (feedback), SE-9 (a11y-раздел) | SE-1/2/4/8/10/11 | — | — |
 | **CO** цвета | CO-1/TOK-2 (semantic split) | CO-2/3/4/5/6 | — | — |
 | **CM** компоненты | CM-2/5/6/7/8/9(part)/10(part) | CM-1/3/4/11/12, CM-9 (danger-zone done) | — | — |

@@ -27,7 +27,19 @@
     <div class="today-hero-body">
         <div class="today-hero-figure">
             <span class="today-hero-due" data-stat-field="due" th:text="${stats.due}">0</span>
-            <span class="today-hero-due-label" th:text="${@plural.pick(stats.due, 'вопрос', 'вопроса', 'вопросов') + ' к повтору'}">вопросов к повтору</span>
+            <!-- «N из M вопросов к повтору» вместо голого «N вопросов к повтору»:
+                 тот же осознанный паттерн, что у today-chip ниже (знаменатель = честная
+                 пропорция, а не интимидирующая 4-5-значная стена). Hero — самая заметная
+                 поверхность (верх /settings), поэтому бренд-решение «информативный
+                 прогресс без дофамина» здесь важнее всего. Знаменатель показываем только
+                 когда осмыслен (total > due); если всё просрочено (total == due) —
+                 нейтральное «N вопросов к повтору», чтобы не подсвечивать «ты ничего не
+                 сделал». Существительное (вопрос/вопроса/вопросов) у hero сохраняем
+                 (есть место, читается полнее, чем терсный chip). -->
+            <span class="today-hero-due-label"
+                  th:text="${stats.total > stats.due
+                      ? 'из ' + stats.total + ' ' + @plural.pick(stats.total, 'вопрос', 'вопроса', 'вопросов') + ' к повтору'
+                      : @plural.pick(stats.due, 'вопрос', 'вопроса', 'вопросов') + ' к повтору'}">вопросов к повтору</span>
         </div>
         <h2 id="today-hero-title" class="visually-hidden">Сегодня к повтору</h2>
         <div class="today-hero-cta">
