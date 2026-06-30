@@ -83,336 +83,358 @@
 4. Адверс-ревьюер (fidelity_ok + parity_ok).
 5. Атомарный per-file коммит: `pedago(mcq): <topic> — single-delta паритет опций (N блоков)`.
 
-## 7. Реестр всех сидеров (re-аудит под СБРОС, worst-first по severity)
+## 7. Реестр всех сидеров — детальный re-аудит (round 3, audit v2, СБРОС статусов)
 
-Всего сидеров: **318**. Источник: `scripts/audit-mcq-parity.py` (re-аудит 2026-07-01, round 3).
-Severity = ParityФлаги + 2×Caric-блоки + (⚠CORRECT_LONGEST_RATE ? 5 : 0) — карикатуры весомее (новый акцент раунда).
-Колонки: **Блоков** — блоков в файле; **corr-long%** — доля блоков, где correct самый длинный (⚠ если >50%);
-**ParityФл** — блоков с length/structure-tell; **Caric-бл** — блоков с маркерами Inflated Caricature Distractor;
-**Статус** все сброшены в `QUEUED` (см. RESET-баннер вверху). Раунд: `—` ещё не брали в round 3, `R3✅` сделан.
+Всего сидеров: **318**. Источник: `scripts/audit-mcq-parity.py` (audit v2, re-аудит 2026-07-01).
+Сортировка worst→best: severity файла → число CRITICAL-блоков → Σфлагов. **Все статусы сброшены в `QUEUED`** —
+улучшение видно по данным (низкие Σ/severity = файл уже дорабатывался в round 2, см. git-историю), а не по статусу.
 
-<!-- Сводка re-аудита 2026-07-01: 318 файлов; ParityФлагов(блоков)=8980; Caricature-блоков=2204 в 308 файлах; ⚠CORRECT_LONGEST_RATE=293 файла. -->
+**Колонки:**
 
-| # | Кат. | Сидер | Блоков | corr-long% | ParityФл | Caric-бл | Σsev | Статус | Раунд |
-|---|---|---|---:|---:|---:|---:|---:|---|---|
-| 1 | system-design | system-design-interview | 41 | 100%⚠ | 41 | 24 | 94 | QUEUED | — |
-| 2 | algorithms | complexity-analysis-interview | 31 | 100%⚠ | 31 | 27 | 90 | QUEUED | — |
-| 3 | databases | mongodb-interview | 46 | 100%⚠ | 46 | 17 | 85 | QUEUED | — |
-| 4 | programming-languages | java-8-interview | 42 | 98%⚠ | 42 | 17 | 81 | QUEUED | — |
-| 5 | architecture | cqrs-event-sourcing-interview | 41 | 100%⚠ | 41 | 17 | 80 | QUEUED | — |
-| 6 | architecture | scalability-patterns-interview | 41 | 100%⚠ | 41 | 17 | 80 | QUEUED | — |
-| 7 | architecture | caching-strategies-interview | 42 | 100%⚠ | 42 | 16 | 79 | QUEUED | — |
-| 8 | architecture | cap-theorem-interview | 42 | 100%⚠ | 42 | 16 | 79 | QUEUED | — |
-| 9 | architecture | consistency-patterns-interview | 42 | 100%⚠ | 42 | 16 | 79 | QUEUED | — |
-| 10 | cicd | pipeline-design-interview | 38 | 100%⚠ | 38 | 18 | 79 | QUEUED | — |
-| 11 | programming-languages | java-collections-interview | 46 | 100%⚠ | 46 | 14 | 79 | QUEUED | — |
-| 12 | performance | jvm-performance-tuning-interview | 38 | 100%⚠ | 38 | 17 | 77 | QUEUED | — |
-| 13 | programming-languages | java-stream-interview | 42 | 100%⚠ | 42 | 15 | 77 | QUEUED | — |
-| 14 | databases | database-architecture-interview | 41 | 100%⚠ | 41 | 15 | 76 | QUEUED | — |
-| 15 | security | jwt-interview | 43 | 100%⚠ | 43 | 14 | 76 | QUEUED | — |
-| 16 | programming-languages | kotlin-collections-interview | 43 | 100%⚠ | 43 | 13 | 74 | QUEUED | — |
-| 17 | programming-languages | kotlin-coroutines-interview | 39 | 100%⚠ | 39 | 15 | 74 | QUEUED | — |
-| 18 | design-patterns | design-patterns-interview | 48 | 100%⚠ | 44 | 12 | 73 | QUEUED | — |
-| 19 | architecture | microservices-interview | 42 | 100%⚠ | 42 | 12 | 71 | QUEUED | — |
-| 20 | frameworks | spring-data-jpa-interview | 43 | 98%⚠ | 42 | 12 | 71 | QUEUED | — |
-| 21 | leadership | code-review-practices-interview | 40 | 100%⚠ | 40 | 13 | 71 | QUEUED | — |
-| 22 | architecture | networking-interview | 43 | 100%⚠ | 43 | 11 | 70 | QUEUED | — |
-| 23 | databases | postgresql-interview | 55 | 100%⚠ | 55 | 5 | 70 | QUEUED | — |
-| 24 | performance | database-performance-interview | 27 | 100%⚠ | 27 | 19 | 70 | QUEUED | — |
-| 25 | security | authentication-authorization-patterns-interview | 45 | 100%⚠ | 45 | 10 | 70 | QUEUED | — |
-| 26 | architecture | distributed-systems-interview | 40 | 100%⚠ | 40 | 12 | 69 | QUEUED | — |
-| 27 | code-quality | technical-debt-interview | 40 | 100%⚠ | 40 | 12 | 69 | QUEUED | — |
-| 28 | databases | sql-interview | 53 | 91%⚠ | 38 | 13 | 69 | QUEUED | — |
-| 29 | devops | argocd-interview | 42 | 100%⚠ | 42 | 11 | 69 | QUEUED | — |
-| 30 | programming-languages | java-concurrency-interview | 56 | 89%⚠ | 46 | 9 | 69 | QUEUED | — |
-| 31 | reactive | rxjava-interview | 46 | 100%⚠ | 46 | 9 | 69 | QUEUED | — |
-| 32 | data-engineering | apache-spark-interview | 35 | 100%⚠ | 35 | 14 | 68 | QUEUED | — |
-| 33 | frameworks | spring-batch-interview | 43 | 100%⚠ | 43 | 10 | 68 | QUEUED | — |
-| 34 | security | tls-ssl-interview | 45 | 100%⚠ | 45 | 9 | 68 | QUEUED | — |
-| 35 | testing | test-automation-interview | 50 | 80%⚠ | 45 | 9 | 68 | QUEUED | — |
-| 36 | architecture | load-balancing-interview | 40 | 100%⚠ | 40 | 11 | 67 | QUEUED | — |
-| 37 | performance | application-profiling-interview | 42 | 100%⚠ | 42 | 10 | 67 | QUEUED | — |
-| 38 | programming-languages | kotlin-exceptions-interview | 40 | 100%⚠ | 40 | 11 | 67 | QUEUED | — |
-| 39 | testing | integration-testing-interview | 40 | 100%⚠ | 40 | 11 | 67 | QUEUED | — |
-| 40 | testing | testcontainers-interview | 40 | 100%⚠ | 40 | 11 | 67 | QUEUED | — |
-| 41 | api | graphql-interview | 40 | 95%⚠ | 37 | 12 | 66 | QUEUED | — |
-| 42 | performance | memory-management-interview | 39 | 100%⚠ | 39 | 11 | 66 | QUEUED | — |
-| 43 | programming-languages | kotlin-interview | 45 | 100%⚠ | 45 | 8 | 66 | QUEUED | — |
-| 44 | programming-languages | kotlin-serialization-interview | 43 | 100%⚠ | 43 | 9 | 66 | QUEUED | — |
-| 45 | testing | mockito-interview | 45 | 89%⚠ | 45 | 8 | 66 | QUEUED | — |
-| 46 | algorithms | trees-interview | 34 | 100%⚠ | 34 | 13 | 65 | QUEUED | — |
-| 47 | databases | cassandra-interview | 44 | 100%⚠ | 44 | 8 | 65 | QUEUED | — |
-| 48 | databases | elasticsearch-interview | 44 | 100%⚠ | 44 | 8 | 65 | QUEUED | — |
-| 49 | algorithms | dynamic-programming-interview | 33 | 100%⚠ | 33 | 13 | 64 | QUEUED | — |
-| 50 | algorithms | heaps-interview | 29 | 100%⚠ | 29 | 15 | 64 | QUEUED | — |
-| 51 | databases | database-replication-interview | 31 | 100%⚠ | 31 | 14 | 64 | QUEUED | — |
-| 52 | devops | git-interview | 43 | 91%⚠ | 37 | 11 | 64 | QUEUED | — |
-| 53 | devops | helm-interview | 43 | 100%⚠ | 43 | 8 | 64 | QUEUED | — |
-| 54 | frameworks | spring-mvc-interview | 43 | 100%⚠ | 43 | 8 | 64 | QUEUED | — |
-| 55 | programming-languages | java-oop-interview | 43 | 100%⚠ | 43 | 8 | 64 | QUEUED | — |
-| 56 | security | owasp-top10-interview | 45 | 100%⚠ | 45 | 7 | 64 | QUEUED | — |
-| 57 | monitoring | observability-interview | 42 | 95%⚠ | 40 | 9 | 63 | QUEUED | — |
-| 58 | programming-languages | java-exceptions-interview | 42 | 98%⚠ | 42 | 8 | 63 | QUEUED | — |
-| 59 | programming-languages | java-types-interview | 38 | 100%⚠ | 38 | 10 | 63 | QUEUED | — |
-| 60 | ai-ml | embeddings-interview | 29 | 100%⚠ | 29 | 14 | 62 | QUEUED | — |
-| 61 | ai-ml | fine-tuning-llm-interview | 35 | 100%⚠ | 35 | 11 | 62 | QUEUED | — |
-| 62 | algorithms | sorting-algorithms-interview | 31 | 100%⚠ | 31 | 13 | 62 | QUEUED | — |
-| 63 | architecture | saga-pattern-interview | 43 | 100%⚠ | 43 | 7 | 62 | QUEUED | — |
-| 64 | frameworks | spring-boot-actuator-interview | 43 | 100%⚠ | 43 | 7 | 62 | QUEUED | — |
-| 65 | frameworks | spring-security-interview | 46 | 96%⚠ | 43 | 7 | 62 | QUEUED | — |
-| 66 | monitoring | metrics-tracing-interview | 41 | 100%⚠ | 41 | 8 | 62 | QUEUED | — |
-| 67 | reactive | project-reactor-interview | 48 | 98%⚠ | 47 | 5 | 62 | QUEUED | — |
-| 68 | security | application-security-interview | 45 | 100%⚠ | 45 | 6 | 62 | QUEUED | — |
-| 69 | testing | test-strategies-interview | 45 | 100%⚠ | 45 | 6 | 62 | QUEUED | — |
-| 70 | ai-ml | ai-application-architecture-interview | 32 | 100%⚠ | 32 | 12 | 61 | QUEUED | — |
-| 71 | ai-ml | reasoning-models-interview | 30 | 100%⚠ | 30 | 13 | 61 | QUEUED | — |
-| 72 | algorithms | arrays-strings-interview | 36 | 100%⚠ | 36 | 10 | 61 | QUEUED | — |
-| 73 | algorithms | hash-tables-interview | 34 | 100%⚠ | 34 | 11 | 61 | QUEUED | — |
-| 74 | databases | database-sharding-interview | 34 | 100%⚠ | 34 | 11 | 61 | QUEUED | — |
-| 75 | devops | terraform-interview | 42 | 100%⚠ | 42 | 7 | 61 | QUEUED | — |
-| 76 | programming-languages | java-generics-interview | 40 | 100%⚠ | 40 | 8 | 61 | QUEUED | — |
-| 77 | programming-languages | java-io-nio-interview | 40 | 100%⚠ | 40 | 8 | 61 | QUEUED | — |
-| 78 | programming-languages | scala-interview | 40 | 100%⚠ | 40 | 8 | 61 | QUEUED | — |
-| 79 | algorithms | divide-and-conquer-interview | 27 | 100%⚠ | 27 | 14 | 60 | QUEUED | — |
-| 80 | algorithms | graphs-interview | 34 | 74%⚠ | 29 | 13 | 60 | QUEUED | — |
-| 81 | api | http-rest-interview | 43 | 95%⚠ | 37 | 9 | 60 | QUEUED | — |
-| 82 | cicd | deployment-strategies-interview | 39 | 100%⚠ | 39 | 8 | 60 | QUEUED | — |
-| 83 | databases | hibernate-interview | 50 | 92%⚠ | 43 | 6 | 60 | QUEUED | — |
-| 84 | databases | redis-interview | 43 | 100%⚠ | 43 | 6 | 60 | QUEUED | — |
-| 85 | testing | unit-testing-interview | 45 | 100%⚠ | 45 | 5 | 60 | QUEUED | — |
-| 86 | architecture | api-gateway-interview | 38 | 100%⚠ | 38 | 8 | 59 | QUEUED | — |
-| 87 | databases | flyway-liquibase-interview | 42 | 100%⚠ | 42 | 6 | 59 | QUEUED | — |
-| 88 | performance | performance-testing-interview | 42 | 100%⚠ | 42 | 6 | 59 | QUEUED | — |
-| 89 | security | oauth2-interview | 42 | 100%⚠ | 42 | 6 | 59 | QUEUED | — |
-| 90 | system-design | design-search-interview | 30 | 73%⚠ | 24 | 15 | 59 | QUEUED | — |
-| 91 | architecture | hexagonal-architecture-interview | 45 | 100%⚠ | 45 | 4 | 58 | QUEUED | — |
-| 92 | architecture | resilience-patterns-interview | 43 | 100%⚠ | 43 | 5 | 58 | QUEUED | — |
-| 93 | programming-languages | java-core-interview | 39 | 100%⚠ | 39 | 7 | 58 | QUEUED | — |
-| 94 | ai-ml | long-context-vs-rag-interview | 30 | 100%⚠ | 30 | 11 | 57 | QUEUED | — |
-| 95 | ai-ml | multi-agent-orchestration-interview | 30 | 100%⚠ | 30 | 11 | 57 | QUEUED | — |
-| 96 | algorithms | greedy-algorithms-interview | 28 | 100%⚠ | 28 | 12 | 57 | QUEUED | — |
-| 97 | databases | database-transactions-interview | 42 | 100%⚠ | 42 | 5 | 57 | QUEUED | — |
-| 98 | devops | gradle-maven-interview | 38 | 100%⚠ | 38 | 7 | 57 | QUEUED | — |
-| 99 | programming-languages | java-17-21-interview | 42 | 100%⚠ | 42 | 5 | 57 | QUEUED | — |
-| 100 | programming-languages | kotlin-interop-java-interview | 38 | 100%⚠ | 38 | 7 | 57 | QUEUED | — |
-| 101 | testing | contract-testing-interview | 42 | 100%⚠ | 42 | 5 | 57 | QUEUED | — |
-| 102 | ai-ml | multimodal-ai-interview | 31 | 100%⚠ | 31 | 10 | 56 | QUEUED | — |
-| 103 | algorithms | searching-algorithms-interview | 31 | 100%⚠ | 31 | 10 | 56 | QUEUED | — |
-| 104 | architecture | clean-architecture-interview | 41 | 100%⚠ | 41 | 5 | 56 | QUEUED | — |
-| 105 | devops | docker-interview | 41 | 100%⚠ | 41 | 5 | 56 | QUEUED | — |
-| 106 | frameworks | spring-cloud-interview | 43 | 100%⚠ | 43 | 4 | 56 | QUEUED | — |
-| 107 | programming-languages | go-concurrency-interview | 35 | 100%⚠ | 35 | 8 | 56 | QUEUED | — |
-| 108 | ai-ml | llm-evaluation-interview | 30 | 100%⚠ | 30 | 10 | 55 | QUEUED | — |
-| 109 | api | openapi-swagger-interview | 42 | 100%⚠ | 42 | 4 | 55 | QUEUED | — |
-| 110 | programming-languages | go-interview | 36 | 100%⚠ | 36 | 7 | 55 | QUEUED | — |
-| 111 | programming-languages | java-annotations-interview | 43 | 98%⚠ | 40 | 5 | 55 | QUEUED | — |
-| 112 | programming-languages | kotlin-dsl-interview | 40 | 100%⚠ | 40 | 5 | 55 | QUEUED | — |
-| 113 | programming-languages | typescript-interview | 33 | 97%⚠ | 30 | 10 | 55 | QUEUED | — |
-| 114 | system-design | design-pastebin-interview | 30 | 100%⚠ | 30 | 10 | 55 | QUEUED | — |
-| 115 | algorithms | recursion-interview | 27 | 100%⚠ | 27 | 11 | 54 | QUEUED | — |
-| 116 | algorithms | two-pointers-sliding-window-interview | 33 | 61%⚠ | 29 | 10 | 54 | QUEUED | — |
-| 117 | performance | caching-performance-interview | 23 | 100%⚠ | 23 | 13 | 54 | QUEUED | — |
-| 118 | system-design | design-instagram-interview | 27 | 100%⚠ | 27 | 11 | 54 | QUEUED | — |
-| 119 | ai-ml | prompt-engineering-interview | 28 | 100%⚠ | 28 | 10 | 53 | QUEUED | — |
-| 120 | frameworks | ktor-interview | 32 | 100%⚠ | 32 | 8 | 53 | QUEUED | — |
-| 121 | leadership | team-leadership-interview | 40 | 100%⚠ | 40 | 4 | 53 | QUEUED | — |
-| 122 | programming-languages | java-serialization-interview | 40 | 100%⚠ | 40 | 4 | 53 | QUEUED | — |
-| 123 | system-design | design-dropbox-interview | 30 | 100%⚠ | 26 | 11 | 53 | QUEUED | — |
-| 124 | system-design | design-key-value-store-interview | 30 | 100%⚠ | 30 | 9 | 53 | QUEUED | — |
-| 125 | testing | chaos-engineering-interview | 44 | 93%⚠ | 32 | 8 | 53 | QUEUED | — |
-| 126 | algorithms | backtracking-interview | 27 | 100%⚠ | 27 | 10 | 52 | QUEUED | — |
-| 127 | architecture | cdn-interview | 30 | 100%⚠ | 29 | 9 | 52 | QUEUED | — |
-| 128 | data-engineering | apache-flink-interview | 31 | 100%⚠ | 31 | 8 | 52 | QUEUED | — |
-| 129 | logging | logging-interview | 42 | 98%⚠ | 41 | 3 | 52 | QUEUED | — |
-| 130 | programming-languages | java-conditional-statements-interview | 42 | 57%⚠ | 31 | 8 | 52 | QUEUED | — |
-| 131 | ai-ml | ai-agents-interview | 28 | 100%⚠ | 28 | 9 | 51 | QUEUED | — |
-| 132 | ai-ml | inference-optimization-interview | 36 | 100%⚠ | 36 | 5 | 51 | QUEUED | — |
-| 133 | ai-ml | mcp-interview | 30 | 100%⚠ | 30 | 8 | 51 | QUEUED | — |
-| 134 | api | websocket-interview | 38 | 100%⚠ | 38 | 4 | 51 | QUEUED | — |
-| 135 | architecture | service-discovery-interview | 30 | 100%⚠ | 30 | 8 | 51 | QUEUED | — |
-| 136 | frameworks | spring-framework-interview | 41 | 98%⚠ | 40 | 3 | 51 | QUEUED | — |
-| 137 | monitoring | opentelemetry-interview | 28 | 100%⚠ | 28 | 9 | 51 | QUEUED | — |
-| 138 | programming-languages | rust-interview | 33 | 70%⚠ | 24 | 11 | 51 | QUEUED | — |
-| 139 | ai-ml | rag-interview | 30 | 43% | 18 | 16 | 50 | QUEUED | — |
-| 140 | api | grpc-interview | 40 | 100%⚠ | 39 | 3 | 50 | QUEUED | — |
-| 141 | architecture | ddd-interview | 38 | 76%⚠ | 25 | 10 | 50 | QUEUED | — |
-| 142 | messaging | rabbitmq-interview | 41 | 100%⚠ | 37 | 4 | 50 | QUEUED | — |
-| 143 | programming-languages | java-jackson-interview | 31 | 100%⚠ | 31 | 7 | 50 | QUEUED | — |
-| 144 | programming-languages | java-lombok-interview | 27 | 100%⚠ | 27 | 9 | 50 | QUEUED | — |
-| 145 | ai-ml | llm-integration-patterns-interview | 28 | 100%⚠ | 28 | 8 | 49 | QUEUED | — |
-| 146 | ai-ml | model-serving-interview | 28 | 100%⚠ | 28 | 8 | 49 | QUEUED | — |
-| 147 | ai-ml | vector-databases-interview | 28 | 100%⚠ | 28 | 8 | 49 | QUEUED | — |
-| 148 | code-quality | code-review-interview | 40 | 55%⚠ | 28 | 8 | 49 | QUEUED | — |
-| 149 | data-engineering | stream-processing-interview | 28 | 100%⚠ | 28 | 8 | 49 | QUEUED | — |
-| 150 | databases | neo4j-interview | 30 | 100%⚠ | 30 | 7 | 49 | QUEUED | — |
-| 151 | programming-languages | go-stdlib-interview | 30 | 100%⚠ | 30 | 7 | 49 | QUEUED | — |
-| 152 | system-design | design-parking-lot-oo-interview | 28 | 100%⚠ | 28 | 8 | 49 | QUEUED | — |
-| 153 | behavioral | behavioral-interview | 38 | 92%⚠ | 31 | 6 | 48 | QUEUED | — |
-| 154 | programming-languages | go-memory-gc-interview | 27 | 100%⚠ | 27 | 8 | 48 | QUEUED | — |
-| 155 | ai-ml | ai-compliance-governance-interview | 32 | 100%⚠ | 32 | 5 | 47 | QUEUED | — |
-| 156 | ai-ml | mlops-interview | 28 | 100%⚠ | 28 | 7 | 47 | QUEUED | — |
-| 157 | ai-ml | open-source-llms-interview | 34 | 100%⚠ | 34 | 4 | 47 | QUEUED | — |
-| 158 | api | api-design-best-practices-interview | 30 | 97%⚠ | 28 | 7 | 47 | QUEUED | — |
-| 159 | architecture | event-driven-patterns-interview | 40 | 62%⚠ | 22 | 10 | 47 | QUEUED | — |
-| 160 | architecture | latency-numbers-interview | 24 | 100%⚠ | 24 | 9 | 47 | QUEUED | — |
-| 161 | behavioral | culture-fit-interview | 22 | 100%⚠ | 22 | 10 | 47 | QUEUED | — |
-| 162 | cloud | serverless-interview | 28 | 100%⚠ | 28 | 7 | 47 | QUEUED | — |
-| 163 | databases | clickhouse-interview | 28 | 100%⚠ | 28 | 7 | 47 | QUEUED | — |
-| 164 | jvm | jvm-interview | 40 | 88%⚠ | 28 | 7 | 47 | QUEUED | — |
-| 165 | monitoring | prometheus-grafana-interview | 39 | 97%⚠ | 38 | 2 | 47 | QUEUED | — |
-| 166 | programming-languages | go-generics-interview | 26 | 100%⚠ | 26 | 8 | 47 | QUEUED | — |
-| 167 | programming-languages | java-modules-interview | 38 | 100%⚠ | 38 | 2 | 47 | QUEUED | — |
-| 168 | reactive | reactive-streams-interview | 30 | 100%⚠ | 30 | 6 | 47 | QUEUED | — |
-| 169 | system-design | design-payment-system-interview | 30 | 100%⚠ | 30 | 6 | 47 | QUEUED | — |
-| 170 | system-design | design-rate-limiter-interview | 30 | 100%⚠ | 30 | 6 | 47 | QUEUED | — |
-| 171 | code-quality | clean-code-practices-interview | 27 | 100%⚠ | 27 | 7 | 46 | QUEUED | — |
-| 172 | devops | ansible-interview | 25 | 100%⚠ | 25 | 8 | 46 | QUEUED | — |
-| 173 | frameworks | quarkus-interview | 31 | 100%⚠ | 31 | 5 | 46 | QUEUED | — |
-| 174 | ai-ml | ai-observability-interview | 28 | 100%⚠ | 28 | 6 | 45 | QUEUED | — |
-| 175 | cloud | aws-lambda-interview | 32 | 38% | 17 | 14 | 45 | QUEUED | — |
-| 176 | databases | dynamodb-interview | 30 | 100%⚠ | 30 | 5 | 45 | QUEUED | — |
-| 177 | devops | linux-interview | 33 | 73%⚠ | 22 | 9 | 45 | QUEUED | — |
-| 178 | monitoring | logging-strategies-interview | 38 | 100%⚠ | 38 | 1 | 45 | QUEUED | — |
-| 179 | programming-languages | go-testing-interview | 28 | 100%⚠ | 28 | 6 | 45 | QUEUED | — |
-| 180 | system-design | design-youtube-interview | 28 | 100%⚠ | 28 | 6 | 45 | QUEUED | — |
-| 181 | code-quality | code-smells-interview | 27 | 100%⚠ | 27 | 6 | 44 | QUEUED | — |
-| 182 | frameworks | spring-webflux-interview | 43 | 58%⚠ | 27 | 6 | 44 | QUEUED | — |
-| 183 | programming-languages | java-initialization-interview | 27 | 100%⚠ | 27 | 6 | 44 | QUEUED | — |
-| 184 | databases | cockroachdb-interview | 24 | 100%⚠ | 24 | 7 | 43 | QUEUED | — |
-| 185 | programming-languages | java-mapstruct-interview | 28 | 100%⚠ | 28 | 5 | 43 | QUEUED | — |
-| 186 | system-design | design-netflix-interview | 30 | 100%⚠ | 30 | 4 | 43 | QUEUED | — |
-| 187 | ai-ml | function-calling-interview | 30 | 63%⚠ | 25 | 6 | 42 | QUEUED | — |
-| 188 | ai-ml | llm-basics-interview | 30 | 100%⚠ | 29 | 4 | 42 | QUEUED | — |
-| 189 | code-quality | refactoring-patterns-interview | 42 | 36% | 20 | 11 | 42 | QUEUED | — |
-| 190 | system-design | design-google-maps-interview | 30 | 70%⚠ | 23 | 7 | 42 | QUEUED | — |
-| 191 | testing | property-based-testing-interview | 21 | 100%⚠ | 21 | 8 | 42 | QUEUED | — |
-| 192 | data-engineering | dbt-interview | 28 | 100%⚠ | 28 | 4 | 41 | QUEUED | — |
-| 193 | data-engineering | kafka-streams-interview | 28 | 100%⚠ | 28 | 4 | 41 | QUEUED | — |
-| 194 | programming-languages | java-string-interview | 39 | 69%⚠ | 18 | 9 | 41 | QUEUED | — |
-| 195 | reactive | reactive-testing-interview | 28 | 100%⚠ | 28 | 4 | 41 | QUEUED | — |
-| 196 | system-design | design-feed-system-interview | 30 | 100%⚠ | 30 | 3 | 41 | QUEUED | — |
-| 197 | testing | load-testing-interview | 22 | 100%⚠ | 22 | 7 | 41 | QUEUED | — |
-| 198 | ai-ml | ai-safety-guardrails-interview | 32 | 31% | 22 | 9 | 40 | QUEUED | — |
-| 199 | algorithms | stacks-queues-interview | 25 | 100%⚠ | 25 | 5 | 40 | QUEUED | — |
-| 200 | code-quality | code-coverage-interview | 25 | 100%⚠ | 25 | 5 | 40 | QUEUED | — |
-| 201 | frameworks | micronaut-interview | 26 | 100%⚠ | 25 | 5 | 40 | QUEUED | — |
-| 202 | leadership | mentoring-interview | 25 | 40% | 0 | 20 | 40 | QUEUED | — |
-| 203 | algorithms | algorithms-interview | 16 | 100%⚠ | 16 | 9 | 39 | QUEUED | — |
-| 204 | algorithms | tries-interview | 28 | 100%⚠ | 28 | 3 | 39 | QUEUED | — |
-| 205 | architecture | reverse-proxy-interview | 30 | 47% | 17 | 11 | 39 | QUEUED | — |
-| 206 | cloud | aws-interview | 34 | 9% | 19 | 10 | 39 | QUEUED | — |
-| 207 | code-quality | static-analysis-interview | 26 | 100%⚠ | 26 | 4 | 39 | QUEUED | — |
-| 208 | frameworks | spring-aop-interview | 22 | 100%⚠ | 22 | 6 | 39 | QUEUED | — |
-| 209 | leadership | estimations-planning-interview | 20 | 100%⚠ | 20 | 7 | 39 | QUEUED | — |
-| 210 | monitoring | elk-stack-interview | 26 | 100%⚠ | 26 | 4 | 39 | QUEUED | — |
-| 211 | reactive | webflux-interview | 28 | 100%⚠ | 28 | 3 | 39 | QUEUED | — |
-| 212 | system-design | design-typeahead-interview | 30 | 27% | 21 | 9 | 39 | QUEUED | — |
-| 213 | system-design | design-uber-interview | 30 | 0% | 25 | 7 | 39 | QUEUED | — |
-| 214 | system-design | design-url-shortener-interview | 30 | 100%⚠ | 30 | 2 | 39 | QUEUED | — |
-| 215 | system-design | design-vending-machine-oo-interview | 24 | 100%⚠ | 24 | 5 | 39 | QUEUED | — |
-| 216 | algorithms | linked-lists-interview | 32 | 100%⚠ | 31 | 1 | 38 | QUEUED | — |
-| 217 | architecture | dns-interview | 30 | 93%⚠ | 23 | 5 | 38 | QUEUED | — |
-| 218 | data-engineering | apache-airflow-interview | 28 | 82%⚠ | 23 | 5 | 38 | QUEUED | — |
-| 219 | frameworks | spring-boot-interview | 43 | 51%⚠ | 25 | 4 | 38 | QUEUED | — |
-| 220 | system-design | design-twitter-interview | 27 | 100%⚠ | 27 | 3 | 38 | QUEUED | — |
-| 221 | behavioral | leadership-stories-interview | 22 | 100%⚠ | 22 | 5 | 37 | QUEUED | — |
-| 222 | data-engineering | data-lake-lakehouse-interview | 28 | 100%⚠ | 28 | 2 | 37 | QUEUED | — |
-| 223 | devops | istio-service-mesh-interview | 26 | 100%⚠ | 26 | 3 | 37 | QUEUED | — |
-| 224 | leadership | conflict-resolution-interview | 20 | 100%⚠ | 20 | 6 | 37 | QUEUED | — |
-| 225 | messaging | message-brokers-comparison-interview | 26 | 100%⚠ | 26 | 3 | 37 | QUEUED | — |
-| 226 | messaging | pulsar-interview | 22 | 100%⚠ | 22 | 5 | 37 | QUEUED | — |
-| 227 | performance | network-performance-interview | 24 | 100%⚠ | 24 | 4 | 37 | QUEUED | — |
-| 228 | security | secrets-management-interview | 22 | 100%⚠ | 22 | 5 | 37 | QUEUED | — |
-| 229 | system-design | design-elevator-oo-interview | 26 | 100%⚠ | 26 | 3 | 37 | QUEUED | — |
-| 230 | databases | hibernate-relationships-interview | 15 | 100%⚠ | 15 | 8 | 36 | QUEUED | — |
-| 231 | messaging | redpanda-interview | 20 | 90%⚠ | 17 | 7 | 36 | QUEUED | — |
-| 232 | ai-ml | agentic-patterns-interview | 30 | 20% | 27 | 4 | 35 | QUEUED | — |
-| 233 | architecture | edge-computing-interview | 18 | 100%⚠ | 18 | 6 | 35 | QUEUED | — |
-| 234 | behavioral | failure-stories-interview | 22 | 100%⚠ | 22 | 4 | 35 | QUEUED | — |
-| 235 | behavioral | star-method-interview | 22 | 100%⚠ | 22 | 4 | 35 | QUEUED | — |
-| 236 | devops | vault-interview | 26 | 100%⚠ | 26 | 2 | 35 | QUEUED | — |
-| 237 | frameworks | spring-cache-interview | 18 | 100%⚠ | 18 | 6 | 35 | QUEUED | — |
-| 238 | messaging | nats-interview | 24 | 100%⚠ | 24 | 3 | 35 | QUEUED | — |
-| 239 | architecture | bff-pattern-interview | 17 | 100%⚠ | 17 | 6 | 34 | QUEUED | — |
-| 240 | monitoring | jaeger-zipkin-interview | 23 | 100%⚠ | 23 | 3 | 34 | QUEUED | — |
-| 241 | programming-languages | go-modules-interview | 27 | 100%⚠ | 27 | 1 | 34 | QUEUED | — |
-| 242 | programming-languages | java-optional-interview | 15 | 100%⚠ | 15 | 7 | 34 | QUEUED | — |
-| 243 | system-design | design-ecommerce-delivery-interview | 36 | 78%⚠ | 13 | 8 | 34 | QUEUED | — |
-| 244 | system-design | design-web-crawler-interview | 26 | 92%⚠ | 23 | 3 | 34 | QUEUED | — |
-| 245 | api | api-versioning-interview | 20 | 100%⚠ | 20 | 4 | 33 | QUEUED | — |
-| 246 | architecture | strangler-fig-interview | 18 | 100%⚠ | 18 | 5 | 33 | QUEUED | — |
-| 247 | behavioral | conflict-stories-interview | 22 | 100%⚠ | 22 | 3 | 33 | QUEUED | — |
-| 248 | devops | kubernetes-interview | 45 | 56%⚠ | 20 | 4 | 33 | QUEUED | — |
-| 249 | leadership | technical-decisions-interview | 22 | 100%⚠ | 22 | 3 | 33 | QUEUED | — |
-| 250 | reactive | reactive-patterns-interview | 26 | 100%⚠ | 26 | 1 | 33 | QUEUED | — |
-| 251 | security | mtls-interview | 20 | 100%⚠ | 20 | 4 | 33 | QUEUED | — |
-| 252 | security | supply-chain-security-interview | 24 | 100%⚠ | 24 | 2 | 33 | QUEUED | — |
-| 253 | testing | mutation-testing-interview | 20 | 100%⚠ | 20 | 4 | 33 | QUEUED | — |
-| 254 | cloud | cloud-native-patterns-interview | 30 | 53%⚠ | 15 | 6 | 32 | QUEUED | — |
-| 255 | devops | consul-interview | 24 | 100%⚠ | 24 | 1 | 31 | QUEUED | — |
-| 256 | frameworks | vertx-interview | 31 | 52%⚠ | 16 | 5 | 31 | QUEUED | — |
-| 257 | monitoring | loki-grafana-interview | 28 | 43% | 17 | 7 | 31 | QUEUED | — |
-| 258 | ai-ml | code-agents-interview | 31 | 58%⚠ | 21 | 2 | 30 | QUEUED | — |
-| 259 | databases | hibernate-caching-interview | 15 | 100%⚠ | 15 | 5 | 30 | QUEUED | — |
-| 260 | databases | hibernate-jpql-criteria-interview | 16 | 88%⚠ | 13 | 6 | 30 | QUEUED | — |
-| 261 | frameworks | spring-kafka-interview | 15 | 100%⚠ | 15 | 5 | 30 | QUEUED | — |
-| 262 | frameworks | spring-retry-interview | 17 | 100%⚠ | 17 | 4 | 30 | QUEUED | — |
-| 263 | frameworks | spring-testing-interview | 16 | 94%⚠ | 15 | 5 | 30 | QUEUED | — |
-| 264 | frameworks | spring-transaction-interview | 15 | 100%⚠ | 15 | 5 | 30 | QUEUED | — |
-| 265 | leadership | tech-interviewing-interview | 20 | 100%⚠ | 19 | 3 | 30 | QUEUED | — |
-| 266 | programming-languages | kotlin-flow-interview | 17 | 100%⚠ | 17 | 4 | 30 | QUEUED | — |
-| 267 | messaging | aws-sqs-sns-interview | 22 | 100%⚠ | 22 | 1 | 29 | QUEUED | — |
-| 268 | api | rest-maturity-interview | 17 | 100%⚠ | 17 | 3 | 28 | QUEUED | — |
-| 269 | databases | scylladb-interview | 23 | 100%⚠ | 23 | 0 | 28 | QUEUED | — |
-| 270 | frameworks | spring-integration-interview | 15 | 100%⚠ | 15 | 4 | 28 | QUEUED | — |
-| 271 | frameworks | spring-state-machine-interview | 15 | 100%⚠ | 15 | 4 | 28 | QUEUED | — |
-| 272 | jvm | graalvm-native-interview | 15 | 100%⚠ | 15 | 4 | 28 | QUEUED | — |
-| 273 | security | zero-trust-interview | 19 | 100%⚠ | 19 | 2 | 28 | QUEUED | — |
-| 274 | devops | linkerd-interview | 20 | 100%⚠ | 20 | 1 | 27 | QUEUED | — |
-| 275 | frameworks | resilience4j-interview | 20 | 100%⚠ | 20 | 1 | 27 | QUEUED | — |
-| 276 | frameworks | spring-ai-interview | 18 | 89%⚠ | 16 | 3 | 27 | QUEUED | — |
-| 277 | frameworks | spring-data-jdbc-interview | 16 | 100%⚠ | 16 | 3 | 27 | QUEUED | — |
-| 278 | frameworks | spring-events-interview | 16 | 100%⚠ | 16 | 3 | 27 | QUEUED | — |
-| 279 | frameworks | spring-validation-interview | 16 | 100%⚠ | 16 | 3 | 27 | QUEUED | — |
-| 280 | monitoring | micrometer-interview | 20 | 100%⚠ | 20 | 1 | 27 | QUEUED | — |
-| 281 | programming-languages | java-functional-interface-interview | 14 | 100%⚠ | 14 | 4 | 27 | QUEUED | — |
-| 282 | programming-languages | java-reflection-interview | 16 | 100%⚠ | 16 | 3 | 27 | QUEUED | — |
-| 283 | cloud | azure-interview | 25 | 40% | 18 | 4 | 26 | QUEUED | — |
-| 284 | data-engineering | data-warehousing-interview | 30 | 33% | 18 | 4 | 26 | QUEUED | — |
-| 285 | frameworks | spring-graphql-interview | 15 | 100%⚠ | 15 | 3 | 26 | QUEUED | — |
-| 286 | frameworks | spring-modulith-interview | 15 | 100%⚠ | 15 | 3 | 26 | QUEUED | — |
-| 287 | programming-languages | kotlin-sealed-classes-interview | 15 | 100%⚠ | 15 | 3 | 26 | QUEUED | — |
-| 288 | programming-languages | kotlin-value-classes-interview | 15 | 93%⚠ | 13 | 4 | 26 | QUEUED | — |
-| 289 | system-design | design-chat-system-interview | 21 | 100%⚠ | 21 | 0 | 26 | QUEUED | — |
-| 290 | frameworks | spring-scheduling-interview | 16 | 100%⚠ | 14 | 3 | 25 | QUEUED | — |
-| 291 | cloud | gcp-interview | 28 | 36% | 16 | 4 | 24 | QUEUED | — |
-| 292 | frameworks | spring-async-interview | 15 | 100%⚠ | 15 | 2 | 24 | QUEUED | — |
-| 293 | frameworks | spring-messaging-interview | 15 | 100%⚠ | 15 | 2 | 24 | QUEUED | — |
-| 294 | frameworks | spring-r2dbc-interview | 15 | 100%⚠ | 15 | 2 | 24 | QUEUED | — |
-| 295 | frameworks | spring-vault-interview | 15 | 100%⚠ | 15 | 2 | 24 | QUEUED | — |
-| 296 | programming-languages | java-records-interview | 15 | 100%⚠ | 15 | 2 | 24 | QUEUED | — |
-| 297 | testing | junit-interview | 15 | 100%⚠ | 15 | 2 | 24 | QUEUED | — |
-| 298 | frameworks | spring-boot-3-migration-interview | 15 | 100%⚠ | 15 | 1 | 22 | QUEUED | — |
-| 299 | frameworks | spring-session-interview | 15 | 100%⚠ | 15 | 1 | 22 | QUEUED | — |
-| 300 | programming-languages | java-pattern-matching-interview | 15 | 100%⚠ | 15 | 1 | 22 | QUEUED | — |
-| 301 | programming-languages | java-virtual-threads-interview | 15 | 100%⚠ | 15 | 1 | 22 | QUEUED | — |
-| 302 | testing | rest-assured-interview | 15 | 100%⚠ | 15 | 1 | 22 | QUEUED | — |
-| 303 | testing | selenium-interview | 15 | 100%⚠ | 15 | 1 | 22 | QUEUED | — |
-| 304 | programming-languages | kotlin-spring-interview | 15 | 100%⚠ | 12 | 2 | 21 | QUEUED | — |
-| 305 | frameworks | spring-rest-client-interview | 13 | 100%⚠ | 13 | 1 | 20 | QUEUED | — |
-| 306 | messaging | kafka-interview | 50 | 70%⚠ | 9 | 2 | 18 | QUEUED | — |
-| 307 | programming-languages | java-completable-future-interview | 15 | 80%⚠ | 7 | 3 | 18 | QUEUED | — |
-| 308 | ai-ml | langchain4j-interview | 18 | 28% | 1 | 2 | 5 | QUEUED | — |
-| 309 | programming-languages | java-22-25-interview | 22 | 45% | 2 | 1 | 4 | QUEUED | — |
-| 310 | testing | cucumber-bdd-interview | 15 | 33% | 0 | 1 | 2 | QUEUED | — |
-| 311 | databases | jooq-interview | 18 | 33% | 1 | 0 | 1 | QUEUED | — |
-| 312 | jvm | crac-interview | 16 | 38% | 1 | 0 | 1 | QUEUED | — |
-| 313 | testing | archunit-interview | 15 | 20% | 1 | 0 | 1 | QUEUED | — |
-| 314 | messaging | apache-camel-interview | 16 | 12% | 0 | 0 | 0 | QUEUED | — |
-| 315 | messaging | jms-activemq-interview | 16 | 19% | 0 | 0 | 0 | QUEUED | — |
-| 316 | performance | jmh-microbenchmarking-interview | 18 | 22% | 0 | 0 | 0 | QUEUED | — |
-| 317 | programming-languages | kotlin-testing-interview | 20 | 35% | 0 | 0 | 0 | QUEUED | — |
-| 318 | programming-languages | scala-effects-interview | 16 | 25% | 0 | 0 | 0 | QUEUED | — |
+| Колонка | Смысл |
+|---|---|
+| **Бл.** | блоков (MCQ) в файле |
+| **Sev** | severity файла = худший блок (`CRIT`/`HIGH`/`MED`/`LOW`) |
+| **C/H/M/L** | сколько блоков каждого уровня severity (CRITICAL/HIGH/MEDIUM/LOW) |
+| **long%** | доля блоков, где correct самый длинный (⚠ >50% = «длиннейший = правильный») |
+| **tech%** | доля блоков, где correct самый технически плотный (⚠ >50%) |
+| **ustr%** | доля блоков, где correct единственный со структурным маркером (→/;/backtick-enum) |
+| **rank** | средний ранг длины correct (0…1; >0.5 = в среднем длиннее дистракторов) |
+| **LEN** | блоков с length-tell (LEN_AVG/LEN_SPREAD/WORD/SENTENCE) |
+| **STR** | блоков со structure-tell (UNIQ_MARKER/ONLY_ONE_*/STRUCTURE_DENSITY) |
+| **DEN** | блоков с tech-density-tell (TECH/BACKTICK/NUMBER/COMMA gap) |
+| **CAR** | блоков с маркерами карикатуры (Plausibility) |
+| **INF** | блоков с `INFLATED_CARICATURE` (раздут до формы correct, но карикатурен) |
+| **SHRT** | блоков с короткими-заглушками (SHORT_DISTR) |
+| **Σ** | всего блоков-флагов в файле |
+| **Статус** | `QUEUED` (сброшено) · по мере правки → `R3✅ <commit>` |
+
+<!-- Сводка round3 re-аудит (audit v2, 2026-07-01): файлов=318; severity файлов CRITICAL/HIGH/MEDIUM/LOW=301/7/5/2;
+блоков-флагов=9321; по группам LEN=8463 STR=7835 DEN=7590 CAR=2197 INF=140 SHRT=7874; ⚠long>50%=292, ⚠tech>50%=314.
+Честно: под объединённым Option+Plausibility баром почти весь корпус = CRITICAL (correct выделяется по длине+структуре+
+плотности одновременно). Round-2-закоммиченные файлы упали в низ таблицы (низкий Σ), но у soft-skill-файлов остался
+CAR/INF — это и есть round-3 цель (mentoring: long40%/LEN6, но CAR20/INF11). -->
+
+| # | Кат. | Сидер | Бл. | Sev | C/H/M/L | long% | tech% | ustr% | rank | LEN | STR | DEN | CAR | INF | SHRT | Σ | Статус |
+|--:|---|---|--:|:--:|:--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|:--:|
+| 1 | databases | cassandra-interview | 44 | CRIT | 44/0/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 44 | 44 | 44 | 8 | 0 | 44 | 44 | QUEUED |
+| 2 | frameworks | spring-mvc-interview | 43 | CRIT | 43/0/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 43 | 43 | 43 | 8 | 0 | 43 | 43 | QUEUED |
+| 3 | testing | contract-testing-interview | 42 | CRIT | 42/0/0/0 | 100%⚠ | 100%⚠ | 98% | 1.00 | 42 | 42 | 42 | 5 | 0 | 42 | 42 | QUEUED |
+| 4 | databases | redis-interview | 43 | CRIT | 41/2/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 43 | 43 | 41 | 6 | 0 | 43 | 43 | QUEUED |
+| 5 | architecture | saga-pattern-interview | 43 | CRIT | 40/3/0/0 | 100%⚠ | 98%⚠ | 100% | 1.00 | 43 | 43 | 40 | 7 | 0 | 43 | 43 | QUEUED |
+| 6 | performance | performance-testing-interview | 42 | CRIT | 40/2/0/0 | 100%⚠ | 100%⚠ | 95% | 1.00 | 42 | 41 | 42 | 6 | 0 | 42 | 42 | QUEUED |
+| 7 | frameworks | spring-batch-interview | 43 | CRIT | 38/5/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 43 | 40 | 41 | 10 | 0 | 43 | 43 | QUEUED |
+| 8 | security | jwt-interview | 43 | CRIT | 38/5/0/0 | 100%⚠ | 100%⚠ | 81% | 1.00 | 43 | 40 | 43 | 14 | 0 | 43 | 43 | QUEUED |
+| 9 | architecture | networking-interview | 43 | CRIT | 37/6/0/0 | 100%⚠ | 100%⚠ | 84% | 1.00 | 43 | 38 | 43 | 11 | 0 | 43 | 43 | QUEUED |
+| 10 | devops | argocd-interview | 42 | CRIT | 37/5/0/0 | 100%⚠ | 100%⚠ | 81% | 1.00 | 42 | 41 | 42 | 11 | 0 | 42 | 42 | QUEUED |
+| 11 | system-design | system-design-interview | 41 | CRIT | 37/4/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 41 | 39 | 41 | 24 | 0 | 38 | 41 | QUEUED |
+| 12 | reactive | project-reactor-interview | 48 | CRIT | 36/11/0/0 | 98%⚠ | 98%⚠ | 77% | 0.98 | 47 | 38 | 44 | 5 | 0 | 47 | 47 | QUEUED |
+| 13 | security | owasp-top10-interview | 45 | CRIT | 36/9/0/0 | 100%⚠ | 100%⚠ | 76% | 1.00 | 45 | 41 | 45 | 7 | 0 | 45 | 45 | QUEUED |
+| 14 | testing | test-strategies-interview | 45 | CRIT | 36/9/0/0 | 100%⚠ | 100%⚠ | 82% | 1.00 | 45 | 37 | 42 | 5 | 0 | 44 | 45 | QUEUED |
+| 15 | testing | unit-testing-interview | 45 | CRIT | 36/9/0/0 | 100%⚠ | 100%⚠ | 78% | 1.00 | 45 | 41 | 42 | 5 | 0 | 45 | 45 | QUEUED |
+| 16 | architecture | caching-strategies-interview | 42 | CRIT | 36/6/0/0 | 100%⚠ | 100%⚠ | 90% | 1.00 | 42 | 40 | 41 | 16 | 0 | 42 | 42 | QUEUED |
+| 17 | frameworks | spring-data-jpa-interview | 43 | CRIT | 36/6/0/0 | 98%⚠ | 98%⚠ | 84% | 0.99 | 42 | 38 | 42 | 12 | 0 | 42 | 42 | QUEUED |
+| 18 | programming-languages | scala-interview | 40 | CRIT | 36/4/0/0 | 100%⚠ | 100%⚠ | 80% | 1.00 | 40 | 37 | 40 | 8 | 0 | 40 | 40 | QUEUED |
+| 19 | programming-languages | java-oop-interview | 43 | CRIT | 35/8/0/0 | 100%⚠ | 98%⚠ | 81% | 1.00 | 43 | 40 | 38 | 8 | 0 | 43 | 43 | QUEUED |
+| 20 | programming-languages | kotlin-collections-interview | 43 | CRIT | 35/8/0/0 | 100%⚠ | 93%⚠ | 95% | 1.00 | 43 | 42 | 36 | 13 | 0 | 42 | 43 | QUEUED |
+| 21 | programming-languages | java-17-21-interview | 42 | CRIT | 35/7/0/0 | 100%⚠ | 95%⚠ | 88% | 1.00 | 42 | 39 | 39 | 5 | 0 | 42 | 42 | QUEUED |
+| 22 | security | authentication-authorization-patterns-interview | 45 | CRIT | 34/11/0/0 | 100%⚠ | 100%⚠ | 76% | 1.00 | 45 | 37 | 45 | 10 | 0 | 45 | 45 | QUEUED |
+| 23 | frameworks | spring-boot-actuator-interview | 43 | CRIT | 34/9/0/0 | 100%⚠ | 100%⚠ | 84% | 1.00 | 43 | 38 | 42 | 7 | 0 | 43 | 43 | QUEUED |
+| 24 | ai-ml | fine-tuning-llm-interview | 35 | CRIT | 34/1/0/0 | 100%⚠ | 100%⚠ | 97% | 1.00 | 35 | 34 | 35 | 11 | 0 | 35 | 35 | QUEUED |
+| 25 | architecture | hexagonal-architecture-interview | 45 | CRIT | 33/12/0/0 | 100%⚠ | 91%⚠ | 87% | 1.00 | 45 | 40 | 36 | 4 | 0 | 45 | 45 | QUEUED |
+| 26 | frameworks | spring-cloud-interview | 43 | CRIT | 33/10/0/0 | 100%⚠ | 100%⚠ | 74% | 1.00 | 43 | 36 | 43 | 4 | 0 | 43 | 43 | QUEUED |
+| 27 | architecture | scalability-patterns-interview | 41 | CRIT | 33/8/0/0 | 100%⚠ | 100%⚠ | 83% | 1.00 | 41 | 37 | 39 | 17 | 0 | 41 | 41 | QUEUED |
+| 28 | leadership | code-review-practices-interview | 40 | CRIT | 33/7/0/0 | 100%⚠ | 100%⚠ | 75% | 1.00 | 40 | 33 | 40 | 12 | 0 | 40 | 40 | QUEUED |
+| 29 | programming-languages | kotlin-dsl-interview | 40 | CRIT | 33/7/0/0 | 100%⚠ | 100%⚠ | 82% | 1.00 | 40 | 37 | 39 | 5 | 0 | 40 | 40 | QUEUED |
+| 30 | performance | memory-management-interview | 39 | CRIT | 33/6/0/0 | 100%⚠ | 97%⚠ | 87% | 1.00 | 39 | 36 | 37 | 11 | 0 | 39 | 39 | QUEUED |
+| 31 | api | websocket-interview | 38 | CRIT | 33/5/0/0 | 100%⚠ | 100%⚠ | 87% | 1.00 | 38 | 33 | 38 | 4 | 0 | 37 | 38 | QUEUED |
+| 32 | cicd | pipeline-design-interview | 38 | CRIT | 33/5/0/0 | 100%⚠ | 97%⚠ | 87% | 1.00 | 38 | 34 | 37 | 18 | 0 | 38 | 38 | QUEUED |
+| 33 | programming-languages | kotlin-interop-java-interview | 38 | CRIT | 33/5/0/0 | 100%⚠ | 100%⚠ | 95% | 1.00 | 38 | 37 | 34 | 7 | 0 | 38 | 38 | QUEUED |
+| 34 | databases | elasticsearch-interview | 44 | CRIT | 32/12/0/0 | 100%⚠ | 98%⚠ | 77% | 1.00 | 44 | 40 | 42 | 8 | 0 | 44 | 44 | QUEUED |
+| 35 | databases | database-transactions-interview | 42 | CRIT | 32/10/0/0 | 100%⚠ | 100%⚠ | 76% | 1.00 | 42 | 34 | 40 | 5 | 0 | 42 | 42 | QUEUED |
+| 36 | devops | terraform-interview | 42 | CRIT | 32/10/0/0 | 100%⚠ | 100%⚠ | 81% | 1.00 | 42 | 36 | 38 | 7 | 0 | 42 | 42 | QUEUED |
+| 37 | architecture | cqrs-event-sourcing-interview | 41 | CRIT | 32/9/0/0 | 100%⚠ | 95%⚠ | 95% | 1.00 | 41 | 40 | 39 | 17 | 0 | 41 | 41 | QUEUED |
+| 38 | logging | logging-interview | 42 | CRIT | 32/9/0/0 | 98%⚠ | 98%⚠ | 79% | 0.98 | 41 | 37 | 39 | 3 | 0 | 40 | 41 | QUEUED |
+| 39 | testing | integration-testing-interview | 40 | CRIT | 32/8/0/0 | 100%⚠ | 100%⚠ | 82% | 1.00 | 40 | 37 | 40 | 11 | 0 | 40 | 40 | QUEUED |
+| 40 | monitoring | logging-strategies-interview | 38 | CRIT | 32/6/0/0 | 100%⚠ | 97%⚠ | 87% | 1.00 | 38 | 36 | 37 | 1 | 0 | 38 | 38 | QUEUED |
+| 41 | algorithms | trees-interview | 34 | CRIT | 32/2/0/0 | 100%⚠ | 100%⚠ | 94% | 1.00 | 34 | 32 | 33 | 13 | 0 | 34 | 34 | QUEUED |
+| 42 | databases | database-sharding-interview | 34 | CRIT | 32/2/0/0 | 100%⚠ | 100%⚠ | 91% | 1.00 | 34 | 33 | 34 | 11 | 0 | 34 | 34 | QUEUED |
+| 43 | programming-languages | java-collections-interview | 46 | CRIT | 31/15/0/0 | 100%⚠ | 98%⚠ | 72% | 1.00 | 46 | 42 | 43 | 14 | 0 | 46 | 46 | QUEUED |
+| 44 | frameworks | spring-security-interview | 46 | CRIT | 31/12/0/0 | 96%⚠ | 94%⚠ | 67% | 0.98 | 43 | 33 | 42 | 7 | 0 | 43 | 43 | QUEUED |
+| 45 | frameworks | spring-framework-interview | 41 | CRIT | 31/9/0/0 | 98%⚠ | 98%⚠ | 85% | 0.98 | 40 | 36 | 37 | 3 | 0 | 40 | 40 | QUEUED |
+| 46 | cicd | deployment-strategies-interview | 39 | CRIT | 31/8/0/0 | 100%⚠ | 97%⚠ | 82% | 1.00 | 39 | 35 | 35 | 8 | 0 | 39 | 39 | QUEUED |
+| 47 | performance | jvm-performance-tuning-interview | 38 | CRIT | 31/7/0/0 | 100%⚠ | 100%⚠ | 55% | 1.00 | 38 | 34 | 38 | 17 | 0 | 38 | 38 | QUEUED |
+| 48 | programming-languages | java-modules-interview | 38 | CRIT | 31/7/0/0 | 100%⚠ | 97%⚠ | 92% | 1.00 | 38 | 35 | 33 | 2 | 0 | 38 | 38 | QUEUED |
+| 49 | ai-ml | ai-compliance-governance-interview | 32 | CRIT | 31/1/0/0 | 100%⚠ | 100%⚠ | 97% | 1.00 | 32 | 31 | 32 | 5 | 0 | 32 | 32 | QUEUED |
+| 50 | api | openapi-swagger-interview | 42 | CRIT | 30/12/0/0 | 100%⚠ | 100%⚠ | 86% | 1.00 | 42 | 37 | 35 | 4 | 0 | 42 | 42 | QUEUED |
+| 51 | architecture | microservices-interview | 42 | CRIT | 30/12/0/0 | 100%⚠ | 95%⚠ | 86% | 1.00 | 42 | 38 | 35 | 12 | 0 | 42 | 42 | QUEUED |
+| 52 | databases | flyway-liquibase-interview | 42 | CRIT | 30/12/0/0 | 100%⚠ | 90%⚠ | 83% | 1.00 | 42 | 40 | 39 | 6 | 0 | 42 | 42 | QUEUED |
+| 53 | performance | application-profiling-interview | 42 | CRIT | 30/12/0/0 | 100%⚠ | 98%⚠ | 81% | 1.00 | 42 | 37 | 37 | 10 | 0 | 42 | 42 | QUEUED |
+| 54 | programming-languages | java-serialization-interview | 40 | CRIT | 30/10/0/0 | 100%⚠ | 95%⚠ | 80% | 1.00 | 40 | 38 | 34 | 4 | 0 | 39 | 40 | QUEUED |
+| 55 | security | tls-ssl-interview | 45 | CRIT | 29/16/0/0 | 100%⚠ | 98%⚠ | 64% | 1.00 | 45 | 36 | 42 | 9 | 0 | 45 | 45 | QUEUED |
+| 56 | ai-ml | open-source-llms-interview | 34 | CRIT | 29/5/0/0 | 100%⚠ | 100%⚠ | 85% | 1.00 | 34 | 31 | 33 | 4 | 0 | 34 | 34 | QUEUED |
+| 57 | algorithms | hash-tables-interview | 34 | CRIT | 29/5/0/0 | 100%⚠ | 100%⚠ | 82% | 1.00 | 34 | 29 | 34 | 11 | 0 | 34 | 34 | QUEUED |
+| 58 | algorithms | dynamic-programming-interview | 33 | CRIT | 29/4/0/0 | 100%⚠ | 97%⚠ | 91% | 1.00 | 33 | 31 | 31 | 13 | 0 | 33 | 33 | QUEUED |
+| 59 | ai-ml | ai-application-architecture-interview | 32 | CRIT | 29/3/0/0 | 100%⚠ | 97%⚠ | 94% | 1.00 | 32 | 31 | 32 | 12 | 0 | 32 | 32 | QUEUED |
+| 60 | system-design | design-feed-system-interview | 30 | CRIT | 29/1/0/0 | 100%⚠ | 100%⚠ | 97% | 1.00 | 30 | 30 | 30 | 3 | 0 | 30 | 30 | QUEUED |
+| 61 | system-design | design-rate-limiter-interview | 30 | CRIT | 29/1/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 30 | 29 | 30 | 5 | 0 | 30 | 30 | QUEUED |
+| 62 | databases | mongodb-interview | 46 | CRIT | 28/18/0/0 | 100%⚠ | 98%⚠ | 63% | 1.00 | 46 | 33 | 43 | 17 | 0 | 46 | 46 | QUEUED |
+| 63 | reactive | rxjava-interview | 46 | CRIT | 28/18/0/0 | 100%⚠ | 89%⚠ | 85% | 1.00 | 46 | 39 | 34 | 9 | 0 | 46 | 46 | QUEUED |
+| 64 | architecture | resilience-patterns-interview | 43 | CRIT | 28/15/0/0 | 100%⚠ | 100%⚠ | 67% | 1.00 | 43 | 34 | 41 | 5 | 0 | 43 | 43 | QUEUED |
+| 65 | devops | helm-interview | 43 | CRIT | 28/15/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 43 | 32 | 43 | 8 | 0 | 43 | 43 | QUEUED |
+| 66 | databases | database-architecture-interview | 41 | CRIT | 28/13/0/0 | 100%⚠ | 93%⚠ | 93% | 1.00 | 41 | 39 | 30 | 15 | 0 | 41 | 41 | QUEUED |
+| 67 | ai-ml | inference-optimization-interview | 36 | CRIT | 28/8/0/0 | 100%⚠ | 100%⚠ | 78% | 1.00 | 36 | 33 | 36 | 5 | 0 | 35 | 36 | QUEUED |
+| 68 | ai-ml | long-context-vs-rag-interview | 30 | CRIT | 28/2/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 30 | 29 | 30 | 11 | 0 | 30 | 30 | QUEUED |
+| 69 | system-design | design-netflix-interview | 30 | CRIT | 28/2/0/0 | 100%⚠ | 100%⚠ | 90% | 1.00 | 30 | 28 | 29 | 4 | 0 | 30 | 30 | QUEUED |
+| 70 | system-design | design-pastebin-interview | 30 | CRIT | 28/2/0/0 | 100%⚠ | 100%⚠ | 90% | 1.00 | 30 | 30 | 30 | 10 | 0 | 30 | 30 | QUEUED |
+| 71 | system-design | design-payment-system-interview | 30 | CRIT | 28/2/0/0 | 100%⚠ | 100%⚠ | 90% | 1.00 | 30 | 28 | 30 | 5 | 0 | 30 | 30 | QUEUED |
+| 72 | programming-languages | java-8-interview | 42 | CRIT | 27/14/1/0 | 98%⚠ | 98%⚠ | 69% | 0.99 | 42 | 34 | 39 | 17 | 0 | 41 | 42 | QUEUED |
+| 73 | programming-languages | java-core-interview | 39 | CRIT | 27/12/0/0 | 100%⚠ | 97%⚠ | 95% | 1.00 | 39 | 38 | 28 | 7 | 0 | 33 | 39 | QUEUED |
+| 74 | architecture | api-gateway-interview | 38 | CRIT | 27/11/0/0 | 100%⚠ | 100%⚠ | 74% | 1.00 | 38 | 31 | 37 | 8 | 0 | 38 | 38 | QUEUED |
+| 75 | algorithms | arrays-strings-interview | 36 | CRIT | 27/9/0/0 | 100%⚠ | 97%⚠ | 81% | 1.00 | 36 | 32 | 33 | 10 | 0 | 36 | 36 | QUEUED |
+| 76 | programming-languages | go-interview | 36 | CRIT | 27/9/0/0 | 100%⚠ | 100%⚠ | 72% | 1.00 | 36 | 32 | 35 | 7 | 0 | 36 | 36 | QUEUED |
+| 77 | ai-ml | llm-evaluation-interview | 30 | CRIT | 27/3/0/0 | 100%⚠ | 97%⚠ | 87% | 1.00 | 30 | 29 | 28 | 10 | 0 | 30 | 30 | QUEUED |
+| 78 | system-design | design-key-value-store-interview | 30 | CRIT | 27/3/0/0 | 100%⚠ | 100%⚠ | 90% | 1.00 | 30 | 27 | 30 | 9 | 0 | 30 | 30 | QUEUED |
+| 79 | ai-ml | mlops-interview | 28 | CRIT | 27/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 28 | 27 | 28 | 7 | 0 | 28 | 28 | QUEUED |
+| 80 | system-design | design-youtube-interview | 28 | CRIT | 27/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 28 | 27 | 28 | 6 | 0 | 28 | 28 | QUEUED |
+| 81 | algorithms | divide-and-conquer-interview | 27 | CRIT | 27/0/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 27 | 27 | 27 | 14 | 0 | 27 | 27 | QUEUED |
+| 82 | system-design | design-instagram-interview | 27 | CRIT | 27/0/0/0 | 100%⚠ | 100%⚠ | 89% | 1.00 | 27 | 27 | 27 | 11 | 0 | 27 | 27 | QUEUED |
+| 83 | security | application-security-interview | 45 | CRIT | 26/19/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 45 | 39 | 41 | 6 | 0 | 45 | 45 | QUEUED |
+| 84 | data-engineering | apache-spark-interview | 35 | CRIT | 26/9/0/0 | 100%⚠ | 100%⚠ | 69% | 1.00 | 35 | 31 | 35 | 14 | 0 | 35 | 35 | QUEUED |
+| 85 | algorithms | searching-algorithms-interview | 31 | CRIT | 26/5/0/0 | 100%⚠ | 100%⚠ | 84% | 1.00 | 31 | 29 | 31 | 10 | 0 | 31 | 31 | QUEUED |
+| 86 | ai-ml | mcp-interview | 30 | CRIT | 26/4/0/0 | 100%⚠ | 100%⚠ | 87% | 1.00 | 30 | 26 | 30 | 8 | 0 | 30 | 30 | QUEUED |
+| 87 | architecture | service-discovery-interview | 30 | CRIT | 26/4/0/0 | 100%⚠ | 100%⚠ | 83% | 1.00 | 30 | 26 | 30 | 8 | 0 | 30 | 30 | QUEUED |
+| 88 | system-design | design-url-shortener-interview | 30 | CRIT | 26/4/0/0 | 100%⚠ | 100%⚠ | 83% | 1.00 | 30 | 27 | 30 | 2 | 0 | 30 | 30 | QUEUED |
+| 89 | ai-ml | ai-observability-interview | 28 | CRIT | 26/2/0/0 | 100%⚠ | 100%⚠ | 89% | 1.00 | 28 | 26 | 28 | 6 | 0 | 28 | 28 | QUEUED |
+| 90 | data-engineering | data-lake-lakehouse-interview | 28 | CRIT | 26/2/0/0 | 100%⚠ | 100%⚠ | 89% | 1.00 | 28 | 28 | 28 | 2 | 0 | 28 | 28 | QUEUED |
+| 91 | programming-languages | kotlin-serialization-interview | 43 | CRIT | 25/18/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 43 | 32 | 39 | 9 | 0 | 43 | 43 | QUEUED |
+| 92 | monitoring | metrics-tracing-interview | 41 | CRIT | 25/16/0/0 | 100%⚠ | 85%⚠ | 63% | 1.00 | 41 | 31 | 31 | 8 | 0 | 41 | 41 | QUEUED |
+| 93 | architecture | load-balancing-interview | 40 | CRIT | 25/15/0/0 | 100%⚠ | 92%⚠ | 65% | 1.00 | 40 | 30 | 33 | 11 | 0 | 40 | 40 | QUEUED |
+| 94 | ai-ml | multimodal-ai-interview | 31 | CRIT | 25/6/0/0 | 100%⚠ | 97%⚠ | 84% | 1.00 | 31 | 28 | 29 | 10 | 0 | 31 | 31 | QUEUED |
+| 95 | databases | database-replication-interview | 31 | CRIT | 25/6/0/0 | 100%⚠ | 100%⚠ | 81% | 1.00 | 31 | 28 | 30 | 14 | 0 | 31 | 31 | QUEUED |
+| 96 | frameworks | quarkus-interview | 31 | CRIT | 25/6/0/0 | 100%⚠ | 97%⚠ | 87% | 1.00 | 31 | 28 | 31 | 5 | 0 | 31 | 31 | QUEUED |
+| 97 | ai-ml | embeddings-interview | 29 | CRIT | 25/4/0/0 | 100%⚠ | 93%⚠ | 93% | 1.00 | 29 | 27 | 26 | 14 | 0 | 28 | 29 | QUEUED |
+| 98 | ai-ml | llm-integration-patterns-interview | 28 | CRIT | 25/3/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 28 | 26 | 26 | 8 | 0 | 28 | 28 | QUEUED |
+| 99 | data-engineering | kafka-streams-interview | 28 | CRIT | 25/3/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 28 | 27 | 27 | 4 | 0 | 28 | 28 | QUEUED |
+| 100 | monitoring | opentelemetry-interview | 28 | CRIT | 25/3/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 28 | 26 | 28 | 9 | 0 | 28 | 28 | QUEUED |
+| 101 | system-design | design-parking-lot-oo-interview | 28 | CRIT | 25/3/0/0 | 100%⚠ | 100%⚠ | 89% | 1.00 | 28 | 26 | 28 | 8 | 0 | 28 | 28 | QUEUED |
+| 102 | monitoring | elk-stack-interview | 26 | CRIT | 25/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 26 | 26 | 26 | 4 | 0 | 26 | 26 | QUEUED |
+| 103 | devops | ansible-interview | 25 | CRIT | 25/0/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 25 | 25 | 25 | 8 | 0 | 25 | 25 | QUEUED |
+| 104 | programming-languages | java-types-interview | 38 | CRIT | 24/14/0/0 | 100%⚠ | 95%⚠ | 71% | 1.00 | 38 | 31 | 33 | 10 | 0 | 38 | 38 | QUEUED |
+| 105 | algorithms | linked-lists-interview | 32 | CRIT | 24/7/0/0 | 100%⚠ | 91%⚠ | 88% | 1.00 | 31 | 29 | 25 | 1 | 0 | 31 | 31 | QUEUED |
+| 106 | data-engineering | apache-flink-interview | 31 | CRIT | 24/7/0/0 | 100%⚠ | 100%⚠ | 77% | 1.00 | 31 | 25 | 31 | 8 | 0 | 31 | 31 | QUEUED |
+| 107 | architecture | cdn-interview | 30 | CRIT | 24/4/1/0 | 100%⚠ | 100%⚠ | 70% | 1.00 | 28 | 25 | 28 | 9 | 1 | 27 | 29 | QUEUED |
+| 108 | ai-ml | ai-agents-interview | 28 | CRIT | 24/4/0/0 | 100%⚠ | 100%⚠ | 86% | 1.00 | 28 | 25 | 27 | 9 | 0 | 28 | 28 | QUEUED |
+| 109 | ai-ml | model-serving-interview | 28 | CRIT | 24/4/0/0 | 100%⚠ | 100%⚠ | 86% | 1.00 | 28 | 27 | 28 | 8 | 0 | 28 | 28 | QUEUED |
+| 110 | cloud | serverless-interview | 28 | CRIT | 24/4/0/0 | 100%⚠ | 96%⚠ | 82% | 1.00 | 28 | 24 | 28 | 7 | 0 | 28 | 28 | QUEUED |
+| 111 | code-quality | clean-code-practices-interview | 27 | CRIT | 24/3/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 27 | 27 | 26 | 7 | 0 | 27 | 27 | QUEUED |
+| 112 | system-design | design-elevator-oo-interview | 26 | CRIT | 24/2/0/0 | 100%⚠ | 100%⚠ | 92% | 1.00 | 26 | 24 | 26 | 3 | 0 | 26 | 26 | QUEUED |
+| 113 | architecture | clean-architecture-interview | 41 | CRIT | 23/18/0/0 | 100%⚠ | 90%⚠ | 66% | 1.00 | 41 | 29 | 34 | 5 | 0 | 41 | 41 | QUEUED |
+| 114 | api | grpc-interview | 40 | CRIT | 23/13/4/0 | 100%⚠ | 90%⚠ | 65% | 1.00 | 39 | 35 | 31 | 3 | 0 | 32 | 40 | QUEUED |
+| 115 | programming-languages | kotlin-coroutines-interview | 39 | CRIT | 23/16/0/0 | 100%⚠ | 92%⚠ | 80% | 1.00 | 39 | 34 | 27 | 15 | 0 | 37 | 39 | QUEUED |
+| 116 | algorithms | complexity-analysis-interview | 31 | CRIT | 23/8/0/0 | 100%⚠ | 100%⚠ | 74% | 1.00 | 31 | 24 | 31 | 27 | 0 | 31 | 31 | QUEUED |
+| 117 | algorithms | sorting-algorithms-interview | 31 | CRIT | 23/8/0/0 | 100%⚠ | 100%⚠ | 74% | 1.00 | 31 | 28 | 30 | 13 | 0 | 31 | 31 | QUEUED |
+| 118 | databases | dynamodb-interview | 30 | CRIT | 23/7/0/0 | 100%⚠ | 100%⚠ | 77% | 1.00 | 30 | 23 | 29 | 5 | 0 | 30 | 30 | QUEUED |
+| 119 | algorithms | heaps-interview | 29 | CRIT | 23/6/0/0 | 100%⚠ | 97%⚠ | 90% | 1.00 | 29 | 29 | 27 | 15 | 0 | 29 | 29 | QUEUED |
+| 120 | devops | istio-service-mesh-interview | 26 | CRIT | 23/3/0/0 | 100%⚠ | 100%⚠ | 85% | 1.00 | 26 | 24 | 26 | 3 | 0 | 26 | 26 | QUEUED |
+| 121 | databases | cockroachdb-interview | 24 | CRIT | 23/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 24 | 24 | 24 | 7 | 0 | 24 | 24 | QUEUED |
+| 122 | performance | network-performance-interview | 24 | CRIT | 23/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 24 | 24 | 24 | 4 | 0 | 24 | 24 | QUEUED |
+| 123 | system-design | design-vending-machine-oo-interview | 24 | CRIT | 23/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 24 | 24 | 24 | 5 | 0 | 24 | 24 | QUEUED |
+| 124 | performance | caching-performance-interview | 23 | CRIT | 23/0/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 23 | 23 | 23 | 13 | 0 | 23 | 23 | QUEUED |
+| 125 | security | oauth2-interview | 42 | CRIT | 22/20/0/0 | 100%⚠ | 100%⚠ | 57% | 1.00 | 42 | 29 | 40 | 6 | 0 | 42 | 42 | QUEUED |
+| 126 | programming-languages | java-io-nio-interview | 40 | CRIT | 22/18/0/0 | 100%⚠ | 92%⚠ | 72% | 1.00 | 40 | 32 | 28 | 8 | 0 | 40 | 40 | QUEUED |
+| 127 | devops | gradle-maven-interview | 38 | CRIT | 22/16/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 38 | 30 | 36 | 7 | 0 | 38 | 38 | QUEUED |
+| 128 | ai-ml | multi-agent-orchestration-interview | 30 | CRIT | 22/8/0/0 | 100%⚠ | 100%⚠ | 70% | 1.00 | 30 | 29 | 30 | 11 | 0 | 30 | 30 | QUEUED |
+| 129 | programming-languages | go-testing-interview | 28 | CRIT | 22/6/0/0 | 100%⚠ | 96%⚠ | 75% | 1.00 | 28 | 26 | 27 | 6 | 0 | 28 | 28 | QUEUED |
+| 130 | system-design | design-twitter-interview | 27 | CRIT | 22/5/0/0 | 100%⚠ | 100%⚠ | 70% | 1.00 | 27 | 25 | 27 | 3 | 0 | 27 | 27 | QUEUED |
+| 131 | databases | postgresql-interview | 55 | CRIT | 21/33/1/0 | 100%⚠ | 91%⚠ | 74% | 1.00 | 55 | 42 | 29 | 5 | 0 | 52 | 55 | QUEUED |
+| 132 | programming-languages | kotlin-exceptions-interview | 40 | CRIT | 21/18/1/0 | 100%⚠ | 88%⚠ | 75% | 1.00 | 40 | 36 | 28 | 11 | 0 | 39 | 40 | QUEUED |
+| 133 | programming-languages | java-jackson-interview | 31 | CRIT | 21/10/0/0 | 100%⚠ | 100%⚠ | 71% | 1.00 | 31 | 28 | 29 | 7 | 0 | 31 | 31 | QUEUED |
+| 134 | data-engineering | dbt-interview | 28 | CRIT | 21/7/0/0 | 100%⚠ | 100%⚠ | 79% | 1.00 | 28 | 23 | 26 | 4 | 0 | 28 | 28 | QUEUED |
+| 135 | data-engineering | stream-processing-interview | 28 | CRIT | 21/7/0/0 | 100%⚠ | 96%⚠ | 86% | 1.00 | 28 | 25 | 24 | 8 | 0 | 28 | 28 | QUEUED |
+| 136 | devops | vault-interview | 26 | CRIT | 21/5/0/0 | 100%⚠ | 96%⚠ | 88% | 1.00 | 26 | 23 | 24 | 2 | 0 | 26 | 26 | QUEUED |
+| 137 | architecture | latency-numbers-interview | 24 | CRIT | 21/3/0/0 | 100%⚠ | 100%⚠ | 88% | 1.00 | 24 | 21 | 24 | 9 | 0 | 22 | 24 | QUEUED |
+| 138 | databases | scylladb-interview | 23 | CRIT | 21/2/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 23 | 22 | 22 | 0 | 0 | 23 | 23 | QUEUED |
+| 139 | security | secrets-management-interview | 22 | CRIT | 21/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 22 | 21 | 22 | 5 | 0 | 22 | 22 | QUEUED |
+| 140 | testing | load-testing-interview | 22 | CRIT | 21/1/0/0 | 100%⚠ | 100%⚠ | 91% | 1.00 | 22 | 21 | 22 | 7 | 0 | 22 | 22 | QUEUED |
+| 141 | system-design | design-chat-system-interview | 21 | CRIT | 21/0/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 21 | 21 | 21 | 0 | 0 | 21 | 21 | QUEUED |
+| 142 | programming-languages | java-generics-interview | 40 | CRIT | 20/20/0/0 | 100%⚠ | 100%⚠ | 55% | 1.00 | 40 | 32 | 35 | 8 | 0 | 40 | 40 | QUEUED |
+| 143 | programming-languages | go-concurrency-interview | 35 | CRIT | 20/15/0/0 | 100%⚠ | 86%⚠ | 69% | 1.00 | 35 | 28 | 25 | 8 | 0 | 34 | 35 | QUEUED |
+| 144 | databases | neo4j-interview | 30 | CRIT | 20/10/0/0 | 100%⚠ | 90%⚠ | 77% | 1.00 | 30 | 27 | 24 | 7 | 0 | 30 | 30 | QUEUED |
+| 145 | algorithms | greedy-algorithms-interview | 28 | CRIT | 20/8/0/0 | 100%⚠ | 89%⚠ | 89% | 1.00 | 28 | 26 | 22 | 12 | 0 | 28 | 28 | QUEUED |
+| 146 | algorithms | tries-interview | 28 | CRIT | 20/8/0/0 | 100%⚠ | 100%⚠ | 75% | 1.00 | 28 | 27 | 26 | 3 | 0 | 28 | 28 | QUEUED |
+| 147 | security | supply-chain-security-interview | 24 | CRIT | 20/4/0/0 | 100%⚠ | 96%⚠ | 88% | 1.00 | 24 | 23 | 24 | 2 | 0 | 24 | 24 | QUEUED |
+| 148 | architecture | cap-theorem-interview | 42 | CRIT | 19/23/0/0 | 100%⚠ | 83%⚠ | 60% | 1.00 | 42 | 32 | 26 | 16 | 0 | 41 | 42 | QUEUED |
+| 149 | architecture | distributed-systems-interview | 40 | CRIT | 19/21/0/0 | 100%⚠ | 92%⚠ | 75% | 1.00 | 40 | 33 | 27 | 12 | 0 | 40 | 40 | QUEUED |
+| 150 | leadership | team-leadership-interview | 40 | CRIT | 19/21/0/0 | 100%⚠ | 92%⚠ | 60% | 1.00 | 40 | 30 | 34 | 4 | 0 | 40 | 40 | QUEUED |
+| 151 | ai-ml | reasoning-models-interview | 30 | CRIT | 19/10/1/0 | 100%⚠ | 100%⚠ | 67% | 1.00 | 30 | 23 | 28 | 13 | 0 | 28 | 30 | QUEUED |
+| 152 | algorithms | backtracking-interview | 27 | CRIT | 19/8/0/0 | 100%⚠ | 89%⚠ | 74% | 1.00 | 27 | 24 | 24 | 10 | 0 | 27 | 27 | QUEUED |
+| 153 | messaging | message-brokers-comparison-interview | 26 | CRIT | 19/7/0/0 | 100%⚠ | 100%⚠ | 73% | 1.00 | 26 | 20 | 26 | 3 | 0 | 26 | 26 | QUEUED |
+| 154 | devops | consul-interview | 24 | CRIT | 19/5/0/0 | 100%⚠ | 100%⚠ | 83% | 1.00 | 24 | 21 | 21 | 1 | 0 | 24 | 24 | QUEUED |
+| 155 | messaging | nats-interview | 24 | CRIT | 19/5/0/0 | 100%⚠ | 100%⚠ | 79% | 1.00 | 24 | 22 | 23 | 3 | 0 | 24 | 24 | QUEUED |
+| 156 | testing | testcontainers-interview | 40 | CRIT | 18/22/0/0 | 100%⚠ | 95%⚠ | 52% | 1.00 | 40 | 31 | 36 | 11 | 0 | 38 | 40 | QUEUED |
+| 157 | messaging | rabbitmq-interview | 41 | CRIT | 18/16/4/0 | 100%⚠ | 95%⚠ | 63% | 1.00 | 35 | 27 | 26 | 4 | 0 | 22 | 38 | QUEUED |
+| 158 | leadership | technical-decisions-interview | 22 | CRIT | 18/4/0/0 | 100%⚠ | 86%⚠ | 91% | 1.00 | 22 | 22 | 22 | 3 | 0 | 22 | 22 | QUEUED |
+| 159 | security | mtls-interview | 20 | CRIT | 18/2/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 20 | 20 | 18 | 4 | 0 | 20 | 20 | QUEUED |
+| 160 | architecture | consistency-patterns-interview | 42 | CRIT | 17/25/0/0 | 100%⚠ | 100%⚠ | 74% | 1.00 | 42 | 36 | 22 | 16 | 0 | 41 | 42 | QUEUED |
+| 161 | api | http-rest-interview | 43 | CRIT | 17/19/4/0 | 95%⚠ | 79%⚠ | 60% | 0.96 | 35 | 34 | 23 | 9 | 1 | 27 | 40 | QUEUED |
+| 162 | code-quality | technical-debt-interview | 40 | CRIT | 17/23/0/0 | 100%⚠ | 78%⚠ | 85% | 1.00 | 40 | 37 | 26 | 12 | 0 | 40 | 40 | QUEUED |
+| 163 | programming-languages | go-stdlib-interview | 30 | CRIT | 17/13/0/0 | 100%⚠ | 97%⚠ | 60% | 1.00 | 30 | 23 | 25 | 7 | 0 | 30 | 30 | QUEUED |
+| 164 | ai-ml | prompt-engineering-interview | 28 | CRIT | 17/10/1/0 | 100%⚠ | 93%⚠ | 75% | 1.00 | 28 | 25 | 21 | 10 | 0 | 27 | 28 | QUEUED |
+| 165 | ai-ml | vector-databases-interview | 28 | CRIT | 17/10/1/0 | 100%⚠ | 100%⚠ | 61% | 1.00 | 28 | 19 | 25 | 8 | 0 | 24 | 28 | QUEUED |
+| 166 | performance | database-performance-interview | 27 | CRIT | 17/10/0/0 | 100%⚠ | 100%⚠ | 63% | 1.00 | 27 | 21 | 27 | 19 | 0 | 27 | 27 | QUEUED |
+| 167 | programming-languages | go-memory-gc-interview | 27 | CRIT | 17/10/0/0 | 100%⚠ | 100%⚠ | 63% | 1.00 | 27 | 20 | 25 | 8 | 0 | 27 | 27 | QUEUED |
+| 168 | algorithms | stacks-queues-interview | 25 | CRIT | 17/8/0/0 | 100%⚠ | 100%⚠ | 68% | 1.00 | 25 | 20 | 25 | 5 | 0 | 25 | 25 | QUEUED |
+| 169 | frameworks | micronaut-interview | 26 | CRIT | 17/8/0/0 | 100%⚠ | 96%⚠ | 65% | 1.00 | 25 | 19 | 24 | 5 | 0 | 25 | 25 | QUEUED |
+| 170 | frameworks | spring-aop-interview | 22 | CRIT | 17/5/0/0 | 100%⚠ | 96%⚠ | 86% | 1.00 | 22 | 20 | 22 | 6 | 0 | 22 | 22 | QUEUED |
+| 171 | messaging | aws-sqs-sns-interview | 22 | CRIT | 17/5/0/0 | 100%⚠ | 100%⚠ | 77% | 1.00 | 22 | 17 | 21 | 1 | 0 | 22 | 22 | QUEUED |
+| 172 | monitoring | micrometer-interview | 20 | CRIT | 17/3/0/0 | 100%⚠ | 100%⚠ | 85% | 1.00 | 20 | 17 | 20 | 1 | 0 | 20 | 20 | QUEUED |
+| 173 | architecture | edge-computing-interview | 18 | CRIT | 17/1/0/0 | 100%⚠ | 100%⚠ | 94% | 1.00 | 18 | 17 | 18 | 6 | 0 | 18 | 18 | QUEUED |
+| 174 | architecture | bff-pattern-interview | 17 | CRIT | 17/0/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 17 | 17 | 17 | 6 | 0 | 17 | 17 | QUEUED |
+| 175 | design-patterns | design-patterns-interview | 48 | CRIT | 16/24/5/1 | 100%⚠ | 69%⚠ | 65% | 1.00 | 43 | 34 | 18 | 12 | 0 | 27 | 46 | QUEUED |
+| 176 | programming-languages | kotlin-interview | 45 | CRIT | 16/27/2/0 | 100%⚠ | 84%⚠ | 80% | 1.00 | 45 | 37 | 22 | 8 | 0 | 39 | 45 | QUEUED |
+| 177 | programming-languages | java-stream-interview | 42 | CRIT | 16/25/1/0 | 100%⚠ | 95%⚠ | 45% | 1.00 | 42 | 28 | 38 | 15 | 0 | 40 | 42 | QUEUED |
+| 178 | api | graphql-interview | 40 | CRIT | 16/20/1/0 | 95%⚠ | 80%⚠ | 55% | 0.98 | 37 | 27 | 23 | 12 | 0 | 31 | 37 | QUEUED |
+| 179 | reactive | webflux-interview | 28 | CRIT | 16/12/0/0 | 100%⚠ | 100%⚠ | 64% | 1.00 | 28 | 21 | 24 | 3 | 0 | 28 | 28 | QUEUED |
+| 180 | algorithms | recursion-interview | 27 | CRIT | 16/10/1/0 | 100%⚠ | 85%⚠ | 89% | 1.00 | 26 | 26 | 20 | 11 | 0 | 22 | 27 | QUEUED |
+| 181 | monitoring | jaeger-zipkin-interview | 23 | CRIT | 16/7/0/0 | 100%⚠ | 96%⚠ | 65% | 1.00 | 23 | 19 | 22 | 3 | 0 | 23 | 23 | QUEUED |
+| 182 | frameworks | resilience4j-interview | 20 | CRIT | 16/4/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 20 | 20 | 16 | 1 | 0 | 20 | 20 | QUEUED |
+| 183 | testing | mutation-testing-interview | 20 | CRIT | 16/4/0/0 | 100%⚠ | 100%⚠ | 75% | 1.00 | 20 | 17 | 20 | 4 | 0 | 20 | 20 | QUEUED |
+| 184 | security | zero-trust-interview | 19 | CRIT | 16/3/0/0 | 100%⚠ | 100%⚠ | 90% | 1.00 | 19 | 18 | 18 | 2 | 0 | 19 | 19 | QUEUED |
+| 185 | testing | mockito-interview | 45 | CRIT | 15/24/6/0 | 89%⚠ | 82%⚠ | 60% | 0.97 | 45 | 38 | 21 | 8 | 0 | 42 | 45 | QUEUED |
+| 186 | reactive | reactive-streams-interview | 30 | CRIT | 15/15/0/0 | 100%⚠ | 100%⚠ | 47% | 1.00 | 30 | 17 | 24 | 6 | 0 | 30 | 30 | QUEUED |
+| 187 | programming-languages | java-mapstruct-interview | 28 | CRIT | 15/13/0/0 | 100%⚠ | 96%⚠ | 61% | 1.00 | 28 | 22 | 21 | 5 | 0 | 27 | 28 | QUEUED |
+| 188 | programming-languages | java-initialization-interview | 27 | CRIT | 15/12/0/0 | 100%⚠ | 96%⚠ | 59% | 1.00 | 27 | 19 | 23 | 6 | 0 | 27 | 27 | QUEUED |
+| 189 | behavioral | conflict-stories-interview | 22 | CRIT | 15/7/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 22 | 21 | 18 | 3 | 0 | 22 | 22 | QUEUED |
+| 190 | devops | linkerd-interview | 20 | CRIT | 15/5/0/0 | 100%⚠ | 100%⚠ | 80% | 1.00 | 20 | 17 | 20 | 1 | 0 | 20 | 20 | QUEUED |
+| 191 | monitoring | observability-interview | 42 | CRIT | 14/22/4/0 | 95%⚠ | 95%⚠ | 45% | 0.98 | 39 | 25 | 28 | 9 | 0 | 36 | 40 | QUEUED |
+| 192 | programming-languages | go-modules-interview | 27 | CRIT | 14/12/1/0 | 100%⚠ | 89%⚠ | 67% | 1.00 | 27 | 19 | 16 | 1 | 0 | 27 | 27 | QUEUED |
+| 193 | code-quality | static-analysis-interview | 26 | CRIT | 14/12/0/0 | 100%⚠ | 100%⚠ | 62% | 1.00 | 26 | 17 | 24 | 4 | 0 | 26 | 26 | QUEUED |
+| 194 | programming-languages | go-generics-interview | 26 | CRIT | 14/12/0/0 | 100%⚠ | 96%⚠ | 58% | 1.00 | 26 | 19 | 24 | 8 | 0 | 26 | 26 | QUEUED |
+| 195 | messaging | pulsar-interview | 22 | CRIT | 14/8/0/0 | 100%⚠ | 100%⚠ | 68% | 1.00 | 22 | 17 | 22 | 5 | 0 | 22 | 22 | QUEUED |
+| 196 | api | api-versioning-interview | 20 | CRIT | 14/6/0/0 | 100%⚠ | 85%⚠ | 90% | 1.00 | 20 | 20 | 19 | 4 | 0 | 20 | 20 | QUEUED |
+| 197 | leadership | estimations-planning-interview | 20 | CRIT | 14/6/0/0 | 100%⚠ | 95%⚠ | 75% | 1.00 | 20 | 17 | 20 | 6 | 0 | 20 | 20 | QUEUED |
+| 198 | api | rest-maturity-interview | 17 | CRIT | 14/3/0/0 | 100%⚠ | 88%⚠ | 76% | 1.00 | 17 | 15 | 16 | 3 | 0 | 17 | 17 | QUEUED |
+| 199 | frameworks | spring-data-jdbc-interview | 16 | CRIT | 14/2/0/0 | 100%⚠ | 100%⚠ | 94% | 1.00 | 16 | 15 | 15 | 3 | 0 | 16 | 16 | QUEUED |
+| 200 | frameworks | spring-integration-interview | 15 | CRIT | 14/1/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 15 | 15 | 14 | 4 | 0 | 15 | 15 | QUEUED |
+| 201 | programming-languages | java-virtual-threads-interview | 15 | CRIT | 14/1/0/0 | 100%⚠ | 100%⚠ | 87% | 1.00 | 15 | 15 | 14 | 1 | 0 | 15 | 15 | QUEUED |
+| 202 | frameworks | ktor-interview | 32 | CRIT | 13/19/0/0 | 100%⚠ | 97%⚠ | 38% | 1.00 | 32 | 24 | 29 | 8 | 0 | 32 | 32 | QUEUED |
+| 203 | behavioral | leadership-stories-interview | 22 | CRIT | 13/9/0/0 | 100%⚠ | 100%⚠ | 91% | 1.00 | 22 | 20 | 20 | 5 | 0 | 22 | 22 | QUEUED |
+| 204 | behavioral | star-method-interview | 22 | CRIT | 13/9/0/0 | 100%⚠ | 96%⚠ | 86% | 1.00 | 22 | 20 | 18 | 4 | 0 | 22 | 22 | QUEUED |
+| 205 | frameworks | spring-vault-interview | 15 | CRIT | 13/2/0/0 | 100%⚠ | 93%⚠ | 93% | 1.00 | 15 | 15 | 14 | 2 | 0 | 15 | 15 | QUEUED |
+| 206 | testing | selenium-interview | 15 | CRIT | 13/2/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 15 | 15 | 14 | 1 | 0 | 15 | 15 | QUEUED |
+| 207 | devops | docker-interview | 41 | CRIT | 12/29/0/0 | 100%⚠ | 90%⚠ | 34% | 1.00 | 41 | 17 | 33 | 5 | 0 | 41 | 41 | QUEUED |
+| 208 | databases | clickhouse-interview | 28 | CRIT | 12/16/0/0 | 100%⚠ | 100%⚠ | 57% | 1.00 | 28 | 21 | 25 | 7 | 0 | 28 | 28 | QUEUED |
+| 209 | testing | property-based-testing-interview | 21 | CRIT | 12/9/0/0 | 100%⚠ | 90%⚠ | 62% | 1.00 | 21 | 16 | 17 | 8 | 0 | 21 | 21 | QUEUED |
+| 210 | programming-languages | kotlin-flow-interview | 17 | CRIT | 12/5/0/0 | 100%⚠ | 94%⚠ | 65% | 1.00 | 17 | 14 | 16 | 4 | 0 | 17 | 17 | QUEUED |
+| 211 | frameworks | spring-graphql-interview | 15 | CRIT | 12/3/0/0 | 100%⚠ | 100%⚠ | 80% | 1.00 | 15 | 14 | 15 | 3 | 0 | 14 | 15 | QUEUED |
+| 212 | frameworks | spring-kafka-interview | 15 | CRIT | 12/3/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 15 | 15 | 13 | 5 | 0 | 15 | 15 | QUEUED |
+| 213 | monitoring | prometheus-grafana-interview | 39 | CRIT | 11/19/8/0 | 97%⚠ | 85%⚠ | 36% | 0.98 | 36 | 18 | 18 | 2 | 0 | 30 | 38 | QUEUED |
+| 214 | ai-ml | llm-basics-interview | 30 | CRIT | 11/14/4/0 | 100%⚠ | 87%⚠ | 53% | 1.00 | 29 | 18 | 14 | 4 | 0 | 22 | 29 | QUEUED |
+| 215 | architecture | dns-interview | 30 | CRIT | 11/6/9/2 | 93%⚠ | 80%⚠ | 70% | 0.97 | 21 | 23 | 19 | 5 | 1 | 10 | 28 | QUEUED |
+| 216 | reactive | reactive-testing-interview | 28 | CRIT | 11/17/0/0 | 100%⚠ | 82%⚠ | 68% | 1.00 | 28 | 23 | 17 | 4 | 0 | 26 | 28 | QUEUED |
+| 217 | code-quality | code-coverage-interview | 25 | CRIT | 11/14/0/0 | 100%⚠ | 92%⚠ | 68% | 1.00 | 25 | 20 | 20 | 5 | 0 | 25 | 25 | QUEUED |
+| 218 | system-design | design-web-crawler-interview | 26 | CRIT | 11/10/1/1 | 92%⚠ | 100%⚠ | 46% | 0.96 | 23 | 13 | 17 | 3 | 0 | 21 | 23 | QUEUED |
+| 219 | frameworks | spring-retry-interview | 17 | CRIT | 11/6/0/0 | 100%⚠ | 100%⚠ | 71% | 1.00 | 17 | 12 | 17 | 4 | 0 | 17 | 17 | QUEUED |
+| 220 | frameworks | spring-messaging-interview | 15 | CRIT | 11/4/0/0 | 100%⚠ | 100%⚠ | 73% | 1.00 | 15 | 13 | 15 | 2 | 0 | 15 | 15 | QUEUED |
+| 221 | frameworks | spring-state-machine-interview | 15 | CRIT | 11/4/0/0 | 100%⚠ | 100%⚠ | 73% | 1.00 | 15 | 13 | 15 | 4 | 0 | 15 | 15 | QUEUED |
+| 222 | frameworks | spring-transaction-interview | 15 | CRIT | 11/4/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 15 | 14 | 12 | 5 | 0 | 15 | 15 | QUEUED |
+| 223 | databases | hibernate-interview | 50 | CRIT | 10/27/6/1 | 92%⚠ | 76%⚠ | 36% | 0.98 | 44 | 23 | 15 | 6 | 0 | 38 | 44 | QUEUED |
+| 224 | system-design | design-search-interview | 30 | CRIT | 10/13/6/1 | 73%⚠ | 97%⚠ | 67% | 0.93 | 21 | 26 | 25 | 15 | 9 | 1 | 30 | QUEUED |
+| 225 | programming-languages | java-lombok-interview | 27 | CRIT | 10/16/1/0 | 100%⚠ | 89%⚠ | 52% | 1.00 | 27 | 19 | 19 | 9 | 0 | 26 | 27 | QUEUED |
+| 226 | reactive | reactive-patterns-interview | 26 | CRIT | 10/16/0/0 | 100%⚠ | 92%⚠ | 81% | 1.00 | 26 | 22 | 13 | 1 | 0 | 25 | 26 | QUEUED |
+| 227 | algorithms | algorithms-interview | 16 | CRIT | 10/6/0/0 | 100%⚠ | 94%⚠ | 69% | 1.00 | 16 | 15 | 16 | 9 | 0 | 16 | 16 | QUEUED |
+| 228 | frameworks | spring-testing-interview | 16 | CRIT | 10/5/0/1 | 94%⚠ | 94%⚠ | 69% | 0.95 | 15 | 14 | 13 | 5 | 0 | 15 | 16 | QUEUED |
+| 229 | programming-languages | java-reflection-interview | 16 | CRIT | 10/6/0/0 | 100%⚠ | 100%⚠ | 62% | 1.00 | 16 | 13 | 16 | 3 | 0 | 16 | 16 | QUEUED |
+| 230 | jvm | graalvm-native-interview | 15 | CRIT | 10/5/0/0 | 100%⚠ | 100%⚠ | 73% | 1.00 | 15 | 14 | 14 | 4 | 0 | 15 | 15 | QUEUED |
+| 231 | programming-languages | java-optional-interview | 15 | CRIT | 10/5/0/0 | 100%⚠ | 100%⚠ | 67% | 1.00 | 15 | 14 | 15 | 7 | 0 | 15 | 15 | QUEUED |
+| 232 | programming-languages | java-functional-interface-interview | 14 | CRIT | 10/4/0/0 | 100%⚠ | 100%⚠ | 79% | 1.00 | 14 | 12 | 14 | 4 | 0 | 14 | 14 | QUEUED |
+| 233 | devops | git-interview | 43 | CRIT | 9/12/19/1 | 91%⚠ | 84%⚠ | 63% | 0.97 | 25 | 31 | 18 | 11 | 0 | 8 | 41 | QUEUED |
+| 234 | api | api-design-best-practices-interview | 30 | CRIT | 9/10/11/0 | 97%⚠ | 83%⚠ | 57% | 0.99 | 26 | 18 | 14 | 7 | 0 | 21 | 30 | QUEUED |
+| 235 | code-quality | code-smells-interview | 27 | CRIT | 9/18/0/0 | 100%⚠ | 74%⚠ | 48% | 1.00 | 27 | 15 | 15 | 6 | 0 | 26 | 27 | QUEUED |
+| 236 | leadership | mentoring-interview | 25 | CRIT | 9/4/6/2 | 40% | 84%⚠ | 0% | 0.70 | 6 | 12 | 4 | 20 | 11 | 0 | 21 | QUEUED |
+| 237 | frameworks | spring-validation-interview | 16 | CRIT | 9/7/0/0 | 100%⚠ | 100%⚠ | 69% | 1.00 | 16 | 13 | 16 | 3 | 0 | 15 | 16 | QUEUED |
+| 238 | databases | hibernate-relationships-interview | 15 | CRIT | 9/6/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 15 | 9 | 15 | 8 | 0 | 15 | 15 | QUEUED |
+| 239 | frameworks | spring-boot-3-migration-interview | 15 | CRIT | 9/6/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 15 | 12 | 15 | 1 | 0 | 15 | 15 | QUEUED |
+| 240 | frameworks | spring-r2dbc-interview | 15 | CRIT | 9/6/0/0 | 100%⚠ | 100%⚠ | 53% | 1.00 | 15 | 10 | 14 | 2 | 0 | 15 | 15 | QUEUED |
+| 241 | programming-languages | java-annotations-interview | 43 | CRIT | 8/28/4/2 | 98%⚠ | 79%⚠ | 40% | 0.99 | 38 | 20 | 21 | 5 | 0 | 34 | 42 | QUEUED |
+| 242 | programming-languages | java-exceptions-interview | 42 | CRIT | 8/32/2/0 | 98%⚠ | 71%⚠ | 19% | 0.99 | 42 | 26 | 21 | 8 | 1 | 41 | 42 | QUEUED |
+| 243 | programming-languages | rust-interview | 33 | CRIT | 8/3/18/1 | 70%⚠ | 61%⚠ | 61% | 0.86 | 7 | 28 | 9 | 11 | 5 | 2 | 30 | QUEUED |
+| 244 | frameworks | spring-cache-interview | 18 | CRIT | 8/10/0/0 | 100%⚠ | 89%⚠ | 61% | 1.00 | 18 | 12 | 14 | 6 | 0 | 15 | 18 | QUEUED |
+| 245 | frameworks | spring-ai-interview | 18 | CRIT | 8/7/1/0 | 89%⚠ | 94%⚠ | 50% | 0.96 | 15 | 12 | 14 | 3 | 0 | 15 | 16 | QUEUED |
+| 246 | databases | hibernate-caching-interview | 15 | CRIT | 8/7/0/0 | 100%⚠ | 100%⚠ | 67% | 1.00 | 15 | 14 | 12 | 5 | 0 | 15 | 15 | QUEUED |
+| 247 | frameworks | spring-async-interview | 15 | CRIT | 8/6/1/0 | 100%⚠ | 93%⚠ | 67% | 1.00 | 14 | 12 | 11 | 2 | 0 | 12 | 15 | QUEUED |
+| 248 | frameworks | spring-session-interview | 15 | CRIT | 8/7/0/0 | 100%⚠ | 93%⚠ | 60% | 1.00 | 15 | 11 | 13 | 1 | 0 | 15 | 15 | QUEUED |
+| 249 | databases | sql-interview | 53 | CRIT | 7/19/14/6 | 91%⚠ | 55%⚠ | 24% | 0.97 | 37 | 23 | 14 | 13 | 0 | 20 | 46 | QUEUED |
+| 250 | testing | test-automation-interview | 50 | CRIT | 7/19/14/3 | 34% | 72%⚠ | 58% | 0.68 | 20 | 35 | 24 | 10 | 6 | 12 | 43 | QUEUED |
+| 251 | code-quality | code-review-interview | 40 | CRIT | 7/7/15/7 | 55%⚠ | 62%⚠ | 42% | 0.74 | 12 | 29 | 18 | 8 | 5 | 3 | 36 | QUEUED |
+| 252 | behavioral | behavioral-interview | 38 | CRIT | 7/13/11/2 | 92%⚠ | 76%⚠ | 34% | 0.97 | 28 | 22 | 9 | 5 | 0 | 17 | 33 | QUEUED |
+| 253 | programming-languages | typescript-interview | 33 | CRIT | 7/18/5/1 | 97%⚠ | 67%⚠ | 46% | 0.98 | 30 | 19 | 11 | 10 | 0 | 22 | 31 | QUEUED |
+| 254 | system-design | design-dropbox-interview | 30 | CRIT | 7/16/6/0 | 100%⚠ | 93%⚠ | 80% | 1.00 | 12 | 27 | 24 | 11 | 1 | 4 | 29 | QUEUED |
+| 255 | system-design | design-typeahead-interview | 30 | CRIT | 7/12/9/1 | 27% | 90%⚠ | 60% | 0.55 | 11 | 20 | 24 | 9 | 7 | 2 | 29 | QUEUED |
+| 256 | programming-languages | java-string-interview | 39 | CRIT | 7/7/9/5 | 69%⚠ | 64%⚠ | 36% | 0.90 | 13 | 22 | 10 | 9 | 3 | 7 | 28 | QUEUED |
+| 257 | ai-ml | function-calling-interview | 30 | CRIT | 7/12/7/0 | 63%⚠ | 93%⚠ | 57% | 0.89 | 21 | 20 | 16 | 6 | 2 | 13 | 26 | QUEUED |
+| 258 | behavioral | failure-stories-interview | 22 | CRIT | 7/13/2/0 | 100%⚠ | 86%⚠ | 64% | 1.00 | 22 | 15 | 8 | 4 | 0 | 18 | 22 | QUEUED |
+| 259 | frameworks | spring-scheduling-interview | 16 | CRIT | 7/5/4/0 | 100%⚠ | 94%⚠ | 69% | 1.00 | 13 | 14 | 9 | 3 | 0 | 4 | 16 | QUEUED |
+| 260 | testing | junit-interview | 15 | CRIT | 7/8/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 15 | 10 | 12 | 2 | 0 | 14 | 15 | QUEUED |
+| 261 | testing | rest-assured-interview | 15 | CRIT | 7/8/0/0 | 100%⚠ | 100%⚠ | 53% | 1.00 | 15 | 12 | 15 | 1 | 0 | 14 | 15 | QUEUED |
+| 262 | frameworks | spring-rest-client-interview | 13 | CRIT | 7/5/1/0 | 100%⚠ | 92%⚠ | 46% | 1.00 | 13 | 10 | 12 | 1 | 0 | 12 | 13 | QUEUED |
+| 263 | programming-languages | java-concurrency-interview | 56 | CRIT | 6/16/23/4 | 89%⚠ | 55%⚠ | 59% | 0.96 | 36 | 38 | 7 | 9 | 1 | 6 | 49 | QUEUED |
+| 264 | programming-languages | java-conditional-statements-interview | 42 | CRIT | 6/14/12/7 | 57%⚠ | 57%⚠ | 24% | 0.70 | 29 | 23 | 17 | 8 | 0 | 17 | 39 | QUEUED |
+| 265 | algorithms | graphs-interview | 34 | CRIT | 6/13/12/1 | 74%⚠ | 76%⚠ | 82% | 0.89 | 6 | 29 | 20 | 13 | 4 | 1 | 32 | QUEUED |
+| 266 | programming-languages | java-records-interview | 15 | CRIT | 6/9/0/0 | 100%⚠ | 93%⚠ | 60% | 1.00 | 15 | 9 | 11 | 2 | 0 | 15 | 15 | QUEUED |
+| 267 | programming-languages | kotlin-sealed-classes-interview | 15 | CRIT | 6/9/0/0 | 100%⚠ | 67%⚠ | 67% | 1.00 | 15 | 11 | 6 | 3 | 0 | 14 | 15 | QUEUED |
+| 268 | cloud | aws-interview | 34 | CRIT | 5/3/13/11 | 9% | 41% | 38% | 0.42 | 6 | 29 | 6 | 10 | 6 | 0 | 32 | QUEUED |
+| 269 | ai-ml | rag-interview | 30 | CRIT | 5/10/10/5 | 43% | 93%⚠ | 47% | 0.78 | 2 | 22 | 15 | 16 | 9 | 0 | 30 | QUEUED |
+| 270 | monitoring | loki-grafana-interview | 28 | CRIT | 5/10/9/2 | 43% | 86%⚠ | 57% | 0.61 | 1 | 22 | 17 | 7 | 5 | 0 | 26 | QUEUED |
+| 271 | leadership | conflict-resolution-interview | 20 | CRIT | 5/15/0/0 | 100%⚠ | 95%⚠ | 45% | 1.00 | 20 | 12 | 16 | 6 | 0 | 20 | 20 | QUEUED |
+| 272 | frameworks | spring-events-interview | 16 | CRIT | 5/11/0/0 | 100%⚠ | 94%⚠ | 62% | 1.00 | 16 | 12 | 11 | 3 | 0 | 16 | 16 | QUEUED |
+| 273 | frameworks | spring-modulith-interview | 15 | CRIT | 5/10/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 15 | 10 | 9 | 3 | 0 | 14 | 15 | QUEUED |
+| 274 | programming-languages | kotlin-value-classes-interview | 15 | CRIT | 5/7/2/0 | 93%⚠ | 73%⚠ | 47% | 0.97 | 13 | 12 | 6 | 4 | 0 | 10 | 14 | QUEUED |
+| 275 | algorithms | two-pointers-sliding-window-interview | 33 | CRIT | 4/18/11/0 | 61%⚠ | 97%⚠ | 76% | 0.86 | 19 | 29 | 26 | 10 | 1 | 3 | 33 | QUEUED |
+| 276 | code-quality | refactoring-patterns-interview | 42 | CRIT | 4/8/15/3 | 36% | 50% | 48% | 0.68 | 2 | 25 | 6 | 10 | 8 | 0 | 30 | QUEUED |
+| 277 | system-design | design-google-maps-interview | 30 | CRIT | 4/15/8/1 | 70%⚠ | 87%⚠ | 73% | 0.80 | 6 | 26 | 20 | 7 | 4 | 0 | 28 | QUEUED |
+| 278 | testing | chaos-engineering-interview | 44 | CRIT | 3/8/24/3 | 93%⚠ | 68%⚠ | 59% | 0.97 | 9 | 31 | 14 | 8 | 0 | 1 | 38 | QUEUED |
+| 279 | frameworks | spring-boot-interview | 43 | CRIT | 3/13/16/2 | 51%⚠ | 86%⚠ | 54% | 0.77 | 11 | 30 | 16 | 4 | 1 | 5 | 34 | QUEUED |
+| 280 | jvm | jvm-interview | 40 | CRIT | 3/11/14/5 | 88%⚠ | 57%⚠ | 25% | 0.96 | 26 | 19 | 11 | 7 | 0 | 12 | 33 | QUEUED |
+| 281 | architecture | ddd-interview | 38 | CRIT | 3/11/16/1 | 76%⚠ | 53%⚠ | 63% | 0.90 | 3 | 28 | 12 | 10 | 6 | 0 | 31 | QUEUED |
+| 282 | ai-ml | ai-safety-guardrails-interview | 32 | CRIT | 3/13/12/2 | 31% | 88%⚠ | 56% | 0.69 | 5 | 24 | 20 | 9 | 5 | 1 | 30 | QUEUED |
+| 283 | devops | linux-interview | 33 | CRIT | 3/18/9/0 | 73%⚠ | 79%⚠ | 64% | 0.88 | 6 | 25 | 26 | 9 | 4 | 0 | 30 | QUEUED |
+| 284 | cloud | aws-lambda-interview | 32 | CRIT | 3/9/13/4 | 38% | 81%⚠ | 38% | 0.69 | 6 | 20 | 14 | 14 | 7 | 0 | 29 | QUEUED |
+| 285 | frameworks | vertx-interview | 31 | CRIT | 3/7/14/4 | 52%⚠ | 84%⚠ | 48% | 0.72 | 13 | 22 | 12 | 5 | 3 | 0 | 28 | QUEUED |
+| 286 | cloud | azure-interview | 25 | CRIT | 3/14/6/0 | 40% | 96%⚠ | 72% | 0.78 | 6 | 22 | 20 | 4 | 2 | 0 | 23 | QUEUED |
+| 287 | behavioral | culture-fit-interview | 22 | CRIT | 3/19/0/0 | 100%⚠ | 91%⚠ | 77% | 1.00 | 22 | 17 | 8 | 10 | 0 | 22 | 22 | QUEUED |
+| 288 | architecture | strangler-fig-interview | 18 | CRIT | 3/14/1/0 | 100%⚠ | 67%⚠ | 61% | 1.00 | 18 | 15 | 3 | 4 | 0 | 13 | 18 | QUEUED |
+| 289 | messaging | redpanda-interview | 20 | CRIT | 3/9/5/1 | 90%⚠ | 80%⚠ | 20% | 0.97 | 17 | 7 | 7 | 7 | 0 | 14 | 18 | QUEUED |
+| 290 | programming-languages | java-pattern-matching-interview | 15 | CRIT | 3/12/0/0 | 100%⚠ | 80%⚠ | 47% | 1.00 | 15 | 8 | 8 | 1 | 0 | 13 | 15 | QUEUED |
+| 291 | frameworks | spring-webflux-interview | 43 | CRIT | 2/9/24/4 | 58%⚠ | 77%⚠ | 60% | 0.77 | 5 | 31 | 18 | 6 | 2 | 0 | 39 | QUEUED |
+| 292 | system-design | design-uber-interview | 30 | CRIT | 2/18/10/0 | 0% | 97%⚠ | 63% | 0.57 | 12 | 23 | 25 | 7 | 3 | 0 | 30 | QUEUED |
+| 293 | ai-ml | agentic-patterns-interview | 30 | CRIT | 2/8/16/3 | 20% | 93%⚠ | 63% | 0.80 | 26 | 21 | 14 | 4 | 2 | 2 | 29 | QUEUED |
+| 294 | ai-ml | code-agents-interview | 31 | CRIT | 2/8/12/6 | 58%⚠ | 77%⚠ | 45% | 0.86 | 15 | 18 | 16 | 2 | 0 | 3 | 28 | QUEUED |
+| 295 | leadership | tech-interviewing-interview | 20 | CRIT | 2/17/0/0 | 100%⚠ | 85%⚠ | 15% | 1.00 | 19 | 8 | 6 | 3 | 0 | 18 | 19 | QUEUED |
+| 296 | databases | hibernate-jpql-criteria-interview | 16 | CRIT | 2/8/4/1 | 88%⚠ | 75%⚠ | 44% | 0.94 | 13 | 12 | 2 | 6 | 1 | 4 | 15 | QUEUED |
+| 297 | programming-languages | kotlin-spring-interview | 15 | CRIT | 2/5/6/0 | 100%⚠ | 80%⚠ | 20% | 1.00 | 12 | 5 | 6 | 2 | 0 | 9 | 13 | QUEUED |
+| 298 | architecture | event-driven-patterns-interview | 40 | CRIT | 1/5/15/8 | 62%⚠ | 62%⚠ | 38% | 0.81 | 11 | 19 | 6 | 10 | 2 | 2 | 29 | QUEUED |
+| 299 | data-engineering | apache-airflow-interview | 28 | CRIT | 1/16/8/1 | 82%⚠ | 96%⚠ | 82% | 0.93 | 4 | 25 | 19 | 5 | 0 | 1 | 26 | QUEUED |
+| 300 | architecture | reverse-proxy-interview | 30 | CRIT | 1/16/4/4 | 47% | 80%⚠ | 53% | 0.72 | 7 | 24 | 19 | 11 | 2 | 0 | 25 | QUEUED |
+| 301 | cloud | gcp-interview | 28 | CRIT | 1/7/10/3 | 36% | 89%⚠ | 50% | 0.71 | 3 | 15 | 9 | 4 | 2 | 0 | 21 | QUEUED |
+| 302 | system-design | design-ecommerce-delivery-interview | 36 | HIGH | 0/5/16/8 | 78%⚠ | 75%⚠ | 33% | 0.91 | 2 | 21 | 5 | 8 | 3 | 0 | 29 | QUEUED |
+| 303 | devops | kubernetes-interview | 45 | HIGH | 0/8/12/6 | 56%⚠ | 67%⚠ | 33% | 0.83 | 9 | 16 | 9 | 4 | 0 | 0 | 26 | QUEUED |
+| 304 | data-engineering | data-warehousing-interview | 30 | HIGH | 0/6/16/1 | 33% | 63%⚠ | 60% | 0.65 | 0 | 22 | 10 | 4 | 0 | 0 | 23 | QUEUED |
+| 305 | cloud | cloud-native-patterns-interview | 30 | HIGH | 0/8/9/4 | 53%⚠ | 57%⚠ | 43% | 0.72 | 1 | 17 | 9 | 6 | 2 | 0 | 21 | QUEUED |
+| 306 | messaging | kafka-interview | 50 | HIGH | 0/3/6/2 | 70%⚠ | 62%⚠ | 0% | 0.85 | 9 | 0 | 2 | 2 | 0 | 1 | 11 | QUEUED |
+| 307 | programming-languages | java-completable-future-interview | 15 | HIGH | 0/2/6/3 | 80%⚠ | 33% | 7% | 0.90 | 6 | 4 | 1 | 3 | 1 | 0 | 11 | QUEUED |
+| 308 | testing | cucumber-bdd-interview | 15 | HIGH | 0/1/0/0 | 33% | 73%⚠ | 0% | 0.72 | 0 | 1 | 0 | 1 | 1 | 0 | 1 | QUEUED |
+| 309 | programming-languages | java-22-25-interview | 22 | MEDI | 0/0/4/3 | 46% | 41% | 4% | 0.76 | 1 | 5 | 2 | 1 | 0 | 0 | 7 | QUEUED |
+| 310 | jvm | crac-interview | 16 | MEDI | 0/0/1/3 | 38% | 62%⚠ | 6% | 0.64 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | QUEUED |
+| 311 | ai-ml | langchain4j-interview | 18 | MEDI | 0/0/2/1 | 28% | 56%⚠ | 0% | 0.61 | 1 | 1 | 1 | 2 | 0 | 0 | 3 | QUEUED |
+| 312 | databases | jooq-interview | 18 | MEDI | 0/0/1/1 | 33% | 78%⚠ | 0% | 0.79 | 2 | 0 | 0 | 0 | 0 | 1 | 2 | QUEUED |
+| 313 | testing | archunit-interview | 15 | MEDI | 0/0/1/0 | 20% | 87%⚠ | 0% | 0.58 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | QUEUED |
+| 314 | messaging | apache-camel-interview | 16 | LOW | 0/0/0/1 | 12% | 75%⚠ | 0% | 0.62 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | QUEUED |
+| 315 | messaging | jms-activemq-interview | 16 | LOW | 0/0/0/1 | 19% | 88%⚠ | 0% | 0.59 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | QUEUED |
+| 316 | performance | jmh-microbenchmarking-interview | 18 | NONE | 0/0/0/0 | 22% | 78%⚠ | 0% | 0.54 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | QUEUED |
+| 317 | programming-languages | kotlin-testing-interview | 20 | NONE | 0/0/0/0 | 35% | 85%⚠ | 0% | 0.61 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | QUEUED |
+| 318 | programming-languages | scala-effects-interview | 16 | NONE | 0/0/0/0 | 25% | 88%⚠ | 0% | 0.53 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | QUEUED |
 
 ## 8. Прогресс (round 3 — Plausibility, старт 2026-07-01)
 
@@ -421,13 +443,16 @@ Severity = ParityФлаги + 2×Caric-блоки + (⚠CORRECT_LONGEST_RATE ? 5
 `kubernetes` 00bf1489). Под объединённым баром Option Parity + **Plausibility Parity** файлы переоткрыты.
 
 - ✅ Plausibility Parity + анти-паттерн **Inflated Caricature Distractor** закреплены в `mcq-quality-fixer` и `interview-writer`.
-- ✅ Детектор `scripts/audit-mcq-parity.py --caricature` добавлен; прогнан по корпусу (2204 блока-кандидата в 308 файлах).
-- ⏳ Идёт workflow `wn86pui6x` (round 2 parity): `ai-safety-guardrails` (issues→0), `spring-webflux`, `test-automation` — добиваем length-tell, на завершении harvest+commit, затем Plausibility-проход.
-- ⏳ Следующая цель round 3: `leadership/mentoring-interview` (28 caric-маркеров в 25 блоках — приоритетный negative example), далее soft-skill/leadership-файлы, затем worst-first по §7.
+- ✅ `scripts/audit-mcq-parity.py` переписан в **audit v2** (commit 92fb5d46): severity LOW/MED/HIGH/CRIT, technical-density, structural-symmetry, caricature v2 (группы+сниппет), INFLATED_CARICATURE, SHORT_DISTR v2, file-level rate'ы, `--json-report`/`--markdown-report`/`--fail-on`/`--selftest`.
+- ✅ §7 пересобран **детальным re-аудитом** (audit v2): per-signal разбивка (LEN/STR/DEN/CAR/INF/SHRT по блокам), severity-распределение C/H/M/L, file-rate'ы long%/tech%/ustr%/rank. Все статусы → QUEUED.
+- ✅ Закоммичено в round 3 (workflow `wn86pui6x`, fidelity_ok+parity_ok): `ai-safety-guardrails` (ad6ca9c7, 32 бл.), `spring-webflux` (b701ac76, 43 бл.), `test-automation` (5f9d63fb, 50 бл.) — length-tell снят, упали в низ таблицы (#250-291).
+- ⏳ Следующая цель round 3: `leadership/mentoring-interview` (long40%/LEN6, но **CAR20/INF11** — приоритетный negative example caricature), далее soft-skill/leadership, затем worst-first CRITICAL по §7 (cassandra/spring-mvc/contract-testing/redis…).
 
-**Честно:** round 3 объединяет две линзы. Length/structure-tell (ParityФл) и caricature-tell (Caric-бл)
-чинятся вместе: дистрактор поднимается до паритета по длине/форме И остаётся правдоподобной ошибочной
-моделью (без токсичных/категоричных маркеров). «Все сидеры исправлены» — цель цикла, не одного тика.
+**Честно:** round 3 объединяет две линзы. Под объединённым баром 301/318 файлов = CRITICAL (correct
+выделяется по длине+структуре+плотности сразу). Length/structure-tell и caricature-tell чинятся вместе:
+дистрактор поднимается до паритета по форме И остаётся правдоподобной ошибочной моделью (без токсичных
+маркеров). Round-2-фиксы убрали length-tell (низкий LEN/Σ), но НЕ caricature (CAR/INF) — это round-3
+остаток. «Все сидеры исправлены» — цель цикла, не одного тика.
 
 ## 9. Координация
 
