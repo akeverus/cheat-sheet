@@ -38,6 +38,21 @@
 
 Severity блока: LOW / MEDIUM / HIGH / CRITICAL.
 
+Человекочитаемость русской прозы (отдельная ось — text + sections каждой опции)
+------------------------------------------------------------------------------
+Не про «угадываемость», а про качество текста для живого читателя-человека.
+Срабатывает на ответах, которые тяжело/неприятно читать по-русски:
+  LOW_CYRILLIC   доля кириллицы среди букв (после снятия `code`) < 0.5 → непереведённая
+                 англоязычная проза (термины в backticks из расчёта исключаются)
+  ENGLISH_RUN    ≥4 латинских слов подряд вне backticks И со служебным англ. словом
+                 (the/is/of/to…) → непереведённое английское предложение, не имя продукта
+  FILLER_PHRASE  вода/academic-tone из стоп-листа («важно отметить», «стоит упомянуть»,
+                 «необходимо понимать», «в этом разделе»…)
+  LONG_SENTENCE  предложение длиннее 45 слов → стена текста / run-on
+  PUNCT          склейка/пунктуация: нет пробела после знака, двойной пробел, пробел перед знаком
+Readability severity блока: LOW / MEDIUM / HIGH (язык важнее косметики). Ось независима от
+parity-severity — не меняет существующие parity-флаги, считается и отображается отдельно.
+
 Метрики на уровне файла
 -----------------------
   correct_longest_rate, correct_shortest_rate, correct_most_technical_rate,
@@ -49,6 +64,7 @@ Severity блока: LOW / MEDIUM / HIGH / CRITICAL.
   python3 scripts/audit-mcq-parity.py --top 25
   python3 scripts/audit-mcq-parity.py -v
   python3 scripts/audit-mcq-parity.py --caricature
+  python3 scripts/audit-mcq-parity.py --readability
   python3 scripts/audit-mcq-parity.py --json-report reports/mcq-parity.json
   python3 scripts/audit-mcq-parity.py --markdown-report reports/mcq-parity.md
   python3 scripts/audit-mcq-parity.py --fail-on critical
@@ -122,6 +138,196 @@ CARICATURE_GROUPS = {
 COMPILED_CARICATURE = {
     g: (w, re.compile("|".join(pats), re.IGNORECASE)) for g, (w, pats) in CARICATURE_GROUPS.items()
 }
+
+# ---- человекочитаемость русской прозы ---------------------------------------
+# Read-only эвристики: находят кандидатов, где ответ плохо читается по-русски —
+# непереведённый английский, вода/academic-tone, run-on предложения, склейка пунктуации.
+CYR_LETTER = re.compile(r"[а-яёА-ЯЁ]")
+LAT_LETTER = re.compile(r"[A-Za-z]")
+BACKTICK_SPAN = re.compile(r"`[^`]*`")
+URL_RE = re.compile(r"https?://\S+")
+LAT_WORD = re.compile(r"[A-Za-z][A-Za-z'’\-]*")
+QUOTE_SPAN = re.compile(r"«[^»]*»|\"[^\"]*\"|“[^”]*”")   # намеренные цитаты — из языка-замера исключаем
+PAREN_SPAN = re.compile(r"\([^)]*\)")                    # скобки — обычно расшифровка акронима/глосс (DORA, SQALE)
+DOUBLE_SPACE_RE = re.compile(r"\S {2,}\S")               # двойной+ пробел внутри текста
+SPACE_BEFORE_PUNCT_RE = re.compile(r"[A-Za-zА-Яа-яёЁ]\s[,.;!?](?:\s|$)")  # пробел ПЕРЕД знаком после слова
+
+# Калибровано по адверс-выборке (см. wf_rdb_calibrate): пороги выставлены на ВЫСОКУЮ ТОЧНОСТЬ —
+# корпус легитимно code-switch'ит (имена продуктов/типов/эндпоинтов, term-фразы «single point of
+# failure»), поэтому сырая доля латиницы/длина run наказывали нормальные русские шпаргалки.
+# Истинное срабатывание = непереведённая английская ПРОЗА со служебными словами, а не цепочка имён.
+CYR_RATIO_THR = 0.5         # доля кириллицы среди букв (после снятия кода/цитат/скобок) ниже → кандидат
+MIN_LETTERS_FOR_RATIO = 16  # не судить о языке слишком коротких фрагментов
+MIN_LAT_FOR_RATIO = 12      # и только если латиницы реально много (не один термин)
+LOW_CYR_MIN_STOP = 3        # LOW_CYRILLIC только при ≥3 строчных англ. служебных (реальная англ. проза)
+ENGLISH_RUN_THR = 5         # ≥N подряд латинских слов в run'е
+ENGLISH_RUN_MIN_STOP = 2    # И ≥2 строчных служебных В ПРЕДЕЛАХ run'а (отсекает «single point of failure», расшифровки)
+LONG_SENTENCE_WORDS = 45    # предложение длиннее → кандидат на run-on (если это НЕ структурное перечисление)
+
+# служебные англ. слова — их наличие в run'е отличает предложение от цепочки имён продуктов
+ENGLISH_STOP = {
+    "the", "a", "an", "is", "are", "was", "were", "of", "to", "and", "for", "with",
+    "that", "this", "in", "on", "it", "as", "by", "or", "be", "from", "you", "your",
+    "we", "if", "not", "but", "can", "will", "should", "would", "which", "when", "how",
+    "what", "at", "its", "their", "they", "than", "then", "so", "do", "does", "has", "have",
+}
+
+# FILLER — только заведомо ПУСТЫЕ academic-зачины (узко, по калибровке: русское «важно понимать, что X»
+# почти всегда несёт смысловое придаточное, в отличие от англо-«it is important to note»).
+FILLER_PHRASES = [
+    "важно отметить", "стоит отметить", "следует отметить", "нельзя не отметить",
+    "хотелось бы отметить", "необходимо отметить", "стоит заметить", "стоит упомянуть",
+    "давайте рассмотрим", "в этом разделе", "в данном разделе", "как мы знаем", "как известно,",
+]
+FILLER_RE = re.compile("|".join(re.escape(p) for p in FILLER_PHRASES), re.IGNORECASE)
+# поля, где «важно понимать, что…»/прямая речь — норма; FILLER там не считаем
+FILLER_SKIP_KEYS = {"source_of_confusion", "edge_cases", "when_to_apply", "if_it_were_true"}
+# маркеры структурного перечисления — «длинное предложение» с ними читается как список, не run-on
+ENUM_NUMBERING = re.compile(r"\(\d\)|\b\d\)|\bшаг\s*\d|\bэтап\s*\d", re.IGNORECASE)
+
+
+def _strip_code(t):
+    """Убрать `code`-спаны и URL — они латинские по природе и не должны судить о языке прозы."""
+    t = BACKTICK_SPAN.sub(" ", t or "")
+    t = URL_RE.sub(" ", t)
+    return t
+
+
+def _mask_code(t):
+    """Заместить `code`-спаны и URL одним сентинелом «·» БЕЗ изменения пробелов вокруг —
+    для проверок пунктуации (двойной пробел / пробел перед знаком)."""
+    t = BACKTICK_SPAN.sub("·", t or "")
+    t = URL_RE.sub("·", t)
+    return t
+
+
+def _looks_like_enumeration(seg):
+    """«Длинное предложение» — на деле структурный список? (двоеточие+разделители / нумерация /
+    параллелизм). Такой текст читается по пунктам, не run-on — гасим LONG_SENTENCE."""
+    if ENUM_NUMBERING.search(seg):
+        return True
+    has_colon = ":" in seg
+    commas = seg.count(",")
+    semis = seg.count(";")
+    dashes = seg.count(" — ") + seg.count(" – ")
+    glosses = seg.count("(")  # пояснения-глоссы в скобках на пункт
+    if has_colon and (commas >= 3 or semis >= 2):
+        return True
+    if semis >= 3 or dashes >= 2 or glosses >= 3 or commas >= 6:
+        return True
+    return False
+
+
+def readability_scan(text, where, key=None):
+    """Эвристики читаемости русской прозы для одной строки. → список {code, detail, where}.
+    Калибровано на высокую точность (FP-выборка): язык — только реальная англ. проза со
+    служебными словами; длинное предложение — только без структуры списка; filler — узкий стоп-лист."""
+    out = []
+    t = text or ""
+    if not t.strip():
+        return out
+    prose = _strip_code(t)
+    # для языка-замера дополнительно убираем цитаты («…») и скобки (расшифровки акронимов/глоссы)
+    lang_prose = PAREN_SPAN.sub(" ", QUOTE_SPAN.sub(" ", prose))
+
+    # язык-эвристики: один проход. Стоп-слово засчитываем ТОЛЬКО для строчного токена — отличает
+    # настоящую англ. прозу («this is the default») от Title-Case расшифровок и имён продуктов.
+    # ENGLISH_RUN требует В ПРЕДЕЛАХ run'а: ≥2 служебных строчных И ≥2 СОДЕРЖАТЕЛЬНЫХ строчных слова
+    # (не-стоп, ≥3 букв) — это отсекает имена-из-Title-Case с одиночными строчными связками
+    # («Best Time to Buy and Sell Stock», «Lead Time for Changes», «out of the box»): там content≈0.
+    longest_run = run = run_stops = run_content = 0
+    flagged_run = False
+    n_stop = 0
+    for tok in lang_prose.split():
+        bare = tok.strip(".,;:!?()«»\"'’[]{}")
+        w = bare.lower()
+        if w and LAT_WORD.fullmatch(w):
+            run += 1
+            if bare == w:                              # bare == w → токен уже строчный
+                if w in ENGLISH_STOP:
+                    run_stops += 1
+                    n_stop += 1
+                elif len(w) >= 3:
+                    run_content += 1
+            longest_run = max(longest_run, run)
+            if run >= ENGLISH_RUN_THR and run_stops >= ENGLISH_RUN_MIN_STOP and run_content >= 2:
+                flagged_run = True
+        else:
+            run = run_stops = run_content = 0
+
+    # 1. LOW_CYRILLIC: латиница доминирует И есть ≥3 строчных служебных слова (реальная англ. проза,
+    #    а не цепочка имён/терминов). Без stopword-порога давало ~78% ложных на этом корпусе.
+    cyr = len(CYR_LETTER.findall(lang_prose))
+    lat = len(LAT_LETTER.findall(lang_prose))
+    letters = cyr + lat
+    if letters >= MIN_LETTERS_FOR_RATIO and lat >= MIN_LAT_FOR_RATIO:
+        ratio = cyr / letters
+        if ratio < CYR_RATIO_THR and n_stop >= LOW_CYR_MIN_STOP:
+            out.append({"code": "LOW_CYRILLIC", "detail": f"cyr={ratio:.2f} (lat={lat}, cyr={cyr}, en-stop={n_stop})", "where": where})
+
+    # 2. ENGLISH_RUN: ≥5 латинских слов подряд И ≥2 служебных строчных в этом run'е
+    if flagged_run:
+        out.append({"code": "ENGLISH_RUN", "detail": f"{longest_run} англ. слов подряд (англ. предложение)", "where": where})
+
+    # 3. вода / academic-tone (узкий стоп-лист; не в полях-исключениях; вне цитат)
+    if key not in FILLER_SKIP_KEYS:
+        fil = sorted({m.group(0).lower() for m in FILLER_RE.finditer(QUOTE_SPAN.sub(" ", t))})
+        if fil:
+            out.append({"code": "FILLER_PHRASE", "detail": ", ".join(fil), "where": where})
+
+    # 4. run-on предложение: длинное И НЕ структурное перечисление (двоеточие+разделители/нумерация)
+    for seg in SENT_SPLIT.split(prose):
+        if len(seg.split()) > LONG_SENTENCE_WORDS and not _looks_like_enumeration(seg):
+            out.append({"code": "LONG_SENTENCE", "detail": f"{len(seg.split())} слов в предложении без структуры списка", "where": where})
+            break
+
+    # 5. пунктуация: только двойной пробел / пробел перед знаком после СЛОВА (по masked коду).
+    #    Склейку «слово,слово» убрали — на этом корпусе это сплошь нотация (C(n,k), X,Y,Z, Map<K,V>).
+    punct_src = _mask_code(t)
+    glitches = []
+    if DOUBLE_SPACE_RE.search(punct_src):
+        glitches.append("двойной пробел")
+    if SPACE_BEFORE_PUNCT_RE.search(punct_src):
+        glitches.append("пробел перед знаком")
+    if glitches:
+        out.append({"code": "PUNCT", "detail": "; ".join(glitches), "where": where})
+
+    return out
+
+
+def _readability_severity(rdb):
+    """Severity ряда readability-флагов: язык важнее косметики."""
+    if not rdb:
+        return "NONE"
+    codes = [x["code"] for x in rdb]
+    lang = sum(1 for c in codes if c in ("LOW_CYRILLIC", "ENGLISH_RUN"))
+    if lang >= 2:
+        return "HIGH"
+    if lang == 1:
+        return "MEDIUM"
+    if "LONG_SENTENCE" in codes and "FILLER_PHRASE" in codes:
+        return "MEDIUM"
+    if len(codes) >= 3:
+        return "MEDIUM"
+    return "LOW"
+
+
+# секции не-прозы: ссылки/слаги и код легитимно латинские — язык/пунктуацию по ним не судим
+NON_PROSE_SECTIONS = {"related", "example"}
+
+
+def block_readability(opts):
+    """Собрать readability-флаги по опциям блока (text + прозаические строковые sections)."""
+    rdb = []
+    for o in opts:
+        lbl = o.get("label") or f"#{o.get('order')}"
+        rdb += readability_scan(o.get("text", ""), f"{lbl}.text", key="text")
+        secs = o.get("sections")
+        if isinstance(secs, dict):
+            for k, v in secs.items():
+                if isinstance(v, str) and k not in NON_PROSE_SECTIONS:
+                    rdb += readability_scan(v, f"{lbl}.{k}", key=k)
+    return rdb
 
 
 # ============================================================================
@@ -316,6 +522,10 @@ def analyze_block(opts, q_number, block_idx):
     # ---- severity ----
     severity = _block_severity(reasons, dims, caric_max, inflated)
 
+    # ---- человекочитаемость (независимая ось: text + sections всех опций) ----
+    rdb = block_readability(opts)
+    readability_severity = _readability_severity(rdb)
+
     correct_label = corrects[0][0].get("label") if len(corrects) == 1 else None
     lengths = {o.get("label") or f"#{o.get('order')}": m["len"] for o, m in metrics}
     return {
@@ -323,6 +533,7 @@ def analyze_block(opts, q_number, block_idx):
         "reasons": reasons, "warnings": warnings,
         "correct_label": correct_label, "lengths": lengths,
         "caricature": [{"label": lbl, "groups": gs, "snippets": sn} for lbl, gs, sn in caric_detail],
+        "readability": rdb, "readability_severity": readability_severity,
     }
 
 
@@ -381,6 +592,7 @@ def analyze_file(path):
         return {"path": str(path), "skipped": "not-mcq-seeder"}
 
     issues = []
+    rdb_issues = []
     nblocks = 0
     longest = shortest = most_tech = uniq_struct = 0
     rank_sum = 0
@@ -413,12 +625,18 @@ def analyze_file(path):
                 rank_sum += rank / len(opts)
             if res["severity"] != "NONE":
                 issues.append(res)
+            if res.get("readability_severity", "NONE") != "NONE":
+                rdb_issues.append(res)
 
     rate = longest / nblocks if nblocks else 0.0
     file_sev = "NONE"
     for it in issues:
         if SEVERITY_ORDER[it["severity"]] > SEVERITY_ORDER[file_sev]:
             file_sev = it["severity"]
+    rdb_sev = "NONE"
+    for it in rdb_issues:
+        if SEVERITY_ORDER[it["readability_severity"]] > SEVERITY_ORDER[rdb_sev]:
+            rdb_sev = it["readability_severity"]
     return {
         "path": str(path),
         "rel": str(path.relative_to(REPO)) if str(path).startswith(str(REPO)) else str(path),
@@ -431,6 +649,10 @@ def analyze_file(path):
         "correct_unique_structure_rate": round(uniq_struct / nblocks, 3) if nblocks else 0.0,
         "avg_correct_length_rank": round(rank_sum / nblocks, 3) if nblocks else 0.0,
         "issues": issues,
+        "readability_flags": len(rdb_issues),
+        "readability_severity": rdb_sev,
+        "readability_flag_rate": round(len(rdb_issues) / nblocks, 3) if nblocks else 0.0,
+        "readability_issues": rdb_issues,
     }
 
 
@@ -534,6 +756,35 @@ def render_caricature(reports, verbose):
     print("Скрипт только находит кандидатов — переписывание дистрактора за человеком.")
 
 
+def render_readability(reports, verbose):
+    rows = [r for r in reports if r.get("readability_flags")]
+    rows.sort(key=lambda r: (-SEVERITY_ORDER[r.get("readability_severity", "NONE")], -r["readability_flags"]))
+    if verbose:
+        for r in rows:
+            print(f"\n## {r['rel']}  blocks={r['blocks']}  readability={r['readability_severity']}  "
+                  f"flag_rate={r['readability_flag_rate']:.0%}")
+            for it in r["readability_issues"]:
+                for x in it["readability"]:
+                    print(f"   Q{it['q_number']} [{it['readability_severity']}] {x['code']} @{x['where']}: {x['detail']}")
+    print("\n=== человекочитаемость русской прозы — кандидаты на правку ===")
+    print(f"{'rdb-sev':>8} {'flags':>5} {'rate':>5}  file")
+    counts = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
+    code_tot = {}
+    for r in rows:
+        counts[r["readability_severity"]] = counts.get(r["readability_severity"], 0) + 1
+        for it in r["readability_issues"]:
+            for x in it["readability"]:
+                code_tot[x["code"]] = code_tot.get(x["code"], 0) + 1
+        print(f"{r['readability_severity']:>8} {r['readability_flags']:>5} "
+              f"{r['readability_flag_rate']:>4.0%}  {r['rel']}")
+    total_rdb = sum(r["readability_flags"] for r in reports)
+    print(f"\nфайлов с readability-флагами: {len(rows)}; блоков-кандидатов: {total_rdb}")
+    print(f"readability severity файлов — HIGH: {counts['HIGH']}, MEDIUM: {counts['MEDIUM']}, LOW: {counts['LOW']}")
+    if code_tot:
+        print("по сигналам: " + ", ".join(f"{k}={v}" for k, v in sorted(code_tot.items(), key=lambda x: -x[1])))
+    print("Скрипт только находит кандидатов — переписывание прозы за человеком.")
+
+
 def build_json_report(reports):
     files = []
     for r in reports:
@@ -545,6 +796,9 @@ def build_json_report(reports):
             "correct_most_technical_rate": r["correct_most_technical_rate"],
             "correct_unique_structure_rate": r["correct_unique_structure_rate"],
             "avg_correct_length_rank": r["avg_correct_length_rank"],
+            "readability_flags": r.get("readability_flags", 0),
+            "readability_severity": r.get("readability_severity", "NONE"),
+            "readability_flag_rate": r.get("readability_flag_rate", 0.0),
             "issues": [
                 {
                     "q_number": it["q_number"], "block_idx": it["block_idx"],
@@ -552,6 +806,13 @@ def build_json_report(reports):
                     "options": {"correct_label": it["correct_label"], "lengths": it["lengths"]},
                     "caricature": it["caricature"],
                 } for it in r["issues"]
+            ],
+            "readability_issues": [
+                {
+                    "q_number": it["q_number"], "block_idx": it["block_idx"],
+                    "readability_severity": it["readability_severity"],
+                    "readability": it["readability"],
+                } for it in r.get("readability_issues", [])
             ],
         })
     files.sort(key=lambda f: (-SEVERITY_ORDER[f["severity"]], -f["flags"]))
@@ -564,6 +825,11 @@ def build_json_report(reports):
             "severity_files": {
                 s: sum(1 for r in reports if r["severity"] == s)
                 for s in ("CRITICAL", "HIGH", "MEDIUM", "LOW")
+            },
+            "readability_blocks_with_flags": sum(r.get("readability_flags", 0) for r in reports),
+            "readability_severity_files": {
+                s: sum(1 for r in reports if r.get("readability_severity") == s)
+                for s in ("HIGH", "MEDIUM", "LOW")
             },
         },
         "files": files,
@@ -583,13 +849,30 @@ def render_markdown(reports):
            f"| HIGH files | {s['severity_files']['HIGH']} |",
            f"| MEDIUM files | {s['severity_files']['MEDIUM']} |",
            f"| LOW files | {s['severity_files']['LOW']} |",
+           f"| Readability flagged blocks | {s.get('readability_blocks_with_flags', 0)} |",
+           f"| Readability HIGH/MEDIUM/LOW files | "
+           f"{s.get('readability_severity_files', {}).get('HIGH', 0)}/"
+           f"{s.get('readability_severity_files', {}).get('MEDIUM', 0)}/"
+           f"{s.get('readability_severity_files', {}).get('LOW', 0)} |",
            "", "## Top problematic files", "",
-           "| Severity | Flags | Correct longest | Most technical | File |",
-           "|---|---:|---:|---:|---|"]
+           "| Severity | Flags | Correct longest | Most technical | RdbSev | RdbFlags | File |",
+           "|---|---:|---:|---:|:--:|---:|---|"]
     top = [f for f in rep["files"] if f["flags"]][:40]
     for f in top:
         out.append(f"| {f['severity']} | {f['flags']} | {f['correct_longest_rate']:.0%} | "
-                   f"{f['correct_most_technical_rate']:.0%} | `{f['path']}` |")
+                   f"{f['correct_most_technical_rate']:.0%} | {f.get('readability_severity', 'NONE')} | "
+                   f"{f.get('readability_flags', 0)} | `{f['path']}` |")
+    # readability-first срез
+    rdb_top = sorted(
+        [f for f in rep["files"] if f.get("readability_flags")],
+        key=lambda f: (-SEVERITY_ORDER[f.get("readability_severity", "NONE")], -f["readability_flags"]),
+    )[:30]
+    if rdb_top:
+        out += ["", "## Top readability problems (русская проза)", "",
+                "| RdbSev | Flags | Rate | File |", "|:--:|---:|---:|---|"]
+        for f in rdb_top:
+            out.append(f"| {f['readability_severity']} | {f['readability_flags']} | "
+                       f"{f.get('readability_flag_rate', 0):.0%} | `{f['path']}` |")
     out += ["", "## Issues", ""]
     for f in top:
         out.append(f"### `{f['path']}`")
@@ -629,6 +912,18 @@ def audit_file_caricature(path):
             hits = [(c["label"], sorted(m for ms in c["groups"].values() for m in ms)) for c in it["caricature"]]
             flagged.append((it["q_number"], hits))
     return flagged, rep["blocks"]
+
+
+def audit_file_readability(path):
+    """Совместимый интерфейс: (flagged[(q_number, [(code, where, detail)])], nblocks, rdb_severity)."""
+    rep = analyze_file(Path(path))
+    if rep.get("skipped"):
+        return [], 0, "NONE"
+    flagged = []
+    for it in rep.get("readability_issues", []):
+        hits = [(x["code"], x["where"], x["detail"]) for x in it["readability"]]
+        flagged.append((it["q_number"], hits))
+    return flagged, rep["blocks"], rep.get("readability_severity", "NONE")
 
 
 # ============================================================================
@@ -694,8 +989,39 @@ def selftest():
     ])
     assert r5["severity"] in ("NONE", "LOW"), (r5["severity"], r5["reasons"])
 
-    print("selftest: OK (5 фикстур: length+struct+density, inflated-caricature, short-stub, "
-          "invalid-correct, clean)")
+    # 6. человекочитаемость: непереведённый английский + вода + run-on
+    r6 = blk([
+        {"order": 0, "label": "A", "correct": True,
+         "text": "Поток захватывает монитор и освобождает его сразу после критической секции."},
+        {"order": 1, "label": "B", "correct": False,
+         "text": "The thread always blocks on the monitor and never releases it until the whole batch is done."},
+        {"order": 2, "label": "C", "correct": False,
+         "text": "Важно отметить, что поток просто крутится в ожидании и не отдаёт процессор."},
+        {"order": 3, "label": "D", "correct": False,
+         "text": "Поток переходит в ожидание по таймеру и затем снова конкурирует за лок с другими потоками, "
+                 "причём делает это многократно подряд и без какой-либо паузы между попытками, пока наконец "
+                 "не получит доступ к разделяемому ресурсу, который ему совершенно необходим для дальнейшего "
+                 "продолжения своей работы строго согласно заранее установленному в операционной системе общему "
+                 "порядку приоритетного планирования всех готовых к исполнению потоков на доступных ядрах процессора."},
+    ])
+    codes6 = {x["code"] for x in r6["readability"]}
+    assert "LOW_CYRILLIC" in codes6 or "ENGLISH_RUN" in codes6, r6["readability"]
+    assert "FILLER_PHRASE" in codes6, r6["readability"]
+    assert "LONG_SENTENCE" in codes6, r6["readability"]
+    assert r6["readability_severity"] in ("MEDIUM", "HIGH"), r6["readability_severity"]
+
+    # 7. чистая русская проза с терминами в backticks → readability NONE (термины не палят язык)
+    r7 = blk([
+        {"order": 0, "label": "A", "correct": True,
+         "text": "Используем `CompletableFuture.supplyAsync` с выделенным `ThreadPoolExecutor` для изоляции."},
+        {"order": 1, "label": "B", "text": "Блокирующий вызов `get()` без таймаута на общем пуле.", "correct": False},
+        {"order": 2, "label": "C", "text": "Синхронный вызов в цикле по списку задач без параллелизма.", "correct": False},
+        {"order": 3, "label": "D", "text": "Запуск через `new Thread()` на каждую задачу без переиспользования.", "correct": False},
+    ])
+    assert r7["readability_severity"] == "NONE", (r7["readability_severity"], r7["readability"])
+
+    print("selftest: OK (7 фикстур: length+struct+density, inflated-caricature, short-stub, "
+          "invalid-correct, clean, readability-bad, readability-clean)")
     return ok
 
 
@@ -711,6 +1037,7 @@ def main():
     ap.add_argument("-v", "--verbose", action="store_true", help="подробно по каждому блоку")
     ap.add_argument("--top", type=int, metavar="N", help="показать только N худших файлов")
     ap.add_argument("--caricature", action="store_true", help="режим только caricature/Plausibility")
+    ap.add_argument("--readability", action="store_true", help="режим только человекочитаемости русской прозы")
     ap.add_argument("--json-report", metavar="PATH", help="сохранить машинный JSON-отчёт")
     ap.add_argument("--markdown-report", metavar="PATH", help="сохранить Markdown-отчёт")
     ap.add_argument("--fail-on", choices=["high", "critical"], help="exit 1 при наличии HIGH/CRITICAL")
@@ -736,6 +1063,8 @@ def main():
 
     if args.caricature:
         render_caricature(reports, args.verbose)
+    elif args.readability:
+        render_readability(reports, args.verbose)
     elif not (args.json_report or args.markdown_report) or args.verbose:
         render_human(reports, args.verbose, args.top)
 
