@@ -40,7 +40,7 @@ perf PE, контент CN, иконки IC).
   `editorial.css` — мёртвый код. Бамп `?v=N`: при правке CSS — обе ссылки в
   `fragments/head.html`; при правке JS — `app.js ?v=N` в `result.html` /
   `settings.html` / `focus-training.html`, `stats.js` — в `stats.html`. Чистая
-  правка текста шаблона бампа НЕ требует. **Текущая версия CSS = v=53, app.js = v=51.**
+  правка текста шаблона бампа НЕ требует. **Текущая версия CSS = v=53, app.js = v=52 (р26).**
 - **Дизайн-система:** 10 переключаемых дизайнов (editorial=дефолт, linear, swiss,
   notion, mintlify, broadsheet, superhuman, stripe, claude, theverge) × 2 темы.
   Персонализация — `data-*` на `<html>`; **дефолт = `data-design="editorial"`
@@ -210,6 +210,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | SET-9 | a11y-оси разбросаны | Сгруппировать движение/контраст в раздел Accessibility | M | M | M | L | 🌱 BACKLOG | SE-9 |
 | SET-10 | admin reset (был `window.prompt`) | Доступная модалка | — | M | L | M | H | ✅ DONE (`653c706e`) | SE-10 |
 | SET-11 | `.focus-question` min-height | Одинаковые «окна вопросов» | — | M | L | L | M | ✅ DONE (`0eb762a5`) | SE-11 |
+| SET-12 | CTA запуска был бинарным («Начать тренировку»/дженерик «Начать сессию») | 4 из 5 режимов давали родовое «Начать сессию» (не говорит, что запускается). Карта `MODE_CTA` в `initSessionModeForm` (app.js): каждый режим → свой винительный лейбл («Начать экзамен/изучение/флешкарты/интенсив»), `\|\| 'Начать сессию'` defensive-фоллбэк. app.js v=51→52 | M | L | L | H | ✅ DONE (р26) | CN |
 | SET-12 | `app.js(v=51)` | Версионный контракт | — | — | — | — | H | 🔁 ONGOING | — |
 
 ### 5.A.5 — `templates/stats.html` + `static/js/stats.js`

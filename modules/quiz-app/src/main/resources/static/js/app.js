@@ -236,10 +236,22 @@
     const countField = document.getElementById('session-count-field');
     const startBtn = document.getElementById('session-start-btn');
     if (!modeSelect || !countField || !startBtn) return;
+    // CTA называет КОНКРЕТНЫЙ режим (винительный падеж), а не дженерик «Начать
+    // сессию» — кнопка обещает ровно то, что произойдёт после клика. Ключи = enum
+    // SessionMode; «Начать сессию» остаётся defensive-фоллбэком для неизвестного
+    // значения. Падежи зафиксированы вручную (тренировка→тренировку — единственная
+    // неноминативная форма), поэтому карта, а не lowcase(option.text).
+    const MODE_CTA = {
+      TRAINING: 'Начать тренировку',
+      STUDY: 'Начать изучение',
+      FLASHCARD: 'Начать флешкарты',
+      EXAM: 'Начать экзамен',
+      MARATHON: 'Начать интенсив',
+    };
     const sync = () => {
       const isTraining = modeSelect.value === 'TRAINING';
       countField.classList.toggle('hidden', isTraining);
-      startBtn.textContent = isTraining ? 'Начать тренировку' : 'Начать сессию';
+      startBtn.textContent = MODE_CTA[modeSelect.value] || 'Начать сессию';
     };
     modeSelect.addEventListener('change', sync);
     sync();
