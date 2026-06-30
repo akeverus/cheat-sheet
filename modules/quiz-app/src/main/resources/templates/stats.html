@@ -82,6 +82,27 @@
 <!-- Общая статистика -->
 <section th:replace="~{fragments/stats-grid :: stats-grid(stats=${stats})}"></section>
 
+<!-- Нет данных по темам: все секции ниже (графики/таблица/прогноз/пробелы)
+     гейтятся на непустой topicStats. При пустом (новый пользователь без ответов
+     либо фильтр без совпадений) страница раньше показывала лишь фильтр + сетку
+     нулей и пустоту — без объяснения и пути дальше. Даём явный empty-state.
+     Условие — ТОЧНАЯ инверсия гейтов секций ниже (topicStats != null and
+     !isEmpty); показываем только когда НЕ активен поиск (у поиска свой empty
+     выше, иначе два «пусто» подряд). Все под-выражения reused из этого же
+     шаблона (searchQuery/#strings.isEmpty — стр.64; filter?./selectedGroup —
+     стр.33/37/38/45). Чисто аддитивно, без CSS/JS. -->
+<section class="card stats-empty"
+         th:if="${(topicStats == null or topicStats.isEmpty()) and (searchQuery == null or #strings.isEmpty(searchQuery))}">
+    <h2 class="mt-0">Пока нет данных по темам</h2>
+    <p class="muted">Ответь на несколько вопросов — и здесь появятся прогресс по темам, точность ответов и прогноз повторений на неделю.</p>
+    <p>
+        <a class="btn next-btn" th:href="@{/}">Начать тренировку →</a>
+        <a class="btn secondary-btn"
+           th:if="${selectedGroup != null or filter?.topic != null or filter?.importantOnly or filter?.onlyWrong}"
+           th:href="@{/stats}">Сбросить фильтры</a>
+    </p>
+</section>
+
 <!-- Графики -->
 <div class="charts-row" th:if="${topicStats != null and !topicStats.isEmpty()}">
     <section class="card chart-card">

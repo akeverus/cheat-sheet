@@ -158,7 +158,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | FT-10 | `.options[role=radiogroup]` selected-до-проверки | Нейтральный ring/border (без green/red) до submit | — | H | L | L | H | ✅ DONE 🔁 | AF-2/3 |
 | FT-11 | option label: CSS-бейдж `counter(upper-latin)` + срез «X. » | Буква рисуется CSS, видимый span чистится; aria-label с буквой | — | M | L | L | H | ✅ DONE | A11Y-1 |
 | FT-12 | option fairness: длина/наполненность выдаёт correct | Контент-перекос; UI обязан не усиливать | seed/mcq pedago-loop | H | — | — | H | 🏛 CONTENT | AF-1 |
-| FT-13 | option layout: длинный вариант доминирует в 2×2 grid | Adaptive single-column когда max/min длины > порога | M | M | M | M | 🌱 BACKLOG | AF-4 |
+| FT-13 | option layout: длинный вариант доминирует в 2×2 grid | **Премиса устарела:** options уже `flex-direction:column` (single-column) в base+editorial → каждый вариант full-width, grid-cell-доминирования НЕТ; «2-col для коротких» = опциональный визуал, не fairness-требование | M | M | M | H | ✅ DONE (single-column уже везде, р19 verify) | AF-4 |
 | FT-14 | inline-`code` в варианте = визуальная подсказка | Гасим заливку/паддинг чипа в тексте выбора (моно остаётся, color inherit); explanation/проза не тронуты | M | L | L | M | ✅ DONE (р17 v=54) | AF-5 |
 | FT-15 | `training-actions` include (Проверить ответ) | CTA далеко при длинных вариантах | sticky/видимый submit | M | M | M | M | 🌱 BACKLOG | TR-4 |
 | FT-16 | empty-state «Сейчас нет вопросов» (5 веток) | Нейтральный заголовок + recovery (finished→«Посмотреть итоги») | — | M | L | L | H | ✅ DONE (р15 `3bb19db0`) | TR-2 |
@@ -223,7 +223,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | STA-5 | `stats.js` графики мелкие/слабые labels | Меньше decorative grid, крупнее labels, tooltips (Chart.js config) | M | M | M | M | 🌱 BACKLOG | AN-5 |
 | STA-6 | Сортировка не видна в покое | Glyph ⇅ на `sortable[aria-sort=none]` | — | M | L | L | H | ✅ DONE (р6) | AN-6 |
 | STA-7 | Empty-state поиска обещал сброс, контрола не было | Ссылка «сбрось поиск и фильтры» → `/stats` | — | M | L | L | H | ✅ DONE (р15 `3bb19db0`) | AN-7 |
-| STA-8 | Empty-state нулевых данных по теме | «По теме ещё нет ответов — начни тренировку» | M | L | L | M | 🌱 BACKLOG | AN-8 |
+| STA-8 | Empty-state нулевых данных по теме | `.stats-empty` секция после stats-grid: «Пока нет данных» + CTA «Начать тренировку» + reset-фильтров (гейт = инверсия section-gates) | M | L | L | H | ✅ DONE (р19, template-only) | AN-8 |
 | STA-9 | Print печатал 12 из 319 тем | Разворот `.is-collapsed` в `@media print` | — | M | L | L | H | ✅ DONE (`06985234`) | AN-9 |
 | STA-10 | CTA из аналитики (тренировать слабые/ошибки) | Кнопки-переходы — может требовать роутов/параметров | M | M | M | L | ⛔ DEFERRED (проверить контракт) | AN-10 |
 | STA-11 | accuracy «58/122/32.2%» необъяснима | Tooltip/пояснение расчёта | L | L | L | M | 🌱 BACKLOG | AN-11 |
@@ -338,7 +338,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | BAS-4 | WIDE LAYOUT грид (≥1200px) + sticky related-rail | `:has()`-driven, без класс-флагов | — | M | M | M | H | ✅ DONE | RES-12 |
 | BAS-5 | `.danger-zone` (error-wash + полная рамка) | НЕ side-stripe (impeccable-ban); собственный divider формы погашен | — | H | L | L | H | ✅ DONE (р16) | SE-4 |
 | BAS-6 | MCQ states (selected neutral / correct / wrong / other) | Семантика цвета только после проверки | — | H | L | L | H | ✅ DONE 🔁 | AF-2/3 |
-| BAS-7 | MCQ adaptive single/2-col по длине | Не внедрён (сейчас editorial 2×2 ring-grid) | container-query/JS-класс по длине | M | M | M | M | 🌱 BACKLOG | AF-4 |
+| BAS-7 | MCQ adaptive single/2-col по длине | options УЖЕ single-column (`flex-direction:column`, base.css:714 + editorial.css:766) → длинный вариант full-width, не доминирует в cell; orphan `grid-column:1/-1` (base.css:786) = no-op (родитель flex) | M | L | L | H | ✅ DONE (single-column; orphan grid-column можно вычистить отдельно) | AF-4 |
 | BAS-8 | inline-`code` фон в вариантах | `.options label code` + result text-span code → transparent/0/inherit (chip-pop убран, overflow-wrap цел) | M | L | L | M | ✅ DONE (р17) | AF-5 |
 | BAS-9 | focus-visible ring везде + forced-colors fallback | Видимый ring | — | M | L | L | H | ✅ DONE (р12) | A11Y-3 |
 | BAS-10 | `:active` press-feedback кнопок | Тактильный отклик | — | M | L | L | H | ✅ DONE | CM-1 |
@@ -392,11 +392,11 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 
 | Область | Открытые (🌱/⛔) | Закрытые (✅) | Не трогать (🚫) | Внешние (🏛) |
 |---------|------------------|---------------|-----------------|--------------|
-| **AF** answer-fairness | AF-4 (adaptive col) | AF-2/3 (нейтр. selected), AF-5 (мягкий code, р17), AF-6 (correct помечен), AF-7 (muted wrong, р18) | AF-8 (иконки до проверки) | AF-1 (паритет длины) |
+| **AF** answer-fairness | — (ядро закрыто) | AF-2/3 (нейтр. selected), AF-4 (single-column уже, р19), AF-5 (мягкий code, р17), AF-6 (correct помечен), AF-7 (muted wrong, р18) | AF-8 (иконки до проверки) | AF-1 (паритет длины) |
 | **TR** тренировка | TR-1/HDR-1 (sticky header), TR-3 (hint), TR-4 (sticky CTA), TR-6 (микрокопия прогресса) | TR-2 (empty), TR-5 (zone-hint), TR-7 (kbd-гейт), TR-9 (post-answer) | TR-8 (48px) | — |
 | **TY** типографика | TY-1 (рус uppercase tracking), TY-2/AF-5 (code), TY-5 (helper) | — | TY-3 (prose measure), TY-4 (18px/1.7) | — |
 | **LO** layout | LO-6 (border-left 3px ⛔) | LO-1/2/3/4 | LO-5 (prose full-width) | — |
-| **AN** аналитика | AN-1 (insights), AN-2 (микрокопия), AN-3 (поиск+фильтр), AN-5 (графики), AN-8 (empty), AN-10 (CTA ⛔), AN-11 (accuracy tooltip) | AN-4/6/7/9 | — | — |
+| **AN** аналитика | AN-1 (insights), AN-2 (микрокопия), AN-3 (поиск+фильтр), AN-5 (графики), AN-10 (CTA ⛔), AN-11 (accuracy tooltip) | AN-4/6/7/9, AN-8 (data-empty, р19) | — | — |
 | **SE** настройки | SE-3 (preview), SE-5 (seg vs tabs), SE-6 (% reset), SE-7 (feedback), SE-9 (a11y-раздел) | SE-1/2/4/8/10/11 | — | — |
 | **CO** цвета | CO-1/TOK-2 (semantic split) | CO-2/3/4/5/6 | — | — |
 | **CM** компоненты | CM-2/5/6/7/8/9(part)/10(part) | CM-1/3/4/11/12, CM-9 (danger-zone done) | — | — |
