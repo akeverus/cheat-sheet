@@ -290,12 +290,13 @@
          base.css   — design-agnostic структура (reset, типошкала, утилиты,
            вёрстка всех страниц), потребляет ТОЛЬКО var(--token).
          Порядок строгий: tokens ПЕРЕД base (переменные определены до
-         использования). Preload обоих — параллельно с парсингом head → меньше
-         FOUC. См. docs/design/DESIGN.md + docs/design/systems/*.md. -->
-    <link rel="preload" as="style" th:href="@{/css/tokens.css(v=51)}">
-    <link rel="preload" as="style" th:href="@{/css/base.css(v=51)}">
-    <link rel="stylesheet" th:href="@{/css/tokens.css(v=51)}">
-    <link rel="stylesheet" th:href="@{/css/base.css(v=51)}">
+         использования). Оба — render-blocking <link> в <head>: preload-сканер
+         находит их немедленно при парсинге, поэтому отдельный <link rel=preload>
+         того же URL строкой выше ничего не ускорял (no-op для same-origin CSS,
+         которая и так грузится с наивысшим приоритетом) и был удалён — не
+         возвращать. См. docs/design/DESIGN.md + docs/design/systems/*.md. -->
+    <link rel="stylesheet" th:href="@{/css/tokens.css(v=52)}">
+    <link rel="stylesheet" th:href="@{/css/base.css(v=52)}">
     <!-- SRI (integrity) + crossorigin: защита от компрометации CDN — браузер
          выполнит ресурс, только если его sha512 совпадает. Хэши пересчитаны из
          самих файлов (openssl dgst -sha512). ВСЕ CDN-ресурсы пиннятся на ТОЧНУЮ
@@ -341,8 +342,12 @@
     <th:block th:if="${includeChart}">
         <!-- Exact-pin 4.5.0 UMD-min (раньше был unversioned /npm/chart.js = latest:
              авто-обновлялся, мог сломать графики без предупреждения) + SRI.
-             chart.umd.min.js экспортит глобал Chart, который зовёт stats.js. -->
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"
+             chart.umd.min.js экспортит глобал Chart, который зовёт stats.js.
+             defer: stats.js — end-of-body, инициализирует графики в DOMContentLoaded
+             (typeof Chart-guard). defer-скрипт исполняется после парсинга, но ДО
+             DOMContentLoaded → Chart готов к initCharts(), а первый рендер /stats
+             больше не блокируется загрузкой Chart.js (был render-blocking). -->
+        <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"
                 integrity="sha512-Y51n9mtKTVBh3Jbx5pZSJNDDMyY+yGe77DGtBPzRlgsf/YLCh13kSZ3JmfHGzYFCmOndraf0sQgfM654b7dJ3w=="
                 crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     </th:block>

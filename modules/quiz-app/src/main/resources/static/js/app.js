@@ -253,14 +253,20 @@
     const countInput = sessionForm.querySelector('input[name="count"]');
     const sessionCountStorageKey = 'quiz.session.count';
     if (countInput) {
-      const storedCount = Number.parseInt(localStorage.getItem(sessionCountStorageKey) || '', 10);
+      // localStorage обёрнут в try/catch: в private/lockdown-режимах getItem кидает
+      // SecurityError, а это самый ранний вызов в цепочке DOMContentLoaded —
+      // непойманное исключение прервало бы инициализацию персонализации, вкладок
+      // и т.д. ниже. Недоступность хранилища деградирует мягко (без restore).
+      let storedRaw = '';
+      try { storedRaw = localStorage.getItem(sessionCountStorageKey) || ''; } catch (_) { /* приватный режим — без restore */ }
+      const storedCount = Number.parseInt(storedRaw, 10);
       if (!Number.isNaN(storedCount) && storedCount >= 1 && storedCount <= 200) {
         countInput.value = String(storedCount);
       }
       countInput.addEventListener('change', () => {
         const value = Number.parseInt(countInput.value || '', 10);
         if (!Number.isNaN(value) && value >= 1 && value <= 200) {
-          localStorage.setItem(sessionCountStorageKey, String(value));
+          try { localStorage.setItem(sessionCountStorageKey, String(value)); } catch (_) { /* приватный режим — не сохраняем */ }
         }
       });
     }
