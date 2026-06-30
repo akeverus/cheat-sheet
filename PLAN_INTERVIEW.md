@@ -398,7 +398,7 @@
 - ✅ Option Parity закреплён в 3 skills (+ structural/cross-block augmentation).
 - ✅ Аудит-скрипт `scripts/audit-mcq-parity.py` создан, прогнан по корпусу (318 сидеров).
 - ✅ Закоммичено по Option Parity: 27 сидеров (см. колонку Commit). slice-4: `azure` (1e42aa0c, +восстановлен Q14-факт), `code-agents` (7a901ca1).
-- 🔧 `leadership/mentoring-interview` (negative example, 96% correct-longest, stub-дистракторы Q2/5/6/7/8/10/11/13) — в работе.
+- ✅ `leadership/mentoring-interview` (negative example) — **исправлен** (fe1dbbf5): все 25 блоков, дистракторы подняты до паритета, заглушки убраны, correct-longest 96%→40%, audit 0 флагов, ложность дистракторов проверена по .md.
 - ⏳ reviewer-less, gate-clean: `ai-ml/rag` (43%), `system-design/design-uber` (37%), `devops/kubernetes` (56%).
 - ⏳ untouched, re-queue: `model-serving`, `clickhouse`.
 
