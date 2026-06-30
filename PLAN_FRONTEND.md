@@ -159,7 +159,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | FT-11 | option label: CSS-бейдж `counter(upper-latin)` + срез «X. » | Буква рисуется CSS, видимый span чистится; aria-label с буквой | — | M | L | L | H | ✅ DONE | A11Y-1 |
 | FT-12 | option fairness: длина/наполненность выдаёт correct | Контент-перекос; UI обязан не усиливать | seed/mcq pedago-loop | H | — | — | H | 🏛 CONTENT | AF-1 |
 | FT-13 | option layout: длинный вариант доминирует в 2×2 grid | Adaptive single-column когда max/min длины > порога | M | M | M | M | 🌱 BACKLOG | AF-4 |
-| FT-14 | inline-`code` в варианте = визуальная подсказка | Мягкая одинаковая подсветка code, не ярче окружения | M | L | L | M | 🌱 BACKLOG | AF-5 |
+| FT-14 | inline-`code` в варианте = визуальная подсказка | Гасим заливку/паддинг чипа в тексте выбора (моно остаётся, color inherit); explanation/проза не тронуты | M | L | L | M | ✅ DONE (р17 v=54) | AF-5 |
 | FT-15 | `training-actions` include (Проверить ответ) | CTA далеко при длинных вариантах | sticky/видимый submit | M | M | M | M | 🌱 BACKLOG | TR-4 |
 | FT-16 | empty-state «Сейчас нет вопросов» (5 веток) | Нейтральный заголовок + recovery (finished→«Посмотреть итоги») | — | M | L | L | H | ✅ DONE (р15 `3bb19db0`) | TR-2 |
 | FT-17 | `app.js(v=51)` в конце body | Версионный контракт JS | бампать при правке app.js | — | — | — | H | 🔁 ONGOING | PE |
@@ -174,7 +174,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | RES-4 | `.btn-regenerate` (только `aiEnabled`) | Перегенерация вариантов через AI | — | — | — | — | H | ✅ DONE (гейт aiEnabled) | — |
 | RES-5 | `.status` (Верно!/Неверно) | Иконка + текст + цвет (не только цвет) | — | H | L | L | H | ✅ DONE 🔁 | CO-4 |
 | RES-6 | options после проверки: `option-correct/wrong/other` + status-label | Правильный помечен «Правильный ответ», выбор — «Твой выбор» | — | M | L | L | H | ✅ DONE | AF-6 |
-| RES-7 | невыбранные wrong-варианты после проверки «кричат» | Приглушить unselected wrong, акцент на selected-wrong + correct | M | L | L | M | 🌱 BACKLOG | AF-7 |
+| RES-7 | невыбранные wrong-варианты после проверки «кричат» | `.option-other` opacity un-scoped из `.result-page` → focus-page тоже 0.85 (был баг: пояснение возвращало 1.0) | M | L | L | M | ✅ DONE (р18 v=55) | AF-7 |
 | RES-8 | `.option-explanation` correct/wrong | Пер-вариант объяснение | verify контраст explanation-wrong | L | L | L | M | 🌱 BACKLOG | — |
 | RES-9 | «Пояснение» h3 (book-open) + markdown | Полный разбор | — | — | — | — | H | ✅ DONE | — |
 | RES-10 | `.sm2-details` (SM-2 состояние) | Раскрываемые SRS-данные | — | — | — | — | H | ✅ DONE | — |
@@ -339,7 +339,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | BAS-5 | `.danger-zone` (error-wash + полная рамка) | НЕ side-stripe (impeccable-ban); собственный divider формы погашен | — | H | L | L | H | ✅ DONE (р16) | SE-4 |
 | BAS-6 | MCQ states (selected neutral / correct / wrong / other) | Семантика цвета только после проверки | — | H | L | L | H | ✅ DONE 🔁 | AF-2/3 |
 | BAS-7 | MCQ adaptive single/2-col по длине | Не внедрён (сейчас editorial 2×2 ring-grid) | container-query/JS-класс по длине | M | M | M | M | 🌱 BACKLOG | AF-4 |
-| BAS-8 | inline-`code` фон в вариантах | Проверить контраст/мягкость | M | L | L | M | 🌱 BACKLOG | AF-5 |
+| BAS-8 | inline-`code` фон в вариантах | `.options label code` + result text-span code → transparent/0/inherit (chip-pop убран, overflow-wrap цел) | M | L | L | M | ✅ DONE (р17) | AF-5 |
 | BAS-9 | focus-visible ring везде + forced-colors fallback | Видимый ring | — | M | L | L | H | ✅ DONE (р12) | A11Y-3 |
 | BAS-10 | `:active` press-feedback кнопок | Тактильный отклик | — | M | L | L | H | ✅ DONE | CM-1 |
 | BAS-11 | reduced-motion + `data-motion` | `@media` + ось движения | — | M | L | L | H | ✅ DONE | A11Y-7 |
@@ -392,7 +392,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 
 | Область | Открытые (🌱/⛔) | Закрытые (✅) | Не трогать (🚫) | Внешние (🏛) |
 |---------|------------------|---------------|-----------------|--------------|
-| **AF** answer-fairness | AF-4 (adaptive col), AF-5 (code), AF-7 (muted wrong) | AF-2/3 (нейтр. selected), AF-6 (correct помечен) | AF-8 (иконки до проверки) | AF-1 (паритет длины) |
+| **AF** answer-fairness | AF-4 (adaptive col) | AF-2/3 (нейтр. selected), AF-5 (мягкий code, р17), AF-6 (correct помечен), AF-7 (muted wrong, р18) | AF-8 (иконки до проверки) | AF-1 (паритет длины) |
 | **TR** тренировка | TR-1/HDR-1 (sticky header), TR-3 (hint), TR-4 (sticky CTA), TR-6 (микрокопия прогресса) | TR-2 (empty), TR-5 (zone-hint), TR-7 (kbd-гейт), TR-9 (post-answer) | TR-8 (48px) | — |
 | **TY** типографика | TY-1 (рус uppercase tracking), TY-2/AF-5 (code), TY-5 (helper) | — | TY-3 (prose measure), TY-4 (18px/1.7) | — |
 | **LO** layout | LO-6 (border-left 3px ⛔) | LO-1/2/3/4 | LO-5 (prose full-width) | — |

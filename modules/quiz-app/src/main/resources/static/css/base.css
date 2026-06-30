@@ -2013,6 +2013,22 @@ html[data-design] .search-question code {
   font-weight: inherit;
   color: inherit;
 }
+/* Инлайн-`code` в ТЕКСТЕ ВАРИАНТА ответа — честность важнее «чипа» (AF-5).
+   Глобальный :not(pre) > code даёт залитый beige-бокс. Если правильный вариант
+   несёт `code` (а в технических MCQ верный термин ЧАСТО в бэктиках), залитая
+   плашка «выпрыгивает» и подсвечивает correct ещё ДО проверки — UI усиливает
+   контентный перекос (задача UI — НЕ усиливать). Гасим ТОЛЬКО заливку/паддинг в
+   тексте выбора (моноширинный шрифт остаётся — код читается формой, не плашкой;
+   color: inherit → ноль цвет-сдвига, максимально нейтрально между вариантами).
+   Прицел узкий: `.options label code` (фокус, до проверки — критичный кейс) и
+   прямой текст-span результата — НЕ трогаем `.option-explanation` (там проза,
+   чип помогает читать) и не переопределяем overflow-wrap (long-token guard цел). */
+html[data-design] .options label code,
+html[data-design] .options > [role="listitem"] > span code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
 html[data-design] .result-page .question-meta { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 html[data-design] .result-page .topic-badge {
   font-family: var(--font-family-mono); font-size: var(--font-size-xs);
@@ -2082,7 +2098,16 @@ html[data-design] .result-page .options > div {
   font-size: var(--font-size-md); box-shadow: none;
   min-width: 0; overflow-wrap: break-word; word-break: break-word;
 }
-html[data-design] .result-page .option-other { opacity: 0.85; }
+/* option-other = невыбранный неправильный вариант ПОСЛЕ проверки. Un-scope из
+   `.result-page` (тот же паритет-фикс, что у `.option-status-label` ниже): app.js
+   на focus-page ТОЖЕ вешает `.option-other` — когда у варианта есть пояснение, он
+   снимает `.option-dimmed` (0.55) и ставит `.option-other`. Без общего правила на
+   focus-page вариант прыгал обратно на полную непрозрачность 1.0 → наличие
+   пояснения делало неверный вариант ЗАМЕТНЕЕ (назад к шуму, ломает иерархию
+   «вот правильный / вот твой выбор»). 0.85: с контентом-пояснением чуть читаемее
+   пустого `.option-dimmed` 0.55, но всё равно рецессивно к correct/your-wrong
+   (1.0 + цвет-wash). result.html (no-JS) поведение не меняется — там и было 0.85. */
+html[data-design] .option-other { opacity: 0.85; }
 /* Чип статуса варианта — ОБЩИЙ для result.html (no-JS фоллбэк) и JS-флоу focus-
    страницы (app.js инжектит те же классы option-status-*). Раньше визуальные правила
    (mono / рамка / капс) жили только под .result-page → на focus-page чип оставался
