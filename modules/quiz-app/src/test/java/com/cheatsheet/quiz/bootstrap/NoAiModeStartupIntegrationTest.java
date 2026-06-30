@@ -34,7 +34,7 @@ class NoAiModeStartupIntegrationTest {
     void indexPageOpens_inNoAiMode() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(not(containsString("Вопросы временно недоступны"))));
+                .andExpect(content().string(not(containsString("Сейчас нет вопросов"))));
     }
 
     @Test
@@ -54,11 +54,11 @@ class NoAiModeStartupIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
 
         // В no-AI режиме при наличии вопроса должна показываться flashcard-фаза,
-        // а не страница «Вопросы временно недоступны»
+        // а не страница «Сейчас нет вопросов»
         if (body.contains("class=\"question-text\"") || body.contains("id=\"interview-card\"")) {
             org.assertj.core.api.Assertions.assertThat(body)
                     .contains("flashcard-phase")
-                    .doesNotContain("Вопросы временно недоступны");
+                    .doesNotContain("Сейчас нет вопросов");
         }
     }
 }
