@@ -147,7 +147,7 @@
             <th class="sortable" data-col="0" data-sort-label="Тема">Тема</th>
             <th class="sortable w-60 text-center" data-col="1" data-sort-label="Всего">Всего</th>
             <th class="min-w-140">Прогресс</th>
-            <th class="sortable w-80 text-center" data-col="3" data-sort-label="Точность">Точность</th>
+            <th class="sortable w-80 text-center" data-col="3" data-sort-label="Точность" title="Доля верных ответов среди отвеченных (не из всех вопросов темы)">Точность</th>
             <th class="sortable w-60 text-center" data-col="4" data-sort-label="Сброшено" title="Сколько раз банк вариантов перегенерировался">Сброшено</th>
             <th class="sortable w-80 text-center" data-col="5" data-sort-label="Зрелость" title="Среднее ease×interval — показатель глубины запоминания">Зрелость</th>
         </tr>
@@ -176,7 +176,8 @@
                 th:classappend="${(item.correct + item.wrong) > 0 ?
                     ((item.correct * 100.0 / (item.correct + item.wrong)) >= 80 ? 'accuracy-high' :
                      ((item.correct * 100.0 / (item.correct + item.wrong)) >= 50 ? 'accuracy-mid' : 'accuracy-low'))
-                    : ''}">
+                    : ''}"
+                th:title="${(item.correct + item.wrong) == 0 ? 'Пока нет ответов по этой теме' : 'Верных ответов: ' + item.correct + ' · Отвечено: ' + (item.correct + item.wrong)}">
                 <span th:text="${(item.correct + item.wrong) == 0 ? '—' : #numbers.formatDecimal((item.correct * 100.0) / (item.correct + item.wrong), 1, 1) + '%'}">0%</span>
             </td>
             <td class="text-center">

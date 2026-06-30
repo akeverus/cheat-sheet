@@ -226,7 +226,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | STA-8 | Empty-state нулевых данных по теме | `.stats-empty` секция после stats-grid: «Пока нет данных» + CTA «Начать тренировку» + reset-фильтров (гейт = инверсия section-gates) | M | L | L | H | ✅ DONE (р19, template-only) | AN-8 |
 | STA-9 | Print печатал 12 из 319 тем | Разворот `.is-collapsed` в `@media print` | — | M | L | L | H | ✅ DONE (`06985234`) | AN-9 |
 | STA-10 | CTA из аналитики (тренировать слабые/ошибки) | Кнопки-переходы — может требовать роутов/параметров | M | M | M | L | ⛔ DEFERRED (проверить контракт) | AN-10 |
-| STA-11 | accuracy «58/122/32.2%» необъяснима | Tooltip/пояснение расчёта | L | L | L | M | 🌱 BACKLOG | AN-11 |
+| STA-11 | accuracy «58/122/32.2%» необъяснима | (а) `title` на `<th>Точность` (паритет с Сброшено/Зрелость): «Доля верных среди отвеченных (не из всех)»; (б) `th:title` ячейки раскрывает дробь «Верных: N · Отвечено: M» (числа после `:` → grammar-safe), «—»→«Пока нет ответов». Чистый Thymeleaf, без бампа | M | L | L | H | ✅ DONE (р25, template-only) | AN-11 |
 | STA-12 | `stats.js(v)` в stats.html | Версионный контракт stats.js | — | — | — | — | H | 🔁 ONGOING | — |
 | STA-13 | «Прогноз повторений» показывал сырой ISO `2026-07-01` | `record ForecastDay(String day)` → дата уже String из SQL (не temporal); починка в источнике = Java/SQL (gated). Фикс на клиенте: `<span>`→`<time th:datetime>` (семантика + ISO машинно) + inline PE-скрипт `Intl ru-RU` → `Сегодня`/`Завтра`/`6 июля` + `title` с днём недели. Локаль-независимо, без recompile, PE-фоллбэк = ISO | M | L | L | H | ✅ DONE (р24, template+inline-script, без бампа) | AN-13 |
 
@@ -400,7 +400,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | **TR** тренировка | TR-1/HDR-1 (sticky header), TR-3 (hint), TR-4 (sticky CTA), TR-6 (микрокопия прогресса) | TR-2 (empty), TR-5 (zone-hint), TR-7 (kbd-гейт), TR-9 (post-answer) | TR-8 (48px) | — |
 | **TY** типографика | TY-1 (рус uppercase tracking), TY-2/AF-5 (code), TY-5 (helper) | — | TY-3 (prose measure), TY-4 (18px/1.7) | — |
 | **LO** layout | LO-6 (border-left 3px ⛔) | LO-1/2/3/4 | LO-5 (prose full-width) | — |
-| **AN** аналитика | AN-1 (insights), AN-5 (графики), AN-10 (CTA ⛔), AN-11 (accuracy tooltip) | AN-4/6/7/9, AN-8 (data-empty, р19), AN-12 (accuracy-bar aria-hidden, р20), AN-2 (микрокопия «N из M» в today-hero, р21), AN-13 (гуманизация ISO-дат прогноза `<time>`+Intl, р24); AN-3 (поиск+фильтр) = 🚫 WONTFIX deliberate | — | — |
+| **AN** аналитика | AN-1 (insights), AN-5 (графики), AN-10 (CTA ⛔) | AN-4/6/7/9, AN-8 (data-empty, р19), AN-12 (accuracy-bar aria-hidden, р20), AN-2 (микрокопия «N из M» в today-hero, р21), AN-13 (гуманизация ISO-дат прогноза `<time>`+Intl, р24), AN-11 (объяснение «Точность» title заголовка+дробь ячейки, р25); AN-3 (поиск+фильтр) = 🚫 WONTFIX deliberate | — | — |
 | **SE** настройки | SE-3 (preview), SE-5 (seg vs tabs), SE-6 (% reset), SE-7 (feedback), SE-9 (a11y-раздел) | SE-1/2/4/8/10/11 | — | — |
 | **CO** цвета | CO-1/TOK-2 (semantic split) | CO-2/3/4/5/6 | — | — |
 | **CM** компоненты | CM-2/5/6/7/8/9(part)/10(part) | CM-1/3/4/11/12, CM-9 (danger-zone done) | — | — |
