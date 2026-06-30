@@ -11,10 +11,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RAG` — паттерн, при котором перед вызовом LLM сначала retrieve релевантные документы из knowledge base, затем augment ими prompt, и только потом generate ответ на основе документов и вопроса. Так модель получает специфичные знания без переобучения.",
+              "text": "`RAG` — паттерн retrieve→augment→generate: перед вызовом LLM сначала достают релевантные документы, augment ими prompt и только потом генерируют ответ.",
               "correct": true,
               "sections": {
-                "explanation": "Три шага: retrieve (vector search по базе), augment (вставить найденные chunks в prompt) и generate (LLM отвечает, опираясь на эти chunks). Это даёт модели актуальные и приватные данные и снижает hallucinations.",
+                "explanation": "Три шага: retrieve (vector search по базе), augment (вставить найденные chunks в prompt) и generate (LLM отвечает, опираясь на эти chunks). Так модель получает специфичные знания без переобучения, актуальные и приватные данные, и реже hallucinations.",
                 "example": "На вопрос «Какая политика по отпускам?» система делает vector search по HR-документам, берёт top-3 chunks и подаёт их в prompt, а LLM отвечает «Согласно документу X (стр. 5)...» со ссылкой на источник.",
                 "when_to_apply": "Применяют когда модели нужны знания, которых нет в её весах: корпоративная документация, свежие данные, knowledge base — и при этом важны citations и отсутствие fine-tuning.",
                 "edge_cases": "Если retrieval вернул нерелевантные chunks, RAG не спасёт от ошибки — мусор на входе даёт мусор на выходе; качество retrieval определяет качество всей системы.",
@@ -24,7 +24,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`RAG` — это техника, при которой модель дообучают (fine-tune) на корпусе документов компании, чтобы она запомнила их в своих весах.",
+              "text": "`RAG` — это техника, при которой модель дообучают (fine-tune) на корпусе документов компании, чтобы она запомнила их в своих весах и отвечала без обращения к внешней базе.",
               "correct": false,
               "sections": {
                 "what_actually": "RAG не меняет веса модели вообще: он подаёт документы в prompt в момент запроса, а дообучение в весах — это как раз fine-tuning, отдельный подход.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`RAG` — это метод сжатия (compression) embeddings, чтобы хранить меньше векторов в базе данных.",
+              "text": "`RAG` — это метод сжатия (compression) embeddings через quantization, чтобы хранить меньше векторов в базе и ускорять поиск без потери знаний.",
               "correct": false,
               "sections": {
                 "what_actually": "RAG не про сжатие векторов: это паттерн retrieve-augment-generate; сжатие embeddings (quantization) — отдельная тема оптимизации хранилища.",
@@ -83,10 +83,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Подход «всё в context» упирается в context limit (даже 1M tokens мало на TB документов), растёт cost и latency, страдает от «lost in the middle» и не фильтрует нерелевантное. RAG же подаёт только релевантные 3-10 chunks вместо всего корпуса.",
+              "text": "Подход «всё в context» упирается в context limit, растит cost и latency, страдает от «lost in the middle» и не фильтрует шум. RAG подаёт только релевантные 3-10 chunks.",
               "correct": true,
               "sections": {
-                "explanation": "Большой context дороже по токенам, медленнее обрабатывается, а модели хуже находят факты в его середине. RAG решает это фильтрацией: retrieval отбирает именно те фрагменты, что нужны под конкретный вопрос.",
+                "explanation": "Даже 1M tokens мало на TB документов. Большой context дороже по токенам, медленнее обрабатывается, а модели хуже находят факты в его середине. RAG решает это фильтрацией: retrieval отбирает именно те фрагменты, что нужны под конкретный вопрос.",
                 "example": "Корпус в гигабайты документов физически не влезает ни в одно окно; RAG достаёт 5 нужных chunks по vacation policy, и модель отвечает точно, не читая всю базу знаний целиком.",
                 "when_to_apply": "Когда корпус больше окна, важна стоимость и скорость, или когда в большом дампе модель теряет нужный факт — отбор релевантного через RAG предпочтительнее.",
                 "edge_cases": "Для маленького корпуса, целиком влезающего в окно, RAG может быть избыточным — иногда проще подать всё в context, если точность retrieval не критична.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Главная причина использовать RAG вместо «всё в context» — это то, что RAG делает модель более креативной и разнообразной в ответах.",
+              "text": "Главная причина использовать RAG вместо «всё в context» — это то, что RAG делает модель более креативной, разнообразной и менее шаблонной в формулировках ответов.",
               "correct": false,
               "sections": {
                 "what_actually": "RAG нужен ради точности, актуальности и экономии, а не ради креативности; он, наоборот, заземляет ответ на конкретные документы.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "RAG и fine-tuning — это одно и то же: оба запоминают документы в весах модели, разница лишь в названии и инструментах.",
+              "text": "RAG и fine-tuning — это одно и то же: оба запоминают документы в весах модели через градиентный спуск, разница лишь в названии, инструментах и формате датасета.",
               "correct": false,
               "sections": {
                 "what_actually": "RAG не трогает веса вообще — он подаёт документы в prompt; только fine-tuning меняет параметры модели, так что это принципиально разные механизмы.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главное отличие в том, что RAG привязан к конкретной модели, а fine-tuning работает с любой LLM без изменений.",
+              "text": "Главное отличие в том, что RAG привязан к конкретной обученной модели, а fine-tuning переносим и работает с любой LLM без изменений пайплайна.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: RAG работает с любой LLM (меняешь модель — пайплайн тот же), а fine-tuning жёстко привязан к конкретной обученной модели.",
@@ -155,10 +155,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "RAG меняет контент в prompt и даёт real-time свежесть (обновил vector DB — готово), легко цитирует источники и работает с любой LLM; fine-tuning меняет параметры модели, требует retrain для свежести, привязан к конкретной модели и не даёт citations. Часто их комбинируют.",
+              "text": "RAG меняет контент в prompt и даёт real-time свежесть, легко цитирует источники и работает с любой LLM; fine-tuning меняет веса модели. Часто их комбинируют.",
               "correct": true,
               "sections": {
-                "explanation": "RAG — это знания во время запроса с per-query стоимостью; fine-tuning — one-time тренировка, дающая стиль и спец-навыки, но «замороженные» знания. Best practice: RAG для фактов, fine-tuning для стиля и узких задач.",
+                "explanation": "RAG — знания во время запроса с per-query стоимостью; обновил vector DB — готово, источники цитируются, модель меняется свободно. Fine-tuning — one-time тренировка: даёт стиль и спец-навыки, но «замороженные» знания, требует retrain для свежести, привязан к модели и не даёт citations. Best practice: RAG для фактов, fine-tuning для стиля и узких задач.",
                 "example": "Чтобы бот знал свежую HR-политику, обновляют vector DB (RAG); чтобы он всегда отвечал в фирменном тоне или классифицировал тикеты — дообучают модель (fine-tuning).",
                 "when_to_apply": "RAG — когда нужны актуальные/приватные факты и citations; fine-tuning — когда нужно изменить поведение, стиль или дать узкий навык вроде классификации.",
                 "edge_cases": "Комбинация работает лучше всего: fine-tuned модель в RAG-пайплайне даёт и нужный стиль, и свежие факты с источниками одновременно.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Архитектура RAG — это единый online-конвейр без offline-фазы: документы эмбеддятся заново при каждом пользовательском запросе.",
+              "text": "Архитектура RAG — это единый online-конвейер без offline-фазы: весь корпус документов эмбеддят заново при каждом пользовательском запросе перед поиском.",
               "correct": false,
               "sections": {
                 "what_actually": "Indexing (chunk→embed→store) делается offline и один раз, а online повторяется только query-часть; переэмбеддинг всего корпуса на каждый запрос был бы запретительно дорогим.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Reranker — обязательный первый компонент, который выполняет основной поиск вместо vector search.",
+              "text": "Reranker — обязательный первый компонент пайплайна, который через cross-encoder выполняет основной поиск по всей базе вместо vector search.",
               "correct": false,
               "sections": {
                 "what_actually": "Reranker идёт после vector search и лишь уточняет порядок уже найденных кандидатов; основной поиск делает retriever через ANN, а reranker вообще опционален.",
@@ -227,10 +227,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "RAG делится на offline-indexing (Chunker → Embedder → Vector DB) и online-query (query → Embedding → Retriever/vector search → Reranker → Prompt builder → LLM → Answer). Ключевые компоненты: chunker, embedder, vector DB, retriever, опциональный reranker, prompt builder и LLM.",
+              "text": "RAG делится на offline-indexing (Chunker → Embedder → Vector DB) и online-query (query → Retriever → Reranker → Prompt → LLM → Answer).",
               "correct": true,
               "sections": {
-                "explanation": "В offline-фазе документы режут на chunks, превращают в векторы и кладут в vector DB. В online-фазе query тоже эмбеддят, ищут top-k похожих, опционально переранжируют, собирают prompt и отдают LLM на генерацию.",
+                "explanation": "В offline-фазе документы режут на chunks, превращают в векторы и кладут в vector DB. В online-фазе query тоже эмбеддят, ищут top-k похожих, опционально переранжируют, собирают prompt и отдают LLM на генерацию. Ключевые компоненты: chunker, embedder, vector DB, retriever, опциональный reranker, prompt builder и LLM.",
                 "example": "Документы → Chunker → Embedding model → Vector DB (offline). User query → Embedding → Vector search → Reranker → Build prompt → LLM → Answer (online) — ровно как на mermaid-диаграмме из шпаргалки.",
                 "when_to_apply": "Эту схему держат в голове при проектировании любого RAG: разделение на offline-indexing и online-query помогает понять, где оптимизировать latency, а где — качество индекса.",
                 "edge_cases": "Reranker помечен optional, но в production его почти всегда добавляют; без него initial retrieval часто отдаёт грубый порядок кандидатов.",
@@ -251,10 +251,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Источники самые разные: PDF, Word, Markdown, HTML, Confluence, Notion, Google Docs, Slack/Discord history, GitHub repos, таблицы БД, аудио через transcription. Инструменты: `Unstructured` (multi-format), `PyMuPDF`/`pdfplumber` (PDF), `BeautifulSoup`/`trafilatura` (HTML), `Docling` от IBM (современный multi-format).",
+              "text": "Источники самые разные: PDF, Word, Markdown, HTML, Confluence, Notion, Slack, GitHub, БД, аудио через transcription. Инструменты подбирают под формат.",
               "correct": true,
               "sections": {
-                "explanation": "Loading — это первый шаг indexing: достать текст из разных форматов и систем. Подвох в том, что парсеры по-разному обрабатывают таблицы, изображения и сноски, а качество парсинга критично для всего RAG.",
+                "explanation": "Loading — первый шаг indexing: достать текст из разных форматов и систем. Инструменты: `Unstructured` (multi-format), `PyMuPDF`/`pdfplumber` (PDF), `BeautifulSoup`/`trafilatura` (HTML), `Docling` от IBM (современный multi-format). Подвох в том, что парсеры по-разному обрабатывают таблицы, изображения и сноски, а качество парсинга критично для всего RAG.",
                 "example": "PDF-политику читают через `PyMuPDF`, HTML-страницу — через `trafilatura`, а смешанный корпус из Confluence и Notion — через `Unstructured` или `Docling`, который аккуратнее с layout.",
                 "when_to_apply": "На этапе сбора корпуса: выбирают парсер под формат и проверяют, что таблицы и сноски не теряются — иначе retrieval будет искать по битому тексту.",
                 "edge_cases": "Сложные PDF с таблицами и колонками разные парсеры читают по-разному; плохой парсинг таблиц рушит точность RAG ещё до chunking и embeddings.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Loading в RAG — это исключительно работа с PDF-файлами; другие форматы (HTML, Markdown, Slack) в RAG не поддерживаются.",
+              "text": "Loading в RAG — это исключительно работа с PDF-файлами через `PyMuPDF`; другие форматы (HTML, Markdown, Slack) в RAG-пайплайне не поддерживаются.",
               "correct": false,
               "sections": {
                 "what_actually": "RAG грузит данные из множества источников — HTML, Markdown, Confluence, Notion, Slack, GitHub, БД и даже аудио через transcription, а не только PDF.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для loading достаточно одного универсального парсера, который одинаково идеально обрабатывает любой формат и любую таблицу.",
+              "text": "Для loading достаточно одного универсального парсера (`Unstructured`), который одинаково идеально обрабатывает любой формат и любую сложную таблицу.",
               "correct": false,
               "sections": {
                 "what_actually": "Парсеры по-разному справляются с таблицами, изображениями и сносками; под разные форматы и сложность выбирают разные инструменты (`PyMuPDF`, `trafilatura`, `Unstructured`, `Docling`).",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Chunking — это процесс сжатия документа в один короткий вектор, представляющий весь файл целиком.",
+              "text": "Chunking — это процесс сжатия документа в один короткий вектор фиксированной длины, представляющий весь файл целиком для индексации.",
               "correct": false,
               "sections": {
                 "what_actually": "Chunking — это разбивка документа на много маленьких кусков, каждый из которых эмбеддится отдельно; один вектор на весь файл потерял бы детализацию retrieval.",
@@ -323,10 +323,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Chunking — разбивка документов на маленькие куски (chunks) для индексации. Стратегии: fixed-size (N tokens/chars), recursive (по иерархии сепараторов `\\n\\n`, `\\n`, `. `, ` `), semantic (по смысловым границам через embedding similarity), markdown-aware (секции/заголовки), code-aware (функции/классы), sentence-based. Хороший chunking — половина успеха RAG.",
+              "text": "Chunking — разбивка документов на маленькие куски для индексации. Стратегии: fixed-size, recursive, semantic, markdown-aware, code-aware, sentence-based.",
               "correct": true,
               "sections": {
-                "explanation": "Chunks нужны, потому что эмбеддить и искать удобнее по небольшим осмысленным фрагментам, чем по целым документам. В LangChain популярен `RecursiveCharacterTextSplitter` с `chunk_size` и `chunk_overlap` и списком сепараторов.",
+                "explanation": "Эмбеддить и искать удобнее по небольшим осмысленным фрагментам, чем по целым документам. Recursive режет по иерархии сепараторов (`\\n\\n`, `\\n`, `. `, ` `), semantic — по смысловым границам через embedding similarity, markdown-aware — по секциям/заголовкам, code-aware — по функциям/классам. Хороший chunking — половина успеха RAG. В LangChain популярен `RecursiveCharacterTextSplitter` с `chunk_size` и `chunk_overlap`.",
                 "example": "`RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, separators=[\"\\n\\n\", \"\\n\", \". \", \" \", \"\"])` режет документ, стараясь рвать сначала по абзацам, потом по строкам, потом по предложениям.",
                 "when_to_apply": "На этапе indexing: выбирают стратегию под тип контента — markdown-aware для документации, code-aware для репозиториев, semantic для связного текста без явной структуры.",
                 "edge_cases": "Наивный fixed-size может разрезать предложение или таблицу посередине, теряя смысл; поэтому recursive и semantic стратегии стараются рвать по естественным границам.",
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Единственно правильный способ chunking — это fixed-size по ровно N символов, любые другие стратегии не используются.",
+              "text": "Единственно правильный способ chunking — это fixed-size по ровно N символов; recursive, semantic и code-aware стратегии на практике не применяются.",
               "correct": false,
               "sections": {
                 "what_actually": "Стратегий много: recursive, semantic, markdown-aware, code-aware, sentence-based — fixed-size лишь одна из них и часто не лучшая, так как режет по смыслу неаккуратно.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Размер chunk нужно всегда ставить максимально большим (например, 8000 tokens), потому что больше context — всегда лучше.",
+              "text": "Размер chunk нужно всегда ставить максимально большим (например, 8000 tokens), потому что больше context — всегда лучше для точности retrieval и ответа.",
               "correct": false,
               "sections": {
                 "what_actually": "Слишком крупные chunks становятся менее precise: vector search хуже выделяет нужный фрагмент, и в context попадает много лишнего, размывая релевантность.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Существует единый универсальный размер chunk (ровно 512 tokens), оптимальный для любого корпуса и любых вопросов.",
+              "text": "Существует единый универсальный размер chunk (ровно 512 tokens), оптимальный для любого корпуса, любых вопросов и любого типа контента без настройки.",
               "correct": false,
               "sections": {
                 "what_actually": "One-size-fits-all не существует: оптимум зависит от типа задачи и контента, поэтому размер подбирают экспериментом на golden dataset.",
@@ -395,10 +395,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Это trade-off: маленькие chunks (200-500 tokens) дают точный retrieval, но мало context; большие (1000-2000 tokens) дают больше context, но менее precise. Рекомендации: Q&A по фактам — 200-500, длинные ответы/synthesis — 800-1500, code — по границам функций/классов, таблицы — целиком. One-size-fits-all нет — тестируй на golden dataset.",
+              "text": "Это trade-off: маленькие chunks точны в retrieval, но дают мало context; большие наоборот. One-size-fits-all нет — тестируй на golden dataset.",
               "correct": true,
               "sections": {
-                "explanation": "Размер балансирует точность поиска и полноту контекста: слишком мелкий chunk точно матчится, но обрезает контекст вокруг факта; слишком крупный тащит лишнее и размывает релевантность. Оптимум зависит от типа задачи.",
+                "explanation": "Размер балансирует точность поиска и полноту контекста: мелкий chunk (200-500 tokens) точно матчится, но обрезает контекст вокруг факта; крупный (1000-2000 tokens) тащит лишнее и размывает релевантность. Рекомендации: Q&A по фактам — 200-500, длинные ответы/synthesis — 800-1500, code — по границам функций/классов, таблицы — целиком.",
                 "example": "Для FAQ по конкретным цифрам берут 200-500 tokens; для аналитических ответов, собираемых из нескольких абзацев, — 800-1500; код режут по функциям, а таблицу держат целым chunk.",
                 "when_to_apply": "При настройке indexing под конкретный корпус и тип вопросов; финальный выбор делают экспериментом на golden dataset, а не по умолчанию.",
                 "edge_cases": "Таблицы и структурированные данные лучше держать целиком независимо от размера — разрезанная пополам таблица теряет смысл строк и заголовков.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Overlap нужен для того, чтобы chunks были полностью идентичны друг другу и в базе хранились дубликаты для надёжности.",
+              "text": "Overlap нужен для того, чтобы соседние chunks были полностью идентичны и в базе хранились дубликаты ради надёжности retrieval на случай потери вектора.",
               "correct": false,
               "sections": {
                 "what_actually": "Overlap — это лишь частичное перекрытие границ (10-20%), а не полное дублирование chunks; полные дубликаты только раздули бы базу без пользы.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Оптимальный overlap — это 80-90% от размера chunk, чем больше перекрытие, тем всегда лучше качество RAG.",
+              "text": "Оптимальный overlap — это 80-90% от размера chunk, и чем больше перекрытие соседних chunks, тем всегда выше итоговое качество RAG.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендуемый overlap — 10-20% (100-300 tokens); огромное перекрытие резко раздувает storage и cost без пропорционального роста качества.",
@@ -467,10 +467,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Overlap — это когда соседние chunks частично перекрываются (например, Chunk 1: tokens 0-1000, Chunk 2: tokens 800-1800 — 200 token overlap). Нужен, чтобы информация на границах chunks не терялась. Размер обычно 10-20% от chunk size (100-300 tokens). Trade-off: больше overlap — больше storage и cost.",
+              "text": "Overlap — это когда соседние chunks частично перекрываются, чтобы информация на границах не терялась. Обычно 10-20% от chunk size.",
               "correct": true,
               "sections": {
-                "explanation": "Если резать встык, факт, попавший на стык двух chunks, может быть разорван и не найден целиком ни в одном из них. Перекрытие гарантирует, что пограничный контекст присутствует в обоих соседних кусках.",
+                "explanation": "Если резать встык, факт на стыке двух chunks может быть разорван и не найден целиком ни в одном. Перекрытие (например, Chunk 1: tokens 0-1000, Chunk 2: tokens 800-1800 — 200 token overlap) гарантирует, что пограничный контекст присутствует в обоих соседних кусках. Trade-off: больше overlap — больше storage и cost (100-300 tokens — разумный дефолт).",
                 "example": "При chunk_size=1000 ставят chunk_overlap=200: предложение на границе попадает и в конец одного chunk, и в начало следующего, поэтому retrieval найдёт его в любом случае.",
                 "when_to_apply": "При настройке сплиттера: overlap включают почти всегда для связного текста, выбирая 10-20% от размера chunk как разумный дефолт.",
                 "edge_cases": "Чрезмерный overlap раздувает число и объём векторов: растут storage и стоимость embeddings без пропорционального выигрыша в качестве.",
@@ -491,10 +491,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Metadata (source, page, section, date, department, language и т.п.) хранится рядом с каждым chunk и нужна для filtering («только HR documents» / «за 2025 год»), citations (вернуть source в ответе), multi-tenancy (фильтр по `tenant_id`) и hybrid search (combine vector + metadata filters). Vector DBs — Pinecone, Weaviate, Qdrant — поддерживают metadata filters.",
+              "text": "Metadata хранится рядом с каждым chunk и нужна для filtering, citations, multi-tenancy и hybrid search. Vector DB поддерживают metadata filters.",
               "correct": true,
               "sections": {
-                "explanation": "Без metadata vector search ищет по всему индексу одинаково для всех; с ней можно сузить поиск, разграничить tenants и вернуть точную ссылку на файл и страницу в ответе пользователю.",
+                "explanation": "Metadata (source, page, section, date, department, language и т.п.) даёт фильтрацию («только HR documents» / «за 2025 год»), citations (вернуть source в ответе), multi-tenancy (фильтр по `tenant_id`) и hybrid search (combine vector + metadata filters). Без неё vector search ищет по всему индексу одинаково; с ней можно сузить поиск, разграничить tenants и вернуть точную ссылку. Pinecone, Weaviate, Qdrant поддерживают metadata filters.",
                 "example": "Chunk хранит `metadata: {source: \"policy_2025.pdf\", page: 5, department: \"HR\"}`, и при запросе фильтруют `department=HR`, а в ответе цитируют `[policy_2025.pdf, page 5]`.",
                 "when_to_apply": "Когда нужны разграничение доступа, фильтрация по времени/домену, citations или мультитенантность — metadata закладывают ещё на этапе indexing вместе с embeddings.",
                 "edge_cases": "Слишком жёсткие фильтры по metadata могут сузить выбор до нуля результатов; баланс между точностью фильтра и recall важен.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Metadata в chunks нужна только для красоты UI и никак не влияет на сам процесс retrieval или citations.",
+              "text": "Metadata в chunks нужна только для красоты UI и отображения в интерфейсе; на сам процесс retrieval, фильтрацию или citations она никак не влияет.",
               "correct": false,
               "sections": {
                 "what_actually": "Metadata напрямую используется в retrieval (фильтры), citations (source/page) и multi-tenancy — это функциональные данные, а не декорация интерфейса.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Metadata обязательно должна храниться в отдельной реляционной БД, потому что vector DB не умеют хранить и фильтровать по ней.",
+              "text": "Metadata обязательно должна храниться в отдельной реляционной БД с join при каждом поиске, потому что vector DB не умеют хранить и фильтровать по ней.",
               "correct": false,
               "sections": {
                 "what_actually": "Современные vector DB (Pinecone, Weaviate, Qdrant) хранят metadata рядом с вектором и поддерживают metadata filters прямо в запросе поиска.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Embeddings генерируются один раз глобально и одинаковы для любого текста, поэтому выбор embedding-модели не важен.",
+              "text": "Embeddings генерируются один раз глобально и одинаковы для любого текста, поэтому выбор embedding-модели и её размерности на качество retrieval не влияет.",
               "correct": false,
               "sections": {
                 "what_actually": "Вектор зависит и от текста, и от конкретной модели: разные модели дают разные размерности и пространства, поэтому выбор модели существенно влияет на качество retrieval.",
@@ -563,10 +563,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Каждый chunk прогоняют через embedding-модель и получают вектор, который сохраняют в vector DB вместе с metadata. Модели: OpenAI `text-embedding-3-large` (3072d) и `text-embedding-3-small` (1536d), Cohere embed-english-v3 (1024d), Voyage AI (специализированы под RAG), open-source sentence-transformers (`all-MiniLM-L6-v2`, `bge-large`).",
+              "text": "Каждый chunk прогоняют через embedding-модель и получают вектор, который сохраняют в vector DB вместе с metadata. Chunks и query эмбеддят одной моделью.",
               "correct": true,
               "sections": {
-                "explanation": "Embedding превращает текст chunk в числовой вектор фиксированной размерности, по которому потом считают similarity. Размерность зависит от модели; важно эмбеддить chunks и query одной и той же моделью.",
+                "explanation": "Embedding превращает текст chunk в числовой вектор фиксированной размерности, по которому считают similarity. Размерность зависит от модели: OpenAI `text-embedding-3-large` (3072d) и `-3-small` (1536d), Cohere embed-english-v3 (1024d), Voyage AI (под RAG), open-source sentence-transformers (`all-MiniLM-L6-v2`, `bge-large`). Важно эмбеддить chunks и query одной и той же моделью.",
                 "example": "`client.embeddings.create(model=\"text-embedding-3-large\", input=chunk_text)` возвращает 3072-мерный вектор, который кладут в vector DB рядом с metadata этого chunk.",
                 "when_to_apply": "На этапе indexing для каждого chunk; выбор модели — баланс качества, размерности, цены и того, managed это API или self-hosted open-source.",
                 "edge_cases": "Если chunks эмбеддили одной моделью, а query — другой, similarity ломается; embedding model mismatch — частый production-баг.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Все embedding-модели выдают вектор одной и той же размерности (например, ровно 768), независимо от модели.",
+              "text": "Все embedding-модели выдают вектор одной и той же размерности (ровно 768 измерений) независимо от модели, поэтому их векторы свободно смешиваются в одном индексе.",
               "correct": false,
               "sections": {
                 "what_actually": "Размерность зависит от модели: `text-embedding-3-large` — 3072d, `-3-small` — 1536d, Cohere — 1024d, MiniLM — 384d; единого числа нет.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Vector search всегда делает полный точный перебор всех векторов в базе, поэтому ANN-алгоритмы вроде HNSW в нём не нужны.",
+              "text": "Vector search всегда делает полный точный перебор всех векторов в базе по euclidean distance, поэтому ANN-алгоритмы вроде HNSW в нём не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Точный перебор по миллионам векторов слишком медленный, поэтому под капотом используют приближённые ANN-алгоритмы (HNSW, IVF, ScaNN), жертвующие крохой точности ради скорости.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главная метрика similarity в vector search — это длина (magnitude) векторов: чем длиннее вектор, тем релевантнее chunk.",
+              "text": "Главная метрика similarity в vector search — это длина (magnitude) векторов: чем длиннее вектор chunk относительно query, тем релевантнее результат.",
               "correct": false,
               "sections": {
                 "what_actually": "Самая частая метрика — cosine similarity, которая как раз нечувствительна к magnitude и смотрит на угол между векторами, а не на их длину.",
@@ -635,10 +635,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Query эмбеддят в вектор, ищут в vector DB top_k наиболее похожих chunks (с опциональным filter), получают их со similarity scores. Метрики similarity: cosine similarity (самая частая, нечувствительна к magnitude), dot product (быстрее; при нормированных векторах = cosine), euclidean distance (реже). Под капотом — ANN-алгоритмы: HNSW, IVF, ScaNN.",
+              "text": "Query эмбеддят в вектор, ищут в vector DB top_k наиболее похожих chunks со similarity scores; под капотом — приближённые ANN-алгоритмы.",
               "correct": true,
               "sections": {
-                "explanation": "Поиск находит ближайшие к query векторы в многомерном пространстве. Точный перебор по миллионам векторов дорог, поэтому используют Approximate Nearest Neighbor — он жертвует малой долей точности ради огромного ускорения.",
+                "explanation": "Поиск находит ближайшие к query векторы в многомерном пространстве. Метрики similarity: cosine similarity (самая частая, нечувствительна к magnitude), dot product (быстрее; при нормированных векторах = cosine), euclidean distance (реже). Точный перебор по миллионам векторов дорог, поэтому используют Approximate Nearest Neighbor (HNSW, IVF, ScaNN) — он жертвует малой долей точности ради огромного ускорения.",
                 "example": "`vector_db.search(vector=query_emb, top_k=5, filter={\"department\": \"HR\"})` возвращает top-5 chunks с их `score`, отсортированных по cosine similarity к запросу.",
                 "when_to_apply": "В online-фазе на каждый запрос; cosine берут по умолчанию, dot product — когда векторы нормированы и важна скорость, ANN-индекс — когда база большая.",
                 "edge_cases": "ANN приближённый: иногда пропускает истинного ближайшего соседа ради скорости; параметры индекса (ef, nlist) балансируют recall и latency.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Параметр top_k в vector search задаёт размерность вектора, а не количество возвращаемых документов.",
+              "text": "Параметр top_k в vector search задаёт размерность возвращаемого вектора (например, 1536), а не количество найденных документов.",
               "correct": false,
               "sections": {
                 "what_actually": "top_k — это число возвращаемых ближайших chunks; размерность вектора определяется embedding-моделью и к top_k отношения не имеет.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "k нужно всегда ставить максимально большим (например, 100), потому что чем больше документов в context, тем точнее ответ.",
+              "text": "k нужно всегда ставить максимально большим (например, 100), потому что чем больше документов в context, тем точнее ответ и тем меньше шанс «lost in the middle».",
               "correct": false,
               "sections": {
                 "what_actually": "Большое k без reranker даёт «lost in the middle» и шум, повышает cost и latency; рекомендуемая база — k=5, а большие значения оправданы лишь с reranking или большим окном.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "При использовании reranking k нужно, наоборот, уменьшать до 1-2 на этапе vector search, чтобы reranker работал быстрее.",
+              "text": "При использовании reranking k нужно, наоборот, уменьшать до 1-2 на этапе vector search, чтобы cross-encoder работал быстрее и не перегружал prompt.",
               "correct": false,
               "sections": {
                 "what_actually": "С reranking сначала достают много кандидатов (k=20-50) грубым поиском, и уже из них cross-encoder выбирает top-5; маленький k на входе лишает reranker материала.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Оптимальное k фиксировано и всегда равно 1: достаточно подать в LLM единственный самый похожий chunk.",
+              "text": "Оптимальное k фиксировано и всегда равно 1: достаточно подать в LLM единственный самый похожий chunk, остальные только добавляют шум и cost.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендации дают k около 5 для базовой RAG (и больше с reranker/окном), потому что ответ часто собирается из нескольких chunks, а top-1 рискует упустить нужный.",
@@ -707,10 +707,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Trade-off: маленькое k (3-5) — быстро и мало context, но рискуем потерять релевантное; большое k (10-20) — больше шанса найти, но больше cost и «lost in the middle». Best practice: базовая RAG — k=5; с reranking — retrieve k=20-50 и rerank → top 5; с большим context (Claude 200K) — k=15-30.",
+              "text": "Trade-off полноты и шума: маленькое k (3-5) быстро, но рискует упустить нужное; большое (10-20) даёт recall ценой cost и «lost in the middle».",
               "correct": true,
               "sections": {
-                "explanation": "k балансирует полноту (recall) и шум. Reranking разрывает этот компромисс: достают много кандидатов грубым поиском, а cross-encoder оставляет небольшой точный top, который и уходит в LLM.",
+                "explanation": "k балансирует полноту (recall) и шум. Best practice: базовая RAG — k=5; с reranking — retrieve k=20-50 и rerank → top 5; с большим context (Claude 200K) — k=15-30. Reranking разрывает этот компромисс: достают много кандидатов грубым поиском, а cross-encoder оставляет небольшой точный top, который и уходит в LLM.",
                 "example": "Без reranker берут k=5 сразу в prompt; с reranker делают vector search top-50, затем cross-encoder отбирает 5 лучших — итоговый context чище при той же базе.",
                 "when_to_apply": "k=5 как дефолт; повышают при наличии reranker или большого окна и понижают, когда важны latency и стоимость на каждый запрос.",
                 "edge_cases": "Слишком большое k без reranker топит ответ в нерелевантных chunks и провоцирует «lost in the middle» — больше не значит лучше.",
@@ -731,10 +731,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Hybrid search комбинирует vector search (хорош для семантики) и keyword search BM25 (хорош для exact matches). Делают vector search top-50 и BM25 top-50, затем сливают через Reciprocal Rank Fusion (RRF) или weighted merge. Нужен для технических терминов, names, IDs, code search и compliance/legal с точными терминами. Поддерживают Weaviate, Qdrant, Elasticsearch, Pinecone.",
+              "text": "Hybrid search комбинирует vector search (семантика) и keyword search BM25 (exact matches), сливая два списка через Reciprocal Rank Fusion или weighted merge.",
               "correct": true,
               "sections": {
-                "explanation": "Чисто семантический поиск может промахнуться по точному коду ошибки или артикулу, а BM25 — по перефразированному смыслу. Hybrid берёт сильные стороны обоих и объединяет ранги в общий список.",
+                "explanation": "Чисто семантический поиск может промахнуться по точному коду ошибки или артикулу, а BM25 — по перефразированному смыслу. Схема: vector search top-50 и BM25 top-50, затем merge через RRF или weighted merge, и документ, высокий в обоих списках, поднимается наверх. Нужен для технических терминов, names, IDs, code search и compliance/legal с точными терминами. Поддерживают Weaviate, Qdrant, Elasticsearch, Pinecone.",
                 "example": "RRF: `scores[doc] += 1/(k+i)` по каждому ранжированию (vector и BM25), затем сортировка по сумме — документ, высокий в обоих списках, поднимается наверх.",
                 "when_to_apply": "Когда в запросах встречаются точные термины, идентификаторы, имена, фрагменты кода или юридические формулировки, где важно точное совпадение, а не только смысл.",
                 "edge_cases": "Веса слияния (vector vs keyword) надо настраивать под корпус: перекос в сторону BM25 теряет семантику, перекос в vector — точные совпадения.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Hybrid search — это запуск vector search дважды на двух разных embedding-моделях с последующим усреднением их векторов.",
+              "text": "Hybrid search — это запуск vector search дважды на двух разных embedding-моделях с последующим усреднением их векторов через Reciprocal Rank Fusion.",
               "correct": false,
               "sections": {
                 "what_actually": "Hybrid комбинирует vector search и keyword search (BM25), а не две embedding-модели; смысл — соединить семантику и точные совпадения, а не усреднить векторы.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "BM25 в hybrid search нужен для семантического понимания синонимов, а vector search — для точного совпадения слов.",
+              "text": "BM25 в hybrid search нужен для семантического понимания синонимов и перефразировок, а vector search — для exact match по конкретным словам, IDs и артикулам.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли обратные: vector search силён в семантике и синонимах, а BM25 — в exact matches по конкретным словам, терминам и IDs.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Reciprocal Rank Fusion (RRF) — это метод сжатия двух списков результатов в один путём удаления всех документов из BM25.",
+              "text": "Reciprocal Rank Fusion (RRF) — это метод сжатия двух списков результатов в один путём полного удаления всех документов, найденных через BM25 keyword search.",
               "correct": false,
               "sections": {
                 "what_actually": "RRF не выбрасывает один из списков, а объединяет ранги обоих: `1/(k+i)` суммирует вклад позиции документа из каждого ранжирования.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Reranking заменяет собой vector search: cross-encoder сам прогоняется по всей базе и сразу находит релевантные документы.",
+              "text": "Reranking заменяет собой vector search: cross-encoder сам прогоняется по всей базе по парам (query, doc) и сразу находит релевантные документы без первичного retrieval.",
               "correct": false,
               "sections": {
                 "what_actually": "Cross-encoder слишком медленный для всей базы, поэтому reranking идёт после vector search и работает лишь по top-50 кандидатам, а не вместо поиска.",
@@ -803,10 +803,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Reranking — после initial retrieval более точная модель пересматривает порядок: vector search даёт top-50 кандидатов (быстро, грубо), reranker (cross-encoder) отбирает top-5 (медленно, точно), их и шлют в LLM. Bi-encoder эмбеддит query и doc отдельно; cross-encoder берёт пару (query, doc) и выдаёт single score — точнее, но медленнее. Эффект: +10-20% к relevance; в production используют почти всегда.",
+              "text": "После initial retrieval более точная модель пересматривает порядок: vector search даёт грубый top-50, cross-encoder отбирает точный top-5, их и шлют в LLM.",
               "correct": true,
               "sections": {
-                "explanation": "Bi-encoder быстр, но грубоват: query и документ кодируются независимо. Cross-encoder читает пару вместе и оценивает их совместную релевантность точнее, поэтому его пускают только на небольшой top после грубого retrieval.",
+                "explanation": "Bi-encoder быстр, но грубоват: query и документ кодируются независимо. Cross-encoder читает пару (query, doc) вместе и выдаёт single score — точнее, но медленнее, поэтому его пускают только на небольшой top после грубого retrieval. Эффект: +10-20% к relevance; в production используют почти всегда. Модели: Cohere Rerank, bge-reranker, Jina Reranker, Voyage Rerank.",
                 "example": "Vector search → top-50 → Cohere Rerank / bge-reranker / Jina Reranker / Voyage Rerank → top-5 → LLM; relevance-метрики обычно растут на 10-20%.",
                 "when_to_apply": "Почти всегда в production RAG: когда нужна высокая точность top-k, а грубый порядок vector search недостаточен для качественного ответа.",
                 "edge_cases": "Cross-encoder дорог по latency, поэтому его нельзя прогонять по всей базе — только по top-N кандидатов из быстрого retrieval.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Bi-encoder и cross-encoder — это одно и то же; оба берут пару (query, doc) и выдают совместный score.",
+              "text": "Bi-encoder и cross-encoder — это одно и то же; оба берут пару (query, doc) вместе и выдают единый совместный score за один проход модели.",
               "correct": false,
               "sections": {
                 "what_actually": "Bi-encoder кодирует query и doc независимо и сравнивает их потом, а cross-encoder читает пару вместе и выдаёт единый score — это разные архитектуры с разной точностью и скоростью.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Reranking в production почти не используют, потому что он ухудшает relevance-метрики на 10-20%.",
+              "text": "Reranking в production почти не используют, потому что cross-encoder ухудшает relevance-метрики на 10-20% по сравнению с чистым vector search.",
               "correct": false,
               "sections": {
                 "what_actually": "Reranking, наоборот, обычно повышает relevance на +10-20% и в production RAG применяется почти всегда; он улучшает, а не ухудшает качество.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Metadata-фильтры применяются к тексту ответа LLM уже после генерации, а не к этапу поиска документов.",
+              "text": "Metadata-фильтры применяются к тексту ответа LLM уже после генерации, отсекая неподходящие предложения, а не к этапу поиска документов.",
               "correct": false,
               "sections": {
                 "what_actually": "Фильтры применяются в момент vector search, сужая множество кандидатов до подходящих по metadata ещё до генерации; постфильтрация ответа — это другое.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Жёсткие metadata-фильтры безопасны и не имеют недостатков: чем больше условий, тем лучше всегда.",
+              "text": "Жёсткие metadata-фильтры безопасны и не имеют недостатков: чем больше условий по дате, языку и tenant, тем точнее и полнее выдача всегда.",
               "correct": false,
               "sections": {
                 "what_actually": "Слишком строгие фильтры могут сузить выбор до нуля результатов — это известный подвох; нужен баланс между ограничением и recall.",
@@ -875,10 +875,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Это поиск с ограничением по metadata: к vector search добавляют filter (например, `tenant_id`, `date >= 2024-01-01`, `language=en`). Применения: multi-tenancy (каждый tenant видит только свои данные), permissions (только разрешённые docs), time-based (recent docs), domain filters (HR vs Engineering). Подвох: жёсткие фильтры могут сильно сузить выбор → no results.",
+              "text": "Это поиск с ограничением по metadata: к vector search добавляют filter, и similarity ищется только внутри прошедшего фильтр подмножества.",
               "correct": true,
               "sections": {
-                "explanation": "Фильтр сужает пространство поиска до подмножества, удовлетворяющего условиям metadata, а уже внутри него работает similarity. Это и про релевантность, и про безопасность доступа.",
+                "explanation": "Фильтр сужает пространство поиска до подмножества, удовлетворяющего условиям metadata (например, `tenant_id`, `date >= 2024-01-01`, `language=en`), а уже внутри него работает similarity — это и про релевантность, и про безопасность доступа. Применения: multi-tenancy (каждый tenant видит только свои данные), permissions (только разрешённые docs), time-based (recent docs), domain filters (HR vs Engineering). Подвох: жёсткие фильтры могут сильно сузить выбор → no results.",
                 "example": "`vector_db.search(vector=query_emb, top_k=5, filter={\"tenant_id\": \"acme_corp\", \"date\": {\"$gte\": \"2024-01-01\"}, \"language\": \"en\"})` вернёт только свежие англоязычные документы нужного tenant.",
                 "when_to_apply": "Когда нужны изоляция tenants, ограничение по правам доступа, свежесть или доменное сужение — фильтры по metadata встраивают прямо в запрос поиска.",
                 "edge_cases": "Слишком строгая комбинация фильтров может обнулить выдачу; иногда фильтр приходится ослаблять или давать fallback, чтобы избежать no results.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Multi-tenancy в RAG достигается тем, что каждому tenant создают полностью отдельную копию embedding-модели.",
+              "text": "Multi-tenancy в RAG достигается тем, что каждому tenant создают полностью отдельную копию embedding-модели и отдельный экземпляр vector DB.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-tenancy обычно реализуют фильтром по `tenant_id` в общей vector DB, а не отдельной моделью на каждого tenant — модель одна, разграничение в metadata.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "RAG-prompt не должен содержать инструкции «если ответа нет — скажи об этом»: модель обязана всегда давать уверенный ответ из своих знаний.",
+              "text": "RAG-prompt не должен содержать инструкции «если ответа нет — скажи об этом»: модель обязана всегда давать уверенный ответ из своих знаний, иначе UX страдает.",
               "correct": false,
               "sections": {
                 "what_actually": "Инструкция честно признавать отсутствие ответа — это best practice RAG: она снижает hallucinations; заставлять модель всегда отвечать из памяти противоречит заземлению на документы.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В RAG-prompt документы и вопрос пользователя нужно смешивать в один сплошной текст без разделителей, чтобы модели было проще.",
+              "text": "В RAG-prompt документы и вопрос пользователя нужно смешивать в один сплошной текст без разделителей и тегов, чтобы модели было проще читать.",
               "correct": false,
               "sections": {
                 "what_actually": "Best practice — явно разделять docs и question (XML-теги/маркеры); смешивание повышает риск prompt injection и путаницы инструкций с контентом.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Запрос citations в prompt бессмысленен, потому что LLM физически не может указать, из какого документа взят ответ.",
+              "text": "Запрос citations в prompt бессмысленен, потому что LLM физически не может указать, из какого документа и страницы взят ответ при генерации.",
               "correct": false,
               "sections": {
                 "what_actually": "В RAG модель как раз видит выданные chunks с их source/page, поэтому может и должна цитировать; запрос citations — стандартная и работающая практика.",
@@ -947,10 +947,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Типовой RAG-prompt задаёт роль ассистента, инструктирует отвечать только на основе документов, говорить «не нашёл», если ответа нет, и всегда указывать источник в формате `[Source: filename, page X]`. Документы и вопрос явно разделяют (XML-теги вроде `<documents>` и `<question>`). Best practices: чёткие инструкции, явное разделение, запрос citations, «если не знаю — скажи», формат ответа.",
+              "text": "Типовой RAG-prompt задаёт роль ассистента, велит отвечать только по документам, говорить «не нашёл» при отсутствии и указывать источник, явно разделяя docs и question.",
               "correct": true,
               "sections": {
-                "explanation": "Хороший template снижает hallucinations и prompt injection: модель понимает, что отвечать можно только по выданным docs, обязана цитировать и честно признавать отсутствие ответа. Чёткие границы между data и question помогают модели не путать инструкции с контентом.",
+                "explanation": "Хороший template снижает hallucinations и prompt injection: модель понимает, что отвечать можно только по выданным docs, обязана цитировать в формате `[Source: filename, page X]` и честно признавать отсутствие ответа. Документы и вопрос разделяют XML-тегами вроде `<documents>` и `<question>`, чтобы модель не путала инструкции с контентом. Best practices: чёткие инструкции, явное разделение, запрос citations, «если не знаю — скажи», формат ответа.",
                 "example": "`<documents>[Doc 1] policy_2025.pdf, p.5: ...</documents> <question>{user_question}</question>` плюс инструкция «если ответа нет в документах — скажи, что не нашёл, и укажи источник».",
                 "when_to_apply": "На этапе generation в любом RAG; особенно важно, когда критичны достоверность, citations и устойчивость к нерелевантному retrieval.",
                 "edge_cases": "Без явного разделения docs и question инструкции внутри документа могут быть восприняты как команды — это вектор prompt injection.",
@@ -971,10 +971,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Подходы: inline citations («Согласно [policy_2025.pdf:5], ...»), references-секция в конце («Sources: [1] policy_2025.pdf, [2] handbook.pdf»), structured output (JSON `{\"answer\": ..., \"sources\": [{\"doc\": ..., \"page\": 5}]}`). Verification: после генерации проверять, что все факты ответа действительно есть в retrieved docs (secondary LLM или string matching). У Claude есть нативная поддержка citations.",
+              "text": "Подходы: inline citations, references-секция в конце ответа и structured output в JSON; после генерации факты ответа сверяют с retrieved docs.",
               "correct": true,
               "sections": {
-                "explanation": "Citations повышают доверие и проверяемость: пользователь видит, откуда взят факт. Источники берут из metadata retrieved chunks; формат выбирают под UX — inline, список ссылок или машиночитаемый JSON.",
+                "explanation": "Citations повышают доверие и проверяемость: пользователь видит, откуда взят факт. Форматы: inline citations («Согласно [policy_2025.pdf:5], ...»), references-секция в конце («Sources: [1] policy_2025.pdf, [2] handbook.pdf»), structured output (JSON `{\"answer\": ..., \"sources\": [{\"doc\": ..., \"page\": 5}]}`). Verification: после генерации проверять, что все факты ответа действительно есть в retrieved docs (secondary LLM или string matching). У Claude есть нативная поддержка citations.",
                 "example": "Claude messages API с `{\"type\": \"document\", \"citations\": {\"enabled\": true}}` возвращает в `response.content` сгенерированные citations, привязанные к фрагментам документа.",
                 "when_to_apply": "Когда важна проверяемость ответа: legal, медицина, support, enterprise — citations позволяют пользователю и аудиту дойти до первоисточника.",
                 "edge_cases": "Модель может приписать факту неверный источник; поэтому citations стоит верифицировать вторичной проверкой, а не доверять им слепо.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Citations в RAG возможны только в формате structured JSON; inline-ссылки и references-секция технически не поддерживаются.",
+              "text": "Citations в RAG возможны только в формате structured JSON; inline-ссылки в тексте и отдельная references-секция технически не поддерживаются ни одной LLM.",
               "correct": false,
               "sections": {
                 "what_actually": "Форматов несколько и все рабочие: inline citations, отдельная references-секция и structured JSON; выбор зависит от UX, а не от технических ограничений.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Источники для citations модель генерирует из своих внутренних знаний, а не из retrieved chunks, поэтому metadata не нужна.",
+              "text": "Источники для citations модель генерирует из своих внутренних знаний, а не из retrieved chunks, поэтому metadata с source и page для них не нужна.",
               "correct": false,
               "sections": {
                 "what_actually": "Citations строятся именно по metadata retrieved chunks (source, page); без них модель не знала бы реальный файл и страницу и придумывала бы ссылки.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "После генерации проверять соответствие фактов источникам не нужно — если модель указала citation, факт гарантированно верен.",
+              "text": "После генерации проверять соответствие фактов источникам не нужно: если модель указала citation на документ, факт в ответе гарантированно верен.",
               "correct": false,
               "sections": {
                 "what_actually": "Модель может ошибиться с привязкой источника, поэтому рекомендуют verification (secondary LLM или string matching), что все факты ответа есть в retrieved docs.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Если retrieval ничего не нашёл, лучшее решение — позволить модели уверенно ответить из своих внутренних знаний без всякого дисклеймера.",
+              "text": "Если retrieval ничего не нашёл, лучшее решение — позволить модели уверенно ответить из своих внутренних знаний без всякого дисклеймера, чтобы не оставлять пользователя без ответа.",
               "correct": false,
               "sections": {
                 "what_actually": "Уверенный ответ из памяти без пометки — это как раз риск hallucinations и потеря trust; правильнее сказать «не знаю» или дать fallback с дисклеймером.",
@@ -1043,10 +1043,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Сценарии: пустые результаты (не пройден threshold) или retrieved docs не содержат ответа (LLM сам это распознаёт). Стратегии: LLM говорит «не знаю» (инструкция в prompt), fallback на общий ответ без RAG с дисклеймером, query rewriting (вдруг спросили неудачно), web search fallback (если разрешён), escalation к human (для чатботов), return empty + предложить уточнить. Главное — не давать ложных уверенных ответов, это потеря trust.",
+              "text": "Два сценария: пустой результат (не пройден threshold) или docs без ответа (распознаёт LLM). Стратегии — «не знаю», query rewriting, fallback с дисклеймером, web search, эскалация.",
               "correct": true,
               "sections": {
-                "explanation": "Пустой или нерелевантный retrieval — нормальная ситуация, и поведение системы здесь определяет доверие. Лучше честно признать отсутствие данных или переформулировать запрос, чем галлюцинировать уверенный ответ.",
+                "explanation": "Пустой или нерелевантный retrieval — нормальная ситуация, и поведение системы здесь определяет доверие. Стратегии: LLM говорит «не знаю» (инструкция в prompt), fallback на общий ответ без RAG с дисклеймером, query rewriting (вдруг спросили неудачно), web search fallback (если разрешён), escalation к human (для чатботов), return empty + предложить уточнить. Главное — не давать ложных уверенных ответов, это потеря trust.",
                 "example": "Если по threshold ничего не прошло, бот отвечает «Не нашёл информации в доступных источниках, уточните вопрос?» вместо выдуманного ответа; либо делает query rewriting и пробует ещё раз.",
                 "when_to_apply": "Всегда закладывают обработку пустого retrieval в production RAG: выбор между «не знаю», fallback, rewriting, web-search и эскалацией зависит от домена и допустимости внешних источников.",
                 "edge_cases": "Web search fallback и общий LLM-ответ без RAG несут риск неактуальных или непроверенных данных — их сопровождают дисклеймером.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Единственная допустимая реакция на пустой retrieval — сразу вернуть HTTP-ошибку 500 и прервать сессию пользователя.",
+              "text": "Единственная допустимая реакция на пустой retrieval — сразу вернуть HTTP-ошибку 500, записать её в лог и прервать сессию пользователя.",
               "correct": false,
               "sections": {
                 "what_actually": "Пустой retrieval — штатная ситуация, а не сбой: на неё реагируют «не знаю», query rewriting, fallback, web-search или эскалацией к человеку, а не аварийной ошибкой.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Query rewriting при пустом retrieval бесполезен: переформулировка запроса никогда не меняет результаты vector search.",
+              "text": "Query rewriting при пустом retrieval бесполезен: переформулировка запроса никогда не меняет embedding и результаты vector search остаются теми же.",
               "correct": false,
               "sections": {
                 "what_actually": "Неудачно сформулированный короткий запрос плохо матчится; rewriting (расширение, переформулировка) часто как раз вытаскивает релевантные chunks, поэтому его и применяют.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Query rewriting — это перевод запроса пользователя на английский язык, и только это; никакого расширения смысла он не делает.",
+              "text": "Query rewriting — это перевод запроса пользователя на английский язык, и только это; никакого расширения смысла или добавления синонимов он не делает.",
               "correct": false,
               "sections": {
                 "what_actually": "Rewriting переформулирует запрос в более полную и подходящую для retrieval форму (и может добавлять синонимы/варианты), а не просто переводит его на другой язык.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Multi-query — это запуск одного и того же неизменного запроса несколько раз подряд для усреднения случайных результатов.",
+              "text": "Multi-query — это запуск одного и того же неизменного запроса несколько раз подряд для усреднения случайных результатов нестабильного vector search.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-query генерирует несколько разных переформулировок query и ищет по каждой, а затем сливает результаты; повтор одинакового запроса дал бы те же chunks.",
@@ -1115,10 +1115,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Иногда исходный query плохой для retrieval (короткий, мало контекста). Query rewriting — LLM переписывает его в более полную формулировку («Сколько отпуск?» → «Какова продолжительность ежегодного оплачиваемого отпуска для сотрудников?»). Multi-query — LLM генерирует 3-5 вариантов query, ищут по каждому и дедуплицируют. Query expansion — добавить synonyms и related terms.",
+              "text": "Исходный query часто плох для retrieval (короткий). Query rewriting переписывает его полнее, multi-query генерирует 3-5 вариантов, expansion добавляет синонимы.",
               "correct": true,
               "sections": {
-                "explanation": "Короткие или неточные запросы плохо матчатся с длинными документами. Переписывание и расширение приближают формулировку к языку документов и повышают recall, ловя релевантное под разными формулировками.",
+                "explanation": "Короткие или неточные запросы плохо матчатся с длинными документами. Query rewriting — LLM переписывает запрос в более полную формулировку («Сколько отпуск?» → «Какова продолжительность ежегодного оплачиваемого отпуска для сотрудников?»). Multi-query — LLM генерирует 3-5 вариантов query, ищут по каждому и дедуплицируют. Query expansion — добавить synonyms и related terms. Всё это приближает формулировку к языку документов и повышает recall.",
                 "example": "Для «Сколько отпуск?» LLM генерирует варианты вроде «Сколько дней отпуска у сотрудников?», «Vacation policy duration», «Annual leave entitlement», ищет по всем и объединяет результаты с дедупликацией.",
                 "when_to_apply": "Когда запросы пользователей короткие, разговорные или многозначные, а прямой vector search по ним даёт слабый recall.",
                 "edge_cases": "Лишние варианты query добавляют LLM-вызовы и могут притащить нерелевантные chunks; результаты приходится дедуплицировать и переранжировать.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Query expansion ухудшает retrieval, потому что добавление синонимов и related terms всегда уводит поиск в сторону.",
+              "text": "Query expansion ухудшает retrieval, потому что добавление синонимов и related terms всегда уводит поиск в сторону от исходного смысла запроса.",
               "correct": false,
               "sections": {
                 "what_actually": "Expansion как раз повышает recall: синонимы и связанные термины помогают матчить документы, использующие иную лексику, чем исходный запрос.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "HyDE генерирует финальный гипотетический ответ и сразу отдаёт его пользователю, минуя retrieval по реальным документам.",
+              "text": "HyDE генерирует финальный гипотетический ответ и сразу отдаёт его пользователю, минуя retrieval по реальным документам и опору на найденные chunks.",
               "correct": false,
               "sections": {
                 "what_actually": "Гипотетический ответ в HyDE используется только как вектор для поиска реальных chunks, а не как финальный ответ; настоящий ответ строится уже по найденным документам.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "HyDE эмбеддит сам короткий запрос пользователя, потому что короткий текст всегда ближе к документам, чем длинный.",
+              "text": "HyDE эмбеддит сам короткий запрос пользователя, потому что короткий текст всегда ближе к длинным документам в векторном пространстве, чем развёрнутый ответ.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: HyDE не эмбеддит короткий query, а строит длинный гипотетический ответ, потому что он семантически ближе к длинным документам, чем краткий вопрос.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "HyDE не требует дополнительных LLM-вызовов и работает абсолютно бесплатно по сравнению с обычным retrieval.",
+              "text": "HyDE не требует дополнительных LLM-вызовов и работает абсолютно бесплатно по сравнению с обычным retrieval, не добавляя ни latency, ни cost.",
               "correct": false,
               "sections": {
                 "what_actually": "HyDE добавляет один extra LLM call для генерации гипотетического ответа — это его trade-off; выигрыш в recall (10-20%) идёт ценой этого вызова.",
@@ -1187,10 +1187,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "HyDE: вместо того чтобы эмбеддить сам query, просят LLM сгенерировать hypothetical answer и эмбеддят его, и уже по нему делают vector search. Зачем: гипотетический ответ семантически ближе к актуальным документам, чем короткий query (запросы короткие, документы длинные). Trade-off: один extra LLM call, но улучшает recall в 10-20% случаев.",
+              "text": "HyDE: вместо вектора query просят LLM сгенерировать hypothetical answer, эмбеддят его и по нему делают vector search — он семантически ближе к документам.",
               "correct": true,
               "sections": {
-                "explanation": "Запрос и документ часто живут в разных «регистрах»: вопрос короткий, ответ — развёрнутый текст. HyDE строит фиктивный развёрнутый ответ, который по форме и лексике ближе к реальным документам, и ищет по его вектору.",
+                "explanation": "Запрос и документ часто живут в разных «регистрах»: вопрос короткий, ответ — развёрнутый текст. HyDE строит фиктивный развёрнутый ответ, который по форме и лексике ближе к реальным документам (запросы короткие, документы длинные), и ищет по его вектору. Trade-off: один extra LLM call, но улучшает recall в 10-20% случаев.",
                 "example": "На «Какая политика по удалёнке?» LLM генерирует «В компании разрешена удалённая работа. Сотрудники могут работать...», эмбеддит этот текст и по нему ищет реальные похожие chunks.",
                 "when_to_apply": "Когда запросы короткие и плохо матчатся с длинными документами, а дополнительный LLM-вызов на запрос приемлем по latency и cost ради роста recall.",
                 "edge_cases": "Если LLM сгенерирует гипотетический ответ с неверными деталями, embedding может увести поиск в сторону; HyDE помогает не всегда (10-20% случаев).",
@@ -1211,10 +1211,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Self-RAG — LLM сама решает, нужен ли retrieval, через special tokens: `[Retrieve]` (запустить retrieval), `[No-Retrieve]` (ответить из training knowledge), `[Relevant]`/`[Irrelevant]` (оценить найденный doc). Заменяет always-retrieve подход. Полезно для открытых вопросов, где retrieval может ничего не дать. Требует fine-tuned LLM, специально обученную распознавать эти tokens.",
+              "text": "Self-RAG — LLM сама через special tokens решает, делать ли retrieval, и оценивает релевантность найденного. Заменяет always-retrieve. Требует fine-tuned LLM под эти tokens.",
               "correct": true,
               "sections": {
-                "explanation": "Вместо безусловного retrieval на каждый запрос модель адаптивно решает, нужен ли он, и оценивает релевантность найденного. Это экономит вызовы и снижает шум на вопросах, где база знаний не нужна.",
+                "explanation": "Вместо безусловного retrieval на каждый запрос модель адаптивно решает, нужен ли он, и оценивает релевантность найденного. Управляющие tokens: `[Retrieve]` запускает поиск, `[No-Retrieve]` отвечает из training knowledge, `[Relevant]`/`[Irrelevant]` оценивают найденный doc. Это экономит вызовы и снижает шум на открытых вопросах, где база знаний не нужна.",
                 "example": "На фактический вопрос по корпоративной базе модель эмитит `[Retrieve]`, а на общий вопрос вроде «переведи фразу» — `[No-Retrieve]` и отвечает сразу, не дёргая vector DB.",
                 "when_to_apply": "Когда часть запросов вообще не требует базы знаний, и always-retrieve тащит лишний шум; и когда есть ресурс на fine-tuning модели под special tokens.",
                 "edge_cases": "Требует специально дообученной LLM — обычная модель эти tokens не понимает, поэтому Self-RAG не «включается» на любой готовой модели.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Self-RAG работает на любой готовой LLM из коробки и не требует никакого специального обучения модели.",
+              "text": "Self-RAG работает на любой готовой LLM из коробки, а служебные tokens разбирает внешний парсер поверх обычного inference, без обучения модели.",
               "correct": false,
               "sections": {
                 "what_actually": "Self-RAG требует fine-tuned LLM, специально обученную распознавать и эмитить special tokens (`[Retrieve]`, `[Relevant]` и т.д.); обычная модель их не понимает.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Self-RAG означает, что система всегда выполняет retrieval перед каждым ответом, без исключений.",
+              "text": "Self-RAG означает, что система всегда выполняет retrieval перед каждым ответом, а special tokens лишь помечают приоритет извлечённых chunks.",
               "correct": false,
               "sections": {
                 "what_actually": "Суть Self-RAG в обратном: модель динамически решает, нужен ли retrieval (`[Retrieve]` vs `[No-Retrieve]`), и заменяет always-retrieve подход.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Special tokens в Self-RAG нужны только для форматирования финального ответа в Markdown, а не для управления retrieval.",
+              "text": "Special tokens в Self-RAG нужны только для форматирования финального ответа в Markdown и расстановки ссылок на источники, а не для управления retrieval.",
               "correct": false,
               "sections": {
                 "what_actually": "Эти tokens управляют процессом: запускать ли retrieval и релевантен ли найденный doc (`[Relevant]`/`[Irrelevant]`); к Markdown-разметке они отношения не имеют.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Multi-query retrieval — это поиск по одному запросу сразу в нескольких разных vector DB одновременно.",
+              "text": "Multi-query retrieval — это поиск по одному запросу сразу в нескольких разных vector DB одновременно, а результаты выбираются по самой быстрой базе.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-query — это несколько переформулировок одного query по одной базе, а не один query по нескольким базам; речь о вариантах формулировки, а не о числе хранилищ.",
@@ -1283,10 +1283,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Multi-query retrieval — LLM генерирует несколько reformulations исходного query, по каждой делают retrieve и затем merge с дедупликацией и переранжировкой. Улучшает recall для ambiguous queries: разные формулировки ловят разные релевантные chunks, которые один исходный запрос мог упустить.",
+              "text": "Multi-query retrieval — LLM генерирует несколько reformulations исходного query, по каждой делает retrieve, а результаты merge с дедупликацией и rerank.",
               "correct": true,
               "sections": {
-                "explanation": "Один запрос покрывает один «угол» формулировки. Несколько переформулировок расширяют покрытие лексики и смысла, поэтому объединённая выдача чаще содержит нужные документы — особенно для неоднозначных вопросов.",
+                "explanation": "Один запрос покрывает один «угол» формулировки. Несколько переформулировок расширяют покрытие лексики и смысла, поэтому объединённая выдача чаще содержит нужные документы — особенно для неоднозначных вопросов. Так растёт recall: разные формулировки ловят разные релевантные chunks, которые один исходный запрос мог упустить.",
                 "example": "`queries = llm.generate_queries(original_query, n=5)`, по каждой `vector_db.search(embed(q), top_k=5)`, затем `dedupe_and_rerank(all_results)` — итог собирает релевантное из всех вариантов.",
                 "when_to_apply": "Когда запросы многозначные или их можно сформулировать по-разному, и важно поднять recall ценой нескольких дополнительных поисков и LLM-вызова.",
                 "edge_cases": "Несколько вариантов возвращают пересекающиеся chunks и шум, поэтому обязательны дедупликация и rerank, иначе context раздуется дубликатами.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "После multi-query результаты разных запросов нельзя объединять — нужно выбрать выдачу только одного, лучшего запроса.",
+              "text": "После multi-query результаты разных запросов нельзя объединять — нужно выбрать выдачу только одного, лучшего запроса по среднему score.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл multi-query именно в объединении (merge) результатов всех формулировок с дедупликацией и rerank; брать только один список свело бы метод к обычному поиску.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Multi-query retrieval снижает recall, потому что лишние формулировки только отвлекают поиск от исходного смысла.",
+              "text": "Multi-query retrieval снижает recall, потому что лишние формулировки только отвлекают поиск от исходного смысла и дробят релевантность между запросами.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-query как раз повышает recall для ambiguous queries: разные формулировки покрывают больше релевантных chunks, чем один запрос.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Contextual Retrieval генерирует контекст для каждого запроса пользователя в момент поиска, а не для chunks при индексации.",
+              "text": "Contextual Retrieval генерирует контекст для каждого запроса пользователя в момент поиска, а не для chunks при индексации, и кэширует его per-session.",
               "correct": false,
               "sections": {
                 "what_actually": "Контекст генерируют для каждого chunk на этапе indexing и эмбеддят вместе с ним; это offline-обогащение документов, а не обработка query в online-фазе.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Contextual Retrieval — это просто увеличение размера chunk до всего документа целиком, без всякой генерации контекста.",
+              "text": "Contextual Retrieval — это просто увеличение размера chunk до всего документа целиком, без всякой генерации контекста, поэтому embeddings становятся длиннее.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод не раздувает chunk до документа, а добавляет к нему короткий сгенерированный Claude контекст (откуда фрагмент, о чём раздел) и эмбеддит комбинацию.",
@@ -1355,10 +1355,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Anthropic Contextual Retrieval (2024) улучшает embeddings через chunk context: перед embed каждого chunk просят Claude сгенерировать короткий контекст (откуда chunk, о чём раздел), и эмбеддят комбинацию [Context] + [Original chunk]. Эффект: retrieval failure rate снижается на 49%. Cost: Claude API на генерацию context каждого chunk (можно batch), но prompt caching делает это дёшево.",
+              "text": "Anthropic Contextual Retrieval (2024) улучшает embeddings: перед embed каждого chunk Claude генерирует короткий контекст, и эмбеддят `[Context] + [chunk]`.",
               "correct": true,
               "sections": {
-                "explanation": "Изолированный chunk вроде «...this transaction was reversed» теряет смысл без окружения. Добавление сгенерированного контекста («это из Q3 2024 financial report, раздел про refunds») делает embedding информативнее, и retrieval точнее находит такие фрагменты.",
+                "explanation": "Изолированный chunk вроде «...this transaction was reversed» теряет смысл без окружения. Перед embed Claude дописывает короткий контекст (откуда chunk, о чём раздел), и эмбеддят комбинацию `[Context] + [Original chunk]` — embedding становится информативнее, retrieval точнее. Эффект: retrieval failure rate падает на 49%. Стоимость генерации контекста на каждый chunk снижают через batch и prompt caching.",
                 "example": "К chunk «...this transaction was reversed.» Claude дописывает «This is from Q3 2024 financial report, section on customer refunds...», и эмбеддят уже объединённый текст — failure rate падает на 49%.",
                 "when_to_apply": "Когда chunks часто теряют смысл вне документа (отчёты, длинные структурированные тексты), и есть бюджет на генерацию контекста; prompt caching делает batch дешёвым.",
                 "edge_cases": "Контекст генерируется на каждый chunk, что добавляет LLM-вызовы при indexing; экономят через batch и prompt caching, иначе стоимость indexing заметно растёт.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Contextual Retrieval ухудшает качество поиска, поэтому Anthropic рекомендует его избегать в production.",
+              "text": "Contextual Retrieval ухудшает качество поиска, поэтому Anthropic рекомендует его избегать в production и оставлять плоские chunks без контекста.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод улучшает поиск: retrieval failure rate снижается на 49% по измерениям Anthropic; его как раз рекомендуют, а не избегают.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "GraphRAG дешевле обычного RAG в построении индекса, потому что граф не требует вызовов LLM.",
+              "text": "GraphRAG дешевле обычного RAG в построении индекса, потому что граф строится готовыми правилами парсинга и regex и совсем не требует вызовов LLM на extraction сущностей.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот, GraphRAG дорог в построении: extraction entities/relationships и генерация summaries communities требуют множества LLM-вызовов — это его главный минус.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "GraphRAG нужен исключительно для поиска точных локальных фактов в одном chunk, где обычный RAG бессилен.",
+              "text": "GraphRAG нужен исключительно для поиска точных локальных фактов внутри одного chunk, где обычный vector-RAG почему-то бессилен и систематически промахивается.",
               "correct": false,
               "sections": {
                 "what_actually": "GraphRAG силён как раз на global-вопросах об общих темах и структуре корпуса; локальные точечные факты хорошо находит и обычный chunk-based RAG.",
@@ -1427,10 +1427,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "GraphRAG (Microsoft, 2024) — RAG поверх knowledge graph, а не просто vector search. Pipeline: LLM извлекает entities и relationships из документов → строит graph; graph кластеризуют в communities; LLM генерирует summaries для каждой community; при query достают релевантные communities и entities. Нужен для вопросов глобального уровня («в чём основные темы документа?»), где обычный RAG плох (видит только chunks). Минус: дорого строить (много LLM calls для extraction).",
+              "text": "GraphRAG (Microsoft, 2024) — RAG поверх knowledge graph: LLM извлекает entities/relationships, граф кластеризуют в communities с summaries. Для global-вопросов.",
               "correct": true,
               "sections": {
-                "explanation": "Обычный chunk-based RAG видит локальные фрагменты, но не общую структуру корпуса. GraphRAG строит граф сущностей и связей и summaries сообществ, поэтому отвечает на вопросы об общей картине, а не только о конкретных фактах.",
+                "explanation": "Обычный chunk-based RAG видит локальные фрагменты, но не общую структуру корпуса. Pipeline GraphRAG: LLM извлекает entities и relationships → строит граф → граф кластеризуют в communities → LLM генерирует summary для каждой community; при query достают релевантные communities и entities. Это нужно для вопросов глобального уровня («в чём основные темы документа?»), где обычный RAG плох, видя только chunks. Минус: дорого строить — много LLM calls на extraction.",
                 "example": "На вопрос «какие главные темы во всём корпусе отчётов?» GraphRAG обращается к summaries communities графа, а chunk-RAG провалился бы, видя лишь разрозненные куски без overall structure.",
                 "when_to_apply": "Для global/summary-вопросов о корпусе в целом, где нужна структура и связи между сущностями, а не точечный факт из одного chunk.",
                 "edge_cases": "Построение графа дорого: extraction entities/relationships и генерация summaries требуют множества LLM-вызовов, поэтому индексация ощутимо дороже обычного RAG.",
@@ -1451,10 +1451,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Agentic RAG — LLM выступает как agent, который сам решает: когда делать retrieve, из каких источников (несколько vector DBs), reformulate ли queries, verify результаты и re-retrieve при необходимости. Это цикл: модель выбирает action (retrieve/rewrite/answer), пополняет context, переписывает запрос или возвращает ответ, пока не satisfied.",
+              "text": "Agentic RAG — LLM как agent в цикле сам решает, когда делать retrieve, из каких источников, переформулировать ли query и re-retrieve, пока не satisfied.",
               "correct": true,
               "sections": {
-                "explanation": "В отличие от статичного пайплайна, агент управляет процессом динамически: оценивает, хватает ли информации, меняет источник или формулировку и повторяет retrieval, пока не соберёт достаточный контекст для ответа.",
+                "explanation": "В отличие от статичного пайплайна, агент управляет процессом динамически: оценивает, хватает ли информации, выбирает источник (несколько vector DBs), меняет формулировку и повторяет retrieval, проверяя результаты, пока не соберёт достаточный контекст. Цикл: модель выбирает action (retrieve/rewrite/answer), пополняет context и переписывает запрос либо возвращает ответ.",
                 "example": "Псевдокод: `while not satisfied: decision = llm.decide_action(...)`; если `retrieve` — тянет chunks из нужного источника, если `rewrite` — переформулирует query, если `answer` — отдаёт ответ из накопленного context.",
                 "when_to_apply": "Для сложных, многошаговых вопросов и нескольких источников, где одного прохода retrieval мало и нужно итеративно уточнять запрос и проверять результаты.",
                 "edge_cases": "Циклы агента увеличивают число LLM-вызовов и latency, а без ограничения итераций агент может зациклиться, так и не достигнув satisfied.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Agentic RAG — это статичный однопроходный пайплайн, в котором retrieval всегда выполняется ровно один раз без права модели что-то менять.",
+              "text": "Agentic RAG — это статичный однопроходный пайплайн, в котором retrieval всегда выполняется ровно один раз без права модели что-то менять или перезапросить.",
               "correct": false,
               "sections": {
                 "what_actually": "Agentic RAG как раз динамический: агент сам решает, когда и откуда делать retrieve, переписывать ли query и повторять ли поиск — это итеративный цикл, а не один фиксированный проход.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В agentic RAG агент может обращаться только к одному фиксированному vector DB и не имеет права выбирать источник.",
+              "text": "В agentic RAG агент может обращаться только к одному фиксированному vector DB и не имеет права выбирать источник или переформулировать запрос.",
               "correct": false,
               "sections": {
                 "what_actually": "Одна из ключевых способностей агента — выбирать, из каких источников (нескольких vector DBs) делать retrieve, а не быть привязанным к одному хранилищу.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Agentic RAG полностью исключает LLM из процесса: решения о retrieval принимает отдельный детерминированный алгоритм без модели.",
+              "text": "Agentic RAG полностью исключает LLM из процесса: решения о retrieval принимает отдельный детерминированный алгоритм без модели и без обратной связи.",
               "correct": false,
               "sections": {
                 "what_actually": "Решения (`decide_action`, rewrite, verify) принимает именно LLM как agent; без модели не было бы ни рассуждения о действиях, ни синтеза ответа.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "RAG достаточно тестировать только по финальному ответу: если текст ответа выглядит правдоподобно, retrieval проверять не нужно.",
+              "text": "RAG достаточно тестировать только по финальному ответу: если текст ответа выглядит правдоподобно и связно, retrieval и источники проверять отдельно уже не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Тестируют послойно — отдельно retrieval (нашлись ли expected_sources) и generation; правдоподобный ответ может опираться на неверные или вовсе не найденные chunks.",
@@ -1523,10 +1523,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Основа — golden dataset: вручную собранные `(question, expected_answer, expected_sources, topics)`. Тестируют: retrieval (нашли ли expected_sources среди retrieved chunks?), generation (содержит ли answer expected_answer?), faithfulness (все ли утверждения опираются на retrieved chunks?), answer relevance (отвечает ли на question?). LLM-as-judge — другая LLM оценивает quality по rubric.",
+              "text": "Основа — golden dataset: вручную выверенные эталонные вопросы с ответами и источниками. Retrieval и generation проверяют раздельно; quality судит LLM-as-judge.",
               "correct": true,
               "sections": {
-                "explanation": "RAG тестируют послойно, потому что ошибка может быть и в retrieval, и в generation. Golden dataset даёт reference для измерения, а LLM-as-judge автоматизирует оценку качества там, где нет точного совпадения строк.",
+                "explanation": "RAG тестируют послойно, потому что ошибка может быть и в retrieval, и в generation. Golden dataset — это записи `(question, expected_answer, expected_sources, topics)`. Проверяют: retrieval (нашли ли expected_sources среди retrieved chunks), generation (содержит ли answer expected_answer), faithfulness (все ли утверждения опираются на retrieved chunks), answer relevance (отвечает ли на question). LLM-as-judge оценивает quality там, где нет точного совпадения строк.",
                 "example": "Запись `{question: \"Сколько дней отпуска?\", expected_answer: \"28 дней\", expected_sources: [\"policy_2025.pdf:5\"]}`: проверяют, попал ли `policy_2025.pdf:5` в retrieved chunks и содержит ли ответ «28 дней».",
                 "when_to_apply": "Перед релизом и непрерывно в production: golden dataset ловит регрессии retrieval и generation при изменении chunking, embeddings, prompt или модели.",
                 "edge_cases": "Golden dataset нужно поддерживать в актуальном состоянии: при изменении корпуса expected_sources устаревают, и тесты начинают давать ложные провалы.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Golden dataset для RAG генерируется автоматически самой тестируемой моделью без участия человека.",
+              "text": "Golden dataset для RAG генерируется автоматически самой тестируемой моделью без участия человека, поэтому эталонные ответы всегда совпадают с её собственными выводами.",
               "correct": false,
               "sections": {
                 "what_actually": "Golden dataset — это вручную курируемый набор `(question, expected_answer, expected_sources)`; автогенерация той же моделью протекала бы её же ошибки в эталон.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Faithfulness в тестировании RAG означает, что ответ грамматически правильно написан, а не опирается на источники.",
+              "text": "Faithfulness в тестировании RAG означает, что ответ грамматически правильно написан и хорошо читается, а не то, что он опирается на извлечённые источники.",
               "correct": false,
               "sections": {
                 "what_actually": "Faithfulness проверяет, что все утверждения ответа основаны на retrieved chunks (модель не выдумала факты); грамотность текста — это совсем другое.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Precision@k и Recall@k — это одно и то же число, просто названное по-разному для retrieval и generation.",
+              "text": "Precision@k и Recall@k — это одно и то же число, просто названное по-разному для retrieval и generation в разных фреймворках evaluation и метриках.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные метрики: Precision@k — доля релевантных среди retrieved, Recall@k — доля найденных среди всех релевантных в базе; они часто конфликтуют, а не совпадают.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Faithfulness и answer relevance измеряют одно и то же — насколько правильно модель нашла документы.",
+              "text": "Faithfulness и answer relevance измеряют одно и то же — насколько правильно модель нашла нужные документы в индексе на этапе поиска по запросу.",
               "correct": false,
               "sections": {
                 "what_actually": "Это generation-метрики разной природы: faithfulness — не выдуманы ли факты (опора на chunks), answer relevance — отвечает ли ответ на сам вопрос; ни одна не про сам поиск документов.",
@@ -1595,10 +1595,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Retrieval metrics: Precision@k (доля retrieved chunks, что релевантны), Recall@k (доля релевантных chunks, что была retrieved), MRR (насколько высоко в списке релевантный), NDCG (discounted cumulative gain). Generation metrics: faithfulness (не выдумала ли факты), answer relevance (отвечает ли на question), context utilization (использовала ли chunks), answer correctness (правильный ли факт).",
+              "text": "Retrieval-метрики (качество поиска): Precision@k, Recall@k, MRR, NDCG. Generation-метрики (качество ответа): faithfulness, answer relevance, context utilization, answer correctness.",
               "correct": true,
               "sections": {
-                "explanation": "Метрики делятся на две группы: качество поиска (нашли ли и как высоко нужное) и качество генерации (верно ли и по делу ли ответила модель). Их меряют отдельно, потому что слабым может быть любой из этапов.",
+                "explanation": "Метрики делятся на две группы по двум звеньям системы. Retrieval: Precision@k (доля retrieved chunks, что релевантны), Recall@k (доля релевантных chunks, что была retrieved), MRR (насколько высоко в списке релевантный), NDCG (discounted cumulative gain). Generation: faithfulness (не выдумала ли факты), answer relevance (отвечает ли на question), context utilization (использовала ли chunks), answer correctness (правильный ли факт).",
                 "example": "Если из retrieved 5 chunks релевантны 4 — Precision@5 = 0.8; если из 10 релевантных в базе нашли 4 — Recall = 0.4; MRR смотрит позицию первого релевантного chunk в списке.",
                 "when_to_apply": "При оценке и мониторинге RAG: retrieval-метрики диагностируют поиск, generation-метрики — ответ; вместе они показывают, где именно деградирует система.",
                 "edge_cases": "Precision и recall конфликтуют: рост k повышает recall, но обычно роняет precision — нужно смотреть обе метрики, а не одну.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "MRR (Mean Reciprocal Rank) — это generation-метрика, оценивающая грамматическую связность ответа модели.",
+              "text": "MRR (Mean Reciprocal Rank) — это generation-метрика, оценивающая грамматическую связность и читаемость текста ответа модели, а не позицию релевантного chunk в выдаче.",
               "correct": false,
               "sections": {
                 "what_actually": "MRR — retrieval-метрика: она измеряет, насколько высоко в списке стоит релевантный chunk, и к связности текста ответа отношения не имеет.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "RAGAS — это vector DB для хранения embeddings, а TruLens — embedding-модель для их генерации.",
+              "text": "RAGAS — это vector DB для хранения embeddings и индексов, а TruLens — embedding-модель для их генерации из текста перед индексацией корпуса.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба — инструменты evaluation/observability для RAG: RAGAS считает метрики качества, TruLens даёт tracking и дашборды; ни тот, ни другой не хранят векторы и не генерируют embeddings.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "RAGAS оценивает только скорость работы RAG (latency, QPS) и не считает метрик качества вроде faithfulness.",
+              "text": "RAGAS оценивает только скорость работы RAG (latency, QPS, throughput) и нагрузку на инфраструктуру, но не считает метрик качества вроде faithfulness или answer relevance.",
               "correct": false,
               "sections": {
                 "what_actually": "RAGAS считает именно метрики качества — `faithfulness`, `answer_relevancy`, `context_precision` — а не производительность; latency и QPS меряют другими инструментами.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В production RAG непрерывная evaluation не нужна: достаточно один раз проверить систему перед запуском.",
+              "text": "В production RAG непрерывная evaluation не нужна: достаточно один раз проверить систему перед запуском, дальше метрики качества уже не меняются со временем.",
               "correct": false,
               "sections": {
                 "what_actually": "Непрерывная evaluation обязательна — без неё незаметно проходят регрессии (от смены модели, корпуса, embeddings), и не видно, деградирует ли система во времени.",
@@ -1667,10 +1667,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "RAGAS — Python-фреймворк для evaluation RAG: считает метрики вроде `faithfulness`, `answer_relevancy`, `context_precision` по датасету из questions, answers и contexts. TruLens — observability + evaluation для LLM/RAG (tracking, dashboards). Phoenix (Arize) — open-source LLM observability. В production RAG непрерывная evaluation обязательна, иначе не понять, деградирует ли система.",
+              "text": "RAGAS — Python-фреймворк для evaluation RAG: считает `faithfulness`, `answer_relevancy`, `context_precision`. TruLens — observability + evaluation, Phoenix — open-source.",
               "correct": true,
               "sections": {
-                "explanation": "Эти инструменты автоматизируют оценку RAG: RAGAS вычисляет стандартные метрики качества retrieval и generation, а TruLens/Phoenix добавляют трекинг и дашборды для наблюдения за системой во времени.",
+                "explanation": "Эти инструменты автоматизируют оценку RAG. RAGAS вычисляет метрики качества по датасету из questions, answers и contexts. TruLens добавляет observability и evaluation для LLM/RAG (tracking, dashboards), Phoenix (Arize) — open-source LLM observability. В production RAG непрерывная evaluation обязательна, иначе не понять, деградирует ли система.",
                 "example": "`evaluate(dataset, metrics=[faithfulness, answer_relevancy, context_precision])` в RAGAS возвращает численные оценки по датасету, которые можно отслеживать от релиза к релизу.",
                 "when_to_apply": "В production-RAG для непрерывной оценки и наблюдаемости: RAGAS — для расчёта метрик в CI, TruLens/Phoenix — для дашбордов и трекинга качества в проде.",
                 "edge_cases": "Многие метрики RAGAS используют LLM-as-judge, поэтому их оценки шумят и стоят денег; их трактуют как тренд, а не как абсолютную истину.",
@@ -1691,10 +1691,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Bad chunking (теряется context, режутся предложения), embedding model mismatch (query и docs разными моделями), stale data (vector DB не synced с источниками), multi-tenancy leak (RAG отдаёт чужие данные), hallucinations (даже с RAG), cost runaway (каждый query = embedding + retrieval + LLM), slow retrieval (большая база без индексов), too many docs in context (lost in the middle), prompt injection через документы, no evaluation (регрессии проходят незаметно).",
+              "text": "Bad chunking, embedding mismatch, stale data, multi-tenancy leak, hallucinations, cost runaway, slow retrieval, lost in the middle, prompt injection, no evaluation.",
               "correct": true,
               "sections": {
-                "explanation": "Проблемы охватывают весь пайплайн: indexing (chunking, embeddings, sync), retrieval (скорость, фильтры, k), generation (hallucinations, injection) и эксплуатацию (cost, evaluation). Каждая бьёт по качеству или безопасности и требует своей защиты.",
+                "explanation": "Проблемы охватывают весь пайплайн: indexing (bad chunking режет предложения и теряет context; embedding mismatch — query и docs разными моделями; stale data — vector DB не synced с источниками), retrieval (slow retrieval на большой базе без индексов; too many docs в context → lost in the middle), generation (hallucinations даже с RAG; prompt injection через документы) и эксплуатация (multi-tenancy leak отдаёт чужие данные; cost runaway — каждый query = embedding + retrieval + LLM; no evaluation — регрессии проходят незаметно).",
                 "example": "Multi-tenancy leak: без фильтра по `tenant_id` retrieval возвращает чужие документы; prompt injection: инструкция внутри документа («ignore previous instructions») воспринимается моделью как команда.",
                 "when_to_apply": "Этот чек-лист держат при проектировании и эксплуатации production RAG, чтобы заранее закрыть chunking, sync, изоляцию tenants, стоимость и evaluation.",
                 "edge_cases": "Часть рисков взаимосвязана: большое k увеличивает latency, провоцирует lost in the middle и cost runaway одновременно — фиксы приходится балансировать.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главный подводный камень RAG в production — это то, что система слишком точна и поэтому даёт скучные, однообразные ответы.",
+              "text": "Главный подводный камень RAG в production — это то, что система слишком точна и поэтому даёт скучные, однообразные и предсказуемые ответы пользователям.",
               "correct": false,
               "sections": {
                 "what_actually": "Реальные риски — bad chunking, stale data, multi-tenancy leak, hallucinations, prompt injection, cost runaway и отсутствие evaluation; «слишком высокая точность» проблемой RAG не является.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Multi-tenancy leak невозможен в RAG, потому что vector search физически не способен вернуть документ другого пользователя.",
+              "text": "Multi-tenancy leak невозможен в RAG, потому что vector search физически не способен вернуть документ другого пользователя без явного указания его id.",
               "correct": false,
               "sections": {
                 "what_actually": "Без фильтра по `tenant_id` vector search спокойно вернёт чужие chunks — multi-tenancy leak реальный production-риск, который закрывают именно metadata-фильтрами.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Prompt injection в RAG невозможен, так как модель обрабатывает документы как данные и никогда не воспринимает их как инструкции.",
+              "text": "Prompt injection в RAG невозможен, так как модель обрабатывает документы как данные и никогда не воспринимает их текст как инструкции к исполнению.",
               "correct": false,
               "sections": {
                 "what_actually": "Prompt injection через документы — реальный риск: инструкции внутри текста («ignore previous instructions») модель может принять за команды, особенно без чёткого разделения docs и question.",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "LangChain — это RAG-first фреймворк без поддержки агентов и инструментов, заточенный исключительно под простые retrieval-пайплайны.",
+              "text": "LangChain — это RAG-first фреймворк без поддержки агентов и инструментов, заточенный исключительно под простые однопроходные retrieval-пайплайны для документов.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: сильная сторона LangChain — богатые tools и agents; RAG-first и более узким по агентам считается как раз LlamaIndex.",
@@ -1763,10 +1763,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "LangChain — богатые tools и agents, но сложный API и частые breaking changes; LlamaIndex — RAG-first и удобный, но меньше agents-tools; Haystack (Deepset) — production-ready, но менее популярен; Custom — полный control и понятность, но больше кода. Best practice 2025: LlamaIndex для RAG-heavy систем, LangChain для agents с инструментами, Custom для production-critical. Многие переходят на custom после LangChain pain.",
+              "text": "У каждого стека свой профиль: LangChain — agents и tools, LlamaIndex — RAG-first, Haystack — production, Custom — полный control. Выбор — компромисс «скорость старта против контроля».",
               "correct": true,
               "sections": {
-                "explanation": "Выбор стека — компромисс между скоростью старта и контролем. Фреймворки ускоряют прототип, но абстракции усложняют отладку и тянут breaking changes; custom требует кода, зато даёт предсказуемость, важную для надёжности.",
+                "explanation": "Выбор стека — компромисс между скоростью старта и контролем. LangChain: богатые tools и agents, но сложный API и частые breaking changes. LlamaIndex: RAG-first и удобный, но меньше agents-tools. Haystack (Deepset): production-ready, но менее популярен. Custom: полный control и понятность, но больше кода. Best practice 2025: LlamaIndex для RAG-heavy, LangChain для agents с инструментами, Custom для production-critical; многие переходят на custom после LangChain pain.",
                 "example": "RAG-heavy документный ассистент удобно собрать на LlamaIndex; систему с инструментами и агентами — на LangChain; а критичный production-сервис нередко пишут custom после боли с абстракциями LangChain.",
                 "when_to_apply": "На старте проекта: фреймворк — для быстрого прототипа и типовых сценариев; custom — когда нужны контроль, предсказуемость и надёжность production-critical системы.",
                 "edge_cases": "Частые breaking changes LangChain ломают сборки между версиями; команды нередко мигрируют на custom именно после такой боли с обновлениями.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Custom-стек всегда хуже фреймворков, потому что не даёт никакого контроля над происходящим в пайплайне.",
+              "text": "Custom-стек всегда хуже фреймворков, потому что не даёт никакого контроля над происходящим в пайплайне и требует поддерживать всё вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "Custom как раз даёт полный control и понятность того, что происходит (ценой большего кода); многие переходят на него ради надёжности production-critical систем.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "LlamaIndex и LangChain абсолютно взаимозаменяемы: между ними нет разницы по сильным сторонам, выбор чисто косметический.",
+              "text": "LlamaIndex и LangChain абсолютно взаимозаменяемы: между ними нет разницы по сильным сторонам, выбор чисто косметический и зависит только от вкуса.",
               "correct": false,
               "sections": {
                 "what_actually": "Разница есть: LlamaIndex удобнее для RAG-heavy систем, LangChain — для агентов с инструментами; best practice как раз рекомендует разные стеки под разные задачи.",
