@@ -126,3 +126,22 @@ recompile-gated или decision-gated. Ключевые вехи:
 (c) хардкод label, который на деле динамический per-mode + ломал тесты.
 Live-verify: `/settings` кнопка = «Применить фильтры»; `/stats?q=<no-match>` ссылка
 сброса рендерится, `href=/stats`. Скрины: обновлён полный набор (14 шт.).
+
+### Раунд 16 — 2026-07-01 — Danger Zone для деструктивного сброса (SE-4)
+Коммит: (см. git) · CSS v=52→53 · Находок применено: 1/1
+| # | Область | Проблема | Правка | Impact/Risk/Conf |
+|---|---------|----------|--------|------------------|
+| 1 | `/settings` → вкладка «Данные» | Деструктивный «Сбросить банк вариантов» отделён от безопасного экспорта лишь тонкой нейтральной линией → необратимое действие легко спутать с экспортом | Обёрнут в `.danger-zone`: заголовок «⚑ Опасная зона», error-wash фон + **полная** error-рамка (НЕ side-stripe — impeccable-ban), `+«Действие необратимо.»`; собственный divider формы погашен. Confirm-гард на кнопке не тронут | high/low/high |
+
+Реализация: `settings.html` — `<div class="danger-zone">` + `<h3 class="danger-zone-title">`
+(иконка `#i-flag` из спрайта, `aria-hidden`); `base.css` — `.danger-zone` (`--color-status-error-wash`
++ `--color-status-error` 1px full-border + `--border-radius-md`), `.danger-zone-title`
+(error-цвет, semibold), гашение `border-top/padding-top` формы внутри зоны. Токены
+error-wash есть на все 10 дизайнов × 2 темы → зона тематизируется автоматически.
+Live-verify (chrome-devtools CSSOM, обе темы editorial): light bg `#F4E0DA` + border
+`rgb(179,38,30)` 1px; dark bg `#392523` + border `rgb(236,133,128)` 1px; заголовок
+error-цвет; форма внутри зоны border-top=0. **Урок верификации:** app-дефолт =
+`data-design="editorial"` (явный атрибут, не отсутствие) → в скрин-рутине ставить
+`setAttribute('data-design','editorial')`, НЕ `removeAttribute` (тот гасит правила
+`html[data-design] …` в момент чтения computed-style). Скрины: полный набор (14 шт.),
+вкладка «Данные» активна в settings-шотах — показывает новую зону.

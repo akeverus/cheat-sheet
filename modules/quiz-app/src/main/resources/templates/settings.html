@@ -258,11 +258,19 @@
                 <p class="export-status hidden" id="export-status" role="status" aria-live="polite"></p>
             </div>
 
-            <form method="post" th:action="@{/settings/reset-options}" class="data-management-form">
-                <p>Удалить все сгенерированные AI варианты ответов. Полезно, если сменил AI-модель или хочешь перегенерировать всё.</p>
-                <button type="submit" class="btn danger-btn"
-                        data-confirm="Удалить все сгенерированные варианты? Они будут перегенерированы заново. Это нельзя отменить.">Сбросить банк вариантов</button>
-            </form>
+            <!-- Опасная зона: деструктивный сброс визуально отделён от безопасного
+                 экспорта выше (error-wash + полная error-рамка, НЕ side-stripe), чтобы
+                 не спутать необратимое действие с экспортом. Confirm-гард — на кнопке. -->
+            <div class="danger-zone">
+                <h3 class="danger-zone-title">
+                    <svg class="ed-icon" aria-hidden="true"><use href="#i-flag"></use></svg>Опасная зона
+                </h3>
+                <form method="post" th:action="@{/settings/reset-options}" class="data-management-form">
+                    <p>Удалить все сгенерированные AI варианты ответов. Полезно, если сменил AI-модель или хочешь перегенерировать всё. Действие необратимо.</p>
+                    <button type="submit" class="btn danger-btn"
+                            data-confirm="Удалить все сгенерированные варианты? Они будут перегенерированы заново. Это нельзя отменить.">Сбросить банк вариантов</button>
+                </form>
+            </div>
         </section>
     </div>
 </main>
