@@ -250,6 +250,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | HEAD-5 | удалены no-op `<link rel=preload as=style>` | Render-blocking same-origin CSS | — | L | L | L | H | ✅ DONE (р14) | PE-4 |
 | HEAD-6 | Chart.js `defer` + порядок stats.js | Не блокировать рендер | — | M | L | L | H | ✅ DONE (р14) | PE-2 |
 | HEAD-7 | self-host chart.js vs CDN (CSP sourcemap) | Архитектурный + download-gated выбор | — | — | — | — | ⛔ DEFERRED | PE-5 |
+| HEAD-8 | `<title>` через `${title}` (head-fragment param, per-template литерал) | settings/summary выбивались из паттерна «<Имя> — Подготовка к собеседованию» (stats/result/error следуют). Приведены к паттерну (р22); home=голое имя приложения (конвенция). Title — template-литерал, фиксится без Java | — | M | L | L | H | ✅ DONE (р22) | — |
 
 ### 5.B.2 — `fragments/header.html`
 
