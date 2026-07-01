@@ -40,7 +40,7 @@ perf PE, контент CN, иконки IC).
   `editorial.css` — мёртвый код. Бамп `?v=N`: при правке CSS — обе ссылки в
   `fragments/head.html`; при правке JS — `app.js ?v=N` в `result.html` /
   `settings.html` / `focus-training.html`, `stats.js` — в `stats.html`. Чистая
-  правка текста шаблона бампа НЕ требует. **Текущая версия CSS = v=60 (р33), app.js = v=52 (р26).**
+  правка текста шаблона бампа НЕ требует. **Текущая версия CSS = v=61 (р37), app.js = v=52 (р26).**
 - **Дизайн-система:** 10 переключаемых дизайнов (editorial=дефолт, linear, swiss,
   notion, mintlify, broadsheet, superhuman, stripe, claude, theverge) × 2 темы.
   Персонализация — `data-*` на `<html>`; **дефолт = `data-design="editorial"`
@@ -234,7 +234,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | STA-12 | `stats.js(v)` в stats.html | Версионный контракт stats.js | — | — | — | — | H | 🔁 ONGOING | — |
 | STA-13 | «Прогноз повторений» показывал сырой ISO `2026-07-01` | `record ForecastDay(String day)` → дата уже String из SQL (не temporal); починка в источнике = Java/SQL (gated). Фикс на клиенте: `<span>`→`<time th:datetime>` (семантика + ISO машинно) + inline PE-скрипт `Intl ru-RU` → `Сегодня`/`Завтра`/`6 июля` + `title` с днём недели. Локаль-независимо, без recompile, PE-фоллбэк = ISO | M | L | L | H | ✅ DONE (р24, template+inline-script, без бампа) | AN-13 |
 | STA-15 | thead `<th>` таблиц (topic-table 6 + data-table 2) без `scope` | `scope="col"` на все 8 заголовков колонок (WCAG 1.3.1/H63 — явная ассоциация ячейка↔заголовок, надёжнее браузерной эвристики у sortable-таблицы). Инертный атрибут (0 CSS/JS/визуала), без бампа. Верифиц. curl'ом под app-деградацией | M | L | L | H | ✅ DONE (р35, template-only) | A11Y |
-| STA-16 | `td.topic-name` — не row-header | `td.topic-name → <th scope="row">`: SR при навигации по ячейке озвучит тему строки (сейчас «40%» без контекста темы). ТРЕБУЕТ CSS `.topic-name{font-weight:normal}` (UA `th{bold}` заболдит тему-ссылку; text-align уже left в base.css:1619) → бамп + ВИЗУАЛЬНАЯ верификация (парность провабельна, но нужен глаз). stats.js не читает `td` (safe). Отложено с р35 до visual-verify раунда | M | L | M | H | 🌱 BACKLOG | A11Y |
+| STA-16 | `td.topic-name` — не row-header | `td.topic-name → <th scope="row">` (319 строк): SR при навигации по data-ячейке озвучит тему строки. Компенсация UA `th{bold}`: `base.css .topic-table th.topic-name{font-weight:var(--font-weight-normal)}` (text-align:left уже на th+td). **Sort цел:** stats.js читает `children[col]` (th-agnostic), не `querySelectorAll('td')` — проверено ПЕРЕД. Рендер пиксель-идентичен (компенсация) → семантическая дельта, скрины не нужны. Live-verify: 319 th[scope=row], fw 400 обе темы, sort asc/desc ОК | M | L | M | H | ✅ DONE (р37, CSS v=60→61) | A11Y |
 | STA-17 | coverage-gaps `data-table` без `<caption>` | topic-table несёт h2+region+`<caption>`, data-table — только h2+scope (R35). `<caption>` = accessible name таблицы в table-nav SR (≠ h2 в heading-nav; topic-table:142 задаёт прецедент при своём h2). Фикс: +`<caption class="visually-hidden">Темы с неполным банком вопросов</caption>` (noun-phrase, не дублирует h2). Region-обёртка не нужна (2 колонки, нет overflow). Инертный visually-hidden (0 layout), без бампа. Верифиц. curl by-construction (секция за `th:if coverageGaps`, паттерн-сиблинг topic-table caption рендерится живьём) | M | L | L | H | ✅ DONE (р36, template-only) | A11Y |
 
 ### 5.A.6 — `templates/error.html`
