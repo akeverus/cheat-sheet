@@ -275,6 +275,8 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | ICO-1 | 20 монохромных Lucide-символов через `currentColor` | Единый icon-layer, обе темы | — | M | L | M | H | ✅ DONE | IC-1 |
 | ICO-2 | `.icon-sprite` (absolute, 0×0) hide | Канон-hide SVG-спрайта (не display:none — рвёт `<use>` в Safari); убрал 159px мёртвого отступа | — | M | L | L | H | ✅ DONE | — |
 | ICO-3 | нет dedicated warning-иконки (danger исп. `#i-flag`) | Намеренный reuse flag для danger-zone | при IC-4 — взвесить отдельный warning-символ | L | L | L | M | 🌱 BACKLOG | IC-4 |
+| ICO-4 | кнопки экспорта несли сырой юникод «↓» (не icon-система, рендер OS-зависим, стоял ПОСЛЕ текста) | Добавлен `#i-download` (Lucide, 21-й символ), swap «текст ↓»→«`<svg.ed-icon>` текст» (SVG + icon-lead как сиблинги). Спрайт+шаблон, без бампа. Контракт-тесты (Экспорт JSON/CSV текст + data-export-format) целы | L | L | L | H | ✅ DONE (р34) | IC-4 |
+| IC-5 | CTA-кнопки несут сырой юникод «→» («Начать повторение →» и др.) | Тот же класс, что ICO-4, но шире (next-btn паттерн) → отдельный раунд. Взвесить `#i-arrow-right` (сейчас в спрайте только `i-arrow-up`) + swap на всех CTA | M | L | M | M | 🌱 BACKLOG | IC-4 |
 
 ### 5.B.4 — `fragments/inline-alert.html`
 
@@ -405,7 +407,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 |---------|------------------|---------------|-----------------|--------------|
 | **AF** answer-fairness | — (ядро закрыто) | AF-2/3 (нейтр. selected), AF-4 (single-column уже, р19), AF-5 (мягкий code, р17), AF-6 (correct помечен), AF-7 (muted wrong, р18) | AF-8 (иконки до проверки) | AF-1 (паритет длины) |
 | **TR** тренировка | TR-1/HDR-1 (sticky header), TR-3 (hint), TR-4 (sticky CTA), TR-6 (микрокопия прогресса) | TR-2 (empty), TR-5 (zone-hint), TR-7 (kbd-гейт), TR-9 (post-answer) | TR-8 (48px) | — |
-| **TY** типографика | TY-1 (рус uppercase tracking), TY-2/AF-5 (code), TY-5 (helper) | — | TY-3 (prose measure), TY-4 (18px/1.7) | — |
+| **TY** типографика | TY-2/AF-5 (code), TY-5 (helper) | TY-1 (editorial-дефолт tracking 0.12→0.09em Cyrillic-safe, р33) | TY-3 (prose measure), TY-4 (18px/1.7) | — |
 | **LO** layout | LO-6 (border-left 3px ⛔) | LO-1/2/3/4 | LO-5 (prose full-width) | — |
 | **AN** аналитика | AN-1 (insights), AN-5 (графики), AN-10 (CTA ⛔) | AN-4/6/7/9, AN-8 (data-empty, р19), AN-12 (accuracy-bar aria-hidden, р20), AN-2 (микрокопия «N из M» в today-hero, р21), AN-13 (гуманизация ISO-дат прогноза `<time>`+Intl, р24), AN-11 (объяснение «Точность» title заголовка+дробь ячейки, р25); AN-3 (поиск+фильтр) = 🚫 WONTFIX deliberate | — | — |
 | **SE** настройки | SE-3 (preview), SE-5 (seg vs tabs), SE-6 (% reset), SE-7 (feedback), SE-9 (a11y-раздел) | SE-1/2/4/8/10/11 | — | — |
@@ -415,7 +417,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | **RE** responsive | RE-1/AF-4 (mobile 1-col) | RE-2/3/4/5/6 | — | — |
 | **PE** perf | PE-5 (self-host chart ⛔) | PE-1/2/4 | PE-3 (font-flip) | — |
 | **CN** контент-тулы | CN-2 (⛔) | — | — | CN-1 (паритет — pedago) |
-| **IC** иконки | IC-4 (точечно danger/empty/insights) | IC-1/2 | IC-3 (намеренные эмодзи) | — |
+| **IC** иконки | IC-5 (сырой «→» на CTA), IC-4-part (empty/insights) | IC-1/2, ICO-4 (export «↓»→`#i-download` SVG, р34) | IC-3 (намеренные эмодзи) | — |
 
 ---
 
