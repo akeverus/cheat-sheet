@@ -360,3 +360,26 @@ PE: без JS кнопка = серверный «Начать сессию» (�
 0/-1/-1, `<button>`, неактивные панели `display:none` → нет keyboard-trap); session-form контролы обёрнуты
 в `<label class=field>` (неявная ассоциация). **Урок: CTA-кнопка должна называть конкретное действие, а не
 родовое «сессия»; при динамическом тексте кнопки покрывать ВСЕ значения enum явной картой + defensive-фоллбэк.**
+
+### Раунд 27 — 2026-07-01 — Контраст `.zone-chip` на экране вопроса: AA-провал в editorial-light (A11Y-14)
+Коммит: (см. git) · CSS v=55→56 (`fragments/head.html`, обе ссылки) · Находок применено: 1/1
+| # | Область | Проблема | Правка | Impact/Risk/Conf |
+|---|---------|----------|--------|------------------|
+| 1 | `.zone-chip` — чип режима («ТРЕНИРОВКА») на экране вопроса (home `/` = question-view), editorial-light | Чип красился `color: var(--color-accent-strong)` (#C96442, тёмный Clay). На ivory (rgb 250,249,245) это **3.70:1** — токен ЯВНО документирован в tokens.css:67-69 как «AA large» (порог крупного текста 3:1). Но чип — mono/uppercase **12px** (`--font-size-xs`) = МЕЛКИЙ текст, порог AA = 4.5:1 → **провал WCAG AA**. Editorial-dark то же место = 4.8:1 (проходит через #D97757). Замер солид-цветом (не градиент) — доверенный | Добавил `.zone-chip` в **уже существующий** editorial-override (base.css:3185-3189), где братья-метки `.ed-masthead-kicker` + `.flashcard-badge` были ОСОЗНАННО сняты с Clay на `--color-text-secondary` («pure typographic label» [spec], комментарий прямо: «Clay … не AA для 12px caps»). Чип — тот же класс метки, и его собственный комментарий (base.css:666-668) заявляет «единый язык метаданных» с `.ed-eyebrow`, а `.ed-eyebrow` (base.css:395) = `text-secondary`. Т.е. accent-strong на чипе был **рассинхроном с задекларированным намерением**. Токен НЕ трогал (6+ заголовочных usages корректно крупные, 3.7 AA-large им ок). Правка editorial-scoped → остальные 8 дизайнов сохраняют accent-чип | medium/low/high |
+
+Реализация: `base.css:3185-3189` — селектор-лист editorial-override расширен с `.ed-masthead-kicker, .flashcard-badge`
+до `.ed-masthead-kicker, .zone-chip, .flashcard-badge { color: var(--color-text-secondary) }`; комментарий обновлён
+(указан accent-strong 3.7:1 «AA large» vs 12px-метки + отсылка к `.ed-eyebrow`). **CSS-правка → бамп v=55→56** обеих
+ссылок в `head.html`. **Live-verify (cp base.css+head в build, hard-reload /, base.css?v=56 подтверждён):**
+editorial-light чип `rgb(94,93,89)` на `rgb(250,249,245)` = **6.26:1** ✓ (было 3.70); editorial-dark `rgb(197,193,180)`
+на `rgb(38,38,36)` = **8.42:1** ✓ (было 4.8). **Скоуп-регресс-чек всех дизайнов (замер обеих тем):** правка НЕ
+затронула notion/swiss/linear/superhuman/stripe/theverge — все проходят (light: notion 5.53, swiss 19.8, linear 6.25,
+superhuman 6.16, stripe 7.81, theverge 5.33; dark аналогично ≥5). **Скрины (chip есть ТОЛЬКО на question-view =
+home; stats/settings/error без чипа → байт-идентичны, не переснимал):** `1-home-light` / `1-home-dark` /
+`6-home-mobile-light` — чип читается как ink-метка в один ряд с эйбрау «ALGORITHMS» и кикером «CHEAT · SHEET»
+(намеренно, не сломано); опции в нейтральном pre-check; сдвига лейаута нет. **Побочная находка (залогирована в
+PLAN §5 как A11Y-15, СЛЕД. раунд):** дизайн `claude` даёт на `.zone-chip` **3.8:1** (rgb 193,96,64 — его clay-акцент) —
+тот же класс дефекта, но у claude clay = бренд-акцент → нужна отдельная развилка (снять на нейтраль vs затемнить его
+токен), не бандлил в этот раунд («хирург, не экскаватор»). **Урок: accent-токен, помеченный «AA large», нельзя
+применять к мелкому тексту (<18.66px bold / <24px); чип-метки 12px caps держать на `text-secondary` в ряду с эйбрау —
+дизайн-система уже задала прецедент на kicker/badge, чип был пропущен.**
