@@ -11,6 +11,19 @@ frontend-файл, строка на каждый пункт). §6 — тема�
 (тот же бэклог под другим углом). Журнал сделанного — `docs/ui-ux-improvement-log.md`.
 Память между тиками — `project_audit_backlog_2026-06` (memory).
 
+> **⚠️ СТАТУС ПРОЦЕССА (с 2026-07-01/02): пользователь ведёт активный ручной frontend-pass.**
+> Пользователь сам делает кодовые правки полным тулчейном (gradle + Playwright + live QA):
+> его р39 = answer-fairness (adaptive single-column / neutral selected / Escape-clear, CSS v→65, JS v→53),
+> р40 = analytics next-actions CTA (stats.js v→12). Он ведёт **собственный** бэклог
+> `docs/ui-ux-backlog.md` (ID: AF/AN/SE/AX) и **сам редактирует** `docs/ui-ux-improvement-log.md`
+> (перенумеровал мой закоммиченный р39 → р41). **Под активной незакоммиченной правкой:** base.css,
+> app.js, stats.js, head.html, result.html, settings.html, focus-training.html, stats.html + **сам лог + сам бэклог**.
+> **Правило коллизий (ужесточено р40):** пока это дерево не закоммичено — НЕ писать ни в код, ни в
+> `docs/ui-ux-improvement-log.md`, ни в `docs/ui-ux-backlog.md` (всё это территория пользователя;
+> `git add` свернёт его хунки, `-p` недоступен). Безопасны только **этот файл** (PLAN, committed-clean)
+> и **память** (вне репо). Мои находки, пересекающиеся с его AF/AN/SE/AX — считать закрытыми им
+> (напр. BAS-21 уже в его base.css). Возврат к реальным правкам — когда его дерево осядет (git status чист).
+
 **Легенда статусов:**
 
 | Статус | Значение |
@@ -366,7 +379,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | BAS-18 | prose `--measure` full-width | Намеренный выбор юзера (259ch на 2560) | НЕ трогать | — | — | — | H | 🚫 WONTFIX | LO-5/TY-3 |
 | BAS-19 | `.zone-chip` красился `accent-strong` (#C96442, «AA large» 3.7:1) при 12px → провал AA-small в editorial-light | Добавлен в editorial-override (base.css:3187) к братьям `.ed-masthead-kicker`/`.flashcard-badge` → `text-secondary`; light 3.70→**6.26:1**, dark 4.8→**8.42:1**; остальные 8 дизайнов не тронуты (accent-чип сохранён). CSS v=55→56 | H | L | L | H | ✅ DONE (р27) | A11Y-14 |
 | BAS-20 | дизайн `claude` (token-only): `.ed-masthead-kicker`+`.zone-chip`+`.flashcard-badge` = **3.8:1** в LIGHT (все три наследуют base `accent-strong` #C16040, «AA-large» токен на 12px caps); kicker глобальный | claude-**light**-scoped override (`:not([data-theme="dark"])`) три метки → `text-secondary` (5.98:1). Dark НЕ трогаем: там accent-strong #E08B6D=7.1:1 проходит + намеренный бренд-coral (token-only наследование). Развилка «нейтраль vs затемнить токен» решена в пользу нейтрали (зеркалит editorial spec «pure typographic label»). CSS v=56→57 | M | L | L | H | ✅ DONE (р28) | A11Y-15 |
-| BAS-21 | `.today-hero-hint` (подсказка под CTA today-hero /settings, 14px) — единственный `*-hint`, красящийся `--color-text-tertiary` (все прочие: zone-hint/keyboard-hint/control-inline-hint/*-forecast-hint = `text-secondary`). tertiary калиброван «AA-large» (3:1), а hint = мелкий текст (порог 4.5:1). **Замер live (р39):** claude-light `#76756E`/`rgb(250,249,245)` = **4.39:1 ПРОВАЛ AA-small**; editorial-light 4.89, editorial-dark 4.99, claude-dark 5.07 — пограничные (в 0.5 от порога). | `.today-hero-hint color: tertiary → secondary` (1 property, паритет со всеми *-hint; secondary AA-safe во всех 10×2). CSS-бамп. **⚠️ БЛОКЕР (р39): base.css + head.html + app.js + 5 шаблонов под АКТИВНЫМ незакоммиченным UX REVIEW PASS пользователя (base.css +193 стр, вкл. MCQ `data-answer-layout=balanced`).** `git add base.css` свернёт чужую работу, `-p` недоступен → правку ОТЛОЖИТЬ до коммита пользователя (не затирать in-flight). Находка верифицирована, применить когда base.css свободна | M | L | L | H | 🌱 BACKLOG (blocked: user in-flight base.css) | A11Y |
+| BAS-21 | `.today-hero-hint` (подсказка под CTA today-hero /settings, 14px) — единственный `*-hint`, красящийся `--color-text-tertiary` (все прочие: zone-hint/keyboard-hint/control-inline-hint/*-forecast-hint = `text-secondary`). tertiary калиброван «AA-large» (3:1), а hint = мелкий текст (порог 4.5:1). **Замер live (р39):** claude-light `#76756E`/`rgb(250,249,245)` = **4.39:1 ПРОВАЛ AA-small**; editorial-light 4.89, editorial-dark 4.99, claude-dark 5.07 — пограничные (в 0.5 от порога). | `.today-hero-hint color: tertiary → secondary` (1 property, паритет со всеми *-hint; secondary AA-safe во всех 10×2). CSS-бамп. **⚠️ БЛОКЕР (р39): base.css + head.html + app.js + 5 шаблонов под АКТИВНЫМ незакоммиченным UX REVIEW PASS пользователя (base.css +193 стр, вкл. MCQ `data-answer-layout=balanced`).** `git add base.css` свернёт чужую работу, `-p` недоступен → правку ОТЛОЖИТЬ до коммита пользователя (не затирать in-flight). Находка верифицирована, применить когда base.css свободна. **✅ РАЗРЕШЕНО ПОЛЬЗОВАТЕЛЕМ (р40):** незакоммиченный base.css пользователя УЖЕ содержит идентичный фикс (`.today-hero-hint tertiary→secondary` с тем же комментарием про `claude-light 4.39:1 провал AA-small`) → БЕЗ Claude-правки; закрыть при коммите пользователя. | M | L | L | H | ✅ DONE-BY-USER (р40, в uncommitted base.css) | A11Y |
 
 ### 5.C.3 — `static/css/editorial.css` (МЁРТВЫЙ КОД)
 
