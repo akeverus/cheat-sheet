@@ -48,11 +48,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`listOf()` всегда возвращает `Collections.unmodifiableList`, поэтому запись через cast гарантированно бросает `UnsupportedOperationException`.",
+              "text": "`listOf()` возвращает ту же неизменяемую обёртку, что и Java `List.of`, поэтому запись через cast к `MutableList` отклоняется на уровне backing-реализации.",
               "correct": false,
               "sections": {
                 "what_actually": "`listOf` для 2+ элементов отдаёт обычную `ArrayList`-обёртку без unmodifiable-защиты, и запись через cast меняет оригинал.",
-                "source_of_confusion": "Похожий механизм `Collections.unmodifiableList` из Java создаёт ожидание единообразной защиты.",
+                "source_of_confusion": "Kotlin `listOf` внешне похож на Java `List.of`, поэтому его считают таким же неизменяемым контейнером.",
                 "if_it_were_true": "Тогда `toList()` как защитная копия был бы избыточен, но он реально нужен именно из-за отсутствия защиты.",
                 "how_it_should_be": "Для 0–1 элементов бывают спец-реализации, но для 2+ это незащищённый `ArrayList`; неизменяемость нужно обеспечивать явно."
               }
@@ -336,11 +336,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`(readOnly as MutableList).add(\"x\")` всегда бросает `ClassCastException` — это и есть защита read-only от записи.",
+              "text": "`(readOnly as MutableList).add(\"x\")` падает с `ClassCastException`, потому что backing-объект read-only списка не реализует `MutableList` — так система типов и защищает от записи.",
               "correct": false,
               "sections": {
                 "what_actually": "Для `listOf(2+)` backing — `ArrayList`, реализующий `MutableList`, поэтому cast успешен и элемент добавляется, нарушая контракт.",
-                "source_of_confusion": "Ожидается, что система типов на runtime «накажет» за нелегальный cast.",
+                "source_of_confusion": "Кажется логичным, что раз тип read-only, то и объект под ним — не `MutableList`, а значит cast должен упасть.",
                 "if_it_were_true": "Тогда нельзя было бы случайно мутировать read-only список, но именно это и происходит при cast.",
                 "how_it_should_be": "Cast к `MutableList` проходит без исключения; защиту даёт только истинно immutable-реализация."
               }
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Под капотом `listOf()` всегда используется `Collections.unmodifiableList`, поэтому запись невозможна ни через cast, ни из Java.",
+              "text": "Под капотом `listOf()` использует `Collections.unmodifiableList`, поэтому запись невозможна ни через cast, ни из Java — как и у Java `List.of`.",
               "correct": false,
               "sections": {
                 "what_actually": "`listOf(0)` → синглтон `EmptyList`, `listOf(1)` → одноэлементная обёртка, `listOf(2+)` → обычный `ArrayList` без unmodifiable-обёртки.",
@@ -443,11 +443,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Sequence` всегда быстрее `List`, поэтому стоит конвертировать все коллекции через `.asSequence()`.",
+              "text": "`Sequence` эффективнее `List`, поэтому переход на `.asSequence()` — безопасная оптимизация по умолчанию для любых цепочек операций.",
               "correct": false,
               "sections": {
                 "what_actually": "`Sequence` несёт overhead итераторов и boxing примитивов; для малых коллекций с одной операцией `List` быстрее за счёт cache locality.",
-                "source_of_confusion": "Лозунг «lazy = быстро» переносят на любой размер данных.",
+                "source_of_confusion": "Логику «lazy экономит аллокации» принимают за выигрыш в скорости на любом размере данных.",
                 "if_it_were_true": "Тогда `asSequence()` был бы бесплатной оптимизацией, но на малых данных он замедляет код.",
                 "how_it_should_be": "`Sequence` выгоден при больших данных и цепочке из 2+ операций или при ранней остановке, а не всегда."
               }
@@ -551,11 +551,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Sequence` всегда быстрее `List` при любом размере, поэтому стоит везде добавлять `.asSequence()`.",
+              "text": "`Sequence` выигрывает у `List` за счёт lazy-вычисления независимо от размера, поэтому его стоит добавлять как оптимизацию по умолчанию.",
               "correct": false,
               "sections": {
                 "what_actually": "Для малых коллекций (менее ~100 элементов) `List` быстрее за счёт cache locality; `Sequence` несёт overhead итераторов и boxing примитивов.",
-                "source_of_confusion": "Лозунг «lazy всегда выигрывает» применяют без учёта размера данных.",
+                "source_of_confusion": "Выигрыш lazy-модели на больших данных обобщают на любой размер без учёта overhead.",
                 "if_it_were_true": "Тогда `asSequence()` был бы бесплатной оптимизацией, но на малых данных он замедляет код.",
                 "how_it_should_be": "`Sequence` выгоден при больших данных, длинных цепочках и ранней остановке, а не при любом размере."
               }
@@ -1151,11 +1151,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`apply` всегда возвращает `Unit` — он для побочных эффектов без результата.",
+              "text": "`apply` возвращает `Unit` — это настроечный блок для побочных эффектов, результат из него получить нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "`apply` возвращает сам receiver (`this`), что и делает его пригодным для fluent-инициализации; `Unit` возвращает не он.",
-                "source_of_confusion": "Похожесть на «настроечный блок без результата» рождает ожидание `Unit`.",
+                "source_of_confusion": "Роль «блока конфигурации без возвращаемого значения» рождает ожидание `Unit` на выходе.",
                 "if_it_were_true": "Тогда `mutableListOf<String>().apply { add(\"a\") }` давал бы `Unit`, но он возвращает настроенный список.",
                 "how_it_should_be": "`apply` возвращает receiver; `run` возвращает результат лямбды — это разные контракты."
               }
@@ -1488,11 +1488,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Flow.toList()` всегда безопасен — риска memory overflow нет.",
+              "text": "`Flow.toList()` — стандартная терминальная операция, поэтому она безопасно собирает поток целиком без риска memory overflow.",
               "correct": false,
               "sections": {
                 "what_actually": "`Flow.toList()` собирает все элементы в память; для бесконечного `Flow` это OOM — нужен `.take(n).toList()` или обработка без материализации.",
-                "source_of_confusion": "Привычка материализовать конечные коллекции переносится на потенциально бесконечный поток.",
+                "source_of_confusion": "Терминальную `toList()` на конечных коллекциях считают одинаково безопасной и для потока.",
                 "if_it_were_true": "Тогда `infiniteFlow.toList()` завершался бы, но он копит элементы до исчерпания памяти.",
                 "how_it_should_be": "Перед `toList()` ограничивай поток (`take`) или обрабатывай инкрементально (`collect`/`onEach`)."
               }
@@ -1704,11 +1704,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`setOf()` всегда возвращает `HashSet` — порядок вставки не гарантирован.",
+              "text": "`setOf()` возвращает `HashSet` — как и в Java, порядок итерации не гарантирован и зависит от хешей.",
               "correct": false,
               "sections": {
                 "what_actually": "`setOf()` возвращает `LinkedHashSet` с порядком вставки; для произвольного порядка и максимальной скорости нужен явный `hashSetOf()`.",
-                "source_of_confusion": "Привычка из Java (`HashSet` по умолчанию) переносится на Kotlin.",
+                "source_of_confusion": "Дефолт `HashSet` из Java переносят на `setOf` в Kotlin.",
                 "if_it_were_true": "Тогда итерация по `setOf` давала бы непредсказуемый порядок, но он сохраняет вставку.",
                 "how_it_should_be": "`setOf`/`linkedSetOf` → `LinkedHashSet` (insertion order); произвольный порядок — у `hashSetOf`."
               }
@@ -1751,13 +1751,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`asSequence()` всегда быстрее обычного `List` — это бесплатная оптимизация для любых данных.",
+              "text": "`asSequence()` убирает промежуточные списки, поэтому для цепочки из 2+ операций оно быстрее `List` независимо от размера коллекции.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Sequence` постоянный overhead: wrapper-итератор на каждую промежуточную операцию, упаковка лямбд через `Function1`, boxing примитивов — для малых коллекций или одной операции он медленнее `List`.",
-                "source_of_confusion": "«Lazy всегда хорошо» из функционального программирования применяют без учёта размера и длины цепочки.",
+                "source_of_confusion": "«Меньше аллокаций = всегда быстрее» переносят с больших данных на любые, забывая про постоянный overhead итераторов.",
                 "if_it_were_true": "Тогда `listOf(a,b,c).asSequence().map{}.toList()` в hot path ускорял бы код, но даёт замедление.",
-                "how_it_should_be": "`Sequence` окупается только на больших данных, длинных цепочках или ранней остановке."
+                "how_it_should_be": "На малых коллекциях overhead wrapper-итераторов перевешивает экономию на аллокациях — `Sequence` окупается лишь на больших данных, длинных цепочках или ранней остановке."
               }
             },
             {
@@ -1968,13 +1968,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`associate` всегда эффективнее `associateBy`, потому что не создаёт промежуточный `Pair`.",
+              "text": "`associate` эффективнее `associateBy` на больших коллекциях: он кладёт готовую пару в `Map` напрямую, тогда как `associateBy` пересобирает её из ключа.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `associate { k to v }` создаёт `Pair` на каждом элементе; `associateBy { keySelector }` пишет `put(key, element)` напрямую без `Pair`.",
-                "source_of_confusion": "Название «associate» звучит как примитивная операция, а «By» со скобками — как обёртка.",
-                "if_it_were_true": "Тогда замена на `associate { it.id to it }` ускоряла бы hot loop, но добавляет N Pair-аллокаций.",
-                "how_it_should_be": "`associateBy` эффективнее за счёт отсутствия Pair; для кастомных ключа/значения без Pair есть `associateBy({}, {})`."
+                "source_of_confusion": "Кажется, что раз `associate` принимает готовый `Pair`, движок вставляет его без лишних шагов, а `associateBy` делает что-то поверх.",
+                "if_it_were_true": "Тогда переход на `associate { it.id to it }` в hot loop ускорял бы индексацию, но добавляет N Pair-аллокаций.",
+                "how_it_should_be": "Наоборот: `associate` аллоцирует `Pair` на каждом элементе, а `associateBy` пишет `put(key, element)` напрямую; для кастомных ключа/значения без Pair есть `associateBy({}, {})`."
               }
             }
           ]
@@ -2123,13 +2123,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`firstOrNull { predicate }` всегда быстрее `first { predicate }`, потому что не бросает исключение.",
+              "text": "`firstOrNull { predicate }` быстрее `first { predicate }` на happy path, потому что не готовит стектрейс на случай отсутствия совпадения.",
               "correct": false,
               "sections": {
                 "what_actually": "Обе функции обходят коллекцию идентично с early-termination на первом совпадении; различие лишь в действии при отсутствии совпадения (throw vs null).",
-                "source_of_confusion": "«Исключения дороги» — общеизвестный факт, но он про создание/проброс, а не про happy path.",
-                "if_it_were_true": "Тогда замена всех `first` на `firstOrNull` ускоряла бы код, но разницы в производительности нет.",
-                "how_it_should_be": "Скорость одинакова; `firstOrNull` выбирают ради null-safety, а не ради perf."
+                "source_of_confusion": "Кажется, что вариант с исключением несёт постоянные накладные расходы на подготовку throw даже когда элемент найден.",
+                "if_it_were_true": "Тогда замена всех `first` на `firstOrNull` ускоряла бы happy path, но разницы в производительности нет.",
+                "how_it_should_be": "Обе обходят коллекцию с early-termination одинаково; `firstOrNull` выбирают ради null-safety, а не ради perf."
               }
             },
             {
@@ -2196,13 +2196,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Structural sharing работает только для `PersistentMap` — для `PersistentList` всегда O(n) copy.",
+              "text": "Structural sharing даёт O(log n) только `PersistentMap`/`PersistentSet` через HAMT; у `PersistentList` нет древовидного индекса, поэтому `add` копирует список за O(n).",
               "correct": false,
               "sections": {
                 "what_actually": "Structural sharing реализован для всех типов: `PersistentList` (RRB-tree), `PersistentMap`/`PersistentSet` (HAMT) — это центральный design pattern библиотеки.",
-                "source_of_confusion": "HAMT для Map более известен (Clojure/Scala), а RRB-tree для List менее на слуху.",
-                "if_it_were_true": "Тогда `PersistentList` был бы бесполезен на больших коллекциях, но он O(log n) на add.",
-                "how_it_should_be": "Все persistent-типы используют structural sharing; для List — RRB-tree, для Map/Set — HAMT."
+                "source_of_confusion": "HAMT для Map/Set на слуху из Clojure/Scala, а RRB-tree для List менее известен — кажется, что список остался плоским массивом.",
+                "if_it_were_true": "Тогда `PersistentList.add` на больших коллекциях был бы бесполезно медленным, но замеры дают O(log n).",
+                "how_it_should_be": "`PersistentList` тоже дерево — RRB-tree, поэтому `add` идёт за O(log n) с разделением неизменённых узлов, как HAMT у Map/Set."
               }
             },
             {
@@ -2256,13 +2256,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Sequence<T>` всегда многопроходна — можно вызывать `count()` и `forEach` подряд.",
+              "text": "`Sequence<T>` можно обойти повторно как `List` — терминальные `count()` и `forEach` не расходуют источник, а лишь читают его.",
               "correct": false,
               "sections": {
                 "what_actually": "Sequence может быть one-shot: generator-источник (`sequence { yield ... }`) при втором проходе бросает `IllegalStateException` или даёт пустой результат; повторяема только `iterable.asSequence()`.",
-                "source_of_confusion": "Туториалы показывают Sequence на `list.asSequence()`, где повторный обход работает.",
-                "if_it_were_true": "Тогда `generateSequence { reader.readLine() }` можно было бы обойти дважды, но reader исчерпан после первого.",
-                "how_it_should_be": "Многопроходность Sequence не гарантирована; generator-источники одноразовы."
+                "source_of_confusion": "Туториалы показывают Sequence на `list.asSequence()`, где повторный обход и правда работает, и это обобщают на любой источник.",
+                "if_it_were_true": "Тогда `generateSequence { reader.readLine() }` можно было бы обойти дважды, но reader исчерпан после первого прохода.",
+                "how_it_should_be": "Многопроходность Sequence не гарантирована: generator-источники (`sequence { }`, `generateSequence`) одноразовы и на втором проходе бросают ошибку или дают пусто."
               }
             },
             {
@@ -2508,13 +2508,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`associate` всегда производительнее `associateBy`, так как использует `Pair` напрямую.",
+              "text": "`associate` производительнее `associateBy` на больших данных: он формирует пару ключ-значение за один шаг, а `associateBy` строит её отдельно.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `associate { k to v }` создаёт `Pair` на каждом элементе; `associateBy { keySelector }` пишет `put(key, element)` без `Pair`.",
-                "source_of_confusion": "«Pair напрямую» звучит как «без обёрток», хотя `Pair` — сам объект-обёртка с аллокацией.",
-                "if_it_were_true": "Тогда `users.associate { it.id to it }` в hot path был бы дешевле, но добавляет N Pair-аллокаций.",
-                "how_it_should_be": "`associateBy` эффективнее за счёт отсутствия Pair; для кастомных ключа/значения без Pair — `associateBy({}, {})`."
+                "source_of_confusion": "«Пара напрямую» звучит как «без обёрток», хотя `Pair` — это сам объект-обёртка с аллокацией на каждый элемент.",
+                "if_it_were_true": "Тогда `users.associate { it.id to it }` в hot path был бы дешевле индексации, но добавляет N Pair-аллокаций.",
+                "how_it_should_be": "Наоборот: `associate` создаёт `Pair` на каждом элементе, а `associateBy` пишет `put(key, element)` без Pair; для кастомных ключа/значения без Pair — `associateBy({}, {})`."
               }
             }
           ]
