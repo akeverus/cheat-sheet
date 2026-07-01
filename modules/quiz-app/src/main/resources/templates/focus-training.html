@@ -168,7 +168,8 @@
         <p class="empty-description" th:if="${!generationUnavailable and !reviewMode and interviewSession == null}">Нет доступных вопросов по выбранным фильтрам. Открой настройки и расширь выборку.</p>
         <p class="empty-description" th:if="${!generationUnavailable and !reviewMode and interviewSession != null and !interviewSession.finished}">Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.</p>
         <p class="empty-description" th:if="${!generationUnavailable and !reviewMode and interviewSession != null and interviewSession.finished}"><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сессия завершена.</p>
-        <div class="empty-actions" th:with="finished=${interviewSession != null and interviewSession.finished}">
+        <div class="empty-actions" th:with="finished=${interviewSession != null and interviewSession.finished},
+                                            settingsPrimary=${!generationUnavailable and !reviewMode and interviewSession == null}">
             <!-- Завершённая сессия: главный CTA — итоги, а не «обновить тренировку».
                  POST /finish сохраняет summary из ещё живой finished-сессии и
                  редиректит на /session-summary (InterviewFlowMvcService.finish);
@@ -177,10 +178,19 @@
             <form th:if="${finished}" method="post" th:action="@{/finish}" class="d-contents">
                 <button type="submit" class="btn next-btn empty-action-summary">Посмотреть итоги</button>
             </form>
-            <a class="btn secondary-btn empty-action-settings" th:href="@{/settings}">Открыть настройки</a>
-            <!-- retry: при finished опускаем до secondary (primary — «итоги»), иначе
-                 остаётся primary. th:href/th:text фиксирует TemplateFragmentContractTest. -->
-            <a class="btn empty-action-retry" th:classappend="${finished} ? ' secondary-btn' : ' next-btn'"
+            <!-- «Фильтры пусты» (нет сессии, не review, AI в порядке): описание прямо
+                 просит «Открой настройки и расширь выборку» → главный CTA здесь и есть
+                 настройки, а не «Обновить тренировку» (перезагрузка того же фильтра —
+                 no-op, уводит по кругу; primary-эмфаза должна совпадать с текстом-
+                 инструкцией). В прочих ветках (AI недоступен / сессия не готова) refresh
+                 осмыслен → там он остаётся primary. settingsPrimary и finished взаимо-
+                 исключающи (finished ⇒ interviewSession != null). -->
+            <a class="btn empty-action-settings" th:classappend="${settingsPrimary} ? ' next-btn' : ' secondary-btn'"
+               th:href="@{/settings}">Открыть настройки</a>
+            <!-- retry: primary по умолчанию; опускаем до secondary при finished (primary —
+                 «итоги») ИЛИ при settingsPrimary (primary — настройки).
+                 th:href/th:text фиксирует TemplateFragmentContractTest. -->
+            <a class="btn empty-action-retry" th:classappend="${finished or settingsPrimary} ? ' secondary-btn' : ' next-btn'"
                th:href="${focusEmptyRetryHref}" th:text="${focusEmptyRetryText}">Обновить тренировку</a>
         </div>
     </section>

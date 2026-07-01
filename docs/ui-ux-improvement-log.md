@@ -446,3 +446,23 @@ dark `#C5C1B4`/`#30302E` = **7.34:1** (оба ≥AA-small, dark ещё и AAA); 
 (подзаголовок группируется с заголовком, не с графиком), subs резолвятся, charts рендерятся. **Скрин-набор:** дельта только на
 `.stats-page` (правило scoped) → пересняты 3 stats-скрина (4-stats-light/dark desktop + 8-stats-mobile-light), остальные 10
 пиксель-идентичны на v=58 (home/training/settings/error не затронуты scoped-правилом); md5 троицы различны (нет stale-race).
+
+### Раунд 31 — 2026-07-01 — Приоритет CTA в empty-state тренировки: primary совпадает с текстом-инструкцией (FT/empty)
+Коммит: (см. git) · ШАБЛОН-текст (без бампа) · Находок применено: 1/1 · Диверсификация: со /stats на recovery-flow /training
+| # | Область | Проблема | Правка | Impact/Risk/Conf |
+|---|---------|----------|--------|------------------|
+| 1 | `focus-training.html` — empty-state «Сейчас нет вопросов», ветка «фильтры пусты» (самая частая, видна живьём на `/training?topic=…`) | Описание прямо просит «**Открой настройки** и расширь выборку», НО главным (залитым primary) CTA была «Обновить тренировку», а «Открыть настройки» — вторичной. Для filter-mismatch refresh = **no-op** (перезагружает тот же пустой запрос → уводит по кругу), тогда как настройки — единственный реальный фикс. Primary-эмфаза противоречила собственной инструкции-копии | Флип приоритета ТОЛЬКО в filters-ветке: `th:with settingsPrimary=${!generationUnavailable and !reviewMode and interviewSession == null}` (тот же expr, что у описания — тест TemplateFragmentContractTest:94 остаётся зелёным). Настройки → `next-btn` при settingsPrimary; retry → `secondary-btn` при `finished or settingsPrimary`. Прочие ветки (AI недоступен / сессия не готова / review) settingsPrimary=false → рендер **байт-идентичен** прежнему (retry-логика сводится к `${finished}`) | medium/low/high |
+
+Реализация: `focus-training.html:171-194` — `th:with` + 2 `th:classappend` (settings и retry). **Классы `.next-btn`/`.secondary-btn`
+уже существуют → чистый шаблон-текст, бамп НЕ нужен.** **Контракт-тесты сверены ПЕРЕД правкой (bootRun-wedge → не гоняю suite):**
+TemplateFragmentContractTest (empty-action-settings/retry + focusEmptyRetry href/text + filters-expr:94 — все сохранены),
+InterviewControllerTest:557-560 (settings/retry/«Обновить тренировку» — сохранены, класс next/secondary не ассертится),
+VisualBaselineContractTest:145 (точный `class="btn next-btn"` — это /result-shell, а empty-кнопки несут `empty-action-*` →
+никогда не матчат эту строку). **Live-verify (cp в build, hard-reload /training?topic=java-concurrency, editorial):** filters-ветка
+→ settings `next-btn` primary (Clay bg `rgb(217,119,87)`, order 0), retry `secondary-btn` (bg transparent, order 1) — primary-эмфаза
+теперь = текст-инструкция; mobile 375 без гориз. переполнения (scrollW 375==innerWidth). Прочие ветки не триггернуть живьём (нужны
+server-состояния AI-down/сессия), но верны **by-construction** (settingsPrimary=false → identical). **Скрин-набор:** дельта только
+на /training empty-state → пересняты 3 training-скрина (2-training-light/dark + 9-training-mobile-light), остальные 11 не тронуты;
+md5 троицы различны (нет stale-race). **Урок: primary-CTA обязан совпадать с guidance-копией empty-state; refresh-кнопка бесполезна
+для filter-mismatch (перезагружает тот же пустой запрос) — эмфаза должна вести к реальному фиксу (настройки). Флип скоупить по
+причине пустоты (settingsPrimary-expr), чтобы прочие ветки (AI/сессия/review, где refresh осмыслен) остались нетронуты.**

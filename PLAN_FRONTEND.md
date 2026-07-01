@@ -162,6 +162,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | FT-14 | inline-`code` в варианте = визуальная подсказка | Гасим заливку/паддинг чипа в тексте выбора (моно остаётся, color inherit); explanation/проза не тронуты | M | L | L | M | ✅ DONE (р17 v=54) | AF-5 |
 | FT-15 | `training-actions` include (Проверить ответ) | CTA далеко при длинных вариантах | sticky/видимый submit | M | M | M | M | 🌱 BACKLOG | TR-4 |
 | FT-16 | empty-state «Сейчас нет вопросов» (5 веток) | Нейтральный заголовок + recovery (finished→«Посмотреть итоги») | — | M | L | L | H | ✅ DONE (р15 `3bb19db0`) | TR-2 |
+| FT-18 | empty-state «фильтры пусты»: primary CTA = «Обновить тренировку» (no-op для filter-mismatch, уводит по кругу), а копия просит «Открой настройки» | Флип primary→«Открыть настройки» ТОЛЬКО в filters-ветке (`settingsPrimary` = `!genUnavail and !review and session==null`); прочие ветки (AI/сессия/review) байт-идентичны. Шаблон-текст, без бампа. Контракт-тесты сверены (filters-expr:94, empty-action-*, next-btn=/result-only) | M | L | L | H | ✅ DONE (р31) | TR-2 |
 | FT-17 | `app.js(v=51)` в конце body | Версионный контракт JS | бампать при правке app.js | — | — | — | H | 🔁 ONGOING | PE |
 
 ### 5.A.2 — `templates/result.html` (живой no-JS фоллбэк POST /answer)
