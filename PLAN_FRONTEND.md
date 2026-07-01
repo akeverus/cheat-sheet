@@ -40,7 +40,7 @@ perf PE, контент CN, иконки IC).
   `editorial.css` — мёртвый код. Бамп `?v=N`: при правке CSS — обе ссылки в
   `fragments/head.html`; при правке JS — `app.js ?v=N` в `result.html` /
   `settings.html` / `focus-training.html`, `stats.js` — в `stats.html`. Чистая
-  правка текста шаблона бампа НЕ требует. **Текущая версия CSS = v=57 (р28), app.js = v=52 (р26).**
+  правка текста шаблона бампа НЕ требует. **Текущая версия CSS = v=58 (р30), app.js = v=52 (р26).**
 - **Дизайн-система:** 10 переключаемых дизайнов (editorial=дефолт, linear, swiss,
   notion, mintlify, broadsheet, superhuman, stripe, claude, theverge) × 2 темы.
   Персонализация — `data-*` на `<html>`; **дефолт = `data-design="editorial"`
@@ -221,8 +221,9 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | STA-2 | «К повтору 9886» пугает | today-hero получил «N из M вопросов к повтору» (паттерн+гард from today-chip line 57) → знаменатель = честная пропорция, не интимидирующая стена. Stats-tile «К повтору» в сетке оставлен (SRS-термин, dashboard-контекст; hero/chip несут пояснение) | — | M | L | L | H | ✅ DONE (р21) | AN-2 |
 | STA-3 | Поиск отделён от фильтров линией | ~~Объединить поиск+фильтры~~ — НЕ дефект: вертикальный hairline + верт.центрирование поиска = осознанное решение с rationale `base.css:1476-1480` (одно поле vs высокий фильтр → пустота под полем как намеренный воздух). Форм-мердж рискован (2 cross-wired формы). Переоткрытие = churn | — | M | M | M | 🚫 WONTFIX (deliberate) | AN-3 |
 | STA-4 | Таблица тем — горизонтальный scroll | overflow-x:auto + tabindex/role/aria-label скролл-региона | — | M | L | L | H | ✅ DONE (р11) | AN-4 |
-| STA-5 | `stats.js` графики мелкие/слабые labels | Меньше decorative grid, крупнее labels, tooltips (Chart.js config) | M | M | M | M | 🌱 BACKLOG | AN-5 |
+| STA-5 | `stats.js` графики мелкие/слабые labels | Меньше decorative grid, крупнее labels, tooltips (Chart.js config). **Ясность/честность-ось закрыта R30 (STA-7); остаётся только label-size/grid — низкий приоритет (JS + бамп stats.js, MxM)** | M | M | M | M | 🌱 BACKLOG | AN-5 |
 | STA-6 | Сортировка не видна в покое | Glyph ⇅ на `sortable[aria-sort=none]` | — | M | L | L | H | ✅ DONE (р6) | AN-6 |
+| STA-7 | Графики рисуют top-25, но заголовок «…по темам» подразумевает ВСЕ; actionable-порядок (точность — слабые впереди) невидим | Подзаголовок `.chart-subtitle` под каждым h2: «Самые активные темы» / «Сначала самые слабые»; aria «те же»→«полные данные». Muted-sm (переиспользован токен `.chart-fallback`, light 6.3:1 / dark 7.34:1) | M | L | L | H | ✅ DONE (р30) | AN-5 |
 | STA-7 | Empty-state поиска обещал сброс, контрола не было | Ссылка «сбрось поиск и фильтры» → `/stats` | — | M | L | L | H | ✅ DONE (р15 `3bb19db0`) | AN-7 |
 | STA-8 | Empty-state нулевых данных по теме | `.stats-empty` секция после stats-grid: «Пока нет данных» + CTA «Начать тренировку» + reset-фильтров (гейт = инверсия section-gates) | M | L | L | H | ✅ DONE (р19, template-only) | AN-8 |
 | STA-9 | Print печатал 12 из 319 тем | Разворот `.is-collapsed` в `@media print` | — | M | L | L | H | ✅ DONE (`06985234`) | AN-9 |
@@ -387,7 +388,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
-| STJ-1 | Chart.js конфиги: мелкие, decorative grid, слабые labels | Меньше сетки, крупнее labels, tooltips, empty-state графика | M | M | M | M | 🌱 BACKLOG | AN-5 |
+| STJ-1 | Chart.js конфиги: мелкие, decorative grid, слабые labels | Меньше сетки, крупнее labels, tooltips, empty-state графика. **Empty-state уже есть (`.chart-fallback`); ясность top-25-среза закрыта R30 (STA-7 — подзаголовки). Остаётся label-size/grid-density — низкий приоритет** | M | M | M | M | 🌱 BACKLOG | AN-5 |
 | STJ-2 | insights-данные для STA-1 | Источник actionable-метрик (без новых API — из модели) | H | M | M | M | 🌱 BACKLOG | AN-1 |
 | STJ-3 | `defer` + порядок загрузки | Chart.js не блокирует | — | — | — | — | H | ✅ DONE (р14) | PE-2 |
 
