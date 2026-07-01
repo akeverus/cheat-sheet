@@ -40,7 +40,7 @@ perf PE, контент CN, иконки IC).
   `editorial.css` — мёртвый код. Бамп `?v=N`: при правке CSS — обе ссылки в
   `fragments/head.html`; при правке JS — `app.js ?v=N` в `result.html` /
   `settings.html` / `focus-training.html`, `stats.js` — в `stats.html`. Чистая
-  правка текста шаблона бампа НЕ требует. **Текущая версия CSS = v=56 (р27), app.js = v=52 (р26).**
+  правка текста шаблона бампа НЕ требует. **Текущая версия CSS = v=57 (р28), app.js = v=52 (р26).**
 - **Дизайн-система:** 10 переключаемых дизайнов (editorial=дефолт, linear, swiss,
   notion, mintlify, broadsheet, superhuman, stripe, claude, theverge) × 2 темы.
   Персонализация — `data-*` на `<html>`; **дефолт = `data-design="editorial"`
@@ -356,7 +356,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | BAS-17 | helper-text контраст | ≥ WCAG точечно | M | L | L | M | 🌱 BACKLOG | TY-5 |
 | BAS-18 | prose `--measure` full-width | Намеренный выбор юзера (259ch на 2560) | НЕ трогать | — | — | — | H | 🚫 WONTFIX | LO-5/TY-3 |
 | BAS-19 | `.zone-chip` красился `accent-strong` (#C96442, «AA large» 3.7:1) при 12px → провал AA-small в editorial-light | Добавлен в editorial-override (base.css:3187) к братьям `.ed-masthead-kicker`/`.flashcard-badge` → `text-secondary`; light 3.70→**6.26:1**, dark 4.8→**8.42:1**; остальные 8 дизайнов не тронуты (accent-чип сохранён). CSS v=55→56 | H | L | L | H | ✅ DONE (р27) | A11Y-14 |
-| BAS-20 | дизайн `claude`: `.zone-chip` = **3.8:1** (rgb 193,96,64 — его clay-акцент), тот же класс дефекта что BAS-19 | Развилка: у claude clay = БРЕНД-акцент → снять чип на нейтраль (как editorial) vs затемнить claude-токен accent-strong. Требует отдельного решения, не бандлить. Замер солид-цветом подтверждён | M | L | L | H | 🌱 BACKLOG (СЛЕД. раунд) | A11Y-15 |
+| BAS-20 | дизайн `claude` (token-only): `.ed-masthead-kicker`+`.zone-chip`+`.flashcard-badge` = **3.8:1** в LIGHT (все три наследуют base `accent-strong` #C16040, «AA-large» токен на 12px caps); kicker глобальный | claude-**light**-scoped override (`:not([data-theme="dark"])`) три метки → `text-secondary` (5.98:1). Dark НЕ трогаем: там accent-strong #E08B6D=7.1:1 проходит + намеренный бренд-coral (token-only наследование). Развилка «нейтраль vs затемнить токен» решена в пользу нейтрали (зеркалит editorial spec «pure typographic label»). CSS v=56→57 | M | L | L | H | ✅ DONE (р28) | A11Y-15 |
 
 ### 5.C.3 — `static/css/editorial.css` (МЁРТВЫЙ КОД)
 

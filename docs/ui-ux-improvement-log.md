@@ -383,3 +383,23 @@ PLAN §5 как A11Y-15, СЛЕД. раунд):** дизайн `claude` даёт
 токен), не бандлил в этот раунд («хирург, не экскаватор»). **Урок: accent-токен, помеченный «AA large», нельзя
 применять к мелкому тексту (<18.66px bold / <24px); чип-метки 12px caps держать на `text-secondary` в ряду с эйбрау —
 дизайн-система уже задала прецедент на kicker/badge, чип был пропущен.**
+
+### Раунд 28 — 2026-07-01 — Контраст clay-меток дизайна `claude` в light: AA-провал kicker+chip+badge (A11Y-15/BAS-20)
+Коммит: (см. git) · CSS v=56→57 (`fragments/head.html`, обе ссылки) · Находок применено: 1/1
+| # | Область | Проблема | Правка | Impact/Risk/Conf |
+|---|---------|----------|--------|------------------|
+| 1 | Дизайн `claude` (token-only), LIGHT: `.ed-masthead-kicker` (ГЛОБАЛЬНЫЙ masthead) + `.zone-chip` + `.flashcard-badge` — все три 12px caps метки | Twin-дефект R27, но обнаружен ШИРЕ: claude — token-only (0 base.css-правил), поэтому наследует base-правила метки `color: var(--color-accent-strong)`. Токен claude-light `--color-accent-strong: #C16040` ЯВНО документирован (tokens.css:1159) как «3.7:1 как текст (AA-large)» → на 12px = **3.8:1**, провал AA-small **на ВСЕХ ТРЁХ метках** (kicker — на каждой странице!). НЕ только chip как в BAS-20-заметке. В DARK claude accent-strong светлее (#E08B6D, **7.1:1**) → проходит | Зеркалю editorial-паттерн, но **light-scoped** (`html[data-design="claude"]:not([data-theme="dark"])`): три метки → `--color-text-secondary` (#5E5D59, документирован «6.3:1»). **Почему только light:** claude-dark 7.1 проходит И несёт намеренный бренд-coral (token-only дизайн осознанно наследует base-акцент, в dark он AA-годен) → «не трогать то, что работает». Токен НЕ трогал | medium/low/high |
+
+Реализация: `base.css` — сразу ПОСЛЕ editorial-override (3190-3192) добавлен claude-блок с комментарием: три селектора
+`html[data-design="claude"]:not([data-theme="dark"]) {.ed-masthead-kicker,.zone-chip,.flashcard-badge}` → `text-secondary`.
+`:not([data-theme="dark"])` матчит дефолт (нет атрибута) + явный light, исключает dark (специфичность (0,3,1) > base (0,2,1)
+→ выигрывает; source-order после base). **CSS-правка → бамп v=56→57** обеих ссылок. **Live-verify (cp в build, hard-reload,
+base.css?v=57 подтверждён, замер обеих тем):** claude-light kicker+chip `rgb(94,93,89)` = **5.98:1** ✓ (было 3.8);
+claude-dark kicker+chip `rgb(224,139,109)` = **7.1:1** ✓ (СОХРАНЁН бренд-coral, не тронут); editorial 6.26/8.42 без изменений;
+notion 5.53/7.39, stripe 7.81/7.79 — не затронуты (правка claude-scoped). **Скрин:** дельта в claude-**light** (не дефолтный
+editorial-путь) → стандартный 14-набор editorial БАЙТ-ИДЕНТИЧЕН (не перезаливал). Верификационный `verify-claude-home-light.png`:
+kicker «CHEAT · SHEET» + чип «ТРЕНИРОВКА» — ink-метки в ряд с эйбрау «ALGORITHMS» (намеренно, не сломано); лейаут цел.
+**После R27+R28 контраст `.zone-chip`/kicker/badge закрыт во ВСЕХ 10 дизайнах × 2 темы (AA-small ≥4.5 везде).** **Урок:
+token-only дизайны наследуют base-правила метки → editorial-override их НЕ покрывает; проверять контраст метки в КАЖДОМ
+дизайне (не только default+той что чинил). AA-large accent-токен на 12px caps проваливается в LIGHT, но может проходить в
+DARK (там значение токена светлее) → фикс scoping-ить по теме, не глушить проходящее dark-состояние.**
