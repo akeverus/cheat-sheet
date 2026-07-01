@@ -40,7 +40,7 @@ perf PE, контент CN, иконки IC).
   `editorial.css` — мёртвый код. Бамп `?v=N`: при правке CSS — обе ссылки в
   `fragments/head.html`; при правке JS — `app.js ?v=N` в `result.html` /
   `settings.html` / `focus-training.html`, `stats.js` — в `stats.html`. Чистая
-  правка текста шаблона бампа НЕ требует. **Текущая версия CSS = v=58 (р30), app.js = v=52 (р26).**
+  правка текста шаблона бампа НЕ требует. **Текущая версия CSS = v=60 (р33), app.js = v=52 (р26).**
 - **Дизайн-система:** 10 переключаемых дизайнов (editorial=дефолт, linear, swiss,
   notion, mintlify, broadsheet, superhuman, stripe, claude, theverge) × 2 темы.
   Персонализация — `data-*` на `<html>`; **дефолт = `data-design="editorial"`
@@ -356,7 +356,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | BAS-13 | per-design SIGNATURES (editorial/linear/swiss) | Хвост base.css | новые 4 дизайна — token-only | — | — | — | H | ✅ DONE | — |
 | BAS-14 | touch target ≥44px мелких контролов | Скан @375 (р29): checkbox 18px/radio 1×1 обёрнуты в `<label>` 44px-высоты (реальная цель — лейбл); seg-btn/step 44/48px; icon-тогглы ≥44. Провалов нет | M | L | L | H | ✅ DONE (verified-clean р29) | A11Y-8 |
 | BAS-15 | tabs vs seg-control визуально похожи | Развести | M | M | M | M | 🌱 BACKLOG | SE-5/CM-2 |
-| BAS-16 | UPPERCASE рус. labels + большой tracking | Сократить tracking на рус. uppercase | M | L | L | M | 🌱 BACKLOG | TY-1 |
+| BAS-16 | UPPERCASE рус. labels + большой tracking: editorial-дефолт держал `--letter-spacing-wide: 0.12em` (самое широкое в системе, без комментария; 9 сиблингов оттюнены до 0.07–0.09em с Cyrillic-safety-коммами). На 12px mono кириллица разваливалась на буквы («Ф И Л Ь Т Р Ы») | `:root` `--letter-spacing-wide: 0.12em → 0.09em` (= Swiss-сигнатура, Cyrillic-safe верх полосы). Editorial-only; прочие 9 не тронуты. Замер live 1.44px→1.08px, скрины 14. CSS v=59→60 | M | L | L | H | ✅ DONE (р33) | TY-1 |
 | BAS-17 | helper-text контраст | ≥ WCAG точечно | M | L | L | M | 🌱 BACKLOG | TY-5 |
 | BAS-18 | prose `--measure` full-width | Намеренный выбор юзера (259ch на 2560) | НЕ трогать | — | — | — | H | 🚫 WONTFIX | LO-5/TY-3 |
 | BAS-19 | `.zone-chip` красился `accent-strong` (#C96442, «AA large» 3.7:1) при 12px → провал AA-small в editorial-light | Добавлен в editorial-override (base.css:3187) к братьям `.ed-masthead-kicker`/`.flashcard-badge` → `text-secondary`; light 3.70→**6.26:1**, dark 4.8→**8.42:1**; остальные 8 дизайнов не тронуты (accent-чип сохранён). CSS v=55→56 | H | L | L | H | ✅ DONE (р27) | A11Y-14 |
