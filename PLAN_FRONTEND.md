@@ -305,6 +305,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | SGR-1 | 6 метрик (Всего/К повтору/Выучено/Верно/Ошибки/Точность) + accuracy-bar | Общая сетка, переиспользуется sidebar/result | — | — | — | — | H | ✅ DONE | — |
 | SGR-2 | accuracy-bar-fill цвет/пороги | Цвет НЕ единственный носитель: значение дублируется текстовой плиткой «Точность N%» сразу выше (CSSOM-verify R20) | verify AA + дубль текстом — выполнено | L | L | L | M | ✅ DONE | CO-4, SGR-3 |
 | SGR-3 | accuracy-bar без accessible-семантики | Осмысленная data-viz (ширина=точность), но без role/aria/лейбла; заливка стоит слева (под «Всего»), не под лейблом «Точность» → безымянная сбивающая графика для AT | `aria-hidden="true"` на `.accuracy-bar` (декоративный дубль текста; не `role=progressbar` — дабл-озвучка). 1 правка фрагмента = 3 экрана | M | L | L | H | ✅ DONE R20 | AN-12 |
+| SGR-4 | 6 stat-карточек без пояснений SRS-жаргона (К повтору/Выучено) — несогласовано с колонками таблицы (у тех title R24/R25) | `title` на каждый `.stat-item`, формулировки сверены с SQL (due=next_review<=now, learned=repetitions>=threshold, correct/wrong=SUM, accuracy=Верно/(Верно+Ошибки)). Плейн-статик, 1 фрагмент = 3 включения. Чистый шаблон → без бампа | M | L | L | H | ✅ DONE (р29) | AN-14 |
 
 ### 5.B.9 — `fragments/today-widget.html`
 
@@ -350,7 +351,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | BAS-11 | reduced-motion + `data-motion` | `@media` + ось движения | — | M | L | L | H | ✅ DONE | A11Y-7 |
 | BAS-12 | `@media print` (break-inside avoid, разворот collapsed) | Печать результата/таблиц/итогов | — | M | L | L | H | ✅ DONE (р14) | PE/AN-9 |
 | BAS-13 | per-design SIGNATURES (editorial/linear/swiss) | Хвост base.css | новые 4 дизайна — token-only | — | — | — | H | ✅ DONE | — |
-| BAS-14 | touch target ≥44px мелких контролов | Точечно проверять | M | L | L | M | 🌱 BACKLOG | A11Y-8 |
+| BAS-14 | touch target ≥44px мелких контролов | Скан @375 (р29): checkbox 18px/radio 1×1 обёрнуты в `<label>` 44px-высоты (реальная цель — лейбл); seg-btn/step 44/48px; icon-тогглы ≥44. Провалов нет | M | L | L | H | ✅ DONE (verified-clean р29) | A11Y-8 |
 | BAS-15 | tabs vs seg-control визуально похожи | Развести | M | M | M | M | 🌱 BACKLOG | SE-5/CM-2 |
 | BAS-16 | UPPERCASE рус. labels + большой tracking | Сократить tracking на рус. uppercase | M | L | L | M | 🌱 BACKLOG | TY-1 |
 | BAS-17 | helper-text контраст | ≥ WCAG точечно | M | L | L | M | 🌱 BACKLOG | TY-5 |
