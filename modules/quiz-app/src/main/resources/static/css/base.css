@@ -2691,6 +2691,25 @@ html[data-design] .seg-btn.is-active {
 }
 html[data-design] .seg-btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); position: relative; z-index: 1; }
 
+/* Дизайн-контрол (10 опций) — единственный seg-control, который переносится
+   (остальные 5 несут 2–3 опции и живут в один ряд). При переносе border-right-
+   разделители .seg-btn «повисают» в конце перенесённых рядов: :last-child гасит
+   ТОЛЬКО глобально-последнюю кнопку, поэтому у концевых кнопок ряда (Notion,
+   Superhuman) на торце болталась вертикальная линия в пустоте. Для 10-опционного
+   пикера набор чипов с зазором чище «склеенных» сегментов: убираем контейнер-рамку
+   и внутренние разделители, даём каждому сегменту собственную рамку + радиус + gap.
+   Орфан-линий больше нет (у каждого чипа полная рамка), перенос читается намеренным.
+   Радиус — токен --border-radius-sm (в editorial 0=квадрат, в rounded-дизайнах 6px)
+   → чип наследует радиус-язык своего дизайна. Скоуп по #id → прочие 5 контролов
+   (склеенные сегменты, верны для 2–3 опций) не тронуты. */
+html[data-design] #design-pref-control {
+  gap: var(--space-2); border: 0; background: transparent; overflow: visible;
+}
+html[data-design] #design-pref-control .seg-btn {
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-sm);
+}
+
 /* Степпер размера шрифта */
 html[data-design] .font-stepper { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 html[data-design] .font-step-btn {
