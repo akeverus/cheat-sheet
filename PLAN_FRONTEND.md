@@ -407,6 +407,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | APP-5 | favorite toggle (`btn-favorite`) | Флоу под решением юзера | НЕ трогать без решения | — | — | — | — | ⛔ DEFERRED | — |
 | APP-6 | seg-controls + вкладки настроек (`initSettingsTabs`) | ARIA-вкладки, восстановление localStorage в try/catch | — | M | L | L | H | ✅ DONE | SE-1 |
 | APP-7 | `?v=` контракт в 3 шаблонах | Бампать при правке app.js | — | — | — | — | H | 🔁 ONGOING | — |
+| APP-8 | `regenerateQuestion` (app.js:1047-1115) async-state НЕ консистентен с братьями-хендлерами | Extra-analysis (343/348: `aria-busy=true` + re-entrancy guard) и export (592-601: `aria-disabled`+`aria-busy`) выставляют busy-семантику и гард повторного клика; regenerate же only `.regenerating`-класс + `title='Удаляю варианты…'` (tooltip → SR ненадёжно) — **нет `aria-busy`** (SR не слышит «занято») и **нет re-entrancy-гарда/disable** (двойной клик → дубль `POST /api/regenerate`, т.к. `obtainAdminToken` кэширует токен). Направление: при старте `button.setAttribute('aria-busy','true')` + ранний гард `if(button.classList.contains('regenerating'))return`, снимать в финале. Admin-only путь (`th:if=aiEnabled` скрывает в seed-first) → низкий impact. **app.js под in-flight pass (blocked)** | L | L | L | H | 🌱 BACKLOG (blocked-file) | A11Y |
 
 ### 5.D.2 — `static/js/stats.js`
 
