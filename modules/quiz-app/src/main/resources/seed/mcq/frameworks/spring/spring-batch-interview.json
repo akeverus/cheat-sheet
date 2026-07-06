@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`JobParameters` никак не влияют на идентичность `JobInstance` — каждый запуск всегда создаёт новый инстанс независимо от параметров.",
+              "text": "`JobParameters` нужны лишь для передачи входных значений (даты, пути к файлам) в компоненты шага; на идентичность `JobInstance` они не влияют — инстанс определяется только именем `Job`, поэтому запуски с разными параметрами делят один и тот же `JobInstance`.",
               "correct": false,
               "sections": {
                 "what_actually": "Именно `JobParameters` определяют идентичность: одинаковые параметры дают тот же `JobInstance`, а не новый.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JobLauncher` сам определяет порядок шагов и бизнес-логику задания, заменяя конфигурацию `Job`.",
+              "text": "`JobLauncher` последовательно выполняет `Step`-ы задания и управляет переходами между ними, а конфигурация `Job` лишь перечисляет доступные шаги.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок шагов и логику задаёт конфигурация `Job` (через `JobBuilder`); `JobLauncher` лишь запускает уже определённый `Job`.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`JobLauncher` поддерживает только синхронный запуск и всегда блокирует поток до завершения `Job`.",
+              "text": "`JobLauncher` выполняет `Job` синхронно и возвращает управление после завершения; для асинхронного запуска поверх него ставят отдельный планировщик, а неблокирующего режима у самого лаунчера нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Режим зависит от `TaskExecutor`: с `SimpleAsyncTaskExecutor` запуск асинхронный и `run()` возвращается немедленно.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`JobLauncher` не проверяет, был ли `JobInstance` уже успешно завершён, и просто запускает его заново.",
+              "text": "`JobLauncher` запускает переданный `Job` без обращения к `JobRepository`; проверку уже завершённого `JobInstance` выполняет сам первый `Step` на старте.",
               "correct": false,
               "sections": {
                 "what_actually": "Перед запуском он сверяется с `JobRepository` и для уже завершённого `JobInstance` бросает `JobInstanceAlreadyCompleteException`.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Step` поддерживает только chunk-модель; одноразовые операции вроде очистки файлов в `Spring Batch` сделать нельзя.",
+              "text": "`Step` реализует только chunk-модель read/process/write; одноразовые операции вроде очистки файлов оформляют как chunk-шаг с reader, возвращающим один элемент.",
               "correct": false,
               "sections": {
                 "what_actually": "Помимо chunk есть tasklet-модель именно для одноразовых атомарных операций (очистка, DDL, вызов API).",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Step` — это весь `Job` целиком; одно задание всегда состоит ровно из одного шага.",
+              "text": "`Step` и `Job` по сути эквивалентны: каждый шаг оформляют как отдельный `Job`, а многошаговую обработку собирают, запуская эти `Job`-ы цепочкой один за другим.",
               "correct": false,
               "sections": {
                 "what_actually": "`Step` — это одна фаза внутри `Job`; задание может содержать много шагов, выполняемых последовательно или параллельно.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Tasklet` обязательно использует `ItemReader`, `ItemProcessor` и `ItemWriter` для своей работы.",
+              "text": "`Tasklet` внутри `execute()` сам вызывает связку `ItemReader`/`ItemProcessor`/`ItemWriter`, оборачивая их обработку в один компонент шага.",
               "correct": false,
               "sections": {
                 "what_actually": "`Tasklet` не использует reader/processor/writer — это одна операция в методе `execute()`; read/process/write — это chunk-модель.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Метод `Tasklet.execute()` возвращает `void` и всегда вызывается ровно один раз.",
+              "text": "Метод `Tasklet.execute()` возвращает `boolean`: `true` завершает шаг, `false` помечает его как неуспешный.",
               "correct": false,
               "sections": {
                 "what_actually": "`execute()` возвращает `RepeatStatus`: `FINISHED` завершает шаг, а `CONTINUABLE` заставляет вызвать метод повторно.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`JpaPagingItemReader` не существует в `Spring Batch` — JPA-чтение возможно только через `HibernateCursorItemReader`.",
+              "text": "`JpaPagingItemReader` выполняет JPQL-запрос целиком и держит все сущности в памяти, а не читает их страницами, поэтому для больших выборок предпочитают `JpaCursorItemReader`.",
               "correct": false,
               "sections": {
                 "what_actually": "`JpaPagingItemReader` штатно входит во фреймворк, как и `JpaCursorItemReader`; Hibernate-вариант — лишь один из нескольких.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`JpaPagingItemReader` не помещает сущности в persistence context, поэтому dirty checking никогда не происходит.",
+              "text": "`JpaPagingItemReader` возвращает detached-сущности вне persistence context, поэтому dirty checking их не затрагивает и очистка контекста не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Прочитанные сущности попадают в persistence context, и для read-only выборок dirty checking стоит отключать (проекции/`readOnly`).",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Batch` не имеет готовых `ItemWriter` для БД — запись в базу всегда пишут вручную через `JdbcTemplate` в tasklet.",
+              "text": "`Spring Batch` для записи в БД предлагает только `JpaItemWriter` поверх `JPA`; для чистого JDBC без ORM готового writer нет, и вставку делают в tasklet через `JdbcTemplate`.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть `JdbcBatchItemWriter`, `JpaItemWriter`, `HibernateItemWriter` для записи в БД из коробки.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`StepExecutionListener.afterStep()` не может влиять на дальнейший поток — он всегда возвращает `void`.",
+              "text": "`StepExecutionListener.afterStep()` возвращает `void` — в нём можно залогировать итоги шага, но изменить `ExitStatus` и повлиять на переходы между шагами нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "`afterStep` возвращает `ExitStatus`, которым можно задать кастомный статус (например, `COMPLETED_WITH_SKIPS`) для условных переходов.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Переходы между шагами всегда линейны: после шага можно указать только один следующий через `.next()`, без ветвления.",
+              "text": "Порядок шагов в `Job` задаётся линейно через `.next()`; чтобы разветвить flow по результату, условие проверяют внутри `Tasklet` или процессора шага и пропускают ненужную обработку.",
               "correct": false,
               "sections": {
                 "what_actually": "Ветвление есть: через `.on(exitStatus).to(step)` и `JobExecutionDecider` можно выбирать разные шаги по результату.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Мониторить batch-задания можно только просматривая логи приложения — структурированных метаданных или метрик `Spring Batch` не предоставляет.",
+              "text": "Мониторинг batch-заданий строят на логах и метаданных `JobRepository`; готовых `Micrometer`-метрик `Spring Batch` не публикует, поэтому счётчики read/write снимают SQL-запросами к таблицам `BATCH_*`.",
               "correct": false,
               "sections": {
                 "what_actually": "Метаданные доступны через `JobExplorer`/`JobRepository`, а метрики — через `Micrometer` и `/actuator/metrics`; логи не единственный источник.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Метрики `Spring Batch` через `Micrometer` доступны всегда, даже без зависимости `spring-boot-starter-actuator`.",
+              "text": "Метрики `Spring Batch` через `Micrometer` включены самим batch-стартером, поэтому `spring-boot-starter-actuator` для их экспорта не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Метрики экспортируются при наличии `actuator`/`Micrometer` на classpath; без них endpoint метрик недоступен.",
@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все `JobParameters` всегда участвуют в идентификации `JobInstance` — пометить параметр как non-identifying нельзя.",
+              "text": "Все `JobParameters` участвуют в идентификации `JobInstance`; чтобы служебный флаг не создавал новый инстанс, его передают вне `JobParameters` — через `ExecutionContext` или системное свойство.",
               "correct": false,
               "sections": {
                 "what_actually": "Параметр можно сделать non-identifying через `addString(name, value, false)` — тогда он не влияет на идентичность инстанса.",
