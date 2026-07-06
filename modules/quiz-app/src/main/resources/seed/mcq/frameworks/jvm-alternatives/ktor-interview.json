@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Ktor` работает только на собственном проприетарном движке от JetBrains, и подключить `Netty` или `Jetty` под него невозможно.",
+              "text": "`Ktor` работает только на собственном движке от JetBrains, и подключить сторонние `Netty` или `Jetty` под него нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "`Ktor` поддерживает несколько engine'ов: `Netty`, `Jetty`, `Tomcat`, `CIO`, и движок выбирается явно при создании сервера.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Ktor` существует ровно один plugin — `KtorCore`, который включает всё сразу: и сериализацию, и аутентификацию, и CORS; отдельных plugins нет.",
+              "text": "Основные возможности собраны в одном стартовом модуле `ktor-server-core`: подключив его, разработчик получает и сериализацию, и аутентификацию, и CORS без отдельных `install()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Plugins разделены по назначению: `ContentNegotiation`, `Authentication`, `CORS` и десятки других подключаются по отдельности.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ContentNegotiation` и `Authentication` — это не plugins, а обязательные части ядра, всегда активные и не требующие `install()`.",
+              "text": "`ContentNegotiation` и `Authentication` — это не отдельные plugins, а встроенные части ядра, доступные по умолчанию без вызова `install()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба — именно plugins: без явного `install(ContentNegotiation)` авто-сериализации не будет, без `install(Authentication)` нет схем auth.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Wildcard-сегмент `{path...}` в `Ktor` запрещён: захватить произвольный хвост пути одним маршрутом невозможно, нужно перечислять все варианты.",
+              "text": "Wildcard-сегмент `{path...}` в `Ktor` не поддерживается: захватить произвольный хвост пути одним маршрутом нельзя, приходится перечислять варианты по отдельности.",
               "correct": false,
               "sections": {
                 "what_actually": "`{path...}` — поддерживаемый wildcard; весь хвост читается через `call.parameters.getAll(\"path\")`.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Группировка `authenticate(\"auth-jwt\") { route(\"/admin\") { ... } }` невозможна: аутентификацию в `Ktor` нельзя применить к группе маршрутов, только к каждому эндпойнту отдельно.",
+              "text": "Группировка `authenticate(\"auth-jwt\") { route(\"/admin\") { ... } }` не работает: аутентификацию в `Ktor` применяют не к группе маршрутов, а к каждому эндпойнту отдельно.",
               "correct": false,
               "sections": {
                 "what_actually": "`authenticate(...)` оборачивает целое поддерево маршрутов, применяя проверку ко всем вложенным эндпойнтам сразу.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Десериализация тела `call.receive<User>()` работает всегда из коробки, даже без подключённого plugin'а — `Ktor` сам распознаёт JSON по содержимому.",
+              "text": "Десериализация тела `call.receive<User>()` работает из коробки без подключённого plugin'а — `Ktor` сам распознаёт JSON по содержимому и парсит его.",
               "correct": false,
               "sections": {
                 "what_actually": "`receive<User>()` требует установленного `ContentNegotiation` с зарегистрированным форматом; без него вызов завершится ошибкой.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Десериализация ответа в `Ktor Client` всегда возвращает сырую строку; распарсить JSON в объект клиент не умеет, нужен ручной `Json.decodeFromString`.",
+              "text": "Десериализация ответа в `Ktor Client` возвращает сырую строку; распарсить JSON в объект клиент не умеет, нужен ручной `Json.decodeFromString`.",
               "correct": false,
               "sections": {
                 "what_actually": "`.body<T>()` десериализует ответ в типизированный объект через установленный `ContentNegotiation`, без ручного парсинга.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`HttpTimeout` задаёт единый общий таймаут на всё; разделить connect-, request- и socket-таймауты в `Ktor` невозможно.",
+              "text": "`HttpTimeout` задаёт единый общий таймаут на весь запрос; отдельно настроить connect-, request- и socket-таймауты этот plugin не даёт.",
               "correct": false,
               "sections": {
                 "what_actually": "`HttpTimeout` различает `requestTimeoutMillis`, `connectTimeoutMillis`, `socketTimeoutMillis` — их настраивают по отдельности.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Логирование исходящих запросов всегда печатает заголовок `Authorization` в открытом виде, и скрыть его средствами `Ktor` нельзя.",
+              "text": "Логирование исходящих запросов печатает заголовок `Authorization` в открытом виде, и скрыть его средствами `Ktor` нельзя — фильтрации чувствительных заголовков в `Logging` нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`Logging` поддерживает `sanitizeHeader { it == HttpHeaders.Authorization }`, который маскирует чувствительные заголовки в логах.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "CORS в `Ktor` настраивается единственным флагом `enableCors = true`, без возможности указать конкретные методы, заголовки или хосты.",
+              "text": "CORS в `Ktor` настраивается одним булевым флагом `enableCors = true`, без возможности указать конкретные методы, заголовки или хосты.",
               "correct": false,
               "sections": {
                 "what_actually": "`install(CORS)` детально настраивается: `allowMethod`, `allowHeader`, `allowHost`, `allowCredentials` — а не одним булевым флагом.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Подстановка значений из переменных окружения в `application.conf` невозможна — env читают только напрямую через `System.getenv` в коде.",
+              "text": "Подстановка значений из переменных окружения в `application.conf` не поддерживается — env читают только напрямую через `System.getenv` в коде.",
               "correct": false,
               "sections": {
                 "what_actually": "HOCON поддерживает подстановку `${?VAR}` прямо в `application.conf`, переопределяя дефолтные значения из окружения.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Ktor` есть встроенные profiles, активируемые через `ktor.profiles.active=prod`, полностью аналогичные `spring.profiles.active`.",
+              "text": "В `Ktor` есть встроенные profiles, активируемые ключом `ktor.profiles.active=prod`, по аналогии со `spring.profiles.active`.",
               "correct": false,
               "sections": {
                 "what_actually": "Встроенных profiles у `Ktor` нет; среды разделяют выбором конфиг-файла, env-переменными или `withFallback`.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Переопределить настройку из переменной окружения нельзя: единственный способ изменить порт — пересобрать артефакт с новым `application.conf`.",
+              "text": "Переопределить настройку из переменной окружения нельзя: чтобы изменить порт, приходится пересобирать артефакт с новым `application.conf`.",
               "correct": false,
               "sections": {
                 "what_actually": "Порт и другие параметры переопределяются env (`KTOR_DEPLOYMENT_PORT=9090`) и `${?VAR}`, без пересборки артефакта.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Указать альтернативный конфиг-файл на запуске невозможно: `Ktor` всегда читает только `application.conf` из classpath и игнорирует системные свойства.",
+              "text": "Указать альтернативный конфиг-файл на запуске нельзя: `Ktor` читает только `application.conf` из classpath и не учитывает системные свойства вроде `-Dconfig.file`.",
               "correct": false,
               "sections": {
                 "what_actually": "Альтернативный файл задают `-Dconfig.file=application-prod.conf`; `Ktor` уважает это системное свойство.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Тестовый `client` внутри `testApplication` всегда сам сериализует любые объекты в JSON, даже без подключения `ContentNegotiation`.",
+              "text": "Тестовый `client` внутри `testApplication` сам сериализует любые объекты в JSON, даже без подключения `ContentNegotiation`.",
               "correct": false,
               "sections": {
                 "what_actually": "Дефолтный тестовый `client` не сериализует body без `ContentNegotiation`; для JSON-тела создают `createClient { install(ContentNegotiation) { json() } }`.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Ktor` следует выбирать всегда, когда нужны готовые enterprise-интеграции — Spring Data JPA, Spring Security, Batch — потому что у `Ktor` их больше.",
+              "text": "`Ktor` стоит выбирать, когда нужны готовые enterprise-интеграции — Spring Data JPA, Spring Security, Batch — потому что у него их набор шире, чем у `Spring Boot`.",
               "correct": false,
               "sections": {
                 "what_actually": "Готовых enterprise-интеграций больше как раз у `Spring Boot`; именно ради них чаще выбирают его, а не `Ktor`.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Выбор между `Ktor` и `Spring Boot` определяется исключительно лицензией: `Ktor` платный для коммерческого использования, поэтому его берут реже.",
+              "text": "Выбор между `Ktor` и `Spring Boot` в первую очередь упирается в лицензию: `Ktor` требует платной подписки для коммерческого использования, поэтому его берут реже.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба фреймворка open-source и бесплатны; выбор определяют язык команды, cold start и нужные интеграции, а не лицензия.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Ktor` на порядок (в 10+ раз) быстрее `Spring WebFlux` во всех сценариях, потому что корутины полностью устраняют переключение контекста.",
+              "text": "`Ktor` заметно быстрее `Spring WebFlux` — примерно вдвое-втрое на типичной нагрузке, потому что корутины дешевле в переключении контекста, чем реактивные операторы Reactor.",
               "correct": false,
               "sections": {
                 "what_actually": "Разница обычно в пределах 5-15%, а не на порядок; оба на `Netty` дают сопоставимую пропускную способность.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Ktor` и `Spring WebFlux` нельзя сравнивать: `WebFlux` синхронный и блокирующий, поэтому всегда обслуживает максимум один запрос за раз.",
+              "text": "Сравнивать `Ktor` и `Spring WebFlux` некорректно: `WebFlux` — синхронный блокирующий стек на модели поток-на-запрос, тогда как `Ktor` асинхронный на корутинах.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring WebFlux` — async non-blocking стек на `Netty` + Reactor; он обслуживает множество одновременных запросов, как и `Ktor`.",
