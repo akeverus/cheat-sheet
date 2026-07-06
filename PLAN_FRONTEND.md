@@ -520,6 +520,8 @@ link-check). APP-9 — JS-построенная comparison-table без `th[sco
 | **CN** контент-тулы | CN-2 (⛔) | — | — | CN-1 (паритет — pedago) |
 | **IC** иконки | IC-5 (сырой «→» на CTA), IC-4-part (empty/insights) | IC-1/2, ICO-4 (export «↓»→`#i-download` SVG, р34) | IC-3 (намеренные эмодзи) | — |
 
+**DUP / duplicate-id (свод-аудит 2026-07-07, р100):** ✅ **CLEAN** — первый явный проход на риск «дубль id от мульти-включения фрагмента» (ломает `aria`/label-ассоциации, невалидный HTML). Результат: ноль same-page дублей id. Паттерн корректен: (1) фрагменты с **хардкод-id** включаются **≤1×/страницу** — `header` ровно 1× на каждой из 6 страниц (id `layout/design/theme-toggle` уникальны per-page), `stats-grid`/`today-widget`/`icons`/`post-answer-controls`/`training-actions` — единожды (`stats-grid` wrapper вкладывает `stats-grid-content` внутри себя, НЕ второй инстанс); (2) фрагменты, потенциально включаемые **несколько раз** (`inline-alert`, `result-zone-head`), **ПАРАМЕТРИЗУЮТ** id — caller передаёт уникальный (`interview-alert`, `result-zone-head-main`). Инвариант для будущих правок: **hardcode-id ⟹ single-include; multi-include ⟹ param-id**. Матрица DUP-колонка (✅ у фрагментов) подтверждена этим evidence.
+
 ---
 
 ## 8. Не трогать — осознанные решения пользователя (🚫 / ⛔)
