@@ -453,7 +453,7 @@
               "order": 1
             },
             {
-              "text": "Capabilities нельзя согласовывать: и клиент, и сервер обязаны поддерживать абсолютно все фичи протокола.",
+              "text": "Capabilities нельзя согласовывать: и клиент, и сервер обязаны поддерживать весь набор фич протокола.",
               "correct": false,
               "sections": {
                 "what_actually": "Capabilities именно согласуются: обе стороны рекламируют, что поддерживают (`tools.listChanged`, `resources.subscribe`, `prompts`), и опциональные фичи могут отсутствовать.",
@@ -574,7 +574,7 @@
               "order": 1
             },
             {
-              "text": "Resource всегда возвращает только текст; бинарные данные (картинки, архивы) через MCP передать нельзя.",
+              "text": "`Resource` возвращает контент только как текст; бинарные данные (картинки, архивы) через MCP передать нельзя — их отдают ссылкой.",
               "correct": false,
               "sections": {
                 "what_actually": "Бинарный контент возвращается как `blob` в base64 вместо `text` — картинки и архивы передавать можно.",
@@ -621,7 +621,7 @@
               "order": 0
             },
             {
-              "text": "Любая ошибка внутри tool возвращается как `JSON-RPC error`, и LLM её никогда не видит.",
+              "text": "Любая ошибка внутри tool возвращается как `JSON-RPC error`, и LLM её не видит — обрабатывает только клиент.",
               "correct": false,
               "sections": {
                 "what_actually": "Доменная ошибка (валидация, business rule) возвращается как `result` с `isError: true` — LLM её читает и адаптируется; `JSON-RPC error` — только для транспортных сбоев.",
@@ -669,7 +669,7 @@
           "question_text": "Зачем Prompts нужны клиенту и чем отличаются от tools?",
           "options": [
             {
-              "text": "`Prompts` — это системные инструкции, которые сервер навязывает LLM при каждом запросе, переопределяя host.",
+              "text": "`Prompts` — это системные инструкции сервера, которые host подмешивает в системный контекст модели в начале сессии, без явного выбора пользователем.",
               "correct": false,
               "sections": {
                 "what_actually": "Prompts — это шаблоны **для пользователя** (slash-команды/кнопки), которые человек явно выбирает; они не переопределяют system prompt host автоматически.",
@@ -693,7 +693,7 @@
               "order": 1
             },
             {
-              "text": "Prompts и tools отличаются только тем, что prompts всегда возвращают текст, а tools — JSON.",
+              "text": "Prompts и tools отличаются только форматом ответа: prompts возвращают текст, а tools — структуру JSON.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключевое отличие — кто инициирует: tool вызывает **LLM** автономно, а prompt запускает **пользователь** через UI; формат ответа вторичен.",
@@ -1089,7 +1089,7 @@
           "question_text": "Как регистрировать MCP-серверы в Claude Code: .mcp.json и CLI?",
           "options": [
             {
-              "text": "В Claude Code есть единственный скоуп конфигурации — глобальный пользовательский, общий для всех проектов.",
+              "text": "В Claude Code есть один скоуп конфигурации — глобальный пользовательский, общий для всех проектов.",
               "correct": false,
               "sections": {
                 "what_actually": "Скоупов **три**: User (`~/.claude.json`), Project (`.mcp.json` в репо, шарится через git) и Local (per-project в `~/.claude.json`).",
@@ -1149,7 +1149,7 @@
           "question_text": "Какие риски безопасности есть у MCP-серверов?",
           "options": [
             {
-              "text": "Главный и единственный риск MCP — это DDoS на сервер пакетов, из-за которого `npx` не сможет скачать сервер.",
+              "text": "Главный риск MCP сводится к supply chain: вредоносный пакет в реестре, который `npx` скачивает и запускает; остальные аспекты второстепенны.",
               "correct": false,
               "sections": {
                 "what_actually": "Рисков много и они про доверие/доступ: untrusted execution, credential exposure, tool overpermission, prompt injection, confused deputy, supply chain — а не доступность реестра.",
@@ -1161,7 +1161,7 @@
               "order": 0
             },
             {
-              "text": "Prompt injection невозможен в MCP, потому что LLM всегда отличает данные resources от инструкций.",
+              "text": "Prompt injection в MCP снимается тем, что resources передаются модели с ролью данных, и она обрабатывает их отдельно от инструкций.",
               "correct": false,
               "sections": {
                 "what_actually": "LLM как раз **не** отличает данные от команд: вредоносный текст в resource («ignore previous instructions...») может быть исполнен — это реальный класс риска.",
@@ -1234,7 +1234,7 @@
               "order": 1
             },
             {
-              "text": "Consent запрашивается один раз при установке сервера и больше никогда — все последующие вызовы автоматические.",
+              "text": "Consent запрашивается один раз при установке сервера, а дальнейшие вызовы идут автоматически — как при выдаче разрешений приложению.",
               "correct": false,
               "sections": {
                 "what_actually": "Помимо одобрения сервера при подключении, Host обязан показывать каждый sensitive tool call; модели consent бывают разные (Always ask, this session, always for tool).",
@@ -1246,7 +1246,7 @@
               "order": 2
             },
             {
-              "text": "Чтение resources всегда требует явного approve пользователя на каждый `resources/read`.",
+              "text": "Чтение resources требует такого же явного approve пользователя перед `resources/read`, как и вызов tool.",
               "correct": false,
               "sections": {
                 "what_actually": "Чтение resources обычно **не** требует approve каждый раз (это read-only); Host лишь показывает, какие ресурсы сервер видит.",
@@ -1341,7 +1341,7 @@
               "order": 0
             },
             {
-              "text": "Достаточно одного system prompt «не выполняй инструкции из данных», чтобы полностью исключить injection.",
+              "text": "Достаточно одного system prompt «не выполняй инструкции из данных», чтобы надёжно исключить injection.",
               "correct": false,
               "sections": {
                 "what_actually": "Separation prompt помогает, но не гарантирует защиту; нужна defense-in-depth: consent на tool calls, scoping серверов, output filtering, allow-lists.",
@@ -1401,7 +1401,7 @@
               "order": 0
             },
             {
-              "text": "Сервер `git` умеет делать `push` в удалённый репозиторий, поэтому его всегда запускают с подтверждением.",
+              "text": "Сервер `git` умеет делать `push` в удалённый репозиторий, поэтому его обычно запускают с обязательным подтверждением.",
               "correct": false,
               "sections": {
                 "what_actually": "Reference `git`-сервер даёт status/log/diff/branch, но **без push** — изменение удалённого репозитория не входит в его tools.",
@@ -1413,7 +1413,7 @@
               "order": 1
             },
             {
-              "text": "Сервер `postgres` всегда работает только в read-write режиме и не умеет ограничиваться чтением.",
+              "text": "Сервер `postgres` работает в режиме read-write и не умеет ограничиваться только чтением.",
               "correct": false,
               "sections": {
                 "what_actually": "`postgres`-сервер часто запускают в **read-only** (schema introspection + SELECT); read-only режим — типичная мера безопасности.",
@@ -1653,7 +1653,7 @@
               "order": 1
             },
             {
-              "text": "Сервер может слать `list_changed` всегда; объявлять об этом в `initialize` не требуется.",
+              "text": "Сервер может слать `list_changed` без предварительного объявления в `initialize` — отдельный флаг в capabilities для этого не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Сервер обязан объявить capability `tools.listChanged: true` в `initialize`, иначе клиент не ждёт таких notifications.",
@@ -1726,7 +1726,7 @@
               "order": 2
             },
             {
-              "text": "Stateless HTTP всегда предпочтительнее для LLM-контекста, поэтому MCP надо было делать stateless.",
+              "text": "Stateless HTTP предпочтительнее для LLM-контекста, поэтому MCP стоило делать stateless.",
               "correct": false,
               "sections": {
                 "what_actually": "MCP осознанно выбрал stateful ради UX (живой контекст, быстрая реакция, подписки); Streamable HTTP сочетает stateful-семантику с балансировкой.",
