@@ -22,7 +22,7 @@
               "order": 0
             },
             {
-              "text": "`Stream processing` — это просто запуск обычной batch-джобы раз в минуту по расписанию через cron.",
+              "text": "`Stream processing` — это запуск обычной batch-джобы каждую минуту по расписанию через cron, то есть частый batch на коротком интервале.",
               "correct": false,
               "sections": {
                 "what_actually": "Запуск batch по расписанию остаётся batch-обработкой ограниченного датасета; stream обрабатывает каждое событие по мере поступления как непрерывный поток.",
@@ -69,7 +69,7 @@
           "question_text": "Чем stream processing отличается от batch processing?",
           "options": [
             {
-              "text": "Batch processing всегда даёт меньшую latency, чем stream processing, потому что обрабатывает данные крупными блоками.",
+              "text": "Batch processing даёт меньшую latency, чем stream, потому что группировка событий в крупные блоки убирает накладные расходы на обработку каждого события.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: batch имеет latency в минуты-часы (накопить → обработать), а stream — миллисекунды-секунды на событие.",
@@ -94,7 +94,7 @@
               "order": 1
             },
             {
-              "text": "Stream и batch отличаются только языком программирования: stream пишут на `Scala`, а batch — на `Python`.",
+              "text": "Stream и batch различаются в основном инструментом: stream-задачи пишут на `Flink`/`Scala`, а batch — на `Spark`/`Python`, и выбор определяется стеком команды.",
               "correct": false,
               "sections": {
                 "what_actually": "Различие в модели обработки (continuous flow vs bounded dataset) и latency, а не в языке; и `Flink`, и `Spark` поддерживают много языков.",
@@ -106,7 +106,7 @@
               "order": 2
             },
             {
-              "text": "Batch processing невозможно выразить через stream-движок, это принципиально разные несовместимые парадигмы.",
+              "text": "Batch и stream строятся на разных несовместимых движках, поэтому batch-логику приходится реализовывать отдельным batch-фреймворком, а не stream-процессором.",
               "correct": false,
               "sections": {
                 "what_actually": "Современные движки исполняют batch как bounded stream: `Flink` и `Spark Structured Streaming` гоняют оба режима.",
@@ -262,7 +262,7 @@
               "order": 0
             },
             {
-              "text": "Event time — это всегда системное время сервера в момент обработки события движком.",
+              "text": "`Event time` — это системное время сервера в тот момент, когда событие обрабатывается движком.",
               "correct": false,
               "sections": {
                 "what_actually": "Системное время обработки — это как раз processing time; event time берётся из timestamp внутри самого события.",
@@ -274,7 +274,7 @@
               "order": 1
             },
             {
-              "text": "Processing time всегда точнее event time, потому что берётся из надёжных системных часов.",
+              "text": "`Processing time` — более точная семантика, чем event time, потому что берётся из надёжных системных часов сервера.",
               "correct": false,
               "sections": {
                 "what_actually": "Точность по системным часам не делает результат корректным: processing time искажает аналитику при задержках и out-of-order.",
@@ -286,7 +286,7 @@
               "order": 2
             },
             {
-              "text": "В production почти всегда используют processing time, потому что он не требует timestamp в данных.",
+              "text": "`Processing time` — дефолт в production, потому что не требует timestamp внутри самих данных и watermark-настройки.",
               "correct": false,
               "sections": {
                 "what_actually": "В production для аналитики почти всегда нужен event time; processing time выбирают лишь в простых кейсах.",
@@ -381,7 +381,7 @@
               "order": 0
             },
             {
-              "text": "Единственная возможная стратегия для late events — всегда выбрасывать их (drop), других вариантов нет.",
+              "text": "Опоздавшие события движок по умолчанию отбрасывает, и чтобы их не терять, обычно расширяют интервал watermark, после чего они перестают считаться late.",
               "correct": false,
               "sections": {
                 "what_actually": "Drop — лишь дефолт; есть ещё dead letter queue, обновление агрегата через allowed lateness и side output.",
@@ -406,7 +406,7 @@
               "order": 2
             },
             {
-              "text": "Late events обязательно нужно обрабатывать в основном потоке вместе со всеми остальными событиями.",
+              "text": "Late events дообрабатывают в том же основном потоке наравне с остальными, досчитывая их в текущее открытое окно.",
               "correct": false,
               "sections": {
                 "what_actually": "Опоздавшие чаще выводят в отдельный канал (side output, DLQ) или обновляют закрытое окно, а не вливают в общий поток как обычные.",
@@ -574,7 +574,7 @@
               "order": 1
             },
             {
-              "text": "Allowed lateness уменьшает потребление памяти, потому что заставляет окна закрываться раньше.",
+              "text": "`Allowed lateness` — механизм экономии памяти: окна закрываются раньше и раньше освобождают удерживаемый state.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: allowed lateness увеличивает потребление памяти, удерживая state окна дольше для приёма late events.",
@@ -586,7 +586,7 @@
               "order": 2
             },
             {
-              "text": "При allowed lateness downstream получает результат окна ровно один раз и обновления исключены.",
+              "text": "`Allowed lateness` не меняет число эмиссий: downstream получает результат окна один раз, а опоздавшие события лишь пишутся в отдельный лог.",
               "correct": false,
               "sections": {
                 "what_actually": "Allowed lateness как раз приводит к повторной эмиссии (re-emit) обновлённого результата окна при late events.",
@@ -669,7 +669,7 @@
           "question_text": "Где хранится state в stream-движках?",
           "options": [
             {
-              "text": "State всегда хранится только в JVM heap, других вариантов backend не существует.",
+              "text": "State держат в JVM heap как в стандартном и самом быстром backend, а `RocksDB` и внешние хранилища задействуют под персистентность снапшотов, но не под горячий рабочий state.",
               "correct": false,
               "sections": {
                 "what_actually": "Кроме JVM heap есть `RocksDB` на диске (для большого state) и внешние хранилища (`Redis`, `Cassandra`).",
@@ -814,7 +814,7 @@
               "order": 1
             },
             {
-              "text": "Exactly-once бесплатен и не влияет на throughput, поэтому его стоит включать всегда по умолчанию.",
+              "text": "`Exactly-once` почти не влияет на throughput, поэтому его включают по умолчанию для большинства пайплайнов ради надёжности.",
               "correct": false,
               "sections": {
                 "what_actually": "Exactly-once даёт overhead (~5-15% throughput) из-за транзакций и checkpoints, поэтому включают его выборочно.",
@@ -1029,7 +1029,7 @@
           "question_text": "Как обрабатывать backpressure?",
           "options": [
             {
-              "text": "Единственный способ убрать backpressure — всегда выбрасывать сообщения (drop) на источнике.",
+              "text": "Backpressure убирают, отбрасывая сообщения (drop) на источнике, — это штатная реакция движка на перегрузку буферов.",
               "correct": false,
               "sections": {
                 "what_actually": "Drop — лишь один из вариантов; сначала профилируют узкое место, увеличивают parallelism, оптимизируют код и ресурсы.",
@@ -1054,7 +1054,7 @@
               "order": 1
             },
             {
-              "text": "Лучший первый шаг при backpressure — сразу купить больше серверов, не разбираясь в причине.",
+              "text": "Лучший первый шаг при backpressure — добавить серверов и поднять ресурсы кластера, чтобы закрыть нехватку вычислительной мощности.",
               "correct": false,
               "sections": {
                 "what_actually": "Сначала профилируют, чтобы найти конкретный медленный оператор; слепое наращивание ресурсов часто не помогает.",
@@ -1569,7 +1569,7 @@
           "question_text": "Как устроен real-time ML inference в streaming?",
           "options": [
             {
-              "text": "Real-time ML inference возможен только если модель переобучается на каждом событии потока.",
+              "text": "Real-time ML inference подразумевает, что модель дообучается на свежих событиях потока прямо в момент предсказания.",
               "correct": false,
               "sections": {
                 "what_actually": "Инференс применяет уже обученную модель к фичам из потока; переобучение на каждом событии — это online learning, отдельная и редкая задача.",
@@ -1606,7 +1606,7 @@
               "order": 2
             },
             {
-              "text": "В real-time inference модель всегда встраивается прямо в stream-процессор; внешний model service не используют.",
+              "text": "В real-time inference модель встраивают прямо в stream-процессор ради минимальной latency, а вызов внешнего model service добавил бы лишний сетевой хоп.",
               "correct": false,
               "sections": {
                 "what_actually": "Embedded model — лишь один паттерн; часто модель выносят в отдельный model service (gRPC), который зовёт стрим.",
