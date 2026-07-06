@@ -198,8 +198,8 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 | **▸ СТИЛИ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
 | `css/tokens.css` | — | ✅ | ✅ | — | 🚫 | ✅ | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | ✅ | — | — | — | — | ✅ | ✅ | — | TOK-1 AA-гейт CLEAN, TOK-5 OS-prefs; TOK-2 accent≈semantic hue = 🚫 identity, mitig. not-by-color-alone |
 | `css/base.css` | 🌱 | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱BAS-15 tabs↔seg (HIER), 🌱BAS-21 today-hero-hint tertiary (4 AA-fail, min 2.96); BAS-17 helper-контраст = ✅ verified-clean; BAS-18 measure = 🚫 |
-| `css/editorial.css` (мёртв) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱EDC-1 не подключён, 2656 строк-дубль tokens+base + stale (до AF-5/tabs); verify-then-remove |
-| `css/{linear,swiss}.css` (мёртвы) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱DSG-1 не подключены, сигнатуры уже в base.css (linear=2/swiss=6) → чистые дубли, удалить |
+| `css/editorial.css` (мёртв) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱EDC-1 не подключён (link/test/JS-ссылок нет), editorial=дефолт → правила ≈ base.css; но перед удалением нужен селектор subset-proof (урок р99: link-check недостаточен), не только «не подключён» |
+| `css/{linear,swiss}.css` (не подключены) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱DSG-1 ❌КОРР.р99: НЕ чистые дубли — linear держит `a`/`a:hover`, swiss `.ed-masthead-kicker`/`.ed-eyebrow` НЕ в base.css (частичный порт, как broadsheet) → port-or-abandon decision, НЕ удалять как junk |
 | `css/broadsheet.css` (не дубль!) | 🌱 | — | — | — | — | — | 🌱 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱DSG-2 CONFIRMED: 13 структ.правил (nav/btn/link) НЕ в base.css (0 vs linear 2/swiss 6) → broadsheet теряет структ.акценты, токены живут |
 | **▸ СКРИПТЫ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
 | `js/app.js` | ✅ | — | — | ✅ | ✅ | — | ✅ | ✅ | 🌱 | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | — | 🌱APP-8 regenerate без aria-busy; 🌱APP-9 comparison-table th без scope/caption; ⛔APP-5 favorite; v=54 |
@@ -207,18 +207,24 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 
 **Как читать сводку.** Открытые 🌱-пункты по файлам: `settings.html`(SET-14/SET-7),
 `stats.html`(STA-18/STA-5), `header.html`(HDR-1), `icons.html`(ICO-3), `training-actions.html`(TAC-3),
-`base.css`(BAS-15/BAS-21), `editorial.css`+`linear/swiss.css`(EDC-1/DSG-1 — мёртвые дубли),
-`broadsheet.css`(DSG-2 — не дубль!), `app.js`(APP-8/APP-9), `stats.js`(STJ-1).
+`base.css`(BAS-15/BAS-21), `editorial/linear/swiss/broadsheet.css`(EDC-1/DSG-1/DSG-2 — overlay'и со stranded-правилами),
+`app.js`(APP-8/APP-9), `stats.js`(STJ-1).
 ⛔: `error.html`(ERR-3 403-retry), `app.js`(APP-5 favorite).
-**Не-blocked, можно брать сразу:** EDC-1 + DSG-1 (удалить мёртвые `editorial/linear/swiss.css` — вне in-flight
-дерева, но удаление = решение). DSG-2 требует правки `base.css` (blocked) + дизайн-решения. Остальные 🌱 —
+**⚠️ КОРР. р99 — overlay'и НЕ «можно удалить как junk»:** прежняя рекомендация «EDC-1+DSG-1 удалить мёртвые
+`editorial/linear/swiss.css`» ОТОЗВАНА. Селектор-diff (р99) показал: linear/swiss держат element-правила
+(`a`/`a:hover`, `.ed-masthead-kicker`/`.ed-eyebrow`) НЕ в `base.css` — частичный порт, как broadsheet (DSG-2).
+Все 4 overlay'я не подключены (design-switch = `data-design`-атрибут, ноль динам. CSS-загрузки), но держат
+непортированные design-акценты → удаление = 0 рендер-дельты, но теряет source восстановления fidelity.
+**Не механический cleanup: DSG-1=DSG-2 = один класс port-or-abandon (дизайн-решение юзера).** Остальные 🌱 —
 в blocked-файлах под активным pass пользователя → ждут чистого `git status`. Расшифровка каждого ID — §6 ниже.
 
-**Из аудита 2026-07-06/07:** DSG-2 — **CONFIRMED статически** (2026-07-07): `broadsheet.css` держит 13 структурных
-rule-блоков (nav/btn/link, Hudson-бордюры), НЕ портированных в `base.css` (0 правил); broadsheet — единственный
-из 4 дизайнов с dedicated `.css`, чью структуру не мигрировали (linear/swiss/editorial — мигрированы). Токены
-broadsheet живут через `tokens.css`, теряются лишь структурные акценты (severity M→L). APP-9 — JS-построенная
-comparison-table без `th[scope]`/`caption`. Оба в §6.
+**Из аудита 2026-07-06/07/07-р99:** DSG-1+DSG-2 — **ОДИН класс (CONFIRMED селектор-diff'ом):** все non-editorial
+overlay'и (`linear`/`swiss`/`broadsheet.css`) держат design-specific element-правила, лишь ЧАСТИЧНО портированные
+в `base.css`, и `base.css` имеет НОВЫЕ правила (`label:has(checked)`, `.option-*`), которых у overlay нет → overlay
+stale+partial. Дизайны рендерятся БЕЗ overlay-акцентов (linear без link-цвета, swiss без kicker/eyebrow, broadsheet
+без 13 nav/btn-правил). Токены живут через `tokens.css`. Решение: port-to-base (вернуть fidelity) ИЛИ accept
+token-only → затем удалить. EDC-1 (editorial.css) — нужен селектор subset-proof перед удалением (не только
+link-check). APP-9 — JS-построенная comparison-table без `th[scope]`/`caption`. Всё в §6.
 
 ---
 
@@ -460,13 +466,13 @@ comparison-table без `th[scope]`/`caption`. Оба в §6.
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
-| EDC-1 | 2656 строк не подключены ни одним `<link>` | Путает чтение/поиск, дублирует токены | Перед удалением — `grep` по всем шаблонам/JS, что нет ссылки; затем убрать. Удаление — мягко-деструктивно, спросить/подтвердить | L | L | L | M | 🌱 BACKLOG (verify-then-remove) | — |
+| EDC-1 | не подключён ни одним `<link>` (свер. 2026-07-07: link/import/test/JS/build-ссылок нет; `TemplateFragmentContractTest` читает только `tokens.css`+`base.css`, editorial.css не пиннит) | Путает чтение/поиск, дублирует токены. editorial = ДЕФОЛТ-дизайн → его правила unwrapped (как design-agnostic слой `base.css`); `base.css` (242K) split-then-extended из editorial.css (169K) → вероятно stale-подмножество | **⚠️ УРОК р99 (из DSG-1): link-check НЕДОСТАТОЧЕН для «pure dupe → delete».** Как выяснилось с linear/swiss — overlay мог держать element-правила, НЕ портированные в base.css. Перед удалением editorial.css нужен **селектор-уровневый subset-proof** (каждое правило editorial.css присутствует в `base.css`/`tokens.css`), а не только «не подключён» + подсчёт. Удаление меняет 0 рендера (не грузится), но без subset-proof теряет потенциально непортированные правила. Мягко-деструктивно → subset-proof + подтверждение юзера | L | L | M | M | 🌱 BACKLOG (needs selector subset-proof, не только link-check) | — |
 
 ### 6.C.4 — `static/css/{broadsheet,linear,swiss}.css`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
-| DSG-1 | `linear.css` + `swiss.css` НЕ подключены ни одним `<link>` (свер. 2026-07-06: `head.html` грузит только `tokens.css` v=61 + `base.css` v=69; ноль per-design `<link>`) | Их структурные сигнатуры УЖЕ портированы в `base.css` (`[data-design="linear"]`=2 правила, `swiss`=6) → эти два файла — **чистые мёртвые дубли**, как `editorial.css` (EDC-1): токены дублируют `tokens.css`, структура дублирует `base.css`. Активный механизм дизайна = `tokens.css` + `base.css`, не эти файлы. **⚠️ `broadsheet.css` — НЕ дубль, см. DSG-2 (единственный источник его структуры)** | Как EDC-1: удалить `linear.css`+`swiss.css` (мягко-деструктивно, спросить). `broadsheet.css` НЕ удалять до DSG-2 | L | L | L | H | 🌱 BACKLOG (verify-then-remove, non-blocked) | — |
+| DSG-1 | `linear.css` + `swiss.css` НЕ подключены ни одним `<link>` (свер. 2026-07-06/07: `head.html` грузит только `tokens.css` v=61 + `base.css` v=69; ноль per-design `<link>`; design-switch = чистый `data-design`-атрибут, app.js:713/stats.js, ноль динамической загрузки CSS) | **❌ КОРРЕКЦИЯ 2026-07-07 (р99): НЕ «чистые дубли».** Прежняя запись «сигнатуры УЖЕ портированы, удалить» — НЕВЕРНА. Селектор-уровневый diff overlay↔base.css: **`linear.css` держит `html[data-design=linear] a` + `a:hover` (link-treatment), которых в `base.css` НЕТ** (там только `body`{font-features} + `#interview-options label:has(checked)`); **`swiss.css` держит `.ed-masthead-kicker`/`.ed-eyebrow` (типографика kicker/eyebrow), которых в `base.css` НЕТ** (там `a:hover`/`.zone-chip`/`label:has`/`.option-correct,wrong`). Порт был **ЧАСТИЧНЫМ**, и в `base.css` есть НОВЫЕ правила (`label:has(checked)`, `.option-*`), которых у overlay НЕТ → overlay **stale + частично-портирован**, ровно как `broadsheet.css` (DSG-2). → **DSG-1 и DSG-2 — ОДИН класс:** все 3 non-editorial overlay'я держат design-specific element-правила, лишь частично мигрированные в `base.css`; т.к. overlay'и не грузятся, эти дизайны СЕЙЧАС рендерятся БЕЗ своих element-акцентов (linear без кастомного link-цвета, swiss без kicker/eyebrow-типографики). | **НЕ механический cleanup.** Удаление меняет 0 рендера (overlay не подключён), но теряет source восстановления fidelity. Решение port-or-abandon (как DSG-2): либо портировать stranded element-правила в `base.css` (вернуть fidelity), либо осознанно принять token-only-дизайны → ТОГДА удалить overlay. Требует дизайн-решения юзера, НЕ «удалить как junk» | L | L | M | H | 🌱 BACKLOG (port-or-abandon decision, как DSG-2) | — |
 | DSG-2 | **CONFIRMED статически (2026-07-07, app не нужен):** `broadsheet` теряет структурную identity. `base.css` = **0** правил `[data-design="broadsheet"]` (editorial=30, swiss=6, linear=2, а также stripe=3/claude=3 портированы), но `broadsheet.css` (не подключён) содержит **13 структурных rule-блоков** на `.ed-nav`/`.ed-nav-link`/`.btn`/`.secondary-btn`/`.next-btn`/`.danger-btn`/`.flashcard-*-btn`/`#extra-analysis-toggle`/`a` (nav-treatment, `border-radius:4px`, Hudson-blue `#41A1CF` бордюры). Broadsheet — ЕДИНСТВЕННЫЙ из 4 дизайнов с dedicated `.css` (editorial/linear/swiss/broadsheet), чью структуру НЕ мигрировали в `base.css` (нет `superhuman/theverge/notion/mintlify.css` — те born-token-only, для них 0 = норма) | При выборе `broadsheet` **токены рендерятся** (cream bg / obsidian buttons / serif — из `tokens.css` `[data-design=broadsheet]`×2), но 13 структурных акцентов ОТСУТСТВУЮТ → broadsheet = «свои токены на editorial-структуре», без Hudson-бордюров/nav-treatment. Severity M→L (identity частично живёт через токены; теряются тонкие акценты) | Портировать 13 rule-блоков из `broadsheet.css` в `base.css` (token-safe, ровно как сделали для linear/swiss) → затем `broadsheet.css` становится дублем → удалить с DSG-1. **Blocked: `base.css` под in-flight pass; + дизайн-решение (broadsheet как signature-дизайн vs демоут в token-only)** | M | L | M | H | 🌱 BACKLOG (blocked-file + decision) | — |
 
 ### 6.D.1 — `static/js/app.js` (v=54)
