@@ -178,7 +178,7 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 |------|------|-------|------|------|-------|-------|-----|------|-------|------|-------|------|-----|-----|-------|-----|-------|------|-------|--------|-------|------|------|----|-----|-----|-------|------------------------|
 | **▸ СТРАНИЦЫ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
 | `focus-training.html` | ✅ | ✅ | 🚫 | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | FT-1..18 закрыты; 48px h2 + neutral-selected = 🚫 |
-| `result.html` | 🌱 | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | 🌱RES-8 контраст `.explanation-wrong`; 🌱RES-14 код только при aiEnabled |
+| `result.html` | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | 🌱RES-14 код только при aiEnabled (RES-8 контраст закрыт: AA во всех 20 дизайн×тема) |
 | `settings.html` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | 🌱 | ✅ | — | ✅ | ✅ | ✅ | — | 🌱SET-14 блок экспорта без h3; 🌱SET-7 персонализация не анонсируется SR |
 | `stats.html` | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | 🌱STA-18 forecast-count SR-дубль; 🌱STA-5 серии графиков не только цветом |
 | `session-summary.html` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | Чисто; dual-path nav = 🚫SUM-8 |
@@ -204,7 +204,7 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 | `js/app.js` | ✅ | — | — | ✅ | ✅ | — | ✅ | ✅ | 🌱 | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | — | 🌱APP-8 regenerate без aria-busy; 🌱APP-9 comparison-table th без scope/caption; ⛔APP-5 favorite; v=54 |
 | `js/stats.js` | — | — | 🌱 | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | 🌱STJ-1 tick-подписи графиков мелкие (low); kbd/progress-dup c app.js = 🚫 standalone-by-design; v=12 |
 
-**Как читать сводку.** Открытые 🌱-пункты по файлам: `result.html`(RES-8/RES-14), `settings.html`(SET-14/SET-7),
+**Как читать сводку.** Открытые 🌱-пункты по файлам: `result.html`(RES-14), `settings.html`(SET-14/SET-7),
 `stats.html`(STA-18/STA-5), `header.html`(HDR-1), `icons.html`(ICO-3), `training-actions.html`(TAC-3),
 `tokens.css`(TOK-2), `base.css`(BAS-15/BAS-17), `editorial.css`+`linear/swiss.css`(EDC-1/DSG-1 — мёртвые дубли),
 `broadsheet.css`(DSG-2 — не дубль!), `app.js`(APP-8/APP-9), `stats.js`(STJ-1).
@@ -260,7 +260,7 @@ comparison-table без `th[scope]`/`caption`. Оба в §6.
 | RES-5 | `.status` (Верно!/Неверно) | Иконка + текст + цвет (не только цвет) | — | H | L | L | H | ✅ DONE 🔁 | CO-4 |
 | RES-6 | options после проверки: `option-correct/wrong/other` + status-label | Правильный помечен «Правильный ответ», выбор — «Твой выбор» | — | M | L | L | H | ✅ DONE | AF-6 |
 | RES-7 | невыбранные wrong-варианты после проверки «кричат» | `.option-other` opacity un-scoped из `.result-page` → focus-page тоже 0.85 (был баг: пояснение возвращало 1.0) | M | L | L | M | ✅ DONE (р18 v=55) | AF-7 |
-| RES-8 | `.option-explanation` correct/wrong | Пер-вариант объяснение | verify контраст explanation-wrong | L | L | L | M | 🌱 BACKLOG | — |
+| RES-8 | `.explanation-wrong` контраст текста (base.css:816-819: bg=`--color-bg-tertiary`, color=`--color-text-secondary`, нейтральный — НЕ red, по answer-fairness) | **✅ VERIFIED-CLEAN статически (2026-07-07):** посчитал WCAG для пары text-secondary/bg-tertiary во **всех 20 дизайн×тема** — минимум editorial-light **4.76:1**, notion-dark **5.11:1**, остальные 5.5–11.9 → AA-normal (≥4.5) проходит везде. `.explanation-wrong strong`=text-primary (ещё выше). Приглушённый нейтральный вид = осознанная fairness, НЕ баг контраста | — | — | — | — | H | ✅ DONE (verified-clean, static) | AF/A11Y |
 | RES-9 | «Пояснение» h3 (book-open) + markdown | Полный разбор | — | — | — | — | H | ✅ DONE | — |
 | RES-10 | `.sm2-details` (SM-2 состояние) | Раскрываемые SRS-данные | — | — | — | — | H | ✅ DONE | — |
 | RES-11 | `#extra-analysis-toggle-result` hidden→JS reveal | Без JS не показывается (нет мёртвого контрола) | — | M | L | L | H | ✅ DONE | TR-9 |
