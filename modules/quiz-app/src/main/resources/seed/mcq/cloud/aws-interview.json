@@ -24,7 +24,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`AWS` — это исключительно IaaS-платформа: она предоставляет только виртуальные машины и сеть, а managed-сервисы (`RDS`, `DynamoDB`, `Lambda`) к ней не относятся и поставляются партнёрами.",
+              "text": "`AWS` — это чистая IaaS-платформа: она предоставляет виртуальные машины и сеть, а managed-сервисы (`RDS`, `DynamoDB`, `Lambda`) к ней не относятся и поставляются партнёрами.",
               "correct": false,
               "sections": {
                 "what_actually": "`AWS` покрывает все уровни: IaaS (`EC2`, `VPC`, `EBS`), PaaS (`Elastic Beanstalk`, `App Runner`, `RDS`) и managed-сервисы (`Lambda`, `DynamoDB`, `SageMaker`). Это multi-tier платформа от самого `Amazon`, а не от партнёров.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`AWS` использует исключительно flat monthly subscription (как `Netflix`): фиксированная плата за account по тарифу Developer/Business, после которой все сервисы доступны без доплат за трафик и storage.",
+              "text": "`AWS` работает по модели flat monthly subscription (как `Netflix`): фиксированная плата за account по тарифу Developer/Business, после которой сервисы доступны без доплат за трафик и storage.",
               "correct": false,
               "sections": {
                 "what_actually": "Основная модель — pay-as-you-go: оплата по факту (`EC2` per-second, `S3` per-GB, `Lambda` per-invocation). Subscription-плана с unlimited-доступом ко всему не существует.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Data transfer внутри одного региона (между `AZ`) всегда полностью бесплатен, а outbound к internet бесплатен в рамках Free Tier неограниченно.",
+              "text": "Data transfer внутри одного региона (между `AZ`) бесплатен, а outbound к internet покрывается Free Tier без заметных лимитов.",
               "correct": false,
               "sections": {
                 "what_actually": "Cross-AZ transfer стоит $0.01–0.02/GB в обе стороны, outbound к internet — $0.05–0.09/GB после 100GB free, и Free Tier здесь ограниченный, а не unlimited.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Цена `EC2` рассчитывается только по CPU-часам; storage (`EBS`), networking, public IPv4 и ОС (Windows-лицензия) включены бесплатно во все instance types без отдельных line items.",
+              "text": "Цена `EC2` складывается из CPU-часов; storage (`EBS`), networking, public IPv4 и ОС (Windows-лицензия) входят в тариф instance без отдельных line items.",
               "correct": false,
               "sections": {
                 "what_actually": "Hourly rate `EC2` включает compute и базовый network, но `EBS`-тома, public IPv4 (платный с 2024), data transfer и Windows-лицензия — отдельные line items в счёте.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`c7g` означает «cloud generation 7», буква в конце — произвольный маркетинговый суффикс; families (`T/M/C/R/X/I/G`) — просто ценовые тиры одного железа, поэтому безопаснее всегда брать самую большую букву `X`.",
+              "text": "`c7g` означает «cloud generation 7», буква в конце — маркетинговый суффикс; families (`T/M/C/R/X/I/G`) — ценовые тиры одного и того же железа, поэтому безопаснее брать букву постарше, `X`: она соответствует более новой и мощной ревизии оборудования.",
               "correct": false,
               "sections": {
                 "what_actually": "В `c7g`: `c` — семейство (Compute-optimized), `7` — поколение, `g` — архитектура (`Graviton`). Families аппаратно-разные: `C` — CPU-bound, `R` — память, `I` — NVMe, `G` — GPU. Брать `X` для веб-сервера — это 10×+ переплата за ненужную память.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главное правило выбора — всегда брать burstable `T`-family (`t3`, `t4g`), потому что они «умные» и автоматически разгоняются под любую sustained-нагрузку без CPU credits; `M`/`C`/`R` устарели и сняты с продажи.",
+              "text": "Главное правило выбора — брать burstable `T`-family (`t3`, `t4g`): они разгоняются под sustained-нагрузку без CPU credits, а `M`/`C`/`R` устарели и сняты с продажи.",
               "correct": false,
               "sections": {
                 "what_actually": "`T`-family — bursty инстансы с CPU credits: ~20% baseline CPU и burst до 100% за счёт кредитов. Когда кредиты кончаются (sustained CPU), `T` деградирует до baseline. `M`/`C`/`R` — current-generation для постоянной нагрузки.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Spot — это просто «дешёвый On-Demand»: цена ниже на 30–50% за счёт более старого оборудования прошлых поколений; прерываний не бывает, поэтому Spot безопасно использовать для production-БД и stateful-нагрузок с длинным lifecycle.",
+              "text": "Spot — это «дешёвый On-Demand»: цена ниже на 30–50% за счёт оборудования прошлых поколений, а прерываний не бывает, поэтому Spot подходит и для production-БД со stateful-нагрузкой.",
               "correct": false,
               "sections": {
                 "what_actually": "Spot — биржевой механизм для излишков capacity, а не старое железо. Аппаратно Spot и On-Demand идентичны; ключевое свойство Spot — interruption (за 2 минуты), и скидка до 90% компенсирует именно этот риск.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Reserved Instances и Savings Plans — это одно и то же, просто SP — переименованный RI после ребрендинга 2019 года; оба одинаково заставляют выбрать конкретный instance type и `AZ` на 1/3 года без права перекомпоновки.",
+              "text": "Reserved Instances и Savings Plans — это одно и то же: SP — переименованный RI после ребрендинга 2019 года; оба фиксируют конкретный instance type и `AZ` на 1/3 года без права перекомпоновки.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные продукты. RI коммитит к конкретному (family, size, region/AZ, OS). Savings Plans коммитят к $/час общих compute-расходов и applicable к `EC2`, `Fargate`, `Lambda`; Compute SP можно перекидывать между регионами/family.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`S3 Standard` (≈ $0.023/GB-month, миллисекундный доступ), потому что это безопасный default-класс для любых данных, включая редко читаемые архивные логи.",
+              "text": "`S3 Standard` (≈ $0.023/GB-month, миллисекундный доступ), потому что это безопасный default-класс под разные данные, включая редко читаемые архивные логи.",
               "correct": false,
               "sections": {
                 "what_actually": "Это hot-storage класс с ценой ≈ $0.023/GB-month — на 50 TB это ≈ $1150 в месяц, тогда как кейс «несколько раз в год» использует <1% возможностей класса.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Glacier Deep Archive` (≈ $0.00099/GB) как абсолютно самый дешёвый класс — он подходит под любой кейс, включая retrieval за минуты, без оценки retrieval-времени.",
+              "text": "`Glacier Deep Archive` (≈ $0.00099/GB) как самый дешёвый класс — он подходит под кейс с retrieval за минуты, без оценки retrieval-времени.",
               "correct": false,
               "sections": {
                 "what_actually": "Deep Archive самый дешёвый (≈ $0.00099/GB), но retrieval идёт до 12 часов; «несколько раз в год за минуты» в этот SLA не укладывается.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Подключить один `EBS`-том с multi-attach сразу ко всем 200 инстансам как общий writable workspace — `EBS` поддерживает неограниченное число одновременных подключений в любой `AZ`.",
+              "text": "Подключить один `EBS`-том с multi-attach сразу ко всем 200 инстансам как общий writable workspace — `EBS` поддерживает неограниченное число одновременных подключений в пределах региона.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-attach у `EBS io2` поддерживает максимум 16 одновременных подключений в одной `AZ` и требует кластерной FS (`GFS2`/`OCFS2`), которой `EC2` «из коробки» не имеет.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `RDS` доступен root-суперюзер: можно делать произвольные DDL и тюнить любой параметр `postgresql.conf` напрямую.",
+              "text": "В `RDS` доступен root-суперюзер: можно делать произвольные DDL и тюнить каждый параметр `postgresql.conf` напрямую.",
               "correct": false,
               "sections": {
                 "what_actually": "`RDS` даёт parameter groups — подмножество настроек движка. Часть параметров ограничена whitelist-ом, нет доступа к файловой системе и superuser-роли в чистом виде. DDL внутри БД работает, но операционные ручки урезаны.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Redis` и `Memcached` функционально идентичны, отличается только название; в 2025 `AWS` рекомендует `Memcached` как default из-за multi-threading.",
+              "text": "`Redis` и `Memcached` функционально идентичны, различается лишь название; в 2025 `AWS` рекомендует `Memcached` как default из-за multi-threading.",
               "correct": false,
               "sections": {
                 "what_actually": "`Redis` богаче: structures (sorted sets, hashes, streams), Pub/Sub, Lua, persistence, репликация, cluster mode. `Memcached` — простой key-value. В 2025 default почти всегда `Redis` именно из-за богатства фич.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `ElastiCache` `Redis` нельзя масштабировать горизонтально — он всегда одна нода, а для шардинга нужно переходить на `DynamoDB` с `DAX`.",
+              "text": "В `ElastiCache` `Redis` не масштабируется горизонтально — работает одной нодой, а для шардинга нужно переходить на `DynamoDB` с `DAX`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Redis` в `ElastiCache` поддерживает cluster mode — горизонтальный шардинг данных по слотам между несколькими нодами с репликами. Переход на `DynamoDB` для шардинга кэша не требуется.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Все эти сервисы (`DocumentDB`, `Neptune`, `Timestream`) — это просто пресеты `RDS` поверх `PostgreSQL`, отличающиеся лишь набором расширений и parameter group.",
+              "text": "Все эти сервисы (`DocumentDB`, `Neptune`, `Timestream`) — пресеты `RDS` поверх `PostgreSQL`, отличающиеся набором расширений и parameter group.",
               "correct": false,
               "sections": {
                 "what_actually": "Это отдельные движки с собственными моделями данных и API: `Neptune` — graph (Gremlin/SPARQL), `Timestream` — time-series, `DocumentDB` — MongoDB-протокол. Они не построены поверх `PostgreSQL` и не входят в семейство `RDS`-движков.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`OpenSearch` и `Redshift` — это одно и то же: оба полнотекстовые поисковые движки на Lucene, разница только в лимитах на размер индекса.",
+              "text": "`OpenSearch` и `Redshift` — это одно и то же: оба полнотекстовые поисковые движки на Lucene, разница лишь в лимитах на размер индекса.",
               "correct": false,
               "sections": {
                 "what_actually": "`OpenSearch` — поисковый/лог-аналитический движок (fork Elasticsearch) с инвертированным индексом. `Redshift` — колоночный аналитический data warehouse для SQL-аналитики по терабайтам. Это разные классы систем под разные задачи.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Специализированные БД не нужны: `DynamoDB` нативно поддерживает graph-traversal, time-series-запросы и полнотекстовый поиск, поэтому всегда достаточно одной таблицы.",
+              "text": "Специализированные БД избыточны: `DynamoDB` нативно поддерживает graph-traversal, time-series-запросы и полнотекстовый поиск, поэтому хватает одной таблицы.",
               "correct": false,
               "sections": {
                 "what_actually": "`DynamoDB` — key-value/document store без нативного graph-traversal, без time-series-функций и без полнотекстового поиска. Graph-обход или поиск пришлось бы городить вручную поверх PK/GSI ценой сложности и throttling.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Route table в `VPC` не нужна: `AWS` маршрутизирует любой трафик по кратчайшему пути сам, а разделение subnets делается исключительно через Security Groups.",
+              "text": "Route table в `VPC` не нужна: `AWS` сама маршрутизирует трафик по кратчайшему пути, а разделение subnets делается через Security Groups.",
               "correct": false,
               "sections": {
                 "what_actually": "Route table — обязательный объект: именно запись `0.0.0.0/0 → igw` или `→ nat` определяет, public подсеть или private. Security Groups фильтруют трафик на уровне инстанса, но не задают маршрутизацию.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Security Groups и NACLs — синонимы: один firewall, просто `NACL` — старое название, а `Security Group` — новое после ребрендинга, поэтому достаточно настроить любой из них.",
+              "text": "Security Groups и NACLs — синонимы: один firewall, где `NACL` — старое название, а `Security Group` — новое после ребрендинга, поэтому достаточно настроить один из них.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные механизмы: SG — stateful, на уровне инстанса, только allow; NACL — stateless, на уровне subnet, allow+deny. Они действуют на разных уровнях и оба существуют одновременно, а не заменяют друг друга.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Только NACL умеет ссылаться на другую Security Group как источник (`allow from web-sg`), а Security Group понимает исключительно CIDR-диапазоны, поэтому межсервисные правила пишут в NACL.",
+              "text": "Ссылаться на другую Security Group как источник (`allow from web-sg`) умеет `NACL`, а Security Group понимает лишь CIDR-диапазоны, поэтому межсервисные правила пишут в NACL.",
               "correct": false,
               "sections": {
                 "what_actually": "Ровно наоборот: ссылаться на другую SG как источник умеет именно Security Group (`allow :5432 from web-sg`), а NACL оперирует только CIDR. SG-в-SG — ключевое удобство для динамичных tiers.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`CloudFront` всегда дороже прямой раздачи из `S3`, потому что добавляет отдельную плату за каждую edge-локацию помесячно сверх стоимости `S3`-трафика и за инвалидацию кэша.",
+              "text": "`CloudFront` дороже прямой раздачи из `S3`, потому что добавляет плату за каждую edge-локацию помесячно сверх стоимости `S3`-трафика и за инвалидацию кэша.",
               "correct": false,
               "sections": {
                 "what_actually": "Помесячной платы за edge-локации нет. Трафик `S3 → CloudFront` не тарифицируется как `S3` outbound, а `CloudFront`-egress часто дешевле прямого `S3`-egress, поэтому CDN нередко удешевляет раздачу, а не удорожает.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`CloudFront` умеет работать только с origin типа `S3`; направить его на `ALB`, `EC2` или произвольный HTTP-сервер нельзя, поэтому динамический контент через него не раздаётся.",
+              "text": "`CloudFront` работает с origin типа `S3`; направить его на `ALB`, `EC2` или произвольный HTTP-сервер нельзя, поэтому динамический контент через него не раздаётся.",
               "correct": false,
               "sections": {
                 "what_actually": "Origin у `CloudFront` может быть любым: `S3`, `ALB`, `EC2`, `API Gateway`, `Lambda@Edge` или произвольный custom HTTP-origin. Динамику ускоряют через origin shield и короткий TTL, поэтому ограничения «только `S3`» нет.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Route53` поддерживает только простую round-robin-балансировку и не умеет ни latency-based, ни failover-маршрутизацию; для этого нужен отдельный сторонний DNS-провайдер вроде Cloudflare.",
+              "text": "`Route53` поддерживает лишь простую round-robin-балансировку и не умеет ни latency-based, ни failover-маршрутизацию; для этого нужен сторонний DNS-провайдер вроде Cloudflare.",
               "correct": false,
               "sections": {
                 "what_actually": "`Route53` штатно поддерживает Weighted, Latency-based, Geolocation, Failover, Geoproximity и Multivalue policies с health checks. Сторонний DNS не нужен — это часть сервиса.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Health checks в `Route53` бесполезны для failover: `Route53` не проверяет доступность таргетов и всегда возвращает все записи, поэтому переключение на резерв делают вручную.",
+              "text": "Health checks в `Route53` бесполезны для failover: `Route53` не проверяет доступность таргетов и возвращает все записи, поэтому переключение на резерв делают вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "Health checks `Route53` периодически опрашивают endpoint, и при failover-policy DNS автоматически перестаёт отдавать нездоровую запись, переключая на secondary. Это и есть штатный автоматический failover, без ручного вмешательства.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Internet Gateway` и `NAT Gateway` — это один и тот же компонент: оба пропускают трафик в обе стороны, и для выхода private-инстанса в интернет достаточно прикрепить любой из них к subnet.",
+              "text": "`Internet Gateway` и `NAT Gateway` — это один и тот же компонент: оба пропускают трафик в обе стороны, и для выхода private-инстанса в интернет достаточно прикрепить один из них к subnet.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные компоненты с разной семантикой: IGW двунаправленный и крепится к `VPC`, NAT односторонний (только outbound) и ставится в public subnet. Private-инстансу для исходящего интернета нужен именно NAT, а не прямой IGW.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Policy в `IAM` пишется на YAML и применяется глобально ко всему аккаунту сразу; привязать её адресно к конкретному пользователю, группе или ресурсу нельзя, поэтому разграничить права между сотрудниками одной командой невозможно.",
+              "text": "Policy в `IAM` пишется на YAML и применяется глобально ко всему аккаунту сразу; привязать её адресно к конкретному пользователю, группе или ресурсу нельзя, поэтому разграничить права между сотрудниками одной команды не выйдет.",
               "correct": false,
               "sections": {
                 "what_actually": "Policy — это JSON-документ (`Version`/`Statement` с `Effect`/`Action`/`Resource`), и он привязывается адресно: identity-based — к user/group/role, resource-based — к конкретному ресурсу. Глобального «применить ко всему» по умолчанию нет.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `IAM` существует только один тип политик — identity-based; resource-based политик и permission boundaries не бывает, поэтому дать доступ к bucket из другого аккаунта невозможно.",
+              "text": "В `IAM` есть лишь один тип политик — identity-based; resource-based политик и permission boundaries не бывает, поэтому доступ к bucket из другого аккаунта не настроить.",
               "correct": false,
               "sections": {
                 "what_actually": "В `IAM` есть несколько типов: identity-based, resource-based (например `S3` bucket policy), permission boundaries, а также SCP и session policies. Resource-based политики как раз и позволяют cross-account доступ к ресурсу.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "IAM-роли работают только для `Lambda`; для `EC2` единственный способ авторизации — это передавать access keys в user-data при запуске инстанса, откуда их читает startup-скрипт и экспортирует в переменные окружения.",
+              "text": "IAM-роли работают лишь для `Lambda`; для `EC2` авторизацию делают через access keys в user-data при запуске инстанса, откуда их читает startup-скрипт и экспортирует в переменные окружения.",
               "correct": false,
               "sections": {
                 "what_actually": "Для `EC2` штатный механизм — instance profile (роль), credentials которой доступны через metadata и ротируются автоматически. Передавать ключи через user-data — антипаттерн, роли поддерживаются и для EC2, и для Lambda, и для ECS/EKS.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Parameter Store` умеет автоматически ротировать DB-пароли точно так же, как `Secrets Manager`, через встроенный планировщик ротации, поэтому Secrets Manager избыточен и его никогда не используют.",
+              "text": "`Parameter Store` автоматически ротирует DB-пароли точно так же, как `Secrets Manager`, через встроенный планировщик ротации, поэтому Secrets Manager избыточен.",
               "correct": false,
               "sections": {
                 "what_actually": "`Parameter Store` не имеет встроенной авто-ротации — её надо реализовывать вручную (своя Lambda + cron). Автоматическую ротацию DB-credentials (RDS/Aurora) из коробки даёт именно `Secrets Manager`, ради чего его и берут.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Secrets Manager` и `Parameter Store` — один и тот же сервис под двумя именами в разных регионах, и оба полностью бесплатны без каких-либо лимитов, ротации и тарификации API-вызовов.",
+              "text": "`Secrets Manager` и `Parameter Store` — один и тот же сервис под двумя именами в разных регионах, и оба бесплатны без лимитов, ротации и тарификации API-вызовов.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные сервисы с разной ценой: Secrets Manager платный (~$0.40/секрет/мес + API), Parameter Store standard-параметры бесплатны, advanced — платные. Различаются они ротацией, лимитами размера и интеграциями.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`SNS` гарантирует строгий порядок и exactly-once доставку для любого числа подписчиков с автоматическим retry и dead-letter, поэтому именно его берут как durable-очередь вместо `SQS`.",
+              "text": "`SNS` обеспечивает строгий порядок и exactly-once доставку для произвольного числа подписчиков с автоматическим retry и dead-letter, поэтому именно его берут как durable-очередь вместо `SQS`.",
               "correct": false,
               "sections": {
                 "what_actually": "Durable-буфер с retry/DLQ и забором сообщения одним воркером — это `SQS`, а не `SNS`. SNS — fanout-уведомления; если подписчик недоступен и нет SQS-буфера, сообщение может потеряться. Exactly-once и порядок дают SQS FIFO, а не SNS.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`MSK` — это полностью serverless-сервис без брокеров, партиций и какого-либо управления: `AWS` сама создаёт топики и тюнит кластер, поэтому Kafka-экспертиза для него вообще не нужна.",
+              "text": "`MSK` — это serverless-сервис без брокеров, партиций и управления: `AWS` сама создаёт топики и тюнит кластер, поэтому Kafka-экспертиза для него не нужна.",
               "correct": false,
               "sections": {
                 "what_actually": "`MSK` (provisioned) — это managed Apache Kafka с реальными брокерами и партициями, где топики, партиционирование и тюнинг остаются на команде. Managed снимает patching/provisioning, но Kafka-экспертиза по-прежнему нужна (есть и MSK Serverless, но это отдельный режим).",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`CloudWatch` собирает только метрики CPU по инстансам `EC2` и не умеет работать с логами, алармами или дашбордами — для логов и алертов нужен исключительно сторонний `Datadog` или `Grafana`.",
+              "text": "`CloudWatch` собирает лишь метрики CPU по инстансам `EC2` и не работает с логами, алармами или дашбордами — для логов и алертов нужен сторонний `Datadog` или `Grafana`.",
               "correct": false,
               "sections": {
                 "what_actually": "`CloudWatch` штатно включает Logs, Alarms, Dashboards, Logs Insights, Synthetics и метрики (не только CPU). Сторонние инструменты (`Datadog`/`Grafana`) опциональны и часто читают как раз из `CloudWatch`.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Logs ingestion в `CloudWatch` всегда бесплатен независимо от объёма, поэтому verbose `DEBUG`-логирование в проде ничего не стоит и его можно не ограничивать.",
+              "text": "Logs ingestion в `CloudWatch` бесплатен независимо от объёма, поэтому verbose `DEBUG`-логирование в проде ничего не стоит и его можно не ограничивать.",
               "correct": false,
               "sections": {
                 "what_actually": "Logs ingestion тарифицируется (~$0.50/GB) и при verbose-логировании становится одной из самых дорогих статей. Поэтому уровни логирования оптимизируют, а не льют `DEBUG` в прод без ограничений.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Алармы `CloudWatch` нельзя связать ни с какими действиями: они только подсвечивают метрику красным в консоли, а уведомления и автоскейлинг настраиваются отдельно вне `CloudWatch`.",
+              "text": "Алармы `CloudWatch` нельзя связать с действиями: они лишь подсвечивают метрику красным в консоли, а уведомления и автоскейлинг настраиваются отдельно вне `CloudWatch`.",
               "correct": false,
               "sections": {
                 "what_actually": "Alarm в `CloudWatch` запускает действия: публикацию в `SNS` (уведомление), scaling-policy `ASG`, действия `EC2`/Systems Manager. Это и делает его инструментом реакции, а не просто индикатором.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`X-Ray` автоматически трассирует все сервисы без какой-либо инструментации кода и не требует sampling — он бесплатно сохраняет 100% трейсов всех запросов навсегда.",
+              "text": "`X-Ray` автоматически трассирует все сервисы без инструментации кода и не требует sampling — он бесплатно сохраняет 100% трейсов всех запросов бессрочно.",
               "correct": false,
               "sections": {
                 "what_actually": "`X-Ray` требует инструментации (SDK/декораторы/auto-instrumentation) и использует sampling: трассировать 100% запросов дорого и шумно. Хранение трейсов тоже тарифицируется и ограничено по retention.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`X-Ray` — единственный возможный способ трассировки на `AWS`; альтернатив вроде `OpenTelemetry` или `Jaeger` для AWS-нагрузок не существует, и вендор-нейтральный трейсинг там невозможен.",
+              "text": "`X-Ray` — безальтернативный способ трассировки на `AWS`; вариантов вроде `OpenTelemetry` или `Jaeger` для AWS-нагрузок не существует, и вендор-нейтральный трейсинг там не сделать.",
               "correct": false,
               "sections": {
                 "what_actually": "Вендор-нейтральный трейсинг на AWS вполне возможен: `OpenTelemetry` (через ADOT — AWS Distro for OpenTelemetry) экспортирует трейсы в `Jaeger`, `Datadog`, `Honeycomb` и сам X-Ray. Альтернативы существуют и часто предпочтительнее.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `Well-Architected Framework` есть единственный pillar — Cost Optimization; Security, Reliability и Performance в него не входят и рассматриваются отдельными несвязанными гайдами в `AWS` Documentation.",
+              "text": "В `Well-Architected Framework` есть лишь один pillar — Cost Optimization; Security, Reliability и Performance в него не входят и рассматриваются отдельными несвязанными гайдами в `AWS` Documentation.",
               "correct": false,
               "sections": {
                 "what_actually": "Pillars-ов шесть: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization и Sustainability. Cost — лишь один из них, а суть framework — балансировать все измерения вместе.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Sustainability был первым и единственным изначальным pillar с 2006 года, а Security и Reliability добавили только в 2021 как необязательные расширения.",
+              "text": "Sustainability был первым и главным изначальным pillar с 2006 года, а Security и Reliability добавили лишь в 2021 как необязательные расширения.",
               "correct": false,
               "sections": {
                 "what_actually": "Изначально (2015) было 5 pillars, включая Security и Reliability с самого начала. Sustainability добавлен последним — в 2021. Хронология обратная утверждению, и Security/Reliability — базовые, не «расширения».",
@@ -1944,7 +1944,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главный способ сэкономить в `AWS` — всегда брать самые большие инстансы (`x1.32xlarge`) с запасом, потому что крупные инстансы `AWS` тарифицирует со скидкой за объём, и right-sizing только вредит.",
+              "text": "Главный способ сэкономить в `AWS` — брать самые большие инстансы (`x1.32xlarge`) с запасом: крупные инстансы `AWS` тарифицирует со скидкой за объём, а right-sizing лишь вредит.",
               "correct": false,
               "sections": {
                 "what_actually": "Over-provisioning — это прямой waste: вы платите за неиспользуемые ресурсы. Right-sizing (подбор размера под реальную нагрузку) — базовый приём cost-оптимизации. Объёмной скидки «чем больше инстанс, тем дешевле per-vCPU» в On-Demand нет.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Cost Explorer и Budgets бесполезны для оптимизации: `AWS` не предоставляет инструментов анализа расходов, поэтому контролировать счёт можно только вручную выгружая CSV из биллинга и считая в Excel.",
+              "text": "Cost Explorer и Budgets бесполезны для оптимизации: `AWS` не предоставляет инструментов анализа расходов, поэтому счёт контролируют вручную, выгружая CSV из биллинга и считая в Excel.",
               "correct": false,
               "sections": {
                 "what_actually": "`AWS` даёт встроенные инструменты: Cost Explorer (анализ и прогноз трат), Budgets (алерты на превышение), Trusted Advisor (поиск idle-ресурсов), Cost Anomaly Detection. Ручной разбор CSV не требуется — это управляемый процесс.",
@@ -2016,7 +2016,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "MFA на root-аккаунте и тестирование бэкапов — лишние формальности: root без MFA достаточно безопасен, а бэкап гарантированно работает по факту создания, проверять восстановление не нужно.",
+              "text": "MFA на root-аккаунте и тестирование бэкапов — лишние формальности: root без MFA достаточно безопасен, а бэкап заведомо работает по факту создания, проверять восстановление не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Root без MFA — критическая дыра (полный контроль над аккаунтом при утечке пароля), а непротестированный бэкап регулярно оказывается нерабочим в момент восстановления. И то, и другое — типичные дорогие ошибки, а не формальности.",
