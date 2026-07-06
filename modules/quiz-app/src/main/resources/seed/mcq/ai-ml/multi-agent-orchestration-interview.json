@@ -22,7 +22,7 @@
               "label": "A"
             },
             {
-              "text": "Multi-agent — это всегда несколько копий одной и той же модели с одним общим промптом, запущенных параллельно, чтобы быстрее обработать большой объём данных.",
+              "text": "Multi-agent — это несколько копий одной модели с общим промптом, запущенных параллельно ради ускорения обработки большого объёма данных.",
               "correct": false,
               "sections": {
                 "what_actually": "Суть multi-agent именно в разных ролях, промптах и `tools` у каждого агента; запуск N идентичных копий ради скорости — это просто batching/sharding, а не multi-agent.",
@@ -34,7 +34,7 @@
               "label": "B"
             },
             {
-              "text": "Multi-agent отличается от single-agent только тем, что у него больше доступных `tools`, а количество и роли LLM-вызовов остаются такими же, как у одного агента.",
+              "text": "Multi-agent отличается от single-agent в основном числом доступных `tools`, а количество и роли LLM-вызовов остаются как у одного агента.",
               "correct": false,
               "sections": {
                 "what_actually": "Отличие не в числе `tools`, а в том, что появляется несколько отдельных агентов с разными контекстами и ролями; single-agent тоже может владеть множеством `tools`.",
@@ -69,7 +69,7 @@
           "question_text": "Когда single-agent достаточно, а когда реально оправдан переход на multi-agent?",
           "options": [
             {
-              "text": "Multi-agent нужно выбирать по умолчанию для любой нетривиальной задачи, потому что несколько агентов почти всегда дают лучше качество, чем один.",
+              "text": "Multi-agent стоит выбирать по умолчанию для нетривиальных задач: несколько агентов чаще дают более качественный результат, чем один.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендация ровно обратная: начинать с single-agent и переходить к multi-agent только когда конкретная метрика требует; «по умолчанию multi» порождает overengineering.",
@@ -94,7 +94,7 @@
               "label": "B"
             },
             {
-              "text": "Выбор single vs multi определяется только размером контекстного окна модели: если окно большое (200k+), multi-agent не нужен никогда.",
+              "text": "Выбор single vs multi определяется размером контекстного окна: при большом окне (200k+) задача умещается в один контекст, и multi-agent не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Размер окна — лишь один из факторов; multi-agent может быть нужен из-за разных permissions, параллелизма или debate даже при огромном окне.",
@@ -106,7 +106,7 @@
               "label": "C"
             },
             {
-              "text": "Single-agent оправдан только для офлайн-задач без пользователя, а любой интерактивный продукт обязан быть multi-agent ради отзывчивости.",
+              "text": "Single-agent оправдан для офлайн-задач без пользователя, а интерактивные продукты делают multi-agent ради отзывчивости.",
               "correct": false,
               "sections": {
                 "what_actually": "Интерактивность не диктует multi-agent; наоборот, single-agent обычно быстрее и дешевле, что важно для latency-критичных интерактивных сценариев.",
@@ -129,7 +129,7 @@
           "question_text": "Какие основные архитектуры multi-agent систем существуют и чем они различаются?",
           "options": [
             {
-              "text": "Существует только одна каноничная архитектура — полносвязный `mesh`, где каждый агент общается с каждым; остальные схемы это её частные урезанные случаи.",
+              "text": "Каноничная архитектура одна — полносвязный `mesh`, где каждый агент общается с каждым; остальные схемы — её урезанные частные случаи.",
               "correct": false,
               "sections": {
                 "what_actually": "Базовых архитектур несколько (hierarchical, sequential, hub-and-spoke, mesh, multi-level), и `mesh` — лишь одна из них, причём наименее предсказуемая.",
@@ -141,7 +141,7 @@
               "label": "A"
             },
             {
-              "text": "Архитектуры различаются только используемым фреймворком: `CrewAI` это всегда hierarchical, `AutoGen` всегда sequential, `LangGraph` всегда mesh.",
+              "text": "Архитектуры задаются выбранным фреймворком: `CrewAI` — hierarchical, `AutoGen` — sequential, `LangGraph` — mesh.",
               "correct": false,
               "sections": {
                 "what_actually": "Фреймворки поддерживают несколько архитектур: `CrewAI` умеет и sequential, и hierarchical; `AutoGen` group chat ближе к mesh; `LangGraph` строит произвольный граф.",
@@ -166,7 +166,7 @@
               "label": "C"
             },
             {
-              "text": "Все перечисленные архитектуры — это просто разные названия одного и того же sequential-конвейера, отличающиеся лишь маркетингом фреймворков.",
+              "text": "Перечисленные архитектуры — разные названия одного sequential-конвейера, различающиеся в основном терминологией фреймворков.",
               "correct": false,
               "sections": {
                 "what_actually": "Топологии реально разные: в hierarchical есть делегирующий manager, в hub-and-spoke лучи изолированы друг от друга, в mesh — прямые двусторонние связи; это не синонимы конвейера.",
@@ -189,7 +189,7 @@
           "question_text": "Чем «agentic workflow» отличается от «agent» по терминологии Anthropic?",
           "options": [
             {
-              "text": "`Workflow` и `agent` — полные синонимы; Anthropic вводит два слова только чтобы отличать свои продукты от конкурентов, технической разницы нет.",
+              "text": "`Workflow` и `agent` — синонимы; Anthropic вводит два термина ради маркетингового разграничения продуктов, технической разницы нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Разница техническая и принципиальная: в workflow control flow задаёт разработчик, в agent — сама модель в runtime; это разные уровни предсказуемости.",
@@ -201,7 +201,7 @@
               "label": "A"
             },
             {
-              "text": "`Agent` — это всегда multi-agent система, а `workflow` — это всегда single-agent; различие проходит ровно по числу агентов.",
+              "text": "`Agent` — это multi-agent система, а `workflow` — single-agent; различие проходит по числу задействованных агентов.",
               "correct": false,
               "sections": {
                 "what_actually": "Различие проходит по тому, кто владеет control flow (код или модель), а не по числу агентов: single-agent может быть полноценным agent, а multi-agent — оркестрированным workflow.",
@@ -213,7 +213,7 @@
               "label": "B"
             },
             {
-              "text": "`Workflow` — это когда LLM вообще не используется (чистый код по правилам), а `agent` — это любой вызов LLM; присутствие модели и есть граница.",
+              "text": "`Workflow` — это когда LLM не используется (чистый код по правилам), а `agent` — это вызов LLM; наличие модели и есть граница.",
               "correct": false,
               "sections": {
                 "what_actually": "В workflow LLM как раз используется — как компонент внутри orchestrated кода; граница не в наличии модели, а в том, кто определяет control flow.",
@@ -262,7 +262,7 @@
               "label": "A"
             },
             {
-              "text": "Anthropic выделяет единственный универсальный паттерн — `Orchestrator-Workers`; остальные «building blocks» придумали уже сторонние фреймворки вроде `CrewAI`.",
+              "text": "Anthropic выделяет один главный паттерн — `Orchestrator-Workers`; остальные «building blocks» добавили уже сторонние фреймворки вроде `CrewAI`.",
               "correct": false,
               "sections": {
                 "what_actually": "В посте перечислено пять паттернов (chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer), а не один; orchestrator-workers — лишь один из них.",
@@ -309,7 +309,7 @@
           "question_text": "Как выбрать между hierarchical, sequential и mesh для типовых задач?",
           "options": [
             {
-              "text": "Для любой задачи правильный выбор — `Mesh`/group chat, потому что прямое общение всех агентов даёт максимально качественный результат за счёт обмена мнениями.",
+              "text": "Универсальный выбор — `Mesh`/group chat: прямое общение агентов даёт наиболее качественный результат за счёт обмена мнениями.",
               "correct": false,
               "sections": {
                 "what_actually": "`Mesh` уместен лишь для дебатов/brainstorming; для конвейеров и декомпозиции он добавляет хаотичный координационный overhead и снижает предсказуемость.",
@@ -334,7 +334,7 @@
               "label": "B"
             },
             {
-              "text": "Выбор архитектуры зависит только от количества агентов: до 3 агентов всегда sequential, от 4 и больше всегда hierarchical, mesh не используется вовсе.",
+              "text": "Выбор архитектуры определяется числом агентов: до 3 — sequential, от 4 — hierarchical, а mesh на практике почти не встречается.",
               "correct": false,
               "sections": {
                 "what_actually": "Архитектуру определяет форма задачи (конвейер, декомпозиция, дебаты), а не голое число агентов; и mesh используется — для group chat/дебатов.",
@@ -346,7 +346,7 @@
               "label": "C"
             },
             {
-              "text": "Hierarchical, sequential и mesh взаимозаменяемы по результату — отличается только синтаксис фреймворка, поэтому выбор делают по тому, какой фреймворк уже подключён.",
+              "text": "Hierarchical, sequential и mesh дают одинаковый результат и различаются синтаксисом фреймворка, поэтому выбор делают по тому, какой фреймворк уже подключён.",
               "correct": false,
               "sections": {
                 "what_actually": "Результат и свойства различаются: sequential предсказуем, hierarchical параллелит декомпозицию, mesh непредсказуем; выбор делают по задаче, а не по подключённой библиотеке.",
@@ -381,7 +381,7 @@
               "label": "A"
             },
             {
-              "text": "`CrewAI` поддерживает только `Process.sequential`: организовать manager, который делегирует подзадачи воркерам, в нём невозможно.",
+              "text": "`CrewAI` поддерживает лишь `Process.sequential`; собрать manager, делегирующего подзадачи воркерам, в нём нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "`CrewAI` поддерживает и `Process.hierarchical`, который автоматически назначает manager-агента для делегирования, а не только sequential.",
@@ -453,7 +453,7 @@
               "label": "B"
             },
             {
-              "text": "`AutoGen` ориентирован исключительно на single-agent ассистентов и принципиально не поддерживает несколько агентов в общем диалоге.",
+              "text": "`AutoGen` ориентирован на single-agent ассистентов и не поддерживает нескольких агентов в общем диалоге.",
               "correct": false,
               "sections": {
                 "what_actually": "`AutoGen` именно про мультиагентные диалоги: `GroupChat` собирает несколько агентов в одну conversation под управлением `GroupChatManager`.",
@@ -609,7 +609,7 @@
           "question_text": "В чём суть Anthropic-подхода «agents-as-tools» и почему он часто лучше специальных фреймворков?",
           "options": [
             {
-              "text": "Anthropic утверждает, что без специального multi-agent фреймворка (CrewAI/AutoGen/LangGraph) собрать многоагентную систему в принципе невозможно.",
+              "text": "Anthropic утверждает, что без специального multi-agent фреймворка (`CrewAI`/`AutoGen`/`LangGraph`) многоагентную систему собрать нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Anthropic утверждает обратное: большинство «multi-agent» систем строится обычным кодом, а фреймворки чаще избыточны.",
@@ -681,7 +681,7 @@
               "label": "A"
             },
             {
-              "text": "`LangGraph` среди них единственный без управления состоянием, а `Swarm` — наоборот, самый stateful, с встроенным checkpointer.",
+              "text": "`LangGraph` среди них выделяется отсутствием управления состоянием, а `Swarm` — наоборот, самый stateful, со встроенным checkpointer.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё ровно наоборот: `LangGraph` — самый stateful (typed StateGraph + checkpointer), а `Swarm` stateless.",
@@ -693,7 +693,7 @@
               "label": "B"
             },
             {
-              "text": "Встроенный Docker-sandbox для исполнения кода есть только у `CrewAI`, а `AutoGen` запускает код исключительно через внешние сервисы.",
+              "text": "Встроенный Docker-sandbox для исполнения кода есть у `CrewAI`, а `AutoGen` запускает код через внешние сервисы.",
               "correct": false,
               "sections": {
                 "what_actually": "Встроенный code execution в Docker-sandbox — фича `AutoGen` (`UserProxyAgent`); у `CrewAI` код идёт через `tools`.",
@@ -754,7 +754,7 @@
               "label": "B"
             },
             {
-              "text": "`OpenAI Agents SDK` полностью отказывается от идеи handoff и переходит на shared StateGraph в стиле `LangGraph`.",
+              "text": "`OpenAI Agents SDK` отказывается от идеи handoff и переходит на shared StateGraph в стиле `LangGraph`.",
               "correct": false,
               "sections": {
                 "what_actually": "Handoffs остаются ключевой концепцией SDK, только более структурированной; на StateGraph он не переходит.",
@@ -826,7 +826,7 @@
               "label": "C"
             },
             {
-              "text": "Набор агентов в `Magentic-One` динамически генерируется LLM под каждую задачу, поэтому состав специалистов всегда разный и заранее неизвестен.",
+              "text": "Набор агентов в `Magentic-One` генерируется LLM под каждую задачу, поэтому состав специалистов меняется от запроса к запросу и заранее неизвестен.",
               "correct": false,
               "sections": {
                 "what_actually": "Набор специалистов фиксирован (`WebSurfer`, `FileSurfer`, `Coder`, `ComputerTerminal`); динамичен оркестратор, а не состав агентов.",
@@ -849,7 +849,7 @@
           "question_text": "Какие коммуникационные паттерны между агентами существуют и каков их trade-off?",
           "options": [
             {
-              "text": "Единственный возможный способ общения агентов — синхронный direct function call; очереди сообщений и broadcast в LLM-системах не применяются.",
+              "text": "Основной способ общения агентов — синхронный direct function call; очереди сообщений и broadcast в LLM-системах почти не применяются.",
               "correct": false,
               "sections": {
                 "what_actually": "Помимо handoff есть message passing (`AutoGen` GroupChat), broadcast и shared memory — это полноценные коммуникационные паттерны.",
@@ -861,7 +861,7 @@
               "label": "A"
             },
             {
-              "text": "Shared memory/blackboard — это коммуникационный паттерн, который полностью устраняет coupling между агентами и обеспечивает идеальную изоляцию контекста.",
+              "text": "Shared memory/blackboard — коммуникационный паттерн, который снижает coupling между агентами и даёт им изолированный контекст.",
               "correct": false,
               "sections": {
                 "what_actually": "Shared memory, наоборот, создаёт coupling и плохо подходит для изоляции: все пишут и читают общий state.",
@@ -886,7 +886,7 @@
               "label": "C"
             },
             {
-              "text": "Handoff и message passing — это одно и то же: оба означают, что один агент навсегда передаёт управление другому и больше не возвращается.",
+              "text": "Handoff и message passing — это одно и то же: оба означают, что один агент передаёт управление другому без возврата.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные паттерны: handoff передаёт control (receiver владеет потоком), а message passing — это обмен сообщениями без передачи владения потоком.",
@@ -921,7 +921,7 @@
               "label": "A"
             },
             {
-              "text": "State в multi-agent нельзя персистить: после завершения шага он всегда теряется, а pause/resume и human-in-the-loop в принципе невозможны.",
+              "text": "State в multi-agent не персистится: после завершения шага он теряется, поэтому pause/resume и human-in-the-loop реализовать нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "State прекрасно персистится — например, checkpointer `LangGraph` в SQLite/Postgres, что и даёт pause/resume и human-in-the-loop.",
@@ -933,7 +933,7 @@
               "label": "B"
             },
             {
-              "text": "Для accumulating-полей вроде messages в `LangGraph` нужно использовать обычное присваивание (overwrite), а `operator.add` применяют только к числовым счётчикам.",
+              "text": "Для accumulating-полей вроде `messages` в `LangGraph` берут обычное присваивание (overwrite), а `operator.add` нужен для числовых счётчиков.",
               "correct": false,
               "sections": {
                 "what_actually": "Для накапливаемых полей (messages) как раз используют reducer `Annotated[list, operator.add]`; overwrite затёр бы историю.",
@@ -1029,7 +1029,7 @@
           "question_text": "Как организовать handoff между агентами безопасно?",
           "options": [
             {
-              "text": "Безопасный handoff не требует никаких ограничений: разрешать любую передачу кому угодно безопасно, потому что агенты сами не зациклятся.",
+              "text": "Безопасный handoff не нуждается в ограничениях: свободная передача между агентами не приводит к проблемам, потому что они сами не зациклятся.",
               "correct": false,
               "sections": {
                 "what_actually": "Без bounded depth и allowed transitions агенты как раз уходят в infinite handoff loop и неподходящих receiver-ов; ограничения обязательны.",
@@ -1054,7 +1054,7 @@
               "label": "B"
             },
             {
-              "text": "При handoff следует всегда пересылать receiver-у всю историю диалога целиком, иначе он не сможет продолжить задачу.",
+              "text": "При handoff receiver-у передают всю историю диалога целиком, иначе он не восстановит контекст задачи.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендуют context summarization on handoff — слать только нужный summary и key facts, а не всю history, чтобы не раздувать контекст.",
@@ -1066,7 +1066,7 @@
               "label": "C"
             },
             {
-              "text": "Handoff не нужно логировать: audit log на каждую передачу избыточен, ведь трассировка многоагентных систем и так невозможна.",
+              "text": "Handoff логировать не нужно: audit log на каждую передачу избыточен, ведь трассировка многоагентных систем всё равно малоинформативна.",
               "correct": false,
               "sections": {
                 "what_actually": "Audit log каждого handoff с trace_id/source/target/reason — прямая best practice; трассировка как раз возможна и нужна.",
@@ -1149,7 +1149,7 @@
           "question_text": "Как эффективно комбинировать multi-agent системы с reasoning-моделями?",
           "options": [
             {
-              "text": "Reasoning-модель нужно использовать на каждом шаге любого agent-loop — только так гарантируется качество, а latency и cost вторичны.",
+              "text": "Reasoning-модель стоит использовать на каждом шаге agent-loop — так достигается лучшее качество, а latency и cost вторичны.",
               "correct": false,
               "sections": {
                 "what_actually": "Это прямой антипаттерн: reasoning на каждом шаге loop даёт 30+ сек latency и огромный счёт; её ставят только на critical decisions.",
@@ -1161,7 +1161,7 @@
               "label": "A"
             },
             {
-              "text": "Reasoning-модели бессмысленно ставить планировщиком: качество плана от модели не зависит, поэтому planner всегда делают самой дешёвой моделью.",
+              "text": "Reasoning-модели незачем ставить планировщиком: качество плана слабо зависит от модели, поэтому planner делают самой дешёвой моделью.",
               "correct": false,
               "sections": {
                 "what_actually": "Reasoning as Planner — одна из ключевых эффективных комбинаций: сильная модель строит/валидирует план, а исполняет дешёвая.",
@@ -1173,7 +1173,7 @@
               "label": "B"
             },
             {
-              "text": "Escalation — это когда reasoning-модель сразу обрабатывает все запросы, а cheap-модель подключают только если reasoning перегружена нагрузкой.",
+              "text": "Escalation — это когда reasoning-модель обрабатывает запросы первой, а cheap-модель подключают при её перегрузке.",
               "correct": false,
               "sections": {
                 "what_actually": "Escalation работает наоборот: сначала пробует cheap-модель, и лишь при низкой confidence запрос эскалируется на reasoning-модель.",
@@ -1269,7 +1269,7 @@
           "question_text": "Что такое orchestrator-workers паттерн и как сделать его самому без фреймворка?",
           "options": [
             {
-              "text": "Orchestrator-workers невозможно реализовать без специального фреймворка вроде `CrewAI` или `LangGraph` — на чистом Python этот паттерн не собрать.",
+              "text": "Orchestrator-workers не реализовать без специального фреймворка вроде `CrewAI` или `LangGraph` — на чистом Python этот паттерн не собрать.",
               "correct": false,
               "sections": {
                 "what_actually": "Anthropic показывает реализацию на чистом Python (`asyncio.gather` по worker-вызовам) — фреймворк не требуется.",
@@ -1306,7 +1306,7 @@
               "label": "C"
             },
             {
-              "text": "Orchestrator-workers — это полностью статический паттерн: список subtasks жёстко зашит в код заранее и не зависит от входной задачи.",
+              "text": "Orchestrator-workers — статический паттерн: список subtasks жёстко зашит в код заранее и не зависит от входной задачи.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключевое свойство — динамическая декомпозиция: orchestrator LLM сам формирует список subtasks под конкретный запрос в runtime.",
@@ -1389,7 +1389,7 @@
           "question_text": "Как соотносятся cost и latency multi-agent против single-agent и как их оптимизировать?",
           "options": [
             {
-              "text": "Multi-agent всегда дешевле single-agent, потому что несколько маленьких агентов суммарно тратят меньше токенов, чем один большой.",
+              "text": "Multi-agent обычно дешевле single-agent: несколько небольших агентов суммарно тратят меньше токенов, чем один крупный.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-agent делает в 3–10× больше вызовов и потому дороже, а не дешевле; экономия требует отдельных мер (caching, cheap-модели).",
@@ -1462,7 +1462,7 @@
               "label": "A"
             },
             {
-              "text": "Единственная метрика для multi-agent — субъективная оценка «нравится ли ответ» без golden dataset; формальный completion rate и per-agent quality не нужны.",
+              "text": "Главная метрика для multi-agent — субъективная оценка «нравится ли ответ» без golden dataset; формальные completion rate и per-agent quality не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Основная метрика — end-to-end task completion rate по golden dataset, плюс per-agent quality и failure taxonomy; «нравится/не нравится» недостаточно.",
@@ -1486,7 +1486,7 @@
               "label": "C"
             },
             {
-              "text": "Оценить можно только систему целиком как чёрный ящик; изолированно протестировать отдельного агента (per-agent quality) принципиально невозможно.",
+              "text": "Оценивать имеет смысл лишь систему целиком как чёрный ящик; изолированно протестировать отдельного агента (per-agent quality) на практике не выходит.",
               "correct": false,
               "sections": {
                 "what_actually": "Per-agent quality — штатная метрика: каждого агента тестируют изолированно unit-test-like промптами.",
@@ -1569,7 +1569,7 @@
           "question_text": "Какие топ anti-patterns встречаются в multi-agent системах?",
           "options": [
             {
-              "text": "Чем больше агентов в системе (5, 10, 20), тем она лучше — масштабирование числа ролей всегда повышает качество и не имеет минусов.",
+              "text": "Чем больше агентов в системе (5, 10, 20), тем она лучше — рост числа ролей повышает качество без заметных минусов.",
               "correct": false,
               "sections": {
                 "what_actually": "«Слишком много агентов» — прямой анти-паттерн: 5+ ролей с overlapping responsibilities создают координационный overhead, который убивает выгоду.",
@@ -1749,7 +1749,7 @@
           "question_text": "Что такое паттерн «agents-as-tools» и когда он лучше handoff?",
           "options": [
             {
-              "text": "«Agents-as-tools» означает, что primary agent навсегда передаёт управление вызванному специалисту, и обратно control уже не возвращается — это и есть классический handoff.",
+              "text": "«Agents-as-tools» означает, что primary agent передаёт управление вызванному специалисту без возврата — это и есть классический handoff.",
               "correct": false,
               "sections": {
                 "what_actually": "При agents-as-tools control как раз остаётся у caller и возвращается автоматически после tool return; «передача навсегда» — это handoff, а не agents-as-tools.",
