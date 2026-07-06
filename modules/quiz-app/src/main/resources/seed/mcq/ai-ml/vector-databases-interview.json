@@ -189,7 +189,7 @@
           "question_text": "Cosine similarity vs Dot product vs Euclidean — в чём разница?",
           "options": [
             {
-              "text": "Все три метрики дают идентичный ranking результатов независимо от свойств векторов.",
+              "text": "Cosine, dot и Euclidean отличаются лишь формулой, но на практике дают один и тот же порядок top-k, поэтому метрику подбирают по скорости, а не по качеству.",
               "correct": false,
               "sections": {
                 "what_actually": "Cosine и dot совпадают только на нормализованных векторах (`||v||=1`); при разной magnitude dot отдаёт предпочтение «длинным» векторам и меняет порядок top-k.",
@@ -201,7 +201,7 @@
               "order": 0
             },
             {
-              "text": "Cosine similarity всегда лучше dot product, потому что dot product не имеет геометрического смысла.",
+              "text": "Cosine предпочтительнее dot product, потому что деление на нормы делает метрику устойчивой к разной длине векторов и даёт более честный ranking.",
               "correct": false,
               "sections": {
                 "what_actually": "Dot имеет смысл — это проекция одного вектора на другой, и на нормализованных векторах он совпадает с cosine, но считается быстрее (без деления на норму).",
@@ -213,7 +213,7 @@
               "order": 1
             },
             {
-              "text": "Euclidean distance даёт лучший recall, чем cosine, для всех типов embeddings.",
+              "text": "Euclidean distance даёт лучший recall, чем cosine, потому что учитывает и направление, и абсолютную величину векторов.",
               "correct": false,
               "sections": {
                 "what_actually": "«Лучшей для всех» метрики нет: на нормализованных embeddings (OpenAI, Cohere) Euclidean даёт ровно тот же ranking, что cosine (`||a-b||²=2-2·cos`), а вот на ненормализованных векторах метрика, не совпадающая с той, под которую обучалась модель, меняет top-k и портит recall.",
@@ -262,7 +262,7 @@
               "order": 0
             },
             {
-              "text": "Всегда выбирать Euclidean — она универсальна и работает с любой моделью.",
+              "text": "По умолчанию брать Euclidean: это геометрически естественная дистанция, и большинство embedding-моделей под неё и оптимизируются.",
               "correct": false,
               "sections": {
                 "what_actually": "Euclidean игнорирует, что современные embeddings обучаются с cosine/dot loss; на ненормализованных векторах она даёт совершенно другой ranking.",
@@ -274,7 +274,7 @@
               "order": 1
             },
             {
-              "text": "Выбор метрики не важен — можно использовать любую, главное consistency между upsert и query.",
+              "text": "Главное — использовать одну и ту же метрику на upsert и на query; при таком consistency конкретный выбор метрики на качество почти не влияет.",
               "correct": false,
               "sections": {
                 "what_actually": "Consistency обязательна, но недостаточна: если индекс построен на Euclidean, а модель училась с cosine, top-k будет систематически «не тем».",
@@ -286,7 +286,7 @@
               "order": 2
             },
             {
-              "text": "Cosine дороже dot даже на нормализованных векторах, поэтому Pinecone/Qdrant используют только Euclidean.",
+              "text": "Cosine требует деления на норму на каждом запросе, поэтому в Pinecone/Qdrant дефолтная метрика — Euclidean как более дешёвая в вычислении.",
               "correct": false,
               "sections": {
                 "what_actually": "Pinecone, Qdrant, Weaviate, pgvector поддерживают все три метрики, и default обычно cosine; на нормализованных векторах HNSW сам считает dot.",
@@ -309,7 +309,7 @@
           "question_text": "Что такое ANN (Approximate Nearest Neighbor)?",
           "options": [
             {
-              "text": "ANN — это exact kNN, реализованный через GPU; recall всегда 1.0, отличается только hardware.",
+              "text": "ANN — это exact kNN, ускоренный аппаратно (GPU, SIMD); он возвращает те же top-k, что полный перебор, но за счёт железа быстрее.",
               "correct": false,
               "sections": {
                 "what_actually": "Буква «A» означает approximate, а не accelerated: GPU-ускоренный exact kNN (FAISS Flat на GPU) существует, но это не ANN — у него recall=1.0 и сложность всё ещё `O(n)`.",
@@ -346,7 +346,7 @@
               "order": 2
             },
             {
-              "text": "ANN гарантирует тот же top-k, что exact kNN, просто быстрее за счёт SIMD-инструкций.",
+              "text": "ANN возвращает ровно тот же top-k, что exact kNN, а ускорение достигается за счёт SIMD-инструкций при сравнении векторов.",
               "correct": false,
               "sections": {
                 "what_actually": "Если бы ANN гарантировал тот же top-k — он был бы exact kNN; слово «approximate» означает, что результат может отличаться.",
@@ -502,7 +502,7 @@
               "order": 0
             },
             {
-              "text": "IVF — экономит память по сравнению с HNSW, поэтому всегда предпочтительнее для production с большими датасетами.",
+              "text": "IVF экономит память по сравнению с HNSW, поэтому для production с большими датасетами он обычно предпочтительнее.",
               "correct": false,
               "sections": {
                 "what_actually": "«Всегда предпочтительнее» — false: IVF хуже по recall@latency и требует retraining при data drift, что несовместимо с частыми обновлениями каталога.",
@@ -514,7 +514,7 @@
               "order": 1
             },
             {
-              "text": "Brute-force (exact KNN) — единственный способ гарантировать корректность, а ANN-индексы дают неверные результаты.",
+              "text": "Brute-force (exact kNN) даёт точный top-k без риска пропустить релевантный документ, а приближённость ANN-индексов на 50M может незаметно ронять качество выдачи.",
               "correct": false,
               "sections": {
                 "what_actually": "Brute-force на 50M даёт `O(N)` per query (сотни мс–секунды), p95 < 50ms физически недостижим; ANN — индустриальный стандарт с recall 0.95–0.99.",
@@ -526,7 +526,7 @@
               "order": 2
             },
             {
-              "text": "IVF-PQ — комбинация даёт максимальный recall и лучше всего подходит для динамичных каталогов с частыми обновлениями.",
+              "text": "IVF-PQ — сжимает векторы и экономит память при большом корпусе, поэтому это подходящий выбор для каталога на 50M с частыми обновлениями.",
               "correct": false,
               "sections": {
                 "what_actually": "PQ — lossy compression, recall ниже, чем у чистого HNSW; «максимальный recall» — антитезис PQ.",
@@ -1149,7 +1149,7 @@
           "question_text": "Какой подход к metadata filtering при vector search наиболее надёжен и почему?",
           "options": [
             {
-              "text": "Pre-filter всегда лучший — сначала отфильтровать всех, потом искать top-k среди оставшихся.",
+              "text": "Pre-filter — самый надёжный подход: сначала отобрать записи по метаданным, а потом искать top-k только среди оставшихся кандидатов.",
               "correct": false,
               "sections": {
                 "what_actually": "Pre-filter опасен при aggressive фильтрах: если после фильтра осталось мало кандидатов, ANN-индекс (особенно HNSW) не даёт хороший recall, и качество проваливается.",
@@ -1161,7 +1161,7 @@
               "order": 0
             },
             {
-              "text": "Post-filter — единственно правильный подход: сделать vector search и потом отфильтровать результаты.",
+              "text": "Post-filter надёжнее всего: сделать обычный vector search, а затем отбросить из top-k результаты, не прошедшие фильтр по метаданным.",
               "correct": false,
               "sections": {
                 "what_actually": "Post-filter опасен: ANN ничего не знает о фильтре и может вернуть top-k, где ни один не проходит filter — тогда после фильтра остаётся пустота и recall падает катастрофически.",
@@ -1173,7 +1173,7 @@
               "order": 1
             },
             {
-              "text": "Metadata filtering не нужен в vector DB — все фильтры надо делать в отдельной реляционной БД после получения IDs.",
+              "text": "Фильтрацию лучше вынести в отдельную реляционную БД: vector DB возвращает top-k ID, а WHERE по метаданным применяется уже к ним в Postgres.",
               "correct": false,
               "sections": {
                 "what_actually": "Фильтр в отдельной БД после top-k — это самый дешёвый post-filter, и у него те же проблемы: vector DB не знает о фильтре и может вернуть top-k, который весь отфильтруется.",
@@ -1294,7 +1294,7 @@
               "order": 1
             },
             {
-              "text": "Replication нужен только для production, а sharding бесполезен в vector DB.",
+              "text": "Replication нужен ради отказоустойчивости в production, а sharding для vector DB редко оправдан — индекс обычно помещается в память одной ноды.",
               "correct": false,
               "sections": {
                 "what_actually": "Sharding критичен при > 100M векторов: один node не выдержит HNSW-индекс в RAM, нужно распределение по shards — это одна из причин выбора Milvus/Pinecone для больших датасетов.",
@@ -1306,7 +1306,7 @@
               "order": 2
             },
             {
-              "text": "Sharding в vector DB всегда выполняется автоматически и не требует настройки.",
+              "text": "Sharding в vector DB выполняется движком автоматически по числу нод и обычно не требует ручной настройки shard key.",
               "correct": false,
               "sections": {
                 "what_actually": "Sharding требует явной конфигурации — выбор shard count, sharding key, strategy для resharding; только managed-сервисы (Pinecone) делают это «прозрачно», но и там есть параметры.",
@@ -1509,7 +1509,7 @@
           "question_text": "Как выбрать vector DB под конкретный сценарий и какие основные decision-факторы?",
           "options": [
             {
-              "text": "Всегда выбирать Pinecone — это безопасный default для любого проекта.",
+              "text": "По умолчанию брать Pinecone — это зрелый managed-сервис, который закрывает большинство сценариев с минимумом ops.",
               "correct": false,
               "sections": {
                 "what_actually": "Pinecone не оптимален везде: для startup с Postgres проще pgvector, для self-host enterprise — Qdrant/Weaviate/Milvus, для prototype — Chroma; выбор зависит от scale, ops, бюджета и existing stack.",
@@ -1534,7 +1534,7 @@
               "order": 1
             },
             {
-              "text": "Выбор vector DB не имеет значения — все они эквивалентны по производительности и фичам.",
+              "text": "Vector DB по сути взаимозаменяемы: у всех есть HNSW и metadata filtering, поэтому выбор влияет скорее на цену, чем на архитектуру.",
               "correct": false,
               "sections": {
                 "what_actually": "Vector DB сильно различаются: Pinecone (managed), Qdrant (Rust, fast), Weaviate (feature-rich, hybrid), Milvus (distributed K8s), pgvector (extension), Chroma (embedded) — выбор влияет на cost, latency, ops, features.",
@@ -1546,7 +1546,7 @@
               "order": 2
             },
             {
-              "text": "Решение принимается только на основе benchmarks — никакие другие факторы не важны.",
+              "text": "Главный критерий выбора — benchmarks по recall и latency: DB с лучшими цифрами на ann-benchmarks и стоит брать.",
               "correct": false,
               "sections": {
                 "what_actually": "Benchmarks важны, но не единственный фактор: ops-стоимость, existing stack, feature-fit, цена, lock-in часто перевешивают; «более медленная» DB выигрывает по совокупности.",
@@ -1581,7 +1581,7 @@
               "order": 0
             },
             {
-              "text": "Backup делается через копирование файлов на disk — это всегда работает.",
+              "text": "Backup делается копированием файлов индекса с диска — этого достаточно для восстановления.",
               "correct": false,
               "sections": {
                 "what_actually": "Простое копирование работает только при остановленной DB (cold backup), что неприемлемо в production; hot backup требует consistent snapshot через snapshot API.",
@@ -1606,7 +1606,7 @@
               "order": 2
             },
             {
-              "text": "Backup в vector DB вообще не нужен — embeddings можно всегда пересоздать через API.",
+              "text": "Отдельный backup vector DB избыточен: embeddings — производное состояние и восстанавливаются из source documents повторным прогоном через embedding-API.",
               "correct": false,
               "sections": {
                 "what_actually": "Re-embedding возможен, но занимает часы, стоит денег, требует stable embedding model и доступа к source documents — так что backup нужен, просто стратегия другая.",
