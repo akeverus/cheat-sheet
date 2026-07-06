@@ -201,7 +201,7 @@
               "label": "A"
             },
             {
-              "text": "`Java NIO` всегда быстрее `Java IO` независимо от сценария — поэтому его стоит применять везде.",
+              "text": "`Java NIO` быстрее `Java IO` за счёт каналов и буферов, поэтому в новом коде по умолчанию выбирают именно его.",
               "correct": false,
               "sections": {
                 "what_actually": "Для простых последовательных операций `IO` не медленнее; `NIO` выигрывает на тысячах соединений либо на mmap/direct buffers.",
@@ -693,7 +693,7 @@
               "label": "B"
             },
             {
-              "text": "`position` всегда совпадает с `limit` — это два названия одного и того же поля буфера.",
+              "text": "`position` и `limit` — это два названия одного и того же поля буфера, поэтому они указывают на одну позицию.",
               "correct": false,
               "sections": {
                 "what_actually": "`position` и `limit` — разные атрибуты: `position` — текущий курсор, `limit` — граница допустимых операций; их совпадение значит «нечего читать/писать».",
@@ -754,7 +754,7 @@
               "label": "B"
             },
             {
-              "text": "`rewind()` сбрасывает `position=0` и `limit=capacity`, что полностью эквивалентно `clear()`.",
+              "text": "`rewind()` сбрасывает `position=0` и `limit=capacity`, то есть по эффекту эквивалентен `clear()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`rewind()` ставит только `position=0` и сбрасывает `mark`; `limit` он не трогает — это для повторного чтения тех же данных, а не подготовки к записи.",
@@ -766,7 +766,7 @@
               "label": "C"
             },
             {
-              "text": "`compact()` всегда копирует все байты буфера в начало, даже те, что уже были прочитаны.",
+              "text": "`compact()` копирует все байты буфера в начало, включая уже прочитанные.",
               "correct": false,
               "sections": {
                 "what_actually": "`compact()` копирует только непрочитанный остаток (`position..limit`) в начало; прочитанные байты отбрасываются.",
@@ -789,7 +789,7 @@
           "question_text": "В чём разница между `direct buffer` и `heap buffer`?",
           "options": [
             {
-              "text": "`Direct buffer` всегда быстрее `heap buffer`, поэтому его стоит использовать везде по умолчанию.",
+              "text": "`Direct buffer` быстрее `heap buffer` за счёт zero-copy при native I/O, поэтому его выбирают по умолчанию.",
               "correct": false,
               "sections": {
                 "what_actually": "Direct buffer медленный в создании (syscall) и не управляется обычным GC; для коротких и мелких операций heap buffer быстрее.",
@@ -1869,7 +1869,7 @@
           "question_text": "Как работает кодировка при чтении/записи текста (`Charset`)?",
           "options": [
             {
-              "text": "`new FileReader(\"file.txt\")` всегда читает файл в кодировке UTF-8 на любой версии Java.",
+              "text": "`new FileReader(\"file.txt\")` читает файл в кодировке UTF-8 по умолчанию, поэтому явно указывать `Charset` не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "До Java 18 `FileReader(String)` использует platform default (`file.encoding`): Linux часто `UTF-8`, Windows — `Cp1251`/`Cp1252`.",
@@ -1881,7 +1881,7 @@
               "label": "A"
             },
             {
-              "text": "`String.getBytes()` без аргументов безопасен — он всегда кодирует строку в UTF-8.",
+              "text": "`String.getBytes()` без аргументов кодирует строку в UTF-8, поэтому явный `Charset` тут не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "`getBytes()` без аргумента до Java 18 использует platform default; стабильно `UTF-8` он стал лишь с JEP 400 (Java 18+).",
@@ -1893,7 +1893,7 @@
               "label": "B"
             },
             {
-              "text": "`Charset.forName(\"UTF-8\")` полностью идентичен `StandardCharsets.UTF_8` во всех ситуациях.",
+              "text": "`Charset.forName(\"UTF-8\")` возвращает тот же объект `Charset`, что и `StandardCharsets.UTF_8`, поэтому между ними нет разницы.",
               "correct": false,
               "sections": {
                 "what_actually": "`forName` ищет charset по имени и может бросить `UnsupportedCharsetException`, тогда как `StandardCharsets.UTF_8` — гарантированная константа.",
@@ -2133,7 +2133,7 @@
               "label": "B"
             },
             {
-              "text": "`EOFException` всегда означает ошибку при чтении файла.",
+              "text": "`EOFException` означает ошибку чтения файла и его нужно обрабатывать как сбой.",
               "correct": false,
               "sections": {
                 "what_actually": "`EOFException` — нормальный сигнал конца у `DataInputStream.readInt()`/`readUTF()`, который часто ожидаем.",
@@ -2206,7 +2206,7 @@
               "label": "C"
             },
             {
-              "text": "`Files.newInputStream` всегда выделяет direct buffer под капотом для ускорения чтения.",
+              "text": "`Files.newInputStream` выделяет direct buffer под капотом для ускорения чтения.",
               "correct": false,
               "sections": {
                 "what_actually": "Он возвращает обычный stream поверх `FileChannel` и не выделяет `ByteBuffer`/direct buffer сам по себе.",
@@ -2229,7 +2229,7 @@
           "question_text": "Когда предпочесть `InputStream`/`OutputStream`, а когда `Channel`/`ByteBuffer`?",
           "options": [
             {
-              "text": "`Channel`/`ByteBuffer` всегда быстрее `InputStream`/`OutputStream`, поэтому новый код стоит писать только на них.",
+              "text": "`Channel`/`ByteBuffer` быстрее `InputStream`/`OutputStream` за счёт буферной модели, поэтому новый код стоит писать на них.",
               "correct": false,
               "sections": {
                 "what_actually": "Для простых текстовых задач разница ничтожна, а API сложнее (`flip`/`clear`/`compact`); выигрыш NIO проявляется лишь на масштабе или mmap.",
