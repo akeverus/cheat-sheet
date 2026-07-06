@@ -6,9 +6,11 @@ product UI/UX + accessibility reviewer. **Хирург, а не экскават
 безопасные порции, каждая с причиной, без хаотичного редизайна и слома
 бизнес-логики.
 
-Центр документа — **§5: per-file/per-point бэклог** (одна таблица на каждый
-frontend-файл, строка на каждый пункт). §6 — тематический cross-cutting индекс
-(тот же бэклог под другим углом). Журнал сделанного — `docs/ui-ux-improvement-log.md`.
+Центр документа — **§5: МАСТЕР-ТАБЛИЦА** (строки = frontend-файлы, столбцы = 27
+измерений UI/UX/a11y; каждая ячейка = состояние файла по этому измерению —
+✅ готово / 🌱 править / 🚫 осознанно / ⛔ отложено / 🔒 recompile / — н/п). Полная
+расшифровка каждого пункта — **§6: per-file/per-point бэклог**. §7 — тематический
+cross-cutting индекс (тот же бэклог под другим углом). Журнал сделанного — `docs/ui-ux-improvement-log.md`.
 Память между тиками — `project_audit_backlog_2026-06` (memory).
 
 > **⚠️ СТАТУС ПРОЦЕССА (с 2026-07-01/02): пользователь ведёт активный ручной frontend-pass.**
@@ -38,7 +40,7 @@ frontend-файл, строка на каждый пункт). §6 — тема�
 
 **Легенда оценок:** Impact / Risk / Effort / Confidence = H(igh) / M(edium) / L(ow).
 Берём сначала **Impact=H, Risk=L/M, Confidence=H**. Колонка **↔** — ссылка на
-тематический ID из §6 (answer-fairness AF, тренировка TR, типографика TY, layout LO,
+тематический ID из §7 (answer-fairness AF, тренировка TR, типографика TY, layout LO,
 аналитика AN, настройки SE, цвета CO, компоненты CM, a11y A11Y, responsive RE,
 perf PE, контент CN, иконки IC).
 
@@ -150,12 +152,77 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 
 ---
 
-## 5. PER-FILE / PER-POINT БЭКЛОГ (ядро документа)
+## 5. МАСТЕР-ТАБЛИЦА: файлы × 27 измерений (что править / что готово)
+
+Одна строка = один frontend-файл. Один столбец = одно измерение UI/UX/a11y.
+Ячейка отвечает на вопрос «в каком состоянии этот файл по этому аспекту».
+Детальная расшифровка каждого 🌱/🚫/⛔ — в **§6** (по ID в колонке «Главный открытый пункт»).
+
+**Легенда ячеек:** ✅ соответствует / сделано · 🌱 открытый пункт (нужна правка, +ID) ·
+🚫 осознанное решение (не трогать) · ⛔ отложено (ждёт решения пользователя) ·
+🔒 требует Java/recompile (вне фронта) · 🔁 постоянный контроль · **—** не применимо.
+
+**Ключи 27 столбцов:** HIER=иерархия/layout · SPACE=отступы (шкала 4/8/12/16/24/32/48) ·
+TYPO=типографика/шкала · RESP=адаптив/overflow/mobile · COLOR=семантич. цвет + не-только-цветом ·
+CONTR=контраст WCAG AA · BTN=кнопки/состояния · FORM=формы (label/валидация/required) ·
+TABLE=таблицы (scope/caption/headers) · ICON=иконки-система · EMPTY=empty-state · LOAD=loading-state ·
+ERR=error-state · SEM=семантич. HTML/роли · FOCUS=focus-visible · KBD=клавиатура · SRLBL=SR-лейблы ·
+LIVE=aria-live/анонсы · TOUCH=тач-таргеты ≥44px · MOTION=reduced-motion · HEADO=иерархия h1–h3 ·
+COPY=микрокопирайт · FAIR=answer-option fairness · PE=progressive-enhancement (без JS) ·
+DUP=переиспользование/нет дублей/dead-code · VER=версионный контракт `?v=N` · PRINT=`@media print`.
+
+_Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk версии: `tokens.css` v=61, `base.css` v=69
+(пользователь бампнул дальше в in-flight pass), `app.js` v=54, `stats.js` v=12._
+
+| Файл | HIER | SPACE | TYPO | RESP | COLOR | CONTR | BTN | FORM | TABLE | ICON | EMPTY | LOAD | ERR | SEM | FOCUS | KBD | SRLBL | LIVE | TOUCH | MOTION | HEADO | COPY | FAIR | PE | DUP | VER | PRINT | Главный открытый пункт |
+|------|------|-------|------|------|-------|-------|-----|------|-------|------|-------|------|-----|-----|-------|-----|-------|------|-------|--------|-------|------|------|----|-----|-----|-------|------------------------|
+| **▸ СТРАНИЦЫ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
+| `focus-training.html` | ✅ | ✅ | 🚫 | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | FT-1..18 закрыты; 48px h2 + neutral-selected = 🚫 |
+| `result.html` | 🌱 | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | 🌱RES-8 контраст `.explanation-wrong`; 🌱RES-14 код только при aiEnabled |
+| `settings.html` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | 🌱 | ✅ | — | ✅ | ✅ | ✅ | — | 🌱SET-14 блок экспорта без h3; 🌱SET-7 персонализация не анонсируется SR |
+| `stats.html` | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | 🌱STA-18 forecast-count SR-дубль; 🌱STA-5 серии графиков не только цветом |
+| `session-summary.html` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | Чисто; dual-path nav = 🚫SUM-8 |
+| `error.html` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | Чисто; 403 авто-retry = ⛔ERR-3 |
+| **▸ ФРАГМЕНТЫ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
+| `fragments/head.html` | — | — | ✅ | ✅ | ✅ | — | — | — | — | — | — | ✅ | ✅ | ✅ | — | — | — | — | — | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | — | Чисто; CDN-guards, 6 осей персонализации до 1-го кадра |
+| `fragments/header.html` | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — | ✅ | — | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | — | — | 🌱HDR-1 компактный header во время сессии |
+| `fragments/icons.html` | — | — | — | — | ✅ | ✅ | — | — | — | 🌱 | — | — | — | ✅ | — | — | ✅ | — | — | — | — | — | — | ✅ | ✅ | — | — | 🌱ICO-3 нет warning-иконки для warn/error (low) |
+| `fragments/mermaid-init.html` | — | — | — | ✅ | 🚫 | 🚫 | — | — | — | — | — | ✅ | ✅ | — | — | — | 🚫 | — | — | — | — | — | — | ✅ | ✅ | — | — | MER-1 🚫 внешний owner; сам код чист (antiscript-guard) |
+| `fragments/inline-alert.html` | ✅ | — | — | ✅ | ✅ | — | — | — | — | — | — | — | ✅ | ✅ | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — | Чисто; role=alert+assertive (IAL-1) |
+| `fragments/post-answer-controls.html` | ✅ | — | — | ✅ | ✅ | — | ✅ | — | — | — | — | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — | ✅ | — | ✅ | ✅ | — | — | Чисто; feedback polite + sink под кнопкой (PAC-1..2) |
+| `fragments/result-zone-head.html` | ✅ | — | — | ✅ | ✅ | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | ✅ | — | ✅ | ✅ | — | — | Чисто; zone-chip+hint (RZH-1) |
+| `fragments/stats-grid.html` | ✅ | — | — | ✅ | ✅ | — | — | — | — | — | 🚫 | ✅ | — | ✅ | — | — | ✅ | — | — | — | — | ✅ | — | ✅ | ✅ | — | — | Чисто; accuracy-bar aria-hidden (SGR-3); cold-start = 🚫 |
+| `fragments/today-widget.html` | ✅ | — | — | ✅ | ✅ | — | ✅ | — | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | 🚫 | ✅ | — | ✅ | ✅ | — | ✅ | ✅ | — | — | Чисто; «N из M к повтору» (TDW-1); streak без aria-live = 🚫 |
+| `fragments/training-actions.html` | ✅ | — | — | ✅ | ✅ | 🌱 | ✅ | ✅ | — | ✅ | — | — | — | ✅ | ✅ | ✅ | ✅ | 🚫 | ✅ | — | — | ✅ | — | ✅ | ✅ | — | — | 🌱TAC-3 keyboard-hint контраст (low); timer/hint без aria-live = 🚫 |
+| **▸ СТИЛИ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
+| `css/tokens.css` | — | ✅ | ✅ | — | 🌱 | ✅ | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | ✅ | — | — | — | — | ✅ | ✅ | — | TOK-1 AA-гейт CLEAN, TOK-5 OS-prefs; 🌱TOK-2 развести accent↔success/error по hue |
+| `css/base.css` | 🌱 | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱BAS-15 tabs↔seg (HIER), 🌱BAS-17 helper-контраст; BAS-18 measure = 🚫 |
+| `css/editorial.css` (мёртв) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱EDC-1 не подключён, 2656 строк-дубль tokens+base + stale (до AF-5/tabs); verify-then-remove |
+| `css/{broadsheet,linear,swiss}.css` (мёртвы) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱DSG-1 3 файла НЕ подключены (только tokens+base); 🌱DSG-2 broadsheet-сигнатуры (0 правил в base.css vs editorial 30/swiss 6/linear 2) → identity=дефолт |
+| **▸ СКРИПТЫ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
+| `js/app.js` | ✅ | — | — | ✅ | ✅ | — | ✅ | ✅ | 🌱 | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | — | 🌱APP-8 regenerate без aria-busy; 🌱APP-9 comparison-table th без scope/caption; ⛔APP-5 favorite; v=54 |
+| `js/stats.js` | — | — | 🌱 | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | 🌱STJ-1 tick-подписи графиков мелкие (low); kbd/progress-dup c app.js = 🚫 standalone-by-design; v=12 |
+
+**Как читать сводку.** Открытые 🌱-пункты по файлам: `result.html`(RES-8/RES-14), `settings.html`(SET-14/SET-7),
+`stats.html`(STA-18/STA-5), `header.html`(HDR-1), `icons.html`(ICO-3), `training-actions.html`(TAC-3),
+`tokens.css`(TOK-2), `base.css`(BAS-15/BAS-17), `editorial.css`(EDC-1), `{broadsheet,linear,swiss}.css`(DSG-1/DSG-2),
+`app.js`(APP-8/APP-9), `stats.js`(STJ-1). ⛔: `error.html`(ERR-3 403-retry), `app.js`(APP-5 favorite).
+**Не-blocked, можно брать сразу:** DSG-1/DSG-2/EDC-1 (мёртвые CSS-файлы — вне in-flight дерева
+пользователя), но удаление/порт требует решения (мягко-деструктивно). Остальные 🌱 — в blocked-файлах
+под активным pass пользователя → ждут чистого `git status`. Расшифровка каждого ID — §6 ниже.
+
+**Новое из аудита 2026-07-06 (workflow, 7 агентов, 597k ток.):** DSG-2 (broadsheet без сигнатур в
+base.css — 0 правил, verify-намеренность live) и APP-9 (JS-построенная comparison-table без `th[scope]`/
+`caption`) — ранее не задокументированы; занесены в §6.
+
+---
+
+## 6. PER-FILE / PER-POINT БЭКЛОГ (расшифровка мастер-таблицы)
 
 > Колонки: **#** · **Пункт** (точка интерфейса в файле) · **Состояние / проблема** ·
 > **Направление правки** · Imp · Risk · Eff · Conf · **Статус** · **↔** (тематич. ID).
 
-### 5.A.1 — `templates/focus-training.html` (главный экран)
+### 6.A.1 — `templates/focus-training.html` (главный экран)
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -178,7 +245,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | FT-18 | empty-state «фильтры пусты»: primary CTA = «Обновить тренировку» (no-op для filter-mismatch, уводит по кругу), а копия просит «Открой настройки» | Флип primary→«Открыть настройки» ТОЛЬКО в filters-ветке (`settingsPrimary` = `!genUnavail and !review and session==null`); прочие ветки (AI/сессия/review) байт-идентичны. Шаблон-текст, без бампа. Контракт-тесты сверены (filters-expr:94, empty-action-*, next-btn=/result-only) | M | L | L | H | ✅ DONE (р31) | TR-2 |
 | FT-17 | `app.js(v=51)` в конце body | Версионный контракт JS | бампать при правке app.js | — | — | — | H | 🔁 ONGOING | PE |
 
-### 5.A.2 — `templates/result.html` (живой no-JS фоллбэк POST /answer)
+### 6.A.2 — `templates/result.html` (живой no-JS фоллбэк POST /answer)
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -197,7 +264,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | RES-13 | `app.js(v=51)` в конце body | Перенесён из середины main | — | — | — | — | H | ✅ DONE (C31) | — |
 | RES-14 | `.question-side` (код вопроса, result.html:128) гейтится `aiEnabled and questionType==CODE and codeSnippet!=null` | **Асимметрия vs страница-вопрос:** focus-training.html:63-64 рендерит `codeSnippet` БЕЗ `aiEnabled`-условия (только `codeSnippet!=null`) → при дефолтном seed-first (`aiEnabled=false`, CLAUDE.md) на РАЗБОРЕ ответа код CODE-вопроса не виден, хотя при ответе показывался. Проверить: несут ли seed CODE-вопросы `codeSnippet` и не остаётся ли review без кода-контекста; если да — выровнять гейт со страницей-вопроса (снять `aiEnabled`-условие). **⚠️ Гейт рендера = behavior-adjacent (не косметика) → verify-then-decide, вероятна отмашка юзера; result.html под in-flight pass (blocked)** | M | M | L | M | 🌱 BACKLOG (verify, blocked-file) | — |
 
-### 5.A.3 — `templates/session-summary.html` (одноразовые итоги)
+### 6.A.3 — `templates/session-summary.html` (одноразовые итоги)
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -210,7 +277,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | SUM-7 | share-script `buildShareText` | Контракт: ≥5 `<td>` на строку, recs из `li` | НЕ ломать селекторы | — | — | — | H | 🔁 ONGOING (контракт) | — |
 | SUM-8 | `@media print` | Чистый лист, break-inside avoid | — | M | L | L | H | ✅ DONE (р14) | PE |
 
-### 5.A.4 — `templates/settings.html` (вкладки)
+### 6.A.4 — `templates/settings.html` (вкладки)
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -230,7 +297,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | SET-13 | 10-опционный дизайн-seg-control переносится в 3 ряда → `border-right`-разделители «повисают» на торце рядов (Notion/Superhuman): `:last-child` гасит только глоб.-последнюю кнопку | Скоуп `#design-pref-control`: контейнер без рамки/bg + gap, каждый сегмент = чип с собственной рамкой + `--border-radius-sm` (design-adaptive). Орфанов нет; прочие 5 контролов (2–3 опции) не тронуты. CSS v=58→59 | M | L | L | H | ✅ DONE (р32) | SE-3/SE-5 |
 | SET-14 | Вкладка «Данные»: подраздел экспорта (settings.html:252-259) без заголовка, а danger-zone ниже несёт h3 «Опасная зона» (265) → heading-nav несимметрична: SR прыжком по заголовкам слышит h2 «Данные» → сразу h3 «Опасная зона», экспорт-блок не якорится как секция | +h3 «Экспорт данных» над `.data-export-block` — паритет с danger-zone h3, обе подсекции навигируемы по заголовкам; визуально дублирует существующий `<p>`-хинт, но даёт SR-структуру. Чистый шаблон-текст, без бампа. **⚠️ БЛОКЕР:** settings.html под активным in-flight пользователя → `git add` свернёт чужие хунки (`-p` недоступен); отложить до коммита пользователя | L | L | L | H | 🌱 BACKLOG (blocked-file) | A11Y |
 
-### 5.A.5 — `templates/stats.html` + `static/js/stats.js`
+### 6.A.5 — `templates/stats.html` + `static/js/stats.js`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -253,7 +320,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | STA-17 | coverage-gaps `data-table` без `<caption>` | topic-table несёт h2+region+`<caption>`, data-table — только h2+scope (R35). `<caption>` = accessible name таблицы в table-nav SR (≠ h2 в heading-nav; topic-table:142 задаёт прецедент при своём h2). Фикс: +`<caption class="visually-hidden">Темы с неполным банком вопросов</caption>` (noun-phrase, не дублирует h2). Region-обёртка не нужна (2 колонки, нет overflow). Инертный visually-hidden (0 layout), без бампа. Верифиц. curl by-construction (секция за `th:if coverageGaps`, паттерн-сиблинг topic-table caption рендерится живьём) | M | L | L | H | ✅ DONE (р36, template-only) | A11Y |
 | STA-18 | Прогноз повторений: `.forecast-count` (голое число, stats.html:278) дублирует уже озвученный `.forecast-bar[role=img]` aria-label «N вопросов» (274) → SR на строке слышит число дважды (у bar — с единицей, у count — без). Визуальному пользователю нужны оба (bar = длина, count = точное число), но для AT count избыточен | `aria-hidden="true"` на `.forecast-count` — декоративный визуальный дубль, полную формулировку с единицей несёт bar; паттерн как у SGR-3 (accuracy-bar aria-hidden при дубле текстом). Чистый шаблон-атрибут, без бампа. **⚠️ БЛОКЕР:** stats.html под in-flight пользователя → отложить до коммита | L | L | L | H | 🌱 BACKLOG (blocked-file) | A11Y |
 
-### 5.A.6 — `templates/error.html`
+### 6.A.6 — `templates/error.html`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -263,7 +330,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | ERR-4 | `.error-details` dev-disclosure | Путь/статус/причина/сообщение/время | — | — | — | — | H | ✅ DONE | — |
 | ERR-5 | `.error-actions` (На главную/Аналитика/Настроить) | Recovery-пути из тупика | — | M | L | L | H | ✅ DONE | CM-10 |
 
-### 5.B.1 — `fragments/head.html`
+### 6.B.1 — `fragments/head.html`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -276,7 +343,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | HEAD-7 | self-host chart.js vs CDN (CSP sourcemap) | Архитектурный + download-gated выбор | — | — | — | — | ⛔ DEFERRED | PE-5 |
 | HEAD-8 | `<title>` через `${title}` (head-fragment param, per-template литерал) | settings/summary выбивались из паттерна «<Имя> — Подготовка к собеседованию» (stats/result/error следуют). Приведены к паттерну (р22); home=голое имя приложения (конвенция). Title — template-литерал, фиксится без Java | — | M | L | L | H | ✅ DONE (р22) | — |
 
-### 5.B.2 — `fragments/header.html`
+### 6.B.2 — `fragments/header.html`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -287,7 +354,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | HDR-5 | noscript-alert | Честно предупреждает о JS-зависимых фичах | — | — | — | — | H | ✅ DONE | — |
 | HDR-6 | sprite-include один раз на страницу | header есть везде | — | — | — | — | H | ✅ DONE | IC-1 |
 
-### 5.B.3 — `fragments/icons.html`
+### 6.B.3 — `fragments/icons.html`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -297,32 +364,32 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | ICO-4 | кнопки экспорта несли сырой юникод «↓» (не icon-система, рендер OS-зависим, стоял ПОСЛЕ текста) | Добавлен `#i-download` (Lucide, 21-й символ), swap «текст ↓»→«`<svg.ed-icon>` текст» (SVG + icon-lead как сиблинги). Спрайт+шаблон, без бампа. Контракт-тесты (Экспорт JSON/CSV текст + data-export-format) целы | L | L | L | H | ✅ DONE (р34) | IC-4 |
 | IC-5 | CTA-кнопки несут сырой юникод «→» (SR-шум + вне icon-системы). **Точный скоуп (р38-аудит):** 7 `btn next-btn` — `today-widget.html:46,47` («Начать повторение →»/«Учить новое →»), `result.html:107` («Следующий вопрос →»), `session-summary.html:37,38` («Повторить ошибки →»/«Продолжить →»), `stats.html:99`, `error.html:52` («На главную →»). Остальные 40 «→» в grep = комменты/JS/проза (НЕ трогать) | **⚠️ БЛОКЕР — convention-решение (р38):** не механический swap. Все icon-кнопки ВЕДУТ иконкой (icon-lead, R34-конвенция); directional «next→» семантически ТРЕЙЛИТ → iconify создаёт mixed lead/trail. 3 варианта, каждый taste-call: (a) trail arrow-icon (ломает lead-конвенцию); (b) lead «→ Следующий» (семантически странно); (c) убрать «→» совсем (минимализм, но снимает намеренную консистентную аффордансу). «→» консистентен на ВСЕХ CTA → вероятно ОСОЗНАННЫЙ паттерн. Нужен выделенный design-decision раунд в СПОКОЙНОЙ среде (visible-delta → screenshot regen settings/stats/error + by-construction result/summary), НЕ casual sweep под нагрузкой | M | M | M | L | 🌱 BACKLOG (design-decision) | IC-4 |
 
-### 5.B.4 — `fragments/inline-alert.html`
+### 6.B.4 — `fragments/inline-alert.html`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
 | IAL-1 | `role=alert` `aria-live=assertive`, параметр hidden | Переиспользуемый алерт-примитив | — | — | — | — | H | ✅ DONE | A11Y-2 |
 
-### 5.B.5 — `fragments/mermaid-init.html`
+### 6.B.5 — `fragments/mermaid-init.html`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
 | MER-1 | antiscript guard + drop при отсутствии mermaid | XSS-поверхность 'loose' закрыта; offline degrade | mermaid — внешний owner | — | — | — | H | 🚫 WONTFIX (не трогать mermaid) | — |
 
-### 5.B.6 — `fragments/post-answer-controls.html`
+### 6.B.6 — `fragments/post-answer-controls.html`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
 | PAC-1 | inline-alert + `#result-feedback` (role=status polite) | Фидбэк проверки озвучивается politely | — | M | L | L | H | ✅ DONE | A11Y-2 |
 | PAC-2 | `#extra-analysis-toggle` + `#extra-analysis-content` sink ПОД кнопкой | Раскрытый контент идёт под триггером (не сиротит кнопку); aria-controls/expanded | — | M | M | M | H | ✅ DONE 🔁 | TR-9 |
 
-### 5.B.7 — `fragments/result-zone-head.html`
+### 6.B.7 — `fragments/result-zone-head.html`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
 | RZH-1 | zone-chip + zone-hint (параметризуемые) | «Сначала итог, затем разбор» — предсказуемость флоу | — | L | L | L | M | ✅ DONE | TR-5 |
 
-### 5.B.8 — `fragments/stats-grid.html`
+### 6.B.8 — `fragments/stats-grid.html`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -331,7 +398,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | SGR-3 | accuracy-bar без accessible-семантики | Осмысленная data-viz (ширина=точность), но без role/aria/лейбла; заливка стоит слева (под «Всего»), не под лейблом «Точность» → безымянная сбивающая графика для AT | `aria-hidden="true"` на `.accuracy-bar` (декоративный дубль текста; не `role=progressbar` — дабл-озвучка). 1 правка фрагмента = 3 экрана | M | L | L | H | ✅ DONE R20 | AN-12 |
 | SGR-4 | 6 stat-карточек без пояснений SRS-жаргона (К повтору/Выучено) — несогласовано с колонками таблицы (у тех title R24/R25) | `title` на каждый `.stat-item`, формулировки сверены с SQL (due=next_review<=now, learned=repetitions>=threshold, correct/wrong=SUM, accuracy=Верно/(Верно+Ошибки)). Плейн-статик, 1 фрагмент = 3 включения. Чистый шаблон → без бампа | M | L | L | H | ✅ DONE (р29) | AN-14 |
 
-### 5.B.9 — `fragments/today-widget.html`
+### 6.B.9 — `fragments/today-widget.html`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -340,7 +407,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | TDW-3 | streak-inline (🔥) без aria-live | Намеренно: наполняется при каждой загрузке, не state-change | НЕ добавлять live-region | — | — | — | H | 🚫 WONTFIX | — |
 | TDW-4 | `today-hero` figure-label показывал голое «N вопросов к повтору» | Hero — самая заметная поверхность, но имел МЕНЕЕ продуманный паттерн, чем chip (TDW-1); голое 4-5-значное число = интимидирующая стена | Тот же «N из M вопросов к повтору» + гард `total>due` (мирроринг chip line 57); существительное сохранено (есть место). Big number/`data-stat-field`/live не тронуты | M | L | L | H | ✅ DONE (р21) | AN-2 |
 
-### 5.B.10 — `fragments/training-actions.html`
+### 6.B.10 — `fragments/training-actions.html`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -348,7 +415,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | TAC-2 | submit (`aria-keyshortcuts=Enter`) + next-btn | Контракт submitId/Text/Disabled/Title | — | — | — | — | H | ✅ DONE | — |
 | TAC-3 | `.keyboard-hint` (символ ⌨ убран) | Текст самодостаточен, без цветного эмодзи вне icon-системы | Усилить контраст/иерархию hint | L | L | L | M | 🌱 BACKLOG | TR-3 |
 
-### 5.C.1 — `static/css/tokens.css`
+### 6.C.1 — `static/css/tokens.css`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -358,7 +425,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | TOK-4 | dark border/text слабые | Усилены border-primary в dark | — | M | L | L | H | ✅ DONE | CO-2 |
 | TOK-5 | OS-prefs (prefers-contrast/forced-colors/reduced-transparency) | media-блоки токенов | — | M | L | M | H | ✅ DONE (`77882943`) | CO-5 |
 
-### 5.C.2 — `static/css/base.css`
+### 6.C.2 — `static/css/base.css`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -384,19 +451,20 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | BAS-20 | дизайн `claude` (token-only): `.ed-masthead-kicker`+`.zone-chip`+`.flashcard-badge` = **3.8:1** в LIGHT (все три наследуют base `accent-strong` #C16040, «AA-large» токен на 12px caps); kicker глобальный | claude-**light**-scoped override (`:not([data-theme="dark"])`) три метки → `text-secondary` (5.98:1). Dark НЕ трогаем: там accent-strong #E08B6D=7.1:1 проходит + намеренный бренд-coral (token-only наследование). Развилка «нейтраль vs затемнить токен» решена в пользу нейтрали (зеркалит editorial spec «pure typographic label»). CSS v=56→57 | M | L | L | H | ✅ DONE (р28) | A11Y-15 |
 | BAS-21 | `.today-hero-hint` (подсказка под CTA today-hero /settings, 14px) — единственный `*-hint`, красящийся `--color-text-tertiary` (все прочие: zone-hint/keyboard-hint/control-inline-hint/*-forecast-hint = `text-secondary`). tertiary калиброван «AA-large» (3:1), а hint = мелкий текст (порог 4.5:1). **Замер live (р39):** claude-light `#76756E`/`rgb(250,249,245)` = **4.39:1 ПРОВАЛ AA-small**; editorial-light 4.89, editorial-dark 4.99, claude-dark 5.07 — пограничные (в 0.5 от порога). | `.today-hero-hint color: tertiary → secondary` (1 property, паритет со всеми *-hint; secondary AA-safe во всех 10×2). CSS-бамп. **⚠️ БЛОКЕР (р39): base.css + head.html + app.js + 5 шаблонов под АКТИВНЫМ незакоммиченным UX REVIEW PASS пользователя (base.css +193 стр, вкл. MCQ `data-answer-layout=balanced`).** `git add base.css` свернёт чужую работу, `-p` недоступен → правку ОТЛОЖИТЬ до коммита пользователя (не затирать in-flight). Находка верифицирована, применить когда base.css свободна. **✅ РАЗРЕШЕНО ПОЛЬЗОВАТЕЛЕМ (р40):** незакоммиченный base.css пользователя УЖЕ содержит идентичный фикс (`.today-hero-hint tertiary→secondary` с тем же комментарием про `claude-light 4.39:1 провал AA-small`) → БЕЗ Claude-правки; закрыть при коммите пользователя. | M | L | L | H | ✅ DONE-BY-USER (р40, в uncommitted base.css) | A11Y |
 
-### 5.C.3 — `static/css/editorial.css` (МЁРТВЫЙ КОД)
+### 6.C.3 — `static/css/editorial.css` (МЁРТВЫЙ КОД)
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
 | EDC-1 | 2656 строк не подключены ни одним `<link>` | Путает чтение/поиск, дублирует токены | Перед удалением — `grep` по всем шаблонам/JS, что нет ссылки; затем убрать. Удаление — мягко-деструктивно, спросить/подтвердить | L | L | L | M | 🌱 BACKLOG (verify-then-remove) | — |
 
-### 5.C.4 — `static/css/{broadsheet,linear,swiss}.css`
+### 6.C.4 — `static/css/{broadsheet,linear,swiss}.css`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
-| DSG-1 | Доп. слои 3 дизайнов (broadsheet/linear/swiss) | Остальные 7 — token-only (в tokens.css) | держать паритет состояний с base.css | L | M | M | M | 🔁 ONGOING (проверять при правках компонентов) | — |
+| DSG-1 | 3 файла (`broadsheet/linear/swiss.css`) НЕ подключены ни одним `<link>` (свер. 2026-07-06: в `head.html` только `tokens.css` v=61 + `base.css` v=69; ноль условных per-design `<link>`) | linear/swiss-сигнатуры УЖЕ портированы в `base.css` (`[data-design="linear"]`=2 правила, `swiss`=6) → эти два файла — чистые мёртвые дубли, как `editorial.css` (EDC-1). Активный механизм дизайна = токены (`tokens.css`) + сигнатуры в `base.css`, не эти файлы | Как EDC-1: `grep`-verify нет ссылки → удалить (мягко-деструктивно, спросить). Broadsheet — см. DSG-2 (сначала решить его) | L | L | L | H | 🌱 BACKLOG (verify-then-remove, non-blocked) | — |
+| DSG-2 | `broadsheet` дизайн БЕЗ структурной identity: `base.css` содержит **0** правил `[data-design="broadsheet"]` (для сравнения: editorial=30, swiss=6, linear=2), а `broadsheet.css` с сигнатурами (nav-pill/outline) не подключён | При выборе дизайна `broadsheet` (через `data-design` на `<html>`) применяются только его токены (цвет/тип из `tokens.css`), но структурный слой = дефолтный editorial → визуально broadsheet ≈ editorial с другой палитрой. Либо это намеренно (broadsheet в token-only когорте, как superhuman/stripe/claude/theverge), либо сигнатуры broadsheet потеряны при порте (linear/swiss портированы, broadsheet — нет) | Live-verify: выбрать broadsheet в /settings, сравнить структуру с editorial. Если identity нужна — портировать nav-pill/outline из `broadsheet.css` в `base.css` (token-safe, как linear/swiss). Если token-only намеренно — DSG-1 удаляет и `broadsheet.css`. Требует решения пользователя + живого app | M | M | M | M | 🌱 BACKLOG (verify — app down) | — |
 
-### 5.D.1 — `static/js/app.js` (v=51)
+### 6.D.1 — `static/js/app.js` (v=54)
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -408,8 +476,9 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | APP-6 | seg-controls + вкладки настроек (`initSettingsTabs`) | ARIA-вкладки, восстановление localStorage в try/catch | — | M | L | L | H | ✅ DONE | SE-1 |
 | APP-7 | `?v=` контракт в 3 шаблонах | Бампать при правке app.js | — | — | — | — | H | 🔁 ONGOING | — |
 | APP-8 | `regenerateQuestion` (app.js:1047-1115) async-state НЕ консистентен с братьями-хендлерами | Extra-analysis (343/348: `aria-busy=true` + re-entrancy guard) и export (592-601: `aria-disabled`+`aria-busy`) выставляют busy-семантику и гард повторного клика; regenerate же only `.regenerating`-класс + `title='Удаляю варианты…'` (tooltip → SR ненадёжно) — **нет `aria-busy`** (SR не слышит «занято») и **нет re-entrancy-гарда/disable** (двойной клик → дубль `POST /api/regenerate`, т.к. `obtainAdminToken` кэширует токен). Направление: при старте `button.setAttribute('aria-busy','true')` + ранний гард `if(button.classList.contains('regenerating'))return`, снимать в финале. Admin-only путь (`th:if=aiEnabled` скрывает в seed-first) → низкий impact. **app.js под in-flight pass (blocked)** | L | L | L | H | 🌱 BACKLOG (blocked-file) | A11Y |
+| APP-9 | JS-построенная comparison-table (app.js ~стр.384/1819, extra-analysis разбор) — `<th>` без `scope`, `<table>` без `<caption>` | Аудит 2026-07-06: динамически собираемая таблица сравнения в доп.анализе рендерит `th` без `scope="col"/"row"` и без `caption` → SR не связывает заголовки со строками, теряется навигация по таблице (в отличие от SSR summary-table, где ARIA под `display:block` уже проставлена). Направление: добавить `th.scope` + `<caption class="sr-only">` в билдере таблицы. Проверить точные строки при разблокировке (app.js большой; блок extra-analysis). **app.js под in-flight pass (blocked)** | L | L | L | M | 🌱 BACKLOG (blocked-file, verify) | A11Y |
 
-### 5.D.2 — `static/js/stats.js`
+### 6.D.2 — `static/js/stats.js`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
@@ -419,7 +488,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 
 ---
 
-## 6. Тематический cross-cutting индекс (тот же бэклог по областям)
+## 7. Тематический cross-cutting индекс (тот же бэклог по областям)
 
 Свод ID по темам — быстрый «worst-first» вход. Подробности и статусы — в §5
 (колонка ↔ ведёт обратно).
@@ -442,7 +511,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 
 ---
 
-## 7. Не трогать — осознанные решения пользователя (🚫 / ⛔)
+## 8. Не трогать — осознанные решения пользователя (🚫 / ⛔)
 
 - prose `--measure` full-width (259ch на 2560) · `.focus-question` 48px · `body`
   18px/1.7 · stats cold-start вид.
@@ -457,7 +526,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 
 ---
 
-## 8. Цикл одной итерации
+## 9. Цикл одной итерации
 
 1. Выбрать одну строку §5 (или §6) worst-first (Impact↑/Risk↓/Conf↑).
 2. Понять UX и код (graphify-first для навигации).
@@ -473,7 +542,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 
 ---
 
-## 9. Скриншот-рутина (после каждого цикла с видимой дельтой)
+## 10. Скриншот-рутина (после каждого цикла с видимой дельтой)
 
 `docs/ui-critique/screenshots/` (gitignored). **Старый набор удаляется
 (`rm -f *.png`), новый перезаписывается.** Набор: 5 страниц × 2 темы desktop
