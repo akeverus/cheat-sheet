@@ -94,7 +94,7 @@
               "order": 1
             },
             {
-              "text": "Реестр хранит полный исходный код и Docker-образ каждого сервиса, чтобы при падении инстанса автоматически пересобрать и поднять его заново.",
+              "text": "Реестр хранит deployment-спецификацию каждого сервиса — образ, число реплик и переменные окружения, — чтобы при падении инстанса пересоздать его по этому описанию.",
               "correct": false,
               "sections": {
                 "what_actually": "Реестр — это лёгкая база адресов и статусов (`host`, `port`, `metadata`), а сборка и запуск инстансов — задача CI/CD и оркестратора (Kubernetes, ECS), а не registry.",
@@ -106,7 +106,7 @@
               "order": 2
             },
             {
-              "text": "Реестр всегда хранится в внешней реляционной БД (PostgreSQL) с транзакциями, потому что иначе данные о сервисах потеряются при перезапуске.",
+              "text": "Реестр хранится во внешней реляционной БД (PostgreSQL) с транзакциями, иначе данные о сервисах потеряются при перезапуске.",
               "correct": false,
               "sections": {
                 "what_actually": "На практике реестры держат state в специализированных хранилищах: Eureka — in-memory с peer-репликацией, Consul/etcd — Raft-лог, ZK — ZAB; внешний Postgres не используется ради скорости watch и доступности.",
@@ -141,7 +141,7 @@
               "order": 0
             },
             {
-              "text": "`Third-party registration` означает, что регистрацию делает сторонняя SaaS-компания за деньги, а `self-registration` — что вы хостите реестр сами.",
+              "text": "`Third-party registration` означает, что регистрацию выполняет сторонний вендор через свой SaaS, а `self-registration` — что вы хостите реестр внутри своей инфраструктуры.",
               "correct": false,
               "sections": {
                 "what_actually": "«Third-party» здесь — это сторонний компонент внутри вашей же архитектуры (`kubelet`+`EndpointController`, Consul Registrator), а не внешний вендор; речь про то, кто пишет запись, а не кто владеет реестром.",
@@ -166,7 +166,7 @@
               "order": 2
             },
             {
-              "text": "Разница в протоколе: `self-registration` всегда работает через DNS, а `third-party registration` — только через gRPC; на то, кто пишет запись, термины не влияют.",
+              "text": "Разница в протоколе: `self-registration` идёт через DNS, а `third-party registration` — через gRPC; на то, кто пишет запись, термины не влияют.",
               "correct": false,
               "sections": {
                 "what_actually": "Различие именно в том, кто инициирует запись (сам инстанс или внешний компонент), а не в транспорте: и self, и third-party могут идти по HTTP, gRPC или через API-сервер.",
@@ -189,7 +189,7 @@
           "question_text": "Какие бывают типы health-check (TTL, HTTP, TCP, gRPC) и в чём смысл разделения liveness/readiness?",
           "options": [
             {
-              "text": "Есть только один тип health-check — TCP-проверка порта; если порт открыт, инстанс считается полностью здоровым и готовым принимать трафик.",
+              "text": "Основной health-check — это TCP-проверка порта: если порт открыт и принимает соединение, инстанс считают здоровым и готовым принимать трафик.",
               "correct": false,
               "sections": {
                 "what_actually": "Типов несколько: TTL (push-heartbeat), HTTP (pull `GET /health`), TCP (открыть порт) и gRPC `grpc.health.v1.Health/Check`; TCP — самый слабый, ведь открытое соединение ≠ работающее приложение.",
@@ -201,7 +201,7 @@
               "order": 0
             },
             {
-              "text": "`Liveness` и `readiness` — это синонимы: обе проверки означают одно и то же, и Kubernetes при провале любой из них всегда перезапускает pod.",
+              "text": "`Liveness` и `readiness` — по сути одно и то же: обе проверки означают «инстанс здоров», и Kubernetes при провале любой из них перезапускает pod.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные пробы: провал liveness ведёт к рестарту контейнера (процесс завис), а провал readiness лишь выводит pod из балансировки трафика, не рестартя его (кеш ещё греется, БД не подключилась).",
@@ -213,7 +213,7 @@
               "order": 1
             },
             {
-              "text": "TTL-based (push) health-check проверяет реальную функциональность приложения (соединение с БД, downstream), потому что инстанс шлёт heartbeat только когда полностью работоспособен.",
+              "text": "TTL-based (push) health-check проверяет реальную функциональность приложения (соединение с БД, downstream), ведь инстанс шлёт heartbeat лишь когда все его зависимости в норме.",
               "correct": false,
               "sections": {
                 "what_actually": "TTL-проверка лишь подтверждает, что поток-heartbeat жив: процесс может слать ping, пока `/api/order` сломан — это классический false-positive; реальную функциональность проверяет HTTP-pull `GET /actuator/health`.",
@@ -334,7 +334,7 @@
               "order": 1
             },
             {
-              "text": "При client-side discovery клиент на каждый запрос ходит в registry за свежим списком инстансов и не кеширует его, чтобы всегда иметь актуальные адреса.",
+              "text": "При client-side discovery клиент на каждый запрос ходит в registry за свежим списком инстансов и не кеширует его, чтобы держать адреса максимально актуальными.",
               "correct": false,
               "sections": {
                 "what_actually": "Клиент почти всегда держит локальный snapshot и refresh-ит его по таймеру (~30 сек); round-trip в registry на каждый запрос убил бы и latency, и сам registry под нагрузкой.",
@@ -346,7 +346,7 @@
               "order": 2
             },
             {
-              "text": "При client-side discovery балансировка всегда централизована в одном выделенном LB-кластере, а клиент лишь читает из него готовое решение.",
+              "text": "При client-side discovery балансировка централизована в одном выделенном LB-кластере, а клиент лишь читает из него готовое решение.",
               "correct": false,
               "sections": {
                 "what_actually": "Централизованная балансировка — признак server-side; в client-side логика балансировки распределена по клиентам (round-robin/weighted/locality-aware в каждом), что и даёт прямой hop без LB.",
@@ -381,7 +381,7 @@
               "order": 0
             },
             {
-              "text": "При server-side discovery клиент обязан сам знать адреса всех инстансов и передаёт их LB в каждом запросе, а LB просто проксирует на указанный адрес.",
+              "text": "При server-side discovery клиент обязан сам знать адреса всех инстансов и передаёт их LB в каждом запросе, а LB проксирует на указанный адрес.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: клиент видит лишь один endpoint LB и не знает ни про registry, ни про инстансы; список инстансов знает и выбирает сам LB, подписанный на registry.",
@@ -429,7 +429,7 @@
           "question_text": "Каковы pros/cons `client-side` vs `server-side` discovery и почему service mesh называют гибридом?",
           "options": [
             {
-              "text": "Client-side discovery всегда даёт большую latency, чем server-side, потому что клиент тратит время на локальный выбор инстанса перед каждым запросом.",
+              "text": "Client-side discovery даёт большую latency, чем server-side, потому что клиент тратит время на локальный выбор инстанса перед каждым запросом.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: client-side обычно быстрее — 1 hop (client → server) против 2 hops у server-side (client → LB → server), который добавляет 1-3 ms на proxy; локальный `pickInstance()` практически бесплатен.",
@@ -453,7 +453,7 @@
               "order": 1
             },
             {
-              "text": "Locality-aware и sticky-балансировка проще в server-side, потому что централизованный LB всегда знает зону каждого клиента.",
+              "text": "Locality-aware и sticky-балансировка проще в server-side, потому что централизованный LB знает зону каждого клиента.",
               "correct": false,
               "sections": {
                 "what_actually": "Locality-aware проще как раз в client-side: клиент знает свою AZ напрямую, а централизованному LB нужно передавать hint, чтобы понять, откуда пришёл клиент.",
@@ -742,7 +742,7 @@
               "order": 0
             },
             {
-              "text": "Consul KV — это просто кеш DNS-ответов реестра, он не предназначен для конфигов, locks или leader election.",
+              "text": "Consul KV — это кеш DNS-ответов реестра, он не предназначен для конфигов, locks или leader election.",
               "correct": false,
               "sections": {
                 "what_actually": "KV — полноценный Raft-replicated key-value store: его используют как distributed config, для distributed locks (`acquire`) и leader election через session+KV, а не как кеш DNS.",
@@ -766,7 +766,7 @@
               "order": 2
             },
             {
-              "text": "Consul Connect — это внешний DDoS-фильтр перед кластером, защищающий server-агентов от перегрузки, и к mTLS между сервисами он отношения не имеет.",
+              "text": "Consul Connect — это API-gateway перед кластером для маршрутизации внешних запросов, а mTLS между сервисами он не обеспечивает.",
               "correct": false,
               "sections": {
                 "what_actually": "Consul Connect — встроенный service mesh: он даёт mTLS между сервисами и intentions (политики «кто к кому может ходить»), а не сетевую защиту от DDoS.",
@@ -933,7 +933,7 @@
               "order": 1
             },
             {
-              "text": "При graceful shutdown Eureka client ничего не делает: инстанс просто перестаёт слать heartbeat, и сервер сам выселит его по истечении TTL через 90 секунд.",
+              "text": "При graceful shutdown Eureka client не делает ничего особого: инстанс перестаёт слать heartbeat, и сервер сам выселит его по истечении TTL через 90 секунд.",
               "correct": false,
               "sections": {
                 "what_actually": "На shutdown срабатывает hook, который шлёт `DELETE` (graceful deregistration) — инстанс исчезает из реестра сразу, не дожидаясь 90-секундного TTL.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "etcd выиграл, потому что использует более сильный consensus-протокол, чем ZAB: Raft гарантирует консистентность, а ZAB её не обеспечивает.",
+              "text": "etcd выиграл, потому что использует более сильный consensus-протокол, чем ZAB: Raft обеспечивает строгую консистентность, а ZAB такого уровня не даёт.",
               "correct": false,
               "sections": {
                 "what_actually": "ZAB тоже обеспечивает строгую консистентность (он близок к Raft и годами держит координацию Kafka/HBase); etcd выиграл эксплуатацией и API, а не «более сильным» консенсусом.",
@@ -1329,7 +1329,7 @@
           "question_text": "Чем отличаются режимы kube-proxy (iptables, IPVS, eBPF/Cilium) и как это влияет на discovery в коде приложения?",
           "options": [
             {
-              "text": "В режиме iptables kube-proxy делает O(1) hash-поиск нужного pod-а, поэтому он лучше всех масштабируется на кластерах с тысячами Service-ов.",
+              "text": "В режиме iptables kube-proxy делает O(1) hash-поиск нужного pod-а, поэтому он хорошо масштабируется на кластерах с тысячами Service-ов.",
               "correct": false,
               "sections": {
                 "what_actually": "O(1) hash-поиск — это про IPVS; iptables-режим линеен (O(N)): при тысячах Service-ов цепочки растут, reload медленный, CPU на packet-processing высокий.",
@@ -1341,7 +1341,7 @@
               "order": 0
             },
             {
-              "text": "eBPF/Cilium — это просто ещё один плагин поверх kube-proxy; он не может полностью заменить kube-proxy и всегда работает вместе с iptables.",
+              "text": "eBPF/Cilium — это ещё один плагин поверх kube-proxy; сам заменить kube-proxy он не способен и работает вместе с iptables.",
               "correct": false,
               "sections": {
                 "what_actually": "Cilium с `kubeProxyReplacement: true` полностью заменяет kube-proxy: DNAT и routing решаются в eBPF-программах в ядре, iptables-режим при этом не нужен.",
@@ -1569,7 +1569,7 @@
           "question_text": "Какие CAP-trade-offs у реестров — Eureka (AP) против Consul/etcd/ZK (CP) — и когда нужен какой?",
           "options": [
             {
-              "text": "Eureka — CP-система: при partition она блокирует запросы и возвращает ошибку «registry unavailable», гарантируя, что клиент никогда не получит stale-список.",
+              "text": "Eureka — CP-система: при partition она блокирует запросы и возвращает ошибку «registry unavailable», так что клиент не получит stale-список.",
               "correct": false,
               "sections": {
                 "what_actually": "Eureka — AP: при partition она продолжает отдавать stale-списки и никогда не возвращает ошибку недоступности; блокировка и ошибка при partition — поведение CP-реестров (Consul/etcd/ZK).",
@@ -1581,7 +1581,7 @@
               "order": 0
             },
             {
-              "text": "etcd и Consul — AP-системы: при partition minority-сторона продолжает принимать записи, поэтому данные всегда доступны, но могут расходиться.",
+              "text": "etcd и Consul — AP-системы: при partition minority-сторона продолжает принимать записи, поэтому данные остаются доступны, но могут расходиться.",
               "correct": false,
               "sections": {
                 "what_actually": "etcd и Consul — CP: minority-сторона при partition НЕ пишет (нет кворума), reads через leader блокируются; они жертвуют доступностью ради консистентности.",
@@ -1606,7 +1606,7 @@
               "order": 2
             },
             {
-              "text": "По CAP-теореме реестр может одновременно обеспечить и consistency, и availability при network partition — нужно лишь правильно настроить таймауты.",
+              "text": "По CAP-теореме реестр может одновременно обеспечить и consistency, и availability при network partition, если аккуратно настроить таймауты.",
               "correct": false,
               "sections": {
                 "what_actually": "При partition CAP заставляет выбрать только C или A: никакой настройкой таймаутов нельзя одновременно гарантировать строгую консистентность и полную доступность во время разрыва сети.",
@@ -1641,7 +1641,7 @@
               "order": 0
             },
             {
-              "text": "Чтобы discovery не был SPOF, достаточно сделать регистрацию инстанса blocking: pod не стартует, пока не зарегистрировался — так гарантируется, что в реестре только готовые инстансы.",
+              "text": "Чтобы discovery не был SPOF, достаточно сделать регистрацию инстанса blocking: pod не стартует, пока не зарегистрировался — так в реестре оказываются только готовые инстансы.",
               "correct": false,
               "sections": {
                 "what_actually": "Blocking-регистрация — это как раз усилитель SPOF: если registry недоступна, pod вообще не стартует; защита — lazy registration (pod ready после первого health-check, не после регистрации).",
@@ -1702,7 +1702,7 @@
               "order": 0
             },
             {
-              "text": "`DiscoveryClient` — это абстракция только над Eureka; для Consul, Kubernetes или ZooKeeper нужно использовать совершенно другой API и переписывать код резолва.",
+              "text": "`DiscoveryClient` — это абстракция только над Eureka; для Consul, Kubernetes или ZooKeeper нужно использовать другой API и переписывать код резолва.",
               "correct": false,
               "sections": {
                 "what_actually": "`DiscoveryClient` — единый интерфейс над всеми реестрами (eureka, consul, kubernetes, zookeeper, nacos); код `getInstances(...)` не меняется, меняется лишь стартер на classpath.",
