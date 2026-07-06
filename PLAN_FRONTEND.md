@@ -364,6 +364,7 @@ link-check). APP-9 — JS-построенная comparison-table без `th[sco
 | HDR-4 | back-to-top инжект, уважает `data-motion` | Появляется после ~1.5 экрана, rAF-throttle, focus-return | — | M | L | L | H | ✅ DONE (`af765fd0`) | CM-11 |
 | HDR-5 | noscript-alert | Честно предупреждает о JS-зависимых фичах | — | — | — | — | H | ✅ DONE | — |
 | HDR-6 | sprite-include один раз на страницу | header есть везде | — | — | — | — | H | ✅ DONE | IC-1 |
+| HDR-7 | stale-комментарий design-toggle: «циклит Editorial→Swiss→Linear→Broadsheet» (4 дизайна, неверный порядок) при фактическом JS-цикле из 10 (`window.__design.list`: editorial→linear→swiss→notion→mintlify→broadsheet→superhuman→stripe→claude→theverge) — рудимент 4-дизайн-эпохи, вводит в заблуждение мейнтейнера | Переписан на drift-proof формулировку: «циклит по ПОЛНОМУ списку `window.__design.list`, сейчас 10 (…)» — описывает МЕХАНИЗМ, не замороженный порядок (не сгниёт при 11-м дизайне). Чистый комментарий (0 CSS/JS/поведения, без бампа), non-blocked header.html | L | L | L | H | ✅ DONE (р102, comment-only, `commit ниже`) | — |
 
 ### 6.B.3 — `fragments/icons.html`
 
