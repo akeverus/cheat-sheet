@@ -36,7 +36,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "RxJava всегда работает в hybrid push-pull: каждый `Observable` сигнализирует о готовности через `request(n)`.",
+              "text": "RxJava работает в hybrid push-pull: каждый `Observable` сигнализирует о готовности через `request(n)`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Observable` НЕ поддерживает `request(n)` и backpressure — это API только `Flowable` из `Reactive Streams`. `Observable` всегда чистый push.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Все три метода можно вызывать любое число раз — RxJava сама дедуплицирует терминальные сигналы.",
+              "text": "Все три метода можно вызывать сколько угодно раз — RxJava сама дедуплицирует терминальные сигналы.",
               "correct": false,
               "sections": {
                 "what_actually": "RxJava не дедуплицирует терминалы: повторные `onComplete`/`onError` либо игнорируются emitter'ом, либо уходят в plugin-handler.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`onComplete()` обязательно вызывается всегда после `onError()` для cleanup.",
+              "text": "`onComplete()` вызывается после `onError()` для финального cleanup.",
               "correct": false,
               "sections": {
                 "what_actually": "`onError()` сам финализирует поток; `onComplete` после него запрещён контрактом и не вызывается.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Maybe<T>` всегда испускает ровно 1 элемент, как `Single`.",
+              "text": "`Maybe<T>` испускает ровно 1 элемент, как `Single`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Maybe` отдаёт **0 или 1** — это реактивный `Optional<T>`; «ровно 1» — это `Single`.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Cold и Hot отличаются только типом `Scheduler`: cold всегда на `io()`, hot — на `computation()`.",
+              "text": "Cold и Hot отличаются типом `Scheduler`: cold исполняется на `io()`, hot — на `computation()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Различие в модели подписки (ленивость и шаринг потока), а не в `Scheduler`; cold/hot работают на любом планировщике.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Hot `Observable` всегда буферизует все прошлые элементы и отдаёт их новым подписчикам.",
+              "text": "Hot `Observable` буферизует все прошлые элементы и отдаёт их новым подписчикам.",
               "correct": false,
               "sections": {
                 "what_actually": "Буферизация прошлых элементов — это `replay()`; обычный hot (например, `PublishSubject`/`publish`) отдаёт только будущие.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Нет, cold `Observable` нельзя сделать hot — для hot-потока нужен принципиально другой источник вроде `Subject`.",
+              "text": "Нет, cold `Observable` нельзя сделать hot — для hot-потока нужен совсем иной источник вроде `Subject`.",
               "correct": false,
               "sections": {
                 "what_actually": "Можно: операторы `publish()`/`share()`/`replay()` превращают cold в hot, переиспользуя тот же источник.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Единственный способ создать `Observable` — это `Observable.create()` с ручным `emitter`.",
+              "text": "Создать `Observable` можно лишь одним способом — через `Observable.create()` с ручным `emitter`.",
               "correct": false,
               "sections": {
                 "what_actually": "`create()` — лишь один из многих операторов; чаще берут `just`, `fromIterable`, `range`, `fromCallable`, которые проще и безопаснее.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`map()` и `flatMap()` оба гарантируют сохранение порядка элементов.",
+              "text": "`map()` и `flatMap()` оба сохраняют порядок элементов.",
               "correct": false,
               "sections": {
                 "what_actually": "`map` сохраняет порядок (1:1), а `flatMap` порядок НЕ гарантирует — внутренние `Observable` работают параллельно.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Да, единственный способ — это `lift()` с ручным управлением `Observer`.",
+              "text": "Да, доступен ровно один способ — это `lift()` с ручным управлением `Observer`.",
               "correct": false,
               "sections": {
                 "what_actually": "`lift` — лишь один из двух способов; рекомендуемый — `compose()` с `Transformer`, который проще и безопаснее.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "По умолчанию RxJava всегда асинхронна и сама создаёт фоновый поток на каждую подписку.",
+              "text": "По умолчанию RxJava асинхронна и сама создаёт фоновый поток на каждую подписку.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию RxJava синхронна — работает в потоке, вызвавшем `subscribe()`; фоновые потоки появляются только с `subscribeOn`/`observeOn`.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Синхронность или асинхронность зависит от типа: `Observable` синхронен, `Flowable` всегда асинхронен.",
+              "text": "Синхронность или асинхронность зависит от типа: `Observable` синхронен, а `Flowable` асинхронен.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба типа по умолчанию синхронны; асинхронность задаётся `Scheduler`-ами, а не выбором `Observable`/`Flowable`.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Нет, RxJava принципиально последовательна и не способна на параллельное выполнение.",
+              "text": "Нет, RxJava по своей природе последовательна и не способна на параллельное выполнение.",
               "correct": false,
               "sections": {
                 "what_actually": "RxJava по умолчанию последовательна, но параллелизм достижим через `flatMap`+`subscribeOn`, `ParallelFlowable` или `merge` источников на разных `Schedulers`.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Да, RxJava распараллеливает любую цепочку автоматически, без участия разработчика.",
+              "text": "Да, RxJava распараллеливает цепочку целиком автоматически, без участия разработчика.",
               "correct": false,
               "sections": {
                 "what_actually": "Автоматического параллелизма нет — по умолчанию всё последовательно; параллелизм надо включать явно.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Да, но единственный способ — это `ParallelFlowable`, других вариантов нет.",
+              "text": "Да, но доступен лишь один способ — `ParallelFlowable`, других вариантов нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`ParallelFlowable` — лишь один из способов; есть ещё `flatMap`+`subscribeOn` для I/O и `merge` источников на разных `Schedulers`.",
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Observable` всегда медленнее `Flowable` из-за отсутствия оптимизаций.",
+              "text": "`Observable` медленнее `Flowable` из-за отсутствия оптимизаций.",
               "correct": false,
               "sections": {
                 "what_actually": "`Observable` чуть быстрее, потому что не несёт overhead на проверки backpressure; `Flowable` чуть медленнее из-за этих проверок.",
@@ -1956,7 +1956,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ERROR` буферизует элементы и бросает ошибку только при достижении лимита `BUFFER`.",
+              "text": "`ERROR` буферизует элементы и бросает ошибку лишь при достижении лимита `BUFFER`.",
               "correct": false,
               "sections": {
                 "what_actually": "`ERROR` бросает `MissingBackpressureException` сразу при невозможности доставить элемент, не накапливая большой буфер.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`MISSING` означает, что backpressure полностью отключён и поток никогда не переполнится.",
+              "text": "`MISSING` означает, что backpressure отключён и поток не переполнится.",
               "correct": false,
               "sections": {
                 "what_actually": "`MISSING` не отключает backpressure, а перекладывает управление на тебя: дальше нужен оператор `onBackpressure*`, иначе будет `MissingBackpressureException`.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно вызвать `Schedulers.io()` — больший пул потоков полностью решает backpressure.",
+              "text": "Достаточно вызвать `Schedulers.io()` — больший пул потоков целиком решает backpressure.",
               "correct": false,
               "sections": {
                 "what_actually": "Backpressure решают сменой на `Flowable`, операторами ограничения скорости (`throttle`/`buffer`/`window`), параллелизмом потребителя и `onBackpressure*`; больший пул сам по себе проблему не убирает.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Нет, RxJava гарантированно освобождает все подписки сама, утечек не бывает.",
+              "text": "Нет, RxJava освобождает все подписки сама, утечек не бывает.",
               "correct": false,
               "sections": {
                 "what_actually": "RxJava сама утечек не создаёт, но неправильное использование (забытые подписки, ссылки на контекст) приводит к утечкам — отписка на разработчике.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Утечки возникают всегда, поэтому после каждого `subscribe` нужно звать `System.gc()`.",
+              "text": "Утечки возникают часто, поэтому после каждого `subscribe` нужно звать `System.gc()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`System.gc()` не решает проблему; утечки устраняют отпиской через `Disposable`/`CompositeDisposable`/`takeUntil`, а не подсказками сборщику.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Утечки бывают только во `Flowable`, а `Observable` от них защищён.",
+              "text": "Утечки бывают лишь во `Flowable`, а `Observable` от них защищён.",
               "correct": false,
               "sections": {
                 "what_actually": "Тип ни при чём: утечки от незакрытых подписок возможны и в `Observable`, и во `Flowable` одинаково.",
@@ -2375,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`clear()` и `dispose()` у `CompositeDisposable` полностью идентичны.",
+              "text": "`clear()` и `dispose()` у `CompositeDisposable` ведут себя одинаково.",
               "correct": false,
               "sections": {
                 "what_actually": "Различие есть: `clear()` отписывает все, но контейнер можно использовать дальше; `dispose()` отписывает все и больше не принимает новые `Disposable`.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Да, и `RxKotlin` полностью заменяет RxJava, делая её зависимость ненужной.",
+              "text": "Да, и `RxKotlin` целиком заменяет RxJava, делая её зависимость ненужной.",
               "correct": false,
               "sections": {
                 "what_actually": "`RxKotlin` — это лишь набор расширений ПОВЕРХ RxJava; сама RxJava остаётся обязательной зависимостью.",
@@ -2568,7 +2568,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "RxJava и `Project Reactor` полностью взаимозаменяемы и имеют идентичный API.",
+              "text": "RxJava и `Project Reactor` взаимозаменяемы и имеют идентичный API.",
               "correct": false,
               "sections": {
                 "what_actually": "API различается: у Reactor `Flux`/`Mono` вместо `Observable`/`Flowable`/`Single`, свой `Context` и `StepVerifier`; концепции близки, но классы и методы разные.",
@@ -2664,7 +2664,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`BUFFER` всегда безопасен и подходит для любых бесконечных потоков.",
+              "text": "`BUFFER` безопасен и подходит для бесконечных потоков.",
               "correct": false,
               "sections": {
                 "what_actually": "`BUFFER` неограниченно копит элементы и на бесконечном быстром потоке приводит к OOM; для него задают лимит и overflow-политику.",
