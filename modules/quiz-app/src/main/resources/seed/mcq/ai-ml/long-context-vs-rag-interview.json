@@ -34,7 +34,7 @@
               "order": 1
             },
             {
-              "text": "Claimed context всегда совпадает с effective: если API принимает 128K, модель одинаково качественно работает на всех 128K без деградации к концу окна.",
+              "text": "Claimed context совпадает с effective: если API принимает 128K, модель одинаково качественно работает на всех 128K без деградации к концу окна.",
               "correct": false,
               "sections": {
                 "what_actually": "Claimed почти всегда больше effective: `GPT-4 Turbo` 128K реально держит ~64K, `Llama 3.1 8B` при 128K — лишь ~32K по `RULER`.",
@@ -69,7 +69,7 @@
           "question_text": "Зачем вообще потребовался long context — какие use-cases он открывает по сравнению с коротким окном?",
           "options": [
             {
-              "text": "Long context нужен исключительно чтобы хранить длинную историю чата, других применений у больших окон нет.",
+              "text": "Long context нужен главным образом чтобы хранить длинную историю чата, других заметных применений у больших окон нет.",
               "correct": false,
               "sections": {
                 "what_actually": "История диалога — лишь один из use-cases; есть ещё анализ длинных документов, codebase analysis, multi-doc QA, few-shot с большими примерами, video understanding.",
@@ -94,7 +94,7 @@
               "order": 1
             },
             {
-              "text": "Long context нужен только для few-shot обучения: единственная задача — впихнуть побольше обучающих примеров в prompt.",
+              "text": "Long context нужен прежде всего для few-shot обучения: его главная задача — уместить побольше обучающих примеров в prompt.",
               "correct": false,
               "sections": {
                 "what_actually": "Few-shot с большими examples — лишь один пункт; есть ещё анализ длинных документов, codebase, multi-doc QA, long conversations и видео.",
@@ -106,7 +106,7 @@
               "order": 2
             },
             {
-              "text": "Long context полностью заменяет необходимость в каком-либо retrieval: с большим окном `RAG` и поиск больше никогда не нужны.",
+              "text": "Long context снимает необходимость в retrieval: с большим окном `RAG` и поиск больше не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Long context не убивает retrieval: огромные корпуса (10M+ токенов) не лезут даже в `Gemini` 2M, и `RAG` остаётся для масштаба, cost, freshness, ACL.",
@@ -141,7 +141,7 @@
               "order": 0
             },
             {
-              "text": "Единственное изменение — увеличить число слоёв трансформера; attention-паттерн и позиционные кодировки трогать не нужно.",
+              "text": "Главное изменение — увеличить число слоёв трансформера; attention-паттерн и позиционные кодировки трогать не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Меняли именно attention-паттерн (sparse, sliding window, ring) и позиционные кодировки (`RoPE` scaling, `YaRN`, `ALiBi`), а не просто глубину сети.",
@@ -166,7 +166,7 @@
               "order": 2
             },
             {
-              "text": "Достаточно одного `KV-cache` offloading на диск — выгрузка кэша полностью решает квадратичную сложность attention, остальные техники избыточны.",
+              "text": "Достаточно одного `KV-cache` offloading на диск — выгрузка кэша снимает квадратичную сложность attention, остальные техники избыточны.",
               "correct": false,
               "sections": {
                 "what_actually": "Offloading экономит память под `KV-cache`, но не убирает `O(n²)` compute: матрицу attention всё равно надо посчитать, поэтому нужны sparse/ring/scaling.",
@@ -286,7 +286,7 @@
               "order": 2
             },
             {
-              "text": "Единственная рабочая митигация — увеличить размер модели: на достаточно крупной модели `Lost in the Middle` исчезает полностью.",
+              "text": "Главная рабочая митигация — увеличить размер модели: на достаточно крупной модели `Lost in the Middle` пропадает.",
               "correct": false,
               "sections": {
                 "what_actually": "Размер не убирает эффект; помогают позиционные приёмы: важное в начало/конец, re-ranking, дублирование query, structured prompt, map-reduce.",
@@ -346,7 +346,7 @@
               "order": 2
             },
             {
-              "text": "Needle-in-a-Haystack считается исчерпывающим бенчмарком: если модель проходит `NIH` на 99%, её effective context гарантированно равен claimed.",
+              "text": "Needle-in-a-Haystack считается исчерпывающим бенчмарком: если модель проходит `NIH` на 99%, её effective context равен claimed.",
               "correct": false,
               "sections": {
                 "what_actually": "`NIH` слишком прост и не гарантирует effective context: модель может найти одну иголку, но провалить multi-hop и aggregation на той же длине.",
@@ -381,7 +381,7 @@
               "order": 0
             },
             {
-              "text": "Effective context — это всегда больше claimed: модели качественно работают за пределами заявленного окна благодаря extrapolation.",
+              "text": "Effective context обычно больше claimed: модели качественно работают за пределами заявленного окна благодаря extrapolation.",
               "correct": false,
               "sections": {
                 "what_actually": "Effective почти всегда меньше claimed: `GPT-4 Turbo` 128K держит ~64K, `Llama 3.1 8B` 128K — лишь ~32K; gap идёт в сторону уменьшения.",
@@ -406,7 +406,7 @@
               "order": 2
             },
             {
-              "text": "Effective context зависит только от тарифа: на платном API эффективное окно равно claimed, а урезается оно лишь на бесплатном.",
+              "text": "Effective context зависит от тарифа: на платном API эффективное окно равно claimed, а урезается оно на бесплатном.",
               "correct": false,
               "sections": {
                 "what_actually": "Effective определяется архитектурой и обучением модели (`RULER` score), а не тарифным планом; платный доступ не делает середину окна качественнее.",
@@ -453,7 +453,7 @@
               "order": 1
             },
             {
-              "text": "`LongBench` состоит исключительно из synthetic needle-задач, реальных текстов в нём нет.",
+              "text": "`LongBench` состоит преимущественно из synthetic needle-задач, реальных текстов в нём почти нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`LongBench` (THUDM) — это реальные задачи: single/multi-doc QA, summarization, few-shot, code completion, plus один synthetic блок (`PassageRetrieval`).",
@@ -502,7 +502,7 @@
               "order": 0
             },
             {
-              "text": "Long context выбирают всегда, когда есть бюджет, а `RAG` — только для бедных проектов; это вопрос исключительно денег.",
+              "text": "Long context выбирают, когда есть бюджет, а `RAG` — для экономных проектов; по сути это вопрос денег.",
               "correct": false,
               "sections": {
                 "what_actually": "Дело не только в деньгах: даже с бюджетом `RAG` нужен для freshness, ACL, citation, multi-tenant и низкой latency, которые long context не закрывает.",
@@ -514,7 +514,7 @@
               "order": 1
             },
             {
-              "text": "`RAG` всегда даёт более высокую точность, чем long context, поэтому long context имеет смысл только когда `RAG` технически невозможен.",
+              "text": "`RAG` обычно даёт более высокую точность, чем long context, поэтому long context имеет смысл, когда `RAG` не удаётся применить технически.",
               "correct": false,
               "sections": {
                 "what_actually": "Для multi-hop reasoning и global understanding long context часто точнее `RAG`, который теряет связи между чанками; точность зависит от задачи.",
@@ -526,7 +526,7 @@
               "order": 2
             },
             {
-              "text": "Выбор определяется только размером документа: меньше 128K — long context, больше — `RAG`, остальные факторы значения не имеют.",
+              "text": "Выбор определяется размером документа: меньше 128K — long context, больше — `RAG`; прочие факторы вторичны.",
               "correct": false,
               "sections": {
                 "what_actually": "Размер — лишь первый фильтр; дальше решают частота обновления, cost, QPS, citation, ACL и latency, а не только число токенов.",
@@ -549,7 +549,7 @@
           "question_text": "Правда ли, что RAG умер с приходом 2M-context Gemini?",
           "options": [
             {
-              "text": "Да, `RAG` полностью устарел: 2M-context `Gemini` вмещает любой корпус, поэтому retrieval больше нигде не нужен.",
+              "text": "Да, `RAG` устарел: 2M-context `Gemini` вмещает большой корпус, поэтому retrieval почти нигде не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "`RAG` не умер: 2M токенов не вмещают корпуса уровня всего internet, корпоративных wiki за 10 лет; границы сдвинулись, но `RAG` сохранил cost, latency, scale, freshness, citation, ACL.",
@@ -574,7 +574,7 @@
               "order": 1
             },
             {
-              "text": "`RAG` мёртв для всего, кроме citation: единственное, что он ещё умеет, — проставлять ссылки `[1][2]`, в остальном его заменил long context.",
+              "text": "`RAG` мёртв для всего, кроме citation: главное, что он ещё умеет, — проставлять ссылки `[1][2]`, в остальном его заменил long context.",
               "correct": false,
               "sections": {
                 "what_actually": "Citation — лишь одно из преимуществ; `RAG` также незаменим для scale, freshness, cost, latency, ACL и audit, не только для ссылок.",
@@ -586,7 +586,7 @@
               "order": 2
             },
             {
-              "text": "`RAG` и long context взаимоисключающи: использовать их вместе невозможно, поэтому с приходом 2M-окна пришлось окончательно выбрать long context.",
+              "text": "`RAG` и long context взаимоисключающи: совмещать их не выходит, поэтому с приходом 2M-окна пришлось выбрать long context.",
               "correct": false,
               "sections": {
                 "what_actually": "Они как раз отлично комбинируются: hybrid (`RAG` сужает scope → long context анализирует) — самый популярный production-паттерн 2026.",
@@ -669,7 +669,7 @@
           "question_text": "Как реализуется ACL filtering (row-level security) в RAG vs long context?",
           "options": [
             {
-              "text": "В long context ACL делается тривиально: достаточно попросить модель «выдай только те куски, которые видит пользователь» из единого prompt.",
+              "text": "В long context ACL делается тривиально: достаточно попросить модель «выдай те куски, которые видит пользователь» из единого prompt.",
               "correct": false,
               "sections": {
                 "what_actually": "Из одного prompt нельзя надёжно «выдать только видимые куски»: всё уже в контексте, и system-prompt-правила обходятся prompt injection; надёжный путь — pre-filter документов до подачи.",
@@ -693,7 +693,7 @@
               "order": 1
             },
             {
-              "text": "Per-user prompt cache полностью решает ACL для long context и при этом всегда экономически выгоден.",
+              "text": "Per-user prompt cache решает ACL для long context и при этом остаётся экономически выгодным.",
               "correct": false,
               "sections": {
                 "what_actually": "Per-user cache — лишь один из вариантов и часто экономически нецелесообразен (кэш под каждого пользователя), а не универсальное выгодное решение.",
@@ -742,7 +742,7 @@
               "order": 0
             },
             {
-              "text": "Long context с prompt cache всегда дешевле `RAG`, потому что 90% скидка на cached input делает большое окно выгоднее любого retrieval.",
+              "text": "Long context с prompt cache обычно дешевле `RAG`, потому что 90% скидка на cached input делает большое окно выгоднее retrieval.",
               "correct": false,
               "sections": {
                 "what_actually": "Даже с cache `RAG` обычно дешевле: ~$525/мес против ~$1317/мес у cached long context — кэш сокращает разрыв до ~2.5×, но не переворачивает его.",
@@ -861,7 +861,7 @@
               "order": 0
             },
             {
-              "text": "Единственный способ снизить `TTFT` для long context — уменьшить max_tokens вывода: чем короче ответ, тем меньше prefill.",
+              "text": "Главный способ снизить `TTFT` для long context — уменьшить max_tokens вывода: чем короче ответ, тем меньше prefill.",
               "correct": false,
               "sections": {
                 "what_actually": "max_tokens влияет на decode (длину вывода), а не на prefill: `TTFT` снижают prompt caching, prefill chunking, speculative decoding, context distillation, continuous batching.",
@@ -886,7 +886,7 @@
               "order": 2
             },
             {
-              "text": "`TTFT` для long context невозможно оптимизировать в принципе: prefill длинного prompt всегда занимает фиксированные десятки секунд независимо от инфраструктуры.",
+              "text": "`TTFT` для long context оптимизировать не выходит: prefill длинного prompt занимает фиксированные десятки секунд независимо от инфраструктуры.",
               "correct": false,
               "sections": {
                 "what_actually": "Оптимизировать можно и нужно: prompt caching вообще пропускает prefill для cached prefix, prefill chunking распараллеливает его, speculative decoding ускоряет старт.",
@@ -921,7 +921,7 @@
               "order": 0
             },
             {
-              "text": "У `Anthropic` prompt caching полностью бесплатен и при записи, и при чтении, поэтому он выгоден с самого первого запроса без условий.",
+              "text": "У `Anthropic` prompt caching бесплатен и при записи, и при чтении, поэтому он выгоден с самого первого запроса.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Anthropic` запись в cache стоит 1.25× обычного input, а чтение — 0.1×; break-even наступает уже после первого hit, но запись не бесплатна.",
@@ -1006,7 +1006,7 @@
               "order": 2
             },
             {
-              "text": "`Gemini` Context Caching бесплатен по storage и не имеет минимального размера, поэтому подходит для любых коротких prompt.",
+              "text": "`Gemini` Context Caching бесплатен по storage и не имеет минимального размера, поэтому подходит и для коротких prompt.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Gemini` storage стоит $1/M токенов/час и есть минимум 32K токенов, поэтому короткие prompt он не кэширует и storage не бесплатен.",
@@ -1066,7 +1066,7 @@
               "order": 2
             },
             {
-              "text": "Hit rate semantic cache в production стабильно держится около 95% для любых задач, поэтому он почти всегда устраняет вызовы LLM.",
+              "text": "Hit rate semantic cache в production стабильно держится около 95% на большинстве задач, поэтому он снимает почти все вызовы LLM.",
               "correct": false,
               "sections": {
                 "what_actually": "Hit rate сильно зависит от типа: ~10-40% для FAQ-style и лишь 1-5% для генеративных задач, а не ~95% повсеместно.",
@@ -1101,7 +1101,7 @@
               "order": 0
             },
             {
-              "text": "Threshold выставляют раз и навсегда на 0.5 для всех доменов; ни per-domain настройки, ни валидаторов не нужно.",
+              "text": "Threshold выставляют один раз на 0.5 для разных доменов; ни per-domain настройки, ни валидаторов не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "На практике стартуют с ~0.95 и делают per-domain (строже 0.98 для `pricing`, свободнее 0.90 для general), плюс validator-модель для отсечения false hits.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "Для semantic cache подходит любой threshold, потому что embedding-модель сама гарантирует, что совпадут только одинаковые по смыслу вопросы.",
+              "text": "Для semantic cache годится широкий диапазон threshold: embedding-модель сама разводит вопросы, и совпадут лишь одинаковые по смыслу.",
               "correct": false,
               "sections": {
                 "what_actually": "Embedding не гарантирует этого: при низком пороге related-but-different вопросы дают cosine 0.85-0.90 и ложные hits; порог надо выбирать осознанно.",
@@ -1294,7 +1294,7 @@
               "order": 1
             },
             {
-              "text": "Cascading всегда дешевле любой одиночной модели и не имеет рисков, потому что каждый запрос гарантированно решается на самой дешёвой ступени.",
+              "text": "Cascading дешевле одиночной модели и не несёт рисков, потому что каждый запрос решается на самой дешёвой ступени.",
               "correct": false,
               "sections": {
                 "what_actually": "Не каждый запрос решается дёшево: escalated идёт через small+large (двойная стоимость), а self-evaluation может ошибочно пропустить сложный запрос.",
@@ -1341,7 +1341,7 @@
               "order": 0
             },
             {
-              "text": "Code agents используют только embedding search по файлам и принципиально не работают с AST или символами кода.",
+              "text": "Code agents используют embedding search по файлам и не работают с AST или символами кода.",
               "correct": false,
               "sections": {
                 "what_actually": "Они активно используют structured retrieval: `Cursor` — AST через tree-sitter, `Cody` — symbol resolution (LSP-like), `Aider` — repomap (compressed AST), а embedding — лишь для unstructured queries.",
@@ -1366,7 +1366,7 @@
               "order": 2
             },
             {
-              "text": "Все code agents используют абсолютно одинаковую архитектуру retrieval, различий между `Cursor`, `Cody` и `Aider` нет.",
+              "text": "Все code agents используют одинаковую архитектуру retrieval, различий между `Cursor`, `Cody` и `Aider` нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Архитектуры различаются: `Cursor` — AST + embedding, `Cody` — zoekt + LSP-symbols, `Aider` — repomap + architect mode; общий лишь паттерн из слоёв.",
@@ -1389,7 +1389,7 @@
           "question_text": "Что такое sparse attention (BigBird/Longformer) и каков её современный статус?",
           "options": [
             {
-              "text": "Sparse attention заставляет каждый token attend ко всем `n` токенам, как vanilla, но с пониженной точностью весов.",
+              "text": "Sparse attention оставляет каждый token attending ко всем `n` токенам, как vanilla, но с пониженной точностью весов.",
               "correct": false,
               "sections": {
                 "what_actually": "Sparse attention наоборот ограничивает паттерн: token attend лишь к окну соседей + нескольким global tokens (+ random в `BigBird`), снижая сложность с `O(n²)` до `O(n)`.",
@@ -1401,7 +1401,7 @@
               "order": 0
             },
             {
-              "text": "`Longformer` использует только random attention пары, а `BigBird` — только sliding window, без global tokens у обоих.",
+              "text": "`Longformer` использует лишь random attention пары, а `BigBird` — лишь sliding window, без global tokens у обоих.",
               "correct": false,
               "sections": {
                 "what_actually": "`Longformer` = local + global; `BigBird` = local + global + random; именно random добавляет `BigBird`, а global есть у обоих.",
@@ -1413,7 +1413,7 @@
               "order": 1
             },
             {
-              "text": "Sparse attention сегодня доминирует во всех frontier-моделях и полностью вытеснила dense attention в `GPT-4`, `Claude` и `Gemini`.",
+              "text": "Sparse attention сегодня доминирует во frontier-моделях и вытеснила dense attention в `GPT-4`, `Claude` и `Gemini`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: с приходом `FlashAttention` + ring attention + position scaling dense attention с эффективным compute стал доминировать в frontier-моделях; sparse была популярна в 2020-2022.",
@@ -1702,7 +1702,7 @@
               "order": 0
             },
             {
-              "text": "Decision tree всегда ведёт к одному ответу — `RAG`, потому что retrieval универсален и покрывает любой размер knowledge.",
+              "text": "Decision tree обычно ведёт к одному ответу — `RAG`, потому что retrieval универсален и покрывает разный размер knowledge.",
               "correct": false,
               "sections": {
                 "what_actually": "Дерево ветвится на четыре исхода (in-prompt, CAG, long context, hybrid/RAG): для <32K — in-prompt, для стабильных 32K-1M с high QPS — CAG, а не всегда RAG.",
@@ -1714,7 +1714,7 @@
               "order": 1
             },
             {
-              "text": "Первая развилка дерева — нужны ли citation; размер knowledge учитывается только в самом конце как второстепенный фактор.",
+              "text": "Первая развилка дерева — нужны ли citation; размер knowledge учитывается в самом конце как второстепенный фактор.",
               "correct": false,
               "sections": {
                 "what_actually": "Первая развилка — именно размер knowledge (<32K / 32K-1M / >1M); citation появляется ниже, как уточнение внутри ветки RAG.",
@@ -1774,7 +1774,7 @@
               "order": 1
             },
             {
-              "text": "`Perplexity` и `Glean` используют long context по всему интернету и всем корпоративным источникам, потому что современные окна вмещают любой объём.",
+              "text": "`Perplexity` и `Glean` используют long context по интернету и корпоративным источникам, потому что современные окна вмещают большой объём.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба используют RAG: `Perplexity` — web search retrieval (internet > 2M токенов), `Glean` — retrieval по TB-level корпоративным источникам; в окно это не помещается.",
