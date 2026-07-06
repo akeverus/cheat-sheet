@@ -518,7 +518,9 @@ Readability — отдельная линза (русская проза): вс�
 - ✅ Закоммичено в round 3 (workflow `wn86pui6x`, fidelity_ok+parity_ok): `ai-safety-guardrails` (ad6ca9c7, 32 бл.), `spring-webflux` (b701ac76, 43 бл.), `test-automation` (5f9d63fb, 50 бл.) — length-tell снят.
 - ✅ Round-3 **de-caricature** band-1 (workflow по 3 файла, fidelity+parity+plausibility triple-ok): `leadership/mentoring` (f75faad6, CAR 27→0), `ai-ml/rag` (a545c58e, CAR 17→0), `ai-ml/design-search` (d0dfcebf, CAR 24→0) — length-tell остался 0, 0 регрессий.
 - ✅ Round-3 de-caricature band-2: `refactoring-patterns` (87d04acf), `aws-lambda` (b238f382), `graphs` (5d4decdd) — каждый CAR→0, дистракторы раздуты до реалистичных ошибочных моделей без токсичных маркеров.
-- ⏳ Следующая цель round 3: CAR-heavy архитектурные INF=0 файлы (`cqrs-event-sourcing`/`scalability-patterns`/`mongodb`/`caching-strategies`/`cap-theorem`/`consistency-patterns`), затем worst-first CRITICAL по §7. Readability-хотспот `behavioral/failure-stories` (🟥4) — отдельный проход при желании.
+- ✅ Round-3 de-caricature band-3/4/5 (workflow, до weekly-limit): `sql`/`kotlin-collections`/`caching-performance` (band-12), `greedy-algorithms`/`graphql`/`ai-application-architecture` (band-13).
+- ✅ **Ручной режим** (weekly-limit до 2026-07-06 18:00 MSK — воркфлоу-ревьюеры недоступны, 1 файл/тик, детерминированные гейты + inline fidelity): `code-review-practices` (f932b593), `spring-data-jpa` (f08756ea), `design-patterns` (d04ae935), `technical-debt` (a5b3bf33, 18 бл.), `microservices` (f937bec0, 16 бл.), `distributed-systems` (687a7949, 16 бл.), `testcontainers` (97ce53db, 19 бл.) — каждый CAR→0, audit-gap «единственн/полностью/любой» дочищены extended tone-regex, correct не тронут.
+- ⏳ Следующая цель round 3: CAR=11 тир worst-first — `rust`/`reverse-proxy`/`recursion`/`networking`/`multi-agent-orchestration`/… (~250 файлов с CAR>0 в очереди). По сбросу лимита (Jul 6) — возврат к 3-файловым воркфлоу-бэндам.
 
 **Честно:** round 3 объединяет три линзы. Под объединённым баром 297/318 файлов = CRITICAL (correct
 выделяется по длине+структуре+плотности). Length/structure-tell и caricature-tell чинятся вместе:
