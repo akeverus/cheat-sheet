@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Testcontainers` не требует Docker вовсе: библиотека эмулирует контейнеры внутри JVM через специальную песочницу и работает на любой машине.",
+              "text": "`Testcontainers` не требует Docker вовсе: библиотека эмулирует контейнеры внутри JVM через специальную песочницу и работает на машине без установленного Docker.",
               "correct": false,
               "sections": {
                 "what_actually": "Docker-демон обязателен — библиотека шлёт ему команды через Docker API; без него тесты падают с явной ошибкой о недоступности Docker.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Жизненным циклом контейнеров всегда управляет сам Docker-демон по `restart policy`, а `Testcontainers Core` только один раз отправляет образ в registry.",
+              "text": "Жизненным циклом контейнеров управляет сам Docker-демон по `restart policy`, а `Testcontainers Core` лишь один раз отправляет образ в registry.",
               "correct": false,
               "sections": {
                 "what_actually": "Жизненным циклом в тестах управляет JUnit 5 Extension и `Ryuk`: старт/стоп привязан к `@BeforeAll`/`@AfterAll`, а cleanup гарантирует Reaper.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`GenericContainer` запускает несколько образов сразу из одного объекта и сам строит сеть между ними, заменяя `docker-compose`.",
+              "text": "`GenericContainer` запускает несколько образов из одного объекта и сам строит сеть между ними, заменяя `docker-compose`.",
               "correct": false,
               "sections": {
                 "what_actually": "Один `GenericContainer` — это один образ/контейнер; для оркестрации стека есть `DockerComposeContainer` и явная `Network`.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Использовать `GenericContainer` следует всегда, даже для `PostgreSQL` и `MySQL`, потому что специализированные контейнеры устарели.",
+              "text": "Использовать `GenericContainer` стоит и для `PostgreSQL`/`MySQL`, потому что специализированные контейнеры устарели и хуже поддерживаются.",
               "correct": false,
               "sections": {
                 "what_actually": "Для популярных БД предпочтительны типизированные контейнеры: они дают `getJdbcUrl()`, правильный healthcheck и `WaitStrategy` из коробки.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`PostgreSQLContainer` всегда требует, чтобы вы вручную собрали JDBC URL из `getHost()` и `getMappedPort(5432)` — метода `getJdbcUrl()` у него нет.",
+              "text": "`PostgreSQLContainer` требует вручную собрать JDBC URL из `getHost()` и `getMappedPort(5432)` — готового `getJdbcUrl()` у него нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод `getJdbcUrl()` есть и возвращает готовый URL с правильной БД и портом; ручная сборка не нужна.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`H2` полностью поддерживает диалект `PostgreSQL`, включая `JSONB`-операторы и расширения, поэтому функциональной разницы с `Testcontainers` нет.",
+              "text": "`H2` в режиме совместимости поддерживает диалект `PostgreSQL`, включая `JSONB`-операторы и расширения, поэтому функциональной разницы с `Testcontainers` почти нет.",
               "correct": false,
               "sections": {
                 "what_actually": "У `H2` лишь частичная эмуляция: `JSONB`-оператор `@>`, расширения (`pg_trgm`, `PostGIS`), многие хранимые процедуры не поддержаны.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`KafkaContainer` поднимает только брокер, а `ZooKeeper` нужно всегда запускать отдельным `GenericContainer` и связывать вручную через `Network`.",
+              "text": "`KafkaContainer` поднимает только брокер, а `ZooKeeper` нужно запускать отдельным `GenericContainer` и связывать вручную через `Network`.",
               "correct": false,
               "sections": {
                 "what_actually": "`KafkaContainer` включает встроенный `ZooKeeper` (или работает в `KRaft`), отдельный контейнер для простого случая не нужен.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Extension всегда создаёт новый контейнер на каждый тестовый метод независимо от `static`, обеспечивая полную изоляцию по умолчанию.",
+              "text": "Extension создаёт новый контейнер на каждый тестовый метод независимо от `static`, обеспечивая полную изоляцию по умолчанию.",
               "correct": false,
               "sections": {
                 "what_actually": "Scope зависит от `static`: `static`-поле — один контейнер на класс (`@BeforeAll`/`@AfterAll`), instance-поле — новый на каждый тест.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@ServiceConnection` доступен в любой версии Spring Boot, начиная с 2.x, и работает идентично `@DynamicPropertySource`.",
+              "text": "`@ServiceConnection` доступен начиная со Spring Boot 2.x и работает идентично `@DynamicPropertySource`.",
               "correct": false,
               "sections": {
                 "what_actually": "Аннотация появилась именно в Spring Boot 3.1; в 2.x её нет, и там используют `@DynamicPropertySource`.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@ServiceConnection` хуже `@DynamicPropertySource`, потому что заставляет вручную перечислять имена всех properties для type-safety.",
+              "text": "`@ServiceConnection` хуже `@DynamicPropertySource`, потому что требует вручную перечислять имена всех properties для type-safety.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `@ServiceConnection` убирает ручное перечисление properties — Spring сам знает нужные ключи через `ConnectionDetails`.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Локальный запуск на контейнерах доступен в любой версии Spring Boot и не требует `bootTestRun` — обычный `bootRun` тоже поднимет контейнеры.",
+              "text": "Локальный запуск на контейнерах доступен начиная со Spring Boot 2.x и не требует `bootTestRun` — обычный `bootRun` тоже поднимет контейнеры.",
               "correct": false,
               "sections": {
                 "what_actually": "Фича появилась в Spring Boot 3.1, а запускают её через `bootTestRun`/`spring-boot:test-run` (используется тестовый класспас), не через обычный `bootRun`.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Singleton Containers — это когда каждый тестовый класс получает свой собственный контейнер, чтобы гарантировать полную изоляцию.",
+              "text": "Singleton Containers — это когда каждый тестовый класс получает свой собственный контейнер ради полной изоляции.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: singleton означает ОДИН общий контейнер на все классы; отдельный контейнер на класс — это противоположный подход.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Параллельный запуск с `Testcontainers` невозможен: контейнеры всегда конфликтуют за фиксированные порты, поэтому тесты приходится гонять последовательно.",
+              "text": "Параллельный запуск с `Testcontainers` не работает: контейнеры конфликтуют за фиксированные порты, поэтому тесты приходится гонять последовательно.",
               "correct": false,
               "sections": {
                 "what_actually": "Параллельность работает: контейнеры используют рандомные порты (`getMappedPort`), так что конфликтов по портам обычно нет.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При параллельном запуске с одним singleton-контейнером `@Transactional` rollback всегда надёжно изолирует данные между потоками.",
+              "text": "При параллельном запуске с одним singleton-контейнером `@Transactional` rollback надёжно изолирует данные между потоками.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Transactional` rollback не всегда работает с параллельными тестами: транзакции блокируют друг друга, поэтому часто нужен `TRUNCATE`/schema-per-test.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Wait.forListeningPort()` — идеальная универсальная стратегия для любых сервисов, включая базы данных, так как открытый порт гарантирует готовность.",
+              "text": "`Wait.forListeningPort()` — универсальная стратегия для большинства сервисов, включая базы данных, так как открытый порт означает готовность.",
               "correct": false,
               "sections": {
                 "what_actually": "Для БД `forListeningPort()` обманчив: порт может быть открыт, а БД ещё не принимает запросы; нужна стратегия готовности самого сервиса.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`dependsOn(container)` гарантирует, что зависимый контейнер дождётся полной готовности другого сервиса (не только старта), заменяя `WaitStrategy`.",
+              "text": "`dependsOn(container)` обеспечивает, что зависимый контейнер дождётся полной готовности другого сервиса (не только старта), заменяя `WaitStrategy`.",
               "correct": false,
               "sections": {
                 "what_actually": "`dependsOn` обеспечивает лишь ПОРЯДОК старта; готовность сервиса по-прежнему проверяет `WaitStrategy` зависимого контейнера.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `GitHub Actions` для `Testcontainers` всегда нужно вручную поднимать `docker:dind`, как в `GitLab CI`.",
+              "text": "В `GitHub Actions` для `Testcontainers` нужно вручную поднимать `docker:dind`, как в `GitLab CI`.",
               "correct": false,
               "sections": {
                 "what_actually": "На `ubuntu-latest` в `GitHub Actions` Docker доступен по умолчанию; `dind` дополнительно поднимать не требуется.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главное ограничение `Testcontainers` — невозможность использовать рандомные порты, из-за чего параллельные тесты всегда конфликтуют.",
+              "text": "Главное ограничение `Testcontainers` — отсутствие поддержки рандомных портов, из-за чего параллельные тесты конфликтуют.",
               "correct": false,
               "sections": {
                 "what_actually": "Рандомные порты — как раз решение, а не ограничение: `getMappedPort` исключает конфликты; реальные ограничения — Docker, время старта, ресурсы.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Testcontainers` гарантирует полную изоляцию данных между тестами автоматически, поэтому протекание состояния невозможно.",
+              "text": "`Testcontainers` обеспечивает изоляцию данных между тестами автоматически, поэтому протекание состояния можно не учитывать.",
               "correct": false,
               "sections": {
                 "what_actually": "При общем контейнере данные протекают между тестами; изоляцию обеспечивает разработчик через `@Transactional` или очистку таблиц.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Testcontainers` стоит использовать всегда вместо моков, потому что контейнеры быстрее и надёжнее unit-тестов.",
+              "text": "`Testcontainers` стоит использовать вместо моков везде, потому что контейнеры быстрее и надёжнее unit-тестов.",
               "correct": false,
               "sections": {
                 "what_actually": "Для быстрой бизнес-логики предпочтительны моки; контейнеры медленнее (2-10 сек старт) и нужны лишь на уровне интеграции.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Токсики применяются ко всем тестам глобально и навсегда — убрать добавленную задержку в рамках теста нельзя.",
+              "text": "Токсики (Toxiproxy) применяются ко всем тестам глобально — убрать добавленную задержку в рамках отдельного теста нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Токсики добавляют и удаляют по имени (`toxics().get(\"db-latency\").remove()`), что позволяет включать сбой и восстанавливать сеть внутри теста.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Ryuk` нельзя отключить — он жёстко зашит в библиотеку и всегда запускается перед тестами.",
+              "text": "`Ryuk` нельзя отключить — он жёстко зашит в библиотеку и запускается перед тестами по умолчанию.",
               "correct": false,
               "sections": {
                 "what_actually": "`Ryuk` отключается через `TESTCONTAINERS_RYUK_DISABLED=true`; это делают в Kubernetes, `Testcontainers Cloud` и при reuse.",
@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`DockerComposeContainer` всегда быстрее набора отдельных контейнеров, потому что docker-compose оптимизирует параллельный старт лучше Testcontainers.",
+              "text": "`DockerComposeContainer` быстрее набора отдельных контейнеров, потому что docker-compose оптимизирует параллельный старт лучше Testcontainers.",
               "correct": false,
               "sections": {
                 "what_actually": "Compose-режим обычно МЕДЛЕННЕЕ из-за overhead; отдельные контейнеры дают больше контроля над стартом и диагностикой.",
@@ -2135,7 +2135,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`DockerComposeContainer` не зависит от установленного docker-compose и всегда использует встроенную реализацию, поэтому `withLocalCompose` не нужен.",
+              "text": "`DockerComposeContainer` не зависит от установленного docker-compose и использует встроенную реализацию, поэтому `withLocalCompose` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть зависимость от docker-compose/Compose V2; `withLocalCompose(true)` как раз переключает на локальный бинарь, и это отмечено как минус.",
@@ -2375,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`LocalStack` Free полностью совместим с production AWS и поддерживает все сервисы и функции без ограничений и без Pro-версии.",
+              "text": "`LocalStack` Free совместим с production AWS и поддерживает большинство сервисов и функций без Pro-версии.",
               "correct": false,
               "sections": {
                 "what_actually": "Часть функций (Lambda с layers, ряд RDS-возможностей) доступна только в Pro; совместимость API не полная, а производительность ниже реального AWS.",
