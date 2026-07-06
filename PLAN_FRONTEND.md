@@ -195,7 +195,7 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 | `fragments/today-widget.html` | ✅ | — | — | ✅ | ✅ | — | ✅ | — | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | 🚫 | ✅ | — | ✅ | ✅ | — | ✅ | ✅ | — | — | Чисто; «N из M к повтору» (TDW-1); streak без aria-live = 🚫 |
 | `fragments/training-actions.html` | ✅ | — | — | ✅ | ✅ | 🌱 | ✅ | ✅ | — | ✅ | — | — | — | ✅ | ✅ | ✅ | ✅ | 🚫 | ✅ | — | — | ✅ | — | ✅ | ✅ | — | — | 🌱TAC-3 keyboard-hint контраст (low); timer/hint без aria-live = 🚫 |
 | **▸ СТИЛИ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
-| `css/tokens.css` | — | ✅ | ✅ | — | 🌱 | ✅ | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | ✅ | — | — | — | — | ✅ | ✅ | — | TOK-1 AA-гейт CLEAN, TOK-5 OS-prefs; 🌱TOK-2 развести accent↔success/error по hue |
+| `css/tokens.css` | — | ✅ | ✅ | — | 🚫 | ✅ | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | ✅ | — | — | — | — | ✅ | ✅ | — | TOK-1 AA-гейт CLEAN, TOK-5 OS-prefs; TOK-2 accent≈semantic hue = 🚫 identity, mitig. not-by-color-alone |
 | `css/base.css` | 🌱 | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱BAS-15 tabs↔seg (HIER), 🌱BAS-17 helper-контраст; BAS-18 measure = 🚫 |
 | `css/editorial.css` (мёртв) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱EDC-1 не подключён, 2656 строк-дубль tokens+base + stale (до AF-5/tabs); verify-then-remove |
 | `css/{linear,swiss}.css` (мёртвы) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱DSG-1 не подключены, сигнатуры уже в base.css (linear=2/swiss=6) → чистые дубли, удалить |
@@ -206,7 +206,7 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 
 **Как читать сводку.** Открытые 🌱-пункты по файлам: `result.html`(RES-14), `settings.html`(SET-14/SET-7),
 `stats.html`(STA-18/STA-5), `header.html`(HDR-1), `icons.html`(ICO-3), `training-actions.html`(TAC-3),
-`tokens.css`(TOK-2), `base.css`(BAS-15/BAS-17), `editorial.css`+`linear/swiss.css`(EDC-1/DSG-1 — мёртвые дубли),
+`base.css`(BAS-15/BAS-17), `editorial.css`+`linear/swiss.css`(EDC-1/DSG-1 — мёртвые дубли),
 `broadsheet.css`(DSG-2 — не дубль!), `app.js`(APP-8/APP-9), `stats.js`(STJ-1).
 ⛔: `error.html`(ERR-3 403-retry), `app.js`(APP-5 favorite).
 **Не-blocked, можно брать сразу:** EDC-1 + DSG-1 (удалить мёртвые `editorial/linear/swiss.css` — вне in-flight
@@ -424,7 +424,7 @@ comparison-table без `th[scope]`/`caption`. Оба в §6.
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
 | TOK-1 | WCAG-контраст всех 10×2 | AA-гейт `scripts/design-token-audit.py` CLEAN | гонять при правке токенов | — | H | M | M | H | ✅ DONE 🔁 | CO-3 |
-| TOK-2 | accent конфликтует с success/error | Развести semantic-токены (accent/selected/success/error) | частично через нейтральный selected | H | M | M | M | 🌱 BACKLOG | CO-1 |
+| TOK-2 | accent-hue vs success/error hue **измерено статически (2026-07-07)**: посчитал hue-дистанцию accent↔success/error по всем 10×2. 4 дизайна near-identical (swiss accent #e5231b = error red Δ0°; broadsheet #a21b24 = error Δ0°; mintlify #18e299 ≈ success green Δ4°; theverge #3cffd0 ≈ success Δ9°), 2 adjacent-но-различимы (editorial/claude coral #d97757 Δ12-15° от error, но S=63 vs насыщенный red), 4 cleanly separated (linear/stripe/superhuman/notion) | **Это НЕ баг-в-токенах, а identity-tension: accent = бренд-хью дизайна (Swiss red, mintlify/theverge mint, Anthropic coral) — менять hue = ломать identity.** Реальный сейфгард = **not-by-color-alone (WCAG 1.4.1) УЖЕ есть:** семантический фидбэк всегда несёт иконку+текст (app.js:1639 `circle-check`+«Верно» / `circle-x`+«Неверно»; option-status-label 1608; wash-фоны ≠ accent-wash) → смысл не зависит от hue. + fairness: семантика только после «Проверить», до — нейтраль | **Держать (mostly 🚫 deliberate + ✅ mitigated).** Residual: primary-CTA в swiss/broadsheet (red) / mintlify/theverge (green) делят hue с error/success — но контекст (кнопка vs status-label+wash) + иконки различают. Если юзер захочет доп.разделения — рычаг = sat/lightness семантических washes, НЕ accent-hue | L | M | M | H | ✅ DONE (characterized, safeguarded) | CO-1 |
 | TOK-3 | `--color-status-error-wash` на все дизайны×темы | Питает danger-zone, тематизируется автоматически | — | — | — | — | H | ✅ DONE | SE-4 |
 | TOK-4 | dark border/text слабые | Усилены border-primary в dark | — | M | L | L | H | ✅ DONE | CO-2 |
 | TOK-5 | OS-prefs (prefers-contrast/forced-colors/reduced-transparency) | media-блоки токенов | — | M | L | M | H | ✅ DONE (`77882943`) | CO-5 |
