@@ -46,10 +46,13 @@ Severity блока: LOW / MEDIUM / HIGH / CRITICAL.
                  англоязычная проза (термины в backticks из расчёта исключаются)
   ENGLISH_RUN    ≥4 латинских слов подряд вне backticks И со служебным англ. словом
                  (the/is/of/to…) → непереведённое английское предложение, не имя продукта
-  FILLER_PHRASE  вода/academic-tone из стоп-листа («важно отметить», «стоит упомянуть»,
-                 «необходимо понимать», «в этом разделе»…)
-  LONG_SENTENCE  предложение длиннее 45 слов → стена текста / run-on
-  PUNCT          склейка/пунктуация: нет пробела после знака, двойной пробел, пробел перед знаком
+  RUS_READABILITY_CLICHE             вода/academic-tone из стоп-листа
+  RUS_READABILITY_LONG_SENTENCE      предложение длиннее 45 слов → стена текста / run-on
+  RUS_READABILITY_TOO_MANY_ARROWS    слишком много стрелок в prose-варианте
+  RUS_READABILITY_TOO_MANY_SEMICOLONS слишком много `;` в одном варианте/предложении
+  RUS_READABILITY_MACHINE_STYLE      машинная цепочка коротких фрагментов через стрелки
+  RUS_READABILITY_OVERSTRUCTURED     вариант перегружен искусственными разделителями
+  RUS_READABILITY_PUNCT              двойной пробел / пробел перед знаком
 Readability severity блока: LOW / MEDIUM / HIGH (язык важнее косметики). Ось независима от
 parity-severity — не меняет существующие parity-флаги, считается и отображается отдельно.
 
@@ -69,6 +72,7 @@ parity-severity — не меняет существующие parity-флаги
   python3 scripts/audit-mcq-parity.py --markdown-report reports/mcq-parity.md
   python3 scripts/audit-mcq-parity.py --fail-on critical
   python3 scripts/audit-mcq-parity.py modules/.../mentoring-interview.json
+  python3 scripts/audit-mcq-parity.py --verbose-skip path/to/dir
   python3 scripts/audit-mcq-parity.py --selftest
 
 Скрипт read-only: никакого --fix. Финальное решение и переписывание — за человеком.
@@ -96,6 +100,7 @@ NUMBER_GAP_ABS = 3
 TECH_GAP_RATIO = 1.5
 TECH_GAP_ABS = 3
 STRUCT_GAP_ABS = 2
+EXPECTED_LABELS = ("A", "B", "C", "D")
 
 SEVERITY_ORDER = {"NONE": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
 
@@ -184,6 +189,17 @@ FILLER_RE = re.compile("|".join(re.escape(p) for p in FILLER_PHRASES), re.IGNORE
 FILLER_SKIP_KEYS = {"source_of_confusion", "edge_cases", "when_to_apply", "if_it_were_true"}
 # маркеры структурного перечисления — «длинное предложение» с ними читается как список, не run-on
 ENUM_NUMBERING = re.compile(r"\(\d\)|\b\d\)|\bшаг\s*\d|\bэтап\s*\d", re.IGNORECASE)
+MACHINE_CHAIN_MIN_ARROWS = 2
+TOO_MANY_ARROWS_THR = 3
+TOO_MANY_SEMICOLONS_THR = 4
+OVERSTRUCTURED_DENSITY_THR = 6
+
+
+def _readability_issue(code, detail, where, legacy_code=None):
+    issue = {"code": code, "detail": detail, "where": where}
+    if legacy_code:
+        issue["legacy_code"] = legacy_code
+    return issue
 
 
 def _strip_code(t):
@@ -216,6 +232,24 @@ def _looks_like_enumeration(seg):
     if semis >= 3 or dashes >= 2 or glosses >= 3 or commas >= 6:
         return True
     return False
+
+
+def _looks_like_machine_chain(text):
+    """Искусственная цепочка вида «вспомнил → оценил → озвучил».
+
+    Алгоритмы с `code`, номерами и длинными поясняющими шагами не считаем машинным стилем.
+    """
+    prose = _strip_code(text)
+    if len(ARROW.findall(prose)) < MACHINE_CHAIN_MIN_ARROWS:
+        return False
+    if NUMRE.search(prose) or "`" in text:
+        return False
+    parts = [p.strip(" .,;:()") for p in ARROW.split(prose) if p.strip(" .,;:()")]
+    if len(parts) < 3:
+        return False
+    short_parts = sum(1 for p in parts if 1 <= len(p.split()) <= 6)
+    has_russian = bool(CYR_LETTER.search(prose))
+    return has_russian and short_parts >= 3 and short_parts / len(parts) >= 0.75
 
 
 def readability_scan(text, where, key=None):
@@ -263,25 +297,64 @@ def readability_scan(text, where, key=None):
     if letters >= MIN_LETTERS_FOR_RATIO and lat >= MIN_LAT_FOR_RATIO:
         ratio = cyr / letters
         if ratio < CYR_RATIO_THR and n_stop >= LOW_CYR_MIN_STOP:
-            out.append({"code": "LOW_CYRILLIC", "detail": f"cyr={ratio:.2f} (lat={lat}, cyr={cyr}, en-stop={n_stop})", "where": where})
+            out.append(_readability_issue(
+                "LOW_CYRILLIC",
+                f"cyr={ratio:.2f} (lat={lat}, cyr={cyr}, en-stop={n_stop})",
+                where,
+            ))
 
     # 2. ENGLISH_RUN: ≥5 латинских слов подряд И ≥2 служебных строчных в этом run'е
     if flagged_run:
-        out.append({"code": "ENGLISH_RUN", "detail": f"{longest_run} англ. слов подряд (англ. предложение)", "where": where})
+        out.append(_readability_issue("ENGLISH_RUN", f"{longest_run} англ. слов подряд (англ. предложение)", where))
 
     # 3. вода / academic-tone (узкий стоп-лист; не в полях-исключениях; вне цитат)
     if key not in FILLER_SKIP_KEYS:
         fil = sorted({m.group(0).lower() for m in FILLER_RE.finditer(QUOTE_SPAN.sub(" ", t))})
         if fil:
-            out.append({"code": "FILLER_PHRASE", "detail": ", ".join(fil), "where": where})
+            out.append(_readability_issue("RUS_READABILITY_CLICHE", ", ".join(fil), where, legacy_code="FILLER_PHRASE"))
 
     # 4. run-on предложение: длинное И НЕ структурное перечисление (двоеточие+разделители/нумерация)
     for seg in SENT_SPLIT.split(prose):
         if len(seg.split()) > LONG_SENTENCE_WORDS and not _looks_like_enumeration(seg):
-            out.append({"code": "LONG_SENTENCE", "detail": f"{len(seg.split())} слов в предложении без структуры списка", "where": where})
+            out.append(_readability_issue(
+                "RUS_READABILITY_LONG_SENTENCE",
+                f"{len(seg.split())} слов в предложении без структуры списка",
+                where,
+                legacy_code="LONG_SENTENCE",
+            ))
             break
 
-    # 5. пунктуация: только двойной пробел / пробел перед знаком после СЛОВА (по masked коду).
+    # 5. искусственная структурность: стрелки, semicolon-цепочки, машинные «алгоритмы» в прозе.
+    arrow_count = len(ARROW.findall(prose))
+    semicolon_count = prose.count(";")
+    colon_count = prose.count(":")
+    structure_density = arrow_count + semicolon_count + colon_count
+    if arrow_count >= TOO_MANY_ARROWS_THR:
+        out.append(_readability_issue(
+            "RUS_READABILITY_TOO_MANY_ARROWS",
+            f"стрелок={arrow_count}",
+            where,
+        ))
+    if semicolon_count >= TOO_MANY_SEMICOLONS_THR or any(seg.count(";") >= 3 for seg in SENT_SPLIT.split(prose)):
+        out.append(_readability_issue(
+            "RUS_READABILITY_TOO_MANY_SEMICOLONS",
+            f"semicolon={semicolon_count}",
+            where,
+        ))
+    if _looks_like_machine_chain(t):
+        out.append(_readability_issue(
+            "RUS_READABILITY_MACHINE_STYLE",
+            "короткие prose-фрагменты соединены стрелками как механическая цепочка",
+            where,
+        ))
+    if structure_density >= OVERSTRUCTURED_DENSITY_THR or (arrow_count >= 2 and semicolon_count >= 2):
+        out.append(_readability_issue(
+            "RUS_READABILITY_OVERSTRUCTURED",
+            f"structure_density={structure_density} (arrows={arrow_count}, semicolons={semicolon_count}, colons={colon_count})",
+            where,
+        ))
+
+    # 6. пунктуация: только двойной пробел / пробел перед знаком после СЛОВА (по masked коду).
     #    Склейку «слово,слово» убрали — на этом корпусе это сплошь нотация (C(n,k), X,Y,Z, Map<K,V>).
     punct_src = _mask_code(t)
     glitches = []
@@ -290,7 +363,7 @@ def readability_scan(text, where, key=None):
     if SPACE_BEFORE_PUNCT_RE.search(punct_src):
         glitches.append("пробел перед знаком")
     if glitches:
-        out.append({"code": "PUNCT", "detail": "; ".join(glitches), "where": where})
+        out.append(_readability_issue("RUS_READABILITY_PUNCT", "; ".join(glitches), where, legacy_code="PUNCT"))
 
     return out
 
@@ -301,13 +374,18 @@ def _readability_severity(rdb):
         return "NONE"
     codes = [x["code"] for x in rdb]
     lang = sum(1 for c in codes if c in ("LOW_CYRILLIC", "ENGLISH_RUN"))
+    rus_codes = [c for c in codes if c.startswith("RUS_READABILITY_")]
     if lang >= 2:
         return "HIGH"
     if lang == 1:
         return "MEDIUM"
-    if "LONG_SENTENCE" in codes and "FILLER_PHRASE" in codes:
+    if "RUS_READABILITY_LONG_SENTENCE" in codes and "RUS_READABILITY_CLICHE" in codes:
         return "MEDIUM"
-    if len(codes) >= 3:
+    if "RUS_READABILITY_OVERSTRUCTURED" in codes and (
+        "RUS_READABILITY_MACHINE_STYLE" in codes or "RUS_READABILITY_TOO_MANY_ARROWS" in codes
+    ):
+        return "MEDIUM"
+    if len(rus_codes) >= 3 or len(codes) >= 3:
         return "MEDIUM"
     return "LOW"
 
@@ -398,6 +476,41 @@ def caricature_scan(text):
     return groups, score, snippets
 
 
+def format_scan(corrects, wrongs):
+    """Format Parity: correct не должен быть УНИКАЛЬНЫМ выбросом по формат-оси
+    (правило пользователя «тире в общем месте, один формат у всех вариантов»).
+    Флагуем только когда correct — единственный, кто отличается от ВСЕХ дистракторов
+    по конкретной пунктуационной оси (или единственный, кто её не несёт). Высокая точность."""
+    reasons = []
+    if len(corrects) != 1 or len(wrongs) < 2:
+        return reasons
+    c = (corrects[0][0].get("text") or "").strip()
+    ws = [(o.get("text") or "").strip() for o, _ in wrongs]
+    if not c or not all(ws):
+        return reasons
+
+    def uniq(axis):
+        cv = axis(c)
+        wv = [axis(w) for w in ws]
+        if cv and not any(wv):
+            return "corr-only"
+        if (not cv) and all(wv):
+            return "corr-lacks"
+        return None
+
+    # Только оси, НЕ покрытые UNIQ_MARKER (colon/semicolon-enum уже там): тире, точка, открывающий backtick.
+    checks = [
+        ("FORMAT_DASH", lambda t: " — " in t or "—" in t),          # тире (em-dash) «в общем месте»
+        ("FORMAT_PERIOD", lambda t: t.endswith(".")),               # завершающая точка — у всех или ни у кого
+        ("FORMAT_OPEN", lambda t: t.startswith("`")),               # открывающий backtick-идентификатор
+    ]
+    for name, axis in checks:
+        verdict = uniq(axis)
+        if verdict:
+            reasons.append(f"{name} {verdict}")
+    return reasons
+
+
 # ============================================================================
 # анализ блока
 # ============================================================================
@@ -406,11 +519,15 @@ def _norm_options(block):
     return opts if isinstance(opts, list) else []
 
 
-def analyze_block(opts, q_number, block_idx):
+def analyze_block(opts, q_number, block_idx, option_error=None):
     """Полный анализ одного MCQ-блока. Возвращает issue-dict (severity может быть NONE)."""
     reasons = []
     warnings = []
     metrics = []
+    if option_error:
+        reasons.append(option_error)
+    if len(opts) != 4:
+        reasons.append(f"INVALID_OPTION_COUNT {len(opts)}")
     for o in opts:
         if "text" not in o or o.get("text") is None:
             warnings.append(f"EMPTY_TEXT order={o.get('order')}")
@@ -424,6 +541,21 @@ def analyze_block(opts, q_number, block_idx):
         reasons.append(f"INVALID_CORRECT_COUNT {len(corrects)}")
     if any(o.get("label") in (None, "") or o.get("order") is None for o, _ in metrics):
         reasons.append("MISSING_LABELS")
+    if len(opts) == 4:
+        orders = [o.get("order") for o, _ in metrics]
+        labels = [o.get("label") for o, _ in metrics]
+        if not all(isinstance(x, int) for x in orders) or sorted(orders) != [0, 1, 2, 3]:
+            reasons.append("INVALID_ORDER_SEQUENCE " + ",".join(str(x) for x in orders))
+        if set(labels) != set(EXPECTED_LABELS):
+            reasons.append("INVALID_LABEL_SEQUENCE " + ",".join(str(x) for x in labels))
+        mismatches = []
+        for o, _ in metrics:
+            order = o.get("order")
+            label = o.get("label")
+            if isinstance(order, int) and 0 <= order < len(EXPECTED_LABELS) and label != EXPECTED_LABELS[order]:
+                mismatches.append(f"{label}@{order}")
+        if mismatches:
+            reasons.append("LABEL_ORDER_MISMATCH " + ",".join(mismatches))
 
     dims = set()           # на каких осях выделяется correct: length/structure/density
     inflated = False
@@ -519,6 +651,9 @@ def analyze_block(opts, q_number, block_idx):
         if inflated:
             reasons.append("INFLATED_CARICATURE")
 
+        # --- Format Parity (пунктуационный формат-tell: correct — уникальный выброс) ---
+        reasons.extend(format_scan(corrects, wrongs))
+
     # ---- severity ----
     severity = _block_severity(reasons, dims, caric_max, inflated)
 
@@ -540,7 +675,15 @@ def analyze_block(opts, q_number, block_idx):
 def _block_severity(reasons, dims, caric_max, inflated):
     if not reasons:
         return "NONE"
-    has_schema = any(r.startswith(("INVALID_CORRECT_COUNT", "MISSING_LABELS")) for r in reasons)
+    has_schema = any(r.startswith((
+        "INVALID_CORRECT_COUNT",
+        "MISSING_LABELS",
+        "MISSING_OPTIONS",
+        "INVALID_OPTION_COUNT",
+        "INVALID_ORDER_SEQUENCE",
+        "INVALID_LABEL_SEQUENCE",
+        "LABEL_ORDER_MISMATCH",
+    )) for r in reasons)
     len_avg = next((float(r.split()[1]) for r in reasons if r.startswith("LEN_AVG ")), 0.0)
     n_core = len(dims)  # length/structure/density на correct
     # CRITICAL
@@ -597,12 +740,14 @@ def analyze_file(path):
     longest = shortest = most_tech = uniq_struct = 0
     rank_sum = 0
     for q in data.get("questions", []):
+        if not isinstance(q, dict):
+            continue
         for bi, b in enumerate(q.get("blocks", []) or []):
-            opts = _norm_options(b)
-            if len(opts) < 2:
-                continue
+            raw_opts = b.get("options") if isinstance(b, dict) else None
+            option_error = None if isinstance(raw_opts, list) else "MISSING_OPTIONS"
+            opts = _norm_options(b) if isinstance(b, dict) else []
             nblocks += 1
-            res = analyze_block(opts, q.get("q_number"), bi)
+            res = analyze_block(opts, q.get("q_number"), bi, option_error=option_error)
             # file-level метрики (по correct)
             ci = next((i for i, o in enumerate(opts) if o.get("correct")), None)
             if sum(1 for o in opts if o.get("correct")) == 1:
@@ -675,7 +820,7 @@ def collect_targets(paths):
     return targets, missing
 
 
-def analyze_all(paths):
+def analyze_all(paths, verbose_skip=False):
     targets, missing = collect_targets(paths)
     for m in missing:
         print(f"⚠ путь не найден или не .json: {m}", file=sys.stderr)
@@ -690,7 +835,7 @@ def analyze_all(paths):
             print(f"⚠ ошибка при разборе {p}: {e}", file=sys.stderr)
             continue
         if rep.get("skipped"):
-            if "--verbose-skip" in sys.argv:
+            if verbose_skip:
                 print(f"· пропуск ({rep['skipped']}): {p}", file=sys.stderr)
             continue
         reports.append(rep)
@@ -714,29 +859,34 @@ def render_human(reports, verbose, top):
                 print(f"   Q{it['q_number']} [{it['severity']}] corr={it['correct_label']}: {', '.join(it['reasons'])}")
     print("\n=== кандидаты на ручную правку (severity-first) ===")
     print(f"{'sev':>8} {'flags':>5} {'long':>5} {'tech':>5}  file")
-    counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
     for r in shown:
-        counts[r["severity"]] = counts.get(r["severity"], 0) + 1
         mark = " ⚠LONGEST" if (r["blocks"] >= 6 and r["correct_longest_rate"] > 0.5) else ""
         print(f"{r['severity']:>8} {r['flags']:>5} {r['correct_longest_rate']:>4.0%} "
               f"{r['correct_most_technical_rate']:>4.0%}  {r['rel']}{mark}")
     total_blocks = sum(r["blocks"] for r in reports)
     total_flags = sum(r["flags"] for r in reports)
+    counts = {
+        s: sum(1 for r in rows if r["severity"] == s)
+        for s in ("CRITICAL", "HIGH", "MEDIUM", "LOW")
+    }
     print(f"\nфайлов: {len(reports)}; с флагами: {len(rows)}; блоков: {total_blocks}; флагов-блоков: {total_flags}")
     print(f"severity файлов — CRITICAL: {counts['CRITICAL']}, HIGH: {counts['HIGH']}, "
           f"MEDIUM: {counts['MEDIUM']}, LOW: {counts['LOW']}")
+    if top and len(rows) > len(shown):
+        print(f"показано: {len(shown)} из {len(rows)} файлов с флагами")
     print("Скрипт только находит кандидатов — финальное решение за человеком.")
 
 
-def render_caricature(reports, verbose):
+def render_caricature(reports, verbose, top=None):
     rows = []
     for r in reports:
         car = [it for it in r["issues"] if it["caricature"]]
         if car:
             rows.append((r, car))
     rows.sort(key=lambda x: -len(x[1]))
+    shown = rows[:top] if top else rows
     if verbose:
-        for r, car in rows:
+        for r, car in shown:
             print(f"\n## {r['rel']}  blocks={r['blocks']}")
             for it in car:
                 for c in it["caricature"]:
@@ -749,18 +899,22 @@ def render_caricature(reports, verbose):
     print(f"\n=== Inflated Caricature Distractor — кандидаты (Plausibility Parity) ===")
     print(f"{'blocks':>6}  file")
     total = 0
-    for r, car in rows:
+    for r, car in shown:
         total += len(car)
         print(f"{len(car):>6}  {r['rel']}")
-    print(f"\nфайлов с маркерами: {len(rows)}; блоков-кандидатов: {total}")
+    total_all = sum(len(car) for _, car in rows)
+    print(f"\nфайлов с маркерами: {len(rows)}; блоков-кандидатов: {total_all}")
+    if top and len(rows) > len(shown):
+        print(f"показано: {len(shown)} из {len(rows)} файлов с маркерами")
     print("Скрипт только находит кандидатов — переписывание дистрактора за человеком.")
 
 
-def render_readability(reports, verbose):
+def render_readability(reports, verbose, top=None):
     rows = [r for r in reports if r.get("readability_flags")]
     rows.sort(key=lambda r: (-SEVERITY_ORDER[r.get("readability_severity", "NONE")], -r["readability_flags"]))
+    shown = rows[:top] if top else rows
     if verbose:
-        for r in rows:
+        for r in shown:
             print(f"\n## {r['rel']}  blocks={r['blocks']}  readability={r['readability_severity']}  "
                   f"flag_rate={r['readability_flag_rate']:.0%}")
             for it in r["readability_issues"]:
@@ -768,18 +922,23 @@ def render_readability(reports, verbose):
                     print(f"   Q{it['q_number']} [{it['readability_severity']}] {x['code']} @{x['where']}: {x['detail']}")
     print("\n=== человекочитаемость русской прозы — кандидаты на правку ===")
     print(f"{'rdb-sev':>8} {'flags':>5} {'rate':>5}  file")
-    counts = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
     code_tot = {}
-    for r in rows:
-        counts[r["readability_severity"]] = counts.get(r["readability_severity"], 0) + 1
+    for r in reports:
         for it in r["readability_issues"]:
             for x in it["readability"]:
                 code_tot[x["code"]] = code_tot.get(x["code"], 0) + 1
+    for r in shown:
         print(f"{r['readability_severity']:>8} {r['readability_flags']:>5} "
               f"{r['readability_flag_rate']:>4.0%}  {r['rel']}")
     total_rdb = sum(r["readability_flags"] for r in reports)
+    counts = {
+        s: sum(1 for r in rows if r["readability_severity"] == s)
+        for s in ("HIGH", "MEDIUM", "LOW")
+    }
     print(f"\nфайлов с readability-флагами: {len(rows)}; блоков-кандидатов: {total_rdb}")
     print(f"readability severity файлов — HIGH: {counts['HIGH']}, MEDIUM: {counts['MEDIUM']}, LOW: {counts['LOW']}")
+    if top and len(rows) > len(shown):
+        print(f"показано: {len(shown)} из {len(rows)} файлов с readability-флагами")
     if code_tot:
         print("по сигналам: " + ", ".join(f"{k}={v}" for k, v in sorted(code_tot.items(), key=lambda x: -x[1])))
     print("Скрипт только находит кандидатов — переписывание прозы за человеком.")
@@ -1006,8 +1165,8 @@ def selftest():
     ])
     codes6 = {x["code"] for x in r6["readability"]}
     assert "LOW_CYRILLIC" in codes6 or "ENGLISH_RUN" in codes6, r6["readability"]
-    assert "FILLER_PHRASE" in codes6, r6["readability"]
-    assert "LONG_SENTENCE" in codes6, r6["readability"]
+    assert "RUS_READABILITY_CLICHE" in codes6, r6["readability"]
+    assert "RUS_READABILITY_LONG_SENTENCE" in codes6, r6["readability"]
     assert r6["readability_severity"] in ("MEDIUM", "HIGH"), r6["readability_severity"]
 
     # 7. чистая русская проза с терминами в backticks → readability NONE (термины не палят язык)
@@ -1020,8 +1179,39 @@ def selftest():
     ])
     assert r7["readability_severity"] == "NONE", (r7["readability_severity"], r7["readability"])
 
-    print("selftest: OK (7 фикстур: length+struct+density, inflated-caricature, short-stub, "
-          "invalid-correct, clean, readability-bad, readability-clean)")
+    # 8. Russian Readability Parity: машинная цепочка и перегруженная пунктуация.
+    r8 = blk([
+        {"order": 0, "label": "A", "correct": True,
+         "text": "Ментор сначала уточняет цель разговора, затем выбирает один следующий шаг."},
+        {"order": 1, "label": "B", "correct": False,
+         "text": "Кандидат вспомнил контекст → оценил риск → озвучил срок → надавил на команду; "
+                 "дальше добавил список: дедлайн; эскалация; контроль; отчёт."},
+        {"order": 2, "label": "C", "text": "Разобрать кейс на ретроспективе и отделить процесс от персональной оценки.", "correct": False},
+        {"order": 3, "label": "D", "text": "Согласовать ожидания один на один и проверить, есть ли общий контекст.", "correct": False},
+    ])
+    codes8 = {x["code"] for x in r8["readability"]}
+    assert "RUS_READABILITY_TOO_MANY_ARROWS" in codes8, r8["readability"]
+    assert "RUS_READABILITY_MACHINE_STYLE" in codes8, r8["readability"]
+    assert "RUS_READABILITY_OVERSTRUCTURED" in codes8, r8["readability"]
+
+    # 9. schema-like robustness: отсутствующие options не роняют анализ, а дают issue.
+    r9 = analyze_block([], 1, 0, option_error="MISSING_OPTIONS")
+    assert "MISSING_OPTIONS" in r9["reasons"], r9["reasons"]
+    assert any(x.startswith("INVALID_OPTION_COUNT") for x in r9["reasons"]), r9["reasons"]
+
+    # 10. schema-like robustness: missing label/order не должны приводить к TypeError.
+    r10 = blk([
+        {"text": "Нет label/order, но анализ должен вернуть issue.", "correct": True},
+        {"order": 1, "label": "B", "text": "Обычный distractor.", "correct": False},
+        {"order": 2, "label": "C", "text": "Обычный distractor.", "correct": False},
+        {"order": 3, "label": "D", "text": "Обычный distractor.", "correct": False},
+    ])
+    assert "MISSING_LABELS" in r10["reasons"], r10["reasons"]
+    assert any(x.startswith("INVALID_ORDER_SEQUENCE") for x in r10["reasons"]), r10["reasons"]
+
+    print("selftest: OK (10 фикстур: length+struct+density, inflated-caricature, short-stub, "
+          "invalid-correct, clean, readability-bad, readability-clean, rus-readability, missing-options, "
+          "missing-label-order)")
     return ok
 
 
@@ -1041,6 +1231,7 @@ def main():
     ap.add_argument("--json-report", metavar="PATH", help="сохранить машинный JSON-отчёт")
     ap.add_argument("--markdown-report", metavar="PATH", help="сохранить Markdown-отчёт")
     ap.add_argument("--fail-on", choices=["high", "critical"], help="exit 1 при наличии HIGH/CRITICAL")
+    ap.add_argument("--verbose-skip", action="store_true", help="показывать пропущенные non-MCQ JSON")
     ap.add_argument("--selftest", action="store_true", help="прогнать встроенные фикстуры и выйти")
     args = ap.parse_args()
 
@@ -1048,7 +1239,7 @@ def main():
         selftest()
         return 0
 
-    reports = analyze_all(args.paths)
+    reports = analyze_all(args.paths, verbose_skip=args.verbose_skip)
 
     if args.json_report:
         outp = Path(args.json_report)
@@ -1062,9 +1253,9 @@ def main():
         print(f"Markdown-отчёт → {outp}")
 
     if args.caricature:
-        render_caricature(reports, args.verbose)
+        render_caricature(reports, args.verbose, args.top)
     elif args.readability:
-        render_readability(reports, args.verbose)
+        render_readability(reports, args.verbose, args.top)
     elif not (args.json_report or args.markdown_report) or args.verbose:
         render_human(reports, args.verbose, args.top)
 

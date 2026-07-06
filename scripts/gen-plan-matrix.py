@@ -38,6 +38,9 @@ PARITY_COLS = [
     ("NUM",      "Num",  "NUMBER_GAP"),
     ("CMA",      "Cma",  "COMMA_GAP"),
     ("INF",      "Infl", "INFLATED_CARICATURE"),
+    ("FDASH",    "Fdsh", "FORMAT_DASH"),
+    ("FPER",     "Fper", "FORMAT_PERIOD"),
+    ("FOPEN",    "Fopn", "FORMAT_OPEN"),
 ]
 CARIC_GROUPS = [
     ("Cabs", "absolute"),
@@ -163,6 +166,9 @@ LEGEND = """**Как читать (каждая колонка = отдельн�
 | **Num** | NUMBER_GAP (чисел у correct больше) |
 | **Cma** | COMMA_GAP (запятых/смысловых частей у correct больше) |
 | **Infl** | INFLATED_CARICATURE (дистрактор раздут до формы correct, но карикатурен) |
+| **Fdsh** | Format Parity: тире `—` только у correct (или только у него нет) — «тире не в общем месте» |
+| **Fper** | Format Parity: завершающая точка есть только у correct (или только у него нет) |
+| **Fopn** | Format Parity: только correct открывается backtick-идентификатором (или только он — нет) |
 | **Cabs** | карикатура: категоричность (всегда/никогда/…) |
 | **Ctox** | карикатура: токсичный менеджмент (заставить/угрожать/…) |
 | **Cabd** | карикатура: абсурдное действие (просто игнорировать/забить/…) |
