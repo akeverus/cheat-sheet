@@ -53,7 +53,7 @@ perf PE, контент CN, иконки IC).
   `editorial.css` — мёртвый код. Бамп `?v=N`: при правке CSS — обе ссылки в
   `fragments/head.html`; при правке JS — `app.js ?v=N` в `result.html` /
   `settings.html` / `focus-training.html`, `stats.js` — в `stats.html`. Чистая
-  правка текста шаблона бампа НЕ требует. **Текущая версия CSS = v=61 (р37), app.js = v=52 (р26).**
+  правка текста шаблона бампа НЕ требует. **Версии (on-disk, вкл. in-flight пользователя, свер. 2026-07-06 / HEAD bcde7ade): app.js = v=54 (settings/result/focus-training), stats.js = v=12; CSS — коммит-база v=61 (р37), у пользователя in-flight v=65 (р39). Точные committed-номера сверить, когда дерево пользователя осядет.**
 - **Дизайн-система:** 10 переключаемых дизайнов (editorial=дефолт, linear, swiss,
   notion, mintlify, broadsheet, superhuman, stripe, claude, theverge) × 2 темы.
   Персонализация — `data-*` на `<html>`; **дефолт = `data-design="editorial"`
@@ -227,12 +227,13 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | SET-12 | CTA запуска был бинарным («Начать тренировку»/дженерик «Начать сессию») | 4 из 5 режимов давали родовое «Начать сессию» (не говорит, что запускается). Карта `MODE_CTA` в `initSessionModeForm` (app.js): каждый режим → свой винительный лейбл («Начать экзамен/изучение/флешкарты/интенсив»), `\|\| 'Начать сессию'` defensive-фоллбэк. app.js v=51→52 | M | L | L | H | ✅ DONE (р26) | CN |
 | SET-12 | `app.js(v=51)` | Версионный контракт | — | — | — | — | H | 🔁 ONGOING | — |
 | SET-13 | 10-опционный дизайн-seg-control переносится в 3 ряда → `border-right`-разделители «повисают» на торце рядов (Notion/Superhuman): `:last-child` гасит только глоб.-последнюю кнопку | Скоуп `#design-pref-control`: контейнер без рамки/bg + gap, каждый сегмент = чип с собственной рамкой + `--border-radius-sm` (design-adaptive). Орфанов нет; прочие 5 контролов (2–3 опции) не тронуты. CSS v=58→59 | M | L | L | H | ✅ DONE (р32) | SE-3/SE-5 |
+| SET-14 | Вкладка «Данные»: подраздел экспорта (settings.html:252-259) без заголовка, а danger-zone ниже несёт h3 «Опасная зона» (265) → heading-nav несимметрична: SR прыжком по заголовкам слышит h2 «Данные» → сразу h3 «Опасная зона», экспорт-блок не якорится как секция | +h3 «Экспорт данных» над `.data-export-block` — паритет с danger-zone h3, обе подсекции навигируемы по заголовкам; визуально дублирует существующий `<p>`-хинт, но даёт SR-структуру. Чистый шаблон-текст, без бампа. **⚠️ БЛОКЕР:** settings.html под активным in-flight пользователя → `git add` свернёт чужие хунки (`-p` недоступен); отложить до коммита пользователя | L | L | L | H | 🌱 BACKLOG (blocked-file) | A11Y |
 
 ### 5.A.5 — `templates/stats.html` + `static/js/stats.js`
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
-| STA-1 | Метрики технические, не actionable | Top-insights «что делать» (слабая тема/повтор ошибок) — данные из модели, без новых API | H | M | M | M | 🌱 BACKLOG | AN-1 |
+| STA-1 | Метрики технические, не actionable | ✅ Реализовано пользователем: секция «Что делать дальше» (stats.html:17-49) — 3 CTA-карточки (Повторить сегодня / Разобрать ошибки / Тренировать слабые темы) + `is-recommended` по состоянию банка (due/wrong/weak); stats.js `initNextActions` (44-68) называет реально слабейшую тему «Слабее всего: X · N%» + пишет aria-label карточки. На существующих маршрутах/данных, без новых API | H | M | M | H | ✅ DONE-BY-USER (р40) | AN-1 |
 | STA-2 | «К повтору 9886» пугает | today-hero получил «N из M вопросов к повтору» (паттерн+гард from today-chip line 57) → знаменатель = честная пропорция, не интимидирующая стена. Stats-tile «К повтору» в сетке оставлен (SRS-термин, dashboard-контекст; hero/chip несут пояснение) | — | M | L | L | H | ✅ DONE (р21) | AN-2 |
 | STA-3 | Поиск отделён от фильтров линией | ~~Объединить поиск+фильтры~~ — НЕ дефект: вертикальный hairline + верт.центрирование поиска = осознанное решение с rationale `base.css:1476-1480` (одно поле vs высокий фильтр → пустота под полем как намеренный воздух). Форм-мердж рискован (2 cross-wired формы). Переоткрытие = churn | — | M | M | M | 🚫 WONTFIX (deliberate) | AN-3 |
 | STA-4 | Таблица тем — горизонтальный scroll | overflow-x:auto + tabindex/role/aria-label скролл-региона | — | M | L | L | H | ✅ DONE (р11) | AN-4 |
@@ -249,6 +250,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | STA-15 | thead `<th>` таблиц (topic-table 6 + data-table 2) без `scope` | `scope="col"` на все 8 заголовков колонок (WCAG 1.3.1/H63 — явная ассоциация ячейка↔заголовок, надёжнее браузерной эвристики у sortable-таблицы). Инертный атрибут (0 CSS/JS/визуала), без бампа. Верифиц. curl'ом под app-деградацией | M | L | L | H | ✅ DONE (р35, template-only) | A11Y |
 | STA-16 | `td.topic-name` — не row-header | `td.topic-name → <th scope="row">` (319 строк): SR при навигации по data-ячейке озвучит тему строки. Компенсация UA `th{bold}`: `base.css .topic-table th.topic-name{font-weight:var(--font-weight-normal)}` (text-align:left уже на th+td). **Sort цел:** stats.js читает `children[col]` (th-agnostic), не `querySelectorAll('td')` — проверено ПЕРЕД. Рендер пиксель-идентичен (компенсация) → семантическая дельта, скрины не нужны. Live-verify: 319 th[scope=row], fw 400 обе темы, sort asc/desc ОК | M | L | M | H | ✅ DONE (р37, CSS v=60→61) | A11Y |
 | STA-17 | coverage-gaps `data-table` без `<caption>` | topic-table несёт h2+region+`<caption>`, data-table — только h2+scope (R35). `<caption>` = accessible name таблицы в table-nav SR (≠ h2 в heading-nav; topic-table:142 задаёт прецедент при своём h2). Фикс: +`<caption class="visually-hidden">Темы с неполным банком вопросов</caption>` (noun-phrase, не дублирует h2). Region-обёртка не нужна (2 колонки, нет overflow). Инертный visually-hidden (0 layout), без бампа. Верифиц. curl by-construction (секция за `th:if coverageGaps`, паттерн-сиблинг topic-table caption рендерится живьём) | M | L | L | H | ✅ DONE (р36, template-only) | A11Y |
+| STA-18 | Прогноз повторений: `.forecast-count` (голое число, stats.html:278) дублирует уже озвученный `.forecast-bar[role=img]` aria-label «N вопросов» (274) → SR на строке слышит число дважды (у bar — с единицей, у count — без). Визуальному пользователю нужны оба (bar = длина, count = точное число), но для AT count избыточен | `aria-hidden="true"` на `.forecast-count` — декоративный визуальный дубль, полную формулировку с единицей несёт bar; паттерн как у SGR-3 (accuracy-bar aria-hidden при дубле текстом). Чистый шаблон-атрибут, без бампа. **⚠️ БЛОКЕР:** stats.html под in-flight пользователя → отложить до коммита | L | L | L | H | 🌱 BACKLOG (blocked-file) | A11Y |
 
 ### 5.A.6 — `templates/error.html`
 
@@ -410,7 +412,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
 | STJ-1 | Chart.js конфиги: мелкие, decorative grid, слабые labels | Меньше сетки, крупнее labels, tooltips, empty-state графика. **Empty-state уже есть (`.chart-fallback`); ясность top-25-среза закрыта R30 (STA-7 — подзаголовки). Остаётся label-size/grid-density — низкий приоритет** | M | M | M | M | 🌱 BACKLOG | AN-5 |
-| STJ-2 | insights-данные для STA-1 | Источник actionable-метрик (без новых API — из модели) | H | M | M | M | 🌱 BACKLOG | AN-1 |
+| STJ-2 | insights-данные для STA-1 | ✅ Реализовано: stats.js `initNextActions` (44-68) сортирует topicStats по accuracy, берёт слабейшую (attempts>0), пишет в `[data-weak-topic-summary]` + aria-label карточки. Питает STA-1 «Что делать дальше», источник — модельный topicStatsJson (без новых API) | H | M | M | H | ✅ DONE-BY-USER (р40) | AN-1 |
 | STJ-3 | `defer` + порядок загрузки | Chart.js не блокирует | — | — | — | — | H | ✅ DONE (р14) | PE-2 |
 
 ---
