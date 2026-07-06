@@ -148,361 +148,387 @@
 4. Адверс-ревьюер (fidelity_ok + parity_ok).
 5. Атомарный per-file коммит: `pedago(mcq): <topic> — single-delta паритет опций (N блоков)`.
 
-## 7. Реестр всех сидеров — детальный re-аудит (round 3, audit v2, СБРОС статусов)
+## 7. Гигантская матрица «файл × проверка» (живой план, авто-регенерация)
 
-Всего сидеров: **318**. Источник: `scripts/audit-mcq-parity.py` (audit v2, re-аудит 2026-07-01).
-Сортировка worst→best: severity файла → число CRITICAL-блоков → Σфлагов. **Все статусы сброшены в `QUEUED`** —
-улучшение видно по данным (низкие Σ/severity = файл уже дорабатывался в round 2, см. git-историю), а не по статусу.
+**Это и есть план, по которому идёт работа.** Строка = MCQ-сидер, столбец = **одна конкретная проверка**
+аудита, ячейка = **сколько блоков файла ещё её проваливают** (`·` = по этой оси чисто/поправлено).
+Строки отсортированы worst-first (ΣCAR↓, затем Σ parity-сигналов↓) — верх таблицы = что править дальше.
 
-**Колонки:**
+Источник — детерминированный `scripts/audit-mcq-parity.py`. Матрица **регенерируется одной командой**
+(каждый тик после коммитов), поэтому всегда отражает актуальное закоммиченное состояние:
 
-| Колонка | Смысл |
+```bash
+python3 scripts/gen-plan-matrix.py --write   # перезаписывает блок между MATRIX:START/END
+```
+
+Легенда всех колонок — прямо под маркером ниже (каждая колонка описана: какую именно правку она требует).
+
+<!-- MATRIX:START (auto: scripts/gen-plan-matrix.py) -->
+
+_Сводка: файлов=318 · caricature-clean(CAR0)=61/318 · остаток CAR-блоков=1415 · строки worst-first (ΣCAR↓, затем Σparity↓). Ячейка=число блоков, где проверка ещё срабатывает; `·`=0 (по этой оси чисто)._
+
+**Как читать (каждая колонка = отдельная проверка аудита; ячейка = сколько блоков ещё править, `·`=0):**
+
+| Колонка | Проверка (что править) |
 |---|---|
-| **Бл.** | блоков (MCQ) в файле |
-| **Sev** | severity файла = худший блок (`CRIT`/`HIGH`/`MED`/`LOW`) |
-| **C/H/M/L** | сколько блоков каждого уровня severity (CRITICAL/HIGH/MEDIUM/LOW) |
-| **long%** | доля блоков, где correct самый длинный (⚠ >50% = «длиннейший = правильный») |
-| **tech%** | доля блоков, где correct самый технически плотный (⚠ >50%) |
-| **ustr%** | доля блоков, где correct единственный со структурным маркером (→/;/backtick-enum) |
-| **rank** | средний ранг длины correct (0…1; >0.5 = в среднем длиннее дистракторов) |
-| **LEN** | блоков с length-tell (LEN_AVG/LEN_SPREAD/WORD/SENTENCE) |
-| **STR** | блоков со structure-tell (UNIQ_MARKER/ONLY_ONE_*/STRUCTURE_DENSITY) |
-| **DEN** | блоков с tech-density-tell (TECH/BACKTICK/NUMBER/COMMA gap) |
-| **CAR** | блоков с маркерами карикатуры (Plausibility) |
-| **INF** | блоков с `INFLATED_CARICATURE` (раздут до формы correct, но карикатурен) |
-| **SHRT** | блоков с короткими-заглушками (SHORT_DISTR) |
-| **RDB** | блоков с проблемой человекочитаемости русской прозы (`--readability`); маркер severity 🟥HIGH / 🟧MEDIUM / 🟨LOW. Независимая ось — НЕ входит в Σ |
-| **Σ** | всего блоков-флагов parity-оси в файле |
-| **Статус** | `QUEUED` (сброшено) · по мере правки → `R3✅ <commit>` |
+| **Бл** | всего MCQ-блоков в файле |
+| **Sev** | severity файла (худший блок) |
+| **ΣCAR** | всего блоков с карикатурой — главный таргет цикла (loop чинит именно это) |
+| **Lavg** | correct/avg-wrong length ratio (correct длиннее в среднем) |
+| **Lspd** | max/min длина опций (разброс) |
+| **Word** | WORD_COUNT_GAP (correct больше слов) |
+| **Sent** | SENTENCE_COUNT_GAP (correct больше предложений) |
+| **Shrt** | SHORT_DISTR (есть дистрактор-заглушка < порога) |
+| **Uniq** | UNIQ_MARKER (только correct несёт →/;/backtick-enum) |
+| **Enum** | ONLY_ONE_ENUMERATION_OPTION (только correct — перечисление) |
+| **Caus** | ONLY_ONE_CAUSAL_OPTION (только один вариант — причинно-следств.) |
+| **Sden** | STRUCTURE_DENSITY_GAP (структурная плотность correct выше) |
+| **Tech** | TECH_DENSITY_GAP (технических терминов у correct больше) |
+| **Btk** | BACKTICK_GAP (backtick'ов у correct больше) |
+| **Num** | NUMBER_GAP (чисел у correct больше) |
+| **Cma** | COMMA_GAP (запятых/смысловых частей у correct больше) |
+| **Infl** | INFLATED_CARICATURE (дистрактор раздут до формы correct, но карикатурен) |
+| **Cabs** | карикатура: категоричность (всегда/никогда/…) |
+| **Ctox** | карикатура: токсичный менеджмент (заставить/угрожать/…) |
+| **Cabd** | карикатура: абсурдное действие (просто игнорировать/забить/…) |
+| **Cdis** | карикатура: обесценивание (без амбиций/оставить в покое/…) |
+| **Cfak** | карикатура: псевдо-обоснование (якобы/очевидно же/…) |
+| **Rlong** | readability: слишком длинное предложение |
+| **Rpun** | readability: склейка пунктуации |
+| **Rcyr** | readability: мало кириллицы (непереведённая англ. проза) |
+| **Reng** | readability: длинный английский run |
+| **Rfil** | readability: вода/filler-фраза |
+| **Sch** | schema-ошибки (INVALID_*/MISSING/LABEL_ORDER) — обязано быть 0 |
+| **Статус** | `✅CAR0` = карикатура вычищена (round-3 done) · `CAR<N>` = остаток в очереди |
 
-<!-- Сводка round3 re-аудит (audit v2 + readability, 2026-07-01, СБРОС #2): файлов=318;
-severity файлов CRITICAL/HIGH/MEDIUM/LOW=297/11/5/2; блоков-флагов(parity)=9311;
-по группам LEN=8463 STR=7838 DEN=7587 CAR=2109 INF=92 SHRT=7874; readability RDB=19 (файлов H/M/L=4/9/3);
-⚠long>50%=292, ⚠tech>50%=314.
-Честно: под объединённым Option+Plausibility баром почти весь корпус = CRITICAL (correct выделяется по длине+структуре+
-плотности одновременно). CAR/INF снизились vs прошлый аудит (2197→2109 / 140→92) — это round-3 caricature-коммиты.
-Readability — отдельная линза (русская проза): всего 19 блоков-кандидатов, хотспот — behavioral/failure-stories (🟥4). -->
+> **Приоритет цикла:** loop чинит **ΣCAR/Cxxx-колонки** (Plausibility). Length/structure-колонки (Lavg…Cma)
+> у длинных энумеративных correct снимаются НЕ обрезкой correct (запрещено), а поднятием дистракторов —
+> это делается попутно в тех же блоках. Readability (Rxxx) — независимая ось. Матрица регенерируется
+> каждый тик: `python3 scripts/gen-plan-matrix.py --write`.
 
-| # | Кат. | Сидер | Бл. | Sev | C/H/M/L | long% | tech% | ustr% | rank | LEN | STR | DEN | CAR | INF | SHRT | RDB | Σ | Статус |
-|--:|---|---|--:|:--:|:--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|:--:|
-| 1 | databases | cassandra-interview | 44 | CRIT | 44/0/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 44 | 44 | 44 | 8 | 0 | 44 | 0 | 44 | QUEUED |
-| 2 | frameworks | spring-mvc-interview | 43 | CRIT | 43/0/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 43 | 43 | 43 | 8 | 0 | 43 | 0 | 43 | QUEUED |
-| 3 | testing | contract-testing-interview | 42 | CRIT | 42/0/0/0 | 100%⚠ | 100%⚠ | 98% | 1.00 | 42 | 42 | 42 | 5 | 0 | 42 | 0 | 42 | QUEUED |
-| 4 | databases | redis-interview | 43 | CRIT | 41/2/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 43 | 43 | 41 | 6 | 0 | 43 | 0 | 43 | QUEUED |
-| 5 | architecture | saga-pattern-interview | 43 | CRIT | 40/3/0/0 | 100%⚠ | 98%⚠ | 100% | 1.00 | 43 | 43 | 40 | 7 | 0 | 43 | 0 | 43 | QUEUED |
-| 6 | performance | performance-testing-interview | 42 | CRIT | 40/2/0/0 | 100%⚠ | 100%⚠ | 95% | 1.00 | 42 | 41 | 42 | 6 | 0 | 42 | 🟨1 | 42 | QUEUED |
-| 7 | frameworks | spring-batch-interview | 43 | CRIT | 38/5/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 43 | 40 | 41 | 10 | 0 | 43 | 0 | 43 | QUEUED |
-| 8 | security | jwt-interview | 43 | CRIT | 38/5/0/0 | 100%⚠ | 100%⚠ | 81% | 1.00 | 43 | 40 | 43 | 14 | 0 | 43 | 0 | 43 | QUEUED |
-| 9 | architecture | networking-interview | 43 | CRIT | 37/6/0/0 | 100%⚠ | 100%⚠ | 84% | 1.00 | 43 | 38 | 43 | 11 | 0 | 43 | 0 | 43 | QUEUED |
-| 10 | devops | argocd-interview | 42 | CRIT | 37/5/0/0 | 100%⚠ | 100%⚠ | 81% | 1.00 | 42 | 41 | 42 | 11 | 0 | 42 | 0 | 42 | QUEUED |
-| 11 | system-design | system-design-interview | 41 | CRIT | 37/4/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 41 | 39 | 41 | 24 | 0 | 38 | 0 | 41 | QUEUED |
-| 12 | reactive | project-reactor-interview | 48 | CRIT | 36/11/0/0 | 98%⚠ | 98%⚠ | 77% | 0.98 | 47 | 38 | 44 | 5 | 0 | 47 | 0 | 47 | QUEUED |
-| 13 | security | owasp-top10-interview | 45 | CRIT | 36/9/0/0 | 100%⚠ | 100%⚠ | 76% | 1.00 | 45 | 41 | 45 | 7 | 0 | 45 | 0 | 45 | QUEUED |
-| 14 | testing | test-strategies-interview | 45 | CRIT | 36/9/0/0 | 100%⚠ | 100%⚠ | 82% | 1.00 | 45 | 37 | 42 | 5 | 0 | 44 | 0 | 45 | QUEUED |
-| 15 | testing | unit-testing-interview | 45 | CRIT | 36/9/0/0 | 100%⚠ | 100%⚠ | 78% | 1.00 | 45 | 41 | 42 | 5 | 0 | 45 | 0 | 45 | QUEUED |
-| 16 | architecture | caching-strategies-interview | 42 | CRIT | 36/6/0/0 | 100%⚠ | 100%⚠ | 90% | 1.00 | 42 | 40 | 41 | 16 | 0 | 42 | 0 | 42 | QUEUED |
-| 17 | frameworks | spring-data-jpa-interview | 43 | CRIT | 36/6/0/0 | 98%⚠ | 98%⚠ | 84% | 0.99 | 42 | 38 | 42 | 12 | 0 | 42 | 0 | 42 | QUEUED |
-| 18 | programming-languages | scala-interview | 40 | CRIT | 36/4/0/0 | 100%⚠ | 100%⚠ | 80% | 1.00 | 40 | 37 | 40 | 8 | 0 | 40 | 0 | 40 | QUEUED |
-| 19 | programming-languages | java-oop-interview | 43 | CRIT | 35/8/0/0 | 100%⚠ | 98%⚠ | 81% | 1.00 | 43 | 40 | 38 | 8 | 0 | 43 | 0 | 43 | QUEUED |
-| 20 | programming-languages | kotlin-collections-interview | 43 | CRIT | 35/8/0/0 | 100%⚠ | 93%⚠ | 95% | 1.00 | 43 | 42 | 36 | 13 | 0 | 42 | 0 | 43 | QUEUED |
-| 21 | programming-languages | java-17-21-interview | 42 | CRIT | 35/7/0/0 | 100%⚠ | 95%⚠ | 88% | 1.00 | 42 | 39 | 39 | 5 | 0 | 42 | 0 | 42 | QUEUED |
-| 22 | security | authentication-authorization-patterns-interview | 45 | CRIT | 34/11/0/0 | 100%⚠ | 100%⚠ | 76% | 1.00 | 45 | 37 | 45 | 10 | 0 | 45 | 0 | 45 | QUEUED |
-| 23 | frameworks | spring-boot-actuator-interview | 43 | CRIT | 34/9/0/0 | 100%⚠ | 100%⚠ | 84% | 1.00 | 43 | 38 | 42 | 7 | 0 | 43 | 0 | 43 | QUEUED |
-| 24 | ai-ml | fine-tuning-llm-interview | 35 | CRIT | 34/1/0/0 | 100%⚠ | 100%⚠ | 97% | 1.00 | 35 | 34 | 35 | 11 | 0 | 35 | 0 | 35 | QUEUED |
-| 25 | architecture | hexagonal-architecture-interview | 45 | CRIT | 33/12/0/0 | 100%⚠ | 91%⚠ | 87% | 1.00 | 45 | 40 | 36 | 4 | 0 | 45 | 0 | 45 | QUEUED |
-| 26 | frameworks | spring-cloud-interview | 43 | CRIT | 33/10/0/0 | 100%⚠ | 100%⚠ | 74% | 1.00 | 43 | 36 | 43 | 4 | 0 | 43 | 0 | 43 | QUEUED |
-| 27 | architecture | scalability-patterns-interview | 41 | CRIT | 33/8/0/0 | 100%⚠ | 100%⚠ | 83% | 1.00 | 41 | 37 | 39 | 17 | 0 | 41 | 0 | 41 | QUEUED |
-| 28 | leadership | code-review-practices-interview | 40 | CRIT | 33/7/0/0 | 100%⚠ | 100%⚠ | 75% | 1.00 | 40 | 33 | 40 | 12 | 0 | 40 | 0 | 40 | QUEUED |
-| 29 | programming-languages | kotlin-dsl-interview | 40 | CRIT | 33/7/0/0 | 100%⚠ | 100%⚠ | 82% | 1.00 | 40 | 37 | 39 | 5 | 0 | 40 | 0 | 40 | QUEUED |
-| 30 | performance | memory-management-interview | 39 | CRIT | 33/6/0/0 | 100%⚠ | 97%⚠ | 87% | 1.00 | 39 | 36 | 37 | 11 | 0 | 39 | 0 | 39 | QUEUED |
-| 31 | api | websocket-interview | 38 | CRIT | 33/5/0/0 | 100%⚠ | 100%⚠ | 87% | 1.00 | 38 | 33 | 38 | 4 | 0 | 37 | 0 | 38 | QUEUED |
-| 32 | cicd | pipeline-design-interview | 38 | CRIT | 33/5/0/0 | 100%⚠ | 97%⚠ | 87% | 1.00 | 38 | 34 | 37 | 18 | 0 | 38 | 0 | 38 | QUEUED |
-| 33 | programming-languages | kotlin-interop-java-interview | 38 | CRIT | 33/5/0/0 | 100%⚠ | 100%⚠ | 95% | 1.00 | 38 | 37 | 34 | 7 | 0 | 38 | 0 | 38 | QUEUED |
-| 34 | databases | elasticsearch-interview | 44 | CRIT | 32/12/0/0 | 100%⚠ | 98%⚠ | 77% | 1.00 | 44 | 40 | 42 | 8 | 0 | 44 | 0 | 44 | QUEUED |
-| 35 | databases | database-transactions-interview | 42 | CRIT | 32/10/0/0 | 100%⚠ | 100%⚠ | 76% | 1.00 | 42 | 34 | 40 | 5 | 0 | 42 | 0 | 42 | QUEUED |
-| 36 | devops | terraform-interview | 42 | CRIT | 32/10/0/0 | 100%⚠ | 100%⚠ | 81% | 1.00 | 42 | 36 | 38 | 7 | 0 | 42 | 0 | 42 | QUEUED |
-| 37 | architecture | cqrs-event-sourcing-interview | 41 | CRIT | 32/9/0/0 | 100%⚠ | 95%⚠ | 95% | 1.00 | 41 | 40 | 39 | 17 | 0 | 41 | 0 | 41 | QUEUED |
-| 38 | logging | logging-interview | 42 | CRIT | 32/9/0/0 | 98%⚠ | 98%⚠ | 79% | 0.98 | 41 | 37 | 39 | 3 | 0 | 40 | 0 | 41 | QUEUED |
-| 39 | testing | integration-testing-interview | 40 | CRIT | 32/8/0/0 | 100%⚠ | 100%⚠ | 82% | 1.00 | 40 | 37 | 40 | 11 | 0 | 40 | 0 | 40 | QUEUED |
-| 40 | monitoring | logging-strategies-interview | 38 | CRIT | 32/6/0/0 | 100%⚠ | 97%⚠ | 87% | 1.00 | 38 | 36 | 37 | 1 | 0 | 38 | 0 | 38 | QUEUED |
-| 41 | algorithms | trees-interview | 34 | CRIT | 32/2/0/0 | 100%⚠ | 100%⚠ | 94% | 1.00 | 34 | 32 | 33 | 13 | 0 | 34 | 0 | 34 | QUEUED |
-| 42 | databases | database-sharding-interview | 34 | CRIT | 32/2/0/0 | 100%⚠ | 100%⚠ | 91% | 1.00 | 34 | 33 | 34 | 11 | 0 | 34 | 0 | 34 | QUEUED |
-| 43 | programming-languages | java-collections-interview | 46 | CRIT | 31/15/0/0 | 100%⚠ | 98%⚠ | 72% | 1.00 | 46 | 42 | 43 | 14 | 0 | 46 | 0 | 46 | QUEUED |
-| 44 | frameworks | spring-security-interview | 46 | CRIT | 31/12/0/0 | 96%⚠ | 94%⚠ | 67% | 0.98 | 43 | 33 | 42 | 7 | 0 | 43 | 0 | 43 | QUEUED |
-| 45 | frameworks | spring-framework-interview | 41 | CRIT | 31/9/0/0 | 98%⚠ | 98%⚠ | 85% | 0.98 | 40 | 36 | 37 | 3 | 0 | 40 | 0 | 40 | QUEUED |
-| 46 | cicd | deployment-strategies-interview | 39 | CRIT | 31/8/0/0 | 100%⚠ | 97%⚠ | 82% | 1.00 | 39 | 35 | 35 | 8 | 0 | 39 | 0 | 39 | QUEUED |
-| 47 | performance | jvm-performance-tuning-interview | 38 | CRIT | 31/7/0/0 | 100%⚠ | 100%⚠ | 55% | 1.00 | 38 | 34 | 38 | 17 | 0 | 38 | 0 | 38 | QUEUED |
-| 48 | programming-languages | java-modules-interview | 38 | CRIT | 31/7/0/0 | 100%⚠ | 97%⚠ | 92% | 1.00 | 38 | 35 | 33 | 2 | 0 | 38 | 0 | 38 | QUEUED |
-| 49 | ai-ml | ai-compliance-governance-interview | 32 | CRIT | 31/1/0/0 | 100%⚠ | 100%⚠ | 97% | 1.00 | 32 | 31 | 32 | 5 | 0 | 32 | 0 | 32 | QUEUED |
-| 50 | api | openapi-swagger-interview | 42 | CRIT | 30/12/0/0 | 100%⚠ | 100%⚠ | 86% | 1.00 | 42 | 37 | 35 | 4 | 0 | 42 | 0 | 42 | QUEUED |
-| 51 | architecture | microservices-interview | 42 | CRIT | 30/12/0/0 | 100%⚠ | 95%⚠ | 86% | 1.00 | 42 | 38 | 35 | 12 | 0 | 42 | 🟧1 | 42 | QUEUED |
-| 52 | databases | flyway-liquibase-interview | 42 | CRIT | 30/12/0/0 | 100%⚠ | 90%⚠ | 83% | 1.00 | 42 | 40 | 39 | 6 | 0 | 42 | 0 | 42 | QUEUED |
-| 53 | performance | application-profiling-interview | 42 | CRIT | 30/12/0/0 | 100%⚠ | 98%⚠ | 81% | 1.00 | 42 | 37 | 37 | 10 | 0 | 42 | 0 | 42 | QUEUED |
-| 54 | programming-languages | java-serialization-interview | 40 | CRIT | 30/10/0/0 | 100%⚠ | 95%⚠ | 80% | 1.00 | 40 | 38 | 34 | 4 | 0 | 39 | 0 | 40 | QUEUED |
-| 55 | security | tls-ssl-interview | 45 | CRIT | 29/16/0/0 | 100%⚠ | 98%⚠ | 64% | 1.00 | 45 | 36 | 42 | 9 | 0 | 45 | 0 | 45 | QUEUED |
-| 56 | ai-ml | open-source-llms-interview | 34 | CRIT | 29/5/0/0 | 100%⚠ | 100%⚠ | 85% | 1.00 | 34 | 31 | 33 | 4 | 0 | 34 | 0 | 34 | QUEUED |
-| 57 | algorithms | hash-tables-interview | 34 | CRIT | 29/5/0/0 | 100%⚠ | 100%⚠ | 82% | 1.00 | 34 | 29 | 34 | 11 | 0 | 34 | 0 | 34 | QUEUED |
-| 58 | algorithms | dynamic-programming-interview | 33 | CRIT | 29/4/0/0 | 100%⚠ | 97%⚠ | 91% | 1.00 | 33 | 31 | 31 | 13 | 0 | 33 | 0 | 33 | QUEUED |
-| 59 | ai-ml | ai-application-architecture-interview | 32 | CRIT | 29/3/0/0 | 100%⚠ | 97%⚠ | 94% | 1.00 | 32 | 31 | 32 | 12 | 0 | 32 | 0 | 32 | QUEUED |
-| 60 | system-design | design-feed-system-interview | 30 | CRIT | 29/1/0/0 | 100%⚠ | 100%⚠ | 97% | 1.00 | 30 | 30 | 30 | 3 | 0 | 30 | 0 | 30 | QUEUED |
-| 61 | system-design | design-rate-limiter-interview | 30 | CRIT | 29/1/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 30 | 29 | 30 | 5 | 0 | 30 | 0 | 30 | QUEUED |
-| 62 | databases | mongodb-interview | 46 | CRIT | 28/18/0/0 | 100%⚠ | 98%⚠ | 63% | 1.00 | 46 | 33 | 43 | 17 | 0 | 46 | 0 | 46 | QUEUED |
-| 63 | reactive | rxjava-interview | 46 | CRIT | 28/18/0/0 | 100%⚠ | 89%⚠ | 85% | 1.00 | 46 | 39 | 34 | 9 | 0 | 46 | 0 | 46 | QUEUED |
-| 64 | architecture | resilience-patterns-interview | 43 | CRIT | 28/15/0/0 | 100%⚠ | 100%⚠ | 67% | 1.00 | 43 | 34 | 41 | 5 | 0 | 43 | 0 | 43 | QUEUED |
-| 65 | devops | helm-interview | 43 | CRIT | 28/15/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 43 | 32 | 43 | 8 | 0 | 43 | 0 | 43 | QUEUED |
-| 66 | databases | database-architecture-interview | 41 | CRIT | 28/13/0/0 | 100%⚠ | 93%⚠ | 93% | 1.00 | 41 | 39 | 30 | 15 | 0 | 41 | 0 | 41 | QUEUED |
-| 67 | ai-ml | inference-optimization-interview | 36 | CRIT | 28/8/0/0 | 100%⚠ | 100%⚠ | 78% | 1.00 | 36 | 33 | 36 | 5 | 0 | 35 | 0 | 36 | QUEUED |
-| 68 | ai-ml | long-context-vs-rag-interview | 30 | CRIT | 28/2/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 30 | 29 | 30 | 11 | 0 | 30 | 0 | 30 | QUEUED |
-| 69 | system-design | design-netflix-interview | 30 | CRIT | 28/2/0/0 | 100%⚠ | 100%⚠ | 90% | 1.00 | 30 | 28 | 29 | 4 | 0 | 30 | 0 | 30 | QUEUED |
-| 70 | system-design | design-pastebin-interview | 30 | CRIT | 28/2/0/0 | 100%⚠ | 100%⚠ | 90% | 1.00 | 30 | 30 | 30 | 10 | 0 | 30 | 0 | 30 | QUEUED |
-| 71 | system-design | design-payment-system-interview | 30 | CRIT | 28/2/0/0 | 100%⚠ | 100%⚠ | 90% | 1.00 | 30 | 28 | 30 | 5 | 0 | 30 | 🟥1 | 30 | QUEUED |
-| 72 | programming-languages | java-8-interview | 42 | CRIT | 27/14/1/0 | 98%⚠ | 98%⚠ | 69% | 0.99 | 42 | 34 | 39 | 17 | 0 | 41 | 0 | 42 | QUEUED |
-| 73 | programming-languages | java-core-interview | 39 | CRIT | 27/12/0/0 | 100%⚠ | 97%⚠ | 95% | 1.00 | 39 | 38 | 28 | 7 | 0 | 33 | 0 | 39 | QUEUED |
-| 74 | architecture | api-gateway-interview | 38 | CRIT | 27/11/0/0 | 100%⚠ | 100%⚠ | 74% | 1.00 | 38 | 31 | 37 | 8 | 0 | 38 | 0 | 38 | QUEUED |
-| 75 | algorithms | arrays-strings-interview | 36 | CRIT | 27/9/0/0 | 100%⚠ | 97%⚠ | 81% | 1.00 | 36 | 32 | 33 | 10 | 0 | 36 | 0 | 36 | QUEUED |
-| 76 | programming-languages | go-interview | 36 | CRIT | 27/9/0/0 | 100%⚠ | 100%⚠ | 72% | 1.00 | 36 | 32 | 35 | 7 | 0 | 36 | 0 | 36 | QUEUED |
-| 77 | ai-ml | llm-evaluation-interview | 30 | CRIT | 27/3/0/0 | 100%⚠ | 97%⚠ | 87% | 1.00 | 30 | 29 | 28 | 10 | 0 | 30 | 0 | 30 | QUEUED |
-| 78 | system-design | design-key-value-store-interview | 30 | CRIT | 27/3/0/0 | 100%⚠ | 100%⚠ | 90% | 1.00 | 30 | 27 | 30 | 9 | 0 | 30 | 0 | 30 | QUEUED |
-| 79 | ai-ml | mlops-interview | 28 | CRIT | 27/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 28 | 27 | 28 | 7 | 0 | 28 | 0 | 28 | QUEUED |
-| 80 | system-design | design-youtube-interview | 28 | CRIT | 27/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 28 | 27 | 28 | 6 | 0 | 28 | 🟧1 | 28 | QUEUED |
-| 81 | algorithms | divide-and-conquer-interview | 27 | CRIT | 27/0/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 27 | 27 | 27 | 14 | 0 | 27 | 0 | 27 | QUEUED |
-| 82 | system-design | design-instagram-interview | 27 | CRIT | 27/0/0/0 | 100%⚠ | 100%⚠ | 89% | 1.00 | 27 | 27 | 27 | 11 | 0 | 27 | 0 | 27 | QUEUED |
-| 83 | security | application-security-interview | 45 | CRIT | 26/19/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 45 | 39 | 41 | 6 | 0 | 45 | 0 | 45 | QUEUED |
-| 84 | data-engineering | apache-spark-interview | 35 | CRIT | 26/9/0/0 | 100%⚠ | 100%⚠ | 69% | 1.00 | 35 | 31 | 35 | 14 | 0 | 35 | 0 | 35 | QUEUED |
-| 85 | algorithms | searching-algorithms-interview | 31 | CRIT | 26/5/0/0 | 100%⚠ | 100%⚠ | 84% | 1.00 | 31 | 29 | 31 | 10 | 0 | 31 | 0 | 31 | QUEUED |
-| 86 | ai-ml | mcp-interview | 30 | CRIT | 26/4/0/0 | 100%⚠ | 100%⚠ | 87% | 1.00 | 30 | 26 | 30 | 8 | 0 | 30 | 🟧1 | 30 | QUEUED |
-| 87 | architecture | service-discovery-interview | 30 | CRIT | 26/4/0/0 | 100%⚠ | 100%⚠ | 83% | 1.00 | 30 | 26 | 30 | 8 | 0 | 30 | 0 | 30 | QUEUED |
-| 88 | system-design | design-url-shortener-interview | 30 | CRIT | 26/4/0/0 | 100%⚠ | 100%⚠ | 83% | 1.00 | 30 | 27 | 30 | 2 | 0 | 30 | 0 | 30 | QUEUED |
-| 89 | ai-ml | ai-observability-interview | 28 | CRIT | 26/2/0/0 | 100%⚠ | 100%⚠ | 89% | 1.00 | 28 | 26 | 28 | 6 | 0 | 28 | 0 | 28 | QUEUED |
-| 90 | data-engineering | data-lake-lakehouse-interview | 28 | CRIT | 26/2/0/0 | 100%⚠ | 100%⚠ | 89% | 1.00 | 28 | 28 | 28 | 2 | 0 | 28 | 0 | 28 | QUEUED |
-| 91 | programming-languages | kotlin-serialization-interview | 43 | CRIT | 25/18/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 43 | 32 | 39 | 9 | 0 | 43 | 0 | 43 | QUEUED |
-| 92 | monitoring | metrics-tracing-interview | 41 | CRIT | 25/16/0/0 | 100%⚠ | 85%⚠ | 63% | 1.00 | 41 | 31 | 31 | 8 | 0 | 41 | 0 | 41 | QUEUED |
-| 93 | architecture | load-balancing-interview | 40 | CRIT | 25/15/0/0 | 100%⚠ | 92%⚠ | 65% | 1.00 | 40 | 30 | 33 | 11 | 0 | 40 | 0 | 40 | QUEUED |
-| 94 | ai-ml | multimodal-ai-interview | 31 | CRIT | 25/6/0/0 | 100%⚠ | 97%⚠ | 84% | 1.00 | 31 | 28 | 29 | 10 | 0 | 31 | 0 | 31 | QUEUED |
-| 95 | databases | database-replication-interview | 31 | CRIT | 25/6/0/0 | 100%⚠ | 100%⚠ | 81% | 1.00 | 31 | 28 | 30 | 14 | 0 | 31 | 0 | 31 | QUEUED |
-| 96 | frameworks | quarkus-interview | 31 | CRIT | 25/6/0/0 | 100%⚠ | 97%⚠ | 87% | 1.00 | 31 | 28 | 31 | 5 | 0 | 31 | 0 | 31 | QUEUED |
-| 97 | ai-ml | embeddings-interview | 29 | CRIT | 25/4/0/0 | 100%⚠ | 93%⚠ | 93% | 1.00 | 29 | 27 | 26 | 14 | 0 | 28 | 0 | 29 | QUEUED |
-| 98 | ai-ml | llm-integration-patterns-interview | 28 | CRIT | 25/3/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 28 | 26 | 26 | 8 | 0 | 28 | 0 | 28 | QUEUED |
-| 99 | data-engineering | kafka-streams-interview | 28 | CRIT | 25/3/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 28 | 27 | 27 | 4 | 0 | 28 | 0 | 28 | QUEUED |
-| 100 | monitoring | opentelemetry-interview | 28 | CRIT | 25/3/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 28 | 26 | 28 | 9 | 0 | 28 | 0 | 28 | QUEUED |
-| 101 | system-design | design-parking-lot-oo-interview | 28 | CRIT | 25/3/0/0 | 100%⚠ | 100%⚠ | 89% | 1.00 | 28 | 26 | 28 | 8 | 0 | 28 | 0 | 28 | QUEUED |
-| 102 | monitoring | elk-stack-interview | 26 | CRIT | 25/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 26 | 26 | 26 | 4 | 0 | 26 | 0 | 26 | QUEUED |
-| 103 | devops | ansible-interview | 25 | CRIT | 25/0/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 25 | 25 | 25 | 8 | 0 | 25 | 🟧1 | 25 | QUEUED |
-| 104 | programming-languages | java-types-interview | 38 | CRIT | 24/14/0/0 | 100%⚠ | 95%⚠ | 71% | 1.00 | 38 | 31 | 33 | 10 | 0 | 38 | 0 | 38 | QUEUED |
-| 105 | algorithms | linked-lists-interview | 32 | CRIT | 24/7/0/0 | 100%⚠ | 91%⚠ | 88% | 1.00 | 31 | 29 | 25 | 1 | 0 | 31 | 0 | 31 | QUEUED |
-| 106 | data-engineering | apache-flink-interview | 31 | CRIT | 24/7/0/0 | 100%⚠ | 100%⚠ | 77% | 1.00 | 31 | 25 | 31 | 8 | 0 | 31 | 0 | 31 | QUEUED |
-| 107 | architecture | cdn-interview | 30 | CRIT | 24/4/1/0 | 100%⚠ | 100%⚠ | 70% | 1.00 | 28 | 25 | 28 | 9 | 1 | 27 | 0 | 29 | QUEUED |
-| 108 | ai-ml | ai-agents-interview | 28 | CRIT | 24/4/0/0 | 100%⚠ | 100%⚠ | 86% | 1.00 | 28 | 25 | 27 | 9 | 0 | 28 | 0 | 28 | QUEUED |
-| 109 | ai-ml | model-serving-interview | 28 | CRIT | 24/4/0/0 | 100%⚠ | 100%⚠ | 86% | 1.00 | 28 | 27 | 28 | 8 | 0 | 28 | 0 | 28 | QUEUED |
-| 110 | cloud | serverless-interview | 28 | CRIT | 24/4/0/0 | 100%⚠ | 96%⚠ | 82% | 1.00 | 28 | 24 | 28 | 7 | 0 | 28 | 0 | 28 | QUEUED |
-| 111 | code-quality | clean-code-practices-interview | 27 | CRIT | 24/3/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 27 | 27 | 26 | 7 | 0 | 27 | 0 | 27 | QUEUED |
-| 112 | system-design | design-elevator-oo-interview | 26 | CRIT | 24/2/0/0 | 100%⚠ | 100%⚠ | 92% | 1.00 | 26 | 24 | 26 | 3 | 0 | 26 | 0 | 26 | QUEUED |
-| 113 | architecture | clean-architecture-interview | 41 | CRIT | 23/18/0/0 | 100%⚠ | 90%⚠ | 66% | 1.00 | 41 | 29 | 34 | 5 | 0 | 41 | 0 | 41 | QUEUED |
-| 114 | api | grpc-interview | 40 | CRIT | 23/13/4/0 | 100%⚠ | 90%⚠ | 65% | 1.00 | 39 | 35 | 31 | 3 | 0 | 32 | 0 | 40 | QUEUED |
-| 115 | programming-languages | kotlin-coroutines-interview | 39 | CRIT | 23/16/0/0 | 100%⚠ | 92%⚠ | 80% | 1.00 | 39 | 34 | 27 | 15 | 0 | 37 | 0 | 39 | QUEUED |
-| 116 | algorithms | complexity-analysis-interview | 31 | CRIT | 23/8/0/0 | 100%⚠ | 100%⚠ | 74% | 1.00 | 31 | 24 | 31 | 27 | 0 | 31 | 0 | 31 | QUEUED |
-| 117 | algorithms | sorting-algorithms-interview | 31 | CRIT | 23/8/0/0 | 100%⚠ | 100%⚠ | 74% | 1.00 | 31 | 28 | 30 | 13 | 0 | 31 | 0 | 31 | QUEUED |
-| 118 | databases | dynamodb-interview | 30 | CRIT | 23/7/0/0 | 100%⚠ | 100%⚠ | 77% | 1.00 | 30 | 23 | 29 | 5 | 0 | 30 | 0 | 30 | QUEUED |
-| 119 | algorithms | heaps-interview | 29 | CRIT | 23/6/0/0 | 100%⚠ | 97%⚠ | 90% | 1.00 | 29 | 29 | 27 | 15 | 0 | 29 | 0 | 29 | QUEUED |
-| 120 | devops | istio-service-mesh-interview | 26 | CRIT | 23/3/0/0 | 100%⚠ | 100%⚠ | 85% | 1.00 | 26 | 24 | 26 | 3 | 0 | 26 | 0 | 26 | QUEUED |
-| 121 | databases | cockroachdb-interview | 24 | CRIT | 23/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 24 | 24 | 24 | 7 | 0 | 24 | 0 | 24 | QUEUED |
-| 122 | performance | network-performance-interview | 24 | CRIT | 23/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 24 | 24 | 24 | 4 | 0 | 24 | 0 | 24 | QUEUED |
-| 123 | system-design | design-vending-machine-oo-interview | 24 | CRIT | 23/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 24 | 24 | 24 | 5 | 0 | 24 | 0 | 24 | QUEUED |
-| 124 | performance | caching-performance-interview | 23 | CRIT | 23/0/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 23 | 23 | 23 | 13 | 0 | 23 | 0 | 23 | QUEUED |
-| 125 | security | oauth2-interview | 42 | CRIT | 22/20/0/0 | 100%⚠ | 100%⚠ | 57% | 1.00 | 42 | 29 | 40 | 6 | 0 | 42 | 0 | 42 | QUEUED |
-| 126 | programming-languages | java-io-nio-interview | 40 | CRIT | 22/18/0/0 | 100%⚠ | 92%⚠ | 72% | 1.00 | 40 | 32 | 28 | 8 | 0 | 40 | 0 | 40 | QUEUED |
-| 127 | devops | gradle-maven-interview | 38 | CRIT | 22/16/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 38 | 30 | 36 | 7 | 0 | 38 | 0 | 38 | QUEUED |
-| 128 | ai-ml | multi-agent-orchestration-interview | 30 | CRIT | 22/8/0/0 | 100%⚠ | 100%⚠ | 70% | 1.00 | 30 | 29 | 30 | 11 | 0 | 30 | 0 | 30 | QUEUED |
-| 129 | programming-languages | go-testing-interview | 28 | CRIT | 22/6/0/0 | 100%⚠ | 96%⚠ | 75% | 1.00 | 28 | 26 | 27 | 6 | 0 | 28 | 0 | 28 | QUEUED |
-| 130 | system-design | design-twitter-interview | 27 | CRIT | 22/5/0/0 | 100%⚠ | 100%⚠ | 70% | 1.00 | 27 | 25 | 27 | 3 | 0 | 27 | 🟧1 | 27 | QUEUED |
-| 131 | databases | postgresql-interview | 55 | CRIT | 21/33/1/0 | 100%⚠ | 91%⚠ | 74% | 1.00 | 55 | 42 | 29 | 5 | 0 | 52 | 0 | 55 | QUEUED |
-| 132 | programming-languages | kotlin-exceptions-interview | 40 | CRIT | 21/18/1/0 | 100%⚠ | 88%⚠ | 75% | 1.00 | 40 | 36 | 28 | 11 | 0 | 39 | 0 | 40 | QUEUED |
-| 133 | programming-languages | java-jackson-interview | 31 | CRIT | 21/10/0/0 | 100%⚠ | 100%⚠ | 71% | 1.00 | 31 | 28 | 29 | 7 | 0 | 31 | 0 | 31 | QUEUED |
-| 134 | data-engineering | dbt-interview | 28 | CRIT | 21/7/0/0 | 100%⚠ | 100%⚠ | 79% | 1.00 | 28 | 23 | 26 | 4 | 0 | 28 | 0 | 28 | QUEUED |
-| 135 | data-engineering | stream-processing-interview | 28 | CRIT | 21/7/0/0 | 100%⚠ | 96%⚠ | 86% | 1.00 | 28 | 25 | 24 | 8 | 0 | 28 | 0 | 28 | QUEUED |
-| 136 | devops | vault-interview | 26 | CRIT | 21/5/0/0 | 100%⚠ | 96%⚠ | 88% | 1.00 | 26 | 23 | 24 | 2 | 0 | 26 | 0 | 26 | QUEUED |
-| 137 | architecture | latency-numbers-interview | 24 | CRIT | 21/3/0/0 | 100%⚠ | 100%⚠ | 88% | 1.00 | 24 | 21 | 24 | 9 | 0 | 22 | 0 | 24 | QUEUED |
-| 138 | databases | scylladb-interview | 23 | CRIT | 21/2/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 23 | 22 | 22 | 0 | 0 | 23 | 0 | 23 | QUEUED |
-| 139 | security | secrets-management-interview | 22 | CRIT | 21/1/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 22 | 21 | 22 | 5 | 0 | 22 | 0 | 22 | QUEUED |
-| 140 | testing | load-testing-interview | 22 | CRIT | 21/1/0/0 | 100%⚠ | 100%⚠ | 91% | 1.00 | 22 | 21 | 22 | 7 | 0 | 22 | 0 | 22 | QUEUED |
-| 141 | system-design | design-chat-system-interview | 21 | CRIT | 21/0/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 21 | 21 | 21 | 0 | 0 | 21 | 0 | 21 | QUEUED |
-| 142 | programming-languages | java-generics-interview | 40 | CRIT | 20/20/0/0 | 100%⚠ | 100%⚠ | 55% | 1.00 | 40 | 32 | 35 | 8 | 0 | 40 | 0 | 40 | QUEUED |
-| 143 | programming-languages | go-concurrency-interview | 35 | CRIT | 20/15/0/0 | 100%⚠ | 86%⚠ | 69% | 1.00 | 35 | 28 | 25 | 8 | 0 | 34 | 0 | 35 | QUEUED |
-| 144 | databases | neo4j-interview | 30 | CRIT | 20/10/0/0 | 100%⚠ | 90%⚠ | 77% | 1.00 | 30 | 27 | 24 | 7 | 0 | 30 | 0 | 30 | QUEUED |
-| 145 | algorithms | greedy-algorithms-interview | 28 | CRIT | 20/8/0/0 | 100%⚠ | 89%⚠ | 89% | 1.00 | 28 | 26 | 22 | 12 | 0 | 28 | 0 | 28 | QUEUED |
-| 146 | algorithms | tries-interview | 28 | CRIT | 20/8/0/0 | 100%⚠ | 100%⚠ | 75% | 1.00 | 28 | 27 | 26 | 3 | 0 | 28 | 0 | 28 | QUEUED |
-| 147 | security | supply-chain-security-interview | 24 | CRIT | 20/4/0/0 | 100%⚠ | 96%⚠ | 88% | 1.00 | 24 | 23 | 24 | 2 | 0 | 24 | 0 | 24 | QUEUED |
-| 148 | architecture | cap-theorem-interview | 42 | CRIT | 19/23/0/0 | 100%⚠ | 83%⚠ | 60% | 1.00 | 42 | 32 | 26 | 16 | 0 | 41 | 0 | 42 | QUEUED |
-| 149 | architecture | distributed-systems-interview | 40 | CRIT | 19/21/0/0 | 100%⚠ | 92%⚠ | 75% | 1.00 | 40 | 33 | 27 | 12 | 0 | 40 | 0 | 40 | QUEUED |
-| 150 | leadership | team-leadership-interview | 40 | CRIT | 19/21/0/0 | 100%⚠ | 92%⚠ | 60% | 1.00 | 40 | 30 | 34 | 4 | 0 | 40 | 0 | 40 | QUEUED |
-| 151 | ai-ml | reasoning-models-interview | 30 | CRIT | 19/10/1/0 | 100%⚠ | 100%⚠ | 67% | 1.00 | 30 | 23 | 28 | 13 | 0 | 28 | 0 | 30 | QUEUED |
-| 152 | algorithms | backtracking-interview | 27 | CRIT | 19/8/0/0 | 100%⚠ | 89%⚠ | 74% | 1.00 | 27 | 24 | 24 | 10 | 0 | 27 | 0 | 27 | QUEUED |
-| 153 | messaging | message-brokers-comparison-interview | 26 | CRIT | 19/7/0/0 | 100%⚠ | 100%⚠ | 73% | 1.00 | 26 | 20 | 26 | 3 | 0 | 26 | 0 | 26 | QUEUED |
-| 154 | devops | consul-interview | 24 | CRIT | 19/5/0/0 | 100%⚠ | 100%⚠ | 83% | 1.00 | 24 | 21 | 21 | 1 | 0 | 24 | 0 | 24 | QUEUED |
-| 155 | messaging | nats-interview | 24 | CRIT | 19/5/0/0 | 100%⚠ | 100%⚠ | 79% | 1.00 | 24 | 22 | 23 | 3 | 0 | 24 | 0 | 24 | QUEUED |
-| 156 | testing | testcontainers-interview | 40 | CRIT | 18/22/0/0 | 100%⚠ | 95%⚠ | 52% | 1.00 | 40 | 31 | 36 | 11 | 0 | 38 | 0 | 40 | QUEUED |
-| 157 | messaging | rabbitmq-interview | 41 | CRIT | 18/16/4/0 | 100%⚠ | 95%⚠ | 63% | 1.00 | 35 | 27 | 26 | 4 | 0 | 22 | 0 | 38 | QUEUED |
-| 158 | leadership | technical-decisions-interview | 22 | CRIT | 18/4/0/0 | 100%⚠ | 86%⚠ | 91% | 1.00 | 22 | 22 | 22 | 3 | 0 | 22 | 0 | 22 | QUEUED |
-| 159 | security | mtls-interview | 20 | CRIT | 18/2/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 20 | 20 | 18 | 4 | 0 | 20 | 0 | 20 | QUEUED |
-| 160 | architecture | consistency-patterns-interview | 42 | CRIT | 17/25/0/0 | 100%⚠ | 100%⚠ | 74% | 1.00 | 42 | 36 | 22 | 16 | 0 | 41 | 0 | 42 | QUEUED |
-| 161 | api | http-rest-interview | 43 | CRIT | 17/19/4/0 | 95%⚠ | 79%⚠ | 60% | 0.96 | 35 | 34 | 23 | 9 | 1 | 27 | 0 | 40 | QUEUED |
-| 162 | code-quality | technical-debt-interview | 40 | CRIT | 17/23/0/0 | 100%⚠ | 78%⚠ | 85% | 1.00 | 40 | 37 | 26 | 12 | 0 | 40 | 0 | 40 | QUEUED |
-| 163 | programming-languages | go-stdlib-interview | 30 | CRIT | 17/13/0/0 | 100%⚠ | 97%⚠ | 60% | 1.00 | 30 | 23 | 25 | 7 | 0 | 30 | 0 | 30 | QUEUED |
-| 164 | ai-ml | prompt-engineering-interview | 28 | CRIT | 17/10/1/0 | 100%⚠ | 93%⚠ | 75% | 1.00 | 28 | 25 | 21 | 10 | 0 | 27 | 0 | 28 | QUEUED |
-| 165 | ai-ml | vector-databases-interview | 28 | CRIT | 17/10/1/0 | 100%⚠ | 100%⚠ | 61% | 1.00 | 28 | 19 | 25 | 8 | 0 | 24 | 0 | 28 | QUEUED |
-| 166 | performance | database-performance-interview | 27 | CRIT | 17/10/0/0 | 100%⚠ | 100%⚠ | 63% | 1.00 | 27 | 21 | 27 | 19 | 0 | 27 | 0 | 27 | QUEUED |
-| 167 | programming-languages | go-memory-gc-interview | 27 | CRIT | 17/10/0/0 | 100%⚠ | 100%⚠ | 63% | 1.00 | 27 | 20 | 25 | 8 | 0 | 27 | 0 | 27 | QUEUED |
-| 168 | algorithms | stacks-queues-interview | 25 | CRIT | 17/8/0/0 | 100%⚠ | 100%⚠ | 68% | 1.00 | 25 | 20 | 25 | 5 | 0 | 25 | 0 | 25 | QUEUED |
-| 169 | frameworks | micronaut-interview | 26 | CRIT | 17/8/0/0 | 100%⚠ | 96%⚠ | 65% | 1.00 | 25 | 19 | 24 | 5 | 0 | 25 | 0 | 25 | QUEUED |
-| 170 | frameworks | spring-aop-interview | 22 | CRIT | 17/5/0/0 | 100%⚠ | 96%⚠ | 86% | 1.00 | 22 | 20 | 22 | 6 | 0 | 22 | 🟨1 | 22 | QUEUED |
-| 171 | messaging | aws-sqs-sns-interview | 22 | CRIT | 17/5/0/0 | 100%⚠ | 100%⚠ | 77% | 1.00 | 22 | 17 | 21 | 1 | 0 | 22 | 0 | 22 | QUEUED |
-| 172 | monitoring | micrometer-interview | 20 | CRIT | 17/3/0/0 | 100%⚠ | 100%⚠ | 85% | 1.00 | 20 | 17 | 20 | 1 | 0 | 20 | 0 | 20 | QUEUED |
-| 173 | architecture | edge-computing-interview | 18 | CRIT | 17/1/0/0 | 100%⚠ | 100%⚠ | 94% | 1.00 | 18 | 17 | 18 | 6 | 0 | 18 | 0 | 18 | QUEUED |
-| 174 | architecture | bff-pattern-interview | 17 | CRIT | 17/0/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 17 | 17 | 17 | 6 | 0 | 17 | 0 | 17 | QUEUED |
-| 175 | design-patterns | design-patterns-interview | 48 | CRIT | 16/24/5/1 | 100%⚠ | 69%⚠ | 65% | 1.00 | 43 | 34 | 18 | 12 | 0 | 27 | 0 | 46 | QUEUED |
-| 176 | programming-languages | kotlin-interview | 45 | CRIT | 16/27/2/0 | 100%⚠ | 84%⚠ | 80% | 1.00 | 45 | 37 | 22 | 8 | 0 | 39 | 0 | 45 | QUEUED |
-| 177 | programming-languages | java-stream-interview | 42 | CRIT | 16/25/1/0 | 100%⚠ | 95%⚠ | 45% | 1.00 | 42 | 28 | 38 | 15 | 0 | 40 | 0 | 42 | QUEUED |
-| 178 | api | graphql-interview | 40 | CRIT | 16/20/1/0 | 95%⚠ | 80%⚠ | 55% | 0.98 | 37 | 27 | 23 | 12 | 0 | 31 | 0 | 37 | QUEUED |
-| 179 | reactive | webflux-interview | 28 | CRIT | 16/12/0/0 | 100%⚠ | 100%⚠ | 64% | 1.00 | 28 | 21 | 24 | 3 | 0 | 28 | 0 | 28 | QUEUED |
-| 180 | algorithms | recursion-interview | 27 | CRIT | 16/10/1/0 | 100%⚠ | 85%⚠ | 89% | 1.00 | 26 | 26 | 20 | 11 | 0 | 22 | 0 | 27 | QUEUED |
-| 181 | monitoring | jaeger-zipkin-interview | 23 | CRIT | 16/7/0/0 | 100%⚠ | 96%⚠ | 65% | 1.00 | 23 | 19 | 22 | 3 | 0 | 23 | 0 | 23 | QUEUED |
-| 182 | frameworks | resilience4j-interview | 20 | CRIT | 16/4/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 20 | 20 | 16 | 1 | 0 | 20 | 0 | 20 | QUEUED |
-| 183 | testing | mutation-testing-interview | 20 | CRIT | 16/4/0/0 | 100%⚠ | 100%⚠ | 75% | 1.00 | 20 | 17 | 20 | 4 | 0 | 20 | 0 | 20 | QUEUED |
-| 184 | security | zero-trust-interview | 19 | CRIT | 16/3/0/0 | 100%⚠ | 100%⚠ | 90% | 1.00 | 19 | 18 | 18 | 2 | 0 | 19 | 0 | 19 | QUEUED |
-| 185 | testing | mockito-interview | 45 | CRIT | 15/24/6/0 | 89%⚠ | 82%⚠ | 60% | 0.97 | 45 | 38 | 21 | 8 | 0 | 42 | 0 | 45 | QUEUED |
-| 186 | reactive | reactive-streams-interview | 30 | CRIT | 15/15/0/0 | 100%⚠ | 100%⚠ | 47% | 1.00 | 30 | 17 | 24 | 6 | 0 | 30 | 0 | 30 | QUEUED |
-| 187 | programming-languages | java-mapstruct-interview | 28 | CRIT | 15/13/0/0 | 100%⚠ | 96%⚠ | 61% | 1.00 | 28 | 22 | 21 | 5 | 0 | 27 | 0 | 28 | QUEUED |
-| 188 | programming-languages | java-initialization-interview | 27 | CRIT | 15/12/0/0 | 100%⚠ | 96%⚠ | 59% | 1.00 | 27 | 19 | 23 | 6 | 0 | 27 | 0 | 27 | QUEUED |
-| 189 | behavioral | conflict-stories-interview | 22 | CRIT | 15/7/0/0 | 100%⚠ | 100%⚠ | 96% | 1.00 | 22 | 21 | 18 | 3 | 0 | 22 | 0 | 22 | QUEUED |
-| 190 | devops | linkerd-interview | 20 | CRIT | 15/5/0/0 | 100%⚠ | 100%⚠ | 80% | 1.00 | 20 | 17 | 20 | 1 | 0 | 20 | 0 | 20 | QUEUED |
-| 191 | monitoring | observability-interview | 42 | CRIT | 14/22/4/0 | 95%⚠ | 95%⚠ | 45% | 0.98 | 39 | 25 | 28 | 9 | 0 | 36 | 🟧1 | 40 | QUEUED |
-| 192 | programming-languages | go-modules-interview | 27 | CRIT | 14/12/1/0 | 100%⚠ | 89%⚠ | 67% | 1.00 | 27 | 19 | 16 | 1 | 0 | 27 | 0 | 27 | QUEUED |
-| 193 | code-quality | static-analysis-interview | 26 | CRIT | 14/12/0/0 | 100%⚠ | 100%⚠ | 62% | 1.00 | 26 | 17 | 24 | 4 | 0 | 26 | 0 | 26 | QUEUED |
-| 194 | programming-languages | go-generics-interview | 26 | CRIT | 14/12/0/0 | 100%⚠ | 96%⚠ | 58% | 1.00 | 26 | 19 | 24 | 8 | 0 | 26 | 0 | 26 | QUEUED |
-| 195 | messaging | pulsar-interview | 22 | CRIT | 14/8/0/0 | 100%⚠ | 100%⚠ | 68% | 1.00 | 22 | 17 | 22 | 5 | 0 | 22 | 0 | 22 | QUEUED |
-| 196 | api | api-versioning-interview | 20 | CRIT | 14/6/0/0 | 100%⚠ | 85%⚠ | 90% | 1.00 | 20 | 20 | 19 | 4 | 0 | 20 | 0 | 20 | QUEUED |
-| 197 | leadership | estimations-planning-interview | 20 | CRIT | 14/6/0/0 | 100%⚠ | 95%⚠ | 75% | 1.00 | 20 | 17 | 20 | 6 | 0 | 20 | 0 | 20 | QUEUED |
-| 198 | api | rest-maturity-interview | 17 | CRIT | 14/3/0/0 | 100%⚠ | 88%⚠ | 76% | 1.00 | 17 | 15 | 16 | 3 | 0 | 17 | 0 | 17 | QUEUED |
-| 199 | frameworks | spring-data-jdbc-interview | 16 | CRIT | 14/2/0/0 | 100%⚠ | 100%⚠ | 94% | 1.00 | 16 | 15 | 15 | 3 | 0 | 16 | 0 | 16 | QUEUED |
-| 200 | frameworks | spring-integration-interview | 15 | CRIT | 14/1/0/0 | 100%⚠ | 100%⚠ | 100% | 1.00 | 15 | 15 | 14 | 4 | 0 | 15 | 0 | 15 | QUEUED |
-| 201 | programming-languages | java-virtual-threads-interview | 15 | CRIT | 14/1/0/0 | 100%⚠ | 100%⚠ | 87% | 1.00 | 15 | 15 | 14 | 1 | 0 | 15 | 0 | 15 | QUEUED |
-| 202 | frameworks | ktor-interview | 32 | CRIT | 13/19/0/0 | 100%⚠ | 97%⚠ | 38% | 1.00 | 32 | 24 | 29 | 8 | 0 | 32 | 0 | 32 | QUEUED |
-| 203 | behavioral | leadership-stories-interview | 22 | CRIT | 13/9/0/0 | 100%⚠ | 100%⚠ | 91% | 1.00 | 22 | 20 | 20 | 5 | 0 | 22 | 0 | 22 | QUEUED |
-| 204 | behavioral | star-method-interview | 22 | CRIT | 13/9/0/0 | 100%⚠ | 96%⚠ | 86% | 1.00 | 22 | 20 | 18 | 4 | 0 | 22 | 0 | 22 | QUEUED |
-| 205 | frameworks | spring-vault-interview | 15 | CRIT | 13/2/0/0 | 100%⚠ | 93%⚠ | 93% | 1.00 | 15 | 15 | 14 | 2 | 0 | 15 | 0 | 15 | QUEUED |
-| 206 | testing | selenium-interview | 15 | CRIT | 13/2/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 15 | 15 | 14 | 1 | 0 | 15 | 0 | 15 | QUEUED |
-| 207 | devops | docker-interview | 41 | CRIT | 12/29/0/0 | 100%⚠ | 90%⚠ | 34% | 1.00 | 41 | 17 | 33 | 5 | 0 | 41 | 0 | 41 | QUEUED |
-| 208 | databases | clickhouse-interview | 28 | CRIT | 12/16/0/0 | 100%⚠ | 100%⚠ | 57% | 1.00 | 28 | 21 | 25 | 7 | 0 | 28 | 0 | 28 | QUEUED |
-| 209 | testing | property-based-testing-interview | 21 | CRIT | 12/9/0/0 | 100%⚠ | 90%⚠ | 62% | 1.00 | 21 | 16 | 17 | 8 | 0 | 21 | 0 | 21 | QUEUED |
-| 210 | programming-languages | kotlin-flow-interview | 17 | CRIT | 12/5/0/0 | 100%⚠ | 94%⚠ | 65% | 1.00 | 17 | 14 | 16 | 4 | 0 | 17 | 0 | 17 | QUEUED |
-| 211 | frameworks | spring-graphql-interview | 15 | CRIT | 12/3/0/0 | 100%⚠ | 100%⚠ | 80% | 1.00 | 15 | 14 | 15 | 3 | 0 | 14 | 0 | 15 | QUEUED |
-| 212 | frameworks | spring-kafka-interview | 15 | CRIT | 12/3/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 15 | 15 | 13 | 5 | 0 | 15 | 0 | 15 | QUEUED |
-| 213 | monitoring | prometheus-grafana-interview | 39 | CRIT | 11/19/8/0 | 97%⚠ | 85%⚠ | 36% | 0.98 | 36 | 18 | 18 | 2 | 0 | 30 | 0 | 38 | QUEUED |
-| 214 | ai-ml | llm-basics-interview | 30 | CRIT | 11/14/4/0 | 100%⚠ | 87%⚠ | 53% | 1.00 | 29 | 18 | 14 | 4 | 0 | 22 | 0 | 29 | QUEUED |
-| 215 | architecture | dns-interview | 30 | CRIT | 11/6/9/2 | 93%⚠ | 80%⚠ | 70% | 0.97 | 21 | 23 | 19 | 5 | 1 | 10 | 0 | 28 | QUEUED |
-| 216 | reactive | reactive-testing-interview | 28 | CRIT | 11/17/0/0 | 100%⚠ | 82%⚠ | 68% | 1.00 | 28 | 23 | 17 | 4 | 0 | 26 | 0 | 28 | QUEUED |
-| 217 | code-quality | code-coverage-interview | 25 | CRIT | 11/14/0/0 | 100%⚠ | 92%⚠ | 68% | 1.00 | 25 | 20 | 20 | 5 | 0 | 25 | 0 | 25 | QUEUED |
-| 218 | system-design | design-web-crawler-interview | 26 | CRIT | 11/10/1/1 | 92%⚠ | 100%⚠ | 46% | 0.96 | 23 | 13 | 17 | 3 | 0 | 21 | 0 | 23 | QUEUED |
-| 219 | frameworks | spring-retry-interview | 17 | CRIT | 11/6/0/0 | 100%⚠ | 100%⚠ | 71% | 1.00 | 17 | 12 | 17 | 4 | 0 | 17 | 0 | 17 | QUEUED |
-| 220 | frameworks | spring-messaging-interview | 15 | CRIT | 11/4/0/0 | 100%⚠ | 100%⚠ | 73% | 1.00 | 15 | 13 | 15 | 2 | 0 | 15 | 0 | 15 | QUEUED |
-| 221 | frameworks | spring-state-machine-interview | 15 | CRIT | 11/4/0/0 | 100%⚠ | 100%⚠ | 73% | 1.00 | 15 | 13 | 15 | 4 | 0 | 15 | 0 | 15 | QUEUED |
-| 222 | frameworks | spring-transaction-interview | 15 | CRIT | 11/4/0/0 | 100%⚠ | 100%⚠ | 93% | 1.00 | 15 | 14 | 12 | 5 | 0 | 15 | 0 | 15 | QUEUED |
-| 223 | databases | hibernate-interview | 50 | CRIT | 10/27/6/1 | 92%⚠ | 76%⚠ | 36% | 0.98 | 44 | 23 | 15 | 6 | 0 | 38 | 0 | 44 | QUEUED |
-| 224 | programming-languages | java-lombok-interview | 27 | CRIT | 10/16/1/0 | 100%⚠ | 89%⚠ | 52% | 1.00 | 27 | 19 | 19 | 9 | 0 | 26 | 0 | 27 | QUEUED |
-| 225 | reactive | reactive-patterns-interview | 26 | CRIT | 10/16/0/0 | 100%⚠ | 92%⚠ | 81% | 1.00 | 26 | 22 | 13 | 1 | 0 | 25 | 0 | 26 | QUEUED |
-| 226 | algorithms | algorithms-interview | 16 | CRIT | 10/6/0/0 | 100%⚠ | 94%⚠ | 69% | 1.00 | 16 | 15 | 16 | 9 | 0 | 16 | 0 | 16 | QUEUED |
-| 227 | frameworks | spring-testing-interview | 16 | CRIT | 10/5/0/1 | 94%⚠ | 94%⚠ | 69% | 0.95 | 15 | 14 | 13 | 5 | 0 | 15 | 0 | 16 | QUEUED |
-| 228 | programming-languages | java-reflection-interview | 16 | CRIT | 10/6/0/0 | 100%⚠ | 100%⚠ | 62% | 1.00 | 16 | 13 | 16 | 3 | 0 | 16 | 0 | 16 | QUEUED |
-| 229 | jvm | graalvm-native-interview | 15 | CRIT | 10/5/0/0 | 100%⚠ | 100%⚠ | 73% | 1.00 | 15 | 14 | 14 | 4 | 0 | 15 | 0 | 15 | QUEUED |
-| 230 | programming-languages | java-optional-interview | 15 | CRIT | 10/5/0/0 | 100%⚠ | 100%⚠ | 67% | 1.00 | 15 | 14 | 15 | 7 | 0 | 15 | 0 | 15 | QUEUED |
-| 231 | programming-languages | java-functional-interface-interview | 14 | CRIT | 10/4/0/0 | 100%⚠ | 100%⚠ | 79% | 1.00 | 14 | 12 | 14 | 4 | 0 | 14 | 0 | 14 | QUEUED |
-| 232 | devops | git-interview | 43 | CRIT | 9/12/19/1 | 91%⚠ | 84%⚠ | 63% | 0.97 | 25 | 31 | 18 | 11 | 0 | 8 | 0 | 41 | QUEUED |
-| 233 | api | api-design-best-practices-interview | 30 | CRIT | 9/10/11/0 | 97%⚠ | 83%⚠ | 57% | 0.99 | 26 | 18 | 14 | 7 | 0 | 21 | 0 | 30 | QUEUED |
-| 234 | code-quality | code-smells-interview | 27 | CRIT | 9/18/0/0 | 100%⚠ | 74%⚠ | 48% | 1.00 | 27 | 15 | 15 | 6 | 0 | 26 | 0 | 27 | QUEUED |
-| 235 | frameworks | spring-validation-interview | 16 | CRIT | 9/7/0/0 | 100%⚠ | 100%⚠ | 69% | 1.00 | 16 | 13 | 16 | 3 | 0 | 15 | 0 | 16 | QUEUED |
-| 236 | databases | hibernate-relationships-interview | 15 | CRIT | 9/6/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 15 | 9 | 15 | 8 | 0 | 15 | 0 | 15 | QUEUED |
-| 237 | frameworks | spring-boot-3-migration-interview | 15 | CRIT | 9/6/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 15 | 12 | 15 | 1 | 0 | 15 | 0 | 15 | QUEUED |
-| 238 | frameworks | spring-r2dbc-interview | 15 | CRIT | 9/6/0/0 | 100%⚠ | 100%⚠ | 53% | 1.00 | 15 | 10 | 14 | 2 | 0 | 15 | 0 | 15 | QUEUED |
-| 239 | programming-languages | java-annotations-interview | 43 | CRIT | 8/28/4/2 | 98%⚠ | 79%⚠ | 40% | 0.99 | 38 | 20 | 21 | 5 | 0 | 34 | 0 | 42 | QUEUED |
-| 240 | programming-languages | java-exceptions-interview | 42 | CRIT | 8/32/2/0 | 98%⚠ | 71%⚠ | 19% | 0.99 | 42 | 26 | 21 | 8 | 1 | 41 | 0 | 42 | QUEUED |
-| 241 | programming-languages | rust-interview | 33 | CRIT | 8/3/18/1 | 70%⚠ | 61%⚠ | 61% | 0.86 | 7 | 28 | 9 | 11 | 5 | 2 | 0 | 30 | QUEUED |
-| 242 | frameworks | spring-cache-interview | 18 | CRIT | 8/10/0/0 | 100%⚠ | 89%⚠ | 61% | 1.00 | 18 | 12 | 14 | 6 | 0 | 15 | 0 | 18 | QUEUED |
-| 243 | frameworks | spring-ai-interview | 18 | CRIT | 8/7/1/0 | 89%⚠ | 94%⚠ | 50% | 0.96 | 15 | 12 | 14 | 3 | 0 | 15 | 0 | 16 | QUEUED |
-| 244 | databases | hibernate-caching-interview | 15 | CRIT | 8/7/0/0 | 100%⚠ | 100%⚠ | 67% | 1.00 | 15 | 14 | 12 | 5 | 0 | 15 | 0 | 15 | QUEUED |
-| 245 | frameworks | spring-async-interview | 15 | CRIT | 8/6/1/0 | 100%⚠ | 93%⚠ | 67% | 1.00 | 14 | 12 | 11 | 2 | 0 | 12 | 0 | 15 | QUEUED |
-| 246 | frameworks | spring-session-interview | 15 | CRIT | 8/7/0/0 | 100%⚠ | 93%⚠ | 60% | 1.00 | 15 | 11 | 13 | 1 | 0 | 15 | 0 | 15 | QUEUED |
-| 247 | databases | sql-interview | 53 | CRIT | 7/19/14/6 | 91%⚠ | 55%⚠ | 24% | 0.97 | 37 | 23 | 14 | 13 | 0 | 20 | 0 | 46 | QUEUED |
-| 248 | testing | test-automation-interview | 50 | CRIT | 7/19/14/3 | 34% | 72%⚠ | 58% | 0.68 | 20 | 35 | 24 | 10 | 6 | 12 | 0 | 43 | QUEUED |
-| 249 | code-quality | code-review-interview | 40 | CRIT | 7/7/15/7 | 55%⚠ | 62%⚠ | 42% | 0.74 | 12 | 29 | 18 | 8 | 5 | 3 | 🟥1 | 36 | QUEUED |
-| 250 | behavioral | behavioral-interview | 38 | CRIT | 7/13/11/2 | 92%⚠ | 76%⚠ | 34% | 0.97 | 28 | 22 | 9 | 5 | 0 | 17 | 0 | 33 | QUEUED |
-| 251 | programming-languages | typescript-interview | 33 | CRIT | 7/18/5/1 | 97%⚠ | 67%⚠ | 46% | 0.98 | 30 | 19 | 11 | 10 | 0 | 22 | 0 | 31 | QUEUED |
-| 252 | system-design | design-dropbox-interview | 30 | CRIT | 7/16/6/0 | 100%⚠ | 93%⚠ | 80% | 1.00 | 12 | 27 | 24 | 11 | 1 | 4 | 0 | 29 | QUEUED |
-| 253 | system-design | design-typeahead-interview | 30 | CRIT | 7/12/9/1 | 27% | 90%⚠ | 60% | 0.55 | 11 | 20 | 24 | 9 | 7 | 2 | 🟧1 | 29 | QUEUED |
-| 254 | programming-languages | java-string-interview | 39 | CRIT | 7/7/9/5 | 69%⚠ | 64%⚠ | 36% | 0.90 | 13 | 22 | 10 | 9 | 3 | 7 | 0 | 28 | QUEUED |
-| 255 | ai-ml | function-calling-interview | 30 | CRIT | 7/12/7/0 | 63%⚠ | 93%⚠ | 57% | 0.89 | 21 | 20 | 16 | 6 | 2 | 13 | 0 | 26 | QUEUED |
-| 256 | behavioral | failure-stories-interview | 22 | CRIT | 7/13/2/0 | 100%⚠ | 86%⚠ | 64% | 1.00 | 22 | 15 | 8 | 4 | 0 | 18 | 🟥4 | 22 | QUEUED |
-| 257 | frameworks | spring-scheduling-interview | 16 | CRIT | 7/5/4/0 | 100%⚠ | 94%⚠ | 69% | 1.00 | 13 | 14 | 9 | 3 | 0 | 4 | 0 | 16 | QUEUED |
-| 258 | testing | junit-interview | 15 | CRIT | 7/8/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 15 | 10 | 12 | 2 | 0 | 14 | 0 | 15 | QUEUED |
-| 259 | testing | rest-assured-interview | 15 | CRIT | 7/8/0/0 | 100%⚠ | 100%⚠ | 53% | 1.00 | 15 | 12 | 15 | 1 | 0 | 14 | 0 | 15 | QUEUED |
-| 260 | frameworks | spring-rest-client-interview | 13 | CRIT | 7/5/1/0 | 100%⚠ | 92%⚠ | 46% | 1.00 | 13 | 10 | 12 | 1 | 0 | 12 | 0 | 13 | QUEUED |
-| 261 | programming-languages | java-concurrency-interview | 56 | CRIT | 6/16/23/4 | 89%⚠ | 55%⚠ | 59% | 0.96 | 36 | 38 | 7 | 9 | 1 | 6 | 0 | 49 | QUEUED |
-| 262 | programming-languages | java-conditional-statements-interview | 42 | CRIT | 6/14/12/7 | 57%⚠ | 57%⚠ | 24% | 0.70 | 29 | 23 | 17 | 8 | 0 | 17 | 0 | 39 | QUEUED |
-| 263 | programming-languages | java-records-interview | 15 | CRIT | 6/9/0/0 | 100%⚠ | 93%⚠ | 60% | 1.00 | 15 | 9 | 11 | 2 | 0 | 15 | 0 | 15 | QUEUED |
-| 264 | programming-languages | kotlin-sealed-classes-interview | 15 | CRIT | 6/9/0/0 | 100%⚠ | 67%⚠ | 67% | 1.00 | 15 | 11 | 6 | 3 | 0 | 14 | 0 | 15 | QUEUED |
-| 265 | cloud | aws-interview | 34 | CRIT | 5/3/13/11 | 9% | 41% | 38% | 0.42 | 6 | 29 | 6 | 10 | 6 | 0 | 0 | 32 | QUEUED |
-| 266 | monitoring | loki-grafana-interview | 28 | CRIT | 5/10/9/2 | 43% | 86%⚠ | 57% | 0.61 | 1 | 22 | 17 | 7 | 5 | 0 | 0 | 26 | QUEUED |
-| 267 | leadership | conflict-resolution-interview | 20 | CRIT | 5/15/0/0 | 100%⚠ | 95%⚠ | 45% | 1.00 | 20 | 12 | 16 | 6 | 0 | 20 | 0 | 20 | QUEUED |
-| 268 | frameworks | spring-events-interview | 16 | CRIT | 5/11/0/0 | 100%⚠ | 94%⚠ | 62% | 1.00 | 16 | 12 | 11 | 3 | 0 | 16 | 0 | 16 | QUEUED |
-| 269 | frameworks | spring-modulith-interview | 15 | CRIT | 5/10/0/0 | 100%⚠ | 100%⚠ | 60% | 1.00 | 15 | 10 | 9 | 3 | 0 | 14 | 0 | 15 | QUEUED |
-| 270 | programming-languages | kotlin-value-classes-interview | 15 | CRIT | 5/7/2/0 | 93%⚠ | 73%⚠ | 47% | 0.97 | 13 | 12 | 6 | 4 | 0 | 10 | 0 | 14 | QUEUED |
-| 271 | algorithms | two-pointers-sliding-window-interview | 33 | CRIT | 4/18/11/0 | 61%⚠ | 97%⚠ | 76% | 0.86 | 19 | 29 | 26 | 10 | 1 | 3 | 0 | 33 | QUEUED |
-| 272 | system-design | design-google-maps-interview | 30 | CRIT | 4/15/8/1 | 70%⚠ | 87%⚠ | 73% | 0.80 | 6 | 26 | 20 | 7 | 4 | 0 | 🟧1 | 28 | QUEUED |
-| 273 | testing | chaos-engineering-interview | 44 | CRIT | 3/8/24/3 | 93%⚠ | 68%⚠ | 59% | 0.97 | 9 | 31 | 14 | 8 | 0 | 1 | 🟥1 | 38 | QUEUED |
-| 274 | frameworks | spring-boot-interview | 43 | CRIT | 3/13/16/2 | 51%⚠ | 86%⚠ | 54% | 0.77 | 11 | 30 | 16 | 4 | 1 | 5 | 0 | 34 | QUEUED |
-| 275 | jvm | jvm-interview | 40 | CRIT | 3/11/14/5 | 88%⚠ | 57%⚠ | 25% | 0.96 | 26 | 19 | 11 | 7 | 0 | 12 | 0 | 33 | QUEUED |
-| 276 | architecture | ddd-interview | 38 | CRIT | 3/11/16/1 | 76%⚠ | 53%⚠ | 63% | 0.90 | 3 | 28 | 12 | 10 | 6 | 0 | 0 | 31 | QUEUED |
-| 277 | ai-ml | ai-safety-guardrails-interview | 32 | CRIT | 3/13/12/2 | 31% | 88%⚠ | 56% | 0.69 | 5 | 24 | 20 | 9 | 5 | 1 | 0 | 30 | QUEUED |
-| 278 | devops | linux-interview | 33 | CRIT | 3/18/9/0 | 73%⚠ | 79%⚠ | 64% | 0.88 | 6 | 25 | 26 | 9 | 4 | 0 | 0 | 30 | QUEUED |
-| 279 | frameworks | vertx-interview | 31 | CRIT | 3/7/14/4 | 52%⚠ | 84%⚠ | 48% | 0.72 | 13 | 22 | 12 | 5 | 3 | 0 | 0 | 28 | QUEUED |
-| 280 | cloud | azure-interview | 25 | CRIT | 3/14/6/0 | 40% | 96%⚠ | 72% | 0.78 | 6 | 22 | 20 | 4 | 2 | 0 | 0 | 23 | QUEUED |
-| 281 | behavioral | culture-fit-interview | 22 | CRIT | 3/19/0/0 | 100%⚠ | 91%⚠ | 77% | 1.00 | 22 | 17 | 8 | 10 | 0 | 22 | 0 | 22 | QUEUED |
-| 282 | architecture | strangler-fig-interview | 18 | CRIT | 3/14/1/0 | 100%⚠ | 67%⚠ | 61% | 1.00 | 18 | 15 | 3 | 4 | 0 | 13 | 0 | 18 | QUEUED |
-| 283 | messaging | redpanda-interview | 20 | CRIT | 3/9/5/1 | 90%⚠ | 80%⚠ | 20% | 0.97 | 17 | 7 | 7 | 7 | 0 | 14 | 0 | 18 | QUEUED |
-| 284 | programming-languages | java-pattern-matching-interview | 15 | CRIT | 3/12/0/0 | 100%⚠ | 80%⚠ | 47% | 1.00 | 15 | 8 | 8 | 1 | 0 | 13 | 0 | 15 | QUEUED |
-| 285 | frameworks | spring-webflux-interview | 43 | CRIT | 2/9/24/4 | 58%⚠ | 77%⚠ | 60% | 0.77 | 5 | 31 | 18 | 6 | 2 | 0 | 0 | 39 | QUEUED |
-| 286 | system-design | design-search-interview | 30 | CRIT | 2/18/9/1 | 53%⚠ | 97%⚠ | 60% | 0.81 | 20 | 27 | 25 | 0 | 0 | 1 | 0 | 30 | QUEUED |
-| 287 | system-design | design-uber-interview | 30 | CRIT | 2/18/10/0 | 0% | 97%⚠ | 63% | 0.57 | 12 | 23 | 25 | 7 | 3 | 0 | 0 | 30 | QUEUED |
-| 288 | ai-ml | agentic-patterns-interview | 30 | CRIT | 2/8/16/3 | 20% | 93%⚠ | 63% | 0.80 | 26 | 21 | 14 | 4 | 2 | 2 | 0 | 29 | QUEUED |
-| 289 | ai-ml | code-agents-interview | 31 | CRIT | 2/8/12/6 | 58%⚠ | 77%⚠ | 45% | 0.86 | 15 | 18 | 16 | 2 | 0 | 3 | 0 | 28 | QUEUED |
-| 290 | leadership | tech-interviewing-interview | 20 | CRIT | 2/17/0/0 | 100%⚠ | 85%⚠ | 15% | 1.00 | 19 | 8 | 6 | 3 | 0 | 18 | 0 | 19 | QUEUED |
-| 291 | databases | hibernate-jpql-criteria-interview | 16 | CRIT | 2/8/4/1 | 88%⚠ | 75%⚠ | 44% | 0.94 | 13 | 12 | 2 | 6 | 1 | 4 | 0 | 15 | QUEUED |
-| 292 | programming-languages | kotlin-spring-interview | 15 | CRIT | 2/5/6/0 | 100%⚠ | 80%⚠ | 20% | 1.00 | 12 | 5 | 6 | 2 | 0 | 9 | 0 | 13 | QUEUED |
-| 293 | algorithms | graphs-interview | 34 | CRIT | 1/14/16/1 | 62%⚠ | 76%⚠ | 79% | 0.85 | 5 | 29 | 19 | 0 | 0 | 1 | 0 | 32 | QUEUED |
-| 294 | architecture | event-driven-patterns-interview | 40 | CRIT | 1/5/15/8 | 62%⚠ | 62%⚠ | 38% | 0.81 | 11 | 19 | 6 | 10 | 2 | 2 | 0 | 29 | QUEUED |
-| 295 | data-engineering | apache-airflow-interview | 28 | CRIT | 1/16/8/1 | 82%⚠ | 96%⚠ | 82% | 0.93 | 4 | 25 | 19 | 5 | 0 | 1 | 0 | 26 | QUEUED |
-| 296 | architecture | reverse-proxy-interview | 30 | CRIT | 1/16/4/4 | 47% | 80%⚠ | 53% | 0.72 | 7 | 24 | 19 | 11 | 2 | 0 | 0 | 25 | QUEUED |
-| 297 | cloud | gcp-interview | 28 | CRIT | 1/7/10/3 | 36% | 89%⚠ | 50% | 0.71 | 3 | 15 | 9 | 4 | 2 | 0 | 0 | 21 | QUEUED |
-| 298 | ai-ml | rag-interview | 30 | HIGH | 0/7/13/9 | 33% | 93%⚠ | 43% | 0.72 | 4 | 24 | 14 | 0 | 0 | 0 | 🟧1 | 29 | QUEUED |
-| 299 | system-design | design-ecommerce-delivery-interview | 36 | HIGH | 0/5/16/8 | 78%⚠ | 75%⚠ | 33% | 0.91 | 2 | 21 | 5 | 8 | 3 | 0 | 0 | 29 | QUEUED |
-| 300 | cloud | aws-lambda-interview | 32 | HIGH | 0/6/18/4 | 38% | 78%⚠ | 38% | 0.68 | 6 | 22 | 14 | 0 | 0 | 0 | 0 | 28 | QUEUED |
-| 301 | code-quality | refactoring-patterns-interview | 42 | HIGH | 0/3/18/5 | 33% | 50% | 38% | 0.66 | 2 | 23 | 6 | 0 | 0 | 0 | 0 | 26 | QUEUED |
-| 302 | devops | kubernetes-interview | 45 | HIGH | 0/8/12/6 | 56%⚠ | 67%⚠ | 33% | 0.83 | 9 | 16 | 9 | 4 | 0 | 0 | 0 | 26 | QUEUED |
-| 303 | data-engineering | data-warehousing-interview | 30 | HIGH | 0/6/16/1 | 33% | 63%⚠ | 60% | 0.65 | 0 | 22 | 10 | 4 | 0 | 0 | 0 | 23 | QUEUED |
-| 304 | cloud | cloud-native-patterns-interview | 30 | HIGH | 0/8/9/4 | 53%⚠ | 57%⚠ | 43% | 0.72 | 1 | 17 | 9 | 6 | 2 | 0 | 0 | 21 | QUEUED |
-| 305 | leadership | mentoring-interview | 25 | HIGH | 0/1/12/4 | 32% | 84%⚠ | 0% | 0.62 | 6 | 12 | 3 | 0 | 0 | 0 | 🟨1 | 17 | QUEUED |
-| 306 | messaging | kafka-interview | 50 | HIGH | 0/3/6/2 | 70%⚠ | 62%⚠ | 0% | 0.85 | 9 | 0 | 2 | 2 | 0 | 1 | 0 | 11 | QUEUED |
-| 307 | programming-languages | java-completable-future-interview | 15 | HIGH | 0/2/6/3 | 80%⚠ | 33% | 7% | 0.90 | 6 | 4 | 1 | 3 | 1 | 0 | 0 | 11 | QUEUED |
-| 308 | testing | cucumber-bdd-interview | 15 | HIGH | 0/1/0/0 | 33% | 73%⚠ | 0% | 0.72 | 0 | 1 | 0 | 1 | 1 | 0 | 0 | 1 | QUEUED |
-| 309 | programming-languages | java-22-25-interview | 22 | MEDI | 0/0/4/3 | 46% | 41% | 4% | 0.76 | 1 | 5 | 2 | 1 | 0 | 0 | 0 | 7 | QUEUED |
-| 310 | jvm | crac-interview | 16 | MEDI | 0/0/1/3 | 38% | 62%⚠ | 6% | 0.64 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 4 | QUEUED |
-| 311 | ai-ml | langchain4j-interview | 18 | MEDI | 0/0/2/1 | 28% | 56%⚠ | 0% | 0.61 | 1 | 1 | 1 | 2 | 0 | 0 | 0 | 3 | QUEUED |
-| 312 | databases | jooq-interview | 18 | MEDI | 0/0/1/1 | 33% | 78%⚠ | 0% | 0.79 | 2 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | QUEUED |
-| 313 | testing | archunit-interview | 15 | MEDI | 0/0/1/0 | 20% | 87%⚠ | 0% | 0.58 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | QUEUED |
-| 314 | messaging | apache-camel-interview | 16 | LOW | 0/0/0/1 | 12% | 75%⚠ | 0% | 0.62 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | QUEUED |
-| 315 | messaging | jms-activemq-interview | 16 | LOW | 0/0/0/1 | 19% | 88%⚠ | 0% | 0.59 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | QUEUED |
-| 316 | performance | jmh-microbenchmarking-interview | 18 | NONE | 0/0/0/0 | 22% | 78%⚠ | 0% | 0.54 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | QUEUED |
-| 317 | programming-languages | kotlin-testing-interview | 20 | NONE | 0/0/0/0 | 35% | 85%⚠ | 0% | 0.61 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | QUEUED |
-| 318 | programming-languages | scala-effects-interview | 16 | NONE | 0/0/0/0 | 25% | 88%⚠ | 0% | 0.53 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | QUEUED |
+| # | Сидер | Бл | Sev | ΣCAR | Lavg | Lspd | Word | Sent | Shrt | Uniq | Enum | Caus | Sden | Tech | Btk | Num | Cma | Infl | Cabs | Ctox | Cabd | Cdis | Cfak | Rlong | Rpun | Rcyr | Reng | Rfil | Sch | Статус |
+|--:|---|--:|:--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|:--:|
+| 1 | memory-management | 39 | CRIT | 11 | 39 | 39 | 39 | 13 | 39 | 34 | 29 | 20 | 7 | 37 | 19 | 10 | 19 | · | 11 | · | · | · | · | · | · | · | · | · | · | CAR11 |
+| 2 | load-balancing | 40 | CRIT | 11 | 40 | 40 | 40 | 15 | 40 | 26 | 18 | 8 | 9 | 33 | 26 | 4 | 13 | · | 10 | 1 | · | · | · | · | · | · | · | · | · | CAR11 |
+| 3 | long-context-vs-rag | 30 | CRIT | 11 | 30 | 30 | 30 | 25 | 30 | 28 | 19 | 9 | 20 | 30 | 17 | 23 | 18 | · | 10 | 1 | · | · | · | · | · | · | · | · | · | CAR11 |
+| 4 | multi-agent-orchestration | 30 | CRIT | 11 | 30 | 30 | 30 | 9 | 30 | 21 | 14 | 14 | 11 | 30 | 18 | 6 | 23 | · | 11 | · | · | · | · | · | · | · | · | · | · | CAR11 |
+| 5 | git | 41 | CRIT | 11 | 23 | 17 | 2 | · | 8 | 27 | 10 | 10 | 1 | 18 | 9 | · | 1 | · | 11 | · | · | · | · | · | · | · | · | · | · | CAR11 |
+| 6 | authentication-authorization-patterns | 45 | CRIT | 10 | 45 | 45 | 45 | 28 | 45 | 34 | 29 | 16 | 8 | 44 | 42 | 6 | 24 | · | 9 | 1 | 1 | · | · | · | · | · | · | · | · | CAR10 |
+| 7 | application-profiling | 42 | CRIT | 10 | 42 | 42 | 40 | 10 | 42 | 34 | 27 | 11 | 11 | 34 | 14 | 9 | 11 | · | 10 | · | · | · | · | · | · | · | · | · | · | CAR10 |
+| 8 | design-pastebin | 30 | CRIT | 10 | 30 | 30 | 30 | 25 | 30 | 27 | 16 | 11 | 25 | 30 | 20 | 15 | 20 | · | 9 | 1 | · | · | · | · | · | · | · | · | · | CAR10 |
+| 9 | java-types | 38 | CRIT | 10 | 38 | 38 | 38 | 17 | 38 | 27 | 20 | 8 | 7 | 33 | 29 | 7 | 8 | · | 10 | · | · | · | · | · | · | · | · | · | · | CAR10 |
+| 10 | arrays-strings | 36 | CRIT | 10 | 36 | 36 | 34 | 21 | 36 | 29 | 18 | 14 | 3 | 33 | 30 | 7 | 6 | · | 9 | · | 1 | · | · | · | · | · | · | · | · | CAR10 |
+| 11 | searching-algorithms | 31 | CRIT | 10 | 31 | 31 | 31 | 25 | 31 | 26 | 22 | 11 | 10 | 31 | 29 | 11 | 12 | · | 10 | · | · | · | · | · | · | · | · | · | · | CAR10 |
+| 12 | multimodal-ai | 31 | CRIT | 10 | 31 | 31 | 31 | 17 | 31 | 26 | 18 | 9 | 10 | 28 | 16 | 16 | 20 | · | 10 | · | · | · | · | · | · | · | · | · | · | CAR10 |
+| 13 | llm-evaluation | 30 | CRIT | 10 | 30 | 30 | 28 | 7 | 30 | 26 | 22 | 12 | 11 | 28 | · | 9 | 18 | · | 10 | · | · | · | · | · | · | · | · | · | · | CAR10 |
+| 14 | backtracking | 27 | CRIT | 10 | 27 | 27 | 27 | 19 | 27 | 20 | 17 | 8 | 2 | 24 | 19 | 4 | 13 | · | 10 | · | · | · | · | · | · | · | · | · | · | CAR10 |
+| 15 | prompt-engineering | 28 | CRIT | 10 | 28 | 28 | 27 | 9 | 27 | 21 | 18 | 11 | 4 | 20 | 8 | 2 | 11 | · | 9 | 1 | · | · | · | · | · | · | · | · | · | CAR10 |
+| 16 | culture-fit | 22 | CRIT | 10 | 22 | 22 | 22 | 22 | 22 | 17 | 17 | 1 | 3 | 3 | 1 | · | 5 | · | 10 | · | · | · | · | · | · | · | · | · | · | CAR10 |
+| 17 | ddd | 31 | CRIT | 10 | 1 | 3 | · | · | · | 24 | 20 | 3 | · | 10 | 9 | · | 6 | 6 | 10 | · | · | · | · | · | · | · | · | · | · | CAR10 |
+| 18 | aws | 32 | CRIT | 10 | · | 3 | · | 3 | · | 13 | 17 | 14 | · | 3 | 2 | 1 | 4 | 6 | 9 | 1 | · | · | · | · | · | · | · | · | · | CAR10 |
+| 19 | event-driven-patterns | 29 | CRIT | 10 | 3 | 9 | · | · | 2 | 15 | 9 | 8 | · | 4 | 3 | · | 2 | 2 | 10 | · | · | · | · | · | · | · | · | · | · | CAR10 |
+| 20 | tls-ssl | 45 | CRIT | 9 | 45 | 45 | 42 | 23 | 45 | 29 | 20 | 17 | 14 | 42 | 41 | 15 | 19 | · | 9 | · | · | · | · | · | · | · | · | · | · | CAR9 |
+| 21 | kotlin-serialization | 43 | CRIT | 9 | 43 | 43 | 42 | 23 | 43 | 26 | 21 | 11 | 5 | 39 | 35 | 4 | 13 | · | 9 | · | · | · | · | · | · | · | · | · | · | CAR9 |
+| 22 | rxjava | 46 | CRIT | 9 | 46 | 46 | 41 | 4 | 46 | 39 | 24 | 3 | 4 | 34 | 32 | 3 | 16 | · | 9 | · | · | · | · | · | · | · | · | · | · | CAR9 |
+| 23 | design-key-value-store | 30 | CRIT | 9 | 30 | 30 | 30 | 26 | 30 | 27 | 17 | 8 | 16 | 30 | 22 | 18 | 23 | · | 9 | · | · | · | · | · | · | · | · | · | · | CAR9 |
+| 24 | sorting-algorithms | 31 | CRIT | 9 | 31 | 31 | 31 | 27 | 31 | 24 | 23 | 15 | 7 | 30 | 23 | 3 | 20 | · | 9 | · | · | · | · | · | · | · | · | · | · | CAR9 |
+| 25 | opentelemetry | 28 | CRIT | 9 | 28 | 28 | 28 | 24 | 28 | 26 | 25 | 14 | 11 | 27 | 19 | 5 | 18 | · | 9 | · | · | · | · | · | · | · | · | · | · | CAR9 |
+| 26 | cdn | 29 | CRIT | 9 | 28 | 28 | 27 | 15 | 27 | 21 | 17 | 10 | 7 | 28 | 17 | 14 | 20 | 1 | 7 | 3 | · | · | · | · | · | · | · | · | · | CAR9 |
+| 27 | ai-agents | 28 | CRIT | 9 | 28 | 28 | 27 | 19 | 28 | 24 | 20 | 8 | 8 | 26 | 18 | 4 | 22 | · | 9 | · | · | · | · | · | · | · | · | · | · | CAR9 |
+| 28 | observability | 40 | CRIT | 9 | 39 | 38 | 26 | 5 | 36 | 19 | 12 | 12 | 3 | 26 | · | 4 | 15 | · | 9 | · | · | · | · | · | · | · | 1 | · | · | CAR9 |
+| 29 | latency-numbers | 24 | CRIT | 9 | 24 | 24 | 21 | 14 | 22 | 21 | 10 | 2 | 8 | 24 | 24 | 23 | 12 | · | 9 | · | · | · | · | · | · | · | · | · | · | CAR9 |
+| 30 | http-rest | 40 | CRIT | 9 | 34 | 32 | 14 | · | 27 | 26 | 17 | 13 | 4 | 19 | 11 | · | 6 | 1 | 9 | · | · | · | · | · | · | · | · | · | · | CAR9 |
+| 31 | complexity-analysis | 31 | CRIT | 9 | 18 | 18 | 13 | 18 | 17 | 19 | 6 | 10 | 8 | 27 | 26 | 11 | 5 | · | 9 | · | · | · | · | · | · | · | · | · | · | CAR9 |
+| 32 | java-lombok | 27 | CRIT | 9 | 27 | 27 | 21 | 2 | 26 | 14 | 11 | 9 | 1 | 17 | 17 | · | 3 | · | 8 | 1 | · | · | · | · | · | · | · | · | · | CAR9 |
+| 33 | algorithms | 16 | CRIT | 9 | 16 | 16 | 16 | 2 | 16 | 11 | 9 | 8 | 4 | 15 | 8 | 1 | 13 | · | 9 | · | · | · | · | · | · | · | · | · | · | CAR9 |
+| 34 | java-concurrency | 49 | CRIT | 9 | 29 | 23 | 2 | 2 | 6 | 33 | 17 | 11 | · | 6 | · | · | 2 | 1 | 8 | 1 | · | · | · | · | · | · | · | · | · | CAR9 |
+| 35 | java-string | 28 | CRIT | 9 | 11 | 11 | 8 | 5 | 7 | 14 | 17 | 12 | 1 | 9 | 8 | 2 | 2 | 3 | 8 | · | 1 | · | · | · | · | · | · | · | · | CAR9 |
+| 36 | linux | 30 | CRIT | 9 | · | 2 | · | 4 | · | 21 | 14 | 9 | 6 | 22 | 22 | · | 4 | 4 | 7 | 2 | · | · | · | · | · | · | · | · | · | CAR9 |
+| 37 | design-typeahead | 29 | CRIT | 9 | 1 | 8 | · | 4 | 2 | 18 | 5 | 4 | 7 | 23 | 2 | 5 | 2 | 7 | 9 | · | · | · | · | · | · | 1 | · | · | · | CAR9 |
+| 38 | ai-safety-guardrails | 30 | CRIT | 9 | · | 3 | · | 2 | 1 | 18 | 14 | 9 | · | 16 | 6 | 2 | 7 | 5 | 8 | 1 | · | · | · | · | · | · | · | · | · | CAR9 |
+| 39 | spring-mvc | 43 | CRIT | 8 | 43 | 43 | 43 | 12 | 43 | 43 | 39 | 16 | 24 | 43 | 42 | 2 | 31 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 40 | cassandra | 44 | CRIT | 8 | 44 | 44 | 44 | 4 | 44 | 44 | 41 | 13 | 20 | 44 | 33 | 11 | 35 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 41 | elasticsearch | 44 | CRIT | 8 | 44 | 44 | 43 | 26 | 44 | 34 | 31 | 18 | 5 | 41 | 38 | 3 | 29 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 42 | scala | 40 | CRIT | 8 | 40 | 40 | 40 | 28 | 40 | 32 | 28 | 8 | 18 | 40 | 39 | 7 | 29 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 43 | helm | 43 | CRIT | 8 | 43 | 43 | 43 | 38 | 43 | 26 | 22 | 8 | 8 | 42 | 40 | 4 | 17 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 44 | deployment-strategies | 39 | CRIT | 8 | 39 | 39 | 39 | 26 | 39 | 32 | 28 | 9 | 12 | 33 | 22 | 3 | 20 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 45 | java-oop | 43 | CRIT | 8 | 43 | 43 | 42 | 3 | 43 | 35 | 20 | 11 | 16 | 37 | 25 | 2 | 18 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 46 | api-gateway | 38 | CRIT | 8 | 38 | 38 | 36 | 20 | 38 | 28 | 23 | 9 | 11 | 35 | 32 | 5 | 24 | · | 7 | 1 | · | · | · | · | · | · | · | · | · | CAR8 |
+| 47 | java-generics | 40 | CRIT | 8 | 40 | 40 | 39 | 25 | 40 | 22 | 11 | 19 | 7 | 33 | 30 | 2 | 15 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 48 | service-discovery | 30 | CRIT | 8 | 30 | 30 | 29 | 19 | 30 | 25 | 14 | 14 | 22 | 30 | 17 | 17 | 23 | · | 7 | · | 1 | · | · | · | · | · | · | · | · | CAR8 |
+| 49 | metrics-tracing | 41 | CRIT | 8 | 41 | 41 | 35 | 13 | 41 | 26 | 20 | 7 | 10 | 27 | 22 | 4 | 11 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 50 | mcp | 30 | CRIT | 8 | 30 | 30 | 30 | 21 | 30 | 26 | 22 | 7 | 16 | 30 | 27 | 4 | 24 | · | 8 | · | · | · | · | · | · | · | 1 | · | · | CAR8 |
+| 51 | design-parking-lot-oo | 28 | CRIT | 8 | 28 | 28 | 28 | 25 | 28 | 25 | 17 | 17 | 19 | 28 | 28 | 6 | 20 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 52 | apache-flink | 31 | CRIT | 8 | 31 | 31 | 31 | 29 | 31 | 24 | 20 | 11 | 8 | 31 | 21 | 6 | 16 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 53 | model-serving | 28 | CRIT | 8 | 28 | 28 | 28 | 21 | 28 | 24 | 23 | 9 | 10 | 28 | 22 | 12 | 17 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 54 | java-io-nio | 40 | CRIT | 8 | 40 | 40 | 38 | 4 | 40 | 29 | 10 | 9 | 1 | 28 | 23 | · | 3 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 55 | mockito | 45 | CRIT | 8 | 43 | 45 | 15 | 7 | 42 | 27 | 23 | 20 | 1 | 20 | 13 | 1 | 5 | · | 8 | 1 | · | · | · | · | · | · | · | · | · | CAR8 |
+| 56 | kotlin | 45 | CRIT | 8 | 44 | 43 | 34 | 1 | 39 | 36 | 11 | 5 | · | 22 | 13 | · | 7 | · | 7 | 1 | · | · | · | · | · | · | · | · | · | CAR8 |
+| 57 | ansible | 25 | CRIT | 8 | 25 | 25 | 25 | 22 | 25 | 24 | 19 | 10 | 11 | 25 | 23 | 3 | 15 | · | 8 | · | · | · | · | · | · | 1 | · | · | · | CAR8 |
+| 58 | go-concurrency | 35 | CRIT | 8 | 35 | 34 | 33 | 11 | 34 | 24 | 20 | 12 | 1 | 24 | 13 | 2 | 7 | · | 7 | · | 1 | · | · | · | · | · | · | · | · | CAR8 |
+| 59 | ktor | 32 | CRIT | 8 | 32 | 32 | 27 | 21 | 32 | 12 | 14 | 6 | 5 | 29 | 19 | 3 | 11 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 60 | llm-integration-patterns | 28 | CRIT | 8 | 28 | 28 | 28 | 5 | 28 | 26 | 19 | 6 | 7 | 26 | 20 | 2 | 13 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 61 | java-exceptions | 42 | CRIT | 8 | 42 | 42 | 28 | 7 | 41 | 8 | 16 | 9 | · | 19 | 18 | · | 4 | 1 | 7 | 2 | · | · | · | · | · | · | · | · | · | CAR8 |
+| 62 | go-memory-gc | 27 | CRIT | 8 | 27 | 27 | 27 | 25 | 27 | 17 | 12 | 6 | 11 | 25 | 10 | 11 | 9 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 63 | stream-processing | 28 | CRIT | 8 | 28 | 28 | 28 | 8 | 28 | 24 | 18 | 10 | 8 | 23 | 12 | 5 | 12 | · | 7 | 1 | · | · | · | · | · | · | · | · | · | CAR8 |
+| 64 | go-generics | 26 | CRIT | 8 | 26 | 26 | 26 | 15 | 26 | 15 | 11 | 8 | 2 | 22 | 17 | 3 | 9 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 65 | vector-databases | 28 | CRIT | 8 | 28 | 27 | 22 | · | 24 | 17 | 13 | 8 | 4 | 24 | 3 | 2 | 7 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 66 | property-based-testing | 21 | CRIT | 8 | 21 | 21 | 19 | 9 | 21 | 13 | 9 | 7 | 1 | 16 | 13 | 3 | 10 | · | 7 | 2 | · | · | · | · | · | · | · | · | · | CAR8 |
+| 67 | java-conditional-statements | 39 | CRIT | 8 | 21 | 28 | 13 | 6 | 17 | 10 | 10 | 11 | 2 | 16 | 11 | 2 | 1 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 68 | hibernate-relationships | 15 | CRIT | 8 | 15 | 15 | 15 | 6 | 15 | 9 | 9 | 3 | 2 | 15 | 15 | 1 | 4 | · | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 69 | code-review | 36 | CRIT | 8 | 7 | 11 | · | · | 3 | 17 | 9 | 13 | 2 | 10 | 5 | · | 10 | 5 | 7 | 1 | · | · | · | · | · | · | · | · | · | CAR8 |
+| 70 | chaos-engineering | 38 | CRIT | 8 | 7 | 4 | 1 | · | 1 | 26 | 14 | 5 | 1 | 9 | 6 | · | 3 | · | 8 | · | · | · | · | · | · | 1 | 1 | · | · | CAR8 |
+| 71 | design-ecommerce-delivery | 29 | HIGH | 8 | · | · | 2 | · | · | 12 | 5 | 8 | 1 | 3 | · | · | 2 | 3 | 8 | · | · | · | · | · | · | · | · | · | · | CAR8 |
+| 72 | owasp-top10 | 45 | CRIT | 7 | 45 | 45 | 45 | 31 | 45 | 34 | 28 | 17 | 14 | 44 | 35 | 14 | 29 | · | 7 | 1 | · | · | · | · | · | · | · | · | · | CAR7 |
+| 73 | spring-security | 43 | CRIT | 7 | 43 | 43 | 43 | 32 | 43 | 31 | 17 | 12 | 3 | 42 | 41 | 3 | 19 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 74 | saga-pattern | 43 | CRIT | 7 | 43 | 43 | 42 | 7 | 43 | 43 | 28 | 9 | 16 | 40 | 27 | 2 | 22 | · | 6 | · | 2 | · | · | · | · | · | · | · | · | CAR7 |
+| 75 | spring-boot-actuator | 43 | CRIT | 7 | 43 | 43 | 40 | 22 | 43 | 36 | 27 | 9 | 6 | 41 | 37 | 3 | 15 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 76 | terraform | 42 | CRIT | 7 | 42 | 42 | 42 | 19 | 42 | 34 | 21 | 5 | 2 | 38 | 25 | · | 21 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 77 | gradle-maven | 38 | CRIT | 7 | 38 | 38 | 38 | 24 | 38 | 23 | 19 | 12 | 9 | 34 | 30 | · | 16 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 78 | kotlin-interop-java | 38 | CRIT | 7 | 38 | 38 | 35 | 14 | 38 | 36 | 22 | 14 | 8 | 34 | 29 | · | 3 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 79 | cap-theorem | 42 | CRIT | 7 | 42 | 42 | 36 | 16 | 41 | 23 | 15 | 17 | 6 | 24 | 20 | 3 | 12 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 80 | go | 36 | CRIT | 7 | 36 | 36 | 36 | 16 | 36 | 26 | 21 | 10 | 7 | 34 | 20 | 3 | 15 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 81 | mlops | 28 | CRIT | 7 | 28 | 28 | 28 | 23 | 28 | 27 | 21 | 9 | 14 | 27 | 17 | 7 | 25 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 82 | serverless | 28 | CRIT | 7 | 28 | 28 | 28 | 21 | 28 | 23 | 17 | 8 | 16 | 27 | 24 | 8 | 24 | · | 6 | · | · | · | 1 | · | · | · | · | · | · | CAR7 |
+| 83 | java-core | 39 | CRIT | 7 | 39 | 38 | 31 | 10 | 33 | 37 | 20 | 12 | 4 | 28 | 23 | · | 3 | · | 6 | 1 | · | · | · | · | · | · | · | · | · | CAR7 |
+| 84 | java-jackson | 31 | CRIT | 7 | 31 | 31 | 31 | 24 | 31 | 22 | 22 | 11 | 7 | 29 | 24 | 2 | 9 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 85 | clean-code-practices | 27 | CRIT | 7 | 27 | 27 | 27 | 17 | 27 | 26 | 20 | 14 | 10 | 24 | 17 | 1 | 12 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 86 | cockroachdb | 24 | CRIT | 7 | 24 | 24 | 24 | 17 | 24 | 23 | 21 | 10 | 14 | 24 | 19 | 6 | 16 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 87 | go-stdlib | 30 | CRIT | 7 | 30 | 30 | 27 | 12 | 30 | 18 | 11 | 9 | 2 | 25 | 17 | · | 7 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 88 | neo4j | 30 | CRIT | 7 | 30 | 30 | 28 | 2 | 30 | 23 | 14 | 8 | 8 | 22 | 10 | 1 | 9 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 89 | clickhouse | 28 | CRIT | 7 | 28 | 28 | 27 | 10 | 28 | 16 | 16 | 7 | 1 | 23 | 12 | 3 | 12 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 90 | load-testing | 22 | CRIT | 7 | 22 | 22 | 22 | 12 | 22 | 20 | 19 | 6 | 12 | 22 | 6 | 9 | 16 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 91 | api-design-best-practices | 30 | CRIT | 7 | 22 | 25 | 8 | 2 | 21 | 17 | 8 | 4 | 3 | 13 | 8 | 5 | 4 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 92 | java-optional | 15 | CRIT | 7 | 15 | 15 | 15 | 4 | 15 | 10 | 10 | 5 | 3 | 13 | 14 | · | 4 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 93 | design-uber | 30 | CRIT | 7 | · | 12 | · | 4 | · | 19 | 9 | 14 | 15 | 25 | 6 | 3 | 3 | 3 | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 94 | jvm | 33 | CRIT | 7 | 22 | 21 | 4 | 2 | 12 | 10 | 10 | 10 | 2 | 6 | 5 | 1 | 3 | · | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 95 | design-google-maps | 28 | CRIT | 7 | · | · | · | 6 | · | 22 | 15 | 13 | 9 | 16 | 3 | 7 | 7 | 4 | 7 | · | · | · | · | · | · | · | 1 | · | · | CAR7 |
+| 96 | redpanda | 18 | CRIT | 7 | 16 | 16 | 9 | · | 14 | 4 | 4 | 4 | 1 | 5 | · | · | 3 | · | 7 | · | · | · | 1 | · | · | · | · | · | · | CAR7 |
+| 97 | loki-grafana | 26 | CRIT | 7 | · | · | · | 1 | · | 16 | 15 | 6 | 2 | 16 | 9 | 2 | 3 | 5 | 7 | · | · | · | · | · | · | · | · | · | · | CAR7 |
+| 98 | performance-testing | 42 | CRIT | 6 | 42 | 42 | 42 | 20 | 42 | 40 | 38 | 11 | 15 | 42 | 23 | 20 | 32 | · | 6 | · | · | · | · | 1 | · | · | · | · | · | CAR6 |
+| 99 | redis | 43 | CRIT | 6 | 43 | 43 | 43 | 5 | 43 | 43 | 35 | 7 | 17 | 41 | 35 | 4 | 22 | · | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 100 | application-security | 45 | CRIT | 6 | 45 | 45 | 45 | 13 | 45 | 27 | 25 | 25 | 5 | 38 | 33 | 2 | 23 | · | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 101 | flyway-liquibase | 42 | CRIT | 6 | 42 | 42 | 39 | 11 | 42 | 35 | 31 | 15 | 9 | 33 | 28 | 3 | 25 | · | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 102 | oauth2 | 42 | CRIT | 6 | 42 | 42 | 42 | 12 | 42 | 24 | 22 | 12 | 4 | 39 | 37 | 4 | 18 | · | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 103 | ai-observability | 28 | CRIT | 6 | 28 | 28 | 28 | 22 | 28 | 25 | 18 | 11 | 22 | 28 | 24 | 17 | 24 | · | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 104 | java-stream | 42 | CRIT | 6 | 42 | 41 | 27 | 17 | 40 | 19 | 13 | 9 | 7 | 35 | 31 | 2 | 18 | · | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 105 | design-youtube | 28 | CRIT | 6 | 28 | 28 | 28 | 25 | 28 | 27 | 16 | 7 | 25 | 28 | 8 | 16 | 19 | · | 5 | 1 | · | · | · | · | · | 1 | · | · | · | CAR6 |
+| 106 | heaps | 29 | CRIT | 6 | 29 | 29 | 29 | 16 | 29 | 25 | 22 | 13 | 4 | 26 | 19 | 3 | 8 | · | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 107 | go-testing | 28 | CRIT | 6 | 28 | 28 | 28 | 24 | 28 | 21 | 18 | 10 | 4 | 27 | 15 | · | 11 | · | 5 | 1 | · | · | · | · | · | · | · | · | · | CAR6 |
+| 108 | java-initialization | 27 | CRIT | 6 | 27 | 27 | 27 | 22 | 27 | 16 | 13 | 8 | 6 | 21 | 16 | 4 | 13 | · | 5 | 1 | · | · | · | · | · | · | · | · | · | CAR6 |
+| 109 | reactive-streams | 30 | CRIT | 6 | 30 | 30 | 26 | 14 | 30 | 14 | 10 | 9 | 11 | 22 | 20 | 1 | 5 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | CAR6 |
+| 110 | hibernate | 44 | CRIT | 6 | 43 | 43 | 24 | 5 | 38 | 18 | 4 | 10 | · | 15 | 12 | · | 2 | · | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 111 | spring-aop | 22 | CRIT | 6 | 22 | 22 | 22 | 11 | 22 | 19 | 15 | 4 | 3 | 20 | 20 | 1 | 10 | · | 6 | 1 | · | · | · | 1 | · | · | · | · | · | CAR6 |
+| 112 | edge-computing | 18 | CRIT | 6 | 18 | 18 | 18 | 12 | 18 | 17 | 13 | 4 | 6 | 18 | 11 | 11 | 17 | · | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 113 | code-smells | 27 | CRIT | 6 | 27 | 27 | 27 | 3 | 26 | 13 | 10 | 2 | 2 | 12 | 7 | 3 | 10 | · | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 114 | estimations-planning | 20 | CRIT | 6 | 20 | 20 | 20 | 11 | 20 | 15 | 12 | 3 | 3 | 18 | 3 | 4 | 16 | · | 6 | 1 | · | · | · | · | · | · | · | · | · | CAR6 |
+| 115 | bff-pattern | 17 | CRIT | 6 | 17 | 17 | 17 | 8 | 17 | 17 | 10 | 8 | 11 | 17 | 6 | 2 | 15 | · | 5 | 1 | · | · | · | · | · | · | · | · | · | CAR6 |
+| 116 | conflict-resolution | 20 | CRIT | 6 | 20 | 20 | 20 | 6 | 20 | 9 | 6 | 2 | 3 | 8 | 2 | · | 16 | · | 5 | 1 | · | · | · | · | · | · | · | · | · | CAR6 |
+| 117 | function-calling | 26 | CRIT | 6 | 15 | 21 | · | 2 | 13 | 17 | 9 | 10 | 4 | 16 | 8 | · | 2 | 2 | 6 | 1 | · | · | · | · | · | · | · | · | · | CAR6 |
+| 118 | spring-cache | 18 | CRIT | 6 | 18 | 17 | 13 | 4 | 15 | 11 | 7 | 3 | 4 | 13 | 10 | 1 | 3 | · | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 119 | spring-webflux | 39 | CRIT | 6 | · | · | · | 5 | · | 26 | 19 | 14 | 1 | 17 | 12 | 1 | 3 | 2 | 5 | 1 | · | · | · | · | · | · | · | · | · | CAR6 |
+| 120 | hibernate-jpql-criteria | 15 | CRIT | 6 | 11 | 11 | 3 | 1 | 4 | 7 | 6 | 6 | · | 2 | · | · | · | 1 | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 121 | cloud-native-patterns | 21 | HIGH | 6 | · | 1 | · | · | · | 13 | 12 | 8 | 2 | 8 | 1 | · | 2 | 2 | 6 | · | · | · | · | · | · | · | · | · | · | CAR6 |
+| 122 | contract-testing | 42 | CRIT | 5 | 42 | 42 | 42 | 27 | 42 | 41 | 31 | 11 | 19 | 42 | 31 | 8 | 29 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 123 | unit-testing | 45 | CRIT | 5 | 45 | 45 | 43 | 30 | 45 | 35 | 27 | 15 | 20 | 42 | 32 | 4 | 15 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | CAR5 |
+| 124 | test-strategies | 45 | CRIT | 5 | 45 | 45 | 45 | 15 | 44 | 37 | 30 | 4 | 11 | 41 | 29 | 8 | 33 | · | 4 | 1 | · | · | · | · | · | · | · | · | · | CAR5 |
+| 125 | database-transactions | 42 | CRIT | 5 | 42 | 42 | 42 | 28 | 42 | 32 | 28 | 10 | 19 | 38 | 33 | 2 | 26 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 126 | resilience-patterns | 43 | CRIT | 5 | 43 | 43 | 43 | 28 | 43 | 29 | 22 | 13 | 13 | 38 | 31 | 10 | 22 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 127 | kotlin-dsl | 40 | CRIT | 5 | 40 | 40 | 40 | 25 | 40 | 33 | 25 | 14 | 11 | 37 | 32 | 1 | 18 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 128 | project-reactor | 47 | CRIT | 5 | 47 | 47 | 46 | 9 | 47 | 37 | 18 | 7 | 4 | 44 | 29 | 2 | 8 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 129 | inference-optimization | 36 | CRIT | 5 | 36 | 36 | 36 | 24 | 35 | 28 | 23 | 18 | 8 | 35 | 12 | 24 | 25 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 130 | java-17-21 | 42 | CRIT | 5 | 42 | 42 | 42 | 9 | 42 | 37 | 24 | 10 | 8 | 39 | 24 | 8 | 12 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 131 | ai-compliance-governance | 32 | CRIT | 5 | 32 | 32 | 32 | 21 | 32 | 31 | 27 | 6 | 13 | 32 | 10 | 19 | 29 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 132 | design-payment-system | 30 | CRIT | 5 | 30 | 30 | 30 | 26 | 30 | 27 | 5 | 15 | 25 | 30 | 17 | 21 | 26 | · | 5 | · | · | · | · | · | · | 1 | 1 | · | · | CAR5 |
+| 133 | clean-architecture | 41 | CRIT | 5 | 41 | 41 | 41 | 7 | 41 | 27 | 16 | 9 | 15 | 30 | 26 | 2 | 13 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 134 | design-rate-limiter | 30 | CRIT | 5 | 30 | 30 | 30 | 26 | 30 | 28 | 15 | 9 | 23 | 30 | 12 | 20 | 21 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 135 | quarkus | 31 | CRIT | 5 | 31 | 31 | 31 | 24 | 31 | 27 | 25 | 2 | 10 | 29 | 23 | 6 | 18 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 136 | docker | 41 | CRIT | 5 | 41 | 41 | 40 | 2 | 41 | 14 | 10 | 7 | · | 28 | 28 | · | 9 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 137 | dynamodb | 30 | CRIT | 5 | 30 | 30 | 30 | 15 | 30 | 23 | 21 | 5 | 4 | 29 | 18 | 6 | 20 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 138 | design-vending-machine-oo | 24 | CRIT | 5 | 24 | 24 | 24 | 17 | 24 | 23 | 19 | 14 | 16 | 24 | 22 | 6 | 16 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 139 | secrets-management | 22 | CRIT | 5 | 22 | 22 | 22 | 20 | 22 | 21 | 20 | 2 | 12 | 22 | 21 | 5 | 17 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 140 | greedy-algorithms | 28 | CRIT | 5 | 28 | 28 | 28 | 19 | 28 | 24 | 13 | 9 | 4 | 19 | 15 | 5 | 4 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 141 | stacks-queues | 25 | CRIT | 5 | 25 | 25 | 25 | 19 | 25 | 17 | 14 | 9 | 6 | 25 | 23 | 2 | 7 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 142 | java-mapstruct | 28 | CRIT | 5 | 28 | 28 | 21 | 12 | 27 | 17 | 17 | 10 | 6 | 21 | 14 | 2 | 3 | · | 4 | 1 | · | · | · | · | · | · | · | · | · | CAR5 |
+| 143 | java-annotations | 42 | CRIT | 5 | 38 | 37 | 20 | 4 | 34 | 17 | 7 | 5 | · | 17 | 9 | · | 4 | · | 3 | 2 | · | · | · | · | · | · | · | · | · | CAR5 |
+| 144 | pulsar | 22 | CRIT | 5 | 22 | 22 | 22 | 18 | 22 | 15 | 10 | 6 | 6 | 21 | 14 | 3 | 11 | · | 4 | 1 | · | · | · | · | · | · | · | · | · | CAR5 |
+| 145 | micronaut | 25 | CRIT | 5 | 25 | 25 | 24 | 3 | 25 | 17 | 8 | 6 | 1 | 24 | 13 | 3 | 9 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 146 | code-coverage | 25 | CRIT | 5 | 25 | 25 | 23 | 3 | 25 | 17 | 8 | 7 | 2 | 18 | 9 | 3 | 10 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 147 | leadership-stories | 22 | CRIT | 5 | 22 | 22 | 22 | 3 | 22 | 20 | 19 | 2 | 9 | 14 | 2 | 3 | 9 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 148 | dns | 28 | CRIT | 5 | 12 | 11 | · | 21 | 10 | 21 | 14 | 10 | 5 | 18 | 4 | 9 | 2 | 1 | 5 | 1 | · | · | · | · | · | · | · | · | · | CAR5 |
+| 149 | behavioral | 33 | CRIT | 5 | 27 | 26 | 11 | · | 17 | 13 | 14 | 8 | 4 | 9 | · | 2 | 1 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 150 | spring-kafka | 15 | CRIT | 5 | 15 | 15 | 10 | 8 | 15 | 14 | 11 | 8 | 1 | 13 | 13 | · | 2 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 151 | spring-testing | 16 | CRIT | 5 | 15 | 15 | 14 | 7 | 15 | 11 | 10 | 5 | · | 12 | 12 | 1 | 7 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 152 | spring-transaction | 15 | CRIT | 5 | 15 | 15 | 14 | 3 | 15 | 14 | 6 | 7 | 1 | 12 | 8 | · | 1 | · | 4 | 1 | · | · | · | · | · | · | · | · | · | CAR5 |
+| 153 | hibernate-caching | 15 | CRIT | 5 | 15 | 15 | 15 | 3 | 15 | 10 | 9 | 4 | · | 10 | 8 | · | 6 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 154 | apache-airflow | 26 | CRIT | 5 | 1 | 3 | · | 1 | 1 | 23 | 15 | 8 | 2 | 19 | 13 | 1 | 3 | · | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 155 | vertx | 28 | CRIT | 5 | 1 | 2 | · | 11 | · | 15 | 12 | 12 | 1 | 10 | 8 | · | 3 | 3 | 5 | · | · | · | · | · | · | · | · | · | · | CAR5 |
+| 156 | java-collections | 46 | CRIT | 4 | 46 | 46 | 45 | 28 | 46 | 34 | 29 | 18 | 9 | 43 | 41 | 7 | 20 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 157 | spring-cloud | 43 | CRIT | 4 | 43 | 43 | 43 | 30 | 43 | 32 | 26 | 11 | 7 | 43 | 39 | 4 | 33 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 158 | pipeline-design | 38 | CRIT | 4 | 34 | 34 | 33 | 26 | 34 | 32 | 21 | 11 | 19 | 36 | 33 | 8 | 25 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 159 | hexagonal-architecture | 45 | CRIT | 4 | 45 | 45 | 43 | 3 | 45 | 39 | 26 | 13 | 9 | 35 | 24 | 2 | 15 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 160 | open-source-llms | 34 | CRIT | 4 | 34 | 34 | 34 | 14 | 34 | 29 | 25 | 10 | 5 | 33 | 20 | 26 | 25 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 161 | openapi-swagger | 42 | CRIT | 4 | 42 | 42 | 41 | 5 | 42 | 36 | 19 | 2 | 6 | 34 | 28 | · | 16 | · | 3 | 1 | · | · | · | · | · | · | · | · | · | CAR4 |
+| 162 | websocket | 38 | CRIT | 4 | 38 | 38 | 28 | 7 | 37 | 33 | 21 | 12 | 12 | 38 | 30 | 5 | 12 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 163 | team-leadership | 40 | CRIT | 4 | 40 | 40 | 39 | 31 | 40 | 24 | 10 | 5 | 12 | 25 | 9 | 2 | 26 | · | 3 | 1 | · | · | · | · | · | · | · | · | · | CAR4 |
+| 164 | design-netflix | 30 | CRIT | 4 | 30 | 30 | 29 | 18 | 30 | 27 | 18 | 13 | 15 | 29 | 19 | 17 | 23 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 165 | java-serialization | 40 | CRIT | 4 | 40 | 40 | 28 | 7 | 39 | 32 | 24 | 10 | 9 | 32 | 19 | 2 | 7 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 166 | elk-stack | 26 | CRIT | 4 | 26 | 26 | 26 | 16 | 26 | 25 | 22 | 9 | 14 | 26 | 19 | 7 | 17 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 167 | kafka-streams | 28 | CRIT | 4 | 28 | 28 | 28 | 24 | 28 | 26 | 21 | 10 | 9 | 27 | 15 | 6 | 8 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 168 | network-performance | 24 | CRIT | 4 | 24 | 24 | 24 | 21 | 24 | 23 | 16 | 10 | 13 | 23 | 7 | 18 | 13 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 169 | dbt | 28 | CRIT | 4 | 28 | 28 | 28 | 11 | 28 | 22 | 15 | 6 | 6 | 25 | 22 | 1 | 11 | · | 3 | 1 | · | · | · | · | · | · | · | · | · | CAR4 |
+| 170 | static-analysis | 26 | CRIT | 4 | 26 | 26 | 26 | 16 | 26 | 16 | 13 | 2 | 2 | 21 | 6 | 3 | 18 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 171 | reactive-testing | 28 | CRIT | 4 | 28 | 28 | 22 | 14 | 26 | 19 | 17 | 10 | 1 | 15 | 13 | · | 1 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 172 | mutation-testing | 20 | CRIT | 4 | 20 | 20 | 20 | 14 | 20 | 15 | 14 | 8 | 11 | 20 | 13 | 10 | 8 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 173 | rabbitmq | 38 | CRIT | 4 | 35 | 30 | 17 | 1 | 22 | 26 | 9 | 5 | 4 | 25 | 13 | · | 1 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 174 | star-method | 22 | CRIT | 4 | 22 | 22 | 22 | 11 | 22 | 19 | 15 | 7 | 7 | 14 | 8 | 4 | 12 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 175 | api-versioning | 20 | CRIT | 4 | 20 | 20 | 20 | 13 | 20 | 18 | 14 | 6 | 9 | 15 | 7 | 7 | 9 | · | 3 | 2 | · | · | · | · | · | · | · | · | · | CAR4 |
+| 176 | mtls | 20 | CRIT | 4 | 20 | 20 | 20 | 3 | 20 | 20 | 18 | 5 | 8 | 18 | 7 | 4 | 15 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 177 | llm-basics | 29 | CRIT | 4 | 28 | 27 | 17 | 4 | 22 | 16 | 9 | 8 | 3 | 13 | 5 | 3 | 4 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 178 | spring-retry | 17 | CRIT | 4 | 17 | 17 | 17 | 11 | 17 | 12 | 11 | 3 | 2 | 16 | 16 | 2 | 9 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 179 | kotlin-flow | 17 | CRIT | 4 | 17 | 17 | 17 | 6 | 17 | 11 | 8 | 8 | 4 | 16 | 12 | · | 2 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 180 | java-functional-interface | 14 | CRIT | 4 | 14 | 14 | 14 | 10 | 14 | 11 | 6 | 7 | 7 | 13 | 12 | 2 | 6 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 181 | spring-state-machine | 15 | CRIT | 4 | 15 | 15 | 15 | 11 | 15 | 11 | 5 | 6 | 2 | 14 | 13 | · | 5 | · | 3 | 1 | · | · | · | · | · | · | · | · | · | CAR4 |
+| 182 | graalvm-native | 15 | CRIT | 4 | 15 | 15 | 15 | 7 | 15 | 11 | 8 | 5 | 2 | 14 | 9 | 2 | 4 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 183 | failure-stories | 22 | CRIT | 4 | 21 | 22 | 15 | · | 18 | 14 | 3 | 11 | 7 | 7 | · | 2 | 1 | · | 4 | · | · | · | · | · | · | 2 | 4 | · | · | CAR4 |
+| 184 | spring-integration | 15 | CRIT | 4 | 15 | 15 | 13 | 4 | 15 | 15 | 10 | 1 | 1 | 14 | 13 | · | 3 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 185 | spring-boot | 34 | CRIT | 4 | 7 | 8 | · | 2 | 5 | 23 | 14 | 9 | 3 | 15 | 8 | · | 3 | 1 | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 186 | strangler-fig | 18 | CRIT | 4 | 18 | 18 | 12 | · | 13 | 11 | 11 | 9 | · | 3 | · | · | 1 | · | 4 | 1 | · | · | · | · | · | · | · | · | · | CAR4 |
+| 187 | agentic-patterns | 29 | CRIT | 4 | 3 | 25 | 1 | · | 2 | 19 | 9 | 8 | 3 | 12 | · | 1 | 3 | 2 | 3 | · | · | · | 1 | · | · | · | · | · | · | CAR4 |
+| 188 | azure | 23 | CRIT | 4 | 1 | 5 | · | 1 | · | 18 | 15 | 7 | 2 | 20 | 9 | · | 4 | 2 | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 189 | kotlin-value-classes | 14 | CRIT | 4 | 13 | 13 | 7 | · | 10 | 7 | 4 | 3 | 3 | 6 | 5 | 1 | 1 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 190 | data-warehousing | 23 | HIGH | 4 | · | · | · | · | · | 18 | 12 | 7 | 1 | 9 | 2 | · | 1 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 191 | kubernetes | 26 | HIGH | 4 | 3 | 6 | 1 | 1 | · | 15 | 6 | 3 | 1 | 9 | 3 | · | 1 | · | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 192 | gcp | 21 | CRIT | 4 | · | 3 | · | · | · | 14 | 4 | 8 | 2 | 9 | 4 | · | · | 2 | 4 | · | · | · | · | · | · | · | · | · | · | CAR4 |
+| 193 | spring-framework | 40 | CRIT | 3 | 40 | 40 | 40 | 21 | 40 | 35 | 32 | 6 | 15 | 34 | 34 | 4 | 20 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 194 | logging | 41 | CRIT | 3 | 41 | 41 | 41 | 21 | 40 | 33 | 22 | 10 | 2 | 38 | 35 | 5 | 16 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 195 | design-feed-system | 30 | CRIT | 3 | 30 | 30 | 30 | 27 | 30 | 29 | 19 | 17 | 28 | 30 | 19 | 23 | 23 | · | 2 | · | 1 | · | · | · | · | · | · | · | · | CAR3 |
+| 196 | ai-application-architecture | 32 | CRIT | 3 | 31 | 31 | 25 | 6 | 31 | 28 | 16 | 15 | 19 | 30 | 10 | 10 | 19 | 1 | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 197 | design-elevator-oo | 26 | CRIT | 3 | 26 | 26 | 26 | 18 | 26 | 24 | 19 | 9 | 12 | 26 | 21 | 3 | 18 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 198 | design-twitter | 27 | CRIT | 3 | 27 | 27 | 27 | 24 | 27 | 19 | 12 | 10 | 19 | 27 | · | 16 | 16 | · | 3 | · | · | · | · | · | · | · | 1 | · | · | CAR3 |
+| 199 | grpc | 40 | CRIT | 3 | 39 | 37 | 22 | 6 | 32 | 26 | 22 | 11 | 1 | 28 | 21 | · | 5 | · | 2 | 1 | · | · | · | · | · | · | · | · | · | CAR3 |
+| 200 | istio-service-mesh | 26 | CRIT | 3 | 26 | 26 | 26 | 21 | 26 | 22 | 18 | 4 | 10 | 26 | 15 | 8 | 15 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 201 | tries | 28 | CRIT | 3 | 28 | 28 | 28 | 21 | 28 | 21 | 9 | 12 | 2 | 26 | 23 | 6 | 7 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 202 | message-brokers-comparison | 26 | CRIT | 3 | 26 | 26 | 26 | 5 | 26 | 19 | 17 | 8 | 6 | 26 | 21 | 3 | 21 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 203 | webflux | 28 | CRIT | 3 | 28 | 28 | 24 | 20 | 28 | 18 | 12 | 10 | 2 | 22 | 21 | 2 | 6 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 204 | jaeger-zipkin | 23 | CRIT | 3 | 23 | 23 | 23 | 18 | 23 | 15 | 12 | 8 | 9 | 22 | 11 | 9 | 14 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 205 | nats | 24 | CRIT | 3 | 24 | 24 | 24 | 15 | 24 | 19 | 13 | 7 | 3 | 23 | 11 | 2 | 9 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 206 | technical-decisions | 22 | CRIT | 3 | 22 | 22 | 22 | 10 | 22 | 20 | 18 | 3 | 16 | 19 | 11 | 4 | 6 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 207 | postgresql | 31 | CRIT | 3 | 31 | 31 | 29 | 1 | 31 | 27 | 3 | 3 | · | 16 | 10 | 1 | 3 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 208 | conflict-stories | 22 | CRIT | 3 | 22 | 22 | 22 | 8 | 22 | 21 | 17 | 1 | 13 | 15 | 3 | 1 | 5 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 209 | rest-maturity | 17 | CRIT | 3 | 17 | 17 | 17 | 14 | 17 | 13 | 10 | 6 | 9 | 15 | 12 | 8 | 11 | · | 2 | 1 | · | · | · | · | · | · | · | · | · | CAR3 |
+| 210 | design-web-crawler | 23 | CRIT | 3 | 22 | 22 | 17 | 1 | 21 | 12 | 6 | 4 | 5 | 17 | 3 | 2 | 5 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 211 | java-reflection | 16 | CRIT | 3 | 16 | 16 | 10 | 10 | 16 | 10 | 8 | 10 | 1 | 16 | 16 | 1 | 4 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 212 | spring-data-jdbc | 16 | CRIT | 3 | 16 | 16 | 16 | 1 | 16 | 15 | 8 | 3 | 1 | 15 | 15 | · | 7 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 213 | spring-graphql | 15 | CRIT | 3 | 15 | 15 | 11 | 10 | 14 | 12 | 7 | 5 | 3 | 15 | 14 | 1 | 1 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 214 | spring-ai | 16 | CRIT | 3 | 15 | 15 | 15 | 7 | 15 | 9 | 5 | 4 | 2 | 13 | 13 | · | 6 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 215 | spring-events | 16 | CRIT | 3 | 16 | 16 | 14 | 4 | 16 | 10 | 7 | 4 | · | 10 | 8 | · | 2 | · | 2 | 1 | · | · | · | · | · | · | · | · | · | CAR3 |
+| 216 | spring-validation | 16 | CRIT | 3 | 16 | 16 | 7 | 1 | 15 | 11 | 6 | 4 | · | 13 | 9 | · | 5 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 217 | teching | 19 | CRIT | 3 | 19 | 19 | 15 | 1 | 18 | 3 | 7 | 4 | · | 5 | · | 3 | 2 | · | 2 | 1 | · | · | · | · | · | · | · | · | · | CAR3 |
+| 218 | spring-modulith | 15 | CRIT | 3 | 15 | 14 | 12 | 2 | 14 | 9 | 7 | 5 | 1 | 7 | 5 | 1 | 1 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 219 | kotlin-sealed-classes | 15 | CRIT | 3 | 15 | 14 | 11 | 1 | 14 | 10 | 6 | 2 | 1 | 6 | 4 | · | 1 | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 220 | spring-scheduling | 16 | CRIT | 3 | 13 | 11 | 2 | 2 | 4 | 11 | 7 | 5 | 2 | 9 | 8 | · | · | · | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 221 | java-completable-future | 11 | HIGH | 3 | 5 | 3 | 1 | · | · | 1 | 1 | 2 | · | · | 1 | · | · | 1 | 3 | · | · | · | · | · | · | · | · | · | · | CAR3 |
+| 222 | java-modules | 38 | CRIT | 2 | 38 | 38 | 27 | 13 | 38 | 35 | 25 | 8 | 9 | 32 | 23 | 1 | 8 | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 223 | design-url-shortener | 30 | CRIT | 2 | 30 | 30 | 30 | 27 | 30 | 25 | 6 | 14 | 18 | 30 | · | 24 | 18 | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 224 | data-lake-lakehouse | 28 | CRIT | 2 | 28 | 28 | 28 | 20 | 28 | 25 | 24 | 12 | 8 | 28 | 24 | 6 | 23 | · | 1 | · | 1 | · | · | · | · | · | · | · | · | CAR2 |
+| 225 | consistency-patterns | 42 | CRIT | 2 | 41 | 42 | 26 | 2 | 41 | 30 | 20 | 16 | 4 | 18 | 5 | 1 | 6 | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 226 | supply-chain-security | 24 | CRIT | 2 | 24 | 24 | 24 | 17 | 24 | 21 | 16 | 6 | 5 | 23 | 13 | 4 | 19 | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 227 | vault | 26 | CRIT | 2 | 26 | 26 | 25 | 13 | 26 | 23 | 16 | · | · | 24 | 17 | 1 | 8 | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 228 | prometheus-grafana | 38 | CRIT | 2 | 36 | 33 | 20 | 5 | 30 | 14 | 3 | 4 | 2 | 16 | 11 | · | 8 | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 229 | zero-trust | 19 | CRIT | 2 | 19 | 19 | 19 | 2 | 19 | 17 | 10 | 4 | 4 | 18 | 10 | · | 14 | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 230 | spring-messaging | 15 | CRIT | 2 | 15 | 15 | 13 | 10 | 15 | 11 | 5 | 5 | 1 | 15 | 13 | 1 | 6 | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 231 | spring-vault | 15 | CRIT | 2 | 15 | 15 | 12 | 3 | 15 | 14 | 10 | 4 | 2 | 14 | 13 | · | 4 | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 232 | spring-r2dbc | 15 | CRIT | 2 | 15 | 15 | 15 | 8 | 15 | 8 | 6 | 3 | 1 | 13 | 13 | · | 2 | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 233 | junit | 15 | CRIT | 2 | 15 | 15 | 11 | 4 | 14 | 9 | 8 | 4 | 2 | 12 | 10 | · | 3 | · | 1 | · | 1 | · | · | · | · | · | · | · | · | CAR2 |
+| 234 | java-records | 15 | CRIT | 2 | 15 | 15 | 15 | 6 | 15 | 9 | 9 | · | 1 | 11 | 5 | · | 4 | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 235 | spring-async | 15 | CRIT | 2 | 14 | 14 | 9 | 2 | 12 | 10 | 5 | 2 | · | 11 | 7 | · | · | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 236 | code-agents | 28 | CRIT | 2 | 2 | 7 | 1 | 6 | 3 | 14 | 7 | 10 | 4 | 14 | 3 | 2 | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 237 | kotlin-spring | 13 | CRIT | 2 | 11 | 12 | 3 | 1 | 9 | 3 | · | 2 | · | 6 | 5 | · | 2 | · | 1 | 1 | · | · | · | · | · | · | · | · | · | CAR2 |
+| 238 | kafka | 11 | HIGH | 2 | 8 | 5 | 2 | · | 1 | · | · | · | · | 2 | · | 1 | · | · | 2 | · | · | · | · | · | · | · | · | · | · | CAR2 |
+| 239 | langchain4j | 3 | MED | 2 | 1 | · | · | · | · | · | 1 | · | · | 1 | 1 | · | · | · | 1 | · | 1 | · | · | · | · | · | · | · | · | CAR2 |
+| 240 | logging-strategies | 38 | CRIT | 1 | 38 | 38 | 37 | 22 | 38 | 33 | 25 | 12 | 19 | 36 | 35 | 5 | 14 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 241 | linked-lists | 31 | CRIT | 1 | 31 | 31 | 27 | 10 | 31 | 28 | 14 | 7 | 6 | 25 | 18 | 4 | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 242 | micrometer | 20 | CRIT | 1 | 20 | 20 | 20 | 17 | 20 | 17 | 14 | 6 | 6 | 20 | 20 | 6 | 17 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 243 | aws-sqs-sns | 22 | CRIT | 1 | 22 | 22 | 22 | 19 | 22 | 17 | 13 | 8 | 5 | 21 | 14 | 4 | 9 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 244 | consul | 24 | CRIT | 1 | 24 | 24 | 24 | 7 | 24 | 20 | 17 | 5 | 6 | 21 | 8 | 4 | 13 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 245 | linkerd | 20 | CRIT | 1 | 20 | 20 | 20 | 14 | 20 | 16 | 17 | 5 | 3 | 19 | 9 | 8 | 11 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 246 | reactive-patterns | 26 | CRIT | 1 | 26 | 26 | 20 | 5 | 25 | 21 | 14 | 7 | 3 | 12 | 8 | 1 | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 247 | go-modules | 27 | CRIT | 1 | 27 | 27 | 24 | 7 | 27 | 18 | 6 | 2 | · | 16 | 3 | 1 | · | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 248 | resilience4j | 20 | CRIT | 1 | 20 | 20 | 15 | 5 | 20 | 20 | 13 | 4 | 3 | 16 | 15 | 1 | 3 | · | · | 1 | · | · | · | · | · | · | · | · | · | CAR1 |
+| 249 | selenium | 15 | CRIT | 1 | 15 | 15 | 15 | 12 | 15 | 14 | 12 | 5 | 7 | 14 | 11 | 2 | 7 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 250 | spring-boot-3-migration | 15 | CRIT | 1 | 15 | 15 | 14 | 10 | 15 | 9 | 10 | 4 | 2 | 15 | 13 | 4 | 6 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 251 | rest-assured | 15 | CRIT | 1 | 15 | 15 | 8 | 12 | 14 | 8 | 10 | 4 | 1 | 14 | 10 | · | 7 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 252 | java-virtual-threads | 15 | CRIT | 1 | 15 | 15 | 14 | 4 | 15 | 13 | 8 | 5 | 1 | 14 | 8 | 1 | 3 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 253 | spring-session | 15 | CRIT | 1 | 15 | 15 | 13 | 4 | 15 | 9 | 3 | 4 | 1 | 13 | 12 | · | 1 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 254 | spring-rest-client | 13 | CRIT | 1 | 13 | 13 | 8 | 7 | 12 | 6 | 3 | 6 | 4 | 11 | 8 | 1 | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 255 | java-pattern-matching | 15 | CRIT | 1 | 15 | 14 | 11 | · | 13 | 7 | 3 | 4 | 2 | 6 | 2 | 1 | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 256 | java-22-25 | 7 | MED | 1 | · | · | · | 1 | · | 1 | 2 | 3 | · | 1 | 1 | · | 1 | · | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 257 | cucumber-bdd | 1 | HIGH | 1 | · | · | · | · | · | · | · | 1 | · | · | · | · | · | 1 | 1 | · | · | · | · | · | · | · | · | · | · | CAR1 |
+| 258 | networking | 43 | CRIT | · | 43 | 43 | 43 | 37 | 43 | 34 | 21 | 12 | 24 | 43 | 31 | 17 | 30 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 259 | argocd | 42 | CRIT | · | 42 | 42 | 42 | 35 | 42 | 34 | 32 | 16 | 19 | 41 | 42 | 4 | 26 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 260 | jwt | 43 | CRIT | · | 43 | 43 | 43 | 34 | 43 | 34 | 31 | 11 | 20 | 42 | 32 | 10 | 25 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 261 | caching-strategies | 42 | CRIT | · | 42 | 42 | 42 | 30 | 42 | 37 | 30 | 17 | 20 | 39 | 35 | 12 | 19 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 262 | integration-testing | 40 | CRIT | · | 40 | 40 | 40 | 27 | 40 | 32 | 29 | 16 | 16 | 39 | 36 | 8 | 18 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 263 | code-review-practices | 40 | CRIT | · | 40 | 40 | 40 | 27 | 40 | 29 | 10 | 8 | 23 | 40 | 32 | 16 | 33 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 264 | spring-data-jpa | 42 | CRIT | · | 42 | 42 | 42 | 26 | 42 | 36 | 27 | 14 | 6 | 42 | 39 | · | 13 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 265 | database-sharding | 34 | CRIT | · | 34 | 34 | 34 | 29 | 34 | 31 | 13 | 15 | 30 | 34 | 30 | 24 | 27 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 266 | spring-batch | 43 | CRIT | · | 43 | 43 | 37 | 22 | 43 | 38 | 33 | 3 | 8 | 41 | 37 | 3 | 17 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 267 | fine-tuning-llm | 35 | CRIT | · | 35 | 35 | 35 | 25 | 35 | 33 | 20 | 14 | 22 | 34 | 25 | 26 | 29 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 268 | cqrs-event-sourcing | 41 | CRIT | · | 41 | 41 | 40 | 20 | 41 | 38 | 24 | 13 | 14 | 33 | 22 | 8 | 30 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 269 | java-8 | 42 | CRIT | · | 41 | 42 | 41 | 30 | 41 | 28 | 17 | 14 | 15 | 37 | 30 | 4 | 19 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 270 | jvm-performance-tuning | 38 | CRIT | · | 38 | 38 | 34 | 27 | 38 | 23 | 6 | 13 | 27 | 38 | 29 | 21 | 26 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 271 | scalability-patterns | 41 | CRIT | · | 41 | 41 | 38 | 25 | 41 | 33 | 21 | 18 | 11 | 38 | 28 | 3 | 18 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 272 | system-design | 41 | CRIT | · | 38 | 40 | 27 | · | 37 | 39 | 15 | 17 | 23 | 40 | 31 | 11 | 22 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 273 | microservices | 42 | CRIT | · | 42 | 41 | 40 | 16 | 41 | 34 | 34 | 19 | 13 | 32 | · | 2 | 22 | · | · | · | · | · | · | · | · | · | 1 | · | · | ✅CAR0 |
+| 274 | trees | 34 | CRIT | · | 34 | 34 | 34 | 28 | 34 | 32 | 26 | 13 | 11 | 33 | 29 | 7 | 12 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 275 | kotlin-collections | 43 | CRIT | · | 43 | 43 | 31 | 2 | 42 | 40 | 24 | 16 | 11 | 35 | 30 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 276 | testcontainers | 40 | CRIT | · | 40 | 40 | 32 | 26 | 40 | 21 | 20 | 14 | 6 | 32 | 31 | · | 15 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 277 | technical-debt | 40 | CRIT | · | 40 | 40 | 40 | 22 | 40 | 34 | 28 | 6 | 17 | 18 | 5 | 1 | 13 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 278 | dynamic-programming | 33 | CRIT | · | 33 | 33 | 33 | 24 | 33 | 29 | 19 | 14 | 4 | 31 | 26 | 16 | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 279 | hash-tables | 34 | CRIT | · | 34 | 33 | 32 | 28 | 33 | 28 | 20 | 7 | 9 | 33 | 22 | 7 | 10 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 280 | database-architecture | 41 | CRIT | · | 40 | 40 | 35 | 1 | 40 | 35 | 23 | 14 | 5 | 29 | 17 | 1 | 10 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 281 | apache-spark | 35 | CRIT | · | 35 | 35 | 28 | 22 | 35 | 23 | 18 | 12 | 9 | 35 | 16 | 5 | 13 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 282 | design-instagram | 27 | CRIT | · | 27 | 26 | 26 | 27 | 26 | 24 | 7 | 13 | 23 | 27 | 17 | 22 | 20 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 283 | database-replication | 31 | CRIT | · | 31 | 31 | 31 | 14 | 31 | 25 | 15 | 11 | 14 | 29 | 24 | 6 | 18 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 284 | distributed-systems | 40 | CRIT | · | 40 | 40 | 39 | 4 | 40 | 30 | 28 | 7 | 2 | 22 | 8 | · | 12 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 285 | divide-and-conquer | 27 | CRIT | · | 27 | 27 | 27 | 22 | 27 | 27 | 19 | 9 | 11 | 27 | 26 | 11 | 12 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 286 | mongodb | 44 | CRIT | · | 32 | 32 | 32 | 9 | 32 | 25 | 15 | 7 | 5 | 34 | 27 | 4 | 14 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 287 | kotlin-exceptions | 40 | CRIT | · | 40 | 40 | 30 | 2 | 39 | 26 | 14 | 18 | 1 | 24 | 21 | · | 11 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 288 | kotlin-coroutines | 39 | CRIT | · | 39 | 39 | 24 | 5 | 36 | 31 | 20 | 19 | 4 | 26 | 20 | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 289 | reasoning-models | 30 | CRIT | · | 30 | 30 | 27 | 12 | 28 | 20 | 8 | 12 | 7 | 28 | 19 | 14 | 15 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 290 | graphql | 37 | CRIT | · | 37 | 35 | 27 | 7 | 31 | 20 | 16 | 10 | 5 | 21 | 12 | 2 | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 291 | caching-performance | 23 | CRIT | · | 23 | 23 | 22 | 16 | 22 | 22 | 8 | 8 | 17 | 23 | 14 | 13 | 14 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 292 | embeddings | 29 | CRIT | · | 29 | 28 | 19 | 8 | 28 | 25 | 13 | 5 | 2 | 26 | 15 | 12 | 11 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 293 | design-patterns | 45 | CRIT | · | 42 | 36 | 16 | 2 | 28 | 29 | 15 | 9 | 1 | 19 | 14 | 1 | 6 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 294 | scylladb | 23 | CRIT | · | 23 | 23 | 23 | 10 | 23 | 22 | 16 | 7 | 3 | 22 | 10 | 7 | 12 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 295 | design-chat-system | 21 | CRIT | · | 21 | 21 | 21 | 9 | 21 | 21 | 14 | 8 | 14 | 21 | 12 | 8 | 7 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 296 | database-performance | 27 | CRIT | · | 21 | 17 | 16 | 20 | 15 | 13 | 5 | 8 | 2 | 25 | 17 | 8 | 16 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 297 | recursion | 27 | CRIT | · | 25 | 24 | 18 | 3 | 20 | 23 | 11 | 8 | 3 | 19 | 13 | 4 | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 298 | sql | 42 | CRIT | · | 30 | 31 | 17 | · | 20 | 13 | 7 | 13 | · | 13 | 11 | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 299 | typescript | 31 | CRIT | · | 29 | 26 | 16 | · | 22 | 16 | 7 | 6 | 1 | 10 | 8 | · | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 300 | test-automation | 40 | CRIT | · | 11 | 17 | · | 6 | 10 | 23 | 16 | 12 | 5 | 17 | 12 | 1 | 6 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 301 | two-pointers-sliding-window | 30 | CRIT | · | 4 | 9 | · | 12 | 4 | 24 | 15 | 9 | 1 | 25 | 24 | 2 | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 302 | design-search | 30 | CRIT | · | 3 | 6 | · | 15 | 1 | 18 | 10 | 16 | 10 | 25 | 4 | 5 | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 303 | design-dropbox | 29 | CRIT | · | 7 | 7 | 2 | 6 | 3 | 23 | 15 | 11 | 5 | 23 | · | 5 | 6 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 304 | graphs | 32 | CRIT | · | 1 | 3 | 1 | 1 | 1 | 27 | 19 | 12 | 2 | 18 | 11 | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 305 | reverse-proxy | 25 | HIGH | · | · | · | · | 7 | · | 16 | 11 | 15 | 10 | 18 | 11 | 1 | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 306 | rust | 30 | CRIT | · | 5 | 7 | · | 2 | 3 | 20 | 15 | 13 | 1 | 8 | 4 | 1 | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 307 | rag | 29 | HIGH | · | · | 3 | · | 1 | · | 13 | 13 | 15 | 2 | 12 | 1 | · | 4 | · | · | · | · | · | · | · | · | · | 1 | · | · | ✅CAR0 |
+| 308 | aws-lambda | 28 | HIGH | · | · | 1 | · | 5 | · | 12 | 9 | 12 | 3 | 10 | 3 | 3 | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 309 | refactoring-patterns | 26 | HIGH | · | · | 1 | · | 1 | · | 16 | 18 | 7 | 1 | 6 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 310 | mentoring | 17 | HIGH | · | · | · | · | 6 | · | · | 1 | 1 | 10 | 3 | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | ✅CAR0 |
+| 311 | crac | 4 | MED | · | · | · | · | · | · | 1 | 3 | 2 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 312 | jooq | 2 | MED | · | 1 | 1 | · | 1 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 313 | archunit | 1 | MED | · | 1 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 314 | apache-camel | 1 | LOW | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 315 | jms-activemq | 1 | LOW | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 316 | jmh-microbenchmarking | 0 | NONE | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 317 | kotlin-testing | 0 | NONE | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 318 | scala-effects | 0 | NONE | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+
+<!-- MATRIX:END -->
+
 
 ## 8. Прогресс (round 3 — Plausibility + Readability, старт 2026-07-01)
 
@@ -521,7 +547,9 @@ Readability — отдельная линза (русская проза): вс�
 - ✅ Round-3 de-caricature band-3/4/5 (workflow, до weekly-limit): `sql`/`kotlin-collections`/`caching-performance` (band-12), `greedy-algorithms`/`graphql`/`ai-application-architecture` (band-13).
 - ✅ **Ручной режим** (weekly-limit до 2026-07-06 18:00 MSK — воркфлоу-ревьюеры недоступны, 1 файл/тик, детерминированные гейты + inline fidelity): `code-review-practices` (f932b593), `spring-data-jpa` (f08756ea), `design-patterns` (d04ae935), `technical-debt` (a5b3bf33, 18 бл.), `microservices` (f937bec0, 16 бл.), `distributed-systems` (687a7949, 16 бл.), `testcontainers` (97ce53db, 19 бл.), `reverse-proxy` (be9ec7ae, 18 бл.), `recursion` (082bc208, 19 бл.), `networking` (5ea7ef10, 19 бл.) — каждый CAR→0, audit-gap «единственн/полностью/любой/исключительно/абсолютно/невозможн/заставля» дочищены extended tone-regex, correct не тронут.
 - ✅ **Воркфлоу-режим возвращён** (weekly-limit снят; ultracode: dynamic workflow orchestration). Workflow `wf_1e99746a-378` (task `w9s0p26cc`, 6 агентов, 0 ошибок, 618K токенов) — фан-аут ≤3 concurrent по CAR=11 тиру **со смещением ranks 9-16** (чтобы разойтись с параллельной сессией, идущей top-down). Агенты возвращают structured patch-sets (не пишут на диск), оркестратор применяет+гейчит+коммитит по одному: `integration-testing` (97c3deb6, 19 бл.), `hash-tables` (74155a3e, 11 бл. +3 ручных block22 ConcurrentHashMap-энумерация), `fine-tuning-llm` (36de1e08, 11 бл.), `design-instagram` (17d19331, 11 бл. +6 ручных blocks 7/8/17 arch-raise), `design-dropbox` (ff1d15e1, 12 бл.), `database-sharding` (3ce51d87, 11 бл.) — каждый CAR→0, length-tell CUR≤HEAD, correct не тронут. Агенты иногда пропускают блоки с длинной энумеративной correct → оркестратор дописывает ручные patch-и (raise дистракторов, не shrink correct).
-- ⏳ Следующая цель round 3: CAR=11 тир worst-first (исключая занятые параллельной сессией `rust`/`reverse-proxy`/`testcontainers`/`recursion`/`networking`) — `multi-agent-orchestration`/`memory-management`/`long-context-vs-rag`/`load-balancing`/`kotlin-exceptions`/`argocd`/… (~240 файлов с CAR>0 в очереди). Продолжать воркфлоу-бэндами ≤3 concurrent с offset-band против гонки.
+- ✅ **Воркфлоу-батч #2** (`wf_e2758d33-b91`, task `wg85itgy0`, 6 агентов, 0 ошибок, 514K токенов), offset-band ranks 6-11: `argocd` (ba1128c5, 27 бл.), `test-automation` (ab40368f, 10 бл.), `spring-batch` (fed3dee6, 10 бл.), `two-pointers-sliding-window` (1ce06375, 10 бл.), `kotlin-exceptions` (b26ed884, 11 бл. +8 topup), `typescript` (510987b1, 10 бл. +3 topup) — каждый CAR→0. Topup-паттерн: агент осознанно оставляет часть блоков (форбидден-маркер смыслонесущ в мисконцепции); оркестратор дочищает механические срабатывания, в т.ч. **ложные `toxic_management` на техническом «заставляет компилятор»** (forces the compiler) — переформулировка глагола (`заставляет`→`обязывает`/`вынуждает`/`требует`) с сохранением ложности.
+- ✅ **§7 переделана в гигантскую матрицу** «файл × проверка» (`scripts/gen-plan-matrix.py`, детерминированно, регенерация `--write`): 318 строк × 30 колонок, каждая колонка = отдельный сигнал аудита (Lavg/Lspd/Word/Sent/Shrt/Uniq/Enum/Caus/Sden/Tech/Btk/Num/Cma/Infl/Cabs/Ctox/Cabd/Cdis/Cfak/Rlong/Rpun/Rcyr/Reng/Rfil/Sch), ячейка = блоков к правке (`·`=чисто). Worst-first. На момент генерации: CAR0=61/318, остаток 1415 CAR-блоков.
+- ⏳ Следующая цель round 3: верх матрицы §7 (CAR=11 тир, исключая занятые параллельной сессией) — `multi-agent-orchestration`/`memory-management`/`long-context-vs-rag`/`load-balancing`/`authentication-authorization-patterns`/`application-profiling`/… Продолжать воркфлоу-бэндами ≤3 concurrent с offset-band против гонки; после каждого батча — `gen-plan-matrix.py --write`.
 
 **Честно:** round 3 объединяет три линзы. Под объединённым баром 297/318 файлов = CRITICAL (correct
 выделяется по длине+структуре+плотности). Length/structure-tell и caricature-tell чинятся вместе:
