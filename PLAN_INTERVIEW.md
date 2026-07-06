@@ -31,6 +31,63 @@
 | `interview-writer` | секция MCQ-quality-rules (~line 314) | «Option Parity (обязательно)» + ссылка на канон при MCQ-sync |
 | `interview-options-writer` (deprecated) | `### Length-ratio cap` (~line 631) | Синхронизировано для legacy-аудита; для нового контента НЕ использовать |
 
+## 1b. ОГРОМНЕЙШАЯ ТАБЛИЦА — все правила из промптов (каталог)
+
+Полный каталог правил из всех 4 промптов цикла (Option Parity → Plausibility Parity → Russian Readability Parity). Каждая строка — атомарное правило с источником, типом (MUST/FORBID/HOW/DoD), проверкой и статусом закрепления в skills.
+
+| # | Промпт-раунд | Категория | Правило | Тип | Как проверяю | В skills |
+|---|---|---|---|---|---|---|
+| R1.1 | Option Parity | Похожесть | Все 4 варианта похожи по длине | MUST | `LEN_SPREAD` max/min ≤1.5; length-tell=0 | ✅ mcq-quality-fixer |
+| R1.2 | Option Parity | Похожесть | Все 4 похожи по грамматической форме | MUST | ручной/адверс-ревьюер | ✅ |
+| R1.3 | Option Parity | Похожесть | Все 4 похожи по числу технических утверждений | MUST | `TECH_DENSITY_GAP`/`WORD_COUNT_GAP` | ✅ |
+| R1.4 | Option Parity | Похожесть | Все 4 похожи по уровню конкретики | MUST | `NUMBER_GAP`/`BACKTICK_GAP` | ✅ |
+| R1.5 | Option Parity | Похожесть | Все 4 похожи по структуре рассуждения | MUST | `ONLY_ONE_*` симметрия | ✅ |
+| R1.6 | Option Parity | Похожесть | Все 4 несут условия/причины/последствия сопоставимо | MUST | адверс-ревьюер | ✅ |
+| R1.7 | Option Parity | Похожесть | Все 4 — один уровень зрелости по стилю | MUST | адверс-ревьюер | ✅ |
+| R1.8 | Option Parity | Запрет | correct НЕ единственный с алгоритмом | FORBID | `ONLY_ONE_ALGORITHM_OPTION` | ✅ |
+| R1.9 | Option Parity | Запрет | correct НЕ единственный со списком шагов | FORBID | `ONLY_ONE_SEQUENCE_OPTION` | ✅ |
+| R1.10 | Option Parity | Запрет | correct НЕ единственный с несколькими точными числами | FORBID | `NUMBER_GAP` | ✅ |
+| R1.11 | Option Parity | Запрет | correct НЕ единственный с несколькими backtick-терминами | FORBID | `BACKTICK_GAP` | ✅ |
+| R1.12 | Option Parity | Запрет | correct НЕ выглядит как полный конспект | FORBID | `LEN_AVG`>1.3 | ✅ |
+| R1.13 | Option Parity | Запрет | correct НЕ единственный с причинно-следственной цепочкой | FORBID | `ONLY_ONE_CAUSAL_OPTION` | ✅ |
+| R1.14 | Option Parity | Запрет | correct НЕ выглядит заметно экспертнее | FORBID | `CORRECT_LONGEST_RATE`/rank | ✅ |
+| R1.15 | Option Parity | Баланс | Если correct несёт 3 смысл. элемента — каждый distractor 2–3 | MUST | адверс-ревьюер | ✅ |
+| R1.16 | Option Parity | Направление | НЕ сокращать correct до заглушек — ПОДНИМАТЬ distractor-ы | HOW | сравнение длин до/после | ✅ §3 |
+| R1.17 | Option Parity | Направление | Детализацию correct → в `sections` (не терять факты) | HOW | факты 1:1 vs .md | ✅ |
+| R1.18 | Option Parity | Направление | Каждый wrong — правдоподобная ошибочная модель той же формы | HOW | адверс-ревьюер | ✅ |
+| R1.19 | Option Parity | Инвариант | Ровно 1 `correct: true`, JSON schema цела | MUST | verify-mcq-json | ✅ |
+| R2.1 | Plausibility | Принцип | Option Parity без Plausibility Parity недостаточен | MUST | `--caricature` audit | ✅ |
+| R2.2 | Plausibility | Смысл | Wrong = реалистичная ошибочная модель middle/senior | MUST | tone-tells=0 + ревьюер | ✅ |
+| R2.3 | Plausibility | Чек | Может ли разумный middle/senior так подумать? | MUST | ручной чек | ✅ |
+| R2.4 | Plausibility | Чек | Есть ли частично верная логика в wrong? | MUST | ручной чек | ✅ |
+| R2.5 | Plausibility | Чек | Ошибка тонкая, а не абсурдная | MUST | `absurd_action` группа | ✅ |
+| R2.6 | Plausibility | Чек | Не звучит как «злодейский менеджер» | FORBID | `toxic_management` группа | ✅ |
+| R2.7 | Plausibility | Чек | Нет слов-маркеров, палящих неправильность | FORBID | tone-regex | ✅ |
+| R2.8 | Plausibility | Чек | Отличается от correct одним смещением, не полной чушью | MUST | ручной чек | ✅ |
+| R2.9 | Plausibility | Анти-паттерн | **Inflated Caricature Distractor** (раздут, но карикатурен) | FORBID | `INFLATED_CARICATURE` | ✅ |
+| R2.10 | Plausibility | Убрать | всегда/никогда/любой ценой/якобы/не спрашивая/сразу записать/заставить/угрожать | FORBID | tone-regex + `--caricature` | ✅ |
+| R2.11 | Plausibility | Модели | Реальные ошибочные модели (1:1↔статус, стендап↔1:1, вера в review, mentorship/coaching, масштаб через отчётность, похвала, выгорание↔скука, blameless↔личный фидбэк) | HOW | тематически | ✅ |
+| R3.1 | Readability | Приоритет | 1)корректность 2)правдоподобность 3)естеств.русский 4)структура 5)длина | HOW | `--readability` | ✅ |
+| R3.2 | Readability | Звучание | Вариант = нормальная фраза инженера/тимлида/ментора | MUST | `LOW_CYRILLIC`/`ENGLISH_RUN` | ✅ |
+| R3.3 | Readability | Запрет | Машинные цепочки через `→` без реального алгоритма | FORBID | `→`-подсчёт vs correct | ✅ |
+| R3.4 | Readability | Запрет | Искусственно раздутые формулировки (канцелярит/ярлыки) | FORBID | `FILLER_PHRASE`/`LONG_SENTENCE` | ✅ |
+| R3.5 | Readability | Запрет | Карикатурные wrong (токсичный тон) | FORBID | `--caricature` | ✅ |
+| R3.6 | Readability | Запрет | Чрезмерные маркеры очевидной неправильности (просто/сразу/ничего не делать/без амбиций/оставить в покое) | FORBID | tone-regex | ✅ |
+| R3.7 | Readability | Длина | Сопоставимо, но не до символа (180–240 ок; 260 vs 60 — нет) | MUST | `LEN_SPREAD` | ✅ |
+| R3.8 | Readability | Чек | Все 4 читаются без спотыкания и звучат по-русски | MUST | `--readability` | ✅ |
+| R3.9 | Readability | Анти-паттерн | **Artificially Balanced but Unreadable Option** | FORBID | `--readability` HIGH | ✅ |
+| R3.10 | Readability | Правило | «Лучше короче но естественно, чем длинно но деревянно» | HOW | ручной чек | ✅ |
+| INV.1 | Все | Инвариант | Правим ТОЛЬКО seed/mcq JSON (не .md) | MUST | git pathspec | ✅ §5 |
+| INV.2 | Все | Инвариант | Не менять correct/label/order/q_number/question_text | MUST | gate_struct | ✅ §5 |
+| INV.3 | Все | Инвариант | Поле `correct` (не is_correct); ensure_ascii=False indent=2 no-NL | MUST | verify-mcq-json | ✅ §5 |
+| DoD.1 | Все | DoD | correct не угадать по длине/структуре/насыщенности/стилю | DoD | audit все оси | ▶ per-file |
+| DoD.2 | Все | DoD | wrong не заглушки и не раздутые карикатуры | DoD | SHORT+CAR+INF=0 | ▶ per-file |
+| DoD.3 | Все | DoD | Все варианты — естественный русский, читаются легко | DoD | `--readability` | ▶ per-file |
+| DoD.4 | Все | DoD | Каждый distractor — реальная ошибочная модель | DoD | адверс-fidelity | ▶ per-file |
+| DoD.5 | Все | DoD | JSON проходит schema validation | DoD | verify-mcq-json | ▶ per-file |
+
+**mentoring-interview (negative example) — приоритетные вопросы:** Q2 (1-on-1), Q3 (IDP), Q5 (Teaching vs Telling), Q6 (сопротивление фидбэку), Q7 (impostor), Q8 (скучающий senior), Q10 (performance review), Q11 (масштаб менторства), Q12 (отказ от вертикали), Q13 (негативный фидбэк), Q14 (middle на плато). Статус: перепроверен в round 3 (см. §8).
+
 ## 2. Признаки «угадываемого» correct (что ищем)
 
 - `LEN_AVG` — len(correct) / avg(len(wrong)) > 1.3;
