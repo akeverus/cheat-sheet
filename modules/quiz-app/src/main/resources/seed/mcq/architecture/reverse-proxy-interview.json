@@ -36,7 +36,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Reverse proxy` — это исключительно L4 TCP-балансировщик: он не разбирает HTTP и не способен ни на TLS termination, ни на роутинг по URL или host-заголовку.",
+              "text": "`Reverse proxy` — это L4 TCP-балансировщик: он не разбирает HTTP и не способен на TLS termination или роутинг по URL/host-заголовку.",
               "correct": false,
               "sections": {
                 "what_actually": "Reverse proxy всегда работает на L7: понимает HTTP-семантику, делает TLS termination, кеш, routing по URL/host/header. Чистый L4 — это отдельная роль load balancer.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Reverse proxy` — это CDN-кеш на edge: его единственная задача — хранить статику ближе к пользователю, а балансировка и TLS к нему отношения не имеют.",
+              "text": "`Reverse proxy` — это CDN-кеш на edge: его основная задача — хранить статику ближе к пользователю, а балансировка и TLS к нему отношения не имеют.",
               "correct": false,
               "sections": {
                 "what_actually": "Кеширование — лишь одна из функций; reverse proxy ещё делает TLS termination, routing, балансировку, rate limiting и header rewriting. CDN — частный случай его применения.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Forward proxy работает строго на L4, а reverse proxy — строго на L7; именно разница OSI-уровней и есть единственное отличие между ними.",
+              "text": "Forward proxy работает строго на L4, а reverse proxy — строго на L7; именно разница OSI-уровней и есть главное отличие между ними.",
               "correct": false,
               "sections": {
                 "what_actually": "Различие не в OSI-уровне, а в стороне и цели: и forward, и reverse обычно работают на L7 (HTTP), отличаясь тем, кого они скрывают.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Чистый load balancer всегда работает на L7 и разбирает HTTP, а reverse proxy всегда сидит на L4 и видит только TCP-пакеты без доступа к URL.",
+              "text": "Чистый load balancer работает на L7 и разбирает HTTP, а reverse proxy сидит на L4 и видит только TCP-пакеты без доступа к URL.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: чистый LB часто L4 (TCP/UDP, не разбирает HTTP), а reverse proxy всегда L7 и понимает HTTP-семантику (routing по URL/host).",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Reverse proxy выполняет бизнес-логику приложения: валидацию заказов, расчёт цен и работу с БД, полностью разгружая от этого backend-сервисы.",
+              "text": "Reverse proxy выполняет бизнес-логику приложения: валидацию заказов, расчёт цен и работу с БД, разгружая от этого backend-сервисы.",
               "correct": false,
               "sections": {
                 "what_actually": "Прокси делает кросс-функциональные задачи (TLS, кеш, routing, rate limit), но не бизнес-логику — она остаётся в backend-сервисах.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Единственная функция reverse proxy — TLS termination; кеш, rate limiting и routing к прокси не относятся и живут в отдельном API-gateway перед ним.",
+              "text": "Основная функция reverse proxy — TLS termination; кеш, rate limiting и routing к прокси не относятся и живут в отдельном API-gateway перед ним.",
               "correct": false,
               "sections": {
                 "what_actually": "TLS termination — важная, но одна из многих функций. Прокси также делает routing, кеш, compression, rate limiting, header injection и observability.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`X-Forwarded-For` всегда содержит ровно один IP — адрес самого первого прокси, а не клиента, и этот IP не меняется при прохождении по цепочке прокси.",
+              "text": "`X-Forwarded-For` содержит ровно один IP — адрес самого первого прокси, а не клиента, и этот IP не меняется при прохождении по цепочке прокси.",
               "correct": false,
               "sections": {
                 "what_actually": "`X-Forwarded-For` — это цепочка `client, proxy1, proxy2`: каждый прокси аппендит клиентский IP. Реальный клиент — самый левый элемент, если все прокси корректно дополняли.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Прокси обязан полностью доверять входящему `X-Forwarded-For` от клиента и пробрасывать его в backend без изменений, чтобы не потерять исходный IP.",
+              "text": "Прокси обязан доверять входящему `X-Forwarded-For` от клиента и пробрасывать его в backend без изменений, чтобы не потерять исходный IP.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: доверять входящему `XFF` опасно (spoofing). Прокси должен затирать или дополнять его и доверять реальному IP только от trusted-сетей (`set_real_ip_from`).",
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`proxy_pass` по умолчанию использует HTTP/2 к бэкенду с мультиплексированием, поэтому `proxy_http_version` указывать не нужно никогда и keepalive работает из коробки.",
+              "text": "`proxy_pass` по умолчанию использует HTTP/2 к бэкенду с мультиплексированием, поэтому `proxy_http_version` указывать не нужно, а keepalive работает из коробки.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию Nginx проксирует upstream по HTTP/1.0; для keepalive нужен явный `proxy_http_version 1.1`. HTTP/2 к обычному бэкенду `proxy_pass` не использует.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Алгоритм балансировки в `upstream` задать нельзя — Nginx всегда использует только round-robin и не поддерживает ни `least_conn`, ни `ip_hash`, ни `hash`.",
+              "text": "Алгоритм балансировки в `upstream` задать нельзя — Nginx использует round-robin и не поддерживает `least_conn`, `ip_hash` или `hash`.",
               "correct": false,
               "sections": {
                 "what_actually": "Алгоритм выбирается явно: `least_conn`, `ip_hash`, `hash <key>`; round-robin — лишь значение по умолчанию, которое можно переопределить.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Ключ `$binary_remote_addr` всегда содержит реальный IP клиента, даже если перед Nginx стоит ещё один прокси или L4 LB, подменяющий адрес источника.",
+              "text": "Ключ `$binary_remote_addr` содержит реальный IP клиента, даже если перед Nginx стоит ещё один прокси или L4 LB, подменяющий адрес источника.",
               "correct": false,
               "sections": {
                 "what_actually": "`$binary_remote_addr` — это IP относительно Nginx. Если перед ним прокси/LB, все запросы идут с одного IP; нужно настроить `real_ip` или брать ключ из `X-Forwarded-For`.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Значение `worker_rlimit_nofile` ни на что не влияет: Nginx сам управляет дескрипторами и полностью игнорирует системный `ulimit -n` под нагрузкой.",
+              "text": "Значение `worker_rlimit_nofile` ни на что не влияет: Nginx сам управляет дескрипторами и игнорирует системный `ulimit -n` под нагрузкой.",
               "correct": false,
               "sections": {
                 "what_actually": "`worker_rlimit_nofile` задаёт `ulimit -n` на воркер; при его нехватке новые соединения отвергаются с `EMFILE: Too many open files`.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Наличие или отсутствие слеша после backend в `proxy_pass` ни на что не влияет — Nginx всегда передаёт URI клиента в backend без каких-либо изменений.",
+              "text": "Наличие или отсутствие слеша после backend в `proxy_pass` ни на что не влияет — Nginx передаёт URI клиента в backend без изменений.",
               "correct": false,
               "sections": {
                 "what_actually": "Слеш меняет поведение кардинально: `proxy_pass http://backend;` (без слеша) передаёт URI as-is, а `proxy_pass http://backend/;` (со слешем) вырезает префикс location.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "HAProxy не умеет роутить по URL или заголовкам — он работает только на L4, распределяя TCP-соединения round-robin между серверами, без `acl`, `use_backend` и любой L7-логики маршрутизации.",
+              "text": "HAProxy не умеет роутить по URL или заголовкам — он работает только на L4, распределяя TCP-соединения round-robin между серверами, без `acl`, `use_backend` и L7-логики маршрутизации.",
               "correct": false,
               "sections": {
                 "what_actually": "HAProxy полноценно работает на L7: `ACL` задают условия по path, header, cookie, src IP, query, а `use_backend ... if <acl>` маршрутизирует по ним.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Все четыре прокси полностью одинаковы по `proxy_cache`, языку ACL и поддержке xDS, поэтому выбор между ними произволен и зависит только от привычки команды, а не от конкретной задачи.",
+              "text": "Все четыре прокси одинаковы по `proxy_cache`, языку ACL и поддержке xDS, поэтому выбор между ними произволен и зависит от привычки команды, а не от конкретной задачи.",
               "correct": false,
               "sections": {
                 "what_actually": "Возможности различаются заметно: кеш встроен только у Nginx, sidecar для mesh — это Envoy, авто-конфиг из labels — Traefik, stick-table+peers — HAProxy.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Встроенный кеш ответов (`proxy_cache`) есть у всех четырёх прокси и работает абсолютно одинаково в Nginx, HAProxy, Envoy и Traefik, включая инвалидацию по тегу и паттерну.",
+              "text": "Встроенный кеш ответов (`proxy_cache`) есть у всех четырёх прокси и работает одинаково в Nginx, HAProxy, Envoy и Traefik, включая инвалидацию по тегу и паттерну.",
               "correct": false,
               "sections": {
                 "what_actually": "Богатый встроенный кеш есть только у Nginx (`proxy_cache`); у HAProxy, Envoy и Traefik встроенного кеша нет, для CDN-уровня берут `Varnish` или CDN.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "mTLS применяется исключительно внутри service mesh между sidecar-ами по SPIFFE ID и принципиально никогда не используется для внешних клиентов, B2B API или IoT-устройств со своими сертификатами.",
+              "text": "mTLS применяется в основном внутри service mesh между sidecar-ами по SPIFFE ID и почти не используется для внешних клиентов, B2B API или IoT-устройств со своими сертификатами.",
               "correct": false,
               "sections": {
                 "what_actually": "mTLS используют широко: B2B API (клиентские сертификаты вместо ключей), IoT-устройства, internal admin endpoints — не только в mesh между sidecar.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "HTTP/3 работает поверх TCP, как и HTTP/2, использует тот же механизм 0-RTT, и потому никогда не блокируется firewall-ами или middleboxes на пути от клиента к прокси.",
+              "text": "HTTP/3 работает поверх TCP, как и HTTP/2, использует тот же механизм 0-RTT, и потому не блокируется firewall-ами или middleboxes на пути от клиента к прокси.",
               "correct": false,
               "sections": {
                 "what_actually": "HTTP/3 работает поверх UDP (QUIC), а не TCP, и именно поэтому firewalls/middleboxes часто его блокируют; для fallback на H2 нужен `Alt-Svc`.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для проксирования к Java/Spring бэкенду всегда нужно настраивать HTTP/2 end-to-end через `proxy_http_version 2.0;`, иначе keepalive-пул и производительность Netty/Tomcat ломаются.",
+              "text": "Для проксирования к Java/Spring бэкенду нужно настраивать HTTP/2 end-to-end через `proxy_http_version 2.0;`, иначе keepalive-пул и производительность Netty/Tomcat ломаются.",
               "correct": false,
               "sections": {
                 "what_actually": "Между прокси и Java/Spring бэкендом обычно оставляют HTTP/1.1: H2 в Netty/Tomcat настроить сложнее, а выигрыш внутри VPC минимален.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "WebSocket поверх HTTP/2 поддерживается из коробки всеми прокси без RFC 8441, поэтому для WS лучше всегда использовать H2 — он мультиплексирует несколько сокетов в одном соединении.",
+              "text": "WebSocket поверх HTTP/2 поддерживается из коробки большинством прокси без RFC 8441, поэтому для WS лучше использовать H2 — он мультиплексирует несколько сокетов в одном соединении.",
               "correct": false,
               "sections": {
                 "what_actually": "HTTP/2 поверх WebSocket требует RFC 8441 (`SETTINGS_ENABLE_CONNECT_PROTOCOL`) и поддерживается не везде; чаще для WS оставляют HTTP/1.1.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Заголовок `Vary` при кешировании динамики игнорируется прокси и нужен лишь браузеру, поэтому ответы для разных пользователей с одним URL всегда переиспользуются из общего кеша.",
+              "text": "Заголовок `Vary` при кешировании динамики игнорируется прокси и нужен лишь браузеру, поэтому ответы для разных пользователей с одним URL переиспользуются из общего кеша.",
               "correct": false,
               "sections": {
                 "what_actually": "`Vary: Accept-Encoding, Authorization` как раз заставляет кеш не пересекаться между пользователями/кодировками; игнорировать его опасно — отдашь чужие данные.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Сжимать нужно абсолютно весь контент, включая JPEG, PNG и MP4, через `gzip_types *;` — это всегда уменьшает размер ответа и снижает исходящий трафик прокси.",
+              "text": "Сжимать нужно весь контент, включая JPEG, PNG и MP4, через `gzip_types *;` — это уменьшает размер ответа и снижает исходящий трафик прокси.",
               "correct": false,
               "sections": {
                 "what_actually": "Уже сжатые форматы (JPEG/PNG/MP4/WebM) повторное сжатие не уменьшает, а только тратит CPU — их исключают из `gzip_types`/`brotli_types`.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Pre-compressed статика невозможна: директивы `gzip_static`/`brotli_static` не существуют, прокси всегда сжимает файлы на лету при каждом запросе, тратя CPU.",
+              "text": "Pre-compressed статика не поддерживается: директив `gzip_static`/`brotli_static` нет, прокси сжимает файлы на лету при каждом запросе, тратя CPU.",
               "correct": false,
               "sections": {
                 "what_actually": "Pre-compressed практикуется: CI генерит `.gz`/`.br` рядом с файлом, и `gzip_static on; brotli_static on;` отдают готовое с нулевой CPU-ценой.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Подмена тела ответа (`sub_filter`) применяется к любым форматам, включая бинарные файлы и изображения, без указания `sub_filter_types` — Nginx сам определяет текстовый контент.",
+              "text": "Подмена тела ответа (`sub_filter`) применяется к разным форматам, включая бинарные файлы и изображения, без указания `sub_filter_types` — Nginx сам определяет текстовый контент.",
               "correct": false,
               "sections": {
                 "what_actually": "`sub_filter` работает только по текстовым типам, заданным в `sub_filter_types text/html application/json`; на бинарных данных он не применяется и не имеет смысла.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Удаление leak-заголовков вроде `Server` и `X-Powered-By` невозможно: `proxy_hide_header` скрывает их только от лога, а клиенту прокси отдаёт всё, что добавил backend.",
+              "text": "Удаление leak-заголовков вроде `Server` и `X-Powered-By` не работает: `proxy_hide_header` скрывает их только от лога, а клиенту прокси отдаёт всё, что добавил backend.",
               "correct": false,
               "sections": {
                 "what_actually": "Прокси штатно удаляет leak-заголовки: `proxy_hide_header X-Powered-By;` или `http-response del-header X-Powered-By` в HAProxy убирают их из ответа бэкенда.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "По умолчанию Nginx НЕ буферизует ответ upstream — он сразу стримит каждый байт клиенту, поэтому `proxy_buffering off` ничего не меняет, а нужен лишь `chunked_transfer_encoding on`.",
+              "text": "По умолчанию Nginx НЕ буферизует ответ upstream — он стримит каждый байт клиенту, поэтому `proxy_buffering off` ничего не меняет, а нужен лишь `chunked_transfer_encoding on`.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию Nginx как раз буферизует ответ (скачивает целиком), что мешает streaming; `proxy_buffering off;` выключает это поведение для потоков.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Буферизацию ответа всегда нужно выключать (`proxy_buffering off`) — она только вредит, замедляет любые запросы и держит backend занятым до конца отдачи клиенту.",
+              "text": "Буферизацию ответа нужно выключать (`proxy_buffering off`) — она вредит, замедляет запросы и держит backend занятым до конца отдачи клиенту.",
               "correct": false,
               "sections": {
                 "what_actually": "Буферизация полезна: она защищает backend от медленных клиентов (прокси держит ответ, backend быстро освобождается) и уменьшает число TCP-сегментов. Выключают её только для streaming.",
