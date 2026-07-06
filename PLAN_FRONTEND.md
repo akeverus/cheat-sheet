@@ -198,22 +198,26 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 | `css/tokens.css` | — | ✅ | ✅ | — | 🌱 | ✅ | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | ✅ | — | — | — | — | ✅ | ✅ | — | TOK-1 AA-гейт CLEAN, TOK-5 OS-prefs; 🌱TOK-2 развести accent↔success/error по hue |
 | `css/base.css` | 🌱 | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱BAS-15 tabs↔seg (HIER), 🌱BAS-17 helper-контраст; BAS-18 measure = 🚫 |
 | `css/editorial.css` (мёртв) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱EDC-1 не подключён, 2656 строк-дубль tokens+base + stale (до AF-5/tabs); verify-then-remove |
-| `css/{broadsheet,linear,swiss}.css` (мёртвы) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱DSG-1 3 файла НЕ подключены (только tokens+base); 🌱DSG-2 broadsheet-сигнатуры (0 правил в base.css vs editorial 30/swiss 6/linear 2) → identity=дефолт |
+| `css/{linear,swiss}.css` (мёртвы) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱DSG-1 не подключены, сигнатуры уже в base.css (linear=2/swiss=6) → чистые дубли, удалить |
+| `css/broadsheet.css` (не дубль!) | 🌱 | — | — | — | — | — | 🌱 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱DSG-2 CONFIRMED: 13 структ.правил (nav/btn/link) НЕ в base.css (0 vs linear 2/swiss 6) → broadsheet теряет структ.акценты, токены живут |
 | **▸ СКРИПТЫ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
 | `js/app.js` | ✅ | — | — | ✅ | ✅ | — | ✅ | ✅ | 🌱 | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | — | 🌱APP-8 regenerate без aria-busy; 🌱APP-9 comparison-table th без scope/caption; ⛔APP-5 favorite; v=54 |
 | `js/stats.js` | — | — | 🌱 | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | 🌱STJ-1 tick-подписи графиков мелкие (low); kbd/progress-dup c app.js = 🚫 standalone-by-design; v=12 |
 
 **Как читать сводку.** Открытые 🌱-пункты по файлам: `result.html`(RES-8/RES-14), `settings.html`(SET-14/SET-7),
 `stats.html`(STA-18/STA-5), `header.html`(HDR-1), `icons.html`(ICO-3), `training-actions.html`(TAC-3),
-`tokens.css`(TOK-2), `base.css`(BAS-15/BAS-17), `editorial.css`(EDC-1), `{broadsheet,linear,swiss}.css`(DSG-1/DSG-2),
-`app.js`(APP-8/APP-9), `stats.js`(STJ-1). ⛔: `error.html`(ERR-3 403-retry), `app.js`(APP-5 favorite).
-**Не-blocked, можно брать сразу:** DSG-1/DSG-2/EDC-1 (мёртвые CSS-файлы — вне in-flight дерева
-пользователя), но удаление/порт требует решения (мягко-деструктивно). Остальные 🌱 — в blocked-файлах
-под активным pass пользователя → ждут чистого `git status`. Расшифровка каждого ID — §6 ниже.
+`tokens.css`(TOK-2), `base.css`(BAS-15/BAS-17), `editorial.css`+`linear/swiss.css`(EDC-1/DSG-1 — мёртвые дубли),
+`broadsheet.css`(DSG-2 — не дубль!), `app.js`(APP-8/APP-9), `stats.js`(STJ-1).
+⛔: `error.html`(ERR-3 403-retry), `app.js`(APP-5 favorite).
+**Не-blocked, можно брать сразу:** EDC-1 + DSG-1 (удалить мёртвые `editorial/linear/swiss.css` — вне in-flight
+дерева, но удаление = решение). DSG-2 требует правки `base.css` (blocked) + дизайн-решения. Остальные 🌱 —
+в blocked-файлах под активным pass пользователя → ждут чистого `git status`. Расшифровка каждого ID — §6 ниже.
 
-**Новое из аудита 2026-07-06 (workflow, 7 агентов, 597k ток.):** DSG-2 (broadsheet без сигнатур в
-base.css — 0 правил, verify-намеренность live) и APP-9 (JS-построенная comparison-table без `th[scope]`/
-`caption`) — ранее не задокументированы; занесены в §6.
+**Из аудита 2026-07-06/07:** DSG-2 — **CONFIRMED статически** (2026-07-07): `broadsheet.css` держит 13 структурных
+rule-блоков (nav/btn/link, Hudson-бордюры), НЕ портированных в `base.css` (0 правил); broadsheet — единственный
+из 4 дизайнов с dedicated `.css`, чью структуру не мигрировали (linear/swiss/editorial — мигрированы). Токены
+broadsheet живут через `tokens.css`, теряются лишь структурные акценты (severity M→L). APP-9 — JS-построенная
+comparison-table без `th[scope]`/`caption`. Оба в §6.
 
 ---
 
@@ -461,8 +465,8 @@ base.css — 0 правил, verify-намеренность live) и APP-9 (JS-
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
-| DSG-1 | 3 файла (`broadsheet/linear/swiss.css`) НЕ подключены ни одним `<link>` (свер. 2026-07-06: в `head.html` только `tokens.css` v=61 + `base.css` v=69; ноль условных per-design `<link>`) | linear/swiss-сигнатуры УЖЕ портированы в `base.css` (`[data-design="linear"]`=2 правила, `swiss`=6) → эти два файла — чистые мёртвые дубли, как `editorial.css` (EDC-1). Активный механизм дизайна = токены (`tokens.css`) + сигнатуры в `base.css`, не эти файлы | Как EDC-1: `grep`-verify нет ссылки → удалить (мягко-деструктивно, спросить). Broadsheet — см. DSG-2 (сначала решить его) | L | L | L | H | 🌱 BACKLOG (verify-then-remove, non-blocked) | — |
-| DSG-2 | `broadsheet` дизайн БЕЗ структурной identity: `base.css` содержит **0** правил `[data-design="broadsheet"]` (для сравнения: editorial=30, swiss=6, linear=2), а `broadsheet.css` с сигнатурами (nav-pill/outline) не подключён | При выборе дизайна `broadsheet` (через `data-design` на `<html>`) применяются только его токены (цвет/тип из `tokens.css`), но структурный слой = дефолтный editorial → визуально broadsheet ≈ editorial с другой палитрой. Либо это намеренно (broadsheet в token-only когорте, как superhuman/stripe/claude/theverge), либо сигнатуры broadsheet потеряны при порте (linear/swiss портированы, broadsheet — нет) | Live-verify: выбрать broadsheet в /settings, сравнить структуру с editorial. Если identity нужна — портировать nav-pill/outline из `broadsheet.css` в `base.css` (token-safe, как linear/swiss). Если token-only намеренно — DSG-1 удаляет и `broadsheet.css`. Требует решения пользователя + живого app | M | M | M | M | 🌱 BACKLOG (verify — app down) | — |
+| DSG-1 | `linear.css` + `swiss.css` НЕ подключены ни одним `<link>` (свер. 2026-07-06: `head.html` грузит только `tokens.css` v=61 + `base.css` v=69; ноль per-design `<link>`) | Их структурные сигнатуры УЖЕ портированы в `base.css` (`[data-design="linear"]`=2 правила, `swiss`=6) → эти два файла — **чистые мёртвые дубли**, как `editorial.css` (EDC-1): токены дублируют `tokens.css`, структура дублирует `base.css`. Активный механизм дизайна = `tokens.css` + `base.css`, не эти файлы. **⚠️ `broadsheet.css` — НЕ дубль, см. DSG-2 (единственный источник его структуры)** | Как EDC-1: удалить `linear.css`+`swiss.css` (мягко-деструктивно, спросить). `broadsheet.css` НЕ удалять до DSG-2 | L | L | L | H | 🌱 BACKLOG (verify-then-remove, non-blocked) | — |
+| DSG-2 | **CONFIRMED статически (2026-07-07, app не нужен):** `broadsheet` теряет структурную identity. `base.css` = **0** правил `[data-design="broadsheet"]` (editorial=30, swiss=6, linear=2, а также stripe=3/claude=3 портированы), но `broadsheet.css` (не подключён) содержит **13 структурных rule-блоков** на `.ed-nav`/`.ed-nav-link`/`.btn`/`.secondary-btn`/`.next-btn`/`.danger-btn`/`.flashcard-*-btn`/`#extra-analysis-toggle`/`a` (nav-treatment, `border-radius:4px`, Hudson-blue `#41A1CF` бордюры). Broadsheet — ЕДИНСТВЕННЫЙ из 4 дизайнов с dedicated `.css` (editorial/linear/swiss/broadsheet), чью структуру НЕ мигрировали в `base.css` (нет `superhuman/theverge/notion/mintlify.css` — те born-token-only, для них 0 = норма) | При выборе `broadsheet` **токены рендерятся** (cream bg / obsidian buttons / serif — из `tokens.css` `[data-design=broadsheet]`×2), но 13 структурных акцентов ОТСУТСТВУЮТ → broadsheet = «свои токены на editorial-структуре», без Hudson-бордюров/nav-treatment. Severity M→L (identity частично живёт через токены; теряются тонкие акценты) | Портировать 13 rule-блоков из `broadsheet.css` в `base.css` (token-safe, ровно как сделали для linear/swiss) → затем `broadsheet.css` становится дублем → удалить с DSG-1. **Blocked: `base.css` под in-flight pass; + дизайн-решение (broadsheet как signature-дизайн vs демоут в token-only)** | M | L | M | H | 🌱 BACKLOG (blocked-file + decision) | — |
 
 ### 6.D.1 — `static/js/app.js` (v=54)
 
