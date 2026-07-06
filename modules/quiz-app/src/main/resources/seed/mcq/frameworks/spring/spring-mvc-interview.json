@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Локализация в `Spring MVC` делается только на фронтенде через JavaScript, сервер всегда отдаёт строки на одном языке.",
+              "text": "Локализацию в `Spring MVC` реализуют на фронтенде через JavaScript-библиотеки, а сервер отдаёт разметку на одном базовом языке.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring MVC` локализует на сервере через `MessageSource` и `LocaleResolver`; фронтенд-переводы — отдельный независимый подход.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`LocaleResolver` определяет локаль исключительно по IP-адресу клиента через geolocation.",
+              "text": "`LocaleResolver` определяет локаль по IP-адресу клиента через geolocation-базу.",
               "correct": false,
               "sections": {
                 "what_actually": "Стандартные `LocaleResolver` берут локаль из заголовка `Accept-Language`, cookie или сессии, а не по IP.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Имя `@PathVariable` обязано всегда отличаться от имени параметра метода, иначе `Spring` не сможет их различить.",
+              "text": "Имя переменной в шаблоне `@PathVariable` должно отличаться от имени параметра метода, иначе `Spring` не сможет их сопоставить.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: при совпадении имён `value` можно опустить — `Spring` сопоставляет по имени автоматически.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@PathVariable` всегда возвращает `String` и не умеет конвертировать значение в `Long`, `UUID` или `Integer`.",
+              "text": "`@PathVariable` отдаёт значение как `String`, а приведение к `Long`, `UUID` или `Integer` делают вручную в теле метода.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring` конвертирует строку в тип параметра через систему `Converter`/`Formatter`: `Long`, `UUID`, `Integer` и др.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Глобальный `@ControllerAdvice` всегда срабатывает раньше локального `@ExceptionHandler` в самом контроллере.",
+              "text": "Глобальный `@ControllerAdvice` перехватывает исключение раньше локального `@ExceptionHandler` в самом контроллере.",
               "correct": false,
               "sections": {
                 "what_actually": "Приоритет у локального `@ExceptionHandler`: для исключения из своего контроллера он обрабатывается раньше `@ControllerAdvice`.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Если на классе исключения стоит `@ResponseStatus`, `Spring` всё равно вернёт `500`, игнорируя аннотацию.",
+              "text": "Если на классе исключения стоит `@ResponseStatus`, но явного `@ExceptionHandler` нет, `Spring` вернёт `500`, а не код из аннотации.",
               "correct": false,
               "sections": {
                 "what_actually": "`@ResponseStatus` на исключении заставляет `Spring` вернуть указанный в ней код (например `404`), а не `500`.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `Spring MVC` есть только один способ обработки исключений — глобальный `@ControllerAdvice`; локальных обработчиков не существует.",
+              "text": "В `Spring MVC` исключения обрабатывают через глобальный `@ControllerAdvice`, а локальные `@ExceptionHandler` в контроллере на приоритет обработки не влияют.",
               "correct": false,
               "sections": {
                 "what_actually": "Способов несколько: локальный `@ExceptionHandler`, `@ControllerAdvice`, `@ResponseStatus` на исключении и стандартный resolver.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Метод с `@ExceptionHandler` обязан возвращать только `void` и не может формировать тело ответа.",
+              "text": "Метод с `@ExceptionHandler` возвращает `void`, а тело ответа об ошибке пишут напрямую в `HttpServletResponse`.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод может возвращать `ResponseEntity`, объект (в REST → `JSON`), `ProblemDetail` или имя view — он формирует ответ.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@ControllerAdvice` может содержать только `@ExceptionHandler`-методы и ничего больше.",
+              "text": "`@ControllerAdvice` содержит `@ExceptionHandler`-методы, а общие `@ModelAttribute` и `@InitBinder` в него выносить нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Помимо `@ExceptionHandler`, в advice бывают `@ModelAttribute` (общие атрибуты) и `@InitBinder` (общий биндинг).",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@ControllerAdvice` всегда применяется ко всем контроллерам, и сузить его область невозможно.",
+              "text": "Область `@ControllerAdvice` не настраивается — он охватывает контроллеры всего приложения по определению.",
               "correct": false,
               "sections": {
                 "what_actually": "Область сужают через `basePackages`, `basePackageClasses`, `assignableTypes`, `annotations`.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Валидацию входных данных надо писать вручную в каждом контроллере через `if`-проверки полей — аннотации `Bean Validation` здесь не помогают.",
+              "text": "Валидацию входных данных пишут вручную в контроллере через `if`-проверки полей, а аннотации `Bean Validation` подходят лишь для сущностей БД.",
               "correct": false,
               "sections": {
                 "what_actually": "Декларативная валидация через аннотации DTO + `@Valid` заменяет ручные проверки; advice централизует ответы об ошибках.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Ошибки валидации `@RequestBody` и `@RequestParam` всегда приводят к одному и тому же исключению `MethodArgumentNotValidException`.",
+              "text": "Ошибки валидации `@RequestBody` и `@RequestParam` приводят к одному исключению `MethodArgumentNotValidException`, поэтому их ловят единым обработчиком.",
               "correct": false,
               "sections": {
                 "what_actually": "`@RequestBody` даёт `MethodArgumentNotValidException`, а ограничения `@RequestParam` (при `@Validated` на классе) — `ConstraintViolationException`.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@RequestBody` всегда использует только `Jackson` и не умеет читать `byte[]`, `String` или `XML`.",
+              "text": "`@RequestBody` десериализует тело через `Jackson`, а для `byte[]`, `String` или `XML` нужен ручной парсинг в контроллере.",
               "correct": false,
               "sections": {
                 "what_actually": "Конвертеров несколько: `ByteArray`, `String`, `Resource`, `Jackson` (JSON), JAXB/Jackson XML — выбор зависит от `Content-Type` и типа параметра.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Порядок конвертеров в списке не имеет значения — `Spring` всегда выбирает `Jackson` для любого тела.",
+              "text": "Порядок конвертеров в списке не влияет на выбор — `Spring` подбирает конвертер по `Content-Type`, а не по позиции.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок важен: побеждает ПЕРВЫЙ конвертер, чей `canRead()`/`canWrite()` подходит для типа и media type.",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Глобальный `@ControllerAdvice` всегда перехватывает исключение раньше локального `@ExceptionHandler` в контроллере.",
+              "text": "Глобальный `@ControllerAdvice` перехватывает исключение раньше локального `@ExceptionHandler` в контроллере.",
               "correct": false,
               "sections": {
                 "what_actually": "Локальный `@ExceptionHandler` имеет ВЫСШИЙ приоритет для исключений своего контроллера; advice — следующий уровень.",
@@ -2531,7 +2531,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring WebFlux` всегда быстрее `Spring MVC` для любых задач, поэтому новые проекты надо начинать только на WebFlux.",
+              "text": "`Spring WebFlux` производительнее `Spring MVC` под большинство нагрузок, поэтому новые проекты разумно начинать на WebFlux.",
               "correct": false,
               "sections": {
                 "what_actually": "WebFlux выигрывает на I/O-bound нагрузке с тысячами соединений; для CRUD на JDBC он не быстрее и сложнее MVC.",
@@ -2568,7 +2568,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Spring MVC` и `WebFlux` можно свободно смешивать в одном контроллере, чередуя блокирующие и реактивные методы без последствий.",
+              "text": "`Spring MVC` и `WebFlux` можно совмещать в одном контроллере, чередуя блокирующие и реактивные методы по мере надобности.",
               "correct": false,
               "sections": {
                 "what_actually": "Смешивать блокирующий и реактивный стек не следует — переход на WebFlux это решение для всего сервиса, не частичное.",
