@@ -334,7 +334,7 @@
               "label": "B"
             },
             {
-              "text": "`settings=profile` нужно ставить всегда — `default` слишком бедный.",
+              "text": "`settings=profile` стоит держать по умолчанию — набор событий в `default` слишком беден для диагностики.",
               "correct": false,
               "sections": {
                 "what_actually": "`default` (~1%) достаточен для большинства задач; `profile` (~2%) включают точечно для диагностики аллокаций, а не 24/7.",
@@ -609,7 +609,7 @@
           "question_text": "Когда использовать `JFR`, а когда `async-profiler`?",
           "options": [
             {
-              "text": "`JFR` всегда лучше `async-profiler`, потому что встроен в `JDK`.",
+              "text": "`JFR` предпочтительнее `async-profiler` в большинстве случаев — он встроен в `JDK` и не требует установки.",
               "correct": false,
               "sections": {
                 "what_actually": "Встроенность не делает JFR точнее: для CPU он имеет safepoint bias, а `async-profiler` через `AsyncGetCallTrace` видит counted-loops честно.",
@@ -621,7 +621,7 @@
               "label": "A"
             },
             {
-              "text": "`async-profiler` всегда лучше — ставим только его, `JFR` не нужен.",
+              "text": "`async-profiler` точнее по CPU, поэтому достаточно только его — `JFR` можно не подключать.",
               "correct": false,
               "sections": {
                 "what_actually": "У async-profiler нет богатой событийной модели JFR (GC, I/O, exceptions); только CPU/alloc/lock/wall.",
@@ -789,7 +789,7 @@
           "question_text": "Как профилировать CPU bottleneck?",
           "options": [
             {
-              "text": "Сразу запускать профилирование без сбора метрик и определения окна деградации.",
+              "text": "Начать со снятия профиля, не фиксируя окно деградации по метрикам — метрики подключить уже на этапе интерпретации.",
               "correct": false,
               "sections": {
                 "what_actually": "Сначала нужно зафиксировать окно деградации по метрикам — иначе профиль снимается не в тот момент и hot path не воспроизводится.",
@@ -814,7 +814,7 @@
               "label": "B"
             },
             {
-              "text": "Сразу делать heap dump и искать утечки — это универсальный путь к bottleneck.",
+              "text": "Начать с heap dump и поиска утечек — он покажет и источник CPU-нагрузки тоже.",
               "correct": false,
               "sections": {
                 "what_actually": "Heap dump — про память, а не про CPU; при CPU-bottleneck он не помогает и ещё вызывает STW-паузу.",
@@ -826,7 +826,7 @@
               "label": "C"
             },
             {
-              "text": "Профилировать только staging, на prod это всегда опасно.",
+              "text": "Профилировать только на staging — снимать что-либо на боевом трафике рискованно для latency.",
               "correct": false,
               "sections": {
                 "what_actually": "Sampling-инструменты (`JFR`, `async-profiler`) безопасны в prod; staging часто не воспроизводит prod-нагрузку.",
@@ -1101,7 +1101,7 @@
               "label": "A"
             },
             {
-              "text": "`memory leak` в Java — это всегда баг сборщика мусора, который не освобождает мусор.",
+              "text": "`memory leak` в Java — это сбой сборщика мусора, который перестаёт освобождать недостижимый мусор.",
               "correct": false,
               "sections": {
                 "what_actually": "Java-утечка — это объекты, которые ещё достижимы через нежелательные ссылки, поэтому GC обоснованно их не собирает; сам GC исправен.",
@@ -1234,7 +1234,7 @@
               "label": "B"
             },
             {
-              "text": "`synchronized` всегда быстрее `ReadWriteLock`, потому что проще.",
+              "text": "`synchronized` быстрее `ReadWriteLock` за счёт меньших накладных расходов, поэтому годится и для read-heavy нагрузки.",
               "correct": false,
               "sections": {
                 "what_actually": "При read-heavy нагрузке `ReadWriteLock`/`StampedLock` сильно выигрывают, позволяя параллельные чтения, тогда как `synchronized` их сериализует.",
@@ -1246,7 +1246,7 @@
               "label": "C"
             },
             {
-              "text": "Глобальный `ConcurrentHashMap` всегда лучше, чем lock-per-partition.",
+              "text": "Глобальный `ConcurrentHashMap` снимает contention лучше ручного lock-per-partition за счёт встроенного lock striping.",
               "correct": false,
               "sections": {
                 "what_actually": "На горячем ключе `ConcurrentHashMap` сериализует операции в одном bucket; нужно partition по domain key.",
@@ -1341,7 +1341,7 @@
               "label": "A"
             },
             {
-              "text": "Любой `STW` критичен — переходить на `ZGC` всегда.",
+              "text": "STW-паузы — главный источник latency, поэтому ради их минимизации стоит переходить на `ZGC` независимо от профиля нагрузки.",
               "correct": false,
               "sections": {
                 "what_actually": "Для batch-нагрузок без latency-SLO важнее throughput; `ZGC` может его снизить, и переход вреден.",
@@ -1366,7 +1366,7 @@
               "label": "C"
             },
             {
-              "text": "Object pooling всегда снижает allocation rate и должен применяться везде.",
+              "text": "Object pooling снижает allocation rate за счёт переиспользования, поэтому его стоит применять на горячих путях с частой аллокацией.",
               "correct": false,
               "sections": {
                 "what_actually": "Pooling вводит синхронизацию и сложность; на thread-safe путях lock contention может превысить выгоду от снижения аллокаций.",
@@ -1569,7 +1569,7 @@
           "question_text": "Как профилировать production безопасно?",
           "options": [
             {
-              "text": "Heap dump снимать всегда, когда нужен анализ памяти в production — это safe-операция.",
+              "text": "Heap dump — обычный способ анализа памяти в production, его можно снимать прямо на боевом инстансе без особых предосторожностей.",
               "correct": false,
               "sections": {
                 "what_actually": "Heap dump вызывает STW-паузу на секунды/минуты (пропорционально heap); это не safe-операция для живого трафика.",
@@ -2194,7 +2194,7 @@
               "label": "B"
             },
             {
-              "text": "`Shallow Heap` всегда меньше `Retained Heap` для любого объекта без исключений.",
+              "text": "`Shallow Heap` меньше `Retained Heap`, ведь retained прибавляет к самому объекту размер удерживаемого им поддерева — совпадать эти величины не могут.",
               "correct": false,
               "sections": {
                 "what_actually": "Shallow может равняться Retained, если объект ничего не dominate'ит (immutable `Integer`, или его поля удерживаются ещё откуда-то).",
@@ -2229,7 +2229,7 @@
           "question_text": "Как анализировать thread dump для обнаружения deadlock и какие состояния потоков важны?",
           "options": [
             {
-              "text": "Все потоки в reactive/event-loop в state `WAITING` — это всегда deadlock, который `jstack` не умеет обнаруживать.",
+              "text": "Массовое `WAITING` у потоков event-loop указывает на deadlock, а обнаружить его `jstack` сам не может — нужен внешний анализатор.",
               "correct": false,
               "sections": {
                 "what_actually": "`WAITING` у event-loop потоков (epoll_wait) — норма, а не deadlock; `jstack` как раз умеет детектить реальные deadlocks через monitor cycle analysis.",
@@ -2361,7 +2361,7 @@
               "label": "A"
             },
             {
-              "text": "`InNewTLAB` записывается при каждой allocation, `OutsideTLAB` — только при переполнении TLAB, поэтому первое всегда множитель второго.",
+              "text": "`InNewTLAB` фиксируется на каждую аллокацию внутри TLAB, а `OutsideTLAB` — только при его переполнении, поэтому событий первого типа кратно больше.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба — sampled events (раз в N байт, default period ~20ms), а не every allocation; соотношение зависит от размеров объектов и TLAB.",
