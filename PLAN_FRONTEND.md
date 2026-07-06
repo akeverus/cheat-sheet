@@ -195,6 +195,7 @@ low/medium-risk + high-confidence. Каждое изменение обязан�
 | RES-11 | `#extra-analysis-toggle-result` hidden→JS reveal | Без JS не показывается (нет мёртвого контрола) | — | M | L | L | H | ✅ DONE | TR-9 |
 | RES-12 | `#result-related-questions` sticky-рейка ≥1200px | Прямой потомок `.ed-page` (id-якорь), не в `.card` | — | M | L | L | H | ✅ DONE (C31) | RE-5 |
 | RES-13 | `app.js(v=51)` в конце body | Перенесён из середины main | — | — | — | — | H | ✅ DONE (C31) | — |
+| RES-14 | `.question-side` (код вопроса, result.html:128) гейтится `aiEnabled and questionType==CODE and codeSnippet!=null` | **Асимметрия vs страница-вопрос:** focus-training.html:63-64 рендерит `codeSnippet` БЕЗ `aiEnabled`-условия (только `codeSnippet!=null`) → при дефолтном seed-first (`aiEnabled=false`, CLAUDE.md) на РАЗБОРЕ ответа код CODE-вопроса не виден, хотя при ответе показывался. Проверить: несут ли seed CODE-вопросы `codeSnippet` и не остаётся ли review без кода-контекста; если да — выровнять гейт со страницей-вопроса (снять `aiEnabled`-условие). **⚠️ Гейт рендера = behavior-adjacent (не косметика) → verify-then-decide, вероятна отмашка юзера; result.html под in-flight pass (blocked)** | M | M | L | M | 🌱 BACKLOG (verify, blocked-file) | — |
 
 ### 5.A.3 — `templates/session-summary.html` (одноразовые итоги)
 
