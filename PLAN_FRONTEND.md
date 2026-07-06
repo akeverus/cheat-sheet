@@ -179,7 +179,7 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 |------|------|-------|------|------|-------|-------|-----|------|-------|------|-------|------|-----|-----|-------|-----|-------|------|-------|--------|-------|------|------|----|-----|-----|-------|------------------------|
 | **▸ СТРАНИЦЫ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
 | `focus-training.html` | ✅ | ✅ | 🚫 | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | FT-1..18 закрыты; 48px h2 + neutral-selected = 🚫 |
-| `result.html` | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | 🌱RES-14 код только при aiEnabled (RES-8 контраст закрыт: AA во всех 20 дизайн×тема) |
+| `result.html` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | Чисто; RES-14 снят (false-positive: код всегда в `.answer:82`, `.question-side`=избыт.пин AI-режима), RES-8 контраст AA все 20; RES-3 favorite=⛔ |
 | `settings.html` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | 🌱 | ✅ | — | ✅ | ✅ | ✅ | — | 🌱SET-14 блок экспорта без h3; 🌱SET-7 персонализация не анонсируется SR |
 | `stats.html` | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | 🌱STA-18 forecast-count SR-дубль; 🌱STA-5 серии графиков не только цветом |
 | `session-summary.html` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | Чисто; dual-path nav = 🚫SUM-8 |
@@ -205,7 +205,7 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 | `js/app.js` | ✅ | — | — | ✅ | ✅ | — | ✅ | ✅ | 🌱 | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | — | 🌱APP-8 regenerate без aria-busy; 🌱APP-9 comparison-table th без scope/caption; ⛔APP-5 favorite; v=54 |
 | `js/stats.js` | — | — | 🌱 | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | 🌱STJ-1 tick-подписи графиков мелкие (low); kbd/progress-dup c app.js = 🚫 standalone-by-design; v=12 |
 
-**Как читать сводку.** Открытые 🌱-пункты по файлам: `result.html`(RES-14), `settings.html`(SET-14/SET-7),
+**Как читать сводку.** Открытые 🌱-пункты по файлам: `settings.html`(SET-14/SET-7),
 `stats.html`(STA-18/STA-5), `header.html`(HDR-1), `icons.html`(ICO-3), `training-actions.html`(TAC-3),
 `base.css`(BAS-15/BAS-21), `editorial.css`+`linear/swiss.css`(EDC-1/DSG-1 — мёртвые дубли),
 `broadsheet.css`(DSG-2 — не дубль!), `app.js`(APP-8/APP-9), `stats.js`(STJ-1).
@@ -267,7 +267,7 @@ comparison-table без `th[scope]`/`caption`. Оба в §6.
 | RES-11 | `#extra-analysis-toggle-result` hidden→JS reveal | Без JS не показывается (нет мёртвого контрола) | — | M | L | L | H | ✅ DONE | TR-9 |
 | RES-12 | `#result-related-questions` sticky-рейка ≥1200px | Прямой потомок `.ed-page` (id-якорь), не в `.card` | — | M | L | L | H | ✅ DONE (C31) | RE-5 |
 | RES-13 | `app.js(v=51)` в конце body | Перенесён из середины main | — | — | — | — | H | ✅ DONE (C31) | — |
-| RES-14 | `.question-side` (код вопроса, result.html:128) гейтится `aiEnabled and questionType==CODE and codeSnippet!=null` | **Асимметрия vs страница-вопрос:** focus-training.html:63-64 рендерит `codeSnippet` БЕЗ `aiEnabled`-условия (только `codeSnippet!=null`) → при дефолтном seed-first (`aiEnabled=false`, CLAUDE.md) на РАЗБОРЕ ответа код CODE-вопроса не виден, хотя при ответе показывался. Проверить: несут ли seed CODE-вопросы `codeSnippet` и не остаётся ли review без кода-контекста; если да — выровнять гейт со страницей-вопроса (снять `aiEnabled`-условие). **⚠️ Гейт рендера = behavior-adjacent (не косметика) → verify-then-decide, вероятна отмашка юзера; result.html под in-flight pass (blocked)** | M | M | L | M | 🌱 BACKLOG (verify, blocked-file) | — |
+| RES-14 | `.question-side` (пин кода, result.html:128) гейтится `aiEnabled and questionType==CODE and codeSnippet!=null` | **❌ FALSE-POSITIVE, СНЯТ (verify-resolved 2026-07-07, р98).** Ранняя гипотеза р90 «под seed-first разбор теряет код-контекст» — НЕВЕРНА. Трассировка данных: (1) `codeSnippet` = «первый блок кода **из ответа**» (`MarkdownQuestionParser`); (2) `QuestionImportService:229` пишет `codeSnippet` ТОЛЬКО при `questionType==CODE` → в БД `codeSnippet!=null ⟺ CODE` (гейт `questionType==CODE` избыточен, не вреден); (3) **`result.html:82 .answer` рендерит ПОЛНЫЙ `answerHtml` (`AnswerPageService:59` = `renderMarkdown(answerMarkdown)`, код НЕ вырезается) ВСЕГДА, без гейта** → блок кода уже внутри разбора. → **На /answer код НЕ теряется** (он в `.answer`); `.question-side` = избыточная ПИН-копия того же кода в правой рейке, включаемая только в two-column AI-режиме (`:has(.question-side)`). Единственный эффект `aiEnabled=true` = код показан ДВАЖДЫ (в `.answer` + пин) — мягкая избыточность, defensible как deliberate (пин кода рядом со скроллящимся разбором+анализом). Асимметрия с focus-training оправдана: там ответ ещё скрыт → `<details>Пример кода` = ЕДИНСТВЕННОЕ место кода (нужно для ответа). **Никакой правки: не баг.** | — | — | — | — | H | ✅ verified-NOT-a-bug (код всегда в `.answer:82`) | — |
 
 ### 6.A.3 — `templates/session-summary.html` (одноразовые итоги)
 
