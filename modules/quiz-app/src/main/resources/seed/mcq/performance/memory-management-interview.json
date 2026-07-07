@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`G1` собирает весь heap одним непрерывным STW-проходом, без деления на регионы.",
+              "text": "`G1` (Garbage First) делит heap на регионы, но каждое поколение — фиксированный непрерывный диапазон адресов: Eden, Survivor и Old заданы статично и не меняются местами. Фазы: Young-only (Eden + Survivor), Concurrent Marking (occupancy Old), Mixed Collection (проход по границе Eden→Old), Full GC при нехватке — регион здесь лишь единица выравнивания внутри поколения.",
               "correct": false,
               "sections": {
                 "what_actually": "`G1` делит heap на регионы и работает инкрементально: собирает Young + наиболее «мусорные» Old-регионы, а не весь heap сразу.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Mixed collection в `G1` собирает лишь Old generation, оставляя Young-регионы нетронутыми.",
+              "text": "Mixed Collection в `G1` собирает только Old-регионы: после Concurrent Marking она проходит по Old с наибольшим мусором, а Young обрабатывается отдельным Young-only циклом и в mixed-паузу не попадает. Фазы: Young-only (Eden + Survivor), Concurrent Marking (occupancy Old), Mixed (чистый Old-проход), Full GC при нехватке.",
               "correct": false,
               "sections": {
                 "what_actually": "Mixed собирает Young + часть Old-регионов одновременно; чисто Old без Young G1 не делает (кроме Full GC).",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Humongous objects` в `G1` — это объекты меньше 1KB, которые аллоцируются прямо в Eden без особенностей.",
+              "text": "`Humongous objects` в `G1` — это объекты меньше половины региона (например, < 512KB при регионе 1MB): они аллоцируются напрямую в Eden наравне с обычными объектами, собираются штатным Young GC и потому фрагментацию не вызывают, а `G1HeapRegionSize` на их размещение не влияет.",
               "correct": false,
               "sections": {
                 "what_actually": "`Humongous objects` — наоборот, объекты > 50% размера региона; они идут в специальные humongous-регионы и провоцируют фрагментацию.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ZGC` достигает sub-ms пауз тем, что вообще не перемещает объекты и не делает compaction.",
+              "text": "`ZGC` — concurrent, region-based сборщик, который достигает sub-ms пауз тем, что вообще не перемещает объекты: он лишь помечает недостижимые и освобождает их на месте (mark-sweep), без compaction. Ключевые технологии: colored pointers (метки достижимости в указателе), load barriers (проверка при чтении) и free-list вместо relocation — уплотнение отдаётся редкому Full GC.",
               "correct": false,
               "sections": {
                 "what_actually": "`ZGC` — compacting сборщик: он перемещает объекты (concurrent relocation), но делает это параллельно приложению, а не в STW.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ZGC` держит паузы < 1мс лишь для heap до 4GB; на больших heap паузы растут линейно с размером.",
+              "text": "`ZGC` — concurrent, compacting сборщик, но его sub-ms паузы гарантированы лишь для heap до 4GB; на больших heap пауза растёт примерно линейно, потому что финальный remap выполняется в STW. Ключевые технологии: colored pointers, load barriers и concurrent relocation — последняя не покрывает remap, отсюда зависимость паузы от размера heap.",
               "correct": false,
               "sections": {
                 "what_actually": "Паузы `ZGC` остаются sub-ms независимо от размера heap (от 8MB до 16TB) — в этом его главное свойство.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Colored pointers в `ZGC` — это раскраска объектов в heap dump для удобства анализа в MAT.",
+              "text": "Colored pointers в `ZGC` — это раскраска объектов в heap dump: анализатор (MAT, VisualVM) подсвечивает поколения и достижимость цветом для удобства чтения. Рантайм-механизмы при этом другие: load barriers (проверка при чтении), concurrent relocation (перемещение параллельно) и multi-mapping памяти, а colored pointers — офлайн-инструмент диагностики дампа.",
               "correct": false,
               "sections": {
                 "what_actually": "Colored pointers — это биты состояния, закодированные в самом указателе (адресе) объекта во время работы, а не визуализация в дампе.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SoftReference` собирается GC при любом сборе мусора, а `WeakReference` — только перед `OutOfMemoryError`.",
+              "text": "Java предоставляет четыре типа ссылок (`java.lang.ref`) с убывающей силой удержания: `Strong` (не собирается, пока есть ссылка), `SoftReference` (очищается при любом GC — короткоживущие маппинги), `WeakReference` (держится до нехватки памяти, перед `OOME` — memory-sensitive кэши), `PhantomReference` (после финализации — cleanup ресурсов).",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `WeakReference` очищается при любом GC, а `SoftReference` держится до нехватки памяти (перед `OOME`).",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`PhantomReference.get()` возвращает сам объект, что позволяет «оживить» (resurrect) его перед сборкой.",
+              "text": "Java предоставляет четыре типа ссылок (`java.lang.ref`) с убывающей силой удержания: `Strong` (не собирается, пока есть ссылка), `SoftReference` (при нехватке памяти — кэши), `WeakReference` (при любом GC — маппинги), `PhantomReference` (её `get()` возвращает сам объект, что позволяет «оживить» (resurrect) его через `ReferenceQueue` перед сборкой).",
               "correct": false,
               "sections": {
                 "what_actually": "`PhantomReference.get()` ВСЕГДА возвращает `null`; resurrection невозможен — её цель лишь уведомление через `ReferenceQueue`.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В Java всего два типа ссылок: `Strong` и `Weak`; `Soft` и `Phantom` — это синонимы для `Weak`.",
+              "text": "Java предоставляет по сути два типа ссылок с убывающей силой удержания: `Strong` (не собирается, пока есть ссылка) и `WeakReference` (собирается при любом GC); `SoftReference` и `PhantomReference` — это не отдельные классы, а режимы `WeakReference` с флагами (memory-sensitive и post-finalization) внутри `java.lang.ref`.",
               "correct": false,
               "sections": {
                 "what_actually": "Типов четыре: `Strong`, `SoftReference`, `WeakReference`, `PhantomReference` — каждый со своей политикой сборки, это не синонимы.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Пилообразный паттерн heap (рост и резкое падение после GC) — это и есть memory leak, его надо устранять.",
+              "text": "Системный процесс: зафиксировать симптом (любой пилообразный паттерн heap — рост и падение после GC — это уже leak) → снять heap dump (`jcmd <pid> GC.heap_dump`) → сравнить dominator tree (что выросло) → Paths to GC Roots (кто держит ссылку) → найти причину (unbounded кэш, `ThreadLocal` без `remove`) → fix + regression test.",
               "correct": false,
               "sections": {
                 "what_actually": "Пилообразный паттерн — НОРМА (аллокация → сбор); утечка — это когда baseline после Full GC растёт линейно и не падает.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Достаточно одного heap dump в момент OOM, чтобы точно определить, что именно растёт со временем.",
+              "text": "Системный процесс: зафиксировать симптом (baseline heap после Full GC растёт) → снять один heap dump в момент OOM (`-XX:+HeapDumpOnOutOfMemoryError`) → по нему одному определить, что растёт со временем, через dominator tree → Paths to GC Roots (кто держит ссылку) → найти причину (unbounded кэш, `ThreadLocal` без `remove`) → fix + regression test.",
               "correct": false,
               "sections": {
                 "what_actually": "Чтобы увидеть рост, нужны НЕСКОЛЬКО дампов с интервалом и сравнение dominator tree: один дамп не покажет динамику.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`System.gc()` соберёт всю недостижимую память, поэтому если после него heap не упал — это утечка нативной памяти.",
+              "text": "Системный процесс: зафиксировать симптом → вызвать `System.gc()`, который гарантированно собирает всю недостижимую память → если heap после него не упал, это подтверждённая утечка нативной памяти → снять heap dump, сравнить dominator tree → найти причину (unbounded кэш, `ThreadLocal` без `remove`) → fix + regression test.",
               "correct": false,
               "sections": {
                 "what_actually": "`System.gc()` — лишь hint, JVM может проигнорировать; вывод об утечке делают по baseline после реальных Full GC, а не после ручного вызова.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Частый GC означает проблему производительности, даже если паузы короткие и SLA соблюдается.",
+              "text": "Включают unified GC logging (`-Xlog:gc*:file=gc.log:time,uptime,level,tags`). В строке `1024M->256M(2048M) 8.123ms` главный сигнал — частота GC: если сборки идут часто, это проблема производительности сама по себе, даже при коротких паузах и соблюдённом SLA. Ключевые метрики: частота (главная), pause time, reclaimed, allocation rate.",
               "correct": false,
               "sections": {
                 "what_actually": "Частота GC сама по себе не проблема: если паузы короткие и SLA выдержан, частые Minor GC — норма.",
@@ -2016,7 +2016,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Один Full GC при старте приложения — это катастрофа и признак неправильной конфигурации памяти.",
+              "text": "Включают unified GC logging (`-Xlog:gc*:file=gc.log:time,uptime,level,tags`). В строке `Pause Full ... 1024M->256M(2048M)` любой `Full GC`, включая единственный при старте приложения, — это катастрофа и признак неверной конфигурации памяти. Ключевые метрики: наличие Full GC (главная), pause time, before→after, promotion rate.",
               "correct": false,
               "sections": {
                 "what_actually": "Один Full GC при старте НОРМАЛЕН (загрузка классов, прогрев метаданных); катастрофа — это частые повторяющиеся Full GC.",
@@ -2028,7 +2028,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Увеличение heap делает GC и реже, и короче одновременно.",
+              "text": "Включают unified GC logging (`-Xlog:gc*:file=gc.log:time,uptime,level,tags`). По строке `1024M->256M(2048M) 8.123ms` подбирают heap: его увеличение делает GC одновременно и реже, и короче, потому что сборщику достаётся больше свободного места. Ключевые метрики: pause time (p95/p99), частота, reclaimed, before→after.",
               "correct": false,
               "sections": {
                 "what_actually": "Больший heap делает GC реже, но паузы при этом станут ДЛИННЕЕ (больше памяти сканировать) — это trade-off, а не чистый выигрыш.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Сильный ответ — это подробный пересказ теории GC и алгоритмов сборки без привязки к конкретному кейсу.",
+              "text": "Шаблон сильного ответа — подробный, структурированный пересказ теории: (1) алгоритмы сборки (mark-sweep-compact, generational), (2) устройство `G1`/`ZGC` по фазам, (3) классификация GC-пауз, (4) модель поколений и promotion, (5) эволюция сборщиков по версиям JDK — без привязки к конкретному инциденту, ведь глубина теории и есть главный сигнал seniority.",
               "correct": false,
               "sections": {
                 "what_actually": "Анти-паттерн как раз пересказ теории без кейса; сильный ответ связывает JVM-детали с реальным симптомом, диагностикой и бизнес-эффектом.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Достаточно назвать root cause проблемы; описывать диагностику и измеримый результат не требуется.",
+              "text": "Шаблон сильного ответа — назвать root cause: (1) сформулировать причину («unbounded `ConcurrentHashMap` с сессиями»), (2) кратко пояснить механизм утечки, (3) на этом остановиться — диагностику (JFR, heap dump, MAT) и измеримый результат описывать не требуется, ведь именно найденная причина показывает уровень кандидата.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужна вся цепочка: симптом → диагностика (инструменты) → root cause → решение → измеримый результат — root cause без остального неубедителен.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Лучший ответ — перечислить как можно больше GC-флагов, которые кандидат знает наизусть.",
+              "text": "Шаблон сильного ответа — продемонстрировать широту флагов: (1) перечислить как можно больше `-XX:`-опций наизусть, (2) `MaxGCPauseMillis`, `InitiatingHeapOccupancyPercent`, (3) флаги `ZGC` и `G1`, (4) редкие diagnostic-флаги, (5) их значения по умолчанию — чем больше флагов кандидат помнит наизусть, тем сильнее ответ, без разбора конкретного кейса.",
               "correct": false,
               "sections": {
                 "what_actually": "Перечисление флагов наизусть не впечатляет; ценится системный процесс диагностики и привязка решения к измеримому результату.",
