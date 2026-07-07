@@ -1702,7 +1702,7 @@
               "order": 0
             },
             {
-              "text": "После `helm repo add` новые версии chart появляются в `helm search repo` автоматически, без `helm repo update`.",
+              "text": "Репозиторий добавляют через `helm repo add bitnami https://charts.bitnami.com/bitnami`, список смотрят `helm repo list`, а chart ищут `helm search repo nginx` (с `--versions` для всех версий). Локальный `index.yaml` подтягивается с сервера при каждом `helm search`, поэтому новые версии видны сразу и отдельный `helm repo update` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "CLI работает с локально закэшированным `index.yaml`; чтобы увидеть новые версии, индекс надо обновить через `helm repo update`.",
@@ -1714,7 +1714,7 @@
               "order": 1
             },
             {
-              "text": "Классический Helm-репозиторий не использует `index.yaml`: каждый chart адресуется только по точному OCI-тегу версии.",
+              "text": "Репозиторий добавляют через `helm repo add`, values смотрят `helm show values bitnami/postgresql`, а chart скачивают `helm pull bitnami/postgresql --version 13.2.0`. Классический HTTP-репозиторий при этом не хранит сводный `index.yaml`: каждый chart адресуется напрямую по URL архива `<repo>/postgresql-13.2.0.tgz` без общего индекса.",
               "correct": false,
               "sections": {
                 "what_actually": "Именно `index.yaml` — основа классического репозитория; адресация по тегу без индекса — это свойство OCI-реестров, а не HTTP-репозиториев.",
@@ -1726,7 +1726,7 @@
               "order": 2
             },
             {
-              "text": "Команда `helm pull` устанавливает chart в кластер, скачивая и применяя его манифесты за один шаг.",
+              "text": "Список репозиториев смотрят `helm repo list`, values chart — `helm show values bitnami/postgresql`, а команда `helm pull bitnami/postgresql --version 13.2.0` скачивает chart, разворачивает его в кластере и применяет манифесты за один шаг (флаг `--untar` дополнительно распаковывает архив локально).",
               "correct": false,
               "sections": {
                 "what_actually": "`helm pull` только скачивает архив chart локально (с `--untar` — распаковывает); установку в кластер делает `helm install`.",
@@ -1942,7 +1942,7 @@
               "order": 0
             },
             {
-              "text": "`helm lint` валидирует семантику Kubernetes API и гарантирует, что отрендеренные манифесты будут приняты кластером.",
+              "text": "`helm lint ./chart` проверяет `Chart.yaml` (обязательные поля) и синтаксис Go templates, а затем валидирует отрендеренные манифесты против схемы Kubernetes API и гарантирует, что кластер примет их при `helm upgrade`. Запускают в CI на каждый commit/PR с флагом `--strict`.",
               "correct": false,
               "sections": {
                 "what_actually": "`lint` проверяет синтаксис и структуру chart, но не семантику K8s API; для неё используют `--dry-run` или `kubeval`.",
@@ -1954,7 +1954,7 @@
               "order": 1
             },
             {
-              "text": "Флаг `--strict` отключает все предупреждения `helm lint`, оставляя только критические ошибки.",
+              "text": "`helm lint ./chart` находит ошибки в `Chart.yaml` и Go templates и проверяет валидность YAML; флаг `--strict` смягчает проверку, отключая предупреждения и оставляя только критические ошибки, поэтому его включают в CI, чтобы нестрогие замечания не роняли pipeline.",
               "correct": false,
               "sections": {
                 "what_actually": "`--strict` наоборот ужесточает проверку: предупреждения трактуются как ошибки и роняют команду.",
@@ -1966,7 +1966,7 @@
               "order": 2
             },
             {
-              "text": "`helm lint` требует запущенного кластера и подключения к API server для своей работы.",
+              "text": "`helm lint ./chart` проверяет структуру директорий и базовую валидность YAML, но для рендеринга Go templates требует активного подключения к API server кластера, поэтому в CI без доступного kube-context команда завершается ошибкой.",
               "correct": false,
               "sections": {
                 "what_actually": "`helm lint` — статический анализ, работающий офлайн без кластера; подключение к API server ему не нужно.",
@@ -1989,7 +1989,7 @@
           "question_text": "Как управлять секретами в `Helm`?",
           "options": [
             {
-              "text": "Kubernetes Secret в release Helm хранит данные в зашифрованном виде, поэтому коммитить `values.yaml` с секретами в git безопасно.",
+              "text": "Kubernetes Secret, создаваемый в release Helm, хранит данные в зашифрованном виде, а не просто в base64, поэтому `values.yaml` с секретами можно коммитить в git: при рендеринге chart Helm сам шифрует значения ключом кластера, и в манифесте release они уже недоступны в открытом виде.",
               "correct": false,
               "sections": {
                 "what_actually": "Kubernetes Secret — это base64-кодирование, а не шифрование; данные легко декодируются, и plaintext-секреты в git недопустимы.",
@@ -2014,7 +2014,7 @@
               "order": 1
             },
             {
-              "text": "`helm-secrets` — это встроенная подкоманда Helm, не требующая установки плагинов или внешнего инструмента вроде SOPS.",
+              "text": "`helm-secrets` — встроенная в Helm подкоманда (`helm secrets enc`/`dec`), которая шифрует `values.yaml` штатными средствами без установки плагинов и без внешнего SOPS; Sealed Secrets и External Secrets Operator нужны лишь для более сложных сценариев с внешним хранилищем.",
               "correct": false,
               "sections": {
                 "what_actually": "`helm-secrets` — это сторонний плагин, который опирается на внешний `SOPS` для шифрования/дешифрования; в ядро Helm он не входит.",
@@ -2026,7 +2026,7 @@
               "order": 2
             },
             {
-              "text": "External Secrets Operator требует коммитить сами секреты в git как часть chart, просто в отдельном файле.",
+              "text": "External Secrets Operator требует закоммитить сами секреты в git как часть chart — обычно в отдельный зашифрованный файл, который оператор расшифровывает и превращает в Kubernetes Secret на лету при синхронизации release.",
               "correct": false,
               "sections": {
                 "what_actually": "ESO как раз держит секреты вне git (Vault, AWS/GCP Secret Manager): в chart деплоится только манифест `ExternalSecret`, а не сам секрет.",
@@ -2229,7 +2229,7 @@
           "question_text": "`Chart Museum` vs `OCI Registry` — в чём разница подходов?",
           "options": [
             {
-              "text": "`OCI Registry` требует поднимать отдельный специализированный сервис, тогда как `Chart Museum` переиспользует существующий container registry.",
+              "text": "`OCI Registry` требует поднимать отдельный специализированный сервис под chart-ы и администрировать его отдельно, тогда как `Chart Museum` переиспользует уже существующий container registry (Harbor/ECR/GHCR); поэтому под OCI закладывают новый компонент инфраструктуры, а Chart Museum разворачивают поверх готового реестра образов.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: OCI переиспользует имеющийся container registry, а Chart Museum — отдельный сервис, который надо поднимать и поддерживать.",
@@ -2254,7 +2254,7 @@
               "order": 1
             },
             {
-              "text": "Оба подхода используют `index.yaml` и поддерживают полнотекстовый `helm search repo` одинаково.",
+              "text": "Оба подхода хранят каталог chart-ов в общем `index.yaml` и одинаково поддерживают полнотекстовый `helm search repo`, поэтому выбор между `Chart Museum` и `OCI Registry` влияет только на способ аутентификации (Basic auth против docker login), но не на механизм поиска chart-ов.",
               "correct": false,
               "sections": {
                 "what_actually": "`index.yaml` и `helm search repo` — это про Chart Museum; OCI адресует chart по точному ref без индекса и поиска.",
@@ -2266,7 +2266,7 @@
               "order": 2
             },
             {
-              "text": "`Chart Museum` поддерживает подпись через `cosign`, а `OCI Registry` — только через provenance-файлы `.prov`.",
+              "text": "`Chart Museum` подписывает chart-ы через `cosign` и Notary v2 и хранит подписи рядом с образами, а `OCI Registry` полагается только на provenance-файлы `.prov`, которые лежат вместе с `index.yaml` и проверяются при `helm install`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `cosign`/Notary v2 — про OCI-артефакты, а Chart Museum использует классические provenance-файлы `.prov`.",
@@ -2289,7 +2289,7 @@
           "question_text": "Как использовать `Helm` в `GitOps` с `ArgoCD` и `ApplicationSet`?",
           "options": [
             {
-              "text": "`ApplicationSet` — это способ описать один Application для одного окружения; для нескольких окружений нужно вручную копировать манифесты.",
+              "text": "`ApplicationSet` описывает один `Application` под одно окружение с его `source.helm` и `valueFiles`; чтобы раскатить chart на dev/staging/prod, для каждого окружения заводят отдельный `Application` вручную, меняя `namespace` и набор values-файлов.",
               "correct": false,
               "sections": {
                 "what_actually": "`ApplicationSet` как раз генерирует множество Application-ов из шаблона и генератора, избавляя от ручного копирования на каждое окружение.",
@@ -2301,7 +2301,7 @@
               "order": 0
             },
             {
-              "text": "Плейсхолдеры вида `{{env}}` в `ApplicationSet` — это Helm Go-templates, рендерящиеся через `.Values`.",
+              "text": "Плейсхолдеры вида `{{env}}` в шаблоне `ApplicationSet` — это Helm Go-templates: ArgoCD рендерит их через `.Values` chart-а, поэтому список окружений задают прямо в `values.yaml`, а не в генераторе `list` внутри `ApplicationSet`.",
               "correct": false,
               "sections": {
                 "what_actually": "`{{env}}` в ApplicationSet — это его собственная подстановка из генератора, а не Helm-шаблоны; `.Values` там не действует.",
@@ -2326,7 +2326,7 @@
               "order": 2
             },
             {
-              "text": "Передать `image.tag` из CI-пайплайна в ArgoCD-Application невозможно — значения берутся только из закоммиченных values-файлов.",
+              "text": "Передать `image.tag` из CI в ArgoCD-`Application` можно только через git: команда `argocd app set --helm-set image.tag=$SHA` умеет читать текущие параметры Helm, но не изменять их, поэтому новый тег образа обязательно коммитят в `values.yaml` перед синхронизацией.",
               "correct": false,
               "sections": {
                 "what_actually": "Тег передают через `helm.parameters` в Application или `argocd app set --helm-set image.tag=$SHA`, а также через argocd-image-updater.",
@@ -2469,7 +2469,7 @@
           "question_text": "Как писать unit-тесты для `Helm Charts` с `helm-unittest`?",
           "options": [
             {
-              "text": "`helm-unittest` устанавливает chart в реальный кластер Kind/Minikube и проверяет состояние Pod-ов после деплоя.",
+              "text": "`helm-unittest` разворачивает chart в реальном кластере Kind/Minikube, дожидается готовности Pod-ов и проверяет их состояние после деплоя; тест-файл (`tests/deployment_test.yaml`) описывает `suite`, целевые `templates` и список `tests` с `asserts`, а запускают всё командой `helm unittest ./chart`.",
               "correct": false,
               "sections": {
                 "what_actually": "`helm-unittest` работает офлайн без кластера: он рендерит шаблоны и проверяет манифесты; установку в Kind делает другой инструмент — `ct`.",
@@ -2494,7 +2494,7 @@
               "order": 1
             },
             {
-              "text": "В `helm-unittest` нельзя задать конкретные values для теста — все тесты прогоняются только с дефолтами из `values.yaml`.",
+              "text": "`helm-unittest` рендерит шаблоны без кластера и проверяет манифесты через `asserts` (`equal`, `hasDocuments`), но задать конкретные values для отдельного теста нельзя: все тесты в `suite` прогоняются с дефолтами из `values.yaml`, поэтому разные наборы значений выносят в отдельные chart-ы.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый тест может переопределять значения через блок `set` (например `set: {replicaCount: 3}`), проверяя рендер при разных входах.",
@@ -2506,7 +2506,7 @@
               "order": 2
             },
             {
-              "text": "Assert `hasDocuments` с `count: 0` всегда падает, так как любой шаблон обязан сгенерировать хотя бы один манифест.",
+              "text": "Assert `hasDocuments` с `count: 0` в `helm-unittest` всегда падает, потому что любой валидный шаблон обязан отрендерить хотя бы один манифест; чтобы проверить условное отключение ресурса через `{{- if }}`, вместо `count: 0` используют `isNull` на конкретном документе.",
               "correct": false,
               "sections": {
                 "what_actually": "`hasDocuments: {count: 0}` — валидная проверка, что при данных values шаблон НЕ создаёт ресурс (например HPA при `autoscaling.enabled: false`).",
