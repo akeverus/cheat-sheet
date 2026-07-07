@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все уровни SLSA (L1-L4) требуют hermetic и reproducible builds — без них нельзя получить даже L1.",
+              "text": "`L1` — hosted build с подписанной provenance (не локальный ноут). `L2` — задокументированный build с генерацией provenance. `L3` — изолированный builder и non-falsifiable provenance через OIDC. `L4` (исходно строжайший) убран в `SLSA 1.0` (2023) — требовал two-person review и hermetic+reproducible builds.",
               "correct": false,
               "sections": {
                 "what_actually": "Hermetic+reproducible builds требовались только на (убранном) `L4`; L1-L3 их не требуют, L1 — это вообще лишь документированный build с provenance.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`SLSA L3` достигается простым добавлением шага `echo build provenance` в скрипт сборки на локальном ноутбуке.",
+              "text": "`L1` — задокументированный build с генерацией provenance. `L2` — hosted build на сервисе с подписанной provenance. `L3` — изолированный builder и non-falsifiable provenance через OIDC. `L4` убран в `SLSA 1.0` (2023), потому что его требования полностью вошли в `L3` и уровень стал избыточным.",
               "correct": false,
               "sections": {
                 "what_actually": "L3 требует изолированного builder и non-falsifiable provenance через ephemeral identity/OIDC; локальный ноут не даёт ни изоляции, ни неподделываемости.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`L4` остаётся самым востребованным и широко применяемым уровнем SLSA в индустрии.",
+              "text": "`L1` — задокументированный build с генерацией provenance. `L2` — hosted build на сервисе с подписанной provenance. `L3` — reproducible build: артефакт байт-в-байт воспроизводится из исходников. `L4` убран в `SLSA 1.0` (2023) — требовал two-person review и hermetic builds.",
               "correct": false,
               "sections": {
                 "what_actually": "`L4` убран в `SLSA 1.0`: его требования (two-person review, hermetic+reproducible) оказались слишком строгими для массового внедрения.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Dependabot` и `Renovate` — это сканеры контейнерных образов на уязвимости, аналоги `Trivy`.",
+              "text": "Оба автоматизируют обновление зависимостей через PR. `Dependabot` нативен в GitHub, бесплатен, но поддерживает больше пакетных менеджеров (`Helm`, `Terraform`, K8s), чем `Renovate`. `Renovate` (Mend) — open source, конфигурируем через presets и regex.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба автоматизируют обновление зависимостей через PR в репозиторий, а сканированием образов на CVE занимается `Trivy`/`Grype`/`Snyk`.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Renovate` — это проприетарный сервис только для GitHub, а `Dependabot` — open source для любых платформ.",
+              "text": "Оба автоматизируют обновление зависимостей через PR. `Dependabot` нативен в GitHub, бесплатен, настраивается через `.github/dependabot.yml`, делает per-dep PR. `Renovate` (Mend) — проприетарный closed-source сервис, доступный только как платное cloud-предложение.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `Dependabot` нативен именно в GitHub, а `Renovate` open source и работает в т.ч. на `GitLab`, self-hosted и cloud.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Dependabot` поддерживает кастомные regex-менеджеры и `Terraform`/`Helm`, а `Renovate` ограничен только npm.",
+              "text": "Оба автоматизируют обновление зависимостей через PR. `Dependabot` нативен в GitHub, берёт advisories из GitHub Advisory Database. `Renovate` (Mend) — open source, self-hosted или cloud, но настраивается тем же файлом `.github/dependabot.yml`, что и Dependabot.",
               "correct": false,
               "sections": {
                 "what_actually": "Кастомные regex-менеджеры и широкая поддержка (`Helm`, `Terraform`, K8s) — это сильная сторона `Renovate`, а не `Dependabot`.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Trivy`, `Snyk` и `Grype` — все три коммерческие и требуют платной подписки для любого использования.",
+              "text": "`Trivy` (`Aqua Security`) — коммерческий, платная подписка для сканирования образов и IaC. `Snyk` — коммерческий, с `SAST` и auto-PR fix-предложениями. `Grype` (`Anchore`) — бесплатный, сканирует SBOM/образы в паре с `Syft`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Trivy` и `Grype` бесплатны и open source; коммерческий только `Snyk` (с ограниченным free tier).",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Grype` генерирует SBOM сам и не нуждается ни в каких внешних инструментах.",
+              "text": "`Trivy` (`Aqua Security`) — бесплатный open source, сканирует образы, FS, K8s, IaC, секреты. `Snyk` — коммерческий, с `SAST` и проприетарной БД уязвимостей. `Grype` (`Anchore`) — бесплатный, сам генерирует SBOM и сканирует его без `Syft`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Grype` сфокусирован на сканировании уязвимостей и в паре с `Syft` для генерации SBOM; сам он SBOM не генерирует.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Snyk` — это только сканер контейнерных образов и не умеет анализировать исходный код (SAST).",
+              "text": "`Trivy` (`Aqua Security`) — бесплатный open source, сканирует образы, SBOM, IaC, секреты. `Snyk` — коммерческий сканер, ограниченный только образами контейнеров, без анализа исходного кода. `Grype` (`Anchore`) — бесплатный, для vuln-сканирования SBOM/образов в паре с `Syft`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Snyk` как раз включает `SAST` для исходного кода, а также сканирование зависимостей, контейнеров и IaC.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`CVE` поддерживается GitHub, а `GHSA` — это глобальный канонический идентификатор от `MITRE`.",
+              "text": "`CVE` (Common Vulnerabilities and Exposures) — идентификатор от GitHub (`CVE-2021-44228`), скорится в `NVD` (NIST). `GHSA` — глобальный канонический ID от `MITRE`, часто быстрее CVE. `OSV` (Google) — унифицированный формат, агрегирующий несколько экосистем.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны: `CVE` — это канонический ID от `MITRE`/NVD, а `GHSA` — БД advisories именно от GitHub.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`GHSA` всегда медленнее `CVE`, потому что обязан дождаться присвоения CVE-номера перед публикацией.",
+              "text": "`CVE` (Common Vulnerabilities and Exposures) — канонический ID от `MITRE`, скорится в `NVD` (NIST). `GHSA` — БД GitHub, но публикуется позже `CVE`, так как обязана дождаться присвоения CVE-номера перед выходом advisory. `OSV` (Google) — формат, агрегирующий `GHSA`, `PyPI`, `npm`.",
               "correct": false,
               "sections": {
                 "what_actually": "`GHSA` часто публикуется БЫСТРЕЕ: мейнтейнеры выкладывают advisory до присвоения CVE, а маппинг на CVE появляется позже.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`OSV` — это собственный сканер уязвимостей от Google, конкурирующий с `Trivy` и `Snyk`.",
+              "text": "`CVE` — канонический ID от `MITRE`, скорится в `NVD` (NIST). `GHSA` — БД GitHub с богатыми метаданными, часто быстрее CVE. `OSV` (Google) — сканер уязвимостей, который сам находит CVE в коде, конкурируя с `Trivy` и `Snyk`.",
               "correct": false,
               "sections": {
                 "what_actually": "`OSV` — это унифицированный формат и агрегатор БД (GHSA, PyPI, npm, RustSec) с API `osv.dev`, а не сканер.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Vendor risk assessment — это разовая проверка только цены и функционала ПО без анализа безопасности.",
+              "text": "Оценивают исключительно наличие сертификатов (`SOC 2 Type II`, `ISO 27001`): если сертификат у вендора есть, остальные оси — data handling, access & auth, supply chain, operational (SLA) — проверять не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Это именно оценка рисков безопасности и данных (сертификации, шифрование, auth, sub-processors), а не сравнение цен и фич.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Все вендоры оцениваются одинаково глубоко независимо от их критичности для системы.",
+              "text": "Оценивают security posture, data handling, access & auth и operational по единому глубокому чеклисту, применяя одинаковую глубину ко всем вендорам без тиринга по критичности.",
               "correct": false,
               "sections": {
                 "what_actually": "Вендоров тиерят: Tier 1 (auth, cloud) — высокий скрутиний неделями, Tier 3 (утилиты) — базовая проверка; глубина зависит от критичности.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "После онбординга вендора переоценивать его безопасность больше не нужно — достаточно первичной проверки.",
+              "text": "Оценивают все оси (security posture, data handling, access & auth, supply chain вендора, operational) один раз при онбординге; периодической переоценки безопасности не требуется, пока вендор не сменится.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужна ongoing-переоценка: ежегодный re-assessment, мониторинг breach (новости, HIBP) и renewal-чекпоинт, потому что вендор может скомпрометироваться позже.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Правильный порядок — сразу начать с enforcement: первым делом блокировать все неподписанные образы admission controller-ом.",
+              "text": "Начинают с enforcement: Phase 1 — admission controller Kyverno блокирует все неподписанные образы, Phase 2 — Visibility (Dependabot, SBOM, скан Trivy), Phase 3 — Harden build, Phase 4 — Attestations через Cosign.",
               "correct": false,
               "sections": {
                 "what_actually": "Enforcement идёт в последнюю очередь (Phase 4): сначала visibility и harden build, иначе блокировка без готовой подписи/attestations остановит все деплои.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Чем больше разных security-инструментов внедрить одновременно, тем лучше защита — tool sprawl это благо.",
+              "text": "Начинают с подписи: Phase 1 — Cosign keyless и SLSA L3 provenance на все артефакты, Phase 2 — Visibility (SBOM, скан Trivy), Phase 3 — Harden build с OIDC, Phase 4 — Enforce через Kyverno.",
               "correct": false,
               "sections": {
                 "what_actually": "Tool sprawl — это ловушка: десяток одновременно внедрённых инструментов даёт хаос и нерелевантные алерты; начинают с 2-3 хорошо интегрированных.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Reproducible и hermetic builds — это первый шаг roadmap, с которого начинают любую команду.",
+              "text": "Начинают с фундамента: Phase 1 — reproducible и hermetic builds (детерминированная сборка байт-в-байт), Phase 2 — Dependabot и SBOM, Phase 3 — Cosign attestations, Phase 4 — Enforce через Kyverno.",
               "correct": false,
               "sections": {
                 "what_actually": "Reproducible/hermetic builds — это advanced-фаза (Phase 5), а не старт; начинают с базовой видимости (Dependabot, SBOM, сканеры).",
