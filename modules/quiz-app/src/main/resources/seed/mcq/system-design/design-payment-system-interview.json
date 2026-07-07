@@ -982,7 +982,7 @@
               "order": 0
             },
             {
-              "text": "Reconciliation не нужна, если код покрыт тестами: при корректной записи в ledger internal-данные всегда совпадают с PSP, сверять нечего.",
+              "text": "Daily job (T+1) грузит PSP-report и internal entries за день T, но сопоставляет их по паре `(amount, timestamp)` вместо `external_id`: совпало → ок, нет пары → in-flight (retry завтра), amount mismatch → fee/FX review. Совпадение суммы и близкого времени считается достаточным признаком одной и той же транзакции.",
               "correct": false,
               "sections": {
                 "what_actually": "Даже при идеальном коде PSP берёт неожиданные fees, бывают FX-различия и in-flight гонки; reconciliation ловит расхождения, которые тесты в принципе не видят.",
@@ -994,7 +994,7 @@
               "order": 1
             },
             {
-              "text": "Достаточно сверять только итоговые суммы за день: если total в ledger совпал с total в PSP-report, все отдельные транзакции точно сошлись.",
+              "text": "Ежедневно берём internal ledger за день T и через `LEFT JOIN` от ledger проверяем, что каждая entry присутствует в PSP-report: нет пары → in-flight, retry завтра; amount mismatch → fee/FX difference, manual review; status mismatch → race. Транзакции, которые есть в PSP, но отсутствуют в ledger, сверка не рассматривает.",
               "correct": false,
               "sections": {
                 "what_actually": "Сверяют пер-транзакцию через `LEFT JOIN ON external_id`: совпадение тоталов маскирует встречные ошибки (одна phantom + одна пропущенная дают тот же total).",
@@ -1006,7 +1006,7 @@
               "order": 2
             },
             {
-              "text": "Reconciliation запускают раз в месяц — этого достаточно, частые прогоны лишь нагружают системы без пользы.",
+              "text": "Reconciliation выполняют в реальном времени на каждый PSP-webhook: приходит `payment.settled` → сверяем сумму вебхука с ledger-entry → расхождение закрываем сразу. Отдельный batch-прогон против дневного settlement-report не нужен — все fees, FX и итоговые суммы уже приходят в теле вебхука.",
               "correct": false,
               "sections": {
                 "what_actually": "Стандарт — daily (T+1): месячная сверка означает, что discrepancy ищется 30 дней, и к обнаружению накапливаются миллионы inquiries от мерчантов.",
@@ -1029,7 +1029,7 @@
           "question_text": "Refunds: partial, full, идемпотентность и временные окна?",
           "options": [
             {
-              "text": "Refund просто отправляет деньги клиенту без проверок суммы и статуса: можно вернуть любую сумму в любой момент жизненного цикла платежа.",
+              "text": "Flow: `POST /refunds {payment_id, amount?}` → проверить `captured`/`settled` → `amount ≤ remaining refundable` → PSP refund call → обратные entries в ledger → webhook мерчанту. Idempotency обеспечивается уникальностью `payment_id`: повторный refund-запрос по тому же платежу всегда возвращает уже созданный refund object. Partial разрешён.",
               "correct": false,
               "sections": {
                 "what_actually": "Refund валидирует, что платёж в `captured`/`settled` и `amount ≤ remaining refundable`; вернуть больше остатка или из неподходящего статуса нельзя (400).",
@@ -1054,7 +1054,7 @@
               "order": 1
             },
             {
-              "text": "Partial refunds запрещены: вернуть можно только всю сумму платежа целиком и только один раз.",
+              "text": "Flow с проверкой суммы (`amount ≤ remaining`), idempotency-key и записью обратных entries; partial разрешён (≤ оригинала, несколько раз). Refund можно инициировать сразу после `authorized`, не дожидаясь `captured`: PSP снимет возврат с authorization hold и вернёт деньги на карту.",
               "correct": false,
               "sections": {
                 "what_actually": "Partial refunds разрешены и могут повторяться, пока их сумма ≤ оригинала; это нужно, например, для возврата одного товара из многотоварного заказа.",
@@ -1066,7 +1066,7 @@
               "order": 2
             },
             {
-              "text": "Окно для refund неограниченно: вернуть деньги на оригинальную карту можно и через год, поведение PSP не зависит от давности.",
+              "text": "Flow с idempotency-key, проверкой `amount ≤ remaining` и обратными entries. Временное окно refund конечно и задаётся PSP (обычно ~180 дней): по его истечении возврат на оригинальную карту отклоняется. Отсчёт окна идёт от даты refund-запроса, поэтому давность самой транзакции на доступность возврата не влияет.",
               "correct": false,
               "sections": {
                 "what_actually": "После ~60 дней многие PSP не дают refund на оригинальную карту (выпускают cheque/manual transfer), а закрытая карта требует недель manual-процесса — окна реальны.",
@@ -1089,7 +1089,7 @@
           "question_text": "Chargebacks: Visa reason codes, evidence, win rate?",
           "options": [
             {
-              "text": "Chargeback — это обычный refund, инициированный мерчантом: он добровольно возвращает деньги клиенту без участия issuer-а и без штрафов.",
+              "text": "Chargeback — customer оспаривает транзакцию, issuer reverses settlement, мерчант теряет деньги + chargeback fee ($15-50). Инициирует процесс сам мерчант: он подаёт запрос в свою acquiring-сеть и указывает Visa reason code (`10.4` fraud, `13.1` not received), а issuer лишь исполняет возврат средств customer'у.",
               "correct": false,
               "sections": {
                 "what_actually": "Chargeback инициирует customer через issuer, а не мерчант; issuer принудительно reverses settlement и налагает chargeback fee $15-50 — это не добровольный refund.",
@@ -1101,7 +1101,7 @@
               "order": 0
             },
             {
-              "text": "Win rate не зависит от evidence: issuer решает по случайному принципу, поэтому собирать доказательства бессмысленно.",
+              "text": "Chargeback — dispute customer через issuer; issuer reverses settlement, мерчант теряет деньги + chargeback fee. Win rate сильно зависит от evidence, но representment невозможен после reversal: как только issuer списал settlement, решение окончательно, а доказательства (3DS, delivery confirmation, IP match) прикладывают уже к последующим спорам.",
               "correct": false,
               "sections": {
                 "what_actually": "Win rate прямо зависит от evidence: без него ~0%, а с delivery confirmation, 3DS-данными и IP match — 60-80%; представление доказательств решает исход.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "Chargeback ratio не имеет порогов и последствий: сколько бы ни было chargebacks, на статус мерчанта у сети это не влияет.",
+              "text": "Chargeback ratio отслеживается сетью: превышение порога (у Visa ~0.9%) запускает monitoring-программу (VDMP) со штрафами вплоть до потери merchant account. Ratio считают как отношение суммы ($) chargebacks к обороту мерчанта за месяц, поэтому один крупный dispute бьёт по метрике сильнее, чем много мелких.",
               "correct": false,
               "sections": {
                 "what_actually": "Пороги жёсткие: Visa `0.9%` → VDMP со штрафами, `1.8%` → High-Risk Program с риском потери acquiring license — ratio напрямую угрожает бизнесу.",
@@ -1329,7 +1329,7 @@
           "question_text": "Subscriptions: recurring billing, dunning, retry strategy?",
           "options": [
             {
-              "text": "При первом failed payment подписку сразу отменяют: retry бессмыслен, раз списание не прошло, клиент должен оплатить заново вручную.",
+              "text": "При failed payment запускается dunning — серия retry по сохранённому payment method (token). Retry делают немедленно и часто: сразу после отказа и далее каждый час, пока платёж не пройдёт или не исчерпаются попытки. Разнос ретраев на дни (3/5/7) только затягивает recovery, поэтому его не применяют.",
               "correct": false,
               "sections": {
                 "what_actually": "Неудачу обрабатывают через dunning с retry (Stripe Smart Retries, 3/5/7 дней): большинство отказов временные (`insufficient_funds`), и повтор спасает подписку без участия клиента.",
@@ -1341,7 +1341,7 @@
               "order": 0
             },
             {
-              "text": "Все decline reasons обрабатывают одинаково: на любой отказ делают серию одинаковых ретраев, причина отказа не влияет на стратегию.",
+              "text": "Decline reasons требуют разной тактики: `insufficient_funds` → сразу request нового payment method (средств на карте всё равно нет), `expired_card` → retry по расписанию (карта могла автопродлиться), `lost_stolen` → НЕ retry. После N неудачных попыток → `past_due`.",
               "correct": false,
               "sections": {
                 "what_actually": "Тактику выбирают по reason: `insufficient_funds` ретраят к зарплате, `expired_card` — просят новый method, `lost_stolen` — НЕ ретраят (potential fraud); подход разный.",
@@ -1366,7 +1366,7 @@
               "order": 2
             },
             {
-              "text": "Network tokens не влияют на subscriptions: при reissue карты подписка всё равно ломается, и success rate от них не зависит.",
+              "text": "Network tokens повышают success rate подписок: при reissue или продлении карты токен автоматически обновляется на стороне сети, и charge проходит без участия клиента. Механизм работает одинаково для любых карт и всех эмитентов, независимо от участия банка в token-программе.",
               "correct": false,
               "sections": {
                 "what_actually": "Network tokens заметно повышают success rate: при reissue network сам обновляет token mapping, и подписка продолжает работать; без них churn ~5-7%/мес.",
@@ -1702,7 +1702,7 @@
               "order": 0
             },
             {
-              "text": "Достаточно стандартных инфраструктурных метрик (CPU, RAM, disk): доменные показатели вроде chargeback_ratio или ledger invariant мониторить не нужно.",
+              "text": "Core metrics по домену: `payment_success_rate` per merchant/PSP, `authorize_latency_p99`, `chargeback_ratio`, `webhook_delivery_lag_p99`. Alerting строят на едином глобальном absolute-пороге (page при success_rate < 95%), без разреза per merchant/PSP — один порог применяется ко всем мерчантам сразу.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужны именно доменные метрики (success_rate, chargeback_ratio, ledger_invariant_check): CPU/RAM не покажут, что Σ entries сломался или success_rate упал на конкретном PSP.",
@@ -1714,7 +1714,7 @@
               "order": 1
             },
             {
-              "text": "PAN, CVV и API keys можно логировать в открытом виде — это удобно для отладки и не нарушает требований, раз логи внутренние.",
+              "text": "Logging: structured JSON, correlation_id/payment_id; в application-логах PAN, CVV и API keys маскируются. В distributed-трейсах (OpenTelemetry/Datadog spans) полный PAN оставляют атрибутом span'а — это удобно для сквозной корреляции платежа и внутри периметра нарушением не считается.",
               "correct": false,
               "sections": {
                 "what_actually": "PAN/CVV/API keys обязаны маскироваться regex'ом в логах: открытое логирование PAN — прямой PCI-violation (Level 1 audit, штрафы), а CVV хранить нельзя вообще.",
@@ -1726,7 +1726,7 @@
               "order": 2
             },
             {
-              "text": "Runbooks не нужны: при инциденте on-call инженер каждый раз импровизирует решение по ситуации, заранее заготовленные планы только мешают.",
+              "text": "Runbooks — заранее заготовленные процедуры на типовые инциденты (PSP outage → routing failover; reconciliation gap > $1M → freeze payouts). Их пишут один раз при запуске сервиса и далее не обновляют: набор инцидентов в платёжной системе фиксирован, поэтому пересматривать процедуры после новых кейсов не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Runbooks дают готовый план под типовые инциденты (PSP outage → routing failover, reconciliation gap > $1M → freeze payouts), сокращая время реакции и ошибки в стрессе.",
@@ -1749,7 +1749,7 @@
           "question_text": "Какие антипаттерны и подводные камни в платёжных системах?",
           "options": [
             {
-              "text": "Хранить деньги в `double` — нормальная практика: современные `double` достаточно точны, и ошибки округления в финансах пренебрежимо малы.",
+              "text": "Ключевые антипаттерны: (1) float/`double` для денег — fix: хранить в `double`, но округлять до 2 знаков через `Math.round` перед каждой записью; (2) single PSP без fallback — fix: multi-PSP routing; (3) PAN в логах — fix: маскирование. Округление `double` перед записью снимает проблему точности денег.",
               "correct": false,
               "sections": {
                 "what_actually": "Float недопустим для денег: `double balance = 100.10 - 100.00` не даёт ровно `0.10` из-за binary-представления, fix — integer minor units (`BIGINT amount_minor` в центах).",
@@ -1774,7 +1774,7 @@
               "order": 1
             },
             {
-              "text": "Single PSP без fallback — приемлемо: крупные PSP вроде Stripe настолько надёжны, что multi-PSP routing — избыточное усложнение.",
+              "text": "Антипаттерны: (1) 2PC между PSP и internal DB — fix: обернуть оба вызова в один `@Transactional`, чтобы rollback БД срабатывал при ошибке PSP; (2) `UPDATE`/`DELETE` на ledger — fix: append-only + reversal; (3) idempotency key без body hash — fix: key + hash → `409`. Единый транзакционный блок гарантирует консистентность PSP и БД.",
               "correct": false,
               "sections": {
                 "what_actually": "Single PSP без fallback — антипаттерн: даже Stripe падает, и 2-часовой outage = 100% revenue loss; fix — multi-PSP routing с health-based switch.",
@@ -1786,7 +1786,7 @@
               "order": 2
             },
             {
-              "text": "Refund после chargeback безопасен: это просто два независимых возврата, лишний refund клиенту не повредит и денег дважды не уйдёт.",
+              "text": "Антипаттерны: (1) idempotency key без request hash → повтор с тем же ключом и другим телом молча проходит — fix: заменить key на уникальный индекс `(amount, timestamp)`; (2) synchronous webhook — fix: outbox; (3) storing CVV — прямой PCI violation. Уникальный индекс `(amount, timestamp)` надёжно отсекает дубликаты платежей.",
               "correct": false,
               "sections": {
                 "what_actually": "Refund после chargeback даёт двойной возврат — деньги уходят и через chargeback, и через manual refund; fix — state-machine guard, запрещающий refund в `disputed`/`chargeback_lost`.",
