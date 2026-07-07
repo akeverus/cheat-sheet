@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все три — это разные названия одной проблемы: переполнения памяти кэша.",
+              "text": "Три классические проблемы кэша: Cache Stampede — массовое одновременное истечение TTL множества ключей даёт волну запросов в БД (лечится рандомизацией TTL — jitter); Cache Penetration — запросы по несуществующим ключам всегда пробивают кэш (лечится кэшированием null или Bloom-фильтром); Cache Avalanche — при истечении TTL одного популярного ключа множество запросов одновременно бьют в БД (лечится mutex-lock на пересчёт).",
               "correct": false,
               "sections": {
                 "what_actually": "Это три разные проблемы: stampede (одновременные запросы при истечении ключа), penetration (запросы по несуществующим ключам), avalanche (массовое одновременное истечение TTL).",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Cache Penetration` лечится исключительно увеличением размера кэша.",
+              "text": "Три классические проблемы кэша: Cache Stampede — при истечении TTL популярного ключа множество запросов одновременно бьют в БД (лечится mutex-lock на пересчёт); Cache Penetration — запросы по несуществующим ключам всегда пробивают кэш (лечится увеличением maxmemory и размера кэша); Cache Avalanche — массовое одновременное истечение TTL даёт волну запросов в БД (лечится рандомизацией TTL — jitter).",
               "correct": false,
               "sections": {
                 "what_actually": "Penetration — это запросы по заведомо отсутствующим ключам; размер кэша не помогает, нужно кэшировать null или использовать Bloom filter.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Cache Avalanche` предотвращается установкой одинакового TTL для всех ключей.",
+              "text": "Три классические проблемы кэша: Cache Stampede — при истечении TTL популярного ключа множество запросов одновременно бьют в БД (лечится mutex-lock на пересчёт); Cache Penetration — запросы по несуществующим ключам всегда пробивают кэш (лечится кэшированием null или Bloom-фильтром); Cache Avalanche — массовое одновременное истечение TTL даёт волну запросов в БД (предотвращается установкой единого TTL для всех ключей).",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: одинаковый TTL и вызывает avalanche; решение — рандомизировать TTL (jitter), чтобы ключи истекали вразнобой.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для надёжной блокировки достаточно `SETNX`, а TTL можно не ставить.",
+              "text": "Блокировку захватывают атомарной командой `SETNX lock:resource owner` (создать только если ключа ещё нет), а снимают Lua-скриптом, который проверяет владельца перед `DEL`; TTL можно не ставить, поскольку скрипт освобождения гарантированно снимет лок по завершении работы; на нескольких независимых узлах для надёжности применяют Redlock (в Java — `Redisson` `RLock`).",
               "correct": false,
               "sections": {
                 "what_actually": "Без TTL упавший владелец оставит вечный лок (deadlock); поэтому используют атомарный `SET ... NX EX` с TTL.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Снимать блокировку можно простым `DEL lock:resource` без проверки владельца.",
+              "text": "Блокировку захватывают атомарной командой `SET lock:resource owner NX EX ttl` (создать только если нет, с TTL во избежание вечного лока при падении владельца), а снимают простым `DEL lock:resource` по завершении работы; для надёжности на нескольких независимых узлах применяют Redlock (в Java — `Redisson` `RLock`).",
               "correct": false,
               "sections": {
                 "what_actually": "Голый `DEL` может снять чужую блокировку (если ваш TTL истёк и лок перезахвачен) — снятие делают Lua-скриптом с проверкой владельца.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Одного `Redis`-узла достаточно для строго корректной блокировки в любых условиях.",
+              "text": "Блокировку захватывают атомарной командой `SET lock:resource owner NX EX ttl`, а снимают Lua-скриптом с проверкой владельца перед `DEL`; поскольку `SET NX` атомарна, одного мастер-узла `Redis` достаточно для строго корректной блокировки даже при failover на реплику, и Redlock не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "При failover мастера незареплицированный лок может «раздвоиться»; для строгих гарантий на нескольких узлах есть алгоритм Redlock.",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Rate limiting на `Redis` делают через `GET`+`SET` в коде приложения без атомарности.",
+              "text": "`Redis` даёт два классических алгоритма rate limiting: Fixed Window — счётчик через `GET` текущего значения, инкремент в коде приложения и обратный `SET` с TTL на окно, просто и быстро; Sliding Window — на `Sorted Set` (score = timestamp), где `ZREMRANGEBYSCORE` чистит старые записи, а `ZCARD` считает запросы в скользящем окне — точнее, но дороже по памяти.",
               "correct": false,
               "sections": {
                 "what_actually": "Read-modify-write в приложении подвержен гонкам; используют атомарный `INCR` (+`EXPIRE`) или Lua-скрипт.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Sliding Window rate limiting реализуют на `Hash`, а не на `Sorted Set`.",
+              "text": "`Redis` даёт два классических алгоритма rate limiting: Fixed Window — атомарный счётчик с TTL на окно (`INCR` ключа `ratelimit:user:window`, при первом обращении `EXPIRE`), просто и быстро, но допускает всплеск на границе окон; Sliding Window — на `Hash`, где поля хранят timestamp'ы запросов, а `HLEN` считает их число в скользящем окне — точнее, но дороже по памяти.",
               "correct": false,
               "sections": {
                 "what_actually": "Sliding Window строят на `Sorted Set`, где score = время запроса, что позволяет чистить старое окно `ZREMRANGEBYSCORE` и считать `ZCARD`.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Fixed Window полностью устраняет всплески запросов на границе временных окон.",
+              "text": "`Redis` даёт два классических алгоритма rate limiting: Fixed Window — атомарный счётчик с TTL на окно (`INCR` ключа `ratelimit:user:window`, при первом обращении `EXPIRE`), который полностью устраняет всплеск запросов на границе соседних окон; Sliding Window — на `Sorted Set` (score = timestamp), где `ZREMRANGEBYSCORE` чистит старые записи, а `ZCARD` считает запросы в окне — точнее, но дороже по памяти.",
               "correct": false,
               "sections": {
                 "what_actually": "Fixed Window как раз подвержен всплеску: на стыке двух окон можно получить почти 2× лимита; равномерность даёт Sliding Window.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для распределённых сессий всё равно нужны sticky sessions на балансировщике.",
+              "text": "`Spring Session` + `Redis` — стандартное решение для распределённых HTTP-сессий: подключают `spring-session-data-redis`, включают `@EnableRedisHttpSession(maxInactiveIntervalInSeconds=1800)`, сессия хранится в `Redis` как `Hash` под ключом `spring:session:sessions:<id>`, но балансировщик всё равно должен держать sticky sessions, чтобы клиент попадал на инстанс-владелец своей сессии.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл `Spring Session` + `Redis` в том, чтобы убрать sticky sessions: любой инстанс читает сессию из общего `Redis`.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Session` хранит сессию в `Redis` как обычную строку (`String`).",
+              "text": "`Spring Session` + `Redis` — стандартное решение для распределённых HTTP-сессий: подключают `spring-session-data-redis`, включают `@EnableRedisHttpSession(maxInactiveIntervalInSeconds=1800)`, а сессия сериализуется и хранится в `Redis` как единая строка (`String`) под ключом `spring:session:sessions:<id>`; любой инстанс за балансировщиком обслуживает любой запрос — sticky sessions не нужны, TTL чистит протухшие сессии.",
               "correct": false,
               "sections": {
                 "what_actually": "Сессия хранится как `Hash` с ключом `spring:session:sessions:<id>`, что позволяет точечно читать/писать атрибуты.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Сессии в `Redis` не имеют срока жизни и хранятся вечно до ручного удаления.",
+              "text": "`Spring Session` + `Redis` — стандартное решение для распределённых HTTP-сессий: подключают `spring-session-data-redis`, включают `@EnableRedisHttpSession`, сессия хранится в `Redis` как `Hash` под ключом `spring:session:sessions:<id>`; любой инстанс за балансировщиком обслуживает любой запрос, но протухшие сессии не имеют TTL и остаются в `Redis`, пока приложение не удалит их вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "У сессий есть TTL, равный `maxInactiveInterval`; по истечении бездействия `Redis` сам удаляет сессию.",
@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Единственный способ очереди на `Redis` — `Pub/Sub`.",
+              "text": "Очередь задач на `Redis` реализуют тремя способами: List + BRPOP — простая очередь, at-most-once, без consumer groups; Pub/Sub (рекомендуется) — at-least-once с consumer groups, `XACK` и переобработкой зависших через `XPENDING`/`XCLAIM`; Streams — broadcast без гарантий доставки; для надёжной масштабируемой очереди с историей берут `Pub/Sub`, а для очень больших объёмов и multi-DC — `Kafka`.",
               "correct": false,
               "sections": {
                 "what_actually": "Очереди делают на `List` (`BRPOP`), `Streams` (consumer groups + ACK) или `Pub/Sub` (broadcast) — у каждого свои гарантии.",
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Очередь на `List` (`BRPOP`) даёт надёжную at-least-once доставку с подтверждениями.",
+              "text": "Очередь задач на `Redis` реализуют тремя способами: List + BRPOP — очередь с at-least-once доставкой и подтверждением обработки, где сообщение упавшего воркера автоматически возвращается в список; Streams — at-least-once с consumer groups, `XACK` и переобработкой через `XPENDING`/`XCLAIM`; Pub/Sub — broadcast без гарантий; для надёжной масштабируемой очереди берут `Streams`, а для multi-DC — `Kafka`.",
               "correct": false,
               "sections": {
                 "what_actually": "`List`+`BRPOP` — at-most-once без ACK: если воркер упал после `RPOP`, сообщение потеряно; at-least-once даёт `Streams`.",
@@ -1895,7 +1895,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Streams` не позволяют переобработать сообщение, зависшее у упавшего воркера.",
+              "text": "Очередь задач на `Redis` реализуют тремя способами: List + BRPOP — простая очередь, at-most-once, без consumer groups; Streams — at-least-once с consumer groups и `XACK`, но зависшее у упавшего воркера сообщение только висит в `XPENDING`, и переназначить его другому воркеру нельзя; Pub/Sub — broadcast без гарантий; для надёжной масштабируемой очереди берут `Streams`, а для очень больших объёмов — `Kafka`.",
               "correct": false,
               "sections": {
                 "what_actually": "Зависшие (pending) сообщения видны через `XPENDING` и переназначаются другому воркеру через `XCLAIM`.",
@@ -2184,7 +2184,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Команду `MONITOR` можно безопасно держать включённой в продакшене постоянно.",
+              "text": "`Redis` мониторят через `INFO` (секции `stats`, `memory`, `clients`, `replication`): ключевые метрики — hit rate (`keyspace_hits/(hits+misses)`), `used_memory`/`maxmemory`, `instantaneous_ops_per_sec`, `connected_clients`, роль и lag реплик; для непрерывного контроля в проде безопасно держать постоянно включённым `MONITOR`, а `SLOWLOG GET` и `LATENCY LATEST` — для разовой диагностики; экспорт — `Redis Exporter` + `Prometheus` + `Grafana`.",
               "correct": false,
               "sections": {
                 "what_actually": "`MONITOR` транслирует каждую команду и заметно нагружает сервер; его используют только кратковременно для отладки.",
@@ -2196,7 +2196,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Hit rate вычисляется как `keyspace_misses / keyspace_hits`.",
+              "text": "`Redis` мониторят через `INFO` (секции `stats`, `memory`, `clients`, `replication`): ключевые метрики — hit rate (`keyspace_misses/keyspace_hits`), `used_memory`/`maxmemory`, `instantaneous_ops_per_sec`, `connected_clients`, роль и lag реплик; для разовой диагностики — `SLOWLOG GET`, `LATENCY LATEST`, осторожно `MONITOR`; в проде — `Redis Exporter` + `Prometheus` + `Grafana`.",
               "correct": false,
               "sections": {
                 "what_actually": "Hit rate = `keyspace_hits / (keyspace_hits + keyspace_misses)`; приведённая формула дала бы бессмысленное значение.",
@@ -2208,7 +2208,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`INFO` не показывает информацию о репликации и состоянии реплик.",
+              "text": "`Redis` мониторят через `INFO` (секции `stats`, `memory`, `clients`): ключевые метрики — hit rate (`keyspace_hits/(hits+misses)`), `used_memory`/`maxmemory`, `instantaneous_ops_per_sec`, `connected_clients`; состояние репликации и lag реплик `INFO` не отдаёт — их смотрят только командами `ROLE` и `WAIT`; для разовой диагностики — `SLOWLOG GET`, `LATENCY LATEST`, осторожно `MONITOR`; в проде — `Redis Exporter` + `Prometheus` + `Grafana`.",
               "correct": false,
               "sections": {
                 "what_actually": "`INFO replication` показывает роль (master/replica), число реплик, их offset и lag.",
