@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Tumbling`-окна перекрываются и задаются через `advanceBy`, а `Hopping` — это фиксированные неперекрывающиеся интервалы.",
+              "text": "`Tumbling` — перекрывающиеся окна фиксированного размера, задаются через `TimeWindows.of(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1))`. `Hopping` — фиксированные неперекрывающиеся интервалы: `TimeWindows.of(Duration.ofMinutes(5))`. `Session` — gap-based, окно закрывается после паузы без событий: `SessionWindows.with(Duration.ofMinutes(15))`.",
               "correct": false,
               "sections": {
                 "what_actually": "Перепутано: `Tumbling` — НЕперекрывающиеся (без `advanceBy`), а `Hopping` — перекрывающиеся (с `advanceBy`).",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Session`-окна имеют фиксированный размер, заданный в `SessionWindows.with(...)`, и не зависят от пауз между событиями.",
+              "text": "`Tumbling` — фиксированные неперекрывающиеся окна: `TimeWindows.of(Duration.ofMinutes(5))`. `Hopping` — фиксированного размера, но перекрывающиеся: `TimeWindows.of(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1))`. `Session` — окна фиксированного размера, заданного в `SessionWindows.with(Duration.ofMinutes(15))`, и не зависят от пауз между событиями.",
               "correct": false,
               "sections": {
                 "what_actually": "Session-окна как раз gap-based: их граница определяется паузой бездействия, а аргумент — это inactivity gap, а не фиксированный размер.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Hopping`-окна в `Kafka Streams` называются `sliding` и задаются классом `SlidingWindows`, это полные синонимы.",
+              "text": "`Tumbling` — фиксированные неперекрывающиеся окна: `TimeWindows.of(Duration.ofMinutes(5))`. `Hopping` — фиксированного размера, но перекрывающиеся через `advanceBy(Duration.ofMinutes(1))`. `Session` — gap-based: `SessionWindows.with(Duration.ofMinutes(15))`. Важно: внутри `Kafka Streams` `Hopping` и `SlidingWindows` — полные синонимы, класс `SlidingWindows` задаёт ровно те же hopping-окна.",
               "correct": false,
               "sections": {
                 "what_actually": "В Kafka Streams hopping и sliding — РАЗНЫЕ вещи: hopping — это `TimeWindows.advanceBy`, а `SlidingWindows` (2.7+) — отдельная концепция (см. Q14).",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Interactive Queries — это возможность писать SQL-запросы к топикам Kafka прямо из приложения.",
+              "text": "`Interactive Queries` — это возможность писать SQL-запросы прямо к топикам Kafka из приложения: объявляешь `CREATE STREAM ... WITH (KAFKA_TOPIC=...)` и получаешь результат через `SELECT ... EMIT CHANGES`, минуя state stores и `store.get(...)`.",
               "correct": false,
               "sections": {
                 "what_actually": "SQL к Kafka — это `ksqlDB`; Interactive Queries — это прямое чтение локальных state stores из кода через Java-API.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Interactive Queries позволяют изменять (писать) значения в state store напрямую, минуя топологию.",
+              "text": "`Interactive Queries` позволяют напрямую изменять значения в state store из приложения, минуя топологию: берёшь store через `streams.store(...)` и вызываешь `store.put(\"alice\", value)`, а апдейт синхронно уходит в changelog-топик.",
               "correct": false,
               "sections": {
                 "what_actually": "Interactive Queries дают READ-ONLY доступ к store; писать в него можно только через топологию обработки.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Interactive Queries требуют отдельного кластера запросов, который индексирует все state stores instances.",
+              "text": "`Interactive Queries` требуют отдельного кластера запросов: он индексирует state stores со всех instances и централизованно отвечает на `store.get(...)`, поэтому приложение обращается не к локальному store, а к этому кластеру через `metadataForKey(...)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Никакого отдельного кластера запросов нет — чтение идёт напрямую из локального store текущего instance.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Exactly-once в Kafka Streams достигается дедупликацией по message-id на стороне потребителя без участия транзакций.",
+              "text": "Exactly-once в Kafka Streams достигается идемпотентной дедупликацией: продюсер проставляет sequence number, а потребитель отбрасывает повторы на стороне чтения через `PROCESSING_GUARANTEE_CONFIG`, без транзакций и атомарного commit'а offset'ов вместе со state.",
               "correct": false,
               "sections": {
                 "what_actually": "Exactly-once реализован через Kafka TRANSACTIONS (атомарная запись в output + commit offset + changelog), а не клиентскую дедупликацию по id.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Exactly-once в Kafka Streams работает только для stateless-пайплайнов; как только появляется state store, гарантия деградирует до at-least-once.",
+              "text": "Exactly-once через `EXACTLY_ONCE_V2` покрывает только stateless-пайплайны (`map`/`filter`); как только в топологию добавляется state store, changelog-апдейты выпадают из транзакции и гарантия деградирует до at-least-once.",
               "correct": false,
               "sections": {
                 "what_actually": "EOS как раз охватывает state: changelog-апдейты включены в транзакцию, поэтому stateful-обработка тоже exactly-once.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Exactly-once включён в Kafka Streams по умолчанию, поэтому никакой конфигурации не требуется.",
+              "text": "Exactly-once в Kafka Streams включён по умолчанию: `PROCESSING_GUARANTEE_CONFIG` уже стоит в `EXACTLY_ONCE_V2`, поэтому отдельная конфигурация не нужна, а `at_least_once` наоборот приходится включать вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию используется `at_least_once`; exactly-once нужно включать явно через `EXACTLY_ONCE_V2`.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ksqlDB` — это самостоятельный движок обработки, никак не связанный с `Kafka Streams` и реализованный с нуля на C++.",
+              "text": "`ksqlDB` — самостоятельный движок обработки, реализованный с нуля на C++ и никак не связанный с `Kafka Streams`: у него собственный runtime, а `CREATE STREAM ... SELECT ... EMIT CHANGES` компилируется в нативный план, а не в топологию `Kafka Streams`.",
               "correct": false,
               "sections": {
                 "what_actually": "`ksqlDB` под капотом работает ИМЕННО на `Kafka Streams` (JVM), а не как отдельный C++-движок.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ksqlDB` — это in-memory кэш поверх Kafka, ускоряющий чтение топиков, без возможности агрегаций и окон.",
+              "text": "`ksqlDB` — in-memory-кэш поверх Kafka, ускоряющий чтение топиков: держит горячие записи в памяти и отдаёт их по ключу, но оконных агрегаций (`WINDOW TUMBLING`) и `SELECT ... EMIT CHANGES` не поддерживает.",
               "correct": false,
               "sections": {
                 "what_actually": "`ksqlDB` полноценно поддерживает агрегации, оконные операции и join'ы на SQL — это не просто кэш чтения.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ksqlDB`-запросы выполняются на брокерах Kafka, поэтому отдельный сервер для него не нужен.",
+              "text": "`ksqlDB`-запросы выполняются прямо на брокерах Kafka: брокер парсит `CREATE STREAM ... SELECT ... EMIT CHANGES` и считает агрегаты у себя, поэтому отдельный `ksqlDB Server` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Запросы выполняет отдельный `ksqlDB Server` (на Kafka Streams), а не брокеры Kafka.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Kafka Streams` используется почти исключительно для batch-ETL ночных выгрузок в дата-склады, а не для real-time.",
+              "text": "`Kafka Streams` в production используют почти исключительно для batch-ETL: ночные выгрузки в дата-склады (`Snowflake`, `Hadoop`), пересчёт витрин по расписанию и миграции таблиц — то есть для offline-обработки, а не для real-time-стриминга.",
               "correct": false,
               "sections": {
                 "what_actually": "`Kafka Streams` — инструмент REAL-TIME stream processing (fraud detection, real-time pricing, event-driven сервисы), а не ночной batch-ETL.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Kafka Streams` применяется только внутри `Confluent` и не нашёл применения в крупных компаниях.",
+              "text": "`Kafka Streams` в production применяется практически только внутри `Confluent` (его создателей) для внутренних сервисов; за пределами компании библиотека распространения не получила, а `LinkedIn`, `Uber`, `Walmart` используют другие движки.",
               "correct": false,
               "sections": {
                 "what_actually": "Его используют многие крупные игроки: `LinkedIn`, `Uber`, `Pinterest`, `Airbnb`, `Slack`, банки (`Goldman Sachs`, `ING`), `Walmart`.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Kafka Streams` используется только стартапами и не применяется в банках из-за отсутствия гарантий доставки.",
+              "text": "`Kafka Streams` в production используют в основном стартапы и небольшие команды за простой deployment; в банках и финтехе (`Goldman Sachs`, `ING`) он почти не встречается — там для strong-гарантий берут `Flink` и `Spark`.",
               "correct": false,
               "sections": {
                 "what_actually": "Банки (`Goldman Sachs`, `ING`) как раз активные пользователи, и у Kafka Streams есть exactly-once-гарантии.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главный минус — невозможность работать с Kafka-топиками, поэтому приходится подключать внешние коннекторы.",
+              "text": "Ключевой минус — слабые гарантии доставки: `Kafka Streams` даёт только at-most-once и не поддерживает exactly-once, поэтому под платежи и финансовые пайплайны берут `Flink`, а не его.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: Kafka Streams работает ТОЛЬКО с Kafka; минус как раз в том, что НЕ-Kafka-источники напрямую недоступны.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Существенный недостаток — отсутствие поддержки stateful-операций, из-за чего нельзя делать агрегации.",
+              "text": "Существенный недостаток — отсутствие stateful-операций: `Kafka Streams` не хранит состояние между событиями, поэтому оконные агрегации и джойны приходится выносить во внешнюю БД.",
               "correct": false,
               "sections": {
                 "what_actually": "Stateful-операции (агрегации, join'ы) поддерживаются через RocksDB+changelog; минус не в их отсутствии, а в том, что state ограничен локальным диском.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Ключевой минус — необходимость эксплуатировать отдельный кластер обработки, как у Spark.",
+              "text": "Ключевой минус — необходимость эксплуатировать отдельный кластер обработки, как у `Spark`: приложение сабмитит job в этот кластер, что усложняет deployment и требует ресурс-менеджера вроде `YARN`.",
               "correct": false,
               "sections": {
                 "what_actually": "Отдельный кластер не нужен — это, наоборот, ПРЕИМУЩЕСТВО Kafka Streams (library, деплой как микросервис).",
