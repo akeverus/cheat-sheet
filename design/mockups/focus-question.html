@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Экран вопроса · макет Instrument</title>
+
+  <!-- Шрифты: Newsreader (вопрос-проза), Space Grotesk (UI), JetBrains Mono (код/лейблы) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    /* ===== Reset / основа ================================================== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-ui);
+      font-size: var(--fs-base);
+      line-height: var(--lh-normal);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    a { color: var(--signal-ink); }
+    code, kbd, pre { font-family: var(--font-mono); }
+
+    .skip-link {
+      position: absolute; left: var(--s-4); top: -3rem;
+      background: var(--signal); color: var(--signal-on);
+      padding: var(--s-2) var(--s-4); border-radius: var(--r-sm);
+      z-index: 20; transition: top var(--dur-1) var(--ease-out);
+    }
+    .skip-link:focus { top: var(--s-4); }
+
+    :where(a, button, input, summary):focus-visible {
+      outline: 2px solid var(--signal);
+      outline-offset: 2px;
+      border-radius: var(--r-sm);
+    }
+
+    /* ===== Masthead ======================================================= */
+    .site {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: var(--s-4);
+      padding: var(--s-4) var(--gutter);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      display: inline-flex; align-items: center; gap: var(--s-2);
+      font-family: var(--font-mono); font-weight: var(--fw-semi);
+      font-size: var(--fs-sm); letter-spacing: var(--track-mono);
+      color: var(--ink); text-decoration: none;
+    }
+    .brand-mark {
+      width: 0.85rem; height: 0.85rem; border-radius: 3px;
+      background: var(--signal);
+      box-shadow: inset 0 0 0 3px var(--paper), 0 0 0 1px var(--signal);
+    }
+    .brand b { font-weight: var(--fw-semi); }
+    .brand span { color: var(--ink-3); }
+
+    .site-nav { display: flex; gap: var(--s-1); }
+    .site-nav a {
+      font-size: var(--fs-sm); font-weight: var(--fw-medium);
+      color: var(--ink-2); text-decoration: none;
+      padding: var(--s-2) var(--s-3); border-radius: var(--r-sm);
+      transition: color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+    }
+    .site-nav a:hover { color: var(--ink); background: var(--surface); }
+    .site-nav a[aria-current="page"] { color: var(--signal-ink); background: var(--signal-wash); }
+
+    .theme-toggle {
+      display: inline-flex; align-items: center; gap: var(--s-2);
+      font-family: var(--font-mono); font-size: var(--fs-xs);
+      color: var(--ink-2); background: var(--surface);
+      border: 1px solid var(--line); border-radius: var(--r-pill);
+      padding: var(--s-2) var(--s-3); cursor: pointer;
+      transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+    }
+    .theme-toggle:hover { border-color: var(--line-strong); color: var(--ink); }
+
+    /* ===== Фокус-колонка ================================================== */
+    main { display: block; }
+    .focus {
+      max-width: var(--page-max);
+      margin: 0 auto;
+      padding: var(--s-7) var(--gutter) var(--s-9);
+    }
+
+    /* --- Сессионная рейка (слим, горизонтальная) ------------------------- */
+    .rail {
+      display: flex; align-items: center; gap: var(--s-4);
+      margin-bottom: var(--s-6);
+    }
+    .rail-progress { flex: 1 1 auto; min-width: 0; }
+    .rail-count {
+      font-family: var(--font-mono); font-size: var(--fs-xs);
+      letter-spacing: var(--track-mono); color: var(--ink-2);
+      margin-bottom: var(--s-2);
+    }
+    .rail-count b { color: var(--ink); font-weight: var(--fw-semi); }
+    .progress-track {
+      height: 4px; border-radius: var(--r-pill);
+      background: var(--surface-2); overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: inherit;
+      background: var(--signal);
+      transform-origin: left center;
+      transition: transform var(--dur-3) var(--ease-out);
+    }
+    .streak-chip {
+      display: inline-flex; align-items: center; gap: var(--s-2);
+      font-family: var(--font-mono); font-size: var(--fs-xs);
+      font-weight: var(--fw-medium); color: var(--spark-ink);
+      background: var(--spark-wash); border-radius: var(--r-pill);
+      padding: var(--s-2) var(--s-3); white-space: nowrap;
+    }
+    .streak-chip .spark {
+      width: 0.55rem; height: 0.55rem; border-radius: 50%;
+      background: var(--spark); box-shadow: 0 0 0 3px var(--spark-wash);
+    }
+    .rail-finish {
+      font-size: var(--fs-xs); font-weight: var(--fw-medium);
+      color: var(--ink-3); background: none; border: 0; cursor: pointer;
+      padding: var(--s-2); text-decoration: underline; text-underline-offset: 3px;
+      transition: color var(--dur-1) var(--ease-out);
+    }
+    .rail-finish:hover { color: var(--error-ink); }
+
+    /* --- Тема-кикер + вопрос --------------------------------------------- */
+    .focus-topic {
+      font-family: var(--font-mono); font-size: var(--fs-xs);
+      font-weight: var(--fw-medium); letter-spacing: var(--track-mono);
+      color: var(--ink-3); margin: 0 0 var(--s-3);
+    }
+    .focus-topic .dot { color: var(--signal); padding: 0 0.35em; }
+    .focus-question {
+      font-family: var(--font-hero);
+      font-size: var(--fs-hero); font-weight: var(--fw-medium);
+      line-height: var(--lh-tight); letter-spacing: var(--track-hero);
+      color: var(--ink); margin: 0 0 var(--s-5);
+      text-wrap: balance;
+    }
+    .focus-question code {
+      font-size: 0.85em; background: var(--surface-2);
+      padding: 0.08em 0.34em; border-radius: var(--r-sm);
+      border: 1px solid var(--line);
+    }
+
+    /* --- Пример кода (нативный <details>) -------------------------------- */
+    .code-details {
+      margin: 0 0 var(--s-6); border: 1px solid var(--line);
+      border-radius: var(--r-md); background: var(--surface); overflow: hidden;
+    }
+    .code-summary {
+      display: flex; align-items: center; gap: var(--s-2);
+      font-family: var(--font-mono); font-size: var(--fs-sm);
+      font-weight: var(--fw-medium); color: var(--ink-2);
+      padding: var(--s-3) var(--s-4); cursor: pointer; list-style: none;
+    }
+    .code-summary::-webkit-details-marker { display: none; }
+    .code-summary::before {
+      content: "▸"; color: var(--signal); font-size: 0.85em;
+      transition: transform var(--dur-1) var(--ease-out);
+    }
+    .code-details[open] .code-summary::before { transform: rotate(90deg); }
+    .code-body {
+      margin: 0; padding: var(--s-4); overflow-x: auto;
+      border-top: 1px solid var(--line); background: var(--paper);
+    }
+    .code-body code { font-size: var(--fs-sm); line-height: var(--lh-snug); color: var(--ink); }
+
+    /* --- Варианты ответа -------------------------------------------------- */
+    .options { display: flex; flex-direction: column; gap: var(--s-3); margin: 0 0 var(--s-6); }
+    .opt {
+      display: grid; grid-template-columns: auto 1fr; align-items: start;
+      gap: var(--s-4);
+      padding: var(--s-4) var(--s-5);
+      border: 1px solid var(--line); border-radius: var(--r-md);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color var(--dur-1) var(--ease-out),
+                  background var(--dur-1) var(--ease-out),
+                  transform var(--dur-1) var(--ease-out);
+    }
+    .opt:hover { border-color: var(--signal-edge); background: var(--paper); }
+    .opt:active { transform: translateY(1px); }
+    .opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .opt-badge {
+      display: grid; place-items: center;
+      width: 1.9rem; height: 1.9rem;
+      font-family: var(--font-mono); font-size: var(--fs-sm); font-weight: var(--fw-semi);
+      color: var(--ink-2); background: var(--paper);
+      border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+      transition: color var(--dur-1) var(--ease-out),
+                  background var(--dur-1) var(--ease-out),
+                  border-color var(--dur-1) var(--ease-out);
+    }
+    .opt-text { color: var(--ink); line-height: var(--lh-snug); padding-top: 0.12rem; }
+    .opt-text code {
+      font-size: 0.85em; background: var(--surface-2);
+      padding: 0.06em 0.3em; border-radius: 4px; border: 1px solid var(--line);
+    }
+    /* выбранный (нейтральный teal — вердикт правильности только на экране result) */
+    .opt:has(input:checked) {
+      border-color: var(--signal); background: var(--signal-wash);
+    }
+    .opt:has(input:checked) .opt-badge {
+      color: var(--signal-on); background: var(--signal); border-color: var(--signal);
+    }
+    .opt:has(input:focus-visible) {
+      outline: 2px solid var(--signal); outline-offset: 2px;
+    }
+
+    /* --- Сабмит + подсказка хоткеев -------------------------------------- */
+    .submit-row {
+      display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap;
+    }
+    .btn {
+      font-family: var(--font-ui); font-size: var(--fs-base); font-weight: var(--fw-semi);
+      border-radius: var(--r-md); padding: var(--s-3) var(--s-6);
+      cursor: pointer; border: 1px solid transparent;
+      transition: background var(--dur-1) var(--ease-out),
+                  border-color var(--dur-1) var(--ease-out),
+                  transform var(--dur-1) var(--ease-out);
+    }
+    .btn-primary { background: var(--signal); color: var(--signal-on); box-shadow: var(--shadow-sm); }
+    .btn-primary:hover { background: var(--signal-strong); }
+    .btn-primary:active { transform: translateY(1px); }
+    .btn-ghost {
+      background: transparent; color: var(--ink); border-color: var(--line-strong);
+    }
+    .btn-ghost:hover { border-color: var(--ink-3); background: var(--surface); }
+    .kbd-hint {
+      font-family: var(--font-mono); font-size: var(--fs-xs);
+      color: var(--ink-3); display: inline-flex; gap: var(--s-3); flex-wrap: wrap;
+    }
+    kbd {
+      font-size: 0.85em; color: var(--ink-2); background: var(--surface-2);
+      border: 1px solid var(--line); border-bottom-width: 2px;
+      border-radius: 4px; padding: 0.05em 0.4em;
+    }
+
+    /* --- Пустое состояние ------------------------------------------------ */
+    .empty { text-align: center; padding: var(--s-8) 0; }
+    .empty-mark {
+      width: 2.5rem; height: 2.5rem; margin: 0 auto var(--s-4);
+      display: grid; place-items: center; border-radius: var(--r-md);
+      background: var(--surface); border: 1px solid var(--line);
+      font-family: var(--font-mono); color: var(--ink-3); font-size: var(--fs-lg);
+    }
+    .empty-title {
+      font-family: var(--font-hero); font-weight: var(--fw-medium);
+      font-size: var(--fs-xl); letter-spacing: var(--track-tight);
+      margin: 0 0 var(--s-3); color: var(--ink);
+    }
+    .empty-desc {
+      color: var(--ink-2); max-width: 42ch; margin: 0 auto var(--s-5);
+      line-height: var(--lh-normal);
+    }
+    .empty-actions { display: inline-flex; gap: var(--s-3); flex-wrap: wrap; justify-content: center; }
+
+    /* --- Аннотация макета (не часть UI) ---------------------------------- */
+    .mock-band {
+      max-width: var(--page-max); margin: var(--s-8) auto 0;
+      padding: 0 var(--gutter);
+    }
+    .mock-label {
+      font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono);
+      color: var(--ink-3); text-transform: none;
+      display: flex; align-items: center; gap: var(--s-3);
+      margin-bottom: var(--s-4);
+    }
+    .mock-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+    /* ===== Motion (emil): вход <300ms, ease-out, reduced-motion-фолбэк ==== */
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .anim { opacity: 1; } /* дефолт видим (reveal усиливает уже видимое) */
+    @media (prefers-reduced-motion: no-preference) {
+      .anim { animation: rise var(--dur-3) var(--ease-out) both; }
+      .stagger > * { animation: rise var(--dur-3) var(--ease-out) both; }
+      .stagger > *:nth-child(1) { animation-delay: 40ms; }
+      .stagger > *:nth-child(2) { animation-delay: 80ms; }
+      .stagger > *:nth-child(3) { animation-delay: 120ms; }
+      .stagger > *:nth-child(4) { animation-delay: 160ms; }
+    }
+
+    @media (max-width: 640px) {
+      .site { flex-wrap: wrap; }
+      .rail { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Перейти к вопросу</a>
+
+  <header class="site">
+    <a class="brand" href="#" aria-label="Тренажёр собеседований, на главную">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <b>собес</b><span>/трек</span>
+    </a>
+    <nav class="site-nav" aria-label="Основная навигация">
+      <a href="#" aria-current="page">Фокус</a>
+      <a href="#">Аналитика</a>
+      <a href="#">Настройки</a>
+    </nav>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Переключить тему">
+      <span id="theme-label">тема: авто</span>
+    </button>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <!-- =========== СОСТОЯНИЕ: вопрос + варианты (основное) =============== -->
+    <article class="focus">
+      <div class="rail anim">
+        <div class="rail-progress">
+          <div class="rail-count">Вопрос <b>7</b> / 20</div>
+          <div class="progress-track" role="progressbar" aria-label="Прогресс сессии"
+               aria-valuemin="0" aria-valuemax="20" aria-valuenow="7">
+            <div class="progress-fill" style="transform: scaleX(0.35)"></div>
+          </div>
+        </div>
+        <span class="streak-chip"><span class="spark" aria-hidden="true"></span>стрик 5 дней</span>
+        <button type="button" class="rail-finish">Завершить сессию</button>
+      </div>
+
+      <p class="focus-topic anim">spring<span class="dot">·</span>транзакции</p>
+      <h1 class="focus-question anim">
+        Что произойдёт, если вызвать метод с <code>@Transactional</code> из другого метода того же бина?
+      </h1>
+
+      <details class="code-details anim">
+        <summary class="code-summary">Пример кода</summary>
+        <pre class="code-body"><code>@Service
+public class OrderService {
+
+    @Transactional
+    public void placeOrder() {
+        writeAudit();          // внутренний вызов
+    }
+
+    @Transactional(propagation = REQUIRES_NEW)
+    public void writeAudit() { /* ... */ }
+}</code></pre>
+      </details>
+
+      <form id="interview-form" onsubmit="return false">
+        <input type="hidden" name="questionId" value="demo-7">
+        <div class="options stagger" id="interview-options" role="radiogroup" aria-label="Варианты ответа">
+          <label class="opt" data-option-id="a" aria-label="Вариант 1">
+            <input type="radio" name="optionId" value="a">
+            <span class="opt-badge" aria-hidden="true">A</span>
+            <span class="opt-text">Аннотация на <code>writeAudit()</code> будет проигнорирована: внутренний вызов идёт напрямую, минуя прокси Spring.</span>
+          </label>
+          <label class="opt" data-option-id="b" aria-label="Вариант 2">
+            <input type="radio" name="optionId" value="b" checked>
+            <span class="opt-badge" aria-hidden="true">B</span>
+            <span class="opt-text">Создастся новая транзакция, потому что указан <code>REQUIRES_NEW</code>.</span>
+          </label>
+          <label class="opt" data-option-id="c" aria-label="Вариант 3">
+            <input type="radio" name="optionId" value="c">
+            <span class="opt-badge" aria-hidden="true">C</span>
+            <span class="opt-text">Spring выбросит исключение о вложенных транзакциях.</span>
+          </label>
+          <label class="opt" data-option-id="d" aria-label="Вариант 4">
+            <input type="radio" name="optionId" value="d">
+            <span class="opt-badge" aria-hidden="true">D</span>
+            <span class="opt-text">Внешняя транзакция приостановится, а <code>writeAudit()</code> выполнится в отдельной.</span>
+          </label>
+        </div>
+        <div class="submit-row">
+          <button type="submit" id="interview-submit" class="btn btn-primary">Проверить ответ</button>
+          <span class="kbd-hint">
+            <span><kbd>1</kbd>–<kbd>9</kbd> выбрать</span>
+            <span><kbd>↑</kbd><kbd>↓</kbd> навигация</span>
+            <span><kbd>Enter</kbd> ответить</span>
+          </span>
+        </div>
+      </form>
+    </article>
+
+    <!-- =========== СОСТОЯНИЕ: нет вопросов (документируем отдельно) ====== -->
+    <div class="mock-band">
+      <p class="mock-label">состояние: нет вопросов</p>
+    </div>
+    <article class="focus" style="padding-top: var(--s-5)">
+      <section class="empty">
+        <div class="empty-mark" aria-hidden="true">∅</div>
+        <h2 class="empty-title">Сейчас нет вопросов</h2>
+        <p class="empty-desc">Нет доступных вопросов по выбранным фильтрам. Открой настройки и расширь выборку.</p>
+        <div class="empty-actions">
+          <a href="#" class="btn btn-primary">Открыть настройки</a>
+          <a href="#" class="btn btn-ghost">Обновить тренировку</a>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <script>
+    // Тема: авто → светлая → тёмная (для ревью макета в обеих темах).
+    (function () {
+      var root = document.documentElement, btn = document.getElementById('theme-toggle'),
+          label = document.getElementById('theme-label'), modes = ['авто', 'светлая', 'тёмная'], i = 0;
+      btn.addEventListener('click', function () {
+        i = (i + 1) % modes.length;
+        if (modes[i] === 'авто') root.removeAttribute('data-theme');
+        else root.setAttribute('data-theme', modes[i] === 'тёмная' ? 'dark' : 'light');
+        label.textContent = 'тема: ' + modes[i];
+      });
+    })();
+  </script>
+</body>
+</html>
