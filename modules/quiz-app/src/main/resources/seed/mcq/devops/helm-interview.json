@@ -2049,7 +2049,7 @@
           "question_text": "Как `Helm` интегрируется с `ArgoCD` и `GitOps`?",
           "options": [
             {
-              "text": "ArgoCD требует, чтобы Helm был установлен и выполнял `helm install` внутри кластера, сохраняя релиз как Secret.",
+              "text": "`ArgoCD` под капотом выполняет `helm upgrade --install` внутри кластера и хранит состояние релиза как Secret `sh.helm.release.v1`, поэтому релизы видны в `helm list`.",
               "correct": false,
               "sections": {
                 "what_actually": "ArgoCD не зовёт `helm install`: он рендерит chart через `helm template` и сам применяет манифесты; обычного Helm-релиза-Secret при этом нет.",
@@ -2061,7 +2061,7 @@
               "order": 0
             },
             {
-              "text": "Откат в GitOps с ArgoCD делается командой `helm rollback`, а не через git.",
+              "text": "Откат в GitOps с ArgoCD выполняют командой `helm rollback <release> <revision>`, переключающей приложение на предыдущую ревизию чарта.",
               "correct": false,
               "sections": {
                 "what_actually": "В GitOps откат — это revert коммита в git: ArgoCD приводит кластер к новому (откатанному) состоянию из репозитория, без `helm rollback`.",
@@ -2086,7 +2086,7 @@
               "order": 2
             },
             {
-              "text": "Flux для деплоя Helm-чартов использует тот же ресурс `Application`, что и ArgoCD.",
+              "text": "Flux разворачивает Helm-чарты через тот же CRD `Application`, что и ArgoCD, отличаясь лишь контроллером-реконсилятором.",
               "correct": false,
               "sections": {
                 "what_actually": "ArgoCD использует CRD `Application`, а Flux — собственный `HelmRelease` (`helm.toolkit.fluxcd.io`); это разные API.",
@@ -2109,7 +2109,7 @@
           "question_text": "Какие best practices применяются при разработке `Helm Charts`?",
           "options": [
             {
-              "text": "Best practice — использовать тег `latest` для образов, чтобы Pod-ы всегда подтягивали самую свежую версию приложения.",
+              "text": "Именование: задавать ресурсам статическое `metadata.name` без префикса release, чтобы два релиза одного chart в namespace не плодили разные имена объектов.",
               "correct": false,
               "sections": {
                 "what_actually": "`latest` — антипаттерн: он делает деплой невоспроизводимым (разные Pod-ы могут получить разные образы); фиксируют конкретную версию через `image.tag`.",
@@ -2121,7 +2121,7 @@
               "order": 0
             },
             {
-              "text": "Best practice — хранить секреты прямо в `values.yaml` chart, чтобы они версионировались вместе с конфигурацией.",
+              "text": "Шаблоны: для переиспользования блоков предпочитать `template`, а не `include`, потому что вывод `template` можно передать в `nindent` для корректных отступов.",
               "correct": false,
               "sections": {
                 "what_actually": "Plaintext-секреты в `values.yaml` недопустимы (git хранит их открыто); их шифруют (SOPS/Sealed Secrets) или держат во внешнем хранилище.",
@@ -2133,7 +2133,7 @@
               "order": 1
             },
             {
-              "text": "Best practice — не бампать `version` chart при изменениях, чтобы не плодить версии и не ломать существующие установки.",
+              "text": "Values: валидировать достаточно директивой `required` в шаблонах; `values.schema.json` дублирует эту проверку, поэтому его добавлять не рекомендуют.",
               "correct": false,
               "sections": {
                 "what_actually": "`version` chart как раз бампают при каждом изменении шаблонов/логики — это основа отслеживания и воспроизводимости релизов.",
@@ -2182,7 +2182,7 @@
               "order": 0
             },
             {
-              "text": "В OCI-реестре chart-ы публикуются с файлом `index.yaml`, как в классическом репозитории, и доступны через `helm search`.",
+              "text": "В OCI-реестре Helm при `helm push` генерирует `index.yaml`, и chart-ы находятся через `helm search repo`, как в HTTP-репозитории.",
               "correct": false,
               "sections": {
                 "what_actually": "OCI не использует `index.yaml`: chart адресуется по тегу версии, а `helm search` по OCI-реестру не работает.",
@@ -2194,7 +2194,7 @@
               "order": 1
             },
             {
-              "text": "Для аутентификации в OCI-реестре нужен отдельный механизм Helm-токенов, не связанный с docker login.",
+              "text": "Аутентификация в OCI-реестре требует отдельного `helm registry token`-механизма и не переиспользует credentials из `docker login` (`~/.docker/config.json`).",
               "correct": false,
               "sections": {
                 "what_actually": "Аутентификация идёт через стандартные docker-кредешелы: `helm registry login` использует те же логин/пароль/токен, что и docker.",
@@ -2206,7 +2206,7 @@
               "order": 2
             },
             {
-              "text": "OCI-чарты можно подписывать только через GPG (Helm provenance); современные инструменты вроде `cosign` для OCI не поддерживаются.",
+              "text": "Chart-ы в OCI-реестре подписывают только классическим Helm provenance (`.prov` + GPG); `cosign` подписывает Docker-образы, но не Helm-OCI-артефакты.",
               "correct": false,
               "sections": {
                 "what_actually": "Для OCI-чартов как раз поддерживается подпись через `cosign`/Sigstore (и Notary v2); GPG-provenance — более классический подход.",
@@ -2349,7 +2349,7 @@
           "question_text": "Как управлять секретами через `Helm Secrets` плагин с `SOPS`?",
           "options": [
             {
-              "text": "`helm-secrets` шифрует только структуру YAML (имена ключей), оставляя сами значения секретов в открытом виде.",
+              "text": "`helm-secrets` через `SOPS` шифрует имена ключей YAML, оставляя их значения в открытом виде, чтобы git-diff секретов оставался читаемым.",
               "correct": false,
               "sections": {
                 "what_actually": "SOPS наоборот шифрует значения, а структуру/ключи оставляет читаемыми для удобного diff; открытыми значения не остаются.",
@@ -2361,7 +2361,7 @@
               "order": 0
             },
             {
-              "text": "`helm-secrets` хранит ключ шифрования прямо внутри зашифрованного файла, поэтому внешний KMS или age не нужны.",
+              "text": "`helm-secrets` встраивает симметричный ключ шифрования в секцию `sops:` самого файла, поэтому внешний KMS или `age`-ключ для расшифровки не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключи шифрования держат во внешнем хранилище (AWS/GCP KMS, age, PGP); в файле лежит лишь метаданные о том, каким ключом он зашифрован.",
@@ -2373,7 +2373,7 @@
               "order": 1
             },
             {
-              "text": "Расшифрованный через `helm secrets dec` файл `.dec` Helm удаляет автоматически сразу после деплоя.",
+              "text": "Команда `helm secrets dec secrets.enc.yaml` расшифровывает данные только в памяти и ничего не пишет на диск, поэтому файла `.dec` рядом не появляется.",
               "correct": false,
               "sections": {
                 "what_actually": "Файл `.dec` остаётся на диске с открытыми секретами; его нужно удалять вручную (`rm ...dec`) после использования.",
@@ -2422,7 +2422,7 @@
               "order": 0
             },
             {
-              "text": "Helm и Kustomize нельзя использовать вместе — это взаимоисключающие инструменты, и в одном пайплайне допустим только один.",
+              "text": "`ArgoCD` не позволяет держать Helm-source и Kustomize-overlay в одном `Application` — под каждый инструмент заводят отдельное приложение.",
               "correct": false,
               "sections": {
                 "what_actually": "Их штатно совмещают: через `--post-renderer`, через `helmCharts` в Kustomize и через multi-source в ArgoCD.",
@@ -2446,7 +2446,7 @@
               "order": 2
             },
             {
-              "text": "Kustomize не умеет вызывать Helm-чарты — функции `helmCharts` в `kustomization.yaml` не существует.",
+              "text": "Kustomize не умеет вызывать Helm-чарты: поля `helmCharts` в `kustomization.yaml` не существует, chart сначала рендерят отдельно.",
               "correct": false,
               "sections": {
                 "what_actually": "Kustomize 4.1+ поддерживает поле `helmCharts`, которое рендерит chart и позволяет наложить `patches` поверх результата.",
@@ -2529,7 +2529,7 @@
           "question_text": "Что такое `Helm provenance` и как подписывать чарты?",
           "options": [
             {
-              "text": "Helm Provenance шифрует содержимое chart, чтобы его нельзя было прочитать без приватного ключа издателя.",
+              "text": "Helm provenance шифрует содержимое `.tgz` ключом издателя, поэтому без публичного ключа `helm install` не может распаковать и отрендерить chart.",
               "correct": false,
               "sections": {
                 "what_actually": "Provenance не шифрует, а подписывает: chart остаётся читаемым, а `.prov` лишь подтверждает целостность и авторство через PGP-подпись.",
@@ -2541,7 +2541,7 @@
               "order": 0
             },
             {
-              "text": "Файл `.prov` не нужен для верификации — `helm install --verify` проверяет подпись по данным внутри самого `.tgz`.",
+              "text": "Файл `.prov` нужен лишь при публикации: `helm install --verify` восстанавливает подпись из аннотаций внутри `Chart.yaml` самого `.tgz`, поэтому класть его рядом не обязательно.",
               "correct": false,
               "sections": {
                 "what_actually": "`.prov` обязателен: именно он несёт PGP-подпись и хеши; без него `--verify` не сможет проверить chart.",
@@ -2566,7 +2566,7 @@
               "order": 2
             },
             {
-              "text": "`cosign` требует управления долгоживущими GPG-ключами точно так же, как классический Helm provenance.",
+              "text": "`cosign sign` подписывает OCI-чарт тем же долгоживущим GPG-keyring (`--keyring`), что и `helm package --sign`, отличаясь лишь форматом вывода подписи.",
               "correct": false,
               "sections": {
                 "what_actually": "`cosign`/Sigstore поддерживает keyless-подпись (через OIDC-идентичность), что избавляет от управления GPG-ключами — это его ключевое отличие от provenance.",
