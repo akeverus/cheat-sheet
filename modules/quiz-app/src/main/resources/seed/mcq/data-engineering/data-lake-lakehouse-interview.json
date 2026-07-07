@@ -669,7 +669,7 @@
           "question_text": "Что такое Apache Hudi?",
           "options": [
             {
-              "text": "`Hudi` и `Delta` — это одно и то же, просто два разных названия одного формата.",
+              "text": "`Apache Hudi` (от Uber, Apache с 2017) — самый старый из трёх table format'ов, UPSERT-первый под streaming inserts/updates. Два storage type: `Copy-on-Write` (CoW — log + base files, быстрая запись, медленнее чтение) и `Merge-on-Read` (MoR — переписывает `Parquet`-файлы целиком, как `Delta`/`Iceberg`). Есть indexing для UPSERT; силён в CDC-pipeline'ах.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные движки с разными форматами log: `Hudi` от `Uber` специализирован на UPSERT и streaming, `Delta` — от `Databricks` с `_delta_log`.",
@@ -681,7 +681,7 @@
               "order": 0
             },
             {
-              "text": "`Merge-on-Read` (MoR) переписывает `Parquet`-файл целиком при каждом update.",
+              "text": "`Apache Hudi` (от Uber, Apache с 2017) — один из трёх table format'ов, оптимизированный под read-heavy аналитику и batch-отчётность, а не под частые update. Два storage type: `Copy-on-Write` (CoW — переписывает `Parquet`-файлы целиком) и `Merge-on-Read` (MoR — log + base files, быстрая запись, медленнее чтение). Индексы ускоряют аналитические сканы; силён в редких больших batch-загрузках.",
               "correct": false,
               "sections": {
                 "what_actually": "Полный rewrite делает `Copy-on-Write`; MoR пишет изменения в log и мержит их при чтении — быстрая запись, медленнее чтение.",
@@ -693,7 +693,7 @@
               "order": 1
             },
             {
-              "text": "`Copy-on-Write` в `Hudi` пропускает запись в delta-log ради оптимизации быстрой записи.",
+              "text": "`Apache Hudi` (от Uber, Apache с 2017) — самый старый из трёх table format'ов, UPSERT-первый под streaming inserts/updates. Два storage type: `Copy-on-Write` (CoW — переписывает `Parquet`-файлы целиком) и `Merge-on-Read` (MoR — log + base files, быстрая запись, медленнее чтение). Индекса для поиска записей нет — каждый UPSERT сканирует все файлы партиции целиком; силён в CDC-pipeline'ах.",
               "correct": false,
               "sections": {
                 "what_actually": "CoW наоборот переписывает `Parquet`-файл целиком при update: быстрее чтение, медленнее запись; быструю запись даёт MoR через log.",
@@ -742,7 +742,7 @@
               "order": 0
             },
             {
-              "text": "На `Databricks` лучше использовать `Iceberg`, а на `Snowflake` — `Delta`.",
+              "text": "Если работаешь на `Databricks` — `Iceberg` (native). Если нужен multi-engine (`Trino`, `Snowflake`, `Spark`, `Flink`) — `Delta` (excellent multi-engine, лучшая schema evolution, hidden partitioning). Если streaming-heavy с UPSERT (CDC) — `Hudi`. Все три дают `ACID` и time travel, но различаются по vendor-neutrality, partitioning и merge-стратегии.",
               "correct": false,
               "sections": {
                 "what_actually": "Ровно наоборот: `Databricks` → `Delta` (native), `Snowflake` → `Iceberg` (external tables since 2023); связки перепутаны местами.",
@@ -754,7 +754,7 @@
               "order": 1
             },
             {
-              "text": "Все три формата идентичны по фичам, поэтому выбор между ними не имеет значения.",
+              "text": "Выбор определяется только популярностью: бери формат с большим числом GitHub-звёзд и community — по фичам `Delta`, `Iceberg` и `Hudi` идентичны и дают одинаковые `ACID`, time travel, schema evolution и merge-стратегии. Платформа (`Databricks`, `Trino`, `Snowflake`) и тип нагрузки (streaming/batch) роли не играют.",
               "correct": false,
               "sections": {
                 "what_actually": "Различия существенны: hidden partitioning у `Iceberg`, MoR-merge у `Hudi`, vendor-neutrality у `Iceberg`, native-привязка к `Databricks` у `Delta`.",
@@ -766,7 +766,7 @@
               "order": 2
             },
             {
-              "text": "`Hudi` — единственный из трёх форматов, который поддерживает time travel.",
+              "text": "Если работаешь на `Databricks` — `Delta` (native). Если нужен multi-engine (`Trino`, `Snowflake`, `Spark`, `Flink`) — `Iceberg`. Если нужен time travel — только `Hudi`: он единственный из трёх поддерживает запрос прошлых версий. Все три дают `ACID`, но различаются по vendor-neutrality и merge-стратегии.",
               "correct": false,
               "sections": {
                 "what_actually": "Все три поддерживают time travel: `Delta` через `_delta_log`, `Iceberg` через snapshots, `Hudi` через timeline.",
@@ -849,7 +849,7 @@
           "question_text": "Что такое time travel в Lakehouse?",
           "options": [
             {
-              "text": "`Time travel` хранит данные бесплатно — все версии живут вечно без дополнительных затрат.",
+              "text": "`Time travel` — запрос прошлых версий таблицы через transaction log: `SELECT * FROM my_table VERSION AS OF 5` или `TIMESTAMP AS OF '2025-04-15 10:00:00'`. Применяется для audit, rollback и ML reproducibility. Хранение старых версий бесплатно — движок дедуплицирует данные, поэтому `VACUUM` не нужен, и все версии живут вечно без дополнительных затрат.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждая старая версия — дополнительный storage; после retention period нужен `VACUUM` для очистки, иначе расходы растут.",
@@ -861,7 +861,7 @@
               "order": 0
             },
             {
-              "text": "`Time travel` требует отдельного backup-хранилища, куда копируются прошлые версии таблицы.",
+              "text": "`Time travel` — запрос прошлых версий таблицы, для которого движок копирует каждую версию в отдельное backup-хранилище (`S3`-бакет со снапшотами). Применяется для audit, rollback и ML reproducibility; запрос указывает нужный снапшот по номеру или дате. Цена — объём backup-хранилища, поэтому снапшоты чистят по расписанию.",
               "correct": false,
               "sections": {
                 "what_actually": "Time travel работает на той же таблице через transaction log; отдельный backup не нужен — старые файлы уже лежат рядом.",
@@ -886,7 +886,7 @@
               "order": 2
             },
             {
-              "text": "`VERSION AS OF` доступен только в `Snowflake`; в `Delta`/`Iceberg` такого синтаксиса нет.",
+              "text": "`Time travel` — запрос прошлых версий таблицы через transaction log, но синтаксис `VERSION AS OF` / `TIMESTAMP AS OF` есть только в `Snowflake`; в `Delta` и `Iceberg` прошлую версию можно получить лишь полным restore таблицы. Применяется для audit, rollback и ML reproducibility; цена — хранение старых версий.",
               "correct": false,
               "sections": {
                 "what_actually": "И `Delta`, и `Iceberg` поддерживают `VERSION AS OF` и `TIMESTAMP AS OF`; это не эксклюзив `Snowflake`.",
@@ -1029,7 +1029,7 @@
           "question_text": "Что такое compaction и как решается small files problem?",
           "options": [
             {
-              "text": "`Compaction` делается через `DROP` таблицы + `INSERT` всех данных заново.",
+              "text": "`Compaction` объединяет мелкие файлы через `DROP TABLE` + повторный `INSERT` всех данных заново — это единственный способ пересобрать файлы в `Delta`/`Iceberg`. Streaming inserts создают тысячи small files (overhead на open/close), поэтому пересоздавать таблицу нужно регулярно. `VACUUM` затем удаляет старые версии после retention period.",
               "correct": false,
               "sections": {
                 "what_actually": "Это перепишет всё целиком; `OPTIMIZE` мержит мелкие файлы инкрементально, а `VACUUM` чистит старые версии после retention.",
@@ -1054,7 +1054,7 @@
               "order": 1
             },
             {
-              "text": "`VACUUM` удаляет файлы немедленно сразу после compaction, без всякого retention.",
+              "text": "`Compaction` объединяет много мелких файлов в большие: `OPTIMIZE my_table` (`Delta`) или `rewrite_data_files` (`Iceberg`), опционально с `ZORDER BY`. Streaming inserts создают тысячи small files, поэтому compaction делают регулярно. `VACUUM` затем удаляет старые файлы немедленно, в той же операции, что и compaction, игнорируя retention period.",
               "correct": false,
               "sections": {
                 "what_actually": "`VACUUM` уважает retention period (default 7 дней); немедленное удаление сломало бы time travel на недавние версии.",
@@ -1066,7 +1066,7 @@
               "order": 2
             },
             {
-              "text": "Small files — не проблема, потому что `Parquet` открывается очень быстро.",
+              "text": "`Compaction` объединяет мелкие файлы в большие через `OPTIMIZE` (`Delta`) или `rewrite_data_files` (`Iceberg`). Но регулярно делать его не нужно: тысячи small files не создают overhead, потому что `Parquet` — колоночный формат и открывается мгновенно, а планировщик читает лишь footer. `VACUUM` при этом всё равно чистит старые версии после retention.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть overhead на open/close, `S3 LIST` и `Spark` task per file; 10000 файлов по 1KB убивают performance независимо от скорости открытия `Parquet`.",
@@ -1089,7 +1089,7 @@
           "question_text": "Что такое Medallion architecture (Bronze, Silver, Gold)?",
           "options": [
             {
-              "text": "`Bronze` хранит готовые BI-отчёты, а `Gold` — сырые необработанные данные.",
+              "text": "`Medallion` (Databricks) — архитектура Lakehouse из трёх слоёв `Delta`-таблиц: `Bronze` (business-level aggregations, готовые BI marts) → `Silver` (cleaned, joined) → `Gold` (raw, append-only, сырые данные из source). Поток: source → Gold → cleaning/dedupe → Silver → aggregations → Bronze. Аналог dbt marts/intermediate/staging в Lakehouse-контексте.",
               "correct": false,
               "sections": {
                 "what_actually": "Ровно наоборот: `Bronze` = raw данные как пришли, `Gold` = business-aggregations и BI marts.",
@@ -1101,7 +1101,7 @@
               "order": 0
             },
             {
-              "text": "`Silver` и `Gold` — это одно и то же, просто два разных названия одного слоя.",
+              "text": "`Medallion` (Databricks) — архитектура Lakehouse из двух слоёв `Delta`-таблиц: `Bronze` (raw, append-only, минимум transformations) → `Silver`/`Gold` — один слой под двумя именами (cleaned, deduplicated и business-level aggregations сразу). Поток: source → Bronze → cleaning + aggregations → Silver/Gold. Аналог dbt staging/marts.",
               "correct": false,
               "sections": {
                 "what_actually": "Слои различны: `Silver` — atomic cleaned entities (dedup, join), `Gold` — aggregated business metrics для BI.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "`Medallion` требует исключительно `Databricks` — на open-source `Spark` он не работает.",
+              "text": "`Medallion` — архитектура Lakehouse из трёх слоёв: `Bronze` (raw, append-only) → `Silver` (cleaned, deduplicated, joined) → `Gold` (business-level aggregations, BI marts). Но это проприетарная фича `Databricks`: на open-source `Spark` или с `Iceberg` слои Medallion не создать, паттерн работает только на managed-платформе. Поток: source → Bronze → Silver → Gold.",
               "correct": false,
               "sections": {
                 "what_actually": "Это паттерн именования слоёв; он работает на любом engine с `Delta`/`Iceberg`, не только на `Databricks`.",
@@ -1329,7 +1329,7 @@
           "question_text": "Зачем нужны Trino / Presto для query на lake?",
           "options": [
             {
-              "text": "`Trino` — это столбцовая БД с собственным custom storage, куда заранее загружают данные.",
+              "text": "`Trino` (бывший `PrestoSQL`) — столбцовая аналитическая БД с собственным custom storage: данные заранее загружают (`INSERT`/`COPY`) в кластер `Trino`, где они хранятся в оптимизированном колоночном формате. Применяется для BI-дашбордов, ad-hoc анализа huge datasets и быстрых агрегаций по загруженным таблицам. Читает из своего хранилища. Managed-вариант — `Starburst`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Trino` — distributed SQL query engine без storage; он читает данные из external sources (`S3`, `Postgres`, `Kafka`) через connectors.",
@@ -1341,7 +1341,7 @@
               "order": 0
             },
             {
-              "text": "`Trino` требует предварительной загрузки всех данных в свой кластер перед выполнением запроса.",
+              "text": "`Trino` (бывший `PrestoSQL`) — distributed SQL engine, который перед запросом загружает все данные из external sources в память кластера, а затем выполняет `JOIN` и агрегации над этой полной копией. Применяется для query на Lake (`Iceberg`, `Delta`), federated queries и ad-hoc анализа. Из-за полной загрузки размер датасета ограничен суммарной RAM кластера. Managed-вариант — `Starburst`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Trino` читает напрямую из source через connectors — никакого ETL и предзагрузки не нужно.",
@@ -1366,7 +1366,7 @@
               "order": 2
             },
             {
-              "text": "`Trino` поддерживает только `Hive Metastore` и не работает с другими каталогами.",
+              "text": "`Trino` (бывший `PrestoSQL`) — distributed SQL engine для query на Lake: `JOIN` таблиц из разных источников в одном запросе. Но работает он только через `Hive Metastore` — единственный поддерживаемый каталог; с `Iceberg` REST, `Glue` или `Kafka` он не интегрируется. Применяется для ad-hoc анализа huge datasets. Managed-вариант — `Starburst`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Iceberg`, `Delta`, `Hudi` catalogs все работают; у `Trino` 30+ connectors к разным data sources.",
