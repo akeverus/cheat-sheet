@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring Batch` есть только один тип слушателя — `JobExecutionListener` для событий начала и конца `Job`.",
+              "text": "Слушателей всего два: `JobExecutionListener` (`beforeJob`/`afterJob`) для жизненного цикла `Job` и `StepExecutionListener` (`beforeStep`/`afterStep`) для `Step`; отдельных слушателей уровня chunk и item (`ChunkListener`, `ItemReadListener`, `ItemWriteListener`) в `Spring Batch` нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Слушатели есть на всех уровнях: Job, Step, Chunk, Read, Process, Write, Skip, Retry — не только на уровне Job.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Слушатели можно реализовать только через интерфейсы; аннотаций вроде `@AfterRead` в `Spring Batch` нет.",
+              "text": "Слушатели реализуют исключительно через интерфейсы (`ChunkListener`, `ItemReadListener`, `SkipListener`); аннотационный стиль вроде `@AfterRead` или `@OnReadError` в `Spring Batch` не поддерживается — эти аннотации относятся к `Spring Integration`.",
               "correct": false,
               "sections": {
                 "what_actually": "Кроме интерфейсов поддерживается аннотационный стиль: `@BeforeJob`, `@AfterRead`, `@OnReadError`, `@AfterChunk` и др.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Слушатели регистрируются глобально на весь контекст и не привязываются к конкретному `Step`.",
+              "text": "Слушатели регистрируются глобально на уровне `JobRepository` и применяются ко всем `Step` контекста сразу; привязывать их к конкретному `Step` через `.listener(...)` в `StepBuilder` не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Слушатели регистрируются адресно через `.listener(...)` у `StepBuilder` или `JobBuilder`, привязываясь к шагу/заданию.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "При партиционировании все Slave-шаги читают одни и те же данные целиком, а потом дедуплицируют результат.",
+              "text": "При партиционировании каждый Slave-`Step` читает весь набор данных целиком, а `Partitioner` затем убирает дубликаты, объединяя результаты в Master-шаге.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый Slave обрабатывает свой раздел (например, свой диапазон id) по границам из `ExecutionContext`, без чтения всех данных и дедупликации.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Slave-reader в партиционировании не требует `@StepScope` — границы раздела доступны обычному синглтон-бину.",
+              "text": "Slave-reader берёт границы своего раздела (`minId`/`maxId`) прямо из `ExecutionContext` без `@StepScope` — обычный синглтон-бин уже видит `stepExecutionContext` через `@Value`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@StepScope` обязателен: `@Value(\"#{stepExecutionContext['minId']}\")` разрешается только в момент выполнения Slave-шага.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Партиционирование, как и многопоточный шаг, не поддерживает restart с точки сбоя.",
+              "text": "Партиционирование, как и многопоточный шаг (multithreaded step), не поддерживает рестарт с точки сбоя — при перезапуске все разделы обрабатываются заново с самого начала.",
               "correct": false,
               "sections": {
                 "what_actually": "Партиционирование как раз поддерживает restart: каждый Slave имеет свой `ExecutionContext` и продолжает с места сбоя.",
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ChunkListener` вызывается один раз на весь `Step`, а не на каждый chunk.",
+              "text": "`ChunkListener` срабатывает один раз на весь `Step`: его `beforeChunk`/`afterChunk` работают как аналоги `beforeStep`/`afterStep`, а не вызываются на каждой порции-транзакции.",
               "correct": false,
               "sections": {
                 "what_actually": "`ChunkListener` срабатывает на каждый chunk (`beforeChunk`/`afterChunk`); один раз на шаг вызывается `StepExecutionListener`.",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ItemWriteListener.afterWrite()` получает один элемент, а не весь записанный chunk.",
+              "text": "`ItemWriteListener.afterWrite()` получает один записанный элемент `T`, поэтому для аудита всей порции его вызывают по разу на каждый item внутри chunk.",
               "correct": false,
               "sections": {
                 "what_actually": "`afterWrite` получает `Chunk<? extends T>` со всеми элементами порции, а не один элемент.",
@@ -2088,7 +2088,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Причину отката chunk в `afterChunkError` узнать нельзя — исключение туда не передаётся.",
+              "text": "Причину отката chunk в `afterChunkError` получить нельзя: `ChunkContext` не хранит исключение, и его приходится ловить отдельным `SkipListener.onSkipInWrite()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Исключение доступно через `context.getAttribute(ChunkListener.ROLLBACK_EXCEPTION_KEY)`.",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring Batch 5` по-прежнему обязательна `@EnableBatchProcessing`, а кастомизация делается только через `JobRepositoryFactoryBean`.",
+              "text": "В `Spring Batch 5` `@EnableBatchProcessing` по-прежнему обязательна для включения инфраструктуры, а тонкую настройку `JobRepository` делают только через `JobRepositoryFactoryBean`.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Batch 5`/`Boot 3` `@EnableBatchProcessing` не нужна; кастомизация идёт через `DefaultBatchConfiguration` или явные атрибуты аннотации.",
@@ -2256,7 +2256,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Batch 5` рекомендует `DataSourceTransactionManager` и отказывается от `JdbcTransactionManager`.",
+              "text": "`Spring Batch 5` рекомендует `DataSourceTransactionManager` как менеджер транзакций по умолчанию для JDBC-ресурсов и постепенно отказывается от `JdbcTransactionManager`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: рекомендован `JdbcTransactionManager` (поддерживает `SQLWarning`), `DataSourceTransactionManager` — устаревающий выбор.",
@@ -2268,7 +2268,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Spring Batch 5` работает на Java 8 и не поддерживает `record` в качестве domain-объектов.",
+              "text": "`Spring Batch 5` требует минимум Java 17, но `record` в качестве domain-объектов для `ItemReader`/`ItemWriter` по-прежнему не поддерживает — нужны классы с сеттерами.",
               "correct": false,
               "sections": {
                 "what_actually": "Минимальная версия — Java 17, и `record` поддерживается как domain-объект.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`gridSize` задаёт размер chunk (число элементов в транзакции), а не количество партиций.",
+              "text": "`gridSize` задаёт размер chunk — число элементов в одной транзакции Worker-`Step`, а не количество создаваемых партиций; на число партиций влияет только `TaskExecutor`.",
               "correct": false,
               "sections": {
                 "what_actually": "`gridSize` — это число партиций (Workers); размер транзакционной порции задаёт `chunk(size, tx)`.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`PartitionHandler` не нужен — Manager-`Step` сам запускает Worker-шаги без него.",
+              "text": "`PartitionHandler` не требуется — Manager-`Step` сам создаёт `StepExecution` для каждой партиции и напрямую запускает Worker-шаги через свой `TaskExecutor`.",
               "correct": false,
               "sections": {
                 "what_actually": "Именно `PartitionHandler` (например, `TaskExecutorPartitionHandler`) исполняет Worker-шаги по партициям; без него распределение не настроено.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`TaskExecutorPartitionHandler` распределяет Worker-шаги по разным JVM через брокер сообщений.",
+              "text": "`TaskExecutorPartitionHandler` распределяет Worker-шаги по разным JVM, отправляя запросы разделов через брокер сообщений (`Spring Integration`).",
               "correct": false,
               "sections": {
                 "what_actually": "`TaskExecutorPartitionHandler` — локальный параллелизм в одном JVM; для разных JVM нужен `MessageChannelPartitionHandler` (remote).",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@SpringBatchTest` нужен только для запуска всего `Job`; отдельный `Step` через `JobLauncherTestUtils` запустить нельзя.",
+              "text": "`@SpringBatchTest` и `JobLauncherTestUtils` умеют запускать только весь `Job` через `launchJob(params)`; отдельный `Step` изолированно протестировать нельзя — метода `launchStep(...)` нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`JobLauncherTestUtils.launchStep(\"stepName\")` запускает отдельный шаг изолированно, не только весь `Job`.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@StepScope`-бины в тестах активируются автоматически без какой-либо поддержки от `@SpringBatchTest`.",
+              "text": "`@StepScope`-бины в тестах активируются автоматически при поднятии контекста, поэтому `StepScopeTestExecutionListener` из `@SpringBatchTest` для доступа к `stepExecutionContext` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Их активирует `StepScopeTestExecutionListener`, который регистрирует именно `@SpringBatchTest`; без него scope не работает в тесте.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Очистка метаданных между тестами не требуется — `JobLauncherTestUtils` сам сбрасывает состояние перед каждым запуском.",
+              "text": "Очистка метаданных между тестами не нужна: `JobLauncherTestUtils` перед каждым `launchJob` сам удаляет предыдущие `JobExecution` из `JobRepository`.",
               "correct": false,
               "sections": {
                 "what_actually": "Метаданные не сбрасываются сами: нужен `jobRepositoryTestUtils.removeJobExecutions()`, иначе повтор тех же параметров конфликтует.",
