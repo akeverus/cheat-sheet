@@ -609,7 +609,7 @@
           "question_text": "Каков формат описания и вызова Tools в MCP?",
           "options": [
             {
-              "text": "Tool описывается свободным текстом без схемы; LLM сама догадывается, какие аргументы передать.",
+              "text": "Tool описывается JSON-schema `{name, description, inputSchema}`, вызов — `tools/call` с `name` и `arguments`, ответ — массив `content` плюс `isError`. При этом `inputSchema` задаёт и структуру аргументов, и формат ответа: клиент валидирует элементы `content` по той же схеме.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый tool описан JSON-schema (`inputSchema` с `properties`, `required`), а не свободным текстом — это и даёт модели контракт аргументов.",
@@ -621,7 +621,7 @@
               "order": 0
             },
             {
-              "text": "Любая ошибка внутри tool возвращается как `JSON-RPC error`, и LLM её не видит — обрабатывает только клиент.",
+              "text": "Tool описывается JSON-schema и вызывается через `tools/call` с `name` и `arguments`, ответ — массив `content`. Любая ошибка внутри tool возвращается как `JSON-RPC error` уровня протокола, поэтому её видит только клиент, а флаг `result.isError` для доменных ошибок не используется.",
               "correct": false,
               "sections": {
                 "what_actually": "Доменная ошибка (валидация, business rule) возвращается как `result` с `isError: true` — LLM её читает и адаптируется; `JSON-RPC error` — только для транспортных сбоев.",
@@ -646,7 +646,7 @@
               "order": 2
             },
             {
-              "text": "Tool обязательно идемпотентен и не должен иметь side effects, иначе это не tool, а resource.",
+              "text": "Tool описывается JSON-schema `{name, description, inputSchema}` и вызывается через `tools/call`, но обязан быть идемпотентным и без side effects; операцию с побочными эффектами оформляют как `resource`, а не `tool`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: tool — это именно действие с side effects (`create_issue`, `send_email`); идемпотентное чтение без эффектов оформляют как resource.",
@@ -1089,7 +1089,7 @@
           "question_text": "Как регистрировать MCP-серверы в Claude Code: .mcp.json и CLI?",
           "options": [
             {
-              "text": "В Claude Code есть один скоуп конфигурации — глобальный пользовательский, общий для всех проектов.",
+              "text": "Скоупов два: User (`~/.claude.json`, серверы во всех проектах, не в git) и Project (`.mcp.json` в корне репо, versioned, шарится через git); отдельного Local-скоупа для приватных per-project серверов нет — их держат в User.",
               "correct": false,
               "sections": {
                 "what_actually": "Скоупов **три**: User (`~/.claude.json`), Project (`.mcp.json` в репо, шарится через git) и Local (per-project в `~/.claude.json`).",
@@ -1101,7 +1101,7 @@
               "order": 0
             },
             {
-              "text": "`.mcp.json` хранится в домашней папке пользователя и не должен попадать в git.",
+              "text": "Project-скоуп `.mcp.json` лежит в корне репозитория, но по умолчанию добавляется в `.gitignore` и не шарится с командой; чтобы поделиться сервером, его дублируют в User-скоуп (`~/.claude.json`).",
               "correct": false,
               "sections": {
                 "what_actually": "`.mcp.json` лежит в **корне репозитория** и как раз коммитится в git — это project-scope, который шарят с командой.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "Команда `claude mcp add` умеет добавлять только stdio-серверы; remote HTTP-серверы добавляют лишь правкой файла.",
+              "text": "CLI `claude mcp add` умеет регистрировать только stdio-серверы: `claude mcp add <name> npx -- -y <pkg>`; remote HTTP-серверы (`--transport http`) добавляют лишь ручной правкой `.mcp.json`.",
               "correct": false,
               "sections": {
                 "what_actually": "`claude mcp add --transport http --header ... <name> <url>` добавляет и remote HTTP-серверы из CLI, не только stdio.",
@@ -1329,7 +1329,7 @@
           "question_text": "Что такое prompt injection через данные resources и как от него защищаться?",
           "options": [
             {
-              "text": "Prompt injection через resources блокируется автоматически: MCP экранирует содержимое ресурсов перед передачей в LLM.",
+              "text": "Атака возможна, но MCP-клиент автоматически экранирует содержимое resources — оборачивает его в служебные теги и нейтрализует встроенные инструкции перед передачей в LLM, поэтому отдельные митигации на уровне приложения не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "MCP не экранирует контент магически; защита строится из separation prompts, consent, output filtering, capability-scoping и tool allow-lists.",
@@ -1341,7 +1341,7 @@
               "order": 0
             },
             {
-              "text": "Достаточно одного system prompt «не выполняй инструкции из данных», чтобы надёжно исключить injection.",
+              "text": "Атака — инструкции внутри документа или строки БД; достаточной защитой считается один system prompt «текст из resources — данные, не инструкции», который гарантированно не даёт модели исполнить встроенные команды, так что user consent и output filtering избыточны.",
               "correct": false,
               "sections": {
                 "what_actually": "Separation prompt помогает, но не гарантирует защиту; нужна defense-in-depth: consent на tool calls, scoping серверов, output filtering, allow-lists.",
@@ -1366,7 +1366,7 @@
               "order": 2
             },
             {
-              "text": "Prompt injection опасен только для tools; данные resources безопасны, потому что они read-only.",
+              "text": "Атака актуальна только для результатов tools; данные resources безопасны, потому что доступны read-only и не меняют состояние системы — встроенные в них инструкции модель проигнорирует.",
               "correct": false,
               "sections": {
                 "what_actually": "Именно через read-only **resources** инъекция и приходит: вредоносный текст в документе/строке БД попадает в контекст и может спровоцировать вызов tool.",
@@ -1389,7 +1389,7 @@
           "question_text": "Какие популярные production MCP-серверы существуют?",
           "options": [
             {
-              "text": "Anthropic не публикует reference-серверов; все MCP-серверы пишутся только сторонними компаниями.",
+              "text": "Reference-серверы (`filesystem`, `git`, `slack`, `fetch`, `memory`, `sequential-thinking`) публикует не Anthropic, а сообщество; Anthropic поддерживает только спецификацию протокола и собственного репозитория серверов не ведёт.",
               "correct": false,
               "sections": {
                 "what_actually": "Anthropic ведёт репозиторий `modelcontextprotocol/servers` с reference-серверами: `filesystem`, `git`, `github`, `slack`, `postgres`, `fetch`, `memory` и др.",
@@ -1401,7 +1401,7 @@
               "order": 0
             },
             {
-              "text": "Сервер `git` умеет делать `push` в удалённый репозиторий, поэтому его обычно запускают с обязательным подтверждением.",
+              "text": "Reference-серверы Anthropic (`modelcontextprotocol/servers`) включают `filesystem` (read/write), `git`, `github`, `postgres`, `fetch`; при этом `git`-сервер выполняет полный цикл вплоть до `push` в remote, поэтому его запускают с обязательным подтверждением.",
               "correct": false,
               "sections": {
                 "what_actually": "Reference `git`-сервер даёт status/log/diff/branch, но **без push** — изменение удалённого репозитория не входит в его tools.",
@@ -1413,7 +1413,7 @@
               "order": 1
             },
             {
-              "text": "Сервер `postgres` работает в режиме read-write и не умеет ограничиваться только чтением.",
+              "text": "Reference-серверы включают `filesystem`, `git`, `postgres`/`sqlite`, `slack`, `memory`; при этом `postgres`-сервер работает исключительно в режиме read-write и не умеет ограничиваться только чтением.",
               "correct": false,
               "sections": {
                 "what_actually": "`postgres`-сервер часто запускают в **read-only** (schema introspection + SELECT); read-only режим — типичная мера безопасности.",
@@ -1629,7 +1629,7 @@
           "question_text": "Для чего нужны notifications/*/list_changed в MCP?",
           "options": [
             {
-              "text": "`notifications/tools/list_changed` сообщает, что содержимое конкретного tool изменилось, и его надо перевызвать.",
+              "text": "Сервер шлёт `notifications/tools/list_changed`, когда изменилось содержимое конкретного tool — его описание или схема; клиент в ответ перечитывает только этот tool и перевызывает его. Возможность объявляется флагом `tools.listChanged: true` в `initialize`.",
               "correct": false,
               "sections": {
                 "what_actually": "`list_changed` сигнализирует, что изменился **список** tools/resources/prompts (появились/исчезли элементы), а не содержимое отдельного элемента.",
@@ -1641,7 +1641,7 @@
               "order": 0
             },
             {
-              "text": "Эти notifications отправляет клиент серверу, когда хочет обновить список доступных инструментов.",
+              "text": "Эти notifications (`tools/list_changed`, `resources/list_changed`, `prompts/list_changed`) отправляет клиент серверу, когда хочет заставить сервер пересобрать и переотдать список доступных инструментов; возможность объявляется в `initialize`.",
               "correct": false,
               "sections": {
                 "what_actually": "`list_changed` шлёт **сервер** клиенту: это server→client уведомление о том, что набор tools/resources/prompts поменялся.",
@@ -1653,7 +1653,7 @@
               "order": 1
             },
             {
-              "text": "Сервер может слать `list_changed` без предварительного объявления в `initialize` — отдельный флаг в capabilities для этого не нужен.",
+              "text": "Сервер сообщает клиенту, что список изменился (`tools/list_changed` и аналоги для resources/prompts), и клиент перечитывает `tools/list`; при этом слать эти notifications можно без объявления `tools.listChanged` в `initialize` — отдельный флаг в capabilities не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Сервер обязан объявить capability `tools.listChanged: true` в `initialize`, иначе клиент не ждёт таких notifications.",
@@ -1702,7 +1702,7 @@
               "order": 0
             },
             {
-              "text": "Stateful MCP масштабируется проще, чем stateless HTTP, потому что соединение уже установлено.",
+              "text": "Stateful MCP масштабируется проще stateless HTTP: persistent connection уже установлено, поэтому sticky sessions и `Mcp-Session-Id` не нужны — любой инстанс за балансировщиком обслужит запрос без session affinity.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: stateful **сложнее** масштабировать (sticky sessions, привязка клиента к инстансу); stateless HTTP масштабируется тривиально — любой POST на любой инстанс.",
@@ -1714,7 +1714,7 @@
               "order": 1
             },
             {
-              "text": "В stateful MCP subscriptions требуют постоянного long-polling со стороны клиента.",
+              "text": "Плюс stateful MCP — subscriptions, но реализованы они постоянным long-polling со стороны клиента: клиент периодически опрашивает сервер об изменениях, а механизм server push протокол не задействует.",
               "correct": false,
               "sections": {
                 "what_actually": "Stateful-канал даёт server push «бесплатно»: сервер сам шлёт уведомления, long-polling не нужен — это как раз преимущество перед stateless.",
@@ -1726,7 +1726,7 @@
               "order": 2
             },
             {
-              "text": "Stateless HTTP предпочтительнее для LLM-контекста, поэтому MCP стоило делать stateless.",
+              "text": "Stateless HTTP по всем параметрам предпочтительнее для LLM-контекста — тривиальный scaling и restart-friendly, — а persistent connection не даёт реальных преимуществ, поэтому MCP стоило проектировать stateless.",
               "correct": false,
               "sections": {
                 "what_actually": "MCP осознанно выбрал stateful ради UX (живой контекст, быстрая реакция, подписки); Streamable HTTP сочетает stateful-семантику с балансировкой.",
