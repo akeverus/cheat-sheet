@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В дизайне парковки задействован ровно один паттерн — Singleton для `ParkingLot`; остальное (Strategy, Observer, State) — это не паттерны, а просто наследование.",
+              "text": "Singleton — `ParkingLot` (один физический объект); State — `Payment` (Cash/Card/UPI как состояния платежа); Factory Method — `SpotFactory`/`VehicleFactory`; Observer — `DisplayBoard` ← `ParkingFloor`; Strategy — `SpotAllocationStrategy` (NearestFirst/SmallestFitting); Chain of Responsibility — `EntryValidationChain`. Не каждый обязателен — на интервью достаточно назвать 4–5 с примером применения.",
               "correct": false,
               "sections": {
                 "what_actually": "Помимо Singleton используются Strategy (оплата), Observer (DisplayBoard), State (Ticket), Factory, Decorator и другие — это самостоятельные паттерны GoF, а не «просто наследование».",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чем больше паттернов GoF удастся впихнуть в дизайн парковки, тем выше оценка — стоит применить все 23 паттерна.",
+              "text": "Singleton — `ParkingLot` (один физический объект); Strategy — `Payment` (Cash/Card/UPI) и `SpotAllocationStrategy`; Prototype — `Ticket` клонируется из шаблона при каждом заезде; Observer — `DisplayBoard` ← `ParkingFloor`; Decorator — `DiscountedRate` поверх `ParkingRate`. Достаточно назвать 4–5 паттернов с примером применения.",
               "correct": false,
               "sections": {
                 "what_actually": "Перебор паттернов — анти-паттерн («каждая фича = паттерн»). Паттерн вводят при реальной точке вариативности; ценят уместность, а не количество.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Observer и Strategy — это один и тот же паттерн под разными именами, поэтому в парковке достаточно упомянуть любой из них.",
+              "text": "Singleton — `ParkingLot`; Strategy — `Payment` и `SpotAllocationStrategy`; Factory Method — `SpotFactory`/`VehicleFactory`; Observer — `ParkingFloor` ← `DisplayBoard` (этаж подписывается на табло и тянет с него данные); State — `Ticket` (ACTIVE/PAID/LOST/EXPIRED); Command — `ParkVehicleCommand`. Достаточно назвать 4–5 с примером применения.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные паттерны: Strategy подменяет алгоритм (способ оплаты/выбора места), Observer уведомляет подписчиков об изменении (табло реагирует на занятость spot).",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Factory не нужна — создавать конкретные spot можно прямым `new MotorcycleSpot(...)` везде, где требуется, это короче и понятнее.",
+              "text": "`SpotFactory` нужна лишь как единая точка логирования и валидации при создании места, но конкретный класс (`MotorcycleSpot`, `ElectricSpot`) по-прежнему выбирает вызывающий код и передаёт готовый объект в фабрику; `SpotAllocationStrategy` затем ищет среди них свободное.",
               "correct": false,
               "sections": {
                 "what_actually": "Разбросанные по коду `new` дублируют знание о типах и ломают OCP: при добавлении `ElectricSpot` пришлось бы править десяток мест. Фабрика — единственная точка создания.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Factory и `SpotAllocationStrategy` — это одно и то же: фабрика и создаёт spot, и решает, какой из них занять под конкретную машину.",
+              "text": "`SpotFactory` и `SpotAllocationStrategy` — это один класс: он по типу машины и создаёт нужный spot, и сразу выбирает, какое из свободных мест занять, объединяя создание и размещение в методе `allocate`.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные обязанности: `SpotFactory` создаёт объект нужного типа, а `SpotAllocationStrategy` выбирает, какой из уже существующих подходящих spot занять (Nearest/Smallest).",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При добавлении `ElectricSpot` с фабрикой придётся менять весь клиентский код, который работает с местами, потому что появился новый класс.",
+              "text": "Создание места и выбор его класса делает `SpotAllocationStrategy`: стратегия по типу машины инстанцирует `MotorcycleSpot` или `LargeSpot` и возвращает его, поэтому при добавлении `ElectricSpot` правится стратегия, а фабрика остаётся без изменений.",
               "correct": false,
               "sections": {
                 "what_actually": "Клиент работает с абстракцией `ParkingSpot` и не меняется; правится только `SpotFactory` (одна новая ветка `case ELECTRIC`). В этом и смысл фабрики.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Open/Closed в этом дизайне означает, что классы вообще нельзя менять никогда — ни при каких условиях, даже при исправлении багов.",
+              "text": "S: `Ticket` хранит факт заезда, тариф считает `ParkingRate`. O: чтобы добавить `UpiPayment`, в существующий `PaymentService` дописывают ветку `if (type == UPI)`, дорабатывая класс под новый способ. L: `LargeSpot` подставляется вместо `ParkingSpot` без сюрпризов. D: `ParkingLot` зависит от интерфейса `TicketRepository`.",
               "correct": false,
               "sections": {
                 "what_actually": "OCP — «открыт для расширения, закрыт для модификации» поведения: новую функциональность добавляют новыми классами (новый `PaymentStrategy`), а не переписыванием существующих. Исправление багов под запрет не попадает.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Liskov Substitution здесь нарушается всегда, как только появляется наследование, поэтому подклассы spot вообще недопустимы.",
+              "text": "S: каждый класс держит одну ответственность. O: новый `PaymentStrategy` добавляется без правок существующего кода. L: соблюдается тем, что `MotorcycleSpot` при заезде грузовика бросает `UnsupportedOperationException`, явно помечая неподходящий тип. I: `Bookable` и `Releasable` разделены. D: зависимость от `PaymentGateway`, а не от Stripe SDK.",
               "correct": false,
               "sections": {
                 "what_actually": "LSP не запрещает наследование — он требует, чтобы подкласс корректно подставлялся вместо базового. `LargeSpot`/`CompactSpot` подставляются нормально; нарушение возникло бы лишь при противоречащем контракту поведении.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Dependency Inversion в парковке означает, что `ParkingLot` должен напрямую инстанцировать `JdbcTicketRepository`, чтобы контролировать конкретную реализацию.",
+              "text": "S: `PaymentStrategy` проводит платёж, не зная про `Ticket`. O: `ElectricSpot` — подкласс плюс одна строка в `SpotFactory`. L: `LargeSpot` заменяет `ParkingSpot` без сюрпризов. D: `ParkingLot` сам создаёт `JdbcTicketRepository` в конструкторе, чтобы жёстко контролировать конкретную реализацию хранилища.",
               "correct": false,
               "sections": {
                 "what_actually": "DIP требует обратного: `ParkingLot` зависит от интерфейса `TicketRepository`, а конкретную `JdbcTicketRepository` внедряют снаружи (DI). Прямой `new` конкретного класса — нарушение DIP.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Всегда нужно блокировать на самом мелком уровне (per-spot CAS) — это единственно правильный выбор независимо от нагрузки.",
+              "text": "Обратная зависимость: глобальный `ReentrantLock` на всю `ParkingLot` даёт максимальный throughput при минимуме кода, поэтому его берут для high-load, а per-spot CAS оставляют для прототипов, где важна простота отладки.",
               "correct": false,
               "sections": {
                 "what_actually": "Per-spot CAS даёт максимум throughput, но усложняет код и тесты; на низкой нагрузке это оверинжиниринг. Дефолт — floor-level, а вниз мигрируют по необходимости.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Глобальный lock на всю `ParkingLot` даёт такой же throughput, как floor-level, потому что машины всё равно приезжают по очереди.",
+              "text": "Floor-level lock не даёт выигрыша над глобальным: пока один поток держит lock этажа, операции на других этажах всё равно ждут общий менеджер `ParkingLot`, поэтому throughput остаётся тем же.",
               "correct": false,
               "sections": {
                 "what_actually": "Глобальный lock сериализует все въезды (даже на разные этажи), давая низкий throughput; floor-level позволяет параллельные въезды на разные этажи. Это разные уровни производительности.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Гранулярность блокировки не влияет на тестируемость — мелкий per-spot CAS тестировать так же легко, как глобальный lock.",
+              "text": "На тестируемость гранулярность не влияет: per-spot CAS и глобальный lock проверяются одними и теми же тестами, так как вся логика блокировки спрятана внутри одного метода `reserve`.",
               "correct": false,
               "sections": {
                 "what_actually": "Чем мельче блокировка, тем сложнее конкурентные тесты (нужно ловить редкие гонки на уровне отдельных spot); глобальный lock тестировать проще. Сложность тестов растёт вниз по уровням.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для бронирования в БД достаточно сначала сделать `SELECT` свободного spot, а потом отдельным запросом `UPDATE` — это безопасно и без всякой версии.",
+              "text": "Достаточно `SELECT id FROM parking_spot WHERE vehicle_id IS NULL LIMIT 1`, затем отдельным запросом `UPDATE parking_spot SET vehicle_id = ? WHERE id = ?` по выбранному id — версия не нужна, второй поток просто перезапишет то же место без ошибки.",
               "correct": false,
               "sections": {
                 "what_actually": "Между `SELECT` и `UPDATE` другой поток/инстанс успеет занять spot (TOCTOU). Атомарность достигается условным UPDATE `WHERE vehicle_id IS NULL` или `@Version`, а не двумя независимыми запросами.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Optimistic locking гарантирует отсутствие конфликтов всегда, поэтому ретраи и обработка `OptimisticLockException` не нужны.",
+              "text": "Hibernate с `@Version` при конфликте автоматически повторяет `UPDATE` с перечитанной версией, поэтому ловить `OptimisticLockException` в коде не нужно — ретрай встроен в провайдера.",
               "correct": false,
               "sections": {
                 "what_actually": "Optimistic locking не предотвращает конфликт, а обнаруживает его: при коллизии прилетает `OptimisticLockException` (или `updated == 0`), и приложение обязано отреагировать — попробовать другой spot.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Колонка `version` в `parking_spot` нужна, чтобы хранить номер парковочного места, а не для контроля конкурентного доступа.",
+              "text": "Оптимистичную блокировку делают так: безусловный `UPDATE parking_spot SET vehicle_id = ?, version = version + 1 WHERE id = ?`, а затем перечитывают `version` и сравнивают с ожидаемой — если совпала, бронь удалась.",
               "correct": false,
               "sections": {
                 "what_actually": "`version` — счётчик ревизий строки для optimistic locking: Hibernate/UPDATE сверяют и инкрементят его, чтобы поймать конкурентное изменение. К номеру места он отношения не имеет.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Бизнес-логику размещения и расчёта тарифа удобнее писать прямо в методах `@RestController` — так меньше слоёв и быстрее разработка.",
+              "text": "Бизнес-логику размещения и расчёта тарифа держат целиком в методах `@RestController` (`ParkingController.park`), а `ParkingLot` оставляют простым хранилищем данных без поведения — так вся обработка запроса собрана в одном слое.",
               "correct": false,
               "sections": {
                 "what_actually": "Логика в контроллере смешивает транспорт и домен, мешает тестированию и замене API. Контроллер должен быть тонким и делегировать в `ParkingLot`/`ExitService`; правила живут в domain-слое.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Эндпоинт изменения тарифов `PUT /api/v1/admin/rates` должен быть доступен любому пользователю без проверки роли — иначе API получится недружелюбным.",
+              "text": "Изменение тарифов вешают на `GET /api/v1/admin/rates?newPrice=...`, передавая новое значение в query-параметрах, — GET проще вызвать из браузера и он кэшируется.",
               "correct": false,
               "sections": {
                 "what_actually": "Менять тарифы вправе только `Admin`; эндпоинт защищают проверкой роли (admin). Открытый доступ позволил бы любому водителю обнулить или взвинтить цены.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Full lot в REST API правильнее отдавать кодом `500 Internal Server Error`, ведь система не смогла припарковать машину.",
+              "text": "Когда парковка заполнена, `POST /api/v1/park` возвращает `500 Internal Server Error`, поскольку сервер не смог выполнить операцию парковки.",
               "correct": false,
               "sections": {
                 "what_actually": "Full lot — ожидаемый бизнес-исход, его маппят в `409 CONFLICT`, чтобы клиент отличал «нет мест» от реального сбоя сервера. `500` обозначает внутреннюю ошибку, а не отсутствие мест.",
