@@ -1089,7 +1089,7 @@
           "question_text": "Как обеспечить потокобезопасность при множественных одновременных запросах к банку лифтов?",
           "options": [
             {
-              "text": "Достаточно объявить все поля лифта `synchronized`-методами, и тогда `volatile`/`Atomic`/concurrent-коллекции уже не нужны.",
+              "text": "Достаточно сделать все методы `Elevator` `synchronized` — тогда `volatile`, `AtomicReference` и concurrent-коллекции избыточны, монитор объекта закрывает и видимость, и атомарность.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужны и concurrent-структуры: `BlockingQueue`, `AtomicReference` для state/direction, `ConcurrentSkipListSet` для stop-set, `CopyOnWriteArrayList` для listeners — `synchronized` на методах их не заменяет.",
@@ -1101,7 +1101,7 @@
               "order": 0
             },
             {
-              "text": "stop-set безопасно хранить в обычном `ArrayList` и итерировать его напрямую, лишь бы метод `step()` был `synchronized`.",
+              "text": "stop-set можно держать в обычном `ArrayList` и обходить напрямую в `step()`, а сортированные операции `ceiling`/`floor` заменить ручным поиском по списку под `synchronized`.",
               "correct": false,
               "sections": {
                 "what_actually": "stop-set держат в `ConcurrentSkipListSet`: `ArrayList` + итератор без копии под параллельными запросами даёт `ConcurrentModificationException`.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "Dispatch loop надо делать многопоточным, а гонки за один лифт ловить ретраями `canAccept` после назначения.",
+              "text": "Dispatch loop стоит распараллелить на пул потоков, а конфликты при выборе одного лифта разрешать повторной проверкой `canAccept` и CAS-ретраями после назначения.",
               "correct": false,
               "sections": {
                 "what_actually": "Dispatch loop делают ОДНОПОТОЧНЫМ (`newSingleThreadExecutor`), что устраняет гонку на корню; ретраи `canAccept` — это лечение симптома, а не причины.",
@@ -1222,7 +1222,7 @@
               "order": 0
             },
             {
-              "text": "При overload (вес выше max) лифт всё равно закрывает двери и едет, но медленнее и с предупреждением на дисплее.",
+              "text": "При overload (вес выше max) двери всё же закрываются, и лифт едет на пониженной скорости с предупреждением на дисплее, пока перегруз небольшой.",
               "correct": false,
               "sections": {
                 "what_actually": "При overload двери НЕ закрываются и лифт не движется вовсе, пока пассажир не выйдет — это safety-инвариант, а не «ехать помедленнее».",
@@ -1234,7 +1234,7 @@
               "order": 1
             },
             {
-              "text": "Fire mode эвакуирует только тот лифт, в котором сработал датчик дыма, остальные продолжают обычную работу.",
+              "text": "Fire mode переводит в эвакуацию только ту кабину, где сработал датчик дыма; остальные лифты bank продолжают обычное обслуживание.",
               "correct": false,
               "sections": {
                 "what_actually": "Fire mode по building alarm переводит ВЕСЬ bank в `FIRE_MODE`: все лифты едут на ground floor и блокируются, а не один.",
@@ -1246,7 +1246,7 @@
               "order": 2
             },
             {
-              "text": "При power outage лифты мгновенно останавливаются между этажами и обесточиваются, пассажиры ждут ремонтную бригаду.",
+              "text": "При power outage лифты сразу обесточиваются и фиксируются тормозом между этажами, а пассажиры ждут прибытия ремонтной бригады.",
               "correct": false,
               "sections": {
                 "what_actually": "При power outage UPS/battery держит control logic, и лифты делают controlled descent до ближайшего этажа, открывают doors и freeze — не зависают между этажами.",
@@ -1389,7 +1389,7 @@
           "question_text": "Какой external API экспонирует `ElevatorController` для интеграции с building monitoring?",
           "options": [
             {
-              "text": "Все routes API лифта должны быть публичными без авторизации, ведь лифтом пользуются все сотрудники здания.",
+              "text": "Авторизацию строят наоборот: `POST /requests` (submit запроса) закрывают за admin-JWT, а `PUT /scheduler` (смена стратегии scheduling) оставляют публичным, раз поездки всё равно инициируют пассажиры.",
               "correct": false,
               "sections": {
                 "what_actually": "Admin/maintenance routes защищены JWT с ролями; публичными (или auth по NFC-карте) могут быть лишь passenger-routes вроде `POST /requests`.",
@@ -1401,7 +1401,7 @@
               "order": 0
             },
             {
-              "text": "`GET /metrics` должен отдавать сырые логи всех запросов в JSON, чтобы мониторинг сам считал агрегаты.",
+              "text": "`GET /metrics` должен отдавать сырые события всех запросов, а агрегаты (`avg_wait_seconds`, `utilization`, `requests_total`) система мониторинга вычисляет уже на своей стороне.",
               "correct": false,
               "sections": {
                 "what_actually": "`GET /metrics` отдаёт Prometheus-метрики (`avg_wait_seconds`, `utilization`, `requests_total`), а не сырые логи — агрегация уже на стороне сервиса.",
@@ -1413,7 +1413,7 @@
               "order": 1
             },
             {
-              "text": "Стрим state changes лифта реализуют через постоянный polling клиентом `GET /elevators` в цикле каждую секунду.",
+              "text": "Стрим state changes отдают не через `GET /elevators/{id}/events` (SSE/WebSocket), а требуют от клиента опрашивать `GET /elevators` в цикле раз в секунду.",
               "correct": false,
               "sections": {
                 "what_actually": "Для стрима событий есть `GET /elevators/{id}/events` (SSE/WebSocket) — push в реальном времени; постоянный polling снапшота избыточен и запаздывает.",
@@ -1462,7 +1462,7 @@
               "order": 0
             },
             {
-              "text": "Симулятор должен использовать реальное системное время (`Instant.now()`), чтобы тесты были максимально приближены к продакшену.",
+              "text": "Симулятор должен брать время из `Instant.now()`/системных часов, тогда тайминги дверей и разгона будут ближе к продакшену, чем при `Clock.fixed`.",
               "correct": false,
               "sections": {
                 "what_actually": "Симулятор использует инъектируемый управляемый `Clock` (`Clock.fixed`/mutable), а не `Instant.now()` — иначе тесты станут невоспроизводимыми и флаки.",
@@ -1474,7 +1474,7 @@
               "order": 1
             },
             {
-              "text": "Главный тест-сценарий — проверить, что при concurrent requests на одном этаже система назначает ВСЕ лифты сразу для надёжности.",
+              "text": "Сценарий concurrent requests на одном этаже должен проверять, что запрос назначается сразу всем свободным лифтам bank — так пассажир точно уедет первым подъехавшим.",
               "correct": false,
               "sections": {
                 "what_actually": "Правильный инвариант — на concurrent requests выбран ровно ОДИН лифт (нет race conditions); назначение всех лифтов было бы дублированием и тратой ресурсов.",
@@ -1486,7 +1486,7 @@
               "order": 2
             },
             {
-              "text": "Сценарий maintenance mid-flight должен проверять, что лифт мгновенно замирает на месте, как только включён maintenance.",
+              "text": "Сценарий maintenance mid-flight должен проверять, что лифт немедленно останавливается на текущей позиции между этажами, как только пришёл maintenance-сигнал.",
               "correct": false,
               "sections": {
                 "what_actually": "При maintenance mid-flight лифт сначала доезжает до ближайшей цели, и лишь потом stops — мгновенная остановка между этажами оставила бы пассажиров запертыми.",
@@ -1509,7 +1509,7 @@
           "question_text": "Какие anti-patterns встречаются в дизайне лифта и как их избежать?",
           "options": [
             {
-              "text": "Хранить двери как поле-`boolean isOpen` внутри `Elevator` — нормальная практика, она экономит лишний класс и проще для чтения.",
+              "text": "Двери как `boolean isOpen` прямо в `Elevator` — правильная инкапсуляция: дверь это простое двоичное состояние, а отдельный класс `Door` со своей State-машиной был бы избыточным усложнением.",
               "correct": false,
               "sections": {
                 "what_actually": "Это anti-pattern: `boolean isOpen` теряет инварианты (двери открыли при движении) и нарушает SRP; нужен отдельный класс `Door` с State.",
@@ -1534,7 +1534,7 @@
               "order": 1
             },
             {
-              "text": "`if/else`-цепочки вместо state machine — приемлемый компромисс, если состояний немного, и переписывать их на enum избыточно.",
+              "text": "`if/else`-цепочки для переходов состояний предпочтительнее state machine: они читаются линейно сверху вниз и не требуют заводить enum состояний с table-driven таблицей переходов.",
               "correct": false,
               "sections": {
                 "what_actually": "`if/else`-цепочки — anti-pattern даже для нескольких состояний: при добавлении нового легко пропустить переход; правильно — enum + table-driven transitions.",
@@ -1546,7 +1546,7 @@
               "order": 2
             },
             {
-              "text": "Lazy-init Singleton без double-checked locking безопасен, потому что JVM сама гарантирует атомарность присваивания ссылки.",
+              "text": "Lazy-init Singleton без double-checked locking потокобезопасен: присваивание ссылки в JVM атомарно, поэтому второй поток не увидит наполовину инициализированный объект.",
               "correct": false,
               "sections": {
                 "what_actually": "Lazy-init Singleton без double-checked locking — anti-pattern: возможна гонка при старте; нужен `synchronized`+`volatile` или enum-singleton.",
