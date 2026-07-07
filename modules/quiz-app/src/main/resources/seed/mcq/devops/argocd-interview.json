@@ -504,7 +504,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`Sync Hooks` — это `Git`-хуки на стороне сервера (`pre-receive`), которые `ArgoCD` устанавливает в репозиторий для валидации коммитов перед синком.",
+              "text": "`Sync Hooks` — исходящие HTTP-вебхуки: в фазы `PreSync` и `PostSync` `ArgoCD` вызывает внешние endpoint'ы (CI-пайплайны, системы оповещения), а перечень URL и фаз задаётся аннотацией `argocd.argoproj.io/hook` прямо на `Application`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Sync Hooks` — это Kubernetes-ресурсы (`Job`/`Workflow`) с аннотацией `argocd.argoproj.io/hook`, запускаемые в фазах синка, а не серверные `Git`-хуки в репозитории.",
@@ -516,7 +516,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Фаза `PostSync` выполняется до применения основных манифестов и предназначена для миграций БД перед стартом приложения.",
+              "text": "Фазы применяются в порядке `PostSync` → `Sync` → `PreSync`: `PostSync` прогоняет миграции БД до применения основных манифестов, `Sync` разворачивает основные ресурсы, а `PreSync` уже после деплоя запускает smoke-тесты и прогрев.",
               "correct": false,
               "sections": {
                 "what_actually": "До применения манифестов выполняется фаза `PreSync` (и именно она для миграций); `PostSync` идёт после успешного синка — для smoke-тестов и уведомлений.",
@@ -528,7 +528,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`hook-delete-policy` управляет тем, удалять ли само приложение `ArgoCD` после неудачного хука, а не под хука.",
+              "text": "`hook-delete-policy` со значениями `HookSucceeded`, `HookFailed` и `BeforeHookCreation` определяет, откатывать ли всё `Application` в предыдущую ревизию, если hook-ресурс завершился с ошибкой.",
               "correct": false,
               "sections": {
                 "what_actually": "`hook-delete-policy` (`HookSucceeded`/`HookFailed`/`BeforeHookCreation`) определяет удаление пода самого хука, а не приложения целиком.",
@@ -1091,7 +1091,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`argocd app rollback` автоматически делает `git revert` сбойного коммита и пушит его, поэтому повторного отката в `Git` не требуется.",
+              "text": "`argocd app rollback my-app 5` под капотом делает `git revert` соответствующего коммита в подключённом репозитории и пушит его, поэтому история `Git` синхронизируется с откатом автоматически и отдельный `git revert` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "`argocd app rollback` не трогает `Git` — он лишь деплоит старую ревизию; для постоянного отката нужен отдельный `git revert` + push.",
@@ -1103,7 +1103,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "После `argocd app rollback` auto-sync продолжает работать как обычно и тут же синхронизирует приложение обратно до HEAD из `Git`.",
+              "text": "После `argocd app rollback my-app 5` политика auto-sync остаётся активной, поэтому контроллер сразу замечает расхождение и повторно синхронизирует приложение до HEAD ветки из `Git`.",
               "correct": false,
               "sections": {
                 "what_actually": "После rollback приложение переходит в suspended — auto-sync отключается, чтобы немедленно не вернуть HEAD; включают его вручную.",
@@ -1128,7 +1128,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`ArgoCD` хранит всю историю деплоев без ограничений, поэтому через `argocd app rollback` можно откатиться к любой ревизии за всё время жизни приложения.",
+              "text": "Глубина истории деплоев в `ArgoCD` не ограничена (`revisionHistoryLimit` по умолчанию отключён), поэтому через `argocd app rollback my-app <id>` можно вернуться к любой ревизии за всё время жизни приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию история ограничена 10 ревизиями (настраивается); более старые ревизии напрямую через `rollback` недоступны.",
@@ -1871,7 +1871,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`argocd admin export` бэкапит реальные значения секретов приложений и токены кластеров, поэтому отдельный бэкап секретов не нужен.",
+              "text": "`argocd admin export > argocd-backup.yaml` выгружает в том числе расшифрованные значения repo-секретов и cluster-credentials, поэтому этого одного файла достаточно для полного восстановления и отдельно бэкапить `Secret`-ресурсы не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Экспорт содержит декларативные объекты и конфигурацию репозиториев без паролей; cluster-credentials и секреты бэкапят отдельно.",
@@ -1883,7 +1883,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Отдельный бэкап `ArgoCD` избыточен: достаточно переустановить его и повторно применить root-`Application`, ведь всё состояние восстанавливается из `Git`.",
+              "text": "Отдельный бэкап `ArgoCD` не нужен: при потере кластера достаточно переустановить контроллер Helm-чартом и повторно применить root-`Application` — `Application`, `AppProject` и подключения к репозиториям целиком восстановятся из `Git` через app-of-apps.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Git` лежат манифесты приложений, но не cluster-credentials, конфигурация репо и регистрации кластеров `ArgoCD` — их теряют без бэкапа.",
@@ -1895,7 +1895,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "HA-установка (`redis-ha` и несколько реплик) снижает потребность в бэкапе, так как реплики хранят копии состояния и при отказе одной данные остаются в других.",
+              "text": "HA-установка (`redis-ha.enabled=true` и несколько реплик `application-controller`) заменяет резервное копирование: реплики хранят полные копии состояния приложений, поэтому при отказе кластера данные восстанавливаются из уцелевших реплик.",
               "correct": false,
               "sections": {
                 "what_actually": "HA повышает доступность при отказе пода/ноды, но не защищает от логической порчи, удаления namespace или потери кластера — для этого нужен бэкап.",
@@ -2291,7 +2291,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`Kustomize` в `ArgoCD` — это шаблонизатор на Go-templates, и overlays задаются через переменные `{{ }}` внутри base-манифестов.",
+              "text": "`Kustomize` в `ArgoCD` работает как шаблонизатор: общие манифесты в `base/` содержат плейсхолдеры `{{ }}`, а каждый каталог `overlays/<env>/` задаёт значения этих переменных, которые `ArgoCD` подставляет при рендере среды.",
               "correct": false,
               "sections": {
                 "what_actually": "`Kustomize` — это template-free наложение патчей на base (`patches`/`replacements`), а не Go-template шаблонизация с `{{ }}`; шаблоны — это про `Helm`.",
@@ -2303,7 +2303,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Чтобы переопределить тег образа для prod, его нужно жёстко прописать прямо в `base/deployment.yaml`, отдельный механизм override отсутствует.",
+              "text": "Переопределить тег образа для `prod` средствами overlay в `Kustomize` нельзя — значение приходится хардкодить прямо в `base/deployment.yaml`, а в `overlays/prod/` допустимы только патчи меток и числа реплик.",
               "correct": false,
               "sections": {
                 "what_actually": "Тег переопределяют через `kustomize.images` в overlay/`Application` (или `--kustomize-image`), а hardcode в base считается анти-паттерном.",
@@ -2328,7 +2328,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Для `Kustomize`-приложения в `Application` обязательно указывать `source.type: kustomize`, иначе `ArgoCD` не распознает overlay.",
+              "text": "`ArgoCD` не умеет автоопределять `Kustomize`: в `Application` обязательно задать поле `source.type: kustomize`, иначе `overlays/prod` применится как обычный каталог YAML без обработки `kustomization.yaml`.",
               "correct": false,
               "sections": {
                 "what_actually": "`ArgoCD` автоопределяет `Kustomize` по наличию `kustomization.yaml` в `path`; явное указание типа нужно лишь в неоднозначных случаях.",
@@ -2351,7 +2351,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`AppProject` и RBAC-политики `argocd-rbac-cm` дублируют друг друга, поэтому достаточно настроить что-то одно — оба уровня вместе не нужны.",
+              "text": "`AppProject` и политики `argocd-rbac-cm` задают одни и те же права и дублируют друг друга, поэтому на практике настраивают только один уровень, а второй оставляют пустым.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные уровни: `AppProject` изолирует (что разрешено приложениям проекта), а `policy.csv` управляет действиями пользователей; они дополняют, а не дублируют друг друга.",
@@ -2363,7 +2363,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`namespaceResourceWhitelist` в `AppProject` определяет, какие namespace доступны приложению, а виды ресурсов он не ограничивает.",
+              "text": "`namespaceResourceWhitelist` в `AppProject` перечисляет namespace, в которые приложению разрешено деплоить, а список допустимых видов ресурсов (`Deployment`, `Secret` и т.д.) задаёт отдельное поле `destinations`.",
               "correct": false,
               "sections": {
                 "what_actually": "Доступные namespace задаёт `destinations`, а `namespaceResourceWhitelist` ограничивает именно виды namespace-ресурсов (`Deployment`, `Service` и т.п.).",
@@ -2375,7 +2375,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "`policy.default` задаёт роль только для встроенного пользователя `admin`, а на пользователей из SSO без привязки групп он не распространяется.",
+              "text": "`policy.default` применяется только к анонимному пользователю `argocd-server`; на залогиненных через SSO пользователей, чьи группы не совпали со строками `policy.csv`, значение по умолчанию не распространяется.",
               "correct": false,
               "sections": {
                 "what_actually": "`policy.default` (обычно `role:readonly`) применяется к любому аутентифицированному пользователю, чьи группы не привязаны явной политикой, включая SSO-пользователей.",
@@ -2471,7 +2471,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`Flux CD` имеет монолитную установку из одного Deployment и богатый встроенный UI, тогда как `ArgoCD` поставляется как набор отдельных контроллеров без интерфейса.",
+              "text": "Монолитная установка одним `Deployment` и богатый встроенный веб-UI — это про `Flux CD`, тогда как `ArgoCD` собран из отдельных контроллеров (source, kustomize, helm) и работает без графического интерфейса, только через CLI.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: монолитная установка и встроенный UI — у `ArgoCD`; `Flux` модульный (отдельные контроллеры) и без своего UI.",
@@ -2496,7 +2496,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "`ArgoCD` придерживается Source-centric модели (`GitRepository`/`Kustomization`), а `Flux` — Application-centric с CRD `Application`.",
+              "text": "`ArgoCD` и `Flux CD` используют общий набор CRD (`Application`/`ApplicationSet`) и одинаковую Application-centric модель, так что `Flux` — по сути тот же `ArgoCD`, только управляемый через `flux bootstrap` вместо веб-UI.",
               "correct": false,
               "sections": {
                 "what_actually": "Application-centric с CRD `Application`/`ApplicationSet` — это `ArgoCD`; Source-centric с `GitRepository`/`Kustomization`/`HelmRelease` — это `Flux`.",
@@ -2508,7 +2508,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`ArgoCD` — CNCF Graduated проект, а `Flux CD` всё ещё на стадии Sandbox и потому не считается production-ready.",
+              "text": "Обе системы поддерживают Helm и Kustomize и следуют pull-модели GitOps, но production-ready считается только `ArgoCD` (CNCF Graduated), тогда как `Flux CD` остаётся на стадии CNCF Sandbox.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба проекта — CNCF Graduated и production-ready; `Flux` не находится на стадии Sandbox.",
