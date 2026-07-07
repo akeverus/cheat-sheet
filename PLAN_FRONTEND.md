@@ -716,6 +716,15 @@ token-only → затем удалить. **EDC-1 (editorial.css) — subset-pro
 
 Инвариант: **JS-клиент НЕ должен звать удалённые endpoint'ы — при вырезании фичи чистить И вызовы, И def'ы, И API-map, И текст-аффордансу, иначе остаётся guaranteed-fail UX; выживший под-функционал (related) отделять от мёртвого, не гейтить/не удалять скопом.** См. §6.E (AIR-1..5), [[project_ai_removal]] #2.
 
+**SET-15 RESOLUTION — per-mode count-default проигнорирован формой: ready-to-apply патч — 2026-07-07, р127.** ⛔ BLOCKED (`settings.html`+`app.js` под WIP), декомпозирован. Перечитал on-disk. **Дефект:** `SessionFlowService.resolveSessionTotal` (SessionFlowService.java:102-108) задаёт per-mode дефолт (EXAM=`defaultExamCount` 20, иначе MARATHON=`defaultMarathonCount` 50), НО применяет его лишь когда `requestedCount == null` (стр.106). Форма `#session-form` ВСЕГДА шлёт `count` (settings.html:125 `value="20"` хардкод; `initSessionFormSync` может перезаписать из localStorage `quiz.session.count`) → `requestedCount` НИКОГДА не null → per-mode дефолт мёртв. Итог: выбор «Интенсив» (MARATHON) молча запускает 20 вопросов вместо 50 (если юзер не правит вручную) — цель режима (большая сессия) незаметно теряется. `initSessionModeForm` (app.js:235-259) на смену режима двигает лишь видимость счётчика + текст CTA, НЕ значение.
+
+- **Решение (frontend-only, config-driven, least-surprise):** per-mode дефолт применять в браузере при смене режима.
+  - **settings.html:** на `<option>` EXAM/MARATHON (и др. count-несущих) добавить `th:attr="data-default-count=${@appProperties.interview.defaultExamCount}"` / `…defaultMarathonCount` — значения из AppProperties, НЕ хардкодить (иначе разойдётся с сервером; `@bean`-доступ уже используется в шаблонах: `@modeUtils`/`@plural`/`@markdownRenderService` → `@appProperties` того же вида, precondition — сверить bean-name). Начальный `value` инпута — от дефолта выбранного режима (`th:value`), не голый `20`.
+  - **app.js `initSessionModeForm`.sync:** при `change` режима читать `data-default-count` выбранной опции → если есть, ставить `countInput.value`. Precedence (§25, least-surprise): **явная смена режима → показать дефолт этого режима**; localStorage-restore (`initSessionFormSync`) применять только на первичной загрузке для изначально выбранного режима, НЕ перебивать mode-switch; ручная правка после выбора режима → персистится как сейчас.
+- **Verify-после:** live на /settings — переключить «Экзамен»↔«Интенсив»: счётчик 20↔50; старт «Интенсив» без ручной правки даёт 50-вопросную сессию (проверить `session-progress` `aria-valuemax`); localStorage-last восстанавливается на reload. Cache-bust `?v=N` app.js (result/settings/focus-training).
+
+Инвариант: **если сервер задаёт per-mode дефолт, применяемый лишь при `null`-запросе, форма НЕ должна безусловно слать значение (иначе дефолт мёртв) — либо не слать `count` при «дефолт этого режима», либо синхронизировать значение формы с per-mode дефолтом на клиенте (config-driven data-attr, не хардкод, не расходясь с сервером).** См. §6.A (SET-15).
+
 ---
 
 ## 8. Не трогать — осознанные решения пользователя (🚫 / ⛔)
