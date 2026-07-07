@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OAuth2 Login` и `OAuth2 Resource Server` — это одно и то же, разницы в конфигурации нет.",
+              "text": "Подключают `spring-boot-starter-oauth2-resource-server`, в `application.yml` задают `spring.security.oauth2.resourceserver.jwt.issuer-uri`, а в `SecurityFilterChain` вызывают `oauth2ResourceServer(...)` — этого достаточно, чтобы браузер редиректил пользователя на страницу входа `Google` и заводил сессию после согласия.",
               "correct": false,
               "sections": {
                 "what_actually": "`oauth2Login` — это вход пользователя через провайдера (получаем профиль), а `oauth2ResourceServer` — приём и валидация чужих `Bearer`-токенов; это разные роли и разные методы DSL.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Обмен `authorization code` на access-токен нужно реализовывать вручную в своём контроллере.",
+              "text": "Подключают `spring-boot-starter-oauth2-client` и задают `registration.<provider>`, но обмен `authorization code` на access-токен пишут вручную: в своём `@GetMapping(\"/callback\")` читают параметр `code` и шлют `POST` на `token-uri` провайдера, а `oauth2Login(...)` отвечает только за редирект на страницу согласия.",
               "correct": false,
               "sections": {
                 "what_actually": "Весь Authorization Code flow (redirect, обмен кода на токен, загрузку профиля) выполняет сам `Spring Security` при `oauth2Login`.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`client-secret` провайдера следует хардкодить прямо в коде конфигурации `SecurityFilterChain`.",
+              "text": "Подключают `spring-boot-starter-oauth2-client`, но `client-id`/`client-secret` передают строковыми литералами прямо в билдер `ClientRegistration.withRegistrationId(...)` внутри `SecurityFilterChain`, так как `application.yml` секреты OAuth2 не считывает.",
               "correct": false,
               "sections": {
                 "what_actually": "Секреты держат вне кода — в переменных окружения/secrets-хранилище и подставляют через `${GOOGLE_CLIENT_SECRET}` в `application.yml`.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для REST API на `JWT` сессии нужно оставить в режиме `IF_REQUIRED`, как для веб-приложений.",
+              "text": "Для REST API на `JWT` в `sessionManagement` оставляют политику `SessionCreationPolicy.IF_REQUIRED`, добавляют `JwtAuthenticationFilter` через `addFilterBefore` и правила `authorizeHttpRequests`, чтобы Spring восстанавливал `SecurityContext` из `HttpSession` на каждый запрос.",
               "correct": false,
               "sections": {
                 "what_actually": "Для stateless REST на `JWT` ставят `STATELESS`, иначе сервер будет создавать ненужные сессии на каждый запрос.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Rate limiting встроен в `Spring Security` и включается одной строкой в `SecurityFilterChain`.",
+              "text": "Кроме `STATELESS`-сессий и `JwtAuthenticationFilter`, rate limiting настраивают средствами самого `Spring Security`: он из коробки ограничивает частоту запросов по IP, поэтому отдельная библиотека вроде `Bucket4j` или API-шлюз не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Rate limiting в `Spring Security` не встроен — его реализуют отдельным фильтром (например на `Bucket4j`) или на API Gateway.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для REST API CSRF-защиту обязательно оставлять включённой, иначе API уязвим.",
+              "text": "Для REST API на `JWT` CSRF-защиту в `SecurityFilterChain` оставляют включённой с `CookieCsrfTokenRepository`, а клиент к каждому `POST`/`DELETE` обязан прикладывать заголовок `X-CSRF-TOKEN`, иначе stateless-эндпоинт уязвим.",
               "correct": false,
               "sections": {
                 "what_actually": "Для stateless REST на `JWT` CSRF отключают: токен в заголовке не отправляется браузером автоматически, так что подделка запроса невозможна.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@WithMockUser` поднимает реального пользователя через `UserDetailsService` из БД.",
+              "text": "Используют `@WithMockUser(username = \"admin\", roles = \"ADMIN\")`, которая перед тестом обращается к `UserDetailsService` и загружает реального пользователя из БД, `MockMvc` шлёт запросы и проверяет статусы `200`/`401`/`403`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@WithMockUser` создаёт синтетический `Authentication` с указанными ролями и не обращается к `UserDetailsService`; для реального пользователя есть `@WithUserDetails`.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Мутирующие запросы (`POST`/`DELETE`) в тесте никогда не требуют CSRF-токена.",
+              "text": "Для запросов используют `MockMvc`, но мутирующие методы (`POST`/`DELETE`) в тесте CSRF-токена не требуют: `SecurityMockMvcRequestPostProcessors.csrf()` нужен только реальному браузеру, а в `MockMvc` проверка CSRF отключена.",
               "correct": false,
               "sections": {
                 "what_actually": "Если в конфигурации CSRF включён, тестовый `POST`/`DELETE` без `with(csrf())` получит `403`; токен добавляют через post-processor.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Анонимный запрос к защищённому эндпоинту в тесте должен возвращать `403`, а не `401`.",
+              "text": "Проверяют статусы через `MockMvc`: `200` для разрешённого запроса, `403` для анонимного (аутентификации нет) и `401` для пользователя, у которого не хватает роли.",
               "correct": false,
               "sections": {
                 "what_actually": "Отсутствие аутентификации — это `401 Unauthorized`; `403` отдают аутентифицированному пользователю без прав.",
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Порядок не важен: CSRF можно настроить до CORS, результат будет тот же.",
+              "text": "Порядок вызовов `cors(...)` и `csrf(...)` в билдере задаёт порядок соответствующих фильтров в цепочке, поэтому `csrf(...)` объявляют до `cors(...)` — тогда `CsrfFilter` встанет перед `CorsFilter` и первым обработает запрос.",
               "correct": false,
               "sections": {
                 "what_actually": "CORS обрабатывают до CSRF и аутентификации; иначе preflight `OPTIONS` (без токенов/credentials) будет отклонён ещё до CORS-обработки.",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Нельзя одновременно включить CSRF для веб-части и отключить его для `/api/**` в одной цепочке.",
+              "text": "Чтобы CSRF действовал на веб-часть, но не на `/api/`, заводят две отдельные цепочки `SecurityFilterChain` с разными `securityMatcher`, потому что в одной цепочке `csrf(...)` применяется ко всем путям без исключений.",
               "correct": false,
               "sections": {
                 "what_actually": "Можно: CSRF оставляют включённым, но исключают API через `ignoringRequestMatchers(\"/api/**\")`, не трогая form-based пути.",
@@ -2088,7 +2088,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для preflight `OPTIONS` не нужно явных правил доступа — `Spring Security` всегда пропускает `OPTIONS`.",
+              "text": "Preflight `OPTIONS` отдельного правила в `authorizeHttpRequests` не требует: по спецификации CORS `Spring Security` всегда пропускает `OPTIONS` без аутентификации, поэтому `permitAll()` для него избыточен.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию `OPTIONS` попадает под `anyRequest().authenticated()` и без `permitAll` для него preflight получит `401`; CORS-фильтр (через `cors()`) или явный `permitAll` это решает.",
@@ -2184,7 +2184,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `Spring Security 6` по-прежнему наследуют `WebSecurityConfigurerAdapter`, просто метод называется иначе.",
+              "text": "В `Spring Security 6` по-прежнему наследуют `WebSecurityConfigurerAdapter`, но вместо `configure(HttpSecurity)` переопределяют переименованный метод `filterChain(HttpSecurity)`, внутри которого вызывают `authorizeHttpRequests()`/`requestMatchers()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Класс полностью удалён из `Spring Security 6`; наследовать нечего — конфигурацию задают бином `SecurityFilterChain`.",
@@ -2196,7 +2196,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Метод `antMatchers()` в `Spring Security 6` остался, изменилось только имя `configure`.",
+              "text": "Главное изменение — переход на `@Bean SecurityFilterChain` вместо `configure(HttpSecurity)`, а методы `authorizeRequests()`/`antMatchers()` остались с прежними именами и работают в `Spring Security 6` без изменений.",
               "correct": false,
               "sections": {
                 "what_actually": "`antMatchers()` удалён вместе с `authorizeRequests()`; используют `requestMatchers()` внутри `authorizeHttpRequests()`.",
@@ -2208,7 +2208,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В новом подходе `AuthenticationManager` создаётся автоматически и его нельзя объявлять бином.",
+              "text": "В новом подходе `AuthenticationManager` контейнер собирает автоматически из бинов `UserDetailsService` и `PasswordEncoder`, поэтому объявлять его отдельным `@Bean` через `AuthenticationConfiguration` нельзя — иначе возникнет конфликт бинов.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: в `Spring Security 6` `AuthenticationManager` обычно объявляют бином через `AuthenticationConfiguration.getAuthenticationManager()`, чтобы инжектить его (например в логин-контроллер).",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для Resource Server обязательно вручную скачивать и обновлять публичные ключи провайдера.",
+              "text": "Подключают `spring-boot-starter-oauth2-resource-server`, но публичные ключи для проверки подписи `JWT` вручную скачивают с `jwk-set-uri` в локальный keystore и указывают его в `oauth2ResourceServer(...)`, так как автоматического обновления ключей у декодера нет.",
               "correct": false,
               "sections": {
                 "what_actually": "По `jwk-set-uri`/`issuer-uri` стартер сам скачивает и кэширует ключи JWKS, подхватывая их ротацию.",
@@ -2256,7 +2256,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Opaque-токены валидируются локально по подписи, как и `JWT`, без обращения к Authorization Server.",
+              "text": "Для непрозрачных токенов настраивают `opaquetoken` с `introspection-uri`, но проверяют их локально по подписи — так же, как `JWT` по `jwk-set-uri`, без сетевого вызова к Authorization Server на каждый запрос.",
               "correct": false,
               "sections": {
                 "what_actually": "Непрозрачный токен не несёт подписанных claims — его проверяют introspection-запросом к Authorization Server (`introspection-uri`).",
@@ -2268,7 +2268,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`issuer-uri` и `jwk-set-uri` — взаимоисключающие, и нужно настраивать оба одновременно.",
+              "text": "В `application.yml` для Resource Server задают и `issuer-uri`, и `jwk-set-uri` одновременно: `issuer-uri` включает auto-discovery, а `jwk-set-uri` отдельно указывает адрес ключей, без него `NimbusJwtDecoder` не соберётся.",
               "correct": false,
               "sections": {
                 "what_actually": "Достаточно одного: `issuer-uri` включает auto-discovery (сам найдёт jwks), либо явно задают `jwk-set-uri`; оба сразу не требуются.",
