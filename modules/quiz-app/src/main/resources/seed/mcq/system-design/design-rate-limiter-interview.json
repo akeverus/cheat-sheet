@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Fail-open означает при отказе Redis блокировать все запросы (deny), чтобы гарантированно защититься от abuse во время outage.",
+              "text": "Fail-open означает: при отказе Redis лимитер переходит в режим deny и отклоняет все запросы (429/503), чтобы во время outage сохранить защиту от abuse ценой доступности API.",
               "correct": false,
               "sections": {
                 "what_actually": "Это описание fail-closed; fail-open наоборот — при отказе Redis разрешать запросы (allow), жертвуя защитой ради доступности API.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для auth и payments правильнее выбирать fail-open, ведь финансовые сервисы важнее всего держать доступными любой ценой.",
+              "text": "Для auth и payments правильнее выбирать fail-open: эти сервисы критичнее всего держать доступными, а риск пропустить brute-force за короткий Redis-outage считается приемлемой платой за uptime.",
               "correct": false,
               "sections": {
                 "what_actually": "Для auth/payments выбирают fail-closed (security-приоритет): при отказе Redis лучше отказать, чем пропустить brute-force или abuse платежей.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Гибридный подход с local fallback бесполезен: при отказе Redis нужно жёстко выбрать либо fail-open, либо fail-closed, без промежуточных вариантов.",
+              "text": "Выбор между fail-open и fail-closed определяется не критичностью сервиса, а объёмом трафика: высоконагруженные endpoint-ы всегда делают fail-closed, а низконагруженные — fail-open, независимо от того, auth это или public read-only API.",
               "correct": false,
               "sections": {
                 "what_actually": "Гибрид как раз рекомендован: при отказе Redis переключаются на local pod-counter с conservative лимитом (`global_limit / pod_count × 1.5`), сохраняя частичную защиту.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Local fallback counter должен задавать per-pod лимит, равный полному global_limit, чтобы каждый под в одиночку держал глобальную планку.",
+              "text": "Local fallback counter выставляет per-pod лимит равным полному `global_limit`, чтобы каждый под в одиночку держал глобальную планку и суммарная защита не ослабевала при отказе Redis.",
               "correct": false,
               "sections": {
                 "what_actually": "Per-pod лимит делают conservative: `(global_limit / pod_count) × 1.5`; если каждый под возьмёт полный global, то N подов дадут N× global — катастрофа.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "При отказе Redis local fallback обеспечивает ровно ту же точность лимита, что и распределённый счётчик, без какой-либо деградации.",
+              "text": "При отказе Redis local fallback обеспечивает ровно ту же точность глобального лимита, что и распределённый Redis-счётчик, поэтому переключение на fallback не создаёт риска пропустить лишние запросы.",
               "correct": false,
               "sections": {
                 "what_actually": "Точность падает: поды не знают друг о друге, суммарно допускают до 1.5× global; это осознанный trade-off ради доступности.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "После восстановления Redis нельзя переключаться обратно автоматически — local fallback должен оставаться активным до ручного рестарта подов.",
+              "text": "После восстановления Redis переключаться обратно на распределённый счётчик нужно вручную, рестартом подов: circuit breaker остаётся открытым и сам не закрывается, пока оператор не сбросит его состояние.",
               "correct": false,
               "sections": {
                 "what_actually": "Circuit breaker сам закрывается при возврате Redis и плавно переключает обратно на distributed-путь; ручной рестарт не нужен.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Volumetric (network) DDoS до сотен Tbps отбивается самим rate limiter через per-IP лимиты на уровне приложения, scrubbing centers и anycast не нужны.",
+              "text": "Volumetric (network) DDoS в сотни Tbps гасится самим rate limiter: per-IP лимиты на уровне приложения отклоняют объёмный флуд, а BGP anycast и scrubbing centers нужны только для L7-abuse вроде брутфорса `/api/login`.",
               "correct": false,
               "sections": {
                 "what_actually": "Volumetric-атаки гасятся сетью (BGP anycast + scrubbing centers, 100+ Tbps) до приложения; rate limiter работает на L7, а не на объёмном сетевом флуде.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "CAPTCHA escalation должна сразу при первом подозрении навсегда банить пользователя, без промежуточных шагов и временных блокировок.",
+              "text": "CAPTCHA escalation при первом же подозрительном сигнале сразу выставляет permanent block по IP, без промежуточного challenge и temp block, чтобы максимально быстро отсечь атакующего.",
               "correct": false,
               "sections": {
                 "what_actually": "Эскалация мягкая и поэтапная: сначала CAPTCHA challenge, после N failures — temp block 1h, и только repeat offender — permanent block, чтобы не банить ложных срабатываний.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Geo-fence бесполезен для DDoS mitigation, потому что блокировка по странам никак не уменьшает abuse и не упоминается в защитных уровнях.",
+              "text": "Geo-fence — это часть Level 2 (application DDoS) и реализуется теми же per-IP счётчиками: лимитер считает запросы по стране так же, как по IP, поэтому отдельного уровня блокировки по географии не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Geo-fence — это Level 5 защиты: блокировка/ограничение по странам режет abuse из регионов вне бизнес-интереса и помогает с compliance.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для rate limiter достаточно одной метрики — общего числа запросов в секунду; decision latency, Redis health и top denied keys мониторить не нужно.",
+              "text": "Для rate limiter достаточно двух метрик — общего RPS и числа allow/deny: decision latency, Redis calls/latency, local_fallback_total и top denied keys выводятся из них и в отдельном мониторинге не нуждаются.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужен полный набор: decision latency (p99 < 10 ms), Redis calls/latency, local_fallback_total, top denied keys и 429 per endpoint — иначе деградацию и abuse не увидеть.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Алерт на `local_fallback_total > 0` не нужен, потому что переключение на local fallback — это штатный режим, не требующий внимания.",
+              "text": "Алерт на `local_fallback_total > 0` не нужен: переключение на local fallback — штатный деградированный режим, который circuit breaker включает и выключает сам, поэтому оператору достаточно смотреть метрику постфактум.",
               "correct": false,
               "sections": {
                 "what_actually": "Любой `local_fallback_total > 0` сигнализирует о проблемах Redis и требует email-алерта: fallback — деградированный режим, а не норма.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Метрика decision latency не имеет целевого порога: rate limiter может думать сколько угодно, ведь он не на критическом пути.",
+              "text": "Метрика decision latency не нуждается в целевом пороге и алерте: лимитер выполняется асинхронно вне основного request-пути, поэтому его задержка не входит в latency ответа API.",
               "correct": false,
               "sections": {
                 "what_actually": "Decision latency имеет жёсткий target (p99 < 10 ms), потому что лимитер именно на critical path API; превышение 50 ms 5 мин подряд — повод для page.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Достаточно одних unit-тестов логики алгоритма; integration с реальным Redis и load-тесты на 1M req/sec для rate limiter избыточны.",
+              "text": "Для rate limiter достаточно unit-тестов логики алгоритма на token bucket и sliding window: они детерминированно покрывают все переходы, а integration с реальным Redis и load на 1M req/sec лишь дублируют уже проверенную логику.",
               "correct": false,
               "sections": {
                 "what_actually": "Unit не ловит race conditions atomic Lua, поведение distributed на 5 подах и деградацию под нагрузкой — для этого нужны integration (Testcontainers) и load-тесты.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Integration-тесты rate limiter правильно делать с mock-объектом вместо Redis, потому что реальный Redis в тестах слишком медленный и не нужен.",
+              "text": "Integration-тесты правильнее гонять на in-memory mock Redis (embedded-redis): он воспроизводит те же команды `INCR` и `EXPIRE`, но быстрее настоящего, поэтому Testcontainers с реальным Redis в CI избыточен.",
               "correct": false,
               "sections": {
                 "what_actually": "Именно реальный Redis (Testcontainers) проверяет atomic Lua и race conditions; mock не воспроизводит single-threaded семантику и гонки, ради которых тест и пишется.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Property-based тестирование неприменимо к rate limiter: инварианты вроде «allowed ≤ limit» нельзя выразить, поэтому хватает только ручных примеров.",
+              "text": "Property-based тестирование к rate limiter неприменимо: инвариант «allowed ≤ limit» зависит от реального времени и refill-интервалов, поэтому сгенерировать корректную случайную последовательность запросов для ScalaCheck/Hypothesis невозможно.",
               "correct": false,
               "sections": {
                 "what_actually": "Property-based как раз идеально подходит: инвариант «при ЛЮБОЙ последовательности allowed ≤ limit + 1» проверяется ScalaCheck/Hypothesis и ловит edge cases, что ручные примеры пропускают.",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Использовать `UPDATE rate_limits SET count=count+1 WHERE key=?` в реляционной БД на каждый запрос — это хорошая практика: транзакции БД дают надёжность и высокий throughput для лимитера.",
+              "text": "Использовать `UPDATE rate_limits SET count=count+1 WHERE key=?` в реляционной БД на каждый запрос — надёжный подход: ACID-транзакция делает инкремент атомарным при гонке подов, а connection pool держит нужный throughput на горячем пути.",
               "correct": false,
               "sections": {
                 "what_actually": "DB-backed counter — классический антипаттерн: `UPDATE ... count+1` берёт row lock и упирается в fsync, давая throughput < 1K/sec; фикс — Redis или in-memory.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Хранить rate-limit ключи в Redis без TTL — хорошая практика, ведь так не теряются исторические данные о клиентах и не нужен лишний EXPIRE.",
+              "text": "Хранить rate-limit ключи в Redis без TTL — оправданная практика: набор активных ключей ограничен числом клиентов и естественно переиспользуется, поэтому память не растёт, а отказ от `EXPIRE` экономит по команде на каждый инкремент.",
               "correct": false,
               "sections": {
                 "what_actually": "Без TTL память Redis растёт линейно по уникальным ключам и приводит к OOM через дни; фикс — `EXPIRE` на каждый INCR с TTL = window × 2.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Считать per-IP лимит по `remote_addr` за балансировщиком корректно: это и есть реальный IP клиента, парсить `X-Forwarded-For` не требуется.",
+              "text": "Считать per-IP лимит по `remote_addr` за балансировщиком корректно: каждый прокси в цепочке подставляет в `remote_addr` адрес исходного клиента, поэтому на бэкенде оказывается настоящий IP пользователя, а `X-Forwarded-For` лишь дублирует ту же информацию.",
               "correct": false,
               "sections": {
                 "what_actually": "За LB `remote_addr` — это IP балансировщика (один на всех!), поэтому per-IP лимит бесполезен; нужно парсить `X-Forwarded-For` или `Cf-Connecting-IP`.",
