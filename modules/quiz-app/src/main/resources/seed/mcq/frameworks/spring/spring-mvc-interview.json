@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ViewResolver` десериализует `JSON`-тело запроса в Java-объект перед вызовом контроллера.",
+              "text": "`ViewResolver` десериализует `JSON`-тело запроса в Java-объект перед вызовом контроллера, работая на входящей стороне.",
               "correct": false,
               "sections": {
                 "what_actually": "Десериализацией `JSON` занимается `HttpMessageConverter` (для `@RequestBody`); `ViewResolver` лишь разрешает имя представления на выходе.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ViewResolver` участвует в каждом ответе, включая `JSON` из `@RestController`.",
+              "text": "`ViewResolver` участвует в формировании любого ответа, включая `JSON` из `@RestController`, где преобразует имя представления в тело.",
               "correct": false,
               "sections": {
                 "what_actually": "В `@RestController` (с `@ResponseBody`) `ViewResolver` пропускается — ответ пишется напрямую через `HttpMessageConverter`.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ViewResolver` сам по себе рендерит HTML и отправляет его клиенту, не создавая объект `View`.",
+              "text": "`ViewResolver` сам рендерит HTML и пишет его в response, минуя этап создания объекта `View`.",
               "correct": false,
               "sections": {
                 "what_actually": "`ViewResolver` лишь возвращает объект `View`; рендеринг (`view.render(model,...)`) выполняет уже сам `View`.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`MultipartResolver` нужен для разбора `JSON`-тела запроса на отдельные поля.",
+              "text": "`MultipartResolver` сам связывает каждую часть запроса с параметрами контроллера, помеченными `@RequestPart`, минуя `RequestPartMethodArgumentResolver`.",
               "correct": false,
               "sections": {
                 "what_actually": "`JSON`-тело разбирает `HttpMessageConverter` (`Jackson`); `MultipartResolver` обрабатывает только `multipart/form-data` (файлы).",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `Spring Boot` дефолтная реализация — `CommonsMultipartResolver` на базе Apache Commons FileUpload.",
+              "text": "В `Spring Boot` дефолтная реализация — `CommonsMultipartResolver` на базе Apache Commons FileUpload, а `StandardServletMultipartResolver` подключают вручную отдельным бином.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Spring Boot` по умолчанию используется `StandardServletMultipartResolver` (Servlet 3.0+); Commons — альтернатива для старых сред.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "При превышении `max-file-size` `Spring` молча обрезает файл до лимита и продолжает обработку.",
+              "text": "При превышении `max-file-size` `Spring` не бросает исключение, а отдаёт в контроллер пустой `MultipartFile` (`getSize()` == 0), оставляя проверку размера обработчику.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring` не обрезает файл, а бросает `MaxUploadSizeExceededException`, которое нужно обработать.",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`MockMvc` поднимает реальный HTTP-сервер (`Tomcat`) и шлёт настоящие сетевые запросы на `localhost`.",
+              "text": "`MockMvc` поднимает встроенный `Tomcat` на случайном порту и шлёт по сети реальные HTTP-запросы, как `TestRestTemplate`.",
               "correct": false,
               "sections": {
                 "what_actually": "`MockMvc` работает БЕЗ сервера и без сети — он вызывает `DispatcherServlet` напрямую внутри JVM.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@WebMvcTest` поднимает полный контекст приложения, включая все сервисы и репозитории.",
+              "text": "`@WebMvcTest` поднимает полный контекст со всеми `@Service` и `@Repository`, как `@SpringBootTest`, только без веб-сервера.",
               "correct": false,
               "sections": {
                 "what_actually": "`@WebMvcTest` — это срез только веб-слоя; сервисы/репозитории не создаются и подменяются `@MockBean`.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`MockMvc` не умеет проверять тело `JSON`-ответа — он валидирует только HTTP-статус.",
+              "text": "`MockMvc` проверяет лишь статус и заголовки ответа; для тела `JSON` нужен отдельный `TestRestTemplate` с десериализацией в объект.",
               "correct": false,
               "sections": {
                 "what_actually": "`MockMvc` проверяет и тело через `jsonPath(...)`/`content()`, и заголовки, и статус — всё вместе.",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`DispatcherServlet` загружает все свои стратегии (`HandlerMapping`, `ViewResolver` и др.) заново на каждый HTTP-запрос.",
+              "text": "`DispatcherServlet` перечитывает стратегии (`HandlerMapping`, `ViewResolver` и др.) на каждый запрос в `doDispatch()`, поэтому новые бины подхватываются без рестарта.",
               "correct": false,
               "sections": {
                 "what_actually": "Стратегии загружаются ОДИН раз при инициализации (`initStrategies()`); на запрос лишь выбирается подходящий из уже загруженных.",
@@ -2256,7 +2256,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Среди `HandlerMapping` выбор делается случайно — приоритет (`Order`) на это не влияет.",
+              "text": "Среди `HandlerMapping` `getHandler()` берёт первый совпавший бин в порядке их создания в контексте, а `Order` учитывается только при выборе `HandlerAdapter`.",
               "correct": false,
               "sections": {
                 "what_actually": "`HandlerMapping` упорядочены по `Order`; `getHandler()` берёт первый подходящий по приоритету, а не случайный.",
@@ -2268,7 +2268,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`RequestMappingHandlerAdapter` вызывается для всех типов handler'ов, включая `HttpRequestHandler` и интерфейс `Controller`.",
+              "text": "`RequestMappingHandlerAdapter` обслуживает любой handler: для `HttpRequestHandler` и интерфейса `Controller` `getHandlerAdapter()` возвращает именно его.",
               "correct": false,
               "sections": {
                 "what_actually": "Для каждого типа handler'а свой адаптер: `RequestMappingHandlerAdapter` (для `@RequestMapping`-методов), `HttpRequestHandlerAdapter`, `SimpleControllerHandlerAdapter`.",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@RequestPart` и `@RequestParam` для файлов абсолютно идентичны и взаимозаменяемы во всех случаях.",
+              "text": "`@RequestPart` и `@RequestParam` для файлов различаются лишь именем: оба применяют один и тот же `HttpMessageConverter` к части и одинаково обрабатывают JSON-часть.",
               "correct": false,
               "sections": {
                 "what_actually": "`@RequestPart` дополнительно умеет десериализовать именованную часть (например `JSON`) через `HttpMessageConverter`, чего `@RequestParam` для сложных частей не делает.",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`file-size-threshold` задаёт максимальный размер файла, после которого запрос отклоняется.",
+              "text": "`file-size-threshold` задаёт максимальный размер файла, свыше которого запрос отклоняется с `MaxUploadSizeExceededException`.",
               "correct": false,
               "sections": {
                 "what_actually": "Максимум задаёт `max-file-size`; `file-size-threshold` — это порог, после которого часть пишется на диск вместо памяти, а не лимит отклонения.",
@@ -2375,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@RequestPart` не поддерживает валидацию `@Valid` — проверять структуру части можно только вручную после десериализации.",
+              "text": "`@RequestPart` игнорирует `@Valid` на части: Bean Validation срабатывает лишь для тела, привязанного через `@RequestBody`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@RequestPart(\"metadata\") @Valid ProductRequest` запускает `Bean Validation` так же, как `@RequestBody` с `@Valid`.",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Глобальный `@ControllerAdvice` перехватывает исключение раньше локального `@ExceptionHandler` в контроллере.",
+              "text": "Глобальный `@ControllerAdvice` перехватывает исключение первым: `ExceptionHandlerExceptionResolver` опрашивает advice-бины раньше, чем локальные `@ExceptionHandler` самого контроллера.",
               "correct": false,
               "sections": {
                 "what_actually": "Локальный `@ExceptionHandler` имеет ВЫСШИЙ приоритет для исключений своего контроллера; advice — следующий уровень.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Несколько `@ControllerAdvice` применяются в случайном порядке, и `@Order` на них не влияет.",
+              "text": "Несколько `@ControllerAdvice` применяются в порядке регистрации их бинов в контексте, а `@Order`/`Ordered` на сортировку advice не влияют.",
               "correct": false,
               "sections": {
                 "what_actually": "Advice сортируются по `@Order`/`Ordered` (меньше — раньше), а также по специфичности пакетов и типов; порядок управляем.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Среди `@ExceptionHandler` базовый тип `Exception` обрабатывается раньше более конкретного подтипа.",
+              "text": "Среди нескольких `@ExceptionHandler` при совпадении иерархии выбирается метод с самым общим типом `Exception`, а конкретные подтипы служат запасным вариантом.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring выбирает самый СПЕЦИФИЧНЫЙ по иерархии тип; `Exception` срабатывает лишь при отсутствии более точного.",
