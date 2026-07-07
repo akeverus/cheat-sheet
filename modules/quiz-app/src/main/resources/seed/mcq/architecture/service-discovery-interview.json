@@ -1149,7 +1149,7 @@
           "question_text": "Как в Kubernetes устроен discovery через Service, Endpoints/EndpointSlices, и зачем появились EndpointSlices?",
           "options": [
             {
-              "text": "Service в Kubernetes сам напрямую хранит список IP живых pod-ов и обновляет его, а объекты Endpoints/EndpointSlices не нужны.",
+              "text": "Service в Kubernetes сам хранит и обновляет список IP живых pod-ов через свой label-селектор, а объекты Endpoints/EndpointSlices — лишь опциональный кэш для CoreDNS.",
               "correct": false,
               "sections": {
                 "what_actually": "Service хранит лишь стабильный identity и селектор по label-ам; actual IP живых pod-ов лежат в отдельных объектах Endpoints (legacy) / EndpointSlices, которые поддерживает EndpointController.",
@@ -1161,7 +1161,7 @@
               "order": 0
             },
             {
-              "text": "kube-proxy резолвит DNS-имена Service-ов в ClusterIP, а CoreDNS пишет iptables/IPVS-правила для DNAT на pod-IP.",
+              "text": "kube-proxy резолвит DNS-имя Service в ClusterIP, а CoreDNS программирует iptables/IPVS-правила для DNAT ClusterIP→pod-IP на каждом node.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны: CoreDNS резолвит `payments-service...svc.cluster.local` в ClusterIP, а kube-proxy на каждом node пишет iptables/IPVS-правила DNAT с ClusterIP на pod-IP.",
@@ -1173,7 +1173,7 @@
               "order": 1
             },
             {
-              "text": "EndpointSlices появились, чтобы хранить больше метаданных, чем Endpoints, а на нагрузку control-plane при большом числе pod-ов они не влияют.",
+              "text": "EndpointSlices ввели, чтобы хранить о pod-е больше метаданных (topology, зоны), а на нагрузку control-plane при тысячах pod-ов они, в отличие от Endpoints, не влияют.",
               "correct": false,
               "sections": {
                 "what_actually": "Главная причина EndpointSlices — именно нагрузка control-plane: при 1000 pod-ах один Endpoints-объект огромен и каждое изменение требует full re-broadcast по watch; slices бьют его на куски по ~100.",
@@ -1329,7 +1329,7 @@
           "question_text": "Чем отличаются режимы kube-proxy (iptables, IPVS, eBPF/Cilium) и как это влияет на discovery в коде приложения?",
           "options": [
             {
-              "text": "В режиме iptables kube-proxy делает O(1) hash-поиск нужного pod-а, поэтому он хорошо масштабируется на кластерах с тысячами Service-ов.",
+              "text": "В режиме iptables kube-proxy выбирает pod через O(1) hash-таблицу в ядре, поэтому его цепочки не растут с числом Service-ов и он отлично масштабируется на кластерах с тысячами Service-ов.",
               "correct": false,
               "sections": {
                 "what_actually": "O(1) hash-поиск — это про IPVS; iptables-режим линеен (O(N)): при тысячах Service-ов цепочки растут, reload медленный, CPU на packet-processing высокий.",
@@ -1341,7 +1341,7 @@
               "order": 0
             },
             {
-              "text": "eBPF/Cilium — это ещё один плагин поверх kube-proxy; сам заменить kube-proxy он не способен и работает вместе с iptables.",
+              "text": "eBPF/Cilium подключается как CNI-плагин поверх kube-proxy и ускоряет routing, но сам заменить kube-proxy не может — DNAT для ClusterIP всё равно остаётся на iptables.",
               "correct": false,
               "sections": {
                 "what_actually": "Cilium с `kubeProxyReplacement: true` полностью заменяет kube-proxy: DNAT и routing решаются в eBPF-программах в ядре, iptables-режим при этом не нужен.",
@@ -1366,7 +1366,7 @@
               "order": 2
             },
             {
-              "text": "Выбор режима kube-proxy меняет код приложения: для IPVS нужно явно указывать алгоритм балансировки в HTTP-клиенте, иначе запросы не маршрутизируются.",
+              "text": "Выбор режима kube-proxy виден в коде приложения: под IPVS HTTP-клиент должен явно указывать алгоритм балансировки (round-robin/least-conn), иначе запросы на ClusterIP не маршрутизируются.",
               "correct": false,
               "sections": {
                 "what_actually": "Discovery в коде выглядит одинаково при любом режиме — приложение ходит по `http://payments-service` и не знает про iptables/IPVS/eBPF; это деталь kernel data plane.",
@@ -1389,7 +1389,7 @@
           "question_text": "Как service mesh (Istio: istiod, Envoy, xDS) реализует discovery и что меняется по сравнению с голым Kubernetes?",
           "options": [
             {
-              "text": "В service mesh каждый сервис сам опрашивает istiod по REST за списком инстансов на каждый запрос, а Envoy-sidecar лишь логирует трафик.",
+              "text": "В service mesh каждый сервис сам обращается к istiod по REST-API за списком инстансов на каждый исходящий запрос, а Envoy-sidecar в это время только собирает логи и метрики трафика.",
               "correct": false,
               "sections": {
                 "what_actually": "Discovery спрятан в sidecar: istiod пушит конфиг в Envoy по xDS (gRPC streaming), и именно Envoy держит endpoints и балансирует локально — приложение istiod не опрашивает вовсе.",
@@ -1401,7 +1401,7 @@
               "order": 0
             },
             {
-              "text": "istiod пушит конфиг в Envoy только при старте pod-а единоразово; при изменении endpoints sidecar придётся вручную перезапускать.",
+              "text": "istiod рендерит Envoy-конфиг и пушит его в sidecar единоразово при инъекции pod-а; когда endpoints меняются, обновление подхватывается только после ручного рестарта sidecar-контейнера.",
               "correct": false,
               "sections": {
                 "what_actually": "xDS — это gRPC streaming с непрерывным push: istiod динамически обновляет endpoints (EDS), clusters (CDS), routes (RDS) в Envoy на лету, без рестарта sidecar.",
@@ -1413,7 +1413,7 @@
               "order": 1
             },
             {
-              "text": "Главное преимущество mesh-discovery — он убирает sidecar из пути запроса, поэтому трафик идёт напрямую pod→pod без дополнительных прокси.",
+              "text": "Главный выигрыш mesh-discovery в том, что sidecar убирается из data path: istiod настраивает маршруты, а трафик после этого идёт напрямую pod→pod без прохода через Envoy.",
               "correct": false,
               "sections": {
                 "what_actually": "Mesh как раз добавляет Envoy-sidecar в каждый pod; выигрыш в том, что sidecar локален (нет inter-host hop через kube-proxy), а не в его отсутствии.",
@@ -1569,7 +1569,7 @@
           "question_text": "Какие CAP-trade-offs у реестров — Eureka (AP) против Consul/etcd/ZK (CP) — и когда нужен какой?",
           "options": [
             {
-              "text": "Eureka — CP-система: при partition она блокирует запросы и возвращает ошибку «registry unavailable», так что клиент не получит stale-список.",
+              "text": "Eureka — CP-система: при network partition она предпочитает consistency, отклоняет запросы с ошибкой «registry unavailable» до пересбора кворума peer-ов, поэтому stale-список клиенту не отдаётся.",
               "correct": false,
               "sections": {
                 "what_actually": "Eureka — AP: при partition она продолжает отдавать stale-списки и никогда не возвращает ошибку недоступности; блокировка и ошибка при partition — поведение CP-реестров (Consul/etcd/ZK).",
@@ -1581,7 +1581,7 @@
               "order": 0
             },
             {
-              "text": "etcd и Consul — AP-системы: при partition minority-сторона продолжает принимать записи, поэтому данные остаются доступны, но могут расходиться.",
+              "text": "Consul и etcd — CP-системы, но при partition minority-раздел избирает собственного лидера и продолжает независимо принимать записи, а расхождение потом сливается Raft-мержем при заживлении.",
               "correct": false,
               "sections": {
                 "what_actually": "etcd и Consul — CP: minority-сторона при partition НЕ пишет (нет кворума), reads через leader блокируются; они жертвуют доступностью ради консистентности.",
@@ -1606,7 +1606,7 @@
               "order": 2
             },
             {
-              "text": "По CAP-теореме реестр может одновременно обеспечить и consistency, и availability при network partition, если аккуратно настроить таймауты.",
+              "text": "Discovery почти всегда требует CP-реестр (Consul/etcd): клиент не должен получать stale-инстанс, поэтому AP-реестры вроде Eureka для service discovery не подходят.",
               "correct": false,
               "sections": {
                 "what_actually": "При partition CAP заставляет выбрать только C или A: никакой настройкой таймаутов нельзя одновременно гарантировать строгую консистентность и полную доступность во время разрыва сети.",
@@ -1749,7 +1749,7 @@
           "question_text": "Как выбрать между Consul, Eureka, etcd, ZooKeeper и Kubernetes DNS по ключевым критериям?",
           "options": [
             {
-              "text": "Все пять — CP-системы с одинаковым consensus-протоколом Raft, поэтому при выборе можно опираться только на язык команды, а не на CAP или интерфейс.",
+              "text": "Eureka, как Consul и etcd, — CP-система на consensus-логе: запись инстанса подтверждается только после репликации на кворум peer-ов, поэтому в JVM-стеке её выбирают ради строгой консистентности реестра.",
               "correct": false,
               "sections": {
                 "what_actually": "CAP и протоколы у них разные: Eureka — AP (peer-to-peer async), Consul/etcd — CP на Raft, ZooKeeper — CP на ZAB, K8s DNS — CP (etcd под капотом); выбор идёт по CAP, интерфейсу, multi-DC и операционке.",
@@ -1774,7 +1774,7 @@
               "order": 1
             },
             {
-              "text": "Kubernetes DNS (CoreDNS + Service) — это AP-система, не зависящая от etcd, поэтому она остаётся доступной для записи даже при потере кворума control plane.",
+              "text": "Kubernetes DNS (CoreDNS + Service) — это AP-система, не зависящая от etcd, поэтому она остаётся доступной для записи endpoint'ов даже при потере кворума control plane.",
               "correct": false,
               "sections": {
                 "what_actually": "K8s discovery — CP, потому что под капотом etcd: при потере кворума control plane не пишет (новые pod-ы не регистрируются), хотя data plane продолжает работать со stale-кешем.",
