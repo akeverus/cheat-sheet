@@ -849,7 +849,7 @@
           "question_text": "Config через `MicroProfile Config`?",
           "options": [
             {
-              "text": "Конфигурация в `Quarkus` читается только из переменных окружения, файлы свойств не поддерживаются.",
+              "text": "Через `MicroProfile Config`. Свойства задают в `application.properties` и инжектят `@ConfigProperty(name=\"my.greeting\") String greeting;`. При конфликте значение из `application.properties` всегда переопределяет переменные окружения и системные свойства — у файла наивысший приоритет источника.",
               "correct": false,
               "sections": {
                 "what_actually": "Источников несколько: `application.properties`, env-переменные, system properties и др.; env — лишь один из них с высоким приоритетом.",
@@ -861,7 +861,7 @@
               "order": 0
             },
             {
-              "text": "Инжектить конфиг можно только через `@Value`, как в `Spring`.",
+              "text": "Через `MicroProfile Config`. Свойства задают в `application.properties`, инжектят полем `@ConfigProperty(name=\"my.greeting\") String greeting;`. Параметра `defaultValue` нет: если свойство отсутствует в конфиге, бин не создаётся и старт падает с `DeploymentException`.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Quarkus` используют `@ConfigProperty` (`MicroProfile Config`) или type-safe `@ConfigMapping`; `@Value` — аннотация `Spring`, а не `Quarkus`.",
@@ -886,7 +886,7 @@
               "order": 2
             },
             {
-              "text": "`@ConfigMapping` появился ещё до `Quarkus 3` и заменяет аннотации полностью устаревшим способом.",
+              "text": "Через `MicroProfile Config`. Свойства задают в `application.properties`, инжектят `@ConfigProperty` или type-safe интерфейсом `@ConfigMapping(prefix=\"my\")`. Инжектируемое поле всегда типа `String`; для `int`, `boolean`, `Duration` значение получают строкой и парсят вручную — встроенных converters нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`@ConfigMapping` (type-safe конфиг в интерфейсе) — относительно новый механизм (`Quarkus 3+`), он дополняет `@ConfigProperty`, а не объявляет его устаревшим.",
@@ -1029,7 +1029,7 @@
           "question_text": "Чем `Mutiny` отличается от `Reactor` и `RxJava`?",
           "options": [
             {
-              "text": "Отличий нет — это одна и та же библиотека под тремя именами.",
+              "text": "Однообъектный тип: `Mutiny` — `Multi<T>`, `Reactor` — `Flux<T>`, `RxJava` — `Observable`/`Flowable`. Многообъектный: `Uni<T>` / `Mono<T>` / `Single`. API: `Mutiny` verbose (`onItem`/`onFailure`), `Reactor`/`RxJava` — compact. Backing: `SmallRye` / `Pivotal` / `ReactiveX`.",
               "correct": false,
               "sections": {
                 "what_actually": "Это три разные библиотеки с разными типами и стилем API: `Mutiny` (`Uni`/`Multi`, `SmallRye`), `Reactor` (`Mono`/`Flux`, `Pivotal`), `RxJava` (`Single`/`Observable`, `ReactiveX`).",
@@ -1054,7 +1054,7 @@
               "order": 1
             },
             {
-              "text": "`Mutiny` отличается тем, что не поддерживает backpressure, в отличие от `Reactor`/`RxJava`.",
+              "text": "Однообъектный тип: `Mutiny` — `Uni<T>`, `Reactor` — `Mono<T>`, `RxJava` — `Single`/`Maybe`. Многообъектный: `Multi<T>` / `Flux<T>` / `Observable`. API: `Mutiny` verbose (`onItem`/`onFailure`), остальные compact. Backing: `Mutiny` — форк `Reactor` от `Pivotal`, `Reactor` и `RxJava` — самостоятельные проекты `Pivotal`/`ReactiveX`.",
               "correct": false,
               "sections": {
                 "what_actually": "Backpressure в `Mutiny` есть — он приходит из `Multi` (поток); отсутствие backpressure не является отличием.",
@@ -1066,7 +1066,7 @@
               "order": 2
             },
             {
-              "text": "Главное отличие в том, что `Mutiny` синхронна, а `Reactor`/`RxJava` асинхронны.",
+              "text": "Однообъектный тип: `Mutiny` — `Uni<T>`, `Reactor` — `Mono<T>`, `RxJava` — `Single`/`Maybe`. Многообъектный: `Multi<T>` / `Flux<T>` / `Observable`. API: `Mutiny` — compact chained без явных групп, а `Reactor`/`RxJava` — verbose с обязательными `onItem`/`onFailure`. Backing: `SmallRye` / `Pivotal` / `ReactiveX`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Mutiny`, как и остальные, асинхронна и неблокирующа; разница в стиле API и типах, а не в sync/async.",
@@ -1569,7 +1569,7 @@
           "question_text": "`@QuarkusTest` и его особенности?",
           "options": [
             {
-              "text": "`@QuarkusTest` поднимает приложение в отдельном внешнем процессе и тестирует его по сети.",
+              "text": "`@QuarkusTest` запускает приложение **в-процессе**, но поднимает свежий экземпляр на каждый тестовый метод, поэтому состояние между тестами не сохраняется. HTTP-тесты — через `RestAssured`: `given().when().get(\"/people\").then().statusCode(200)`. Mocking — `@InjectMock UserRepository repo;` + `Mockito.when(...)`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@QuarkusTest` запускает приложение **в-процессе** (в той же JVM), а не как отдельный внешний процесс.",
@@ -1581,7 +1581,7 @@
               "order": 0
             },
             {
-              "text": "В `@QuarkusTest` нельзя мокать зависимости — Mockito не поддерживается.",
+              "text": "`@QuarkusTest` запускает приложение **в-процессе** и использует `RestAssured` для HTTP-тестов. Mocking делают аннотацией `@MockBean UserRepository repo;`, как в `Spring Boot` — `@InjectMock` в `Quarkus` не поддерживается. Для проверки native есть `@QuarkusIntegrationTest`.",
               "correct": false,
               "sections": {
                 "what_actually": "Mocking поддержан: `@InjectMock UserRepository repo;` + `Mockito.when(repo.findById(1L)).thenReturn(...)` штатно работает в `@QuarkusTest`.",
@@ -1606,7 +1606,7 @@
               "order": 2
             },
             {
-              "text": "`@QuarkusTest` всегда собирает и запускает native image для каждого теста.",
+              "text": "`@QuarkusTest` запускает приложение **в-процессе** и использует `RestAssured` для HTTP-тестов, а mocking — через `@InjectMock` + `Mockito.when(...)`. При этом `@QuarkusTest` собирает native image перед каждым классом, а `@QuarkusIntegrationTest`, наоборот, гоняет тесты на JVM.",
               "correct": false,
               "sections": {
                 "what_actually": "Обычный `@QuarkusTest` гоняет на JVM в-процессе; native проверяет отдельная `@QuarkusIntegrationTest`, и не на каждый тест.",
@@ -1629,7 +1629,7 @@
           "question_text": "`RestAssured` интеграция?",
           "options": [
             {
-              "text": "`RestAssured` — это mock-фреймворк для подмены зависимостей, аналог `Mockito`.",
+              "text": "`RestAssured` — DSL для HTTP-тестов исходящих вызовов: он подменяет внешние REST-сервисы, к которым обращается приложение, а не проверяет собственные эндпоинты. Порт и base URL в `Quarkus` настраиваются из коробки, синтаксис — `given().when().get(\"/people\").then().statusCode(200)`.",
               "correct": false,
               "sections": {
                 "what_actually": "`RestAssured` — DSL для HTTP-тестов (given/when/then), а моки делает `Mockito` (`@InjectMock`); это разные инструменты.",
@@ -1641,7 +1641,7 @@
               "order": 0
             },
             {
-              "text": "Для `RestAssured` в `Quarkus` нужно вручную указывать порт и base URL в каждом тесте.",
+              "text": "`RestAssured` — DSL для HTTP-тестов, но в `Quarkus` он работает только против уже запущенного приложения по внешнему URL: базовый адрес и порт прописывают в каждом тесте через `RestAssured.baseURI`. Структура `given().when().post(\"/people\").then().statusCode(201)` остаётся прежней.",
               "correct": false,
               "sections": {
                 "what_actually": "`Quarkus` идёт с готовой настройкой `RestAssured` (порт, base URL), так что в тесте достаточно `given()...get(\"/people\")`.",
@@ -1653,7 +1653,7 @@
               "order": 1
             },
             {
-              "text": "`RestAssured` умеет только GET-запросы, для POST/PUT нужен другой инструмент.",
+              "text": "`RestAssured` — DSL для HTTP-тестов с готовой настройкой порта и base URL в `Quarkus`. Проверять можно только статус-код и заголовки ответа; тело JSON через `.body(\"name\", equalTo(\"Alice\"))` не валидируется — для этого нужен отдельный JSON-матчер.",
               "correct": false,
               "sections": {
                 "what_actually": "`RestAssured` поддерживает все HTTP-методы: `given().body(...).post(\"/people\").then().statusCode(201)` — обычный сценарий.",
@@ -1702,7 +1702,7 @@
               "order": 0
             },
             {
-              "text": "`Quarkus` интегрируется с Kubernetes только в native-режиме; на JVM манифесты не генерируются.",
+              "text": "Подключают `quarkus-kubernetes`, но манифесты `target/kubernetes/kubernetes.yaml` генерируются только при сборке native image (`./mvnw package -Pnative`); на JVM extension отдаёт лишь свойства вроде `quarkus.kubernetes.replicas`, без готовых YAML.",
               "correct": false,
               "sections": {
                 "what_actually": "Генерация манифестов через `quarkus-kubernetes` работает независимо от режима упаковки — и на JVM, и в native.",
@@ -1714,7 +1714,7 @@
               "order": 1
             },
             {
-              "text": "Манифесты Kubernetes пишут вручную; `Quarkus` ничего не генерирует.",
+              "text": "Подключают `quarkus-kubernetes`, и при сборке (`./mvnw package`) генерируется только `Dockerfile` и container image; сами манифесты `Deployment`/`Service` пишут вручную. Настройка образа — свойствами `quarkus.container-image.group`, `quarkus.container-image.name`.",
               "correct": false,
               "sections": {
                 "what_actually": "`quarkus-kubernetes` как раз генерирует `kubernetes.yaml`/`.json` из свойств `quarkus.kubernetes.*` при сборке.",
@@ -1726,7 +1726,7 @@
               "order": 2
             },
             {
-              "text": "Для Kubernetes-интеграции в `Quarkus` ничего подключать не нужно — она в core.",
+              "text": "Подключают `quarkus-kubernetes`; манифесты `target/kubernetes/kubernetes.yaml` генерируются при сборке, но настраиваются только Java-аннотациями (`@KubernetesApplication(replicas=3)`) на главном классе — свойства из `application.properties` для них не действуют. Есть extensions для `Helm`, `OpenShift`.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужен extension `quarkus-kubernetes` (или `openshift`/`helm`); в минимальный core генерация манифестов не входит.",
@@ -1809,7 +1809,7 @@
           "question_text": "Какие минусы `Quarkus`?",
           "options": [
             {
-              "text": "У `Quarkus` нет существенных минусов — это зрелый фреймворк уровня `Spring` по экосистеме.",
+              "text": "Минусы: холодный старт и потребление памяти хуже, чем у `Spring Boot`, из-за build-time обработки; runtime-производительность ниже; `MicroProfile` менее знаком Spring-разработчикам; меньше community и готовых интеграций; долгая native-сборка.",
               "correct": false,
               "sections": {
                 "what_actually": "Минусы есть: меньше community и материалов, чем у `Spring`, сложности с reflection в native, долгая native-сборка, обучение `Mutiny`.",
@@ -1821,7 +1821,7 @@
               "order": 0
             },
             {
-              "text": "Главный минус `Quarkus` — что он не поддерживает Kubernetes и облачный деплой.",
+              "text": "Минусы: приложение обязательно компилировать в native image через `GraalVM` — JVM-режим не поддерживается, отсюда `GraalVM` на CI и долгая сборка (2-10 мин); reflection и third-party библиотеки требуют ручной настройки; `Mutiny` нужно осваивать отдельно.",
               "correct": false,
               "sections": {
                 "what_actually": "Kubernetes — как раз сильная сторона `Quarkus` (`quarkus-kubernetes`, малый footprint); реальные минусы — community, native-сложности, обучение.",
@@ -1846,7 +1846,7 @@
               "order": 2
             },
             {
-              "text": "Единственный минус `Quarkus` — отсутствие поддержки реактивного программирования.",
+              "text": "Минусы: нет полноценного `CDI` — бины связывают вручную, без `@Inject`; экосистема меньше, чем у `Spring`; `MicroProfile`/Jakarta EE непривычны Spring-разработчикам; долгая native-сборка и vendor lock-in в `Red Hat`.",
               "correct": false,
               "sections": {
                 "what_actually": "Реактивность — сильная сторона `Quarkus` (`Mutiny`+`Vert.x`); реальные минусы — экосистема, native-сборка, обучение `Mutiny`.",
