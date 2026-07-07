@@ -725,10 +725,31 @@ _Сводка: файлов=318 · caricature-clean(CAR0)=317/318 · остат�
   `::new`-is-static, Predicate.and-no-short-circuit, custom-SAM-must-be-apply), `logging` (**b03745be**, GELF-binary,
   acks=0-guarantees, Kafka-appender-no-fallback; verify conn-drop→ручной гейт). Requeue-3 закрыты; terraform Q35-B +
   mutation Q12-C absolute-tells смягчены. Все гейты OK. **ROUND-5 итог: 87/318 файлов.**
-- ⏳ **ROUND-5 band#17 launched** (workflow `wf_57dcc115-94a`, task `wjkbcx6gh`): `rest-maturity`, `java-initialization`,
-  `saga-pattern`, `java-records`, `api-gateway`, `scalability-patterns` (worst-first, mean 3.12-3.17x). Субсеты теперь
-  несут `q_number` (positional-remap баг устранён). Очередь ROUND 5 — 225 файлов остаётся (worst-first, без off-limits/dirty).
-  Off-limits: agentic-patterns/git/chaos-engineering/postgresql/testcontainers/mentoring.
+- ✅ **ROUND-5 band#17** (2026-07-07, workflow `wf_57dcc115-94a`): 3/6 закоммичены под length-parity — `rest-maturity`
+  (**fce73997**), `java-initialization` (**05fae726**), `saga-pattern` (**d292a5ec**); `java-records`/`api-gateway`/
+  `scalability-patterns` НЕ закоммичены (пользователь остановил на structure-parity замечании) → откачены, уйдут в ROUND-6.
+  **ROUND-5 итог: 90 файлов length-parity (коммиты сохранены как улучшения).**
+
+### ROUND 6 — STRUCTURE/FORMAT PARITY (RESET #4, старт 2026-07-07, по прямому указанию пользователя)
+
+**Новый governing-бар.** Пользователь указал: даже в переработанных файлах у correct одна структура/
+формат, а у дистракторов — другая; это неверно — **структура и формат обязаны совпадать у всех опций**.
+Дистрактор = **клон скелета correct с ОДНОЙ смысловой подменой** (то же число предложений, перечислений,
+скобочных уточнений, код-спанов, тот же паттерн `;`/`—`/нумерации), а не плоская проза с одним неверным
+тезисом. Иначе correct угадывается по ФОРМЕ.
+
+- **Метрика/гейт:** `scripts/mcq-structure-parity.py` — `structure-tell` блока = Σ|feat(correct) −
+  mean(feat(distractors))| по {предложения,`;`,`:`,`(`,код-спаны,нумерация,`—`,`,`}. Эталон rxjava ≈ **9**;
+  плоские файлы дают 18–27. Ранжирование `--rank` (worst-first), гейт в apply-harness: `structure-tell CUR ≤ HEAD`.
+- **Инструменты обновлены:** skill `mcq-quality-fixer` (§ Structural-richness parity + measurable gate);
+  workflow gen/verify prompt (ПРАВИЛО 0 — structure parity, worked example, verify-rejection); apply-harness
+  (structure-tell gate рядом с length-ratio).
+- **Reset:** ROUND-5 done-set (87 стемов) заархивирован в ledger; ROUND-5 pedago-коммиты СОХРАНЕНЫ (это
+  улучшения по длине/правдоподобию). ROUND-6 переоткрывает все файлы под structure-parity, worst-first по
+  `structure-tell`. Топ-худшие: database-sharding 27.7, design-vending-machine-oo 26.4, ai-observability 25.0,
+  divide-and-conquer 24.7, design-instagram 24.1 (130 файлов выше 1.4×gold).
+- **Cron:** остановлен пользователем 2026-07-07 (автономный `/loop 15m` цикл отменён; ROUND-6 продолжится по запросу).
+- Off-limits (чужая сессия): agentic-patterns/git/chaos-engineering/postgresql/testcontainers/mentoring.
 
 ### ROUND 4 — Каноничный свод из 20 правил (RESET #3, старт 2026-07-07)
 
