@@ -725,6 +725,18 @@ token-only → затем удалить. **EDC-1 (editorial.css) — subset-pro
 
 Инвариант: **если сервер задаёт per-mode дефолт, применяемый лишь при `null`-запросе, форма НЕ должна безусловно слать значение (иначе дефолт мёртв) — либо не слать `count` при «дефолт этого режима», либо синхронизировать значение формы с per-mode дефолтом на клиенте (config-driven data-attr, не хардкод, не расходясь с сервером).** См. §6.A (SET-15).
 
+**RIA-2 RESOLUTION — STUDY-режим: переход LEARN→QUIZ недостижим из UI (ПОДТВЕРЖДЁННЫЙ P1) + ready-to-apply патч — 2026-07-07, р128.** ⛔ Fix BLOCKED (`focus-training.html` под WIP), но дефект ПОДТВЕРЖДЁН статически (было «подозрение на orphan» → теперь доказано). **Доказательство (backend read-only + template/JS grep):**
+
+- `POST /study-confirm` (InterviewMvcController:157) → `InterviewFlowMvcService.studyConfirm` (49) → `SessionFlowService.applyStudyConfirm` (51) — ЕДИНСТВЕННЫЙ путь перехода STUDY `LEARN→QUIZ` (`applyStudyConfirm` → `canSwitchStudyToQuiz` (110, STUDY+LEARN) → фаза QUIZ).
+- `applyStudyConfirm` вызывается ТОЛЬКО из `studyConfirm`; `canSwitchStudyToQuiz` — ТОЛЬКО внутри `applyStudyConfirm`. Авто-switch на `/start`/`/answer` НЕТ (grep: 0 иных вызовов, 0 `setStudyPhase`, 0 `StudyPhase.QUIZ` вне enum).
+- `StudyPhase` = {LEARN «вопрос+полный ответ», QUIZ «тот же вопрос + варианты»} (StudyPhase.java) — QUIZ интендед быть достижимым.
+- `/study-confirm` имеет **0 триггеров в шаблонах и 0 в JS** (grep `/study`|`study-confirm` по templates/ + static/ = пусто). STUDY-LEARN рендерит ответ через flashcard-browse `<details>` (focus-training.html:82-89, `studyAnswerHtml`), где НЕТ кнопки «перейти к проверке».
+- **Итог:** пользователь в «Изучение» (STUDY, settings.html:114) видит вопрос+ответ (LEARN), но НЕ имеет affordance перейти в QUIZ-фазу (само-проверку); «Следующий вопрос» лишь листает LEARN → активный recall (суть режима) НЕДОСТИЖИМ. Core-loop экспонированного режима сломан = **P1**.
+
+**Ready-to-apply патч (когда разблокируется `focus-training.html`):** в STUDY-LEARN-ветке (гейтить модельным флагом `studyLearnPhase` — уже прокидывается FocusTrainingPageService:95, но шаблоном НЕ читается: сейчас STUDY-LEARN неотличим от browse `!sessionFlashcard`) добавить форму-триггер под раскрытым ответом: `<form method="post" th:action="@{/study-confirm}"><button type="submit" class="btn next-btn">Проверить себя →</button></form>`. Гейт именно `studyLearnPhase` (не browse). CSRF Spring добавляет сам (как в /flashcard-reveal форме). **Verify-после:** live — старт «Изучение»: в LEARN виден ответ + кнопка «Проверить себя»; клик → та же карточка в QUIZ-фазе с вариантами (POST /study-confirm → focusRedirect). Чистая template-правка (без CSS/JS) → бамп `?v=N` НЕ нужен.
+
+Инвариант: **единственный endpoint перехода фазы/состояния без template- и JS-триггера ⟹ режим тупикует; каждый @PostMapping обязан иметь UI-affordance ИЛИ быть удалён как мёртвый (route-integrity: сверять @PostMapping ↔ `th:action`/JS-fetch).** См. §6.F (RIA-2), [[project_session_modes_summary_flow]].
+
 ---
 
 ## 8. Не трогать — осознанные решения пользователя (🚫 / ⛔)
