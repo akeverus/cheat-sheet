@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Трассы дёшевы в хранении, потому что каждый запрос порождает ровно один маленький span, а индексация не нужна.",
+              "text": "Основная статья расходов — сетевой egress при экспорте: гоняя `1000 RPS × 10 span/request` по gRPC/OTLP между зонами доступности, вы платите за межзональный трафик, а готовые трассы на диске Cassandra/ES при retention 7-30 дней хранятся почти бесплатно.",
               "correct": false,
               "sections": {
                 "what_actually": "Один запрос порождает множество span'ов, каждый индексируется по trace_id/сервису/времени/атрибутам — объём растёт до сотен GB в день.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Дороговизна трасс объясняется только лицензией на Jaeger, а не объёмом данных; сам трафик span'ов незначителен.",
+              "text": "Дороговизна объясняется прежде всего лицензией на backend: enterprise-подписка на Jaeger и Elasticsearch тарифицируется по объёму принятых трасс, тогда как дисковый объём span'ов после компрессии остаётся незначительным и на счёт почти не влияет.",
               "correct": false,
               "sections": {
                 "what_actually": "Jaeger бесплатен (open-source); дорогим хранение делает именно объём span'ов и стоимость storage (`Cassandra`/`ES`) на терабайтах.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Главная статья расходов на трассы — это CPU на генерацию span'ов в приложении, а хранение почти ничего не стоит.",
+              "text": "Главная статья расходов — CPU-время на генерацию и сериализацию span'ов в приложении: инструментация добавляет заметный overhead на каждый запрос при `1000 RPS`, а запись готовых трасс в Cassandra/ES на терабайты обходится дёшево.",
               "correct": false,
               "sections": {
                 "what_actually": "Доминирует именно стоимость storage и индексации на терабайтах данных, а overhead генерации span'ов в приложении относительно мал.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Jaeger UI имеет только одно представление — список trace_id без возможности раскрыть отдельную трассу или сравнить две.",
+              "text": "Search по сервису, операции и тегам, Trace view с timeline span'ов и деталями (attributes, logs) и System architecture с service map в Jaeger есть, но side-by-side сравнения двух трасс нет — их сопоставляют вручную или выгружают в Grafana.",
               "correct": false,
               "sections": {
                 "what_actually": "Jaeger UI богат: Search, Trace view (timeline + иерархия), Trace comparison, System architecture (service map), Monitor (RED-метрики).",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В Jaeger UI service map нужно строить вручную через `DependencyLinker`, так как авто-генерации зависимостей нет.",
+              "text": "Search, Trace view с иерархией parent-child и Trace comparison доступны, а вот service dependency map не строится автоматически из трасс — граф зависимостей приходится задавать вручную через статический конфиг сервисов.",
               "correct": false,
               "sections": {
                 "what_actually": "В Jaeger service map (System architecture) генерируется автоматически из трасс; ручной `DependencyLinker` — это про Zipkin.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Trace view в Jaeger показывает только метрики CPU и памяти по сервису, без timeline отдельных span'ов.",
+              "text": "Search, Trace view и System architecture присутствуют, но вкладка Monitor показывает инфраструктурные метрики хоста (CPU, память, диск) по каждому сервису, а не RED-метрики (rate/errors/latency), вычисленные из span'ов.",
               "correct": false,
               "sections": {
                 "what_actually": "Trace view показывает timeline и иерархию span'ов с их атрибутами/логами/ошибками; CPU/память — это домен метрик (Prometheus), а не trace view.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Tempo` хранит трассы в `Elasticsearch` и индексирует все атрибуты span'ов, обеспечивая богатый attribute-based поиск как в Jaeger.",
+              "text": "`Grafana Tempo` — tracing-backend от Grafana, но, в отличие от Jaeger, он индексирует все атрибуты span'ов в собственном инвертированном индексе, поэтому даёт богатый attribute-based поиск даже без знания `trace_id`.",
               "correct": false,
               "sections": {
                 "what_actually": "Tempo хранит трассы в object storage (S3/GCS/Azure) и индексирует только `trace_id`; богатый attribute-поиск — это про Jaeger на ES.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Tempo` — это система метрик от Grafana, заменяющая `Prometheus`/`Mimir`, а не tracing-backend.",
+              "text": "`Grafana Tempo` — компонент Grafana-стека для хранения логов в паре с Prometheus; трассировку в этом стеке закрывает Loki, а Tempo отвечает за долгосрочное хранение логов в object storage.",
               "correct": false,
               "sections": {
                 "what_actually": "Tempo — это backend для трасс; метрики в Grafana-стеке хранит `Mimir`/`Prometheus`, а логи — `Loki`.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Tempo` требует дорогого высокопроизводительного блочного хранилища и не работает с object storage вроде S3.",
+              "text": "`Grafana Tempo` хранит трассы на локальных SSD каждого инстанса и реплицирует их между нодами кластера ради отказоустойчивости, поэтому масштабирование упирается в дисковый объём узлов, а не в дешёвый object storage.",
               "correct": false,
               "sections": {
                 "what_actually": "Tempo как раз спроектирован под object storage (S3/GCS/Azure Blob), что и делает его дешёвым; дорогой блочный storage не требуется.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главное преимущество SaaS-APM в том, что они радикально дешевле self-hosted решений на любом масштабе.",
+              "text": "Ключевое преимущество SaaS-APM (`Datadog`, `New Relic`) — предсказуемая фиксированная цена, не зависящая от объёма трасс, поэтому на большом масштабе они выходят дешевле self-hosted `Jaeger`/`Tempo`, где платишь за собственную инфраструктуру.",
               "correct": false,
               "sections": {
                 "what_actually": "SaaS-APM как раз очень дороги at scale (Datadog ~$30/host); их плюс — отсутствие ops и polished UI, а не дешевизна.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "SaaS-APM полностью исключают vendor lock-in, потому что данные всегда остаются в вашей инфраструктуре.",
+              "text": "Главный плюс SaaS-APM — отсутствие vendor lock-in: агенты шлют данные в стандартном OTLP-формате, поэтому трассы физически остаются в вашем кластере, а вендор лишь рисует UI поверх вашего хранилища.",
               "correct": false,
               "sections": {
                 "what_actually": "У SaaS данные покидают вашу среду и есть риск lock-in (хотя OTel его снизил); хранение «у себя» — это про self-hosted.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`AWS X-Ray` — самый дорогой и многофункциональный enterprise-APM, превосходящий Datadog по числу фич.",
+              "text": "`AWS X-Ray` не привязан к экосистеме AWS: он одинаково хорошо трассирует нагрузку в любом облаке и on-prem, поэтому подходит как универсальный кросс-облачный APM, а не только для AWS-нагрузок.",
               "correct": false,
               "sections": {
                 "what_actually": "`AWS X-Ray` — наоборот, дёшев для AWS-only и ограничен по фичам; самые богатые фичами — Datadog/Splunk.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Если уже используется Grafana-стек, правильный выбор — поставить рядом отдельный `Datadog`, а не использовать Tempo.",
+              "text": "Если уже есть Grafana-стек, трассировку всё равно стоит закрывать SaaS `Honeycomb`, а не Tempo: у Grafana есть нативный datasource-плагин для Honeycomb, поэтому его трассы показываются прямо в Grafana без потери интеграции.",
               "correct": false,
               "sections": {
                 "what_actually": "При уже существующем Grafana-стеке логичен `Tempo` (Loki + Mimir + Grafana), а не дорогой внешний Datadog рядом.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для любого нового проекта в 2025 единственно правильный выбор — `Zipkin`, потому что он проще всех остальных.",
+              "text": "При ограниченном бюджете и требовании self-host самый дешёвый путь — поднять `Datadog` в self-hosted режиме: агент бесплатен, а платить нужно только за хранение трасс на своих серверах.",
               "correct": false,
               "sections": {
                 "what_actually": "Для новых проектов в 2025 рекомендуют Jaeger v2 или SigNoz (self-host) либо Datadog/Honeycomb (SaaS); Zipkin — для legacy.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Самый дешёвый self-hosted вариант — это `Elasticsearch`-based Jaeger, потому что ES дешевле object storage.",
+              "text": "Самый дешёвый self-hosted backend — `Elasticsearch`-based Jaeger: ES эффективно сжимает span'ы и обходится дешевле object storage, поэтому связку `Tempo + S3` берут только на экзотических масштабах.",
               "correct": false,
               "sections": {
                 "what_actually": "Самый дешёвый self-host — Tempo + S3 (object storage) или ClickHouse; ES, наоборот, дорог по памяти и стоимости.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главная проблема трассировки — нехватка данных: без sampling трасс слишком мало, поэтому sampling нужно отключать в production.",
+              "text": "Частая проблема — missing spans: context propagation работает только внутри одного потока, поэтому `CompletableFuture` и реактивные пайплайны принципиально теряют `trace_id`, и починить это в асинхронном коде нельзя без смены фреймворка.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот, частая проблема — storage explosion от избытка данных; sampling (особенно tail) как раз нужен в production, а его отсутствие — отдельная проблема.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Самая частая проблема — что Jaeger UI слишком быстрый на больших datasets, из-за чего пользователи не успевают читать трассы.",
+              "text": "Частая проблема — high cardinality тегов: чтобы её обойти, span'ы индексируют по каждому уникальному атрибуту, и чем выше кардинальность, тем быстрее отрабатывают запросы в Jaeger.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот, Jaeger UI бывает медленным на больших datasets; «слишком быстрый UI» — не проблема и противоречит реальному списку.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "У Jaeger есть встроенный alerting, поэтому отдельный `Prometheus` для оповещений по трейсам не нужен.",
+              "text": "Частая проблема — inconsistent attributes: разные сервисы шлют разные имена тегов, и единственный выход — вручную переименовывать поля в каждом сервисе, потому что стандартных имён для HTTP/DB атрибутов не существует.",
               "correct": false,
               "sections": {
                 "what_actually": "У Jaeger нет встроенного alerting — отсутствие алертинга само по себе частая проблема, и его строят поверх метрик в `Prometheus`.",
