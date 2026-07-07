@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "RLHF — это одностадийный процесс: достаточно обучить reward model, и модель сразу выровнена, без SFT и без PPO.",
+              "text": "RLHF обходится двумя стадиями — SFT и reward model: RM своим scalar-reward'ом напрямую дообучает policy, поэтому отдельная PPO-стадия не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "RLHF — три стадии: SFT, затем Reward Model, затем PPO; одной reward model недостаточно — она лишь источник сигнала для RL-оптимизации policy.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В PPO-стадии RLHF KL-penalty от reference-модели не нужен, потому что reward model и так не даёт модели деградировать.",
+              "text": "На PPO-стадии KL-penalty от reference-модели (SFT) можно убрать: reward model сама удерживает policy от деградации, и reward hacking при этом не возникает.",
               "correct": false,
               "sections": {
                 "what_actually": "KL-penalty обязателен: без него policy reward-hack'ает RM и скатывается в degeneration; reference удерживает её близко к SFT.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "RLHF держит в памяти ровно одну модель, что делает его легче и дешевле, чем DPO с двумя моделями.",
+              "text": "RLHF держит в памяти ровно одну модель, поэтому дешевле и стабильнее, чем DPO, которому нужны policy и reference одновременно.",
               "correct": false,
               "sections": {
                 "what_actually": "RLHF/PPO держит 3-4 модели (policy, reference, RM, иногда value), это тяжелее DPO с двумя (policy + reference).",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все пять методов (RLHF, DPO, GRPO, KTO, ORPO) требуют обученной reward model и одинакового числа моделей в памяти.",
+              "text": "Все пять методов (RLHF, DPO, GRPO, KTO, ORPO) требуют отдельно обученной reward model и различаются лишь алгоритмом оптимизации policy.",
               "correct": false,
               "sections": {
                 "what_actually": "Только RLHF использует learned RM; DPO/KTO/ORPO работают через implicit/binary reward без RM, а число моделей разное (RLHF 3-4, DPO 2, ORPO 1).",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "GRPO предназначен для субъективных диалогов и оценки стиля, а DPO — единственный метод для математики и кода.",
+              "text": "GRPO ориентирован на субъективные диалоги и оценку стиля, где нет проверяемого ответа, а reasoning, математику и код закрывает исключительно DPO.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `GRPO` создан для verifiable reasoning (math, code, R1-style), а DPO — общий метод alignment по preference pairs, не «единственный для математики».",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "ORPO требует больше всего моделей в памяти (4-5), потому что объединяет механизмы SFT, DPO, KTO и reward model сразу.",
+              "text": "ORPO держит в памяти больше всего моделей (4-5), так как одновременно с policy использует reference-модель и reward model.",
               "correct": false,
               "sections": {
                 "what_actually": "ORPO держит МЕНЬШЕ всех — 1 модель (нет reference, нет RM); объединение SFT+preference в один loss как раз снижает требования.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "TRL — это библиотека квантизации в 4-bit (NF4), а bitsandbytes отвечает за высокоуровневых тренеров SFT, DPO и GRPO.",
+              "text": "`TRL` — это библиотека 4-bit квантизации (NF4), тогда как `bitsandbytes` предоставляет высокоуровневых тренеров `SFTTrainer`, `DPOTrainer`, `GRPOTrainer`.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны: `bitsandbytes` делает 4/8-bit квантизацию (NF4), а `trl` предоставляет тренеров `SFTTrainer`/`DPOTrainer`/`GRPOTrainer`.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Unsloth работает медленнее и требует больше VRAM, чем чистый transformers+trl, поэтому его используют только ради удобного API.",
+              "text": "`Unsloth` работает медленнее и требует больше VRAM, чем чистый `transformers`+`trl`, и берут его только ради удобного API.",
               "correct": false,
               "sections": {
                 "what_actually": "Unsloth наоборот даёт 2-5× скорость и ~70% меньше VRAM за счёт custom Triton-kernels; его берут именно ради скорости и экономии памяти.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Axolotl требует писать весь pipeline на чистом Python без конфигов, и потому он менее воспроизводим, чем ручной transformers+trl.",
+              "text": "`Axolotl` требует описывать весь pipeline на чистом Python без конфигов, из-за чего он менее воспроизводим, чем ручной `transformers`+`trl`.",
               "correct": false,
               "sections": {
                 "what_actually": "Axolotl — это декларативный YAML-config над trl+peft; именно конфиг делает pipeline воспроизводимым и удобным для production.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно посмотреть на train loss: если он низкий, модель гарантированно полезна и дополнительная оценка не нужна.",
+              "text": "Достаточно held-out perplexity: если она ниже, чем у базовой модели, downstream-качество гарантированно выше, и task-specific бенчмарки вроде MMLU или GSM8K уже не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Низкий loss ≠ полезная модель: он может означать overfitting; нужны benchmark'и, domain-eval и human/judge для реальной оценки полезности.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "LLM-as-judge даёт абсолютно объективную и воспроизводимую оценку, которая полностью заменяет human eval как gold standard.",
+              "text": "LLM-as-judge (MT-Bench, AlpacaEval 2) полностью воспроизводим и свободен от position bias, поэтому его win rate можно принять как gold standard вместо human eval.",
               "correct": false,
               "sections": {
                 "what_actually": "LLM-as-judge удобен, но subjective и подвержен bias; gold standard — именно human eval, хоть он дорог и медленен.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Catastrophic forgetting нельзя обнаружить при оценке, потому что general benchmarks не применимы к fine-tuned моделям.",
+              "text": "Прогон general-бенчмарков (MMLU, HellaSwag) до и после fine-tuning бесполезен: модель уже специализирована, поэтому регрессию общих способностей эти тесты показать не могут.",
               "correct": false,
               "sections": {
                 "what_actually": "Forgetting как раз ловят прогоном general benchmarks (MMLU, HellaSwag) ДО и ПОСЛЕ FT: регрессия >5% — сигнал проблемы.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Catastrophic forgetting невозможно обнаружить заранее — его замечают только пользователи в проде, методов детектирования нет.",
+              "text": "`Catastrophic forgetting` нельзя обнаружить заранее: методов детектирования нет, регрессию замечают только пользователи в проде.",
               "correct": false,
               "sections": {
                 "what_actually": "Forgetting детектируют прогоном general benchmarks (MMLU, HellaSwag, ARC) до и после FT: регрессия >2-5% — явный сигнал ещё до деплоя.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Лучший способ митигировать forgetting — увеличить число эпох и learning rate, чтобы модель «крепче» закрепила новый домен.",
+              "text": "Лучшая митигация forgetting — поднять число эпох и learning rate (5e-5 вместо 1e-5), чтобы модель прочнее закрепила новый домен.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: overtraining (много epochs) и высокий lr — главные ИСТОЧНИКИ forgetting; митигируют меньшим числом эпох и lr 1e-5.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Full fine-tuning безопаснее LoRA в плане forgetting, потому что обновление всех весов сохраняет общие знания лучше адаптера.",
+              "text": "Full fine-tuning надёжнее LoRA против forgetting: обновление всех весов сохраняет общие знания лучше, чем узкий адаптер.",
               "correct": false,
               "sections": {
                 "what_actually": "Forgetting — классическая болезнь именно full FT; LoRA безопаснее, так как base заморожен и адаптер можно отключить (adapter switching).",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Самые частые ошибки fine-tuning — это сложные баги в самом алгоритме оптимизатора и архитектуре LoRA, а не вопросы данных и формата.",
+              "text": "Топ-ошибки при fine-tuning — тонкие баги в реализации оптимизатора AdamW и в архитектуре LoRA-адаптера, а chat template и качество данных второстепенны.",
               "correct": false,
               "sections": {
                 "what_actually": "Большинство провалов — про данные/формат: chat template, mismatched tokenizer, малый датасет, EOS; алгоритм LoRA/оптимизатора обычно ни при чём.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Использование tokenizer от Llama-2 для дообучения Llama-3 безопасно, потому что у моделей одного семейства одинаковый словарь.",
+              "text": "Взять tokenizer от Llama-2 для дообучения Llama-3 безопасно: внутри одного семейства словарь идентичен, и vocab shift не возникает.",
               "correct": false,
               "sections": {
                 "what_actually": "Mismatched tokenizer — классическая ошибка: у Llama-3 другой vocab, чем у Llama-2; чужой tokenizer даёт vocab shift и ломает обучение.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Обучение на 50 примерах в течение 10 эпох — отличная практика, дающая хорошую генерализацию без overfitting.",
+              "text": "50 примеров при 10 эпохах — хорошая практика: многократный проход по маленькому датасету улучшает генерализацию и не даёт overfitting.",
               "correct": false,
               "sections": {
                 "what_actually": "50 примеров × 10 эпох → overfitting: модель повторяет их дословно; для <500 примеров рекомендуют 1 эпоху, eval set и early stopping.",
