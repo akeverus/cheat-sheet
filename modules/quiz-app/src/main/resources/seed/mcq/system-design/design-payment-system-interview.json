@@ -609,7 +609,7 @@
           "question_text": "3D Secure 2.0: чем challenge отличается от frictionless?",
           "options": [
             {
-              "text": "Frictionless означает, что 3DS вообще не запускается, а challenge — что транзакция проходит без всякой проверки issuer-а.",
+              "text": "Frictionless — это когда ACS требует доп.верификацию (SMS-OTP или биометрию), а challenge — когда ACS возвращает approved без участия держателя карты.",
               "correct": false,
               "sections": {
                 "what_actually": "В обоих случаях 3DS запускается и ACS оценивает risk: frictionless — approved без user-interaction, challenge — с доп.верификацией; оба проходят через issuer.",
@@ -621,7 +621,7 @@
               "order": 0
             },
             {
-              "text": "3DS повышает fraud, но это плата за рост конверсии: challenge всегда увеличивает долю успешно завершённых платежей.",
+              "text": "После успешного 3DS liability shift переносит ответственность за fraud-chargeback на acquirer и мерчанта, а не на банк-эмитент (issuer).",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: challenge снижает fraud, но повышает cart abandonment (до 15-30% drop), поэтому его зовут выборочно только на high-risk транзакциях.",
@@ -646,7 +646,7 @@
               "order": 2
             },
             {
-              "text": "3DS обязателен абсолютно для всех транзакций в любом регионе, включая US, без каких-либо исключений.",
+              "text": "3DS/SCA обязателен для всех card-not-present транзакций во всех регионах, включая US, без исключений вроде low-value, recurring/MIT или TRA.",
               "correct": false,
               "sections": {
                 "what_actually": "Обязательность задаётся PSD2 SCA только в EU и для > 30 EUR с исключениями (low-value, recurring/MIT, TRA); в US 3DS обычно opt-in.",
@@ -909,7 +909,7 @@
           "question_text": "Как устроен settlement (T+1, batch files, ACH/SWIFT)?",
           "options": [
             {
-              "text": "Settlement и capture — синонимы: как только мерчант сделал capture, settlement завершён и деньги в тот же миг на его банковском счёте.",
+              "text": "Settlement — это и есть момент capture: после успешного capture деньги в тот же миг зачисляются на банковский счёт мерчанта, отдельного clearing-цикла T+1 нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Capture — это messaging «спиши», а settlement — отдельное money movement через clearing-файлы, обычно T+1..T+2; они разнесены во времени, а не одно и то же.",
@@ -921,7 +921,7 @@
               "order": 0
             },
             {
-              "text": "Settlement идёт по каждой транзакции отдельно в реальном времени: на каждый платёж формируется свой instant-перевод в card network.",
+              "text": "Settlement выполняется per-transaction в реальном времени: на каждый captured-платёж acquirer сразу шлёт отдельный clearing-message в card network, без end-of-day агрегации в batch-файл.",
               "correct": false,
               "sections": {
                 "what_actually": "Settlement делают batch'ем в конце дня: acquirer агрегирует транзакции в clearing file (Visa BASE II, MC IPM), а не отправляет per-transaction в реальном времени.",
@@ -933,7 +933,7 @@
               "order": 1
             },
             {
-              "text": "ACH и SWIFT взаимозаменяемы: оба дают мгновенный международный перевод по одинаковой цене, выбор между ними произволен.",
+              "text": "ACH и SWIFT взаимозаменяемы: оба — мгновенные международные переводы с одинаковой комиссией, поэтому выбор между batch-ACH и wire произволен.",
               "correct": false,
               "sections": {
                 "what_actually": "ACH дёшев, медленен (1-2 дня) и batch-only внутри страны, а SWIFT/wire дороже ($25-50), почти real-time и международный — это разные инструменты под разные задачи.",
@@ -1149,7 +1149,7 @@
           "question_text": "Anti-fraud: rules + ML, velocity, device fingerprint?",
           "options": [
             {
-              "text": "Достаточно одного ML-модуля: правила, velocity и device fingerprint избыточны, если есть хорошо обученная модель XGBoost.",
+              "text": "Достаточно одного ML-модуля (XGBoost): rule engine, velocity-лимиты и device fingerprint — избыточные слои, их сигналы модель извлекает сама из сырых признаков транзакции.",
               "correct": false,
               "sections": {
                 "what_actually": "ML дополняют детерминированными rules (velocity, blacklist, AVS), потому что правила ловят явные паттерны мгновенно и объяснимо, а ML — тонкие; вместе они сильнее.",
@@ -1161,7 +1161,7 @@
               "order": 0
             },
             {
-              "text": "Главная цель fraud-системы — заблокировать максимум транзакций: чем больше отклонено, тем безопаснее, false-positive не считаются проблемой.",
+              "text": "Цель fraud-системы — максимизировать catch rate: модель тюнят только на долю пойманного fraud, а false-positive (заблокированные легитимные платежи) в метрику качества не закладывают.",
               "correct": false,
               "sections": {
                 "what_actually": "Over-blocking опаснее: у большинства мерчантов стоимость false-positive (потерянная выручка от честных клиентов) выше, чем стоимость самого fraud, поэтому порог тюнят.",
@@ -1173,7 +1173,7 @@
               "order": 1
             },
             {
-              "text": "ML-модель обучают один раз при запуске; переобучение не нужно, так как паттерны fraud неизменны во времени.",
+              "text": "ML-модель обучают один раз на historical-данных при запуске; поскольку fraud-паттерны стабильны во времени, периодический retrain и мониторинг feature drift не требуются.",
               "correct": false,
               "sections": {
                 "what_actually": "Существует model drift: появляются новые паттерны (например, волна card-not-present), поэтому модель переобучают (еженедельно) на свежих chargeback-метках.",
@@ -1462,7 +1462,7 @@
               "order": 0
             },
             {
-              "text": "Платёжная система — это один монолитный сервис с единой БД: gateway, orchestrator, ledger и risk просто пакеты внутри одного приложения.",
+              "text": "Gateway, orchestrator, ledger и risk — модули одного монолитного сервиса с общей БД; отдельные service boundaries, per-service хранилища и mTLS между компонентами не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Это набор отдельных сервисов с разными хранилищами и границами (vault PCI-isolated, ledger sharded), а не пакеты монолита — изоляция критична для PCI и независимого масштабирования.",
@@ -1474,7 +1474,7 @@
               "order": 1
             },
             {
-              "text": "Token Vault — обычный сервис, доступный любому компоненту по HTTP без особых ограничений, как и Ledger или Gateway.",
+              "text": "Token Vault доступен любому сервису по обычному HTTP из shared-сети; PCI-isolation и mTLS-only доступ к нему не требуются, раз PAN уже токенизирован.",
               "correct": false,
               "sections": {
                 "what_actually": "Vault — PCI-isolated и доступен только по mTLS из конкретного сервиса; открытый HTTP-доступ к нему расширил бы PCI-scope на всех вызывающих.",
@@ -1486,7 +1486,7 @@
               "order": 2
             },
             {
-              "text": "Все сервисы общаются только синхронно по REST: Kafka и async-события в платёжной архитектуре не используются.",
+              "text": "Все взаимодействия между сервисами — синхронные REST-вызовы; Kafka, event-стриминг и async Webhook Dispatcher в потоке платежа не участвуют.",
               "correct": false,
               "sections": {
                 "what_actually": "Inter-service связь смешанная: sync через gRPC+mTLS на критичном пути и async через Kafka events (PaymentAuthorized, PaymentSettled) для side-effects и webhook-доставки.",
@@ -1509,7 +1509,7 @@
           "question_text": "Payment orchestrator и smart routing между PSP — как выбрать оптимальный PSP?",
           "options": [
             {
-              "text": "Smart routing выбирает PSP случайным образом (round-robin) для равномерной нагрузки; сигналы BIN, amount и health на выбор не влияют.",
+              "text": "Smart routing сводится к статической cost-таблице: PSP выбирается только по минимальной комиссии для данного BIN, а real-time PSP health (latency/error rate, circuit breaker) и historical acceptance rate на выбор не влияют.",
               "correct": false,
               "sections": {
                 "what_actually": "Routing управляется сигналами — BIN, amount, merchant preferences, PSP health и 3DS result — ради оптимизации cost и acceptance rate, а не равномерной раздачи нагрузки.",
@@ -1534,7 +1534,7 @@
               "order": 1
             },
             {
-              "text": "Failover retry на другой PSP делают при любом decline, включая `lost_stolen`: главное — добиться успешной авторизации любой ценой.",
+              "text": "Failover retry переключает платёж на другой PSP при любом decline-коде, включая hard declines `lost_stolen` и `pickup_card`: любой отказ трактуется как recoverable-сбой PSP-A и повторяется на PSP-B.",
               "correct": false,
               "sections": {
                 "what_actually": "Ретраят только recoverable-decline (`do_not_honor`); `lost_stolen` ретраить нельзя — это fraud-сигнал, и повтор на другом PSP означал бы попытку списать с украденной карты.",
@@ -1546,7 +1546,7 @@
               "order": 2
             },
             {
-              "text": "Orchestrator — это stateless-функция: при рестарте сервиса состояние workflow теряется, и платёж приходится запускать с нуля.",
+              "text": "Orchestrator хранит состояние workflow только в памяти процесса, а durability обеспечивает клиентский retry поверх idempotency-key, а не durable execution log Temporal.",
               "correct": false,
               "sections": {
                 "what_actually": "Orchestrator на Temporal — durable workflow: состояние переживает рестарт сервиса, есть встроенные retry/timeout и инспекция «что произошло на шаге N месяц назад».",
@@ -1569,7 +1569,7 @@
           "question_text": "Multi-region: data residency, failover, regulatory?",
           "options": [
             {
-              "text": "Multi-region — это только про снижение latency: data residency и disaster recovery к географическому распределению отношения не имеют.",
+              "text": "Multi-region нужен исключительно для снижения latency за счёт близости к пользователю; data residency и disaster recovery решаются в пределах одного датацентра и от географического распределения не зависят.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-region решает три задачи разом — latency, DR (failover за 5-15 мин) и data residency (RU PD-152, India RBI); residency и DR часто и есть главные драйверы.",
@@ -1581,7 +1581,7 @@
               "order": 0
             },
             {
-              "text": "Sensitive-данные (PAN, токены) реплицируют во все регионы для максимальной доступности, как и обычные транзакции.",
+              "text": "Sensitive-данные (PAN, токены) реплицируют во все регионы наравне с транзакциями — единый global vault повышает доступность и упрощает cross-region reads.",
               "correct": false,
               "sections": {
                 "what_actually": "PAN и токены НЕ реплицируют cross-region — держат per-region vault; multi-DC replication применяют только к non-sensitive данным (transactions, settlements).",
@@ -1606,7 +1606,7 @@
               "order": 2
             },
             {
-              "text": "Writes в ledger выполняют cross-region синхронно во всех датацентрах, чтобы любой регион всегда имел актуальный баланс.",
+              "text": "Записи в ledger реплицируют cross-region синхронно (2-phase commit по всем датацентрам), чтобы любой регион всегда видел строго актуальный баланс без eventual consistency.",
               "correct": false,
               "sections": {
                 "what_actually": "Cross-region writes дают 100+ms latency и ломают SLA, а конкуренция за primary грозит split-brain; поэтому writes делают per-region controlled, а cross-region — async.",
