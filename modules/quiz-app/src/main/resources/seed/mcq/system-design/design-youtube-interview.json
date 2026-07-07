@@ -309,7 +309,7 @@
           "question_text": "Какие resolutions/bitrates выбирают и зачем нужен bitrate ladder?",
           "options": [
             {
-              "text": "Ladder нужен только чтобы дать пользователю меню выбора качества вручную; автоматического переключения между ступенями нет.",
+              "text": "Ladder существует только чтобы показать пользователю меню выбора качества вручную; во время воспроизведения плеер между ступенями не переключается — ABR по измеренной пропускной способности не применяют.",
               "correct": false,
               "sections": {
                 "what_actually": "Главная роль ladder — автоматический ABR: плеер сам переключает ступени по bandwidth, ручной выбор вторичен.",
@@ -334,7 +334,7 @@
               "order": 1
             },
             {
-              "text": "144p в 2026 году бесполезен и его давно убрали, потому что у всех есть быстрый интернет.",
+              "text": "Нижнюю ступень фиксируют на 360p, а 144p убрали: современные кодеки (AV1/VP9) ужимают 360p в те же ~100 kbps, что раньше требовались для 144p, так что отдельная 144p-ступень избыточна.",
               "correct": false,
               "sections": {
                 "what_actually": "144p активно используется в развивающихся рынках (Индия, Африка), на плохом 3G и для экономии mobile data.",
@@ -346,7 +346,7 @@
               "order": 2
             },
             {
-              "text": "Bitrate для каждой ступени фиксирован глобально и одинаков для всех видео независимо от их содержания.",
+              "text": "Битрейт каждой ступени задаётся глобальной таблицей и одинаков для всех видео; per-title и content-aware encoding не применяют — talking-head и action-сцену кодируют в один и тот же битрейт на 720p.",
               "correct": false,
               "sections": {
                 "what_actually": "Per-title и content-aware encoding выдают разный bitrate под сложность контента, а не единый фиксированный ladder.",
@@ -789,7 +789,7 @@
           "question_text": "Как спроектировать metadata DB: схема и sharding?",
           "options": [
             {
-              "text": "Всю metadata держат в одной таблице с автоинкрементным числовым PK, и этого PK достаточно для всех запросов — по видео, по каналу и по подпискам.",
+              "text": "Одной таблицы `video_metadata` с `video_id` в роли PK хватает на все паттерны: выборки по каналу и по подпискам обслуживают тем же PK через вторичные индексы, отдельные таблицы `channel_videos`/`subscriptions` не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Разные query-shapes требуют разных partition-ключей: video-by-id, videos-by-channel, subs-by-user шардируются по своим ключам.",
@@ -814,7 +814,7 @@
               "order": 1
             },
             {
-              "text": "`video_metadata` шардируют по `uploader_user_id`, чтобы все видео автора лежали в одной партиции рядом.",
+              "text": "`video_metadata` шардируют по `uploader_user_id`, чтобы все видео автора лежали в одной партиции рядом; lookup по `video_id` идёт scatter-запросом по всем шардам.",
               "correct": false,
               "sections": {
                 "what_actually": "`video_metadata` шардируют hash by `video_id`; видео-по-автору обслуживает отдельная таблица `channel_videos` по `user_id`.",
@@ -826,7 +826,7 @@
               "order": 2
             },
             {
-              "text": "Comments хранят в той же реляционной таблице, что и video_metadata, одной строкой на видео со всеми комментами в JSON-поле.",
+              "text": "Comments шардируют по `commenter_user_id`, чтобы все комментарии одного пользователя лежали вместе; выборка комментов к конкретному видео идёт scatter-gather по всем шардам.",
               "correct": false,
               "sections": {
                 "what_actually": "Comments — отдельная таблица (Cassandra/Spanner), partition by `video_id`, с cursor-пагинацией и time-bucket для популярных.",
@@ -1029,7 +1029,7 @@
           "question_text": "Какие features используют для ranking model?",
           "options": [
             {
-              "text": "Ranking-модель использует только один признак — общее число просмотров видео, и сортирует кандидатов строго по популярности.",
+              "text": "В модель подают отдельно video-фичи (`total_views`, `like_ratio`) и user-фичи (`watch_history_embedding`), но cross-фичи (user × video) не заводят — итоговый скор складывают из двух независимых частей.",
               "correct": false,
               "sections": {
                 "what_actually": "Используют сотни features (video/user/context + cross); сортировка только по views игнорировала бы персонализацию.",
@@ -1054,7 +1054,7 @@
               "order": 1
             },
             {
-              "text": "Модель предсказывает только один скаляр — вероятность клика (CTR), и больше никаких целей в ранжировании нет.",
+              "text": "Голова модели предсказывает единственный таргет — `p(click)` (CTR); `E[watch_time]`, `p(like)`, `p(share)` в лосс не входят, кандидатов ранжируют строго по прогнозному CTR.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-objective head предсказывает сразу несколько целей: p(click), E[watch_time], p(like), p(share), p(skip-5s).",
@@ -1066,7 +1066,7 @@
               "order": 2
             },
             {
-              "text": "Контекстные признаки (устройство, время суток, referrer) не влияют на ранжирование, потому что предпочтения пользователя стабильны и от контекста не зависят.",
+              "text": "Контекстные признаки (`device_type`, `time_of_day`, `referrer`) собирают, но на ранжирующий скор они не влияют — веса по ним заморожены, т.к. предпочтения пользователя считают контекст-независимыми.",
               "correct": false,
               "sections": {
                 "what_actually": "Context features (device_type, time_of_day, referrer, previous_video_in_session) — полноценная группа признаков ранжирования.",
@@ -1089,7 +1089,7 @@
           "question_text": "Как устроен поиск: Elasticsearch, transcripts, ranking?",
           "options": [
             {
-              "text": "Поиск ищет только по `title` и `description`; содержимое видео (что в нём говорят) для поиска недоступно.",
+              "text": "На upload гонят ASR → transcript, но его склеивают в одно text-поле `transcript` целиком; поиск по содержимому работает, однако deep-link «jump to position» не поддерживается — переход всегда в начало видео, без нарезки по 30s windows.",
               "correct": false,
               "sections": {
                 "what_actually": "На upload гонят ASR → transcript, который индексируют отдельным полем `transcript_chunks` для поиска по сказанному.",
@@ -1101,7 +1101,7 @@
               "order": 0
             },
             {
-              "text": "Порядок результатов целиком определяется BM25-скором Elasticsearch; отдельной ranking-модели поверх ES нет.",
+              "text": "Финальный порядок задаёт сам Elasticsearch через `function_score` с boost по engagement (views, recency); отдельной Learn-to-Rank модели поверх top-100 нет — ES-скор считают достаточным, переранжирование не делают.",
               "correct": false,
               "sections": {
                 "what_actually": "Поверх ES-выдачи работает отдельная Learn-to-Rank модель (LambdaMART/DNN), переранжирующая top-100 с учётом engagement.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "Запрос с опечаткой возвращает пустую выдачу, потому что поиск делает только точное совпадение терминов.",
+              "text": "Autocomplete строят на `match_phrase_prefix` по полю `title` в реальном времени, без предпосчитанного edge-ngram индекса и без учёта popularity подсказок.",
               "correct": false,
               "sections": {
                 "what_actually": "Применяют ES fuzzy + phonetic + spell correction по словарю, поэтому опечатки толерируются и выдача не пустеет.",
@@ -1222,7 +1222,7 @@
               "order": 0
             },
             {
-              "text": "Разница между SSAI и CSAI только в формате creative-файла рекламы, а место сшивки (клиент или сервер) одинаковое в обоих случаях.",
+              "text": "SSAI (Server-Side) — это когда плеер сам подгружает ad asset и ставит контент на паузу; CSAI (Client-Side) — когда сервер вставляет ad-сегменты прямо в manifest между content-сегментами.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключевое различие именно в месте сшивки: CSAI склеивает на клиенте, SSAI — на сервере прямо в манифесте.",
@@ -1234,7 +1234,7 @@
               "order": 1
             },
             {
-              "text": "VAST — это видеокодек для рекламных роликов, оптимизированный под низкий битрейт, а не формат описания рекламы.",
+              "text": "VAST — это клиентский JavaScript-API, через который creative напрямую управляет плеером и собирает интерактивные события; XML-описания creative/tracking/impression он не задаёт.",
               "correct": false,
               "sections": {
                 "what_actually": "VAST — это XML-стандарт IAB, описывающий creative, impression и tracking; кодеком он не является.",
@@ -1246,7 +1246,7 @@
               "order": 2
             },
             {
-              "text": "Frequency capping реализуют, перекодируя видео так, чтобы реклама была встроена в сами сегменты на этапе transcoding.",
+              "text": "Frequency capping делают на клиенте: плеер хранит cookie со счётчиком показов каждого `ad_id` и сам режет частоту, без серверного счётчика per (user_id, ad_id).",
               "correct": false,
               "sections": {
                 "what_actually": "Frequency capping — это runtime-counter в Redis per `(user_id, ad_id)`; в transcoding рекламу не вшивают.",
@@ -1569,7 +1569,7 @@
           "question_text": "Как делать CDN cache invalidation для удалённых видео?",
           "options": [
             {
-              "text": "Достаточно дождаться истечения TTL сегментов (до года), и удалённое видео само пропадёт из кеша без активных действий.",
+              "text": "Активный purge не нужен: сегментам заранее выставляют короткий TTL, поэтому удалённое видео вымывается из edge-кеша в пределах TTL само, без вызовов CDN purge API.",
               "correct": false,
               "sections": {
                 "what_actually": "TTL до года неприемлем для DMCA: нужен active purge + edge-blacklist, чтобы отрубить доступ немедленно, а не через год.",
@@ -1581,7 +1581,7 @@
               "order": 0
             },
             {
-              "text": "Versioned URLs полностью решают проблему удаления: достаточно обновить версию в URL, и старый контент становится недоступен.",
+              "text": "Versioned URLs полностью решают удаление: как только новый manifest ссылается на новую версию пути, старые сегменты становятся недостижимы и по прямой ссылке.",
               "correct": false,
               "sections": {
                 "what_actually": "Versioned URLs не годятся для DMCA: старые сегменты живут в кеше до TTL и доступны по прямой ссылке, если её сохранили.",
@@ -1606,7 +1606,7 @@
               "order": 2
             },
             {
-              "text": "Очистки одного только manifest достаточно для полного удаления, потому что без manifest плеер не знает URL сегментов.",
+              "text": "Очистки одного manifest (~1 KB) достаточно для полного удаления: плеер получает список сегментов только из manifest, поэтому без него прямые URL сегментов недостижимы.",
               "correct": false,
               "sections": {
                 "what_actually": "Manifest-only invalidation обходится, если segment URLs скопированы; поэтому YouTube комбинирует manifest purge + async segment cleanup + blacklist.",
