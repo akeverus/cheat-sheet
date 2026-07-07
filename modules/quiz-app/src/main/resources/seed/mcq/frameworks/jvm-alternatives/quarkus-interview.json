@@ -669,7 +669,7 @@
           "question_text": "Как работает reflection в native image?",
           "options": [
             {
-              "text": "Reflection в native image работает точно так же, как на JVM, без какой-либо регистрации.",
+              "text": "Reflection в native image работает так же, как на JVM: `Class.forName(...)` динамически резолвит любой класс в runtime, регистрация не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "В native reflection работает только для классов, объявленных в reachability metadata; без регистрации — `ClassNotFoundException`/`NoSuchMethodException`.",
@@ -681,7 +681,7 @@
               "order": 0
             },
             {
-              "text": "Reflection в native image полностью запрещён и не работает ни при каких условиях.",
+              "text": "В native image reflection невозможен в принципе: `Quarkus`-extensions вместо него генерируют байткод на этапе сборки, а `@RegisterForReflection` игнорируется.",
               "correct": false,
               "sections": {
                 "what_actually": "Reflection работает, если класс зарегистрирован (например, через `@RegisterForReflection` или metadata); запрещён он лишь без регистрации.",
@@ -693,7 +693,7 @@
               "order": 1
             },
             {
-              "text": "Reflection в native настраивается одним флагом `--enable-all-reflection` без перечисления классов.",
+              "text": "`GraalVM` при сборке сам трассирует весь код и регистрирует любые классы, используемые через reflection, поэтому ни `@RegisterForReflection`, ни `reflect-config.json` не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Такого «включить весь reflection» флага нет: классы перечисляют в metadata или помечают `@RegisterForReflection` точечно.",
@@ -909,7 +909,7 @@
           "question_text": "Health, Metrics, OpenAPI — встроенные?",
           "options": [
             {
-              "text": "Health/Metrics/OpenAPI отдаются на стандартных путях `/actuator/...`, как в `Spring Boot`.",
+              "text": "Health/Metrics/OpenAPI отдаются на стандартных путях `/actuator/health`, `/actuator/metrics`, как в `Spring Boot`.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Quarkus` эти endpoints живут под префиксом `/q/` (`/q/health`, `/q/metrics`, `/q/openapi`), а `/actuator/...` — это `Spring Boot Actuator`.",
@@ -921,7 +921,7 @@
               "order": 0
             },
             {
-              "text": "Чтобы получить health и metrics, нужно вручную писать REST-эндпоинты — встроенных нет.",
+              "text": "Готовых health и metrics нет: их поднимают вручную через `@Path`-ресурсы или подключают сторонний `Spring Boot Actuator`-стартер.",
               "correct": false,
               "sections": {
                 "what_actually": "Они встроены: подключаешь `smallrye-health`/`micrometer-registry-prometheus`/`smallrye-openapi` — и endpoints появляются автоматически.",
@@ -933,7 +933,7 @@
               "order": 1
             },
             {
-              "text": "Эти возможности доступны всегда без подключения каких-либо extensions.",
+              "text": "Health, metrics и OpenAPI входят в `quarkus-core` и доступны всегда — подключать `smallrye-health`/`smallrye-openapi` не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужно подключить соответствующие extensions; без них endpoints `/q/health`/`/q/metrics`/`/q/openapi` не появятся.",
@@ -1089,7 +1089,7 @@
           "question_text": "`Uni` и `Multi` в `Mutiny`?",
           "options": [
             {
-              "text": "`Uni` — это поток из многих значений, а `Multi` — одно значение.",
+              "text": "`Uni<T>` испускает поток из многих элементов, а `Multi<T>` держит ровно одно значение или ошибку; операторы (`transform`, `filter`, `recoverWithItem`) и `.subscribe().with(...)` у обоих одинаковые.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `Uni<T>` — одно значение или ошибка, `Multi<T>` — поток из 0..N значений.",
@@ -1101,7 +1101,7 @@
               "order": 0
             },
             {
-              "text": "`Uni` и `Multi` исполняются сразу при создании, без подписки.",
+              "text": "`Uni` и `Multi` — hot/eager источники: вычисление стартует сразу при создании, а `.subscribe().with(...)` лишь забирает уже готовый результат.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба ленивы: цепочка выполняется только при `subscribe()`; без подписки ничего не произойдёт.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "`Uni` и `Multi` — это блокирующие коллекции, аналог `List` и `Set`.",
+              "text": "`Uni` и `Multi` — это просто псевдонимы Reactor-типов `Mono` и `Flux`: `Mutiny` переиспользует их классы и операторы без собственного API.",
               "correct": false,
               "sections": {
                 "what_actually": "Это реактивные асинхронные типы (значение/поток), а не коллекции в памяти; они не блокируют поток в ожидании данных.",
@@ -1149,7 +1149,7 @@
           "question_text": "`Vert.x` под капотом?",
           "options": [
             {
-              "text": "Реактивный стек `Quarkus` построен на `Netty` напрямую, без `Vert.x`.",
+              "text": "Реактивный стек `Quarkus` построен прямо на `Netty`, без промежуточного `Vert.x`-слоя.",
               "correct": false,
               "sections": {
                 "what_actually": "`Quarkus` использует `Eclipse Vert.x` (который сам построен поверх `Netty`); прикладной слой работает именно с `Vert.x`, а не с голым `Netty`.",
@@ -1161,7 +1161,7 @@
               "order": 0
             },
             {
-              "text": "`Vert.x` в `Quarkus` доступен только косвенно и не может быть заинжектен напрямую.",
+              "text": "`Vert.x` в `Quarkus` спрятан внутри рантайма: получить `Vertx` или `EventBus` через `@Inject` нельзя, доступ только через высокоуровневые API.",
               "correct": false,
               "sections": {
                 "what_actually": "`Vert.x` можно инжектить напрямую (`@Inject Vertx vertx;`, `@Inject EventBus eventBus;`) или работать через обёртку `Mutiny`.",
@@ -1173,7 +1173,7 @@
               "order": 1
             },
             {
-              "text": "`Vert.x` отвечает в `Quarkus` только за HTTP-сервер и ни за что больше.",
+              "text": "`Vert.x` в `Quarkus` обслуживает только HTTP-сервер; DB-драйверы, mailer и `EventBus` построены на отдельных библиотеках, а не на `Vert.x`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Vert.x` лежит и под DB-драйверами (`Vert.x SQL Client`), `EventBus`, mailer и другими реактивными интеграциями, не только под HTTP.",
@@ -1222,7 +1222,7 @@
               "order": 0
             },
             {
-              "text": "`Panache` — это отдельная СУБД, заменяющая `PostgreSQL`/`MySQL`.",
+              "text": "`Panache` не даёт готовых операций: каждый метод вроде `findById`/`listAll` приходится вручную реализовывать в наследнике `PanacheRepository`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Panache` — слой поверх `Hibernate` (ORM), а не база данных; данные по-прежнему хранятся в реальной СУБД.",
@@ -1234,7 +1234,7 @@
               "order": 1
             },
             {
-              "text": "`Panache` полностью заменяет `Hibernate` собственным движком маппинга.",
+              "text": "`Panache` полностью заменяет `Hibernate`: у него собственный движок маппинга и генерации SQL, а `Hibernate ORM` внутри не используется.",
               "correct": false,
               "sections": {
                 "what_actually": "`Panache` работает поверх `Hibernate ORM`, не заменяя его: маппинг, транзакции и SQL по-прежнему делает `Hibernate`.",
@@ -1246,7 +1246,7 @@
               "order": 2
             },
             {
-              "text": "В `Panache` доступен только Repository-стиль; Active Record не поддерживается.",
+              "text": "В `Panache` доступен только Repository-стиль (`PanacheRepository`); Active Record с наследованием `PanacheEntity` не поддерживается.",
               "correct": false,
               "sections": {
                 "what_actually": "`Panache` поддерживает оба стиля: Active Record (`PanacheEntity`) и Repository (`PanacheRepository`).",
@@ -1749,7 +1749,7 @@
           "question_text": "Когда выбирать `Quarkus` вместо `Spring Boot`?",
           "options": [
             {
-              "text": "`Quarkus` стоит выбирать всегда — он строго лучше `Spring Boot` во всех сценариях.",
+              "text": "`Quarkus` стоит выбирать всегда: меньший memory footprint и быстрый cold start он даёт в любом сценарии, поэтому `Spring Boot` уже не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Выбор зависит от контекста: `Quarkus` хорош для serverless/Kubernetes и быстрого старта, но `Spring Boot` выигрывает при наличии Spring-команды и редких интеграций.",
@@ -1774,7 +1774,7 @@
               "order": 1
             },
             {
-              "text": "`Quarkus` выбирают именно для классических сервисов на bare metal и VM, не для облака.",
+              "text": "`Quarkus` берут прежде всего под монолиты на bare metal и долгоживущие VM-приложения, где cold start и экономия памяти не важны.",
               "correct": false,
               "sections": {
                 "what_actually": "`Quarkus` нацелен на cloud-native (serverless, Kubernetes); для классических VM/bare metal сервисов его преимущества почти не проявляются.",
@@ -1786,7 +1786,7 @@
               "order": 2
             },
             {
-              "text": "`Spring Boot` выбирают только когда нужен максимально быстрый cold start.",
+              "text": "`Spring Boot` выбирают именно тогда, когда критичен самый быстрый cold start и минимальное потребление памяти в serverless.",
               "correct": false,
               "sections": {
                 "what_actually": "Как раз cold start — сильная сторона `Quarkus`; `Spring Boot` выбирают за экосистему, команду и широту интеграций.",
