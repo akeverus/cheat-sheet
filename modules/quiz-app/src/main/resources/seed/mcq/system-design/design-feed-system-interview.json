@@ -1389,7 +1389,7 @@
           "question_text": "Какой trade-off между feed freshness и latency и какие SLO?",
           "options": [
             {
-              "text": "Freshness и latency — это одно и то же: оба измеряют время загрузки ленты клиентом, поэтому оптимизируются вместе.",
+              "text": "Freshness и latency — это одна и та же метрика: обе измеряют время до появления ленты на экране клиента, поэтому покрываются одним SLO.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные метрики: freshness — время от создания поста до его появления в чьей-то ленте; latency — время загрузки feed клиентом; они в trade-off.",
@@ -1401,7 +1401,7 @@
               "order": 0
             },
             {
-              "text": "Pure pull даёт лучшую latency загрузки ленты, потому что ничего не нужно собирать — данные уже готовы на read.",
+              "text": "Pure pull даёт лучшую latency загрузки ленты (~50 ms): timeline заранее собран, читателю остаётся отдать готовый результат без сборки на read.",
               "correct": false,
               "sections": {
                 "what_actually": "Pure pull даёт instant freshness, но худшую latency (200-500 ms): на read собирают и merge-sort-ят посты всех подписок; готов лишь push-timeline.",
@@ -1413,7 +1413,7 @@
               "order": 1
             },
             {
-              "text": "Stale cache улучшает одновременно и latency, и freshness, поэтому это бесплатная оптимизация без trade-off.",
+              "text": "Stale cache улучшает сразу и latency, и freshness: раз лента лежит в кэше, она и отдаётся быстро, и всегда актуальна — trade-off отсутствует.",
               "correct": false,
               "sections": {
                 "what_actually": "Stale cache даёт низкую latency (~10 ms), но ухудшает freshness (до ~30 сек устаревания) — это и есть trade-off, а не бесплатный выигрыш.",
@@ -1462,7 +1462,7 @@
               "order": 0
             },
             {
-              "text": "Block — односторонний: если A блокирует B, то A перестаёт видеть B, но B по-прежнему видит посты A.",
+              "text": "Block — односторонний, как mute: A блокирует B → A не видит постов B, но B продолжает видеть посты A и не знает о блокировке.",
               "correct": false,
               "sections": {
                 "what_actually": "Block двусторонний: A блокирует B → оба перестают видеть посты друг друга; односторонняя видимость — это mute, а не block.",
@@ -1474,7 +1474,7 @@
               "order": 1
             },
             {
-              "text": "Block эффективнее применять на write: при блокировке сразу удалять все посты B из timeline A командой `ZREM`, чтобы на read не фильтровать.",
+              "text": "Block выгоднее применять на write-time: при блокировке сразу вычищать посты B из timeline A через `ZREM`, чтобы на read не фильтровать.",
               "correct": false,
               "sections": {
                 "what_actually": "Block-фильтр обычно делают на read: write-side `ZREM` при блокировке дорог (особенно для целебрити), а read-filter дёшев и допускает краткую неконсистентность.",
@@ -1486,7 +1486,7 @@
               "order": 2
             },
             {
-              "text": "Block list — публичная информация: API отдаёт список заблокированных пользователей, чтобы клиенты могли его отображать.",
+              "text": "Block list — публичные данные: API отдаёт список заблокированных пользователей, чтобы клиент показывал его в настройках.",
               "correct": false,
               "sections": {
                 "what_actually": "Block list приватный и не светится в API: раскрытие, кто кого заблокировал, — приватность и потенциальный харассмент-вектор.",
@@ -1629,7 +1629,7 @@
           "question_text": "Как организовать throttling и backpressure при spike нагрузки?",
           "options": [
             {
-              "text": "При spike достаточно одного уровня защиты — rate limit на API Gateway; edge/WAF и backpressure от Kafka избыточны.",
+              "text": "Против spike достаточно одного token bucket на API Gateway; edge/WAF rate limiting и backpressure от Kafka — избыточное дублирование той же защиты.",
               "correct": false,
               "sections": {
                 "what_actually": "Защита многослойная: edge/WAF, API Gateway rate limit, application-level bulkhead/circuit breaker, backpressure от Kafka и graceful degradation — один слой не закрывает все источники spike.",
@@ -1641,7 +1641,7 @@
               "order": 0
             },
             {
-              "text": "При перегрузке ranking-сервиса систему просто выключают, отдавая ошибку 503 — graceful degradation в chrono-режим не предусмотрена.",
+              "text": "При перегрузке ranking-сервиса circuit breaker сразу отдаёт всей ленте 503; переключение в chrono-fallback не делают, чтобы не показывать неранжированную ленту.",
               "correct": false,
               "sections": {
                 "what_actually": "При падении ranking делают graceful degradation: circuit breaker (Resilience4j) переключает на chrono-режим, отдавая ленту без ranking, а не 503.",
@@ -1653,7 +1653,7 @@
               "order": 1
             },
             {
-              "text": "Bulkhead-изоляция означает, что ranking-service и feed-service делят один общий thread pool, чтобы эффективнее утилизировать потоки.",
+              "text": "Bulkhead-изоляция — это когда ranking-service и feed-service используют общий thread pool, чтобы под нагрузкой перераспределять потоки между ними.",
               "correct": false,
               "sections": {
                 "what_actually": "Bulkhead — наоборот: ranking-service держат в отдельном thread pool от feed-service, чтобы перегрузка ranking не исчерпала потоки всего feed-path.",
@@ -1702,7 +1702,7 @@
               "order": 0
             },
             {
-              "text": "Самая большая статья расходов feed-системы — Redis-кластер, поэтому экономию начинают с урезания памяти Redis.",
+              "text": "Самая крупная статья инфры — Redis-кластер (дорогая in-memory RAM), поэтому оптимизацию затрат начинают с урезания памяти Redis.",
               "correct": false,
               "sections": {
                 "what_actually": "Доминирует CDN egress ($0.5-2M/month на медиа); Redis ($50-150K) заметно дешевле, и экономию начинают с bandwidth, а не с урезания памяти.",
@@ -1714,7 +1714,7 @@
               "order": 1
             },
             {
-              "text": "Spot instances используют для основного production-трафика (feed/ranking serving), чтобы платить меньше за главные сервисы.",
+              "text": "Spot instances пускают под основной production-путь (feed/ranking serving), чтобы платить меньше именно за самый нагруженный трафик.",
               "correct": false,
               "sections": {
                 "what_actually": "Spot берут для batch-jobs (ranking training, indexing), где прерывание не критично; production serving держат на стабильных Reserved/On-Demand.",
@@ -1726,7 +1726,7 @@
               "order": 2
             },
             {
-              "text": "Старые посты (> 1 года) хранят в той же горячей Cassandra, что и свежие — выносить их в cold storage не экономит, а усложняет.",
+              "text": "Reserved Instances / Savings Plans дают скидку только на storage-объём (S3/EBS), поэтому на compute (EC2/k8s) сэкономить ими нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Холодные посты выносят в cold storage (S3 IA/Glacier) — они почти не читаются, и дешёвый tier экономит на storage без потери durability.",
@@ -1749,7 +1749,7 @@
           "question_text": "Какие антипаттерны и подводные камни у feed-систем?",
           "options": [
             {
-              "text": "Главный антипаттерн — асинхронный fanout через Kafka: он создаёт лишнюю задержку, правильнее делать fanout синхронно в request thread при создании поста.",
+              "text": "Главный антипаттерн — асинхронный fanout через Kafka: он добавляет лишнюю задержку, поэтому fanout правильнее делать синхронно в request thread при создании поста.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: sync fanout в request thread — это и есть антипаттерн (POST висит 5 сек на 10K followers); async через Kafka — правильное решение.",
@@ -1774,7 +1774,7 @@
               "order": 1
             },
             {
-              "text": "Хранение медиа (фото/видео) как BLOB прямо в БД — рекомендуемая практика, потому что так проще обеспечить транзакционную целостность поста и его медиа.",
+              "text": "Медиа правильно выносить из основной таблицы постов в отдельную реляционную таблицу с `bytea`-колонкой — это снимает нагрузку с постов и сохраняет транзакционность.",
               "correct": false,
               "sections": {
                 "what_actually": "Media as DB blobs — антипаттерн: IO/storage растут с каждым фото, дорого и медленно; правильно — S3 + CDN, в БД только URL.",
@@ -1786,7 +1786,7 @@
               "order": 2
             },
             {
-              "text": "Strong consistency (`QUORUM`) на запись timeline всех подписчиков — лучшая практика, гарантирующая, что лента у всех одинакова.",
+              "text": "Проблему больших fanout-write решают заменой Cassandra `QUORUM` на `ALL` при записи timeline — так запись во все 100 подписчиков становится атомарной.",
               "correct": false,
               "sections": {
                 "what_actually": "Strong consistency на timeline — антипаттерн: `QUORUM` на 100 follower-timelines даёт 10× latency; правильно — eventual consistency и async fanout.",
