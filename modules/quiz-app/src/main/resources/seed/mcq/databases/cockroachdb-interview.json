@@ -789,7 +789,7 @@
           "question_text": "Какие уровни изоляции в `CockroachDB` и почему `SERIALIZABLE` по умолчанию?",
           "options": [
             {
-              "text": "По умолчанию в `CockroachDB`, как и в `PostgreSQL`, уровень `READ COMMITTED`.",
+              "text": "По умолчанию `CockroachDB` использует `READ COMMITTED`, как `PostgreSQL`, а `SERIALIZABLE` включается опционально через `BEGIN ISOLATION LEVEL SERIALIZABLE;`. Цена сильной изоляции — больше retry и медленнее записи при конкуренции, поэтому её берут точечно для correctness-critical транзакций.",
               "correct": false,
               "sections": {
                 "what_actually": "У `CockroachDB` по умолчанию **`SERIALIZABLE`** — это сознательное отличие от `PostgreSQL`, где дефолт `READ COMMITTED`.",
@@ -826,7 +826,7 @@
               "order": 2
             },
             {
-              "text": "`SERIALIZABLE` в `CockroachDB` быстрее `READ COMMITTED`, потому что не нужно отслеживать конфликты.",
+              "text": "`SERIALIZABLE` в `CockroachDB` работает быстрее `READ COMMITTED` при конкуренции, потому что не отслеживает конфликты записи и обходится без retry. Опцию `READ COMMITTED` при этом добавили в v23+ ради `PostgreSQL`-совместимости, а не ради производительности.",
               "correct": false,
               "sections": {
                 "what_actually": "`SERIALIZABLE` **дороже**: он отслеживает конфликты и при их обнаружении делает retry, поэтому на конкурентной нагрузке медленнее, чем `READ COMMITTED`.",
@@ -982,7 +982,7 @@
               "order": 0
             },
             {
-              "text": "`CockroachDB` поддерживает все возможности `PostgreSQL`, включая `PostGIS`, FDW и `LISTEN/NOTIFY`, без ограничений.",
+              "text": "`CockroachDB` реализует полный набор возможностей `PostgreSQL` — хранимые процедуры, триггеры, `PostGIS`, FDW и `LISTEN/NOTIFY` работают идентично оригиналу. Поэтому legacy PostgreSQL-приложения переносятся как drop-in без правок кода и без отдельного тестирования совместимости.",
               "correct": false,
               "sections": {
                 "what_actually": "Многое поддержано лишь **ограниченно или отсутствует**: `PostGIS`, FDW, `LISTEN/NOTIFY`, триггеры и хранимки — как раз в списке ограничений.",
@@ -994,7 +994,7 @@
               "order": 1
             },
             {
-              "text": "Главное ограничение `CockroachDB` — отсутствие поддержки `JOIN` и подзапросов.",
+              "text": "Главное ограничение `CockroachDB` — отсутствие оконных функций (`OVER`/`PARTITION BY`) и общих табличных выражений (`WITH ... AS`), из-за чего сложную аналитику приходится выносить во внешнее OLAP-хранилище, тогда как базовый CRUD и джойны переносятся с `PostgreSQL` без изменений.",
               "correct": false,
               "sections": {
                 "what_actually": "`JOIN` и подзапросы как раз **поддерживаются** (это NewSQL); ограничения касаются триггеров, хранимок, `PostGIS`, FDW и подобного.",
@@ -1006,7 +1006,7 @@
               "order": 2
             },
             {
-              "text": "Ограничения `CockroachDB` зафиксированы навсегда и никогда не расширяются от версии к версии.",
+              "text": "Ограничения `CockroachDB` зафиксированы в SQL-слое и не меняются между релизами, поэтому список неподдерживаемых возможностей (триггеры, FDW, `PostGIS`) одинаков от ранних версий до текущей. Планировать миграцию можно по документации любой версии, не сверяясь с release notes.",
               "correct": false,
               "sections": {
                 "what_actually": "Список ограничений **сокращается со временем**: например, materialized views уже добавили, и фичи постепенно появляются в новых версиях.",
@@ -1029,7 +1029,7 @@
           "question_text": "Чем `CockroachDB` отличается от `Google Spanner`?",
           "options": [
             {
-              "text": "`CockroachDB` использует `TrueTime` (атомные часы) и `Paxos`, как и `Spanner`, — отличий по часам и консенсусу нет.",
+              "text": "`CockroachDB`, как и `Spanner`, синхронизирует время через `TrueTime` на атомных часах и строит консенсус на `Paxos`, поэтому по механизму часов и репликации системы идентичны; расходятся они лишь в хостинге — `CockroachDB` можно развернуть self-host, а `Spanner` доступен только как managed в GCP.",
               "correct": false,
               "sections": {
                 "what_actually": "`CockroachDB` использует `HLC` (на NTP) и `Raft`, а `TrueTime`+`Paxos` — это именно `Spanner`; в этом ключевое архитектурное различие.",
@@ -1054,7 +1054,7 @@
               "order": 1
             },
             {
-              "text": "`Spanner` дешевле и проще `CockroachDB`, потому что это open-source-проект без облачной привязки.",
+              "text": "`Spanner` дешевле и проще в эксплуатации, чем `CockroachDB`, потому что распространяется как open-source без облачной привязки и разворачивается self-host в любой инфраструктуре; `CockroachDB` же общается по `PostgreSQL` wire-протоколу и удобен для миграции с PG.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `Spanner` проприетарен, GCP-only и дорог, а open-source и (как правило) дешевле — `CockroachDB`.",
@@ -1066,7 +1066,7 @@
               "order": 2
             },
             {
-              "text": "`CockroachDB` использует собственный диалект GoogleSQL, а `Spanner` — PostgreSQL wire-протокол.",
+              "text": "`CockroachDB` реализует собственный диалект GoogleSQL, а `Spanner` общается по `PostgreSQL` wire-протоколу, поэтому приложения на драйвере `pgx` подключаются к `Spanner` напрямую; при этом обе системы дают строгую согласованность и горизонтально масштабируют запись между регионами.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: **PostgreSQL wire** — у `CockroachDB`, а собственный **GoogleSQL** — у `Spanner` (хотя `Spanner` позже добавил PG-интерфейс).",
@@ -1089,7 +1089,7 @@
           "question_text": "Чем `CockroachDB` отличается от `Amazon Aurora`?",
           "options": [
             {
-              "text": "И `CockroachDB`, и `Aurora` — multi-master: запись можно вести в любую ноду в обоих случаях.",
+              "text": "И `CockroachDB`, и `Aurora PostgreSQL` — multi-master: запись можно направлять в любую ноду кластера, а конфликты разрешаются автоматически на уровне storage. Различаются они в основном совместимостью диалекта и стоимостью, но не в модели записи.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-master (запись в любую ноду) — это `CockroachDB`; `Aurora PostgreSQL` имеет **один writer** (single master), реплики — read-only.",
@@ -1101,7 +1101,7 @@
               "order": 0
             },
             {
-              "text": "`Aurora` — настоящая distributed SQL с multi-region writes, а `CockroachDB` работает только в одном регионе.",
+              "text": "`Aurora` — настоящая distributed SQL с синхронными multi-region writes в любой узел, а `CockroachDB` реплицирует данные только внутри одного региона и за его пределами масштабируется лишь read-репликами. Поэтому geo-распределённую запись обычно строят на `Aurora`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: multi-region writes — у `CockroachDB`; `Aurora` распределяет **хранилище**, но имеет single writer, а cross-region — это read-replica или Global DB с одним writer.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "`CockroachDB` использует PostgreSQL-дефолты изоляции, а `Aurora` всегда работает в `SERIALIZABLE`.",
+              "text": "`CockroachDB` использует стандартные `PostgreSQL`-дефолты изоляции (`READ COMMITTED`), а `Aurora PostgreSQL` всегда поднимает транзакции до `SERIALIZABLE`, поэтому именно `Aurora` строже защищает от аномалий записи при конкуренции.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: **`SERIALIZABLE` всегда** — у `CockroachDB`; `Aurora` придерживается PostgreSQL-дефолтов (`READ COMMITTED`).",
@@ -1149,7 +1149,7 @@
           "question_text": "Чем `CockroachDB` отличается от `YugabyteDB`?",
           "options": [
             {
-              "text": "`YugabyteDB` совместим только с `Cassandra` (CQL) и не имеет PostgreSQL-интерфейса.",
+              "text": "`YugabyteDB` совместим только с `Cassandra` через `YCQL` и не имеет `PostgreSQL`-интерфейса, поэтому приложения на драйвере `pgx` мигрируют на `CockroachDB`, но не на `YugabyteDB`. Cassandra-совместимость — его ключевое отличие от CRDB.",
               "correct": false,
               "sections": {
                 "what_actually": "`YugabyteDB` поддерживает и **YSQL** (PostgreSQL, на форке PG-кода), и **YCQL** (Cassandra-совместимый), а не только CQL.",
@@ -1161,7 +1161,7 @@
               "order": 0
             },
             {
-              "text": "`CockroachDB`, как и `YugabyteDB`, форкнул исходный код `PostgreSQL`, поэтому их совместимость одинакова.",
+              "text": "`CockroachDB`, как и `YugabyteDB`, построен на форке исходного кода `PostgreSQL`, поэтому уровень PostgreSQL-совместимости у них одинаковый и оба поддерживают серверные расширения PG без ограничений. Различие сводится в основном к лицензии.",
               "correct": false,
               "sections": {
                 "what_actually": "PG-код форкнул именно `YugabyteDB` (отсюда более полная совместимость); `CockroachDB` совместим лишь по wire-протоколу и написан с нуля.",
@@ -1173,7 +1173,7 @@
               "order": 1
             },
             {
-              "text": "Обе базы выпущены под одной лицензией BSL, поэтому по открытости они идентичны.",
+              "text": "Обе базы распространяются под лицензией BSL с одинаковым сроком перехода в open-source, поэтому по степени открытости `CockroachDB` и `YugabyteDB` неотличимы; расходятся они в основном по архитектуре SQL-слоя.",
               "correct": false,
               "sections": {
                 "what_actually": "Лицензии разные: `CockroachDB` — BSL, а `YugabyteDB` — **Apache 2.0** (более свободная), это заметное отличие по openness.",
@@ -1222,7 +1222,7 @@
               "order": 0
             },
             {
-              "text": "`TiDB` совместим с `PostgreSQL`, как и `CockroachDB`, — диалект у них общий.",
+              "text": "`TiDB` совместим с `PostgreSQL` по wire-протоколу, как и `CockroachDB`, поэтому оба подключаются драйвером `pgx` и делят общий диалект SQL; отличаются они в основном лицензией и географией распространения.",
               "correct": false,
               "sections": {
                 "what_actually": "`TiDB` совместим с **`MySQL`**, а не с `PostgreSQL`; именно по диалекту базы и расходятся.",
@@ -1234,7 +1234,7 @@
               "order": 1
             },
             {
-              "text": "`CockroachDB` сильнее в HTAP/аналитике благодаря встроенному колоночному движку, а `TiDB` — чисто OLTP.",
+              "text": "`CockroachDB` сильнее в HTAP и аналитике благодаря встроенному колоночному движку для параллельных сканов, тогда как `TiDB` ориентирован на чистый OLTP и обрабатывает аналитику только на строковом хранилище. Поэтому смешанные нагрузки чаще кладут на `CockroachDB`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: сильный HTAP — у `TiDB` (`TiFlash` для колоночного хранения), а у `CockroachDB` аналитика **limited**.",
@@ -1246,7 +1246,7 @@
               "order": 2
             },
             {
-              "text": "`TiDB` имеет монолитную архитектуру (compute и storage в одном процессе), как `CockroachDB`.",
+              "text": "`TiDB` использует монолитную архитектуру, где compute и storage живут в одном процессе, как у `CockroachDB`, поэтому вычисления и хранение в нём нельзя масштабировать по отдельности. Отличается он главным образом MySQL-совместимостью.",
               "correct": false,
               "sections": {
                 "what_actually": "`TiDB` **разделяет** compute (`TiDB`) и storage (`TiKV`) на отдельные слои; монолитен здесь как раз `CockroachDB`.",
