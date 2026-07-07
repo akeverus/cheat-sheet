@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `execution` символ `*` всегда означает «любое количество пакетов», а `..` — «один любой тип».",
+              "text": "`execution` отбирает методы по сигнатуре: `execution([modifier] return-type [class.]method(params) [throws])`; в нём `*` обозначает любое число сегментов пути или параметров, `..` — ровно один сегмент (один тип/компонент пути), а `+` — тип и все его подтипы. Например `execution(* com.example.service..*(..))` отбирает все методы пакета `service` и его подпакетов.",
               "correct": false,
               "sections": {
                 "what_actually": "Значения перепутаны: `*` — это один сегмент, а `..` — любое число пакетов в пути или параметров.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`execution` умеет отбирать методы только по точному полному имени метода без поддержки wildcards.",
+              "text": "`execution` отбирает методы по сигнатуре: `execution([modifier] return-type [class.]method(params) [throws])`; в нём `*` обозначает один сегмент (один тип/компонент пути), `..` применяется только в позиции пакета для вложенных пакетов, а любое число параметров в скобках задаётся через `*`; `+` же — тип и все его подтипы. Например `execution(* com.example.service..OrderService.find*(*))` отбирает методы с любым набором параметров.",
               "correct": false,
               "sections": {
                 "what_actually": "`execution` поддерживает wildcards `*`, `..`, `+`, поэтому можно описывать целые пакеты и сигнатуры, а не только точные имена.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Символ `+` в `execution` означает «логическое И» для объединения двух pointcut-выражений.",
+              "text": "`execution` отбирает методы по сигнатуре: `execution([modifier] return-type [class.]method(params) [throws])`; в нём `*` обозначает один сегмент (один тип/компонент пути), `..` — любое число пакетов в пути или параметров в скобках, а `+` ставится после типа параметра и означает «один или более аргументов такого типа». Например `execution(* com.example.service..*.*(String+))` отбирает методы с одним и более `String`-аргументом.",
               "correct": false,
               "sections": {
                 "what_actually": "`+` после типа означает «тип и все его подтипы»; логическое И — это `&&` при комбинировании pointcut-ов.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В Spring AOP есть только два типа advice: `@Before` (до метода) и `@After` (после метода).",
+              "text": "Их четыре: `@Before` (до метода), `@AfterReturning` (после успешного возврата), `@AfterThrowing` (при выбросе исключения) и `@After` (всегда, как finally); полного контроля над вызовом ни один advice не даёт — чтобы обернуть метод целиком, подменить аргументы или результат, используют отдельный `MethodInterceptor`, а не advice-аннотацию. Порядок при одном JoinPoint: `@Before` → метод → `@AfterReturning`/`@AfterThrowing` → `@After`.",
               "correct": false,
               "sections": {
                 "what_actually": "Типов пять: `@Before`, `@AfterReturning`, `@AfterThrowing`, `@After` и `@Around`; двумя дело не ограничивается.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@After` выполняется только при успешном завершении метода и пропускается, если выброшено исключение.",
+              "text": "Их пять: `@Before` (до метода), `@AfterReturning` (после успешного возврата), `@AfterThrowing` (при выбросе исключения), `@After` (только при успешном завершении, если исключения не было) и `@Around` (оборачивает вызов и даёт полный контроль); порядок при одном JoinPoint: `@Around`(до) → `@Before` → метод → `@Around`(после) → `@AfterReturning`/`@AfterThrowing` → `@After`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@After` работает как `finally` — выполняется всегда, и при успехе, и при исключении; «только при успехе» — это `@AfterReturning`.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@Before` может изменить возвращаемое значение метода, перезаписав его до выполнения.",
+              "text": "Их пять: `@Before` (до метода, может подменить возвращаемое значение, вернув другой объект из тела advice), `@AfterReturning` (после успешного возврата), `@AfterThrowing` (при выбросе исключения), `@After` (всегда, как finally) и `@Around` (оборачивает вызов); порядок при одном JoinPoint: `@Around`(до) → `@Before` → метод → `@Around`(после) → `@AfterReturning`/`@AfterThrowing` → `@After`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Before` выполняется до метода и не имеет доступа к результату, поэтому изменить возврат не может; это умеет только `@Around` (и частично `@AfterReturning`).",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JoinPoint` и `ProceedingJoinPoint` идентичны: оба имеют метод `proceed()` и доступны в любом advice.",
+              "text": "`JoinPoint` и `ProceedingJoinPoint` — два имени одного и того же типа: оба дают `getSignature()`, `getArgs()`, `getTarget()`, `getThis()` и метод `proceed()` для запуска целевого метода, поэтому `proceed()` можно вызвать в любом advice — и в `@Around`, и в `@Before` — независимо от того, какой из типов объявлен параметром.",
               "correct": false,
               "sections": {
                 "what_actually": "`proceed()` есть только у `ProceedingJoinPoint`, и он доступен лишь в `@Around`; обычный `JoinPoint` метода `proceed()` не имеет.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ProceedingJoinPoint` доступен во всех типах advice, включая `@Before` и `@AfterReturning`.",
+              "text": "`JoinPoint` — объект с информацией о перехваченном вызове (`getSignature()`, `getArgs()`, `getTarget()`, `getThis()`), а `ProceedingJoinPoint` расширяет его методом `proceed()`; при этом `ProceedingJoinPoint` можно объявить параметром в любом advice — и в `@Before`, и в `@AfterReturning`, — чтобы при необходимости повторно запустить целевой метод через `proceed()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`ProceedingJoinPoint` передаётся только в `@Around`; в `@Before`/`@AfterReturning` используется обычный `JoinPoint`.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`JoinPoint` хранит ссылку на проксируемый объект, и `getThis()` всегда равен `getTarget()`.",
+              "text": "`JoinPoint` даёт доступ к перехваченному вызову: `getSignature()`, `getArgs()`, `getTarget()` (целевой объект) и `getThis()` (текущий объект); поскольку advice всегда исполняется на прокси, `getThis()` и `getTarget()` возвращают один и тот же объект. `ProceedingJoinPoint` — его расширение, доступное только в `@Around`, которое добавляет метод `proceed()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`getThis()` возвращает прокси, а `getTarget()` — реальный целевой объект; они различаются, особенно при проксировании.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Данные о методе берут из `HttpServletRequest`, который Spring передаёт в каждый advice как параметр.",
+              "text": "Данные о методе получают рефлексией целевого класса: `pjp.getTarget().getClass().getEnclosingMethod()` возвращает перехваченный `Method`, из него берут `getParameterTypes()`, `getReturnType()` и `getAnnotations()`; аргументы вызова достают из `pjp.getArgs()`, а имя класса — из `pjp.getTarget().getClass().getSimpleName()`.",
               "correct": false,
               "sections": {
                 "what_actually": "AOP не работает с `HttpServletRequest`; метаданные вызова дают `JoinPoint`/`MethodSignature`, а не объект запроса.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Имена параметров метода всегда доступны через `getParameterNames()` без каких-либо флагов компиляции.",
+              "text": "Через `JoinPoint`/`ProceedingJoinPoint`: приводят `getSignature()` к `MethodSignature`, берут `getMethod()` (рефлексивный `Method`), `getReturnType()` и `getParameterNames()`; имена параметров доступны всегда, без флагов компиляции, потому что AspectJ сохраняет их прямо в сигнатуре join point. Аннотации метода берут из `getMethod().getAnnotation(...)`, аргументы — из `pjp.getArgs()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Без флага `-parameters` имена параметров не сохраняются, и `getParameterNames()` вернёт синтетические `arg0`, `arg1`.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы получить рефлексивный `Method`, нужно привести `getSignature()` к `FieldSignature`.",
+              "text": "Через `JoinPoint`/`ProceedingJoinPoint`: приводят `getSignature()` к `FieldSignature`, оттуда берут `getMethod()` (рефлексивный `Method`), `getParameterNames()` и `getReturnType()`; аргументы дают `pjp.getArgs()`, аннотации метода — `method.getAnnotation(...)`, а имена параметров требуют компиляции с флагом `-parameters` (Spring Boot включает его автоматически).",
               "correct": false,
               "sections": {
                 "what_actually": "Для метода сигнатуру приводят к `MethodSignature` и зовут `getMethod()`; `FieldSignature` — про поля, которых в Spring AOP нет.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Retry реализуют в `@Before`-advice, повторно вызывая метод оттуда при ошибке.",
+              "text": "Объявляют аннотацию `@Retry` (атрибуты `attempts`, `delayMs`) с `@Retention(RUNTIME)`, а retry-логику вешают в `@Before(\"@annotation(retry)\")`-advice: в цикле повторно инвокируют целевой метод, ловят исключение, проверяют retryable ли оно, ждут `delayMs` и повторяют, пока не исчерпаны попытки; после успешной попытки управление уходит в сам метод.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Before` не может вызвать целевой метод и не видит его исключений; повторный вызов возможен только из `@Around` через `proceed()`.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "При retry нужно повторять метод на любом исключении, не различая retryable и не-retryable ошибки.",
+              "text": "Объявляют аннотацию `@Retry` (`attempts`, `delayMs`) с `@Retention(RUNTIME)`, а в `@Around(\"@annotation(retry)\")`-advice в цикле зовут `pjp.proceed()`; повторяют на любом исключении, так как `proceed()` всегда оборачивает исходную ошибку в `UndeclaredThrowableException` и различить retryable-типы внутри advice невозможно; после исчерпания попыток бросают последнее исключение.",
               "correct": false,
               "sections": {
                 "what_actually": "Повторять стоит только retryable-исключения (например сетевые таймауты); на бизнес-ошибках (валидация) повтор бессмысленен и вреден.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Retry через AOP можно безопасно применять к любым операциям, включая списание денег и отправку платежей.",
+              "text": "Объявляют аннотацию `@Retry` (атрибуты `attempts`, `on`, `delayMs`) с `@Retention(RUNTIME)`, а в `@Around(\"@annotation(retry)\")`-advice в цикле зовут `pjp.proceed()`, проверяя retryable-исключения и выжидая `delayMs`; такой retry безопасно навешивать на любые методы, включая списание денег и отправку платежей, потому что AOP перед повтором автоматически откатывает побочные эффекты неудачной попытки.",
               "correct": false,
               "sections": {
                 "what_actually": "Retry безопасен только для идемпотентных операций; повтор неидемпотентного платежа приведёт к двойному списанию.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Время метода измеряют в паре `@Before`/`@After`, сохраняя `startTime` в поле аспекта между ними.",
+              "text": "Объявляют аннотацию `@Timed`, а замер делают парой advice: в `@Before(\"@annotation(timed)\")` сохраняют `System.nanoTime()` в поле аспекта, в `@After` вычитают его и пишут длительность в лог или `MeterRegistry`; аспект — синглтон, но одно поле корректно хранит начало вызова отдельно для каждого потока.",
               "correct": false,
               "sections": {
                 "what_actually": "Хранить `startTime` в поле аспекта небезопасно: аспект — синглтон, и при конкурентных вызовах значения перетрут друг друга; корректно измерять в одном `@Around`.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для измерения времени обязательно писать свой аспект — готовых решений в экосистеме Spring нет.",
+              "text": "Объявляют аннотацию `@Timed`, а в `@Around(\"@annotation(timed)\")`-advice замеряют `System.nanoTime()` до и после `pjp.proceed()`; готового аналога в экосистеме нет, поэтому `Timer` и `MeterRegistry` из Micrometer для аспектного замера времени неприменимы и вызываются только вручную из бизнес-кода.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть готовый `@Timed` из Micrometer, интегрированный с Spring Boot Actuator; свой аспект чаще всего не нужен.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Измерять время нужно в `@AfterReturning`, замеряя момент возврата метода.",
+              "text": "Объявляют аннотацию `@Timed`, а замер вешают на `@AfterReturning(\"@annotation(timed)\")`-advice: в момент успешного возврата вызывают `System.nanoTime()` и получают длительность выполнения метода; для методов, бросающих исключение, тот же замер дублируют в `@AfterThrowing`-advice.",
               "correct": false,
               "sections": {
                 "what_actually": "`@AfterReturning` видит только момент успешного возврата и не знает момента старта, поэтому длительность по нему не вычислить; нужен `@Around`.",
