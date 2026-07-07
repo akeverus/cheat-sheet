@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Экран вопроса · макет Instrument</title>
 
   <!-- Шрифты: Newsreader (вопрос-проза), Space Grotesk (UI), JetBrains Mono (код/лейблы) -->
@@ -27,12 +27,18 @@
     }
     a { color: var(--signal-ink); }
     code, kbd, pre { font-family: var(--font-mono); }
+    [hidden] { display: none !important; }
+
+    /* Единая сетка: шапка и контент делят один контейнер. Читаемая колонка
+       контента уже, но прижата к левому краю контейнера — общая композиция. */
+    .wrap { width: min(100% - 2 * var(--gutter), 60rem); margin-inline: auto; }
+    .col  { max-width: 46rem; }
 
     .skip-link {
-      position: absolute; left: var(--s-4); top: -3rem;
+      position: absolute; left: var(--s-4); top: -4rem;
       background: var(--signal); color: var(--signal-on);
       padding: var(--s-2) var(--s-4); border-radius: var(--r-sm);
-      z-index: 20; transition: top var(--dur-1) var(--ease-out);
+      z-index: 30; transition: top var(--dur-1) var(--ease-out);
     }
     .skip-link:focus { top: var(--s-4); }
 
@@ -42,25 +48,51 @@
       border-radius: var(--r-sm);
     }
 
-    /* ===== Masthead ======================================================= */
-    .site {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: var(--s-4);
-      padding: var(--s-4) var(--gutter);
-      border-bottom: 1px solid var(--line);
+    /* ===== Макет-каркас (НЕ часть продукта): переключатель состояний ======= */
+    .mock-bar {
+      border-bottom: 1px dashed var(--line-strong);
+      background: var(--surface);
+    }
+    .mock-bar__inner {
+      display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap;
+      padding: var(--s-2) 0;
+    }
+    .mock-tag {
+      font-family: var(--font-mono); font-size: var(--fs-xs);
+      letter-spacing: var(--track-mono); color: var(--ink-3);
+    }
+    .mock-states { display: inline-flex; gap: var(--s-1); flex-wrap: wrap; }
+    .mock-states button {
+      font-family: var(--font-ui); font-size: var(--fs-xs); font-weight: var(--fw-medium);
+      color: var(--ink-2); background: var(--paper);
+      border: 1px solid var(--line); border-radius: var(--r-pill);
+      padding: var(--s-1) var(--s-3); cursor: pointer;
+      transition: color var(--dur-1) var(--ease-out),
+                  border-color var(--dur-1) var(--ease-out),
+                  background var(--dur-1) var(--ease-out);
+    }
+    .mock-states button:hover { border-color: var(--line-strong); color: var(--ink); }
+    .mock-states button[aria-pressed="true"] {
+      color: var(--signal-ink); border-color: var(--signal-edge); background: var(--signal-wash);
+    }
+
+    /* ===== Шапка ========================================================== */
+    .site-head { border-bottom: 1px solid var(--line); background: var(--paper); }
+    .site-head__inner {
+      display: flex; align-items: center; gap: var(--s-4);
+      padding: var(--s-4) 0;
     }
     .brand {
       display: inline-flex; align-items: center; gap: var(--s-2);
       font-family: var(--font-mono); font-weight: var(--fw-semi);
       font-size: var(--fs-sm); letter-spacing: var(--track-mono);
-      color: var(--ink); text-decoration: none;
+      color: var(--ink); text-decoration: none; margin-right: auto;
     }
     .brand-mark {
       width: 0.85rem; height: 0.85rem; border-radius: 3px;
       background: var(--signal);
       box-shadow: inset 0 0 0 3px var(--paper), 0 0 0 1px var(--signal);
     }
-    .brand b { font-weight: var(--fw-semi); }
     .brand span { color: var(--ink-3); }
 
     .site-nav { display: flex; gap: var(--s-1); }
@@ -73,23 +105,21 @@
     .site-nav a:hover { color: var(--ink); background: var(--surface); }
     .site-nav a[aria-current="page"] { color: var(--signal-ink); background: var(--signal-wash); }
 
+    .nav-menu-btn { display: none; }  /* появляется только на мобиле */
+
     .theme-toggle {
       display: inline-flex; align-items: center; gap: var(--s-2);
-      font-family: var(--font-mono); font-size: var(--fs-xs);
+      font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium);
       color: var(--ink-2); background: var(--surface);
       border: 1px solid var(--line); border-radius: var(--r-pill);
       padding: var(--s-2) var(--s-3); cursor: pointer;
       transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
     }
     .theme-toggle:hover { border-color: var(--line-strong); color: var(--ink); }
+    .theme-toggle .tt-glyph { font-size: 1em; line-height: 1; }
 
-    /* ===== Фокус-колонка ================================================== */
-    main { display: block; }
-    .focus {
-      max-width: var(--page-max);
-      margin: 0 auto;
-      padding: var(--s-7) var(--gutter) var(--s-9);
-    }
+    /* ===== Состояния экрана (ровно одно видимо) =========================== */
+    .state { padding: var(--s-7) 0 var(--s-9); }
 
     /* --- Сессионная рейка (слим, горизонтальная) ------------------------- */
     .rail {
@@ -104,8 +134,8 @@
     }
     .rail-count b { color: var(--ink); font-weight: var(--fw-semi); }
     .progress-track {
-      height: 4px; border-radius: var(--r-pill);
-      background: var(--surface-2); overflow: hidden;
+      height: 6px; border-radius: var(--r-pill);
+      background: var(--line); overflow: hidden;
     }
     .progress-fill {
       height: 100%; border-radius: inherit;
@@ -113,24 +143,26 @@
       transform-origin: left center;
       transition: transform var(--dur-3) var(--ease-out);
     }
+    /* Стрик — тише прогресса и вопроса (вторичный статус) */
     .streak-chip {
       display: inline-flex; align-items: center; gap: var(--s-2);
       font-family: var(--font-mono); font-size: var(--fs-xs);
-      font-weight: var(--fw-medium); color: var(--spark-ink);
-      background: var(--spark-wash); border-radius: var(--r-pill);
-      padding: var(--s-2) var(--s-3); white-space: nowrap;
+      color: var(--ink-2); background: var(--surface);
+      border: 1px solid var(--line); border-radius: var(--r-pill);
+      padding: var(--s-1) var(--s-3); white-space: nowrap;
     }
     .streak-chip .spark {
-      width: 0.55rem; height: 0.55rem; border-radius: 50%;
-      background: var(--spark); box-shadow: 0 0 0 3px var(--spark-wash);
+      width: 0.5rem; height: 0.5rem; border-radius: 50%;
+      background: var(--spark);
     }
     .rail-finish {
       font-size: var(--fs-xs); font-weight: var(--fw-medium);
-      color: var(--ink-3); background: none; border: 0; cursor: pointer;
-      padding: var(--s-2); text-decoration: underline; text-underline-offset: 3px;
-      transition: color var(--dur-1) var(--ease-out);
+      color: var(--ink-2); background: none;
+      border: 1px solid var(--line); border-radius: var(--r-pill);
+      padding: var(--s-1) var(--s-3); cursor: pointer; white-space: nowrap;
+      transition: color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
     }
-    .rail-finish:hover { color: var(--error-ink); }
+    .rail-finish:hover { color: var(--error-ink); border-color: var(--error); }
 
     /* --- Тема-кикер + вопрос --------------------------------------------- */
     .focus-topic {
@@ -142,18 +174,19 @@
     .focus-question {
       font-family: var(--font-hero);
       font-size: var(--fs-hero); font-weight: var(--fw-medium);
-      line-height: var(--lh-tight); letter-spacing: var(--track-hero);
+      line-height: var(--lh-hero); letter-spacing: var(--track-hero);
       color: var(--ink); margin: 0 0 var(--s-5);
-      text-wrap: balance;
+      text-wrap: balance; max-width: 20ch;
     }
+    .focus-question .nowrap { white-space: nowrap; }
+    /* Код в герое — без плашки: mono + teal-цвет, чтобы токен не был «баннером» */
     .focus-question code {
-      font-size: 0.85em; background: var(--surface-2);
-      padding: 0.08em 0.34em; border-radius: var(--r-sm);
-      border: 1px solid var(--line);
+      font-size: 0.85em; color: var(--signal-ink);
+      background: none; border: 0; padding: 0; white-space: nowrap;
     }
 
-    /* --- Пример кода (нативный <details>) -------------------------------- */
-    .code-details {
+    /* --- Код к вопросу (нативный <details>, открыт по умолчанию) --------- */
+    .question-code-details {
       margin: 0 0 var(--s-6); border: 1px solid var(--line);
       border-radius: var(--r-md); background: var(--surface); overflow: hidden;
     }
@@ -168,7 +201,7 @@
       content: "▸"; color: var(--signal); font-size: 0.85em;
       transition: transform var(--dur-1) var(--ease-out);
     }
-    .code-details[open] .code-summary::before { transform: rotate(90deg); }
+    .question-code-details[open] .code-summary::before { transform: rotate(90deg); }
     .code-body {
       margin: 0; padding: var(--s-4); overflow-x: auto;
       border-top: 1px solid var(--line); background: var(--paper);
@@ -178,14 +211,15 @@
     /* --- Варианты ответа -------------------------------------------------- */
     .options { display: flex; flex-direction: column; gap: var(--s-3); margin: 0 0 var(--s-6); }
     .opt {
-      display: grid; grid-template-columns: auto 1fr; align-items: start;
+      display: grid; grid-template-columns: auto 1fr auto; align-items: start;
       gap: var(--s-4);
       padding: var(--s-4) var(--s-5);
-      border: 1px solid var(--line); border-radius: var(--r-md);
+      border: 1px solid var(--line-strong); border-radius: var(--r-md);
       background: var(--surface);
       cursor: pointer;
       transition: border-color var(--dur-1) var(--ease-out),
                   background var(--dur-1) var(--ease-out),
+                  box-shadow var(--dur-1) var(--ease-out),
                   transform var(--dur-1) var(--ease-out);
     }
     .opt:hover { border-color: var(--signal-edge); background: var(--paper); }
@@ -193,7 +227,7 @@
     .opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
     .opt-badge {
       display: grid; place-items: center;
-      width: 1.9rem; height: 1.9rem;
+      width: 1.75rem; height: 1.75rem;
       font-family: var(--font-mono); font-size: var(--fs-sm); font-weight: var(--fw-semi);
       color: var(--ink-2); background: var(--paper);
       border: 1px solid var(--line-strong); border-radius: var(--r-sm);
@@ -201,20 +235,80 @@
                   background var(--dur-1) var(--ease-out),
                   border-color var(--dur-1) var(--ease-out);
     }
-    .opt-text { color: var(--ink); line-height: var(--lh-snug); padding-top: 0.12rem; }
+    .opt-text { color: var(--ink); line-height: var(--lh-snug); padding-top: 0.1rem; }
     .opt-text code {
       font-size: 0.85em; background: var(--surface-2);
       padding: 0.06em 0.3em; border-radius: 4px; border: 1px solid var(--line);
     }
-    /* выбранный (нейтральный teal — вердикт правильности только на экране result) */
+    /* Индикатор состояния варианта — форма, а не только цвет */
+    .opt-mark {
+      width: 1.35rem; height: 1.35rem; margin-top: 0.15rem;
+      border-radius: 50%; border: 2px solid var(--line-strong);
+      display: grid; place-items: center; color: transparent;
+      transition: border-color var(--dur-1) var(--ease-out),
+                  background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+    }
+    .opt-mark svg { width: 0.85rem; height: 0.85rem; }
+
+    /* Выбранный: обводка + индикатор + тинт бейджа (не «залито цветом») */
     .opt:has(input:checked) {
-      border-color: var(--signal); background: var(--signal-wash);
+      border-color: var(--signal);
+      background: var(--signal-wash);
+      box-shadow: inset 0 0 0 1px var(--signal);
     }
     .opt:has(input:checked) .opt-badge {
-      color: var(--signal-on); background: var(--signal); border-color: var(--signal);
+      color: var(--signal-ink); border-color: var(--signal);
     }
+    .opt:has(input:checked) .opt-mark {
+      border-color: var(--signal); background: var(--signal); color: var(--signal-on);
+    }
+    /* Клавиатурный фокус — отдельная обводка-кольцо (отличается от selected) */
     .opt:has(input:focus-visible) {
-      outline: 2px solid var(--signal); outline-offset: 2px;
+      outline: 2px solid var(--signal); outline-offset: 3px;
+      box-shadow: var(--ring-focus);
+    }
+
+    /* Разбор (result): корректность семантическими green/red, отдельно от teal */
+    .opt.is-readonly { cursor: default; }
+    .opt.is-readonly:hover { background: var(--surface); border-color: var(--line-strong); }
+    .opt--correct {
+      border-color: var(--success); background: var(--success-wash);
+      box-shadow: inset 0 0 0 1px var(--success);
+    }
+    .opt--correct .opt-badge { color: var(--success-ink); border-color: var(--success); }
+    .opt--correct .opt-mark { border-color: var(--success); background: var(--success); color: var(--success-on); }
+    .opt--incorrect {
+      border-color: var(--error); background: var(--error-wash);
+      box-shadow: inset 0 0 0 1px var(--error);
+    }
+    .opt--incorrect .opt-badge { color: var(--error-ink); border-color: var(--error); }
+    .opt--incorrect .opt-mark { border-color: var(--error); background: var(--error); color: var(--error-on); }
+    .opt-tag {
+      display: inline-block; margin-left: var(--s-2);
+      font-family: var(--font-mono); font-size: 0.85em; font-weight: var(--fw-medium);
+      vertical-align: 0.1em; color: var(--ink-3);
+      border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+      padding: 0 0.4em;
+    }
+
+    /* --- Вердикт разбора -------------------------------------------------- */
+    .verdict {
+      display: flex; align-items: center; gap: var(--s-3);
+      padding: var(--s-3) var(--s-4); margin: 0 0 var(--s-5);
+      border-radius: var(--r-md); border: 1px solid var(--error-ink);
+      background: var(--error-wash); color: var(--error-ink);
+      font-weight: var(--fw-semi);
+    }
+    .verdict.is-ok { border-color: var(--success-ink); background: var(--success-wash); color: var(--success-ink); }
+    .verdict svg { width: 1.15rem; height: 1.15rem; flex: none; }
+    .explain {
+      font-family: var(--font-hero); font-size: var(--fs-md);
+      line-height: var(--lh-normal); color: var(--ink); max-width: 62ch;
+      margin: 0 0 var(--s-6);
+    }
+    .explain code {
+      font-family: var(--font-mono); font-size: 0.85em; background: var(--surface-2);
+      padding: 0.06em 0.3em; border-radius: 4px; border: 1px solid var(--line);
     }
 
     /* --- Сабмит + подсказка хоткеев -------------------------------------- */
@@ -224,7 +318,8 @@
     .btn {
       font-family: var(--font-ui); font-size: var(--fs-base); font-weight: var(--fw-semi);
       border-radius: var(--r-md); padding: var(--s-3) var(--s-6);
-      cursor: pointer; border: 1px solid transparent;
+      cursor: pointer; border: 1px solid transparent; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
       transition: background var(--dur-1) var(--ease-out),
                   border-color var(--dur-1) var(--ease-out),
                   transform var(--dur-1) var(--ease-out);
@@ -232,58 +327,52 @@
     .btn-primary { background: var(--signal); color: var(--signal-on); box-shadow: var(--shadow-sm); }
     .btn-primary:hover { background: var(--signal-strong); }
     .btn-primary:active { transform: translateY(1px); }
-    .btn-ghost {
-      background: transparent; color: var(--ink); border-color: var(--line-strong);
-    }
+    .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
     .btn-ghost:hover { border-color: var(--ink-3); background: var(--surface); }
-    .kbd-hint {
-      font-family: var(--font-mono); font-size: var(--fs-xs);
-      color: var(--ink-3); display: inline-flex; gap: var(--s-3); flex-wrap: wrap;
+    /* Клавиатурные подсказки — только на широких экранах с мышью+клавиатурой
+       (не touch). min-width страхует узкие вьюпорты, где эмулятор не меняет pointer. */
+    .kbd-hint { display: none; }
+    @media (hover: hover) and (pointer: fine) and (min-width: 641px) {
+      .kbd-hint {
+        font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-3);
+        display: inline-flex; gap: var(--s-3); flex-wrap: wrap;
+      }
     }
     kbd {
       font-size: 0.85em; color: var(--ink-2); background: var(--surface-2);
-      border: 1px solid var(--line); border-bottom-width: 2px;
+      border: 1px solid var(--line-strong); border-bottom-width: 2px;
       border-radius: 4px; padding: 0.05em 0.4em;
     }
 
-    /* --- Пустое состояние ------------------------------------------------ */
-    .empty { text-align: center; padding: var(--s-8) 0; }
-    .empty-mark {
-      width: 2.5rem; height: 2.5rem; margin: 0 auto var(--s-4);
+    /* --- Пустое / завершено (центрированные состояния) ------------------- */
+    .centered { text-align: center; padding: var(--s-8) 0; max-width: 42ch; margin: 0 auto; }
+    .state-mark {
+      width: 3rem; height: 3rem; margin: 0 auto var(--s-4);
       display: grid; place-items: center; border-radius: var(--r-md);
-      background: var(--surface); border: 1px solid var(--line);
-      font-family: var(--font-mono); color: var(--ink-3); font-size: var(--fs-lg);
+      background: var(--surface); border: 1px solid var(--line-strong);
+      color: var(--ink-2);
     }
-    .empty-title {
+    .state-mark svg { width: 1.5rem; height: 1.5rem; }
+    .state-mark.is-ok { color: var(--success-ink); border-color: var(--success); background: var(--success-wash); }
+    .state-title {
       font-family: var(--font-hero); font-weight: var(--fw-medium);
       font-size: var(--fs-xl); letter-spacing: var(--track-tight);
-      margin: 0 0 var(--s-3); color: var(--ink);
+      line-height: var(--lh-hero); margin: 0 0 var(--s-3); color: var(--ink);
     }
-    .empty-desc {
-      color: var(--ink-2); max-width: 42ch; margin: 0 auto var(--s-5);
-      line-height: var(--lh-normal);
+    .state-desc { color: var(--ink-2); margin: 0 auto var(--s-5); line-height: var(--lh-normal); }
+    .state-meta {
+      font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--ink-2);
+      margin: 0 0 var(--s-5);
     }
-    .empty-actions { display: inline-flex; gap: var(--s-3); flex-wrap: wrap; justify-content: center; }
-
-    /* --- Аннотация макета (не часть UI) ---------------------------------- */
-    .mock-band {
-      max-width: var(--page-max); margin: var(--s-8) auto 0;
-      padding: 0 var(--gutter);
-    }
-    .mock-label {
-      font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono);
-      color: var(--ink-3); text-transform: none;
-      display: flex; align-items: center; gap: var(--s-3);
-      margin-bottom: var(--s-4);
-    }
-    .mock-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    .state-meta b { color: var(--ink); font-weight: var(--fw-semi); }
+    .state-actions { display: inline-flex; gap: var(--s-3); flex-wrap: wrap; justify-content: center; }
 
     /* ===== Motion (emil): вход <300ms, ease-out, reduced-motion-фолбэк ==== */
     @keyframes rise {
       from { opacity: 0; transform: translateY(8px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .anim { opacity: 1; } /* дефолт видим (reveal усиливает уже видимое) */
+    .anim { opacity: 1; }
     @media (prefers-reduced-motion: no-preference) {
       .anim { animation: rise var(--dur-3) var(--ease-out) both; }
       .stagger > * { animation: rise var(--dur-3) var(--ease-out) both; }
@@ -293,127 +382,281 @@
       .stagger > *:nth-child(4) { animation-delay: 160ms; }
     }
 
+    /* ===== Мобильная адаптация =========================================== */
     @media (max-width: 640px) {
-      .site { flex-wrap: wrap; }
-      .rail { flex-wrap: wrap; }
+      .site-head__inner { gap: var(--s-3); }
+      .site-nav { display: none; }              /* убираем десктопную нав */
+      .nav-menu-btn {
+        display: inline-grid; place-items: center;
+        width: 2.25rem; height: 2.25rem;
+        color: var(--ink-2); background: var(--surface);
+        border: 1px solid var(--line); border-radius: var(--r-sm); cursor: pointer;
+      }
+      .nav-menu-btn svg { width: 1.15rem; height: 1.15rem; }
+      .theme-toggle .tt-word { display: none; }  /* тема → только глиф */
+      .theme-toggle { padding: var(--s-2); width: 2.25rem; height: 2.25rem; justify-content: center; }
+
+      .focus-question { max-width: none; }
+      .rail { flex-wrap: wrap; gap: var(--s-3); }
+
+      /* Основное действие — закреплённая нижняя панель c safe-area */
+      .state--active .submit-row {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+        background: var(--paper); border-top: 1px solid var(--line);
+        padding: var(--s-3) var(--gutter);
+        padding-bottom: calc(var(--s-3) + env(safe-area-inset-bottom));
+      }
+      .state--active .submit-row .btn-primary { width: 100%; }
+      .state--active .col { padding-bottom: var(--s-9); }
     }
   </style>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Перейти к вопросу</a>
 
-  <header class="site">
-    <a class="brand" href="#" aria-label="Тренажёр собеседований, на главную">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <b>собес</b><span>/трек</span>
-    </a>
-    <nav class="site-nav" aria-label="Основная навигация">
-      <a href="#" aria-current="page">Фокус</a>
-      <a href="#">Аналитика</a>
-      <a href="#">Настройки</a>
-    </nav>
-    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Переключить тему">
-      <span id="theme-label">тема: авто</span>
-    </button>
+  <!-- Каркас макета (не UI продукта): показывает по одному состоянию экрана -->
+  <div class="mock-bar">
+    <div class="wrap mock-bar__inner">
+      <span class="mock-tag">макет · состояние экрана:</span>
+      <div class="mock-states" role="group" aria-label="Состояния экрана (демо макета)">
+        <button type="button" data-state="active" aria-pressed="true">Активный вопрос</button>
+        <button type="button" data-state="result" aria-pressed="false">Разбор ответа</button>
+        <button type="button" data-state="empty" aria-pressed="false">Нет вопросов</button>
+        <button type="button" data-state="done" aria-pressed="false">Завершено</button>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-head">
+    <div class="wrap site-head__inner">
+      <a class="brand" href="#" aria-label="собес/трек, на главную">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span><b>собес</b>/трек</span>
+      </a>
+      <nav class="site-nav" aria-label="Основная навигация">
+        <a href="#" aria-current="page">Фокус</a>
+        <a href="#">Аналитика</a>
+        <a href="#">Настройки</a>
+      </nav>
+      <button class="nav-menu-btn" type="button" aria-label="Меню">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Тема оформления: авто">
+        <span class="tt-glyph" id="theme-glyph" aria-hidden="true">◐</span>
+        <span class="tt-word" id="theme-word">Авто</span>
+      </button>
+    </div>
   </header>
 
   <main id="main-content" tabindex="-1">
-    <!-- =========== СОСТОЯНИЕ: вопрос + варианты (основное) =============== -->
-    <article class="focus">
-      <div class="rail anim">
-        <div class="rail-progress">
-          <div class="rail-count">Вопрос <b>7</b> / 20</div>
-          <div class="progress-track" role="progressbar" aria-label="Прогресс сессии"
-               aria-valuemin="0" aria-valuemax="20" aria-valuenow="7">
-            <div class="progress-fill" style="transform: scaleX(0.35)"></div>
+
+    <!-- ================= СОСТОЯНИЕ: активный вопрос ===================== -->
+    <section class="state state--active" data-state="active">
+      <div class="wrap">
+        <div class="col">
+          <div class="rail anim">
+            <div class="rail-progress">
+              <div class="rail-count">Вопрос <b>7</b> из 20</div>
+              <div class="progress-track" role="progressbar" aria-label="Прогресс сессии"
+                   aria-valuemin="0" aria-valuemax="20" aria-valuenow="7">
+                <div class="progress-fill" style="transform: scaleX(0.35)"></div>
+              </div>
+            </div>
+            <span class="streak-chip"><span class="spark" aria-hidden="true"></span>стрик 5 дней</span>
+            <button type="button" class="rail-finish">Завершить сессию</button>
           </div>
-        </div>
-        <span class="streak-chip"><span class="spark" aria-hidden="true"></span>стрик 5 дней</span>
-        <button type="button" class="rail-finish">Завершить сессию</button>
-      </div>
 
-      <p class="focus-topic anim">spring<span class="dot">·</span>транзакции</p>
-      <h1 class="focus-question anim">
-        Что произойдёт, если вызвать метод с <code>@Transactional</code> из другого метода того же бина?
-      </h1>
+          <p class="focus-topic anim">spring<span class="dot">·</span>транзакции</p>
+          <h1 class="focus-question anim">
+            В какой транзакции выполнится внутренний вызов <span class="nowrap"><code>writeAudit()</code></span> — по коду ниже?
+          </h1>
 
-      <details class="code-details anim">
-        <summary class="code-summary">Пример кода</summary>
-        <pre class="code-body"><code>@Service
+          <details class="question-code-details anim" open>
+            <summary class="code-summary">Код к вопросу</summary>
+            <pre class="code-body"><code>@Service
 public class OrderService {
 
     @Transactional
     public void placeOrder() {
-        writeAudit();          // внутренний вызов
+        writeAudit();          // внутренний вызов того же бина
     }
 
     @Transactional(propagation = REQUIRES_NEW)
-    public void writeAudit() { /* ... */ }
+    public void writeAudit() { /* пишем запись аудита */ }
 }</code></pre>
-      </details>
+          </details>
 
-      <form id="interview-form" onsubmit="return false">
-        <input type="hidden" name="questionId" value="demo-7">
-        <div class="options stagger" id="interview-options" role="radiogroup" aria-label="Варианты ответа">
-          <label class="opt" data-option-id="a" aria-label="Вариант 1">
-            <input type="radio" name="optionId" value="a">
-            <span class="opt-badge" aria-hidden="true">A</span>
-            <span class="opt-text">Аннотация на <code>writeAudit()</code> будет проигнорирована: внутренний вызов идёт напрямую, минуя прокси Spring.</span>
-          </label>
-          <label class="opt" data-option-id="b" aria-label="Вариант 2">
-            <input type="radio" name="optionId" value="b" checked>
-            <span class="opt-badge" aria-hidden="true">B</span>
-            <span class="opt-text">Создастся новая транзакция, потому что указан <code>REQUIRES_NEW</code>.</span>
-          </label>
-          <label class="opt" data-option-id="c" aria-label="Вариант 3">
-            <input type="radio" name="optionId" value="c">
-            <span class="opt-badge" aria-hidden="true">C</span>
-            <span class="opt-text">Spring выбросит исключение о вложенных транзакциях.</span>
-          </label>
-          <label class="opt" data-option-id="d" aria-label="Вариант 4">
-            <input type="radio" name="optionId" value="d">
-            <span class="opt-badge" aria-hidden="true">D</span>
-            <span class="opt-text">Внешняя транзакция приостановится, а <code>writeAudit()</code> выполнится в отдельной.</span>
-          </label>
+          <form id="interview-form" onsubmit="return false">
+            <input type="hidden" name="questionId" value="demo-7">
+            <div class="options stagger" id="interview-options" role="radiogroup" aria-label="Варианты ответа">
+              <label class="opt" data-option-id="a">
+                <input type="radio" name="optionId" value="a">
+                <span class="opt-badge" aria-hidden="true">A</span>
+                <span class="opt-text"><code>writeAudit()</code> выполнится в текущей транзакции: <code>REQUIRES_NEW</code> игнорируется, внутренний вызов идёт мимо прокси Spring.</span>
+                <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+              </label>
+              <label class="opt" data-option-id="b">
+                <input type="radio" name="optionId" value="b" checked>
+                <span class="opt-badge" aria-hidden="true">B</span>
+                <span class="opt-text">Стартует новая транзакция: аннотация <code>REQUIRES_NEW</code> на <code>writeAudit()</code> приостановит внешнюю.</span>
+                <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+              </label>
+              <label class="opt" data-option-id="c">
+                <input type="radio" name="optionId" value="c">
+                <span class="opt-badge" aria-hidden="true">C</span>
+                <span class="opt-text">Spring выбросит исключение о вложенных транзакциях при входе в <code>writeAudit()</code>.</span>
+                <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+              </label>
+              <label class="opt" data-option-id="d">
+                <input type="radio" name="optionId" value="d">
+                <span class="opt-badge" aria-hidden="true">D</span>
+                <span class="opt-text">Внешняя транзакция откатится, а <code>writeAudit()</code> зафиксируется в собственной новой транзакции.</span>
+                <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+              </label>
+            </div>
+            <div class="submit-row">
+              <button type="submit" id="interview-submit" class="btn btn-primary">Проверить ответ</button>
+              <span class="kbd-hint">
+                <span><kbd>1</kbd>–<kbd>9</kbd> выбрать</span>
+                <span><kbd>↑</kbd><kbd>↓</kbd> навигация</span>
+                <span><kbd>Enter</kbd> ответить</span>
+              </span>
+            </div>
+          </form>
         </div>
-        <div class="submit-row">
-          <button type="submit" id="interview-submit" class="btn btn-primary">Проверить ответ</button>
-          <span class="kbd-hint">
-            <span><kbd>1</kbd>–<kbd>9</kbd> выбрать</span>
-            <span><kbd>↑</kbd><kbd>↓</kbd> навигация</span>
-            <span><kbd>Enter</kbd> ответить</span>
-          </span>
-        </div>
-      </form>
-    </article>
+      </div>
+    </section>
 
-    <!-- =========== СОСТОЯНИЕ: нет вопросов (документируем отдельно) ====== -->
-    <div class="mock-band">
-      <p class="mock-label">состояние: нет вопросов</p>
-    </div>
-    <article class="focus" style="padding-top: var(--s-5)">
-      <section class="empty">
-        <div class="empty-mark" aria-hidden="true">∅</div>
-        <h2 class="empty-title">Сейчас нет вопросов</h2>
-        <p class="empty-desc">Нет доступных вопросов по выбранным фильтрам. Открой настройки и расширь выборку.</p>
-        <div class="empty-actions">
-          <a href="#" class="btn btn-primary">Открыть настройки</a>
-          <a href="#" class="btn btn-ghost">Обновить тренировку</a>
+    <!-- ================= СОСТОЯНИЕ: разбор ответа ====================== -->
+    <section class="state" data-state="result" hidden>
+      <div class="wrap">
+        <div class="col">
+          <div class="rail">
+            <div class="rail-progress">
+              <div class="rail-count">Вопрос <b>7</b> из 20</div>
+              <div class="progress-track" role="progressbar" aria-label="Прогресс сессии"
+                   aria-valuemin="0" aria-valuemax="20" aria-valuenow="7">
+                <div class="progress-fill" style="transform: scaleX(0.35)"></div>
+              </div>
+            </div>
+            <span class="streak-chip"><span class="spark" aria-hidden="true"></span>стрик 5 дней</span>
+          </div>
+
+          <p class="focus-topic">spring<span class="dot">·</span>транзакции</p>
+          <h2 class="focus-question" style="font-size: var(--fs-lg)">
+            В какой транзакции выполнится внутренний вызов <span class="nowrap"><code>writeAudit()</code></span>?
+          </h2>
+
+          <p class="verdict"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg> Неверно — правильный ответ A</p>
+
+          <div class="options" role="group" aria-label="Разбор вариантов">
+            <div class="opt opt--correct is-readonly">
+              <span class="opt-badge" aria-hidden="true">A</span>
+              <span class="opt-text"><code>writeAudit()</code> выполнится в текущей транзакции: <code>REQUIRES_NEW</code> игнорируется, внутренний вызов идёт мимо прокси Spring.<span class="opt-tag">верный ответ</span></span>
+              <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            </div>
+            <div class="opt opt--incorrect is-readonly">
+              <span class="opt-badge" aria-hidden="true">B</span>
+              <span class="opt-text">Стартует новая транзакция: аннотация <code>REQUIRES_NEW</code> на <code>writeAudit()</code> приостановит внешнюю.<span class="opt-tag">ваш ответ</span></span>
+              <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>
+            </div>
+            <div class="opt is-readonly">
+              <span class="opt-badge" aria-hidden="true">C</span>
+              <span class="opt-text">Spring выбросит исключение о вложенных транзакциях при входе в <code>writeAudit()</code>.</span>
+              <span class="opt-mark" aria-hidden="true"></span>
+            </div>
+            <div class="opt is-readonly">
+              <span class="opt-badge" aria-hidden="true">D</span>
+              <span class="opt-text">Внешняя транзакция откатится, а <code>writeAudit()</code> зафиксируется в собственной новой транзакции.</span>
+              <span class="opt-mark" aria-hidden="true"></span>
+            </div>
+          </div>
+
+          <p class="explain">
+            Прокси Spring перехватывает только <em>входящие извне</em> вызовы бина. Когда
+            <code>placeOrder()</code> вызывает <code>writeAudit()</code> напрямую, вызов идёт
+            через <code>this</code>, минуя прокси, — поэтому <code>@Transactional(REQUIRES_NEW)</code>
+            не срабатывает, и аудит пишется в той же транзакции. Чтобы получить отдельную
+            транзакцию, <code>writeAudit()</code> нужно вызвать через инжектированный прокси
+            (self-injection) или вынести в другой бин.
+          </p>
+
+          <div class="submit-row">
+            <button type="button" class="btn btn-primary">Следующий вопрос</button>
+          </div>
         </div>
-      </section>
-    </article>
+      </div>
+    </section>
+
+    <!-- ================= СОСТОЯНИЕ: нет вопросов ======================= -->
+    <section class="state" data-state="empty" hidden>
+      <div class="wrap">
+        <div class="centered">
+          <div class="state-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v7l-4 2v-9L3 4z"/></svg>
+          </div>
+          <h1 class="state-title">Нет вопросов по фильтрам</h1>
+          <p class="state-desc">Под выбранные темы и режим сейчас ничего не подобралось. Измени фильтры или начни новую тренировку.</p>
+          <div class="state-actions">
+            <a href="#" class="btn btn-primary">Изменить фильтры</a>
+            <a href="#" class="btn btn-ghost">Начать новую тренировку</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= СОСТОЯНИЕ: тренировка завершена =============== -->
+    <section class="state" data-state="done" hidden>
+      <div class="wrap">
+        <div class="centered">
+          <div class="state-mark is-ok" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <h1 class="state-title">Тренировка завершена</h1>
+          <p class="state-meta"><b>20</b> вопросов · <b>16</b> верно · стрик <b>5 дней</b></p>
+          <p class="state-desc">Разбор ошибок и повторение сложных тем ждут в итогах сессии.</p>
+          <div class="state-actions">
+            <a href="#" class="btn btn-primary">К итогам сессии</a>
+            <a href="#" class="btn btn-ghost">Новая тренировка</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <script>
     // Тема: авто → светлая → тёмная (для ревью макета в обеих темах).
     (function () {
-      var root = document.documentElement, btn = document.getElementById('theme-toggle'),
-          label = document.getElementById('theme-label'), modes = ['авто', 'светлая', 'тёмная'], i = 0;
+      var root = document.documentElement,
+          btn = document.getElementById('theme-toggle'),
+          glyph = document.getElementById('theme-glyph'),
+          word = document.getElementById('theme-word'),
+          modes = [
+            { name: 'Авто',    glyph: '◐', attr: null },
+            { name: 'Светлая', glyph: '☀', attr: 'light' },
+            { name: 'Тёмная',  glyph: '☾', attr: 'dark' }
+          ], i = 0;
       btn.addEventListener('click', function () {
         i = (i + 1) % modes.length;
-        if (modes[i] === 'авто') root.removeAttribute('data-theme');
-        else root.setAttribute('data-theme', modes[i] === 'тёмная' ? 'dark' : 'light');
-        label.textContent = 'тема: ' + modes[i];
+        var m = modes[i];
+        if (m.attr) root.setAttribute('data-theme', m.attr); else root.removeAttribute('data-theme');
+        glyph.textContent = m.glyph;
+        word.textContent = m.name;
+        btn.setAttribute('aria-label', 'Тема оформления: ' + m.name.toLowerCase());
+      });
+    })();
+
+    // Макет-переключатель состояний: показываем ровно одно состояние экрана.
+    (function () {
+      var buttons = document.querySelectorAll('.mock-states button'),
+          sections = document.querySelectorAll('main > .state');
+      function show(name) {
+        sections.forEach(function (s) { s.hidden = (s.getAttribute('data-state') !== name); });
+        buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-state') === name)); });
+      }
+      buttons.forEach(function (b) {
+        b.addEventListener('click', function () { show(b.getAttribute('data-state')); });
       });
     })();
   </script>
