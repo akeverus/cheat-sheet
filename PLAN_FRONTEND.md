@@ -27,6 +27,7 @@ cross-cutting индекс (тот же бэклог под другим угл�
 > закрытыми на слово (**корр. р97: BAS-21 НЕ в его base.css — `base.css:2764` до сих пор tertiary; запись р40
 > ошибочна**). Возврат к реальным правкам — когда его дерево осядет (git status чист).
 > **р99 (2026-07-07): read-only аудит фронт-осколков AI-removal (мой backend-рефактор `b4ee4ffc`+`e323aac4` удалил AI-endpoints) → новый кластер §6.E (AIR-1..5). Ключевое: «Показать доп. анализ» теперь падает на КАЖДЫЙ клик (AIR-1) — верифицировано по on-disk WIP. Фикс blocked (app.js+шаблоны под pass) + нужно решение A/B/C. Закоммичен только PLAN.**
+> **р100 (2026-07-07): полный route-integrity аудит → §6.F (RIA-1..3). forward-направление CLEAN (никаких битых вызовов сверх 5 AI-endpoints); reverse-орфан `POST /study-confirm` без вызывающего (RIA-2, ⛔ live-verify+decision, out-of-frontend-scope). Всё ещё blocked на коде — закоммичен только PLAN.**
 
 **Легенда статусов:**
 
@@ -57,7 +58,7 @@ perf PE, контент CN, иконки IC).
   `editorial.css` — мёртвый код. Бамп `?v=N`: при правке CSS — обе ссылки в
   `fragments/head.html`; при правке JS — `app.js ?v=N` в `result.html` /
   `settings.html` / `focus-training.html`, `stats.js` — в `stats.html`. Чистая
-  правка текста шаблона бампа НЕ требует. **Версии (on-disk, вкл. in-flight пользователя, свер. 2026-07-06 / HEAD bcde7ade): app.js = v=54 (settings/result/focus-training), stats.js = v=12; CSS — коммит-база v=61 (р37), у пользователя in-flight v=65 (р39). Точные committed-номера сверить, когда дерево пользователя осядет.**
+  правка текста шаблона бампа НЕ требует. **Версии (on-disk, вкл. in-flight пользователя, свер. 2026-07-07 р100): app.js = v=54 (settings/result/focus-training), stats.js = v=12; CSS on-disk `head.html:298-299` = `tokens.css v=61` / `base.css v=69` (пользователь двигал base дальше — было v=65 на р39). Точные committed-номера сверить, когда дерево пользователя осядет.**
 - **Дизайн-система:** 10 переключаемых дизайнов (editorial=дефолт, linear, swiss,
   notion, mintlify, broadsheet, superhuman, stripe, claude, theverge) × 2 темы.
   Персонализация — `data-*` на `<html>`; **дефолт = `data-design="editorial"`
@@ -511,6 +512,18 @@ token-only → затем удалить. **EDC-1 (editorial.css) — subset-pro
 | AIR-4 | `regenerateQuestion` (app.js:1047-1115) зовёт удалённый `POST /api/regenerate` | Хендлер + делегирование от `.btn-regenerate` (1126) живы в JS, но сама кнопка под `th:if=${aiEnabled}` (result.html:49) → в seed-first **не рендерится** → путь **недостижим** (не user-facing). Мёртвый JS к будущей чистке (не срочно). Отдельно APP-8 (async-state a11y) — теперь moot, пока кнопка скрыта | Удалить при чистке app.js (низкий приоритет) | L | L | L | H | 🌱 BACKLOG (blocked-file, dead-not-reachable) | APP-8 |
 | AIR-5 | резолв ранее-подозреваемых пунктов | `RES-4` (regenerate-btn) и `RES-14` (question-side CODE-пин) — оба `th:if=${aiEnabled}` → навсегда скрыты в seed-first, контент НЕ теряется (`RES-14`: код всегда в `.answer:82`). **Не баги, действий нет** — фиксируется как закрытая ветка fallout | — | — | — | — | H | ✅ verified-not-a-bug | RES-4/RES-14 |
 
+### 6.F — ROUTE / ACTION INTEGRITY (frontend→backend, полный аудит р100, 2026-07-07)
+
+> **Метод (read-only, static).** Сопоставил ВСЕ frontend-точки вызова (app.js/stats.js `apiFetch`/`fetch`/inline + шаблонные `th:action`/`th:href="@{...}"`) с ЖИВЫМ набором маршрутов (`@*Mapping` в 4 контроллерах: `InterviewMvcController`, `InterviewApiController`, `ExportController`, `GlobalExceptionHandler`). Цель — вылов осиротевших вызовов ПОМИМО AI-кластера (§6.E).
+>
+> **Живой набор маршрутов (11 GET + 10 POST):** GET `/ · /training · /review · /settings · /stats · /session-summary · /export · /api/streak · /api/stats · /api/topic-stats · /api/next`; POST `/start · /study-confirm · /flashcard-reveal · /flashcard-grade · /finish · /answer · /settings/reset-options · /api/favorite · /api/answer · /api/confidence`.
+
+| # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
+|---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
+| RIA-1 | forward-аудит: битые вызовы фронта | **CLEAN-BILL.** Каждая frontend-точка вызова бьётся в живой маршрут, КРОМЕ ровно 5 AI-удалённых (`/api/regenerate·wrong-feedback·takeaway·comparison·code-trace` = §6.E). Проверены: `/api/answer·next·stats·topic-stats·confidence·favorite·streak` (7 живых API), `/answer·/finish·/review·/export` (inline app.js), шаблонные `/·/stats·/settings·/start·/flashcard-reveal·/flashcard-grade·/settings/reset-options` — все ✅. → **никаких НОВЫХ сирот сверх AIR**; класс «битая кнопка» закрыт | — | — | — | — | H | ✅ verified-clean (кроме AIR) | AIR-1 |
+| RIA-2 | reverse-орфан: `POST /study-confirm` без вызывающего | Живой маршрут `studyConfirm` (`InterviewMvcController:157` → `InterviewFlowMvcService:49` → `applyStudyConfirm` → focus-redirect), но **НИ один шаблон/JS не постит на него** (grep `study-confirm` по static+templates = 0). В STUDY-режиме focus-training рендерит ветку `!sessionFlashcard` (browse `<details>`, стр.82-89) — reveal БЕЗ POST и БЕЗ advance-контрола; `/answer`-форма скрыта (`th:if=${!flashcardMode}`). → либо `/study-confirm` **вестигиальный** (STUDY продвигается иначе — вероятно app.js `/api/next`), либо в STUDY нет кнопки «изучил → дальше». **НЕ фронт-фикс:** это backend-маршрут/бизнес-флоу (правка API запрещена) + требует live-проверки STUDY-режима (app сейчас down; старт сессии = SRS-загрязнение). Действие: при живом app пройти STUDY-режим, решить с пользователем — удалить вестигиальный маршрут ИЛИ добавить advance-контрол | Live-verify STUDY + решение пользователя | M | L | M | M | ⛔ DEFERRED (needs live+decision, out-of-frontend-scope) | TR |
+| RIA-3 | reverse: `/training` GET, `/session-summary` GET не залинкованы | Не баг: `/session-summary` — redirect-таргет POST `/finish` (рендерится там, не линкуется — by design); `/training` — bookmarkable/redirect-вход focus-страницы (`MvcNavigationService:32` → view `focus-training`), достижим прямой навигацией. Обе достижимы не через `<a>` | Действий нет | — | — | — | — | H | ✅ verified-not-a-bug | — |
+
 ---
 
 ## 7. Тематический cross-cutting индекс (тот же бэклог по областям)
@@ -523,6 +536,7 @@ token-only → затем удалить. **EDC-1 (editorial.css) — subset-pro
 | **AF** answer-fairness | — (ядро закрыто) | AF-2/3 (нейтр. selected), AF-4 (single-column уже, р19), AF-5 (мягкий code, р17), AF-6 (correct помечен), AF-7 (muted wrong, р18) | AF-8 (иконки до проверки) | AF-1 (паритет длины) |
 | **TR** тренировка | TR-1/HDR-1 (sticky header), TR-3 (hint), TR-4 (sticky CTA), TR-6 (микрокопия прогресса) | TR-2 (empty), TR-5 (zone-hint), TR-7 (kbd-гейт), TR-9 (post-answer sink-механика; сам flow БИТ→AIR-1) | TR-8 (48px) | — |
 | **AIR** AI-removal fallout | AIR-1 (доп.анализ dead-end, реком.B), AIR-2 (тогглы без aiEnabled-гейта), AIR-3 (related подавлены), AIR-4 (мёртвый regenerate JS) | AIR-5 (RES-4/RES-14 — not-a-bug) | — | — |
+| **RIA** route-integrity | RIA-2 (`/study-confirm` reverse-орфан ⛔ live+decision) | RIA-1 (forward clean-bill, кроме AIR), RIA-3 (`/training`·`/session-summary` — not-a-bug) | — | — |
 | **TY** типографика | TY-2/AF-5 (code), TY-5 (helper) | TY-1 (editorial-дефолт tracking 0.12→0.09em Cyrillic-safe, р33) | TY-3 (prose measure), TY-4 (18px/1.7) | — |
 | **LO** layout | LO-6 (border-left 3px ⛔) | LO-1/2/3/4 | LO-5 (prose full-width) | — |
 | **AN** аналитика | AN-1 (insights), AN-5 (графики), AN-10 (CTA ⛔) | AN-4/6/7/9, AN-8 (data-empty, р19), AN-12 (accuracy-bar aria-hidden, р20), AN-2 (микрокопия «N из M» в today-hero, р21), AN-13 (гуманизация ISO-дат прогноза `<time>`+Intl, р24), AN-11 (объяснение «Точность» title заголовка+дробь ячейки, р25); AN-3 (поиск+фильтр) = 🚫 WONTFIX deliberate | — | — |
