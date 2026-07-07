@@ -609,7 +609,7 @@
           "question_text": "Чем отличается chronological feed от algorithmic и где какой применяют?",
           "options": [
             {
-              "text": "Algorithmic feed всегда показывает посты строго в обратном хронологическом порядке, просто с более красивым UI, чем chronological.",
+              "text": "Chronological (reverse-chrono): самые свежие сверху, простая предсказуемая модель, `ZREVRANGE` без ranking-stage. Algorithmic: тот же строгий обратный хронологический порядок, только ML-слой подбирает превью, обложки и подписи к постам, не меняя их последовательность в ленте; выше вовлечённость даёт именно оформление. Продукты: Instagram, Facebook, TikTok (For You) — algorithmic; Threads, Bluesky — chrono по умолчанию.",
               "correct": false,
               "sections": {
                 "what_actually": "Algorithmic ранжирует по relevance signals (engagement, affinity, recency decay) ML-моделью — порядок не хронологический; обратная хронология — это chronological feed.",
@@ -621,7 +621,7 @@
               "order": 0
             },
             {
-              "text": "Chronological feed выигрывает по engagement у algorithmic, поэтому все крупные соцсети (Instagram, TikTok) вернулись к хронологии.",
+              "text": "Chronological (reverse-chrono): самые свежие сверху, предсказуемая модель; по engagement он выигрывает у algorithmic, поэтому Instagram, Facebook и TikTok отказались от ML-ранжирования и вернулись к хронологии по умолчанию. Algorithmic: ML-ranking по relevance signals, оставлен лишь как опциональная вкладка для рекламы. Реализация: chrono — `ZREVRANGE`; algorithmic — candidate generation + ranking model.",
               "correct": false,
               "sections": {
                 "what_actually": "Algorithmic поднимает engagement (Instagram +20% time-on-app в 2016); Instagram, Facebook, TikTok как раз algorithmic, chrono по умолчанию — у Threads/Bluesky.",
@@ -646,7 +646,7 @@
               "order": 2
             },
             {
-              "text": "Chronological feed требует такого же тяжёлого ranking-этапа и GPU-инференса, как algorithmic, поэтому по latency они одинаковы.",
+              "text": "Chronological (reverse-chrono): самые свежие сверху, но для сортировки прогоняет тот же тяжёлый ranking-этап с GPU-инференсом, что и algorithmic, поэтому latency и стоимость обоих одинаковы. Algorithmic: ML-ranking по relevance signals (engagement, affinity, recency decay). Продукты: Instagram, TikTok (For You) — algorithmic; Threads, Bluesky — chrono по умолчанию.",
               "correct": false,
               "sections": {
                 "what_actually": "Chrono — это `ZREVRANGE` без ranking-stage и отдаётся за ~30 ms; именно ranking (GPU-инференс ~50 ms) — самый тяжёлый этап algorithmic-пути.",
@@ -669,7 +669,7 @@
           "question_text": "Какие features и signals используют для ranking постов?",
           "options": [
             {
-              "text": "Для ranking достаточно одного признака — времени публикации поста; остальные features не дают прироста качества ленты.",
+              "text": "Ranking сводится к одному признаку — recency (`age_minutes`, `exp(-age/decay)`): чем свежее пост, тем выше; engagement, affinity и user history в модель не подают, так как заметного прироста качества ленты они не дают. Feature store не нужен — единственный сигнал считается на лету. По сути ranking = тот же chronological order с экспоненциальным сглаживанием.",
               "correct": false,
               "sections": {
                 "what_actually": "Recency — лишь одна категория; ranking использует engagement, affinity (user×author), user history, media-type weight и negative signals в совокупности.",
@@ -681,7 +681,7 @@
               "order": 0
             },
             {
-              "text": "Negative signals (hide, not-interested, unfollow, mute) учитывают со слабым положительным весом, чтобы не подавлять активность пользователя.",
+              "text": "Категории features: recency (`exp(-age/decay)`); engagement per post (likes, comments, reshares, CTR); affinity user×author (past interactions, `pmi(user, author)`); user history (embeddings последних viewed постов). Negative signals (hide, not-interested, unfollow, mute) подмешивают со слабым положительным весом, чтобы не подавлять активность автора и не сужать охват. Feature store (Feast/Tecton) даёт offline+online consistency.",
               "correct": false,
               "sections": {
                 "what_actually": "Negative signals несут сильный отрицательный вес: hide/unfollow/mute резко понижают score похожего контента, а не повышают его.",
@@ -693,7 +693,7 @@
               "order": 1
             },
             {
-              "text": "Affinity между пользователем и автором — это просто число их общих подписчиков; история личных взаимодействий в affinity не входит.",
+              "text": "Категории features: recency (`exp(-age/decay)`); engagement per post (likes, comments, CTR, нормированные по возрасту поста); affinity user×author — это число общих подписчиков автора и читателя, а история личных взаимодействий (лайки, replies, DM, profile visits) в affinity не входит; media-type weight (video > image > text); negative signals (hide, unfollow — сильный отрицательный вес). Feature store (Feast/Tecton) даёт offline+online consistency.",
               "correct": false,
               "sections": {
                 "what_actually": "Affinity (user×author) строят на past interactions — лайках, replies, profile visits, DM-чатах — и метриках вроде `pmi(user, author)`, а не на общих подписчиках.",
@@ -909,7 +909,7 @@
           "question_text": "Как выглядит high-level architecture feed-системы?",
           "options": [
             {
-              "text": "В архитектуре fanout выполняется синхронно внутри Post Service в том же запросе, без отдельных воркеров и без Kafka.",
+              "text": "Clients → Load Balancer/CDN → API Gateway → сервисы: Feed Service (read-path), Post Service (write-path: валидация, persist и сразу синхронный fanout в Redis-timelines всех подписчиков в том же HTTP-запросе, без Kafka и отдельных воркеров), User Service, Ranking Service (gRPC). Хранилища: Posts DB (Cassandra), User DB (Postgres), Redis Cluster (timelines), S3 (media), Elasticsearch (search).",
               "correct": false,
               "sections": {
                 "what_actually": "Fanout вынесен в отдельные async-воркеры: Post Service публикует в Kafka, а Fanout Workers консьюмят и заполняют Redis-timelines.",
@@ -921,7 +921,7 @@
               "order": 0
             },
             {
-              "text": "Feed Service и Post Service — это один монолитный сервис, обслуживающий и read-path, и write-path в одном процессе.",
+              "text": "Clients → Load Balancer/CDN → API Gateway → единый Feed/Post Service, который в одном процессе обслуживает и read-path (сборка ленты, ranking), и write-path (валидация, persist, Kafka emit); отдельных Feed- и Post-сервисов нет. Дальше: User Service, Ranking Service (gRPC), Fanout Workers (Kafka → Redis-timelines). Хранилища: Posts DB (Cassandra), User DB (Postgres), Redis Cluster (timelines), S3 (media).",
               "correct": false,
               "sections": {
                 "what_actually": "Их разделяют: Feed Service — read-path (push-timeline + celebrity-pull + ranking), Post Service — write-path (валидация, persist, Kafka emit); масштабируются независимо.",
@@ -933,7 +933,7 @@
               "order": 1
             },
             {
-              "text": "Follow-граф хранят в той же Posts DB (Cassandra), отдельный Graph DB в архитектуре не нужен.",
+              "text": "Clients → Load Balancer/CDN → API Gateway → сервисы: Feed Service (read-path), Post Service (write-path, Kafka emit), User Service, Ranking Service (gRPC), Fanout Workers (Kafka → Redis-timelines). Хранилища: Posts DB (Cassandra) — в ней же лежит и follow-граф (`edges`), поэтому отдельный Graph DB (Neo4j / sharded MySQL) не нужен; User DB (Postgres), Redis Cluster (timelines), S3 (media), Elasticsearch (search).",
               "correct": false,
               "sections": {
                 "what_actually": "Follow-граф держат в отдельном Graph DB (Neo4j или sharded MySQL `edges` table) — у него своя модель доступа к рёбрам, отличная от posts store.",
@@ -1089,7 +1089,7 @@
           "question_text": "Какие способы real-time updates (long-polling, SSE, WebSocket) и где какой?",
           "options": [
             {
-              "text": "WebSocket — единственный способ доставлять real-time обновления ленты; long-polling и SSE для feed непригодны в принципе.",
+              "text": "Long-polling: клиент GET `/feed/updates?since=<ts>`, сервер держит до new data/timeout — но для ленты его считают непригодным. SSE: one-way push по HTTP — также неприменим к feed. Единственный работоспособный транспорт real-time обновлений — WebSocket (two-way persistent, low overhead, нужен sticky LB); long-polling и SSE в feed-системах в принципе не используют. Prod-stack: in-app real-time держат исключительно на WebSocket (Phoenix/Centrifugo).",
               "correct": false,
               "sections": {
                 "what_actually": "Все три применимы: long-polling прост, SSE годится для one-way push, WebSocket — для bidirectional; выбор зависит от потребности и масштаба коннектов.",
@@ -1101,7 +1101,7 @@
               "order": 0
             },
             {
-              "text": "Server-Sent Events (SSE) — это двусторонний канал: клиент и сервер обмениваются сообщениями в обе стороны по одному соединению.",
+              "text": "Long-polling: клиент GET `/feed/updates?since=<ts>`, сервер держит до new data/timeout; прост и проходит любой proxy. SSE: двусторонний канал по одному HTTP-соединению — и клиент, и сервер шлют сообщения в обе стороны, поэтому годится для real-time лайков и комментов без отдельного запроса. WebSocket: тоже two-way persistent, но дороже держать миллионы коннектов, нужен sticky LB. Prod-stack: push-уведомления (mobile) — FCM/APNs.",
               "correct": false,
               "sections": {
                 "what_actually": "SSE — one-way push (только server → client) по обычному HTTP; двусторонний обмен даёт WebSocket, а не SSE.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "Real-time доставку всего тела новых постов в реальном времени гонят прямо через WebSocket, чтобы клиент не делал отдельный GET feed.",
+              "text": "Long-polling: GET `/feed/updates?since=<ts>` до new data/timeout, проходит любой proxy. SSE: one-way push (server→client) по HTTP. WebSocket: two-way persistent — по нему в реальном времени гонят полное тело каждого нового поста (текст, медиа-URL, счётчики), чтобы клиент не делал отдельный GET feed и снималась нагрузка с read-path. Prod-stack: in-app real-time — WebSocket (Phoenix/Centrifugo/Soketi).",
               "correct": false,
               "sections": {
                 "what_actually": "Через WebSocket шлют лёгкий badge-сигнал «N новых постов»; само тело ленты клиент забирает обычным `GET /feed` (Q18), а не по сокету.",
@@ -1462,7 +1462,7 @@
               "order": 0
             },
             {
-              "text": "Block — односторонний, как mute: A блокирует B → A не видит постов B, но B продолжает видеть посты A и не знает о блокировке.",
+              "text": "Block (односторонний, как mute): A блокирует B → A не видит постов B, но B продолжает видеть посты A и не знает о блокировке; фильтр на read time после ranking, хранится в `user_blocks`. Mute (односторонний): A muted B → A не видит постов B, B не знает. Hide post (per-post): юзер скрывает конкретный пост, сильный negative signal для ranking. Privacy: block list приватный, не светим в API.",
               "correct": false,
               "sections": {
                 "what_actually": "Block двусторонний: A блокирует B → оба перестают видеть посты друг друга; односторонняя видимость — это mute, а не block.",
@@ -1474,7 +1474,7 @@
               "order": 1
             },
             {
-              "text": "Block выгоднее применять на write-time: при блокировке сразу вычищать посты B из timeline A через `ZREM`, чтобы на read не фильтровать.",
+              "text": "Block (двусторонний): A блокирует B → взаимно не видят постов друг друга; но применять его выгоднее на write time — при блокировке сразу вычищать посты B из Redis-timeline A через `ZREM`, чтобы на read не фильтровать. Mute (односторонний): A не видит B, B не знает. Hide post (per-post): сильный negative signal для ranking. Privacy: block list приватный, не светим в API.",
               "correct": false,
               "sections": {
                 "what_actually": "Block-фильтр обычно делают на read: write-side `ZREM` при блокировке дорог (особенно для целебрити), а read-filter дёшев и допускает краткую неконсистентность.",
@@ -1486,7 +1486,7 @@
               "order": 2
             },
             {
-              "text": "Block list — публичные данные: API отдаёт список заблокированных пользователей, чтобы клиент показывал его в настройках.",
+              "text": "Block (двусторонний): A блокирует B → взаимно не видят постов друг друга; фильтр на read time, хранится в `user_blocks` (partition by `blocker_id`). Mute (односторонний): A не видит B, B не знает. Hide post (per-post): сильный negative signal для ranking. Privacy: block list — публичные данные, API отдаёт список заблокированных, чтобы клиент показывал его в настройках.",
               "correct": false,
               "sections": {
                 "what_actually": "Block list приватный и не светится в API: раскрытие, кто кого заблокировал, — приватность и потенциальный харассмент-вектор.",
@@ -1702,7 +1702,7 @@
               "order": 0
             },
             {
-              "text": "Самая крупная статья инфры — Redis-кластер (дорогая in-memory RAM), поэтому оптимизацию затрат начинают с урезания памяти Redis.",
+              "text": "Top cost buckets (Twitter/X-scale): Redis-кластер ($0.5-2M/month, дорогая in-memory RAM доминирует), CDN egress ($200-500K), Cassandra+storage ($100-300K), Kafka ($30-100K). Поэтому оптимизацию затрат начинают с урезания памяти Redis: короче TTL timelines, агрессивный eviction, tiered cache. Прочее: WebP/AVIF, Reserved Instances (30-60% скидка).",
               "correct": false,
               "sections": {
                 "what_actually": "Доминирует CDN egress ($0.5-2M/month на медиа); Redis ($50-150K) заметно дешевле, и экономию начинают с bandwidth, а не с урезания памяти.",
@@ -1714,7 +1714,7 @@
               "order": 1
             },
             {
-              "text": "Spot instances пускают под основной production-путь (feed/ranking serving), чтобы платить меньше именно за самый нагруженный трафик.",
+              "text": "Top cost buckets: CDN egress ($0.5-2M/month), compute/k8s ($200-500K), Cassandra+storage ($100-300K), Redis ($50-150K). Оптимизации: per-title video encoding, WebP/AVIF, длиннее edge cache TTL, Reserved Instances (30-60% скидка), а spot instances пускают под основной production-путь (feed/ranking serving), чтобы платить меньше именно за самый нагруженный трафик; cold storage для старых постов.",
               "correct": false,
               "sections": {
                 "what_actually": "Spot берут для batch-jobs (ranking training, indexing), где прерывание не критично; production serving держат на стабильных Reserved/On-Demand.",
@@ -1726,7 +1726,7 @@
               "order": 2
             },
             {
-              "text": "Reserved Instances / Savings Plans дают скидку только на storage-объём (S3/EBS), поэтому на compute (EC2/k8s) сэкономить ими нельзя.",
+              "text": "Top cost buckets: CDN egress ($0.5-2M/month), compute/k8s ($200-500K), Cassandra+storage ($100-300K), Redis ($50-150K). Оптимизации: per-title video encoding (−до 50% bandwidth), WebP/AVIF, длиннее edge cache TTL, cold storage (посты > 1 года → S3 IA/Glacier); Reserved Instances / Savings Plans дают скидку только на storage-объём (S3/EBS), а на compute (EC2/k8s) ими сэкономить нельзя — там помогает лишь spot.",
               "correct": false,
               "sections": {
                 "what_actually": "Холодные посты выносят в cold storage (S3 IA/Glacier) — они почти не читаются, и дешёвый tier экономит на storage без потери durability.",
