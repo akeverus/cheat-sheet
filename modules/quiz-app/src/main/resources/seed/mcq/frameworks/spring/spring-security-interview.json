@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Resource Server должен сам выдавать и подписывать `JWT`-токены пользователям.",
+              "text": "Resource Server сам выпускает и подписывает `JWT` для пользователей после логина, а затем сам же их валидирует.",
               "correct": false,
               "sections": {
                 "what_actually": "Выдача токенов — задача Authorization Server; Resource Server только принимает и валидирует чужие токены.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Публичный ключ для проверки подписи `JWT` нужно вручную прописывать в коде и обновлять при ротации.",
+              "text": "Публичный ключ для проверки подписи прописывают статически в `application.yml` и обновляют вручную при каждой ротации на стороне IdP.",
               "correct": false,
               "sections": {
                 "what_actually": "По `jwk-set-uri`/`issuer-uri` `Spring Security` сам скачивает и кэширует ключи JWKS, подхватывая ротацию автоматически.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Роли всегда автоматически маппятся из claim `roles` без какой-либо настройки.",
+              "text": "Роли из claim `roles` всегда попадают в `GrantedAuthority` с префиксом `ROLE_` автоматически, настройка `JwtAuthenticationConverter` не нужна.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию authorities берутся из `scope`/`scp` с префиксом `SCOPE_`; для claim `roles` нужен кастомный `JwtAuthenticationConverter`.",
@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Кастомный claim с ролями (`roles`) подхватывается автоматически без `JwtAuthenticationConverter`.",
+              "text": "Кастомный claim `roles` по умолчанию маппится в authorities с префиксом `SCOPE_`, поэтому `JwtAuthenticationConverter` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию authorities берутся из `scope`/`scp`; чтобы роли читались из `roles`, нужен `JwtAuthenticationConverter` с `setAuthoritiesClaimName(\"roles\")`.",
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Audience токена проверяется автоматически, поэтому кастомный `OAuth2TokenValidator` не нужен.",
+              "text": "Проверка `aud` (audience) входит в стандартный `JwtValidators.createDefaultWithIssuer(...)`, поэтому кастомный `OAuth2TokenValidator` для audience не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию проверяются подпись, срок и issuer (при `issuer-uri`), но не audience; проверку `aud` добавляют своим `OAuth2TokenValidator`.",
@@ -1895,7 +1895,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Resource Server с `JWT` должен хранить серверную сессию для каждого валидированного токена.",
+              "text": "Resource Server с `JWT` создаёт `HttpSession` и кэширует в ней `Authentication`, чтобы не декодировать токен на каждый запрос.",
               "correct": false,
               "sections": {
                 "what_actually": "Resource Server работает stateless (`SessionCreationPolicy.STATELESS`): каждый запрос валидируется по токену, сессия не создаётся.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`BearerTokenAuthenticationFilter` нужно писать и регистрировать вручную, как кастомный JWT-фильтр.",
+              "text": "`BearerTokenAuthenticationFilter` не входит в Spring Security, его нужно реализовать самому и зарегистрировать через `addFilterBefore(...)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Это стандартный фильтр `Spring Security`, который подключается автоматически при `oauth2ResourceServer()`; вручную его не пишут.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`JwtDecoder` умеет работать только с JWKS-endpoint и не поддерживает HMAC-секрет или RSA-ключ.",
+              "text": "`NimbusJwtDecoder.withSecretKey(...)` предназначен для RSA-ключа, а `.withPublicKey(...)` — для HMAC-секрета.",
               "correct": false,
               "sections": {
                 "what_actually": "`NimbusJwtDecoder` поддерживает `withJwkSetUri` (JWKS), `withSecretKey` (HMAC) и `withPublicKey` (RSA) — источник ключа выбирают по типу токена.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`setJwtValidator(...)` добавляет валидатор к стандартным проверкам, не заменяя их.",
+              "text": "`setJwtValidator(...)` дополняет валидатор по умолчанию (проверку `exp`/`nbf`), поэтому оборачивать проверки в `DelegatingOAuth2TokenValidator` не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "`setJwtValidator` заменяет валидатор целиком; чтобы сохранить базовые проверки (issuer/срок), их оборачивают в `DelegatingOAuth2TokenValidator` вместе со своими.",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SameSite=Strict` полностью заменяет CSRF-токен, и при нём CSRF-защиту можно отключать.",
+              "text": "`SameSite=Strict` полностью закрывает CSRF на уровне браузера, поэтому CSRF-токен становится избыточным и защиту можно отключить.",
               "correct": false,
               "sections": {
                 "what_actually": "`SameSite` — дополнение, а не замена: он не покрывает старые браузеры и часть сценариев, поэтому CSRF-токен оставляют включённым.",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "CSRF можно смело отключать в любом приложении, использующем session cookies, если включён HTTPS.",
+              "text": "CSRF можно отключать в приложении с session cookies, если весь трафик идёт по `HTTPS`: `TLS` защищает и от подделки межсайтовых запросов.",
               "correct": false,
               "sections": {
                 "what_actually": "При session cookies CSRF обязателен независимо от HTTPS — TLS защищает канал, но не от подделки запроса с чужого сайта через автоматически отправляемую cookie.",
@@ -2375,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`SameSite=None` обеспечивает максимальную защиту от CSRF и его стоит использовать по умолчанию.",
+              "text": "`SameSite=None` даёт самую строгую политику отправки cookie и потому лучший выбор по умолчанию против CSRF.",
               "correct": false,
               "sections": {
                 "what_actually": "`SameSite=None` означает отправку cookie всегда (в т.ч. cross-site) — это наименьшая защита и требует флага `Secure`; от CSRF защищают `Strict`/`Lax`.",
@@ -2424,7 +2424,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@WithMockUser` загружает пользователя через `UserDetailsService`, поэтому имя должно существовать в БД.",
+              "text": "`@WithMockUser` под капотом вызывает `UserDetailsService.loadUserByUsername(...)`, поэтому указанный `username` обязан существовать в хранилище.",
               "correct": false,
               "sections": {
                 "what_actually": "`@WithMockUser` создаёт мок-`Authentication` с указанными ролями и не обращается к `UserDetailsService`; для реального пользователя есть `@WithUserDetails`.",
@@ -2436,7 +2436,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@WithMockUser(roles={\"ADMIN\"})` создаёт authority `ADMIN` без префикса `ROLE_`.",
+              "text": "`@WithMockUser(roles={\"ADMIN\"})` кладёт в контекст authority ровно `ADMIN`; префикс `ROLE_` появился бы только при атрибуте `authorities`.",
               "correct": false,
               "sections": {
                 "what_actually": "`roles` автоматически получают префикс `ROLE_` (`ROLE_ADMIN`); чтобы задать authority без префикса, используют параметр `authorities`.",
@@ -2448,7 +2448,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для имитации `JWT`/`Bearer`-токена в тесте нужно вручную подписывать настоящий токен и слать его в заголовке.",
+              "text": "Для имитации `JWT`-аутентификации в `MockMvc` нужно поднять реальный `JwtDecoder`, подписать валидный токен и передать его в заголовке `Authorization`.",
               "correct": false,
               "sections": {
                 "what_actually": "Достаточно `SecurityMockMvcRequestPostProcessors.jwt()`/`opaqueToken()` — они подставляют аутентификацию без реальной подписи и сети.",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `WebFlux` используется тот же `ThreadLocal`-`SecurityContextHolder`, что и в сервлетном стеке.",
+              "text": "В `WebFlux` тот же `ThreadLocal`-`SecurityContextHolder` заполняется на event-loop потоке при каждом запросе, поэтому `ReactiveSecurityContextHolder` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "В `WebFlux` нет привязки к потоку — контекст хранится в `Reactor Context`, доступ даёт `ReactiveSecurityContextHolder`.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В реактивной цепочке `SecurityContext` нужно вручную передавать в каждый `flatMap` через параметр.",
+              "text": "В реактивной цепочке `SecurityContext` из `ReactiveSecurityContextHolder` приходится вручную прокидывать параметром в каждый `flatMap`, иначе между операторами он теряется.",
               "correct": false,
               "sections": {
                 "what_actually": "`Reactor Context` распространяется по операторам автоматически, поэтому в `WebFlux` контекст доступен в `map`/`flatMap` без ручной передачи.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`MODE_INHERITABLETHREADLOCAL` корректно передаёт контекст в потоки `ThreadPoolTaskExecutor`.",
+              "text": "`MODE_INHERITABLETHREADLOCAL` наследует `SecurityContext` и в переиспользуемых потоках `ThreadPoolTaskExecutor`, поэтому `DelegatingSecurityContextAsyncTaskExecutor` не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Эта стратегия работает только для дочерних потоков (`new Thread()`); пул переиспользует существующие потоки, и контекст в них не наследуется.",
