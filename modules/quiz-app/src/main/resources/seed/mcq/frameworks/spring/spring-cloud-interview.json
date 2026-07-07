@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Resilience4j` настраивается только программно через Java-конфиг; параметры в `application.yml` он игнорирует.",
+              "text": "`Resilience4j` в `Spring Cloud` конфигурируют только программно — через `CircuitBreakerConfig.custom()` и `CircuitBreakerRegistry`; свойства под `resilience4j.circuitbreaker.instances.<name>` в `application.yml` стартер не читает, а `@CircuitBreaker(name = \"...\")` берёт лишь дефолтные настройки.",
               "correct": false,
               "sections": {
                 "what_actually": "`Resilience4j` в Spring Boot конфигурируется как раз через `application.yml` (`resilience4j.circuitbreaker.instances.*`), плюс возможен программный API.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Fallback-метод должен иметь совершенно другую сигнатуру, без параметров исходного метода и без `Throwable`.",
+              "text": "Fallback-метод обязан иметь тот же тип возврата, но пустой список параметров: передавать в него аргументы исходного метода или параметр `Throwable` нельзя, иначе `@CircuitBreaker` не свяжет его через `fallbackMethod`.",
               "correct": false,
               "sections": {
                 "what_actually": "Fallback повторяет параметры исходного метода и принимает дополнительный `Throwable` причины сбоя.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для включения `Circuit Breaker` достаточно аннотации `@Retryable`; отдельный стартер `resilience4j` не нужен.",
+              "text": "Для включения `Circuit Breaker` достаточно пометить метод `@Retryable` из `Spring Retry` и задать `maxAttempts`; отдельный стартер `spring-cloud-starter-circuitbreaker-resilience4j` не нужен, размыкание цепи включается тем же счётчиком попыток.",
               "correct": false,
               "sections": {
                 "what_actually": "Circuit Breaker включает `@CircuitBreaker` из `Resilience4j` (нужен его стартер); `@Retryable` — это Spring Retry для повторов, не CB.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Resilience4j` устарел и находится в maintenance mode, а `Hystrix` активно развивается и рекомендуется для нового.",
+              "text": "`Resilience4j` объявлен deprecated и переведён в maintenance mode, тогда как `Hystrix` активно развивается силами сообщества, работает на Java 17+ и рекомендуется для новых проектов.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `Hystrix` deprecated, а `Resilience4j` активно развивается и рекомендуется для новых проектов.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Resilience4j` изолирует каждый вызов в отдельном thread pool, а `Hystrix` использует лёгкие декораторы без потоков.",
+              "text": "Изоляция у `Resilience4j` построена на отдельном thread pool под каждую команду, а `Hystrix` использует лёгкие декораторы в вызывающем потоке без выделенных пулов — поэтому `Resilience4j` тяжелее по ресурсам.",
               "correct": false,
               "sections": {
                 "what_actually": "Модели перепутаны: thread-pool-изоляция — у `Hystrix`, а лёгкие декораторы — у `Resilience4j`.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Hystrix` предоставляет модули `RateLimiter`, `Retry` и `Bulkhead`, которых нет в `Resilience4j`.",
+              "text": "`Hystrix` из коробки предоставляет модули `RateLimiter`, `Retry` и `Bulkhead` как отдельные декораторы, тогда как `Resilience4j` ограничен только `CircuitBreaker` и эти паттерны не покрывает.",
               "correct": false,
               "sections": {
                 "what_actually": "Богатый набор модулей (`RateLimiter`, `Retry`, `Bulkhead`, `TimeLimiter`) — это как раз `Resilience4j`, а не `Hystrix`.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Cloud Commons` — это сам `Eureka Server`: он хранит реестр и обслуживает регистрацию инстансов.",
+              "text": "`Spring Cloud Commons` — это серверная часть service discovery: он поднимает реестр, принимает heartbeat-регистрацию инстансов и отдаёт их список клиентам, то есть играет роль `Eureka Server`.",
               "correct": false,
               "sections": {
                 "what_actually": "Commons — это набор абстракций (интерфейсов), а не реестр; `Eureka` — отдельная конкретная реализация поверх них.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Cloud Commons` содержит готовую реализацию `DiscoveryClient`, поэтому стартер `Eureka`/`Consul` не нужен.",
+              "text": "`Spring Cloud Commons` уже включает рабочую реализацию `DiscoveryClient` поверх реального реестра, поэтому подключать стартер `Eureka` или `Consul` не требуется — discovery заработает на одном Commons.",
               "correct": false,
               "sections": {
                 "what_actually": "Commons даёт только интерфейс `DiscoveryClient`; рабочую реализацию приносит стартер `Eureka`/`Consul`/`K8s`.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Аннотации `@LoadBalanced` и `@RefreshScope` определены в `Spring Boot`, а не в `Spring Cloud Commons`.",
+              "text": "Аннотации `@LoadBalanced` и `@RefreshScope` объявлены в ядре `Spring Boot` (модуль autoconfigure), а `Spring Cloud Commons` лишь переиспользует их, не добавляя собственных абстракций поверх discovery.",
               "correct": false,
               "sections": {
                 "what_actually": "`@LoadBalanced` и `@RefreshScope` — это абстракции из `Spring Cloud Commons`, а не из ядра `Spring Boot`.",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring Cloud Netflix` сегодня активны все исходные компоненты — `Eureka`, `Ribbon`, `Hystrix`, `Zuul` и `Feign`.",
+              "text": "`Spring Cloud Netflix` до сих пор активно поддерживает весь исходный набор — `Eureka`, `Ribbon`, `Hystrix`, `Zuul` и `Feign`; ни один компонент не удалён, а `Ribbon` остаётся дефолтным клиентским балансировщиком.",
               "correct": false,
               "sections": {
                 "what_actually": "Активен только `Eureka`; `Ribbon`/`Hystrix`/`Zuul` удалены в `2022.0`, а `Feign` перенесён в `OpenFeign`.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Zuul` из `Spring Cloud Netflix` был заменён на `Spring Cloud LoadBalancer`, а `Ribbon` — на `Spring Cloud Gateway`.",
+              "text": "`Zuul` из `Spring Cloud Netflix` заменили на `Spring Cloud LoadBalancer` для клиентской балансировки, а `Ribbon` — на `Spring Cloud Gateway` как новый API-шлюз; оба перехода состоялись в `2022.0`.",
               "correct": false,
               "sections": {
                 "what_actually": "Замены перепутаны: `Zuul` → `Spring Cloud Gateway`, а `Ribbon` → `Spring Cloud LoadBalancer`.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Eureka`, как и `Ribbon` с `Hystrix`, удалён в `2022.0` и больше не рекомендуется для новых проектов.",
+              "text": "`Eureka` вместе с `Ribbon` и `Hystrix` удалён в `2022.0`, поэтому для service discovery в новых проектах вместо него берут `Spring Cloud Consul` или `Kubernetes`-discovery.",
               "correct": false,
               "sections": {
                 "what_actually": "`Eureka` остаётся активным и рекомендуемым; удалены `Ribbon`, `Hystrix`, `Zuul`, но не `Eureka`.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Retry` в `Resilience4j` по умолчанию повторяет любые исключения, включая бизнес-ошибки валидации.",
+              "text": "`Retry` настраивают тем же ключом `resilience4j.circuitbreaker.instances.<name>`, что и `Circuit Breaker`, и он наследует его `failure-rate-threshold`, решая по проценту ошибок, повторять ли вызов.",
               "correct": false,
               "sections": {
                 "what_actually": "Повторяемые типы задают в `retry-exceptions`, а бизнес-ошибки кладут в `ignore-exceptions`, чтобы их не повторять.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Bulkhead` увеличивает число параллельных вызовов до максимума, чтобы ускорить обработку под нагрузкой.",
+              "text": "`Bulkhead` в `Resilience4j` наращивает число одновременных вызовов до `max-concurrent-calls`, чтобы под нагрузкой распараллелить обработку и поднять пропускную способность сервиса.",
               "correct": false,
               "sections": {
                 "what_actually": "`Bulkhead` наоборот ограничивает параллелизм (`max-concurrent-calls`), изолируя ресурсы, а не наращивая их.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Порядок аннотаций `Resilience4j` не имеет значения — `Retry`, `Bulkhead` и `CircuitBreaker` применяются произвольно.",
+              "text": "Порядок аннотаций `Resilience4j` задаётся тем, как они написаны над методом сверху вниз: `Bulkhead`, `CircuitBreaker` и `Retry` применяются в этом текстовом порядке без фиксированной схемы приоритета.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок фиксирован: `Bulkhead` → `TimeLimiter` → `CircuitBreaker` → `Retry` → `RateLimiter`, и он влияет на поведение.",
@@ -2531,7 +2531,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Cloud Circuit Breaker` жёстко привязан к `Hystrix` и не работает с `Resilience4j` или `Sentinel`.",
+              "text": "`Spring Cloud Circuit Breaker` жёстко завязан на `Hystrix`: он оборачивает вызовы только через `HystrixCommand`, а реализации `Resilience4j` и `Sentinel` через его `CircuitBreakerFactory` подключить нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Это абстракция над несколькими реализациями (`Resilience4j`, `Sentinel`, `Spring Retry`); по умолчанию — `Resilience4j`, а `Hystrix` устарел.",
@@ -2543,7 +2543,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`CircuitBreakerFactory` — это то же самое, что аннотация `@CircuitBreaker` из `Resilience4j`, просто другой синтаксис.",
+              "text": "`CircuitBreakerFactory` — это программный синоним аннотации `@CircuitBreaker` из `Resilience4j`: обе живут в одном стартере и дают ту же привязку к реализации, отличаясь лишь стилем вызова (`factory.create(...)` против аннотации).",
               "correct": false,
               "sections": {
                 "what_actually": "`@CircuitBreaker` — прямой API `Resilience4j`; `CircuitBreakerFactory` — нейтральная абстракция `Spring Cloud` над любой реализацией.",
@@ -2568,7 +2568,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Spring Cloud Circuit Breaker` нельзя использовать в `Spring Cloud Gateway` — он работает только в обычных сервисах.",
+              "text": "`Spring Cloud Circuit Breaker` применим только в императивных `@Service`-бинах через `CircuitBreakerFactory`; в `Spring Cloud Gateway` его нет — там размыкание цепи настраивают отдельным стартером `Hystrix`.",
               "correct": false,
               "sections": {
                 "what_actually": "Gateway интегрирован с абстракцией через фильтр `CircuitBreaker` (с `fallbackUri`), так что CB применяется и на уровне маршрута.",
