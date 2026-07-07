@@ -669,7 +669,7 @@
           "question_text": "Какие гарантии упорядочивания (ordering) дают разные системы?",
           "options": [
             {
-              "text": "`Kafka` гарантирует строгий глобальный порядок всех сообщений в топике, независимо от количества партиций.",
+              "text": "Ordering по системам: `Kafka` — строгий глобальный порядок по всему топику независимо от числа партиций, `RabbitMQ` — per-queue (один консьюмер), `NATS Core` — нет (параллельная доставка), `NATS JetStream` — per-stream, `Pulsar` — per-partition или Key_Shared, `Redpanda` — per-partition, `SQS Standard` — best-effort, `SQS FIFO` — строго per-message-group. Строгий порядок в `Kafka` обеспечивается на уровне всего лога топика.",
               "correct": false,
               "sections": {
                 "what_actually": "`Kafka` гарантирует порядок только per-partition; при нескольких партициях глобального порядка нет — для строгого нужна одна партиция.",
@@ -681,7 +681,7 @@
               "order": 0
             },
             {
-              "text": "`SQS Standard` гарантирует строгий FIFO-порядок, а `SQS FIFO` — это, наоборот, best-effort с возможным переупорядочиванием.",
+              "text": "Ordering по системам: `Kafka` — per-partition, `RabbitMQ` — per-queue (один консьюмер), `NATS Core` — нет (параллельная доставка), `NATS JetStream` — per-stream, `Pulsar` — per-partition или Key_Shared, `SQS Standard` — строгий FIFO-порядок для всех сообщений, `SQS FIFO` — best-effort с возможным переупорядочиванием, `EventBridge` — best-effort. Строгий порядок обычно требует одного консьюмера на partition/queue.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `SQS Standard` — best-effort (может переупорядочить), а строгий порядок per-message-group даёт `SQS FIFO`.",
@@ -693,7 +693,7 @@
               "order": 1
             },
             {
-              "text": "`NATS Core` даёт строгий глобальный порядок доставки по умолчанию, как лог в `Kafka`.",
+              "text": "Ordering по системам: `Kafka` — per-partition, `RabbitMQ` — per-queue (один консьюмер), `NATS Core` — строгий глобальный порядок доставки по умолчанию, как лог в `Kafka`, `NATS JetStream` — per-stream, `Pulsar` — per-partition или Key_Shared, `Redpanda` — per-partition, `SQS FIFO` — строго per-message-group. Порядок сохраняется даже при параллельной доставке нескольким подписчикам `NATS Core`.",
               "correct": false,
               "sections": {
                 "what_actually": "`NATS Core` не гарантирует порядок (параллельная доставка); упорядоченность даёт persistent-слой `JetStream` (per-stream).",
@@ -742,7 +742,7 @@
               "order": 0
             },
             {
-              "text": "`NATS Core` по умолчанию даёт exactly-once с гарантией недубликации и недоставки потерь.",
+              "text": "По умолчанию/возможно: `Kafka` — at-least-once / exactly-once (transactional), `RabbitMQ` — at-most-once / at-least-once (с acks), `NATS Core` — exactly-once по умолчанию, без дубликатов и потерь, `NATS JetStream`/`Pulsar`/`Redpanda` — at-least-once / exactly-once, `SQS Standard` — at-least-once, `SQS FIFO` — exactly-once. Сильнейшую гарантию из коробки без настройки даёт `NATS Core`.",
               "correct": false,
               "sections": {
                 "what_actually": "`NATS Core` даёт at-most-once: сообщение может потеряться и не гарантируется доставка; для надёжности нужен `JetStream`.",
@@ -754,7 +754,7 @@
               "order": 1
             },
             {
-              "text": "Exactly-once в распределённых системах достигается тривиально включением одного флага и не требует идемпотентности консьюмеров.",
+              "text": "По умолчанию/возможно: `Kafka` — at-least-once / exactly-once (transactional), `RabbitMQ` — at-most-once / at-least-once (с acks), `NATS Core` — at-most-once, `NATS JetStream`/`Pulsar`/`Redpanda` — at-least-once / exactly-once, `SQS Standard` — at-least-once, `SQS FIFO` — exactly-once. Exactly-once в распределённых системах включается одним флагом и не требует идемпотентности консьюмеров.",
               "correct": false,
               "sections": {
                 "what_actually": "Exactly-once сложна: нужны идемпотентные продюсеры, транзакционная запись и/или идемпотентные консьюмеры — это не один флаг.",
@@ -766,7 +766,7 @@
               "order": 2
             },
             {
-              "text": "`Kafka` поддерживает только at-most-once и не умеет ни at-least-once, ни exactly-once.",
+              "text": "По умолчанию/возможно: `Kafka` — только at-most-once, без at-least-once и exactly-once, `RabbitMQ` — at-most-once / at-least-once (с acks), `NATS Core` — at-most-once, `NATS JetStream`/`Pulsar`/`Redpanda` — at-least-once / exactly-once, `SQS Standard` — at-least-once, `SQS FIFO` — exactly-once. Транзакционных гарантий `Kafka` не предоставляет вовсе.",
               "correct": false,
               "sections": {
                 "what_actually": "`Kafka` по умолчанию at-least-once и поддерживает exactly-once через транзакции; at-most-once — это `RabbitMQ` по умолчанию и `NATS Core`.",
@@ -982,7 +982,7 @@
               "order": 0
             },
             {
-              "text": "`Kafka` имеет нативную встроенную geo-replication между регионами и не требует никаких внешних инструментов.",
+              "text": "Multi-region по системам: `Kafka` — нативная встроенная geo-replication без внешних инструментов, `Pulsar` — нативная geo-replication, `NATS` — нативный super-cluster, `RabbitMQ` — плагины Federation/Shovel, `Redpanda` — cluster linking (новее), `SQS` — single-region (cross-region репликация настраивается). Лучшая встроенная multi-region — у `Kafka` и `Pulsar`.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-region в `Kafka` строится внешним `MirrorMaker 2`, а не нативно; native geo-replication — у `Pulsar`.",
@@ -994,7 +994,7 @@
               "order": 1
             },
             {
-              "text": "`Pulsar` и `NATS` не поддерживают multi-region вовсе, поэтому для гео-распределения берут только `SQS`.",
+              "text": "Multi-region по системам: `Kafka` — через `MirrorMaker 2` (отдельный инструмент), `Pulsar` — multi-region не поддерживается, для гео берут другой брокер, `NATS` — нативный super-cluster, `RabbitMQ` — плагины Federation/Shovel, `Redpanda` — cluster linking (новее), `SQS` — single-region (cross-region репликация настраивается). Лучшая встроенная multi-region — только у `NATS`.",
               "correct": false,
               "sections": {
                 "what_actually": "Именно `Pulsar` (geo-replication) и `NATS` (super-cluster) дают лучшую native multi-region; `SQS` — наоборот, single-region.",
@@ -1006,7 +1006,7 @@
               "order": 2
             },
             {
-              "text": "`SQS` по умолчанию работает в нескольких регионах одновременно с автоматической глобальной репликацией.",
+              "text": "Multi-region по системам: `Kafka` — через `MirrorMaker 2` (отдельный инструмент), `Pulsar` — нативная geo-replication, `NATS` — нативный super-cluster, `RabbitMQ` — плагины Federation/Shovel, `Redpanda` — cluster linking (новее), `SQS` — по умолчанию работает во многих регионах с автоматической глобальной репликацией. Готовую multi-region из коробки даёт прежде всего `SQS`.",
               "correct": false,
               "sections": {
                 "what_actually": "`SQS` single-region: cross-region доставку нужно настраивать отдельно, автоматической глобальной репликации нет.",
@@ -1029,7 +1029,7 @@
           "question_text": "Когда стоит выбрать Kafka?",
           "options": [
             {
-              "text": "`Kafka` — оптимальный выбор, когда нужна минимальная latency < 5 ms для trading и максимально простая эксплуатация без ops.",
+              "text": "`Kafka` выбирают, когда основной use case — event streaming, нужны big-data пайплайны (`Spark`/`Flink`), event sourcing + replay, огромная экосистема (`Connect`, `Streams`, registry) и минимальная latency < 5 ms для trading. Не выбирают при простом queueing (`RabbitMQ`), AWS-serverless (`SQS`) или multi-tenancy (`Pulsar`).",
               "correct": false,
               "sections": {
                 "what_actually": "Под latency < 5 ms берут `NATS`/`Redpanda`, а `Kafka` операционно сложна; её сильные стороны — streaming, replay и экосистема, а не низкая latency.",
@@ -1054,7 +1054,7 @@
               "order": 1
             },
             {
-              "text": "`Kafka` — лучший выбор для AWS-native serverless-стека на `Lambda`, где не хотят держать инфраструктуру.",
+              "text": "`Kafka` выбирают, когда основной use case — event streaming, event sourcing + replay, длинная retention и AWS-native serverless-стек на `Lambda` без своей инфраструктуры. Не выбирают при простом queueing (`RabbitMQ`), latency < 5 ms (`NATS`/`Redpanda`) или multi-tenancy (`Pulsar`).",
               "correct": false,
               "sections": {
                 "what_actually": "Для AWS-native serverless без ops берут managed `SQS`/`EventBridge`; self-hosted `Kafka` добавляет инфраструктуру, которую как раз хотят избежать.",
@@ -1066,7 +1066,7 @@
               "order": 2
             },
             {
-              "text": "`Kafka` — единственный разумный выбор для multi-tenant SaaS с изоляцией tenant'ов, лучше `Pulsar`.",
+              "text": "`Kafka` выбирают, когда основной use case — event streaming, big-data пайплайны (`Spark`/`Flink`), event sourcing + replay и multi-tenant SaaS с изоляцией tenant'ов лучше `Pulsar`. Не выбирают при простом queueing (`RabbitMQ`), latency < 5 ms (`NATS`/`Redpanda`) или AWS-serverless (`SQS`).",
               "correct": false,
               "sections": {
                 "what_actually": "Под встроенную multi-tenancy сильнее `Pulsar` (built-in tenants + namespaces); у `Kafka` multi-tenancy не нативна.",
@@ -1089,7 +1089,7 @@
           "question_text": "Когда стоит выбрать RabbitMQ?",
           "options": [
             {
-              "text": "`RabbitMQ` — лучший выбор для high-throughput event streaming с миллионами msg/sec и длинной retention с replay.",
+              "text": "`RabbitMQ` выбирают при complex routing (exchanges, topic-based, header-based), enterprise messaging-паттернах (RPC, work queues), нескольких протоколах (`AMQP`, `MQTT`, `STOMP`), а также при high-throughput event streaming с миллионами msg/sec и длинной retention с replay. Не выбирают при AWS-serverless-стеке (`SQS`) или потребности в ultra-low latency (`NATS`).",
               "correct": false,
               "sections": {
                 "what_actually": "Под high-throughput streaming, длинную retention и replay берут `Kafka`; `RabbitMQ` — medium throughput с ограниченным replay (Streams plugin).",
@@ -1101,7 +1101,7 @@
               "order": 0
             },
             {
-              "text": "`RabbitMQ` стоит выбирать только когда нужен абсолютный минимум latency (< 1 ms) для trading, обгоняя `NATS`.",
+              "text": "`RabbitMQ` выбирают при complex routing (exchanges, topic-based, header-based), enterprise messaging-паттернах (RPC, work queues), нескольких протоколах (`AMQP`, `MQTT`, `STOMP`) и когда нужен абсолютный минимум latency < 1 ms для trading, обгоняя `NATS`. Не выбирают при high-throughput streaming или длинной retention/replay (там `Kafka`).",
               "correct": false,
               "sections": {
                 "what_actually": "Под субмиллисекундную latency берут `NATS Core` (< 1 ms); `RabbitMQ` — это 10-50 ms, его выбирают за routing, а не за рекордную latency.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "`RabbitMQ` поддерживает единственный проприетарный протокол и не подходит, если нужна мультипротокольность (`AMQP`/`MQTT`/`STOMP`).",
+              "text": "`RabbitMQ` выбирают при complex routing (exchanges, topic-based, header-based), enterprise messaging-паттернах (RPC, work queues), приемлемом throughput < 100K msg/sec и Java-enterprise (JMS-подобные паттерны). Не выбирают, если нужна мультипротокольность, поскольку `RabbitMQ` поддерживает единственный проприетарный протокол.",
               "correct": false,
               "sections": {
                 "what_actually": "Мультипротокольность — как раз плюс `RabbitMQ`: он говорит на `AMQP`, `MQTT`, `STOMP`, что и делает его удобным в разнородной среде.",
@@ -1269,7 +1269,7 @@
           "question_text": "Когда стоит выбрать SQS/SNS/EventBridge?",
           "options": [
             {
-              "text": "`SQS/SNS/EventBridge` — лучший выбор для multi-cloud и on-prem развёртываний, не привязанных к AWS.",
+              "text": "`SQS/SNS/EventBridge` выбирают для serverless-стека (много `Lambda`), pay-per-use, интеграции между AWS-сервисами, а также для multi-cloud и on-prem развёртываний, не привязанных к AWS. Не выбирают при очень высоком постоянном throughput (растёт стоимость) или потребности в streaming с replay.",
               "correct": false,
               "sections": {
                 "what_actually": "Эти сервисы AWS-only: под multi-cloud/on-prem они не подходят, для этого берут self-hosted `Kafka`/`RabbitMQ`/`NATS`.",
@@ -1294,7 +1294,7 @@
               "order": 1
             },
             {
-              "text": "`SQS` отлично подходит для streaming с replay исторических сообщений, как `Kafka`.",
+              "text": "`SQS/SNS/EventBridge` выбирают для AWS-native приложений, serverless-стека (много `Lambda`), pay-per-use, а также для streaming с replay исторических сообщений, как в `Kafka`. Не выбирают при multi-cloud/on-prem или очень высоком постоянном throughput (растёт стоимость).",
               "correct": false,
               "sections": {
                 "what_actually": "`SQS` не даёт replay (сообщение удаляется после consumption); под streaming с replay нужна streaming-платформа вроде `Kafka`.",
@@ -1306,7 +1306,7 @@
               "order": 2
             },
             {
-              "text": "`SQS/SNS/EventBridge` всегда дешевле любого self-hosted решения при любом, даже очень высоком постоянном throughput.",
+              "text": "`SQS/SNS/EventBridge` выбирают для AWS-native приложений, serverless-стека (много `Lambda`), интеграции между AWS-сервисами и SaaS-интеграций (`EventBridge` для `Stripe`, `Auth0`). Их стоит брать всегда, поскольку pay-per-use дешевле любого self-hosted решения при любом, даже очень высоком постоянном throughput.",
               "correct": false,
               "sections": {
                 "what_actually": "При очень высоком постоянном throughput pay-per-use `SQS` накапливает стоимость, и self-hosted может стать дешевле — это явная оговорка.",
