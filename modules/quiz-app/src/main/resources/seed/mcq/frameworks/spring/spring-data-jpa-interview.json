@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`REQUIRES_NEW` присоединяется к уже существующей транзакции, а не создаёт отдельную.",
+              "text": "`Propagation` задаёт поведение `@Transactional`-метода относительно текущей транзакции. По умолчанию `REQUIRED`: присоединяется к текущей или создаёт новую. `REQUIRES_NEW` присоединяется к уже открытой транзакции; `NESTED` создаёт savepoint; `MANDATORY` требует существующую (иначе исключение); `SUPPORTS`/`NOT_SUPPORTED`/`NEVER` — варианты без обязательной транзакции.",
               "correct": false,
               "sections": {
                 "what_actually": "`REQUIRES_NEW` приостанавливает текущую транзакцию и открывает новую независимую; присоединяется к существующей именно `REQUIRED`.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Propagation по умолчанию — `REQUIRES_NEW`, поэтому каждый `@Transactional`-метод выполняется в собственной транзакции.",
+              "text": "`Propagation` определяет поведение `@Transactional`-метода относительно существующей транзакции. По умолчанию `REQUIRES_NEW`: каждый метод выполняется в собственной транзакции. `REQUIRED` присоединяется к текущей или создаёт новую; `NESTED` создаёт savepoint; `MANDATORY` требует существующую (иначе исключение); `SUPPORTS`/`NOT_SUPPORTED`/`NEVER` — варианты без обязательной транзакции.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию `REQUIRED`: вложенный метод присоединяется к уже открытой транзакции, а не создаёт новую.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "При `REQUIRED`, если внешний метод поймает исключение из внутреннего, транзакция успешно закоммитится.",
+              "text": "`Propagation` определяет отношение `@Transactional`-метода к текущей транзакции: `REQUIRED` разделяет одну транзакцию с внешним методом, `REQUIRES_NEW` открывает отдельную, `NESTED` использует savepoint. При `REQUIRED`, если внешний метод поймает исключение из внутреннего в try/catch, общая транзакция всё равно успешно закоммитится.",
               "correct": false,
               "sections": {
                 "what_actually": "После исключения во вложенном методе транзакция помечается rollback-only; commit невозможен, даже если исключение поймано — будет `UnexpectedRollbackException`.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Поля `@CreatedDate` и `@LastModifiedDate` нужно заполнять вручную в сервисе перед каждым `save()`.",
+              "text": "`Auditing` фиксирует, кто и когда создал или изменил запись. Поля `@CreatedDate` и `@LastModifiedDate` нужно заполнять вручную в сервисе перед каждым `save()`, тогда как `@CreatedBy`/`@LastModifiedBy` `AuditingEntityListener` подставляет автоматически из `AuditorAware`.",
               "correct": false,
               "sections": {
                 "what_actually": "Их заполняет `AuditingEntityListener` автоматически на событиях `@PrePersist`/`@PreUpdate`; ручное проставление не требуется.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для аудита достаточно поставить `@CreatedDate`/`@CreatedBy` на поля — `@EnableJpaAuditing` включать не нужно.",
+              "text": "`Auditing` заполняет поля «кто и когда создал/изменил запись», и для этого достаточно разметить `@CreatedDate`, `@LastModifiedDate`, `@CreatedBy`, `@LastModifiedBy` в `@MappedSuperclass` с `@EntityListeners(AuditingEntityListener.class)`; аннотация `@EnableJpaAuditing` при этом необязательна и нужна только для кастомного `AuditorAware`.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `@EnableJpaAuditing` инфраструктура аудита не активируется и аннотации полей не срабатывают.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "При обновлении записи `@CreatedDate` и `@CreatedBy` тоже перезаписываются текущими значениями.",
+              "text": "`Auditing` через `@EnableJpaAuditing` и `AuditingEntityListener` заполняет `@CreatedDate`, `@LastModifiedDate`, `@CreatedBy`, `@LastModifiedBy` из `AuditorAware`; при `save()` на обновление все четыре поля, включая `@CreatedDate` и `@CreatedBy`, перезаписываются текущими значениями.",
               "correct": false,
               "sections": {
                 "what_actually": "При обновлении меняются только `@LastModifiedDate`/`@LastModifiedBy`; поля создания обычно помечают `updatable=false` и не трогают.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Detached-сущность отслеживается `EntityManager`, поэтому изменения в ней автоматически попадут в БД при commit.",
+              "text": "У сущности JPA четыре состояния: `New`/Transient (создан через `new`), `Managed` (привязан к `EntityManager`), `Detached` и `Removed`. При этом `Detached`-объект по-прежнему отслеживается контекстом, поэтому изменения в нём автоматически попадут в БД при commit без вызова `merge`.",
               "correct": false,
               "sections": {
                 "what_actually": "Detached-объект НЕ отслеживается: изменения в нём не сохранятся, пока его не вернуть в контекст через `merge`.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`merge(detached)` изменяет переданный объект на managed, и дальше можно работать с тем же экземпляром.",
+              "text": "У сущности четыре состояния: `New`, `Managed`, `Detached`, `Removed`. Переходы: `persist`→Managed, `detach`/`clear`/`close`→Detached, `remove`→Removed. Вызов `merge(detached)` переводит в `Managed` сам переданный экземпляр, и дальше работают с тем же объектом.",
               "correct": false,
               "sections": {
                 "what_actually": "`merge` возвращает новый managed-экземпляр, а исходный остаётся detached; продолжать работу нужно с возвращённым объектом.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Сущность в состоянии `New` (Transient) уже отслеживается контекстом сразу после `new`.",
+              "text": "У сущности четыре состояния: `New`/Transient, `Managed`, `Detached`, `Removed`. Сущность в состоянии `New` уже отслеживается контекстом сразу после `new`, а `persist` лишь фиксирует её в БД при ближайшем flush.",
               "correct": false,
               "sections": {
                 "what_actually": "`New`/Transient-объект не связан с контекстом и не отслеживается до вызова `persist`/`save`.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@OneToMany` по умолчанию `EAGER`, а `@ManyToOne` — `LAZY`.",
+              "text": "`FetchType` определяет, когда грузятся связанные сущности. По умолчанию `@OneToMany`/`@ManyToMany` — `EAGER` и тянут коллекцию сразу с родителем, а `@ManyToOne`/`@OneToOne` — `LAZY` и грузят связь при первом обращении. Явно менять стратегию можно через `JOIN FETCH`/`@EntityGraph`.",
               "correct": false,
               "sections": {
                 "what_actually": "Дефолты обратные: `@ManyToOne`/`@OneToOne` — `EAGER`, а `@OneToMany`/`@ManyToMany` — `LAZY`.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`EAGER` — рекомендуемый best practice, потому что гарантированно избегает проблемы N+1.",
+              "text": "`FetchType` определяет, когда грузятся связанные сущности: `EAGER` — сразу с родителем, `LAZY` — при первом обращении. Best practice — везде ставить `EAGER`, потому что немедленная загрузка избавляет от проблемы N+1 при выборке списков.",
               "correct": false,
               "sections": {
                 "what_actually": "Best practice — `LAZY`: `EAGER` как раз провоцирует N+1 и загрузку лишних данных при выборках списков.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Обращение к `LAZY`-связи после закрытия сессии безопасно: `Hibernate` сам откроет новое соединение и догрузит данные.",
+              "text": "`FetchType` определяет, когда грузятся связанные сущности: `EAGER` — сразу с родителем, `LAZY` — при первом обращении. Обращение к `LAZY`-связи после закрытия сессии безопасно: `Hibernate` откроет новое соединение и догрузит данные по запросу.",
               "correct": false,
               "sections": {
                 "what_actually": "Доступ к LAZY-полю вне открытого контекста бросает `LazyInitializationException` — новое соединение автоматически не открывается.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Аннотации `@CreatedDate`/`@CreatedBy` работают сами по себе, и `@EnableJpaAuditing` добавлять необязательно.",
+              "text": "Аудит собирают из `@CreatedDate`/`@LastModifiedDate` (время) и `@CreatedBy`/`@LastModifiedBy` (автор), размеченных в `@MappedSuperclass` с `@EntityListeners(AuditingEntityListener.class)`; слушатель заполняет их на `@PrePersist`/`@PreUpdate`. Аннотация `@EnableJpaAuditing` при этом необязательна — поля срабатывают и без неё.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `@EnableJpaAuditing` инфраструктура аудита не активируется, и аннотации полей остаются незаполненными.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@CreatedBy` заполняется именем пользователя даже когда запись создаётся фоновой задачей без аутентификации.",
+              "text": "Аудит включается `@EnableJpaAuditing(auditorAwareRef=\"auditorProvider\")`, а `AuditingEntityListener` на `@PrePersist`/`@PreUpdate` заполняет время и автора. `@CreatedBy` при этом получает имя пользователя из `AuditorAware` даже для записей, которые создаёт фоновая задача без аутентификации в `SecurityContext`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@CreatedBy` берёт значение из `AuditorAware`; если в `SecurityContext` нет аутентификации (фоновый поток), значение будет `null` или дефолтным.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@Version` нужен для аудита времени изменения и заменяет `@LastModifiedDate`.",
+              "text": "Аудит включается `@EnableJpaAuditing`, а `AuditingEntityListener` заполняет `@CreatedDate`/`@LastModifiedDate` и `@CreatedBy`/`@LastModifiedBy` на `@PrePersist`/`@PreUpdate`. Поле `@Version` при этом хранит время последнего изменения и заменяет `@LastModifiedDate`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Version` отвечает за оптимистичную блокировку (счётчик ревизий), а не за аудит времени; время изменения хранит `@LastModifiedDate`.",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Modifying` можно опустить: если в `@Query` стоит `UPDATE`/`DELETE`, Spring сам определит DML.",
+              "text": "`@Modifying` можно опустить: если в `@Query` стоит `UPDATE` или `DELETE`, Spring сам распознаёт DML по тексту и выполняет его в транзакции. Флаги `clearAutomatically`/`flushAutomatically` при этом управляют синхронизацией persistence context, а возврат `int` даёт число затронутых строк.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `@Modifying` Spring выполняет `@Query` как SELECT (через `getResultList`) и для DML это даёт ошибку.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Bulk-`@Modifying` запросы запускают JPA-каскады и lifecycle-callbacks для дочерних сущностей.",
+              "text": "`@Modifying` помечает `@Query` как DML (`UPDATE`/`DELETE`), выполняемый в `@Transactional`. Такой bulk-запрос проходит через ORM и запускает JPA-каскады и lifecycle-callbacks (`@PreRemove`/`@PreUpdate`) для дочерних сущностей, поэтому зависимые записи обрабатываются автоматически.",
               "correct": false,
               "sections": {
                 "what_actually": "Bulk DML идёт напрямую в БД, минуя ORM, и НЕ запускает каскады/callbacks; зависимые записи чистят отдельно или через FK `ON DELETE CASCADE`.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Флаг `flushAutomatically=true` очищает persistence context после выполнения запроса.",
+              "text": "`@Modifying` помечает `@Query` как DML, а два флага управляют persistence context: `flushAutomatically=true` очищает контекст после выполнения запроса, а `clearAutomatically=true` сбрасывает несохранённые изменения до него. Возврат `int` — число затронутых строк.",
               "correct": false,
               "sections": {
                 "what_actually": "Очистку контекста после запроса делает `clearAutomatically=true`; `flushAutomatically=true` сбрасывает pending changes ДО выполнения запроса.",
