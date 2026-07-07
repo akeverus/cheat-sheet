@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Tail sampling принимает решение на старте trace, поэтому буферизация span'ов не нужна.",
+              "text": "Tail sampling принимает решение на старте trace, ещё до генерации span'ов, поэтому буферизировать их в Collector не нужно и стоимость минимальна.",
               "correct": false,
               "sections": {
                 "what_actually": "Tail sampling решает после завершения trace и потому обязан буферизовать все span'ы до этого момента.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Head sampling заведомо сохраняет все ошибочные и медленные traces, не теряя interesting traces.",
+              "text": "Head sampling заведомо сохраняет все error и slow traces и добавляет процент обычных, поэтому interesting traces не теряются даже при решении на старте.",
               "correct": false,
               "sections": {
                 "what_actually": "Head решает вслепую на старте, ещё не зная исхода, поэтому может выбросить именно ошибочный trace.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Tail sampling реализуется в SDK приложения, а Collector в этом не участвует.",
+              "text": "Tail sampling реализуется в SDK приложения и держит буфер span'ов прямо в процессе, а Collector в маршруте семплирования не участвует.",
               "correct": false,
               "sections": {
                 "what_actually": "Tail sampling реализуется в Collector, поскольку требует видеть все span'ы trace, которые у одного SDK неполны.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`OTel` поддерживает лишь push-модель; pull через `Prometheus` scrape не сделать.",
+              "text": "`OTel` поддерживает только push: SDK сам отправляет метрики через OTLP exporter, а pull-режим, где `Prometheus` scrape'ит `/metrics` endpoint, в `OTel` не реализован.",
               "correct": false,
               "sections": {
                 "what_actually": "`OTel` умеет обе модели: push через OTLP exporter и pull через Prometheus exporter с `/metrics` endpoint.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При pull-модели приложение само инициирует отправку метрик в backend по расписанию.",
+              "text": "Pull — это когда приложение по `aggregation period` само инициирует отправку метрик в backend, а push — когда backend дёргает `/metrics` endpoint приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "При pull инициатор — backend (`Prometheus`), который scrape'ит endpoint; приложение лишь экспонирует `/metrics`.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Aggregation period нельзя настроить — метрики уходят в backend мгновенно по каждому событию.",
+              "text": "`Aggregation period` фиксирован и не настраивается: метрики не агрегируются во времени, а уходят в backend мгновенно после каждого измерения.",
               "correct": false,
               "sections": {
                 "what_actually": "Метрики агрегируются за период (по умолчанию ~60 сек) и отправляются батчами, а не по каждому событию.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Log correlation требует вручную копировать каждый лог в trace — автоматической связи между ними нет.",
+              "text": "Correlation делается только вручную: разработчик копирует текст лога в атрибуты span'а, потому что автоматической связи лог ↔ trace через `trace_id` в `OTel` нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`OTel` авто-коррелирует через Log Bridge, а вендорские UI (`Datadog`, `Honeycomb`) линкуют логи и traces автоматически.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для корреляции лог должен содержать полный текст trace, а не только идентификаторы.",
+              "text": "Чтобы связать лог с trace, запись лога должна нести полный сериализованный trace целиком, а не только `trace_id` + `span_id` — по одним идентификаторам backend запрос не найдёт.",
               "correct": false,
               "sections": {
                 "what_actually": "Логу достаточно `trace_id`/`span_id`; сам trace хранится в tracing backend и подтягивается по ID.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Log correlation возможна только в open-source стеке; коммерческие вендоры её не поддерживают.",
+              "text": "Log correlation работает только в open-source стеке (`Jaeger`, `Tempo`, `Loki`); коммерческие вендоры вроде `Datadog` и `New Relic` линковку логов и traces не поддерживают.",
               "correct": false,
               "sections": {
                 "what_actually": "`Datadog`, `Honeycomb`, `New Relic` как раз автоматически линкуют логи и traces в своём UI.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`OTel` работает только с `Jaeger`; для `Prometheus`, `Loki` и коммерческих вендоров нужны отдельные SDK.",
+              "text": "`OTel` умеет слать только в `Jaeger`; для `Prometheus`, `Loki` и коммерческих вендоров нужны отдельные вендорские SDK вместо единого OTLP.",
               "correct": false,
               "sections": {
                 "what_actually": "`OTel` поддерживает множество backend (`Jaeger`, `Prometheus`, `Loki`, `Tempo`, `Datadog` и др.) через exporters одного SDK.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Коммерческие вендоры (`Datadog`, `New Relic`) не принимают OTLP, поэтому требуют свои проприетарные агенты.",
+              "text": "Коммерческие вендоры (`Datadog`, `New Relic`, `Splunk`) OTLP не принимают и требуют ставить свои проприетарные агенты вместо `OTel` Collector.",
               "correct": false,
               "sections": {
                 "what_actually": "В 2025 `Datadog`, `New Relic`, `Splunk`, `Honeycomb` штатно принимают OTLP input.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`AWS X-Ray` и `Azure Monitor` несовместимы с `OTel` в принципе — это закрытые экосистемы.",
+              "text": "`AWS X-Ray` и `Azure Monitor` — закрытые экосистемы и с OTLP несовместимы в принципе, поэтому данные `OTel` в них не попадают.",
               "correct": false,
               "sections": {
                 "what_actually": "`AWS X-Ray` поддерживает `OTel` через ADOT, а `Azure Monitor` и `Google Cloud Trace` принимают OTLP-данные.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OTel` не даёт никакого overhead в production — инструментация бесплатна по CPU и памяти.",
+              "text": "Overhead инструментации пренебрежимо мал (<1% CPU), так как экспорт идёт асинхронно в фоне, поэтому агрессивный sampling ради производительности не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Инструментация ест 5-10% CPU и память на буферизацию; именно поэтому рекомендуют агрессивный sampling.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Cardinality explosion в `OTel` не грозит, поэтому можно смело тегировать метрики атрибутом `user_id`.",
+              "text": "Cardinality explosion касается только traces, а метрики от неё защищены агрегацией, поэтому тегировать метрики атрибутом `user_id` безопасно.",
               "correct": false,
               "sections": {
                 "what_actually": "Высококардинальные атрибуты (`user_id`) порождают взрыв числа time series — классический cardinality explosion.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Несколько auto-агентов мирно сосуществуют, а версии SDK/Agent/API совместимы между собой автоматически.",
+              "text": "Несколько auto-инструментирующих агентов можно навешивать одновременно без конфликтов — `OTel` сам выбирает один активный, поэтому дублирования span'ов не возникает.",
               "correct": false,
               "sections": {
                 "what_actually": "Несколько агентов конфликтуют (дублируют span'ы), а version mismatch SDK/Agent/API — частая причина поломок.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Стоимость `OTel` не зависит от объёма данных, поэтому sampling и фильтрация не дают экономии.",
+              "text": "Backend'ы тарифицируют `OTel` по числу подключённых сервисов, а не по объёму данных, поэтому sampling и drop span'ов в Collector экономии не дают.",
               "correct": false,
               "sections": {
                 "what_actually": "Backend'ы тарифицируют ingest, и объём traces/metrics напрямую определяет счёт; sampling сокращает его.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы сэкономить, нужно навешивать как можно больше атрибутов на span — это уплотняет данные и снижает цену.",
+              "text": "Чем больше атрибутов на span, тем сильнее OTLP-сжатие переиспользует словарь, поэтому обогащение span'ов атрибутами снижает итоговую стоимость ingest.",
               "correct": false,
               "sections": {
                 "what_actually": "Больше атрибутов = больше объём и cardinality = выше cost; для экономии число атрибутов как раз сокращают.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Self-host backend'ов (`Jaeger`, `Loki`, `Tempo`) дороже SaaS, поэтому для экономии берут `Datadog`.",
+              "text": "Self-host `Jaeger`, `Loki` и `Tempo` обходится дороже управляемого SaaS из-за инфраструктуры, поэтому ради экономии выгоднее полностью перейти на `Datadog`.",
               "correct": false,
               "sections": {
                 "what_actually": "Self-host open-source backend'ов часто дешевле дорогого SaaS по ingest, хотя добавляет операционные расходы.",
