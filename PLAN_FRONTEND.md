@@ -759,6 +759,23 @@ token-only → затем удалить. **EDC-1 (editorial.css) — subset-pro
 
 Инвариант: **каждый интерактивный контрол формы обязан иметь программно-привязанную видимую метку (implicit label-wrap ИЛИ `for`/`id`); числовые/ограниченные поля — HTML-констрейнт; multi-form страницы — синхронизировать live-state контролов в submit-снапшот (иначе lost-input); live-region-атрибуты — только на реально-мутирующем контенте.** Метод: инвентарь `<label|input|select|button>` → проверка label-текст + ассоциация + констрейнт + (для multi-form) submit-time-sync через JS-трейс. Покрытие: 3 формы /settings, ВСЕ контролы. (§7-кандидат: **FORMS**.)
 
+**APPLY-BATCH — исполняемый батч 3 накопленных фиксов + anchor-drift re-validation, р131 (2026-07-07, фаэр #10).** Свёл AIR-1 (р126) + SET-15 (р127) + RIA-2 (р128) в ОДИН упорядоченный проход и **ре-валидировал anchor'ы против ТЕКУЩИХ WIP-версий файлов** (read-only) — WIP юзера сдвинул структуру, line-refs старых spec'ов частично устарели.
+
+- **Anchor-drift статус (валидировано grep'ом против on-disk WIP 2026-07-07):**
+  - **AIR-1** — семантические anchor'ы ЖИВЫ (5 мёртвых `API.*`: app.js:21/23/25/26/27; result-flow `apiFetch` 358/376/395/410; question-flow 1760/1784/1807/1839; toggle-ID `extra-analysis-toggle*`; секция `#result-related-questions`:139). НО flow-структура app.js **переработана WIP** (старой формы `failedCount===requests.length` больше нет) → **line-патч р126 УСТАРЕЛ**, re-derive на apply-time.
+  - **SET-15** — `settings.html:125 value="20"` **СТАБИЛЕН**, дрейфа нет.
+  - **RIA-2** — orphan **ПОДТВЕРЖДЁН** (`/study-confirm` 0 триггеров, `studyLearnPhase` не читается шаблоном). НО STUDY-LEARN-ветка реструктурирована WIP (`studyAnswerHtml` теперь 2×: `<details>`@86 + `<div>`@98) → **insertion-point сдвинулся**, re-derive.
+- **Порядок батча (по разделяемым файлам — минимизировать cache-bump):**
+  - **Группа A (общий bump app.js `v=54→55`):** AIR-1 + SET-15 ОБА трогают app.js → ОДИН bump на оба, НЕ два.
+    - AIR-1: app.js (снять 5 `API.*` + мёртвые fetch'и обоих flow, сохранить related-questions reveal) + result.html («Показать доп. анализ»→«Похожие вопросы», toggle→простой reveal `#result-related-questions`) + post-answer-controls.html (`extraButtonText`) + focus-training.html:157 (`extraButtonText`).
+    - SET-15: settings.html (`data-default-count` per-mode из `@appProperties` на `input[name=count]`) + app.js (`initSessionModeForm` читает `data-default-count` при смене mode).
+    - **Cache-bump:** `app.js(v=54)`→`(v=55)` в settings.html:277 + result.html:149 + focus-training.html:199 (ровно 3 места, покрывает и AIR-1, и SET-15).
+  - **Группа B (template-only, БЕЗ bump):** RIA-2 — только focus-training.html (добавить `<form th:action="@{/study-confirm}">` в STUDY-LEARN-ветке под `studyLearnPhase`; сервер уже отдаёт флаг — `FocusTrainingPageService`, бизнес-логику НЕ менять).
+- **Apply-time протокол (обязателен — НЕ применять line-refs вслепую):** (1) дождаться разблокировки (юзер commit/stash WIP + app up); (2) re-grep anchor'ы (`API.*`, `extra-analysis-toggle*`, `name="count"`, `study-confirm`/`studyLearnPhase`) против then-current файлов; (3) re-derive line-патчи; (4) ОДИН app.js-bump на 3 шаблона (Группа A); (5) live-verify: result-кнопка → related reveal БЕЗ alert · смена mode → count = per-mode default · STUDY LEARN→QUIZ достижим; (6) commit per-pathspec, без push.
+- **Bonus AIR-fallout (кандидат, spec-only, файл BLOCKED):** focus-training.html:166 `«AI временно недоступен. Обнови страницу…»` под `th:if=${generationUnavailable}` — мёртвая AI-копия (после AI-removal флаг ~никогда не true). Добавить в AIR-cleanup: снять строку/флаг при разблокировке. (§6.E-родня.)
+
+Инвариант: **накопленные ready-spec'и держать anchor-валидными — при длительной COLLISION-блокировке WIP юзера дрейфует, line-refs протухают; периодически re-grep семантических anchor'ов против on-disk и помечать spec «structure-drifted → re-derive at apply» vs «stable»; батчить фиксы по общим файлам ради одного cache-bump.** Метод: grep spec-anchor'ов (API-константы / toggle-ID / имена-полей / orphan-эндпоинты) → сверка «жив ли дефект» + «сдвинулась ли структура» → пометка в APPLY-BATCH. (§7-кандидат: **APPLY-BATCH** — исполняемость очереди.)
+
 ---
 
 ## 8. Не трогать — осознанные решения пользователя (🚫 / ⛔)
