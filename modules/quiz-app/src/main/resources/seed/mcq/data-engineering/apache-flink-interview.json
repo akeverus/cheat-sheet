@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Keyed state и operator state — одно и то же: оба привязаны к ключу и хранят данные per key.",
+              "text": "**Keyed state** привязан к параллельной subtask — для connector state (например, `Kafka` offsets). **Operator state** привязан к key (`KeyedStream`) — для агрегаций per user, сессий. Types: `ValueState[T]`, `ListState[T]`, `MapState[K,V]`, `ReducingState[T]`, `AggregatingState[I,O]`. Регистрируется через `getRuntimeContext.getState(...)` в `open()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Только keyed state привязан к ключу; operator state привязан к subtask и не требует `KeyedStream`.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Keyed state доступен на любом `DataStream`, даже без вызова `keyBy`, потому что ключ берётся автоматически.",
+              "text": "**Keyed state** доступен на любом `DataStream` без вызова `keyBy` — `Flink` сам выводит ключ по `hashCode()` элемента. **Operator state** привязан к параллельной subtask — для connector state (`Kafka` offsets). Keyed state types: `ValueState[T]`, `ListState[T]`, `MapState[K,V]`.",
               "correct": false,
               "sections": {
                 "what_actually": "Keyed state требует `KeyedStream` (после `keyBy`); на неключевом потоке доступен лишь operator state.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Единственный тип keyed state — это `ValueState`; списков, мапов и aggregating-состояний в `Flink` нет.",
+              "text": "**Keyed state** поддерживает `ValueState[T]`, `ListState[T]`, `MapState[K,V]`, но хранит одно общее значение на всю параллельную subtask, а не отдельное значение per key. **Operator state** тоже привязан к subtask — для connector state (`Kafka` offsets).",
               "correct": false,
               "sections": {
                 "what_actually": "Keyed state включает `ValueState`, `ListState`, `MapState`, `ReducingState`, `AggregatingState` — не только `ValueState`.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Checkpoint в `Flink` — это snapshot только входных данных в `Kafka`, без сохранения внутреннего state операторов.",
+              "text": "Checkpoint — это snapshot только offset'ов входных `Kafka`-партиций: `JobManager` фиксирует позиции чтения source'ов, а внутренний state операторов не сохраняется и пересчитывается заново при рестарте. Включается `env.enableCheckpointing(60000)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Checkpoint сохраняет именно state всех операторов (плюс позиции source), а не только входные данные `Kafka`.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для checkpoint `Flink` полностью останавливает поток, ждёт обработки всех событий и только потом снимает snapshot.",
+              "text": "Для консистентности `Flink` применяет stop-the-world: `JobManager` приостанавливает обработку во всех operators, дожидается drain всех in-flight событий и только затем снимает snapshot state в state backend (`HDFS`, `S3`). Включается `env.enableCheckpointing(60000)`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Chandy-Lamport` снимает согласованный snapshot без остановки потока — через barrier-маркеры, проходящие вместе с данными.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Operator снимает snapshot своего state сразу при получении barrier из первого же input stream, не дожидаясь остальных.",
+              "text": "Checkpoint использует barrier'ы (`Chandy-Lamport`): `JobManager` инжектирует barrier в input streams, и operator снимает snapshot своего state сразу при получении barrier из первого же input, не дожидаясь barrier'ов с остальных inputs. Snapshot пишется в state backend (`HDFS`, `S3`).",
               "correct": false,
               "sections": {
                 "what_actually": "При aligned checkpoints operator ждёт barriers со всех input streams, и только потом снимает snapshot — это даёт консистентность.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Exactly-once в `Flink` достигается автоматически с любым source и sink, никаких требований к ним нет.",
+              "text": "Flink гарантирует **exactly-once** на уровне state, и этого достаточно при любом sink: даже обычный non-transactional sink не даёт дублей, потому что `Flink` дедуплицирует записи на выходе по checkpoint-id. К source требование одно — поддержка replay (`Kafka`, `Kinesis`).",
               "correct": false,
               "sections": {
                 "what_actually": "End-to-end exactly-once требует source с replay (`Kafka`/`Kinesis`) и sink с транзакционной или идемпотентной записью — это явные условия.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "At-least-once и exactly-once в `Flink` идентичны: оба полностью исключают дубликаты на выходе.",
+              "text": "**Exactly-once** и **at-least-once** отличаются только производительностью: обе гарантии полностью исключают дубли на выходе, просто at-least-once снимает checkpoint чаще и потому медленнее. Условие для обеих — source с replay (`Kafka`) и transactional sink (2PC).",
               "correct": false,
               "sections": {
                 "what_actually": "At-least-once допускает дубли (быстрее и проще), а exactly-once их исключает с точки зрения state — это разные гарантии.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для exactly-once source может вообще не поддерживать replay, так как `Flink` сам восстанавливает потерянные события из воздуха.",
+              "text": "Flink гарантирует **exactly-once**, при этом source может не поддерживать replay: при сбое `Flink` восстанавливает необработанные события из state backend (`HDFS`, `S3`), куда они попадают вместе с checkpoint'ом. Sink должен быть transactional (2PC) или idempotent.",
               "correct": false,
               "sections": {
                 "what_actually": "`Flink` не «выдумывает» события: для exactly-once source обязан уметь replay (переиграть события с известного offset после рестарта).",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Parallelism в `Flink` можно задать только глобально на всю job; настроить его для отдельного оператора нельзя.",
+              "text": "`env.setParallelism(8)` задаёт parallelism сразу для всей job; переопределить его для отдельного operator через `.setParallelism(4)` нельзя — на уровне оператора `Flink` этот вызов игнорирует. `env.setMaxParallelism(128)` задаёт потолок масштабирования. Best practice: стартовать с `parallelism = #cores в кластере`.",
               "correct": false,
               "sections": {
                 "what_actually": "Parallelism настраивается и точечно: `.setParallelism(N)` на конкретном операторе переопределяет глобальный дефолт.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`maxParallelism` можно свободно менять в любой момент работы job без каких-либо ограничений и миграций.",
+              "text": "`env.setParallelism(8)` — global default; `.setParallelism(4)` на operator — override; `env.setMaxParallelism(128)` — потолок, который можно свободно поднимать на лету между рестартами без savepoint migration. Best practice: source обычно = числу partitions `Kafka`-топика.",
               "correct": false,
               "sections": {
                 "what_actually": "`maxParallelism` фиксируется при первом запуске (определяет key-groups); изменить его потом можно только через savepoint migration.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Источник всегда должен иметь максимальный parallelism в графе, многократно превышающий число партиций `Kafka`-топика.",
+              "text": "`env.setParallelism(8)` — global default; `.setParallelism(4)` на operator — override. Best practice: source-оператор всегда должен иметь parallelism кратно больше числа partitions `Kafka`-топика, иначе часть партиций не будет прочитана. `env.setMaxParallelism(128)` — потолок вертикального масштабирования.",
               "correct": false,
               "sections": {
                 "what_actually": "Parallelism источника обычно ставят равным числу партиций топика; больше партиций subtask простаивают, не давая выигрыша.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Flink` стоит выбирать всегда и для любых задач, потому что он строго превосходит `Spark` во всех сценариях без исключений.",
+              "text": "**Выбирай `Flink`**, когда критична latency < 100 мс, нужен stateful processing с big state, exactly-once end-to-end и true streaming вместо micro-batch; **выбирай `Spark Streaming`**, когда нужен `CEP` для сложных event-паттернов.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spark` выигрывает для единого batch+streaming-стека, при допустимой latency в секунды и при уже имеющейся `Spark`-экспертизе — универсального превосходства нет.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Flink` выбирают именно тогда, когда нужен единый стек для batch и streaming, а `Spark` — только для чистого streaming.",
+              "text": "**Выбирай `Flink`**, когда нужен единый стек для batch + streaming в одном движке с переиспользованием кода; **выбирай `Spark Streaming`**, когда latency > 1 с приемлема и `Spark` уже используется в компании.",
               "correct": false,
               "sections": {
                 "what_actually": "Аргументы перевёрнуты: единый batch+streaming-стек — довод за `Spark`, а pure low-latency streaming — за `Flink`.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Flink` выбирают, когда latency больше секунды полностью приемлема и low-latency не важна.",
+              "text": "**Выбирай `Flink`**, когда latency больше секунды полностью приемлема и low-latency не важна; **выбирай `Spark Streaming`**, когда нужен один стек для batch + streaming, `Spark` уже используется и команда с ним знакома.",
               "correct": false,
               "sections": {
                 "what_actually": "Если latency в секунды приемлема, это как раз аргумент в пользу `Spark`; `Flink` берут ради задержек < 100 мс.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "У `Flink` нет недостатков: он проще в освоении, имеет большее community и более зрелый SQL, чем `Spark`, по всем пунктам.",
+              "text": "1) Высокая latency из-за micro-batch-модели обработки. 2) Меньше community по сравнению со `Spark`. 3) Меньше готовых connectors (хотя основные есть). 4) `SQL API` менее зрелый, чем `Spark SQL`. 5) Сложнее в `Python` (`PyFlink` не так mature, как `PySpark`). `Spark` доминирует в data engineering overall.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Flink` есть реальные минусы: круче кривая обучения, меньше community, менее зрелый `SQL API` и `PyFlink` по сравнению со `Spark`.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главный минус `Flink` — отсутствие exactly-once и невозможность fault tolerance, из-за чего он теряет данные.",
+              "text": "1) Steeper learning curve — больше концепций (state, watermarks, checkpoints). 2) Слабая fault tolerance: `Flink` гарантирует только at-least-once, поэтому при сбоях возможны дубли. 3) Меньше community, чем у `Spark`. 4) Меньше готовых connectors. 5) Меньше ML/AI-возможностей. `Spark` доминирует в data engineering overall.",
               "correct": false,
               "sections": {
                 "what_actually": "Exactly-once и fault tolerance — сильные стороны `Flink` (через checkpoints), а не минусы; минусы лежат в экосистеме и сложности эксплуатации.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`PyFlink` полностью зрелее и популярнее `PySpark`, поэтому работа с `Python` — главное преимущество `Flink`.",
+              "text": "1) Steeper learning curve — больше концепций (state, watermarks, checkpoints). 2) Меньше community по сравнению со `Spark`. 3) Операционная сложность — checkpointing, savepoints, state migration. 4) `SQL API` менее зрелый, чем `Spark SQL`. 5) Нет `Python API` — `Flink`-джобы пишутся только на `Java`/`Scala`. `Spark` доминирует в data engineering overall.",
               "correct": false,
               "sections": {
                 "what_actually": "`PyFlink` менее зрелый, чем `PySpark` — это как раз один из минусов `Flink`, а не преимущество.",
