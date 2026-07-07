@@ -982,7 +982,7 @@
               "label": "A"
             },
             {
-              "text": "`sealed` запрещает любое наследование, как `final`.",
+              "text": "`sealed` полностью запрещает наследование, поэтому по эффекту эквивалентен `final` на классе.",
               "correct": false,
               "sections": {
                 "what_actually": "`final` запрещает ВСЕ подклассы, а `sealed` разрешает ровно перечисленные в `permits` типы — это разные механизмы.",
@@ -994,7 +994,7 @@
               "label": "B"
             },
             {
-              "text": "Подтипы `sealed` могут быть в любом пакете без ограничений.",
+              "text": "Классы из `permits` могут находиться в любом пакете и модуле — их размещение не ограничено.",
               "correct": false,
               "sections": {
                 "what_actually": "Подтипы должны быть в том же модуле (named module) или пакете (unnamed module); `permits` не может ссылаться на произвольный класс из classpath.",
@@ -1006,7 +1006,7 @@
               "label": "C"
             },
             {
-              "text": "`sealed interface` не работает с `record` — только с обычными классами.",
+              "text": "`sealed interface` нельзя реализовать через `record` — в `permits` допустимы только обычные классы.",
               "correct": false,
               "sections": {
                 "what_actually": "`sealed interface permits` отлично работает с `record` — это каноничный способ моделировать sum types (`Result = Success | Failure`).",
@@ -1329,7 +1329,7 @@
           "question_text": "Что такое ковариантность и контравариантность в контексте типов?",
           "options": [
             {
-              "text": "Массивы `Java` инвариантны, как и `List<T>`.",
+              "text": "И массивы, и `List<T>` инвариантны: присвоить `String[]` переменной типа `Object[]` компилятор запрещает.",
               "correct": false,
               "sections": {
                 "what_actually": "Массивы `Java` КОВАРИАНТНЫ: `String[]` — подтип `Object[]`, поэтому `Object[] arr = new String[3]` разрешено; это известная небезопасность (heap pollution).",
@@ -1341,7 +1341,7 @@
               "label": "A"
             },
             {
-              "text": "Все generic-типы ковариантны автоматически в `Java`.",
+              "text": "Все generic-типы в `Java` ковариантны по умолчанию: `List<String>` — подтип `List<Object>` даже без wildcard.",
               "correct": false,
               "sections": {
                 "what_actually": "`List<String>` НЕ подтип `List<Object>` — generics инвариантны без wildcard; ковариантность задают явно через `<? extends>`.",
@@ -1366,7 +1366,7 @@
               "label": "C"
             },
             {
-              "text": "`Object[] arr = new String[3]; arr[0] = 42;` компилируется и работает корректно.",
+              "text": "`Object[] arr = new String[3]; arr[0] = 42;` компилируется и на этапе выполнения кладёт `Integer` в массив без ошибок.",
               "correct": false,
               "sections": {
                 "what_actually": "Компилируется из-за ковариантности, но в runtime бросает `ArrayStoreException`: `JVM` проверяет тип элемента при каждой записи в массив.",
@@ -1462,7 +1462,7 @@
               "label": "A"
             },
             {
-              "text": "`Optional` следует использовать как поле класса для nullable-полей.",
+              "text": "`Optional<T>` предназначен прежде всего для nullable-полей класса и параметров конструктора.",
               "correct": false,
               "sections": {
                 "what_actually": "`Optional` НЕ предназначен для полей: добавляет 16 байт на объект, не сериализуется стандартным сериализатором и ломает `Jackson` по умолчанию.",
@@ -1474,7 +1474,7 @@
               "label": "B"
             },
             {
-              "text": "`optional.get()` — рекомендуемый способ извлечения значения.",
+              "text": "`optional.get()` — предпочтительный способ извлечь значение вместо `orElse` или `map`.",
               "correct": false,
               "sections": {
                 "what_actually": "`get()` бросает `NoSuchElementException`, если `Optional` пуст, — это эквивалент NPE и сводит на нет смысл `Optional`.",
@@ -1486,7 +1486,7 @@
               "label": "C"
             },
             {
-              "text": "`Optional` потокобезопасен и его можно использовать для атомарных операций.",
+              "text": "`Optional` спроектирован для атомарных операций и заменяет `AtomicReference` в многопоточном коде.",
               "correct": false,
               "sections": {
                 "what_actually": "`Optional` immutable, но не предназначен для атомарных операций над shared-состоянием — для этого есть `AtomicReference`.",
@@ -1509,7 +1509,7 @@
           "question_text": "Как типы влияют на сериализацию?",
           "options": [
             {
-              "text": "`transient` поля сериализуются с дефолтным значением типа.",
+              "text": "`transient` поля записываются в поток, но всегда со значением по умолчанию для их типа.",
               "correct": false,
               "sections": {
                 "what_actually": "`transient` поля НЕ сериализуются вообще; при десериализации они получают default типа (`null`, `0`, `false`), но не пишутся в поток.",
@@ -1534,7 +1534,7 @@
               "label": "B"
             },
             {
-              "text": "`static` поля сериализуются как часть состояния объекта.",
+              "text": "`static` поля сериализуются вместе с объектом и восстанавливают своё значение при десериализации.",
               "correct": false,
               "sections": {
                 "what_actually": "`static` поля принадлежат классу, а не экземпляру, поэтому сериализация их игнорирует; при восстановлении берётся текущее значение в `JVM`.",
@@ -1546,7 +1546,7 @@
               "label": "C"
             },
             {
-              "text": "`serialVersionUID` генерируется автоматически, и менять его не нужно.",
+              "text": "`serialVersionUID` вычисляется автоматически и остаётся неизменным при любой правке класса, поэтому объявлять его вручную не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Если UID не указать явно, компилятор генерирует его по сигнатуре класса; любое изменение полей/методов меняет UID и вызывает `InvalidClassException` на старых данных.",
@@ -1569,7 +1569,7 @@
           "question_text": "Что такое `value-based` классы?",
           "options": [
             {
-              "text": "Value-based классы можно использовать как монитор для `synchronized`.",
+              "text": "На экземпляре value-based класса можно безопасно синхронизироваться через `synchronized`.",
               "correct": false,
               "sections": {
                 "what_actually": "Нельзя: `JVM` не гарантирует уникальность объекта (`Integer.valueOf(42)` может быть кэшированным или новым), поэтому `synchronized` на нём непредсказуем.",
@@ -1581,7 +1581,7 @@
               "label": "A"
             },
             {
-              "text": "`Integer`, `Long`, `Double` — НЕ value-based классы.",
+              "text": "Обёртки `Integer`, `Long`, `Double` — обычные identity-классы, а не value-based.",
               "correct": false,
               "sections": {
                 "what_actually": "Все боксированные типы (`Integer`, `Long`, `Double`, `Boolean`, `Character`), а также `LocalDate`, `LocalTime`, `Optional` и любой `record` — value-based.",
@@ -1606,7 +1606,7 @@
               "label": "C"
             },
             {
-              "text": "Для value-based классов `==` гарантированно работает как `equals()`.",
+              "text": "Для value-based классов `==` всегда даёт тот же результат, что и `equals()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Гарантии нет: `Integer a = 200; Integer b = 200; a == b` → `false` (вне кэша); `JVM` вольна делить экземпляры или нет.",
@@ -1869,7 +1869,7 @@
           "question_text": "Что такое `text blocks` и как они обрабатывают отступы?",
           "options": [
             {
-              "text": "Text block сохраняет ВСЕ ведущие пробелы каждой строки как есть.",
+              "text": "Text block сохраняет все ведущие пробелы каждой строки как есть, без удаления общего отступа.",
               "correct": false,
               "sections": {
                 "what_actually": "Компилятор удаляет минимальный общий отступ среди всех непустых строк (включая позицию закрывающего `\"\"\"`) — это re-indentation алгоритм.",
@@ -1881,7 +1881,7 @@
               "label": "A"
             },
             {
-              "text": "Внутри text block нужно экранировать двойные кавычки `\\\"` как в обычной строке.",
+              "text": "Внутри text block двойные кавычки нужно экранировать как `\\\"`, точно как в обычном строковом литерале.",
               "correct": false,
               "sections": {
                 "what_actually": "Внутри text block кавычки НЕ требуют экранирования — разделять нужно только последовательность из трёх `\"\"\"`.",
@@ -1893,7 +1893,7 @@
               "label": "B"
             },
             {
-              "text": "Text block нельзя использовать в `switch case` или аннотациях.",
+              "text": "Text block — не константа времени компиляции, поэтому его нельзя применять в `case`-метках `switch` или в аннотациях.",
               "correct": false,
               "sections": {
                 "what_actually": "В `switch case` действительно нельзя (нужна compile-time константа без выражений), но в аннотациях МОЖНО — как любую String-константу.",
