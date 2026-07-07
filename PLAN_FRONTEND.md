@@ -788,6 +788,19 @@ token-only → затем удалить. **EDC-1 (editorial.css) — subset-pro
 
 ---
 
+**APPLY DONE — р133 (2026-07-07). Пользователь снял collision-guard явным разрешением («доделай долги … коммиты можешь делать сам»), долги применены и закоммичены.** WIP пользователя сохранён отдельным прозрачным коммитом `41782d54` (reorganizable via `git reset --soft`), фиксы легли поверх чистыми коммитами:
+
+- **`0ed95133` `test:`** — удалены мёртвые тесты AI-эндпоинтов (открытие р133): `/api/takeaway·comparison·code-trace·wrong-feedback·regenerate·hint` вырезаны вместе с провайдерами, но их тесты в `InterviewControllerApiTest` остались и падали 404 (было скрыто `-x test`). Снято 6 семейств тест-методов + осиротевшие импорты. **Инвариант базлайна был КРАСНЫМ, не зелёным** — memory «green» относилась к моменту AI-removal; тесты добавились/восстановились позже.
+- **`c0b997ba` `fix(ui):`** — AIR-1 + RIA-2 + SET-15 + AIR-fallout одним пакетом (файлы смешивают концерны — `app.js`=AIR-1+SET-15, `focus-training.html`=RIA-2+fallout — раздельные pathspec-коммиты невозможны без `git add -p`; концерны разведены в теле коммита). app.js `v=54→55`.
+  - **AIR-1** ✅ — 5 мёртвых `API.*` + оба flow fetch'ей сняты; кнопка+контейнер убраны с result.html; единственный пост-разбор = серверные «Похожие вопросы». Контракт-тесты перепривязаны (Template/Visual + result-shell.txt + InterviewControllerTest).
+  - **RIA-2** ✅ — учебная карточка `studyLearnPhase` (ответ + «Проверить себя →» → POST /study-confirm → switchToQuizPhase); форма вариантов теперь `!flashcardMode and !studyLearnPhase` (в LEARN скрыта, в QUIZ показывается). **Семантика из enum `StudyPhase`: LEARN = вопрос+полный ответ, QUIZ = вопрос+варианты.** Добавлен end-to-end render-тест (`tests=1 skipped=0`, ассерты реально исполнились).
+  - **SET-15** ✅ — `data-default-count` на `<option>` + app.js ставит дефолт при смене mode (EXAM=20, STUDY/FLASHCARD/MARATHON=50).
+  - **AIR-fallout** ✅ — снята мёртвая копия «AI временно недоступен» (флаг зашит в false).
+- **CSRF-урок:** live-проба STUDY через curl упирается в 403 — `CookieCsrfTokenRepository.withHttpOnlyFalse()` НЕ пишет `XSRF-TOKEN` cookie на GET (только JSESSIONID; Spring Security 6 deferred-token). Для проверки session-POST-флоу использовать **MockMvc `.with(csrf())`**, не raw curl. Это и лучше: render-тест = постоянная регрессия вместо разовой пробы.
+- **⚠️ ОСТАВЛЕНО пользователю (WIP-территория, НЕ мой батч):** `InterviewControllerTest.statsTableHeadersExposeKeyboardSortableContract` КРАСНЫЙ — ассертит подстроку `th class="sortable"`, а WIP пользователя добавил `scope="col"` → рендерится `th scope="col" class="sortable"`. Правится либо в `stats.html` (территория юзера), либо в самом ассерте — **не трогаю** (незавершённый a11y-pass юзера по stats). Сообщено пользователю.
+
+---
+
 ## 8. Не трогать — осознанные решения пользователя (🚫 / ⛔)
 
 - prose `--measure` full-width (259ch на 2560) · `.focus-question` 48px · `body`
