@@ -7,6 +7,47 @@
 <main id="main-content" class="ed-page" tabindex="-1">
 <div class="app-layout">
 <div class="main-content">
+<!-- Общая статистика: на дашборде данные должны идти до фильтров, иначе первый экран
+     расходуется на вторичные controls. -->
+<section th:replace="~{fragments/stats-grid :: stats-grid(stats=${stats})}"></section>
+
+<!-- Следующее действие: аналитика должна сразу подсказывать учебный шаг, а не
+     только показывать числа. Блок использует уже существующие маршруты/флаги:
+     / — повторение due, onlyWrong — разбор ошибок, weakTopics — стратегия слабых тем. -->
+<section class="card stats-next-actions" aria-labelledby="stats-next-actions-title">
+    <div class="stats-next-actions-head">
+        <h2 id="stats-next-actions-title">Что делать дальше</h2>
+        <p>Выбери короткую следующую сессию по текущему состоянию банка.</p>
+    </div>
+    <div class="stats-next-actions-grid">
+        <a class="stats-next-action stats-next-action-primary"
+           th:href="@{/}"
+           th:classappend="${stats.due > 0} ? ' is-recommended'">
+            <span class="stats-next-action-label">Повторить сегодня</span>
+            <strong th:text="${stats.due}">0</strong>
+            <span class="stats-next-action-detail"
+                  th:text="${stats.due > 0 ? @plural.pick(stats.due, 'вопрос к повтору', 'вопроса к повтору', 'вопросов к повтору') : 'всё повторено'}">вопросов к повтору</span>
+        </a>
+        <a class="stats-next-action"
+           th:href="@{/(onlyWrong=true, ordered=true)}"
+           th:classappend="${stats.due == 0 and stats.wrong > 0} ? ' is-recommended'">
+            <span class="stats-next-action-label">Разобрать ошибки</span>
+            <strong th:text="${stats.wrong}">0</strong>
+            <span class="stats-next-action-detail"
+                  th:text="${stats.wrong > 0 ? @plural.pick(stats.wrong, 'ошибка в истории', 'ошибки в истории', 'ошибок в истории') : 'ошибок пока нет'}">ошибок в истории</span>
+        </a>
+        <a class="stats-next-action stats-next-action-weak"
+           th:href="@{/(weakTopics=true, ordered=true)}"
+           th:classappend="${stats.due == 0 and stats.wrong == 0 and topicStats != null and !topicStats.isEmpty()} ? ' is-recommended'">
+            <span class="stats-next-action-label">Тренировать слабые темы</span>
+            <span class="stats-next-action-topic" data-weak-topic-summary
+                  th:text="${topicStats != null and !topicStats.isEmpty()} ? 'Самая слабая тема — по данным ниже' : 'Тем пока нет'">Самая слабая тема</span>
+            <strong th:text="${topicStats != null ? topicStats.size() : 0}">0</strong>
+            <span class="stats-next-action-detail">тем в аналитике</span>
+        </a>
+    </div>
+</section>
+
 <!-- Поиск + фильтр -->
 <section class="card stats-filter-card">
     <div class="stats-filter-row stats-filter-separated">
@@ -79,9 +120,6 @@
     </ul>
 </section>
 
-<!-- Общая статистика -->
-<section th:replace="~{fragments/stats-grid :: stats-grid(stats=${stats})}"></section>
-
 <!-- Нет данных по темам: все секции ниже (графики/таблица/прогноз/пробелы)
      гейтятся на непустой topicStats. При пустом (новый пользователь без ответов
      либо фильтр без совпадений) страница раньше показывала лишь фильтр + сетку
@@ -132,12 +170,10 @@
 <!-- Таблица тем -->
 <section class="card overflow-x-auto" th:if="${topicStats != null and !topicStats.isEmpty()}">
     <h2 class="mt-0">Детализация по темам</h2>
-    <!-- C30: контейнер несёт overflow-x:auto (горизонтальный скролл на узких
-         экранах, 5 из 6 колонок шире 320–375px). tabindex=0 делает скролл-регион
-         доступным с клавиатуры (WCAG 2.1.1) — тот же приём, что у .summary-table
-         (session-summary.html). role=region+aria-label дают ему имя в SR. -->
+    <!-- C30: контейнер несёт overflow-x:auto для wide-table режима; на мобильной
+         ширине CSS переводит tbody rows в stacked-card режим по data-label. -->
     <div class="topic-table-wrap" id="topic-table-wrap" data-collapse-rows="12"
-         tabindex="0" role="region" aria-label="Детализация по темам, таблица с горизонтальной прокруткой">
+         tabindex="0" role="region" aria-label="Детализация по темам">
     <table class="topic-table" id="topic-table">
         <caption class="visually-hidden">Статистика по темам</caption>
         <thead>
@@ -156,13 +192,13 @@
         </thead>
         <tbody>
         <tr th:each="item : ${topicStats}">
-            <th scope="row" class="topic-name">
+            <th scope="row" class="topic-name" data-label="Тема">
                 <a th:href="@{/(topic=${item.topic}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false})}"
                    th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(item.topic), '-', ' '), '_', ' '))}"
                    th:title="${item.topic}">topic</a>
             </th>
-            <td th:text="${item.total}" class="text-center">0</td>
-            <td>
+            <td th:text="${item.total}" class="text-center" data-label="Всего">0</td>
+            <td data-label="Прогресс">
                 <div class="topic-progress-bar">
                     <div class="topic-progress-learned"
                          th:attr="data-progress=${item.total != 0 ? (item.learned * 100.0 / item.total) : 0}"
@@ -175,6 +211,7 @@
                       th:text="${item.learned} + '/' + ${item.total}">0/0</span>
             </td>
             <td class="accuracy-cell text-center"
+                data-label="Точность"
                 th:classappend="${(item.correct + item.wrong) > 0 ?
                     ((item.correct * 100.0 / (item.correct + item.wrong)) >= 80 ? 'accuracy-high' :
                      ((item.correct * 100.0 / (item.correct + item.wrong)) >= 50 ? 'accuracy-mid' : 'accuracy-low'))
@@ -182,11 +219,11 @@
                 th:title="${(item.correct + item.wrong) == 0 ? 'Пока нет ответов по этой теме' : 'Верных ответов: ' + item.correct + ' · Отвечено: ' + (item.correct + item.wrong)}">
                 <span th:text="${(item.correct + item.wrong) == 0 ? '—' : #numbers.formatDecimal((item.correct * 100.0) / (item.correct + item.wrong), 1, 1) + '%'}">0%</span>
             </td>
-            <td class="text-center">
+            <td class="text-center" data-label="Сброшено">
                 <span th:if="${item.regenSum() > 0}" class="regen-badge" th:text="${item.regenSum()}">0</span>
                 <span th:if="${item.regenSum() == 0}" class="muted">—</span>
             </td>
-            <td class="text-center">
+            <td class="text-center" data-label="Зрелость">
                 <span th:with="m=${item.maturityScore}"
                       th:class="'maturity-badge ' + (${m} >= 10 ? 'maturity-high' : (${m} >= 3 ? 'maturity-mid' : 'maturity-low'))"
                       th:text="${m == 0 ? '—' : #numbers.formatDecimal(m, 1, 1)}">—</span>
@@ -293,6 +330,6 @@
      JSON.parse в stats.js. [(...)] (unescaped) кладёт literal-JSON,
      который Chart.js потом успешно парсит. -->
 <script type="application/json" id="topic-stats-data" th:inline="text">[(${topicStatsJson})]</script>
-<script th:src="@{/js/stats.js(v=11)}"></script>
+<script th:src="@{/js/stats.js(v=12)}"></script>
 </body>
 </html>

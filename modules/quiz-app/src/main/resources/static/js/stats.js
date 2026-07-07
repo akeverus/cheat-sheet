@@ -26,6 +26,48 @@
     return parts[parts.length - 1].replace(/-interview$/, '');
   }
 
+  function displayTopicName(t) {
+    var name = shortName(t).replace(/[-_]+/g, ' ').trim();
+    return name ? name.charAt(0).toUpperCase() + name.slice(1) : 'Без темы';
+  }
+
+  function topicAccuracyItem(t) {
+    var attempts = (t.correct || 0) + (t.wrong || 0);
+    return {
+      name: displayTopicName(t),
+      rawName: t.topic || '',
+      attempts: attempts,
+      accuracy: attempts === 0 ? 0 : Math.round(((t.correct || 0) / attempts) * 100)
+    };
+  }
+
+  function initNextActions() {
+    var weakSummary = document.querySelector('[data-weak-topic-summary]');
+    if (!weakSummary) return;
+
+    var topicStats = getTopicStats();
+    var weakest = topicStats
+      .map(topicAccuracyItem)
+      .filter(function (t) { return t.attempts > 0; })
+      .sort(function (a, b) { return a.accuracy - b.accuracy || b.attempts - a.attempts; })[0];
+
+    if (!weakest) {
+      weakSummary.textContent = topicStats.length > 0
+        ? 'Слабая тема появится после первых ответов'
+        : 'Тем пока нет';
+      return;
+    }
+
+    weakSummary.textContent = 'Слабее всего: ' + weakest.name + ' · ' + weakest.accuracy + '%';
+    if (weakest.rawName) weakSummary.setAttribute('title', weakest.rawName);
+
+    var action = weakSummary.closest('.stats-next-action');
+    if (action) {
+      action.setAttribute('aria-label', 'Тренировать слабые темы. Слабее всего: '
+        + weakest.name + ', точность ' + weakest.accuracy + '%.');
+    }
+  }
+
   // Читаем editorial-токены темы с :root, чтобы графики были читаемы в обеих
   // темах (по умолчанию Chart.js рисует оси тёмно-серым — невидимо на тёмном фоне).
   function themePalette() {
@@ -341,6 +383,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     hydrateProgressBarsFromData();
+    initNextActions();
     initCharts();
     initTableSort();
     initKeyboardHelp();

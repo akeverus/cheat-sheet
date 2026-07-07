@@ -821,6 +821,47 @@ html[data-design] .explanation-wrong {
 html[data-design] .explanation-correct strong { color: var(--color-status-success); }
 html[data-design] .explanation-wrong strong { color: var(--color-text-primary); }
 
+html[data-design] #interview-options label .option-explanation-disclosure {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+html[data-design] .option-explanation-disclosure {
+  margin-top: var(--space-3);
+}
+
+html[data-design] .option-explanation-disclosure .option-explanation {
+  margin-top: var(--space-2);
+}
+
+html[data-design] .option-explanation-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
+  list-style: none;
+  padding: var(--space-2) 0;
+}
+
+html[data-design] .option-explanation-summary::-webkit-details-marker {
+  display: none;
+}
+
+html[data-design] .option-explanation-summary::before {
+  content: "▸";
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+}
+
+html[data-design] .option-explanation-disclosure[open] > .option-explanation-summary::before {
+  content: "▾";
+}
+
 /* Кнопки в фокусе. Старый styles.css бьёт по ID/фикс-позиционированию
    (#interview-submit (1,0,0); .focus-page .focus-training #interview-submit (1,2,0);
    .focus-page .focus-training .action-footer fixed). Перебиваем, добавляя .focus-page
@@ -1591,6 +1632,84 @@ html[data-design] .stats-page .stat-value { font-family: var(--font-family-displ
 html[data-design] .stats-page .stat-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
 html[data-design] .stats-page .accuracy-bar { height: 4px; margin-top: var(--space-4); background: var(--color-bg-tertiary); border-radius: var(--border-radius-full); overflow: hidden; }
 html[data-design] .stats-page .accuracy-bar-fill { height: 100%; background: var(--color-accent-primary); }
+
+/* Actionable analytics: первый экран не только показывает KPI, но и предлагает
+   следующий учебный шаг. Карточки остаются нейтральными; recommended — через
+   рамку и label, а не только цвет. */
+html[data-design] .stats-page .stats-next-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+html[data-design] .stats-page .stats-next-actions-head h2 {
+  margin: 0 0 var(--space-2);
+}
+
+html[data-design] .stats-page .stats-next-actions-head p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+html[data-design] .stats-page .stats-next-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+html[data-design] .stats-page .stats-next-action {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-4);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+html[data-design] .stats-page .stats-next-action:hover {
+  border-color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+}
+
+html[data-design] .stats-page .stats-next-action.is-recommended {
+  border-color: var(--color-accent-primary);
+  box-shadow: inset 0 0 0 1px var(--color-accent-primary);
+}
+
+html[data-design] .stats-page .stats-next-action-label {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+html[data-design] .stats-page .stats-next-action.is-recommended .stats-next-action-label {
+  color: var(--color-accent-strong);
+}
+
+html[data-design] .stats-page .stats-next-action strong {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-tight);
+}
+
+html[data-design] .stats-page .stats-next-action-topic {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  overflow-wrap: anywhere;
+}
+
+html[data-design] .stats-page .stats-next-action-detail {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
 
 /* Графики */
 html[data-design] .stats-page .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6); }
@@ -2791,15 +2910,20 @@ html[data-design] .summary-tools-status {
   html[data-design] .focus-page .focus-topbar .today-chip { margin: 0; }
   html[data-design] .focus-page .focus-topbar .session-progress-track { width: 8rem; }
 
-  /* Опции — экзаменационный бланк 2×2 на всю ширину колонки (раньше включалось
-     только с 1680px, из-за чего на 1200–1680 справа зияла мёртвая зона).
-     Буквенный CSS-счётчик идёт по DOM (A B / C D по строкам), клавиши 1–9 не
-     затронуты. На result-странице (/answer) НЕ применяем — там у вариантов
-     раскрыты объяснения, их удобнее сравнивать вертикальным сканом. */
+  /* Опции по умолчанию остаются одноколоночными: для обучающих MCQ это честнее,
+     потому что длинный вариант не получает лишнюю визуальную важность в 2×2.
+     app.js ставит data-answer-layout="balanced" только когда варианты близки по
+     длине и inline-code не сконцентрирован в одной карточке. */
   html[data-design] .focus-page #interview-options {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-3);
+    max-width: var(--max-width-options);
+  }
+  /* 2×2 разрешён только для сопоставимых по длине вариантов и только в wide/grid
+     композиции. Flow/split ниже всё равно перебивают в один столбец. */
+  html[data-design] .focus-page #interview-options[data-answer-layout="balanced"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     max-width: none;
   }
   /* После ответа app.js дорисовывает в каждый вариант .option-explanation —
@@ -3286,4 +3410,281 @@ html[data-design="swiss"] .option-correct,
 html[data-design="swiss"] .option-wrong {
   background: transparent !important;
   border-color: var(--color-border-primary) !important;
+}
+
+/* ===========================================================================
+   UX REVIEW PASS — 2026-07-01.
+   Точечные исправления после просмотра реальных desktop/mobile скриншотов:
+   приоритет данных над фильтрами, компактнее mobile chrome, меньше шума в MCQ.
+   ========================================================================== */
+html[data-design] .stats-page .stats-filter-card {
+  padding: var(--space-5);
+}
+
+html[data-design] .stats-page .stats-grid {
+  margin-bottom: var(--space-5);
+}
+
+html[data-design] .stats-page .stats-grid + .stats-filter-card {
+  margin-top: 0;
+}
+
+html[data-design] #interview-options label {
+  text-align: left;
+}
+
+html[data-design] #interview-options label:has(input:checked) {
+  border-color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+  box-shadow: inset 0 0 0 1px var(--color-border-secondary);
+}
+
+html[data-design] #interview-options label:has(input:checked)::before {
+  background: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+  color: var(--color-bg-primary);
+  box-shadow: none;
+}
+
+html[data-design="swiss"] #interview-options label:has(input:checked) {
+  box-shadow: inset 3px 0 0 0 var(--color-text-primary);
+}
+
+html[data-design] #interview-options label.option-correct:has(input:checked),
+html[data-design] #interview-options label.option-wrong:has(input:checked) {
+  box-shadow: none;
+}
+
+@media (max-width: 760px) {
+  html[data-design] .stats-page .stats-next-actions,
+  html[data-design] .stats-page .stats-next-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  html[data-design] .stats-page .stats-filter-card {
+    padding: var(--space-4);
+  }
+
+  html[data-design] .stats-page .stats-filter-pane,
+  html[data-design] .stats-page .stats-search-pane {
+    flex: 0 1 auto;
+  }
+
+  html[data-design] .stats-page .search-input {
+    flex: 0 1 auto;
+  }
+
+  html[data-design] .stats-page .search-form {
+    gap: var(--space-3);
+  }
+
+  html[data-design] .stats-page .topic-table-wrap {
+    overflow-x: visible;
+  }
+
+  html[data-design] .stats-page .topic-table,
+  html[data-design] .stats-page .topic-table thead,
+  html[data-design] .stats-page .topic-table tbody,
+  html[data-design] .stats-page .topic-table tr,
+  html[data-design] .stats-page .topic-table th,
+  html[data-design] .stats-page .topic-table td {
+    display: block;
+  }
+
+  html[data-design] .stats-page .topic-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  html[data-design] .stats-page .topic-table tbody {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  html[data-design] .stats-page .topic-table tbody tr {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: var(--rule-weight) solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-bg-primary);
+  }
+
+  html[data-design] .stats-page .topic-table th,
+  html[data-design] .stats-page .topic-table td {
+    padding: 0;
+    border-bottom: 0;
+    text-align: left;
+  }
+
+  html[data-design] .stats-page .topic-table .topic-name {
+    padding-bottom: var(--space-2);
+    border-bottom: var(--rule-weight) solid var(--color-border-secondary);
+  }
+
+  html[data-design] .stats-page .topic-table .topic-name a {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+    overflow-wrap: anywhere;
+  }
+
+  html[data-design] .stats-page .topic-table td[data-label] {
+    display: grid;
+    grid-template-columns: minmax(90px, 0.42fr) minmax(0, 1fr);
+    gap: var(--space-3);
+    align-items: center;
+    color: var(--color-text-primary);
+  }
+
+  html[data-design] .stats-page .topic-table td[data-label]::before {
+    content: attr(data-label);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  html[data-design] .stats-page .topic-table td[data-label] > * {
+    justify-self: end;
+  }
+
+  html[data-design] .stats-page .topic-table td[data-label="Прогресс"] {
+    grid-template-columns: minmax(90px, 0.42fr) minmax(0, 1fr) auto;
+  }
+
+  html[data-design] .stats-page .topic-table td[data-label="Прогресс"] .topic-progress-bar {
+    width: 100%;
+    min-width: 0;
+  }
+
+  html[data-design] .stats-page .topic-table td[data-label="Прогресс"] .topic-progress-label {
+    justify-self: end;
+  }
+
+  html[data-design] .focus-page #interview-options .option-other .option-explanation,
+  html[data-design] .focus-page #interview-options .option-other .option-explanation-disclosure,
+  html[data-design] .focus-page #interview-options .option-other .option-status-muted {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  html[data-design] .ed-masthead-inner {
+    row-gap: var(--space-2);
+  }
+
+  html[data-design] .ed-masthead-title {
+    font-size: clamp(1.15rem, 5vw, 1.35rem);
+    line-height: 1.12;
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: auto;
+  }
+
+  html[data-design] .ed-masthead-kicker {
+    font-size: 0.68rem;
+  }
+
+  html[data-design] .ed-masthead-toggles {
+    gap: var(--space-2);
+  }
+
+  html[data-design] .ed-theme-toggle {
+    width: 40px;
+    height: 40px;
+  }
+
+  html[data-design] .ed-nav-link {
+    min-height: 40px;
+  }
+
+  html[data-design] .ed-page {
+    padding-top: var(--space-5);
+  }
+
+  html[data-design] .focus-question {
+    min-height: 0;
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-4);
+    font-size: clamp(1.55rem, 7.2vw, 2rem);
+  }
+
+  html[data-design] .focus-topbar {
+    margin-bottom: var(--space-4);
+  }
+
+  html[data-design] #interview-options {
+    gap: var(--space-2);
+    margin-bottom: var(--space-5);
+  }
+
+  html[data-design] #interview-options label {
+    align-items: start;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    font-size: var(--font-size-base);
+    line-height: 1.55;
+  }
+
+  html[data-design] #interview-options label::before {
+    margin-top: 0.08em;
+    width: 2rem;
+    height: 2rem;
+    font-size: var(--font-size-xs);
+  }
+
+  html[data-design] #interview-options label > span:not([class]) {
+    max-width: none;
+  }
+
+  html[data-design] .option-explanation {
+    padding: var(--space-3);
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+  }
+
+  html[data-design] .result-correct,
+  html[data-design] .result-wrong {
+    padding: var(--space-3);
+  }
+
+  html[data-design] [data-ui-fragment="post-answer-controls"] > #next-question {
+    width: 100%;
+    margin-top: var(--space-5);
+  }
+
+  html[data-design] .keyboard-hint {
+    display: none;
+  }
+
+  html[data-design] .today-hero-head {
+    margin-bottom: var(--space-3);
+  }
+
+  html[data-design] .today-hero-body {
+    gap: var(--space-4);
+  }
+
+  html[data-design] .today-hero-figure {
+    display: block;
+  }
+
+  html[data-design] .today-hero-due-label {
+    display: block;
+    margin-top: var(--space-2);
+  }
+
+  html[data-design] .settings-page .session-launcher {
+    gap: var(--space-5);
+  }
+
+  html[data-design] .settings-page .launcher-progress {
+    margin-top: var(--space-6);
+  }
 }

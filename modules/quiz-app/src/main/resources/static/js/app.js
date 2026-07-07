@@ -41,6 +41,7 @@
     timerSeconds: 0
   });
   let learningPrefs = { ...defaultLearningPrefs };
+  const OPTION_EXPLANATION_COLLAPSE_QUERY = '(max-width: 760px)';
 
   // Иконка из SVG-спрайта (fragments/icons.html) как строка для innerHTML —
   // те же Lucide-символы, что в шаблонах. Монохром через currentColor, вставляем
@@ -808,6 +809,7 @@
     initSubmitOnceGuard();
     initFlashcardShortcuts();
     initKeyboardHelp();
+    enhanceOptionExplanationDisclosure(document);
     initCopyCode();
   });
 
@@ -1148,8 +1150,33 @@
   if (!form || !optionsContainer) return;
 
   const optionInputs = Array.from(form.querySelectorAll('input[name="optionId"]'));
+  const ANSWER_LAYOUT_SKEW_THRESHOLD = 1.4;
   let answered = false;
   let timerInterval = null;
+
+  function updateAnswerLayoutMode() {
+    const labels = Array.from(optionsContainer.querySelectorAll('label[data-option-id]'));
+    if (labels.length < 2) return;
+
+    const lengths = labels.map(label => {
+      const text = label.querySelector('span')?.textContent || '';
+      return Math.max(1, text.replace(/\s+/g, ' ').trim().length);
+    });
+    const minLength = Math.min(...lengths);
+    const maxLength = Math.max(...lengths);
+    const lengthRatio = maxLength / minLength;
+    const inlineCodeCounts = labels.map(label => label.querySelectorAll('span:not([class]) code').length);
+    const hasInlineCodeSkew = Math.max(...inlineCodeCounts) > Math.min(...inlineCodeCounts);
+    const forceSingleColumn = lengthRatio > ANSWER_LAYOUT_SKEW_THRESHOLD || hasInlineCodeSkew;
+
+    optionsContainer.dataset.answerLayout = forceSingleColumn ? 'single' : 'balanced';
+    optionsContainer.dataset.answerSkew = lengthRatio.toFixed(2);
+    if (forceSingleColumn) {
+      optionsContainer.dataset.answerLayoutReason = hasInlineCodeSkew ? 'inline-code-skew' : 'length-skew';
+    } else {
+      delete optionsContainer.dataset.answerLayoutReason;
+    }
+  }
 
   function upsertFormHidden(name, value) {
     let hidden = form.querySelector('input[type="hidden"][name="' + name + '"]');
@@ -1258,6 +1285,7 @@
   loadLearningPrefs();
   applyLearningPrefsToDom();
   syncLearningPrefsToRequest();
+  updateAnswerLayoutMode();
   startQuestionTimer();
   [instantModeToggle, hardModeToggle, reviewModeToggle, adaptiveModeToggle, timerSelect]
     .filter(Boolean)
@@ -1321,6 +1349,16 @@
       const delta = key === 'ArrowDown' ? 1 : -1;
       const nextIndex = (currentIndex + delta + optionInputs.length) % optionInputs.length;
       selectOptionByIndex(nextIndex);
+      return;
+    }
+    if (key === 'Escape') {
+      const selected = form.querySelector('input[name="optionId"]:checked');
+      if (selected) {
+        event.preventDefault();
+        selected.checked = false;
+        selected.dispatchEvent(new Event('change', { bubbles: true }));
+        selected.focus({ preventScroll: true });
+      }
       return;
     }
     if (key >= '1' && key <= '9') {
@@ -1394,12 +1432,44 @@
     return wrapper.innerHTML;
   }
 
+  function optionExplanationSummaryText(explanation) {
+    if (explanation.classList.contains('explanation-correct')) {
+      return 'Почему это правильный ответ';
+    }
+    return explanation.closest('.option-wrong') ? 'Почему выбранный ответ неверен' : 'Пояснение к варианту';
+  }
+
+  function enhanceOptionExplanationDisclosure(container) {
+    if (!container || !window.matchMedia || !window.matchMedia(OPTION_EXPLANATION_COLLAPSE_QUERY).matches) {
+      return;
+    }
+    container.querySelectorAll('.option-explanation:not([data-disclosure-bound])').forEach((explanation) => {
+      if (explanation.closest('.option-explanation-disclosure')) return;
+
+      const details = document.createElement('details');
+      details.className = 'option-explanation-disclosure';
+      details.classList.add(explanation.classList.contains('explanation-correct')
+        ? 'option-explanation-disclosure-correct'
+        : 'option-explanation-disclosure-wrong');
+
+      const summary = document.createElement('summary');
+      summary.className = 'option-explanation-summary';
+      summary.textContent = optionExplanationSummaryText(explanation);
+
+      explanation.parentNode.insertBefore(details, explanation);
+      details.appendChild(summary);
+      details.appendChild(explanation);
+      explanation.setAttribute('data-disclosure-bound', 'true');
+    });
+  }
+
   // Дорисовывает mermaid-диаграммы и highlight.js в контенте, вставленном
   // ПОСЛЕ DOMContentLoaded (ответ/пояснения приходят через AJAX, и начальные
   // инициализаторы mermaid/hljs их уже не трогают). Без этого диаграмма
   // оставалась сырым `graph TD ...`, а код — без подсветки.
   function renderDynamicContent(container) {
     if (!container) return;
+    enhanceOptionExplanationDisclosure(container);
     if (typeof hljs !== 'undefined') {
       container.querySelectorAll('pre code').forEach(function (block) {
         try { hljs.highlightElement(block); } catch (_) { /* подсветка не критична */ }
