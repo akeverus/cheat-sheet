@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`CQL` поддерживает JOIN и подзапросы, как обычный SQL.",
+              "text": "`CQL` (`Cassandra Query Language`) — SQL-подобный язык: DDL (`CREATE KEYSPACE/TABLE/INDEX`, `ALTER`, `DROP`), DML (`INSERT`/`SELECT`/`UPDATE`/`DELETE`, `BATCH`); `INSERT`/`UPDATE` — upsert, `DELETE` создаёт tombstone, а вдобавок `CQL` поддерживает `JOIN` и коррелированные подзапросы между таблицами, как реляционный SQL.",
               "correct": false,
               "sections": {
                 "what_actually": "`CQL` НЕ поддерживает JOIN и подзапросы; WHERE ограничен ключевыми колонками.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`INSERT` в `Cassandra` падает с ошибкой, если строка с таким ключом уже существует.",
+              "text": "`INSERT` в `Cassandra` ведёт себя как в реляционных БД: если строка с таким primary key уже существует, команда падает с ошибкой дубликата и для перезаписи нужен отдельный `UPDATE`; при этом `DELETE` создаёт tombstone, а `WHERE` обязан содержать partition key.",
               "correct": false,
               "sections": {
                 "what_actually": "`INSERT` — это upsert: при существующем ключе он молча перезаписывает (как `UPDATE`).",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`DELETE` в `Cassandra` немедленно физически удаляет данные с диска.",
+              "text": "`DELETE` в `Cassandra` немедленно физически стирает строку из SSTable на диске и высвобождает место, поэтому `gc_grace_seconds` и compaction на само удаление не влияют; `INSERT` и `UPDATE` при этом суть upsert, а `WHERE` требует partition key.",
               "correct": false,
               "sections": {
                 "what_actually": "`DELETE` создаёт tombstone (маркер удаления); физическое удаление происходит при компакции после `gc_grace_seconds`.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Hinted Handoff — это механизм постоянного хранения всех реплик данных на координаторе.",
+              "text": "`Hinted Handoff` — механизм, при котором координатор для каждой записи постоянно хранит у себя полную копию данных всех реплик и обслуживает из неё чтения, снимая нагрузку с основных узлов; накопленные копии живут до `max_hint_window` и не отменяют repair.",
               "correct": false,
               "sections": {
                 "what_actually": "Hint — временная подсказка для НЕДОСТУПНОЙ реплики, хранимая ограниченное время (`max_hint_window`, по умолчанию 3 часа), а не постоянная копия.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Hinted Handoff полностью заменяет необходимость в repair.",
+              "text": "`Hinted Handoff` — координатор при недоступности реплики сохраняет hint локально и досылает записи после восстановления узла; поскольку накопленные hints покрывают все пропущенные за простой записи, плановый `repair` для консистентности этих строк становится избыточным.",
               "correct": false,
               "sections": {
                 "what_actually": "Hints не заменяют repair: при длительном простое (> `max_hint_window`) они истекают и данные теряются, поэтому repair всё равно нужен.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Hinted Handoff хранит подсказки бесконечно, пока реплика не вернётся.",
+              "text": "`Hinted Handoff` — координатор сохраняет hint для недоступной реплики и держит его сколь угодно долго, пока узел не восстановится, после чего досылает накопленные записи; ограничения по времени жизни hint нет, поэтому даже многодневный простой не ведёт к потере данных.",
               "correct": false,
               "sections": {
                 "what_actually": "Hints живут ограниченное время (`max_hint_window`, дефолт 3 часа); по истечении они отбрасываются.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Компакция изменяет существующие SSTable на месте, дописывая в них слитые данные.",
+              "text": "`Compaction` открывает существующие SSTable и дописывает результат слияния прямо в них, обновляя строки на месте (in-place) и вычищая устаревшие версии и tombstones без создания новых файлов; стратегии `STCS`, `LCS`, `TWCS` различаются лишь тем, какие SSTable выбираются для такой правки.",
               "correct": false,
               "sections": {
                 "what_actually": "SSTable immutable: компакция создаёт НОВЫЙ SSTable из нескольких старых (без дубликатов и tombstones), затем удаляет старые.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Стратегию компакции выбирают одну для всего кластера, она не настраивается per-table.",
+              "text": "Стратегия компакции задаётся один раз на весь кластер параметром в `cassandra.yaml` и применяется одинаково ко всем keyspace и таблицам; назначить отдельной таблице свою стратегию (например `TWCS` для time-series) нельзя без рестарта всего кластера.",
               "correct": false,
               "sections": {
                 "what_actually": "Стратегия задаётся per-table в `WITH compaction = {...}` и меняется через `ALTER TABLE`.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`LCS` (Leveled) рекомендуется для write-heavy нагрузок.",
+              "text": "`LCS` (Leveled) рекомендуется для write-heavy нагрузок: уровни и небольшие SSTable снижают write amplification при записи, тогда как `STCS` (SizeTiered) лучше подходит для read-heavy, обеспечивая чтение из одного SSTable примерно в 90% случаев.",
               "correct": false,
               "sections": {
                 "what_actually": "`LCS` — для READ-heavy (предсказуемое чтение из 1 SSTable ценой write I/O); для write-heavy берут `STCS`.",
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "По умолчанию `Cassandra` требует аутентификацию и не пускает анонимных клиентов.",
+              "text": "По умолчанию `Cassandra` стартует с `authenticator: PasswordAuthenticator` и требует логин и пароль, поэтому анонимный доступ закрыт «из коробки», а `CassandraAuthorizer` применяет гранты ролей ко всем запросам без дополнительной настройки.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию используется `AllowAllAuthenticator` (без пароля); аутентификацию включают явно (`PasswordAuthenticator`).",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Шифрование межузлового трафика и клиент-узел нельзя включить одновременно.",
+              "text": "Шифрование настраивается через `server_encryption_options` (internode) и `client_encryption_options` (клиент-узел), но эти каналы делят общий keystore и не могут быть включены одновременно — активировав TLS для клиентов, межузловой трафик приходится оставлять незашифрованным.",
               "correct": false,
               "sections": {
                 "what_actually": "`server_encryption_options` (internode) и `client_encryption_options` (клиент-узел) настраиваются независимо и работают вместе.",
@@ -2088,7 +2088,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Авторизация в `Cassandra` не поддерживает разграничение прав по таблицам.",
+              "text": "Авторизация через `CassandraAuthorizer` выдаёт роли гранты на уровне keyspace целиком (`GRANT SELECT ON KEYSPACE`), а разграничить права на отдельную таблицу внутри keyspace нельзя — для этого таблицу выносят в собственный keyspace.",
               "correct": false,
               "sections": {
                 "what_actually": "`CassandraAuthorizer` поддерживает гранты на keyspace и таблицы (`GRANT SELECT ON KEYSPACE`, `GRANT MODIFY ON TABLE`).",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cassandra` и `MongoDB` имеют одинаковую архитектуру и CAP-классификацию.",
+              "text": "`Cassandra` и `MongoDB` устроены одинаково: обе masterless P2P без выделенного primary и обе относятся к AP по CAP, различаясь лишь моделью данных — wide-column против document.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cassandra` — masterless wide-column, AP; `MongoDB` — document, primary-secondary (replica set), CP. Это разные архитектуры и компромиссы CAP.",
@@ -2256,7 +2256,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`HBase`, как и `Cassandra`, имеет masterless архитектуру без единой точки отказа.",
+              "text": "`HBase`, как и `Cassandra`, построена на masterless P2P-архитектуре без единой точки отказа: region-серверы равноправны и координируются напрямую, поэтому падение любого узла не выводит кластер из строя.",
               "correct": false,
               "sections": {
                 "what_actually": "`HBase` использует master (`HMaster`) и зависит от HDFS/ZooKeeper; masterless — это именно `Cassandra`.",
@@ -2268,7 +2268,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Cassandra`, как и `MongoDB`, по умолчанию даёт strong consistency.",
+              "text": "`Cassandra`, как и `MongoDB`, по умолчанию отдаёт strong consistency: запись подтверждается после применения на всех репликах, а понизить уровень до eventual можно лишь явной настройкой `CL`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cassandra` — tunable consistency (по умолчанию ближе к eventual при низких CL); strong по умолчанию — у `MongoDB`.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ALLOW FILTERING` — рекомендуемый способ запросов по неключевым колонкам в production.",
+              "text": "`ALLOW FILTERING` — приемлемый способ запросов по неключевым колонкам в production: координатор распараллеливает фильтрацию по узлам, а при вторичном индексе на нужной колонке он читает релевантные партиции, а не весь кластер.",
               "correct": false,
               "sections": {
                 "what_actually": "`ALLOW FILTERING` — анти-паттерн №1: полное сканирование партиций кластера; под такой запрос делают отдельную таблицу.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Неограниченно растущие партиции (unbounded wide partitions) безопасны и не требуют bucketing.",
+              "text": "Неограниченно растущие wide-партиции не требуют bucketing: paging (`fetch_size`) читает партицию порциями и не грузит её в память целиком, так что рост числа строк сказывается на объёме диска, но не на латентности чтения.",
               "correct": false,
               "sections": {
                 "what_actually": "Неограниченные партиции (например все события пользователя навсегда) растут бесконечно → медленные чтения, GC, OOM; решение — bucketing.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Большое число tombstones не влияет на производительность чтения.",
+              "text": "Большое число tombstones почти не влияет на производительность чтения: при `SELECT` Cassandra пропускает tombstone-ячейки на этапе чтения из SSTable, а физически они убираются compaction'ом после `gc_grace_seconds`, так что опасны лишь для роста диска.",
               "correct": false,
               "sections": {
                 "what_actually": "Накопление tombstones замедляет чтение и вызывает `TombstoneOverwhelmingException`; это распространённый анти-паттерн (частые DELETE).",
