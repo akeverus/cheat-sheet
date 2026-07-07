@@ -249,10 +249,10 @@ _Сводка: файлов=318 · caricature-clean(CAR0)=317/318 · остат�
 | 7 | java-collections | 46 | CRIT | · | 46 | 46 | 45 | 28 | 46 | 34 | 29 | 18 | 9 | 43 | 41 | 7 | 20 | · | 16 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 8 | jwt | 43 | CRIT | · | 43 | 43 | 43 | 34 | 43 | 34 | 31 | 11 | 20 | 42 | 32 | 10 | 25 | · | 9 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 9 | caching-strategies | 42 | CRIT | · | 42 | 42 | 42 | 30 | 42 | 37 | 30 | 17 | 20 | 39 | 35 | 12 | 19 | · | 12 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 10 | performance-testing | 42 | CRIT | · | 42 | 42 | 42 | 20 | 42 | 40 | 38 | 11 | 15 | 42 | 23 | 20 | 32 | · | 8 | · | 3 | · | · | · | · | 1 | · | · | · | · | · | ✅CAR0 |
-| 11 | contract-testing | 42 | CRIT | · | 42 | 42 | 42 | 27 | 42 | 41 | 31 | 11 | 19 | 42 | 31 | 8 | 29 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 12 | authentication-authorization-patterns | 45 | CRIT | · | 45 | 45 | 43 | 28 | 45 | 30 | 24 | 17 | 8 | 44 | 42 | 6 | 23 | · | 10 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 13 | elasticsearch | 44 | CRIT | · | 44 | 44 | 43 | 26 | 44 | 34 | 31 | 18 | 5 | 41 | 38 | 3 | 29 | · | 12 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 10 | contract-testing | 42 | CRIT | · | 42 | 42 | 42 | 27 | 42 | 41 | 31 | 11 | 19 | 42 | 31 | 8 | 29 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 11 | authentication-authorization-patterns | 45 | CRIT | · | 45 | 45 | 43 | 28 | 45 | 30 | 24 | 17 | 8 | 44 | 42 | 6 | 23 | · | 10 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 12 | elasticsearch | 44 | CRIT | · | 44 | 44 | 43 | 26 | 44 | 34 | 31 | 18 | 5 | 41 | 38 | 3 | 29 | · | 12 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 13 | performance-testing | 42 | CRIT | · | 42 | 42 | 41 | 20 | 42 | 37 | 34 | 14 | 15 | 42 | 23 | 20 | 31 | · | 8 | · | 3 | · | · | · | · | 1 | · | · | · | · | · | ✅CAR0 |
 | 14 | unit-testing | 45 | CRIT | · | 45 | 45 | 43 | 30 | 45 | 35 | 27 | 16 | 20 | 42 | 32 | 4 | 15 | · | 7 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 15 | spring-cloud | 43 | CRIT | · | 43 | 43 | 43 | 30 | 43 | 32 | 26 | 11 | 7 | 43 | 39 | 4 | 33 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 16 | redis | 43 | CRIT | · | 43 | 43 | 43 | 5 | 43 | 43 | 34 | 7 | 17 | 41 | 35 | 4 | 22 | · | 18 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
@@ -628,6 +628,11 @@ _Сводка: файлов=318 · caricature-clean(CAR0)=317/318 · остат�
   mistaken-models. ratio Q38 6.49x→**1.69x** (near-parity, correct=346), Q43 6.54x→2.45x, Q30 6.20x→2.76x.
   Ложность сохранена (redis A binary-incompatible / D pubsub-removed; hex A structure-guarantees-purity /
   D Lombok-as-main-sin; mcp A failed-adoption / D MCP↔A2A competing). Убран маркер «полностью».
+- ✅ **`performance-testing` Q14/Q25/Q26/Q27/Q32** (f993b8f4, 15 дистракторов): worst untouched non-essay
+  файл (9 flagged блоков, correct 381-411). Свежий скан хвоста: приоритет non-essay correct (≤420) —
+  лучший parity-gain. Короткие false-fact стабы (52-89) → правдоподобные mistaken-models: много role-swap
+  (Q14 SLI↔SLA/SLO, Q26 Checks↔Assertions) и wrong-tool-fact (Q27 k6=Java/Scala/GUI, Q32 Locust=Go/JS).
+  ratio 5.3-6.3x → 2.2-2.6x. Убраны всегда/любые. correct/label/order не тронуты.
 - ⚠️ **Negation-echo (rule 11) скан = почти всё false-positive:** высокий Jaccard с correct ловит ХОРОШИЕ
   minimal-pair дистракторы (одна точечная ошибка, та же структура — ровно чего требуют 20 правил).
   langchain4j Q12/Q17/Q18, scala-effects Q9/A, crac Q16/C — все legit, НЕ трогать. Единственный genuine
