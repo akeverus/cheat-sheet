@@ -194,7 +194,7 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 | `fragments/result-zone-head.html` | ✅ | — | — | ✅ | ✅ | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | ✅ | — | ✅ | ✅ | — | — | Чисто; zone-chip+hint (RZH-1) |
 | `fragments/stats-grid.html` | ✅ | — | — | ✅ | ✅ | — | — | — | — | — | 🚫 | ✅ | — | ✅ | — | — | ✅ | — | — | — | — | ✅ | — | ✅ | ✅ | — | — | Чисто; accuracy-bar aria-hidden (SGR-3); cold-start = 🚫 |
 | `fragments/today-widget.html` | ✅ | — | — | ✅ | ✅ | — | ✅ | — | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | 🚫 | ✅ | — | ✅ | ✅ | — | ✅ | ✅ | — | — | Чисто; «N из M к повтору» (TDW-1); streak без aria-live = 🚫 |
-| `fragments/training-actions.html` | ✅ | — | — | ✅ | ✅ | 🌱 | ✅ | ✅ | — | ✅ | — | — | — | ✅ | ✅ | ✅ | ✅ | 🚫 | ✅ | — | — | ✅ | — | ✅ | ✅ | — | — | 🌱TAC-3 keyboard-hint контраст (low); timer/hint без aria-live = 🚫 |
+| `fragments/training-actions.html` | ✅ | — | — | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | — | — | ✅ | ✅ | ✅ | ✅ | 🚫 | ✅ | — | — | ✅ | — | ✅ | ✅ | — | — | Чисто; TAC-3 keyboard-hint контраст ✅ verified р107 (min 5.93:1); timer/hint без aria-live = 🚫 |
 | **▸ СТИЛИ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
 | `css/tokens.css` | — | ✅ | ✅ | — | 🚫 | ✅ | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | ✅ | — | — | — | — | ✅ | ✅ | — | TOK-1 AA-гейт CLEAN, TOK-5 OS-prefs; TOK-2 accent≈semantic hue = 🚫 identity, mitig. not-by-color-alone |
 | `css/base.css` | 🌱 | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱BAS-15 tabs↔seg (HIER), 🌱BAS-21 today-hero-hint tertiary (4 AA-fail, min 2.96); BAS-17 helper-контраст = ✅ verified-clean; BAS-18 measure = 🚫 |
@@ -206,7 +206,7 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 | `js/stats.js` | — | — | 🌱 | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | 🌱STJ-1 tick-подписи графиков мелкие (low); kbd/progress-dup c app.js = 🚫 standalone-by-design; v=12 |
 
 **Как читать сводку.** Открытые 🌱-пункты по файлам: `settings.html`(SET-14/SET-7),
-`stats.html`(STA-18/STA-5), `header.html`(HDR-1), `icons.html`(ICO-3), `training-actions.html`(TAC-3),
+`stats.html`(STA-18/STA-5), `header.html`(HDR-1), `icons.html`(ICO-3),
 `base.css`(BAS-15/BAS-21), `editorial/linear/swiss/broadsheet.css`(EDC-1/DSG-1/DSG-2 — overlay'и со stranded-правилами),
 `app.js`(APP-8/APP-9), `stats.js`(STJ-1).
 ⛔: `error.html`(ERR-3 403-retry), `app.js`(APP-5 favorite).
@@ -426,7 +426,7 @@ link-check). APP-9 — JS-построенная comparison-table без `th[sco
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
 | TAC-1 | `#question-timer` aria-hidden | Без live-region (иначе озвучка каждую секунду) | — | — | — | — | H | ✅ DONE | A11Y |
 | TAC-2 | submit (`aria-keyshortcuts=Enter`) + next-btn | Контракт submitId/Text/Disabled/Title | — | — | — | — | H | ✅ DONE | — |
-| TAC-3 | `.keyboard-hint` (символ ⌨ убран) | Текст самодостаточен, без цветного эмодзи вне icon-системы | Усилить контраст/иерархию hint | L | L | L | M | 🌱 BACKLOG | TR-3 |
+| TAC-3 | `.keyboard-hint` (символ ⌨ убран) | Текст самодостаточен, без цветного эмодзи вне icon-системы. **Контраст резолвлен статически (р107):** hint = `color:var(--color-text-secondary)` (base.css:992, единственная декларация; блок 3662 = только `display:none` на узком брейкпоинте) на `--color-bg-primary` (body), font-size-xs = small-text → порог AA-normal 4.5:1. Посчитал text-secondary↔bg-primary по всем 21 токен-блокам (10 дизайнов×2 темы+editorial-варианты): **MIN 5.93:1 (notion-dark), ВСЕ PASS** — margin к 4.5 комфортный. Контраст НЕ баг | ✅ verified-clean, правки нет | L | L | L | H | ✅ DONE (р107, static contrast) | TR-3 |
 
 ### 6.C.1 — `static/css/tokens.css`
 
