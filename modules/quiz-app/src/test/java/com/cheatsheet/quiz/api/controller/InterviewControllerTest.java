@@ -501,7 +501,9 @@ class InterviewControllerTest {
         // aria-keyshortcuts="Enter Space") навешивает stats.js при инициализации —
         // это progressive enhancement, в серверном HTML их НЕТ (round-01 C28:
         // role=columnheader у нативного <th> избыточен, состояние держит aria-sort).
-        assertThat(body).contains("th class=\"sortable\"");
+        // `<th>` теперь несёт scope="col" (a11y, WCAG 1.3.1/H63, commit b57cc089) →
+        // проверяем подстроку class="sortable" без жёсткой привязки к порядку атрибутов.
+        assertThat(body).contains("class=\"sortable\"");
         assertThat(countOccurrences(body, "class=\"sortable")).isGreaterThanOrEqualTo(4);
         assertThat(body).contains("data-sort-label=");
         assertThat(body).contains("id=\"table-sort-status\"");

@@ -53,14 +53,12 @@ class SecurityConfigWebMvcTest {
 
     @Test
     void sensitiveEndpointsAllowValidAdminToken() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/admin/senior-rules")
-                        .header("X-Admin-Token", "test-admin-token"))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/regenerate")
-                        .header("X-Admin-Token", "test-admin-token"))
-                .andExpect(status().isBadRequest());
-
+        // /api/admin/senior-rules и /api/regenerate удалены вместе с AI-кодом
+        // (commit b4ee4ffc). Их матчеры намеренно оставлены в SecurityConfig
+        // как scaffolding, поэтому запрос БЕЗ токена всё ещё блокируется 403
+        // (см. sensitiveEndpointsAreBlockedWithoutAdminToken), но С валидным
+        // токеном роутинг доходит до отсутствующего контроллера → 404, а не 200.
+        // Единственный живой чувствительный эндпоинт — /export.
         mockMvc.perform(MockMvcRequestBuilders.get("/export")
                         .header("X-Admin-Token", "test-admin-token"))
                 .andExpect(status().isOk());
