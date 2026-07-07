@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Timer` записывает только количество событий и не хранит информацию о времени их выполнения.",
+              "text": "`Timer` измеряет длительность только ещё выполняющихся, незавершённых операций и число одновременно активных вызовов. Создаётся через `Timer.builder(\"http.request.active\").register(registry)`, а `timer.record(() -> processRequest())` держит замер открытым, пока задача не завершилась, и итоговую длительность отдельных завершённых вызовов не фиксирует.",
               "correct": false,
               "sections": {
                 "what_actually": "`Timer` автоматически фиксирует и время, и количество: `count`, `totalTime`, `max` и при настройке перцентили.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Timer` нужно всегда останавливать вручную через `stop()`, иначе замер не запишется.",
+              "text": "`Timer` записывает замер только явной парой start/stop: `Timer.Sample sample = Timer.start(registry)` открывает интервал, а `sample.stop(timer)` закрывает и сохраняет его. Способы `timer.record(Duration.ofMillis(150))` и `timer.record(() -> processRequest())` дают лишь разовую оценку и в реестр замер не пишут.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть удобные формы без ручного stop: `timer.record(Duration.ofMillis(150))` и `timer.record(() -> processRequest())` пишут замер сами.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Timer` измеряет время только в наносекундах и не позволяет задавать единицы вроде миллисекунд или секунд.",
+              "text": "`Timer` измеряет и время, и частоту событий, но работает исключительно в наносекундах: `timer.record(Duration.ofMillis(150))` переводит значение в нс при записи, и прочитать агрегаты в других единицах через `timer.totalTime(TimeUnit.SECONDS)` уже нельзя — выбор `TimeUnit` при чтении не поддерживается.",
               "correct": false,
               "sections": {
                 "what_actually": "`Timer` принимает `Duration` любой точности (`Duration.ofMillis(150)`), а базовую единицу экспорта бэкенд выбирает сам (`Prometheus` — секунды).",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Boot` автоматически регистрирует только бизнес-метрики приложения, которые разработчик объявил вручную.",
+              "text": "`Spring Boot` авто-регистрирует технические метрики JVM (`jvm.memory.used`, `jvm.gc.pause`) и HTTP (`http.server.requests`), но каждый набор нужно явно включать свойством `management.metrics.binders.*.enabled=true` в `application.yml`: по умолчанию все `MeterBinder`-ы выключены и данных не поставляют.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: авто-регистрируются именно технические метрики (JVM, HTTP, пулы), а бизнес-метрики разработчик добавляет сам.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Boot` авто-регистрирует только метрики HTTP-запросов и ничего про JVM или пулы соединений.",
+              "text": "`Spring Boot` через `MeterBinder` авто-регистрирует только HTTP-метрики `http.server.requests` (по методу/URI/статусу) и `http.client.requests`; JVM (`jvm.memory.used`, `jvm.gc.pause`), `HikariCP` и `Logback` под авто-инструментирование не попадают и требуют ручной регистрации.",
               "correct": false,
               "sections": {
                 "what_actually": "Авто-регистрация шире: JVM (память, GC, потоки, классы), HTTP, `HikariCP`, `Tomcat`, `Logback`, кэши.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Spring Boot` авто-регистрирует метрики, но они доступны только в логах, а не через эндпоинт.",
+              "text": "`Spring Boot` авто-регистрирует технический набор метрик (JVM, HTTP, `HikariCP`), но только при наличии на classpath `micrometer-registry-prometheus`: без конкретного registry-бэкенда `MeterBinder`-ы не активируются и ни одна метрика не собирается.",
               "correct": false,
               "sections": {
                 "what_actually": "Авто-метрики доступны через `/actuator/metrics` и `/actuator/prometheus`, а не через логи.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Кастомную метрику в `Spring Boot` можно создать только через аннотацию `@Timed` над методом.",
+              "text": "Кастомную метрику создают только аннотацией `@Timed(\"payments\")` над методом сервиса: инжектить `MeterRegistry` при этом не нужно, а `Counter.builder(...)` и `Gauge.builder(...)` в прикладном коде не применяются — все виды метрик покрывает `@Timed`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Timed` — лишь один из способов и только для таймеров; есть инжекция `MeterRegistry` и `MeterBinder` для любых типов.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Кастомную метрику нужно создавать заново в каждом методе через `registry.counter(...)`, иначе она не обновится.",
+              "text": "Кастомную метрику получают вызовом `registry.counter(\"payments\", \"status\", \"success\")` внутри каждого метода перед инкрементом: счётчик приходится пересоздавать при каждом вызове, потому что между вызовами `MeterRegistry` его не сохраняет и накопленное значение обнуляется.",
               "correct": false,
               "sections": {
                 "what_actually": "Достаточно создать метрику один раз (в конструкторе) и переиспользовать ссылку; `register()` идемпотентен по id.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для кастомной метрики обязательно нужен отдельный `MeterRegistry`, который разработчик создаёт сам.",
+              "text": "Для кастомной метрики разработчик сам создаёт экземпляр `MeterRegistry` (например `new SimpleMeterRegistry()`) в сервисе и регистрирует метрики в нём: инжектить бин `MeterRegistry` из контекста нельзя, иначе метрики не попадут в общий реестр.",
               "correct": false,
               "sections": {
                 "what_actually": "Кастомные метрики регистрируют в уже существующем авто-сконфигурированном `MeterRegistry` из контекста, отдельный реестр не нужен.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Перцентили в `Micrometer` можно настроить только через `application.yml`, программный API их не поддерживает.",
+              "text": "Перцентили в `Micrometer` задаются только декларативно через `management.metrics.distribution.percentiles` в `application.yml`; программный `Timer.builder(...).publishPercentiles(0.5,0.95,0.99)` перцентили не включает и служит лишь для именования метрики.",
               "correct": false,
               "sections": {
                 "what_actually": "Перцентили задаются и программно (`.publishPercentiles(...)`, `.publishPercentileHistogram(true)`), и через YAML — оба пути равноправны.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Client-side перцентили можно свободно усреднять между инстансами, получая корректный общий p99.",
+              "text": "Client-side перцентили (`.publishPercentiles(0.5,0.95,0.99)`) вычисляются в приложении и свободно агрегируются между инстансами: `Prometheus` усредняет присланные каждым подом `p99` через `avg()` и даёт корректный общий перцентиль.",
               "correct": false,
               "sections": {
                 "what_actually": "Client-side перцентили НЕ агрегируются по инстансам: среднее перцентилей не равно перцентилю — для агрегации нужен histogram.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Гистограммы (`publishPercentileHistogram`) вычисляются полностью на клиенте и не требуют участия `Prometheus`.",
+              "text": "Гистограммы (`.publishPercentileHistogram(true)`) полностью вычисляют перцентили на стороне клиента и экспортируют уже готовый `p99`; `Prometheus` при этом лишь хранит присланное значение и `histogram_quantile()` не вызывает.",
               "correct": false,
               "sections": {
                 "what_actually": "Histogram-режим отдаёт buckets, а сам перцентиль (`histogram_quantile()`) считает уже `Prometheus` на стороне сервера.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`MeterFilter` — это инструмент только для удаления неугодных метрик и не умеет ничего, кроме `deny`.",
+              "text": "`MeterFilter` — это фильтр только для запрета регистрации метрик: единственная его операция `MeterFilter.deny(...)` отбрасывает ненужные метрики по имени, а переименование, работу с тегами и ограничение кардинальности он не выполняет.",
               "correct": false,
               "sections": {
                 "what_actually": "`MeterFilter` гораздо шире `deny`: он переименовывает метрики, добавляет/удаляет теги (`ignoreTags`), ограничивает кардинальность (`maximumAllowableTags`) и явно разрешает (`accept`).",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`MeterFilter` применяется к метрикам уже после их экспорта в `Prometheus`, фильтруя данные на стороне TSDB.",
+              "text": "`MeterFilter` применяется к метрикам уже после их экспорта: `Prometheus` вызывает его на стороне TSDB при scrape и через `registry.config().meterFilter(...)` отфильтровывает присланные серии перед записью в хранилище.",
               "correct": false,
               "sections": {
                 "what_actually": "`MeterFilter` работает в момент регистрации метрики внутри приложения, ДО экспорта, а не на стороне `Prometheus`.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`MeterFilter` нельзя использовать для добавления общих тегов — для этого есть только `commonTags`.",
+              "text": "`MeterFilter` умеет удалять и переименовывать теги, но добавлять общие теги ко всем метрикам через него нельзя: для этого есть отдельный механизм `MeterRegistryCustomizer.commonTags(...)`, к `MeterFilter` не относящийся.",
               "correct": false,
               "sections": {
                 "what_actually": "`MeterFilter` как раз умеет добавлять теги (в том числе через `commonTags`, который сам реализован как фильтр).",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`MeterBinder` — это аннотация, которую вешают на метод для автоматической регистрации метрики.",
+              "text": "`MeterBinder` — это аннотация уровня метода (`@MeterBinder`): её вешают на метод сервиса, и `Spring Boot` при старте автоматически регистрирует возвращаемую методом метрику в `MeterRegistry`.",
               "correct": false,
               "sections": {
                 "what_actually": "`MeterBinder` — это SPI-интерфейс с методом `bindTo(MeterRegistry)`, а не аннотация; его реализуют классом.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`MeterBinder` нужно вручную вызывать через `bindTo()` в каждом сервисе, где требуются его метрики.",
+              "text": "`MeterBinder` — это интерфейс с методом `bindTo(MeterRegistry registry)`, но `Spring Boot` его автоматически не вызывает: `bindTo()` нужно вручную вызывать в каждом сервисе, которому нужны эти метрики, передавая туда свой `MeterRegistry`.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Spring Boot` бины `MeterBinder` подхватываются автоматически — `bindTo()` вызывается фреймворком, руками его дёргать не нужно.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`MeterBinder` предназначен только для метрик базы данных и не подходит для других ресурсов.",
+              "text": "`MeterBinder` — это SPI (`bindTo(MeterRegistry registry)`), предназначенный только для инструментирования пулов соединений к базе данных вроде `HikariCP`; для JVM, кэшей `Caffeine` и очередей применяют другие механизмы, не `MeterBinder`.",
               "correct": false,
               "sections": {
                 "what_actually": "`MeterBinder` универсален: Spring Boot через него регистрирует JVM, `HikariCP`, `Caffeine`, `Tomcat` и любые кастомные метрики, не только БД.",
