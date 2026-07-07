@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно одного алерта на `5xx > 5%`: если HTTP-ошибок мало, LLM-система здорова, остальные алерты избыточны.",
+              "text": "Достаточно одного алерта на `5xx > 5%` за 5 мин: пока доля HTTP-ошибок в норме, ответ `200 OK` подтверждает исправность LLM, поэтому eval-score- и hallucination-алерты избыточны.",
               "correct": false,
               "sections": {
                 "what_actually": "Анти-паттерн именно в этом: для LLM 200 OK с галлюцинацией хуже, чем 500, поэтому нужны ещё cost-spike, latency p99, eval-drop и hallucination-алерты.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Алертить нужно только на cost spike, потому что деньги — единственный по-настоящему критичный риск LLM-системы.",
+              "text": "Алертить нужно только на cost spike (`hourly > 3× weekly_avg` → SMS), потому что перерасход бюджета — единственный необратимый риск, а латентность и качество саморегулируются.",
               "correct": false,
               "sections": {
                 "what_actually": "Cost-spike — лишь один из Tier-1 алертов; не менее критичны latency p99, error rate, rate-limit и падение eval-score.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Все алерты должны быть Tier 1 и слать SMS дежурному, потому что любое отклонение в LLM одинаково критично.",
+              "text": "Каждый алерт должен быть Tier 1 и слать SMS дежурному, потому что деление сигналов на уровни критичности рискует замаскировать деградацию качества.",
               "correct": false,
               "sections": {
                 "what_actually": "Алерты делят на три tier'а по серьёзности: cache hit drop или рост tool-calls (Tier 3) не будят дежурного, в отличие от cost-spike (Tier 1).",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "PII защищают только тем, что ставят пароль на доступ к observability-дашборду; сам текст промптов можно хранить как есть.",
+              "text": "Достаточно ограничить доступ к observability-бэкенду (RBAC на проект в Langfuse); сам `gen_ai.prompt` при этом можно писать в span как есть, раз прочитать его смогут только допущенные.",
               "correct": false,
               "sections": {
                 "what_actually": "Контроль доступа не отменяет утечку при breach: содержимое нужно редактировать (Presidio/regex) или вовсе не сохранять (флаг capture-content=false).",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Единственный способ — полностью отключить весь трейсинг для запросов с PII, иначе данные неизбежно утекут.",
+              "text": "Единственный надёжный способ — целиком отключить трейсинг для запросов с PII (`tracer.suppress()`), потому что любая маскировка оставляет остаточные следы и рано или поздно протекает.",
               "correct": false,
               "sections": {
                 "what_actually": "Полное отключение трейсинга избыточно: достаточно отключить захват content (`CAPTURE_MESSAGE_CONTENT=false`) или редактировать его, сохранив метаданные.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Хеширование `sha256(prompt)` — это обратимая операция, поэтому хранить хеш так же опасно, как и сырой промпт.",
+              "text": "`sha256(prompt)` не защищает данные, потому что это шифрование с ключом и хеш штатно расшифровывается обратно в исходный промпт.",
               "correct": false,
               "sections": {
                 "what_actually": "`sha256` необратим: по хешу нельзя восстановить исходный текст, поэтому он даёт уникальность запроса без раскрытия PII.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "User feedback бывает только явный (thumbs up/down, звёзды); неявные сигналы поведения для observability бесполезны и их не собирают.",
+              "text": "User feedback учитывают только явный (thumbs up/down, 5 звёзд, comment); implicit-сигналы — переформулировка вопроса, копирование ответа, закрытие чата — это шум, в observability их не заводят.",
               "correct": false,
               "sections": {
                 "what_actually": "Кроме explicit есть implicit-сигналы (переформулировал вопрос, скопировал ответ, закрыл чат) и downstream (конверсия/retention/refund) — они тоже ценны.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Feedback связывают с трейсом по времени: ищут ближайший по таймстемпу trace, потому что `trace_id` фронтенду недоступен.",
+              "text": "Feedback привязывают к трейсу по времени: backend берёт ближайший по timestamp trace в окне ±5 c, потому что `trace_id` живёт только на бэкенде и фронтенду недоступен.",
               "correct": false,
               "sections": {
                 "what_actually": "Связку делают по `trace_id`, который фронтенд получает с ответом и шлёт обратно в feedback — не по времени.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Корреляция `eval_score` с `user_rating` не нужна: если LLM-judge поставил высокий score, мнение пользователя уже не важно.",
+              "text": "Считать `correlation(eval_score, user_rating)` не нужно: LLM-judge откалиброван по определению, поэтому при высоком `eval_score` расхождение с оценкой пользователя можно игнорировать.",
               "correct": false,
               "sections": {
                 "what_actually": "Корреляция критична: если judge says 0.9, а юзер ставит ❌, значит judge плохо калиброван и его нужно перекалибровать.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Golden dataset` собирают исключительно из случайной выборки запросов, потому что репрезентативность важнее, чем сложность кейсов.",
+              "text": "`Golden dataset` формируют случайной выборкой из потока production-трейсов (`lf.fetch_traces(limit=100)` со случайным сэмплингом), потому что равномерное покрытие трафика важнее прицельного отбора low-score, user-flagged и adversarial кейсов.",
               "correct": false,
               "sections": {
                 "what_actually": "Берут не случайную выборку, а целенаправленные источники: high-frequency, low-score, user-flagged, edge cases и adversarial — именно сложные/частые кейсы.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для golden dataset `expected_output` берут прямо из самого трейса без участия человека, потому что это и есть «правильный» ответ модели.",
+              "text": "Для `golden dataset` `expected_output` берут прямо из трейса (`item.expected_output = trace.output`) без human-review, потому что ответ модели в проде и есть эталонный `expected_output`.",
               "correct": false,
               "sections": {
                 "what_actually": "expected_output курируется человеком: сырой ответ из трейса мог быть как раз плохим (это часто low-score/thumbs-down кейс).",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Golden dataset` нужен только для разовой оценки перед первым релизом и больше не используется — это статичный артефакт.",
+              "text": "`Golden dataset` — статичный артефакт для разовой приёмки перед первым релизом; в CI на каждое изменение промпта его повторно не гоняют, чтобы не смещать baseline.",
               "correct": false,
               "sections": {
                 "what_actually": "Dataset живёт постоянно: его прогоняют в CI при каждом изменении промпта и пополняют новыми low-score/flagged кейсами из прода.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "RAG-трейс — это один span на весь pipeline; разделять embed_query, vector_search и llm_call на отдельные spans не нужно.",
+              "text": "RAG удобнее трейсить одним span'ом на весь `chat_request`: `embed_query`, `vector_search` и `llm_call` — внутренние шаги, дробить их на child-spans только раздувает трейс.",
               "correct": false,
               "sections": {
                 "what_actually": "RAG-трейс разбивают на spans: `embed_query`, `vector_search` (с `retrieved_chunks`), `rerank`, `llm_call` (с `chunks_used`), `post_check` — иначе не видно, где затык.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для RAG достаточно мерить только `answer_relevancy`; retrieval-метрики вроде precision@k и recall не нужны, ведь главное — финальный ответ.",
+              "text": "Для RAG достаточно мерить `answer_relevancy` на финальном ответе; `retrieval_precision@k` и `retrieval_recall` избыточны, ведь плохой retrieval и так проявится в низком `answer_relevancy`.",
               "correct": false,
               "sections": {
                 "what_actually": "Retrieval-метрики критичны: плохой retrieval (`precision@k`/`recall`/`mrr` низкие) даёт плохой ответ, даже если llm-часть идеальна.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`faithfulness` и `answer_relevancy` — это одно и то же: обе метрики показывают, насколько ответ соответствует вопросу пользователя.",
+              "text": "`faithfulness` и `answer_relevancy` измеряют одно и то же — соответствие ответа вопросу пользователя, поэтому держать в дашборде обе метрики незачем.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные метрики: `faithfulness` — опирается ли ответ на контекст (нет ли галлюцинации), `answer_relevancy` — отвечает ли он на вопрос.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Context utilization` — это доля запросов, для которых retrieval вообще вернул хоть какой-то контекст; чанки и цитаты тут ни при чём.",
+              "text": "`Context utilization` — это доля запросов, где `vector_search` вернул хотя бы один чанк выше порога релевантности; какие именно чанки попали в ответ, метрика не учитывает.",
               "correct": false,
               "sections": {
                 "what_actually": "Это доля использованного контекста внутри одного ответа (`cited_chunks / retrieved_chunks`), а не доля запросов с непустым retrieval.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Context utilization` всегда равна 1.0, если retrieval сработал, потому что модель по определению использует весь переданный ей контекст.",
+              "text": "`Context utilization` равна 1.0 всякий раз, когда `vector_search` вернул top-k чанков, потому что модель по построению читает и учитывает весь переданный контекст.",
               "correct": false,
               "sections": {
                 "what_actually": "Модель часто игнорирует часть контекста: из 10 чанков может использовать 2 (utilization 0.2) или 0 (галлюцинация).",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Единственный способ посчитать `context utilization` — это attention-based анализ весов модели, который доступен для любого API.",
+              "text": "Единственный корректный способ измерить `context utilization` — attention-based: смотреть распределение весов внимания по токенам контекста; citation-парсинг для этого слишком груб.",
               "correct": false,
               "sections": {
                 "what_actually": "Attention-based требует доступа к weights (для API-моделей недоступен); основные способы — citation-based и LLM-as-judge.",
