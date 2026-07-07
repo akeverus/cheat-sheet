@@ -198,7 +198,7 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 | **▸ СТИЛИ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
 | `css/tokens.css` | — | ✅ | ✅ | — | 🚫 | ✅ | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | ✅ | — | — | — | — | ✅ | ✅ | — | TOK-1 AA-гейт CLEAN, TOK-5 OS-prefs; TOK-2 accent≈semantic hue = 🚫 identity, mitig. not-by-color-alone |
 | `css/base.css` | 🌱 | ✅ | ✅ | ✅ | ✅ | 🌱 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | 🌱BAS-15 tabs↔seg (HIER), 🌱BAS-21 today-hero-hint tertiary (4 AA-fail, min 2.96); BAS-17 helper-контраст = ✅ verified-clean; BAS-18 measure = 🚫 |
-| `css/editorial.css` (мёртв) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱EDC-1 не подключён (link/test/JS-ссылок нет), editorial=дефолт → правила ≈ base.css; но перед удалением нужен селектор subset-proof (урок р99: link-check недостаточен), не только «не подключён» |
+| `css/editorial.css` (мёртв) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱EDC-1 subset-proof ✅ р109: pre-split монолит, 9 uniques = box-sizing-дубли + обсолет pre-tabs-разметка → чистый историч-дубль, SAFE-TO-DELETE (ждёт ГО юзера, НЕ stranded как DSG-1) |
 | `css/{linear,swiss}.css` (не подключены) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱DSG-1 ❌КОРР.р99: НЕ чистые дубли — linear держит `a`/`a:hover`, swiss `.ed-masthead-kicker`/`.ed-eyebrow` НЕ в base.css (частичный порт, как broadsheet) → port-or-abandon decision, НЕ удалять как junk |
 | `css/broadsheet.css` (не дубль!) | 🌱 | — | — | — | — | — | 🌱 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 🌱 | — | — | 🌱DSG-2 CONFIRMED: 13 структ.правил (nav/btn/link) НЕ в base.css (0 vs linear 2/swiss 6) → broadsheet теряет структ.акценты, токены живут |
 | **▸ СКРИПТЫ** | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
@@ -207,7 +207,7 @@ _Свер. 2026-07-06 (HEAD после pedago-интерливов). On-disk в�
 
 **Как читать сводку.** Открытые 🌱-пункты по файлам: `settings.html`(SET-14/SET-7),
 `stats.html`(STA-18/STA-5), `header.html`(HDR-1), `icons.html`(ICO-3),
-`base.css`(BAS-15/BAS-21), `editorial/linear/swiss/broadsheet.css`(EDC-1/DSG-1/DSG-2 — overlay'и со stranded-правилами),
+`base.css`(BAS-15/BAS-21), `linear/swiss/broadsheet.css`(DSG-1/DSG-2 — overlay'и со stranded-правилами), `editorial.css`(EDC-1 — subset-proof ✅ р109: чистый историч-дубль, SAFE-TO-DELETE ждёт ГО),
 `app.js`(APP-8/APP-9), `stats.js`(STJ-1).
 ⛔: `error.html`(ERR-3 403-retry), `app.js`(APP-5 favorite).
 **⚠️ КОРР. р99 — overlay'и НЕ «можно удалить как junk»:** прежняя рекомендация «EDC-1+DSG-1 удалить мёртвые
@@ -223,8 +223,7 @@ overlay'и (`linear`/`swiss`/`broadsheet.css`) держат design-specific elem
 в `base.css`, и `base.css` имеет НОВЫЕ правила (`label:has(checked)`, `.option-*`), которых у overlay нет → overlay
 stale+partial. Дизайны рендерятся БЕЗ overlay-акцентов (linear без link-цвета, swiss без kicker/eyebrow, broadsheet
 без 13 nav/btn-правил). Токены живут через `tokens.css`. Решение: port-to-base (вернуть fidelity) ИЛИ accept
-token-only → затем удалить. EDC-1 (editorial.css) — нужен селектор subset-proof перед удалением (не только
-link-check). APP-9 — JS-построенная comparison-table без `th[scope]`/`caption`. Всё в §6.
+token-only → затем удалить. **EDC-1 (editorial.css) — subset-proof ✅ ВЫПОЛНЕН (р109): пре-split монолит (621 sel), лишь 9 editorial-only vs base+tokens (817 sel) = box-sizing-дубли + обсолет pre-tabs-разметка (.control-card/.settings-content/.app-layout) → ноль live-stranded, чистый историч-дубль, SAFE-TO-DELETE (в отличие от DSG-1) — ждёт лишь ГО юзера.** APP-9 — JS-построенная comparison-table без `th[scope]`/`caption`. Всё в §6.
 
 ---
 
@@ -468,7 +467,7 @@ link-check). APP-9 — JS-построенная comparison-table без `th[sco
 
 | # | Пункт | Состояние / проблема | Направление | Imp | Risk | Eff | Conf | Статус | ↔ |
 |---|-------|----------------------|-------------|-----|------|-----|------|--------|---|
-| EDC-1 | не подключён ни одним `<link>` (свер. 2026-07-07: link/import/test/JS/build-ссылок нет; `TemplateFragmentContractTest` читает только `tokens.css`+`base.css`, editorial.css не пиннит) | Путает чтение/поиск, дублирует токены. editorial = ДЕФОЛТ-дизайн → его правила unwrapped (как design-agnostic слой `base.css`); `base.css` (242K) split-then-extended из editorial.css (169K) → вероятно stale-подмножество | **⚠️ УРОК р99 (из DSG-1): link-check НЕДОСТАТОЧЕН для «pure dupe → delete».** Как выяснилось с linear/swiss — overlay мог держать element-правила, НЕ портированные в base.css. Перед удалением editorial.css нужен **селектор-уровневый subset-proof** (каждое правило editorial.css присутствует в `base.css`/`tokens.css`), а не только «не подключён» + подсчёт. Удаление меняет 0 рендера (не грузится), но без subset-proof теряет потенциально непортированные правила. Мягко-деструктивно → subset-proof + подтверждение юзера | L | L | M | M | 🌱 BACKLOG (needs selector subset-proof, не только link-check) | — |
+| EDC-1 | не подключён ни одним `<link>` (свер. 2026-07-07: link/import/test/JS/build-ссылок нет; `TemplateFragmentContractTest` читает только `tokens.css`+`base.css`, editorial.css не пиннит) | editorial.css = **пре-split монолит** (173K, 578 блоков: `:root`-токены + `html[data-design]`-база + `.ed-*`-компоненты в одном файле) — предок нынешних `tokens.css`+`base.css`. Путает чтение/поиск | **✅ SUBSET-PROOF ВЫПОЛНЕН (р109):** селектор-set-diff editorial.css(621 sel) vs `base.css`+`tokens.css`(817 sel) → **всего 9 editorial-only селекторов**, и ВСЕ 9 = либо (a) функц-дубли box-sizing (`html[data-design] *`/`::before`/`::after` — base.css:76 держит `box-sizing:border-box`), либо (b) **ОБСОЛЕТ pre-redesign-разметка** (`.settings-page .control-card`/`.settings-content`/`.app-layout`/`.main-content`/`.card`, `.result-page .option-other`) — заменена tabs-редизайном `0eb762a5` (`.settings-shell`/`.settings-tab` в base.css); текущие шаблоны эти классы НЕ эмитят. → **ноль live-релевантных stranded-правил.** Категорически ОТЛИЧАЕТСЯ от linear/swiss (DSG-1: держат УНИКАЛЬНЫЕ current design-signature вроде link-цвета/kicker, которых в base НЕТ). editorial = **чистый pre-split историч-дубль, безопасен к удалению** (0 рендер-дельты + 0 потери fidelity: «unique» биты целят в несуществующую разметку). Осталось лишь ГО юзера (r99-политика: overlay-удаление = решение юзера; 173K = консеквентно) | L | L | L | H | 🌱 SAFE-TO-DELETE (subset-proof ✅ р109; ждёт ГО юзера, НЕ stranded как DSG-1) | — |
 
 ### 6.C.4 — `static/css/{broadsheet,linear,swiss}.css`
 
