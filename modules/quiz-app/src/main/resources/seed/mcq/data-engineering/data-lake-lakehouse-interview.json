@@ -609,7 +609,7 @@
           "question_text": "Чем отличается Apache Iceberg?",
           "options": [
             {
-              "text": "`Iceberg` — это storage format для `S3`, заменяющий собой `Parquet` как формат файлов.",
+              "text": "`Apache Iceberg` — это новый columnar file format, пришедший на смену `Parquet` и `ORC`: он хранит и данные, и column-статистику внутри одного бинарного файла, а движки (`Spark`, `Trino`) читают его напрямую вместо `Parquet`, за счёт чего сканы получаются быстрее.",
               "correct": false,
               "sections": {
                 "what_actually": "Здесь путаница уровней: `Iceberg` — table format поверх `Parquet`/`ORC`, он не заменяет файловый формат, а управляет метаданными над ним.",
@@ -621,7 +621,7 @@
               "order": 0
             },
             {
-              "text": "`Iceberg` требует `Databricks` runtime для записи в таблицу.",
+              "text": "`Apache Iceberg` — open table format от Netflix, но commit новых snapshot'ов в таблицу доступен из `Databricks` runtime; сторонние движки вроде `Trino` и `Flink` работают с таблицей в read-only режиме.",
               "correct": false,
               "sections": {
                 "what_actually": "Ровно наоборот: `Iceberg` создан как vendor-neutral альтернатива `Delta` и пишется `Spark`, `Trino`, `Flink` без привязки к `Databricks`.",
@@ -646,7 +646,7 @@
               "order": 2
             },
             {
-              "text": "Hidden partitioning в `Iceberg` означает, что данные вообще не партиционированы.",
+              "text": "`Apache Iceberg` использует hidden partitioning: партиция по `day(ts)` не хранится в данных, поэтому движок не может заранее отсечь файлы и вынужден сканировать всю таблицу, отбрасывая лишние строки уже после чтения.",
               "correct": false,
               "sections": {
                 "what_actually": "Партиционирование есть, но скрыто от пользователя: partition spec (`day(ts)`) вычисляется автоматически, и пишут фильтр по `ts`, не зная о партиции.",
@@ -982,7 +982,7 @@
               "order": 0
             },
             {
-              "text": "`Z-Order` — это просто сортировка таблицы по одной колонке (`ORDER BY`).",
+              "text": "`Z-Order` — это линейная сортировка таблицы по одной ведущей колонке (как `ORDER BY user_id`): строки раскладываются строго по возрастанию этого столбца, поэтому data skipping ускоряет фильтры именно по нему.",
               "correct": false,
               "sections": {
                 "what_actually": "`ORDER BY` делает single-column сортировку; `Z-Order` — multi-dimensional clustering, располагающий близкие значения по нескольким columns рядом.",
@@ -994,7 +994,7 @@
               "order": 1
             },
             {
-              "text": "`Z-Order` работает только по одной partition column таблицы.",
+              "text": "`Z-Order` применяется к partition-колонкам таблицы: он переупорядочивает партиции между собой так, чтобы соседние партиции хранили близкие значения partition key.",
               "correct": false,
               "sections": {
                 "what_actually": "Партиционирование и Z-Order — разные вещи: Z-Order работает внутри партиций по non-partition columns.",
@@ -1006,7 +1006,7 @@
               "order": 2
             },
             {
-              "text": "`Z-Order` повышает write latency, но никак не влияет на скорость reads.",
+              "text": "`Z-Order` увеличивает стоимость записи из-за дополнительного `OPTIMIZE`-прохода, а на скорость чтения влияет лишь косвенно — через уменьшение числа файлов, но не через data skipping.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл Z-Order именно в ускорении reads через file skipping; `OPTIMIZE` — фоновая операция, а выигрыш получают запросы.",
@@ -1149,7 +1149,7 @@
           "question_text": "Что такое Data Mesh?",
           "options": [
             {
-              "text": "`Data Mesh` — это программный продукт (software) для управления Lakehouse.",
+              "text": "`Data Mesh` — это готовый software-продукт (от вендора вроде `Databricks`), который разворачивают поверх Lakehouse: он автоматизирует каталогизацию, data quality и SLA, чтобы команды получали self-serve доступ к данным из коробки.",
               "correct": false,
               "sections": {
                 "what_actually": "Это socio-technical парадигма, а не tool; реализуется на `Iceberg`/`Delta` + `Unity`/`Glue` + governance-процессах.",
@@ -1161,7 +1161,7 @@
               "order": 0
             },
             {
-              "text": "`Data Mesh` означает, что одна central команда владеет всеми pipelines организации.",
+              "text": "`Data Mesh` означает, что одна центральная data-команда владеет всеми pipelines и датасетами организации и раздаёт остальным доступ по запросу через единый governance-слой.",
               "correct": false,
               "sections": {
                 "what_actually": "Это data lake monolith — антипаттерн, от которого Mesh как раз отказывается в пользу domain ownership.",
@@ -1173,7 +1173,7 @@
               "order": 1
             },
             {
-              "text": "`Data Mesh` полностью устраняет центральную инфраструктуру — каждый domain делает всё сам с нуля.",
+              "text": "`Data Mesh` убирает общую платформу как таковую — каждый domain поднимает собственный стек хранения и обработки с нуля, а обмен данными идёт напрямую между командами без общих стандартов.",
               "correct": false,
               "sections": {
                 "what_actually": "Остаётся self-serve platform team, а federated governance задаёт общие стандарты; central infra не исчезает.",
@@ -1389,7 +1389,7 @@
           "question_text": "В чём суть small files problem и как её решать?",
           "options": [
             {
-              "text": "Small files — это не проблема, потому что у `S3` нет никакого open-overhead на файл.",
+              "text": "Small files не деградируют performance на `S3`: object storage открывает любой объект за один `GET`, поэтому число файлов на скорость чтения не влияет — важен лишь суммарный объём данных.",
               "correct": false,
               "sections": {
                 "what_actually": "`S3 LIST` + `GET` на каждый файл создают network roundtrips, а `Spark` per-task overhead умножается на число файлов.",
@@ -1401,7 +1401,7 @@
               "order": 0
             },
             {
-              "text": "Решение small files problem — просто увеличить число executor cores в `Spark`.",
+              "text": "Small files problem решается масштабированием кластера: достаточно добавить executor cores в `Spark`, чтобы больше файлов читалось параллельно, и overhead исчезает сам собой.",
               "correct": false,
               "sections": {
                 "what_actually": "Это не решает root cause: больше parallelism не помогает, если bottleneck в metadata reads, а не в compute.",
@@ -1413,7 +1413,7 @@
               "order": 1
             },
             {
-              "text": "Медленные streaming inserts не создают small files — проблема только у быстрых записей.",
+              "text": "Small files порождают редкие крупные batch-загрузки, а частые streaming-инсерты с короткими интервалами, наоборот, укрупняют файлы за счёт дозаписи в уже существующие.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый micro-batch пишет файл; короткий interval (1 min) даёт много мелких файлов в день независимо от скорости.",
@@ -1509,7 +1509,7 @@
           "question_text": "Зачем нужны метаданные и каталоги (AWS Glue, Hive Metastore, Unity Catalog)?",
           "options": [
             {
-              "text": "`Hive Metastore` — современный рекомендуемый стандарт для Lakehouse в 2024.",
+              "text": "`Hive Metastore` — современный рекомендуемый стандарт каталога для Lakehouse: в 2024 новые проекты стартуют именно на нём как на самом активно развиваемом варианте со встроенными governance и lineage.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hive Metastore` старый (Java, локальный); современный тренд — vendor-neutral `Iceberg REST Catalog`.",
@@ -1534,7 +1534,7 @@
               "order": 1
             },
             {
-              "text": "`Unity Catalog` работает исключительно с `Iceberg` и не поддерживает `Delta`.",
+              "text": "`Unity Catalog` рассчитан на `Iceberg`-таблицы и не умеет регистрировать `Delta`; для `Delta`-таблиц Databricks держит отдельный legacy-каталог.",
               "correct": false,
               "sections": {
                 "what_actually": "`Unity Catalog` native для `Delta` и добавляет support для `Iceberg` через Uniform; он не ограничен `Iceberg`.",
@@ -1546,7 +1546,7 @@
               "order": 2
             },
             {
-              "text": "`Catalog` хранит сами данные таблиц и тем самым заменяет собой `S3`.",
+              "text": "`Catalog` хранит сами данные таблиц — строки и колонки — в своей внутренней БД, поэтому при наличии каталога отдельное object storage вроде `S3` уже не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Catalog хранит metadata (schema, location, partitions); данные остаются в object storage (`S3`).",
@@ -1569,7 +1569,7 @@
           "question_text": "Какой формат таблиц выбрать в 2026?",
           "options": [
             {
-              "text": "plain Parquet полностью устарел — в 2026 его нельзя использовать ни при каких условиях.",
+              "text": "plain Parquet устарел и вытеснен table format'ами: в 2026 даже для простой batch-аналитики берут `Delta` или `Iceberg`, потому что голый Parquet не даёт ACID и schema evolution.",
               "correct": false,
               "sections": {
                 "what_actually": "Для simple batch analytics без UPSERT plain Parquet всё ещё актуален и дешевле, чем overhead table format.",
@@ -1581,7 +1581,7 @@
               "order": 0
             },
             {
-              "text": "`Delta` — единственный по-настоящему open standard среди table formats.",
+              "text": "`Delta` — самый vendor-neutral open standard среди table format'ов, поэтому для максимальной совместимости с `Trino`, `Snowflake` и `Flink` выбирают именно его.",
               "correct": false,
               "sections": {
                 "what_actually": "`Iceberg` более open (multi-vendor support), тогда как `Delta` привязан к roadmap `Databricks`.",
@@ -1606,7 +1606,7 @@
               "order": 2
             },
             {
-              "text": "`Hudi` подходит для всего и полностью устраняет нужду в `Iceberg`/`Delta`.",
+              "text": "`Hudi` покрывает все сценарии — от streaming upserts до batch-аналитики и vendor-neutral интеграций — и в 2026 делает выбор в пользу `Iceberg` или `Delta` избыточным.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hudi` оптимизирован под UPSERT-heavy workloads; для read-heavy multi-engine BI он не лучший выбор.",
