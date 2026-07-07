@@ -737,6 +737,14 @@ token-only → затем удалить. **EDC-1 (editorial.css) — subset-pro
 
 Инвариант: **единственный endpoint перехода фазы/состояния без template- и JS-триггера ⟹ режим тупикует; каждый @PostMapping обязан иметь UI-affordance ИЛИ быть удалён как мёртвый (route-integrity: сверять @PostMapping ↔ `th:action`/JS-fetch).** См. §6.F (RIA-2), [[project_session_modes_summary_flow]].
 
+**ROUTEINT — полный route↔UI-trigger cross-reference (route-integrity, §16) — свод-аудит 2026-07-07, р129.** ✅ **CLEAN, кроме уже-известного RIA-2.** Систематически сверил ВСЕ 22 контроллер-mapping'а против template-`th:action`/`th:href`/модельных-URL + JS-`API`/fetch — искал orphan-эндпоинты (mapping без триггера, как RIA-2) и битые ссылки (триггер без mapping).
+
+- **POST-эндпоинты — все с триггером, КРОМЕ одного:** `/api/answer`·`/api/confidence`·`/api/favorite` (JS), `/start`·`/answer`·`/finish`·`/flashcard-reveal`·`/flashcard-grade`·`/settings`·`/settings/reset-options` (template-формы) → ✅. **`/study-confirm` — 0 триггеров = RIA-2 (P1, р128).** Единственный orphan.
+- **GET-страницы — все достижимы:** `/` (nav/бренд), `/stats`·`/settings` (nav), `/review` (session-summary «Повторить ошибки»), `/session-summary` (redirect с POST /finish), **`/training`** (НЕ литеральный `@{/training}`, а серверный URL из `MvcModelAttributeMapper:113-118` — empty-retry/mode-start CTA `/training?mode=FLASHCARD|STUDY` → verified, НЕ orphan), `/export` (JS на /settings).
+- **JS-вызовы без server-mapping (битые) — все уже трекаются:** `/api/wrong-feedback`·`/api/comparison`·`/api/takeaway`·`/api/code-trace` = AIR-1 (вырезаны с AI, р126); `/api/regenerate` = мёртв, но недостижим (кнопка под `th:if=aiEnabled`, [[project_ai_removal]]). Новых битых нет.
+
+Инвариант: **каждый `@PostMapping` обязан иметь template-`th:action` ИЛИ JS-fetch-триггер (иначе orphan-тупик); каждый JS/template-триггер обязан бить в существующий mapping (иначе битый вызов); GET-страница — достижима из nav/ссылки/redirect/модельного-URL.** Метод: grep `@(Get|Post)Mapping` ↔ `th:action=@{…}` + `th:href` + модельные-URL-строки + JS `API.*`/`fetch`; расхождение в любую сторону = дефект. Покрытие: ВСЕ 22 mapping'а. (§7-кандидат: **ROUTEINT**.)
+
 ---
 
 ## 8. Не трогать — осознанные решения пользователя (🚫 / ⛔)
