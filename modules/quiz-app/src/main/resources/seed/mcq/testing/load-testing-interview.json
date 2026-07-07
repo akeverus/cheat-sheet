@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все четыре инструмента одинаковы по производительности и языку — выбор чисто косметический.",
+              "text": "Сравнение: язык — JMeter XML/GUI, k6 JS/TS, Gatling Scala/Java, Locust Python; но по производительности лидируют JMeter и Locust (very high), а k6 и Gatling — medium; GUI-дизайн только у JMeter.",
               "correct": false,
               "sections": {
                 "what_actually": "Они заметно различаются: язык (XML/GUI, JS/TS, Scala/Java, Python), производительность (k6 и Gatling — very high; JMeter и Locust — medium), отчёты, наличие GUI-дизайна и зрелость.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Только JMeter предоставляет GUI-дизайн тестов, а k6, Gatling и Locust его тоже имеют.",
+              "text": "Сравнение: язык — JMeter XML/GUI, k6 JS/TS, Gatling Scala/Java, Locust Python; производительность — k6 и Gatling высокая; лучшие встроенные отчёты — у Locust, а Gatling и k6 требуют внешней Grafana; GUI-дизайн только у JMeter.",
               "correct": false,
               "sections": {
                 "what_actually": "GUI для drag-drop дизайна теста есть именно у JMeter; k6, Gatling и Locust — code-based и GUI-дизайнера не имеют (у Locust/Gatling есть лишь web UI наблюдения).",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "k6 имеет самую высокую зрелость и крупнейшую legacy-базу, а JMeter — растущий новичок.",
+              "text": "Сравнение: язык — JMeter XML/GUI, k6 JS/TS, Gatling Scala/Java, Locust Python; производительность — k6 и Gatling высокая; но максимальная зрелость и крупнейшая legacy-база — у k6, а JMeter — растущий новичок с небольшим сообществом.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: максимальная зрелость и крупнейшая legacy-база у JMeter (с 1998), а k6 — быстро растущий, но более молодой инструмент.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "k6-тест пишут как XML-файл `.jmx` и запускают через `jmeter -n`.",
+              "text": "k6-тест — это JS-модуль: импортируешь `http from 'k6/http'`, а `check`, `group`, `sleep` — из модуля `k6/core`; кастомные метрики через `Rate from 'k6/metrics'`, в `export const options` задаёшь scenarios и thresholds.",
               "correct": false,
               "sections": {
                 "what_actually": "k6-тест — это JS-модуль с `export const options` и `export default function`, запускается `k6 run script.js`; `.jmx` и `jmeter -n` — это JMeter.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В k6 проверки ответа делают функцией `assert`, как в Python-тестах.",
+              "text": "k6-тест — JS-модуль с импортами `http from 'k6/http'` и `check, group, sleep from 'k6'`; `export function setup()` вызывается в конце и чистит за собой, а `export function teardown()` один раз в начале делает логин и возвращает токен в `export default function`.",
               "correct": false,
               "sections": {
                 "what_actually": "В k6 ответ проверяют функцией `check(res, { ... })`, а не `assert`; `assert` — это про unit-фреймворки вроде pytest.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Точка входа k6-теста объявляется как `export function main()`, а не `default`.",
+              "text": "k6-тест — JS-модуль с импортами из `k6/http` и `k6`; основной поток объявляют как именованный `export function main()`, которую k6 находит по имени, — `export default function` точкой входа в k6 не является.",
               "correct": false,
               "sections": {
                 "what_actually": "Точкой входа служит `export default function ()`, которую k6 вызывает на каждой итерации VU; именованного `main()` k6 не ищет.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Bottleneck — это всегда CPU; если latency растёт, нужно просто добавить ядер.",
+              "text": "Bottleneck analysis сводится к мониторингу CPU: если утилизация ядер высокая — скейлить CPU или оптимизировать код; память, сеть, БД и disk I/O на рост latency практически не влияют.",
               "correct": false,
               "sections": {
                 "what_actually": "Узким местом бывает что угодно: память, сеть, БД, disk I/O, внешние API — поэтому анализ начинают с метрик, а не с предположения про CPU.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Bottleneck analysis делают один раз: нашёл узкое место — и на этом всё, повторять не нужно.",
+              "text": "Bottleneck analysis выполняют один раз: нашёл самое узкое место, оптимизировал его — и процесс завершён; повторные прогоны load test уже ничего не меняют.",
               "correct": false,
               "sections": {
                 "what_actually": "Процесс итеративный: устранение одного узкого места сдвигает предел на следующий ресурс, поэтому цикл «тест → оптимизация → тест» повторяют.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для bottleneck analysis достаточно одних только логов приложения; APM и профайлеры не нужны.",
+              "text": "Для bottleneck analysis достаточно логов приложения и `EXPLAIN ANALYZE`; APM (Datadog, New Relic) и профайлеры (`pprof`, async-profiler) избыточны — по логам видно, какой ресурс упирается.",
               "correct": false,
               "sections": {
                 "what_actually": "Логи не показывают утилизацию CPU/RAM, план SQL-запроса и спаны; для этого нужны APM (Datadog/New Relic), профайлеры (`pprof`, async-profiler) и `EXPLAIN ANALYZE`.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главная и единственная частая ошибка — слишком высокая нагрузка; всё остальное некритично.",
+              "text": "Единственная значимая ошибка нагрузочного теста — недостаточный warm-up: если прогреть JIT и connection pools, остальные факторы (think time, регион генератора, кэширование, percentiles) на результат уже не влияют.",
               "correct": false,
               "sections": {
                 "what_actually": "Ошибок много и они разнородны: happy-path only, нереалистичные данные, отсутствие think time, тест из того же региона, искажение кэшем, отсутствие baselines и игнор percentiles.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Тестировать только happy path — это правильно; error-сценарии в нагрузочном тесте проверять не нужно.",
+              "text": "Тестировать только happy path — правильный подход: нагрузочный тест меряет производительность на успешных запросах, а error-сценарии проверяют отдельно функциональными тестами, и на числа load test они не влияют.",
               "correct": false,
               "sections": {
                 "what_actually": "Happy-path-only — как раз ошибка: под нагрузкой важны и error-сценарии (таймауты, 5xx, ретраи), иначе пропустишь деградацию на отказах.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Baselines не нужны: достаточно посмотреть на абсолютные числа одного прогона, чтобы оценить performance.",
+              "text": "Baselines не нужны: достаточно посмотреть абсолютные p95/p99 одного прогона и сверить их с SLA — историческое сравнение прогонов между собой ничего не добавляет.",
               "correct": false,
               "sections": {
                 "what_actually": "Без baseline не с чем сравнивать: «p95 = 180ms» само по себе ничего не говорит о регрессии — нужен опорный прогон, поэтому их отсутствие считают ошибкой.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Coordinated omission — это когда несколько генераторов нагрузки случайно шлют один и тот же запрос дважды.",
+              "text": "Coordinated omission — это когда параллельные VU синхронизируют свои таймеры и одновременно бьют по системе всплесками, из-за чего график throughput выглядит рваным.",
               "correct": false,
               "sections": {
                 "what_actually": "Coordinated omission — это когда инструмент **замедляется** вслед за медленной системой и потому **недооценивает** latency, а не дублирование запросов.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Coordinated omission делает percentile-latency хуже реальных, преувеличивая хвост.",
+              "text": "Coordinated omission искажает измерения в консервативную сторону: percentile-latency выглядят хуже реальных, потому что инструмент дублирует медленные запросы в статистике и раздувает хвост.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот, omission делает percentile-latency **лучше** реальных (оптимистичнее), скрывая всплески, а не преувеличивая их.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Решение coordinated omission — увеличить think time между запросами, чтобы система успевала отвечать.",
+              "text": "Coordinated omission устраняют, увеличивая think time между запросами: давая системе больше пауз, тул успевает зафиксировать каждый медленный ответ, и хвост latency перестаёт теряться.",
               "correct": false,
               "sections": {
                 "what_actually": "Решение — constant arrival rate (open model, k6 `constant-arrival-rate`), HdrHistogram-коррекции и синтетическая инъекция, а не увеличение пауз.",
