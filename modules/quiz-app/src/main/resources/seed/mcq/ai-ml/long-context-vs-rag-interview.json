@@ -669,7 +669,7 @@
           "question_text": "Как реализуется ACL filtering (row-level security) в RAG vs long context?",
           "options": [
             {
-              "text": "В long context ACL делается тривиально: достаточно попросить модель «выдай те куски, которые видит пользователь» из единого prompt.",
+              "text": "В long context ACL тривиален: достаточно system-prompt-правила «выдавай пользователю только куски с его clearance» — модель фильтрует контекст на лету, и это надёжнее, чем metadata-filter в `RAG`.",
               "correct": false,
               "sections": {
                 "what_actually": "Из одного prompt нельзя надёжно «выдать только видимые куски»: всё уже в контексте, и system-prompt-правила обходятся prompt injection; надёжный путь — pre-filter документов до подачи.",
@@ -681,7 +681,7 @@
               "order": 0
             },
             {
-              "text": "ACL в `RAG` невозможен: vector DB не поддерживают фильтрацию, поэтому row-level security там не реализуешь.",
+              "text": "ACL в `RAG` реализуется только через отдельный vector-индекс под каждую роль: единый индекс не даёт row-level security, поэтому под каждый уровень clearance поднимают свою коллекцию и маршрутизируют запрос в неё.",
               "correct": false,
               "sections": {
                 "what_actually": "В `RAG` ACL как раз тривиален: метаданные на vector DB + filter в retrieval (`filter={\"team\": user.team, ...}` в `Pinecone`/`Weaviate`).",
@@ -693,7 +693,7 @@
               "order": 1
             },
             {
-              "text": "Per-user prompt cache решает ACL для long context и при этом остаётся экономически выгодным.",
+              "text": "Per-user prompt cache решает ACL для long context: у каждого пользователя свой кэшированный prefix только из видимых ему документов, а поскольку cache reuse убирает повторный prefill, это ещё и дёшево при любом числе пользователей.",
               "correct": false,
               "sections": {
                 "what_actually": "Per-user cache — лишь один из вариантов и часто экономически нецелесообразен (кэш под каждого пользователя), а не универсальное выгодное решение.",
@@ -849,7 +849,7 @@
           "question_text": "Что такое TTFT (time-to-first-token) для long context и как его оптимизируют?",
           "options": [
             {
-              "text": "`TTFT` — это полное время генерации всего ответа от начала до последнего токена.",
+              "text": "`TTFT` — это полное время генерации всего ответа: метрику считают от отправки запроса до момента, когда выдан последний токен, поэтому для long context её снижают, ускоряя декодинг всех выходных токенов сразу.",
               "correct": false,
               "sections": {
                 "what_actually": "`TTFT` — время именно до первого токена (равно prefill latency); полное время ответа включает ещё decode всех последующих токенов.",
@@ -861,7 +861,7 @@
               "order": 0
             },
             {
-              "text": "Главный способ снизить `TTFT` для long context — уменьшить max_tokens вывода: чем короче ответ, тем меньше prefill.",
+              "text": "Главный способ снизить `TTFT` для long context — уменьшить max_tokens вывода: чем короче генерируемый ответ, тем меньше токенов нужно посчитать до первого, поэтому prefill проходит быстрее.",
               "correct": false,
               "sections": {
                 "what_actually": "max_tokens влияет на decode (длину вывода), а не на prefill: `TTFT` снижают prompt caching, prefill chunking, speculative decoding, context distillation, continuous batching.",
@@ -886,7 +886,7 @@
               "order": 2
             },
             {
-              "text": "`TTFT` для long context оптимизировать не выходит: prefill длинного prompt занимает фиксированные десятки секунд независимо от инфраструктуры.",
+              "text": "`TTFT` для long context упирается в prefill и снижается только более быстрыми GPU: алгоритмические приёмы вроде prompt caching на первый токен не влияют, так как кэш ускоряет лишь декодинг последующих токенов.",
               "correct": false,
               "sections": {
                 "what_actually": "Оптимизировать можно и нужно: prompt caching вообще пропускает prefill для cached prefix, prefill chunking распараллеливает его, speculative decoding ускоряет старт.",
@@ -1269,7 +1269,7 @@
           "question_text": "Что такое cascading (small → large model) и какую экономию он даёт?",
           "options": [
             {
-              "text": "Cascading — это запуск одного и того же запроса на всех моделях сразу (small, medium, large) и усреднение их ответов.",
+              "text": "`Cascading` — параллельный запуск запроса на small, medium и large сразу с усреднением их ответов; экономия идёт от того, что дешёвые модели «голосуют» и тянут среднюю цену за запрос вниз.",
               "correct": false,
               "sections": {
                 "what_actually": "Cascading — последовательная эскалация: дешёвая модель отвечает первой, и только при низкой confidence запрос идёт дальше к более дорогой, а не на все сразу.",
@@ -1294,7 +1294,7 @@
               "order": 1
             },
             {
-              "text": "Cascading дешевле одиночной модели и не несёт рисков, потому что каждый запрос решается на самой дешёвой ступени.",
+              "text": "`Cascading` дешевле одиночной large-модели и почти не несёт рисков качества: escalation-логика гарантирует, что сложный запрос всегда поднимется на large, поэтому точность не падает относительно always-large.",
               "correct": false,
               "sections": {
                 "what_actually": "Не каждый запрос решается дёшево: escalated идёт через small+large (двойная стоимость), а self-evaluation может ошибочно пропустить сложный запрос.",
@@ -1306,7 +1306,7 @@
               "order": 2
             },
             {
-              "text": "В cascading решение об эскалации принимает сам пользователь, вручную выбирая модель для каждого запроса.",
+              "text": "В `cascading` решение об эскалации на следующую ступень принимает пользователь: он вручную выбирает модель под каждый запрос, а система лишь суммирует итоговую стоимость по выбранным ступеням.",
               "correct": false,
               "sections": {
                 "what_actually": "Решение принимается автоматически — self-evaluation модели, эвристики (длина, keywords, intent) или отдельная validator-модель, а не пользователь вручную.",
@@ -1329,7 +1329,7 @@
           "question_text": "Как code agents (Cursor, Cody, Aider) комбинируют retrieval и long context?",
           "options": [
             {
-              "text": "Code agents целиком загружают весь репозиторий в каждый prompt и не используют никакого retrieval или symbol resolution.",
+              "text": "Code agents вроде `Cursor` и `Aider` целиком загружают весь репозиторий в каждый prompt, опираясь на 200K-context `Claude 3.5 Sonnet`, и потому не нуждаются ни в symbol resolution, ни в embedding search.",
               "correct": false,
               "sections": {
                 "what_actually": "Полную загрузку использует лишь `Copilot Workspace` для small/medium проектов; `Cursor`/`Cody`/`Aider` комбинируют AST/symbol retrieval + embedding search + long context, а не грузят всё.",
@@ -1341,7 +1341,7 @@
               "order": 0
             },
             {
-              "text": "Code agents используют embedding search по файлам и не работают с AST или символами кода.",
+              "text": "Code agents строят retrieval только на embedding search по файлам и не используют AST или symbol resolution, поскольку точное разрешение символов слишком дорого для больших репозиториев.",
               "correct": false,
               "sections": {
                 "what_actually": "Они активно используют structured retrieval: `Cursor` — AST через tree-sitter, `Cody` — symbol resolution (LSP-like), `Aider` — repomap (compressed AST), а embedding — лишь для unstructured queries.",
@@ -1366,7 +1366,7 @@
               "order": 2
             },
             {
-              "text": "Все code agents используют одинаковую архитектуру retrieval, различий между `Cursor`, `Cody` и `Aider` нет.",
+              "text": "`Cursor`, `Cody` и `Aider` используют по сути одну архитектуру — embedding-индекс всего репозитория плюс long context — и различаются лишь размером context window выбранной модели.",
               "correct": false,
               "sections": {
                 "what_actually": "Архитектуры различаются: `Cursor` — AST + embedding, `Cody` — zoekt + LSP-symbols, `Aider` — repomap + architect mode; общий лишь паттерн из слоёв.",
@@ -1569,7 +1569,7 @@
           "question_text": "Что такое LLMLingua и как работает prompt compression?",
           "options": [
             {
-              "text": "`LLMLingua` сжимает prompt, обучая большую модель переписывать текст короче, как summarization через `GPT-4`.",
+              "text": "`LLMLingua` сжимает prompt, дообучая большую модель уровня `GPT-4` переписывать текст короче: это абстрактивная summarization, где выход компактнее входа, но смысл сохранён.",
               "correct": false,
               "sections": {
                 "what_actually": "`LLMLingua` (Microsoft, 2023) не переписывает текст большой моделью, а использует small LM (LLaMA-7B) для удаления низко-perplexity токенов; summarization — отдельная альтернатива.",
@@ -1581,7 +1581,7 @@
               "order": 0
             },
             {
-              "text": "`LLMLingua` удаляет токены с высокой perplexity, потому что именно непредсказуемые токены считаются шумом, который можно выбросить.",
+              "text": "`LLMLingua` удаляет токены с высокой perplexity: непредсказуемые для small LM токены считаются шумом и выбрасываются, а низко-perplexity (predictable) токены сохраняются как несущие смысл.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: высокая perplexity = важный (информативный) токен, который оставляют; удаляют низко-perplexity (stop words, redundant phrasing).",
@@ -1606,7 +1606,7 @@
               "order": 2
             },
             {
-              "text": "`LLMLingua` сжимает prompt без потери качества вообще: при любом коэффициенте сжатия (хоть 20×) accuracy остаётся 100%.",
+              "text": "`LLMLingua` сжимает prompt практически без потери качества: даже при экстремальном 20× accuracy держится на уровне исходного prompt, потому что удаляются только полностью избыточные токены.",
               "correct": false,
               "sections": {
                 "what_actually": "Потеря есть, просто минимальная: 5× даёт retention ~90%+, а агрессивное 20× применимо лишь к некоторым задачам, не сохраняя 100% на всех.",
@@ -1702,7 +1702,7 @@
               "order": 0
             },
             {
-              "text": "Decision tree обычно ведёт к одному ответу — `RAG`, потому что retrieval универсален и покрывает разный размер knowledge.",
+              "text": "Decision tree почти всегда сходится к `RAG`: retrieval масштабируется на любой размер knowledge, поэтому даже для <32K рекомендуют поднять vector store, а in-prompt и CAG остаются нишевыми исключениями.",
               "correct": false,
               "sections": {
                 "what_actually": "Дерево ветвится на четыре исхода (in-prompt, CAG, long context, hybrid/RAG): для <32K — in-prompt, для стабильных 32K-1M с high QPS — CAG, а не всегда RAG.",
@@ -1714,7 +1714,7 @@
               "order": 1
             },
             {
-              "text": "Первая развилка дерева — нужны ли citation; размер knowledge учитывается в самом конце как второстепенный фактор.",
+              "text": "Первая развилка дерева — нужны ли точные citation с источниками: если да → `RAG`, если нет → in-prompt, а размер knowledge проверяется в самом конце как второстепенный фактор.",
               "correct": false,
               "sections": {
                 "what_actually": "Первая развилка — именно размер knowledge (<32K / 32K-1M / >1M); citation появляется ниже, как уточнение внутри ветки RAG.",
@@ -1726,7 +1726,7 @@
               "order": 2
             },
             {
-              "text": "Для knowledge >1M токенов дерево рекомендует CAG + prompt cache, загружая всё в кэш одним prefill.",
+              "text": "Для knowledge >1M токенов дерево рекомендует `CAG` + prompt cache: весь корпус прогревается одним prefill и переиспользуется, что дешевле retrieval на каждый запрос.",
               "correct": false,
               "sections": {
                 "what_actually": "При >1M `RAG` обязателен: такой объём не влезает в effective context, поэтому CAG (требующий KB ≤ окна) здесь неприменим.",
