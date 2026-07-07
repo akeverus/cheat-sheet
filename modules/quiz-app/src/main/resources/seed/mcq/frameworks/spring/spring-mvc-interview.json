@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@EnableWebMvc` обязателен в любом `Spring Boot`-приложении, иначе контроллеры не будут работать.",
+              "text": "`@EnableWebMvc` активирует Java-конфигурацию `Spring MVC` и регистрирует `HandlerMapping`, `HandlerAdapter`, `HttpMessageConverter`'ы, валидаторы; в `Spring Boot`-приложении его нужно объявлять обязательно, иначе `DispatcherServlet` не получит маппинги и ни один `@Controller` не будет обрабатывать запросы.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Spring Boot` MVC настраивается автоконфигурацией; `@EnableWebMvc` не нужен и даже вреден — он отключает автонастройки.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@EnableWebMvc` лишь дополняет автоконфигурацию `Spring Boot`, ничего не отключая.",
+              "text": "`@EnableWebMvc` регистрирует стандартные бины `Spring MVC` (`HandlerMapping`, `HandlerAdapter`, конвертеры) поверх настроенных `Spring Boot` и лишь дополняет автоконфигурацию, не отключая её дефолты (`Jackson`, обслуживание статических ресурсов), поэтому его безопасно добавлять для тонкой настройки.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `@EnableWebMvc` отключает `WebMvcAutoConfiguration`, поэтому теряются дефолты Jackson, статики и т.д.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы кастомизировать MVC в `Spring Boot`, обязательно нужен `@EnableWebMvc` вместе с `WebMvcConfigurer`.",
+              "text": "Чтобы кастомизировать `Spring MVC` в `Spring Boot`, нужно объявить `@EnableWebMvc` и реализовать `WebMvcConfigurer`: только в паре они дают переопределить интерсепторы, форматтеры и конвертеры через методы `addInterceptors()` и `configureMessageConverters()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Для кастомизации достаточно реализовать `WebMvcConfigurer` БЕЗ `@EnableWebMvc` — автоконфигурация при этом сохраняется.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`POJO` — это объект, который обязан наследоваться от базового класса фреймворка, например `SpringBean`.",
+              "text": "`POJO` (Plain Old Java Object) — это объект, обязанный следовать спецификации `JavaBean`: публичный конструктор без аргументов, приватные поля с `getter`/`setter` и реализация `Serializable`; в `Spring MVC` только такой объект `Spring` умеет привязывать к форме через `@ModelAttribute`.",
               "correct": false,
               "sections": {
                 "what_actually": "POJO — это как раз объект БЕЗ наследования от фреймворк-классов; обязательный базовый класс противоречит определению.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`POJO` обязательно должен реализовывать интерфейс `Serializable` и иметь аннотацию `@Entity`.",
+              "text": "`POJO` — это Java-объект персистентного слоя, размеченный JPA-аннотациями (`@Entity`, `@Table`, `@Column`) и управляемый `EntityManager`; в `Spring MVC` его отдают напрямую в представление как модель, минуя DTO.",
               "correct": false,
               "sections": {
                 "what_actually": "POJO не требует ни `Serializable`, ни `@Entity`; это просто обычный класс с полями и методами доступа.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `Spring MVC` контроллеры принципиально не могут быть POJO, так как обязаны наследовать `AbstractController`.",
+              "text": "В `Spring MVC` контроллеры принципиально не могут быть POJO: чтобы `DispatcherServlet` их вызвал, класс обязан наследовать `AbstractController` или реализовать интерфейс `Controller` и переопределить `handleRequest()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Современные контроллеры — это POJO с аннотацией `@Controller`; наследование `AbstractController` — устаревший подход и не обязателен.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ContextLoaderListener` создаёт дочерний контекст для контроллеров, а `DispatcherServlet` — корневой контекст для сервисов.",
+              "text": "`ContextLoaderListener` создаёт ДОЧЕРНИЙ `WebApplicationContext` (контроллеры, `ViewResolver`), а `DispatcherServlet` при старте поднимает КОРНЕВОЙ контекст (сервисы, репозитории); веб-бины дочернего контекста видят корневые бины сервисов, но не наоборот.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `ContextLoaderListener` создаёт КОРНЕВОЙ контекст (сервисы), а `DispatcherServlet` — ДОЧЕРНИЙ (контроллеры).",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В иерархии контекстов корневой контекст видит бины веб-слоя (контроллеры, ViewResolver).",
+              "text": "`ContextLoaderListener` создаёт КОРНЕВОЙ контекст (сервисы, репозитории), а `DispatcherServlet` — ДОЧЕРНИЙ (контроллеры, `ViewResolver`); в этой иерархии корневой контекст видит бины веб-слоя и может инжектить контроллеры и `ViewResolver` в сервисы.",
               "correct": false,
               "sections": {
                 "what_actually": "Видимость односторонняя: дочерний (веб) видит корневой (бизнес), но корневой бины веб-слоя НЕ видит.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`DispatcherServlet` — это просто `Filter`, который работает до создания `ApplicationContext`.",
+              "text": "`DispatcherServlet` — это сервлетный `Filter`, который перехватывает каждый HTTP-запрос ещё до инициализации `ApplicationContext` и делегирует его в `HandlerMapping`; собственного контекста он не создаёт, а работает поверх корневого от `ContextLoaderListener`.",
               "correct": false,
               "sections": {
                 "what_actually": "`DispatcherServlet` — это сервлет (Front Controller), и он работает поверх уже поднятого `WebApplicationContext`, а не до контекста.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`DispatcherServlet` вызывает контроллер напрямую, без `HandlerMapping` и `HandlerAdapter` — он сам ищет метод по аннотациям при каждом запросе.",
+              "text": "`DispatcherServlet` при каждом запросе сам сканирует `@RequestMapping`-аннотации контроллеров, находит подходящий метод и вызывает его напрямую через рефлексию, а `HandlerMapping` и `HandlerAdapter` задействуются только для отдачи статических ресурсов.",
               "correct": false,
               "sections": {
                 "what_actually": "Диспетчер сначала находит handler через `HandlerMapping`, затем вызывает его через `HandlerAdapter`; прямого вызова контроллера в обход этих компонентов нет.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`postHandle()` интерцепторов вызывается даже когда контроллер бросил исключение.",
+              "text": "Если контроллер бросает исключение, `DispatcherServlet` всё равно вызывает `postHandle()` каждого интерцептора в обратном порядке, чтобы они поправили `ModelAndView`, и только потом передаёт ошибку в `HandlerExceptionResolver`.",
               "correct": false,
               "sections": {
                 "what_actually": "При исключении `postHandle()` ПРОПУСКАЕТСЯ; вызывается только `afterCompletion()` (всегда) и срабатывает `HandlerExceptionResolver`.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Даже для `@ResponseBody`-методов `DispatcherServlet` обязательно проходит через `ViewResolver`.",
+              "text": "Даже для `@ResponseBody`-методов `DispatcherServlet` после контроллера обязательно вызывает `ViewResolver.resolveViewName()`, трактуя возвращённое значение как логическое имя представления, и только затем сериализует результат в JSON.",
               "correct": false,
               "sections": {
                 "what_actually": "При `@ResponseBody` шаг `ViewResolver` пропускается — ответ пишется напрямую через `HttpMessageConverter`.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@RequestBody` десериализует тело через `Jackson`, а для `byte[]`, `String` или `XML` нужен ручной парсинг в контроллере.",
+              "text": "`@RequestBody` автоматически десериализует только `application/json` через `MappingJackson2HttpMessageConverter`; для `byte[]`, `String` или XML встроенного конвертера нет, поэтому такие тела приходится читать из `HttpServletRequest` и парсить в контроллере вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "Конвертеров несколько: `ByteArray`, `String`, `Resource`, `Jackson` (JSON), JAXB/Jackson XML — выбор зависит от `Content-Type` и типа параметра.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`configureMessageConverters()` лишь добавляет конвертер к существующим, не затрагивая дефолтные.",
+              "text": "Кастомный конвертер добавляют через `configureMessageConverters()` — этот метод дописывает его к списку по умолчанию, не трогая встроенные (`ByteArray`, `String`, `MappingJackson2`), а `extendMessageConverters()` нужен лишь для смены их порядка.",
               "correct": false,
               "sections": {
                 "what_actually": "`configureMessageConverters()` ПОЛНОСТЬЮ заменяет список (дефолты теряются); добавляет, не ломая, метод `extendMessageConverters()`.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Порядок конвертеров в списке не влияет на выбор — `Spring` подбирает конвертер по `Content-Type`, а не по позиции.",
+              "text": "Порядок конвертеров в списке не влияет на результат: для каждого запроса `Spring` перебирает все зарегистрированные `HttpMessageConverter` и берёт тот, чей тип точно совпадает с `Content-Type`, независимо от позиции в списке.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок важен: побеждает ПЕРВЫЙ конвертер, чей `canRead()`/`canWrite()` подходит для типа и media type.",
@@ -2531,7 +2531,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring WebFlux` производительнее `Spring MVC` под большинство нагрузок, поэтому новые проекты разумно начинать на WebFlux.",
+              "text": "`Spring WebFlux` на `Netty` даёт более высокую пропускную способность под большинством нагрузок, включая обычный CRUD и CPU-bound обработку, поэтому новые проекты по умолчанию разумно начинать на реактивном стеке `Mono`/`Flux`.",
               "correct": false,
               "sections": {
                 "what_actually": "WebFlux выигрывает на I/O-bound нагрузке с тысячами соединений; для CRUD на JDBC он не быстрее и сложнее MVC.",
@@ -2543,7 +2543,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "На `Spring WebFlux` можно спокойно использовать блокирующий JDBC внутри `Mono`/`Flux` — реактивность сама уберёт блокировку.",
+              "text": "На `Spring WebFlux` блокирующие JDBC-вызовы можно оборачивать прямо в `Mono`/`Flux`, и реактивный конвейер сам вынесет их с event loop в отдельный пул, поэтому переписывать слой доступа к данным на R2DBC необязательно.",
               "correct": false,
               "sections": {
                 "what_actually": "Блокирующий JDBC в реактивном стеке блокирует поток event-loop и убивает выгоду; нужен неблокирующий R2DBC.",
@@ -2568,7 +2568,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Spring MVC` и `WebFlux` можно совмещать в одном контроллере, чередуя блокирующие и реактивные методы по мере надобности.",
+              "text": "`Spring MVC` и `Spring WebFlux` можно свободно совмещать в одном контроллере, помечая одни методы блокирующими, а другие — возвращающими `Mono`/`Flux`, так как `DispatcherServlet` и реактивный `WebHandler` работают в приложении параллельно.",
               "correct": false,
               "sections": {
                 "what_actually": "Смешивать блокирующий и реактивный стек не следует — переход на WebFlux это решение для всего сервиса, не частичное.",
