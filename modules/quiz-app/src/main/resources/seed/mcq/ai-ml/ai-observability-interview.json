@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`LangSmith` — это open-source проект под `MIT`-лицензией, который ставится локально через `docker compose` бесплатно для любой команды.",
+              "text": "`LangSmith` — open-source платформа под `MIT`-лицензией: self-host через `docker compose` бесплатен для любой команды, а auto-instrumentation для `LangChain` и Prompts Hub идут из коробки.",
               "correct": false,
               "sections": {
                 "what_actually": "Open-source/MIT и бесплатный self-host через docker — это про `Langfuse`; LangSmith проприетарен, self-host только в платном enterprise.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`LangSmith` — это proxy-based инструмент: чтобы его подключить, достаточно поменять `base_url` запроса, код менять не нужно.",
+              "text": "`LangSmith` — proxy-based трейсинг: подключается заменой `base_url` запроса на прокси-эндпоинт без изменения кода, а поверх собирает datasets и evaluations.",
               "correct": false,
               "sections": {
                 "what_actually": "Proxy-подход с заменой `base_url` — это `Helicone`; LangSmith работает через SDK и декоратор `@traceable`.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`LangSmith` умеет только observability (сбор трейсов) и не имеет встроенных evaluations, datasets или prompt-управления.",
+              "text": "`LangSmith` покрывает datasets и evaluations, но prompt-управление вынесено в отдельный сервис `LangServe`: версионирования и rollback промптов в самом LangSmith нет.",
               "correct": false,
               "sections": {
                 "what_actually": "LangSmith — это observability + eval-платформа: есть datasets/experiments, built-in evaluators, Prompts Hub и annotation queue.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Langfuse` — это closed-source SaaS без self-host, как и LangSmith; его единственное отличие — более низкая цена подписки.",
+              "text": "`Langfuse` — open-source под `MIT`, но в self-host-версии доступен только сбор трейсов: `Prompts`, `Scores` и `Sessions` включаются лишь в облачной подписке.",
               "correct": false,
               "sections": {
                 "what_actually": "Langfuse как раз open-source (MIT) с бесплатным self-host через Docker — это его главное отличие от проприетарного LangSmith.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Langfuse` — это proxy: подключается заменой `base_url`, поэтому SDK и декораторы ему не нужны.",
+              "text": "`Langfuse` — proxy-based: трафик идёт через его gateway после замены `base_url`, поэтому SDK и декоратор `@observe` ему не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Langfuse интегрируется через SDK и декоратор `@observe`, а не через подмену `base_url`; proxy-подход — это Helicone.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Langfuse` и `LangSmith` идентичны по архитектуре: у обоих ровно те же сущности с теми же именами, выбор между ними чисто по бренду.",
+              "text": "`Langfuse` взаимозаменяем с LangSmith: его SDK автоматически инструментирует любой `LangChain`/`LangGraph`-код с нулевой настройкой, ровно как auto-instrumentation LangSmith.",
               "correct": false,
               "sections": {
                 "what_actually": "Архитектуры различаются: у Langfuse — Traces/Observations/Sessions/Users/Prompts/Scores и generic SDK, у LangSmith — LangChain-centric runs и enterprise-self-host.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Arize Phoenix` уникален тем, что это единственный полностью closed-source enterprise-инструмент, не дающий запускать ничего локально.",
+              "text": "`Arize Phoenix` уникален тем, что запускается только как managed-сервис Arize AI: `phoenix.launch_app()` открывает не локальный UI, а облачную сессию, куда уходят все трейсы.",
               "correct": false,
               "sections": {
                 "what_actually": "Phoenix — open-source и local-first: `phoenix.launch_app()` поднимает UI прямо в notebook без внешнего backend.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Arize Phoenix` уникален тем, что это proxy-инструмент: трейсинг включается заменой `base_url`, как в Helicone.",
+              "text": "`Arize Phoenix` уникален тем, что это proxy-инструмент: трейсинг включается заменой `base_url` на его gateway, как в Helicone, без OpenTelemetry-инструментирования.",
               "correct": false,
               "sections": {
                 "what_actually": "Phoenix — OTel-native (через OpenInference SDK), а не proxy; замена `base_url` — это подход Helicone.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Arize Phoenix` уникален тем, что вообще не делает evaluation — это чисто трейсинг-инструмент без оценки качества.",
+              "text": "`Arize Phoenix` уникален тем, что его встроенные evaluators (`HallucinationEvaluator`, `QAEvaluator`) работают только как судьи поверх OpenAI и не принимают другие модели.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот, его упор именно на eval depth: built-in `HallucinationEvaluator`/`QAEvaluator`/`RelevanceEvaluator` и кластеризация плохих ответов.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Helicone` требует переписать весь код под свой SDK, поэтому интеграция в существующий проект самая трудоёмкая среди инструментов.",
+              "text": "`Helicone` требует обернуть каждый вызов в его SDK `HeliconeAsyncOpenAI` и вручную проставить трейс-хедеры, поэтому интеграция — самая трудоёмкая среди инструментов.",
               "correct": false,
               "sections": {
                 "what_actually": "Helicone — proxy-based: меняешь `base_url` на `https://oai.helicone.ai/v1` и добавляешь хедер `Helicone-Auth`, код вызова не трогаешь.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Helicone` снижает латентность LLM-запросов, потому что кэширует и проксирует их ближе к пользователю.",
+              "text": "`Helicone` снижает латентность каждого запроса, потому что проксирует его через ближайший edge-регион и не добавляет собственного сетевого hop'а.",
               "correct": false,
               "sections": {
                 "what_actually": "Helicone, наоборот, добавляет дополнительный hop (+30-80 мс); кэш ускоряет лишь повторные запросы, а не запросы в целом.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Helicone` даёт самый глубокий eval/dataset workflow среди всех инструментов, превосходя LangSmith и Phoenix.",
+              "text": "`Helicone` даёт самый глубокий eval/dataset-workflow с версионируемыми датасетами и LLM-судьями, поэтому его берут вместо LangSmith и Phoenix для строгой оценки качества.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот, у Helicone меньше глубины по eval: нет полноценного dataset/experiment workflow, его сила — простота и кэш, а не оценка качества.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Continuous eval` — это прогон тестового набора один раз при релизе в CI; в проде на живом трафике ничего не оценивается.",
+              "text": "`Continuous eval` — это прогон фиксированного тестового набора в CI при каждом релизе: упали метрики — деплой блокируется, а на живом проде оценка не запускается.",
               "correct": false,
               "sections": {
                 "what_actually": "Это как раз continuous eval в проде: качество меряют постоянно на живом трафике, а не только при релизе, потому что модель дрейфует.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Continuous eval` оценивает 100% production-запросов синхронно, блокируя ответ пользователю до получения eval-score.",
+              "text": "`Continuous eval` работает синхронно: judge-модель оценивает ответ до его отправки, поэтому пользователь получает уже проверенный на faithfulness результат.",
               "correct": false,
               "sections": {
                 "what_actually": "Eval сэмплируют (1-5%) и считают асинхронно, не блокируя ответ: сам eval — это LLM-вызов, он дорог и медленный.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Continuous eval` использует ту же модель и для генерации, и для оценки, потому что модель лучше всех понимает собственные ответы.",
+              "text": "`Continuous eval` берёт для оценки ту же модель, что отвечала пользователю, чтобы контекст генерации и оценки совпадал и score был точнее.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужен independent judge другой семьи (Claude оценивает GPT и наоборот): self-judge даёт self-preference bias.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главный анти-паттерн — собирать слишком много метрик качества (eval); достаточно мерить только latency, как в классическом APM.",
+              "text": "Главный анти-паттерн — собирать слишком много eval-метрик качества: это дорого, поэтому в проде достаточно мерить latency и error-rate, как в классическом APM.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: «только латентность без качества» — это и есть анти-паттерн, ведь `p99=800ms` ничего не говорит про галлюцинации; eval-метрики обязательны.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Анти-паттерн — использовать разные модели для генерации и для eval; judge всегда должен быть той же модели, что и основная.",
+              "text": "Анти-паттерн — редактировать (redact) PII перед логированием промптов: исходные промпты нужно сохранять целиком, иначе теряется контекст для воспроизведения бага.",
               "correct": false,
               "sections": {
                 "what_actually": "Ровно наоборот: один judge той же семьи — анти-паттерн (self-preference bias); правильно брать cross-judge другой семьи.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Анти-паттерн — хранить промпты в коде неправильно; правильнее всегда хардкодить промпты прямо в коде, чтобы они версионировались вместе с ним.",
+              "text": "Анти-паттерн — писать в трейс `embedding_id` вместо самих векторов: для повторного кластерного анализа нужно хранить сырые embeddings целиком.",
               "correct": false,
               "sections": {
                 "what_actually": "Хардкод промптов в коде — это и есть анти-паттерн: любая правка требует деплоя и делает A/B невозможным; промпты держат в hub (LangSmith/Langfuse).",
