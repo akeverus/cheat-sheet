@@ -1,3 +1,11 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven { url = uri("https://repo.spring.io/milestone") }
+    }
+}
+
 rootProject.name = "cheat-sheet"
 
 include(":quiz-domain", ":quiz-persistence", ":quiz-app")
