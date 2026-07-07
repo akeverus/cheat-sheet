@@ -95,6 +95,53 @@ class InterviewControllerTest {
     }
 
     @Test
+    void studyModeLearnPhaseRendersConfirmButtonThenQuizShowsOptions() throws Exception {
+        // RIA-2: раньше фаза LEARN режима STUDY не имела UI — показывалась форма
+        // вариантов (как TRAINING), а POST /study-confirm был недостижим. Тест
+        // фиксирует контракт: LEARN = учебная карточка «ответ + Проверить себя»
+        // (форма вариантов скрыта), /study-confirm → QUIZ = форма вариантов.
+        MockHttpSession session = new MockHttpSession();
+        // ordered=true → первый вопрос детерминирован и имеет seed-варианты.
+        mockMvc.perform(post("/start")
+                        .with(csrf())
+                        .session(session)
+                        .param("mode", "STUDY")
+                        .param("count", "5")
+                        .param("ordered", "true"))
+                .andExpect(status().is3xxRedirection());
+
+        InterviewSession interviewSession = (InterviewSession) session.getAttribute("interviewSession");
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+                interviewSession != null, "STUDY-сессия не создана — нет вопросов в тестовой БД");
+
+        String learn = mockMvc.perform(get("/training").session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        // Вырожденный случай: вопрос без вариантов → флешкарта, отдельной карточки
+        // изучения нет (её показывает flashcard-browse) — пропускаем.
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+                learn.contains("study-learn-phase"),
+                "Первый STUDY-вопрос без вариантов — фаза изучения вырождена во флешкарту");
+
+        // LEARN: карточка ответа + кнопка перехода к проверке; формы вариантов НЕТ.
+        assertThat(learn).contains("action=\"/study-confirm\"");
+        assertThat(learn).contains("Проверить себя");
+        assertThat(learn).contains("class=\"answer markdown-content\"");
+        assertThat(learn).doesNotContain("id=\"interview-form\"");
+
+        // Переход LEARN → QUIZ.
+        mockMvc.perform(post("/study-confirm").with(csrf()).session(session))
+                .andExpect(status().is3xxRedirection());
+
+        String quiz = mockMvc.perform(get("/training").session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        // QUIZ: форма вариантов появилась, карточки изучения больше нет.
+        assertThat(quiz).contains("id=\"interview-form\"");
+        assertThat(quiz).doesNotContain("study-learn-phase");
+    }
+
+    @Test
     void statsSearchResultsPreserveFilterParamsInTopicLinks() throws Exception {
         String body = mockMvc.perform(get("/stats")
                         .param("topic", "sample")
@@ -689,7 +736,9 @@ class InterviewControllerTest {
             if (body.contains("id=\"interview-form\"")) {
                 assertThat(body).contains("Пост-разбор");
                 assertThat(body).contains("Сначала итог, затем объяснение и дополнительные блоки");
-                assertThat(body).contains("Показать доп. анализ");
+                // AIR-1: AI-разбор вырезан → единственный пост-ответный блок «Похожие
+                // вопросы» (кнопка extra-analysis раскрывает relatedQuestions).
+                assertThat(body).contains("Похожие вопросы");
             }
         }
 
@@ -700,7 +749,7 @@ class InterviewControllerTest {
             if (body.contains("id=\"interview-form\"")) {
                 assertThat(body).contains("Пост-разбор");
                 assertThat(body).contains("Сначала итог, затем объяснение и дополнительные блоки");
-                assertThat(body).contains("Показать доп. анализ");
+                assertThat(body).contains("Похожие вопросы");
                 assertThat(body).doesNotContain("Подробнее");
             }
         }

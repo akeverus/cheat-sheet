@@ -109,7 +109,29 @@
             </div>
         </div>
 
-        <form method="post" th:action="@{/answer}" id="interview-form" th:if="${!flashcardMode}">
+        <!-- STUDY / фаза LEARN: учебная карточка «вопрос + полный ответ». По контракту
+             StudyPhase.LEARN = показ полного ответа для изучения; кнопка «Проверить
+             себя» шлёт POST /study-confirm → SessionFlowService.applyStudyConfirm
+             переводит сессию в QUIZ (switchToQuizPhase), и ниже отрисуется форма
+             вариантов (её th:if теперь гасит studyLearnPhase, чтобы в LEARN не было
+             двойного пути ответа). Раньше studyLearnPhase не имел UI: в LEARN
+             показывалась форма вариантов (как TRAINING), studyAnswerHtml вычислялся,
+             но нигде не выводился, а /study-confirm был недостижим — фаза изучения
+             была неотличима от проверки. RIA-2.
+             !flashcardMode: у вопроса без seed-вариантов LEARN вырождается во
+             флешкарту (блок flashcard-browse выше уже раскрывает ответ), а QUIZ там
+             всё равно был бы пуст — отдельная карточка изучения не нужна. -->
+        <div th:if="${studyLearnPhase and !flashcardMode}" class="flashcard-phase study-learn-phase">
+            <div class="flashcard-badge">Изучение — прочитай ответ, затем проверь себя</div>
+            <div class="flashcard-answer">
+                <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
+            </div>
+            <form method="post" th:action="@{/study-confirm}" class="study-confirm-form">
+                <button type="submit" class="flashcard-reveal-btn study-confirm-btn">Проверить себя →</button>
+            </form>
+        </div>
+
+        <form method="post" th:action="@{/answer}" id="interview-form" th:if="${!flashcardMode and !studyLearnPhase}">
             <input type="hidden" name="questionId" th:value="${current.question.id}">
             <input type="hidden" name="topic" th:value="${filter?.topic}">
             <input type="hidden" name="group" th:value="${selectedGroup}">
@@ -154,16 +176,17 @@
             hidden=true
         )}"></div>
         <div th:replace="~{fragments/post-answer-controls :: post-answer-controls(
-            extraButtonText='Показать доп. анализ'
+            extraButtonText='Похожие вопросы'
         )}"></div>
     </section>
 
     <section class="empty empty-card-inner" th:if="${current == null}">
         <h2 class="empty-title">Сейчас нет вопросов</h2>
-        <!-- Ветки взаимоисключающие: generationUnavailable имеет высший приоритет,
-             иначе при недоступном AI во время запущенной сессии показывались два
-             противоречащих сообщения сразу. -->
-        <p class="empty-description" th:if="${generationUnavailable}">AI временно недоступен. Обнови страницу через несколько секунд.</p>
+        <!-- AIR-fallout: AI вырезан → generationUnavailable зашит в false
+             (FocusTrainingPageService:54). Строка «AI временно недоступен» никогда не
+             рендерилась и вводила в заблуждение — удалена. Оставшиеся ветки
+             взаимоисключающие по reviewMode / наличию сессии. -->
+
         <p class="empty-description" th:if="${!generationUnavailable and reviewMode}">Нет вопросов с ошибками для review.</p>
         <p class="empty-description" th:if="${!generationUnavailable and !reviewMode and interviewSession == null}">Нет доступных вопросов по выбранным фильтрам. Открой настройки и расширь выборку.</p>
         <p class="empty-description" th:if="${!generationUnavailable and !reviewMode and interviewSession != null and !interviewSession.finished}">Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.</p>
@@ -196,6 +219,6 @@
     </section>
 </main>
 
-<script th:src="@{/js/app.js(v=54)}"></script>
+<script th:src="@{/js/app.js(v=55)}"></script>
 </body>
 </html>

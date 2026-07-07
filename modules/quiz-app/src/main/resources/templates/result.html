@@ -106,19 +106,12 @@
                    th:href="@{/(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
                     Следующий вопрос →
                 </a>
-                <!-- hidden по умолчанию: кнопка чисто JS-driven. Без JS она была
-                     бы мёртвым контролом (клик ничего не делает). app.js при
-                     инициализации снимает .hidden — так no-JS её не видит. -->
-                <button type="button"
-                        id="extra-analysis-toggle-result"
-                        class="btn secondary-btn hidden"
-                        aria-controls="result-extra-analysis"
-                        aria-expanded="false"
-                        th:attr="data-question-id=${result.question.id},data-selected-option-id=${result.selected.id},data-correct=${result.correctAnswer}">
-                    Показать доп. анализ
-                </button>
             </div>
-            <div id="result-extra-analysis" class="result-feedback hidden" aria-live="polite"></div>
+            <!-- «Похожие вопросы» рендерятся сервером ниже (#result-related-questions,
+                 th:if relatedQuestions). AI-разбор (feedback/comparison/takeaway/трейс)
+                 вырезан вместе с провайдерами — кнопка «доп. анализ» и её пустой
+                 контейнер удалены (иначе клик всегда падал в «Не удалось загрузить»). -->
+
 
             <div th:if="${interviewSession != null and interviewSession.finished}" class="mt-3 text-center">
                 <strong><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сессия завершена!</strong>
@@ -146,6 +139,6 @@
 </main>
 <!-- app.js перенесён в конец body (был внутри main между секциями — структурная
      аномалия, см. остальные страницы: focus-training/settings). Критика C31. -->
-<script th:src="@{/js/app.js(v=54)}"></script>
+<script th:src="@{/js/app.js(v=55)}"></script>
 </body>
 </html>

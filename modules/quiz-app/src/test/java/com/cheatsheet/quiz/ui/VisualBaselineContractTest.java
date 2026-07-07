@@ -142,10 +142,13 @@ class VisualBaselineContractTest {
                 // в рендере нет, но строка результата (вердикт) присутствует.
                 "hasStatusLine=" + body.contains("class=\"status"),
                 "hasResultActionsContainer=" + body.contains("class=\"result-actions\""),
-                "hasNextQuestionLink=" + body.contains("class=\"btn next-btn\""),
-                "hasSecondaryAnalysisButton=" + body.contains("id=\"extra-analysis-toggle-result\""),
-                "nextLinkBeforeSecondaryAction=" + (body.indexOf("class=\"btn next-btn\"")
-                        < body.indexOf("id=\"extra-analysis-toggle-result\""))
+                // Вторичная кнопка «доп. анализ» (#extra-analysis-toggle-result) и её
+                // порядок относительно next-btn удалены из подписи вместе с
+                // AI-провайдерами (AIR-1): блок «Похожие вопросы» рендерится сервером
+                // условно (th:if relatedQuestions) и зависит от данных вопроса —
+                // недетерминирован для baseline. Оставляем только структурный факт
+                // наличия перехода «Следующий вопрос».
+                "hasNextQuestionLink=" + body.contains("class=\"btn next-btn\"")
         );
 
         assertThat(signature).isEqualTo(readBaseline("visual-baseline/result-shell.txt"));

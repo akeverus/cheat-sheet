@@ -79,7 +79,7 @@ class TemplateFragmentContractTest {
         assertThat(focusTraining).doesNotContain("focus-surface-tabs");
         assertThat(focusTraining).contains("chipText='Пост-разбор'");
         assertThat(focusTraining).contains("hintText='Сначала итог, затем объяснение и дополнительные блоки'");
-        assertThat(focusTraining).contains("extraButtonText='Показать доп. анализ'");
+        assertThat(focusTraining).contains("extraButtonText='Похожие вопросы'");
         // Трек гейтится th:if="${interviewSession != null}" (вне сессии пустой
         // progressbar 0/0 не рендерится) → null-ветки тернарников не нужны.
         assertThat(focusTraining).contains("aria-valuemax=${interviewSession.getTotal()}");
@@ -114,8 +114,12 @@ class TemplateFragmentContractTest {
         assertThat(result).contains("class=\"question-main flow-stack-md\"");
         assertThat(result).contains("class=\"result-actions\"");
         assertThat(result).contains("th:if=\"${interviewSession != null and interviewSession.finished}\"");
-        assertThat(result.indexOf("class=\"btn next-btn\""))
-                .isLessThan(result.indexOf("id=\"extra-analysis-toggle-result\""));
+        // Кнопка «доп. анализ» (#extra-analysis-toggle-result) удалена вместе с
+        // AI-провайдерами (AIR-1) — на result.html остаётся только серверный блок
+        // «Похожие вопросы» (#result-related-questions). Проверка порядка
+        // next-btn ↔ вторичная кнопка больше неприменима.
+        assertThat(result).doesNotContain("id=\"extra-analysis-toggle-result\"");
+        assertThat(result).contains("id=\"result-related-questions\"");
         assertThat(stats).contains("showPrimaryNav=true");
         assertThat(settings).contains("showPrimaryNav=true");
         assertThat(result).contains("fragments/inline-alert :: inline-alert");

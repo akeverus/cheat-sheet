@@ -109,12 +109,18 @@
                         <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
                         <label class="field">
                             <span class="field-label">Режим:</span>
+                            <!-- data-default-count: серверный per-mode дефолт числа вопросов
+                                 (application.yml default-exam-count=20 / default-marathon-count=50;
+                                 SessionFlowService.resolveSessionTotal: EXAM→exam, остальные→marathon).
+                                 app.js при СМЕНЕ режима подставляет его в счётчик — SET-15: раньше
+                                 поле было жёстко 20 для всех, MARATHON/STUDY/FLASHCARD получали 20
+                                 вместо 50. Источник правды — application.yml (значения продублированы). -->
                             <select name="mode" id="session-mode-select">
-                                <option value="TRAINING" th:selected="${mode == null or mode.name() == 'TRAINING'}">Тренировка</option>
-                                <option value="STUDY" th:selected="${mode != null and mode.name() == 'STUDY'}">Изучение</option>
-                                <option value="FLASHCARD" th:selected="${mode != null and mode.name() == 'FLASHCARD'}">Флешкарты</option>
-                                <option value="EXAM" th:selected="${mode != null and mode.name() == 'EXAM'}">Экзамен</option>
-                                <option value="MARATHON" th:selected="${mode != null and mode.name() == 'MARATHON'}">Интенсив</option>
+                                <option value="TRAINING" data-default-count="20" th:selected="${mode == null or mode.name() == 'TRAINING'}">Тренировка</option>
+                                <option value="STUDY" data-default-count="50" th:selected="${mode != null and mode.name() == 'STUDY'}">Изучение</option>
+                                <option value="FLASHCARD" data-default-count="50" th:selected="${mode != null and mode.name() == 'FLASHCARD'}">Флешкарты</option>
+                                <option value="EXAM" data-default-count="20" th:selected="${mode != null and mode.name() == 'EXAM'}">Экзамен</option>
+                                <option value="MARATHON" data-default-count="50" th:selected="${mode != null and mode.name() == 'MARATHON'}">Интенсив</option>
                             </select>
                         </label>
                         <!-- ТРЕНИРОВКА — бесконечный режим без сессии (SessionFlowService.startSession:
@@ -274,6 +280,6 @@
         </section>
     </div>
 </main>
-<script th:src="@{/js/app.js(v=54)}"></script>
+<script th:src="@{/js/app.js(v=55)}"></script>
 </body>
 </html>

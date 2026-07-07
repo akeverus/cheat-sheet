@@ -1,8 +1,5 @@
 (() => {
   const UI_CONSTANTS = Object.freeze({
-    EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT: 'Показать доп. анализ',
-    EXTRA_ANALYSIS_BUTTON_LOADING_TEXT: 'Загружаю…',
-    EXTRA_ANALYSIS_BUTTON_DONE_TEXT: 'Доп. анализ загружен',
     FAVORITE_ADD_LABEL: 'Добавить в избранное',
     FAVORITE_REMOVE_LABEL: 'Убрать из избранного',
     // v2→v3: ловушка round-01 B7. Контролы режимов (instant/hard/review/adaptive/timer)
@@ -20,16 +17,9 @@
     TOPIC_STATS: '/api/topic-stats',
     REGENERATE: '/api/regenerate',
     CONFIDENCE: '/api/confidence',
-    WRONG_FEEDBACK: '/api/wrong-feedback',
     FAVORITE: '/api/favorite',
-    TAKEAWAY: '/api/takeaway',
-    COMPARISON: '/api/comparison',
-    CODE_TRACE: '/api/code-trace',
     STREAK: '/api/streak'
   };
-  const EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT = UI_CONSTANTS.EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
-  const EXTRA_ANALYSIS_BUTTON_LOADING_TEXT = UI_CONSTANTS.EXTRA_ANALYSIS_BUTTON_LOADING_TEXT;
-  const EXTRA_ANALYSIS_BUTTON_DONE_TEXT = UI_CONSTANTS.EXTRA_ANALYSIS_BUTTON_DONE_TEXT;
   const FAVORITE_ADD_LABEL = UI_CONSTANTS.FAVORITE_ADD_LABEL;
   const FAVORITE_REMOVE_LABEL = UI_CONSTANTS.FAVORITE_REMOVE_LABEL;
   const LEARNING_PREFS_STORAGE_KEY = UI_CONSTANTS.LEARNING_PREFS_STORAGE_KEY;
@@ -254,6 +244,17 @@
       countField.classList.toggle('hidden', isTraining);
       startBtn.textContent = MODE_CTA[modeSelect.value] || 'Начать сессию';
     };
+    const countInput = countField.querySelector('input[name="count"]');
+    // SET-15: при явной СМЕНЕ режима подставляем per-mode серверный дефолт
+    // (data-default-count у <option>) — чтобы поле не оставалось жёстко «20» для
+    // MARATHON/STUDY/FLASHCARD (их серверный дефолт 50, EXAM=20). Слушатель на
+    // 'change' срабатывает ТОЛЬКО на явную смену, не на первичном sync() при
+    // загрузке — иначе затёрли бы restore счётчика из localStorage (initSessionFormSync).
+    modeSelect.addEventListener('change', () => {
+      const opt = modeSelect.selectedOptions[0];
+      const def = opt && opt.getAttribute('data-default-count');
+      if (countInput && def) countInput.value = def;
+    });
     modeSelect.addEventListener('change', sync);
     sync();
   }
@@ -313,150 +314,6 @@
       upsertHidden('onlyWrong', getFilterField('onlyWrong')?.checked ? 'true' : '');
       upsertHidden('shuffle', getFilterField('shuffle')?.checked ? 'true' : '');
       upsertHidden('weakTopics', getFilterField('weakTopics')?.checked ? 'true' : '');
-    });
-  }
-
-  function initResultPageExtraAnalysis() {
-    const btn = document.getElementById('extra-analysis-toggle-result');
-    const container = document.getElementById('result-extra-analysis');
-    if (!btn || !container) return;
-    // Кнопка рендерится hidden (no-JS не должен видеть JS-only контрол) —
-    // раскрываем её, раз JS доступен и обработчик навешивается.
-    btn.classList.remove('hidden');
-
-    const questionId = btn.getAttribute('data-question-id');
-    const selectedOptionId = btn.getAttribute('data-selected-option-id');
-    const isCorrect = btn.getAttribute('data-correct') === 'true';
-    const related = document.getElementById('result-related-questions');
-    if (!questionId) return;
-
-    const addBlock = (className, html) => {
-      const block = document.createElement('div');
-      block.className = 'content-block ' + className;
-      block.innerHTML = html;
-      container.appendChild(block);
-    };
-
-    btn.addEventListener('click', async () => {
-      // aria-busy в гарде: aria-disabled (в отличие от native disabled) не
-      // блокирует повторную клавиатурную активацию во время загрузки.
-      if (btn.dataset.loaded === 'true' || btn.getAttribute('aria-busy') === 'true') return;
-      // aria-disabled, а не disabled: native disabled выбрасывает фокус
-      // клавиатуры на <body>; aria-disabled оставляет кнопку в tab-order
-      // (клик мышью гасит CSS pointer-events, повтор с клавиатуры — гард выше).
-      btn.setAttribute('aria-disabled', 'true');
-      btn.setAttribute('aria-busy', 'true');
-      btn.setAttribute('aria-expanded', 'true');
-      btn.textContent = EXTRA_ANALYSIS_BUTTON_LOADING_TEXT;
-      container.classList.remove('hidden');
-      container.innerHTML = '';
-      clearInlineAlert();
-
-      const requests = [];
-      if (!isCorrect && selectedOptionId) {
-        requests.push(
-          apiFetch(API.WRONG_FEEDBACK, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'questionId=' + encodeURIComponent(questionId) + '&optionId=' + encodeURIComponent(selectedOptionId)
-          })
-            .then(async (resp) => {
-              if (!resp.ok) throw await parseApiError(resp);
-              const fb = await resp.json();
-              if (fb.available && fb.feedback) {
-                addBlock(
-                  'wrong-feedback',
-                  '<div class="wrong-feedback-title">' + icon('lightbulb', 'ed-icon-lead') + 'Почему это неверно:</div>' +
-                  '<div class="wrong-feedback-text">' + escapeHtml(fb.feedback) + '</div>'
-                );
-              }
-            })
-        );
-        requests.push(
-          apiFetch(API.COMPARISON + '?questionId=' + encodeURIComponent(questionId) + '&selectedOptionId=' + encodeURIComponent(selectedOptionId))
-            .then(async (resp) => {
-              if (!resp.ok) throw await parseApiError(resp);
-              const cmp = await resp.json();
-              if (!cmp.comparison) return;
-              const parsed = typeof cmp.comparison === 'string' ? JSON.parse(cmp.comparison) : cmp.comparison;
-              if (!parsed.criteria || !parsed.criteria.length) return;
-              let table = '<div class="comparison-title">' + icon('chart', 'ed-icon-lead') + 'Сравнение: выбранное vs правильное</div>';
-              table += '<table class="comparison-table"><tr><th>Критерий</th><th>Выбранное</th><th>Правильное</th></tr>';
-              parsed.criteria.forEach(c => {
-                table += '<tr><td>' + escapeHtml(c.criterion) + '</td><td>' + escapeHtml(c.selected) + '</td><td>' + escapeHtml(c.correct) + '</td></tr>';
-              });
-              table += '</table>';
-              addBlock('comparison-block', table);
-            })
-        );
-      }
-
-      requests.push(
-        apiFetch(API.TAKEAWAY + '?questionId=' + encodeURIComponent(questionId))
-          .then(async (resp) => {
-            if (!resp.ok) throw await parseApiError(resp);
-            const tk = await resp.json();
-            if (tk.takeaway) {
-              addBlock(
-                'takeaway-block',
-                '<div class="takeaway-title">' + icon('target', 'ed-icon-lead') + 'Главное, что нужно запомнить:</div>' +
-                '<div class="takeaway-text">' + escapeHtml(tk.takeaway) + '</div>'
-              );
-            }
-          })
-      );
-
-      requests.push(
-        apiFetch(API.CODE_TRACE + '?questionId=' + encodeURIComponent(questionId))
-          .then(async (resp) => {
-            if (!resp.ok) throw await parseApiError(resp);
-            const traceData = await resp.json();
-            if (!traceData.trace) return;
-            const parsed = typeof traceData.trace === 'string' ? JSON.parse(traceData.trace) : traceData.trace;
-            if (!parsed.steps || !parsed.steps.length) return;
-            let html = '<details><summary class="code-trace-title">' + icon('search', 'ed-icon-lead') + 'Пошаговое выполнение кода</summary>';
-            html += '<ol class="code-trace-steps">';
-            parsed.steps.forEach(s => {
-              html += '<li class="code-trace-step">';
-              html += '<span class="trace-step-num">' + escapeHtml(s.step) + '</span>';
-              if (s.line) html += '<span class="trace-step-line">' + escapeHtml(s.line) + '</span>';
-              if (s.state) html += '<span class="trace-step-state">' + escapeHtml(s.state) + '</span>';
-              html += '<span class="trace-step-explanation">' + escapeHtml(s.explanation) + '</span>';
-              html += '</li>';
-            });
-            html += '</ol></details>';
-            addBlock('code-trace-block', html);
-          })
-      );
-
-      try {
-        const results = await Promise.allSettled(requests);
-        const failedCount = results.filter(r => r.status === 'rejected').length;
-        if (requests.length > 0 && failedCount === requests.length) {
-          // Полный провал (все блоки упали): НЕ помечаем loaded='true' и НЕ пишем
-          // «загружен» — иначе кнопка осталась бы заблокированной с ложной меткой
-          // успеха. Возвращаем кнопку в исходное retryable-состояние.
-          setInlineAlert('Не удалось загрузить доп. анализ. Попробуй ещё раз.');
-          btn.removeAttribute('aria-disabled');
-          btn.textContent = EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
-          btn.setAttribute('aria-expanded', 'false');
-          container.classList.add('hidden');
-        } else {
-          btn.dataset.loaded = 'true';
-          btn.textContent = EXTRA_ANALYSIS_BUTTON_DONE_TEXT;
-          if (related) related.classList.remove('hidden');
-          if (failedCount > 0) {
-            setInlineAlert('Часть блоков доп. анализа не загрузилась. Можно продолжить тренировку.', 'error');
-          }
-        }
-      } catch (err) {
-        console.error('Result extra analysis failed:', err);
-        setInlineAlert('Не удалось загрузить доп. анализ. Попробуй ещё раз.');
-        btn.removeAttribute('aria-disabled');
-        btn.textContent = EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
-      } finally {
-        btn.removeAttribute('aria-busy');
-      }
     });
   }
 
@@ -801,7 +658,6 @@
     initShuffleTopic();
     initSessionFormSync();
     initSessionModeForm();
-    initResultPageExtraAnalysis();
     initExportButtons();
     initPersonalization();
     initSettingsTabs();
@@ -837,40 +693,6 @@
    * @param {string} [method='GET'] - 'GET' or 'POST'
    * @param {{ postBody?: FormData|URLSearchParams, insertAfter?: boolean, placeholderClassName?: string, errorMessage?: string }} [options] - For POST pass postBody; insertAfter inserts after parentEl instead of appending
    */
-  function fetchWithPlaceholder(url, parentEl, loadingText, renderFn, method = 'GET', options = {}) {
-    const {
-      postBody,
-      insertAfter = false,
-      placeholderClassName = 'loading-placeholder',
-      errorMessage,
-      rethrowOnError = false
-    } = options;
-    const placeholder = document.createElement('div');
-    placeholder.className = placeholderClassName;
-    placeholder.innerHTML = loadingText;
-    if (insertAfter) {
-      parentEl.after(placeholder);
-    } else {
-      parentEl.appendChild(placeholder);
-    }
-    const request = (method === 'POST' && postBody != null)
-      ? apiPost(url, postBody)
-      : apiGet(url);
-    return request
-      .then(data => {
-        clearInlineAlert();
-        renderFn(data, placeholder);
-      })
-      .catch(e => {
-        console.warn('Operation failed:', e);
-        placeholder.remove();
-        setInlineAlert(errorMessage || e?.message || 'Не удалось загрузить дополнительные данные. Попробуй ещё раз.');
-        if (rethrowOnError) {
-          throw e;
-        }
-      });
-  }
-
   function updateSessionProgress(data) {
     const progressSpans = document.querySelectorAll('.session-progress');
     if (!progressSpans.length) return;
@@ -1753,122 +1575,6 @@
     else feedbackDiv.after(el);
   }
 
-  function fetchWrongFeedback(questionId, selectedOptionId, rethrowOnError = false) {
-    const wrongBlock = feedbackDiv.querySelector('.result-wrong');
-    if (!wrongBlock) return;
-    return fetchWithPlaceholder(
-      API.WRONG_FEEDBACK,
-      wrongBlock,
-      '<span class="wrong-feedback-loader">' + icon('bot', 'ed-icon-lead') + 'Анализирую ошибку…</span>',
-      (fbData, placeholderEl) => {
-        placeholderEl.classList.remove('loading');
-        if (fbData.available && fbData.feedback) {
-          placeholderEl.innerHTML =
-            '<div class="wrong-feedback-title">' + icon('lightbulb', 'ed-icon-lead') + 'Почему это неверно:</div>' +
-            '<div class="wrong-feedback-text">' + escapeHtml(fbData.feedback) + '</div>';
-        } else {
-          placeholderEl.remove();
-        }
-      },
-      'POST',
-      {
-        postBody: new URLSearchParams({ questionId: questionId, optionId: String(selectedOptionId) }),
-        placeholderClassName: 'content-block wrong-feedback loading',
-        rethrowOnError: rethrowOnError
-      }
-    );
-  }
-
-  function fetchTakeaway(questionId, rethrowOnError = false) {
-    return fetchWithPlaceholder(
-      API.TAKEAWAY + '?questionId=' + encodeURIComponent(questionId),
-      feedbackDiv,
-      '<span class="takeaway-loading-text">Загрузка…</span>',
-      (tkData, placeholderEl) => {
-        placeholderEl.remove();
-        if (tkData.takeaway) {
-          const tkDiv = document.createElement('div');
-          tkDiv.className = 'content-block takeaway-block';
-          tkDiv.innerHTML =
-            '<div class="takeaway-title">' + icon('target', 'ed-icon-lead') + 'Главное, что нужно запомнить:</div>' +
-            '<div class="takeaway-text">' + escapeHtml(tkData.takeaway) + '</div>';
-          appendAnalysisBlock(tkDiv);
-        }
-      },
-      'GET',
-      { insertAfter: true, placeholderClassName: 'content-block takeaway-block takeaway-loading', rethrowOnError: rethrowOnError }
-    );
-  }
-
-  function fetchComparison(questionId, selectedOptionId, rethrowOnError = false) {
-    const wrongBlock = feedbackDiv.querySelector('.result-wrong');
-    if (!wrongBlock) return;
-    return fetchWithPlaceholder(
-      API.COMPARISON + '?questionId=' + encodeURIComponent(questionId) + '&selectedOptionId=' + encodeURIComponent(selectedOptionId),
-      wrongBlock,
-      '<span class="comparison-loading-text">Загрузка…</span>',
-      (cmpData, placeholderEl) => {
-        placeholderEl.remove();
-        if (cmpData.comparison) {
-          try {
-            const parsed = typeof cmpData.comparison === 'string' ? JSON.parse(cmpData.comparison) : cmpData.comparison;
-            if (parsed.criteria && parsed.criteria.length > 0) {
-              const cmpDiv = document.createElement('div');
-              cmpDiv.className = 'content-block comparison-block';
-              let tableHtml = '<div class="comparison-title">' + icon('chart', 'ed-icon-lead') + 'Сравнение: выбранное vs правильное</div>';
-              tableHtml += '<table class="comparison-table"><tr><th>Критерий</th><th>Выбранное</th><th>Правильное</th></tr>';
-              parsed.criteria.forEach(c => {
-                tableHtml += '<tr><td>' + escapeHtml(c.criterion) + '</td><td>' + escapeHtml(c.selected) + '</td><td>' + escapeHtml(c.correct) + '</td></tr>';
-              });
-              tableHtml += '</table>';
-              cmpDiv.innerHTML = tableHtml;
-              wrongBlock.after(cmpDiv);
-            }
-          } catch (e) { /* ignore parse error */ }
-        }
-      },
-      'GET',
-      { insertAfter: true, placeholderClassName: 'content-block comparison-block comparison-loading', rethrowOnError: rethrowOnError }
-    );
-  }
-
-  function fetchCodeTrace(questionId, rethrowOnError = false) {
-    const codeBlock = document.querySelector('.question-code');
-    if (!codeBlock) return;
-    return fetchWithPlaceholder(
-      API.CODE_TRACE + '?questionId=' + encodeURIComponent(questionId),
-      feedbackDiv,
-      '<span class="code-trace-loading-text">Загрузка…</span>',
-      (traceData, placeholderEl) => {
-        placeholderEl.remove();
-        if (traceData.trace) {
-          try {
-            const parsed = typeof traceData.trace === 'string' ? JSON.parse(traceData.trace) : traceData.trace;
-            if (parsed.steps && parsed.steps.length > 0) {
-              const traceDiv = document.createElement('div');
-              traceDiv.className = 'content-block code-trace-block';
-              let html = '<details><summary class="code-trace-title">' + icon('search', 'ed-icon-lead') + 'Пошаговое выполнение кода</summary>';
-              html += '<ol class="code-trace-steps">';
-              parsed.steps.forEach(s => {
-                html += '<li class="code-trace-step">';
-                html += '<span class="trace-step-num">' + escapeHtml(s.step) + '</span>';
-                if (s.line) html += '<span class="trace-step-line">' + escapeHtml(s.line) + '</span>';
-                if (s.state) html += '<span class="trace-step-state">' + escapeHtml(s.state) + '</span>';
-                html += '<span class="trace-step-explanation">' + escapeHtml(s.explanation) + '</span>';
-                html += '</li>';
-              });
-              html += '</ol></details>';
-              traceDiv.innerHTML = html;
-              appendAnalysisBlock(traceDiv);
-            }
-          } catch (e) { /* ignore parse error */ }
-        }
-      },
-      'GET',
-      { insertAfter: true, placeholderClassName: 'content-block code-trace-block code-trace-loading', rethrowOnError: rethrowOnError }
-    );
-  }
-
   function renderRelatedQuestions(data) {
     if (!data.relatedQuestions || data.relatedQuestions.length === 0) return;
     const currentGroup = form.querySelector('input[name="group"]')?.value || '';
@@ -1954,71 +1660,27 @@
     setInteractionBusy(false);
     feedbackDiv.setAttribute('tabindex', '-1');
     feedbackDiv.focus();
-    if (extraAnalysisBtn && !learningPrefs.hardMode) {
+    // AI-разбор (feedback/comparison/takeaway/трейс кода) удалён вместе с
+    // провайдерами. Единственное живое наполнение «доп. анализа» — похожие вопросы
+    // для закрепления (приходят в ответе /api/answer, рендерятся без сети). Кнопка =
+    // простое progressive-disclosure «Похожие вопросы»; в hard-режиме, как и раньше, скрыта.
+    const hasRelated = !learningPrefs.hardMode
+      && Array.isArray(data.relatedQuestions) && data.relatedQuestions.length > 0;
+    if (extraAnalysisBtn && hasRelated) {
       extraAnalysisBtn.classList.remove('hidden');
       extraAnalysisBtn.removeAttribute('aria-disabled');
-      extraAnalysisBtn.textContent = EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
-      // При ошибке показываем ключевой разбор сразу, чтобы не терять учебный момент.
-      if (!isCorrect) {
-        fetchWrongFeedback(questionId, data.selectedOptionId);
-        fetchComparison(questionId, data.selectedOptionId);
-      }
-      let loaded = false;
-      extraAnalysisBtn.onclick = async () => {
-        if (loaded) return;
-        loaded = true;
-        // aria-disabled, не disabled: сохраняем фокус клавиатуры на кнопке
-        // (native disabled сбросил бы его на <body>). Повтор гасит флаг loaded.
-        extraAnalysisBtn.setAttribute('aria-disabled', 'true');
-        extraAnalysisBtn.setAttribute('aria-busy', 'true');
+      extraAnalysisBtn.setAttribute('aria-expanded', 'false');
+      let relatedRevealed = false;
+      extraAnalysisBtn.onclick = () => {
+        if (relatedRevealed) return;
+        relatedRevealed = true;
         extraAnalysisBtn.setAttribute('aria-expanded', 'true');
-        extraAnalysisBtn.textContent = EXTRA_ANALYSIS_BUTTON_LOADING_TEXT;
-        try {
-          const requests = [];
-          requests.push(fetchTakeaway(questionId, true));
-          requests.push(fetchCodeTrace(questionId, true));
-          const results = await Promise.allSettled(requests);
-          renderRelatedQuestions(data);
-          // realCount исключает undefined-слоты (fetchCodeTrace возвращает undefined
-          // для вопросов без кода → allSettled считает их fulfilled).
-          const realCount = requests.filter(r => r != null).length;
-          const failedCount = results.filter(r => r.status === 'rejected').length;
-          if (realCount > 0 && failedCount === realCount) {
-            // Полный провал: возвращаем кнопку в кликабельное состояние (как на
-            // result-странице), иначе она застывала на «загружен» без контента.
-            loaded = false;
-            extraAnalysisBtn.removeAttribute('aria-disabled');
-            extraAnalysisBtn.setAttribute('aria-expanded', 'false');
-            extraAnalysisBtn.textContent = EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
-            setInlineAlert('Не удалось загрузить доп. анализ. Попробуй ещё раз.');
-          } else {
-            extraAnalysisBtn.textContent = EXTRA_ANALYSIS_BUTTON_DONE_TEXT;
-            if (failedCount > 0) {
-              setInlineAlert('Часть блоков доп. анализа не загрузилась. Можно продолжить тренировку.');
-            }
-          }
-        } finally {
-          extraAnalysisBtn.removeAttribute('aria-busy');
-        }
-      };
-    } else {
-      if (learningPrefs.hardMode) {
-        if (extraAnalysisBtn) {
-          extraAnalysisBtn.classList.add('hidden');
-        }
-      } else {
-        // Fallback for pages where the extra-analysis button is absent.
-        if (!isCorrect) {
-          fetchWrongFeedback(questionId, data.selectedOptionId);
-          fetchComparison(questionId, data.selectedOptionId);
-        }
-        fetchTakeaway(questionId);
-        fetchCodeTrace(questionId);
         renderRelatedQuestions(data);
-      }
-      if (extraAnalysisBtn && learningPrefs.hardMode) {
+        // Кнопка отыграла роль — прячем, чтобы не осталась «нажатой пустышкой».
         extraAnalysisBtn.classList.add('hidden');
-      }
+      };
+    } else if (extraAnalysisBtn) {
+      extraAnalysisBtn.classList.add('hidden');
     }
 
     nextLink.onclick = (e) => {
