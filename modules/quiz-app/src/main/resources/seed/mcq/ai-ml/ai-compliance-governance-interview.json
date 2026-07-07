@@ -982,7 +982,7 @@
               "order": 0
             },
             {
-              "text": "`Datasheet for Dataset` документирует обученную модель: её веса, архитектуру и метрики.",
+              "text": "`Datasheets for Datasets` (Gebru et al. 2018) — стандарт документации обученной модели: intended use, метрики по демографическим срезам (accuracy, false positive rate по группам), training/evaluation setup, ethical considerations и caveats. Downstream-команда читает datasheet, чтобы понять границы применимости весов и архитектуры перед деплоем.",
               "correct": false,
               "sections": {
                 "what_actually": "Datasheet документирует именно датасет (composition, collection, preprocessing); модель документирует Model Card.",
@@ -994,7 +994,7 @@
               "order": 1
             },
             {
-              "text": "Datasheet нужен только для соблюдения формальностей и не помогает в bias detection.",
+              "text": "`Datasheets for Datasets` заполняются автоматически инструментами профилирования (pandas-profiling, TFDV) по статистике датасета: распределения признаков, доля пропусков, кардинальность категорий. Секции Motivation и Collection Process в стандарт не входят, поскольку восстанавливаются из метаданных загрузки.",
               "correct": false,
               "sections": {
                 "what_actually": "Datasheet прямо помогает bias detection: зная demographics датасета, понимаешь blind spots модели.",
@@ -1006,7 +1006,7 @@
               "order": 2
             },
             {
-              "text": "`Datasheets for Datasets` — это формат хранения самих данных, аналог Parquet или CSV.",
+              "text": "`Datasheets for Datasets` — бинарный формат сериализации датасета со встроенной схемой и типами колонок, аналог Parquet или Arrow; поверх данных он хранит блок метаданных (лицензия, версия, контрольные суммы), который ML-фреймворки читают при загрузке.",
               "correct": false,
               "sections": {
                 "what_actually": "Datasheet — это документация (метаданные про датасет), а не формат хранения данных вроде Parquet/CSV.",
@@ -1149,7 +1149,7 @@
           "question_text": "Какие методы explainability существуют для ML и LLM?",
           "options": [
             {
-              "text": "Explainability всегда даёт 100% точное объяснение того, как модель на самом деле приняла решение.",
+              "text": "Методы explainability делятся на post-hoc (`SHAP`, `LIME`, integrated gradients) и intrinsic (linear и tree-модели). Post-hoc-атрибуции реконструируют фактический путь вычисления внутри сети, поэтому считаются faithful-объяснением реального механизма принятия решения.",
               "correct": false,
               "sections": {
                 "what_actually": "Explainability ≠ correctness: post-hoc методы часто имеют низкую faithfulness — объяснение может не отражать actual reasoning модели.",
@@ -1161,7 +1161,7 @@
               "order": 0
             },
             {
-              "text": "Единственный метод explainability — `SHAP`, остальные подходы не существуют.",
+              "text": "`SHAP` строит вокруг конкретного предсказания локальную интерпретируемую linear-модель на возмущённых сэмплах и объясняет ровно этот прогноз, тогда как `LIME` вычисляет глобальную важность признаков через Shapley-значения по всему датасету.",
               "correct": false,
               "sections": {
                 "what_actually": "Методов много: SHAP, LIME, permutation importance, partial dependence, integrated gradients, Grad-CAM, attention maps, mechanistic interpretability.",
@@ -1173,7 +1173,7 @@
               "order": 1
             },
             {
-              "text": "`Attention maps` в трансформерах — это строгое и полное объяснение решения модели.",
+              "text": "`Attention maps` визуализируют веса self-attention между токенами; поскольку эти веса напрямую задают вклад каждого входного токена в итоговое предсказание, они дают валидную feature-атрибуцию для LLM.",
               "correct": false,
               "sections": {
                 "what_actually": "Attention ≠ explanation в strict sense: attention maps показывают, какие токены повлияли, но не дают каузального объяснения reasoning.",
@@ -1269,7 +1269,7 @@
           "question_text": "Что должен включать audit trail для AI-системы?",
           "options": [
             {
-              "text": "Audit trail для AI — это просто текстовый лог приложения, который можно редактировать и чистить.",
+              "text": "Audit trail для AI-системы — это стандартные application-логи в централизованном хранилище (ELK, Loki) с request/response, версией модели и метками времени; чтобы контролировать объём, к ним применяется log rotation с перезаписью старых записей по политике retention.",
               "correct": false,
               "sections": {
                 "what_actually": "Quality audit log должен быть append-only (нельзя редактировать post-hoc), cryptographically signed или immutable storage, structured (JSON/Parquet), а не free-form редактируемый текст.",
@@ -1306,7 +1306,7 @@
               "order": 2
             },
             {
-              "text": "Audit trail нужно хранить вечно для абсолютно всех типов записей без исключений.",
+              "text": "Retention audit trail подчиняется GDPR right-to-erasure: при запросе субъекта на удаление соответствующие decision logs и model lineage вычищаются из хранилища, поэтому долгосрочно (6+ месяцев) удерживать их нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Retention дифференцирован: decision logs — минимум 6 месяцев (AI Act Art. 12), model/data lineage — permanent, access logs — per policy (SOC 2 — 1+ year).",
@@ -1389,7 +1389,7 @@
           "question_text": "Как организовать reporting AI incidents?",
           "options": [
             {
-              "text": "AI incident по EU AI Act — это любая мелкая ошибка модели, например единичный неверный ответ чат-бота.",
+              "text": "`Serious incident` по AI Act (Art. 3(49)) — это событие, которое напрямую и фактически повлекло death, serious health damage, сбой critical infrastructure или нарушение fundamental rights; косвенный вред или ситуации, где ущерб лишь мог наступить, под определение не подпадают.",
               "correct": false,
               "sections": {
                 "what_actually": "`Serious incident` (Art. 3(49)) — это death/serious health damage, disruption critical infrastructure, infringement fundamental rights или serious damage to property/environment, а не любой мелкий сбой.",
@@ -1401,7 +1401,7 @@
               "order": 0
             },
             {
-              "text": "О serious incident по AI Act можно сообщить в любой удобный срок, жёстких дедлайнов нет.",
+              "text": "Timeline по Art. 73: сразу после установления causal link отчёт подаётся в течение 2 дней в стандартном случае, 15 дней для widespread incidents или сбоя critical infrastructure и 10 дней при death.",
               "correct": false,
               "sections": {
                 "what_actually": "Дедлайны жёсткие (Art. 73): 15 days для standard serious incident, 2 days для widespread infringement/infrastructure, 10 days для death — immediately после establishing causal link.",
@@ -1413,7 +1413,7 @@
               "order": 1
             },
             {
-              "text": "Об AI incident сообщают напрямую в Европейскую комиссию, а не в национальные органы.",
+              "text": "Отчёт о serious incident направляется в market surveillance authority того MS, где учреждён provider AI-системы; орган страны, где фактически произошёл incident, к процедуре не привлекается.",
               "correct": false,
               "sections": {
                 "what_actually": "Сообщают в `market surveillance authority` той MS, где произошёл incident, а не напрямую в Commission.",
@@ -1509,7 +1509,7 @@
           "question_text": "Что такое red teaming AI и какие best practices?",
           "options": [
             {
-              "text": "Red teaming AI — это только классический security pentest инфраструктуры, без проверки поведения модели.",
+              "text": "Red teaming AI сводится к security-тестированию инфраструктуры вокруг модели: пентест API и аутентификации, поиск уязвимостей в data pipeline, model extraction через обход rate-limit. Поведенческие атаки на саму модель (jailbreaks, bias probing) относятся к отдельной дисциплине QA и в red teaming не входят.",
               "correct": false,
               "sections": {
                 "what_actually": "Red teaming AI отличается от классического security red team: помимо code exploits он тестирует behavioral attacks на модель (jailbreaks, bias, hallucinations).",
@@ -1534,7 +1534,7 @@
               "order": 1
             },
             {
-              "text": "Red teaming AI проводят один раз перед запуском модели, и после этого он не требуется.",
+              "text": "Red teaming AI выполняется как разовый pre-deployment gate: команда прогоняет структурированный набор атак перед релизом, фиксирует severity, и при отсутствии критичных находок повторный прогон после митигаций и на последующих версиях не планируется.",
               "correct": false,
               "sections": {
                 "what_actually": "Best practice — continuous red teaming: модель обновляется, attack landscape меняется, fixes создают новые attack surfaces, поэтому one-shot pre-launch недостаточно.",
@@ -1546,7 +1546,7 @@
               "order": 2
             },
             {
-              "text": "Для red teaming достаточно одного эксперта, разнообразие команды значения не имеет.",
+              "text": "Для red teaming AI достаточно одного профильного security-эксперта с глубоким знанием модели: он покрывает и jailbreaks, и bias probing, и robustness testing, поэтому привлечение diverse teams из разных доменов на качество находок влияет слабо.",
               "correct": false,
               "sections": {
                 "what_actually": "Best practice — diverse teams (gender, race, domain expertise, например эксперты по CBRN): разный опыт находит разные failure modes.",
@@ -1702,7 +1702,7 @@
               "order": 0
             },
             {
-              "text": "Data residency означает, что модель должна быть обучена только на данных одной страны.",
+              "text": "`Data residency` означает, что обучающие данные должны происходить из целевого региона: модель для EU обучается на собранных в EEA датасетах, тогда как inference-трафик и хранение выходов при этом могут находиться в любой юрисдикции.",
               "correct": false,
               "sections": {
                 "what_actually": "Data residency — про регион обработки и хранения данных (inputs, outputs, storage), а не про национальность training data.",
@@ -1714,7 +1714,7 @@
               "order": 1
             },
             {
-              "text": "Data residency обеспечивается исключительно self-hosted моделями; cloud-провайдеры её не поддерживают.",
+              "text": "Data residency закрывается self-hosted развёртыванием в собственном VPC: у публичных cloud-провайдеров служебная телеметрия и control plane терминируются в US-регионах, из-за чего regional deployment и EU sovereign clouds (OVH, Scaleway) требование по региону хранения не выполняют.",
               "correct": false,
               "sections": {
                 "what_actually": "Cloud-провайдеры поддерживают residency через regional deployment: Azure OpenAI, Anthropic на AWS Bedrock (eu-central-1), Google Vertex — не только self-hosted.",
@@ -1726,7 +1726,7 @@
               "order": 2
             },
             {
-              "text": "Data residency требует только шифрования данных, регион хранения не имеет значения.",
+              "text": "Data residency выполняется при шифровании данных с управлением ключами in-region (BYOK/HYOK): пока ключи недоступны за пределами региона, сами зашифрованные данные можно держать в любом data center, ведь без ключа они нечитаемы и считаются обработанными в регионе ключей.",
               "correct": false,
               "sections": {
                 "what_actually": "Encryption — часть checklist, но суть residency именно в регионе обработки/хранения (GDPR Chapter V, national security laws), а не только в шифровании.",
