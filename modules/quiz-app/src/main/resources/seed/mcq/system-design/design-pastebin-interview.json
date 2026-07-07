@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Private и password-protected paste тоже надо отдавать через CDN с длинным TTL, чтобы ускорить доступ их владельцам.",
+              "text": "Cache key для private и password-protected paste строят так же — `(short_code, raw)` — и кладут на edge с длинным immutable-TTL, чтобы владелец получал тот же edge-hit, что и public: проверку доступа делают один раз при первом запросе, дальше отдают из общего кэша.",
               "correct": false,
               "sections": {
                 "what_actually": "Private/password обходят CDN (`Cache-Control: private`): кэшировать приватный контент на edge — риск отдать его не тому пользователю.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Без CDN стоимость egress примерно такая же, как с CDN, поэтому CDN нужен только ради латентности, но не ради экономии.",
+              "text": "Bandwidth считается одинаково: что 30 TB/мес напрямую с origin, что через CDN — это те же ~$600/мес, ведь CDN лишь проксирует тот же объём трафика; поэтому CDN оправдан только латентностью (edge ближе к пользователю), а не экономией egress.",
               "correct": false,
               "sections": {
                 "what_actually": "Без CDN egress ~30 TB/месяц ≈ $600+, а с 95% hit — $30 origin + $50-100 CDN; экономия кратная, не только латентность.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "CDN-кэш для view-endpoint надо делать с таким же агрессивным TTL, как для raw, потому что HTML-страница так же immutable.",
+              "text": "View-endpoint (`/view/abc1234`) кэшируют тем же длинным immutable-TTL и включают в общую versioned-схему `/v1/...`, что и raw: HTML-страница отдаётся с edge как статика, поскольку сама страница paste не меняется после создания.",
               "correct": false,
               "sections": {
                 "what_actually": "View-endpoint кэшируют коротким TTL (или serve-stale): HTML меняется при новых комментариях и счётчике просмотров, тогда как raw — immutable.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Multi-region нужен с самого старта любого `Pastebin`, иначе сервис не сможет работать даже на малых нагрузках.",
+              "text": "Multi-region — 3 региона (US/EU/APAC), каждый full-stack, GeoDNS-routing — закладывают с самого старта любого `Pastebin`: без раскатки во все регионы сервис не выдержит даже базовую нагрузку и не пройдёт GDPR, поэтому single region как стартовая конфигурация не рассматривается.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию для startup-`Pastebin` достаточно single region; multi-region добавляют при scale (латентность, GDPR, DR), а не на старте.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "При multi-region paste, созданный в US, доступен EU-пользователю мгновенно и без задержки, потому что репликация синхронна.",
+              "text": "Cross-region репликация синхронная: paste, созданный в US-регионе, сразу доступен EU-пользователю без задержки, потому что запись подтверждается только после реплики во все три региона (US/EU/APAC); поэтому первый cross-region-доступ такой же быстрый, как локальный.",
               "correct": false,
               "sections": {
                 "what_actually": "Cross-region репликация async (lag 5-30 сек): EU-пользователь к US-paste первый раз идёт cross-region (медленнее), потом кэшируется в EU edge.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Data residency не накладывает ограничений на физическое размещение: EU-paste можно хранить в любом регионе, лишь бы был доступ.",
+              "text": "Data residency ограничивает только доступ, а не физическое размещение: EU-paste можно хранить в US- или APAC-регионе и реплицировать куда угодно, лишь бы EU-пользователю был обеспечен доступ через GeoDNS; опция «Store data in: US/EU/APAC» влияет только на латентность.",
               "correct": false,
               "sections": {
                 "what_actually": "Data residency требует физического хранения EU-данных только в EU-регионе (GDPR); это не «где угодно», а строгая привязка к географии.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Anonymous-режим надо запретить: создавать paste можно только после регистрации, иначе невозможно контролировать abuse.",
+              "text": "Anonymous-режим отключают: создать paste можно только после регистрации через OAuth или user/password, потому что без привязки к аккаунту нельзя ни применить rate-limit, ни вести DMCA-трекинг, ни отозвать доступ; поэтому `curl ... | pastebin` требует заранее полученный API-токен.",
               "correct": false,
               "sections": {
                 "what_actually": "Anonymous-создание разрешено (базовый paste без auth), но с урезанными фичами (no edit/private) и низкими квотами; полный запрет убил бы суть quick-paste.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "OAuth требует, чтобы `Pastebin` сам хранил пароли пользователей GitHub/Google для последующей аутентификации.",
+              "text": "OAuth-flow требует, чтобы `Pastebin` принимал логин и пароль от GitHub/Google, проверял их у себя и хранил в собственной БД (bcrypt-hash), чтобы затем повторно аутентифицировать пользователя без обращения к провайдеру.",
               "correct": false,
               "sections": {
                 "what_actually": "OAuth как раз избавляет от хранения паролей: пользователь аутентифицируется у провайдера, а `Pastebin` получает только токен/профиль, не пароль.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Session-cookie достаточно пометить как `Secure`; флаги `HttpOnly` и `SameSite` избыточны и только усложняют интеграцию.",
+              "text": "Session-cookie достаточно пометить `Secure` (только по HTTPS): флаги `HttpOnly` и `SameSite=Strict` избыточны, ведь HTTPS уже шифрует cookie в транзите и тем самым закрывает и кражу через `document.cookie` при XSS, и отправку с чужой сессией при CSRF.",
               "correct": false,
               "sections": {
                 "what_actually": "Cookie ставят `HttpOnly` (защита от XSS-кражи), `Secure` (только HTTPS) и `SameSite=Strict` (защита от CSRF) — каждый флаг закрывает свой класс атак.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно мониторить только latency создания и просмотра; storage- и abuse-метрики для `Pastebin` не нужны.",
+              "text": "Достаточно двух latency-метрик — `paste_creation_latency_p99` и `paste_view_latency_p99`: storage-срез (`blob_storage_size_tb`, `compression_ratio`) и anti-abuse (`dmca_blocks_per_day`, `malware_detections`) дублируют то, что и так проявится ростом latency, поэтому отдельно их не собирают.",
               "correct": false,
               "sections": {
                 "what_actually": "Мониторят и storage (`blob_storage_size_tb`, `compression_ratio`), и abuse (`dmca_blocks_per_day`, `malware_detections`), и бизнес — latency лишь один из срезов.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Все алерты надо слать одним каналом с одинаковым приоритетом, потому что разделять severity по типам метрик незачем.",
+              "text": "Все алерты — `creation_success_rate < 95%`, DMCA-spike, GC-лаг > 24ч — маршрутизируют одним каналом с одинаковым приоритетом page: разделять severity по типам метрик незачем, ведь дежурный смотрит единый дашборд и сам решит, что критично.",
               "correct": false,
               "sections": {
                 "what_actually": "Severity разная: `creation_success_rate < 95%` 5 мин → page (будят дежурного), DMCA-spike → Slack, GC-лаг > 24ч → email — каждый канал под свою критичность.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`compression_ratio` можно не мониторить: уровень `zstd` задаётся в конфиге и держится стабильным, так что метрика будет показывать почти постоянное значение.",
+              "text": "`compression_ratio` не мониторят: уровень `zstd` фиксируется в конфиге (например, level 3), поэтому ratio детерминирован кодеком и держится на постоянных 3-4× независимо от контента — метрика показывала бы плоскую линию без полезного сигнала.",
               "correct": false,
               "sections": {
                 "what_actually": "`compression_ratio` отслеживают (target 3-4×): его падение сигналит о смене характера контента или о сбое сжатия, влияя на стоимость storage.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главный способ снизить стоимость — отказаться от CDN, потому что CDN сам по себе дорогая статья расхода без реальной экономии.",
+              "text": "Главный рычаг экономии — убрать CDN: edge-слой добавляет $50-100/мес сверху и лишь проксирует тот же трафик, поэтому отдача raw напрямую с origin (30 TB/мес) выходит дешевле, чем origin + CDN, а латентность закрывают несколькими origin-репликами по регионам.",
               "correct": false,
               "sections": {
                 "what_actually": "CDN, наоборот, удешевляет: 95% hit делает origin-bandwidth в ~20× дешевле, а edge-компрессия экономит ещё ~70% трафика.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Compression почти не влияет на стоимость, потому что storage в S3 настолько дёшев, что экономия 70% несущественна.",
+              "text": "Compression почти не влияет на итоговый счёт: storage в S3 стоит $0.023/GB, поэтому даже zstd 3-4× (−70% объёма) экономит копейки на фоне bandwidth и compute — внедрять сжатие ради storage смысла нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Compression даёт −70% storage (zstd 3-4×), что прямо снижает счёт за blob с $300-900 до $100-300 — это существенная экономия, а не мелочь.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Менять S3 на Cloudflare R2 или Backblaze B2 бессмысленно: цены за GB у всех провайдеров одинаковы, разницы в счёте не будет.",
+              "text": "Менять S3 на Cloudflare R2 или Backblaze B2 смысла нет: цена за GB у крупных провайдеров сходится к одному уровню (~$0.023/GB), а egress-fee берут все, поэтому переезд ради стоимости не даёт разницы в счёте даже на больших объёмах.",
               "correct": false,
               "sections": {
                 "what_actually": "R2 ($0.015/GB) дешевле S3 ($0.023/GB), B2 ещё дешевле, плюс R2 не берёт egress-fee через Cloudflare CDN — разница в счёте ощутимая.",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Считать views синхронно (`UPDATE views_count = views_count + 1` на каждый просмотр) — нормальная практика, проблем с этим нет.",
+              "text": "Синхронный инкремент просмотров (`UPDATE pastes SET views_count = views_count + 1 WHERE id = ?` на каждый view) — нормальная практика: одна строка, одна короткая транзакция, точное значение без лага; даже на популярном paste с 1200 view/sec Postgres берёт row-lock на микросекунды, поэтому contention не возникает.",
               "correct": false,
               "sections": {
                 "what_actually": "Синхронный инкремент даёт row-contention на популярных paste; правильно — async через Kafka + batch update.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Хранить большие blob прямо в колонке Postgres — оптимально, потому что Postgres TOAST прозрачно обрабатывает overflow без последствий.",
+              "text": "Хранить большие blob прямо в колонке Postgres — оптимально: `TOAST` прозрачно выносит значения >2 KB в отдельное storage и сжимает их, поэтому основная таблица не растёт, а backup/restore остаётся быстрым независимо от объёма контента.",
               "correct": false,
               "sections": {
                 "what_actually": "TOAST хранит overflow, но размер БД растёт быстро, а backup/restore становится мучительно медленным; fix — blob в S3.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Full-text search по всем paste по умолчанию — правильное решение, потому что максимально полный индекс полезнее для пользователей.",
+              "text": "Full-text search по всем paste по умолчанию (единый Elasticsearch-индекс по public, unlisted и private) — правильное решение: максимально полный индекс полезнее для пользователей и упрощает поддержку одного поискового пайплайна.",
               "correct": false,
               "sections": {
                 "what_actually": "Индексация всех paste — privacy violation и юридический риск (поиск утёкших паролей); индексируют только explicitly public.",
