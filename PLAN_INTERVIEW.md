@@ -257,14 +257,14 @@ _Сводка: файлов=318 · caricature-clean(CAR0)=317/318 · остат�
 | 7 | spring-mvc | 43 | CRIT | · | 43 | 43 | 43 | 12 | 43 | 42 | 37 | 14 | 24 | 43 | 42 | 2 | 28 | · | 11 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 8 | jwt | 43 | CRIT | · | 43 | 43 | 43 | 34 | 43 | 34 | 31 | 11 | 20 | 42 | 32 | 10 | 25 | · | 9 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 9 | caching-strategies | 42 | CRIT | · | 42 | 42 | 42 | 30 | 42 | 37 | 30 | 17 | 20 | 39 | 35 | 12 | 19 | · | 12 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 10 | contract-testing | 42 | CRIT | · | 42 | 42 | 42 | 27 | 42 | 41 | 31 | 11 | 19 | 42 | 31 | 8 | 29 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 11 | authentication-authorization-patterns | 45 | CRIT | · | 45 | 45 | 43 | 28 | 45 | 30 | 24 | 17 | 8 | 44 | 42 | 6 | 23 | · | 10 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 12 | elasticsearch | 44 | CRIT | · | 44 | 44 | 43 | 26 | 44 | 34 | 31 | 18 | 5 | 41 | 38 | 3 | 29 | · | 12 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 13 | performance-testing | 42 | CRIT | · | 42 | 42 | 41 | 20 | 42 | 37 | 34 | 14 | 15 | 42 | 23 | 20 | 31 | · | 8 | · | 3 | · | · | · | · | 1 | · | · | · | · | · | ✅CAR0 |
+| 10 | authentication-authorization-patterns | 45 | CRIT | · | 45 | 45 | 43 | 28 | 45 | 30 | 24 | 17 | 8 | 44 | 42 | 6 | 23 | · | 10 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 11 | elasticsearch | 44 | CRIT | · | 44 | 44 | 43 | 26 | 44 | 34 | 31 | 18 | 5 | 41 | 38 | 3 | 29 | · | 12 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 12 | performance-testing | 42 | CRIT | · | 42 | 42 | 41 | 20 | 42 | 37 | 34 | 14 | 15 | 42 | 23 | 20 | 31 | · | 8 | · | 3 | · | · | · | · | 1 | · | · | · | · | · | ✅CAR0 |
+| 13 | contract-testing | 42 | CRIT | · | 42 | 42 | 42 | 27 | 42 | 40 | 29 | 11 | 19 | 42 | 30 | 8 | 29 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 14 | unit-testing | 45 | CRIT | · | 45 | 45 | 43 | 30 | 45 | 35 | 27 | 16 | 20 | 42 | 32 | 4 | 15 | · | 7 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 15 | spring-cloud | 43 | CRIT | · | 43 | 43 | 43 | 30 | 43 | 30 | 24 | 12 | 7 | 43 | 39 | 4 | 33 | · | 9 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 16 | redis | 43 | CRIT | · | 43 | 43 | 43 | 5 | 43 | 43 | 34 | 7 | 17 | 41 | 35 | 4 | 22 | · | 18 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 17 | fine-tuning-llm | 35 | CRIT | · | 35 | 35 | 35 | 25 | 35 | 33 | 20 | 14 | 22 | 34 | 25 | 26 | 29 | · | 16 | · | 16 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 17 | fine-tuning-llm | 35 | CRIT | · | 35 | 35 | 35 | 25 | 35 | 33 | 18 | 15 | 22 | 34 | 25 | 26 | 29 | · | 17 | · | 16 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 18 | scala | 40 | CRIT | · | 40 | 40 | 40 | 28 | 40 | 31 | 26 | 10 | 18 | 40 | 39 | 7 | 27 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 19 | test-strategies | 45 | CRIT | · | 45 | 45 | 45 | 15 | 44 | 37 | 30 | 4 | 11 | 41 | 29 | 8 | 33 | · | 3 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 20 | database-transactions | 42 | CRIT | · | 42 | 42 | 42 | 28 | 42 | 31 | 26 | 14 | 19 | 38 | 32 | 2 | 24 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
@@ -316,9 +316,9 @@ _Сводка: файлов=318 · caricature-clean(CAR0)=317/318 · остат�
 | 66 | long-context-vs-rag | 30 | CRIT | · | 30 | 30 | 30 | 25 | 30 | 28 | 19 | 10 | 20 | 30 | 17 | 23 | 18 | · | 8 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 67 | testcontainers | 40 | CRIT | · | 40 | 40 | 32 | 26 | 40 | 21 | 20 | 14 | 6 | 32 | 31 | · | 15 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 68 | design-key-value-store | 30 | CRIT | · | 30 | 30 | 30 | 26 | 30 | 27 | 15 | 7 | 16 | 30 | 22 | 18 | 22 | · | 14 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 69 | kotlin-interop-java | 38 | CRIT | · | 38 | 38 | 35 | 14 | 38 | 36 | 22 | 14 | 8 | 34 | 29 | · | 3 | · | 8 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 70 | design-payment-system | 30 | CRIT | · | 30 | 30 | 30 | 26 | 30 | 27 | 5 | 15 | 25 | 30 | 17 | 21 | 26 | · | 7 | · | 1 | · | · | · | · | · | · | 1 | 1 | · | · | ✅CAR0 |
-| 71 | java-types | 37 | CRIT | · | 37 | 37 | 34 | 17 | 37 | 26 | 18 | 9 | 7 | 31 | 28 | 7 | 8 | · | 18 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 69 | design-payment-system | 30 | CRIT | · | 30 | 30 | 30 | 26 | 30 | 27 | 6 | 15 | 25 | 30 | 17 | 21 | 26 | · | 8 | · | 1 | · | · | · | · | · | · | 1 | 1 | · | · | ✅CAR0 |
+| 70 | kotlin-interop-java | 38 | CRIT | · | 38 | 38 | 35 | 14 | 38 | 36 | 22 | 14 | 8 | 34 | 29 | · | 3 | · | 8 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 71 | java-types | 37 | CRIT | · | 37 | 37 | 34 | 17 | 37 | 26 | 18 | 12 | 7 | 31 | 28 | 7 | 8 | · | 16 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 72 | clean-architecture | 41 | CRIT | · | 41 | 41 | 41 | 7 | 41 | 27 | 16 | 9 | 15 | 30 | 26 | 2 | 13 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 73 | websocket | 38 | CRIT | · | 38 | 38 | 28 | 7 | 37 | 33 | 21 | 12 | 12 | 38 | 30 | 5 | 12 | · | 2 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 74 | design-pastebin | 30 | CRIT | · | 30 | 30 | 30 | 24 | 30 | 25 | 12 | 11 | 25 | 30 | 20 | 16 | 20 | · | 10 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
@@ -337,12 +337,12 @@ _Сводка: файлов=318 · caricature-clean(CAR0)=317/318 · остат�
 | 87 | service-discovery | 30 | CRIT | · | 30 | 30 | 29 | 19 | 30 | 24 | 12 | 14 | 22 | 30 | 17 | 17 | 23 | · | 6 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 88 | java-modules | 38 | CRIT | · | 38 | 38 | 27 | 13 | 38 | 35 | 25 | 8 | 9 | 32 | 23 | 1 | 8 | · | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 89 | apache-flink | 31 | CRIT | · | 31 | 31 | 31 | 29 | 31 | 24 | 20 | 11 | 8 | 31 | 21 | 6 | 16 | · | 10 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 90 | quarkus | 31 | CRIT | · | 31 | 31 | 31 | 24 | 31 | 27 | 25 | 2 | 10 | 29 | 23 | 6 | 18 | · | 9 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 91 | design-parking-lot-oo | 28 | CRIT | · | 28 | 28 | 28 | 25 | 28 | 25 | 17 | 17 | 19 | 28 | 28 | 6 | 20 | · | 2 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 92 | mcp | 30 | CRIT | · | 30 | 30 | 30 | 21 | 30 | 26 | 19 | 6 | 16 | 30 | 27 | 4 | 24 | · | 5 | · | 2 | · | · | · | · | · | · | · | 1 | · | · | ✅CAR0 |
-| 93 | metrics-tracing | 41 | CRIT | · | 41 | 41 | 34 | 13 | 41 | 25 | 19 | 7 | 10 | 27 | 22 | 4 | 11 | · | 2 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 94 | java-serialization | 40 | CRIT | · | 40 | 40 | 28 | 7 | 39 | 32 | 24 | 10 | 9 | 32 | 19 | 2 | 7 | · | 7 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 95 | arrays-strings | 36 | CRIT | · | 36 | 36 | 32 | 21 | 36 | 27 | 16 | 12 | 3 | 33 | 30 | 7 | 5 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 90 | design-parking-lot-oo | 28 | CRIT | · | 28 | 28 | 28 | 25 | 28 | 25 | 17 | 17 | 19 | 28 | 28 | 6 | 20 | · | 2 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 91 | mcp | 30 | CRIT | · | 30 | 30 | 30 | 21 | 30 | 26 | 19 | 6 | 16 | 30 | 27 | 4 | 24 | · | 5 | · | 2 | · | · | · | · | · | · | · | 1 | · | · | ✅CAR0 |
+| 92 | metrics-tracing | 41 | CRIT | · | 41 | 41 | 34 | 13 | 41 | 25 | 19 | 7 | 10 | 27 | 22 | 4 | 11 | · | 2 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 93 | java-serialization | 40 | CRIT | · | 40 | 40 | 28 | 7 | 39 | 32 | 24 | 10 | 9 | 32 | 19 | 2 | 7 | · | 7 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 94 | arrays-strings | 36 | CRIT | · | 36 | 36 | 32 | 21 | 36 | 27 | 16 | 12 | 3 | 33 | 30 | 7 | 5 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 95 | quarkus | 31 | CRIT | · | 31 | 31 | 30 | 25 | 31 | 23 | 21 | 4 | 10 | 29 | 23 | 6 | 18 | · | 11 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 96 | apache-spark | 35 | CRIT | · | 35 | 35 | 28 | 22 | 35 | 23 | 18 | 12 | 9 | 35 | 16 | 5 | 13 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 97 | database-architecture | 41 | CRIT | · | 40 | 40 | 35 | 1 | 40 | 35 | 23 | 14 | 5 | 29 | 17 | 1 | 10 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 98 | design-youtube | 28 | CRIT | · | 28 | 28 | 28 | 25 | 28 | 27 | 16 | 7 | 25 | 28 | 8 | 16 | 19 | · | 11 | · | · | · | · | · | · | · | · | 1 | · | · | · | ✅CAR0 |
@@ -352,8 +352,8 @@ _Сводка: файлов=318 · caricature-clean(CAR0)=317/318 · остат�
 | 102 | java-core | 39 | CRIT | · | 39 | 38 | 31 | 10 | 33 | 37 | 20 | 12 | 4 | 28 | 23 | · | 3 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 103 | database-replication | 31 | CRIT | · | 31 | 31 | 31 | 14 | 31 | 25 | 15 | 11 | 14 | 29 | 24 | 6 | 18 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 104 | serverless | 28 | CRIT | · | 28 | 28 | 28 | 21 | 28 | 23 | 17 | 7 | 16 | 27 | 24 | 8 | 24 | · | 8 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 105 | design-url-shortener | 30 | CRIT | · | 30 | 30 | 30 | 27 | 30 | 25 | 6 | 14 | 18 | 30 | · | 24 | 18 | · | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 106 | java-jackson | 31 | CRIT | · | 31 | 31 | 31 | 24 | 31 | 22 | 22 | 11 | 7 | 29 | 24 | 2 | 9 | · | 6 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 105 | java-jackson | 31 | CRIT | · | 31 | 31 | 31 | 24 | 31 | 22 | 22 | 11 | 7 | 29 | 24 | 2 | 9 | · | 6 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 106 | design-url-shortener | 30 | CRIT | · | 30 | 30 | 30 | 27 | 30 | 26 | 5 | 12 | 18 | 30 | · | 24 | 18 | · | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 107 | model-serving | 28 | CRIT | · | 28 | 28 | 28 | 21 | 28 | 24 | 23 | 9 | 10 | 28 | 22 | 12 | 17 | · | 3 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 108 | divide-and-conquer | 27 | CRIT | · | 27 | 27 | 27 | 22 | 27 | 27 | 19 | 9 | 11 | 27 | 26 | 11 | 12 | · | 9 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 109 | mongodb | 45 | CRIT | · | 32 | 32 | 32 | 9 | 32 | 25 | 15 | 7 | 5 | 34 | 27 | 4 | 14 | · | 11 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
@@ -671,9 +671,21 @@ _Сводка: файлов=318 · caricature-clean(CAR0)=317/318 · остат�
   JUnit-parallel-default-on, flaky=always-fails, H2-replaces-Testcontainers), `helm` (**e9aa1eb9**, Q35/36/37/40/41/43 —
   ArgoCD-helm-install, SOPS-encrypts-keys-not-values, post-renderer-before-template, provenance-encrypts).
   ratio 4.5-5.7x→2.9-4.1x, caric=0, tone=0, fidelity+schema OK. Все 107 прошли ручной semantic-gate.
+- ✅ **WORKFLOW-RESTART band#3** (2026-07-07, workflow `wf_d1f033bd-51e`, 12 агентов / 0 ошибок / 568K токенов):
+  **36 блоков, 108 дистракторов** (0 отклонено verify): `contract-testing` (**821621cc**, Q19/27/29/31/40/41 —
+  @State-once-per-context, message-pact-checks-delivery, StubRunner-real-service, LOCAL↔REMOTE swap, big-bang-rollout),
+  `quarkus` (**bebe6fd7**, Q12/16/19/20/21/30 — reflection-without-registration, /actuator-paths, Uni/Multi cardinality-swap,
+  Netty-not-Vertx, Panache-replaces-Hibernate), `design-url-shortener` (**e33851b8**, Q16/19/23/24/28/29 — scan-once,
+  single-Redis-INCR, honeypot-visible, sync-cross-region-quorum, eternal-TTL-fixes-stampede), `fine-tuning-llm`
+  (**a16df73c**, Q14/19/24/27/28/29 — RLHF-two-stages, TRL↔bitsandbytes role-swap, perplexity-enough, Llama2-tokenizer-safe),
+  `java-types` (**fb5ec5c5**, Q17/23/25/26/27/32 — sealed=final, arrays-invariant/ArrayStoreException, Optional-for-fields,
+  static-serialized, value-based-synchronized), `design-payment-system` (**603f2f1b**, Q11/16/20/25/26/27 —
+  frictionless↔challenge swap, liability-shift-to-acquirer, settlement=capture, monolith-single-DB, sync-2PC-cross-region).
+  ratio 4.3-5.6x→2.2-4.3x, все гейты OK, 108/108 через ручной semantic-gate. 1 reword (заставля→требует): tone-guard был
+  over-broad на benign «forces» — убран из apply-TONE regex (согласовано с audit-удалением caricature-группы).
 - ⏳ **Дальше — worst-first банды по 6 файлов через тот же workflow** (матрица §7 = worst-first очередь).
-  Band#3 в работе (`wf_d1f033bd-51e`): contract-testing/quarkus/design-url-shortener/fine-tuning-llm/java-types/design-payment-system.
-  Каждый файл переписывается по ПОЛНЫМ 20 правилам (не только length-tell). Остаток очереди ~287 файлов.
+  Band#4 в работе (`wf_51905ab5-41d`): deployment-strategies/design-netflix/design-parking-lot-oo/ai-observability/test-strategies/design-youtube.
+  Каждый файл переписывается по ПОЛНЫМ 20 правилам (не только length-tell). Остаток очереди ~281 файл.
   jmh Q9/B — genuine rule-9. Off-limits: agentic-patterns/git/chaos-engineering/postgresql/testcontainers + любой dirty файл.
 
 ---
