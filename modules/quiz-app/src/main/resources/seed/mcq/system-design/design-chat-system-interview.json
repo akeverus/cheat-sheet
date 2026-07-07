@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Sticky session по `hash(user_id) % N` — единственный валидный подход на масштабе 500M.",
+              "text": "Sticky session по `hash(user_id) % N`: балансировщик закрепляет пользователя за WS-сервером по модулю от числа нод, presence и маршрутизация живут в памяти этого сервера, доставка идёт прямым push без брокера. Подход выдерживает rolling deploy и autoscale, потому что добавление ноды перехеширует лишь малую долю пользователей.",
               "correct": false,
               "sections": {
                 "what_actually": "Sticky работает, но при изменении `N` (scale-out/in WS-tier) ключи переезжают, и reconnect попадает на другой сервер, ломая локальный state; Slack/Discord выбрали non-sticky.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Sticky по IP клиента — самый простой и быстрый подход для WebSocket-чата.",
+              "text": "Sticky по IP клиента: балансировщик маршрутизирует по source-IP на один WS-сервер и держит соединение там весь сеанс, без presence-регистрации и брокера. Для мобильных клиентов это надёжно, так как source-IP пользователя стабилен на всём протяжении WebSocket-сессии.",
               "correct": false,
               "sections": {
                 "what_actually": "IP-based sticky ломается на мобильных: IP меняется при переключении Wi-Fi/4G/5G, а NAT/CGNAT даёт один IP миллионам пользователей — sticky схлопывает их на 1 сервер.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Хранить полные сообщения прямо в presence-сервисе — тогда не нужны ни Cassandra, ни брокер.",
+              "text": "Full-mesh server-to-server: каждый WS-сервер держит прямое соединение со всеми остальными и при сообщении сам пушит его на сервер получателя, без presence-хранилища и внешнего брокера. Топология убирает лишний сетевой hop через брокер и потому линейно масштабируется на тысячи нод.",
               "correct": false,
               "sections": {
                 "what_actually": "Presence хранит только метаданные (`user_id→server_id` + TTL), ~8GB на 500M; а 50B msg/day × 1KB = 50TB/day — это hot tier (Cassandra) + cold (S3), не presence-объём.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`PRIMARY KEY (message_id)` — каждое сообщение становится отдельной партицией.",
+              "text": "`PRIMARY KEY (message_id)`, где `message_id` — `TIMEUUID`: каждое сообщение становится отдельной партицией с идеально равномерным распределением по кластеру, а `TIMEUUID` задаёт глобальную сортировку по времени. Это делает чтение «последних 50 сообщений» чата одним быстрым запросом.",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда «дай последние 50 сообщений чата» превращается в scatter-gather по всему кластеру (тысячи нод) вместо `O(1)` seek в одну партицию.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`PRIMARY KEY (sender_id, message_id)` — партиция по отправителю.",
+              "text": "`PRIMARY KEY ((sender_id), message_id) WITH CLUSTERING ORDER BY (message_id DESC)`, `message_id` — `TIMEUUID`: партиция `sender_id` группирует сообщения одного автора, clustering `TIMEUUID DESC` даёт сортировку и уникальность. `DESC` ускоряет «последние 50 сообщений» чата, так как участники диалога лежат рядом.",
               "correct": false,
               "sections": {
                 "what_actually": "Партиция по `sender_id` кладёт все сообщения user A на одну ноду, но читают-то по conversation; в группе 100 человек это scatter по 100 партициям на каждое чтение.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`PRIMARY KEY (conversation_id, sent_at)` без отдельного `message_id` и без `TIMEUUID`.",
+              "text": "`PRIMARY KEY ((conversation_id), sent_at) WITH CLUSTERING ORDER BY (sent_at DESC)`, где `sent_at` — `TIMESTAMP`: партиция `conversation_id` локализует чат, clustering `sent_at` сортирует сообщения и различает их по времени. `DESC` ускоряет «последние 50 сообщений».",
               "correct": false,
               "sections": {
                 "what_actually": "`sent_at TIMESTAMP` теряет точность ниже ms: два одновременных сообщения конфликтуют по clustering key (Last-Write-Wins перезатрёт одно); и нет ID для ACK/dedup.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "PostgreSQL для всего: messages, users, presence — простота операций важнее scale.",
+              "text": "PostgreSQL для всех данных: messages в партиционированных таблицах, users/friends в реляционных, presence — в unlogged-таблицах, media — в `BYTEA`/`JSONB`-колонках. Один ACID-движок с привычной операционкой закрывает все access-pattern без зоопарка технологий.",
               "correct": false,
               "sections": {
                 "what_actually": "PostgreSQL тянет ~100K writes/sec на тюненом инстансе, но 2M msg/sec требует 20-50 shards с cross-shard логикой; presence в SQL = constant WAL pressure + vacuum-storm.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "MongoDB для всего: schema-less даёт гибкость для эволюции фич.",
+              "text": "Cassandra/Scylla для users/friends (гибко масштабируемый граф связей); PostgreSQL для messages (ACID на каждое сообщение); Redis для presence (ephemeral KV + TTL); S3 для media. Тяжёлые реляционные связи уходят в Cassandra, а критичные сообщения — под транзакции Postgres.",
               "correct": false,
               "sections": {
                 "what_actually": "MongoDB хорош horizontally, но для chat-time-series не оптимален: write amplification из-за BSON, нет clustering-order как в Cassandra, а presence в Redis быстрее в ~10×.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Только Redis для всего: in-memory быстрее любой disk-БД.",
+              "text": "Cassandra для messages; PostgreSQL для users/friends; S3 для presence (durable-хранилище статусов online/offline); Redis для media — кэш горячих картинок. Каждый тип данных ложится в свой движок под его профиль нагрузки.",
               "correct": false,
               "sections": {
                 "what_actually": "Redis — RAM-storage: 50TB hot messages × цена RAM = ~$500K/мес + 3× на репликацию, тогда как disk в Cassandra в ~100× дешевле; recovery Redis после краша — десятки минут.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Sharding по `user_id` — у каждого пользователя outbox-партиция с его отправленными сообщениями.",
+              "text": "Sharding по `user_id` (consistent hash в token ring): у каждого пользователя outbox-партиция со всеми отправленными им сообщениями; virtual nodes дают равномерность. Для hot partition (celeb-отправитель) partition key расширяют до `(user_id, bucket)` по неделям.",
               "correct": false,
               "sections": {
                 "what_actually": "Outbox-модель (по author/sender) хороша для feed-систем (Twitter/Instagram), но в чате читают по conversation, поэтому каждое чтение становится cross-shard query.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Sharding по `message_id` (random hash) — равномерное распределение, нет hot partition.",
+              "text": "Sharding по `message_id` (random hash в token ring): идеально равномерное распределение записи по нодам, hot partition исключён by design. Чтение диалога собирает сообщения через вторичный индекс по `conversation_id` поверх шардов.",
               "correct": false,
               "sections": {
                 "what_actually": "Random sharding рассыпает сообщения одной conversation по всему кластеру, и «последние 50 в чате» превращаются в scatter-gather с фильтрацией по `conversation_id`.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Sharding по `sent_at` (time-based partitions) — естественно для time-series.",
+              "text": "Sharding по `sent_at` (time-based partitions в token ring): естественно для time-series, virtual nodes выравнивают распределение. Для hot partition групповой чат разносят по `(sent_at, conversation_id)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Time-based партиции создают hot-write-partition «сегодня»: 100% writes в одну replica-group; а чтение «чат X за весь период» = scan всех time-партиций.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Lamport timestamps на client-side с monotonic counter — каждое сообщение инкрементит счётчик.",
+              "text": "Lamport timestamps на клиенте: каждое устройство держит monotonic counter, штампует им сообщение, а получатели сортируют по этому счётчику — так внутри чата все видят один порядок без участия сервера. Глобальный порядок между чатами не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Lamport timestamps работают для causally related events; client-side counter — это локальный view, у двух клиентов счётчики не согласованы, и сравнить их нельзя без causality-info.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Vector clocks для total ordering между всеми участниками чата.",
+              "text": "Vector clocks на каждого участника: вектор счётчиков задаёт total ordering сообщений между всеми участниками, любой получатель восстанавливает единый линейный порядок. Глобальный порядок между чатами при этом не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Vector clocks решают partial ordering в multi-master KV (старый Dynamo/Riak); их размер растёт с числом writers — для группы 100 человек это ~1.6KB overhead на каждое 100-байтное сообщение.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Global ordering across all conversations через distributed sequencer (Zookeeper/etcd).",
+              "text": "Global ordering через distributed sequencer (Zookeeper/etcd): единый сервис выдаёт монотонные ID всем сообщениям, поэтому порядок консистентен и внутри чата, и между чатами. Это снимает нужду в `TIMEUUID` и server-assigned timestamp.",
               "correct": false,
               "sections": {
                 "what_actually": "Global sequencer становится bottleneck (2M msg/sec через один counter невозможно) и SPOF; при этом global order не нужен — никто не сравнивает порядок между разными чатами.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Server-side `Elasticsearch` index для всех чатов независимо от шифрования.",
+              "text": "Server-side `Elasticsearch` inverted index для всех чатов: сервер индексирует входящие сообщения и отдаёт full-text search одинаково для E2E и non-E2E. Единый индекс проще эксплуатировать, а latency поиска одинаково низкая для всех пользователей.",
               "correct": false,
               "sections": {
                 "what_actually": "Для E2E-систем сервер физически не имеет plaintext — индексировать нечего кроме metadata; `Elasticsearch` требует tokenized text для inverted index.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Сделать E2E «слабой» — server держит ключи, чтобы иметь возможность search.",
+              "text": "Гибридная схема: сервер хранит копию ключей шифрования, расшифровывает сообщения на своей стороне для построения `Elasticsearch`-индекса, а транспорт оставляет E2E-зашифрованным. Так сохраняются и E2E-приватность, и полноценный server-side search.",
               "correct": false,
               "sections": {
                 "what_actually": "Если server имеет ключи decrypt, это уже не E2E (см. Q19); «слабая E2E» — оксюморон, граница либо есть, либо нет.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Не предоставлять search в E2E-чатах вообще — это принципиально нерешаемая проблема.",
+              "text": "Client-side индекс невозможен из-за ограничений мобильных устройств, поэтому в E2E-чатах full-text search не предоставляют — при end-to-end шифровании это принципиально нерешаемая задача.",
               "correct": false,
               "sections": {
                 "what_actually": "WhatsApp/Signal предоставляют search — он работает client-side: медленнее server-side, но usable для большинства сценариев.",
