@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Правильный порядок: `apply` сначала создаёт ресурсы, затем `plan` проверяет результат, а `init` запускают в самом конце.",
+              "text": "Базовый цикл: `terraform init` (скачать провайдеры/модули) → `apply` (применить изменения) → `plan` (сверить фактический результат с конфигурацией) → при необходимости `destroy` (удалить ресурсы). `plan` запускают после `apply`, чтобы подтвердить совпадение инфраструктуры с кодом.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок обратный: сначала `init`, затем `plan` (до изменений), и только потом `apply`.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`terraform init` применяет изменения к инфраструктуре, как `apply`.",
+              "text": "Базовый цикл: `terraform init` (настроить backend и сразу поднять ресурсы) → `plan` (показать оставшийся diff) → `apply` (дописать изменения) → при необходимости `destroy` (удалить ресурсы). Основное развёртывание выполняет `init`, а `apply` лишь вносит последующие правки.",
               "correct": false,
               "sections": {
                 "what_actually": "`init` лишь инициализирует рабочую директорию (провайдеры, модули, backend); изменения вносит `apply`.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`terraform plan` сам по себе создаёт и изменяет ресурсы в облаке.",
+              "text": "Базовый цикл: `terraform init` (скачать провайдеры/модули) → `plan` (рассчитать и сразу применить изменения в облаке) → `apply` (записать результат в state) → при необходимости `destroy` (удалить ресурсы). Изменения в облако вносит `plan`, а `apply` только фиксирует их в state-файле.",
               "correct": false,
               "sections": {
                 "what_actually": "`plan` только показывает предполагаемые изменения; фактически их вносит `apply`.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Ansible — это прежде всего инструмент провиженинга со state-файлом, как Terraform, только на YAML.",
+              "text": "Terraform — декларативный мультиоблачный provisioning со state и HCL. `Ansible` — тоже декларативный provisioning со своим state-файлом, только на YAML. `Pulumi` — IaC на обычных языках (TypeScript/Python/Go). `CloudFormation` — декларативный и только для AWS.",
               "correct": false,
               "sections": {
                 "what_actually": "Ansible — в основном configuration management, процедурный и обычно без управляемого state.",
@@ -2016,7 +2016,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Pulumi использует собственный декларативный DSL и не позволяет писать инфраструктуру на обычных языках.",
+              "text": "Terraform — декларативный мультиоблачный provisioning со state и HCL. `Ansible` — configuration management, процедурный и обычно без state. `Pulumi` — IaC на собственном декларативном DSL, без поддержки обычных языков программирования. `CloudFormation` — декларативный и только для AWS.",
               "correct": false,
               "sections": {
                 "what_actually": "Главная особенность Pulumi — именно использование обычных языков (TypeScript/Python/Go), а не отдельного DSL.",
@@ -2028,7 +2028,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "CloudFormation мультиоблачен и управляет ресурсами AWS, Azure и GCP одинаково.",
+              "text": "Terraform — декларативный мультиоблачный provisioning со state и HCL. `Ansible` — configuration management, процедурный и обычно без state. `Pulumi` — IaC на обычных языках (TypeScript/Python/Go). `CloudFormation` — декларативный мультиоблачный сервис, одинаково управляющий ресурсами AWS, Azure и GCP.",
               "correct": false,
               "sections": {
                 "what_actually": "CloudFormation — AWS-only; мультиоблачность — это свойство Terraform/Pulumi.",
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Лучшая практика — держать всю инфраструктуру в одном большом `main.tf` без модулей и разбиения.",
+              "text": "Рекомендуется: держать всю конфигурацию в одном `main.tf` без деления на модули (ради простоты навигации), пинить версии провайдеров, хранить state удалённо с locking, применять `fmt`/`validate` в CI, не хранить секреты в коде и придерживаться least-privilege.",
               "correct": false,
               "sections": {
                 "what_actually": "Монолитный файл плохо масштабируется и читается; рекомендуется разбиение на модули и логические файлы.",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Версии провайдеров и модулей пинить не нужно — всегда брать latest для свежих фич.",
+              "text": "Рекомендуется: разбивать код на модули и окружения, держать стандартные файлы (`main.tf`, `variables.tf`, `outputs.tf`), брать latest-версии провайдеров без пиннинга ради свежих фич, хранить state удалённо с locking, применять `fmt`/`validate` в CI и придерживаться least-privilege.",
               "correct": false,
               "sections": {
                 "what_actually": "Без пиннинга сборка невоспроизводима; версии фиксируют и обновляют осознанно.",
@@ -2088,7 +2088,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Структуру проекта определяет провайдер автоматически при `init`; организовывать файлы вручную не требуется.",
+              "text": "Рекомендуется: разбивать код на модули и окружения, держать стандартные файлы (`main.tf`, `variables.tf`, `outputs.tf`), пинить версии провайдеров, коммитить `terraform.tfstate` в git вместо удалённого backend для истории изменений, применять `fmt`/`validate` в CI и придерживаться least-privilege.",
               "correct": false,
               "sections": {
                 "what_actually": "`init` лишь скачивает зависимости; структуру файлов и модулей проектирует команда.",
@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "HCP Terraform — это self-hosted редакция, пришедшая на смену Terraform Enterprise.",
+              "text": "HCP Terraform — это self-hosted платформа, которую в 2024 развернули на замену Terraform Enterprise: её ставят в собственном дата-центре и получают remote state, remote runs, VCS-интеграцию, политики и приватный реестр. Управляемый SaaS-вариант при этом называется Terraform Cloud.",
               "correct": false,
               "sections": {
                 "what_actually": "HCP Terraform — это SaaS (бывший Terraform Cloud); self-hosted остаётся Terraform Enterprise.",
@@ -2123,7 +2123,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "HCP Terraform и Terraform Cloud — это два разных продукта с разным набором фич.",
+              "text": "HCP Terraform и Terraform Cloud — это два разных продукта HashiCorp: HCP Terraform отвечает за remote runs и политики, а Terraform Cloud — только за remote state и приватный реестр. Self-hosted-вариантом остаётся Terraform Enterprise.",
               "correct": false,
               "sections": {
                 "what_actually": "Это один и тот же сервис: HCP Terraform — переименованный Terraform Cloud, возможности те же.",
@@ -2135,7 +2135,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "HCP Terraform убрал remote state и remote runs, оставив только приватный реестр модулей.",
+              "text": "HCP Terraform — это переименованный в 2024 Terraform Cloud, но при ребрендинге из него убрали remote runs и VCS-интеграцию, оставив только remote state и приватный реестр. Self-hosted-вариантом остаётся Terraform Enterprise.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключевые возможности (remote state, remote runs, политики) сохранены; ребрендинг их не урезал.",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Тестировать Terraform можно только сторонним Terratest; встроенного фреймворка тестов в Terraform нет.",
+              "text": "Есть только один способ — сторонний `Terratest` (Go-библиотека, которая разворачивает реальную инфраструктуру, проверяет её и затем уничтожает); встроенного фреймворка с `.tftest.hcl` в Terraform нет, нативной команды `terraform test` не существует.",
               "correct": false,
               "sections": {
                 "what_actually": "Встроенный `terraform test` с `.tftest.hcl` существует и дополняет внешние инструменты вроде Terratest.",
@@ -2256,7 +2256,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Terratest проверяет конфигурацию статически и никогда не разворачивает реальную инфраструктуру.",
+              "text": "Есть два подхода: встроенный `terraform test` (нативный фреймворк с `.tftest.hcl` и `assert`-условиями по плану) и `Terratest` — Go-библиотека, которая проверяет конфигурацию и план статически, не разворачивая реальных ресурсов.",
               "correct": false,
               "sections": {
                 "what_actually": "Terratest как раз разворачивает реальные ресурсы, проверяет их и затем уничтожает (интеграционный подход).",
@@ -2268,7 +2268,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`terraform test` пишется на Go, а Terratest — на HCL.",
+              "text": "Есть два подхода: встроенный `terraform test`, тесты которого пишут на Go, и `Terratest` — библиотека, где сценарии описывают на HCL в файлах `.tftest.hcl`, применяя конфигурацию и проверяя `assert`-условия.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `terraform test` использует HCL (`.tftest.hcl`), а Terratest — Go.",
@@ -2424,7 +2424,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`moved`-блок физически перемещает ресурс в другой регион/зону облака.",
+              "text": "`moved`-блок (`moved { from = ..., to = ... }`) даёт Terraform команду физически перенести уже созданный ресурс в другой регион или зону доступности без пересоздания, обновляя его размещение в облаке. Это декларативная альтернатива ручной миграции ресурса через провайдера.",
               "correct": false,
               "sections": {
                 "what_actually": "`moved` меняет только адрес ресурса в state/коде, а не его физическое размещение в облаке.",
@@ -2436,7 +2436,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`moved`-блок нужен, чтобы перенести state-файл в другой backend.",
+              "text": "`moved`-блок (`moved { from = ..., to = ... }`) переносит state-файл из одного backend в другой (например, с локального на S3), не затрагивая сами ресурсы. Это декларативная, версионируемая альтернатива ручному `terraform init -migrate-state`.",
               "correct": false,
               "sections": {
                 "what_actually": "Перенос state между backend делает `init -migrate-state`; `moved` адресует ресурсы внутри одного state.",
@@ -2448,7 +2448,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Без `moved`-блока Terraform сам распознаёт переименование и сохраняет ресурс по содержимому.",
+              "text": "Отдельный `moved`-блок не нужен: Terraform сам сопоставляет переименованный ресурс со старым по совпадению атрибутов в state и обновляет адрес, не пересоздавая объект. Явная запись `moved { from = ..., to = ... }` лишь дублирует это автоматическое поведение.",
               "correct": false,
               "sections": {
                 "what_actually": "Terraform адресует ресурсы по адресу, а не по содержимому: без moved/state mv переименование = destroy+create.",
