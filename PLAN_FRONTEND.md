@@ -745,6 +745,20 @@ token-only → затем удалить. **EDC-1 (editorial.css) — subset-pro
 
 Инвариант: **каждый `@PostMapping` обязан иметь template-`th:action` ИЛИ JS-fetch-триггер (иначе orphan-тупик); каждый JS/template-триггер обязан бить в существующий mapping (иначе битый вызов); GET-страница — достижима из nav/ссылки/redirect/модельного-URL.** Метод: grep `@(Get|Post)Mapping` ↔ `th:action=@{…}` + `th:href` + модельные-URL-строки + JS `API.*`/`fetch`; расхождение в любую сторону = дефект. Покрытие: ВСЕ 22 mapping'а. (§7-кандидат: **ROUTEINT**.)
 
+**FORMS — labels-and-instructions + state-integrity форм на /settings (§14 / WCAG 3.3.1–3.3.3) — аудит 2026-07-07, р130.** ✅ **CLEAN.** /settings — самая форм-насыщенная достижимая поверхность (3 формы: `filters-form` GET, `session-form` POST /start, finish-form POST /finish). Сверил каждый контрол против §14. (Label-слой `session-form` частично зафиксирован ранее в **SET-16**; р130 РАСШИРЯЕТ аудит на `filters-form` + впервые проверяет **cross-form state-integrity** — самое ценное здесь.)
+
+- **Метки — все привязаны и видимы:** group·topic·ordered·mode·count обёрнуты в `<label class="field">` со `<span class="field-label">` (неявная ассоциация control-в-label + видимый текст); 4 тоггла (important/onlyWrong/shuffle/weakTopics) — `<label class="toggle-item">`+`<span>`. Нет placeholder-as-label, нет unlabeled-контролов. ✅
+- **Error-prevention на числовом:** `count` = `min=1 max=200` (HTML5-констрейнт) + JS-ревалидация диапазона перед persist (`app.js:276,281`). ✅
+- **Submit-аффорданс:** кнопки с явным текстом; CTA режим-специфичен («Начать тренировку/экзамен/…», `MODE_CTA` `app.js:245–255`). ✅
+- **Graceful degradation:** localStorage-restore счётчика обёрнут в try/catch (private/lockdown-режим) — не рвёт цепочку init (`app.js:274,282`). ✅
+- **State-integrity (РЕФУТИРОВАННЫЙ кандидат-дефект — с доказательством):** две раздельные формы, `session-form` реплицирует фильтры как `<input type="hidden">` (settings.html:103–109). Гипотеза «изменил фильтр-чекбокс → нажал „Начать сессию“ без „Применить фильтры“ → сессия стартует со СТАРЫМИ фильтрами» — **опровергнута:** `session-form` имеет `submit`-хендлер (`app.js:303–316`), который на сабмите читает **живые** значения из `filters-form` и `upsertHidden`-ит их в скрытые инпуты. Корректная тонкость: при `shuffle`=on topic/group **намеренно** обнуляются (`app.js:304–306`, микс тем игнорирует конкретную тему). Stale-filter-тупика НЕТ. ✅
+
+Остаток (не блокеры аудита, оба уже трекаются/минорны):
+- **NIT (инертно, не вредит):** `role="status" aria-live="polite"` на статичном `<p id="filter-mode-hint">` (settings.html:97). Polite-live-region с никогда-не-меняющимся контентом по ARIA-спеке НЕ анонсируется на загрузке → атрибуты инертны; функциональна лишь роль `aria-describedby`-цели (на shuffle-checkbox + ordered-select). Рекомендация при разблокировке settings.html: снять `role=status`/`aria-live`, оставить как plain `<p>`-цель. Минор, spec-only (файл BLOCKED).
+- **KNOWN:** `count value="20"` хардкод игнорирует per-mode серверные дефолты EXAM/MARATHON → SET-15, ready-spec р127.
+
+Инвариант: **каждый интерактивный контрол формы обязан иметь программно-привязанную видимую метку (implicit label-wrap ИЛИ `for`/`id`); числовые/ограниченные поля — HTML-констрейнт; multi-form страницы — синхронизировать live-state контролов в submit-снапшот (иначе lost-input); live-region-атрибуты — только на реально-мутирующем контенте.** Метод: инвентарь `<label|input|select|button>` → проверка label-текст + ассоциация + констрейнт + (для multi-form) submit-time-sync через JS-трейс. Покрытие: 3 формы /settings, ВСЕ контролы. (§7-кандидат: **FORMS**.)
+
 ---
 
 ## 8. Не трогать — осознанные решения пользователя (🚫 / ⛔)
