@@ -309,7 +309,7 @@
           "question_text": "Как устроены классы `Floor`, `Display`, `Door` и `Request`?",
           "options": [
             {
-              "text": "`Display` должен сам опрашивать `Elevator` каждые 100 ms через `getCurrentFloor()` в цикле и перерисовываться.",
+              "text": "`Floor` хранит `number`, флаги `hasUpButton`/`hasDownButton` (на крайних этажах одна из кнопок false) и методы `pressUp`/`pressDown`, публикующие external Request. `Display` в отдельном потоке каждые 100 ms опрашивает `Elevator.getCurrentFloor()` и перерисовывает этаж+направление. `Door` держит `AtomicReference<DoorState>` и `ObstructionSensor`, методы `open`/`close` (при `sensor.detected()` → reopen). `Request` — immutable value object с `requestId`, `sourceFloor`, nullable `destinationFloor`, `direction`, `createdAt`, `type`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Display` реализует `ElevatorListener` (Observer) и обновляется по событию `onStateChange(e)` — pull-поллинг даёт tight coupling и лишнюю нагрузку.",
@@ -334,7 +334,7 @@
               "order": 1
             },
             {
-              "text": "Каждый `Floor` обязан иметь и `UP`-, и `DOWN`-кнопку — иначе пассажир не сможет вызвать лифт.",
+              "text": "`Floor` хранит `number`, всегда обе кнопки `hasUpButton` и `hasDownButton` (в том числе на верхнем и нижнем этаже), `Display` и методы `pressUp`/`pressDown`, публикующие external Request. `Display implements ElevatorListener` и в `onStateChange` рендерит этаж+направление. `Door` держит `AtomicReference<DoorState>` и `ObstructionSensor`, методы `open`/`close` (при `sensor.detected()` → reopen). `Request` — immutable value object с `requestId`, `sourceFloor`, nullable `destinationFloor`, `direction`, `createdAt`, `type`.",
               "correct": false,
               "sections": {
                 "what_actually": "На крайних этажах одна кнопка отсутствует: верхний этаж не имеет `UP` (`hasUpButton = false`), нижний — `DOWN`, ехать дальше некуда.",
@@ -346,7 +346,7 @@
               "order": 2
             },
             {
-              "text": "`Request` достаточно сделать простым `Map<String,Object>` с ключами floor/dir, чтобы не плодить классы.",
+              "text": "`Floor` хранит `number`, флаги `hasUpButton`/`hasDownButton` (на крайних этажах одна из кнопок false), `Display` и методы `pressUp`/`pressDown`, публикующие запрос. `Display implements ElevatorListener` и в `onStateChange` рендерит этаж+направление. `Door` держит `AtomicReference<DoorState>` и `ObstructionSensor`, методы `open`/`close` (при `sensor.detected()` → reopen). `Request` моделируется как mutable `HashMap<String,Object>` с ключами `floor`/`dir`/`ts`, который планировщик по ходу дополняет полем `destinationFloor`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Request` — это типизированный immutable value object с явными полями (`sourceFloor`, `destinationFloor`, `direction`, `type`); `Map` теряет типобезопасность и инварианты.",
@@ -549,7 +549,7 @@
           "question_text": "Как реализованы `ElevatorController` (Singleton + dispatch loop) и `Request` в Java?",
           "options": [
             {
-              "text": "`ElevatorController` использует обычный `new ElevatorController(...)` без Singleton, а dispatch выполняется прямо в потоке, вызвавшем `submit()`.",
+              "text": "`ElevatorController` создаётся обычным `new ElevatorController(...)` в каждом месте вызова, держит `List<Elevator> elevators`, `Scheduler`, `BlockingQueue<Request> incoming = new LinkedBlockingQueue<>()` и `Executors.newSingleThreadExecutor()` под `dispatchLoop`. `submit(r)` делает `incoming.offer(r)`; `dispatchLoop` в цикле `incoming.take()` → `scheduler.dispatch(r, elevators)` → `chosen.addStop(sourceFloor, dir)` и, если `destinationFloor != null`, `addStop(destinationFloor, dir)`. `Request` — final-класс с `requestId`, `sourceFloor`, nullable `destinationFloor`, `direction`, `type`, `createdAt`; equals/hashCode на `requestId`.",
               "correct": false,
               "sections": {
                 "what_actually": "Controller реализован как Singleton с double-checked locking (`volatile INSTANCE` + `synchronized`), а `submit()` лишь кладёт `Request` в `BlockingQueue`; обработку ведёт отдельный однопоточный `dispatchLoop`.",
@@ -574,7 +574,7 @@
               "order": 1
             },
             {
-              "text": "Очередь входящих запросов делают обычным `ArrayDeque<Request>` с ручным `wait()/notify()` для блокировки потребителя.",
+              "text": "`ElevatorController` — Singleton с `private static volatile INSTANCE` и double-checked locking в `init(...)`. Он держит `List<Elevator> elevators`, `Scheduler`, входящую очередь как `ArrayDeque<Request>` с ручными `wait()`/`notify()` для блокировки потребителя и `Executors.newSingleThreadExecutor()` под `dispatchLoop`. `submit(r)` кладёт запрос в deque и делает `notify()`; `dispatchLoop` ждёт на `wait()`, затем `scheduler.dispatch(r, elevators)` → `chosen.addStop(sourceFloor, dir)`. `Request` — final-класс с `requestId`, `sourceFloor`, nullable `destinationFloor`, `direction`, `type`, `createdAt`; equals/hashCode на `requestId`.",
               "correct": false,
               "sections": {
                 "what_actually": "Используют `BlockingQueue` (`LinkedBlockingQueue`): он потокобезопасен по контракту JDK и `take()` сам блокирует потребителя — ручной `wait/notify` лишний и ошибкоопасен.",
@@ -586,7 +586,7 @@
               "order": 2
             },
             {
-              "text": "Dispatch loop стоит делать многопоточным (`newFixedThreadPool(8)`), чтобы параллельно разбирать очередь запросов и быстрее назначать лифты.",
+              "text": "`ElevatorController` — Singleton с `private static volatile INSTANCE` и double-checked locking в `init(...)`. Он держит `List<Elevator> elevators`, `Scheduler`, `BlockingQueue<Request> incoming = new LinkedBlockingQueue<>()` и `Executors.newFixedThreadPool(8)`, чтобы несколько dispatch-потоков параллельно разбирали очередь. Каждый поток делает `incoming.take()` → `scheduler.dispatch(r, elevators)` → `chosen.addStop(sourceFloor, dir)` и, если `destinationFloor != null`, `addStop(destinationFloor, dir)`. `Request` — final-класс с `requestId`, `sourceFloor`, nullable `destinationFloor`, `direction`, `type`, `createdAt`; equals/hashCode на `requestId`.",
               "correct": false,
               "sections": {
                 "what_actually": "Dispatch loop намеренно однопоточный (`newSingleThreadExecutor`): он сериализует выбор лифта и исключает гонку, когда два потока назначают один и тот же лифт.",
@@ -909,7 +909,7 @@
           "question_text": "Какой trade-off между алгоритмами (FCFS, SCAN, LOOK, Nearest-Car, Group, Destination)?",
           "options": [
             {
-              "text": "FCFS — оптимальный алгоритм по среднему wait time, потому что обслуживает запросы строго в порядке поступления, без «несправедливых» обгонов.",
+              "text": "Таблица trade-off: FCFS — лучший wait/energy за счёт строгого порядка без обгонов, `O(1)`, годится как продакшн-дефолт. SCAN — средний wait, средняя энергия (до края), `O(log n)` с TreeSet, базовый «elevator algorithm». LOOK — лучше SCAN по wait и energy, `O(log n)`, большинство реальных лифтов. Nearest-Car — хорош при низкой нагрузке, `O(N)` per request, small banks (2-4 лифта). Group dispatching — сложное моделирование, `O(N·M)` или ML inference, большие здания. Destination dispatching — с учётом peak, premium-системы (Schindler/KONE/Otis).",
               "correct": false,
               "sections": {
                 "what_actually": "FCFS даёт ПЛОХОЙ avg wait и плохую энергию: он гоняет кабину туда-сюда по порядку нажатий, игнорируя направление; это учебный антипример, а не оптимум.",
@@ -921,7 +921,7 @@
               "order": 0
             },
             {
-              "text": "SCAN и LOOK имеют сложность `O(N)` на запрос, как и Nearest-Car, потому что все они перебирают лифты банка.",
+              "text": "Таблица trade-off: FCFS — плохой wait/energy, `O(1)`, учебный пример. SCAN и LOOK — `O(N)` на запрос из-за линейного перебора очереди остановок, средний-хороший wait, большинство реальных лифтов. Nearest-Car — хорош при низкой нагрузке, средняя энергия, `O(N)` per request, small banks (2-4 лифта). Group dispatching — лучшие метрики, `O(N·M)` или ML inference, большие здания. Destination dispatching — best wait/energy с учётом peak, premium-системы (Schindler/KONE/Otis).",
               "correct": false,
               "sections": {
                 "what_actually": "SCAN/LOOK работают над stop-set ОДНОЙ кабины за `O(log n)` с TreeSet/NavigableSet; `O(N) per request` — это про Nearest-Car (перебор N лифтов).",
@@ -933,7 +933,7 @@
               "order": 1
             },
             {
-              "text": "Destination dispatching стоит применять везде, включая жилые дома на 2-3 лифта, ведь у него лучшие метрики.",
+              "text": "Таблица trade-off: FCFS — плохой wait/energy, `O(1)`, учебный пример. SCAN — средний wait, средняя энергия (до края), `O(log n)` с TreeSet. LOOK — лучше SCAN по wait и energy, `O(log n)`, большинство реальных лифтов. Nearest-Car — хорош при низкой нагрузке, `O(N)` per request, small banks (2-4 лифта). Group dispatching — лучшие метрики, `O(N·M)`, большие здания. Destination dispatching — best wait/energy, поэтому его ставят везде по умолчанию, включая жилые дома на 2-3 лифта.",
               "correct": false,
               "sections": {
                 "what_actually": "Destination dispatching сложен в моделировании и оправдан в premium-системах больших зданий; для small banks (2-4 лифта) хватает LOOK + Nearest-Car.",
@@ -982,7 +982,7 @@
               "order": 0
             },
             {
-              "text": "Strategy в дизайне лифта применён к `ElevatorState`/`DoorState`, чтобы менять поведение лифта в зависимости от состояния.",
+              "text": "State — в `Scheduler` (SCAN/LOOK/Nearest/Group меняются без правок controller). Strategy — в `ElevatorState`/`DoorState` (избавляет от больших if/else и держит инварианты переходов). Observer — `Display` и metrics-collector подписаны на `Elevator` (разделение state-mutation и UI/мониторинга). Command — `Request` как value object плюс dispatcher loop (запрос-объект можно ставить в очередь, логировать, повторять). Singleton — `ElevatorController` (одна точка координации банка).",
               "correct": false,
               "sections": {
                 "what_actually": "К `ElevatorState`/`DoorState` применён State-паттерн (поведение зависит от состояния); Strategy — это `Scheduler` (взаимозаменяемые алгоритмы выбора лифта).",
@@ -994,7 +994,7 @@
               "order": 1
             },
             {
-              "text": "Observer в дизайне лифта — это `ElevatorController`, который Singleton'ом наблюдает за всеми запросами здания.",
+              "text": "State — в `ElevatorState`/`DoorState` (избавляет от больших if/else и держит инварианты переходов). Strategy — в `Scheduler` (SCAN/LOOK/Nearest/Group меняются без правок controller). Observer — `Elevator` подписывается на `Display` и metrics-collector и дёргает их при каждом рендере. Command — `Request` как value object плюс dispatcher loop. Singleton — `ElevatorController` (одна точка координации банка).",
               "correct": false,
               "sections": {
                 "what_actually": "Observer — это `Display`/metrics-collector, подписанные на `Elevator` через `ElevatorListener`; Singleton (`ElevatorController`) — отдельный паттерн про единую точку координации.",
@@ -1006,7 +1006,7 @@
               "order": 2
             },
             {
-              "text": "Command-паттерн в лифте реализован через `Scheduler`, который инкапсулирует алгоритм назначения как объект.",
+              "text": "State — в `ElevatorState`/`DoorState` (держит инварианты переходов). Strategy — в `Request` как value object в очереди, который можно логировать и повторять. Observer — `Display` и metrics-collector подписаны на `Elevator`. Command — `Scheduler`, инкапсулирующий алгоритм назначения (SCAN/LOOK/Nearest) как объект. Singleton — `ElevatorController` (одна точка координации банка).",
               "correct": false,
               "sections": {
                 "what_actually": "Command — это `Request` как value object плюс dispatcher loop (запрос-команда в очереди); `Scheduler` — это Strategy (взаимозаменяемый алгоритм), а не Command.",
@@ -1222,7 +1222,7 @@
               "order": 0
             },
             {
-              "text": "При overload (вес выше max) двери всё же закрываются, и лифт едет на пониженной скорости с предупреждением на дисплее, пока перегруз небольшой.",
+              "text": "Emergency button (red) — текущее движение переходит в плавный SAFE_STOP на ближайшем этаже, doors open, сигнал на пульт, все pending stops отменяются. Overload (weight > max) — двери всё же закрываются, и лифт едет на пониженной скорости с предупреждением на дисплее, пока перегруз небольшой. Fire mode — building alarm переводит весь bank в `FIRE_MODE`: каждый лифт едет на ground floor, открывает doors, блокируется, internal requests игнорируются. Power outage — UPS/battery держит control logic, лифты делают controlled descent до ближайшего этажа, открывают doors, freeze.",
               "correct": false,
               "sections": {
                 "what_actually": "При overload двери НЕ закрываются и лифт не движется вовсе, пока пассажир не выйдет — это safety-инвариант, а не «ехать помедленнее».",
@@ -1234,7 +1234,7 @@
               "order": 1
             },
             {
-              "text": "Fire mode переводит в эвакуацию только ту кабину, где сработал датчик дыма; остальные лифты bank продолжают обычное обслуживание.",
+              "text": "Emergency button (red) — текущее движение переходит в плавный SAFE_STOP на ближайшем этаже, doors open, сигнал на пульт, все pending stops отменяются. Overload (weight > max) — doors НЕ закрываются, warning на дисплее, лифт не движется, пока пассажир не выйдет. Fire mode — в эвакуацию на ground floor переходит только та кабина, где сработал датчик дыма; остальные лифты bank продолжают обычное обслуживание. Power outage — UPS/battery держит control logic, лифты делают controlled descent до ближайшего этажа, открывают doors, freeze.",
               "correct": false,
               "sections": {
                 "what_actually": "Fire mode по building alarm переводит ВЕСЬ bank в `FIRE_MODE`: все лифты едут на ground floor и блокируются, а не один.",
@@ -1246,7 +1246,7 @@
               "order": 2
             },
             {
-              "text": "При power outage лифты сразу обесточиваются и фиксируются тормозом между этажами, а пассажиры ждут прибытия ремонтной бригады.",
+              "text": "Emergency button (red) — текущее движение переходит в плавный SAFE_STOP на ближайшем этаже, doors open, сигнал на пульт, все pending stops отменяются. Overload (weight > max) — doors НЕ закрываются, warning на дисплее, лифт не движется, пока пассажир не выйдет. Fire mode — building alarm переводит весь bank в `FIRE_MODE`: каждый лифт едет на ground floor, открывает doors, блокируется, internal requests игнорируются. Power outage — лифты сразу обесточиваются и фиксируются тормозом между этажами, а пассажиры ждут прибытия ремонтной бригады.",
               "correct": false,
               "sections": {
                 "what_actually": "При power outage UPS/battery держит control logic, и лифты делают controlled descent до ближайшего этажа, открывают doors и freeze — не зависают между этажами.",
@@ -1269,7 +1269,7 @@
           "question_text": "Как устроены predictive scheduling и учёт historical traffic patterns?",
           "options": [
             {
-              "text": "Predictive scheduling означает, что лифт физически едет к этажу ещё до нажатия кнопки на основе случайного выбора, чтобы «угадать» пассажира.",
+              "text": "Optimization-уровень заранее паркует idle-лифты: morning peak (08-10) — на ground, evening peak (17-19) — на верхних, lunch (12-14) — inter-floor. Реализация — `IdleParkingPolicy`, но прогнозный этаж выбирается случайно через `Random.nextInt(floors)`, без исторических данных, чтобы «угадать» пассажира ещё до нажатия кнопки. KPI для tuning — average waiting time (AWT) и average journey time (AJT).",
               "correct": false,
               "sections": {
                 "what_actually": "Predictive scheduling паркует idle-лифт на ПРОГНОЗНОМ этаже по историческим данным (ML на time-of-day и пр.), а не едет к случайному этажу наугад.",
@@ -1294,7 +1294,7 @@
               "order": 1
             },
             {
-              "text": "Ключевые KPI для tuning стратегии — это CPU-загрузка сервера scheduling и объём логов в гигабайтах.",
+              "text": "Optimization-уровень использует паттерны загрузки во времени: morning peak (08-10) — parked на ground, едут up; evening peak (17-19) — parked на верхних, едут down; lunch (12-14) — inter-floor two-way; off-peak (ночь) — один лифт активен, остальные idle. Реализация — `IdleParkingPolicy` и ML-модели (gradient boosting на признаках time-of-day, day-of-week, building events) предсказывают next-likely-call floor. KPI для tuning — CPU-загрузка сервера scheduling и суммарный объём логов в гигабайтах.",
               "correct": false,
               "sections": {
                 "what_actually": "KPI для tuning — это average waiting time (AWT) и average journey time (AJT); CPU и объём логов к качеству обслуживания пассажиров отношения не имеют.",
@@ -1306,7 +1306,7 @@
               "order": 2
             },
             {
-              "text": "Off-peak ночью все лифты должны активно патрулировать этажи, чтобы быть готовыми к редким вызовам.",
+              "text": "Optimization-уровень использует паттерны загрузки во времени: morning peak (08-10) — parked на ground, едут up; evening peak (17-19) — parked на верхних, едут down; lunch (12-14) — inter-floor two-way; off-peak (ночь) — все лифты активно патрулируют этажи, чтобы быть готовыми к редким вызовам. Реализация — `IdleParkingPolicy` и ML-модели (gradient boosting на признаках time-of-day, day-of-week, building events) предсказывают next-likely-call floor. KPI для tuning — average waiting time (AWT) и average journey time (AJT).",
               "correct": false,
               "sections": {
                 "what_actually": "В off-peak (ночь) активен ОДИН лифт, остальные idle/parked — патрулирование всеми кабинами впустую жгло бы энергию.",
