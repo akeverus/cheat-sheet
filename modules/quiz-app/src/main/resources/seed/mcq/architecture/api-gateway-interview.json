@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все фильтры в `Spring Cloud Gateway` — это исключительно pre-фильтры; обработать ответ после backend нельзя.",
+              "text": "Фильтры делятся только по области (`GatewayFilter` — на маршрут, `GlobalFilter` — на все маршруты), а фаза всегда одна — pre: весь код исполняется до `chain.filter()`, до отправки запроса в backend. Встроенные фабрики (`AddRequestHeader`, `RewritePath`, `StripPrefix`, `CircuitBreaker`, `Retry`) работают только на входящем запросе, поэтому изменить готовый ответ через `ModifyResponseBody` или `SetResponseHeader` уже нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Фильтры бывают и pre (до backend), и post (после ответа); один фильтр может работать в обеих фазах.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`GatewayFilter` применяется ко всем маршрутам автоматически, а `GlobalFilter` — только к одному явно указанному маршруту.",
+              "text": "Фильтры классифицируются по области и фазе (pre — до backend, post — после ответа), но области перепутаны: `GatewayFilter` применяется автоматически ко всем маршрутам, а `GlobalFilter` привязывается к одному явно указанному маршруту. Встроенные фабрики — `AddRequestHeader`, `RewritePath`, `StripPrefix`, `CircuitBreaker` — включаются глобально через `GatewayFilter`.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `GlobalFilter` действует на все маршруты, а `GatewayFilter` привязывается к конкретному маршруту.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Встроенных фабрик трансформации нет: чтобы добавить заголовок или переписать путь, всегда нужен кастомный Java-фильтр.",
+              "text": "Классификация по области и фазе есть, но встроенных фабрик трансформации нет: `AddRequestHeader`, `RewritePath`, `StripPrefix` в конфиге не работают, каждую нужно реализовать кастомным `GatewayFilterFactory`. Из коробки Gateway делает только маршрутизацию по `Predicate`, а всю трансформацию заголовков и путей пишут вручную на Java.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть множество встроенных фабрик: `AddRequestHeader`, `RewritePath`, `StripPrefix`, `CircuitBreaker`, `Retry` и десятки других из коробки.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Fixed Window` — самый точный алгоритм без всплесков, поэтому его рекомендуют для строгих лимитов.",
+              "text": "`Fixed Window` — счётчик на фиксированное окно (`INCR`+`EXPIRE` в `Redis`, O(1) память) и при этом самый точный из четырёх алгоритмов: граничного всплеска у него нет, 100 запросов в конце окна и 100 в начале следующего он учитывает корректно, поэтому для строгих лимитов рекомендуют именно его.",
               "correct": false,
               "sections": {
                 "what_actually": "`Fixed Window` как раз страдает «граничным всплеском» (100 запросов в конце окна + 100 в начале следующего = 200 за 2 сек); точность у него низкая.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Token Bucket` не допускает всплесков и сглаживает трафик в равномерный поток, как `Leaky Bucket`.",
+              "text": "`Token Bucket` пополняет ведро токенами с фиксированной скоростью и отдаёт запрос только при наличии токена, поэтому всплесков не допускает и сглаживает трафик в равномерный поток — ровно как `Leaky Bucket` с его очередью постоянной скорости; параметр `burstCapacity` лишь задаёт стартовый запас токенов.",
               "correct": false,
               "sections": {
                 "what_actually": "`Token Bucket` как раз допускает burst до размера ведра; равномерный поток обеспечивает `Leaky Bucket`.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Sliding Window Log` потребляет O(1) памяти, поэтому дёшев даже при очень высоких лимитах.",
+              "text": "`Sliding Window Log` хранит запросы в `Redis` ZSET (`ZADD`/`ZREMRANGEBYSCORE`/`ZCARD`), но за счёт агрегации по окну потребляет O(1) памяти, поэтому дёшев даже при очень высоких лимитах — по стоимости он не отличается от `Fixed Window`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Sliding Window Log` хранит timestamp каждого запроса, поэтому память O(N) — дорого при высоких лимитах.",
@@ -1944,7 +1944,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Браузеры поддерживают `gRPC` нативно, поэтому `gRPC-Web` и транскодинг на Gateway не нужны.",
+              "text": "Браузеры давно поддерживают `gRPC` нативно через `fetch` API и HTTP/2, поэтому транскодинг на Gateway не нужен: клиент открывает HTTP/2-соединение и шлёт `Content-Type: application/grpc` прямо в backend, а Gateway лишь проксирует поток без смены протокола. `gRPC-Web` остаётся легаси-обёрткой для старых браузеров без HTTP/2.",
               "correct": false,
               "sections": {
                 "what_actually": "Браузеры `gRPC` напрямую не умеют (нет доступа к HTTP/2 trailers через `fetch`), поэтому и существует `gRPC-Web` как обёртка.",
@@ -1956,7 +1956,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`gRPC-Web` передаёт trailers в стандартных HTTP trailers, так же как нативный `gRPC`.",
+              "text": "`gRPC-Web` передаёт `grpc-status` и `grpc-message` в стандартных HTTP trailers, точно как нативный `gRPC`, поэтому браузерный клиент читает их через `fetch` из trailer-секции ответа; Gateway (`Envoy`) при транскодинге просто пробрасывает trailers дальше без переупаковки в тело.",
               "correct": false,
               "sections": {
                 "what_actually": "`gRPC-Web` инкапсулирует trailers в тело ответа, потому что браузеры не читают HTTP trailers.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`gRPC-Web` полностью поддерживает client-side и bidirectional streaming поверх обычного HTTP.",
+              "text": "`gRPC-Web` полностью поддерживает server, client и bidirectional streaming поверх обычного HTTP/2 — тот же набор, что и нативный `gRPC`, так как Gateway (`Envoy` с фильтром `grpc_web`) сохраняет двунаправленный поток; WebSocket-транспорт нужен лишь для совсем старых браузеров без HTTP/2.",
               "correct": false,
               "sections": {
                 "what_actually": "`gRPC-Web` поддерживает server streaming, но не client/bidi streaming через обычный HTTP-транспорт.",
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`AWS API Gateway` бывает только одного типа — REST API; вариантов HTTP API и WebSocket API не существует.",
+              "text": "`AWS API Gateway` существует только в одном варианте — REST API с моделями, валидацией и Lambda Authorizer; отдельных HTTP API и WebSocket API нет, а WebSocket-соединения обслуживает тот же REST API, храня connection ID в `DynamoDB`. Интеграция с Lambda идёт через Proxy Integration, а rate limiting — через Usage Plans.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть три варианта: REST API (полнофункциональный), HTTP API (легковесный, ~70% дешевле) и WebSocket API (хранит connection ID в `DynamoDB`).",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`AWS API Gateway` не имеет лимита на время выполнения интеграции — синхронный запрос может ждать Lambda сколько угодно.",
+              "text": "`AWS API Gateway` не накладывает лимита на время интеграции: раз сама Lambda выполняется до 15 минут, синхронный запрос через Gateway ждёт её ответа столько же и не обрывается. Единственным ограничением латентности остаётся cold start (100-500мс), а долгие операции спокойно идут синхронно через Proxy Integration.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть жёсткий timeout 29 секунд на интеграцию: синхронный запрос не может ждать Lambda дольше.",
@@ -2088,7 +2088,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "HTTP API в `AWS API Gateway` дороже REST API и не поддерживает JWT-авторизацию нативно.",
+              "text": "HTTP API в `AWS API Gateway` примерно на 70% дороже REST API, зато предлагает нативную JWT-авторизацию и легковесную маршрутизацию без моделей и валидации. Поэтому REST API выбирают ради экономии, а HTTP API — когда важнее встроенный JWT, чем цена за миллион вызовов.",
               "correct": false,
               "sections": {
                 "what_actually": "HTTP API, наоборот, дешевле REST API (~70%) и поддерживает JWT-авторизацию нативно, жертвуя возможностями трансформации.",
@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для GraphQL через Gateway достаточно обычного rate limiting по RPS — сложность отдельных запросов значения не имеет.",
+              "text": "Для GraphQL через Gateway достаточно обычного rate limiting по RPS: endpoint единый (`POST /graphql`), поэтому Gateway считает запросы в секунду так же, как для REST, и сложность отдельного запроса роли не играет. `MaxQueryComplexityInstrumentation` и Persisted Queries — опциональная оптимизация, а не защита от тяжёлых запросов.",
               "correct": false,
               "sections": {
                 "what_actually": "RPS-лимит не подходит: один GraphQL-запрос может быть крайне сложным (глубокая вложенность), поэтому считают Query Complexity и Depth.",
@@ -2123,7 +2123,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Schema Stitching` — современный рекомендуемый подход, вытеснивший `Apollo Federation`.",
+              "text": "`Schema Stitching` — современный рекомендуемый подход: он вытеснил устаревшую `Apollo Federation`, потому что объединяет схемы прямо в Gateway и не требует `@key`-директив в сервисах. `Apollo Router` считается легаси-компонентом времён Federation, а Stitching обходится без него.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `Schema Stitching` — устаревший подход (хрупкий, Gateway знает внутренние схемы), а современный — `Apollo Federation`.",
@@ -2135,7 +2135,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `Apollo Federation` Gateway хранит единую монолитную схему, а сервисы не владеют своими частями.",
+              "text": "В `Apollo Federation` Gateway хранит единую монолитную схему целиком, а сервисы не владеют своими частями: `@key(fields: \"id\")` лишь помечает первичный ключ внутри общей схемы, и `Apollo Router` исполняет запросы по ней, не обращаясь к подграфам за их частью схемы.",
               "correct": false,
               "sections": {
                 "what_actually": "В Federation каждый сервис владеет своей частью схемы; `@key`-директива позволяет ссылаться на типы из других сервисов.",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Retry на Gateway можно безопасно применять к любым HTTP-методам, включая POST и PUT.",
+              "text": "Retry на Gateway можно безопасно применять к любым HTTP-методам, включая POST и PUT: задают `retries`, `statuses` (502/503) и экспоненциальный `backoff` с jitter, а идемпотентность не важна, потому что backend сам отсекает дубли по ключу запроса. Поэтому фильтр Retry не ограничивают параметром `methods`.",
               "correct": false,
               "sections": {
                 "what_actually": "Retry безопасен только для идемпотентных методов (GET, HEAD, OPTIONS); POST/PUT без идемпотентности могут создать дубли записей.",
@@ -2256,7 +2256,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Делать retry поверх открытого Circuit Breaker — рекомендуемая практика для повышения надёжности.",
+              "text": "Делать retry поверх открытого Circuit Breaker — рекомендуемая практика: пока CB в состоянии OPEN, повторные попытки с `backoff` повышают шанс, что backend успеет восстановиться, поэтому `Resilience4j` намеренно пропускает retry сквозь открытую цепь к `fallbackUri`.",
               "correct": false,
               "sections": {
                 "what_actually": "Retry поверх открытого CB — anti-паттерн; `Resilience4j` автоматически предотвращает это, перехватывая запрос CB до retry.",
@@ -2268,7 +2268,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Таймауты на уровне Gateway при использовании Retry не нужны — повтор сам прервёт зависший запрос.",
+              "text": "Таймауты на уровне Gateway при использовании Retry не нужны: повтор сам прерывает зависший запрос новой попыткой, поэтому `connect-timeout` и `response-timeout` можно не задавать. Достаточно параметров `retries` и `backoff`, а `Resilience4j` закроет соединение с мёртвым backend при переходе CB в OPEN.",
               "correct": false,
               "sections": {
                 "what_actually": "Без таймаутов (`connect-timeout`, `response-timeout`) retry «зависнет», ожидая ответа от мёртвого backend бесконечно.",
