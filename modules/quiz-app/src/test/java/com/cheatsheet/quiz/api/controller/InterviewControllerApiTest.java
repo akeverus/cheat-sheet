@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.cheatsheet.quiz.TestInterviewPath;
-import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
 import com.cheatsheet.quiz.domain.AnswerOption;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
@@ -16,7 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockHttpSession;
@@ -30,8 +28,12 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Интеграционные тесты для JSON-API эндпоинтов InterviewController:
- * /api/answer, /api/regenerate, /api/hint, /api/favorite,
- * /api/takeaway, /api/comparison, /api/code-trace, /api/streak, /api/confidence, /api/wrong-feedback.
+ * /api/answer, /api/favorite, /api/streak, /api/confidence, /api/stats, /api/topic-stats.
+ *
+ * <p>AIR-cleanup: тесты /api/takeaway, /api/comparison, /api/code-trace,
+ * /api/wrong-feedback удалены — эти AI-разбор эндпоинты вырезаны вместе с
+ * провайдерами (OpenAI/DeepSeek), маппингов в InterviewApiController больше нет,
+ * а запросы к ним отдавали 404 → тесты были мёртвыми.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -48,7 +50,6 @@ class InterviewControllerApiTest {
     @Autowired MockMvc mockMvc;
     @Autowired QuestionRepository questionRepository;
     @Autowired AnswerOptionRepository answerOptionRepository;
-    @Value("${app.admin-token}") String adminToken;
 
     /**
      * Возвращает первый доступный вопрос или скипает тест, если вопросов нет.
@@ -88,104 +89,6 @@ class InterviewControllerApiTest {
     }
 
     @Test
-    void apiRegenerateReturnsSuccess() throws Exception {
-        Question q = firstQuestionOrSkip();
-
-        mockMvc.perform(post("/api/regenerate")
-                        .header(SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, adminToken)
-                        .header("X-Forwarded-For", "10.10.10.1")
-                        .param("questionId", String.valueOf(q.id())))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.questionId").value(q.id()))
-                .andExpect(jsonPath("$.message").isString());
-    }
-
-    @Test
-    void apiRegenerateWithoutTokenReturnsForbidden() throws Exception {
-        Question q = firstQuestionOrSkip();
-
-        mockMvc.perform(post("/api/regenerate")
-                        .param("questionId", String.valueOf(q.id())))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.type").value("FORBIDDEN"));
-    }
-
-    @Test
-    void apiRegenerateReturnsRateLimitWithRetryAfterHeader() throws Exception {
-        Question q = firstQuestionOrSkip();
-
-        mockMvc.perform(post("/api/regenerate")
-                        .header(SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, adminToken)
-                        .header("X-Forwarded-For", "10.10.10.2")
-                        .param("questionId", String.valueOf(q.id())))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-
-        mockMvc.perform(post("/api/regenerate")
-                        .header(SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, adminToken)
-                        .header("X-Forwarded-For", "10.10.10.2")
-                        .param("questionId", String.valueOf(q.id())))
-                .andExpect(status().isTooManyRequests())
-                .andExpect(jsonPath("$.type").value("RATE_LIMIT_EXCEEDED"))
-                .andExpect(jsonPath("$.message").value("Слишком много запросов к /api/regenerate, повторите позже"))
-                .andExpect(jsonPath("$.details.retryAfterSeconds").value(60))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Retry-After", "60"));
-    }
-
-    @Test
-    void apiRegenerateWithNonExistentQuestionReturns404() throws Exception {
-        mockMvc.perform(post("/api/regenerate")
-                        .header(SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, adminToken)
-                        .header("X-Forwarded-For", "10.10.10.3")
-                        .param("questionId", "999999"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.type").value("QUESTION_NOT_FOUND"));
-    }
-
-    @Test
-    void apiHintReturnsHintOrNotFound() throws Exception {
-        Question q = firstQuestionOrSkip();
-
-        MvcResult result = mockMvc.perform(post("/api/hint")
-                        .param("questionId", String.valueOf(q.id()))
-                        .param("level", "1"))
-                .andReturn();
-
-        assertThat(result.getResponse().getStatus()).isIn(200, 503);
-        String body = result.getResponse().getContentAsString();
-        if (result.getResponse().getStatus() == 200) {
-            assertThat(body).contains("hint");
-            assertThat(body).contains("level");
-            assertThat(body).contains("maxLevel");
-        } else {
-            assertThat(body).contains("AI_GENERATION_FAILED");
-        }
-    }
-
-    @Test
-    void apiHintWithNonExistentQuestionReturns404() throws Exception {
-        mockMvc.perform(post("/api/hint")
-                        .param("questionId", "999999")
-                        .param("level", "1"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.type").value("QUESTION_NOT_FOUND"));
-    }
-
-    @Test
-    void apiHintWithInvalidLevelReturnsValidationError() throws Exception {
-        Question q = firstQuestionOrSkip();
-
-        mockMvc.perform(post("/api/hint")
-                        .param("questionId", String.valueOf(q.id()))
-                        .param("level", "10"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
-    }
-
-    @Test
     void apiFavoriteTogglesState() throws Exception {
         Question q = firstQuestionOrSkip();
 
@@ -205,125 +108,6 @@ class InterviewControllerApiTest {
         mockMvc.perform(post("/api/favorite")
                         .param("questionId", "999999"))
                 .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void apiTakeawayReturns200WithTakeawayField() throws Exception {
-        Question q = firstQuestionOrSkip();
-        MvcResult result = mockMvc.perform(get("/api/takeaway").param("questionId", String.valueOf(q.id())))
-                .andExpect(status().isOk())
-                .andReturn();
-        assertThat(result.getResponse().getContentAsString()).contains("takeaway");
-    }
-
-    @Test
-    void apiTakeawayWithInvalidQuestionIdReturnsValidationError() throws Exception {
-        mockMvc.perform(get("/api/takeaway")
-                        .param("questionId", "0"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
-    }
-
-    @Test
-    void apiTakeawayWithNonNumericQuestionIdReturnsValidationError() throws Exception {
-        mockMvc.perform(get("/api/takeaway")
-                        .param("questionId", "abc"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
-    }
-
-    @Test
-    void apiComparisonReturns200WithComparisonField() throws Exception {
-        Question q = firstQuestionOrSkip();
-        List<AnswerOption> options = answerOptionRepository.findByQuestionId(q.id());
-        assumeTrue(!options.isEmpty(), "Нет вариантов ответа для вопроса " + q.id());
-        MvcResult result = mockMvc.perform(get("/api/comparison")
-                        .param("questionId", String.valueOf(q.id()))
-                        .param("selectedOptionId", String.valueOf(options.get(0).id())))
-                .andExpect(status().isOk())
-                .andReturn();
-        assertThat(result.getResponse().getContentAsString()).contains("comparison");
-    }
-
-    @Test
-    void apiComparisonWithInvalidSelectedOptionIdReturnsValidationError() throws Exception {
-        Question q = firstQuestionOrSkip();
-
-        mockMvc.perform(get("/api/comparison")
-                        .param("questionId", String.valueOf(q.id()))
-                        .param("selectedOptionId", "0"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
-    }
-
-    @Test
-    void apiComparisonWithNonNumericSelectedOptionIdReturnsValidationError() throws Exception {
-        Question q = firstQuestionOrSkip();
-
-        mockMvc.perform(get("/api/comparison")
-                        .param("questionId", String.valueOf(q.id()))
-                        .param("selectedOptionId", "abc"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
-    }
-
-    @Test
-    void apiComparisonWithInvalidQuestionIdReturnsValidationError() throws Exception {
-        mockMvc.perform(get("/api/comparison")
-                        .param("questionId", "0")
-                        .param("selectedOptionId", "1"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
-    }
-
-    @Test
-    void apiComparisonWithNonNumericQuestionIdReturnsValidationError() throws Exception {
-        mockMvc.perform(get("/api/comparison")
-                        .param("questionId", "abc")
-                        .param("selectedOptionId", "1"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
-    }
-
-    @Test
-    void apiCodeTraceReturns200WithTraceField() throws Exception {
-        Question q = firstQuestionOrSkip();
-        MvcResult result = mockMvc.perform(get("/api/code-trace").param("questionId", String.valueOf(q.id())))
-                .andExpect(status().isOk())
-                .andReturn();
-        assertThat(result.getResponse().getContentAsString()).contains("trace");
-    }
-
-    @Test
-    void apiCodeTraceWithInvalidQuestionIdReturnsValidationError() throws Exception {
-        mockMvc.perform(get("/api/code-trace")
-                        .param("questionId", "0"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
-    }
-
-    @Test
-    void apiCodeTraceWithNonNumericQuestionIdReturnsValidationError() throws Exception {
-        mockMvc.perform(get("/api/code-trace")
-                        .param("questionId", "abc"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
     }
 
     @Test
@@ -459,80 +243,6 @@ class InterviewControllerApiTest {
                 .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
                 .andExpect(jsonPath("$.details").isArray());
-    }
-
-    @Test
-    void apiWrongFeedbackReturns200() throws Exception {
-        Question q = firstQuestionOrSkip();
-        List<AnswerOption> options = answerOptionRepository.findByQuestionId(q.id());
-        assumeTrue(!options.isEmpty(), "Нет вариантов ответа для вопроса " + q.id());
-        mockMvc.perform(post("/api/wrong-feedback")
-                        .param("questionId", String.valueOf(q.id()))
-                        .param("optionId", String.valueOf(options.get(0).id())))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.questionId").value(q.id()))
-                .andExpect(jsonPath("$.optionId").value(options.get(0).id()))
-                .andExpect(jsonPath("$.available").isBoolean());
-    }
-
-    @Test
-    void apiWrongFeedbackWithInvalidOptionIdReturnsValidationError() throws Exception {
-        Question q = firstQuestionOrSkip();
-
-        mockMvc.perform(post("/api/wrong-feedback")
-                        .param("questionId", String.valueOf(q.id()))
-                        .param("optionId", "0"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
-    }
-
-    @Test
-    void apiWrongFeedbackWithNonNumericOptionIdReturnsValidationError() throws Exception {
-        Question q = firstQuestionOrSkip();
-
-        mockMvc.perform(post("/api/wrong-feedback")
-                        .param("questionId", String.valueOf(q.id()))
-                        .param("optionId", "abc"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
-    }
-
-    @Test
-    void apiWrongFeedbackWithNonNumericQuestionIdReturnsValidationError() throws Exception {
-        mockMvc.perform(post("/api/wrong-feedback")
-                        .param("questionId", "abc")
-                        .param("optionId", "1"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
-    }
-
-    @Test
-    void apiWrongFeedbackWithNonExistentQuestionReturns404() throws Exception {
-        mockMvc.perform(post("/api/wrong-feedback")
-                        .param("questionId", "999999")
-                        .param("optionId", "1"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.type").value("QUESTION_NOT_FOUND"));
-    }
-
-    @Test
-    void apiWrongFeedbackWithNonExistentOptionReturnsUnavailable() throws Exception {
-        Question q = firstQuestionOrSkip();
-
-        mockMvc.perform(post("/api/wrong-feedback")
-                        .param("questionId", String.valueOf(q.id()))
-                        .param("optionId", "999999"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.questionId").value(q.id()))
-                .andExpect(jsonPath("$.optionId").value(999999))
-                .andExpect(jsonPath("$.feedback").isEmpty())
-                .andExpect(jsonPath("$.available").value(false));
     }
 
     @Test
