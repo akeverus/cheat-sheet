@@ -189,7 +189,7 @@
           "question_text": "Какие основные функциональные интерфейсы есть в java.util.function?",
           "options": [
             {
-              "text": "Сигнатура `Function<T,R>` — это `void apply(T t)`: функция принимает аргумент, но ничего не возвращает.",
+              "text": "Ядро пакета: `Function<T,R>` с сигнатурой `void apply(T)` (принимает аргумент, но результат не возвращает), `Predicate<T>` (`boolean test(T)`), `Consumer<T>` (`void accept(T)`), `Supplier<T>` (`T get()`), плюс `Bi*`-версии на два аргумента. Набор покрывает все сочетания наличия входа и выхода.",
               "correct": false,
               "sections": {
                 "what_actually": "`Function<T,R>` возвращает результат: `R apply(T t)`. Интерфейс с `void accept(T)` без возврата — это `Consumer<T>`.",
@@ -201,7 +201,7 @@
               "order": 0
             },
             {
-              "text": "`Supplier<T>` принимает аргумент типа `T` и возвращает `boolean`, работая как проверка значения.",
+              "text": "Ядро пакета: `Supplier<T>` принимает аргумент `T` и возвращает `boolean` (проверяет значение), `Function<T,R>` (`R apply(T)`), `Consumer<T>` (`void accept(T)`), `UnaryOperator<T>` (`T apply(T)`), плюс `Bi*`-версии на два аргумента. Набор покрывает все сочетания наличия входа и выхода.",
               "correct": false,
               "sections": {
                 "what_actually": "`Supplier<T>` не принимает аргументов и возвращает `T` через `T get()`. Проверка с возвратом `boolean` — это `Predicate<T>`.",
@@ -213,7 +213,7 @@
               "order": 1
             },
             {
-              "text": "`Consumer<T>` возвращает новое значение типа `T`, поэтому его удобно использовать в `map()`.",
+              "text": "Ядро пакета: `Consumer<T>` возвращает новое значение `T` и потому подходит для `map()`, `Function<T,R>` (`R apply(T)`), `Predicate<T>` (`boolean test(T)`), `Supplier<T>` (`T get()`), плюс `Bi*`-версии на два аргумента. Набор покрывает все сочетания наличия входа и выхода.",
               "correct": false,
               "sections": {
                 "what_actually": "`Consumer<T>` ничего не возвращает (`void accept(T)`); для преобразования с возвратом в `map()` нужна `Function<T,R>`.",
@@ -369,7 +369,7 @@
           "question_text": "Чем Runnable отличается от Callable и Supplier?",
           "options": [
             {
-              "text": "`Runnable.run()` возвращает результат типа `T` и поэтому используется в `ExecutorService.submit` для получения `Future<T>`.",
+              "text": "`Runnable.run()` возвращает `T` и потому годится для `ExecutorService.submit`, дающего `Future<T>`; `Callable<T>.call()` тоже возвращает `T`, но объявляет `throws Exception`, а `Supplier<T>.get()` возвращает `T` без checked-исключений.",
               "correct": false,
               "sections": {
                 "what_actually": "`Runnable.run()` возвращает `void`; результат через `Future` даёт `Callable<T>`. `submit(Runnable)` возвращает `Future<?>`, разрешающийся в `null`.",
@@ -381,7 +381,7 @@
               "order": 0
             },
             {
-              "text": "`Supplier<T>.get()` объявляет `throws Exception`, поэтому из него удобно бросать checked-исключения, как `IOException`.",
+              "text": "`Supplier<T>.get()` объявляет `throws Exception`, поэтому годится для задач с `IOException`; `Callable<T>.call()` тоже возвращает `T` и бросает checked, а `Runnable.run()` возвращает `void` и checked-исключений не объявляет.",
               "correct": false,
               "sections": {
                 "what_actually": "`Supplier.get()` не объявляет checked-исключений; бросать checked умеет только `Callable.call() throws Exception`.",
@@ -406,7 +406,7 @@
               "order": 2
             },
             {
-              "text": "Все три интерфейса лежат в одном пакете `java.util.function` и полностью взаимозаменяемы по типу.",
+              "text": "Все три интерфейса — `Runnable`, `Callable<T>` и `Supplier<T>` — лежат в одном пакете `java.util.function` и взаимозаменяемы по типу, поэтому `ExecutorService.submit` одинаково принимает любой из них.",
               "correct": false,
               "sections": {
                 "what_actually": "Пакеты разные: `Runnable` — `java.lang`, `Callable` — `java.util.concurrent`, `Supplier` — `java.util.function`; по типу они невзаимозаменяемы.",
@@ -429,7 +429,7 @@
           "question_text": "Какие 4 вида method references существуют?",
           "options": [
             {
-              "text": "Существует только один вид method reference — ссылка на статический метод `ClassName::staticMethod`; для методов экземпляра и конструкторов синтаксиса `::` нет.",
+              "text": "Вид только один — ссылка на статический метод `ClassName::staticMethod` (≈ `x -> ClassName.staticMethod(x)`); записи `instance::method`, `Type::instanceMethod` и `Type::new` — это обычные лямбды, а не отдельные виды method reference.",
               "correct": false,
               "sections": {
                 "what_actually": "Видов четыре: статический, на объекте, на типе и на конструктор. `instance::method`, `Type::method` и `Type::new` — валидные method references.",
@@ -441,7 +441,7 @@
               "order": 0
             },
             {
-              "text": "`ClassName::new` ссылается на статический метод класса с именем `new`, а не на конструктор.",
+              "text": "`ClassName::new` — это ссылка на статический метод класса с именем `new`, а не отдельный вид method reference на конструктор; создание объекта через `::` записать нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "`ClassName::new` — это ссылка именно на конструктор; метода с именем `new` в Java не существует, `new` — ключевое слово.",
@@ -453,7 +453,7 @@
               "order": 1
             },
             {
-              "text": "`String::toUpperCase` — это ссылка на статический метод класса `String`, выполняемая без объекта-receiver.",
+              "text": "`String::toUpperCase` — ссылка на статический метод класса `String`, выполняемая без объекта-receiver, того же вида, что и `Integer::parseInt`.",
               "correct": false,
               "sections": {
                 "what_actually": "`String::toUpperCase` — ссылка на метод экземпляра по типу: первый аргумент лямбды становится receiver, то есть `s -> s.toUpperCase()`.",
@@ -502,7 +502,7 @@
               "order": 0
             },
             {
-              "text": "`andThen` и `compose` полностью эквивалентны: оба выполняют функции слева направо и всегда дают одинаковый результат.",
+              "text": "`andThen` и `compose` эквивалентны: оба выполняют функции слева направо, поэтому `times2.andThen(plus3).apply(5)` и `times2.compose(plus3).apply(5)` дают один результат `13`.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок противоположен: `andThen` выполняет `this` первой, `compose` — переданную функцию первой; на некоммутативных операциях результаты различаются (13 против 16).",
@@ -514,7 +514,7 @@
               "order": 1
             },
             {
-              "text": "`f.andThen(g)` означает «сначала `g`, потом `f`», то есть вычисляет `f(g(x))`.",
+              "text": "`f.andThen(g)` означает «сначала `g`, потом `f`» — вычисляет `f(g(x))`; поэтому `times2.andThen(plus3).apply(5)` = `(5+3)*2 = 16`.",
               "correct": false,
               "sections": {
                 "what_actually": "`f.andThen(g)` означает «сначала `f`, потом `g`», то есть `g(f(x))`. Порядок `f(g(x))` даёт как раз `compose`.",
@@ -526,7 +526,7 @@
               "order": 2
             },
             {
-              "text": "У `Consumer` есть оба метода — `andThen` и `compose`, так как он, как и `Function`, поддерживает полную композицию.",
+              "text": "У `Consumer` есть оба метода — `andThen` и `compose`: `c1.andThen(c2)` выполняет побочные эффекты по очереди, а `c1.compose(c2)` — в обратном порядке, как у `Function`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Consumer` имеет только `andThen`: без возвращаемого значения нечего передавать дальше, поэтому `compose` для него не определён.",
@@ -549,7 +549,7 @@
           "question_text": "Как работают and(), or(), negate() в Predicate?",
           "options": [
             {
-              "text": "`and`, `or`, `negate` мутируют исходный предикат на месте и возвращают `void`, поэтому цепочки `a.and(b).or(c)` невозможны.",
+              "text": "`and`, `or`, `negate` мутируют исходный предикат на месте и возвращают `void`: `notEmpty.and(startsWithA)` меняет сам `notEmpty`, поэтому fluent-цепочки `a.and(b).or(c)` собрать нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Методы не мутируют исходный предикат, а возвращают новый `Predicate`, поэтому цепочки `a.and(b).or(c)` как раз и работают.",
@@ -574,7 +574,7 @@
               "order": 1
             },
             {
-              "text": "`negate()` возвращает `boolean` — результат инверсии текущего теста, а не новый предикат.",
+              "text": "`negate()` возвращает `boolean` — сразу инвертированный результат текущего теста; `notEmpty.negate()` даёт готовое значение, а не новый `Predicate` для последующего `.test(...)`.",
               "correct": false,
               "sections": {
                 "what_actually": "`negate()` возвращает новый `Predicate<T>`, а не `boolean`; сам тест выполняется позже вызовом `.test(value)`.",
@@ -586,7 +586,7 @@
               "order": 2
             },
             {
-              "text": "`and()` всегда вычисляет оба предиката независимо от результата первого, потому что короткого замыкания у `Predicate` нет.",
+              "text": "`and()` всегда вычисляет оба предиката независимо от результата первого: короткого замыкания у `Predicate` нет, поэтому `expensive.and(cheap)` прогоняет `cheap` даже при `false` у `expensive`.",
               "correct": false,
               "sections": {
                 "what_actually": "`and()` использует короткое замыкание: если первый предикат вернул `false`, второй не вычисляется (он реализован через `&&`).",
@@ -789,7 +789,7 @@
           "question_text": "Как создать собственный функциональный интерфейс?",
           "options": [
             {
-              "text": "Собственный функциональный интерфейс должен наследовать `java.util.function.Function`, иначе лямбда к нему неприменима.",
+              "text": "Собственный функциональный интерфейс обязан наследовать `java.util.function.Function` (или другой встроенный SAM), иначе лямбда к нему неприменима: `interface Validator<T> extends Function<T,Boolean> { ... }`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наследовать `Function` не требуется: достаточно объявить независимый интерфейс с одним абстрактным методом, и лямбда к нему применима.",
@@ -814,7 +814,7 @@
               "order": 1
             },
             {
-              "text": "В собственном функциональном интерфейсе можно объявить только один абстрактный метод, но добавлять `default`-методы (`and`, `or`) запрещено.",
+              "text": "В собственном интерфейсе абстрактный метод должен быть один, а добавлять `default`-методы (`and`, `or`, `negate`) запрещено — они сломали бы SAM-контракт и превратили его в обычный интерфейс.",
               "correct": false,
               "sections": {
                 "what_actually": "`default`-методы добавлять можно и нужно: именно они дают доменную композицию (`and`, `or`, `negate`), не нарушая SAM-контракт.",
@@ -826,7 +826,7 @@
               "order": 2
             },
             {
-              "text": "Чтобы интерфейс стал функциональным, его абстрактный метод обязан называться именно `apply`, как в `Function`.",
+              "text": "Чтобы интерфейс стал функциональным, его единственный абстрактный метод обязан называться `apply`, как у `Function`; имена вроде `validate` или `transform` компилятор для SAM-метода не примет.",
               "correct": false,
               "sections": {
                 "what_actually": "Имя метода произвольно: `validate`, `transform`, `run`, `test` — всё подходит; важно лишь, что абстрактный метод один.",
