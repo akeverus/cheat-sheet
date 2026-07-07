@@ -1029,7 +1029,7 @@
           "question_text": "Какие метрики Istio отдаёт в Prometheus?",
           "options": [
             {
-              "text": "Чтобы получить метрики из Istio, нужно вручную инструментировать код приложения клиентом Prometheus.",
+              "text": "Istio не генерирует метрики сам: чтобы получить `istio_requests_total` и `istio_request_duration_milliseconds`, приложение обязано инструментироваться клиентом Prometheus (Micrometer) и отдавать их на `/metrics`. Envoy-sidecar только проксирует трафик, а labels (source/destination service, response code) заполняет код. Это уже даёт дашборды, alerting и триггеры для авто-скейлинга (KEDA).",
               "correct": false,
               "sections": {
                 "what_actually": "Метрики `istio_*` генерирует Envoy автоматически на каждый запрос — инструментировать код не нужно.",
@@ -1054,7 +1054,7 @@
               "order": 1
             },
             {
-              "text": "Istio отдаёт метрики только по TCP-трафику и не различает HTTP response codes.",
+              "text": "Envoy экспортирует только TCP-метрики: `istio_tcp_sent_bytes_total`, `istio_tcp_received_bytes_total` и число открытых соединений. HTTP-запросы учитываются в тех же счётчиках без разбивки по response code и protocol, поэтому error rate по 5xx через них не построить. Годится для дашбордов по объёму трафика и авто-скейлинга по числу соединений.",
               "correct": false,
               "sections": {
                 "what_actually": "Istio отдаёт богатые HTTP-метрики с labels по response code и protocol (`istio_requests_total`), а `istio_tcp_*` — лишь для TCP-трафика.",
@@ -1066,7 +1066,7 @@
               "order": 2
             },
             {
-              "text": "Метрики Istio нельзя использовать для авто-скейлинга — они только для ручного просмотра дашбордов.",
+              "text": "Envoy экспортирует `istio_requests_total` (counter) и `istio_request_duration_milliseconds` (histogram) с богатыми labels: source/destination service, response code, protocol. Но это pull-метрики только для Prometheus-дашбордов и alerting — забирать их в HPA или KEDA нельзя, так как значения обновляются лишь на scrape и для авто-скейлинга непригодны.",
               "correct": false,
               "sections": {
                 "what_actually": "Метрики Istio служат сигналом для авто-скейлинга через KEDA (например, по RPS или latency), а не только для дашбордов.",
@@ -1089,7 +1089,7 @@
           "question_text": "Как работает distributed tracing в Istio (Jaeger, Tempo)?",
           "options": [
             {
-              "text": "Istio автоматически связывает trace-заголовки внутри приложения, поэтому код менять не нужно вообще.",
+              "text": "Envoy генерирует trace spans и сам связывает входящий и исходящий запросы внутри pod, копируя `B3`-заголовки между ними, поэтому код приложения менять не нужно вообще. Настраивается через `meshConfig.defaultConfig.tracing` (`sampling` — % запросов, `zipkin.address` — коллектор). Context propagation целиком берёт на себя sidecar.",
               "correct": false,
               "sections": {
                 "what_actually": "Istio проставляет spans на уровне Envoy, но context propagation внутри приложения (проброс `B3`/W3C заголовков) обязан делать сам код.",
@@ -1101,7 +1101,7 @@
               "order": 0
             },
             {
-              "text": "Sampling в Istio задаётся в `VirtualService` на каждый маршрут отдельно.",
+              "text": "Envoy генерирует trace spans и пробрасывает `B3` (или W3C) заголовки. Sampling (% запросов) и адрес коллектора задаются per-route в `VirtualService` через поле `tracing`, поэтому трейсинг включают только для отдельных маршрутов. Код приложения при этом обязан пробрасывать trace-заголовки между входящим и исходящим запросами.",
               "correct": false,
               "sections": {
                 "what_actually": "Sampling настраивается глобально в `meshConfig.defaultConfig.tracing.sampling`, а не в VirtualService на маршрут.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "Distributed tracing в Istio работает только с Jaeger и несовместим с другими бэкендами.",
+              "text": "Envoy генерирует trace spans и пробрасывает `B3`-заголовки, но экспорт работает только с Jaeger по протоколу Zipkin: адрес задаётся в `meshConfig.defaultConfig.tracing.zipkin.address`, а Tempo и OTLP-бэкенды несовместимы. Код приложения всё равно должен пробрасывать trace-заголовки между запросами.",
               "correct": false,
               "sections": {
                 "what_actually": "Istio шлёт spans по Zipkin-совместимому протоколу/OTLP, поэтому работает с Jaeger, Tempo, Zipkin и другими совместимыми коллекторами.",
@@ -1222,7 +1222,7 @@
               "order": 0
             },
             {
-              "text": "`Kiali` — это control plane Istio, который раздаёт конфигурацию Envoy вместо Istiod.",
+              "text": "`Kiali` — control plane Istio: раздаёт конфигурацию sidecar'ам Envoy по xDS и валидирует CRD, заменяя собой Istiod. Дополнительно строит service graph и показывает health сервисов. Ставится манифестом и открывается через `istioctl dashboard kiali`. Без него sidecar'ы не получат свою конфигурацию.",
               "correct": false,
               "sections": {
                 "what_actually": "Конфигурацию Envoy раздаёт `Istiod`; Kiali — это observability-UI поверх mesh, он ничего не конфигурирует в data plane.",
@@ -1234,7 +1234,7 @@
               "order": 1
             },
             {
-              "text": "`Kiali` сам собирает метрики с Envoy и хранит их, заменяя Prometheus.",
+              "text": "`Kiali` — UI для Istio, который сам скрейпит метрики с Envoy-sidecar'ов и хранит их в собственной TSDB, заменяя Prometheus. На их основе рисует service graph, traffic animation и health сервисов. Ставится манифестом и открывается через `istioctl dashboard kiali`. Практически essential для эксплуатации mesh.",
               "correct": false,
               "sections": {
                 "what_actually": "Kiali не хранилище метрик: он читает данные из Prometheus и строит граф поверх них, а не заменяет его.",
@@ -1246,7 +1246,7 @@
               "order": 2
             },
             {
-              "text": "`Kiali` — это всего лишь дашборд статической документации Istio без данных о реальном трафике.",
+              "text": "`Kiali` — UI для Istio, показывающий статическую топологию из применённых CRD и документацию по конфигурации mesh: просмотр YAML-ресурсов и их валидацию. Данные о реальном трафике он не отображает — для потоков и health нужны отдельные инструменты. Ставится манифестом и открывается через `istioctl dashboard kiali`.",
               "correct": false,
               "sections": {
                 "what_actually": "Kiali показывает живой service graph и traffic animation по реальным метрикам, а не статическую документацию.",
@@ -1269,7 +1269,7 @@
           "question_text": "Что такое ambient mode (sidecar-less) в Istio?",
           "options": [
             {
-              "text": "Ambient mode оставляет sidecar в каждом pod, но переписывает их на Rust для скорости.",
+              "text": "`Ambient mode` (с 2022, GA 2024) оставляет по одному sidecar-прокси в каждом pod, но переписывает его с Envoy на Rust ради скорости и меньшего расхода памяти. Архитектура однослойная — весь mTLS и L7 делает этот per-pod прокси. Плюсы над классикой: та же модель, но легче прокси и ниже latency, а adoption такой же, как у sidecar-режима.",
               "correct": false,
               "sections": {
                 "what_actually": "Ambient как раз убирает per-pod sidecar: L4 уносится в per-node `ztunnel`, а L7 — в опциональный waypoint; на Rust написан именно ztunnel.",
@@ -1294,7 +1294,7 @@
               "order": 1
             },
             {
-              "text": "В ambient mode L7-функции (retries, L7-routing) работают всегда и бесплатно, без дополнительных прокси.",
+              "text": "`Ambient mode` (с 2022, GA 2024) — service mesh без sidecars. `ztunnel` (DaemonSet, 1 на ноду) даёт L4 mTLS, и на его же уровне бесплатно работают все L7-функции — retries, L7-routing, RequestAuthentication — без каких-либо дополнительных прокси. Плюсы: нет модификации pod, ниже расход ресурсов, полный L7 из коробки даже на большом mesh.",
               "correct": false,
               "sections": {
                 "what_actually": "L7-фичи требуют развёрнутого `waypoint proxy` (Envoy) per-namespace/service; без него работает только L4 (mTLS) через ztunnel.",
@@ -1306,7 +1306,7 @@
               "order": 2
             },
             {
-              "text": "Чтобы включить ambient mode для workload, нужно пересоздать pod с новым контейнером-прокси.",
+              "text": "`Ambient mode` (с 2022, GA 2024) — service mesh без sidecars: L4 — `ztunnel` (DaemonSet, 1 на ноду), L7 — `waypoint proxy` (опционально). Чтобы подключить workload, pod пересоздают с добавленным контейнером-прокси, который перехватывает трафик. Плюсы: ниже расход ресурсов, чем на классических sidecar, и дешевле для большого mesh.",
               "correct": false,
               "sections": {
                 "what_actually": "Ambient включается opt-in label-ом без модификации pod и без добавления контейнера — в этом и смысл 'no pod modification'.",
@@ -1329,7 +1329,7 @@
           "question_text": "Что такое ztunnel и waypoint proxy в ambient mode?",
           "options": [
             {
-              "text": "`ztunnel` разворачивается per service и даёт L7-фичи (retries, routing), а `waypoint` — это L4 mTLS на ноде.",
+              "text": "`ztunnel` разворачивается per service или per namespace, написан на Envoy, отвечает за L7-фичи (retries, traffic routing, RequestAuthentication) и опционален. `waypoint proxy` — DaemonSet (1 на ноду) на Rust, делает L4 mTLS и простую authz, присутствует в ambient всегда. Экономия: для L4-only mesh хватает одного waypoint на ноду — дешевле, чем sidecars.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны: `ztunnel` — per-node L4 mTLS, а `waypoint` — per-service/namespace L7-прокси (Envoy) с retries и routing.",
@@ -1341,7 +1341,7 @@
               "order": 0
             },
             {
-              "text": "`waypoint proxy` обязателен в ambient и разворачивается по одному на каждую ноду, как ztunnel.",
+              "text": "`ztunnel` — DaemonSet (1 на ноду) на Rust, отвечает за L4 mTLS и простую authz. `waypoint proxy` — тоже Envoy-компонент, но он обязателен в ambient и разворачивается по одному на каждую ноду, как ztunnel, добавляя L7-фичи (retries, traffic routing). Экономия: два DaemonSet на ноду всё равно дешевле, чем sidecar на каждый pod.",
               "correct": false,
               "sections": {
                 "what_actually": "Waypoint опционален и ставится per service/namespace только при потребности в L7; на каждой ноде сидит именно ztunnel.",
@@ -1366,7 +1366,7 @@
               "order": 2
             },
             {
-              "text": "Оба компонента, `ztunnel` и `waypoint`, написаны на Envoy/C++ и идентичны по функциям.",
+              "text": "`ztunnel` и `waypoint proxy` оба написаны на Envoy/C++ и функционально идентичны: каждый делает и L4 mTLS, и L7-фичи (retries, traffic routing). Отличается только область: `ztunnel` — per node, `waypoint` — per service, но выбрать можно любой. Экономия: для small mesh хватает одного из них — дешевле, чем sidecars.",
               "correct": false,
               "sections": {
                 "what_actually": "`ztunnel` написан на Rust и делает L4, а `waypoint` — это Envoy для L7; функции у них разные, не идентичные.",
@@ -1389,7 +1389,7 @@
           "question_text": "Чем Istio отличается от Linkerd и Consul Connect?",
           "options": [
             {
-              "text": "`Linkerd` имеет больше фич, чем Istio, и поэтому считается самым сложным в эксплуатации mesh.",
+              "text": "`Linkerd` — максимум фич и самый сложный в эксплуатации из трёх, с тяжёлым Rust-прокси. `Istio` — проще Linkerd, но с меньшим набором возможностей, только K8s. `Consul Connect` — multi-platform (VM + K8s), HashiCorp-стек. Выбор: максимум фич → Linkerd; проще на K8s → Istio; multi-platform → Consul.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: самый богатый по фичам и самый сложный — Istio; Linkerd намеренно проще и покрывает subset фич.",
@@ -1401,7 +1401,7 @@
               "order": 0
             },
             {
-              "text": "`Istio` единственный из трёх работает не только в Kubernetes, но и на голых VM.",
+              "text": "`Istio` — максимум фич и единственный из трёх, кто работает не только в K8s, но и на голых VM, самый зрелый. `Linkerd` — простой, Rust-прокси <1 ms, K8s-only, subset фич. `Consul Connect` — HashiCorp-стек, только Kubernetes. Выбор: multi-platform (VM + K8s) → Istio; простота на K8s → Linkerd.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-platform (VM + K8s) — это про `Consul Connect`; Istio ориентирован на K8s, а Linkerd — K8s-only.",
@@ -1413,7 +1413,7 @@
               "order": 1
             },
             {
-              "text": "`Linkerd` тяжелее Istio по ресурсам, поскольку использует тот же Envoy-прокси.",
+              "text": "`Linkerd` тяжелее Istio по ресурсам, потому что использует тот же Envoy-прокси (~50-100 MB, 5-10 ms), K8s-only. `Istio` — максимум фич, но легче Linkerd, самый популярный. `Consul Connect` — multi-platform (VM + K8s), HashiCorp-стек. Выбор: минимум ресурсов → Istio; multi-platform → Consul.",
               "correct": false,
               "sections": {
                 "what_actually": "Linkerd использует собственный лёгкий Rust-прокси (~30 MB, <1 ms), который легче тяжёлого Envoy у Istio (~50-100 MB).",
