@@ -2049,7 +2049,7 @@
           "question_text": "Как работает Spring Boot Logging Auto-configuration?",
           "options": [
             {
-              "text": "`Spring Boot` всегда использует `Logback` и не умеет переключаться на `Log4j2` через classpath.",
+              "text": "`Spring Boot` при старте всегда инициализирует `LogbackLoggingSystem` независимо от classpath, читает `logback-spring.xml`/`logback.xml`, применяет `logging.level.*`/`logging.file.*` из `application.yml` и активирует `<springProfile>`-секции; переход на `Log4j2` требует ручной замены системного свойства.",
               "correct": false,
               "sections": {
                 "what_actually": "`LoggingSystem.detect()` выбирает движок по classpath: если есть `log4j-core` (через `spring-boot-starter-log4j2`), активируется `Log4j2LoggingSystem`.",
@@ -2061,7 +2061,7 @@
               "order": 0
             },
             {
-              "text": "Свойства `logging.level.*` из `application.yml` авто-конфигурация игнорирует — уровни задаются только в XML.",
+              "text": "`Spring Boot` через `LoggingSystem.detect()` выбирает движок по classpath, инициализирует `logback-spring.xml`/`logback.xml` и активирует `<springProfile>`-секции, но уровни берёт только из XML: `logging.level.*`/`logging.file.*` из `application.yml` авто-конфигурация в движок не транслирует.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring специально применяет `logging.level.*`/`logging.file.*`/`logging.pattern.*` поверх XML-конфига; YAML — штатный канал настройки уровней.",
@@ -2086,7 +2086,7 @@
               "order": 2
             },
             {
-              "text": "`logback.xml` имеет приоритет над `logback-spring.xml` при старте Spring Boot.",
+              "text": "`Spring Boot` через `LoggingSystem.detect()` выбирает движок по classpath, применяет `logging.level.*`/`logging.file.*` из `application.yml` и активирует `<springProfile>`-секции, но конфиг инициализирует в порядке «сначала `logback.xml`, затем `logback-spring.xml`», отдавая приоритет `logback.xml`.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring Boot сначала ищет `logback-spring.xml` (с поддержкой Spring-расширений) и только при его отсутствии берёт `logback.xml`.",
@@ -2109,7 +2109,7 @@
           "question_text": "Что такое ECS Layout и зачем он нужен?",
           "options": [
             {
-              "text": "`ECS` — это формат сжатия логов перед отправкой в Elasticsearch.",
+              "text": "`ECS Layout` (через `co.elastic.logging:logback-ecs-encoder`) — это формат сжатия лог-полей (`log.level`, `trace.id`, `service.name`) перед отправкой в `Elasticsearch`, уменьшающий объём индекса и трафик до `Kibana Discover`.",
               "correct": false,
               "sections": {
                 "what_actually": "`ECS` — это стандарт ИМЁН ПОЛЕЙ (схема), а не алгоритм сжатия; он определяет, как называть `log.level`, `trace.id` и т.д.",
@@ -2121,7 +2121,7 @@
               "order": 0
             },
             {
-              "text": "ECS Layout и кастомный `LogstashEncoder` можно свободно смешивать в одном индексе ES.",
+              "text": "`ECS Layout` (`logback-ecs-encoder`) и кастомный `LogstashEncoder` пишут совместимый JSON, поэтому их можно свободно смешивать в одном индексе `Elasticsearch` — `Kibana` объединит поля `log.level` и `level` в общих дашбордах.",
               "correct": false,
               "sections": {
                 "what_actually": "ECS использует имена вроде `log.level`, а `LogstashEncoder` — `level`; в одном индексе их маппинги конфликтуют, дашборды ломаются.",
@@ -2133,7 +2133,7 @@
               "order": 1
             },
             {
-              "text": "Главное преимущество ECS — он работает быстрее любого другого энкодера за счёт бинарного формата.",
+              "text": "Главное преимущество `ECS Layout` (`logback-ecs-encoder`) — он пишет логи в бинарном виде и потому работает быстрее `LogstashEncoder` и `JsonLayout`, снижая нагрузку на диск при высоком потоке событий.",
               "correct": false,
               "sections": {
                 "what_actually": "ECS — это про стандартизацию имён полей и совместимость с Elastic, а не про скорость; формат остаётся текстовым JSON.",
@@ -2182,7 +2182,7 @@
               "order": 0
             },
             {
-              "text": "Чтобы проверить логи в тесте, обязательно читать и парсить лог-файл с диска.",
+              "text": "Для unit-теста логирования настраивают `FileAppender` на временный файл, в `@AfterEach` читают его с диска и парсят строки, проверяя наличие `\"Payment processed\"` и уровня `INFO`; для интеграционных тестов берут `OutputCaptureExtension` с `CapturedOutput`.",
               "correct": false,
               "sections": {
                 "what_actually": "`MemoryAppender` (на базе `ListAppender`) даёт события прямо в памяти — файл не нужен; чтение файла хрупко и медленно.",
@@ -2194,7 +2194,7 @@
               "order": 1
             },
             {
-              "text": "Отвязывать `MemoryAppender` в `@AfterEach` не нужно — он сам отцепится после теста.",
+              "text": "`MemoryAppender extends ListAppender<ILoggingEvent>` в `@BeforeEach` цепляют через `logger.addAppender(...)` и `start()`; отвязывать его в `@AfterEach` не требуется — JUnit пересоздаёт экземпляр теста, и аппендер отцепляется вместе с ним, не влияя на соседние тесты.",
               "correct": false,
               "sections": {
                 "what_actually": "Аппендер остаётся привязанным к `Logger` (это глобальное состояние логгера) и без `detachAppender` будет копить события следующих тестов, давая ложные срабатывания.",
@@ -2206,7 +2206,7 @@
               "order": 2
             },
             {
-              "text": "`MemoryAppender` и `OutputCaptureExtension` — это одно и то же, разницы в применении нет.",
+              "text": "`MemoryAppender extends ListAppender<ILoggingEvent>` и `OutputCaptureExtension` с `CapturedOutput` дают одинаковый доступ к типизированным `ILoggingEvent`, поэтому в unit- и интеграционных тестах их применяют взаимозаменяемо — оба цепляются к `Logger` через `addAppender(...)`.",
               "correct": false,
               "sections": {
                 "what_actually": "`MemoryAppender` даёт типизированные `ILoggingEvent` для unit-теста класса; `OutputCaptureExtension` ловит сырой stdout для проверки реального формата в интеграционном тесте — разные уровни.",
@@ -2289,7 +2289,7 @@
           "question_text": "Как работает Log4j2 garbage-free logging?",
           "options": [
             {
-              "text": "Garbage-free logging означает, что `Log4j2` сам запускает сборку мусора чаще, чтобы освободить память.",
+              "text": "`Garbage-free logging` в `Log4j2` периодически форсирует сборку мусора между батчами лог-событий, освобождая heap до накопления пауз; включается свойствами `log4j2.enableDirectEncoders=true` и `log4j2.garbagefreeThreadContextMap=true` для latency-чувствительных приложений.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот — он МИНИМИЗИРУЕТ создание объектов (пулы, direct encoding), чтобы GC запускался РЕЖЕ; форсирование GC тут ни при чём.",
@@ -2301,7 +2301,7 @@
               "order": 0
             },
             {
-              "text": "`JsonLayout` полностью поддерживает garbage-free режим, никаких ограничений нет.",
+              "text": "`Garbage-free logging` в `Log4j2` минимизирует аллокации через пул `LogEvent` и direct encoding и полноценно работает с любым layout, включая `JsonLayout`: JSON-вывод в этом режиме не создаёт промежуточных объектов.",
               "correct": false,
               "sections": {
                 "what_actually": "`JsonLayout` НЕ garbage-free; для JSON в этом режиме используют `JsonTemplateLayout`, иначе аллокации сводят выигрыш на нет.",
@@ -2326,7 +2326,7 @@
               "order": 2
             },
             {
-              "text": "Garbage-free режим нужен любому веб-приложению — он всегда даёт заметный выигрыш.",
+              "text": "`Garbage-free logging` в `Log4j2` через переиспользование `LogEvent`/`ByteBuffer` даёт заметный выигрыш в любом веб-приложении, поэтому его включают по умолчанию флагами `log4j2.enableDirectEncoders=true` и `log4j2.garbagefreeThreadContextMap=true`.",
               "correct": false,
               "sections": {
                 "what_actually": "Для обычных CRUD-сервисов выигрыш незаметен, а ограничения (layout, флаги) усложняют конфиг; режим оправдан лишь для latency-критичных систем.",
@@ -2349,7 +2349,7 @@
           "question_text": "Как настроить Graylog / GELF для приёма логов из Java?",
           "options": [
             {
-              "text": "`GELF` — это бинарный протокол, несовместимый с JSON, поэтому логи в нём нечитаемы.",
+              "text": "`Graylog` — платформа централизованного логирования на протоколе `GELF`, компактном бинарном формате (не JSON) с полями `version`, `host`, `short_message`; в Java настраивают через `logback-gelf` с `GelfLayout`, обёрнутый в `AsyncAppender`, а прочитать такой лог можно только декодером `Graylog`.",
               "correct": false,
               "sections": {
                 "what_actually": "`GELF` — это компактный JSON-формат (с опциональным chunking/сжатием), а не бинарный протокол; его поля (`short_message`, `host`) читаемы.",
@@ -2361,7 +2361,7 @@
               "order": 0
             },
             {
-              "text": "Для production однозначно выбирают UDP `GELF` — он быстрее и надёжнее TCP.",
+              "text": "`Graylog` принимает логи по `GELF`; в Java его настраивают через `logback-gelf` с `GelfLayout` в `AsyncAppender`, и для production выбирают `GelfUdpAppender` (UDP) — он быстрее и надёжнее TCP при высоком потоке, поэтому именно его рекомендуют для prod.",
               "correct": false,
               "sections": {
                 "what_actually": "UDP не гарантирует доставку и теряет сообщения при перегрузке; для prod рекомендуют TCP `GELF` + async, UDP — лишь когда потеря допустима.",
@@ -2373,7 +2373,7 @@
               "order": 1
             },
             {
-              "text": "`Graylog` хранит логи в собственной встроенной БД и `Elasticsearch` ему не нужен.",
+              "text": "`Graylog` — платформа централизованного логирования на протоколе `GELF`; логи с полями `version`, `host`, `short_message` он принимает через `logback-gelf` с `GelfLayout` и хранит в собственной встроенной БД, поэтому отдельный `Elasticsearch`/OpenSearch для поиска ему не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "`Graylog` использует `Elasticsearch`/OpenSearch как хранилище и поисковый движок; собственной полнотекстовой БД у него нет.",
@@ -2422,7 +2422,7 @@
               "order": 0
             },
             {
-              "text": "`Kafka Appender` с `acks=0` гарантирует доставку каждой лог-записи в топик.",
+              "text": "`Kafka Appender` (через `logback-kafka-appender` + `LogstashEncoder`) отправляет лог-записи прямо в топик `Kafka` с `acks=0`; этот режим подтверждает запись на брокере и гарантирует доставку каждой записи даже при пиковой нагрузке.",
               "correct": false,
               "sections": {
                 "what_actually": "`acks=0` — fire-and-forget: producer не ждёт подтверждения брокера, и при перегрузке/сбое записи теряются; гарантий доставки нет.",
@@ -2434,7 +2434,7 @@
               "order": 1
             },
             {
-              "text": "Kafka Appender проще в настройке, чем связка `Filebeat → ELK`, и заменяет её во всех случаях.",
+              "text": "`Kafka Appender` (`logback-kafka-appender` + `LogstashEncoder`) пишет логи прямо в топик `Kafka`, минуя файлы и агенты, поэтому он проще в настройке, чем связка `Filebeat → ELK`, и заменяет её в любом сервисе независимо от нагрузки.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka Appender сложнее (producer-конфиг, топики, потребители, fallback) и оправдан под высокую нагрузку/stream-обработку; для простых случаев `Filebeat → ELK` проще.",
@@ -2446,7 +2446,7 @@
               "order": 2
             },
             {
-              "text": "Fallback-аппендер при использовании Kafka Appender не нужен — Kafka всегда доступна.",
+              "text": "`Kafka Appender` (`logback-kafka-appender` + `LogstashEncoder`) отправляет записи в топик `Kafka` с `acks=0`; поскольку брокер `Kafka` реплицирован и высокодоступен, дополнительный fallback-аппендер (`FileAppender`) не нужен — продюсер дождётся восстановления брокера и не потеряет записи.",
               "correct": false,
               "sections": {
                 "what_actually": "Брокер может быть недоступен (сеть, ребаланс, перегрузка); без fallback-аппендера (например `FileAppender`) логи в этот момент теряются безвозвратно.",
