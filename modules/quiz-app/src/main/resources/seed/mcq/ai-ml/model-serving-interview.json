@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Ollama` — это масштабируемый production-кластер для multi-user LLM serving, конкурент `vLLM` по throughput.",
+              "text": "`Ollama` — production-grade кластер для multi-user LLM serving с горизонтальным масштабированием; one-command install, OpenAI-compatible API на `http://localhost:11434`, под капотом `llama.cpp`, library моделей (Llama, Mistral, Qwen). Use cases: high-throughput serving под нагрузкой, прямой конкурент `vLLM`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Ollama` — про простой локальный запуск (single-instance); он не оптимизирован под multi-user production-нагрузку.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Ollama` написан с нуля на собственном движке и не имеет ничего общего с `llama.cpp`.",
+              "text": "`Ollama` — простой способ запустить LLM локально; one-command install, кроссплатформенный (Mac, Linux, Windows), OpenAI-compatible API на `http://localhost:11434`, под капотом собственный движок на `PyTorch`/`Transformers`, library моделей (Llama, Mistral, Qwen). Use cases: local development, privacy POC, edge.",
               "correct": false,
               "sections": {
                 "what_actually": "`Ollama` как раз использует `llama.cpp` под капотом для инференса.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Ollama` работает только на Linux с NVIDIA GPU и не поддерживает Mac или Windows.",
+              "text": "`Ollama` — простой способ запустить LLM локально; one-command install, работает на Linux и Windows с NVIDIA GPU (на Mac не стартует из-за отсутствия CUDA), OpenAI-compatible API на `http://localhost:11434`, под капотом `llama.cpp`, library моделей (Llama, Mistral, Qwen). Use cases: local development, privacy POC, edge.",
               "correct": false,
               "sections": {
                 "what_actually": "`Ollama` кроссплатформенный (Mac, Linux, Windows) и хорошо работает в том числе на Apple Silicon.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`llama.cpp` запускает модели только на NVIDIA GPU и не умеет инференс на CPU вообще.",
+              "text": "`llama.cpp` — C++ реализация для запуска LLM, но исключительно с CUDA на NVIDIA GPU; формат `GGUF` (quantized-модели), низкое потребление памяти (4/5/8-bit), используется в `Ollama` и LM Studio. Уровни quantization: `Q4_K_M` (4-bit), `Q8_0` (8-bit), `Q2_K` (2-bit). CPU-инференс не поддерживается вовсе.",
               "correct": false,
               "sections": {
                 "what_actually": "Главная фишка `llama.cpp` — именно CPU-инференс (с опциональным GPU-ускорением как дополнением).",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`llama.cpp` использует обычные `safetensors`/`PyTorch`-веса без какой-либо квантизации.",
+              "text": "`llama.cpp` — C++ реализация для запуска LLM на CPU (с опциональным GPU-ускорением); грузит стандартные `safetensors`/`PyTorch`-веса в full precision без квантизации, быстро на Apple Silicon (Metal), используется в `Ollama` и LM Studio. Памяти требует много, зато точность модели остаётся исходной.",
               "correct": false,
               "sections": {
                 "what_actually": "`llama.cpp` работает с форматом `GGUF` и активно использует quantization (4/5/8-bit) для экономии памяти.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`llama.cpp` — это облачный сервис от Meta для хостинга моделей Llama по подписке.",
+              "text": "`llama.cpp` — официальная C++ реализация от Meta (команда Llama) для запуска LLM на CPU; формат `GGUF` (quantized-модели), низкое потребление памяти (4/5/8-bit), быстро на Apple Silicon (Metal), используется в `Ollama` и LM Studio. Уровни quantization: `Q4_K_M` (4-bit), `Q8_0` (8-bit), `Q2_K` (2-bit).",
               "correct": false,
               "sections": {
                 "what_actually": "`llama.cpp` — open-source C++ проект для локального инференса, а не облачный сервис.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "KV cache — это кэш готовых ответов модели на популярные запросы, чтобы не запускать генерацию повторно.",
+              "text": "KV cache — кэш готовых ответов модели на повторяющиеся запросы: при совпадении промпта результат отдаётся без генерации, поэтому память под кэш растёт с числом уникальных запросов, а не с длиной контекста. Оптимизации: LRU-вытеснение старых записей и семантическое сравнение промптов.",
               "correct": false,
               "sections": {
                 "what_actually": "KV cache — это закэшированные `Key`/`Value` из attention для уже обработанных токенов, а не кэш финальных ответов.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "KV cache не растёт с длиной последовательности и всегда занимает фиксированный небольшой объём памяти.",
+              "text": "KV cache хранит закэшированную копию весов модели рядом с активациями для быстрого доступа; его объём определяется числом параметров и не зависит от длины sequence. Оптимизации: weight quantization (`INT8`) и `mmap`-загрузка весов.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: KV cache растёт с длиной sequence и при длинных контекстах может превышать размер весов модели.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "KV cache замедляет генерацию, потому что на каждый токен приходится заново сериализовать всю историю на диск.",
+              "text": "KV cache на каждый новый токен заново пересчитывает `Key`/`Value` для всей истории и сбрасывает их на диск, поэтому длинные контексты линейно замедляют генерацию. Оптимизации борются с этим: `PagedAttention` (vLLM) и `FP8`-quantization уменьшают объём дисковых записей.",
               "correct": false,
               "sections": {
                 "what_actually": "KV cache ускоряет генерацию, переиспользуя уже посчитанные `K`/`V` в памяти GPU, без записи истории на диск.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для LLM всегда нужен `H100` независимо от размера модели — карты поменьше (`RTX 4090`, `L40s`) для inference непригодны.",
+              "text": "GPU выбирают по максимальной производительности, а не по размеру модели: под любую задачу берут `H100` (80GB, ~$30K) или `A100`, а `RTX 4090` (24GB) и `L40s` (48GB) для LLM inference непригодны. Правило: и 7B, и 405B требуют один и тот же `H100`-класс.",
               "correct": false,
               "sections": {
                 "what_actually": "Выбор зависит от размера модели: 7B спокойно идёт на `RTX 4090` (24GB), `H100` нужен для прода и больших моделей.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главный критерий выбора GPU — тактовая частота ядер, а объём видеопамяти на размещение модели не влияет.",
+              "text": "Ключевой критерий выбора GPU — тактовая частота ядер и число CUDA-cores: чем выше частота, тем крупнее модель поместится. Поэтому `RTX 4090` (~2.5 GHz) тянет 70B лучше, чем `A100` (~1.4 GHz), а объём VRAM вторичен.",
               "correct": false,
               "sections": {
                 "what_actually": "Для LLM решает прежде всего объём VRAM (влезет ли модель), а не частота: 70B FP16 = 140GB просто не поместится в 24GB.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "На MacBook M-series LLM запустить нельзя — для любого inference нужна дискретная NVIDIA GPU.",
+              "text": "MacBook M-series для LLM inference непригоден: без CUDA `vLLM`/`llama.cpp` не запускаются, поэтому даже 7B требует дискретной NVIDIA (минимум `RTX 4090`). Unified memory Apple под inference не задействуется.",
               "correct": false,
               "sections": {
                 "what_actually": "MacBook M-series с unified memory вполне годится для локального dev-инференса (через `llama.cpp`/`Ollama` и Metal).",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главная и практически единственная проблема serving — это сетевая безопасность; всё остальное (OOM, cold start) встречается крайне редко.",
+              "text": "Основные проблемы model serving лежат в сетевом слое: TLS-termination, DNS и load-balancer misconfig; ресурсные проблемы вроде OOM или cold start в проде почти не встречаются, потому что оркестратор автоматически resize'ит поды.",
               "correct": false,
               "sections": {
                 "what_actually": "Типичные проблемы — это прежде всего OOM, медленный cold start, очереди запросов, недоутилизация GPU и cost runaway, а не только безопасность.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "После quantization качество модели никогда не падает, поэтому quality regressions в список проблем не входят.",
+              "text": "Типичные проблемы: OOM, cold start, request queueing, cost runaway; при этом quantization считается чисто выигрышной — она уменьшает память и ускоряет inference без потери качества, поэтому quality regressions в список рисков не входят.",
               "correct": false,
               "sections": {
                 "what_actually": "Quality regressions после quantization — реальная частая проблема: агрессивная квантизация роняет качество, особенно на reasoning.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "GPU underutilization невозможна: если под живёт, GPU всегда загружен на 100% и простоя не бывает.",
+              "text": "Типичные проблемы: OOM, cold start, cost runaway; но GPU underutilization среди них быть не может — пока под в статусе Running, GPU по определению загружен на 100%, поэтому naive batching и одиночные запросы простоя не создают.",
               "correct": false,
               "sections": {
                 "what_actually": "Недоутилизация GPU — частая проблема: при naive batching и одиночных запросах GPU простаивает, теряя throughput и деньги.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для любого сценария — что классический ML, что LLM — единственно правильный выбор это `vLLM`, остальные движки устарели.",
+              "text": "Decision tree прост: `vLLM` закрывает любой сценарий — LLM в проде, local dev и даже классический ML (`PyTorch`/`TensorFlow`-модели), потому что поддерживает все фреймворки; `Ollama`, `TGI` и `Triton` в 2025 избыточны.",
               "correct": false,
               "sections": {
                 "what_actually": "`vLLM` хорош для LLM-throughput, но для классического ML берут `TorchServe`/`TF Serving`/`BentoML`/`Triton`, а для local dev — `Ollama`.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для local dev и edge правильный выбор — `TensorRT-LLM`, потому что он проще всего ставится одной командой.",
+              "text": "Для local dev и edge правильный выбор — `TensorRT-LLM`: ставится одной командой, кроссплатформенный и не требует NVIDIA-железа, поэтому на ноутбуке удобнее `Ollama`; `vLLM` берут только для max-throughput в проде.",
               "correct": false,
               "sections": {
                 "what_actually": "Для local dev/edge берут `Ollama` (one-command install); `TensorRT-LLM` наоборот сложен в setup и предназначен для max-perf на NVIDIA.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Классическую `TensorFlow`-модель в проде следует сервить через `TorchServe`, так как он поддерживает все фреймворки.",
+              "text": "Классическую `TensorFlow`-модель в проде сервят через `TorchServe`, а `PyTorch`-модель — через `TF Serving`: оба сервера фреймворк-агностичны, поэтому маппинг взаимозаменяем; multi-framework закрывает `Triton`.",
               "correct": false,
               "sections": {
                 "what_actually": "`TorchServe` — для `PyTorch`; `TensorFlow`-модель сервят через `TF Serving` (или универсальный `Triton`).",
