@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Fake всегда лучше mock — про `Mockito` можно забыть.",
+              "text": "Fake — реальная упрощённая реализация порта (`InMemoryAccountRepository` на `Map`): раз он проверяет состояние, им заменяют и моки для проверки «событие опубликовано», полностью отказываясь от `Mockito` в проекте.",
               "correct": false,
               "sections": {
                 "what_actually": "Для проверки «был ли вызван `publish`» моки остаются удобнее, потому что они про interaction, а не про state.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Fake — это просто mock с заранее заданными (replayed) ответами.",
+              "text": "Fake — это заранее заготовленные (canned) ответы порта, зашитые в тест: он не хранит состояние, а на любой вызов возвращает подготовленный `Account`, поэтому balance после операций не меняется.",
               "correct": false,
               "sections": {
                 "what_actually": "Fake имеет настоящую упрощённую логику (хранит и возвращает состояние), а mock отдаёт скриптованные ответы без логики.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать H2 как fake для JPA-порта.",
+              "text": "Fake делают на уровне драйвера БД: PostgreSQL подменяют встроенным H2, а JPA-адаптер и SQL остаются реальными, так порт репозитория тестируется без изменения кода адаптера.",
               "correct": false,
               "sections": {
                 "what_actually": "H2 — это другая реальная БД, а не fake адаптера; она привносит свои диалект-проблемы.",
@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Это разные парадигмы: Hexagonal про порты, а Clean про слои.",
+              "text": "Это разные принципы: Hexagonal строится на портах и адаптерах вокруг ядра, а Clean — на правиле зависимостей от внешних колец к `Entities`; общей идеи DIP у них нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Это ложная дихотомия: обе про DIP, и отличия лишь в деталях терминологии и наличии Presenter.",
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Clean запрещает фреймворки в любом слое, а Hexagonal — нет.",
+              "text": "Clean запрещает фреймворки во всех кольцах, включая `Frameworks`, тогда как Hexagonal допускает Spring/JPA в адаптерах — в этом принципиальное расхождение.",
               "correct": false,
               "sections": {
                 "what_actually": "Обе архитектуры изолируют ядро от фреймворков, но допускают фреймворки во внешних слоях/адаптерах.",
@@ -1895,7 +1895,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Hexagonal изобретён в 2012 году, а Clean — в 2005.",
+              "text": "Это один принцип (DIP), отличие в хронологии: Hexagonal (Cockburn) появился в 2012, а Clean (Martin) — раньше, в 2005; остальное — вопрос терминологии портов и колец.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: Hexagonal — Кокбёрн 2005, Clean — Мартин 2012; даты перепутаны.",
@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Оставить толстый `Service` — рефакторить вредно.",
+              "text": "Каждую доменную сущность выносят в свой сервис (`OrderService`, `PaymentService`, `CustomerService`) с несколькими публичными методами внутри; дробить до одного метода на класс избыточно.",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда SRP нарушен, любой метод тянет 15 зависимостей, а тесты громоздки.",
@@ -2123,7 +2123,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Разделить только по CRUD: один Create, один Read, один Update, один Delete.",
+              "text": "Класс дробят строго по CRUD: `CreateOrderService`, `ReadOrderService`, `UpdateOrderService`, `DeleteOrderService` — по одному на каждый тип операции над агрегатом.",
               "correct": false,
               "sections": {
                 "what_actually": "Это грубое разделение, где разные бизнес-операции (`placeOrder` ≠ `updateOrder`) смешиваются в один «Update».",
@@ -2135,7 +2135,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Использовать `@Qualifier` для разных аспектов одного класса.",
+              "text": "Логику оставляют в одном `OrderService`, но методы помечают разными `@Qualifier` и внедряют нужный через `@Autowired`, разнося ответственность на уровне Spring-контекста.",
               "correct": false,
               "sections": {
                 "what_actually": "Это хак: класс остаётся толстым, и все его проблемы (SRP, зависимости, тесты) сохраняются.",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно ESLint-style правил для пакетов.",
+              "text": "Через `Checkstyle` с модулем `ImportControl`: в XML описывают, что `domain` не импортирует `adapter`, что use-cases реализуют порты `port.in`, а контроллеры не трогают `adapter.out`; нарушение валит `mvn validate`.",
               "correct": false,
               "sections": {
                 "what_actually": "В Java нет ESLint; для проверки классовых зависимостей нужен ArchUnit или JDepend.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Code review достаточно — ArchUnit это vendor lock-in.",
+              "text": "Через разбиение на Gradle-модули: `domain` — отдельный модуль без зависимости на `adapter`, поэтому нелегальный импорт просто не компилируется и отдельные ArchUnit-тесты не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Человеческий enforcement ненадёжен, а ArchUnit — это обычные JUnit-тесты без какого-либо lock-in.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать Maven enforcer plugin для контроля структуры пакетов.",
+              "text": "Через `maven-enforcer-plugin` с `bannedDependencies`: модулю `domain` запрещают тянуть Spring и JPA, что гарантирует соблюдение всех правил гексагона без отдельных тестов.",
               "correct": false,
               "sections": {
                 "what_actually": "Maven enforcer проверяет POM (версии, зависимости модулей), а не зависимости между классами.",
@@ -2591,7 +2591,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Кидать `DataAccessException` прямо из use-case — Spring сам её поймает.",
+              "text": "Secondary-адаптер (репозиторий) сам ловит доменные исключения и переводит их в HTTP-статусы (404, 422) с `ErrorDto`, а primary-адаптер только сериализует готовый ответ.",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда домен зависит от Spring — это leak абстракции в ядро.",
@@ -2603,7 +2603,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Использовать `RuntimeException` везде, не различая типы ошибок.",
+              "text": "Все сбои заворачивают в один `RuntimeException` с текстовым сообщением; `@ControllerAdvice` парсит сообщение и по нему выбирает HTTP-статус (404, 422 или 500).",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда HTTP-handler не знает, какой статус вернуть, и всё вырождается в `500`.",
@@ -2615,7 +2615,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Возвращать HTTP-статусы прямо из use-case через `ResponseEntity`.",
+              "text": "Use-case сразу возвращает `ResponseEntity` с нужным статусом (404, 422) и `ErrorDto`, чтобы primary-адаптер просто пробросил ответ без маппинга исключений.",
               "correct": false,
               "sections": {
                 "what_actually": "Это HTTP в ядре: use-case нельзя будет вызвать из Kafka-listener или CLI без HTTP-семантики.",
@@ -2664,7 +2664,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Реактивность ломает Hexagonal — ядро придётся переписывать.",
+              "text": "Реактивность проникает в ядро: доменные методы обязаны возвращать `Mono`/`Flux`, поэтому синхронную бизнес-логику переписывают под реактивные операторы, а чистой Java в `domain/` не остаётся.",
               "correct": false,
               "sections": {
                 "what_actually": "Это ложное утверждение: гексагон ортогонален реактивности, меняются лишь типы портов.",
@@ -2676,7 +2676,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Реактивность требует `event sourcing` в качестве другого паттерна.",
+              "text": "Реактивные репозитории (`R2DBC`) не работают с обычным CRUD, поэтому персистентность переводят на `event sourcing`: агрегат восстанавливают из `Flux<DomainEvent>`.",
               "correct": false,
               "sections": {
                 "what_actually": "Это ложная связь: реактивность и event sourcing независимы.",
@@ -2688,7 +2688,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@Transactional` работает с `Mono` — ничего не меняется.",
+              "text": "Транзакции не меняются: `@Transactional` на use-case корректно оборачивает возвращаемый `Mono` и коммитит его после `subscribe`, поэтому `TransactionalOperator` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Это фактическая ошибка: для реактивных транзакций нужен `TransactionalOperator`, а `@Transactional` с `Mono` не работает как ожидается.",
