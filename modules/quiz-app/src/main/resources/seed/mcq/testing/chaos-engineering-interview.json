@@ -11,10 +11,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Chaos Engineering` — дисциплина проведения экспериментов на распределённой системе ради повышения уверенности в её способности переносить турбулентные условия в проде. Проверяет не известные требования, а `unknown unknowns` — эффекты, проявляющиеся только при реальном взаимодействии сервисов под нагрузкой.",
+                "text": "`Chaos Engineering` — дисциплина экспериментов на распределённой системе ради уверенности в её поведении при турбулентных условиях прода.",
               "correct": true,
               "sections": {
-                "explanation": "В распределённых системах отказы неизбежны: падают инстансы, теряются пакеты, тормозит сеть, ломаются зависимости. Обычный тест проверяет известные сценарии, а хаос ищет скрытые слабости, которые нельзя предусмотреть заранее.",
+                "explanation": "Проверяет не известные требования, а `unknown unknowns` — эффекты, проявляющиеся только при реальном взаимодействии сервисов под нагрузкой. В распределённых системах отказы неизбежны: падают инстансы, теряются пакеты, тормозит сеть, ломаются зависимости. Обычный тест проверяет известные сценарии, а хаос ищет скрытые слабости, которые нельзя предусмотреть заранее.",
                 "example": "Команда убивает один из трёх инстансов `order-service` в проде и наблюдает, что `p95 latency` и `error rate` остаются в норме — так подтверждается резилентность к падению инстанса.",
                 "when_to_apply": "Когда система распределённая, есть реальный трафик и нужно строить уверенность в поведении при сбоях, а не только проверять функциональные требования в CI.",
                 "edge_cases": "Хаос не заменяет unit- и integration-тесты: на незрелой системе без observability и resilience-паттернов он лишь подсветит baseline-баги, а не distributed-специфику.",
@@ -83,10 +83,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Канонические пять принципов с `principlesofchaos.org`: (1) построить гипотезу вокруг `steady state behavior`, (2) варьировать реальные события (`vary real-world events`), (3) запускать эксперименты в проде, (4) автоматизировать для непрерывного выполнения, (5) минимизировать `blast radius`.",
+              "text": "Пять принципов `principlesofchaos.org`: гипотеза вокруг steady state, реальные события, запуск в проде, автоматизация и минимизация blast radius.",
               "correct": true,
               "sections": {
-                "explanation": "Принципы образуют научный метод: измеримая гипотеза о норме, инъекция реалистичных отказов, реальные прод-условия, автоматизация ради непрерывной уверенности и ограничение области воздействия ради безопасности.",
+                "explanation": "Развёрнуто: (1) построить гипотезу вокруг `steady state behavior`, (2) варьировать реальные события (`vary real-world events`), (3) запускать эксперименты в проде, (4) автоматизировать для непрерывного выполнения, (5) минимизировать `blast radius`. Принципы образуют научный метод: измеримая гипотеза о норме, инъекция реалистичных отказов, реальные прод-условия, автоматизация ради непрерывной уверенности и ограничение области воздействия ради безопасности.",
                 "example": "Гипотеза «при crash одного инстанса `error rate` < 0.5%» + `pod-kill` на 10% подов в проде по расписанию с kill switch — это все пять принципов разом.",
                 "when_to_apply": "Когда нужно отличить дисциплинированный хаос от «давайте что-нибудь сломаем»: проверяете каждый эксперимент на соответствие пяти пунктам.",
                 "edge_cases": "Прод — идеал, но на старте зрелости часть экспериментов гоняют на staging; это компромисс, а не нарушение, если двигаться к проду осознанно.",
@@ -155,10 +155,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Steady State` — измеримое поведение системы в нормальных условиях, выраженное через бизнес- и технические метрики (`throughput`, `error rate`, `p99 latency`). `Hypothesis` — гипотеза, что эта устойчивость сохранится при инжектировании отказа; цель — попытаться её опровергнуть.",
+              "text": "`Steady State` — измеримое поведение системы в норме через метрики; `Hypothesis` — что устойчивость сохранится при отказе, и цель её опровергнуть.",
               "correct": true,
               "sections": {
-                "explanation": "Мы фиксируем числовую норму с временным окном, а потом проверяем, держится ли она под отказом. Если steady state нарушился — нашли слабое место; если сохранился — повысили уверенность.",
+                "explanation": "Steady state выражают через бизнес- и технические метрики (`throughput`, `error rate`, `p99 latency`). Мы фиксируем числовую норму с временным окном, а потом проверяем, держится ли она под отказом. Если steady state нарушился — нашли слабое место; если сохранился — повысили уверенность.",
                 "example": "«При отключении одного из трёх инстансов `order-service` за 5 минут: `p95 latency` < 300 ms, `error rate` ≤ 0.5%, `throughput` падает не более чем на 5%» — корректная формулировка с числами и окном.",
                 "when_to_apply": "Перед любым экспериментом: без steady state нельзя отличить успешный прогон от провального, и abort condition не на что опереть.",
                 "edge_cases": "Гипотеза «приложение не упадёт» — антипаттерн: она расплывчата, без чисел и окон, поэтому результат эксперимента нельзя интерпретировать.",
@@ -227,10 +227,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Blast Radius` — область воздействия эксперимента: сколько пользователей, запросов, инстансов и регионов он затронет. Контролируют его географическим, процентным и временным ограничением, таргетингом по атрибутам, а также kill switch и feature flag для мгновенной остановки.",
+              "text": "`Blast Radius` — охват эксперимента по юзерам, запросам и регионам; контролируют ограничением охвата, таргетингом и kill switch.",
               "correct": true,
               "sections": {
-                "explanation": "Минимизация blast radius — главный контракт безопасности хаоса: начинаем с одного пода, потом namespace, потом кластер; эксперимент длится минуты, а не часы, и всегда есть способ его немедленно выключить.",
+                "explanation": "Охват — это сколько пользователей, запросов, инстансов и регионов затронет эксперимент. Контроль идёт через географическое, процентное и временное ограничение, таргетинг по атрибутам, а также kill switch и feature flag. Минимизация blast radius — главный контракт безопасности хаоса: начинаем с одного пода, потом namespace, потом кластер; эксперимент длится минуты, а не часы, и всегда есть способ его немедленно выключить.",
                 "example": "В `Chaos Mesh`: `mode: fixed-percent`, `value: \"10\"`, `duration: \"60s\"` — отказ затрагивает только 10% подов на одну минуту, что жёстко ограничивает область.",
                 "when_to_apply": "В каждом эксперименте, особенно в проде: процент трафика наращивают постепенно (1% → 5% → 25%), таргетируя сначала internal/canary-пользователей.",
                 "edge_cases": "Пренебрежение blast radius — главная причина, почему хаос-эксперименты рушат прод: `pod-kill` с `mode: all` превращается в само-DDoS.",
@@ -251,10 +251,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Testing` проверяет известное поведение («фича работает»), `Fault Injection` — обработку известного сбоя («ошибка обрабатывается»), а `Chaos Engineering` ищет неизвестные слабости через гипотезу «`steady state` сохраняется». Fault injection — инструмент/подмножество техник; Chaos Engineering — процесс и дисциплина с формализмом (гипотеза, steady state, blast radius).",
+              "text": "`Testing` проверяет известное поведение, `Fault Injection` — обработку известного сбоя, а `Chaos Engineering` ищет неизвестные слабости через гипотезу.",
               "correct": true,
               "sections": {
-                "explanation": "Разница в цели и формализме: тесты детерминированы и живут в Dev/CI, fault injection контролируем в Test/Staging, а хаос — продолжительная практика на staging и в проде, оперирующая всей системой.",
+                "explanation": "Fault injection — инструмент и подмножество техник; Chaos Engineering — процесс и дисциплина с формализмом (гипотеза, steady state, blast radius). Разница в цели и формализме: тесты детерминированы и живут в Dev/CI, fault injection контролируем в Test/Staging, а хаос — продолжительная практика на staging и в проде, оперирующая всей системой.",
                 "example": "Можно использовать `fault injection` в unit-тесте, замокав исключение клиента БД, без всякого хаоса; хаос же — это запланированный эксперимент с гипотезой и abort condition.",
                 "when_to_apply": "Когда на собеседовании просят развести понятия: testing = ищем баги, fault injection = инструмент инъекции, chaos = дисциплина построения уверенности в поведении при сбоях.",
                 "edge_cases": "Границы размыты: fault injection встречается и внутри хаоса, и внутри тестов — ключевое отличие хаоса не в технике, а в наличии гипотезы, steady state и blast radius.",
@@ -323,10 +323,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Канон `principlesofchaos.org` требует продакшена (реальный трафик, конфигурации, зависимости и пользователи), но на практике зрелость растёт постепенно: Dev → Staging → Production Canary → Production. Staging оправдан для первых экспериментов, высокорискованных сценариев (`Chaos Kong` на регион) и валидации новых типов атак; компромисс между ними — shadow traffic.",
+              "text": "Канон требует продакшена, но зрелость растёт постепенно от Dev к Production, а staging оправдан для старта.",
               "correct": true,
               "sections": {
-                "explanation": "Прод важен, потому что только он даёт реальные race conditions, секреты, лимиты, пулы и поведение зависимостей; staging почти никогда не повторяет прод точно, поэтому фраза «у нас staging как прод» обычно неверна.",
+                "explanation": "Путь зрелости: Dev → Staging → Production Canary → Production. Прод даёт реальный трафик, конфигурации, зависимости и пользователей; staging оправдан для первых экспериментов, высокорискованных сценариев (`Chaos Kong` на регион) и валидации новых типов атак, а компромисс между ними — shadow traffic. Прод важен, потому что только он даёт реальные race conditions, секреты, лимиты, пулы и поведение зависимостей; staging почти никогда не повторяет прод точно, поэтому фраза «у нас staging как прод» обычно неверна.",
                 "example": "Команда начинает с `pod-kill` на staging, затем переходит на Production Canary с blast radius 1%, и лишь потом масштабирует эксперимент на полный прод.",
                 "when_to_apply": "Staging — для старта, обучения процессу и проверки рискованных атак; прод (с малым blast radius) — когда команда доверяет процессу и нужна настоящая уверенность.",
                 "edge_cases": "Shadow traffic зеркалит часть запросов на эксперимент без влияния на реальные ответы — близко к проду без риска для пользователей.",
@@ -395,10 +395,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Simian Army` — набор инструментов Netflix (2011-2012) для симуляции отказов разных уровней: `Chaos Monkey` (убивает один EC2-инстанс в бизнес-часы), `Chaos Gorilla` (отключает `Availability Zone`), `Chaos Kong` (роняет регион), `Latency Monkey`, `Doctor Monkey`, `Janitor Monkey`, `Conformity Monkey`, `Security Monkey`, `10-18 Monkey`. Сегодня это исторический контекст и источник терминологии.",
+              "text": "`Simian Army` — набор инструментов Netflix (2011-2012) для симуляции отказов: от убийства инстанса до отключения зоны и региона.",
               "correct": true,
               "sections": {
-                "explanation": "`Chaos Monkey` был первым, остальные «обезьяны» добавляли новые измерения хаоса — от задержек до проверки конфигураций и локализации. Часть проектов заморожена; Netflix перешёл к платформе `ChAP` (Chaos Automation Platform).",
+                "explanation": "Состав: `Chaos Monkey` (убивает один EC2-инстанс в бизнес-часы), `Chaos Gorilla` (отключает `Availability Zone`), `Chaos Kong` (роняет регион), `Latency Monkey`, `Doctor Monkey`, `Janitor Monkey`, `Conformity Monkey`, `Security Monkey`, `10-18 Monkey`. Сегодня это исторический контекст и источник терминологии: `Chaos Monkey` был первым, остальные «обезьяны» добавляли новые измерения хаоса — от задержек до проверки конфигураций и локализации. Часть проектов заморожена; Netflix перешёл к платформе `ChAP` (Chaos Automation Platform).",
                 "example": "`Janitor Monkey` находит и убивает неиспользуемые ресурсы, а `Conformity Monkey` проверяет нарушения правил конфигурации — это уже не «убийство серверов», а гигиена инфраструктуры.",
                 "when_to_apply": "Когда на собеседовании спрашивают про историю и терминологию хаоса: Simian Army — корни практики, а для реальных задач сегодня берут `Gremlin`, `Chaos Mesh`, `Litmus`.",
                 "edge_cases": "Часть Simian Army устарела и заморожена; публично активен `Chaos Monkey 2.0` с интеграцией со `Spinnaker`, остальные «обезьяны» — наследие.",
@@ -467,10 +467,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Во время миграции Netflix на AWS (2010-2011) команда поняла, что облачные инстансы пропадают без предупреждения, и неготовый к этому код ломается в проде. Решение: пусть инстансы падают каждый день в бизнес-часы — тогда код придётся писать резистентным изначально. Суть `Chaos Monkey` — тренировка кода быть готовым к падению инстансов, а не просто «убийство серверов».",
+              "text": "Инстансы в AWS пропадали без предупреждения; решение — ронять их каждый день, чтобы код писали резистентным.",
               "correct": true,
               "sections": {
-                "explanation": "`Chaos Monkey` случайно выбирает один инстанс в AWS Auto Scaling Group и терминирует его в рабочее время, чтобы команда могла реагировать, а ASG создавал замену; это заставляет делать сервисы stateless и переоткрывать пулы соединений.",
+                "explanation": "Это происходило в 2010-2011 годах. Суть `Chaos Monkey` — тренировка кода быть готовым к падению инстансов, а не просто «убийство серверов». Он случайно выбирает один инстанс в AWS Auto Scaling Group и терминирует его в рабочее время, чтобы команда могла реагировать, а ASG создавал замену; это заставляет делать сервисы stateless и переоткрывать пулы соединений.",
                 "example": "После внедрения инженеры вынуждены обеспечить, чтобы балансировщик быстро исключал мёртвый инстанс, а клиенты делали retry с jitter — иначе ежедневное падение инстанса ломало бы прод.",
                 "when_to_apply": "Когда на интервью спрашивают «в чём суть Chaos Monkey»: ответ — в выработке резилентного кода через постоянное, ожидаемое падение инстансов.",
                 "edge_cases": "`Chaos Monkey for Spring Boot` (codecentric) не связан с Netflix — это application-уровневый хаос в Java; путать их не стоит.",
@@ -491,10 +491,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Chaos Gorilla` выключает целую `Availability Zone` (AZ) в AWS и проверяет, переносит ли сервис потерю AZ (multi-AZ deployment, cross-AZ routing). `Chaos Kong` выключает целый регион (например, `us-east-1`) и проверяет глобальный failover, DNS-routing и cross-region replication; из-за большого blast radius его запускают редко (у Netflix — ежеквартально).",
+              "text": "`Chaos Gorilla` выключает `Availability Zone` и проверяет потерю зоны; `Chaos Kong` выключает регион и проверяет глобальный failover.",
               "correct": true,
               "sections": {
-                "explanation": "Это тяжёлая артиллерия Simian Army на уровнях AZ и region — эскалация над `Chaos Monkey` (один инстанс). Каждый уровень требует своей зрелости архитектуры: Gorilla — multi-AZ, Kong — multi-region active-active.",
+                "explanation": "`Gorilla` проверяет multi-AZ deployment и cross-AZ routing; `Kong` (например, `us-east-1`) — глобальный failover, DNS-routing и cross-region replication, и его запускают редко из-за большого blast radius (у Netflix — ежеквартально). Это тяжёлая артиллерия Simian Army на уровнях AZ и region — эскалация над `Chaos Monkey` (один инстанс). Каждый уровень требует своей зрелости архитектуры: Gorilla — multi-AZ, Kong — multi-region active-active.",
                 "example": "Типичная находка `Chaos Gorilla`: `master` базы оказался в упавшей AZ, а автоматического failover нет — сервис лежит до ручного вмешательства.",
                 "when_to_apply": "`Gorilla` — когда нужно валидировать устойчивость к потере зоны; `Kong` — когда архитектура заявлена как multi-region и нужно проверить региональный failover.",
                 "edge_cases": "`Chaos Kong` редко запускают из-за огромного blast radius и сложной подготовки; без multi-region active-active он гарантированно уронит сервис.",
@@ -563,10 +563,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Эксперименты классифицируют по слою инфраструктуры: `Infrastructure/State` (kill pod/VM, restart, disk full, clock skew), `Network` (latency, packet loss, partition, DNS failure), `Resource/Stress` (CPU/memory/IO stress), `Application` (exception injection, slow responses), `Dependency` (DB slow down, cache miss, 3rd-party down), `Data` (corruption, eventual consistency lag), `Security` (cert expiry, IAM revocation), `Regional` (AZ/region down).",
+              "text": "Эксперименты классифицируют по слою: Infrastructure, Network, Resource, Application, Dependency, Data, Regional.",
               "correct": true,
               "sections": {
-                "explanation": "Таксономия по слою воздействия помогает строить портфель: хороший план содержит смесь категорий, покрывая разные сценарии отказов, а не один лишь pod-kill.",
+                "explanation": "Примеры по категориям: `Infrastructure/State` — kill pod/VM, restart, disk full, clock skew; `Network` — latency, packet loss, partition, DNS failure; `Resource/Stress` — CPU/memory/IO stress; `Application` — exception injection, slow responses; `Dependency` — DB slow down, cache miss, 3rd-party down; `Data` — corruption, eventual consistency lag; `Security` — cert expiry, IAM revocation; `Regional` — AZ/region down. Таксономия по слою воздействия помогает строить портфель: хороший план содержит смесь категорий, а не один лишь pod-kill.",
                 "example": "Чтобы проверить graceful degradation — берут `Dependency` (3rd-party API down); чтобы проверить autoscaling — `Resource` (CPU/memory stress); чтобы проверить retry logic — `Application` (slow responses).",
                 "when_to_apply": "При планировании набора экспериментов: выбираете категории под конкретный вопрос («что хочу проверить?») и диверсифицируете портфель.",
                 "edge_cases": "Полагаться только на одну категорию (например, `Infrastructure`/pod-kill) — антипаттерн: остаются непроверенными network, disk, DNS и dependency failures.",
@@ -635,10 +635,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Цель — проверить реакцию сервиса на медленные ответы зависимостей (DB, внешние API, соседние сервисы). Задержку вносят через `tc` (`netem delay 200ms`), `Toxiproxy`, `Pumba`, `Chaos Mesh NetworkChaos` или `Gremlin Latency`. Измеряют `p95/p99` downstream, срабатывание таймаутов, активацию circuit breaker и успешный fallback.",
+              "text": "Цель — проверить реакцию на медленные ответы зависимостей; задержку вносят через `tc`, `Toxiproxy` или `NetworkChaos` и измеряют тайминги.",
               "correct": true,
               "sections": {
-                "explanation": "Это один из самых полезных экспериментов: таймауты и retry — главный источник каскадных отказов. Деградация (медленные ответы) часто хуже, чем полная недоступность, потому что ломает тайминги.",
+                "explanation": "Зависимости — DB, внешние API, соседние сервисы; задержку инжектируют через `tc` (`netem delay 200ms`), `Toxiproxy`, `Pumba`, `Chaos Mesh NetworkChaos` или `Gremlin Latency`. Измеряют `p95/p99` downstream, срабатывание таймаутов, активацию circuit breaker и успешный fallback. Это один из самых полезных экспериментов: таймауты и retry — главный источник каскадных отказов, а деградация часто хуже полной недоступности.",
                 "example": "`tc qdisc add dev eth0 root netem delay 200ms` добавляет 200 ms к ответам; если таймаут клиента больше `SLA`, запросы копятся, а без circuit breaker начинается каскадный отказ.",
                 "when_to_apply": "Когда нужно проверить timeout/retry-стратегию и circuit breaker до того, как реальная деградация зависимости вызовет каскад в проде.",
                 "edge_cases": "Частые находки: retry без jitter даёт retry storm; нет fallback — полный blackout фичи; таймаут больше latency инъекции — запросы ждут и накапливаются.",
@@ -707,10 +707,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`DNS chaos` инжектирует сбои в резолвинге доменных имён: замедление, failure, NXDOMAIN, неправильный IP. Это важный класс, потому что DNS — частая единая точка отказа, а приложения плохо его кэшируют. В `Chaos Mesh` это `DNSChaos` (`action: error`, `patterns`, `selector`); проверяют наличие DNS-кэша, таймауты на резолвинг, graceful degradation и алерты на рост DNS-ошибок.",
+              "text": "`DNS chaos` инжектирует сбои резолвинга имён; важный класс, потому что DNS — частая единая точка отказа, а приложения плохо его кэшируют.",
               "correct": true,
               "sections": {
-                "explanation": "Сценарии: resolver недоступен, истёк TTL и свежий запрос падает, возвращается NXDOMAIN или wrong IP, латентность в DNS-ответах. Цель — убедиться, что приложение переживает проблемы резолвинга, а не зависает на каждом вызове.",
+                "explanation": "Сбои бывают разные: замедление, failure, NXDOMAIN, неправильный IP. В `Chaos Mesh` это `DNSChaos` (`action: error`, `patterns`, `selector`); проверяют наличие DNS-кэша, таймауты на резолвинг, graceful degradation и алерты на рост DNS-ошибок. Сценарии: resolver недоступен, истёк TTL и свежий запрос падает, возвращается NXDOMAIN или wrong IP, латентность в DNS-ответах. Цель — убедиться, что приложение переживает проблемы резолвинга, а не зависает на каждом вызове.",
                 "example": "В JVM частый баг — `networkaddress.cache.ttl=-1` (кэш навсегда): после failover зависимости приложение всё ещё стучится в старый IP, потому что не перерезолвило имя.",
                 "when_to_apply": "Когда нужно проверить устойчивость к проблемам резолвинга и корректность DNS-кэширования, особенно для критичных внешних зависимостей.",
                 "edge_cases": "Слишком долгий DNS-кэш (`ttl=-1`) ломает failover; слишком короткий — лишняя нагрузка на resolver и латентность на каждом вызове.",
@@ -731,10 +731,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Цель — проверить поведение при исчерпании диска и медленных IO-операциях (логи, временные файлы, БД, swap). Типы: disk fill (заполнить до 95-100%), IO latency (задержка чтения/записи), IO error (возврат `EIO`), read-only mount. В `Chaos Mesh` это `IOChaos` (`action: latency`, `volumePath`, `delay`, `percent`, `duration`).",
+              "text": "Цель — проверить поведение при исчерпании диска и медленных IO; типы: disk fill, IO latency, IO error; в `Chaos Mesh` это `IOChaos`.",
               "correct": true,
               "sections": {
-                "explanation": "Проверяют: работает ли лог-ротация (иначе `/var/log` переполнится первым), умеет ли БД gracefully отключать writes при полном диске, срабатывают ли алерты заранее (порог 80%, не 99%), не падает ли приложение при невозможности записать лог.",
+                "explanation": "Эксперимент затрагивает весь диск: логи, временные файлы, БД и swap. Disk fill заполняет до 95-100%, IO latency добавляет задержку чтения/записи, IO error возвращает `EIO`, read-only перемонтирует ФС; `IOChaos` принимает `action: latency`, `volumePath`, `delay`, `percent`, `duration`. Проверяют: работает ли лог-ротация (иначе `/var/log` переполнится первым), умеет ли БД gracefully отключать writes при полном диске, срабатывают ли алерты заранее (порог 80%, не 99%), не падает ли приложение при невозможности записать лог.",
                 "example": "Типичная находка: при `disk full` сервис падает с `OutOfDiskSpaceException`, потому что не может записать на диск стек-трейс самой этой ошибки.",
                 "when_to_apply": "Когда нужно проверить устойчивость к переполнению диска и деградации IO до того, как реальный full disk уронит сервис в проде.",
                 "edge_cases": "Если алерты настроены на порог 99%, у команды не остаётся времени отреагировать; разумный порог — 80%, чтобы успеть очистить или расширить диск.",
@@ -803,10 +803,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Stress-эксперименты нагружают ресурсы узла (`Chaos Mesh StressChaos` со `stressors.memory` и `stressors.cpu`), чтобы проверить: реакцию autoscaling (HPA/ASG), корректность resource limits и requests, поведение OOM killer и graceful degradation, работу backpressure в reactive-системах. Смотрят, добавляет ли HPA реплики, снимает ли `readinessProbe` трафик с перегруженного пода, не страдают ли соседи.",
+              "text": "Stress-эксперименты нагружают ресурсы узла через `StressChaos`, чтобы проверить autoscaling, resource limits, OOM killer и backpressure.",
               "correct": true,
               "sections": {
-                "explanation": "Цель — убедиться, что узел и приложение деградируют контролируемо: масштабируются, изолируют нагрузку лимитами и снимают трафик с больных подов, а не утягивают за собой соседей и кластер.",
+                "explanation": "Используют `stressors.memory` и `stressors.cpu`; смотрят, добавляет ли HPA реплики (HPA/ASG), снимает ли `readinessProbe` трафик с перегруженного пода, не страдают ли соседи, корректно ли работают requests/limits и graceful degradation в reactive-системах. Цель — убедиться, что узел и приложение деградируют контролируемо: масштабируются, изолируют нагрузку лимитами и снимают трафик с больных подов, а не утягивают за собой соседей и кластер.",
                 "example": "Частая находка: HPA настроен по CPU, а bottleneck — memory, поэтому реплики не добавляются; либо `GC pause` превышает readiness timeout, и под циклически рестартится как unhealthy.",
                 "when_to_apply": "Когда нужно валидировать автоскейлинг, resource limits и поведение под ресурсным давлением до реального всплеска нагрузки в проде.",
                 "edge_cases": "Без `resource limits` один pod съедает ресурсы ноды и роняет всех соседей (noisy neighbour) — классический сценарий, который и выявляет stress-эксперимент.",
@@ -875,10 +875,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Dependency failure` — отказ внешней зависимости (DB, cache, message broker, 3rd-party API). Инжектируют четырьмя способами: на клиенте через `Toxiproxy` между приложением и зависимостью; на сервере — остановить реальную зависимость (kill pod Redis); на уровне сети — `iptables DROP` к порту; mock на границе — `WireMock`, возвращающий 500. Проверяют graceful degradation, circuit breaker, bulkhead и retry с jitter.",
+              "text": "`Dependency failure` — отказ внешней зависимости; инжектируют через `Toxiproxy`, kill pod, `iptables DROP` или mock на границе.",
               "correct": true,
               "sections": {
-                "explanation": "Это самый бизнес-релевантный класс: микросервисы живут в паутине зависимостей. Цель — убедиться, что падение одной зависимости (кэш) приводит к деградации (чтение из БД), а не к полному отказу фичи.",
+                "explanation": "Зависимости — DB, cache, message broker, 3rd-party API. На клиенте `Toxiproxy` встаёт между приложением и зависимостью; на сервере останавливают реальную зависимость (kill pod Redis); на сети `iptables DROP` к порту; mock на границе — `WireMock`, возвращающий 500. Проверяют graceful degradation, circuit breaker, bulkhead и retry с jitter. Это самый бизнес-релевантный класс: цель — убедиться, что падение кэша приводит к деградации (чтение из БД), а не к полному отказу фичи.",
                 "example": "В Spring Boot тесте `Toxiproxy` перекрывает трафик к Redis (`toxics().timeout(...)`), и проверяется, что `userService.findById` отдаёт результат из БД, а `fallbackCounter` инкрементируется.",
                 "when_to_apply": "Когда нужно валидировать resilience-паттерны (circuit breaker, bulkhead, timeout, retry) против отказа конкретной критичной зависимости.",
                 "edge_cases": "Без bulkhead одна зависимость может утянуть весь пул потоков, заблокировав и здоровые вызовы; circuit breaker должен срабатывать за разумное время, а не зависать.",
@@ -947,10 +947,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Добавить зависимость `de.codecentric:chaos-monkey-spring-boot`, активировать профилем (`--spring.profiles.active=chaos-monkey`) и сконфигурировать `chaos.monkey` в `application.yml`: `watcher` (какие бины атаковать) и `assaults` (`level`, `latencyActive`, `exceptionsActive` и т.д.). Это application-level хаос в Java: инжектирует задержки, исключения и может убить приложение, а endpoint `chaosmonkey` экспонируется через Actuator.",
+              "text": "Добавить зависимость `chaos-monkey-spring-boot`, активировать профилем `chaos-monkey` и настроить `watcher` и `assaults`.",
               "correct": true,
               "sections": {
-                "explanation": "В отличие от Netflix `Chaos Monkey` (infrastructure-level, EC2 kill, интеграция со Spinnaker), codecentric-версия работает на уровне методов и latency внутри JVM, без внешних инструментов — идеально для integration/load-тестов Spring Boot.",
+                "explanation": "Активация профилем идёт через `--spring.profiles.active=chaos-monkey`; `watcher` задаёт, какие бины атаковать, `assaults` — `level`, `latencyActive`, `exceptionsActive` и т.д. Это application-level хаос в Java: инжектирует задержки, исключения и может убить приложение, а endpoint `chaosmonkey` экспонируется через Actuator. В отличие от Netflix `Chaos Monkey` (infrastructure-level, EC2 kill, Spinnaker), codecentric-версия работает на уровне методов и latency внутри JVM, без внешних инструментов — идеально для integration/load-тестов.",
                 "example": "Базовый конфиг: `assaults.level: 5`, `latencyActive: true`, `latencyRangeStart: 2000`, `latencyRangeEnd: 5000` — каждый 5-й вызов watched-бина тормозит на 2-5 секунд.",
                 "when_to_apply": "Для Java-приложения, когда нужен точечный application-level хаос (latency, exceptions) без разворачивания Kubernetes-платформы.",
                 "edge_cases": "Это НЕ Netflix Chaos Monkey: codecentric-библиотека не убивает EC2-инстансы, а инжектирует хаос внутрь JVM; путать их источник и уровень — типичная ошибка.",
@@ -971,10 +971,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Watchers` определяют, ГДЕ срабатывает хаос — какие типы Spring-бинов будут атакованы (`@Controller`, `@RestController`, `@Service`, `@Repository`, `@Component`, custom `@ChaosMonkeyAnnotation`, Actuator). `Assaults` определяют, ЧТО произойдёт — тип атаки: `Latency Assault`, `Exception Assault`, `Kill Application Assault` (`System.exit(1)`), `Memory Assault`, `CPU Assault`.",
+              "text": "`Watchers` определяют, ГДЕ срабатывает хаос — какие типы Spring-бинов атакуются; `Assaults` — ЧТО произойдёт, тип атаки.",
               "correct": true,
               "sections": {
-                "explanation": "Это два ортогональных измерения: watcher выбирает целевые бины, assault — эффект. Параметр `assaults.level: 5` означает «атакуй каждый 5-й вызов метода, подпадающего под watcher»; можно задать `deterministic: true` или случайный выбор.",
+                "explanation": "Watchers покрывают `@Controller`, `@RestController`, `@Service`, `@Repository`, `@Component`, custom `@ChaosMonkeyAnnotation` и Actuator. Assaults: `Latency Assault`, `Exception Assault`, `Kill Application Assault` (`System.exit(1)`), `Memory Assault`, `CPU Assault`. Это два ортогональных измерения: watcher выбирает целевые бины, assault — эффект. Параметр `assaults.level: 5` означает «атакуй каждый 5-й вызов метода, подпадающего под watcher»; можно задать `deterministic: true` или случайный выбор.",
                 "example": "Watcher `restController: true` + `Latency Assault` (`level: 5`) → каждый 5-й HTTP-запрос к REST-контроллеру получает задержку перед ответом, остальные обрабатываются обычно.",
                 "when_to_apply": "Когда настраиваете точечный application-level хаос: watcher ограничивает область (blast radius внутри приложения), assault задаёт тип отказа.",
                 "edge_cases": "`Kill Application Assault` вызывает `System.exit(1)` и убивает процесс целиком — это самый разрушительный assault, применять его нужно осознанно.",
@@ -1043,10 +1043,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Latency Assault` вносит случайную задержку в диапазоне `[latencyRangeStart, latencyRangeEnd]` ms перед методом (`latencyActive: true`). `Exception Assault` выбрасывает настраиваемое исключение вместо выполнения метода (`exceptionsActive: true`, `exception.type`, `arguments`). Оба управляются `level` (каждый N-й вызов) и привязываются к watcher.",
+              "text": "`Latency Assault` вносит задержку из заданного диапазона; `Exception Assault` выбрасывает настраиваемое исключение.",
               "correct": true,
               "sections": {
-                "explanation": "Latency проверяет таймауты на upstream-клиентах (например, каждый 3-й HTTP-запрос тормозит на 1-3 секунды), Exception проверяет обработку ошибок, error handlers и алерты (например, каждый 10-й вызов service кидает `RuntimeException`). Можно активировать несколько assaults — выбор случайный из активных.",
+                "explanation": "Latency задаётся `latencyActive: true` и диапазоном `[latencyRangeStart, latencyRangeEnd]` ms; Exception — `exceptionsActive: true`, `exception.type`, `arguments`. Оба управляются `level` (каждый N-й вызов) и привязываются к watcher. Latency проверяет таймауты на upstream-клиентах (например, каждый 3-й HTTP-запрос тормозит на 1-3 секунды), Exception проверяет обработку ошибок, error handlers и алерты (например, каждый 10-й вызов service кидает `RuntimeException`). Можно активировать несколько assaults — выбор случайный из активных.",
                 "example": "С версии 2.4+ watcher можно ограничить списком бинов: `chaos.monkey.watcher.beans: [\"com.example.OrderService#placeOrder\"]` — это критично для точечных экспериментов и blast radius внутри приложения.",
                 "when_to_apply": "Latency — для тестирования таймаутов и circuit breaker; Exception — для проверки error handling и алертинга; вместе — для смешанного отказа.",
                 "edge_cases": "При нескольких активных assaults выбор случаен из активных, поэтому поведение становится менее предсказуемым — для детерминизма лучше включать по одному.",
@@ -1115,10 +1115,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Chaos Monkey предоставляет Actuator endpoint `/actuator/chaosmonkey` для управления без рестарта: `GET /status`, `POST /enable`, `POST /disable`, `GET /` (текущая конфигурация), `POST /assaults` (обновить assaults JSON-телом). Это даёт runtime-эксперимент (включили → понаблюдали → выключили) и kill switch для немедленной остановки при выходе за abort condition.",
+              "text": "Actuator endpoint `/actuator/chaosmonkey` управляет хаосом без рестарта и служит kill switch.",
               "correct": true,
               "sections": {
-                "explanation": "Управление в runtime позволяет интегрировать хаос с внешним оркестратором (CI, GameDay tooling) и мгновенно останавливать атаку. Главное условие — защита endpoint-а: публично открытый `/chaosmonkey/enable` это готовый DoS.",
+                "explanation": "Доступны `GET /status`, `POST /enable`, `POST /disable`, `GET /` (текущая конфигурация), `POST /assaults` (обновить assaults JSON-телом). Цикл «включили → понаблюдали → выключили» позволяет немедленно останавливать атаку при выходе за abort condition. Управление в runtime позволяет интегрировать хаос с внешним оркестратором (CI, GameDay tooling). Главное условие — защита endpoint-а: публично открытый `/chaosmonkey/enable` это готовый DoS.",
                 "example": "`POST /actuator/chaosmonkey/assaults` с телом `{\"level\":5,\"latencyActive\":true,\"latencyRangeStart\":500,\"latencyRangeEnd\":1500}` меняет параметры атаки на лету, без перезапуска приложения.",
                 "when_to_apply": "Когда нужен контролируемый эксперимент в живом приложении с возможностью мгновенно выключить хаос (kill switch) при нарушении abort condition.",
                 "edge_cases": "В проде endpoint обязан быть за Basic Auth или mTLS; иначе любой может включить assault и положить сервис — безопасность здесь критична.",
@@ -1178,7 +1178,7 @@
               "text": "Лучшая практика — включить watcher на весь `@Service` слой большого монолита вместо точечных аннотаций.",
               "correct": false,
               "sections": {
-                "what_actually": "Это антипаттерн: атака расползается непредсказуемо по всему слою; кастомная аннотация как раз и решает проблему неконтролируемого радиуса.",
+                "what_actually": "Это плохая практика, а не лучшая: атака расползается непредсказуемо по всему слою; кастомная аннотация как раз и решает проблему неконтролируемого радиуса.",
                 "source_of_confusion": "Кажется, что «чем шире охват, тем полнее тест», но это ломает контроль blast radius.",
                 "if_it_were_true": "Тогда blast radius внутри приложения был бы неуправляем, что противоречит принципам хаоса.",
                 "how_it_should_be": "Для точечности используют `@ChaosMonkeyAnnotation` на нужных методах, а не watcher на весь слой."
@@ -1187,10 +1187,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Когда стандартных watchers по стереотипам Spring (`@Service`, `@Repository`) недостаточно и нужен ТОЧЕЧНЫЙ контроль над конкретными методами. Создаётся кастомная аннотация, помеченная `@ChaosMonkeyAnnotation`, навешивается на нужный метод, и активируется через `chaos.monkey.watcher.customAnnotations`. Это позволяет атаковать только один метод из большого сервиса и точно контролировать blast radius.",
+              "text": "Когда стандартных watchers недостаточно и нужен ТОЧЕЧНЫЙ контроль над конкретными методами через кастомную аннотацию.",
               "correct": true,
               "sections": {
-                "explanation": "Стандартный watcher на весь `@Service` слой в большом монолите — антипаттерн: атака расползается непредсказуемо. Кастомная аннотация явно документирует «этот метод участвует в хаос-экспериментах» и сужает область.",
+                "explanation": "Создаётся кастомная аннотация, помеченная `@ChaosMonkeyAnnotation`, навешивается на нужный метод и активируется через `chaos.monkey.watcher.customAnnotations`. Это позволяет атаковать только один метод из большого сервиса и точно контролировать blast radius. Стандартный watcher на весь `@Service` слой в большом монолите — антипаттерн: атака расползается непредсказуемо. Кастомная аннотация явно документирует «этот метод участвует в хаос-экспериментах» и сужает область.",
                 "example": "`@FaultyPayment` (мета-аннотированная `@ChaosMonkeyAnnotation`) на методе `PaymentService.charge(...)` + `customAnnotations: [\"com.example.chaos.FaultyPayment\"]` атакует только этот метод, не трогая остальной сервис.",
                 "when_to_apply": "Когда нужно атаковать один метод из большого сервиса, смешивать уровни атаки для разных методов или явно задокументировать участие метода в хаосе.",
                 "edge_cases": "Можно завести несколько кастомных аннотаций с разными уровнями атаки для разных методов — это даёт более тонкое управление, чем единый `level` на весь слой.",
@@ -1211,10 +1211,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Chaos Mesh` — open-source платформа хаос-инжиниринга для Kubernetes (PingCAP, CNCF Incubating). Описывает эксперименты как Custom Resources (CR), что позволяет хранить их в Git и применять через `kubectl apply`. Fault types: `PodChaos`, `NetworkChaos`, `IOChaos`, `StressChaos`, `TimeChaos`, `DNSChaos`, `HTTPChaos`, `JVMChaos`, `KernelChaos`, `AWSChaos`/`GCPChaos`.",
+              "text": "`Chaos Mesh` — open-source платформа хаоса для Kubernetes; эксперименты описываются как Custom Resources.",
               "correct": true,
               "sections": {
-                "explanation": "Архитектура: `Chaos Dashboard` → `Chaos Controller Manager` → `Chaos Daemon` на каждом ноде → target pod. Преимущества: rich UI dashboard, Workflow (цепочки экспериментов), Schedule (periodic chaos), RBAC и multi-tenancy.",
+                "explanation": "Это CNCF Incubating проект. Fault types: `PodChaos`, `NetworkChaos`, `IOChaos`, `StressChaos`, `TimeChaos`, `DNSChaos`, `HTTPChaos`, `JVMChaos`, `KernelChaos`, `AWSChaos`/`GCPChaos`. Архитектура: `Chaos Dashboard` → `Chaos Controller Manager` → `Chaos Daemon` на каждом ноде → target pod. Преимущества: rich UI dashboard, Workflow (цепочки экспериментов), Schedule (periodic chaos), RBAC и multi-tenancy.",
                 "example": "`NetworkChaos` поддерживает delay, loss, duplicate, corrupt, partition, bandwidth; `PodChaos` — pod-failure, pod-kill, container-kill; всё описывается YAML-манифестом CR.",
                 "when_to_apply": "Когда нужно много fault types из коробки на Kubernetes, развитая визуализация и GitOps-подход (эксперименты как YAML в репозитории).",
                 "edge_cases": "Как CNCF Incubating проект, `Chaos Mesh` особенно удобен для TiDB-like инфраструктуры; альтернатива — `Litmus` с фокусом на каталог переиспользуемых экспериментов.",
@@ -1283,10 +1283,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`PodChaos` — самый распространённый тип: убить или вывести из строя pod. Описывается YAML-CR с `action` (`pod-failure` — временно недоступен, `pod-kill` — уничтожить один раз, `container-kill` — убить контейнер внутри pod), `mode` (one/all/fixed/fixed-percent/random-max-percent), `selector` (namespaces + labelSelectors), опционально `duration`. Применяется `kubectl apply`, удаляется `kubectl delete` (kill switch).",
+              "text": "`PodChaos` — самый частый тип: убить или вывести из строя pod; описывается YAML-CR с `action`, `mode` и `selector`.",
               "correct": true,
               "sections": {
-                "explanation": "Параметр `mode` напрямую контролирует blast radius: `one` — один случайный pod, `all` — все под selector (опасно в проде), `fixed-percent` — заданный процент. `selector` ограничивает namespace и набор подов по меткам.",
+                "explanation": "`action` бывает `pod-failure` (временно недоступен), `pod-kill` (уничтожить один раз) и `container-kill` (убить контейнер внутри pod); `mode` — one/all/fixed/fixed-percent/random-max-percent; `selector` — namespaces плюс labelSelectors; есть опциональный `duration`. Удаляется `kubectl delete` (kill switch). Параметр `mode` напрямую контролирует blast radius: `one` — один случайный pod, `all` — все под selector (опасно в проде), `fixed-percent` — заданный процент.",
                 "example": "`action: pod-failure`, `mode: one`, `duration: '30s'`, `selector.namespaces: [production]`, `labelSelectors: {'app.kubernetes.io/component': 'api'}` — один api-под становится недоступен на 30 секунд.",
                 "when_to_apply": "Когда нужно проверить устойчивость к падению/перезапуску подов и корректность readiness probes и replacement в Deployment.",
                 "edge_cases": "`mode: all` в проде — это само-DDoS (убивает все подходящие поды сразу); всегда начинают с `one` или `fixed-percent`, а `kubectl delete podchaos` служит kill switch.",
@@ -1355,10 +1355,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`NetworkChaos` инжектирует сетевые эффекты через `tc` (Linux traffic control) на уровне pod-а. Для задержки: `action: delay` с `delay.latency`, `delay.jitter`, `delay.correlation`, `direction` и `target` (целевой набор подов). Также поддерживает `partition` (изоляция), `loss` (packet loss), `duplicate`, `corrupt`, `bandwidth`.",
+              "text": "`NetworkChaos` инжектирует сетевые эффекты через `tc`; для задержки — `action: delay` с настройкой latency и таргетингом на нужные поды.",
               "correct": true,
               "sections": {
-                "explanation": "Эффект применяется направленно: например, трафик `orders → payments` получает +200ms ± 50ms на 60 секунд. `partition` создаёт сетевую изоляцию (тест на split-brain), когда два набора подов перестают видеть друг друга.",
+                "explanation": "Для задержки используют `delay.latency`, `delay.jitter`, `delay.correlation`, `direction` и `target` (целевой набор подов). Также поддерживаются `partition` (изоляция), `loss` (packet loss), `duplicate`, `corrupt`, `bandwidth`. Эффект применяется направленно: например, трафик `orders → payments` получает +200ms ± 50ms на 60 секунд. `partition` создаёт сетевую изоляцию (тест на split-brain), когда два набора подов перестают видеть друг друга.",
                 "example": "`action: delay`, `delay: {latency: \"200ms\", jitter: \"50ms\", correlation: \"25\"}`, `direction: to`, `target.labelSelectors: {app: payments}` — задержка от orders к payments на 60s.",
                 "when_to_apply": "Когда нужно проверить таймауты и retry-стратегию, eventual consistency при partition, health checks под latency или отладить race conditions в распределённых алгоритмах.",
                 "edge_cases": "`partition` с `direction: both` и `mode: all` полностью изолирует два сервиса — мощный, но рискованный эксперимент на split-brain; blast radius нужно контролировать особенно тщательно.",
@@ -1427,10 +1427,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Litmus` — open-source платформа хаос-инжиниринга для Kubernetes (CNCF Incubating, MayaData) с фокусом на `experiment hub`: каталог готовых переиспользуемых экспериментов (`ChaosHub`), которые собирают в workflows. Использует CR `ChaosEngine`, `ChaosExperiment`, `ChaosResult`, интегрируется с Argo Workflows; философия — experiment-first (reusable), а не fault-first.",
+              "text": "`Litmus` — open-source CNCF-платформа хаоса для Kubernetes с фокусом на experiment hub: каталог переиспользуемых экспериментов.",
               "correct": true,
               "sections": {
-                "explanation": "Ключевое отличие от `Chaos Mesh`: Litmus строится вокруг каталога переиспользуемых экспериментов из Hub (команда берёт `pod-delete`, `node-drain` и применяет к workloads), тогда как Chaos Mesh — вокруг встроенных fault types и собственного dashboard.",
+                "explanation": "Использует CR `ChaosEngine`, `ChaosExperiment`, `ChaosResult` (`ChaosHub` хранит шаблоны), интегрируется с Argo Workflows; философия — experiment-first (reusable), а не fault-first. Ключевое отличие от `Chaos Mesh`: Litmus строится вокруг каталога переиспользуемых экспериментов из Hub (команда берёт `pod-delete`, `node-drain` и применяет к workloads), тогда как Chaos Mesh — вокруг встроенных fault types и собственного dashboard.",
                 "example": "Команда не пишет YAML с нуля, а берёт `pod-network-latency` из `ChaosHub` (публичного или приватного) и применяет к своему deployment через `ChaosEngine`.",
                 "when_to_apply": "Когда нужен каталог переиспользуемых экспериментов, интеграция с Argo Workflows и фокус на cloud-native end-to-end сценарии.",
                 "edge_cases": "Оба — CNCF Incubating и прод-уровневые: `Chaos Mesh` берут за богатство fault types и dashboard, `Litmus` — за experiment hub и Argo-интеграцию; выбор зависит от приоритетов.",
@@ -1451,10 +1451,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Litmus использует три ключевых CR: `ChaosExperiment` — переиспользуемый шаблон (что делать, какие env принимает, permissions, образ runner-а); `ChaosEngine` — применение шаблона к конкретному workload (`appinfo` с `appns`/`applabel`/`appkind`, `chaosServiceAccount`, override env вроде `PODS_AFFECTED_PERC`); `ChaosResult` — создаётся автоматически, содержит pass/fail и метрики для Prometheus.",
+              "text": "Три CR Litmus: `ChaosExperiment` — переиспользуемый шаблон, `ChaosEngine` — применение к workload, `ChaosResult` — итог прогона.",
               "correct": true,
               "sections": {
-                "explanation": "Разделение шаблона и применения — это и есть experiment-first философия Litmus: `ChaosExperiment` берётся из `ChaosHub`, а `ChaosEngine` привязывает его к своему приложению с конкретными параметрами, не переписывая логику.",
+                "explanation": "`ChaosExperiment` задаёт, что делать, какие env принимает, permissions и образ runner-а; `ChaosEngine` содержит `appinfo` (`appns`/`applabel`/`appkind`), `chaosServiceAccount` и override env вроде `PODS_AFFECTED_PERC`; `ChaosResult` создаётся автоматически и содержит метрики для Prometheus. Разделение шаблона и применения — это и есть experiment-first философия Litmus: шаблон берётся из `ChaosHub`, а `ChaosEngine` привязывает его к приложению, не переписывая логику.",
                 "example": "`ChaosExperiment` `pod-delete` задаёт `TOTAL_CHAOS_DURATION` и `CHAOS_INTERVAL`, а `ChaosEngine` `orders-pod-delete` применяет его к `app=orders` с `PODS_AFFECTED_PERC: '33'`.",
                 "when_to_apply": "Когда нужно переиспользовать один эксперимент на разных workloads, меняя только параметры в `ChaosEngine`, а результат собирать в `ChaosResult`/Prometheus.",
                 "edge_cases": "`ChaosResult` создаётся автоматически и питает Prometheus-метрики — без него нельзя анализировать прогон; забыть про observability здесь так же критично, как и в любом хаосе.",
@@ -1523,10 +1523,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Gremlin` — коммерческая SaaS-платформа хаос-инжиниринга (failure-as-a-service) для hosts, containers и Kubernetes через агент. Категории атак: `Resource` (CPU, Memory, IO, Disk), `State` (Shutdown, Reboot, Process Killer, Time Travel), `Network` (Blackhole, Latency, Packet Loss, DNS), `Custom` через API. Ключевая ценность — `halt button`: любая атака мгновенно откатывается.",
+              "text": "`Gremlin` — коммерческая SaaS-платформа хаоса для hosts, containers и Kubernetes; ключевая ценность — мгновенный `halt button`.",
               "correct": true,
               "sections": {
-                "explanation": "Сильные стороны: production-safe (halt button, автоматический cleanup), Scenarios (серии escalating-атак), RBAC, Status Checks (автостоп при нарушении SLO), ALFI (Application Level Fault Injection в JVM/.NET) и интеграции с PagerDuty, Datadog, Slack из коробки.",
+                "explanation": "Категории атак: `Resource` (CPU, Memory, IO, Disk), `State` (Shutdown, Reboot, Process Killer, Time Travel), `Network` (Blackhole, Latency, Packet Loss, DNS), `Custom` через API. Сильные стороны: production-safe (halt button, автоматический cleanup), Scenarios (серии escalating-атак), RBAC, Status Checks (автостоп при нарушении SLO), ALFI (Application Level Fault Injection в JVM/.NET) и интеграции с PagerDuty, Datadog, Slack из коробки.",
                 "example": "Атака latency через API: `{\"type\":\"latency\",\"args\":[\"-d\",\"60\",\"-m\",\"200\",\"-p\",\"443\"]}` на host-123 — 60 секунд +200ms на порт 443 с возможностью мгновенного halt.",
                 "when_to_apply": "Когда нужна enterprise-поддержка и compliance (SOC2, HIPAA), команда не хочет разворачивать open-source, или нужны scenarios и готовые интеграции с алертингом.",
                 "edge_cases": "Минус — коммерческая лицензия: для стартап-бюджета open-source (`Chaos Mesh`, `Litmus`) дешевле, хотя и требует поддержки своими силами.",
@@ -1595,10 +1595,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Pumba` — CLI-инструмент для хаоса на уровне Docker и containerd, работающий БЕЗ Kubernetes. Умеет kill/stop/pause/remove контейнеры, network delay/loss/corrupt (через `tc netem`), bandwidth limit, stress на CPU/memory (через `stress-ng`). Идеален для docker-compose окружений, локальной разработки и интеграционных тестов — это «kubectl для контейнерного хаоса».",
+              "text": "`Pumba` — CLI для хаоса на уровне Docker и containerd БЕЗ Kubernetes; «kubectl для контейнерного хаоса».",
               "correct": true,
               "sections": {
-                "explanation": "Главное отличие — отсутствие зависимости от Kubernetes: Pumba легковесен и не требует разворачивать целую платформу, поэтому подходит для Docker Swarm, docker-compose и лёгких CI-пайплайнов с контейнерами.",
+                "explanation": "Умеет kill/stop/pause/remove контейнеры, network delay/loss/corrupt (через `tc netem`), bandwidth limit и stress на CPU/memory (через `stress-ng`). Подходит для docker-compose окружений, локальной разработки и интеграционных тестов. Главное отличие — отсутствие зависимости от Kubernetes: Pumba легковесен и не требует разворачивать целую платформу, поэтому годится для Docker Swarm, docker-compose и лёгких CI-пайплайнов с контейнерами.",
                 "example": "`pumba --interval 10s kill --signal SIGKILL \"re2:myapp.*\"` убивает случайный контейнер по regexp каждые 10 секунд; `pumba netem --duration 1m delay --time 500 orders` добавляет 500ms задержки.",
                 "when_to_apply": "Когда окружение на Docker без K8s (docker-compose/Swarm), нужны локальные integration-тесты или лёгкий CI без деплоя целой хаос-платформы.",
                 "edge_cases": "Для network-эффектов Pumba использует вспомогательный tc-образ (`--tc-image gaiadocker/iproute2`), так как `tc` должен быть доступен внутри контейнерного namespace.",
@@ -1667,10 +1667,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Toxiproxy` (Shopify) — TCP-прокси между клиентом и сервером, который программно инжектирует «toxics»: `latency`, `bandwidth`, `slow_close`, `timeout`, `slicer`, `limit_data`/`reset_peer`. Основное применение — integration-тесты с реалистичной сетевой нестабильностью: запускается локально (часто через `Testcontainers`), пишется детерминированно, ловит те же баги, что и прод-хаос.",
+              "text": "`Toxiproxy` (Shopify) — TCP-прокси, который программно инжектирует «toxics» вроде latency и timeout; применяется в integration-тестах.",
               "correct": true,
               "sections": {
-                "explanation": "Приложение ходит к зависимости через Toxiproxy, а тест-код управляет toxics через admin API (порт 8474). Это мост между «обычными тестами» и настоящим chaos engineering: проверка circuit breaker, timeout и retry в realistic-сценариях без Kubernetes.",
+                "explanation": "Полный набор toxics: `latency`, `bandwidth`, `slow_close`, `timeout`, `slicer`, `limit_data`/`reset_peer`. Применение — integration-тесты с реалистичной сетевой нестабильностью: запускается локально (часто через `Testcontainers`), пишется детерминированно, ловит те же баги, что и прод-хаос. Приложение ходит к зависимости через Toxiproxy, а тест-код управляет toxics через admin API (порт 8474): проверка circuit breaker, timeout и retry без Kubernetes.",
                 "example": "В тесте с `Testcontainers`: `proxy.toxics().latency(\"slow_pg\", ToxicDirection.DOWNSTREAM, 2000)` добавляет 2 секунды задержки к Postgres, и тест ждёт, что откроется circuit breaker (`CallNotPermittedException`).",
                 "when_to_apply": "Для integration-тестов клиентов БД, кешей и очередей, проверки resilience-паттернов и CI-пайплайнов, где нужен chaos без Kubernetes.",
                 "edge_cases": "`timeout` toxic держит keep-alive без ответа и проверяет таймауты пула соединений; `slicer` бьёт данные на маленькие чанки — тонкие сценарии, которые сложно воспроизвести иначе.",
@@ -1691,10 +1691,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Выбор зависит от слоя и платформы: `Netflix Chaos Monkey` — AWS VM + Spinnaker; `Chaos Monkey Spring Boot` — Java-монолит, точечный хаос в коде; `Gremlin` — enterprise/SaaS; `Litmus` — CNCF + Argo workflows; `Chaos Mesh` — много fault types и dashboard на K8s; `Pumba` — Docker без K8s; `Toxiproxy` — integration-тесты client libs; `AWS FIS`/`Azure Chaos Studio` — cloud-native без агентов.",
+              "text": "Выбор зависит от слоя: для K8s — `Chaos Mesh`/`Litmus`, для Docker — `Pumba`, для Spring Boot — `Chaos Monkey SB`.",
               "correct": true,
               "sections": {
-                "explanation": "Дерево решений идёт от платформы: Kubernetes → Chaos Mesh (fault types) или Litmus (experiment hub); Docker без K8s → Pumba; Spring Boot → Chaos Monkey SB; TCP-зависимости в тестах → Toxiproxy; AWS VM → Netflix CM или AWS FIS; enterprise SaaS → Gremlin.",
+                "explanation": "Полная карта: `Netflix Chaos Monkey` — AWS VM + Spinnaker; `Chaos Monkey Spring Boot` — Java-монолит, точечный хаос в коде; `Gremlin` — enterprise/SaaS; `Litmus` — CNCF + Argo workflows; `Chaos Mesh` — много fault types и dashboard на K8s; `Pumba` — Docker без K8s; `Toxiproxy` — integration-тесты client libs; `AWS FIS`/`Azure Chaos Studio` — cloud-native без агентов. Дерево решений идёт от платформы и слоя, затем от приоритета (fault types vs hub vs compliance).",
                 "example": "В крупных командах чаще мультистэк: `Toxiproxy` в unit/integration, `Chaos Mesh` в staging/prod K8s, `Gremlin` для compliance-критичных сценариев — один инструмент редко закрывает всё.",
                 "when_to_apply": "Когда выбираете стек под конкретное окружение: сначала определяете платформу и слой, затем — приоритет (fault types vs hub vs compliance).",
                 "edge_cases": "Cloud-native сервисы (`AWS FIS`, `Azure Chaos Studio`) не требуют агентов, но привязаны к одному облаку — это компромисс между простотой и portability.",
@@ -1763,10 +1763,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`GameDay` — запланированное мероприятие, на котором команда проводит серию хаос-экспериментов в реальном (часто продовом) окружении, наблюдает реакцию системы и процессов и документирует находки. Формат придуман Jesse Robbins в Amazon (2003), вдохновлён пожарными учениями. Фазы: Prepare (неделя) → Execute (2-4 часа) → Learn/post-mortem (1-2 часа) → Follow-up (action items).",
+              "text": "`GameDay` — запланированное мероприятие, где команда проводит серию хаос-экспериментов в реальном окружении.",
               "correct": true,
               "sections": {
-                "explanation": "GameDay тренирует не только систему, но и команду: runbooks, коммуникацию, алерты, процесс принятия решений. Incident responders действуют как на настоящем инциденте, observers фиксируют поведение, все события идут в timeline.",
+                "explanation": "Формат придуман Jesse Robbins в Amazon (2003), вдохновлён пожарными учениями. Фазы: Prepare (неделя) → Execute (2-4 часа) → Learn/post-mortem (1-2 часа) → Follow-up (action items). GameDay тренирует не только систему, но и команду: runbooks, коммуникацию, алерты, процесс принятия решений. Incident responders действуют как на настоящем инциденте, observers фиксируют поведение, все события идут в timeline.",
                 "example": "Подготовка: выбрать scope и hypothesis, определить steady state и abort conditions, написать runbook, нотифицировать смежные команды и on-call, убедиться в наличии observability.",
                 "when_to_apply": "Когда нужно проверить готовность системы и команды к реальным сбоям в контролируемых условиях, а также валидировать runbooks и алертинг.",
                 "edge_cases": "Без фазы Follow-up (проверка закрытия action items через 1-2 недели) GameDay превращается в «покатушки без последствий» — находки забываются, и тот же сбой повторяется.",
@@ -1835,10 +1835,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Runbook` — документ эксперимента, служащий и планом, и артефактом для post-mortem. Структура: Metadata (date, owner, severity, environment), Hypothesis, Steady State Metrics (где смотреть), Blast Radius (процент/duration/регион), Abort Conditions, Procedure (пошаговый план), Rollback (kill switch), Observability Links (dashboards, alerts, tracing).",
+              "text": "`Runbook` — документ эксперимента: и план, и артефакт post-mortem; фиксирует гипотезу, метрики, abort и rollback.",
               "correct": true,
               "sections": {
-                "explanation": "Runbook обязателен: без него эксперимент превращается в импровизацию, а post-mortem — в догадки. Он фиксирует, что именно проверяем, как, в каких границах и как откатываем, чтобы любой участник понимал план.",
+                "explanation": "Структура по разделам: Metadata (date, owner, severity, environment), Hypothesis, Steady State Metrics (где смотреть), Blast Radius (процент/duration/регион), Abort Conditions, Procedure (пошаговый план), Rollback (kill switch), Observability Links (dashboards, alerts, tracing). Runbook обязателен: без него эксперимент превращается в импровизацию, а post-mortem — в догадки. Он фиксирует, что именно проверяем, как, в каких границах и как откатываем.",
                 "example": "Раздел Abort Conditions: «`error rate` > 5% в течение 30s; `p99 latency` > 2s в течение 60s; ручное решение Safety Officer» — конкретные триггеры остановки.",
                 "when_to_apply": "Перед каждым экспериментом, особенно в проде и на GameDay: runbook готовят на фазе Prepare и review-ят до запуска.",
                 "edge_cases": "Раздел Rollback должен содержать проверенный kill switch (например, `kubectl delete podchaos ...`), иначе при срабатывании abort condition команда не сможет быстро остановить эксперимент.",
@@ -1907,10 +1907,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Post-mortem` после chaos-эксперимента похож на incident post-mortem, но с фокусом на ОБУЧЕНИЕ, а не на вину (blameless). Шаблон: Summary, Timeline, Hypothesis outcome (подтверждена/опровергнута), What went well, What went wrong, Action Items (owner + deadline), Unknown unknowns. Метрики: `MTTD`, `MTTR`, Customer Impact, SLO Burn Rate.",
+              "text": "`Post-mortem` похож на incident post-mortem, но blameless: фокус на ОБУЧЕНИИ, а не на вине; фиксирует исход и actions.",
               "correct": true,
               "sections": {
-                "explanation": "Принцип blameless: фокус на системе и процессах, а не на людях. «Алерт не сработал, потому что метрика не экспортировалась» — полезно; «Петя забыл настроить алерт» — нет. Хороший post-mortem становится знанием команды, плохой — бюрократией.",
+                "explanation": "Шаблон: Summary, Timeline, Hypothesis outcome (подтверждена/опровергнута), What went well, What went wrong, Action Items (owner + deadline), Unknown unknowns. Метрики: `MTTD`, `MTTR`, Customer Impact, SLO Burn Rate. Принцип blameless: фокус на системе и процессах, а не на людях. «Алерт не сработал, потому что метрика не экспортировалась» — полезно; «Петя забыл настроить алерт» — нет.",
                 "example": "В разделе What went wrong фиксируют находку «`MTTR` выше ожидаемого, алерт пришёл с задержкой 4 минуты» и создают action item с конкретным owner и deadline.",
                 "when_to_apply": "После каждого эксперимента (в идеале в течение 48 часов), чтобы зафиксировать находки, outcome гипотезы и action items, пока контекст свежий.",
                 "edge_cases": "Раздел Unknown unknowns специально ловит то, что команда не предвидела — именно ради этого и проводят хаос; без него теряется главная ценность эксперимента.",
@@ -1931,10 +1931,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Abort condition` — автоматический или ручной триггер немедленной остановки эксперимента, когда система выходит за допустимые границы деградации. Это ОБЯЗАТЕЛЬНЫЙ элемент любого chaos-эксперимента. Типы: metric-based (`error rate` > 5%), latency-based (`p99` > 2s за 60s), business-based (checkout/min упал на 10%), SLO-based (burn rate > 2x), manual (Safety Officer).",
+              "text": "`Abort condition` — авто- или ручной триггер немедленной остановки при выходе за границы деградации; ОБЯЗАТЕЛЕН всегда.",
               "correct": true,
               "sections": {
-                "explanation": "Философия: лучше остановить эксперимент раньше, чем продолжать и получить реальный инцидент; цель — учиться, а не ронять прод. Готовность остановить эксперимент — признак зрелости практики.",
+                "explanation": "Типы: metric-based (`error rate` > 5%), latency-based (`p99` > 2s за 60s), business-based (checkout/min упал на 10%), SLO-based (burn rate > 2x), manual (Safety Officer). Философия: лучше остановить эксперимент раньше, чем продолжать и получить реальный инцидент; цель — учиться, а не ронять прод. Готовность остановить эксперимент — признак зрелости практики.",
                 "example": "PrometheusRule с `expr: sum(rate(http_requests_total{status=~\"5..\"}[1m])) / sum(rate(...)) > 0.05`, `for: 30s` и аннотацией `action: kubectl delete chaos --all` — автоматический abort при 5% ошибок.",
                 "when_to_apply": "Задаётся для каждого эксперимента заранее (в runbook) и реализуется через Gremlin Status Checks, удаление CR в Chaos Mesh или script-based watcher на Prometheus.",
                 "edge_cases": "Удаление CR (`kubectl delete`) мгновенно откатывает большинство fault types в Chaos Mesh — это и есть kill switch; но для необратимых эффектов нужен отдельный rollback-план.",
@@ -2003,10 +2003,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Без observability хаос слепой — нельзя подтвердить гипотезу, увидеть abort condition или написать post-mortem. Это prerequisite, а не «хорошо бы». Три столпа: Metrics (SLO/SLI dashboards, infra, business), Logs (структурированные JSON с correlation ID, агрегация в ELK/Loki), Traces (distributed tracing, span attributes). Обязательный минимум включает ещё event marker на графиках.",
+              "text": "Без observability хаос слепой — не подтвердить гипотезу и не поймать abort; prerequisite. Три столпа: metrics, logs, traces.",
               "correct": true,
               "sections": {
-                "explanation": "Минимум: dashboard со steady state метриками (`p50/p95/p99`, error rate, throughput), alerts на SLO-burn, агрегация логов с correlation ID, distributed tracing (`OpenTelemetry`) и annotation на графике «в 14:00 запустили chaos experiment X».",
+                "explanation": "Metrics — SLO/SLI dashboards, infra, business; Logs — структурированные JSON с correlation ID, агрегация в ELK/Loki; Traces — distributed tracing, span attributes. Обязательный минимум включает ещё event marker на графиках. Минимум: dashboard со steady state метриками (`p50/p95/p99`, error rate, throughput), alerts на SLO-burn, агрегация логов с correlation ID, distributed tracing (`OpenTelemetry`) и annotation на графике «в 14:00 запустили chaos experiment X».",
                 "example": "Типичный провал: «запустили chaos, приложение вроде не упало» — но без метрик нельзя сказать, что `p99` вырос в 10 раз, потому что никто не смотрел именно на него.",
                 "when_to_apply": "Перед первым GameDay: подготовка часто включает доработку observability, и это полезный побочный эффект практики.",
                 "edge_cases": "Distributed tracing критичен, чтобы видеть, как latency одного сервиса каскадирует по всей цепочке — без него причинно-следственная связь в распределённой системе теряется.",
@@ -2075,10 +2075,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`SLO` задаёт цель надёжности (например, 99.9% success за 30 дней), `error budget` = 100% − SLO = допустимый процент ошибок. Chaos Engineering НАМЕРЕННО тратит error budget, чтобы получить информацию. Принципы: нет бюджета → chaos откладывается; бюджет есть → можно экспериментировать; abort condition = SLO burn rate; чем больше бюджета, тем агрессивнее эксперименты.",
+              "text": "`SLO` задаёт цель надёжности, `error budget` = 100% − SLO; Chaos Engineering НАМЕРЕННО его тратит, а при нехватке откладывается.",
               "correct": true,
               "sections": {
-                "explanation": "Математика: 99.9% SLO → error budget 43.2 минуты downtime в месяц; chaos experiment — контролируемое расходование (5 минут ≈ 12% месячного бюджета). Без SLO/budget хаос работает «на ощупь»; с ними — это дисциплина управления надёжностью.",
+                "explanation": "Например, 99.9% success за 30 дней даёт error budget 43.2 минуты downtime в месяц; chaos experiment — контролируемое расходование (5 минут ≈ 12% месячного бюджета). Принципы: бюджет есть → можно экспериментировать; abort condition = SLO burn rate; чем больше бюджета, тем агрессивнее эксперименты. Без SLO/budget хаос работает «на ощупь»; с ними — это дисциплина управления надёжностью.",
                 "example": "Политика: `minimum_error_budget: 50%` (не запускаем, если осталось < 50%), `experiment_budget_consumption: 5%` (один эксперимент < 5% бюджета), `auto_halt_on_slo_burn: 2x` (burn rate > 2x → abort).",
                 "when_to_apply": "Когда нужно решить, можно ли вообще запускать эксперимент сейчас, и задать abort condition на основе скорости расходования бюджета.",
                 "edge_cases": "Если error budget исчерпан, chaos замораживают и переходят к стабилизации — эксперименты в этот момент только усугубили бы выход за SLO.",
@@ -2147,10 +2147,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Автоматизация экспериментов — 4-й принцип хаоса: ручные GameDays дают разовую уверенность, CI/CD — непрерывную. Три уровня интеграции: (1) Smoke chaos в pre-deploy CI (`Toxiproxy` в integration tests), (2) Staging chaos post-deploy (`Chaos Mesh` jobs после smoke), (3) Prod chaos по расписанию (`Chaos Mesh Schedule`, `Gremlin scenarios`). Нужны guardrails: emergency freeze, SLO burn check, maintenance windows, Slack-нотификации.",
+              "text": "Автоматизация — 4-й принцип хаоса; CI/CD даёт непрерывность через smoke в CI, staging post-deploy и prod по расписанию.",
               "correct": true,
               "sections": {
-                "explanation": "CI/CD-интеграция даёт регрессию chaos-устойчивости: если вчера выдерживали pod-kill, а сегодня нет — найдём через 24 часа, а не через квартал. Новые деплои проверяются против того же набора экспериментов автоматически.",
+                "explanation": "Уровни: (1) Smoke chaos в pre-deploy CI (`Toxiproxy` в integration tests), (2) Staging chaos post-deploy (`Chaos Mesh` jobs после smoke), (3) Prod chaos по расписанию (`Chaos Mesh Schedule`, `Gremlin scenarios`). Guardrails: emergency freeze, SLO burn check, maintenance windows, Slack-нотификации. CI/CD-интеграция даёт регрессию chaos-устойчивости: если вчера выдерживали pod-kill, а сегодня нет — найдём через 24 часа, а не через квартал.",
                 "example": "GitHub Actions job `chaos-staging`: `kubectl apply -f chaos/pod-failure.yaml` → `sleep 60` → `./scripts/check-slo.sh` → cleanup `kubectl delete` с `if: always()` для гарантированной очистки.",
                 "when_to_apply": "Когда практика уже зрелая (есть observability, SLO, runbooks) и нужно перейти от разовых GameDays к непрерывной проверке резилентности.",
                 "edge_cases": "Guardrail emergency freeze критичен: никакого chaos во время реального инцидента или в maintenance windows (например, в black Friday), иначе автоматизация усугубит ситуацию.",
@@ -2171,10 +2171,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Chaos Maturity Model` (Netflix, Rosenthal & Jones) оценивает зрелость практики по двум осям: `sophistication` (глубина экспериментов: Elementary → Simple → Advanced → Sophisticated) и `adoption` (широта внедрения: In the Shadows → Investment → Adoption → Cultural Expectation). Цель — осознанное продвижение по матрице в зависимости от бизнес-потребностей, а не достижение максимума всеми командами.",
+              "text": "`Chaos Maturity Model` (Netflix) оценивает зрелость по двум осям — `sophistication` и `adoption`.",
               "correct": true,
               "sections": {
-                "explanation": "Sophistication растёт от разовых ручных экспериментов на staging без гипотез (Elementary) до автоматизации в проде с интеграцией в SLO и business metrics (Sophisticated). Adoption — от одного инженера «в тени» до культурного ожидания, где chaos обязателен как unit-тесты.",
+                "explanation": "Авторы — Rosenthal & Jones; цель — осознанное продвижение под бизнес-потребности, а не достижение максимума всеми командами. Sophistication: Elementary → Simple → Advanced → Sophisticated; adoption: In the Shadows → Investment → Adoption → Cultural Expectation. Sophistication растёт от разовых ручных экспериментов на staging без гипотез (Elementary) до автоматизации в проде с интеграцией в SLO и business metrics (Sophisticated). Adoption — от одного инженера «в тени» до культурного ожидания, где chaos обязателен как unit-тесты.",
                 "example": "Ответ на «как начать chaos в команде»: Elementary на staging → Simple с runbooks и post-mortem → Advanced с автоматизацией в CI → Sophisticated с интеграцией в SLO и прод.",
                 "when_to_apply": "Когда нужно оценить текущую зрелость практики и спланировать следующий шаг развития, не перепрыгивая через уровни.",
                 "edge_cases": "Не все команды должны быть на Sophisticated+Cultural: для стартапа с 3 сервисами это оверкилл — модель про осознанный выбор уровня, а не про гонку к максимуму.",
@@ -2243,10 +2243,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В зрелой практике роли распределены: `Chaos Engineer/SRE` (проектирует эксперименты, развивает платформу), `Service Owner/Dev Lead` (отвечает за hypothesis своих сервисов), `Incident Responder/on-call` (реагирует на abort, тренируется), `Safety Officer` (останавливает эксперимент), `Observability Engineer` (метрики, логи, трейсинг), `Platform Team` (поддерживает chaos-инфраструктуру), `Leadership/EM` (выделяет время и бюджет). Модели организации: Centralized, Federated, Embedded.",
+              "text": "В зрелой практике роли распределены: SRE/Chaos Engineer, Service Owner, on-call, Safety Officer, Observability Engineer и Leadership.",
               "correct": true,
               "sections": {
-                "explanation": "Масштаб определяет распределение: маленькая компания — один SRE + вовлечённые service owners; крупная — платформенная команда + «chaos champions» в каждом squad. Модели: Centralized (SRE владеет всем), Federated (платформа централизована, эксперименты пишут команды), Embedded (chaos engineer в каждой команде).",
+                "explanation": "Ответственность ролей: `Chaos Engineer/SRE` проектирует эксперименты и развивает платформу; `Service Owner/Dev Lead` отвечает за hypothesis своих сервисов; `Incident Responder/on-call` реагирует на abort и тренируется; `Safety Officer` останавливает эксперимент; `Observability Engineer` ведёт метрики, логи, трейсинг; `Platform Team` поддерживает chaos-инфраструктуру; `Leadership/EM` выделяет время и бюджет. Модели организации: Centralized (SRE владеет всем), Federated (платформа централизована, эксперименты пишут команды), Embedded (chaos engineer в каждой команде).",
                 "example": "На GameDay роли проявляются явно: Orchestrator ведёт тайминги, Safety Officer следит за abort conditions и имеет право остановить, Observers фиксируют метрики и timeline.",
                 "when_to_apply": "Когда выстраиваете процесс хаоса в организации и нужно понять, кто за что отвечает и какую модель (Centralized/Federated/Embedded) выбрать под размер компании.",
                 "edge_cases": "`Safety Officer` — особая роль с правом немедленно остановить эксперимент; смешивать её с orchestrator-ом нельзя, иначе ведущий эксперимент может проигнорировать сигнал к остановке.",
@@ -2315,10 +2315,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Сопротивление частое («вы хотите специально ломать прод?!»), поэтому нужны аргументы в деньгах и рисках: ROI на предотвращённых инцидентах, снижение `MTTR`, compliance (PCI/SOC2 требуют disaster recovery testing), confidence for releases, attract talent. Аргументировать конкретными метриками (MTTR, incident frequency, SLO, customer impact), а не абстрактным «повысит resilience», и двигаться постепенно от staging.",
+              "text": "Сопротивление частое, поэтому убеждают деньгами и рисками — ROI, MTTR, compliance — а не абстрактным «повысит resilience».",
               "correct": true,
               "sections": {
-                "explanation": "Сторителлинг через цифры: «один прод-инцидент = 4 часа × 30 инженеров = 120 человеко-часов; chaos-эксперимент = 2 часа × 5 инженеров = 10 человеко-часов; ROI 12x». Конкретика убеждает лучше, чем ссылки на моду или Netflix.",
+                "explanation": "Аргументы: ROI на предотвращённых инцидентах, снижение `MTTR`, compliance (PCI/SOC2 требуют disaster recovery testing), confidence for releases, attract talent. Убеждают конкретными метриками — MTTR, incident frequency, SLO, customer impact — и двигаются постепенно от staging. Сторителлинг через цифры: «один прод-инцидент = 4 часа × 30 инженеров = 120 человеко-часов; chaos-эксперимент = 2 часа × 5 инженеров = 10 человеко-часов; ROI 12x».",
                 "example": "Антипаттерны пресейла: «хотим ронять прод, потому что модно», «Netflix делает, и мы должны», «повысит resilience» — слишком абстрактно; нужны MTTR, incident frequency и customer impact.",
                 "when_to_apply": "Когда продаёте практику руководству или продукт-команде и нужно перевести технические выгоды в бизнес-метрики и деньги.",
                 "edge_cases": "Никогда не стартовать с «давайте сразу `Chaos Kong` на прод» — это пугает бизнес; путь: staging → показать hypothesis/finding → накопить кейсы → повысить зрелость.",
@@ -2387,10 +2387,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Типичные антипаттерны: (1) «chaos ради chaos» — без hypothesis и steady state; (2) нет abort condition; (3) chaos без observability; (4) неконтролируемый blast radius (`mode: all` в проде); (5) chaos во время инцидента (нужен freeze); (6) игнорирование post-mortem; (7) эксперименты «по настроению» без расписания; (8) chaos вместо тестов; (9) полагаться только на `Chaos Monkey`/pod-kill; (10) одноразовый GameDay.",
+              "text": "Антипаттерны: «chaos ради chaos» без гипотезы, нет abort, нет observability, неконтролируемый blast radius и опора только на pod-kill.",
               "correct": true,
               "sections": {
-                "explanation": "Все антипаттерны сводятся к двум корням: отсутствие методологии (нет гипотезы, abort, post-mortem) и отсутствие безопасности/непрерывности (неконтролируемый радиус, chaos в инцидент, разовость). Дисциплинированный хаос противоположен каждому из них.",
+                "explanation": "Полный список: (1) «chaos ради chaos» — без hypothesis и steady state; (2) нет abort condition; (3) chaos без observability; (4) неконтролируемый blast radius (`mode: all` в проде); (5) chaos во время инцидента (нужен freeze); (6) игнорирование post-mortem; (7) эксперименты «по настроению» без расписания; (8) chaos вместо тестов; (9) полагаться только на `Chaos Monkey`/pod-kill; (10) одноразовый GameDay. Все они сводятся к двум корням: отсутствие методологии и отсутствие безопасности/непрерывности.",
                 "example": "Антипаттерн #4: `pod-kill` на `mode: all` в проде = само-DDoS; правильно — всегда начинать с `one` или `fixed-percent: 10`, наращивая постепенно.",
                 "when_to_apply": "Как чек-лист при ревью плана эксперимента: если узнаёте хоть один антипаттерн, эксперимент нужно переработать до запуска.",
                 "edge_cases": "Антипаттерн #8 («chaos вместо тестов») коварен: хаос дополняет unit/integration-тесты для distributed-специфики, но не заменяет их — путаница ведёт к пробелам в базовом покрытии.",
@@ -2411,10 +2411,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Это базовый антипаттерн: команда подключила `Chaos Monkey`, запускает «что-нибудь» и не получает пользы. Дисциплинированный chaos — научный метод: (1) Гипотеза («при X произойдёт Y, steady state Z сохранится»), (2) Измеримость (метрики для подтверждения/опровержения), (3) Blast radius (явно ограниченный), (4) Abort condition (триггер остановки), (5) Outcome (action items, post-mortem). Формула: Problem → Hypothesis → Experiment → Result → Learning → Action.",
+              "text": "Базовый антипаттерн: запускают «что-нибудь» без пользы. Дисциплина — научный метод: гипотеза, измеримость, abort и outcome.",
               "correct": true,
               "sections": {
-                "explanation": "Если любой из этапов отсутствует — это «chaos ради chaos». Лучше не делать эксперимент вовсе, чем делать без методологии: бессистемная поломка не даёт ни уверенности, ни знаний.",
+                "explanation": "Пять элементов: (1) Гипотеза («при X произойдёт Y, steady state Z сохранится»), (2) Измеримость (метрики для подтверждения/опровержения), (3) Blast radius (явно ограниченный), (4) Abort condition (триггер остановки), (5) Outcome (action items, post-mortem). Формула: Problem → Hypothesis → Experiment → Result → Learning → Action. Если любой из этапов отсутствует — это «chaos ради chaos»; лучше не делать эксперимент вовсе, чем делать без методологии.",
                 "example": "Плохо: «давайте запустим pod-kill на проде и посмотрим» (нет hypothesis). Хорошо: «думаем, что при убийстве 1 из 5 pod payment-service `p95` не превысит 500 ms — проверим в четверг в 14:00».",
                 "when_to_apply": "Перед каждым экспериментом как фильтр: если нет гипотезы, метрик, blast radius, abort или плана действий — эксперимент не готов.",
                 "edge_cases": "Даже технически корректный эксперимент без outcome (action items, post-mortem) скатывается в «chaos ради chaos» — без последствий находки теряются.",
@@ -2483,10 +2483,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы первый эксперимент был продуктивен, нужны: Observability (dashboards, alerts на SLO, log aggregation, tracing), определённые SLO/error budget, проверенные runbooks, работающий on-call с paging, resilience-паттерны в коде (circuit breaker, retry, timeout), быстрый rollback (< 5 мин), автоскейлинг/self-healing, communication-каналы для инцидентов. Без них chaos лишь подсветит baseline-баги, а не distributed-специфику.",
+              "text": "Перед первым экспериментом нужны observability, SLO/error budget, runbooks, on-call, resilience-паттерны и быстрый rollback.",
               "correct": true,
               "sections": {
-                "explanation": "Признаки незрелости (chaos рано): деплой вручную часами, метрики смотрят только после жалоб юзеров, нет staging, единая БД без replica/failover, нет тестов. Chaos помогает подсветить пробелы, но не решает их — сначала 2-3 квартала на observability и resilience.",
+                "explanation": "Полный список: Observability (dashboards, alerts на SLO, log aggregation, tracing), SLO/error budget, runbooks, on-call с paging, resilience-паттерны (circuit breaker, retry, timeout), быстрый rollback (< 5 мин), автоскейлинг/self-healing, communication-каналы. Без них chaos лишь подсветит baseline-баги, а не distributed-специфику. Признаки незрелости: деплой вручную часами, метрики смотрят только после жалоб, нет staging, единая БД без replica/failover, нет тестов — сначала 2-3 квартала на observability и resilience.",
                 "example": "Если деплой занимает часы и нет быстрого rollback, эксперимент с pod-kill превратится в затяжной инцидент — нет способа быстро вернуть систему в норму.",
                 "when_to_apply": "Перед самым первым экспериментом и при оценке, готова ли команда к хаосу вообще, или стоит сначала вложиться в фундамент.",
                 "edge_cases": "Отсутствие базовых тестов особенно коварно: chaos найдёт обычные баги (а не distributed-specific), и команда сделает ложный вывод, что «хаос бесполезен».",
@@ -2555,10 +2555,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Chaos — это ВАЛИДАЦИЯ resilience-паттернов: паттерн без chaos = надежда, chaos без паттерна = падение. Маппинг: Circuit Breaker ← latency injection; Retry с backoff ← 5xx на 50% запросов; Timeout ← slow downstream (`Toxiproxy` latency 10s); Bulkhead ← thread pool saturation; Failover/replication ← kill master DB; Graceful degradation ← full dependency outage (partition); Idempotency ← duplicate requests.",
+              "text": "Chaos — это ВАЛИДАЦИЯ resilience-паттернов: паттерн без chaos = надежда; каждому паттерну — свой эксперимент.",
               "correct": true,
               "sections": {
-                "explanation": "Процесс: design pattern → implement → chaos experiment → если паттерн не сработал, возврат к implement; если сработал — регрессия в CI. Теоретический паттерн без chaos — это паттерн, в который нельзя верить.",
+                "explanation": "Маппинг: Circuit Breaker ← latency injection; Retry с backoff ← 5xx на 50% запросов; Timeout ← slow downstream (`Toxiproxy` latency 10s); Bulkhead ← thread pool saturation; Failover/replication ← kill master DB; Graceful degradation ← full dependency outage (partition); Idempotency ← duplicate requests. Процесс: design pattern → implement → chaos experiment → если паттерн не сработал, возврат к implement; если сработал — регрессия в CI. Теоретический паттерн без chaos — это паттерн, в который нельзя верить.",
                 "example": "Антипример: «у нас есть circuit breaker» → «мы не проверяли, как он переходит в half-open в продакшене»; latency injection как раз и проверяет реальное поведение breaker-а.",
                 "when_to_apply": "Когда в коде реализованы resilience-паттерны и нужно убедиться, что они действительно работают под реальным отказом, а не только на бумаге.",
                 "edge_cases": "Idempotency проверяют через network duplicate (дублирование пакетов): без этого эксперимента нельзя быть уверенным, что повтор запроса не создаст дубль заказа или платежа.",
@@ -2627,10 +2627,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Pre-flight чек-лист: hypothesis в формате «при X → Y, steady state Z», выбранные и мониторящиеся steady state metrics, явно ограниченный blast radius, автоматизированный abort condition, проверенный kill switch (dry-run cleanup), написанный и review-нутый runbook, предупреждённый on-call, отсутствие incident freeze, наличие error budget; плюс observability (dashboard, alerts, trace ID, event marker) и post-фаза (post-mortem за 48ч, action items, learnings, follow-up).",
+              "text": "Pre-flight чек-лист: гипотеза «при X → Y, steady state Z», мониторинг метрик, ограниченный blast radius и abort.",
               "correct": true,
               "sections": {
-                "explanation": "Принципы выбора экспериментов: start small (от simple pod-kill до Chaos Kong), learn from incidents (постмортемы → сценарии), prioritize by risk (критичные зависимости первыми), diversify portfolio, automate what works. Senior показывает, что chaos — способ мышления: мы не верим, что система работает, мы это доказываем.",
+                "explanation": "Полный gate: hypothesis в формате «при X → Y, steady state Z», выбранные и мониторящиеся steady state metrics, явно ограниченный blast radius, автоматизированный abort condition, проверенный kill switch (dry-run cleanup), написанный и review-нутый runbook, предупреждённый on-call, отсутствие incident freeze, наличие error budget; плюс observability (dashboard, alerts, trace ID, event marker) и post-фаза (post-mortem за 48ч, action items, learnings, follow-up). Принципы выбора: start small, learn from incidents, prioritize by risk, diversify portfolio, automate what works.",
                 "example": "Перед запуском фиксируют baseline-метрики (скриншот), стартуют эксперимент с мониторингом 5-10 минут, останавливают и наблюдают восстановление, делают post-incident скриншот метрик.",
                 "when_to_apply": "Как финальный gate непосредственно перед каждым экспериментом: пройти весь чек-лист подготовки, observability и плана post-фазы.",
                 "edge_cases": "Пункт «нет incident freeze (прод стабилен последние 24ч)» легко пропустить под давлением графика, но запуск хаоса на нестабильном проде превращает эксперимент в усугубление инцидента.",
