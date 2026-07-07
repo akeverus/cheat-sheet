@@ -31,7 +31,6 @@ public class TrainingSessionService {
     private final QuestionRepository questionRepository;
     private final UserTopicStatsRepository userTopicStatsRepository;
     private final TopicCatalogService topicCatalogService;
-    private final PreloadService preloadService;
     private final Clock clock;
     private final AppProperties appProperties;
 
@@ -63,7 +62,6 @@ public class TrainingSessionService {
 
         log.info("training_session_started mode={} requestedCount={} loadedQuestions={} topic={} group={} onlyWrong={}",
                 mode, limit, ids.size(), filter.topic(), filter.group(), filter.onlyWrong());
-        preloadService.preloadQuestions(ids);
         return new InterviewSession(mode, ids, filter.effectiveTopic(), filter.effectiveGroup(),
                 filter.importantOnly(), filter.onlyWrong(), filter.shuffle(), filter.isOrdered());
     }
@@ -106,7 +104,6 @@ public class TrainingSessionService {
         }
         if (!penaltyIds.isEmpty()) {
             session.addPenaltyQuestions(penaltyIds);
-            preloadService.preloadQuestions(penaltyIds);
             log.info("exam_penalty_questions_added sessionMode={} added={}", session.getMode(), penaltyIds.size());
         }
     }

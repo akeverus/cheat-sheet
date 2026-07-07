@@ -149,7 +149,7 @@ public class MvcModelAttributeMapper {
             model.addAttribute("diagram", state.diagram());
         }
         model.addAttribute("relatedQuestions", state.relatedQuestions());
-        model.addAttribute("aiEnabled", appProperties.isAiEnabled());
+        model.addAttribute("aiEnabled", false);
         model.addAttribute("reviewState", state.reviewState());
     }
 

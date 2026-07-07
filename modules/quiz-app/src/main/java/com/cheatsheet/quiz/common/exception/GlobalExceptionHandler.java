@@ -4,8 +4,6 @@ import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
 import com.cheatsheet.quiz.common.model.ApiError;
 import com.cheatsheet.quiz.domain.exception.OptionNotFoundException;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
-import com.cheatsheet.quiz.service.admin.AdminSeniorRulesService;
-import com.cheatsheet.quiz.service.ai.AiGenerationException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -86,28 +84,6 @@ public class GlobalExceptionHandler {
     public Object handleTypeMismatchException(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
         String message = ex.getName() + ": unsupported format";
         return badRequest(request, ApiErrorTypes.VALIDATION_ERROR, "Некорректные параметры запроса", List.of(message));
-    }
-
-    @ExceptionHandler(AdminSeniorRulesService.ValidationException.class)
-    public Object handleAdminValidationException(AdminSeniorRulesService.ValidationException ex, HttpServletRequest request) {
-        List<String> details = toDetailsList(ex.details());
-        return badRequest(request, ApiErrorTypes.VALIDATION_ERROR, ex.getMessage(), details);
-    }
-
-    @ExceptionHandler(AiGenerationException.class)
-    public Object handleAiGenerationException(AiGenerationException ex, HttpServletRequest request) {
-        if (isApiRequest(request)) {
-            return apiErrorResponse(
-                    HttpStatus.SERVICE_UNAVAILABLE,
-                    ApiErrorTypes.AI_GENERATION_FAILED,
-                    ex.getMessage(),
-                    null
-            );
-        }
-        log.warn("AI generation unavailable on {}: {}", safeUri(request), safeMessage(ex));
-        ModelAndView mav = new ModelAndView("error");
-        mav.setStatus(HttpStatus.SERVICE_UNAVAILABLE);
-        return mav;
     }
 
     @ExceptionHandler(IllegalStateException.class)
@@ -221,15 +197,5 @@ public class GlobalExceptionHandler {
                 .replace('\t', ' ')
                 .trim();
         return compact.length() > 300 ? compact.substring(0, 300) + "..." : compact;
-    }
-
-    private List<String> toDetailsList(java.util.Map<String, ?> details) {
-        if (details == null || details.isEmpty()) {
-            return null;
-        }
-        return details.entrySet().stream()
-                .sorted(java.util.Map.Entry.comparingByKey())
-                .map(entry -> entry.getKey() + ": " + String.valueOf(entry.getValue()))
-                .toList();
     }
 }

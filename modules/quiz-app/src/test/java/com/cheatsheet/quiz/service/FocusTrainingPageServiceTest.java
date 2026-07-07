@@ -13,7 +13,6 @@ import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageServi
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
-import com.cheatsheet.quiz.service.ai.AiGenerationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,12 +46,7 @@ class FocusTrainingPageServiceTest {
 
     @BeforeEach
     void setUp() {
-        AppProperties appProperties = new AppProperties() {
-            @Override
-            public boolean isAiEnabled() {
-                return true;
-            }
-        };
+        AppProperties appProperties = new AppProperties();
         service = new FocusTrainingPageService(
                 facade,
                 questionRepository,
@@ -63,9 +57,9 @@ class FocusTrainingPageServiceTest {
     }
 
     @Test
-    void marksGenerationUnavailableWhenAiFails() {
+    void returnsEmptyStateWhenFacadeHasNoQuestion() {
         InterviewFilter filter = new InterviewFilter("java", "backend", false, false, false, true);
-        when(facade.nextQuestion(any(), anyBoolean(), anyLong())).thenThrow(new AiGenerationException("AI unavailable"));
+        when(facade.nextQuestion(any(), anyBoolean(), anyLong())).thenReturn(Optional.empty());
         when(facade.getStats(any())).thenReturn(new InterviewStats(10, 3, 2, 7, 3));
         when(questionRepository.findTopics()).thenReturn(List.of("java"));
         when(topicCatalogService.normalizeGroup("backend")).thenReturn("backend");
@@ -80,8 +74,8 @@ class FocusTrainingPageServiceTest {
                 1L
         );
 
-        assertThat(state.generationUnavailable()).isTrue();
         assertThat(state.current()).isEmpty();
+        assertThat(state.generationUnavailable()).isFalse();
     }
 
     @Test

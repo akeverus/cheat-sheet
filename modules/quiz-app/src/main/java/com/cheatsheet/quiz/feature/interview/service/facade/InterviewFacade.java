@@ -2,11 +2,7 @@ package com.cheatsheet.quiz.feature.interview.service.facade;
 
 import com.cheatsheet.quiz.domain.*;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
-import com.cheatsheet.quiz.feature.interview.service.insight.CodeTraceService;
-import com.cheatsheet.quiz.feature.interview.service.insight.HintService;
 import com.cheatsheet.quiz.feature.interview.service.insight.RelatedQuestionsService;
-import com.cheatsheet.quiz.feature.interview.service.insight.TakeawayService;
-import com.cheatsheet.quiz.feature.interview.service.insight.WrongAnswerFeedbackService;
 import com.cheatsheet.quiz.infrastructure.render.MarkdownRenderService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -28,11 +24,7 @@ import java.util.Optional;
 public class InterviewFacade {
     InterviewService interviewService;
     MarkdownRenderService markdownRenderService;
-    HintService hintService;
     RelatedQuestionsService relatedQuestionsService;
-    TakeawayService takeawayService;
-    WrongAnswerFeedbackService wrongAnswerFeedbackService;
-    CodeTraceService codeTraceService;
 
     public Optional<InterviewQuestion> nextQuestion(InterviewFilter filter, boolean weakTopicsPriority) {
         return interviewService.nextQuestion(filter, weakTopicsPriority);
@@ -70,28 +62,8 @@ public class InterviewFacade {
         return markdownRenderService.toHtml(markdown);
     }
 
-    public Optional<Hint> getHint(long questionId, int level) {
-        return hintService.getHint(questionId, level);
-    }
-
     public List<RelatedQuestion> findRelated(long questionId, String topic) {
         return relatedQuestionsService.findRelated(questionId, topic);
-    }
-
-    public Optional<String> getTakeaway(long questionId) {
-        return takeawayService.getOrGenerate(questionId);
-    }
-
-    public Optional<String> getWrongFeedback(long questionId, long optionId) {
-        return wrongAnswerFeedbackService.getFeedback(questionId, optionId);
-    }
-
-    public Optional<String> generateComparison(long questionId, long selectedOptionId) {
-        return wrongAnswerFeedbackService.generateComparison(questionId, selectedOptionId);
-    }
-
-    public Optional<String> getCodeTrace(long questionId) {
-        return codeTraceService.getOrGenerate(questionId);
     }
 
     public List<TopicStats> getTopicStats() {

@@ -13,7 +13,7 @@ import com.cheatsheet.quiz.domain.ReviewResult;
 import com.cheatsheet.quiz.domain.ReviewState;
 import com.cheatsheet.quiz.domain.exception.OptionNotFoundException;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
-import com.cheatsheet.quiz.feature.interview.service.core.PreloadService;
+import com.cheatsheet.quiz.feature.interview.service.core.OptionLookupService;
 import com.cheatsheet.quiz.feature.interview.service.core.TrainingSessionService;
 import com.cheatsheet.quiz.feature.interview.service.review.ReviewService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
@@ -21,7 +21,6 @@ import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
-import com.cheatsheet.quiz.service.ai.option.AIQuestionService;
 import com.cheatsheet.quiz.service.strategy.DefaultSelectionStrategy;
 import com.cheatsheet.quiz.service.strategy.ShuffleSelectionStrategy;
 import com.cheatsheet.quiz.service.strategy.WeakTopicsSelectionStrategy;
@@ -51,8 +50,7 @@ class InterviewServiceTest {
     @Mock QuestionStatsRepository questionStatsRepository;
     @Mock AnswerOptionRepository answerOptionRepository;
     @Mock ReviewStateRepository reviewStateRepository;
-    @Mock AIQuestionService optionGenerationService;
-    @Mock PreloadService preloadService;
+    @Mock OptionLookupService optionLookupService;
     @Mock ApplicationEventPublisher eventPublisher;
     @Mock DefaultSelectionStrategy defaultSelectionStrategy;
     @Mock ShuffleSelectionStrategy shuffleSelectionStrategy;
@@ -74,8 +72,7 @@ class InterviewServiceTest {
                 questionStatsRepository,
                 answerOptionRepository,
                 reviewStateRepository,
-                optionGenerationService,
-                preloadService,
+                optionLookupService,
                 eventPublisher,
                 defaultSelectionStrategy,
                 shuffleSelectionStrategy,
@@ -133,7 +130,6 @@ class InterviewServiceTest {
         assertThat(result.correct().id()).isEqualTo(100L);
         assertThat(result.updatedState()).isEqualTo(updated);
         verify(reviewService).applyAnswer(question, true, null);
-        verify(preloadService).preloadNext(filter);
     }
 
     @Test
@@ -205,7 +201,6 @@ class InterviewServiceTest {
                 new AnswerOption(1003L, 11L, "Wrong 3", false, 3, "OPENAI", null)
         );
 
-        when(preloadService.pollPreloaded(filter)).thenReturn(Optional.empty());
         when(defaultSelectionStrategy.selectNextQuestionId(filter, 1_700_000_000L)).thenReturn(Optional.of(10L));
         when(questionRepository.findById(10L)).thenReturn(Optional.of(excluded));
         when(questionRepository.findQuestionIdsExcluding(
@@ -213,7 +208,7 @@ class InterviewServiceTest {
         )).thenReturn(List.of(11L));
         when(questionRepository.findById(11L)).thenReturn(Optional.of(alternative));
         when(reviewStateRepository.findByQuestionId(11L)).thenReturn(Optional.empty());
-        when(optionGenerationService.getOrCreateOptions(alternative)).thenReturn(options);
+        when(optionLookupService.getOrCreateOptions(alternative)).thenReturn(options);
 
         Optional<InterviewQuestion> result = interviewService.nextQuestion(filter, false, 10L);
 
@@ -233,7 +228,6 @@ class InterviewServiceTest {
                 new AnswerOption(2203L, 22L, "Wrong 3", false, 3, "OPENAI", null)
         );
 
-        when(preloadService.pollPreloaded(filter)).thenReturn(Optional.empty());
         when(defaultSelectionStrategy.selectNextQuestionId(filter, 1_700_000_000L)).thenReturn(Optional.of(21L));
         when(questionRepository.findById(21L)).thenReturn(Optional.of(excluded));
         when(questionRepository.findTopics()).thenReturn(List.of("java", "spring"));
@@ -244,7 +238,7 @@ class InterviewServiceTest {
         )).thenReturn(List.of(22L));
         when(questionRepository.findById(22L)).thenReturn(Optional.of(alternative));
         when(reviewStateRepository.findByQuestionId(22L)).thenReturn(Optional.empty());
-        when(optionGenerationService.getOrCreateOptions(alternative)).thenReturn(options);
+        when(optionLookupService.getOrCreateOptions(alternative)).thenReturn(options);
 
         Optional<InterviewQuestion> result = interviewService.nextQuestion(filter, false, 21L);
 
@@ -262,11 +256,10 @@ class InterviewServiceTest {
                 new AnswerOption(3102L, 31L, "Wrong 2", false, 2, "OPENAI", null)
         );
 
-        when(preloadService.pollPreloaded(filter)).thenReturn(Optional.empty());
         when(defaultSelectionStrategy.selectNextQuestionId(filter, 1_700_000_000L)).thenReturn(Optional.of(31L));
         when(questionRepository.findById(31L)).thenReturn(Optional.of(primary));
         when(reviewStateRepository.findByQuestionId(31L)).thenReturn(Optional.empty());
-        when(optionGenerationService.getOrCreateOptions(primary)).thenReturn(reducedOptions);
+        when(optionLookupService.getOrCreateOptions(primary)).thenReturn(reducedOptions);
 
         Optional<InterviewQuestion> result = interviewService.nextQuestion(filter);
 
@@ -294,7 +287,7 @@ class InterviewServiceTest {
 
         when(questionRepository.findById(77L)).thenReturn(Optional.of(question));
         when(reviewStateRepository.findByQuestionId(77L)).thenReturn(Optional.empty());
-        when(optionGenerationService.getOrCreateOptions(question)).thenReturn(reducedOptions);
+        when(optionLookupService.getOrCreateOptions(question)).thenReturn(reducedOptions);
 
         Optional<InterviewQuestion> result = interviewService.questionForSession(session);
 

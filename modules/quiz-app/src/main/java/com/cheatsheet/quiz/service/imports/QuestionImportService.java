@@ -5,12 +5,10 @@ import lombok.RequiredArgsConstructor;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.common.util.InterviewPathResolver;
 import org.apache.commons.lang3.StringUtils;
-import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.FullTextSearchRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
-import com.cheatsheet.quiz.service.ai.AiQuestionClient;
 import com.cheatsheet.quiz.service.cache.OptionCache;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -55,8 +53,6 @@ public class QuestionImportService {
     private final Clock clock;
     private final MarkdownQuestionParser parser;
     private final HashingService hashingService;
-    private final QuestionExpansionService questionExpansionService;
-    private final AiQuestionClient aiQuestionClient;
     private final TransactionTemplate transactionTemplate;
     private final McqJsonLoader mcqJsonLoader;
 
@@ -149,30 +145,16 @@ public class QuestionImportService {
                 if (item.answerMarkdown() == null || item.answerMarkdown().isBlank()) {
                     continue;
                 }
-                Optional<MarkdownQuestionParser.ParsedQuestion> canonicalized = canonicalize(item, relativePath);
-                if (canonicalized.isEmpty()) {
-                    log.warn("Канонизация вопроса {} из {} не удалась — вопрос пропущен",
-                            item.questionNumber(), relativePath);
-                    continue;
-                }
-                MarkdownQuestionParser.ParsedQuestion finalQuestion = canonicalized.get();
+                // Канонизация через AI удалена — используем распарсенный вопрос напрямую.
+                MarkdownQuestionParser.ParsedQuestion finalQuestion = item;
                 UpsertOutcome outcome = transactionTemplate.execute(status -> upsertQuestion(finalQuestion, relativePath, topic));
                 if (outcome == null) {
                     continue;
                 }
                 switch (outcome) {
-                    case INSERT -> {
-                        inserted++;
-                        inserted += ensureExpansionVariants(relativePath, finalQuestion, topic);
-                    }
-                    case UPDATE -> {
-                        updated++;
-                        inserted += ensureExpansionVariants(relativePath, finalQuestion, topic);
-                    }
-                    case UNCHANGED -> {
-                        unchanged++;
-                        inserted += ensureExpansionVariants(relativePath, finalQuestion, topic);
-                    }
+                    case INSERT -> inserted++;
+                    case UPDATE -> updated++;
+                    case UNCHANGED -> unchanged++;
                 }
             }
         } catch (IOException e) {
@@ -204,51 +186,6 @@ public class QuestionImportService {
      */
     private List<MarkdownQuestionParser.ParsedQuestion> parseQuestionsFromFile(Path file) throws IOException {
         return parser.parse(file);
-    }
-
-    private Optional<MarkdownQuestionParser.ParsedQuestion> canonicalize(
-            MarkdownQuestionParser.ParsedQuestion parsed,
-            String relativePath
-    ) {
-        Optional<AiQuestionClient.CanonicalQuestion> canonical = aiQuestionClient.canonicalizeQuestion(
-                parsed.questionText(),
-                parsed.answerMarkdown(),
-                relativePath
-        );
-        if (canonical.isEmpty()) {
-            log.info("Канонизация недоступна для {}#Q{} — используем fallback из исходного markdown",
-                    relativePath, parsed.questionNumber());
-            return Optional.of(parsed);
-        }
-        AiQuestionClient.CanonicalQuestion value = canonical.get();
-        QuestionType questionType = resolveQuestionType(parsed, value, relativePath);
-        return Optional.of(parsed.toBuilder()
-                .questionText(value.questionText())
-                .answerMarkdown(value.answerMarkdown())
-                .questionType(questionType)
-                .codeSnippet(questionType == QuestionType.CODE ? value.codeSnippet() : null)
-                .build());
-    }
-
-    private QuestionType resolveQuestionType(
-            MarkdownQuestionParser.ParsedQuestion parsed,
-            AiQuestionClient.CanonicalQuestion canonical,
-            String relativePath
-    ) {
-        QuestionType parserType = parsed.questionType() == null ? QuestionType.TEXT : parsed.questionType();
-        QuestionType canonicalType = "CODE".equalsIgnoreCase(canonical.questionType()) ? QuestionType.CODE : QuestionType.TEXT;
-        boolean canonicalHasCode = canonical.codeSnippet() != null && !canonical.codeSnippet().isBlank();
-        if (canonicalType == QuestionType.CODE && !canonicalHasCode) {
-            log.warn("Канонизация вернула CODE без codeSnippet для {}#Q{} — используем parser type={}",
-                    relativePath, parsed.questionNumber(), parserType);
-            return parserType;
-        }
-        if (parserType == QuestionType.CODE && canonicalType == QuestionType.TEXT) {
-            log.warn("Type mismatch parser=CODE, canonical=TEXT для {}#Q{} — сохраняем parser type",
-                    relativePath, parsed.questionNumber());
-            return parserType;
-        }
-        return canonicalType;
     }
 
     /**
@@ -288,24 +225,6 @@ public class QuestionImportService {
         }
 
         return UpsertOutcome.UNCHANGED;
-    }
-
-    private int ensureExpansionVariants(String relativePath, MarkdownQuestionParser.ParsedQuestion base, String topic) {
-        String baseSlug = relativePath + "#Q" + base.questionNumber();
-        Optional<Question> baseQuestion = questionRepository.findBySlug(baseSlug);
-        if (baseQuestion.isEmpty()) {
-            return 0;
-        }
-        int existingVariants = questionRepository.countExpandedBySourceSlug(baseQuestion.get().sourceSlug());
-        if (existingVariants > 0) {
-            return 0;
-        }
-        try {
-            return questionExpansionService.expandFromBase(baseQuestion.get(), topic, relativePath);
-        } catch (Exception e) {
-            log.warn("Расширение вопроса {} не удалось: {}", baseQuestion.get().slug(), e.getMessage(), e);
-            return 0;
-        }
     }
 
     /** Результат импорта одного файла. */

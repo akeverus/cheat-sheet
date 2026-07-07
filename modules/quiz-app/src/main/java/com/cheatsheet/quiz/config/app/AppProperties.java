@@ -1,6 +1,5 @@
 package com.cheatsheet.quiz.config.app;
 
-import com.cheatsheet.quiz.domain.AiProvider;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -45,10 +44,6 @@ public class AppProperties {
 
     /** Путь к YAML-каталогу групп и порядка тем (classpath). */
     private String topicGroupsConfig = "topic-groups.yaml";
-
-    /** Активный AI-провайдер (primary) для генерации вариантов ответов. */
-    @NotNull
-    private AiProvider aiProvider = AiProvider.OPENAI;
 
     /** Настройки тестирования (пороги, лимиты, defaults). */
     @Valid @NotNull

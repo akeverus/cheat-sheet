@@ -4,7 +4,6 @@ import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
-import com.cheatsheet.quiz.feature.interview.service.core.PreloadService;
 import com.cheatsheet.quiz.feature.interview.service.core.TrainingSessionService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
@@ -42,8 +41,6 @@ class TrainingSessionServiceTest {
     UserTopicStatsRepository userTopicStatsRepository;
     @Mock
     TopicCatalogService topicCatalogService;
-    @Mock
-    PreloadService preloadService;
 
     TrainingSessionService service;
 
@@ -56,7 +53,6 @@ class TrainingSessionServiceTest {
                 questionRepository,
                 userTopicStatsRepository,
                 topicCatalogService,
-                preloadService,
                 clock,
                 properties
         );
@@ -106,6 +102,5 @@ class TrainingSessionServiceTest {
         service.addExamPenaltyQuestions(session);
 
         assertThat(session.getQuestionIds()).contains(101L, 102L);
-        verify(preloadService).preloadQuestions(List.of(101L, 102L));
     }
 }

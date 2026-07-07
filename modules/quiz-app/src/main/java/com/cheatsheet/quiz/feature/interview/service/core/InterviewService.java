@@ -20,7 +20,6 @@ import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
-import com.cheatsheet.quiz.service.ai.option.AIQuestionService;
 import com.cheatsheet.quiz.service.event.AnswerEvent;
 import com.cheatsheet.quiz.service.strategy.DefaultSelectionStrategy;
 import com.cheatsheet.quiz.service.strategy.ShuffleSelectionStrategy;
@@ -44,9 +43,8 @@ import java.util.Optional;
  * <p>Координирует работу всех компонентов:</p>
  * <ul>
  *   <li>{@link QuestionRepository} — загрузка вопросов;</li>
- *   <li>{@link AIQuestionService} — генерация вариантов ответов;</li>
+ *   <li>{@link OptionLookupService} — резолвер вариантов ответа (seed);</li>
  *   <li>{@link SpacedRepetitionService} — алгоритм SM-2;</li>
- *   <li>{@link PreloadService} — фоновая предзагрузка;</li>
  *   <li>{@link QuestionStatsRepository} — статистика.</li>
  * </ul>
  */
@@ -58,8 +56,7 @@ public class InterviewService {
     QuestionStatsRepository questionStatsRepository;
     AnswerOptionRepository answerOptionRepository;
     ReviewStateRepository reviewStateRepository;
-    AIQuestionService aiQuestionService;
-    PreloadService preloadService;
+    OptionLookupService optionLookupService;
     ApplicationEventPublisher eventPublisher;
     DefaultSelectionStrategy defaultSelectionStrategy;
     ShuffleSelectionStrategy shuffleSelectionStrategy;
@@ -76,8 +73,7 @@ public class InterviewService {
             QuestionStatsRepository questionStatsRepository,
             AnswerOptionRepository answerOptionRepository,
             ReviewStateRepository reviewStateRepository,
-            AIQuestionService aiQuestionService,
-            PreloadService preloadService,
+            OptionLookupService optionLookupService,
             ApplicationEventPublisher eventPublisher,
             DefaultSelectionStrategy defaultSelectionStrategy,
             ShuffleSelectionStrategy shuffleSelectionStrategy,
@@ -92,8 +88,7 @@ public class InterviewService {
         this.questionStatsRepository = questionStatsRepository;
         this.answerOptionRepository = answerOptionRepository;
         this.reviewStateRepository = reviewStateRepository;
-        this.aiQuestionService = aiQuestionService;
-        this.preloadService = preloadService;
+        this.optionLookupService = optionLookupService;
         this.eventPublisher = eventPublisher;
         this.defaultSelectionStrategy = defaultSelectionStrategy;
         this.shuffleSelectionStrategy = shuffleSelectionStrategy;
@@ -108,7 +103,7 @@ public class InterviewService {
     /**
      * Возвращает следующий вопрос для тестирования с учётом фильтра и интервального повторения.
      *
-     * <p>Сначала проверяет предзагруженные вопросы, иначе выбирает due/next по теме и фильтрам.</p>
+     * <p>Выбирает due/next вопрос по теме и фильтрам через стратегию отбора.</p>
      *
      * @param filter фильтр (тема, только важные, только с ошибками, перемешивание)
      * @return вопрос с вариантами ответов и состоянием повторения или пустой Optional
@@ -130,16 +125,12 @@ public class InterviewService {
 
     public Optional<InterviewQuestion> nextQuestion(InterviewFilter filter, boolean weakTopicsPriority, Long excludeQuestionId) {
         long now = clock.instant().getEpochSecond();
-        Question question = preloadService.pollPreloaded(filter)
+        var strategy = filter.isShuffled()
+                ? shuffleSelectionStrategy
+                : (weakTopicsPriority ? weakTopicsSelectionStrategy : defaultSelectionStrategy);
+        Question question = strategy.selectNextQuestionId(filter, now)
                 .flatMap(questionRepository::findById)
-                .orElseGet(() -> {
-                    var strategy = filter.isShuffled()
-                            ? shuffleSelectionStrategy
-                            : (weakTopicsPriority ? weakTopicsSelectionStrategy : defaultSelectionStrategy);
-                    return strategy.selectNextQuestionId(filter, now)
-                            .flatMap(questionRepository::findById)
-                            .orElse(null);
-                });
+                .orElse(null);
 
         if (question == null) {
             return Optional.empty();
@@ -229,7 +220,6 @@ public class InterviewService {
         ResolvedQuestion resolved = resolveQuestionAndOptions(questionId, selectedOptionId);
         ReviewState updated = reviewService.applyAnswer(resolved.question(), resolved.isCorrect(), confidence);
 
-        preloadService.preloadNext(filter);
         AnswerDisplayMode displayMode = AnswerDisplayMode.FULL;
 
         publishAnswerEvent(questionId, selectedOptionId, resolved);
@@ -321,7 +311,7 @@ public class InterviewService {
         reviewStateRepository.insertIfAbsent(question.id(), nowEpoch);
         ReviewState reviewState = reviewStateRepository.findByQuestionId(question.id())
                 .orElse(ReviewDefaults.initialState(question.id(), nowEpoch));
-        List<AnswerOption> options = aiQuestionService.getOrCreateOptions(question);
+        List<AnswerOption> options = optionLookupService.getOrCreateOptions(question);
         return Optional.of(new InterviewQuestion(question, options, reviewState));
     }
 

@@ -15,7 +15,6 @@ import com.cheatsheet.quiz.domain.FlashcardPhase;
 import com.cheatsheet.quiz.domain.StudyPhase;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
-import com.cheatsheet.quiz.service.ai.AiGenerationException;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -53,16 +52,9 @@ public class FocusTrainingPageService {
             Long excludeQuestionId
     ) {
         boolean generationUnavailable = false;
-        Optional<InterviewQuestion> current;
-        try {
-            current = interviewSession != null
-                    ? facade.questionForSession(interviewSession)
-                    : facade.nextQuestion(filter, weakTopicsPriority, excludeQuestionId);
-        } catch (AiGenerationException e) {
-            generationUnavailable = true;
-            current = Optional.empty();
-            log.warn("focus_page_ai_generation_unavailable message={}", e.getMessage());
-        }
+        Optional<InterviewQuestion> current = interviewSession != null
+                ? facade.questionForSession(interviewSession)
+                : facade.nextQuestion(filter, weakTopicsPriority, excludeQuestionId);
 
         SurfaceState surface = buildSurfaceState(filter, selectedMode, interviewSession, weakTopicsPriority);
 
@@ -71,8 +63,8 @@ public class FocusTrainingPageService {
                 && interviewSession.getStudyPhase() == StudyPhase.LEARN;
         boolean sessionFlashcardMode = interviewSession != null
                 && interviewSession.getMode() == InterviewMode.FLASHCARD;
-        boolean noAiFlashcard = !appProperties.isAiEnabled()
-                && current.isPresent()
+        // AI недоступен: вопрос без seed-вариантов → всегда режим флешкарты.
+        boolean noAiFlashcard = current.isPresent()
                 && current.get().options().isEmpty();
         boolean flashcardMode = sessionFlashcardMode || noAiFlashcard;
         boolean flashcardRevealed = sessionFlashcardMode

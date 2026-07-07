@@ -1,6 +1,5 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.domain.Hint;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewQuestion;
@@ -10,11 +9,7 @@ import com.cheatsheet.quiz.domain.RelatedQuestion;
 import com.cheatsheet.quiz.domain.TopicStats;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
-import com.cheatsheet.quiz.feature.interview.service.insight.CodeTraceService;
-import com.cheatsheet.quiz.feature.interview.service.insight.HintService;
 import com.cheatsheet.quiz.feature.interview.service.insight.RelatedQuestionsService;
-import com.cheatsheet.quiz.feature.interview.service.insight.TakeawayService;
-import com.cheatsheet.quiz.feature.interview.service.insight.WrongAnswerFeedbackService;
 import com.cheatsheet.quiz.infrastructure.render.MarkdownRenderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,15 +32,7 @@ class InterviewFacadeTest {
     @Mock
     private MarkdownRenderService markdownRenderService;
     @Mock
-    private HintService hintService;
-    @Mock
     private RelatedQuestionsService relatedQuestionsService;
-    @Mock
-    private TakeawayService takeawayService;
-    @Mock
-    private WrongAnswerFeedbackService wrongAnswerFeedbackService;
-    @Mock
-    private CodeTraceService codeTraceService;
 
     private InterviewFacade facade;
 
@@ -54,11 +41,7 @@ class InterviewFacadeTest {
         facade = new InterviewFacade(
                 interviewService,
                 markdownRenderService,
-                hintService,
-                relatedQuestionsService,
-                takeawayService,
-                wrongAnswerFeedbackService,
-                codeTraceService
+                relatedQuestionsService
         );
     }
 
@@ -75,22 +58,12 @@ class InterviewFacadeTest {
     }
 
     @Test
-    void renderAndInsightMethodsDelegateToSpecificServices() {
-        Hint hint = new Hint(1L, 1L, 2, "hint", 1_700_000_000L);
+    void renderMarkdownDelegatesToRenderService() {
         when(markdownRenderService.toHtml("md")).thenReturn("<p>md</p>");
-        when(hintService.getHint(1L, 2)).thenReturn(Optional.of(hint));
-        when(takeawayService.getOrGenerate(3L)).thenReturn(Optional.of("takeaway"));
-        when(codeTraceService.getOrGenerate(4L)).thenReturn(Optional.of("trace"));
 
         assertThat(facade.renderMarkdown("md")).isEqualTo("<p>md</p>");
-        assertThat(facade.getHint(1L, 2)).contains(hint);
-        assertThat(facade.getTakeaway(3L)).contains("takeaway");
-        assertThat(facade.getCodeTrace(4L)).contains("trace");
 
         verify(markdownRenderService).toHtml("md");
-        verify(hintService).getHint(1L, 2);
-        verify(takeawayService).getOrGenerate(3L);
-        verify(codeTraceService).getOrGenerate(4L);
     }
 
     @Test
@@ -116,18 +89,12 @@ class InterviewFacadeTest {
     }
 
     @Test
-    void relatedAndFeedbackOperationsDelegateToDedicatedServices() {
+    void relatedOperationsDelegateToDedicatedService() {
         List<RelatedQuestion> related = List.of(new RelatedQuestion(10L, "q", "java", 90.0));
         when(relatedQuestionsService.findRelated(10L, "java")).thenReturn(related);
-        when(wrongAnswerFeedbackService.getFeedback(10L, 1L)).thenReturn(Optional.of("feedback"));
-        when(wrongAnswerFeedbackService.generateComparison(10L, 1L)).thenReturn(Optional.of("comparison"));
 
         assertThat(facade.findRelated(10L, "java")).isEqualTo(related);
-        assertThat(facade.getWrongFeedback(10L, 1L)).contains("feedback");
-        assertThat(facade.generateComparison(10L, 1L)).contains("comparison");
 
         verify(relatedQuestionsService).findRelated(10L, "java");
-        verify(wrongAnswerFeedbackService).getFeedback(10L, 1L);
-        verify(wrongAnswerFeedbackService).generateComparison(10L, 1L);
     }
 }

@@ -1,9 +1,7 @@
 package com.cheatsheet.quiz.api.mapper.request;
 
-import com.cheatsheet.quiz.api.dto.request.interview.HintRequest;
 import com.cheatsheet.quiz.api.dto.request.interview.SubmitAnswerRequest;
 import com.cheatsheet.quiz.feature.interview.usecase.AnswerApiService;
-import com.cheatsheet.quiz.feature.interview.usecase.HintApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.NextQuestionApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.stats.StatsApiService;
 import org.junit.jupiter.api.Test;
@@ -38,18 +36,6 @@ class ApiRequestMapperTest {
         assertThat(command.shuffle()).isTrue();
         assertThat(command.ordered()).isFalse();
         assertThat(command.confidence()).isEqualTo(4);
-    }
-
-    @Test
-    void toHintCommandUsesResolvedLevel() {
-        HintRequest request = new HintRequest();
-        request.setQuestionId(20L);
-        request.setLevel(null);
-
-        HintApiService.HintCommand command = mapper.toHintCommand(request);
-
-        assertThat(command.questionId()).isEqualTo(20L);
-        assertThat(command.level()).isEqualTo(request.levelOrDefault());
     }
 
     @Test

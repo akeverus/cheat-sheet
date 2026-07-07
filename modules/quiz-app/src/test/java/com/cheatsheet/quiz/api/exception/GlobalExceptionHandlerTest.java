@@ -5,8 +5,6 @@ import com.cheatsheet.quiz.common.exception.GlobalExceptionHandler;
 import com.cheatsheet.quiz.api.dto.request.interview.QuestionIdRequest;
 import com.cheatsheet.quiz.domain.exception.OptionNotFoundException;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
-import com.cheatsheet.quiz.service.admin.AdminSeniorRulesService;
-import com.cheatsheet.quiz.service.ai.AiGenerationException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,8 +39,6 @@ class GlobalExceptionHandlerTest {
                 .standaloneSetup(
                         new ApiValidationController(),
                         new UiValidationController(),
-                        new ApiAiErrorController(),
-                        new ApiAdminValidationController(),
                         new ApiTypeMismatchController(),
                         new ApiConflictController(),
                         new FaviconController(),
@@ -74,25 +70,6 @@ class GlobalExceptionHandlerTest {
         mockMvc.perform(post("/test/validation").param("questionId", "0"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"));
-    }
-
-    @Test
-    void apiAiGenerationErrorReturnsTypedServiceUnavailable() throws Exception {
-        mockMvc.perform(post("/api/test/ai-failure"))
-                .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.status").value(503))
-                .andExpect(jsonPath("$.type").value(ApiErrorTypes.AI_GENERATION_FAILED))
-                .andExpect(jsonPath("$.message").isNotEmpty());
-    }
-
-    @Test
-    void apiAdminValidationErrorReturnsStructuredDetails() throws Exception {
-        mockMvc.perform(post("/api/test/admin-validation"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.type").value(ApiErrorTypes.VALIDATION_ERROR))
-                .andExpect(jsonPath("$.message").value("Некорректный payload"))
-                .andExpect(jsonPath("$.details[0]").value("entry: spring-transactional=-1"));
     }
 
     @Test
@@ -199,25 +176,6 @@ class GlobalExceptionHandlerTest {
         @PostMapping("/test/validation")
         String validate(@Valid @ModelAttribute QuestionIdRequest request) {
             return "ok";
-        }
-    }
-
-    @RestController
-    static class ApiAiErrorController {
-        @PostMapping("/api/test/ai-failure")
-        String fail() {
-            throw new AiGenerationException("AI временно недоступен");
-        }
-    }
-
-    @RestController
-    static class ApiAdminValidationController {
-        @PostMapping("/api/test/admin-validation")
-        String fail() {
-            throw new AdminSeniorRulesService.ValidationException(
-                    "Некорректный payload",
-                    java.util.Map.of("entry", "spring-transactional=-1")
-            );
         }
     }
 
