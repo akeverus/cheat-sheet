@@ -6,6 +6,13 @@
 <header th:replace="~{fragments/header :: header(pageTitle='Итоги сессии', statsPage=false, activePage='focus', showPrimaryNav=true)}"></header>
 <main id="main-content" class="ed-page" tabindex="-1">
 <section class="card summary-score">
+    <!-- Заголовок карточки счёта: скрыт визуально (число + подпись «Точность
+         сессии» несут смысл на экране), но даёт SR-навигации по заголовкам якорь
+         на главный результат — паритет с h2 секций «Результаты по темам»/«Ошибки»/
+         «Рекомендации». Без него навигация по H перепрыгивала счёт (самое важное).
+         Только h2 (без aria-label на section) — точный паритет с секциями-сёстрами,
+         не плодим region-landmark на одной карточке из четырёх. -->
+    <h2 class="summary-section-title visually-hidden">Результат сессии</h2>
     <div class="summary-mode-line" th:text="${@modeUtils.displayName(summary.mode)}"></div>
     <div class="summary-score-value"
          th:classappend="${summary.accuracy >= 80} ? 'text-success' : (${summary.accuracy >= 50} ? 'text-warning' : 'text-danger')"
