@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@State`-метод выполняется один раз перед всем тестовым классом и готовит данные сразу для всех interactions.",
+              "text": "`@State`-метод срабатывает один раз при инициализации `PactVerificationContext` и держит подготовленные данные для всех interactions до конца verification.",
               "correct": false,
               "sections": {
                 "what_actually": "`@State`-метод выполняется **перед каждой** interaction с соответствующим state'ом, а не однократно на класс — иначе states разных interactions конфликтовали бы.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Очистка данных после interaction невозможна через `@State`; для этого нужен только ручной `@AfterEach` в тесте.",
+              "text": "Teardown после interaction делается только через `@AfterEach`: у `@State` есть лишь setup-фаза, очистку данных он не поддерживает.",
               "correct": false,
               "sections": {
                 "what_actually": "Очистка делается через `@State(value=..., action=StateChangeAction.TEARDOWN)` — отдельный teardown-метод, выполняемый после interaction; `@AfterEach` не обязателен.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Параметризованные `@State` появились только в спецификации v4; в Pact v3 state — это всегда просто строка без параметров.",
+              "text": "Несколько state'ов на один метод (`@State({...})`) поддерживаются только в спецификации Pact v4; в v3 один метод обслуживает ровно один state.",
               "correct": false,
               "sections": {
                 "what_actually": "Provider states с параметрами доступны уже с Pact v3 (`given(\"user exists\", Map.of(...))`), а не только в v4.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Message pacts проверяют, что сообщение реально доставлено в Kafka и прочитано consumer'ом из топика.",
+              "text": "`MessagePactBuilder` проверяет не формат сообщения, а факт доставки: Pact подключается к Kafka и убеждается, что consumer реально вычитал сообщение из топика.",
               "correct": false,
               "sections": {
                 "what_actually": "Message pacts проверяют **формат** сообщения (структуру JSON, типы, обязательность), а не факт реальной доставки в Kafka или чтения из топика.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для async через Pact нужно поднять реальный Kafka-брокер и в тесте отправить сообщение в настоящий топик.",
+              "text": "Message pacts работают только поверх `@EmbeddedKafka`: без запущенного in-memory брокера Pact не может проверить контракт сообщения.",
               "correct": false,
               "sections": {
                 "what_actually": "Message pacts работают без реального брокера: consumer получает сериализованное сообщение от Pact, provider возвращает его строкой через `@PactVerifyProvider`.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Message pacts проверяют только consumer-side; provider, публикующий сообщение, верифицировать через Pact нельзя.",
+              "text": "Provider-side сообщение верифицируется через `@PactVerifyProvider`, но target всегда `HttpTestTarget` — отдельного `MessageTestTarget` в Pact JVM нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Provider тоже верифицируется: он должен по запросу **выдать** сообщение через `@PactVerifyProvider`, а target — `MessageTestTarget`.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В Groovy DSL значения всегда фиксируются точно; динамические matcher'ы вроде `$(regex(...))` не поддерживаются.",
+              "text": "Динамические значения в Groovy DSL задают только через `value(consumer(...), producer(...))`; хелпер `$(regex(...))` относится к YAML и в Groovy не работает.",
               "correct": false,
               "sections": {
                 "what_actually": "DSL как раз поддерживает динамические значения через `$(regex(...))`, `email()`, `number()` — это основной способ описать формат, а не конкретное значение.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Контракты в Spring Cloud Contract можно писать только на Groovy; YAML-формат не поддерживается.",
+              "text": "Контракты пишут на Groovy или Kotlin DSL; YAML-формат Spring Cloud Contract не поддерживает.",
               "correct": false,
               "sections": {
                 "what_actually": "`SCC` поддерживает и YAML-контракты (с секцией `matchers` и `type: by_regex`), не только Groovy DSL.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Messaging-контракты в Groovy DSL описать нельзя — `Spring Cloud Contract` работает только с HTTP.",
+              "text": "Блоки `input {...}` и `outputMessage {...}` доступны только в YAML-контрактах; в Groovy DSL есть лишь `request`/`response`, messaging там описать нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "`SCC` поддерживает и messaging-контракты: `label`, `input { triggeredBy(...) }`, `outputMessage { sentTo ...; body ... }` для Kafka/Camel.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@AutoConfigureStubRunner` запускает реальный сервис provider'а в отдельном контейнере и проксирует к нему запросы consumer'а.",
+              "text": "`@AutoConfigureStubRunner` через Testcontainers поднимает реальный provider-сервис из его Docker-образа и направляет к нему запросы consumer'а.",
               "correct": false,
               "sections": {
                 "what_actually": "Аннотация поднимает локальный `WireMock`-сервер из `stubs.jar` (по правилам контракта), а не реальный сервис provider'а.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Режим `stubsMode = LOCAL` берёт стабы напрямую из Maven/Nexus по сети, а `REMOTE` — с classpath.",
+              "text": "Режим `stubsMode=REMOTE` ищет стабы в локальном `~/.m2`, а `LOCAL` скачивает их из Nexus по сети.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `LOCAL` — из локального Maven (`~/.m2`), `REMOTE` — из Maven/Nexus/Artifactory по сети; ещё есть `CLASSPATH` (стабы на classpath).",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@AutoConfigureStubRunner` требует, чтобы consumer и provider лежали в одном репозитории, иначе стабы недоступны.",
+              "text": "В `ids` порт указывать нельзя — StubRunner всегда назначает случайный порт, а обратиться к стабу можно только через `StubFinder`.",
               "correct": false,
               "sections": {
                 "what_actually": "Стабы публикуются как `stubs.jar` в Maven/Nexus, поэтому consumer и provider могут быть в разных репозиториях; общий репозиторий не требуется.",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Начинать нужно сразу с HA-развёртывания `Pact Broker` и включения `can-i-deploy` как блокирующего шага для всех пар сервисов одновременно.",
+              "text": "Сразу развернуть `Pact Broker` в HA-кластере и включить блокирующий `can-i-deploy` для всех пар сервисов одновременно, иначе внедрение не масштабируется.",
               "correct": false,
               "sections": {
                 "what_actually": "Начинают с пилота: одна пара consumer-provider, брокер через Docker Compose (без HA), 1-2 теста; `can-i-deploy` сначала warn-only, блокирующим он становится позже.",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Внедрение нужно начинать с самой критичной пары сервисов, чтобы сразу защитить главный бизнес-поток.",
+              "text": "Пилот начинать с самой критичной пары сервисов, чтобы сразу защитить главный бизнес-поток.",
               "correct": false,
               "sections": {
                 "what_actually": "Для пилота берут важную, но **не самую критичную** пару — чтобы учиться без риска уронить ключевой поток на незрелом процессе.",
@@ -2375,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`can-i-deploy` сразу должен быть блокирующим шагом, иначе команды его проигнорируют и пилот не даст результата.",
+              "text": "`can-i-deploy` с первого дня должен блокировать деплой; warn-only лишь приучает команды игнорировать красные пайплайны.",
               "correct": false,
               "sections": {
                 "what_actually": "Сначала `can-i-deploy` включают в режиме warn-only (этап стабилизации брокера), а блокирующим делают лишь на этапе rollout, когда процесс устоялся.",
@@ -2424,7 +2424,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Best practice — версионировать сервисы по semantic version (`1.2.3`), а не по git SHA, чтобы версии были читаемыми.",
+              "text": "Публиковать pact'ы под semantic version сервиса (`1.2.3`), а не под git SHA, чтобы `can-i-deploy` сопоставлял совместимость по мажорным версиям.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендуется версионировать по git SHA: он уникален и точно указывает на коммит; semver переиспользуется и может указывать на разные билды.",
@@ -2436,7 +2436,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Best practice — консолидировать все pact'ы в одной центральной «pact-команде», чтобы унифицировать качество контрактов.",
+              "text": "Контрактами должен владеть отдельный QA-отдел в общем репозитории, а не consumer- и provider-команды, — так качество контрактов единообразно.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендуется обратное: каждая команда **владеет своим** pact'ом; централизация в «pact-команду» убивает ownership.",
@@ -2448,7 +2448,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Best practice — фиксировать в контракте все поля ответа provider'а, чтобы контракт был максимально полным и точным.",
+              "text": "Фиксировать в контракте все поля ответа provider'а, а не только используемые consumer'ом, чтобы контракт был максимально полным.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендуется фиксировать только то, что consumer реально читает: чрезмерно детальный контракт хрупок и ломается на любом изменении ответа.",
