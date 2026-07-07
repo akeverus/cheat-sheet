@@ -253,8 +253,8 @@ _Сводка: файлов=318 · caricature-clean(CAR0)=317/318 · остат�
 | 3 | owasp-top10 | 45 | CRIT | · | 45 | 45 | 45 | 31 | 45 | 34 | 28 | 17 | 14 | 44 | 35 | 14 | 29 | · | 7 | · | 9 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 4 | networking | 43 | CRIT | · | 43 | 43 | 43 | 37 | 43 | 34 | 21 | 12 | 24 | 43 | 31 | 17 | 30 | · | 18 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 5 | argocd | 42 | CRIT | · | 42 | 42 | 42 | 35 | 42 | 34 | 32 | 16 | 19 | 41 | 42 | 4 | 26 | · | 18 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 6 | spring-mvc | 43 | CRIT | · | 43 | 43 | 43 | 12 | 43 | 43 | 39 | 15 | 24 | 43 | 42 | 2 | 29 | · | 8 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 7 | java-collections | 46 | CRIT | · | 46 | 46 | 45 | 28 | 46 | 34 | 29 | 18 | 9 | 43 | 41 | 7 | 20 | · | 16 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 6 | java-collections | 46 | CRIT | · | 46 | 46 | 45 | 28 | 46 | 34 | 29 | 18 | 9 | 43 | 41 | 7 | 20 | · | 16 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 7 | spring-mvc | 43 | CRIT | · | 43 | 43 | 43 | 12 | 43 | 42 | 37 | 14 | 24 | 43 | 42 | 2 | 28 | · | 11 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 8 | jwt | 43 | CRIT | · | 43 | 43 | 43 | 34 | 43 | 34 | 31 | 11 | 20 | 42 | 32 | 10 | 25 | · | 9 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 9 | caching-strategies | 42 | CRIT | · | 42 | 42 | 42 | 30 | 42 | 37 | 30 | 17 | 20 | 39 | 35 | 12 | 19 | · | 12 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 10 | contract-testing | 42 | CRIT | · | 42 | 42 | 42 | 27 | 42 | 41 | 31 | 11 | 19 | 42 | 31 | 8 | 29 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
@@ -262,18 +262,18 @@ _Сводка: файлов=318 · caricature-clean(CAR0)=317/318 · остат�
 | 12 | elasticsearch | 44 | CRIT | · | 44 | 44 | 43 | 26 | 44 | 34 | 31 | 18 | 5 | 41 | 38 | 3 | 29 | · | 12 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 13 | performance-testing | 42 | CRIT | · | 42 | 42 | 41 | 20 | 42 | 37 | 34 | 14 | 15 | 42 | 23 | 20 | 31 | · | 8 | · | 3 | · | · | · | · | 1 | · | · | · | · | · | ✅CAR0 |
 | 14 | unit-testing | 45 | CRIT | · | 45 | 45 | 43 | 30 | 45 | 35 | 27 | 16 | 20 | 42 | 32 | 4 | 15 | · | 7 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 15 | spring-cloud | 43 | CRIT | · | 43 | 43 | 43 | 30 | 43 | 32 | 26 | 11 | 7 | 43 | 39 | 4 | 33 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 15 | spring-cloud | 43 | CRIT | · | 43 | 43 | 43 | 30 | 43 | 30 | 24 | 12 | 7 | 43 | 39 | 4 | 33 | · | 9 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 16 | redis | 43 | CRIT | · | 43 | 43 | 43 | 5 | 43 | 43 | 34 | 7 | 17 | 41 | 35 | 4 | 22 | · | 18 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 17 | fine-tuning-llm | 35 | CRIT | · | 35 | 35 | 35 | 25 | 35 | 33 | 20 | 14 | 22 | 34 | 25 | 26 | 29 | · | 16 | · | 16 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 18 | scala | 40 | CRIT | · | 40 | 40 | 40 | 28 | 40 | 32 | 28 | 8 | 18 | 40 | 39 | 7 | 29 | · | 7 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 19 | integration-testing | 40 | CRIT | · | 40 | 40 | 40 | 27 | 40 | 32 | 29 | 16 | 16 | 39 | 36 | 8 | 18 | · | 13 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 20 | test-strategies | 45 | CRIT | · | 45 | 45 | 45 | 15 | 44 | 37 | 30 | 4 | 11 | 41 | 29 | 8 | 33 | · | 3 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 21 | helm | 43 | CRIT | · | 43 | 43 | 43 | 38 | 43 | 26 | 22 | 8 | 8 | 42 | 40 | 4 | 17 | · | 12 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 22 | database-transactions | 42 | CRIT | · | 42 | 42 | 42 | 28 | 42 | 31 | 26 | 14 | 19 | 38 | 32 | 2 | 24 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 23 | resilience-patterns | 43 | CRIT | · | 43 | 43 | 43 | 28 | 43 | 29 | 22 | 13 | 13 | 38 | 31 | 10 | 22 | · | 9 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 24 | spring-security | 43 | CRIT | · | 43 | 43 | 43 | 32 | 43 | 31 | 17 | 12 | 3 | 42 | 41 | 3 | 19 | · | 15 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 25 | tls-ssl | 45 | CRIT | · | 45 | 45 | 40 | 21 | 44 | 27 | 20 | 14 | 14 | 40 | 39 | 15 | 18 | · | 6 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 26 | spring-data-jpa | 42 | CRIT | · | 42 | 42 | 42 | 26 | 42 | 36 | 27 | 14 | 6 | 42 | 39 | · | 13 | · | 12 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 18 | scala | 40 | CRIT | · | 40 | 40 | 40 | 28 | 40 | 31 | 26 | 10 | 18 | 40 | 39 | 7 | 27 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 19 | test-strategies | 45 | CRIT | · | 45 | 45 | 45 | 15 | 44 | 37 | 30 | 4 | 11 | 41 | 29 | 8 | 33 | · | 3 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 20 | database-transactions | 42 | CRIT | · | 42 | 42 | 42 | 28 | 42 | 31 | 26 | 14 | 19 | 38 | 32 | 2 | 24 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 21 | integration-testing | 40 | CRIT | · | 40 | 40 | 40 | 27 | 40 | 32 | 27 | 17 | 16 | 39 | 36 | 8 | 18 | · | 12 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 22 | resilience-patterns | 43 | CRIT | · | 43 | 43 | 43 | 28 | 43 | 29 | 22 | 13 | 13 | 38 | 31 | 10 | 22 | · | 9 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 23 | tls-ssl | 45 | CRIT | · | 45 | 45 | 40 | 21 | 44 | 27 | 20 | 14 | 14 | 40 | 39 | 15 | 18 | · | 6 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 24 | spring-security | 43 | CRIT | · | 43 | 43 | 43 | 32 | 43 | 31 | 17 | 11 | 3 | 42 | 41 | 3 | 19 | · | 15 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 25 | spring-data-jpa | 42 | CRIT | · | 42 | 42 | 42 | 26 | 42 | 36 | 27 | 14 | 6 | 42 | 39 | · | 13 | · | 12 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
+| 26 | helm | 43 | CRIT | · | 43 | 43 | 43 | 37 | 43 | 24 | 20 | 8 | 8 | 42 | 40 | 4 | 17 | · | 12 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 27 | code-review-practices | 40 | CRIT | · | 40 | 40 | 40 | 27 | 40 | 29 | 10 | 8 | 23 | 40 | 32 | 16 | 33 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 28 | database-sharding | 34 | CRIT | · | 34 | 34 | 34 | 29 | 34 | 31 | 12 | 15 | 30 | 34 | 30 | 24 | 27 | · | 11 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
 | 29 | application-security | 45 | CRIT | · | 45 | 45 | 45 | 13 | 45 | 27 | 25 | 25 | 5 | 38 | 33 | 2 | 23 | · | 6 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
@@ -660,8 +660,20 @@ _Сводка: файлов=318 · caricature-clean(CAR0)=317/318 · остат�
   kube-proxy↔CoreDNS role-swap, iptables O(1) property-transfer, Eureka=CP), `database-transactions` (**6c504a78**,
   Q25/37/38/41/42 — readOnly=SERIALIZABLE, advisory=row-lock, XA-brokers, RYW=isolation-level, WAL=SELECT-cache).
   Все ratio 5-6x→1.9-5.5x, caric=0, tone=0, fidelity+schema OK. Это первая жатва restart-конвейера.
+- ✅ **WORKFLOW-RESTART band#2** (2026-07-07, workflow `wf_74744495-021`, 12 агентов / 0 ошибок / 569K токенов):
+  worst-first по 6 блоков/файл. **36 блоков, 107 дистракторов** (1 отклонён verify-стадией): `spring-cloud`
+  (**b58d388d**, Q32/33/35/39/40/42 — Consul=AP, RateLimiter-in-memory, 503-vs-429, Auth-Code-for-m2m,
+  OpenFeign-как-сервер), `spring-security` (**88229c41**, Q16/32/39/40/41/42 — RS-issues-token, withSecretKey↔RSA
+  swap, SameSite=None-strictest, @WithMockUser↔@WithUserDetails, WebFlux-ThreadLocal), `spring-mvc` (**8d202176**,
+  Q17/21/30/38/40/42 — ViewResolver-десериализует, Commons-default, MockMvc-real-Tomcat, advice-before-local),
+  `scala` (**1c4ef79c**, Q22/27/28/30/37/40 — implicit=access-modifier, ArrayBuffer-immutable, Future-lazy,
+  Akka-still-Apache), `integration-testing` (**6c329134**, Q24/27/30/31/35/38 — mock-DB-real-services swap,
+  JUnit-parallel-default-on, flaky=always-fails, H2-replaces-Testcontainers), `helm` (**e9aa1eb9**, Q35/36/37/40/41/43 —
+  ArgoCD-helm-install, SOPS-encrypts-keys-not-values, post-renderer-before-template, provenance-encrypts).
+  ratio 4.5-5.7x→2.9-4.1x, caric=0, tone=0, fidelity+schema OK. Все 107 прошли ручной semantic-gate.
 - ⏳ **Дальше — worst-first банды по 6 файлов через тот же workflow** (матрица §7 = worst-first очередь).
-  Каждый файл переписывается по ПОЛНЫМ 20 правилам (не только length-tell). Остаток очереди ~293 файла.
+  Band#3 в работе (`wf_d1f033bd-51e`): contract-testing/quarkus/design-url-shortener/fine-tuning-llm/java-types/design-payment-system.
+  Каждый файл переписывается по ПОЛНЫМ 20 правилам (не только length-tell). Остаток очереди ~287 файлов.
   jmh Q9/B — genuine rule-9. Off-limits: agentic-patterns/git/chaos-engineering/postgresql/testcontainers + любой dirty файл.
 
 ---
