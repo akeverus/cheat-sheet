@@ -1029,7 +1029,7 @@
           "question_text": "Какие Samplers и Listeners самые важные в JMeter?",
           "options": [
             {
-              "text": "`View Results Tree` — рекомендуемый listener для production-нагрузки на 1000+ RPS.",
+              "text": "`View Results Tree` логирует каждый запрос с полным телом ответа, поэтому его держат включённым на распределённом прогоне 1000+ RPS для точных перцентилей.",
               "correct": false,
               "sections": {
                 "what_actually": "`View Results Tree` тяжёл по памяти и нужен только для отладки; в prod-тесте его выключают.",
@@ -1054,7 +1054,7 @@
               "label": "B"
             },
             {
-              "text": "`HTTP Request` Sampler умеет отправлять SQL-запросы напрямую в базу данных.",
+              "text": "`HTTP Request` Sampler умеет обращаться к базе по JDBC-пулу и выполнять SQL напрямую, если указать connection pool.",
               "correct": false,
               "sections": {
                 "what_actually": "SQL-запросы выполняет `JDBC Request` Sampler; `HTTP Request` шлёт только HTTP/HTTPS.",
@@ -1066,7 +1066,7 @@
               "label": "C"
             },
             {
-              "text": "`Simple Data Writer` отображает результаты в реальном времени с графиками во время прогона.",
+              "text": "`Simple Data Writer` рисует перцентили на живом графике во время прогона, заменяя собой `Backend Listener`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Simple Data Writer` молча пишет `.jtl` (CSV) для последующего анализа; real-time графики дают другие listeners/Grafana.",
@@ -1989,7 +1989,7 @@
           "question_text": "Что такое ramp-up, think time и realistic workload?",
           "options": [
             {
-              "text": "`Ramp-up` — это пауза между действиями одного виртуального пользователя.",
+              "text": "`Ramp-up` — пауза между отдельными действиями одного виртуального пользователя, имитирующая чтение страницы.",
               "correct": false,
               "sections": {
                 "what_actually": "Пауза между действиями одного VU — это think time; ramp-up — период выхода нагрузки с 0 до целевой.",
@@ -2014,7 +2014,7 @@
               "label": "B"
             },
             {
-              "text": "`Realistic workload` — это когда 100% VU долбят один самый нагруженный эндпоинт.",
+              "text": "`Realistic workload` — когда все виртуальные пользователи одновременно бьют в самый тяжёлый эндпоинт, чтобы быстрее нащупать узкое место.",
               "correct": false,
               "sections": {
                 "what_actually": "Realistic workload — это распределение запросов как в проде (например browse 60%, checkout 5%), а не молотьба одного URL.",
@@ -2026,7 +2026,7 @@
               "label": "C"
             },
             {
-              "text": "`Think time` для всех типов пользователей должен быть одинаковым — обычно ровно 1 секунда.",
+              "text": "`Think time` задаётся единым значением для всех сценариев, обычно около секунды, независимо от типа действия.",
               "correct": false,
               "sections": {
                 "what_actually": "Think time зависит от действия: карточка 3-15 сек, форма 10-60 сек, API consumer 0-1 сек — единого значения нет.",
@@ -2289,7 +2289,7 @@
           "question_text": "Как связать load testing с Grafana/Prometheus и APM?",
           "options": [
             {
-              "text": "График latency сам по себе показывает root cause деградации без других источников.",
+              "text": "График latency сам по себе указывает на root cause деградации, поэтому метрики сервиса, кластера и APM-трейсы избыточны.",
               "correct": false,
               "sections": {
                 "what_actually": "Только latency не покажет причину; нужны метрики теста + сервиса (actuator) + инфраструктуры (node_exporter) + APM-трейсы.",
@@ -2301,7 +2301,7 @@
               "label": "A"
             },
             {
-              "text": "`k6` умеет стримить метрики только в InfluxDB и несовместим с Prometheus.",
+              "text": "`k6` пишет метрики в InfluxDB нативным output-ом, а в Prometheus они попадают через периодический scrape встроенного REST-эндпоинта.",
               "correct": false,
               "sections": {
                 "what_actually": "k6 поддерживает Prometheus remote write: `--out experimental-prometheus-rw` или `K6_PROMETHEUS_RW_SERVER_URL`.",
@@ -2326,7 +2326,7 @@
               "label": "C"
             },
             {
-              "text": "`Gatling` нельзя интегрировать с real-time дашбордами — только с финальным HTML-отчётом.",
+              "text": "`Gatling` отдаёт данные в дашборды после прогона, выгружая `simulation.log` в InfluxDB одним batch-импортом.",
               "correct": false,
               "sections": {
                 "what_actually": "Gatling стримит метрики в real-time в InfluxDB через graphite-writer (`gatling.conf`), помимо финального HTML.",
@@ -2349,7 +2349,7 @@
           "question_text": "Какие anti-patterns и типичные ошибки в нагрузочном тестировании?",
           "options": [
             {
-              "text": "Запускать load-тест из GUI JMeter в prod-режиме — нормальная практика без последствий.",
+              "text": "Гонять нагрузочный тест из GUI JMeter — норма: графический режим потребляет столько же ресурсов, сколько non-GUI прогон.",
               "correct": false,
               "sections": {
                 "what_actually": "GUI съедает CPU/RAM на отрисовку и искажает результаты — это классический anti-pattern; нужен CLI non-GUI режим.",
@@ -2361,7 +2361,7 @@
               "label": "A"
             },
             {
-              "text": "Измерять среднюю latency вместо процентилей — корректный подход, скрывающий лишний шум.",
+              "text": "Измерять среднюю latency вместо перцентилей оправдано: среднее устойчивее к выбросам и вернее отражает пользовательский опыт.",
               "correct": false,
               "sections": {
                 "what_actually": "Среднее скрывает хвосты (anti-pattern): 1% пользователей с 500ms не виден в average; нужны p95/p99/p99.9.",
@@ -2373,7 +2373,7 @@
               "label": "B"
             },
             {
-              "text": "Использовать closed model для web-трафика правильнее, чем open model.",
+              "text": "Для web-трафика closed model точнее open model: фиксированный пул VU не даёт очереди запросов расти бесконтрольно.",
               "correct": false,
               "sections": {
                 "what_actually": "Для web правильна open model; closed model даёт coordinated omission и заниженную latency — это anti-pattern.",
@@ -2422,7 +2422,7 @@
               "label": "A"
             },
             {
-              "text": "`Coordinated omission` — это потеря пакетов в сети между генератором и сервером.",
+              "text": "`Coordinated omission` — потеря пакетов на сетевом пути между генератором нагрузки и сервером, из-за которой часть замеров latency пропадает.",
               "correct": false,
               "sections": {
                 "what_actually": "Это не сетевые потери, а статистическое занижение latency в closed-model инструментах из-за «пропущенных» запросов при замедлении.",
@@ -2434,7 +2434,7 @@
               "label": "B"
             },
             {
-              "text": "`Coordinated omission` возникает в open model и устраняется переходом на closed model.",
+              "text": "`Coordinated omission` проявляется в open model с расписанием заявок и лечится переходом на closed model с ожиданием ответа.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: проблема возникает в closed model и устраняется переходом на open model (arrival rate).",
@@ -2446,7 +2446,7 @@
               "label": "C"
             },
             {
-              "text": "При coordinated omission latency завышается, делая систему хуже, чем она есть.",
+              "text": "При coordinated omission замеренная latency завышается, из-за чего система выглядит медленнее, чем работает на самом деле.",
               "correct": false,
               "sections": {
                 "what_actually": "Latency занижается, а не завышается: «зависшие» запросы не учитываются, и p99 выглядит лучше реального.",
@@ -2469,7 +2469,7 @@
           "question_text": "Как дать сильный ответ про performance testing за 60 секунд?",
           "options": [
             {
-              "text": "Сильный ответ — «используем JMeter, гоняем HTTP-запросы, смотрим среднюю latency».",
+              "text": "Сильный ответ — назвать инструмент (JMeter), сказать «гоняем HTTP-запросы под нагрузкой» и привести среднюю latency как итоговую метрику.",
               "correct": false,
               "sections": {
                 "what_actually": "Это как раз слабый ответ: нет привязки к SLO, «среднее» скрывает tail latency, нет слов о реалистичности, CI, baseline и observability.",
@@ -2494,7 +2494,7 @@
               "label": "B"
             },
             {
-              "text": "В 60-секундном ответе главное — перечислить все инструменты, не упоминая SLO и результаты.",
+              "text": "В 60-секундном ответе главное — исчерпывающе перечислить весь инструментарий (k6, Gatling, JMeter, Grafana), а SLO и итоговые цифры оставить за скобками.",
               "correct": false,
               "sections": {
                 "what_actually": "Перечня инструментов мало: сильный ответ привязан к SLO и заканчивается конкретным результатом (baseline, breaking point, цифры).",
@@ -2506,7 +2506,7 @@
               "label": "C"
             },
             {
-              "text": "Достаточно сказать «load-тест прошёл, значит продакшен выдержит» — это убедительный финал.",
+              "text": "Достаточно завершить фразой «load-тест зелёный, значит прод выдержит пик» — сильный вывод, не требующий деталей про baseline.",
               "correct": false,
               "sections": {
                 "what_actually": "Это ошибка интерпретации: пройденный load-тест не гарантирует prod, если окружение не совпадает; нужен prod-like стенд и baseline.",
