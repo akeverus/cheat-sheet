@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`maxAttempts` задаёт число повторов сверх исходного вызова, поэтому `maxAttempts = 3` даёт всего четыре обращения к методу.",
+              "text": "`maxAttempts` задаёт число повторов сверх первого вызова, поэтому при `maxAttempts = 3` метод обращается к цели до четырёх раз, а паузы между попытками задаёт `backoff`.",
               "correct": false,
               "sections": {
                 "what_actually": "`maxAttempts` включает первую попытку: значение 3 — это исходный вызов плюс два повтора, итого три обращения.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Параметр `retryFor` указывает исключения, которые НЕ нужно повторять, а `noRetryFor` — те, которые повторять.",
+              "text": "Параметр `retryFor` перечисляет исключения, которые повторять НЕ нужно, а `noRetryFor` — те, при которых метод вызывается повторно; обе аннотации пришли на смену прежним `value` и `exclude`.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `retryFor` (бывший `value`) перечисляет исключения для повтора, `noRetryFor` (бывший `exclude`) — те, что повтор пропускает.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "По умолчанию `@Retryable` повторяет метод при любом `Throwable`, а `maxAttempts` равен 5.",
+              "text": "Если попытки исчерпаны и метод `@Recover` не объявлен, `@Retryable` подавляет последнее исключение и возвращает значение по умолчанию (`null` для объектов, `0` для примитивов).",
               "correct": false,
               "sections": {
                 "what_actually": "Дефолтный `maxAttempts` равен 3, и без указания `retryFor` повтор идёт по широкому набору исключений, но это не пять попыток и настраивается явно.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Recover` вызывается перед каждой повторной попыткой, чтобы подготовить состояние для следующего retry.",
+              "text": "`@Recover` вызывается перед каждой повторной попыткой, чтобы подготовить состояние (например, откатить транзакцию) для следующего retry.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Recover` вызывается один раз — только после исчерпания всех попыток как терминальный fallback, а не между попытками.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Первым аргументом `@Recover`-метода должен быть объект исходного запроса, а тип исключения указывать не обязательно.",
+              "text": "Первым аргументом `@Recover`-метода должен идти объект исходного запроса, а параметр с типом пойманного исключения указывать не обязательно.",
               "correct": false,
               "sections": {
                 "what_actually": "Первым аргументом обязан идти тип пойманного исключения (или суперкласс); по нему Spring выбирает нужный recover, а параметры запроса идут следом.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@Recover`-метод может возвращать любой тип, отличный от типа `@Retryable`-метода, например всегда `void`.",
+              "text": "Возвращаемый тип `@Recover`-метода может быть любым, отличным от типа `@Retryable`-метода, — например всегда `void` независимо от исходной сигнатуры.",
               "correct": false,
               "sections": {
                 "what_actually": "Возвращаемый тип `@Recover` должен совпадать с типом `@Retryable`-метода; иначе Spring не сматчит fallback и пробросит исходное исключение.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring Retry` есть единственная политика `SimpleRetryPolicy`, остальные стратегии настраиваются только параметрами `@Backoff`.",
+              "text": "В `Spring Retry` реализация `RetryPolicy` одна — `SimpleRetryPolicy`; прочие стратегии повтора получают не отдельными классами, а параметрами `@Backoff`.",
               "correct": false,
               "sections": {
                 "what_actually": "Политик несколько: `AlwaysRetryPolicy`, `NeverRetryPolicy`, `TimeoutRetryPolicy`, `ExceptionClassifierRetryPolicy`, `CircuitBreakerRetryPolicy`, `CompositeRetryPolicy` — а `@Backoff` отвечает за паузы, а не за условие повтора.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`TimeoutRetryPolicy` ограничивает максимум попыток числом, а не временем, аналогично `SimpleRetryPolicy`.",
+              "text": "`TimeoutRetryPolicy` ограничивает повторы фиксированным числом попыток, а не общим временем выполнения, то есть ведёт себя так же, как `SimpleRetryPolicy`.",
               "correct": false,
               "sections": {
                 "what_actually": "`TimeoutRetryPolicy` повторяет, пока не истёк заданный таймаут по времени; ограничение по числу попыток — это `SimpleRetryPolicy`.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`CompositeRetryPolicy` всегда применяет политики строго по очереди, не комбинируя их решения.",
+              "text": "`CompositeRetryPolicy` применяет вложенные политики строго по очереди, переключаясь на следующую после исчерпания предыдущей, а не комбинирует их решения по AND/OR.",
               "correct": false,
               "sections": {
                 "what_actually": "`CompositeRetryPolicy` именно комбинирует решения вложенных политик с AND/OR-логикой (optimistic/pessimistic), а не выполняет их последовательно по одной.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Retryable` полностью работает с `Mono`/`Flux`: при ошибке в реактивном потоке аспект автоматически переподписывается на источник.",
+              "text": "`@Retryable` полностью работает с `Mono`/`Flux`: аспект оборачивает реактивный конвейер и при ошибке в потоке автоматически переподписывается на источник до `maxAttempts`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Retryable` не работает с реактивными типами; для `Mono`/`Flux` повтор делают оператором `.retryWhen(...)` внутри цепочки.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Реактивный повтор включается параметром `@Retryable(reactive = true)`, который активирует поддержку `Mono`/`Flux`.",
+              "text": "Достаточно вернуть тело метода через `Mono.fromCallable(...)`, и аспект `Spring Retry` начнёт повторять вызов при каждом сигнале `onError` в потоке.",
               "correct": false,
               "sections": {
                 "what_actually": "Параметра `reactive` у `@Retryable` нет; реактивный повтор реализуется операторами Reactor (`retryWhen`/`Retry.backoff`), а не флагом аннотации.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Оператор `Retry.backoff()` поддерживает только фиксированную задержку и не умеет добавлять jitter.",
+              "text": "Оператор `Retry.backoff(...)` умеет только фиксированную задержку между повторами и не поддерживает экспоненциальный рост или добавление `jitter`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Retry.backoff()` даёт экспоненциальный backoff и поддерживает `jitter(...)` для разброса повторов во времени.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`RetryListener` имеет единственный метод `onRetry`, который вызывается перед каждым повтором и не даёт доступа к ошибке.",
+              "text": "`RetryListener` состоит из единственного метода `onRetry(context)`, который вызывается перед каждой попыткой и не передаёт объект возникшего исключения.",
               "correct": false,
               "sections": {
                 "what_actually": "У `RetryListener` есть `open`, `onError` (с доступом к `Throwable`) и `close`; метода `onRetry` без ошибки нет, а ошибка как раз доступна в `onError`.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Метрики числа повторов `Spring Retry` собирает в Micrometer автоматически без `RetryListener`.",
+              "text": "`Spring Retry` публикует счётчики числа повторов в Micrometer автоматически, поэтому отдельный `RetryListener` для сбора метрик не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Встроенных out-of-the-box метрик у `Spring Retry` нет; их собирают вручную в `RetryListener` через `MeterRegistry` (встроенные метрики — у `Resilience4j`).",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`RetryContext.NAME` хранит имя выброшенного исключения, по которому листенер группирует метрики.",
+              "text": "Атрибут `RetryContext.NAME` хранит имя выброшенного исключения, по которому листенер группирует метрики по типам ошибок.",
               "correct": false,
               "sections": {
                 "what_actually": "`RetryContext.NAME` — это имя ретраимого метода/операции, а не имя исключения; тип ошибки берут из `Throwable` в `onError`.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Retry` поддерживает реактивный стек (`Reactor`, RxJava) из коробки, а `Resilience4j` работает только в блокирующем коде.",
+              "text": "`Spring Retry` из коробки поддерживает реактивный стек (`Reactor`, RxJava), тогда как `Resilience4j` применим только в блокирующем императивном коде.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: реактивный стек (Reactor/RxJava) поддерживает `Resilience4j`, а `Spring Retry` с `Mono`/`Flux` не работает.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Retry` предоставляет Rate Limiter и Bulkhead, которых нет в `Resilience4j`.",
+              "text": "`Spring Retry` предоставляет встроенные `RateLimiter` и `Bulkhead` наравне с повтором, поэтому для этих ограничителей `Resilience4j` не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Rate Limiter и Bulkhead есть как раз у `Resilience4j`; в `Spring Retry` их нет вовсе.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Обе библиотеки одинаковы по возможностям: и `Spring Retry`, и `Resilience4j` имеют полноценный CB с `HALF_OPEN`, Rate Limiter и встроенные метрики.",
+              "text": "Обе библиотеки одинаковы по возможностям: и `Spring Retry`, и `Resilience4j` имеют полноценный CB с `HALF_OPEN`, `RateLimiter` и встроенные метрики Micrometer.",
               "correct": false,
               "sections": {
                 "what_actually": "Возможности различаются: у `Spring Retry` базовый CB без `HALF_OPEN`, нет Rate Limiter и встроенных метрик — всё это есть только у `Resilience4j`.",
