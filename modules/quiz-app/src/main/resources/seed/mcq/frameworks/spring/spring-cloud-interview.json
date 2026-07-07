@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Consul` — это AP-система с eventual consistency, точно как `Eureka`, и не использует консенсус.",
+              "text": "`Consul` — AP-система с eventual consistency, как `Eureka`: узлы расходятся при сетевом разделе и синхронизируются gossip-протоколом без единого лидера и консенсуса.",
               "correct": false,
               "sections": {
                 "what_actually": "`Consul` — CP-система с Raft-консенсусом; eventual consistency без консенсуса — это модель `Eureka`.",
@@ -1895,7 +1895,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Consul` не умеет хранить конфигурацию и не может заменить `Config Server` — только discovery.",
+              "text": "`Consul` умеет только discovery: хранить конфигурацию через KV он не способен, поэтому `Config Server` заменить не может.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Consul` есть встроенный KV-store, и через `consul-config` он работает как источник конфигурации.",
@@ -1944,7 +1944,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`RequestRateLimiter` в Gateway хранит счётчики в памяти каждого инстанса, поэтому `Redis` не требуется.",
+              "text": "`RequestRateLimiter` держит счётчики Token Bucket в локальной памяти каждого инстанса Gateway, поэтому `Redis` подключать не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию `RequestRateLimiter` использует `Redis` для общего распределённого счётчика между всеми инстансами Gateway.",
@@ -1956,7 +1956,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При превышении лимита Gateway возвращает `503 Service Unavailable`, как при сбое downstream-сервиса.",
+              "text": "При превышении лимита `RequestRateLimiter` возвращает `503 Service Unavailable`, как при недоступности downstream-сервиса.",
               "correct": false,
               "sections": {
                 "what_actually": "При превышении rate limit возвращается `429 Too Many Requests`, а не `503`.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`KeyResolver` задаёт downstream-URL маршрута, а не ключ, по которому считается лимит запросов.",
+              "text": "`KeyResolver`-бин вычисляет downstream-URL маршрута, а не ключ, по которому считается лимит запросов.",
               "correct": false,
               "sections": {
                 "what_actually": "`KeyResolver` вычисляет ключ для лимитирования (пользователь/IP/API-ключ); URL маршрута задаётся в `uri`.",
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для machine-to-machine между сервисами используют `Authorization Code` grant с редиректом пользователя в браузер.",
+              "text": "Для machine-to-machine между сервисами применяют `Authorization Code` grant: вызывающий сервис редиректит пользователя в браузер на `/oauth2/authorize`, получает код и меняет его на токен.",
               "correct": false,
               "sections": {
                 "what_actually": "Для M2M используют `Client Credentials` grant (без пользователя); `Authorization Code` с редиректом — для интерактивного входа пользователя.",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Resource Server валидирует токен, обращаясь к базе данных вызывающего сервиса, а не по `issuer-uri`.",
+              "text": "Resource Server валидирует токен через интроспекцию в базе данных вызывающего сервиса, а не по `issuer-uri` и его JWKS.",
               "correct": false,
               "sections": {
                 "what_actually": "Resource Server валидирует JWT по `issuer-uri` auth-сервера (подпись/ключи), а не через БД вызывающего сервиса.",
@@ -2088,7 +2088,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Токен в Feign-вызов добавляется автоматически без какой-либо конфигурации, как заголовки трассировки.",
+              "text": "Токен в Feign-вызов подставляется автоматически без `RequestInterceptor` и какой-либо конфигурации, как заголовки трассировки.",
               "correct": false,
               "sections": {
                 "what_actually": "OAuth2-токен в Feign кладут явно через `RequestInterceptor` поверх `OAuth2AuthorizedClientManager`; автоматически он не добавляется.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Cloud Kubernetes` требует, чтобы в кластере дополнительно работал `Eureka Server` — он лишь проксирует к нему.",
+              "text": "`Spring Cloud Kubernetes` не заменяет `Eureka`, а требует поднять `Eureka Server` внутри кластера и лишь проксирует к нему запросы discovery.",
               "correct": false,
               "sections": {
                 "what_actually": "Он заменяет `Eureka` нативным `K8s` discovery (DNS + `Service`); отдельный `Eureka Server` не нужен.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Конфигурацию `Spring Cloud Kubernetes` берёт только из внешнего `Config Server`, а `ConfigMap` не поддерживает.",
+              "text": "Конфигурацию `Spring Cloud Kubernetes` читает только из внешнего `Config Server`, а `ConfigMap`/`Secret` как источник не поддерживает.",
               "correct": false,
               "sections": {
                 "what_actually": "Он читает конфигурацию из `ConfigMap`/`Secret` напрямую через `K8s` API, заменяя `Config Server`.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для работы `Spring Cloud Kubernetes` не нужны никакие права в кластере — он читает `K8s` API анонимно.",
+              "text": "Для работы `Spring Cloud Kubernetes` не нужны права в кластере — он читает `K8s` API анонимно, без `ServiceAccount` и RBAC.",
               "correct": false,
               "sections": {
                 "what_actually": "Доступ к `K8s` API требует RBAC: `ServiceAccount` с правами читать `services`/`endpoints`/`configmaps`.",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@RefreshScope` пересоздаёт бин автоматически каждые несколько секунд, поэтому вызывать `/actuator/refresh` не нужно.",
+              "text": "`@RefreshScope`-бины пересоздаются автоматически по таймеру каждые несколько секунд, поэтому вызывать `/actuator/refresh` не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Бин с `@RefreshScope` пересоздаётся не по таймеру, а по триггеру `/actuator/refresh` (или событию `Bus`).",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`/actuator/refresh` перезапускает весь JVM-процесс приложения, чтобы применить новую конфигурацию.",
+              "text": "`POST /actuator/refresh` перезапускает весь JVM-процесс приложения, чтобы применить новую конфигурацию, как обычный рестарт.",
               "correct": false,
               "sections": {
                 "what_actually": "`/actuator/refresh` не перезапускает процесс — он лишь пересоздаёт `@RefreshScope`-бины внутри живого приложения.",
@@ -2375,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Один вызов `/actuator/refresh` обновляет сразу все инстансы сервиса, поэтому `Spring Cloud Bus` не нужен.",
+              "text": "Один `POST /actuator/refresh` обновляет сразу все инстансы сервиса через `Config Server`, поэтому `Spring Cloud Bus` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "`/actuator/refresh` обновляет только тот инстанс, на котором вызван; для всех сразу нужен `Bus` и `busrefresh`.",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OpenFeign` генерирует серверные контроллеры из интерфейса — он поднимает HTTP-эндпоинты, а не вызывает чужие.",
+              "text": "`OpenFeign` генерирует из интерфейса серверные контроллеры и поднимает HTTP-эндпоинты, а не вызывает удалённые сервисы.",
               "correct": false,
               "sections": {
                 "what_actually": "`OpenFeign` генерирует HTTP-клиент (исходящие вызовы); серверные эндпоинты создаёт `@RestController`.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы активировать Feign-клиенты, не нужна аннотация `@EnableFeignClients` — интерфейсы становятся бинами сами.",
+              "text": "Аннотация `@EnableFeignClients` не нужна: помеченные `@FeignClient` интерфейсы становятся бинами обычным компонент-сканированием.",
               "correct": false,
               "sections": {
                 "what_actually": "Активация требует `@EnableFeignClients` (часто с `basePackages`); без неё `@FeignClient`-интерфейсы не сканируются.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `@FeignClient` поле `name` обязано быть полным URL с протоколом и портом, иначе вызов не пройдёт.",
+              "text": "Поле `name` в `@FeignClient` обязано быть полным URL со схемой и портом (`http://host:8080`); имя сервиса для discovery туда класть нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "`name` — логическое имя сервиса для discovery/`LoadBalancer`; полный URL задают опционально через `url`.",
