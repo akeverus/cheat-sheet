@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Facts задаются вручную в playbook через `vars` и не имеют отношения к автоматическому сбору данных о хосте.",
+              "text": "Facts — данные о хосте (ОС, память, сеть), но собирает их lightweight-агент, заранее установленный на каждом managed node и присылающий сводку на control node, а не механизм самого `Ansible` по `SSH`.",
               "correct": false,
               "sections": {
                 "what_actually": "Facts собираются автоматически с managed node (ОС, память, сеть); ручные значения в `vars` — это обычные переменные, не facts.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Сбор facts нельзя отключить — `Ansible` всегда собирает их на каждом хосте перед запуском play.",
+              "text": "Facts — информация о managed node, собираемая модулем `setup`; снятая на первом хосте, она кэшируется глобально и переиспользуется для всех остальных хостов play без повторного сбора.",
               "correct": false,
               "sections": {
                 "what_actually": "Сбор отключается через `gather_facts: no` — именно так ускоряют прогон на больших флотах, когда facts не нужны.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Кастомные facts задаются только через CLI-флаг `-e` и не могут жить файлами на самом хосте.",
+              "text": "Facts собираются автоматически о каждом хосте, но обратиться к ним можно только через `hostvars[inventory_hostname]`; прямой доступ по `ansible_facts['distribution']` или алиасам вроде `ansible_hostname` не поддерживается.",
               "correct": false,
               "sections": {
                 "what_actually": "Кастомные facts кладут файлами в `/etc/ansible/facts.d/` на managed node; `-e` — это extra vars, не механизм custom facts.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Ansible Vault` — это отдельный сетевой сервис хранения секретов, который надо развернуть, как `HashiCorp Vault`.",
+              "text": "`Ansible Vault` — отдельный сервис-хранилище секретов: его разворачивают рядом с control node, а playbooks во время выполнения обращаются к нему за паролями по `HTTP API`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Ansible Vault` — встроенная утилита шифрования файлов/строк локально, а не сетевой сервис; сетевой сервис — это `HashiCorp Vault`.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Vault шифрует только целые файлы и не умеет зашифровать одну переменную-строку внутри playbook.",
+              "text": "`Ansible Vault` шифрует секреты, но только целыми файлами: `ansible-vault encrypt secrets.yml` зашифрует файл полностью, а зашифровать одну переменную-строку прямо в обычном playbook нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Vault умеет и одну строку: `ansible-vault encrypt_string 'mypassword' --name 'db_password'` даёт зашифрованный inline-блок.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Зашифрованный Vault-файл расшифровывается автоматически без всякого пароля при запуске playbook.",
+              "text": "Зашифрованный Vault-файл расшифровывается автоматически по `SSH`-ключу, которым `Ansible` подключается к managed node, поэтому отдельный vault-пароль при запуске playbook указывать не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Для расшифровки при запуске нужен пароль: `--ask-vault-pass` или `--vault-password-file`; без него playbook упадёт.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Ansible` stateful и ведёт state-файл инфраструктуры, а `Terraform` stateless и независим между прогонами.",
+              "text": "`Ansible` — stateful: ведёт state-файл и сверяет с ним инфраструктуру, а `Terraform` — stateless, каждый прогон независим; поэтому встроенный drift detection есть у `Ansible`, а `Terraform` его лишён.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `Terraform` stateful (state-файл), а `Ansible` stateless — каждый его прогон независим.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Terraform` — это процедурный инструмент config management, а `Ansible` — декларативный provisioning инфраструктуры.",
+              "text": "`Ansible` — декларативный: описывает желаемое состояние всей инфраструктуры целиком, а `Terraform` — процедурный: выполняет шаги по порядку; поэтому идемпотентность у `Ansible` охватывает всю инфраструктуру, а у `Terraform` — только отдельные шаги.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `Terraform` декларативен и про provisioning, а `Ansible` процедурен (задачи по порядку) и силён в config management.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Ansible` и `Terraform` — прямые конкуренты, и использовать их вместе бессмысленно и избыточно.",
+              "text": "`Ansible` и `Terraform` покрывают один и тот же слой автоматизации — и provisioning, и config management, — поэтому это прямые конкуренты, и совместное использование лишь дублирует функциональность.",
               "correct": false,
               "sections": {
                 "what_actually": "Их как раз часто используют вместе: `Terraform` provisioning'ит инфраструктуру, `Ansible` конфигурирует софт на ней.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Ansible`, `Puppet` и `Chef` все agentless и работают по `SSH` без установки агентов на узлы.",
+              "text": "`Ansible`, `Puppet` и `Chef` — все три agentless: подключаются к узлам по `SSH` без установки агента и различаются лишь языком описания (`YAML`, Puppet DSL, `Ruby`).",
               "correct": false,
               "sections": {
                 "what_actually": "Agentless только `Ansible`; `Puppet` и `Chef` agent-based и требуют установки агента (демона) на каждый узел.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Chef` использует язык `YAML` и push-модель, что делает его эквивалентным `Ansible` по архитектуре.",
+              "text": "`Chef` описывает конфигурацию на `YAML` и работает по push-модели с control node, что делает его архитектурно эквивалентным `Ansible`; `Puppet` же agent-based и использует pull.",
               "correct": false,
               "sections": {
                 "what_actually": "`Chef` использует `Ruby` и pull-модель с агентом; `YAML` и push — это про `Ansible`, не про `Chef`.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "По состоянию на 2025 `Puppet` и `Chef` имеют наивысший adoption, а `Ansible` declining и почти не используется.",
+              "text": "По adoption на 2025 лидируют `Puppet` и `Chef` за счёт зрелых экосистем `Forge` и `Supermarket`, а `Ansible` остаётся нишевым инструментом с падающей популярностью.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: у `Ansible` highest adoption в 2025, а `Puppet`/`Chef` declining и считаются legacy.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Лучшая практика — использовать `command`/`shell` вместо профильных модулей, потому что так гибче и быстрее.",
+              "text": "Отдавать предпочтение модулям `command` и `shell` вместо специализированных модулей — так задачи короче и не зависят от версии конкретного модуля.",
               "correct": false,
               "sections": {
                 "what_actually": "Best practice ровно обратная: НЕ использовать `command`/`shell` при наличии профильного модуля, ради идемпотентности.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для версий пакетов рекомендуется всегда ставить `state: latest`, чтобы система была максимально свежей.",
+              "text": "Для пакетов указывать `state: latest`, а не пинить версии, чтобы окружение всегда получало свежие багфиксы и security-патчи.",
               "correct": false,
               "sections": {
                 "what_actually": "Best practice — пинить версии и избегать `latest`, потому что `latest` ломает воспроизводимость между хостами.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Секреты лучше хранить в playbook открытым текстом в git, чтобы команда легко их находила.",
+              "text": "Хранить секреты открытыми переменными в `group_vars`, а сам репозиторий держать приватным — этого достаточно, шифровать их через `Vault` избыточно.",
               "correct": false,
               "sections": {
                 "what_actually": "Секреты держат в `ansible-vault` (или интегрируют `HashiCorp Vault`), а не открытым текстом в git.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главная проблема `Ansible` в том, что он требует устанавливать агент на каждый узел и обновлять его.",
+              "text": "Основная эксплуатационная проблема — накладные расходы на агента: его надо установить на каждый managed node и следить, чтобы его версия совпадала с версией control node.",
               "correct": false,
               "sections": {
                 "what_actually": "`Ansible` agentless — нет агента и его обновлений; типичные проблемы это `SSH`, `become`, precedence, forks и тестирование.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Медленное выполнение `Ansible` нельзя ускорить — параметр forks и отключение фактов на скорость не влияют.",
+              "text": "Медленное выполнение почти не ускоряется параметром `forks`: он задаёт лишь размер буфера вывода, тогда как скорость упирается в последовательный парсинг `YAML` на control node.",
               "correct": false,
               "sections": {
                 "what_actually": "Скорость как раз тюнят: повышают `forks` и ставят `gather_facts: no`; низкий forks и сбор фактов — частые причины тормозов.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Inventory drift невозможен в `Ansible`, потому что список хостов всегда автоматически актуален.",
+              "text": "Проблема `inventory drift` для `Ansible` неактуальна: перед каждым play `Ansible` валидирует статический inventory-файл и сам вычёркивает из него недоступные хосты, поддерживая список в актуальном виде.",
               "correct": false,
               "sections": {
                 "what_actually": "Inventory drift (устаревший static-список хостов) — реальная частая проблема; её снимает dynamic inventory, но static не самообновляется.",
