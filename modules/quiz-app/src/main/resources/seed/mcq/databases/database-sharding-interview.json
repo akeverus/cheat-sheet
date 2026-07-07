@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Cross-shard `JOIN` между двумя таблицами, шардированными по разным ключам, выполняется так же дёшево, как локальный join, потому что роутер сам собирает данные.",
+              "text": "Cross-shard `JOIN` таблиц, шардированных по разным ключам (`user_id` и `order_id`), роутер выполняет распределённым hash-join'ом: он параллельно стягивает совпадающие строки со всех shards с той же стоимостью, что и локальный join, поэтому денормализация и broadcast-таблицы для этого не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Cross-shard join экспоненциально дорог; его решают co-located sharding, денормализацией, broadcast tables или app-level join, а не «бесплатной» сборкой роутером.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Broadcast (reference) tables` шардируют по `tenant_id` вместе с остальными таблицами, поэтому JOIN с ними обычно превращается в cross-shard операцию с обходом всех shards.",
+              "text": "`Broadcast (reference) tables` — небольшие справочники (страны, категории, currencies), которые шардируются по `tenant_id` наравне с основными таблицами; поэтому JOIN с ними локален лишь на своём shard, а для остальных данных требует обхода всех узлов.",
               "correct": false,
               "sections": {
                 "what_actually": "Reference tables как раз реплицируются на каждый shard целиком (не шардируются), чтобы JOIN с ними был локальным — шардировать их по `tenant_id` это anti-pattern (Q33).",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Co-located sharding` означает, что обе таблицы шардированы по разным ключам, и Citus автоматически переносит данные между shards во время JOIN.",
+              "text": "`Co-located sharding` означает, что связанные таблицы шардированы по разным distribution-ключам, а Citus сопоставляет их через общий `co-located distribution column`, поэтому JOIN выполняется локально на каждом shard без обхода узлов.",
               "correct": false,
               "sections": {
                 "what_actually": "Co-located — это шардирование обеих таблиц по одному и тому же ключу (`tenant_id`), чтобы связанные строки лежали на одном shard и JOIN был локальным без переноса данных.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Saga` выполняет по одной локальной транзакции на каждый shard, но при сбое на шаге K автоматически откатывает уже закоммиченные шаги 1..K-1 средствами СУБД, без написания компенсаций.",
+              "text": "`Saga` разбивает распределённую операцию на N локальных транзакций (по одной на shard), каждая коммитится в своём узле; при сбое на шаге K сама СУБД откатывает уже закоммиченные шаги 1..K-1, поэтому compensating transactions вручную писать не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Saga — eventually consistent, а не атомарна: она разбивает транзакцию на локальные шаги и откатывает их compensating transactions при сбое шага.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`2PC` продолжает работу даже при падении координатора между фазами prepare и commit: участники по таймауту самостоятельно решают commit или abort и снимают блокировки.",
+              "text": "`2PC (two-phase commit)`: координатор делает prepare, собирает «yes» от всех участников, затем commit (иначе abort); если координатор падает между prepare и commit, участники по таймауту сами выбирают commit или abort и снимают локи, поэтому долгих блокировок нет.",
               "correct": false,
               "sections": {
                 "what_actually": "2PC именно блокирующий: при падении координатора между prepare и commit участники остаются заблокированными до его восстановления.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Outbox`-паттерн оборачивает запись данных в shard и публикацию в Kafka в общую распределённую 2PC-транзакцию, чтобы обе операции применились атомарно.",
+              "text": "`Outbox + локальные транзакции`: каждый shard оборачивает бизнес-запись и запись события для Kafka в одну распределённую 2PC-транзакцию, чтобы данные и событие применились атомарно, а воркер затем просто читает `outbox`.",
               "correct": false,
               "sections": {
                 "what_actually": "Outbox как раз избегает 2PC: событие пишется в outbox-таблицу в той же локальной транзакции, а воркер асинхронно публикует его в Kafka.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Клиент в MongoDB sharding подключается напрямую к shard'у и по формуле `hash(shard key) mod N` сам вычисляет, на каком узле лежат данные, минуя маршрутизатор.",
+              "text": "В MongoDB sharding клиент подключается напрямую к нужному shard'у (replica set) и сам вычисляет его по `hash(shard key) mod N`; `config servers` при этом лишь хранят диапазоны chunks на случай ребаланса.",
               "correct": false,
               "sections": {
                 "what_actually": "Клиент подключается к `mongos` — stateless-роутеру, который по метаданным определяет нужный shard; прямого подключения к shard в обход роутера нет.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Config servers` хранят пользовательские данные коллекций и обслуживают запросы чтения, а `shards` держат метаданные о том, какой chunk на каком узле.",
+              "text": "`Config servers` — replica set из 3 узлов, который хранит пользовательские данные коллекций и обслуживает чтения; `shards` (тоже replica set) держат метаданные о том, какой chunk на каком узле.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны: config servers (replica set из 3 узлов) хранят метаданные (диапазоны chunks → shards), а пользовательские данные лежат на shards.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Chunk` в MongoDB — это диапазон значений shard key, а balancer перемещает такие chunks между config servers, выравнивая на них нагрузку.",
+              "text": "`Chunk` — диапазон значений shard key (default 128 MB, единица перемещения); `balancer` — фоновый процесс на config servers, который при перекосе перемещает chunks между самими config servers через split + migrate.",
               "correct": false,
               "sections": {
                 "what_actually": "Chunk — это диапазон значений shard key (default 128 MB), а не весь shard; balancer перемещает chunks между shards через split + migrate.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`VTGate` в Vitess — это sidecar рядом с каждым MySQL-инстансом, отвечающий за connection pooling и throttling, а `VTTablet` — stateless-роутер, к которому подключается клиент по MySQL-протоколу.",
+              "text": "`VTGate` — sidecar-прокси рядом с каждым MySQL-инстансом, отвечающий за connection pooling, throttling и streaming; `VTTablet` — stateless router (как mongos), к которому клиент подключается обычным MySQL-протоколом.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны: VTGate — это stateless router (как mongos), а VTTablet — sidecar к каждому MySQL-инстансу с pooling/throttling/streaming.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Vindex` в Vitess — это binlog-based механизм репликации, который переносит данные между shards при resharding, а не способ отобразить колонку в keyspace_id.",
+              "text": "`Vindex` — binlog-based механизм Vitess для миграций (resharding, materialize, online schema changes): он переносит данные между shards, отслеживая изменения MySQL-binlog.",
               "correct": false,
               "sections": {
                 "what_actually": "Vindex — это как раз маппинг колонки → keyspace_id (типы hash, lookup, numeric, xxhash); MySQL-binlog-репликацию делает vReplication, а не vindex.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Vitess работает поверх форка MySQL с изменённым wire-протоколом, поэтому существующему приложению нужен специальный Vitess-драйвер вместо стандартного MySQL-клиента.",
+              "text": "Vitess работает поверх форка MySQL с модифицированным wire-протоколом, поэтому существующему приложению нужен специальный Vitess-драйвер вместо стандартного MySQL-клиента.",
               "correct": false,
               "sections": {
                 "what_actually": "Vitess работает поверх обычного MySQL, и клиент подключается стандартным MySQL-протоколом через VTGate — переписывать драйвер не нужно.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В CockroachDB таблица распределяется по узлам после того, как разработчик задаёт в DDL `shard key`; без такого объявления она остаётся на одном узле.",
+              "text": "CockroachDB распределяет таблицу автоматически, но только после того, как в DDL задан `SHARD KEY`: без такого объявления вся таблица остаётся на одном узле. Данные хранятся как KV-пары (key = `tablePrefix + PK + columnFamily`); keyspace разбит на `ranges` (~64-512 MB); каждый range — Raft group, реплицируется на 3+ узла; при росте range — `auto-split` на два меньших, при перекосе — `auto-rebalance` на менее загруженные узлы. Hot spots от monotonic PK решают `UUID` PK или `hash sharded indexes` (`USING HASH WITH (bucket_count = 16)`). Похожая модель: TiDB, Spanner, YugabyteDB.",
               "correct": false,
               "sections": {
                 "what_actually": "CockroachDB шардирует автоматически — понятия «shard key» в DDL нет; keyspace сам разбивается на ranges и авто-сплитится при росте.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Каждый `range` в CockroachDB хранится на одном узле без репликации ради экономии места, а отказоустойчивость обеспечивается периодическими бэкапами keyspace.",
+              "text": "CockroachDB шардирует автоматически — понятия «shard key» в DDL нет. Данные хранятся как KV-пары (key = `tablePrefix + PK + columnFamily`); keyspace разбит на `ranges` (~64-512 MB); каждый range держится на одном узле без репликации ради экономии места, а отказоустойчивость обеспечивают периодические бэкапы keyspace; при росте range — `auto-split` на два меньших, при перекосе — `auto-rebalance`. Hot spots от monotonic PK решают `UUID` PK или `hash sharded indexes` (`USING HASH WITH (bucket_count = 16)`). Похожая модель: TiDB, Spanner, YugabyteDB.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый range — это Raft group, реплицируемая на 3+ узла; падение одного узла не теряет данные, реплики продолжают обслуживать range.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`auto-split` в CockroachDB сливает соседние ranges в один более крупный при росте нагрузки, чтобы сократить число Raft-групп и накладные расходы на консенсус.",
+              "text": "CockroachDB шардирует автоматически — понятия «shard key» в DDL нет. Данные хранятся как KV-пары (key = `tablePrefix + PK + columnFamily`); keyspace разбит на `ranges` (~64-512 MB); каждый range — Raft group, реплицируется на 3+ узла. При росте нагрузки `auto-split` сливает соседние ranges в один более крупный, чтобы сократить число Raft-групп и накладные расходы на консенсус; балансировку даёт `auto-rebalance`. Hot spots от monotonic PK решают `UUID` PK или `hash sharded indexes` (`USING HASH WITH (bucket_count = 16)`). Похожая модель: TiDB, Spanner, YugabyteDB.",
               "correct": false,
               "sections": {
                 "what_actually": "Auto-split делает обратное: при превышении порога range делится на два меньших, увеличивая их число; объединения «при росте» нет.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В DynamoDB `partition key` упорядочивает items внутри партиции, а `sort key` хешируется и определяет, в какую партицию попадёт item.",
+              "text": "Primary key в DynamoDB — это `partition key` либо `(partition key, sort key)`, где `partition key` упорядочивает items внутри партиции, а `sort key` хешируется и определяет, в какую партицию попадёт item.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны: partition key хешируется и выбирает партицию, а sort key упорядочивает items внутри одной партиции.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "DynamoDB GSI обновляется синхронно вместе с основной таблицей и остаётся strong-consistent, поэтому read-after-write по GSI сразу возвращает только что записанный item без задержки.",
+              "text": "`GSI` (Global Secondary Index) — отдельная «таблица» с другим partition/sort key, которая обновляется синхронно в той же транзакции, что и основная, и остаётся strong-consistent, поэтому read-after-write по индексу сразу возвращает свежий item.",
               "correct": false,
               "sections": {
                 "what_actually": "DynamoDB GSI async-реплицируется и eventually consistent: только что записанный item может ещё не появиться в GSI, read-after-write не гарантирован.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Hot partition` в DynamoDB снимают увеличением provisioned capacity таблицы: если поднять общие RCU/WCU, партиции получают больше пропускной способности и тротлинг на горячем ключе уходит.",
+              "text": "`Hot partition` снимают увеличением provisioned capacity таблицы: если поднять общие RCU/WCU, throughput делится между всеми партициями, поэтому и горячий `partition key` получает больше пропускной способности и тротлинг уходит.",
               "correct": false,
               "sections": {
                 "what_actually": "Hot partition лечат именно salting, adaptive capacity и DAX-кэшем: лимит считается per-partition, поэтому рост общей capacity не снимает перекос на один ключ.",
