@@ -76,9 +76,6 @@ app:
   # Каталог групп/порядка тем для UI и селектора вопросов
   topic-groups-config: topic-groups.yaml
 
-  # AI-провайдер: openai, deepseek
-  ai-provider: ${AI_PROVIDER:openai}
-
   # --- Безопасность чувствительных endpoint ---
   admin-token: ${APP_ADMIN_TOKEN:}
   regenerate-rate-limit-per-minute: ${REGENERATE_RATE_LIMIT_PER_MINUTE:20}
@@ -87,55 +84,11 @@ app:
   interview:
     learned-repetitions: 3        # порог «выучено»
     exam-penalty-questions: 5     # штрафные вопросы при ошибке в экзамене
-    expand-per-source: 0          # число дополнительных формулировок из одного источника (0 = отключено)
     max-session-count: 200        # максимум вопросов в сессии (защита от DoS)
     default-exam-count: 20       # дефолтное число вопросов в экзамене
     default-marathon-count: 50   # дефолтное число вопросов в марафоне
     default-daily-goal: 10         # цель на день для streak-бара
     senior-rule-priority-overrides: {} # пример: {spring-transactional: 5, sql-null-semantics: 4}
-
-  # --- Общие настройки AI-запросов ---
-  ai:
-    timeout-seconds: 60
-    max-input-length: 10000       # максимальная длина ввода в AI (символов)
-    question-preview-length: 60  # длина превью вопроса в логах
-    answer-preview-length: 500   # длина превью ответа при передаче в AI
-    # ВАЖНО: основной источник MCQ — JSON-сидеры (seed/mcq/<category>/<topic>.json).
-    # AI используется только если включён явный fallback И есть API-ключ.
-    # Включай только когда осознанно хочешь автоматический догенератор опций.
-    fallback-enabled: ${AI_FALLBACK_ENABLED:false}
-
-  # --- DeepSeek ---
-  deepseek:
-    base-url: https://api.deepseek.com
-    endpoint: /v1/chat/completions
-    model: deepseek-chat
-    api-key: ${DEEPSEEK_API_KEY:}
-    temperature: 0.4
-
-  # --- OpenAI (ChatGPT) ---
-  openai:
-    base-url: https://api.openai.com
-    endpoint: /v1/chat/completions
-    model: ${OPENAI_MODEL:gpt-4.1-mini}
-    api-key: ${OPENAI_API_KEY:}
-    temperature: 0.4
-
-  # --- Предзагрузка вариантов ответов ---
-  preload:
-    batch-size: 5
-    core-pool-size: 4
-    max-pool-size: 8
-    queue-capacity: 100
-    sleep-ms: 200
-    max-queue-size: 50
-    max-queues: 20
-    startup-preload: ${PRELOAD_STARTUP_PRELOAD:false}
-    full-warmup: ${PRELOAD_FULL_WARMUP:false}
-    warmup-limit: ${PRELOAD_WARMUP_LIMIT:0} # 0 = все вопросы, >0 = только первые N (тестовый режим)
-    test-mode: ${PRELOAD_TEST_MODE:false}   # true + warmup-limit=0 => автолимит 10 вопросов
-    warmup-random-seed: ${PRELOAD_WARMUP_RANDOM_SEED:-1} # -1 = новый random subset на каждый прогрев
-    log-progress-every: 50       # логировать прогресс предзагрузки каждые N вопросов
 
   # --- Кэш вариантов ответов ---
   cache:

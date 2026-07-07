@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * <pre>
  * app:
  *   interview-path: cheatsheets/interview
- *   ai-provider: openai
  *   interview:
  *     learned-repetitions: 3
  *     exam-penalty-questions: 5
@@ -48,22 +47,6 @@ public class AppProperties {
     /** Настройки тестирования (пороги, лимиты, defaults). */
     @Valid @NotNull
     private Interview interview = new Interview();
-
-    /** Настройки AI-провайдера: общие параметры запросов. */
-    @Valid @NotNull
-    private Ai ai = new Ai();
-
-    /** Конфигурация DeepSeek API. */
-    @Valid @NotNull
-    private DeepSeek deepseek = new DeepSeek();
-
-    /** Конфигурация OpenAI API. */
-    @Valid @NotNull
-    private OpenAi openai = new OpenAi();
-
-    /** Настройки фонового предзагрузчика вариантов ответов. */
-    @Valid @NotNull
-    private Preload preload = new Preload();
 
     /** Настройки in-memory кэша вариантов ответов. */
     @Valid @NotNull
@@ -103,28 +86,6 @@ public class AppProperties {
      */
     private boolean trustForwardedForHeader = false;
 
-    /**
-     * @return true, если хотя бы у одного из AI-провайдеров задан API-ключ
-     */
-    public boolean isAiEnabled() {
-        OpenAi openai = getOpenai();
-        DeepSeek deepseek = getDeepseek();
-        boolean openaiSet = openai != null && openai.getApiKey() != null && !openai.getApiKey().isBlank();
-        boolean deepseekSet = deepseek != null && deepseek.getApiKey() != null && !deepseek.getApiKey().isBlank();
-        return openaiSet || deepseekSet;
-    }
-
-    /**
-     * @return true, если можно генерировать варианты ответа через AI «на лету».
-     * По умолчанию false: проект использует JSON-сидеры из {@code seed/mcq/**} как
-     * основной источник опций, а AI трогаем только если кто-то осознанно включит
-     * {@code app.ai.fallback-enabled=true} и при этом задан хотя бы один ключ.
-     */
-    public boolean isAiFallbackAllowed() {
-        Ai aiCfg = getAi();
-        return isAiEnabled() && aiCfg != null && aiCfg.isFallbackEnabled();
-    }
-
     // ========== Вложенные классы конфигурации ==========
 
     /**
@@ -142,10 +103,6 @@ public class AppProperties {
         @Min(value = 0, message = "app.interview.exam-penalty-questions не может быть отрицательным")
         private int examPenaltyQuestions = 5;
 
-        /** Число дополнительных формулировок вопроса из одного источника (0 = отключено). */
-        @Min(0) @Max(5)
-        private int expandPerSource = 0;
-
         /** Максимальное количество вопросов в сессии (защита от DoS). */
         @Min(1) @Max(500)
         private int maxSessionCount = 200;
@@ -160,159 +117,6 @@ public class AppProperties {
 
         /** Переопределение приоритетов Senior-правил по ключу (key -> priority). */
         private Map<String, Integer> seniorRulePriorityOverrides = new ConcurrentHashMap<>();
-
-        /** Значение служебных метаданных для AI-сгенерированных вопросов. */
-        @NotBlank
-        private String questionGeneratedMetadataValue = "generated";
-    }
-
-    /**
-     * Общие параметры AI-запросов, одинаковые для всех провайдеров.
-     *
-     * <p>Настраиваются через {@code app.ai.*}.</p>
-     */
-    @Getter @Setter
-    public static class Ai {
-        /** Таймаут HTTP-запроса к AI-провайдеру (секунды). */
-        @Min(value = 5, message = "app.ai.timeout-seconds не менее 5")
-        private int timeoutSeconds = 30;
-
-        /** Максимальная длина ввода в AI (символов). */
-        @Min(1000)
-        private int maxInputLength = 10_000;
-
-        /** Длина превью вопроса в логах (символов). */
-        @Min(10)
-        private int questionPreviewLength = 60;
-
-        /** Длина превью ответа при передаче в AI (символов). */
-        @Min(100)
-        private int answerPreviewLength = 500;
-
-        /**
-         * Разрешить on-demand AI-генерацию вариантов ответа, если в БД нет seed-варианта.
-         * <p>По умолчанию <b>false</b>: основной источник MCQ — JSON-сидеры в
-         * {@code seed/mcq/<category>/<topic>.json}. AI трогаем только если seed реально
-         * отсутствует и кто-то осознанно включил флаг через {@code app.ai.fallback-enabled=true}.
-         */
-        private boolean fallbackEnabled = false;
-    }
-
-    /**
-     * Конфигурация DeepSeek API.
-     *
-     * <p>Настраивается через {@code app.deepseek.*}.</p>
-     */
-    @Getter @Setter
-    public static class DeepSeek {
-        /** Базовый URL без пути (например, {@code https://api.deepseek.com}). */
-        private String baseUrl = "https://api.deepseek.com";
-
-        /** Путь к эндпоинту чата. */
-        private String endpoint = "/v1/chat/completions";
-
-        /** Название модели. */
-        private String model = "deepseek-chat";
-
-        /** API-ключ (должен передаваться через переменную окружения). */
-        private String apiKey;
-
-        /** Температура генерации (0.0 — детерминированно, 1.0 — творчески). */
-        private double temperature = 0.7;
-    }
-
-    /**
-     * Конфигурация OpenAI API (ChatGPT).
-     *
-     * <p>Настраивается через {@code app.openai.*}.</p>
-     */
-    @Getter @Setter
-    public static class OpenAi {
-        /** Базовый URL (для ChatGPT: {@code https://api.openai.com}). */
-        private String baseUrl = "https://api.openai.com";
-
-        /** Путь к эндпоинту. */
-        private String endpoint = "/v1/chat/completions";
-
-        /** Модель (например, {@code gpt-4.1-mini}, {@code gpt-4o}). */
-        private String model = "gpt-4.1-mini";
-
-        /** API-ключ. */
-        private String apiKey;
-
-        /** Температура генерации. */
-        private double temperature = 0.7;
-    }
-
-    /**
-     * Настройки фонового предзагрузчика вариантов ответов.
-     *
-     * <p>Предзагрузчик заранее генерирует варианты для следующих вопросов,
-     * чтобы ускорить отображение сессии тестирования.</p>
-     *
-     * <p>Настраивается через {@code app.preload.*}.</p>
-     */
-    @Getter @Setter
-    public static class Preload {
-        /** Количество вопросов, загружаемых за одну итерацию. */
-        @Min(1) private int batchSize = 5;
-
-        /** Минимальное количество потоков в пуле предзагрузчика. */
-        @Min(1) private int corePoolSize = 2;
-
-        /** Максимальное количество потоков в пуле предзагрузчика. */
-        @Min(1) private int maxPoolSize = 4;
-
-        /** Размер очереди задач предзагрузчика. */
-        @Min(1) private int queueCapacity = 100;
-
-        /** Пауза между запросами к AI при предзагрузке (мс). */
-        @Min(100) private long sleepMs = 1000;
-
-        /** Максимальный размер одной очереди предзагрузки. */
-        @Min(1) private int maxQueueSize = 50;
-
-        /** Максимальное количество одновременных очередей (по комбинациям фильтров). */
-        @Min(1) private int maxQueues = 20;
-
-        /** Генерировать AI-варианты для ВСЕХ вопросов при старте (фоновый процесс). */
-        private boolean fullWarmup = true;
-
-        /**
-         * Выполнять ли стартовую предзагрузку первой пачки вопросов в StartupRunner.
-         * Если false, вопросы загружаются лениво только по пользовательским действиям.
-         */
-        private boolean startupPreload = true;
-
-        /**
-         * Лимит вопросов для полного прогрева при старте.
-         * <ul>
-         *   <li>0 — без лимита (прогрев всех вопросов без опций);</li>
-         *   <li>>0 — прогрев только первых N вопросов (тестовый режим экономии токенов).</li>
-         * </ul>
-         */
-        @Min(0)
-        private int warmupLimit = 0;
-
-        /**
-         * Упрощенный тестовый режим прогрева.
-         * Если включен и {@code warmupLimit == 0}, автоматически применяется лимит 10 вопросов.
-         */
-        private boolean testMode = false;
-
-        /**
-         * Seed для рандомного поднабора warmup (только при {@code warmupLimit > 0}).
-         * <ul>
-         *   <li>-1 — недетерминированный random на каждый запуск;</li>
-         *   <li>>=0 — фиксированный seed для воспроизводимости.</li>
-         * </ul>
-         */
-        @Min(-1)
-        private long warmupRandomSeed = -1;
-
-        /** Логировать прогресс предзагрузки каждые N вопросов. */
-        @Min(1)
-        private int logProgressEvery = 50;
     }
 
     /**
