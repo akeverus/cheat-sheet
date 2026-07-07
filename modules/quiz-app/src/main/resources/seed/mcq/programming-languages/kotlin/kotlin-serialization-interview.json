@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Moshi` — мультиплатформенная библиотека и работает на iOS/Native наравне с `kotlinx`.",
+              "text": "`Moshi` (Square) генерирует адаптеры через `moshi-kotlin-codegen` (KSP/kapt) и, как и `kotlinx.serialization`, мультиплатформенна: помимо JVM/Android работает на Kotlin/Native и iOS.",
               "correct": false,
               "sections": {
                 "what_actually": "`Moshi` работает только на JVM/Android; мультиплатформенность — преимущество `kotlinx.serialization`.",
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Moshi` поддерживает форматы JSON, Protobuf и CBOR, как `kotlinx.serialization`.",
+              "text": "`Moshi` (Square) работает только на JVM/Android, но поддерживает те же форматы, что и `kotlinx.serialization` — JSON, Protobuf и CBOR — через отдельные адаптеры.",
               "correct": false,
               "sections": {
                 "what_actually": "`Moshi` поддерживает только JSON; мультиформатность (Protobuf/CBOR) — у `kotlinx.serialization`.",
@@ -1895,7 +1895,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Moshi` проверяет nullable на этапе компиляции, как `kotlinx.serialization`.",
+              "text": "`Moshi` (Square) — альтернатива Gson с кодогенерацией через KSP/kapt, и, как `kotlinx.serialization`, проверяет соответствие nullable-типов на этапе компиляции, а не в рантайме.",
               "correct": false,
               "sections": {
                 "what_actually": "`Moshi` проверяет nullable в рантайме (бросает `JsonDataException`); compile-time проверки — у `kotlinx`.",
@@ -1944,7 +1944,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Java Serialization безопаснее `kotlinx.serialization`, так как использует бинарный формат.",
+              "text": "Java Serialization (`java.io.Serializable`) безопаснее `kotlinx.serialization` при работе с недоверенным вводом: бинарный поток нельзя подделать так же легко, как текстовый JSON.",
               "correct": false,
               "sections": {
                 "what_actually": "Java Serialization исторически уязвима к deserialization attacks; бинарность не делает её безопаснее — `kotlinx` не инстанцирует произвольные классы.",
@@ -1956,7 +1956,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Java Serialization мультиплатформенна и работает на Kotlin/Native и Kotlin/JS.",
+              "text": "Java Serialization (`java.io.Serializable`, `ObjectInputStream`) мультиплатформенна наравне с `kotlinx.serialization` — сериализованный поток читается и на Kotlin/Native, и на Kotlin/JS.",
               "correct": false,
               "sections": {
                 "what_actually": "Java Serialization — только JVM; мультиплатформенность даёт `kotlinx.serialization`.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Java Serialization нативно понимает Kotlin nullable и default-значения.",
+              "text": "Java Serialization нативно учитывает Kotlin-специфику: восстанавливает default-значения конструктора и различает nullable/non-nullable поля, как `kotlinx.serialization`.",
               "correct": false,
               "sections": {
                 "what_actually": "Java Serialization не знает о Kotlin-семантике nullable и default — это JVM-механизм поверх полей.",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В Spring Boot нельзя использовать Jackson и kotlinx.serialization одновременно — нужно выбрать что-то одно.",
+              "text": "В Spring Boot Jackson и `kotlinx.serialization` взаимоисключают друг друга: при регистрации `KotlinSerializationJsonHttpMessageConverter` Jackson-конвертер отключается и все контроллеры переходят на kotlinx.",
               "correct": false,
               "sections": {
                 "what_actually": "Их можно использовать одновременно: `@Serializable`-классы обрабатывает kotlinx, а обычные классы — Jackson.",
@@ -2256,7 +2256,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Свойство `preferred-json-mapper` влияет только на десериализацию входящих запросов, но не на сериализацию ответов.",
+              "text": "Свойство `spring.mvc.converters.preferred-json-mapper` умеет переключать приложение на kotlinx: значение `kotlinx` заставляет Spring использовать её конвертер и для запросов, и для ответов.",
               "correct": false,
               "sections": {
                 "what_actually": "`preferred-json-mapper` задаёт предпочитаемый конвертер для JSON в обе стороны, а не только для чтения.",
@@ -2268,7 +2268,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В kotlinx-DTO для Spring исключают поле через `@JsonIgnore`, как в Jackson.",
+              "text": "В kotlinx-DTO для Spring поле исключают из JSON аннотацией `@JsonIgnore`, как в Jackson, а не собственной аннотацией kotlinx.",
               "correct": false,
               "sections": {
                 "what_actually": "В kotlinx исключают поле через `@Transient`; `@JsonIgnore` — это Jackson-аннотация и на `@Serializable` не действует.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@SerialName` меняет имя поля в Kotlin-коде, а JSON-ключ остаётся равным имени свойства.",
+              "text": "`@SerialName(\"amount\")` переименовывает свойство в самом Kotlin-коде, тогда как ключ в JSON/бинарном формате остаётся равным исходному имени поля (`totalPrice`).",
               "correct": false,
               "sections": {
                 "what_actually": "`@SerialName` разделяет имя в коде и имя в JSON: меняется именно JSON-ключ, а Kotlin-имя можно сохранить старым.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Через `@SerialName` одно поле может одновременно читаться и по старому, и по новому имени из коробки.",
+              "text": "`@SerialName` из коробки позволяет одному полю сериализоваться под новым именем, но при десериализации приниматься сразу под двумя ключами — и `total_price`, и `amount` — без отдельного сериализатора.",
               "correct": false,
               "sections": {
                 "what_actually": "Один `@SerialName` фиксирует ровно одно имя; поддержка ОБОИХ имён требует кастомного сериализатора (например, `JsonTransformingSerializer`).",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@SerialName` на уровне класса задаёт имя поля-дискриминатора (`type`), а не его значение.",
+              "text": "На уровне класса `@SerialName` переопределяет имя самого поля-дискриминатора (по умолчанию `type`), а не значение, подставляемое для конкретного подтипа.",
               "correct": false,
               "sections": {
                 "what_actually": "Класс-уровневый `@SerialName` задаёт ЗНАЧЕНИЕ дискриминатора подтипа; имя поля-дискриминатора меняют `classDiscriminator`/`@JsonClassDiscriminator`.",
@@ -2424,7 +2424,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `KSerializer` достаточно реализовать `serialize`/`deserialize`, а `descriptor` не нужен.",
+              "text": "Для кастомного `KSerializer<T>` достаточно реализовать `serialize(encoder, value)` и `deserialize(decoder)`; свойство `descriptor` можно не переопределять — компилятор подставит дефолтное.",
               "correct": false,
               "sections": {
                 "what_actually": "`descriptor` обязателен — это abstract-член интерфейса, описывающий структуру для всех форматов.",
@@ -2436,7 +2436,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для структуры из нескольких полей дескриптор задают через `PrimitiveSerialDescriptor`.",
+              "text": "Для структуры из нескольких полей дескриптор строят через `PrimitiveSerialDescriptor(\"Name\", ...)`, а сами поля читают и пишут в `encodeStructure`/`decodeStructure`.",
               "correct": false,
               "sections": {
                 "what_actually": "Для структуры используют `buildClassSerialDescriptor { element<Long>(\"amount\") ... }`; `PrimitiveSerialDescriptor` — для одного примитива.",
@@ -2448,7 +2448,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Кастомный `KSerializer` подключается к полю только через `SerializersModule`; аннотацией на поле нельзя.",
+              "text": "Кастомный `KSerializer` подключают к полю только глобально — через `contextual` в `SerializersModule`; аннотация `@Serializable(with = ...)` работает лишь для целого класса.",
               "correct": false,
               "sections": {
                 "what_actually": "Подключают и через `@Serializable(with = ColorSerializer::class)` на поле, и через `contextual` в модуле — оба способа валидны.",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Явный `null` для non-nullable поля по умолчанию подставляет default-значение без ошибки.",
+              "text": "Явный `null`, присланный в non-nullable поле, по умолчанию тихо заменяется на default-значение свойства, и десериализация проходит без `SerializationException`.",
               "correct": false,
               "sections": {
                 "what_actually": "Явный `null` для non-nullable поля по умолчанию даёт `SerializationException`; чтобы он заменялся default, нужен `coerceInputValues = true`.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "kotlinx.serialization ведёт себя с nullable и default точно так же, как Jackson.",
+              "text": "Обработка nullable и default в kotlinx совпадает с Jackson: и отсутствие ключа, и явный `null` трактуются одинаково — как отсутствие значения с подстановкой default.",
               "correct": false,
               "sections": {
                 "what_actually": "Поведение отличается: в kotlinx отсутствие ключа = default, а явный `null` для non-nullable = ошибка, тогда как Jackson их часто уравнивает.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "При `encodeDefaults=false` можно отличить «поле не передано» от «поле = null» по составу выходного JSON.",
+              "text": "Флаг `coerceInputValues=true` заставляет kotlinx оставлять присланный `null` в non-nullable поле как `null`, минуя default-значение.",
               "correct": false,
               "sections": {
                 "what_actually": "При `encodeDefaults=false` оба случая дают одинаковый выход — отличить «не передано» от «null» нельзя, что ломает PATCH-семантику.",
