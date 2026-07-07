@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В provider-тесте на каждую interaction пишут отдельный `@Test`-метод вручную, дублируя проверку каждого взаимодействия.",
+              "text": "Класс помечается `@Provider(\"UserService\")` и `@PactFolder(\"pacts\")`, но на каждую interaction разработчик вручную пишет отдельный `@Test`-метод, внутри которого сам вызывает `context.verifyInteraction()`; `@TestTemplate` для Pact в JUnit 5 не применяется. Данные готовят методы `@State(\"user 42 exists\")`.",
               "correct": false,
               "sections": {
                 "what_actually": "Один `@TestTemplate` с `PactVerificationInvocationContextProvider` автоматически генерирует по тесту на каждую interaction — руками их не размножают.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Provider-тест обязан использовать `@PactFolder` и не может брать pact'ы из брокера; работа с `Pact Broker` поддерживается только на consumer-side.",
+              "text": "Класс помечается `@Provider(\"UserService\")` и обязан брать контракты локально через `@PactFolder(\"pacts\")`: аннотация `@PactBroker` доступна только на consumer-side, поэтому provider не может верифицировать pact'ы напрямую из брокера. Target задаётся в `@BeforeEach` через `PactVerificationContext`, состояния — методами `@State`.",
               "correct": false,
               "sections": {
                 "what_actually": "Источник pact'ов выбирается: `@PactFolder` (локальная папка) или `@PactBroker` (из брокера с consumer version selectors). Provider как раз обычно тянет pact'ы из брокера.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В provider-тесте `@State`-методы не нужны: provider сам угадывает требуемое состояние данных из описания interaction.",
+              "text": "Класс помечается `@Provider(\"UserService\")` и `@PactFolder(\"pacts\")`; target задаётся через `PactVerificationContext` в `@BeforeEach`, а `@TestTemplate` генерирует по тесту на interaction. Методы `@State` при этом не нужны: provider сам восстанавливает требуемое состояние данных из описания interaction перед проверкой.",
               "correct": false,
               "sections": {
                 "what_actually": "`@State`-методы обязательны для interactions с provider state: именно они приводят систему в нужное предусловие перед запросом; ничего не «угадывается».",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Spring Cloud Contract по умолчанию consumer-driven, как и Pact: consumer пишет ожидания, из которых генерируются stub'ы.",
+              "text": "`Spring Cloud Contract` — Spring-фреймворк, по умолчанию consumer-driven, как и Pact: consumer описывает ожидания, из которых генерируются JUnit-тесты для провайдера и `WireMock`-стабы (`stubs.jar`) для consumer'а. Контракты хранятся в Maven/Git, а не в Pact Broker.",
               "correct": false,
               "sections": {
                 "what_actually": "`SCC` по умолчанию **producer-driven**: контракт описывает provider, из него генерируются тесты для провайдера и stub'ы для consumer'а (хотя CDC он формально тоже умеет).",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Spring Cloud Contract использует встроенный mock Pact'а на consumer-side и публикует контракты исключительно в Pact Broker.",
+              "text": "`Spring Cloud Contract` — Spring-ориентированный фреймворк, producer-driven: provider описывает контракт (Groovy/YAML DSL), из которого генерируются JUnit-тесты провайдеру и стабы для consumer'а. На consumer-side стабы поднимаются встроенным mock-движком Pact, а сами контракты хранятся в Maven-репозитории.",
               "correct": false,
               "sections": {
                 "what_actually": "`SCC` использует `WireMock`-стабы (упакованные в `stubs.jar`) и хранит их в Maven/Git; Pact Broker поддерживается опционально, но не является основным хранилищем.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Spring Cloud Contract — language-agnostic инструмент, так же как Pact, поэтому provider может быть на любом языке.",
+              "text": "`Spring Cloud Contract` — producer-driven фреймворк: provider задаёт контракт на Groovy/YAML DSL, а стабы для consumer'а поднимает `WireMock`. Как и Pact, инструмент language-agnostic, поэтому provider и consumer могут быть написаны на любом языке.",
               "correct": false,
               "sections": {
                 "what_actually": "`SCC` ориентирован на JVM (частично `.NET`); language-agnosticism (`JVM`, `JS`, `Go`, `Python`, `.NET`) — это сильная сторона именно Pact.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@AutoConfigureStubRunner` через Testcontainers поднимает реальный provider-сервис из его Docker-образа и направляет к нему запросы consumer'а.",
+              "text": "Consumer подключает `spring-cloud-starter-contract-stub-runner` и помечает тест `@AutoConfigureStubRunner(ids=\"com.example:user-service:+:stubs:8081\", stubsMode=LOCAL)`; StubRunner через Testcontainers поднимает реальный provider-сервис из его Docker-образа и проксирует к нему HTTP-запросы клиента. Формат id: `groupId:artifactId:version:classifier:port`, где `+` — последняя версия.",
               "correct": false,
               "sections": {
                 "what_actually": "Аннотация поднимает локальный `WireMock`-сервер из `stubs.jar` (по правилам контракта), а не реальный сервис provider'а.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Режим `stubsMode=REMOTE` ищет стабы в локальном `~/.m2`, а `LOCAL` скачивает их из Nexus по сети.",
+              "text": "Consumer подключает `spring-cloud-starter-contract-stub-runner` и помечает тест `@AutoConfigureStubRunner(ids=\"com.example:user-service:+:stubs:8081\", stubsMode=REMOTE)`; StubRunner поднимает локальный `WireMock` из `stubs.jar`. Режим `REMOTE` берёт стабы из локального `~/.m2`, а `LOCAL` скачивает их из Maven/Nexus по сети.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `LOCAL` — из локального Maven (`~/.m2`), `REMOTE` — из Maven/Nexus/Artifactory по сети; ещё есть `CLASSPATH` (стабы на classpath).",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `ids` порт указывать нельзя — StubRunner всегда назначает случайный порт, а обратиться к стабу можно только через `StubFinder`.",
+              "text": "Consumer подключает `spring-cloud-starter-contract-stub-runner` и помечает тест `@AutoConfigureStubRunner(ids=\"com.example:user-service:+:stubs\", stubsMode=LOCAL)`; StubRunner поднимает `WireMock` из `stubs.jar`. Порт в `ids` указывать нельзя — StubRunner всегда назначает случайный, и обратиться к стабу можно только через `StubFinder`. Режимы: `CLASSPATH`, `LOCAL`, `REMOTE`.",
               "correct": false,
               "sections": {
                 "what_actually": "Стабы публикуются как `stubs.jar` в Maven/Nexus, поэтому consumer и provider могут быть в разных репозиториях; общий репозиторий не требуется.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Breaking change безопаснее всего внедрять одномоментно: provider сразу делает новое поле обязательным, а consumer'ы чинятся постфактум.",
+              "text": "Breaking change — изменение, ломающее существующих consumer'ов (удалённое поле, изменённый тип, новое обязательное поле в запросе). Безопаснее всего внедрять его одномоментно: provider сразу делает новое поле обязательным, а consumer'ы чинятся постфактум по упавшим верификациям.",
               "correct": false,
               "sections": {
                 "what_actually": "Правильный путь поэтапный: provider сначала добавляет поле как **опциональное** с дефолтом, consumer'ы по очереди обновляют pact'ы, и только когда все верификации прошли — поле делают обязательным.",
@@ -2016,7 +2016,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Tolerant reader (expand/contract) означает, что matchers фиксируют точные значения полей, чтобы поймать любое изменение.",
+              "text": "Одна из стратегий — expand/contract на основе tolerant reader: consumer описывает matchers, фиксирующие точные значения полей (`stringValue`, конкретные даты и ID), чтобы поймать любое расхождение с provider'ом и не пропустить breaking change.",
               "correct": false,
               "sections": {
                 "what_actually": "Tolerant reader делает обратное: matchers сравнивают по **типу**, а не по значению, чтобы consumer не ломался от новых значений и добавленных полей.",
@@ -2028,7 +2028,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Добавление нового опционального поля в ответ provider'а — это breaking change, ломающий всех consumer'ов.",
+              "text": "Добавление нового опционального поля в ответ provider'а — это breaking change: даже tolerant reader consumer'ы падают на неизвестном поле, поэтому такое расширение схемы требует версионирования endpoint'а (v1/v2) и deprecation period.",
               "correct": false,
               "sections": {
                 "what_actually": "Добавление опционального поля в ответ — non-breaking: consumer-driven контракт фиксирует лишь используемые поля, поэтому новые поля никого не ломают.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главная ошибка — использовать type matchers (`stringType`) вместо точных значений (`stringValue`), из-за чего контракт становится слишком слабым.",
+              "text": "Главная ошибка — использовать type matchers (`stringType`, `datetime`) для динамических полей вместо точных значений (`stringValue`): контракт получается слишком слабым и пропускает регрессии, поэтому timestamp и ID лучше фиксировать буквально.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: ошибка — использовать `stringValue` для динамических полей (timestamp, ID); правильно брать `stringType`/`datetime`, иначе pact хрупкий и падает на каждом новом значении.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Типичная ошибка — публиковать результаты верификации с указанием `pact.provider.version`; правильнее версию не указывать, чтобы не засорять матрицу.",
+              "text": "Типичная ошибка — при `publishResults` передавать `pact.provider.version`: это привязывает результат к конкретной сборке и засоряет матрицу совместимости, поэтому версию провайдера правильнее не указывать.",
               "correct": false,
               "sections": {
                 "what_actually": "Ошибка ровно обратная — **забыть** `pact.provider.version`: без неё результат не публикуется и матрица устаревает; версию указывать обязательно.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Типичная ошибка — использовать реальную БД (Testcontainers) в provider-тестах; правильнее мокать зависимости для скорости.",
+              "text": "Типичная ошибка — поднимать реальную БД через Testcontainers в provider-тестах: это замедляет верификацию, поэтому зависимости провайдера правильнее мокать, чтобы тест проверял только контракт.",
               "correct": false,
               "sections": {
                 "what_actually": "Ошибка — наоборот, **моки** вместо реальных зависимостей: они обесценивают верификацию (проверяется не тот код); правильно использовать реальную БД (Testcontainers).",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Сразу развернуть `Pact Broker` в HA-кластере и включить блокирующий `can-i-deploy` для всех пар сервисов одновременно, иначе внедрение не масштабируется.",
+              "text": "Начать сразу с масштаба: развернуть `Pact Broker` в HA-кластере, подключить все пары consumer-provider одновременно и с первого дня включить блокирующий `can-i-deploy`. Пилот на одной паре только затягивает выкатку и не масштабируется.",
               "correct": false,
               "sections": {
                 "what_actually": "Начинают с пилота: одна пара consumer-provider, брокер через Docker Compose (без HA), 1-2 теста; `can-i-deploy` сначала warn-only, блокирующим он становится позже.",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Пилот начинать с самой критичной пары сервисов, чтобы сразу защитить главный бизнес-поток.",
+              "text": "Поэтапно: Этап 1 Pilot — начать с самой критичной пары сервисов, чтобы сразу защитить главный бизнес-поток; брокер через Docker Compose, 1-2 теста. Этап 2 Stabilization — автоматизация публикации в CI, `can-i-deploy` warn-only. Этап 3 Rollout — остальные пары и блокирующий `can-i-deploy`.",
               "correct": false,
               "sections": {
                 "what_actually": "Для пилота берут важную, но **не самую критичную** пару — чтобы учиться без риска уронить ключевой поток на незрелом процессе.",
@@ -2375,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`can-i-deploy` с первого дня должен блокировать деплой; warn-only лишь приучает команды игнорировать красные пайплайны.",
+              "text": "Поэтапно: Этап 1 Pilot — одна пара (важная, но не самая критичная), брокер через Docker Compose. Этап 2 Stabilization — автоматизация публикации в CI, причём `can-i-deploy` с первого дня должен блокировать деплой: warn-only лишь приучает команды игнорировать красные пайплайны. Этап 3 Rollout — остальные пары.",
               "correct": false,
               "sections": {
                 "what_actually": "Сначала `can-i-deploy` включают в режиме warn-only (этап стабилизации брокера), а блокирующим делают лишь на этапе rollout, когда процесс устоялся.",
