@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A/B героя вопроса · макет Instrument</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--paper); color: var(--ink);
+      font-family: var(--font-ui); font-size: var(--fs-base); line-height: var(--lh-normal);
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    }
+    code { font-family: var(--font-mono); }
+    .wrap { width: min(100% - 2 * var(--gutter), 46rem); margin-inline: auto; }
+
+    :where(button, summary):focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; border-radius: var(--r-sm); }
+
+    /* Каркас макета */
+    .mock-bar { border-bottom: 1px dashed var(--line-strong); background: var(--surface); }
+    .mock-bar__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) 0; }
+    .mock-tag { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); color: var(--ink-3); }
+    .theme-toggle {
+      display: inline-flex; align-items: center; gap: var(--s-2);
+      font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium);
+      color: var(--ink-2); background: var(--paper);
+      border: 1px solid var(--line); border-radius: var(--r-pill);
+      padding: var(--s-1) var(--s-3); cursor: pointer;
+    }
+
+    .variant { padding: var(--s-8) 0; border-bottom: 1px solid var(--line); }
+    .variant:last-child { border-bottom: 0; }
+    .variant-label {
+      display: inline-flex; align-items: baseline; gap: var(--s-2);
+      font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono);
+      color: var(--signal-ink); margin-bottom: var(--s-6);
+    }
+    .variant-label b { font-weight: var(--fw-semi); color: var(--ink); }
+
+    /* Общий тема-кикер и код */
+    .h-topic {
+      font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: var(--fw-medium);
+      letter-spacing: var(--track-mono); color: var(--ink-3); margin: 0 0 var(--s-3);
+    }
+    .h-topic .dot { color: var(--signal); padding: 0 0.35em; }
+    .h-code {
+      margin: var(--s-5) 0 0; border: 1px solid var(--line); border-radius: var(--r-md);
+      background: var(--surface); overflow: hidden;
+    }
+    .h-code summary {
+      display: flex; align-items: center; gap: var(--s-2);
+      font-family: var(--font-mono); font-size: var(--fs-sm); font-weight: var(--fw-medium);
+      color: var(--ink-2); padding: var(--s-3) var(--s-4); cursor: pointer; list-style: none;
+    }
+    .h-code summary::-webkit-details-marker { display: none; }
+    .h-code summary::before { content: "▸"; color: var(--signal); font-size: 0.85em; transition: transform var(--dur-1) var(--ease-out); }
+    .h-code[open] summary::before { transform: rotate(90deg); }
+    .h-code pre { margin: 0; padding: var(--s-4); overflow-x: auto; border-top: 1px solid var(--line); background: var(--paper); }
+    .h-code code { font-size: var(--fs-sm); line-height: var(--lh-snug); color: var(--ink); }
+
+    .note { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-3); margin: var(--s-4) 0 0; line-height: var(--lh-snug); max-width: 60ch; }
+
+    /* ---- Вариант A: редакционный serif (текущий эталон) ------------------ */
+    .qa {
+      font-family: var(--font-hero); font-weight: var(--fw-medium);
+      font-size: clamp(2rem, 1.5rem + 2vw, 2.6rem); line-height: var(--lh-hero);
+      letter-spacing: var(--track-hero); color: var(--ink); margin: 0; text-wrap: balance; max-width: 20ch;
+    }
+    .qa code { font-size: 0.85em; color: var(--signal-ink); white-space: nowrap; }
+
+    /* ---- Вариант B: компактный sans-«инструмент» ------------------------- */
+    .qb {
+      font-family: var(--font-ui); font-weight: var(--fw-semi);
+      font-size: clamp(1.4rem, 1.15rem + 1vw, 1.75rem); line-height: var(--lh-snug);
+      letter-spacing: var(--track-tight); color: var(--ink); margin: 0;
+      text-wrap: balance; max-width: 34ch;
+    }
+    .qb code { font-size: 0.9em; color: var(--signal-ink); white-space: nowrap; }
+    /* B даёт вопросу «рабочую рамку»: тонкое верхнее правило + плотный ритм */
+    .b-frame { padding-top: var(--s-4); border-top: 2px solid var(--line-strong); }
+    .b-frame .h-topic { color: var(--ink-2); }
+
+    @media (min-width: 720px) {
+      .qb { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mock-bar">
+    <div class="wrap mock-bar__inner">
+      <span class="mock-tag">макет · A/B героя вопроса (тот же tokens.css)</span>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Тема оформления: авто">
+        <span aria-hidden="true">◐</span> <span id="theme-word">Авто</span>
+      </button>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <!-- ВАРИАНТ A -->
+    <section class="variant">
+      <p class="variant-label"><b>A</b> · Newsreader serif · редакционный (текущий эталон)</p>
+      <p class="h-topic">spring<span class="dot">·</span>транзакции</p>
+      <h1 class="qa">В какой транзакции выполнится внутренний вызов <code>writeAudit()</code> — по коду ниже?</h1>
+      <details class="h-code" open>
+        <summary>Код к вопросу</summary>
+        <pre><code>@Transactional
+public void placeOrder() {
+    writeAudit();   // внутренний вызов того же бина
+}</code></pre>
+      </details>
+      <p class="note">Голос: спокойный «технический альманах». Serif придаёт вопросу вес и
+        читаемость длинным формулировкам. Риск: на мобиле крупный герой ведёт себя как постер.</p>
+    </section>
+
+    <!-- ВАРИАНТ B -->
+    <section class="variant">
+      <p class="variant-label"><b>B</b> · Space Grotesk sans · компактный «инструмент»</p>
+      <div class="b-frame">
+        <p class="h-topic">spring<span class="dot">·</span>транзакции</p>
+        <h2 class="qb">В какой транзакции выполнится внутренний вызов <code>writeAudit()</code> — по коду ниже?</h2>
+      </div>
+      <details class="h-code" open>
+        <summary>Код к вопросу</summary>
+        <pre><code>@Transactional
+public void placeOrder() {
+    writeAudit();   // внутренний вызов того же бина
+}</code></pre>
+      </details>
+      <p class="note">Голос: собранный рабочий инструмент. Sans + плотный ритм + верхнее
+        правило дают «рабочую единицу», не постер. Легче на мобиле, меньше драмы. Риск:
+        теряется редакционный характер, ближе к дженерик-tool.</p>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var root = document.documentElement, btn = document.getElementById('theme-toggle'),
+          word = document.getElementById('theme-word'), modes = ['Авто','Светлая','Тёмная'], attrs = [null,'light','dark'], i = 0;
+      btn.addEventListener('click', function () {
+        i = (i + 1) % modes.length;
+        if (attrs[i]) root.setAttribute('data-theme', attrs[i]); else root.removeAttribute('data-theme');
+        word.textContent = modes[i];
+        btn.setAttribute('aria-label', 'Тема оформления: ' + modes[i].toLowerCase());
+      });
+    })();
+  </script>
+</body>
+</html>
