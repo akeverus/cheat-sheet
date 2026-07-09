@@ -5,7 +5,8 @@ table always reflects the live corpus. Writes docs/mcq-structure-parity-plan.md.
 
 structure-tell(block) = Σ |feat(correct) − mean(feat(distractors))| over 8 structural
 features {sent, semi, colon, paren, code, enum, dash, comma}. GOLD rxjava ≈ 9.09.
-A file is "parity" (✅) once its mean tell ≤ PARITY_MAX (near/below gold).
+A file is "parity" (✅) once no block exceeds PARITY_MAX. Mean tell remains a
+ranking signal only and cannot hide local structure tells.
 
 Usage: python3 scripts/gen-structure-parity-plan.py [--write]
 """
@@ -15,7 +16,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SEED = ROOT + "/modules/quiz-app/src/main/resources/seed/mcq"
 GOLD_STEM = "rxjava"
 OUT = ROOT + "/docs/mcq-structure-parity-plan.md"
-PARITY_MAX = 10.0   # mean structure-tell at/below which a file is considered at parity
+PARITY_MAX = 10.0   # maximum allowed structure-tell for every block
 # parallel-session / dirty — do not touch; shown as ⏸ in the plan
 OFFLIMITS = {"agentic-patterns", "git", "chaos-engineering", "postgresql", "testcontainers", "mentoring"}
 
@@ -56,7 +57,8 @@ def main():
     rows.sort(key=lambda r:(-r["mean"], -r["over"]))
 
     total=len(rows)
-    done=[r for r in rows if r["mean"]<=PARITY_MAX and r["stem"] not in OFFLIMITS]
+    done=[r for r in rows if r["over"]==0 and r["stem"] not in OFFLIMITS]
+    review=[r for r in rows if r["mean"]<=PARITY_MAX and r["over"]>0 and r["stem"] not in OFFLIMITS]
     queued=[r for r in rows if r["mean"]>PARITY_MAX and r["stem"] not in OFFLIMITS]
     offl=[r for r in rows if r["stem"] in OFFLIMITS]
 
@@ -67,9 +69,9 @@ def main():
     L.append("")
     L.append("**Правило:** у всех 4 опций блока одна структура и формат — дистрактор клонирует скелет correct (перечисление, скобки, код-спаны, стрелочная цепочка) с ровно одной смысловой подменой. Эталон-образец: `algorithms-interview.json` (см. commit).")
     L.append("")
-    L.append(f"**Метрика:** mean structure-tell файла. GOLD `rxjava` = {gold['mean'] if gold else '?'}. Файл считается на паритете при mean ≤ {PARITY_MAX:.0f}.")
+    L.append(f"**Метрика:** block-level structure-tell; mean используется только для worst-first сортировки. GOLD `rxjava` = {gold['mean'] if gold else '?'}. Файл считается на паритете, когда блоков >{PARITY_MAX:.0f} не осталось.")
     L.append("")
-    L.append(f"**Прогресс:** ✅ {len(done)} на паритете · ⬜ {len(queued)} в очереди · ⏸ {len(offl)} off-limits (параллельная сессия) · всего {total}.")
+    L.append(f"**Прогресс:** ✅ {len(done)} на паритете · ⬜ {len(queued)} в очереди · 🟡 {len(review)} перепроверить · ⏸ {len(offl)} off-limits (параллельная сессия) · всего {total}.")
     if queued:
         avg_q=round(statistics.mean(r["mean"] for r in queued),1)
         L.append(f"Средний tell в очереди = {avg_q}; худший = {queued[0]['stem']} ({queued[0]['mean']}).")
@@ -78,7 +80,8 @@ def main():
     L.append("|--:|:--:|:--|:--|--:|--:|--:|")
     for i,r in enumerate(rows,1):
         if r["stem"] in OFFLIMITS: status="⏸"
-        elif r["mean"]<=PARITY_MAX: status="✅"
+        elif r["over"]==0: status="✅"
+        elif r["mean"]<=PARITY_MAX: status="🟡"
         else: status="⬜"
         L.append(f"| {i} | {status} | `{r['stem']}` | {r['cat']} | {r['blocks']} | {r['mean']} | {r['over']} |")
     L.append("")
@@ -87,9 +90,9 @@ def main():
     if "--write" in sys.argv:
         os.makedirs(os.path.dirname(OUT), exist_ok=True)
         open(OUT,"w").write(md)
-        print(f"wrote {OUT}: {total} files, ✅{len(done)} ⬜{len(queued)} ⏸{len(offl)}")
+        print(f"wrote {OUT}: {total} files, ✅{len(done)} ⬜{len(queued)} 🟡{len(review)} ⏸{len(offl)}")
     else:
         print(md[:1500])
-        print(f"...\n[dry-run] {total} files, ✅{len(done)} ⬜{len(queued)} ⏸{len(offl)}. Add --write.")
+        print(f"...\n[dry-run] {total} files, ✅{len(done)} ⬜{len(queued)} 🟡{len(review)} ⏸{len(offl)}. Add --write.")
 
 if __name__=="__main__": main()
