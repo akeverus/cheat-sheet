@@ -24,7 +24,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Retry` — это полноценная библиотека fault tolerance с Circuit Breaker, Rate Limiter и Bulkhead из коробки, заменяющая `Resilience4j`.",
+              "text": "`Spring Retry` — полноценная библиотека fault tolerance с retry, Circuit Breaker, Rate Limiter и Bulkhead; предлагает аннотационный API (`@Retryable`/`@Recover`) и программный (`RetryTemplate`). Применяется для HTTP-вызовов к нестабильным API, сетевых ошибок (таймауты, 5xx), операций с БД при дедлоках или `OptimisticLockException`, чтения из очередей (Kafka, JMS). Принцип: при заданном исключении метод повторяется N раз с настраиваемой паузой.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring Retry` покрывает только retry и базовый CB без `HALF_OPEN`; Rate Limiter, Bulkhead и TimeLimiter в ней отсутствуют — это профиль `Resilience4j`.",
@@ -36,7 +36,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Retry` повторяет операцию бесконечно до успеха независимо от типа исключения, пока вызов не завершится без ошибки.",
+              "text": "`Spring Retry` — библиотека для автоматического повтора неудавшихся операций при временных сбоях; предлагает аннотационный API (`@Retryable`/`@Recover`) и программный (`RetryTemplate`). Применяется для HTTP-вызовов к нестабильным API, сетевых ошибок (таймауты, 5xx), операций с БД при дедлоках или `OptimisticLockException`, чтения из очередей (Kafka, JMS). Принцип: при любом исключении метод повторяется бесконечно до успеха с настраиваемой паузой.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию повторов конечное число (`maxAttempts = 3`) и только для заданных в `retryFor` исключений; бесконечный повтор — это отдельная `AlwaysRetryPolicy`, применяемая осознанно.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Spring Retry` предназначен прежде всего для повтора детерминированных ошибок вроде `ValidationException` и `IllegalArgumentException`.",
+              "text": "`Spring Retry` — библиотека для автоматического повтора детерминированных ошибок валидации; предлагает аннотационный API (`@Retryable`/`@Recover`) и программный (`RetryTemplate`). Применяется для ошибок `ValidationException` и `IllegalArgumentException`, неверных аргументов (null, формат), нарушений бизнес-правил или ограничений схемы, отклонённых команд (Kafka, JMS). Принцип: при заданном исключении метод повторяется N раз с настраиваемой паузой.",
               "correct": false,
               "sections": {
                 "what_actually": "Retry имеет смысл только для transient-ошибок (таймауты, 5xx, дедлоки); детерминированные ошибки валидации повторно дадут тот же результат и их исключают через `noRetryFor`.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно добавить зависимость `spring-retry` — в `Spring Boot` аннотации `@Retryable` активируются автоматически без `@EnableRetry`.",
+              "text": "Добавляют зависимость `org.springframework.retry:spring-retry` плюс `spring-aspects` (AOP обязателен для аннотационного подхода), и помечают конфигурацию `@EnableRetry`. В `Spring Boot` `spring-retry` подхватывается автоматически при наличии зависимости, и `@EnableRetry` указывать не нужно — аннотации `@Retryable`/`@Recover` активируются автоматически.",
               "correct": false,
               "sections": {
                 "what_actually": "Сама зависимость подхватывается автоконфигурацией, но обработка `@Retryable` требует явного `@EnableRetry`; без него прокси не создаётся и повторов не будет.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для аннотационного подхода `spring-aspects` (AOP) не нужен — `Spring Retry` повторяет вызовы через рефлексию без прокси.",
+              "text": "Добавляют зависимость `org.springframework.retry:spring-retry` без `spring-aspects` (аннотационный подход работает через рефлексию без AOP-прокси), и помечают конфигурацию `@EnableRetry`. В `Spring Boot` `spring-retry` подхватывается автоматически при наличии зависимости, но `@EnableRetry` всё равно нужно указать явно — иначе аннотации `@Retryable`/`@Recover` не активируются.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Retryable` реализован через Spring AOP-прокси, поэтому `spring-aspects` обязателен; без AOP аннотация игнорируется.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@EnableRetry` нужно ставить на каждый сервис-бин с методами `@Retryable`, а не на конфигурацию.",
+              "text": "Добавляют зависимость `org.springframework.retry:spring-retry` плюс `spring-aspects` (AOP обязателен для аннотационного подхода), и помечают каждый сервис-бин `@EnableRetry`. В `Spring Boot` `spring-retry` подхватывается автоматически при наличии зависимости, но `@EnableRetry` всё равно нужно указать явно — иначе аннотации `@Retryable`/`@Recover` не активируются.",
               "correct": false,
               "sections": {
                 "what_actually": "`@EnableRetry` ставят один раз на `@Configuration`-класс; он включает обработку `@Retryable` во всём контексте, а не пер-бин.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`maxAttempts` задаёт число повторов сверх первого вызова, поэтому при `maxAttempts = 3` метод обращается к цели до четырёх раз, а паузы между попытками задаёт `backoff`.",
+              "text": "`@Retryable` оборачивает метод AOP-прокси: при выбросе исключения из `retryFor` метод вызывается повторно до `maxAttempts` повторов сверх первой попытки (четыре вызова при значении 3) с паузой по `backoff`. Параметры: `retryFor` (раньше `value`) — исключения для повтора, `noRetryFor` (раньше `exclude`) — исключения без повтора, `maxAttempts`, `backoff` (`@Backoff` с `delay`/`multiplier`/`maxDelay`). При исчерпании попыток пробрасывается последнее исключение либо вызывается `@Recover`.",
               "correct": false,
               "sections": {
                 "what_actually": "`maxAttempts` включает первую попытку: значение 3 — это исходный вызов плюс два повтора, итого три обращения.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Параметр `retryFor` перечисляет исключения, которые повторять НЕ нужно, а `noRetryFor` — те, при которых метод вызывается повторно; обе аннотации пришли на смену прежним `value` и `exclude`.",
+              "text": "`@Retryable` оборачивает метод AOP-прокси: при выбросе исключения из `retryFor` метод вызывается повторно до `maxAttempts` (включая первую попытку, по умолчанию 3) с паузой по `backoff`. Параметры: `retryFor` (раньше `value`) — исключения без повтора, `noRetryFor` (раньше `exclude`) — исключения для повтора, `maxAttempts`, `backoff` (`@Backoff` с `delay`/`multiplier`/`maxDelay`). При исчерпании попыток пробрасывается последнее исключение либо вызывается `@Recover`.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `retryFor` (бывший `value`) перечисляет исключения для повтора, `noRetryFor` (бывший `exclude`) — те, что повтор пропускает.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Если попытки исчерпаны и метод `@Recover` не объявлен, `@Retryable` подавляет последнее исключение и возвращает значение по умолчанию (`null` для объектов, `0` для примитивов).",
+              "text": "`@Retryable` оборачивает метод AOP-прокси: при выбросе исключения из `retryFor` метод вызывается повторно до `maxAttempts` (включая первую попытку, по умолчанию 5) с паузой по `backoff`. Параметры: `retryFor` (раньше `value`) — исключения для повтора, `noRetryFor` (раньше `exclude`) — исключения без повтора, `maxAttempts`, `backoff` (`@Backoff` с `delay`/`multiplier`/`maxDelay`). При исчерпании попыток пробрасывается последнее исключение либо вызывается `@Recover`.",
               "correct": false,
               "sections": {
                 "what_actually": "Дефолтный `maxAttempts` равен 3, и без указания `retryFor` повтор идёт по широкому набору исключений, но это не пять попыток и настраивается явно.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Recover` вызывается перед каждой повторной попыткой, чтобы подготовить состояние (например, откатить транзакцию) для следующего retry.",
+              "text": "`@Recover` — метод-fallback, который вызывается перед каждой повторной попыткой `@Retryable`. Требования к сигнатуре: тот же класс, что и `@Retryable`; первый аргумент — тип пойманного исключения (или его суперкласс); тот же возвращаемый тип, что у `@Retryable`-метода; остальные аргументы совпадают с аргументами `@Retryable`-метода. При нескольких `@Recover` Spring выбирает наиболее специфичный по типу исключения, как перегруженные обработчики.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Recover` вызывается один раз — только после исчерпания всех попыток как терминальный fallback, а не между попытками.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Первым аргументом `@Recover`-метода должен идти объект исходного запроса, а параметр с типом пойманного исключения указывать не обязательно.",
+              "text": "`@Recover` — метод-fallback, который вызывается после исчерпания всех попыток `@Retryable`. Требования к сигнатуре: тот же класс, что и `@Retryable`; первый аргумент — объект исходного запроса (исключение указывать не обязательно); тот же возвращаемый тип, что у `@Retryable`-метода; остальные аргументы совпадают с аргументами `@Retryable`-метода. При нескольких `@Recover` Spring выбирает наиболее специфичный по типу исключения, как перегруженные обработчики.",
               "correct": false,
               "sections": {
                 "what_actually": "Первым аргументом обязан идти тип пойманного исключения (или суперкласс); по нему Spring выбирает нужный recover, а параметры запроса идут следом.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Возвращаемый тип `@Recover`-метода может быть любым, отличным от типа `@Retryable`-метода, — например всегда `void` независимо от исходной сигнатуры.",
+              "text": "`@Recover` — метод-fallback, который вызывается после исчерпания всех попыток `@Retryable`. Требования к сигнатуре: тот же класс, что и `@Retryable`; первый аргумент — тип пойманного исключения (или его суперкласс); любой возвращаемый тип, включая `void` независимо от `@Retryable`-метода; остальные аргументы совпадают с аргументами `@Retryable`-метода. При нескольких `@Recover` Spring выбирает наиболее специфичный по типу исключения, как перегруженные обработчики.",
               "correct": false,
               "sections": {
                 "what_actually": "Возвращаемый тип `@Recover` должен совпадать с типом `@Retryable`-метода; иначе Spring не сматчит fallback и пробросит исходное исключение.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Retry` поддерживает только фиксированную задержку; экспоненциальный backoff и джиттер доступны лишь в `Resilience4j`.",
+              "text": "`Spring Retry` через `@Backoff` поддерживает: только фиксированную задержку (`delay`), без экспоненты (`multiplier` не применяется, поэтому 1s→1s→1s), без потолка (`maxDelay` не поддерживается, поэтому 1s→1s→1s→1s→1s) и без джиттера (`random = true` игнорируется) для борьбы с thundering herd. Программно те же стратегии задают через `ExponentialBackOffPolicy` (`setInitialInterval`/`setMultiplier`/`setMaxInterval`) и аналогичные классы политик.",
               "correct": false,
               "sections": {
                 "what_actually": "Экспоненциальный backoff (`multiplier`), потолок (`maxDelay`) и джиттер (`random = true`) встроены прямо в `@Backoff` и `ExponentialBackOffPolicy`.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Параметр `maxDelay` задаёт суммарное время всех пауз, после которого retry прекращается.",
+              "text": "`Spring Retry` через `@Backoff` поддерживает: фиксированную задержку (`delay`), экспоненциальную (`delay` + `multiplier`, например 1s→2s→4s), экспоненциальную с общим бюджетом (`maxDelay`, например повторы прекращаются после суммарных 10s) и джиттер (`random = true`) для борьбы с thundering herd. Программно те же стратегии задают через `ExponentialBackOffPolicy` (`setInitialInterval`/`setMultiplier`/`setMaxInterval`) и аналогичные классы политик.",
               "correct": false,
               "sections": {
                 "what_actually": "`maxDelay` ограничивает максимум одной паузы между попытками (потолок интервала), а не суммарное время; общее время лимитирует `TimeoutRetryPolicy`.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Джиттер (`random = true`) увеличивает каждую паузу ровно вдвое, чтобы гарантированно развести клиентов по времени.",
+              "text": "`Spring Retry` через `@Backoff` поддерживает: фиксированную задержку (`delay`), экспоненциальную (`delay` + `multiplier`, например 1s→2s→4s), экспоненциальную с потолком (`maxDelay`, например 1s→2s→4s→10s→10s) и джиттер (`random = true`) как точное удвоение каждой паузы для борьбы с thundering herd. Программно те же стратегии задают через `ExponentialBackOffPolicy` (`setInitialInterval`/`setMultiplier`/`setMaxInterval`) и аналогичные классы политик.",
               "correct": false,
               "sections": {
                 "what_actually": "Джиттер добавляет случайный разброс к задержке, а не фиксированное удвоение; цель — рандомизировать моменты повторов против thundering herd.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RetryTemplate`, как и `@Retryable`, работает только внутри Spring-бинов и требует `@EnableRetry` и AOP-прокси.",
+              "text": "`RetryTemplate` — программный API для retry только внутри Spring-бинов с `@EnableRetry` и AOP. Его берут, когда retry нужен не в Spring-бине (utility-метод, лямбда), когда политику надо конфигурировать динамически, когда нужен явный recover-callback прямо в коде или когда требуется stateful retry (Kafka, JMS). Строят билдером (`maxAttempts`, `exponentialBackoff`, `retryOn`, `withListener`) и вызывают `execute(retryCallback, recoveryCallback)`.",
               "correct": false,
               "sections": {
                 "what_actually": "`RetryTemplate` — чисто программный объект, не зависит от AOP и `@EnableRetry`; его можно использовать в любом коде, включая статические утилиты.",
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`RetryTemplate` не поддерживает recover-callback: после исчерпания попыток он всегда пробрасывает последнее исключение.",
+              "text": "`RetryTemplate` — программный API для retry без аннотаций и AOP. Его берут, когда retry нужен не в Spring-бине (utility-метод, лямбда), когда политику надо конфигурировать динамически, когда исключение нужно всегда пробросить без recover-callback или когда требуется stateful retry (Kafka, JMS). Строят билдером (`maxAttempts`, `exponentialBackoff`, `retryOn`, `withListener`) и вызывают `execute(retryCallback)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Второй аргумент `execute(retryCallback, recoveryCallback)` — это recover-callback, который вызывается при исчерпании попыток вместо проброса исключения.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`RetryTemplate` нельзя использовать для stateful retry в Kafka/JMS — для этого годятся только аннотации.",
+              "text": "`RetryTemplate` — программный API для retry без аннотаций и AOP. Его берут, когда retry нужен не в Spring-бине (utility-метод, лямбда), когда политику надо конфигурировать динамически, когда нужен явный recover-callback прямо в коде или только когда stateful retry не требуется (Kafka и JMS не поддерживаются). Строят билдером (`maxAttempts`, `exponentialBackoff`, `retryOn`, `withListener`) и вызывают `execute(retryCallback, recoveryCallback)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Stateful retry реализуется именно через `RetryTemplate` с `RetryState`/`DefaultRetryState`; аннотации для transactional message listeners как раз не подходят.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring Retry` реализация `RetryPolicy` одна — `SimpleRetryPolicy`; прочие стратегии повтора получают не отдельными классами, а параметрами `@Backoff`.",
+              "text": "`Spring Retry` предоставляет одну политику с режимами: `SimpleRetryPolicy` (фиксированное число попыток по типам исключений), `AlwaysRetryPolicy` (режим бесконечного повтора — осторожно), `NeverRetryPolicy` (режим без повторов — для тестов), `TimeoutRetryPolicy` (параметр времени внутри Simple), `ExceptionClassifierRetryPolicy` (параметры для разных исключений), `CircuitBreakerRetryPolicy` (режим встроенного Circuit Breaker) и `CompositeRetryPolicy` (набор параметров `@Backoff`, а не отдельные классы).",
               "correct": false,
               "sections": {
                 "what_actually": "Политик несколько: `AlwaysRetryPolicy`, `NeverRetryPolicy`, `TimeoutRetryPolicy`, `ExceptionClassifierRetryPolicy`, `CircuitBreakerRetryPolicy`, `CompositeRetryPolicy` — а `@Backoff` отвечает за паузы, а не за условие повтора.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`TimeoutRetryPolicy` ограничивает повторы фиксированным числом попыток, а не общим временем выполнения, то есть ведёт себя так же, как `SimpleRetryPolicy`.",
+              "text": "`Spring Retry` предоставляет набор политик: `SimpleRetryPolicy` (повторять до истечения общего таймаута), `AlwaysRetryPolicy` (повторять бесконечно — осторожно), `NeverRetryPolicy` (никогда — для тестов), `TimeoutRetryPolicy` (фиксированное число попыток по типам исключений), `ExceptionClassifierRetryPolicy` (разные политики для разных исключений), `CircuitBreakerRetryPolicy` (встроенный Circuit Breaker) и `CompositeRetryPolicy` (комбинация политик с AND/OR-логикой).",
               "correct": false,
               "sections": {
                 "what_actually": "`TimeoutRetryPolicy` повторяет, пока не истёк заданный таймаут по времени; ограничение по числу попыток — это `SimpleRetryPolicy`.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`CompositeRetryPolicy` применяет вложенные политики строго по очереди, переключаясь на следующую после исчерпания предыдущей, а не комбинирует их решения по AND/OR.",
+              "text": "`Spring Retry` предоставляет набор политик: `SimpleRetryPolicy` (фиксированное число попыток по типам исключений), `AlwaysRetryPolicy` (повторять бесконечно — осторожно), `NeverRetryPolicy` (никогда — для тестов), `TimeoutRetryPolicy` (повторять до истечения таймаута), `ExceptionClassifierRetryPolicy` (разные политики для разных исключений), `CircuitBreakerRetryPolicy` (встроенный Circuit Breaker) и `CompositeRetryPolicy` (последовательное переключение политик после исчерпания каждой).",
               "correct": false,
               "sections": {
                 "what_actually": "`CompositeRetryPolicy` именно комбинирует решения вложенных политик с AND/OR-логикой (optimistic/pessimistic), а не выполняет их последовательно по одной.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`CircuitBreakerRetryPolicy` — это полноценный Circuit Breaker с состояниями `CLOSED`/`OPEN`/`HALF_OPEN` и встроенными Micrometer-метриками.",
+              "text": "`CircuitBreakerRetryPolicy` — встроенный в `Spring Retry` Circuit Breaker (в отличие от полноценного `Resilience4j`), полноценный для production-сценариев. Оборачивает делегат-политику (например `SimpleRetryPolicy(3)`) и настраивается через `setOpenTimeout` (как долго цепь открыта) и `setResetTimeout` (через сколько сбросить). Возможности: встроенные Micrometer-метрики, состояние `HALF_OPEN`, Spring Boot auto-configuration; `Resilience4j` не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "У встроенного CB нет `HALF_OPEN` и нет встроенных метрик; полноценную модель состояний и метрики даёт `Resilience4j`.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`CircuitBreakerRetryPolicy` применяется напрямую как аннотация `@CircuitBreaker` на методе, без `RetryTemplate`.",
+              "text": "`CircuitBreakerRetryPolicy` — встроенный в `Spring Retry` Circuit Breaker (в отличие от полноценного `Resilience4j`), подходящий для простых случаев. Применяется напрямую аннотацией `@CircuitBreaker` без `RetryTemplate` и настраивается через её `openTimeout` (как долго цепь открыта) и `resetTimeout` (через сколько сбросить). Ограничения: нет метрик, нет состояния `HALF_OPEN`, нет Spring Boot auto-configuration; для production берут `Resilience4j`.",
               "correct": false,
               "sections": {
                 "what_actually": "Это `RetryPolicy`, которую устанавливают в `RetryTemplate` (`setRetryPolicy`); отдельной аннотации `@CircuitBreaker` в `Spring Retry` нет — она есть в `Resilience4j`.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`setOpenTimeout` задаёт, через сколько после открытия цепь автоматически закроется и снова начнёт пропускать вызовы.",
+              "text": "`CircuitBreakerRetryPolicy` — встроенный в `Spring Retry` Circuit Breaker (в отличие от полноценного `Resilience4j`), подходящий для простых случаев. Оборачивает делегат-политику (например `SimpleRetryPolicy(3)`) и настраивается через `setOpenTimeout` (через сколько закрыть цепь) и `setResetTimeout` (окно подсчёта сбоев). Ограничения: нет метрик, нет состояния `HALF_OPEN`, нет Spring Boot auto-configuration; для production берут `Resilience4j`.",
               "correct": false,
               "sections": {
                 "what_actually": "`setOpenTimeout` — это окно, в течение которого считаются сбои/цепь держится открытой; за сброс отвечает `setResetTimeout`.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "При self-invocation `@Retryable` не работает, потому что Spring отключает повтор для методов, вызванных из того же пакета.",
+              "text": "`@Retryable` реализован через Spring AOP-прокси: прокси оборачивает бин снаружи, и retry срабатывает только при вызове через прокси. Вызов метода из того же пакета блокируется правилами видимости Spring, поэтому повтор не запускается — та же проблема, что у `@Transactional`. Решения: перенести вызывающий класс в другой пакет (рекомендуется), открыть метод как `public`, либо использовать соседний package.",
               "correct": false,
               "sections": {
                 "what_actually": "Дело не в пакете, а в обходе AOP-прокси: внутренний `this.method()` не проходит через прокси, и аспект retry не применяется.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Self-invocation чинится добавлением `@Retryable` второй раз на внутренний метод, чтобы прокси перехватил оба вызова.",
+              "text": "`@Retryable` реализован через Spring AOP-прокси: прокси оборачивает бин снаружи, и retry срабатывает только при вызове через прокси. Вызов `this.method()` внутри того же класса перехватывается, если продублировать `@Retryable` на обоих методах, поэтому повтор не запускается — та же проблема, что у `@Transactional`. Решения: добавить `@Retryable` на внешний и внутренний методы (рекомендуется), не меняя бин и способ вызова.",
               "correct": false,
               "sections": {
                 "what_actually": "Дублирование аннотации не помогает: внутренний вызов всё равно идёт мимо прокси; нужно звать метод через прокси (отдельный бин, `@Lazy`-self или `RetryTemplate`).",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Чтобы retry работал при внутренних вызовах, нужно перейти с JDK-прокси на CGLIB через `proxyTargetClass = true`.",
+              "text": "`@Retryable` реализован через Spring AOP-прокси: прокси оборачивает бин снаружи, и retry срабатывает только при вызове через прокси. Вызов `this.method()` внутри того же класса перехватывается только CGLIB-прокси, поэтому повтор не запускается — та же проблема, что у `@Transactional`. Решения: включить `proxyTargetClass = true` (рекомендуется), перейдя с JDK-прокси на CGLIB.",
               "correct": false,
               "sections": {
                 "what_actually": "Тип прокси (JDK vs CGLIB) не влияет на self-invocation: оба не перехватывают `this`-вызовы; нужно изменить способ вызова, а не тип прокси.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно поставить `@Transactional` и `@Retryable` на один метод — Spring сам открывает новую транзакцию перед каждой попыткой.",
+              "text": "Если один метод одновременно `@Transactional` и `@Retryable`, Spring сам открывает новую транзакцию перед каждой попыткой и retry остаётся корректным (объект очищается автоматически). Правильно — обе аннотации ставят на один метод: `@Retryable` и `@Transactional` вместе создают новую транзакцию на попытку, чтобы каждая попытка была новой транзакцией.",
               "correct": false,
               "sections": {
                 "what_actually": "На одном методе транзакция откатывается до повтора, и retry работает поверх уже отменённой транзакции; новую транзакцию на попытку даёт только разделение методов.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Правильный порядок — транзакция снаружи, retry внутри: `@Transactional` на внешнем методе, `@Retryable` на вложенном.",
+              "text": "Если один метод одновременно `@Transactional` и `@Retryable`, транзакция откатывается раньше, чем срабатывает повтор, и retry бесполезен (объект остаётся в dirty state). Правильно — транзакция снаружи, retry внутри: `@Transactional` ставят на внешний метод, а повторяемую работу выносят во вложенный `@Retryable`-метод, чтобы каждая попытка была новой транзакцией.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок обратный: retry должен быть снаружи (внешний метод без `@Transactional`), а транзакция — во вложенном, иначе повтор идёт после отката.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Комбинировать `@Retryable` и `@Transactional` нельзя в принципе — Spring выбросит ошибку при старте контекста.",
+              "text": "Комбинировать `@Transactional` и `@Retryable` нельзя: Spring обнаруживает конфликт аспектов и завершает запуск контекста ошибкой. Разделение методов тоже не помогает: `@Retryable` ставят на внешний метод без `@Transactional`, а транзакционную работу выносят во вложенный `@Transactional`-метод, чтобы каждая попытка была новой транзакцией.",
               "correct": false,
               "sections": {
                 "what_actually": "Их можно и нужно комбинировать; ошибки при старте нет — важно лишь правильно расположить аннотации (retry снаружи, транзакция внутри).",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Retryable` полностью работает с `Mono`/`Flux`: аспект оборачивает реактивный конвейер и при ошибке в потоке автоматически переподписывается на источник до `maxAttempts`.",
+              "text": "`@Retryable` полностью работает с реактивными методами (`Mono`/`Flux`), потому что возвращается реактивный тип, а не результат выполнения — перехват исключения аспектом не подходит к асинхронному потоку. Аспект сам переподписывается на реактивный источник до `maxAttempts`: оператор `.retryWhen(Retry.backoff(...))` не требуется с `filter`, `jitter` и `onRetryExhaustedThrow`. Альтернатива для `WebClient` — `Resilience4j` `ReactiveCircuitBreaker` и `ReactiveRateLimiter`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Retryable` не работает с реактивными типами; для `Mono`/`Flux` повтор делают оператором `.retryWhen(...)` внутри цепочки.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Достаточно вернуть тело метода через `Mono.fromCallable(...)`, и аспект `Spring Retry` начнёт повторять вызов при каждом сигнале `onError` в потоке.",
+              "text": "`@Retryable` работает с реактивными методами (`Mono`/`Flux`), если тело обёрнуто в `Mono.fromCallable(...)`, потому что возвращается реактивный тип, а не результат выполнения — перехват исключения аспектом не подходит к асинхронному потоку. Для реактивного стека достаточно вернуть `Mono.fromCallable(...)`: аспект повторяет вызов при каждом `onError` с `filter`, `jitter` и `onRetryExhaustedThrow`. Альтернатива для `WebClient` — `Resilience4j` `ReactiveCircuitBreaker` и `ReactiveRateLimiter`.",
               "correct": false,
               "sections": {
                 "what_actually": "Параметра `reactive` у `@Retryable` нет; реактивный повтор реализуется операторами Reactor (`retryWhen`/`Retry.backoff`), а не флагом аннотации.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Оператор `Retry.backoff(...)` умеет только фиксированную задержку между повторами и не поддерживает экспоненциальный рост или добавление `jitter`.",
+              "text": "`@Retryable` не работает с реактивными методами (`Mono`/`Flux`), потому что возвращается реактивный тип, а не результат выполнения — перехват исключения аспектом не подходит к асинхронному потоку. Для реактивного стека используют встроенный механизм Reactor: оператор `.retryWhen(Retry.backoff(...))` только с фиксированной задержкой, без `jitter` и экспоненциального роста. Альтернатива для `WebClient` — `Resilience4j` `ReactiveCircuitBreaker` и `ReactiveRateLimiter`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Retry.backoff()` даёт экспоненциальный backoff и поддерживает `jitter(...)` для разброса повторов во времени.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Stateful retry означает, что `RetryTemplate` хранит результаты успешных вызовов в кеше, чтобы не выполнять операцию повторно.",
+              "text": "Stateful retry сохраняет результаты успешных вызовов в кеше через ключ (`RetryState`/`DefaultRetryState`). Он нужен для транзакционных message listeners (Kafka, JMS): при ошибке транзакция откатывается, сообщение возвращается в очередь, и consumer получает его снова — это новый вызов, а не continuation предыдущего retry. Идентификатор сообщения возвращает сохранённый результат без новой попытки. В `spring-kafka` stateful retry настраивают через error handler + `BackOff`.",
               "correct": false,
               "sections": {
                 "what_actually": "Stateful retry хранит не результаты, а состояние/счётчик попыток по ключу между отдельными вызовами; это про связывание повторов, а не кеширование ответов.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Stateful retry нужен для обычных синхронных HTTP-вызовов, а для Kafka/JMS, наоборот, используется stateless retry.",
+              "text": "Stateful retry сохраняет состояние повторов между вызовами через ключ (`RetryState`/`DefaultRetryState`). Он нужен для обычных синхронных HTTP-вызовов, а не для message listeners (Kafka, JMS): при ошибке транзакция откатывается, сообщение возвращается в очередь, и consumer получает его снова — это новый вызов, а не continuation предыдущего retry. Идентификатор сообщения связывает попытки в единую цепочку. В `spring-kafka` используют только stateless retry через error handler + `BackOff`.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: для синхронных вызовов хватает stateless (цикл в одном вызове), а stateful нужен именно транзакционным Kafka/JMS-листенерам.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для stateful retry достаточно поставить `@Retryable(stateful = true)` на Kafka-листенер, и состояние сохранится автоматически.",
+              "text": "Stateful retry автоматически сохраняет состояние повторов через `@Retryable(stateful = true)` без ключа (`RetryState`/`DefaultRetryState` не нужны). Он нужен для транзакционных message listeners (Kafka, JMS): при ошибке транзакция откатывается, сообщение возвращается в очередь, и consumer получает его снова — это новый вызов, а не continuation предыдущего retry. Идентификатор сообщения связывает попытки в единую цепочку. В `spring-kafka` достаточно поставить эту аннотацию на listener без error handler + `BackOff`.",
               "correct": false,
               "sections": {
                 "what_actually": "Stateful retry реализуют через `RetryTemplate` с `RetryState`/`DefaultRetryState` (или error handler в `spring-kafka`), а не через простой атрибут аннотации на листенере.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`RetryListener` состоит из единственного метода `onRetry(context)`, который вызывается перед каждой попыткой и не передаёт объект возникшего исключения.",
+              "text": "`RetryListener` перехватывает события повтора: единственный `onRetry` (перед каждой попыткой), без `open` (старта), `onError` (ошибки) и `close` (завершения). В `onRetry` инкрементируют счётчик `MeterRegistry`, но объект исключения и итог недоступны. Листенер регистрируют через `template.registerListener(...)` или билдер `.withListener(...)`, а имя метода берут из `ctx.getAttribute(RetryContext.NAME)`.",
               "correct": false,
               "sections": {
                 "what_actually": "У `RetryListener` есть `open`, `onError` (с доступом к `Throwable`) и `close`; метода `onRetry` без ошибки нет, а ошибка как раз доступна в `onError`.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Retry` публикует счётчики числа повторов в Micrometer автоматически, поэтому отдельный `RetryListener` для сбора метрик не нужен.",
+              "text": "`RetryListener` перехватывает события повтора: `open` (старт), `onError` (на каждой неудачной попытке) и `close` (завершение). Micrometer автоматически публикует счётчик и лог каждой попытки, поэтому `onError` и `close` для метрик не нужны. Листенер регистрируют через `template.registerListener(...)` или билдер `.withListener(...)`, а имя метода берут из `ctx.getAttribute(RetryContext.NAME)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Встроенных out-of-the-box метрик у `Spring Retry` нет; их собирают вручную в `RetryListener` через `MeterRegistry` (встроенные метрики — у `Resilience4j`).",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Атрибут `RetryContext.NAME` хранит имя выброшенного исключения, по которому листенер группирует метрики по типам ошибок.",
+              "text": "`RetryListener` перехватывает события повтора: `open` (старт), `onError` (на каждой неудачной попытке) и `close` (завершение). В `onError` инкрементируют счётчик `MeterRegistry` и пишут лог с номером попытки и сообщением ошибки, в `close` фиксируют итог. Листенер регистрируют через `template.registerListener(...)` или билдер `.withListener(...)`, а имя выброшенного исключения берут из `ctx.getAttribute(RetryContext.NAME)`.",
               "correct": false,
               "sections": {
                 "what_actually": "`RetryContext.NAME` — это имя ретраимого метода/операции, а не имя исключения; тип ошибки берут из `Throwable` в `onError`.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Разные политики для методов задаются только программно через `ExceptionClassifierRetryPolicy`; аннотация `@Retryable` всегда одна на весь класс.",
+              "text": "Разные методы не могут иметь собственные `@Retryable`; политики задаются только программно через `ExceptionClassifierRetryPolicy` — например один с пятью попытками и `multiplier = 1.5`, другой с двумя попытками и фиксированным delay. Дополнительно `@Retryable` можно повесить только на класс как единую политику, а на конкретном методе атрибуты не переопределяются (например только `maxAttempts`).",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый метод может нести собственный `@Retryable` со своими параметрами; `ExceptionClassifierRetryPolicy` — лишь программная альтернатива, а не единственный способ.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Class-level `@Retryable` и метод-уровневый суммируются: метод получает попытки класса плюс свои.",
+              "text": "Каждый метод может иметь собственный `@Retryable` со своими `retryFor`, `maxAttempts` и `backoff` — например один с пятью попытками и `multiplier = 1.5`, другой с двумя попытками и фиксированным delay. Дополнительно `@Retryable` можно повесить на класс как default для всех методов, а на конкретном методе прибавить отдельные атрибуты к классовым (например получить сумму `maxAttempts`).",
               "correct": false,
               "sections": {
                 "what_actually": "Метод-уровневый `@Retryable` переопределяет настройки класса, а не складывается с ними; берётся более специфичная аннотация на методе.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`maxAttempts` нельзя задавать на уровне метода — он настраивается исключительно глобально в `application.yml`.",
+              "text": "Каждый метод использует глобальные `retryFor`, `maxAttempts` и `backoff` из `application.yml` — например один с пятью попытками и `multiplier = 1.5`, другой с двумя попытками и фиксированным delay. Дополнительно `@Retryable` можно повесить на класс как default для всех методов, а на конкретном методе переопределить отдельные атрибуты (например только `maxAttempts`).",
               "correct": false,
               "sections": {
                 "what_actually": "`maxAttempts` задаётся прямо в `@Retryable` на методе (или классе); отдельного глобального свойства в `application.yml` для него нет.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для теста `@Retryable` достаточно создать сервис через `new MyService()` и замокать зависимость — повтор сработает и без контекста Spring.",
+              "text": "`@Retryable` работает через Spring AOP, поэтому для теста достаточно обычного `new MyService()` без контекста (`@SpringBootTest` или `@SpringJUnitConfig` с AOP не нужны) — повтор сработает без прокси. Зависимость мокируют (`@MockBean`), задают исключение через `when(...).thenThrow(...)` и проверяют число вызовов через `verify(mock, times(N))`, а вызов `@Recover` — по итоговому результату. Для скорости retry-логику тестируют через `RetryTemplate` без реального `@Backoff`.",
               "correct": false,
               "sections": {
                 "what_actually": "`new MyService()` создаёт объект без прокси, поэтому `@Retryable` игнорируется; нужен бин из контекста (`@SpringBootTest`/`@SpringJUnitConfig`).",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Число попыток в тесте проверяют через `verify(mock, times(1))`, так как мок вызывается лишь однажды независимо от `maxAttempts`.",
+              "text": "`@Retryable` работает через Spring AOP, поэтому тест должен поднимать контекст (`@SpringBootTest` или `@SpringJUnitConfig` с AOP) — обычный `new MyService()` обойдёт прокси и повтора не будет. Зависимость мокируют (`@MockBean`), задают исключение через `when(...).thenThrow(...)` и проверяют число вызовов через `verify(mock, times(1))`, а вызов `@Recover` — по итоговому результату. Для скорости retry-логику тестируют через `RetryTemplate` без реального `@Backoff`.",
               "correct": false,
               "sections": {
                 "what_actually": "При повторах мок вызывается столько раз, сколько было попыток; для `maxAttempts = 3` это `verify(mock, times(3))`, а не один.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Реальный `@Backoff` в тестах не влияет на скорость — Spring при тестировании отключает задержки автоматически.",
+              "text": "`@Retryable` работает через Spring AOP, поэтому тест должен поднимать контекст (`@SpringBootTest` или `@SpringJUnitConfig` с AOP) — обычный `new MyService()` обойдёт прокси и повтора не будет. Зависимость мокируют (`@MockBean`), задают исключение через `when(...).thenThrow(...)` и проверяют число вызовов через `verify(mock, times(N))`, а вызов `@Recover` — по итоговому результату. В тестовом контексте Spring автоматически отключает реальный `@Backoff`, поэтому дополнительные настройки скорости не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring не отключает `@Backoff` в тестах: реальные паузы замедляют прогон, поэтому либо тестируют `RetryTemplate` без backoff, либо уменьшают `delay`.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Retry` из коробки поддерживает реактивный стек (`Reactor`, RxJava), тогда как `Resilience4j` применим только в блокирующем императивном коде.",
+              "text": "`Spring Retry` и `Resilience4j` оба умеют полноценный retry, но дальше расходятся: у `Spring Retry` есть поддержка Reactor/RxJava, а Circuit Breaker базовый; Rate Limiter, Bulkhead и TimeLimiter не являются главным отличием, метрики — вручную через listener, auto-config частичная. У `Resilience4j` CB полноценный (`CLOSED`/`OPEN`/`HALF_OPEN`), есть Rate Limiter, Bulkhead и TimeLimiter, но поддерживается только блокирующий код, метрики Micrometer из коробки и полная Spring Boot auto-configuration через starter.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: реактивный стек (Reactor/RxJava) поддерживает `Resilience4j`, а `Spring Retry` с `Mono`/`Flux` не работает.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Retry` предоставляет встроенные `RateLimiter` и `Bulkhead` наравне с повтором, поэтому для этих ограничителей `Resilience4j` не требуется.",
+              "text": "`Spring Retry` и `Resilience4j` оба умеют полноценный retry, но дальше расходятся: у `Spring Retry` Circuit Breaker базовый (без `HALF_OPEN`), есть Rate Limiter, Bulkhead и TimeLimiter наравне с retry, но нет реактивного стека, метрики — вручную через listener, auto-config частичная. У `Resilience4j` CB полноценный (`CLOSED`/`OPEN`/`HALF_OPEN`), есть Rate Limiter, Bulkhead, TimeLimiter, поддержка Reactor/RxJava, метрики Micrometer из коробки и полная Spring Boot auto-configuration через starter.",
               "correct": false,
               "sections": {
                 "what_actually": "Rate Limiter и Bulkhead есть как раз у `Resilience4j`; в `Spring Retry` их нет вовсе.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Обе библиотеки одинаковы по возможностям: и `Spring Retry`, и `Resilience4j` имеют полноценный CB с `HALF_OPEN`, `RateLimiter` и встроенные метрики Micrometer.",
+              "text": "`Spring Retry` и `Resilience4j` оба умеют полноценный retry, и дальше совпадают: у `Spring Retry` CB полноценный (`CLOSED`/`OPEN`/`HALF_OPEN`), есть Rate Limiter, Bulkhead, TimeLimiter, поддержка Reactor/RxJava, метрики Micrometer из коробки и полная auto-configuration. У `Resilience4j` CB полноценный (`CLOSED`/`OPEN`/`HALF_OPEN`), есть Rate Limiter, Bulkhead, TimeLimiter, поддержка Reactor/RxJava, метрики Micrometer из коробки и полная Spring Boot auto-configuration через starter.",
               "correct": false,
               "sections": {
                 "what_actually": "Возможности различаются: у `Spring Retry` базовый CB без `HALF_OPEN`, нет Rate Limiter и встроенных метрик — всё это есть только у `Resilience4j`.",
