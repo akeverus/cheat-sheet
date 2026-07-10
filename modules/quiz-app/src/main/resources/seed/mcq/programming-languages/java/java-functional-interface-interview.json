@@ -189,7 +189,7 @@
           "question_text": "Какие основные функциональные интерфейсы есть в java.util.function?",
           "options": [
             {
-              "text": "Ядро пакета: `Function<T,R>` с сигнатурой `void apply(T)` (принимает аргумент, но результат не возвращает), `Predicate<T>` (`boolean test(T)`), `Consumer<T>` (`void accept(T)`), `Supplier<T>` (`T get()`), плюс `Bi*`-версии на два аргумента. Набор покрывает все сочетания наличия входа и выхода.",
+              "text": "Базовые интерфейсы пакета: `Function<T,R>` (`void apply(T)` — принимает аргумент, но результат не возвращает), `BiFunction<T,U,R>`, `UnaryOperator<T>` (`T apply(T)`), `BinaryOperator<T>`, `Predicate<T>` (`boolean test(T)`), `BiPredicate<T,U>`, `Consumer<T>` (`void accept(T)`), `BiConsumer<T,U>`, `Supplier<T>` (`T get()`). Плюс `Runnable` и `Callable<T>` из других пакетов. Они покрывают все комбинации «есть/нет входа» и «есть/нет выхода».",
               "correct": false,
               "sections": {
                 "what_actually": "`Function<T,R>` возвращает результат: `R apply(T t)`. Интерфейс с `void accept(T)` без возврата — это `Consumer<T>`.",
@@ -201,7 +201,7 @@
               "order": 0
             },
             {
-              "text": "Ядро пакета: `Supplier<T>` принимает аргумент `T` и возвращает `boolean` (проверяет значение), `Function<T,R>` (`R apply(T)`), `Consumer<T>` (`void accept(T)`), `UnaryOperator<T>` (`T apply(T)`), плюс `Bi*`-версии на два аргумента. Набор покрывает все сочетания наличия входа и выхода.",
+              "text": "Базовые интерфейсы пакета: `Function<T,R>` (`R apply(T)`), `BiFunction<T,U,R>`, `UnaryOperator<T>` (`T apply(T)`), `BinaryOperator<T>`, `Predicate<T>` (`boolean test(T)`), `BiPredicate<T,U>`, `Consumer<T>` (`void accept(T)`), `BiConsumer<T,U>`, `Supplier<T>` (`boolean test(T)` — принимает `T` и возвращает `boolean`). Плюс `Runnable` и `Callable<T>` из других пакетов. Они покрывают все комбинации «есть/нет входа» и «есть/нет выхода».",
               "correct": false,
               "sections": {
                 "what_actually": "`Supplier<T>` не принимает аргументов и возвращает `T` через `T get()`. Проверка с возвратом `boolean` — это `Predicate<T>`.",
@@ -213,7 +213,7 @@
               "order": 1
             },
             {
-              "text": "Ядро пакета: `Consumer<T>` возвращает новое значение `T` и потому подходит для `map()`, `Function<T,R>` (`R apply(T)`), `Predicate<T>` (`boolean test(T)`), `Supplier<T>` (`T get()`), плюс `Bi*`-версии на два аргумента. Набор покрывает все сочетания наличия входа и выхода.",
+              "text": "Базовые интерфейсы пакета: `Function<T,R>` (`R apply(T)`), `BiFunction<T,U,R>`, `UnaryOperator<T>` (`T apply(T)`), `BinaryOperator<T>`, `Predicate<T>` (`boolean test(T)`), `BiPredicate<T,U>`, `Consumer<T>` (`T accept(T)` — возвращает новое значение и потому подходит для `map()`), `BiConsumer<T,U>`, `Supplier<T>` (`T get()`). Плюс `Runnable` и `Callable<T>` из других пакетов. Они покрывают все комбинации «есть/нет входа» и «есть/нет выхода».",
               "correct": false,
               "sections": {
                 "what_actually": "`Consumer<T>` ничего не возвращает (`void accept(T)`); для преобразования с возвратом в `map()` нужна `Function<T,R>`.",
@@ -262,7 +262,7 @@
               "order": 0
             },
             {
-              "text": "`Consumer` и `Supplier` идентичны по сигнатуре: оба принимают `T` и возвращают `T`, различаясь только названием.",
+              "text": "`Consumer<T>` и `Supplier<T>` идентичны по сигнатуре: оба принимают значение типа `T` и возвращают `T` (`T accept(T)` / `T get(T)`), различаясь только названием — один «потребляет», другой «поставляет», но форма одна.",
               "correct": false,
               "sections": {
                 "what_actually": "Сигнатуры противоположны: `Consumer` — `void accept(T)` (вход есть, выхода нет), `Supplier` — `T get()` (входа нет, выход есть).",
@@ -274,7 +274,7 @@
               "order": 1
             },
             {
-              "text": "`Supplier<T>` принимает значение и логирует его, а `Consumer<T>` создаёт новое значение по запросу.",
+              "text": "`Supplier<T>` принимает значение типа `T` и ничего не возвращает (`void accept(T)`) — он потребляет данные ради побочного эффекта (логирование, `forEach`). `Consumer<T>` наоборот: не принимает входных данных и возвращает значение типа `T` (`T get()`) — он производит/поставляет значение (фабрика, ленивая инициализация в `orElseGet`).",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны: потребляет и логирует `Consumer`, а создаёт значение по запросу `Supplier`.",
@@ -286,7 +286,7 @@
               "order": 2
             },
             {
-              "text": "Оба интерфейса возвращают `boolean`: `Consumer` — успех потребления, `Supplier` — доступность значения.",
+              "text": "`Consumer<T>` принимает значение типа `T` и возвращает `boolean` (`boolean accept(T)`) — успех потребления (логирование, `forEach`). `Supplier<T>` наоборот: не принимает входных данных и возвращает `boolean` (`boolean get()`) — доступность значения (фабрика, ленивая инициализация в `orElseGet`).",
               "correct": false,
               "sections": {
                 "what_actually": "Ни один не возвращает `boolean`: `Consumer` возвращает `void`, `Supplier` — значение типа `T`. Булев результат даёт `Predicate`.",
@@ -309,7 +309,7 @@
           "question_text": "Чем Function отличается от UnaryOperator?",
           "options": [
             {
-              "text": "`UnaryOperator<T>` принимает два аргумента типа `T` и возвращает один `T`, объединяя их.",
+              "text": "`UnaryOperator<T>` расширяет `BiFunction<T,T,T>` — это частный случай, когда оба входа и выход совпадают. `Function<T,R>` допускает один аргумент (`String → Integer`), а `UnaryOperator<T>` требует два аргумента типа `T` и возвращает `T` (`String, String → String`). По аналогии `BinaryOperator<T>` — то же самое, что `UnaryOperator`.",
               "correct": false,
               "sections": {
                 "what_actually": "Два аргумента типа `T` с результатом `T` — это `BinaryOperator<T>`; `UnaryOperator` принимает ровно один аргумент.",
@@ -334,7 +334,7 @@
               "order": 1
             },
             {
-              "text": "`Function<T,R>` обязана иметь одинаковые входной и выходной типы, а `UnaryOperator<T>` позволяет их различать.",
+              "text": "`UnaryOperator<T>` расширяет `Function<T,T>` — это частный случай, когда тип входа и выхода совпадает. `Function<T,R>` обязана иметь одинаковые типы (`String → String`), а `UnaryOperator<T>` допускает разные (`String → Integer`). По аналогии `BinaryOperator<T>` — частный случай `BiFunction<T,T,T>`.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: ограничение «одинаковые типы» накладывает `UnaryOperator<T>`, а `Function<T,R>` как раз допускает разные `T` и `R`.",
@@ -346,7 +346,7 @@
               "order": 2
             },
             {
-              "text": "`UnaryOperator<T>` и `Function<T,R>` никак не связаны наследованием — это два независимых интерфейса без общего родителя.",
+              "text": "`UnaryOperator<T>` и `Function<T,R>` никак не связаны наследованием — это два независимых интерфейса без общего родителя. `Function<T,R>` допускает разные типы (`String → Integer`), а `UnaryOperator<T>` требует одинаковых (`String → String`). По аналогии `BinaryOperator<T>` — частный случай `BiFunction<T,T,T>`.",
               "correct": false,
               "sections": {
                 "what_actually": "Связь прямая: `UnaryOperator<T>` объявлен как `extends Function<T,T>`, то есть является его подтипом-специализацией.",
@@ -369,7 +369,7 @@
           "question_text": "Чем Runnable отличается от Callable и Supplier?",
           "options": [
             {
-              "text": "`Runnable.run()` возвращает `T` и потому годится для `ExecutorService.submit`, дающего `Future<T>`; `Callable<T>.call()` тоже возвращает `T`, но объявляет `throws Exception`, а `Supplier<T>.get()` возвращает `T` без checked-исключений.",
+              "text": "`Runnable.run()` возвращает `T` и не объявляет checked-исключений, лежит в `java.lang` — поэтому годится для `ExecutorService.submit`, дающего `Future<T>`. `Callable<T>.call()` возвращает `T` и объявляет `throws Exception`, лежит в `java.util.concurrent`. `Supplier<T>.get()` возвращает `T`, но checked-исключений не объявляет, лежит в `java.util.function`. Ключ: `Callable` умеет бросать checked exception, `Supplier` — нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`Runnable.run()` возвращает `void`; результат через `Future` даёт `Callable<T>`. `submit(Runnable)` возвращает `Future<?>`, разрешающийся в `null`.",
@@ -381,7 +381,7 @@
               "order": 0
             },
             {
-              "text": "`Supplier<T>.get()` объявляет `throws Exception`, поэтому годится для задач с `IOException`; `Callable<T>.call()` тоже возвращает `T` и бросает checked, а `Runnable.run()` возвращает `void` и checked-исключений не объявляет.",
+              "text": "`Runnable.run()` ничего не возвращает (`void`) и не объявляет checked-исключений, лежит в `java.lang`. `Callable<T>.call()` возвращает `T` и объявляет `throws Exception`, лежит в `java.util.concurrent`. `Supplier<T>.get()` возвращает `T` и объявляет `throws Exception`, лежит в `java.util.function`. Ключ: `Supplier` умеет бросать checked exception так же, как `Callable`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Supplier.get()` не объявляет checked-исключений; бросать checked умеет только `Callable.call() throws Exception`.",
@@ -406,7 +406,7 @@
               "order": 2
             },
             {
-              "text": "Все три интерфейса — `Runnable`, `Callable<T>` и `Supplier<T>` — лежат в одном пакете `java.util.function` и взаимозаменяемы по типу, поэтому `ExecutorService.submit` одинаково принимает любой из них.",
+              "text": "`Runnable.run()` ничего не возвращает (`void`) и не объявляет checked-исключений, лежит в `java.util.function`. `Callable<T>.call()` возвращает `T` и объявляет `throws Exception`, лежит в `java.util.function`. `Supplier<T>.get()` возвращает `T`, но checked-исключений не объявляет, лежит в `java.util.function`. Ключ: все три взаимозаменяемы по типу, поэтому `ExecutorService.submit` одинаково принимает любой из них.",
               "correct": false,
               "sections": {
                 "what_actually": "Пакеты разные: `Runnable` — `java.lang`, `Callable` — `java.util.concurrent`, `Supplier` — `java.util.function`; по типу они невзаимозаменяемы.",
@@ -429,7 +429,7 @@
           "question_text": "Какие 4 вида method references существуют?",
           "options": [
             {
-              "text": "Вид только один — ссылка на статический метод `ClassName::staticMethod` (≈ `x -> ClassName.staticMethod(x)`); записи `instance::method`, `Type::instanceMethod` и `Type::new` — это обычные лямбды, а не отдельные виды method reference.",
+              "text": "Вид только один: 1) ссылка на статический метод `ClassName::staticMethod` (≈ `x -> ClassName.staticMethod(x)`); 2) запись `instance::method` — обычная лямбда, не method reference; 3) запись `ClassName::instanceMethod` — обычная лямбда, не method reference; 4) запись `ClassName::new` — обычная лямбда, не method reference.",
               "correct": false,
               "sections": {
                 "what_actually": "Видов четыре: статический, на объекте, на типе и на конструктор. `instance::method`, `Type::method` и `Type::new` — валидные method references.",
@@ -441,7 +441,7 @@
               "order": 0
             },
             {
-              "text": "`ClassName::new` — это ссылка на статический метод класса с именем `new`, а не отдельный вид method reference на конструктор; создание объекта через `::` записать нельзя.",
+              "text": "Четыре вида: 1) ссылка на статический метод `ClassName::staticMethod` (≈ `x -> ClassName.staticMethod(x)`); 2) ссылка на метод конкретного объекта `instance::method` (≈ `x -> instance.method(x)`); 3) ссылка на метод экземпляра по типу `ClassName::instanceMethod`, где первый аргумент становится receiver (≈ `x -> x.method()`); 4) ссылка на статический метод с именем `new` `ClassName::new` (≈ `x -> ClassName.new(x)`), а не на конструктор — создание объекта через `::` записать нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "`ClassName::new` — это ссылка именно на конструктор; метода с именем `new` в Java не существует, `new` — ключевое слово.",
@@ -453,7 +453,7 @@
               "order": 1
             },
             {
-              "text": "`String::toUpperCase` — ссылка на статический метод класса `String`, выполняемая без объекта-receiver, того же вида, что и `Integer::parseInt`.",
+              "text": "Четыре вида: 1) ссылка на статический метод `ClassName::staticMethod` (≈ `x -> ClassName.staticMethod(x)`); 2) ссылка на метод конкретного объекта `instance::method` (≈ `x -> instance.method(x)`); 3) ссылка на статический метод по типу `ClassName::instanceMethod`, выполняемая без объекта-receiver (≈ `x -> ClassName.instanceMethod(x)`), того же вида, что и `Integer::parseInt`; 4) ссылка на конструктор `ClassName::new` (≈ `x -> new ClassName(x)`).",
               "correct": false,
               "sections": {
                 "what_actually": "`String::toUpperCase` — ссылка на метод экземпляра по типу: первый аргумент лямбды становится receiver, то есть `s -> s.toUpperCase()`.",
@@ -502,7 +502,7 @@
               "order": 0
             },
             {
-              "text": "`andThen` и `compose` эквивалентны: оба выполняют функции слева направо, поэтому `times2.andThen(plus3).apply(5)` и `times2.compose(plus3).apply(5)` дают один результат `13`.",
+              "text": "Оба объединяют функции в цепочку, и порядок выполнения одинаковый. `f.andThen(g)` — сначала `f`, потом `g` (`g(f(x))`): `times2.andThen(plus3).apply(5)` = `(5*2)+3 = 13`. `f.compose(g)` — тоже сначала `f`, потом `g` (`g(f(x))`): `times2.compose(plus3).apply(5)` = `(5*2)+3 = 13`. Мнемоника: `andThen` и `compose` эквивалентны, оба идут слева направо.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок противоположен: `andThen` выполняет `this` первой, `compose` — переданную функцию первой; на некоммутативных операциях результаты различаются (13 против 16).",
@@ -514,7 +514,7 @@
               "order": 1
             },
             {
-              "text": "`f.andThen(g)` означает «сначала `g`, потом `f`» — вычисляет `f(g(x))`; поэтому `times2.andThen(plus3).apply(5)` = `(5+3)*2 = 16`.",
+              "text": "Оба объединяют функции в цепочку, но порядок выполнения обратный. `f.andThen(g)` — сначала `g`, потом `f` (`f(g(x))`): `times2.andThen(plus3).apply(5)` = `(5+3)*2 = 16`. `f.compose(g)` — сначала `f`, потом `g` (`g(f(x))`): `times2.compose(plus3).apply(5)` = `(5*2)+3 = 13`. Мнемоника: в `andThen` аргумент выполняется после `this`, в `compose` — до.",
               "correct": false,
               "sections": {
                 "what_actually": "`f.andThen(g)` означает «сначала `f`, потом `g`», то есть `g(f(x))`. Порядок `f(g(x))` даёт как раз `compose`.",
@@ -526,7 +526,7 @@
               "order": 2
             },
             {
-              "text": "У `Consumer` есть оба метода — `andThen` и `compose`: `c1.andThen(c2)` выполняет побочные эффекты по очереди, а `c1.compose(c2)` — в обратном порядке, как у `Function`.",
+              "text": "Оба объединяют `Consumer` в цепочку, но порядок выполнения обратный. `c1.andThen(c2)` — сначала `c1`, потом `c2` (побочные эффекты по очереди): `log.andThen(audit).accept(x)`. `c1.compose(c2)` — сначала `c2`, потом `c1` (в обратном порядке): `log.compose(audit).accept(x)`. Мнемоника: у `Consumer` есть оба метода — `andThen` и `compose`, как у `Function`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Consumer` имеет только `andThen`: без возвращаемого значения нечего передавать дальше, поэтому `compose` для него не определён.",
@@ -549,7 +549,7 @@
           "question_text": "Как работают and(), or(), negate() в Predicate?",
           "options": [
             {
-              "text": "`and`, `or`, `negate` мутируют исходный предикат на месте и возвращают `void`: `notEmpty.and(startsWithA)` меняет сам `notEmpty`, поэтому fluent-цепочки `a.and(b).or(c)` собрать нельзя.",
+              "text": "Это `default`-методы композиции предикатов. `and` — оба условия истинны (логическое И), `or` — хотя бы одно истинно (логическое ИЛИ), `negate` — инверсия результата. Они мутируют исходный предикат на месте и возвращают `void`: `notEmpty.and(startsWithA)` меняет сам `notEmpty`, поэтому fluent-цепочки `a.and(b).or(c)` собрать нельзя. Плюс статический `Predicate.not(...)` (Java 11+) для инверсии method reference.",
               "correct": false,
               "sections": {
                 "what_actually": "Методы не мутируют исходный предикат, а возвращают новый `Predicate`, поэтому цепочки `a.and(b).or(c)` как раз и работают.",
@@ -574,7 +574,7 @@
               "order": 1
             },
             {
-              "text": "`negate()` возвращает `boolean` — сразу инвертированный результат текущего теста; `notEmpty.negate()` даёт готовое значение, а не новый `Predicate` для последующего `.test(...)`.",
+              "text": "Это `default`-методы композиции предикатов. `and` — оба условия истинны (логическое И), `or` — хотя бы одно истинно (логическое ИЛИ), `negate` — инверсия результата, возвращает сразу `boolean` (готовый результат теста), а не новый `Predicate` для `.test(...)`: `names.stream().filter(notEmpty.and(startsWithA).and(longEnough))`. Плюс статический `Predicate.not(...)` (Java 11+) для инверсии method reference.",
               "correct": false,
               "sections": {
                 "what_actually": "`negate()` возвращает новый `Predicate<T>`, а не `boolean`; сам тест выполняется позже вызовом `.test(value)`.",
@@ -586,7 +586,7 @@
               "order": 2
             },
             {
-              "text": "`and()` всегда вычисляет оба предиката независимо от результата первого: короткого замыкания у `Predicate` нет, поэтому `expensive.and(cheap)` прогоняет `cheap` даже при `false` у `expensive`.",
+              "text": "Это `default`-методы композиции предикатов. `and` — оба условия всегда вычисляются независимо (без короткого замыкания), `or` — тоже без short-circuit, `negate` — инверсия результата. Они возвращают новый `Predicate`, удобный в `filter`: `names.stream().filter(notEmpty.and(startsWithA).and(longEnough))`. Плюс статический `Predicate.not(...)` (Java 11+) для инверсии method reference.",
               "correct": false,
               "sections": {
                 "what_actually": "`and()` использует короткое замыкание: если первый предикат вернул `false`, второй не вычисляется (он реализован через `&&`).",
@@ -609,7 +609,7 @@
           "question_text": "Что такое примитивные специализации функциональных интерфейсов?",
           "options": [
             {
-              "text": "Примитивные специализации — это интерфейсы, которые наоборот всегда упаковывают примитив в обёртку для единообразия с `Object`.",
+              "text": "Это варианты стандартных интерфейсов, которые наоборот всегда упаковывают примитив (`int`, `long`, `double`) в обёртку для единообразия с `Object`. Например: `IntUnaryOperator`, `ToIntFunction<T>`, `IntPredicate`, `IntConsumer`, `IntSupplier`, `IntToDoubleFunction`. Они избегают накладных расходов на упаковку: `IntUnaryOperator square = x -> x*x;` всегда создаёт объекты `Integer`, как и `Function<Integer,Integer>`.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл специализаций обратный: они устраняют boxing, работая с примитивом напрямую, а не упаковывают его.",
@@ -621,7 +621,7 @@
               "order": 0
             },
             {
-              "text": "Примитивные специализации существуют только для `Predicate` (`IntPredicate`, `LongPredicate`), а для `Function`, `Consumer`, `Supplier` их нет.",
+              "text": "Это варианты стандартных интерфейсов, работающие напрямую с примитивами (`int`, `long`, `double`) без boxing/unboxing. Например: только `IntPredicate` и `LongPredicate` — для `Function`, `Consumer`, `Supplier` примитивных специализаций нет. Они избегают накладных расходов на упаковку: `IntUnaryOperator square = x -> x*x;` не создаёт объектов `Integer`, в отличие от `Function<Integer,Integer>`.",
               "correct": false,
               "sections": {
                 "what_actually": "Специализации есть у большинства семейств: `IntFunction`, `ToIntFunction`, `IntConsumer`, `IntSupplier`, `IntUnaryOperator` и аналогичные для `long`/`double`.",
@@ -646,7 +646,7 @@
               "order": 2
             },
             {
-              "text": "`ToIntFunction<T>` принимает примитив `int` и возвращает объект `T`, то есть распаковывает значение в ссылочный тип.",
+              "text": "Это варианты стандартных интерфейсов, работающие напрямую с примитивами (`int`, `long`, `double`) без boxing/unboxing. Например: `IntUnaryOperator`, `ToIntFunction<T>` (принимает `int` и возвращает объект `T`), `IntPredicate`, `IntConsumer`, `IntSupplier`, `IntToDoubleFunction`. Они избегают накладных расходов на упаковку: `IntUnaryOperator square = x -> x*x;` не создаёт объектов `Integer`, в отличие от `Function<Integer,Integer>`.",
               "correct": false,
               "sections": {
                 "what_actually": "`ToIntFunction<T>` наоборот: принимает объект `T` и возвращает примитив `int` (`int applyAsInt(T)`); примитив на входе — это `IntFunction<R>`.",
@@ -669,7 +669,7 @@
           "question_text": "Что значит effectively final для переменных в лямбде?",
           "options": [
             {
-              "text": "Effectively final означает, что переменную нужно обязательно объявить со словом `final`, иначе лямбда её не захватит.",
+              "text": "Переменные из внешней области видимости, используемые внутри лямбды, должны быть обязательно объявлены со словом `final` — иначе лямбда их не захватит; effectively final без явного `final` недостаточно. Если переменную переприсвоить (`mutable = \"Changed\";`), она перестаёт быть effectively final и захват в лямбде даёт compile error. Поля класса (`this.field`) при этом менять можно.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключевое слово `final` писать не обязательно: достаточно, чтобы переменная фактически не переприсваивалась — компилятор сам признаёт её effectively final.",
@@ -681,7 +681,7 @@
               "order": 0
             },
             {
-              "text": "Внутри лямбды можно свободно переприсваивать захваченные локальные переменные — ограничение касается только полей класса.",
+              "text": "Переменные из внешней области видимости, используемые внутри лямбды, должны быть `final` или effectively final — то есть фактически не меняться после инициализации, хотя слово `final` явно не написано. Если переменную переприсвоить (`mutable = \"Changed\";`), это допустимо: внутри лямбды можно свободно менять захваченные локальные переменные — ограничение касается только полей класса (`this.field`).",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: захваченные локальные переменные менять нельзя (нужна effectively final), а поля класса (`this.field`) изменять как раз можно.",
@@ -693,7 +693,7 @@
               "order": 1
             },
             {
-              "text": "Захваченную локальную переменную можно безопасно менять в параллельном стриме через `int[] counter = {0}`, и это потокобезопасно.",
+              "text": "Переменные из внешней области видимости, используемые внутри лямбды, должны быть `final` или effectively final — то есть фактически не меняться после инициализации, хотя слово `final` явно не написано. Если переменную переприсвоить (`mutable = \"Changed\";`), она перестаёт быть effectively final и захват в лямбде даёт compile error. Поля класса (`this.field`) при этом менять можно; а локальную переменную безопасно менять в параллельном стриме через `int[] counter = {0}` — это потокобезопасно.",
               "correct": false,
               "sections": {
                 "what_actually": "Трюк с массивом обходит компилятор, но НЕ потокобезопасен: при параллельном стриме `counter[0]++` создаёт гонку; нужен `AtomicInteger`.",
@@ -742,7 +742,7 @@
               "order": 0
             },
             {
-              "text": "Да, всегда: лямбда может бросать любое checked-исключение, потому что компилятор автоматически добавляет `throws` к абстрактному методу интерфейса.",
+              "text": "Да, всегда: лямбда может бросать любое checked-исключение, потому что компилятор автоматически добавляет `throws` к абстрактному методу интерфейса. Стандартные интерфейсы (`Function`, `Predicate`, `Consumer` и т.д.) получают `throws` неявно, поэтому `path -> Files.readAllBytes(Path.of(path))` компилируется. Обходы не нужны: ни unchecked (`UncheckedIOException`), ни собственный интерфейс с `throws` (`ThrowingFunction<T,R> { R apply(T) throws Exception; }`).",
               "correct": false,
               "sections": {
                 "what_actually": "Компилятор не дописывает `throws`: тело лямбды обязано укладываться в существующую сигнатуру, а `Function.apply` checked-исключений не объявляет.",
@@ -754,7 +754,7 @@
               "order": 1
             },
             {
-              "text": "В JDK есть готовые throwing-версии стандартных интерфейсов, например `ThrowingFunction`, поэтому свой интерфейс писать не нужно.",
+              "text": "Нет, если функциональный интерфейс не объявляет `throws`. Стандартные интерфейсы (`Function`, `Predicate`, `Consumer` и т.д.) checked-исключений не объявляют, поэтому `path -> Files.readAllBytes(Path.of(path))` не компилируется. Обходы не нужны: в JDK есть готовые throwing-версии стандартных интерфейсов, например `ThrowingFunction<T,R> { R apply(T) throws Exception; }`, поэтому свой интерфейс писать не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "В стандартной библиотеке таких интерфейсов нет: `ThrowingFunction` приходится писать самому или брать из сторонних утилит.",
@@ -766,7 +766,7 @@
               "order": 2
             },
             {
-              "text": "Обернуть checked в unchecked внутри лямбды невозможно — `try/catch` в теле лямбды запрещён синтаксисом.",
+              "text": "Нет, если функциональный интерфейс не объявляет `throws`. Стандартные интерфейсы (`Function`, `Predicate`, `Consumer` и т.д.) checked-исключений не объявляют, поэтому `path -> Files.readAllBytes(Path.of(path))` не компилируется. Обходы недоступны: обернуть checked в unchecked внутри лямбды невозможно — `try/catch` в теле лямбды запрещён синтаксисом, а собственный интерфейс с `throws` (`ThrowingFunction<T,R> { R apply(T) throws Exception; }`) тоже не поможет.",
               "correct": false,
               "sections": {
                 "what_actually": "В теле лямбды-блока `try/catch` разрешён: именно так checked оборачивают в `UncheckedIOException` или `RuntimeException`.",
