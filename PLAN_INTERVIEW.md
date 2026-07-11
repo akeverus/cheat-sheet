@@ -247,7 +247,7 @@ python3 scripts/gen-interview-plan.py --write --reset      # + сбросить 
 
 <!-- INTERVIEW-PLAN:START (auto: scripts/gen-interview-plan.py) -->
 
-_Сводка: сидеров=318 · ✅DONE=1 · 🔄WIP=0 · ⬜QUEUED=317 · остаток визуально-палящих блоков (по не-DONE)=9050. Проверка каждого файла — против `docs/golden-examples.md`._
+_Сводка: сидеров=318 · ✅DONE=2 · 🔄WIP=0 · ⬜QUEUED=316 · остаток визуально-палящих блоков (по не-DONE)=9030. Проверка каждого файла — против `docs/golden-examples.md`._
 
 **Golden** = статус проверки файла против `docs/golden-examples.md` (⬜ QUEUED · 🔄 WIP · ✅ DONE). **Tell** = сколько блоков ещё визуально палят correct (самый длинный / единств. с `:` / больше backtick'ов / единств. с перечислением) — worst-first ключ, диагностика, не авто-гейт.
 
@@ -498,7 +498,7 @@ _Сводка: сидеров=318 · ✅DONE=1 · 🔄WIP=0 · ⬜QUEUED=317 · 
 | 243 | `design-chat-system` | system-design | 21 | 21 | ⬜ |
 | 244 | `property-based-testing` | testing | 21 | 21 | ⬜ |
 | 245 | `loki-grafana` | monitoring | 28 | 20 | ⬜ |
-| 246 | `conflict-resolution` | leadership | 20 | 20 | ⬜ |
+| 246 | `conflict-resolution` | leadership | 20 | 20 | ✅ |
 | 247 | `estimations-planning` | leadership | 20 | 20 | ⬜ |
 | 248 | `linkerd` | devops | 20 | 20 | ⬜ |
 | 249 | `mtls` | security | 20 | 20 | ⬜ |
