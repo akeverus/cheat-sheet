@@ -247,7 +247,7 @@ python3 scripts/gen-interview-plan.py --write --reset      # + сбросить 
 
 <!-- INTERVIEW-PLAN:START (auto: scripts/gen-interview-plan.py) -->
 
-_Сводка: сидеров=318 · ✅DONE=6 · 🔄WIP=0 · ⬜QUEUED=312 · остаток визуально-палящих блоков (по не-DONE)=8950. Проверка каждого файла — против `docs/golden-examples.md`._
+_Сводка: сидеров=318 · ✅DONE=7 · 🔄WIP=0 · ⬜QUEUED=311 · остаток визуально-палящих блоков (по не-DONE)=8930. Проверка каждого файла — против `docs/golden-examples.md`._
 
 **Golden** = статус проверки файла против `docs/golden-examples.md` (⬜ QUEUED · 🔄 WIP · ✅ DONE). **Tell** = сколько блоков ещё визуально палят correct (самый длинный / единств. с `:` / больше backtick'ов / единств. с перечислением) — worst-first ключ, диагностика, не авто-гейт.
 
@@ -503,7 +503,7 @@ _Сводка: сидеров=318 · ✅DONE=6 · 🔄WIP=0 · ⬜QUEUED=312 · 
 | 248 | `linkerd` | devops | 20 | 20 | ✅ |
 | 249 | `mtls` | security | 20 | 20 | ✅ |
 | 250 | `resilience4j` | spring | 20 | 20 | ✅ |
-| 251 | `tech-interviewing` | leadership | 20 | 20 | ⬜ |
+| 251 | `tech-interviewing` | leadership | 20 | 20 | ✅ |
 | 252 | `gcp` | cloud | 28 | 19 | ⬜ |
 | 253 | `zero-trust` | security | 19 | 19 | ⬜ |
 | 254 | `redpanda` | messaging | 20 | 18 | ⬜ |
