@@ -1371,12 +1371,129 @@ html[data-design="theverge"][data-theme="dark"] {
 }
 
 /* ===========================================================================
+   INSTRUMENT — гринфилд-язык из design/mockups/ (Фаза 2: перенос макетов во
+   фронт). OKLCH-палитра «Instrument»: прохладные нейтралы (hue ~262), teal-
+   signal как единственный коммитнутый интерактив, амбер-spark для микро-акцентов.
+   Шрифты: Newsreader (display) / Space Grotesk (UI/body) / JetBrains Mono (код).
+   AA by-construction: ЗАЛИВКИ берут signal-STRONG (≥4.5 с near-white -on, как в
+   макетах it.19), ТЕКСТ-варианты (ссылки/статусы) — signal/-ink уровня ~5.2–5.6:1.
+   Отступы/структуру/размеры наследует из base.css (как все дизайны) — здесь
+   только цвет, типографика и трактовка. Опционален: SSR-дефолт остаётся editorial.
+   ========================================================================== */
+html[data-design="instrument"] {
+  color-scheme: light;
+
+  --color-bg-primary:   oklch(0.985 0.003 262); /* cool near-white paper */
+  --color-bg-secondary: oklch(0.958 0.004 262); /* surface-ступень */
+  --color-bg-tertiary:  oklch(0.998 0.002 262); /* приподнятая карта — светлее фона */
+  --color-bg-inverse:   oklch(0.245 0.015 264);
+  --color-surface-overlay: oklch(0.245 0.015 264 / 0.42);
+
+  --color-text-primary:   oklch(0.245 0.015 264); /* ink ~13:1 */
+  --color-text-secondary: oklch(0.430 0.013 264); /* ~7.2:1 */
+  --color-text-tertiary:  oklch(0.500 0.012 264); /* ~5.4:1 (AA) */
+  --color-text-inverse:   oklch(0.985 0.003 262);
+  --color-text-link:      oklch(0.435 0.105 205); /* signal-ink ~5.4:1 */
+
+  --color-border-primary:   oklch(0.876 0.007 262); /* line */
+  --color-border-secondary: oklch(0.912 0.006 262); /* тоньше hairline */
+  --color-border-focus:     oklch(0.550 0.110 205); /* signal */
+
+  --color-accent-primary:        oklch(0.470 0.115 205); /* signal-strong — заливка (AA с -on) */
+  --color-accent-strong:         oklch(0.435 0.105 205); /* signal-ink — как текст */
+  --color-accent-primary-hover:  oklch(0.435 0.105 205);
+  --color-accent-primary-active: oklch(0.400 0.100 205);
+  --color-accent-on:             oklch(0.990 0.010 205); /* near-white на заливке */
+  --color-accent-secondary:      oklch(0.500 0.120 62);  /* spark-ink амбер */
+  --color-accent-wash:           oklch(0.963 0.020 205); /* signal-wash (выбранный) */
+
+  --color-status-success:      oklch(0.470 0.120 150); /* success-ink: текст ~5.6:1 + заливка с -on */
+  --color-status-success-on:   oklch(0.990 0.010 150);
+  --color-status-success-wash: oklch(0.945 0.045 150);
+  --color-status-warning:      oklch(0.500 0.120 62);  /* spark-ink */
+  --color-status-error:        oklch(0.500 0.200 27);  /* error-ink ~5.2:1 */
+  --color-status-error-on:     oklch(0.990 0.010 27);
+  --color-status-error-wash:   oklch(0.950 0.045 27);
+  --color-status-info:         oklch(0.435 0.105 205); /* signal-ink */
+
+  --font-family-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-family-body:    'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --font-family-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-wide:   0.02em; /* instrument не «трекает» широко — держим сдержанно */
+
+  --line-height-tight:   1.15;
+  --line-height-normal:  1.6;
+  --line-height-relaxed: 1.7;
+
+  --border-radius-sm:   6px;
+  --border-radius-md:  10px;
+  --border-radius-lg:  16px;
+  --border-radius-full: 999px;
+  --rule-weight:        1px;
+  --rule-weight-strong: 2px;
+
+  /* Instrument предпочитает кольца/границы; тень — скупо. */
+  --shadow-sm: 0 1px 2px oklch(0.24 0.02 264 / 0.06), 0 2px 8px oklch(0.24 0.02 264 / 0.05);
+  --shadow-md: 0 4px 14px oklch(0.24 0.02 264 / 0.10);
+  --shadow-lg: 0 4px 14px oklch(0.24 0.02 264 / 0.10), 0 12px 32px oklch(0.24 0.02 264 / 0.08);
+  --shadow-focus: 0 0 0 3px oklch(0.550 0.110 205 / 0.40);
+}
+html[data-design="instrument"][data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg-primary:   oklch(0.190 0.012 264);
+  --color-bg-secondary: oklch(0.224 0.014 264);
+  --color-bg-tertiary:  oklch(0.262 0.016 264); /* приподнятая — светлее фона */
+  --color-bg-inverse:   oklch(0.940 0.008 258);
+  --color-surface-overlay: oklch(0 0 0 / 0.55);
+
+  --color-text-primary:   oklch(0.940 0.008 258); /* off-white ~13:1 */
+  --color-text-secondary: oklch(0.780 0.010 258); /* ~7.4:1 */
+  --color-text-tertiary:  oklch(0.710 0.010 258); /* ~5.7:1 */
+  --color-text-inverse:   oklch(0.190 0.012 264);
+  --color-text-link:      oklch(0.760 0.110 205); /* signal-ink ~7:1 */
+
+  --color-border-primary:   oklch(0.360 0.015 264);
+  --color-border-secondary: oklch(0.310 0.014 264);
+  --color-border-focus:     oklch(0.720 0.115 205);
+
+  --color-accent-primary:        oklch(0.800 0.115 205); /* signal-strong — заливка (AA с dark -on) */
+  --color-accent-strong:         oklch(0.760 0.110 205); /* signal-ink — текст ~7:1 */
+  --color-accent-primary-hover:  oklch(0.760 0.110 205);
+  --color-accent-primary-active: oklch(0.720 0.115 205);
+  --color-accent-on:             oklch(0.170 0.020 258);
+  --color-accent-secondary:      oklch(0.820 0.120 75); /* spark */
+  --color-accent-wash:           oklch(0.285 0.038 205);
+
+  --color-status-success:      oklch(0.760 0.120 150);
+  --color-status-success-on:   oklch(0.170 0.020 150);
+  --color-status-success-wash: oklch(0.300 0.050 150);
+  --color-status-warning:      oklch(0.820 0.120 75);
+  --color-status-error:        oklch(0.720 0.175 27);
+  --color-status-error-on:     oklch(0.170 0.020 27);
+  --color-status-error-wash:   oklch(0.300 0.070 27);
+  --color-status-info:         oklch(0.760 0.110 205);
+
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.30), 0 2px 10px oklch(0 0 0 / 0.28);
+  --shadow-md: 0 4px 14px oklch(0 0 0 / 0.35);
+  --shadow-lg: 0 6px 20px oklch(0 0 0 / 0.40);
+  --shadow-focus: 0 0 0 3px oklch(0.720 0.115 205 / 0.45);
+}
+
+/* ===========================================================================
    Ширина чтения (data-reading-width, ставит head.html). Ортогональна дизайну:
    переопределяет ТОЛЬКО меру прозы --measure. Селектор html[data-reading-width]
    (0,1,1) и блоки дизайнов html[data-design="X"] (0,1,1) равны по специфичности —
    этот блок СТОИТ ПОСЛЕ всех дизайн-блоков, поэтому выигрывает по порядку.
    --measure нигде не переопределяется на уровне дизайна (только editorial :root),
-   так что один override работает во всех 10 дизайнах.
+   так что один override работает во всех 11 дизайнах (вкл. instrument).
    - standard (атрибута нет): мера остаётся 72ch (комфортная длина строки);
    - wide: 100ch — заметно шире (видно больше текста на больших экранах), но всё
      ещё ограничено (не «бесконечная» строка на 2560).
@@ -1390,7 +1507,7 @@ html[data-reading-width="wide"] {
    переопределяет шкалу отступов --space-*. Селектор html[data-density="compact"]
    (0,1,1) равен дизайн-блокам (0,1,1), СТОИТ ПОСЛЕ них → выигрывает по порядку.
    --space-* нигде не переопределяется per-design (только editorial :root), поэтому
-   один override компактит все 10 дизайнов.
+   один override компактит все 11 дизайнов (вкл. instrument).
    - spacious (атрибута нет): полная «воздушная» шкала (см. :root).
    - compact: ~0.7–0.75× на средних/крупных ступенях (где живёт вертикальный
      воздух), мягче на мелких; шкала остаётся строго монотонной. Мелкие атомарные

@@ -147,6 +147,42 @@ empty/done = **(b)** app-shell (при развороте); focus-order = **(c)*
 **Прогресс критики (cr.N) — в `CRITIQUE.md`.** cr.1: 2 слоп-дефекта `shell` исправлены
 (эмодзи→Lucide, glassmorphism-шапка→сплошная sticky); C3–C6 в бэклоге.
 
+## 🚀 ФАЗА 2 — перенос «Instrument» во фронт (журнал f2.N)
+
+**Юзер: «начинай Фазу 2, перенос во фронт» (2026-07-11).** Стратегия переноса —
+**аддитивная, недеструктивная:** прод-фронт использует switchable-движок дизайнов
+(10 штук: editorial-дефолт + linear/swiss/notion/mintlify/broadsheet/superhuman/
+stripe/claude/theverge; каждый — полный набор токенов под `html[data-design="X"]`
+в `tokens.css`, общий `base.css` + одни DOM-хуки). «Instrument» ложится как
+**11-й opt-in дизайн** `instrument`: 0 регресса для существующих 10, SSR-дефолт
+остаётся editorial, промоут в дефолт позже = 1 строка (решение юзера). Контракт
+(id/классы/data-*/a11y/тему) не трогаю — все дизайны его разделяют.
+
+**Ключевой факт:** прод и макеты используют РАЗНЫЕ словари токенов (прод: `--color-bg-*`/
+`--color-text-*`/`--color-accent-*`/`--font-family-*`; макет: `--paper`/`--ink`/`--signal`).
+Перенос = **маппинг OKLCH-палитры «Instrument» в прод-имена токенов** (блок как у claude).
+AA by-construction: заливки → signal-STRONG (≥4.5 с near-white `-on`, как it.19),
+текст/ссылки/статусы → signal/-ink (~5.2–5.6:1). Отступы/размеры/структура —
+из base.css (per-design блок переопределяет ТОЛЬКО цвет+типографику+трактовку).
+
+- **f2.1 (Фаза 2, тик 1) — регистрация дизайна `instrument`.** 4 точки касания +
+  шрифты + доки, всё аддитивно: (1) `tokens.css` — новый блок `html[data-design="instrument"]`
+  (light) + `[data-theme="dark"]` (dark, переопределяет только цвета+тени, шрифты/радиусы
+  каскадят из базового блока — как claude/theverge); полный маппинг Instrument→прод-словарь.
+  (2) `head.html` — `'instrument'` в массив `DESIGNS` + `instrument:{light:#FAFAFB,dark:#1B1B21}`
+  в `THEME_COLORS` (mobile-chrome). (3) `head.html` — `Newsreader` (serif-display) +
+  `Space Grotesk` (UI/body) в оба font-`<link>` (JetBrains Mono уже грузился = mono);
+  обновил устаревший коммент «Newsreader убраны». (4) `settings.html` — 11-я seg-btn
+  `data-design-pref="instrument"` (Instrument) + коммент «10→11». Плюс 2 коммента
+  `tokens.css` (reading-width/density) «10→11 дизайнов». **QA:** `TemplateFragmentContractTest`
+  зелёный (base.css/tokens.css структура цела, регресса нет); brace-balance ок; тест
+  перечисления дизайнов НЕ исчерпывающий (проверяет 5) → не ломается. **Живой AA/визуал
+  обеих тем — след. тик** (нужен bootRun + chrome-devtools). Дизайн выбираем через
+  /settings → Оформление → Дизайн → Instrument (превью сразу, localStorage 'design').
+  Дальше: живой QA рендера `instrument` (AA обе темы, 7 вьюпортов), затем — сверка
+  структурных деталей экранов с макетами (masthead/рельсы/app-shell) там, где base.css
+  расходится с «Instrument».
+
 ## ✅ ПРЕДЫДУЩИЙ ЦИКЛ ЗАВЕРШЁН (it.21, §8 стоп-условие выполнено)
 
 **Все 6 экранов языка «Instrument» собраны, проходят QA-гейт §3 и полноширинны:**
