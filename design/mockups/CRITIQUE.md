@@ -32,9 +32,24 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 | C14 | P3 | `settings` покрывает 3 вкладки/export/7 осей/filters/session/streak, но не reset-options-confirm | Danger-кнопка «Сбросить банк вариантов» есть, шага ПОДТВЕРЖДЕНИЯ (необратимое действие) в макете нет. **ФИКС (R0.10):** добавлена confirm-модалка `role=alertdialog` (aria-labelledby/describedby, focus-trap, Esc, возврат фокуса, дефолт-фокус на «Отмена» = безопасно, scrim-click close); кнопка Danger получила `aria-haspopup=dialog`. Устанавливает паттерн подтверждения деструктива для порта (`POST /settings/reset-options`) | `settings.html` | **DONE** |
 | C15 | P2 | `stats`: амбер-заливки данных (`bar-due`, `bar-acc-mid`, `cp-due`, `fc-fill.is-today`) на треке `surface-2` = **2.06:1 < 3:1** (light) | **Реальный дефект** (не «граф. объект compliant», как C11): столбцы данных ДОЛЖНЫ отличаться от трека ≥3:1 (WCAG 1.4.11) — иначе амбер-бары «к повтору»/mid-точность не видны в светлой теме. Яркий `--spark` (L 0.720) слишком светлый на светлом треке. **ФИКС:** заливки данных → `--spark-ink` (L 0.500) = 5.02 light / 8.72 dark ≥3:1; легенда `.sw-due` синхронизирована. Правка ЛОКАЛЬНА в `stats.html` (`--spark` — декор-акцент, не тронут). learned↔due различаются ПО ТОНУ (teal↔амбер, CVD-safe blue-yellow ось) + числовой лейбл | `stats.html` | **DONE** |
 | C16 | P3 | `stats` покрывает overview/charts+fallback/sortable-table/forecast/gaps, но registry-список шире | Недостающие состояния: empty/cold-start (в проде — осознанный вид, memory `project_design_elevation_round1`), search (поиск по темам). Coverage-gap. Порт stats BLOCKED параллельным WIP | `stats.html` | TODO |
+| C17 | P2 | `shell`: заливка стрика `.streak-fill` `--spark` на треке `surface-2` = **2.06:1 < 3:1** (light) | **Реальный дефект того же класса, что C15** (не «граф. объект compliant» как C11): полоса стрика показывает ДОЛЮ прогресса (`width:72%`) → графобъект (WCAG 1.4.11, 3:1), а яркий `--spark` (L 0.720) на светлом треке `surface-2` не виден в light. **ФИКС:** `.streak-fill` → `--spark-ink` (L 0.500) = 5.02 light / 8.72 dark ≥3:1. Локально в `shell.html` (`--spark` декор-акцент не тронут; `.streak-flame`/`.streak-count` уже `--spark-ink`). Найден при замыкании 7-поверхностного recheck (R0.11) | `shell.html` | **DONE** |
 
 ## Журнал критики
 
+- **cr.13 (ROUND-RESET, R0.11)** — **замкнут полный 7-поверхностный B_MOCKUP_RECHECK: `shell`
+  (глобальный хром) перепроверен + фикс C17.** Последняя поверхность на `RECHECK` (все 6
+  страничных пройдены R0.3–R0.10). detector exit 0. AA обе темы — 12 текст-пар хрома
+  (шапка/нав/меню/подвал/kbd-help) все ≥4.5 (worst 5.31 ink3/surface; skip/btn 6.01; nav-current
+  signal-ink/signal-wash 6.54; kbd 13.1). Графобъект: `.streak-fill` (доля прогресса стрика,
+  `width:72%`) `--spark`/`surface-2` = **2.06 light < 3:1 → ПОФИКШЕН** на `--spark-ink` (5.02/
+  8.72) — тот же класс, что C15 в stats (декор `--spark` не тронут; flame/count уже spark-ink).
+  a11y образцовый (skip→main, main tabindex=-1, nav aria-label, nav-menu-btn aria-expanded/
+  controls, theme-toggle aria-label синх JS, kbd-help role=dialog+aria-modal+focus-trap+Esc+
+  возврат фокуса, streak role=group, декор-svg aria-hidden). States полны (6): header-nav/
+  mobile-drawer/theme-toggle(авто→светлая→тёмная)/kbd-help-modal/skip-link/footer. Порт хрома
+  BLOCKED (head.html/header в параллельном WIP); no-js хрома (тема/меню/справка на JS) — проверить
+  на bootRun при parity-фазе. **Итог: все 7 поверхностей recheck-PASS; следующий worst-first —
+  coverage-gaps C12(focus)/C13(result)/C16(stats) либо parity-фаза, когда base.css разблокируется.**
 - **cr.12 (ROUND-RESET, R0.10)** — **закрыт coverage-gap C14: confirm-модалка необратимого
   сброса в `settings`.** worst-first после замыкания recheck — самый ценный gap (data-safety:
   до правки деструктив-кнопка «Сбросить банк вариантов» срабатывала без подтверждения).

@@ -21,7 +21,7 @@
 
 | Surface | detector | AA | full-width | a11y | states | parity | contract | no-js/print | Фаза |
 |---|---|---|---|---|---|---|---|---|---|
-| shell (chrome) | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | RECHECK | TODO | B_MOCKUP_RECHECK |
+| shell (chrome) | PASS | PASS✧ | PASS* | PASS✧ | PASS | TODO | TODO | RECHECK | B_MOCKUP_RECHECK (recheck+fix R0.11) |
 | focus-training | PASS | PASS‡ | PASS* | PASS | PASS(core)† | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.6) |
 | result | PASS | PASS‡ | PASS* | PASS | PASS(core)§ | TODO | TODO | RECHECK | B_MOCKUP_RECHECK (recheck R0.7) |
 | session-summary | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.3) |
@@ -73,6 +73,19 @@ session + streak + **reset-options-confirm** (role=alertdialog, focus-trap, Esc,
 light / 8.72 dark; CRITIQUE C15). После фикса все столбцы ≥3:1. states: overview/charts+
 fallback/sortable-table/forecast/gaps покрыты; НЕ покрыты empty/cold-start (осознан) + search
 (C16). Порт stats BLOCKED (WIP).
+
+`✧` shell (chrome) RECHECK ПРОЙДЕН + ФИКС (R0.11): detector exit 0. AA обе темы — все 12
+текст-пар хрома ≥4.5 (worst 5.02 spark-ink/surface light, 5.31 ink3/surface; skip-link/btn
+signal-on/signal-strong 6.01; nav-current signal-ink/signal-wash 6.54; kbd 13.1). Графобъект:
+`.streak-fill` (доля прогресса стрика) `--spark`/`surface-2` = **2.06 light < 3:1 → ПОФИКШЕН**
+на `--spark-ink` (5.02 light / 8.72 dark; C17 — тот же класс, что C15 в stats). a11y ОБРАЗЦОВЫЙ:
+skip-link→#main-content, `main tabindex=-1`, header nav `aria-label`, `nav-menu-btn`
+`aria-expanded`+`aria-controls=mobile-menu`, theme-toggle `aria-label` синх в JS (авто/светлая/
+тёмная), kbd-help `role=dialog`+`aria-modal`+`aria-labelledby`/`aria-describedby`+focus-trap+Esc+
+возврат фокуса, streak `role=group`+`aria-label`, все декор-svg `aria-hidden`. States ПОЛНЫ (6):
+header-nav / mobile-drawer(data-open+JS) / theme-toggle(3 режима) / kbd-help-modal / skip-link /
+footer. parity/contract TODO (порт хрома BLOCKED — head.html в параллельном WIP); no-js RECHECK
+(тема/меню/справка на JS — деградацию проверить на bootRun при parity-фазе).
 
 `*` full-width для error и session-summary верифицирован **структурно** (edge-to-edge
 `.wrap width:100%` + грид main+рельс, брейк 1080px = проверенный паттерн других экранов),

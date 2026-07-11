@@ -941,3 +941,28 @@ Dirty changes created by loop: 0
   (`POST /settings/reset-options`).
 - **Следующий тик:** worst-first — C16 (stats states: search) / C12 (focus states) /
   C13 (result states) ЛИБО Фаза E по разблокировке `base.css`.
+
+### 2026-07-12 — R0.11: замкнут полный 7-поверхностный B_MOCKUP_RECHECK — `shell` + фикс C17
+
+- **Worst-first:** `shell` (глобальный хром) — единственная поверхность на `RECHECK` по всей
+  строке матрицы (6 страничных пройдены R0.3–R0.10). Collision-guard: `base.css`/прод-шаблоны
+  всё ещё dirty (порт BLOCKED), но `shell.html` (макет) чист → правка безопасна.
+- **RECHECK-результат:** detector exit 0. AA обе темы — 12 текст-пар хрома (шапка/нав/меню/
+  подвал/kbd-help) все ≥4.5 (worst 5.31 ink3/surface light; skip/btn signal-on/signal-strong
+  6.01; nav-current signal-ink/signal-wash 6.54; kbd 13.1). a11y образцовый: skip→#main-content,
+  `main tabindex=-1`, header nav `aria-label`, `nav-menu-btn` `aria-expanded`+`aria-controls`,
+  theme-toggle `aria-label` синх в JS (авто/светлая/тёмная), kbd-help `role=dialog`+`aria-modal`+
+  `aria-labelledby`/`describedby`+focus-trap+Esc+возврат фокуса, streak `role=group`, декор-svg
+  `aria-hidden`. States полны (6): header-nav/mobile-drawer/theme-toggle(3)/kbd-help-modal/
+  skip-link/footer.
+- **Найден+пофикшен C17:** графобъект `.streak-fill` (полоса стрика, `width:72%` = доля
+  прогресса) `--spark` на треке `surface-2` = **2.06:1 < 3:1** (light) — тот же класс, что C15
+  в stats. **ФИКС:** `.streak-fill` → `--spark-ink` = 5.02 light / 8.72 dark ≥3:1 (локально в
+  `shell.html`; декор `--spark` не тронут; `.streak-flame`/`.streak-count` уже spark-ink).
+- **QA (§9):** detector exit 0 до и после фикса; AA-скрипт (OKLCH→sRGB) обе темы.
+- **Ledgers:** matrix shell-строка RECHECK→PASS (+сноска `✧`); registry shell notes + states
+  ПОЛНЫ; CRITIQUE C17 **DONE** + журнал cr.13; gaps_found обновлён. **Итог: все 7 поверхностей
+  recheck-PASS — полный B_MOCKUP_RECHECK замкнут.**
+- **Следующий тик:** worst-first — coverage-gaps C12 (focus states: flashcard/study-LEARN/
+  generationUnavailable/loading/inline-alert/no-js/diagram) / C13 (result: confidence/regenerate/
+  no-js) / C16 (stats: search) ЛИБО Фаза E (порт) по разблокировке `base.css`.
