@@ -29,12 +29,24 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 | C11 | — | `opt-mark` (галочка верного варианта): `success-on` на заливке `success` = AA 4.28 < 4.5 (light) | **РЕШЕНО (compliant):** галочка — **графический объект** (WCAG 1.4.11, порог 3:1), `aria-hidden`, избыточна с зелёной обводкой `.opt--correct` + тегом «верный ответ» + тинтом бейджа. 4.28 ≥ 3:1 → проходит. Единственная пара ниже строгого 4.5-бара (сестра `error-on/error` = 4.95). Общий токен `--success` НЕ риплю в recheck-тик (задел на 8 макетов). Если понадобится симметрия ≥4.5 — точечно затемнить `--success` fill в отдельном тике | `focus-question.html` (tokens) | **РЕШЕНО** |
 | C12 | P3 | `focus-question` покрывает 4 состояния (active/result/empty/done), но registry-список focus-training шире | Reference-экран задал ЯЗЫК на 4 ядровых состояниях; недостающие: flashcard-reveal/grade(1-4), study-LEARN(study-confirm), generationUnavailable, loading-placeholder, inline-alert/error, no-js-fallback, diagram/mermaid. Coverage-gap — доработать состояния reference-экрана (порт focus-training всё равно BLOCKED параллельным WIP) | `focus-question.html` | TODO |
 | C13 | P3 | `result` покрывает correct/incorrect/analysis/favorite, но registry-список result шире | Недостающие состояния: confidence-виджет (🎲🤔💪, оставлен намеренно в проде), regenerate, no-js-fallback (живой `/answer`). Coverage-gap reference-разбора (порт result BLOCKED параллельным WIP). Отдельно — при ПОРТЕ провести `aria-live` на вердикт (§8 `#result-feedback`): в макете вердикт статичный `<p>`, live-region проводится в прод, не дефект макета | `result.html` | TODO |
-| C14 | P3 | `settings` покрывает 3 вкладки/export/7 осей/filters/session/streak, но не reset-options-confirm | Danger-кнопка «Сбросить банк вариантов» есть, шага ПОДТВЕРЖДЕНИЯ (необратимое действие) в макете нет. Coverage-gap: показать/застабить confirm-модалку сброса. Порт settings BLOCKED параллельным WIP | `settings.html` | TODO |
+| C14 | P3 | `settings` покрывает 3 вкладки/export/7 осей/filters/session/streak, но не reset-options-confirm | Danger-кнопка «Сбросить банк вариантов» есть, шага ПОДТВЕРЖДЕНИЯ (необратимое действие) в макете нет. **ФИКС (R0.10):** добавлена confirm-модалка `role=alertdialog` (aria-labelledby/describedby, focus-trap, Esc, возврат фокуса, дефолт-фокус на «Отмена» = безопасно, scrim-click close); кнопка Danger получила `aria-haspopup=dialog`. Устанавливает паттерн подтверждения деструктива для порта (`POST /settings/reset-options`) | `settings.html` | **DONE** |
 | C15 | P2 | `stats`: амбер-заливки данных (`bar-due`, `bar-acc-mid`, `cp-due`, `fc-fill.is-today`) на треке `surface-2` = **2.06:1 < 3:1** (light) | **Реальный дефект** (не «граф. объект compliant», как C11): столбцы данных ДОЛЖНЫ отличаться от трека ≥3:1 (WCAG 1.4.11) — иначе амбер-бары «к повтору»/mid-точность не видны в светлой теме. Яркий `--spark` (L 0.720) слишком светлый на светлом треке. **ФИКС:** заливки данных → `--spark-ink` (L 0.500) = 5.02 light / 8.72 dark ≥3:1; легенда `.sw-due` синхронизирована. Правка ЛОКАЛЬНА в `stats.html` (`--spark` — декор-акцент, не тронут). learned↔due различаются ПО ТОНУ (teal↔амбер, CVD-safe blue-yellow ось) + числовой лейбл | `stats.html` | **DONE** |
 | C16 | P3 | `stats` покрывает overview/charts+fallback/sortable-table/forecast/gaps, но registry-список шире | Недостающие состояния: empty/cold-start (в проде — осознанный вид, memory `project_design_elevation_round1`), search (поиск по темам). Coverage-gap. Порт stats BLOCKED параллельным WIP | `stats.html` | TODO |
 
 ## Журнал критики
 
+- **cr.12 (ROUND-RESET, R0.10)** — **закрыт coverage-gap C14: confirm-модалка необратимого
+  сброса в `settings`.** worst-first после замыкания recheck — самый ценный gap (data-safety:
+  до правки деструктив-кнопка «Сбросить банк вариантов» срабатывала без подтверждения).
+  **Добавлено:** `role=alertdialog` overlay (`aria-modal`, `aria-labelledby=reset-confirm-title`,
+  `aria-describedby=reset-confirm-desc`), кнопки «Отмена»/«Сбросить банк», JS с focus-trap +
+  Esc + возврат фокуса на триггер + scrim-click close; **дефолт-фокус на «Отмена»** (безопасный
+  для деструктива); danger-кнопка → `aria-haspopup=dialog`. Overlay-язык = Instrument
+  (scrim `color-mix(ink 42%)`, `ov-pop` только в no-preference), как kbd-help в focus-question.
+  **QA:** detector exit 0; AA обе темы (title/btn-secondary 15.55, desc 7.77/9.23, btn-danger
+  4.95/6.13 — все ≥4.5). Паттерн подтверждения деструктива установлен для порта
+  (`POST /settings/reset-options`). Дальше worst-first — C16 (stats states) / C12 (focus states) /
+  C13 (result states) ЛИБО Фаза E по разблокировке `base.css`.
 - **cr.11 (ROUND-RESET, R0.9)** — **B_MOCKUP_RECHECK экрана `stats` → найден и ПОФИКШЕН
   реальный дефект контраста столбцов (C15).** detector exit 0. **AA обе темы:** все
   ТЕКСТОВЫЕ пары ≥4.5 (acc-тона на surface/paper 5.5–5.95; ov/action signal-ink 6.4–6.5;

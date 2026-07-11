@@ -173,6 +173,16 @@
     .data-card.is-danger { border-color: var(--error); background: var(--error-wash); }
     .data-card.is-danger h3 { color: var(--error-ink); }
 
+    /* ===== Confirm-модалка (необратимый сброс, role=alertdialog) ========== */
+    .confirm-overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: var(--gutter); background: color-mix(in oklab, var(--ink) 42%, transparent); }
+    .confirm-overlay[hidden] { display: none; }
+    .confirm-modal { width: min(30rem, 100%); max-height: 85dvh; overflow-y: auto; background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--r-lg); box-shadow: var(--shadow-lift); padding: var(--s-6); }
+    .confirm-modal h2 { font-family: var(--font-hero); font-size: var(--fs-lg); font-weight: var(--fw-medium); color: var(--ink); margin: 0 0 var(--s-2); }
+    .confirm-modal p { color: var(--ink-2); font-size: var(--fs-sm); line-height: var(--lh-snug); margin: 0 0 var(--s-5); }
+    .confirm-actions { display: flex; gap: var(--s-3); justify-content: flex-end; flex-wrap: wrap; }
+    @keyframes ov-pop { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+    @media (prefers-reduced-motion: no-preference) { .confirm-overlay:not([hidden]) .confirm-modal { animation: ov-pop var(--dur-2) var(--ease-out) both; } }
+
     /* ===== Motion (emil) ================================================== */
     @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .anim { opacity: 1; }
@@ -464,7 +474,7 @@
                 <h3>Опасная зона</h3>
                 <p>Сброс удалит варианты ответов у всех вопросов. До перезапуска они откроются как флешкарты. Это необратимо.</p>
                 <div class="data-actions">
-                  <button type="button" class="btn btn-danger">Сбросить банк вариантов</button>
+                  <button type="button" class="btn btn-danger" id="reset-open" aria-haspopup="dialog">Сбросить банк вариантов</button>
                 </div>
               </div>
             </div>
@@ -474,6 +484,19 @@
       </div>
     </div>
   </main>
+
+  <!-- Подтверждение необратимого сброса (role=alertdialog: требует явного ответа,
+       фокус по умолчанию на «Отмена» — безопасный дефолт для деструктива). -->
+  <div class="confirm-overlay" id="reset-confirm" hidden>
+    <div class="confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="reset-confirm-title" aria-describedby="reset-confirm-desc">
+      <h2 id="reset-confirm-title">Сбросить банк вариантов?</h2>
+      <p id="reset-confirm-desc">Варианты ответов удалятся у всех вопросов. До перезапуска они откроются как флешкарты. Это действие необратимо.</p>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-secondary" id="reset-cancel">Отмена</button>
+        <button type="button" class="btn btn-danger" id="reset-do">Сбросить банк</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     // Тема: авто → светлая → тёмная (для ревью макета в обеих темах).
@@ -511,6 +534,37 @@
           else if (k === 'Home') j = 0; else if (k === 'End') j = n - 1;
           if (j >= 0) { e.preventDefault(); select(j, true); }
         });
+      });
+    })();
+
+    // Confirm-модалка сброса (role=alertdialog): открытие/закрытие, focus-trap,
+    // Esc, возврат фокуса на триггер; дефолт-фокус на «Отмена» (безопасно).
+    (function () {
+      var overlay = document.getElementById('reset-confirm'),
+          openBtn = document.getElementById('reset-open'),
+          cancelBtn = document.getElementById('reset-cancel'),
+          doBtn = document.getElementById('reset-do'),
+          modal = overlay.querySelector('.confirm-modal'),
+          lastFocus = null;
+      function focusables() {
+        return [].slice.call(modal.querySelectorAll('button,a[href],[tabindex]:not([tabindex="-1"])'))
+          .filter(function (el) { return !el.hasAttribute('disabled'); });
+      }
+      function open() { lastFocus = document.activeElement; overlay.hidden = false; cancelBtn.focus(); }
+      function close() { overlay.hidden = true; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+      openBtn.addEventListener('click', open);
+      cancelBtn.addEventListener('click', close);
+      doBtn.addEventListener('click', close); // демо: в проде — POST /settings/reset-options
+      overlay.addEventListener('mousedown', function (e) { if (e.target === overlay) close(); });
+      document.addEventListener('keydown', function (e) {
+        if (overlay.hidden) return;
+        if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+        if (e.key === 'Tab') {
+          var f = focusables(); if (!f.length) return;
+          var first = f[0], last = f[f.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
       });
     })();
 

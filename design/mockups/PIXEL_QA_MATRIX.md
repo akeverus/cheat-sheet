@@ -25,7 +25,7 @@
 | focus-training | PASS | PASS‡ | PASS* | PASS | PASS(core)† | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.6) |
 | result | PASS | PASS‡ | PASS* | PASS | PASS(core)§ | TODO | TODO | RECHECK | B_MOCKUP_RECHECK (recheck R0.7) |
 | session-summary | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.3) |
-| settings | PASS | PASS | PASS* | PASS✦ | PASS(core)◊ | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.8) |
+| settings | PASS | PASS | PASS* | PASS✦ | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.8, +confirm R0.10) |
 | stats | PASS | PASS♦ | PASS* | PASS | PASS(core)◊ | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck+fix R0.9) |
 | error | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (макет R0.2) |
 
@@ -61,9 +61,12 @@ coverage-gap). AA все текст-пары ≥4.5 обе темы (worst 5.52/
 for/id на select/input. Паритет §3 (#filters-form/#session-form)/§8. AA все пары ≥4.5 обе
 темы (worst 4.95 btn-danger / 5.24 dark).
 
-`◊` settings states: покрыты 3 вкладки + export json/csv + 7 осей персонализации + filters +
-session + streak; НЕ покрыт reset-options-confirm (кнопка Danger есть, шаг подтверждения нет
-— CRITIQUE C14). Порт settings BLOCKED (WIP).
+`◊` stats states: покрыты overview/charts+fallback/sortable-table/forecast/gaps; НЕ покрыты
+empty/cold-start (осознан в проде) + search (CRITIQUE C16, coverage-gap). Порт stats BLOCKED (WIP).
+
+_settings states — теперь ПОЛНЫ (R0.10):_ 3 вкладки + export json/csv + 7 осей + filters +
+session + streak + **reset-options-confirm** (role=alertdialog, focus-trap, Esc, дефолт-фокус
+на «Отмена», detector exit 0, AA обе темы worst 4.95) → CRITIQUE C14 **DONE**.
 
 `♦` stats: все ТЕКСТ-пары ≥4.5 обе темы. Графобъекты-столбцы (3:1): найден провал амбер
 `--spark`/`surface-2` = 2.06 light → **ПОФИКШЕН** (заливки данных → `--spark-ink`, 5.02

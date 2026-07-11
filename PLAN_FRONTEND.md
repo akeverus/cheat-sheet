@@ -920,3 +920,24 @@ Dirty changes created by loop: 0
 - **Следующий тик:** база всё ещё BLOCKED. Worst-first — доработка coverage-gaps макетов
   (C12 focus-states / C13 result-states / C14 settings-confirm / C16 stats-states) ЛИБО
   вход в Фазу E по разблокировке `base.css`.
+
+### 2026-07-11 — R0.10: закрыт C14 — confirm-модалка необратимого сброса в `settings`
+
+- **Loop → 10m** (cron e2e2b139, `*/10 * * * *`; старый 15m f11d40dd удалён).
+- **Worst-first:** после замыкания recheck (R0.9) — самый ценный coverage-gap = **C14**
+  (data-safety: деструктив-кнопка «Сбросить банк вариантов» срабатывала БЕЗ подтверждения).
+  Параллельные staged skill-dirs съехали (сессия закоммитила); база всё ещё dirty → порт BLOCKED,
+  но `settings.html` (макет) чист → правка безопасна.
+- **Добавлено в `settings.html`:** confirm-overlay `role=alertdialog` (`aria-modal`,
+  `aria-labelledby`/`aria-describedby`), кнопки «Отмена»/«Сбросить банк», JS: open/close +
+  focus-trap + Esc + возврат фокуса на триггер + scrim-click close; **дефолт-фокус на «Отмена»**
+  (безопасный дефолт деструктива); danger-кнопка → `aria-haspopup=dialog`. Overlay-язык =
+  Instrument (как kbd-help в focus-question).
+- **QA (§9):** detector exit 0; AA обе темы (title/btn-secondary 15.55, desc 7.77/9.23,
+  btn-danger 4.95/6.13 — все ≥4.5).
+- **Ledgers:** CRITIQUE C14 **DONE** + журнал cr.12; matrix settings states → PASS (◊-сноска
+  переназначена на stats, добавлена settings-states-полны заметка); registry states ПОЛНЫ;
+  gaps_found C14 закрыт. Устанавливает паттерн подтверждения деструктива для порта
+  (`POST /settings/reset-options`).
+- **Следующий тик:** worst-first — C16 (stats states: search) / C12 (focus states) /
+  C13 (result states) ЛИБО Фаза E по разблокировке `base.css`.
