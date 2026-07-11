@@ -30,9 +30,28 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 | C12 | P3 | `focus-question` покрывает 4 состояния (active/result/empty/done), но registry-список focus-training шире | Reference-экран задал ЯЗЫК на 4 ядровых состояниях; недостающие: flashcard-reveal/grade(1-4), study-LEARN(study-confirm), generationUnavailable, loading-placeholder, inline-alert/error, no-js-fallback, diagram/mermaid. Coverage-gap — доработать состояния reference-экрана (порт focus-training всё равно BLOCKED параллельным WIP) | `focus-question.html` | TODO |
 | C13 | P3 | `result` покрывает correct/incorrect/analysis/favorite, но registry-список result шире | Недостающие состояния: confidence-виджет (🎲🤔💪, оставлен намеренно в проде), regenerate, no-js-fallback (живой `/answer`). Coverage-gap reference-разбора (порт result BLOCKED параллельным WIP). Отдельно — при ПОРТЕ провести `aria-live` на вердикт (§8 `#result-feedback`): в макете вердикт статичный `<p>`, live-region проводится в прод, не дефект макета | `result.html` | TODO |
 | C14 | P3 | `settings` покрывает 3 вкладки/export/7 осей/filters/session/streak, но не reset-options-confirm | Danger-кнопка «Сбросить банк вариантов» есть, шага ПОДТВЕРЖДЕНИЯ (необратимое действие) в макете нет. Coverage-gap: показать/застабить confirm-модалку сброса. Порт settings BLOCKED параллельным WIP | `settings.html` | TODO |
+| C15 | P2 | `stats`: амбер-заливки данных (`bar-due`, `bar-acc-mid`, `cp-due`, `fc-fill.is-today`) на треке `surface-2` = **2.06:1 < 3:1** (light) | **Реальный дефект** (не «граф. объект compliant», как C11): столбцы данных ДОЛЖНЫ отличаться от трека ≥3:1 (WCAG 1.4.11) — иначе амбер-бары «к повтору»/mid-точность не видны в светлой теме. Яркий `--spark` (L 0.720) слишком светлый на светлом треке. **ФИКС:** заливки данных → `--spark-ink` (L 0.500) = 5.02 light / 8.72 dark ≥3:1; легенда `.sw-due` синхронизирована. Правка ЛОКАЛЬНА в `stats.html` (`--spark` — декор-акцент, не тронут). learned↔due различаются ПО ТОНУ (teal↔амбер, CVD-safe blue-yellow ось) + числовой лейбл | `stats.html` | **DONE** |
+| C16 | P3 | `stats` покрывает overview/charts+fallback/sortable-table/forecast/gaps, но registry-список шире | Недостающие состояния: empty/cold-start (в проде — осознанный вид, memory `project_design_elevation_round1`), search (поиск по темам). Coverage-gap. Порт stats BLOCKED параллельным WIP | `stats.html` | TODO |
 
 ## Журнал критики
 
+- **cr.11 (ROUND-RESET, R0.9)** — **B_MOCKUP_RECHECK экрана `stats` → найден и ПОФИКШЕН
+  реальный дефект контраста столбцов (C15).** detector exit 0. **AA обе темы:** все
+  ТЕКСТОВЫЕ пары ≥4.5 (acc-тона на surface/paper 5.5–5.95; ov/action signal-ink 6.4–6.5;
+  gap-chip 5.41; chart-лейблы 7.18/14.4). **Графобъекты (столбцы, 3:1):** нашёл провал —
+  амбер `--spark` на треке `surface-2` = **2.06:1** (`bar-due`, `bar-acc-mid`, `cp-due`,
+  `fc-fill.is-today`): данные-бары почти не видны в светлой теме. **ФИКС (локально в
+  stats.html):** заливки данных → `--spark-ink` (5.02 light / 8.72 dark), легенда `.sw-due`
+  синхронизирована; яркий `--spark` (декор) не тронут. learned↔due — по тону (teal↔амбер,
+  CVD-safe) + числовой лейбл, не по яркости (inherent: любой амбер, читаемый на светлом
+  треке, близок к teal по L). После фикса: signal/surface-2 3.65, spark-ink/surface-2 5.02,
+  success 3.55, error 4.16 — все столбцы ≥3:1. **a11y-каркас образцовый:** SVG-графики
+  `role=img`+aria-label (+«данные в таблице ниже»)+fallback `role=status aria-live`; таблица
+  `caption`+`th scope=col/row`+sortable `aria-sort`+клавиши Enter/Space+статус-анонс;
+  скролл-регион `role=region tabindex=0`; паритет §5 (stats.js хуки)/§6. **states:** покрыты
+  overview/charts+fallback/sortable-table/forecast/gaps; НЕ покрыты empty/cold-start (осознан
+  в проде) + search → **C16**. **Веха:** recheck всех 7 поверхностей замкнут. Дальше — Фаза E
+  по разблокировке `base.css`, либо доработка coverage-gaps (C12/C13/C14/C16).
 - **cr.10 (ROUND-RESET, R0.8)** — **B_MOCKUP_RECHECK экрана `settings` (вкладки Сессия/
   Оформление/Данные).** detector exit 0. **AA обе темы:** все пары ≥4.5 (light worst 4.95
   btn-danger `error-on/error`, dark 5.24); danger-карта `ink-2/error-wash` 6.71, `error-ink/

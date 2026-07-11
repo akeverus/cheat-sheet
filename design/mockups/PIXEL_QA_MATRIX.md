@@ -26,7 +26,7 @@
 | result | PASS | PASS‡ | PASS* | PASS | PASS(core)§ | TODO | TODO | RECHECK | B_MOCKUP_RECHECK (recheck R0.7) |
 | session-summary | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.3) |
 | settings | PASS | PASS | PASS* | PASS✦ | PASS(core)◊ | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.8) |
-| stats | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
+| stats | PASS | PASS♦ | PASS* | PASS | PASS(core)◊ | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck+fix R0.9) |
 | error | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (макет R0.2) |
 
 ## Дименсиональные оси (кросс-поверхностные) — статус
@@ -64,6 +64,12 @@ for/id на select/input. Паритет §3 (#filters-form/#session-form)/§8. 
 `◊` settings states: покрыты 3 вкладки + export json/csv + 7 осей персонализации + filters +
 session + streak; НЕ покрыт reset-options-confirm (кнопка Danger есть, шаг подтверждения нет
 — CRITIQUE C14). Порт settings BLOCKED (WIP).
+
+`♦` stats: все ТЕКСТ-пары ≥4.5 обе темы. Графобъекты-столбцы (3:1): найден провал амбер
+`--spark`/`surface-2` = 2.06 light → **ПОФИКШЕН** (заливки данных → `--spark-ink`, 5.02
+light / 8.72 dark; CRITIQUE C15). После фикса все столбцы ≥3:1. states: overview/charts+
+fallback/sortable-table/forecast/gaps покрыты; НЕ покрыты empty/cold-start (осознан) + search
+(C16). Порт stats BLOCKED (WIP).
 
 `*` full-width для error и session-summary верифицирован **структурно** (edge-to-edge
 `.wrap width:100%` + грид main+рельс, брейк 1080px = проверенный паттерн других экранов),

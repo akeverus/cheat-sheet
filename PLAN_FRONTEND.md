@@ -897,3 +897,26 @@ Dirty changes created by loop: 0
   registry port_status → BLOCKED + recheck-заметка; CRITIQUE C14 + журнал cr.10; gaps_found +1.
 - **Следующий тик:** worst-first — recheck `stats` (последний чистый макет, замкнёт recheck
   всех 7 поверхностей), ЛИБО вход в Фазу E по разблокировке `base.css`.
+
+### 2026-07-11 — R0.9: B_MOCKUP_RECHECK `stats` → найден+ПОФИКШЕН дефект контраста (C15)
+
+- **Worst-first:** последний нерасчеканный чистый макет (`stats`) — замыкает recheck всех 7.
+- **Проверено (§9):** detector exit 0. **AA обе темы:** все ТЕКСТ-пары ≥4.5.
+- **РЕАЛЬНЫЙ ДЕФЕКТ (не «compliant», как C11):** амбер-заливки данных `--spark` на треке
+  `surface-2` = **2.06:1 < 3:1** (WCAG 1.4.11, light) — столбцы «к повтору»/mid-точность
+  почти не видны в светлой теме. **ФИКС локально в stats.html:** `bar-due`/`bar-acc-mid`/
+  `cp-due`/`fc-fill.is-today` → `--spark-ink` (5.02 light / 8.72 dark ≥3:1); легенда `.sw-due`
+  синхронизирована; яркий `--spark` (декор) не тронут. learned↔due различаются по тону
+  (teal↔амбер, CVD-safe) + числовой лейбл. После фикса все столбцы ≥3:1 (C15 **DONE**).
+- **a11y образцовый:** SVG `role=img`+aria-label+«данные в таблице»+fallback `role=status`;
+  таблица `caption`+`th scope`+`aria-sort`+клавиши Enter/Space+статус-анонс; скролл-регион
+  `role=region tabindex=0` — паритет §5 (stats.js хуки)/§6. **full-width** структурно.
+- **Coverage-gap (C16):** покрыты overview/charts+fallback/sortable-table/forecast/gaps;
+  НЕ покрыты empty/cold-start (осознан в проде) + search.
+- **ВЕХА:** recheck всех 7 поверхностей ЗАМКНУТ (error/session-summary/focus-question/result/
+  settings/stats). Найден 1 реальный дефект за проход (C15, пофикшен), остальное — compliant.
+- **Ledgers:** matrix stats detector/AA♦/full-width*/a11y → PASS, states → PASS(core)◊;
+  registry port_status → BLOCKED + recheck/fix-заметка; CRITIQUE C15(DONE)/C16 + журнал cr.11.
+- **Следующий тик:** база всё ещё BLOCKED. Worst-first — доработка coverage-gaps макетов
+  (C12 focus-states / C13 result-states / C14 settings-confirm / C16 stats-states) ЛИБО
+  вход в Фазу E по разблокировке `base.css`.
