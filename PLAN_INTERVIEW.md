@@ -247,7 +247,7 @@ python3 scripts/gen-interview-plan.py --write --reset      # + сбросить 
 
 <!-- INTERVIEW-PLAN:START (auto: scripts/gen-interview-plan.py) -->
 
-_Сводка: сидеров=318 · ✅DONE=11 · 🔄WIP=0 · ⬜QUEUED=307 · остаток визуально-палящих блоков (по не-DONE)=8853. Проверка каждого файла — против `docs/golden-examples.md`._
+_Сводка: сидеров=318 · ✅DONE=12 · 🔄WIP=0 · ⬜QUEUED=306 · остаток визуально-палящих блоков (по не-DONE)=8836. Проверка каждого файла — против `docs/golden-examples.md`._
 
 **Golden** = статус проверки файла против `docs/golden-examples.md` (⬜ QUEUED · 🔄 WIP · ✅ DONE). **Tell** = сколько блоков ещё визуально палят correct (самый длинный / единств. с `:` / больше backtick'ов / единств. с перечислением) — worst-first ключ, диагностика, не авто-гейт.
 
@@ -505,7 +505,7 @@ _Сводка: сидеров=318 · ✅DONE=11 · 🔄WIP=0 · ⬜QUEUED=307 ·
 | 250 | `zero-trust` | security | 19 | 19 | ✅ |
 | 251 | `conflict-resolution` | leadership | 20 | 18 | ✅ |
 | 252 | `linkerd` | devops | 20 | 17 | ✅ |
-| 253 | `kotlin-flow` | kotlin | 17 | 17 | ⬜ |
+| 253 | `kotlin-flow` | kotlin | 17 | 17 | ✅ |
 | 254 | `rest-maturity` | api | 17 | 17 | ⬜ |
 | 255 | `design-uber` | system-design | 30 | 16 | ⬜ |
 | 256 | `rag` | ai-ml | 30 | 16 | ⬜ |
