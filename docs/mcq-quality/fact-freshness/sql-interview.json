@@ -17,7 +17,12 @@
     "PostgreSQL TIMESTAMPTZ: 8 байт (как и TIMESTAMP), зону НЕ хранит — конвертирует в UTC при записи и в зону сессии при чтении [Q6]. Актуально в PostgreSQL 16.",
     "Процедуры с COMMIT/ROLLBACK внутри — начиная с PostgreSQL 11 (CREATE PROCEDURE + CALL); функции управлять транзакцией не могут [Q10]. Актуально в PostgreSQL 16.",
     "REFRESH MATERIALIZED VIEW CONCURRENTLY требует уникального индекса на matview; автоматического инкрементального обновления matview в PostgreSQL 16 нет (IVM — сторонние расширения) [Q9].",
-    "TRUNCATE — DDL: в PostgreSQL транзакционен (можно ROLLBACK), в MySQL/Oracle выполняет неявный COMMIT [Q1]. Диалектно-чувствительно."
+    "TRUNCATE — DDL: в PostgreSQL транзакционен (можно ROLLBACK), в MySQL/Oracle выполняет неявный COMMIT [Q1]. Диалектно-чувствительно.",
+    "Стандартный MERGE INTO ... USING ... WHEN MATCHED появился в PostgreSQL 15; INSERT ... ON CONFLICT — с PostgreSQL 9.5 [Q16]. Актуально в PostgreSQL 16.",
+    "RETURNING поддерживают PostgreSQL, Oracle (RETURNING INTO), MariaDB 10.5+, SQL Server (OUTPUT); MySQL 8.0 НЕ поддерживает RETURNING [Q20].",
+    "CTE: до PostgreSQL 12 всегда материализовался (optimization fence); с PG12 инлайнится по умолчанию, управление — MATERIALIZED/NOT MATERIALIZED. Data-modifying CTE (WITH ... DELETE/UPDATE/INSERT RETURNING) — специфика PostgreSQL [Q19, Q20].",
+    "GROUP BY по алиасу из SELECT: запрещён стандартом SQL, но PostgreSQL и MySQL резолвят имена выходных столбцов как расширение [Q14].",
+    "SQL Server temp-таблицы: #name — локальная (сессия), ##name — глобальная (все сессии). PostgreSQL: CREATE TEMP TABLE — сессионная, поддерживает индексы и ограничения [Q12]."
   ],
-  "notes": "Ядро SQL (constraints, NULL-семантика, нормальные формы, View) — стандарт SQL:2016, стабильно. Диалектная специфика привязана к PostgreSQL 16 / MySQL 8.0. Покрывает Q1-Q10; расширяется по мере обработки остальных чанков файла."
+  "notes": "Ядро SQL (constraints, NULL-семантика, нормальные формы, View) — стандарт SQL:2016, стабильно. Диалектная специфика привязана к PostgreSQL 16 / MySQL 8.0. Покрывает Q1-Q20; расширяется по мере обработки остальных чанков файла."
 }
