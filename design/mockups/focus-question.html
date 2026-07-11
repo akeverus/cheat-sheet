@@ -383,6 +383,33 @@
     }
     .grade .g-name { font-size: var(--fs-sm); font-weight: var(--fw-semi); }
 
+    /* --- Инлайн-уведомление (inline-alert fragment): error / info / warn.
+       Неблокирующее сообщение в потоке вопроса. Иконка + заголовок
+       (семантический ink) + текст (--ink для читаемости) + dismiss.
+       role=alert (ошибка) / role=status (инфо/предупреждение). ------------- */
+    .inline-alert {
+      display: flex; align-items: flex-start; gap: var(--s-3);
+      padding: var(--s-3) var(--s-4); margin: 0 0 var(--s-4);
+      border: 1px solid; border-radius: var(--r-md);
+    }
+    .inline-alert > svg { width: 1.2rem; height: 1.2rem; flex: none; margin-top: 0.1rem; }
+    .ia-body { flex: 1 1 auto; min-width: 0; }
+    .ia-title { font-weight: var(--fw-semi); font-size: var(--fs-sm); }
+    .ia-text { font-size: var(--fs-sm); line-height: var(--lh-snug); color: var(--ink); margin-top: var(--s-1); }
+    .ia-text a { color: inherit; text-decoration: underline; }
+    .ia-dismiss {
+      flex: none; display: inline-grid; place-items: center;
+      width: 1.75rem; height: 1.75rem; margin: -0.15rem -0.25rem -0.15rem 0;
+      color: inherit; background: none; border: 0; border-radius: var(--r-sm);
+      cursor: pointer; opacity: 0.7;
+      transition: opacity var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+    }
+    .ia-dismiss:hover { opacity: 1; background: color-mix(in oklab, currentColor 12%, transparent); }
+    .ia-dismiss svg { width: 1rem; height: 1rem; }
+    .inline-alert--error { border-color: var(--error-ink); background: var(--error-wash); color: var(--error-ink); }
+    .inline-alert--info  { border-color: var(--signal-ink); background: var(--signal-wash); color: var(--signal-ink); }
+    .inline-alert--warn  { border-color: var(--spark-ink); background: var(--spark-wash); color: var(--spark-ink); }
+
     /* --- Сабмит + подсказка хоткеев -------------------------------------- */
     .submit-row {
       display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap;
@@ -554,6 +581,7 @@
         <button type="button" data-state="active" aria-pressed="true">Активный вопрос</button>
         <button type="button" data-state="result" aria-pressed="false">Разбор ответа</button>
         <button type="button" data-state="flashcard" aria-pressed="false">Флешкарта (изучение)</button>
+        <button type="button" data-state="alert" aria-pressed="false">Уведомления</button>
         <button type="button" data-state="empty" aria-pressed="false">Нет вопросов</button>
         <button type="button" data-state="done" aria-pressed="false">Завершено</button>
       </div>
@@ -799,6 +827,65 @@ public class OrderService {
       </div>
     </section>
 
+    <!-- ================= СОСТОЯНИЕ: инлайн-уведомления ================= -->
+    <section class="state" data-state="alert" hidden>
+      <div class="wrap">
+        <div class="focus-grid">
+          <aside class="focus-aside">
+            <div class="rail">
+              <div class="rail-progress">
+                <div class="rail-count">Вопрос <b>7</b> из 20</div>
+                <div class="progress-track" role="progressbar" aria-label="Прогресс сессии"
+                     aria-valuemin="0" aria-valuemax="20" aria-valuenow="7">
+                  <div class="progress-fill" style="transform: scaleX(0.35)"></div>
+                </div>
+              </div>
+              <span class="streak-chip"><span class="spark" aria-hidden="true"></span>стрик 5 дней</span>
+            </div>
+          </aside>
+
+          <div class="focus-main">
+            <p class="focus-topic">компонент<span class="dot">·</span>уведомления</p>
+            <h1 class="focus-question" style="font-size: var(--fs-lg)">Инлайн-уведомления</h1>
+            <p class="flash-prompt">Неблокирующие сообщения в потоке вопроса: ошибка, информация, предупреждение. Каждое с иконкой, доступным <code>role</code> и кнопкой закрытия.</p>
+
+            <div class="inline-alert inline-alert--error" role="alert">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+              <div class="ia-body">
+                <div class="ia-title">Не удалось сохранить ответ</div>
+                <div class="ia-text">Проверь соединение и попробуй ещё раз. Прогресс сессии не потерян.</div>
+              </div>
+              <button type="button" class="ia-dismiss" aria-label="Закрыть уведомление">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <div class="inline-alert inline-alert--info" role="status">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <div class="ia-body">
+                <div class="ia-title">Режим флешкарты</div>
+                <div class="ia-text">Для этого вопроса нет вариантов ответа, показываем как карточку с самооценкой.</div>
+              </div>
+              <button type="button" class="ia-dismiss" aria-label="Закрыть уведомление">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <div class="inline-alert inline-alert--warn" role="status">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+              <div class="ia-body">
+                <div class="ia-title">Скоро повтор</div>
+                <div class="ia-text">18 карточек ждут повторения сегодня. Заверши сессию, чтобы не сбить интервалы.</div>
+              </div>
+              <button type="button" class="ia-dismiss" aria-label="Закрыть уведомление">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ================= СОСТОЯНИЕ: нет вопросов ======================= -->
     <section class="state" data-state="empty" hidden>
       <div class="wrap">
@@ -920,6 +1007,16 @@ public class OrderService {
         var isText = /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test((e.target && e.target.tagName) || '');
         if (isText) return;               // не перехватывать пробел на контролах
         e.preventDefault(); reveal();
+      });
+    })();
+
+    // Инлайн-уведомления: закрытие по кнопке dismiss (делегирование).
+    (function () {
+      document.addEventListener('click', function (e) {
+        var btn = e.target.closest && e.target.closest('.ia-dismiss');
+        if (!btn) return;
+        var alert = btn.closest('.inline-alert');
+        if (alert) alert.hidden = true;
       });
     })();
 

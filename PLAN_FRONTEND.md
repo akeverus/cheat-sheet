@@ -988,3 +988,21 @@ Dirty changes created by loop: 0
 - **Следующий тик:** worst-first — следующее состояние C12 (generationUnavailable / loading /
   inline-alert / no-js / diagram) ЛИБО C13 (result states) / C16 (stats search), ЛИБО Фаза E
   (порт) по разблокировке `base.css`.
+
+### 2026-07-12 — R0.13: C12 дальше — состояние `alert` (inline-alert fragment)
+
+- **Worst-first:** после flashcard (R0.12) следующий по ценности недостающий кусок C12 —
+  переиспользуемый inline-alert (прод-фрагмент `inline-alert.html`, P1 error/notice, полностью
+  отсутствовал). Collision-guard: mockups+PLAN чисты, прод-WIP dirty (порт BLOCKED).
+- **Добавлено состояние `alert`** (mock-switch «Уведомления»): демо 3 вариантов в колонке main —
+  **error** (`role=alert`), **info** (`role=status`, «Режим флешкарты» = заодно messaging
+  generationUnavailable), **warn** (`role=status`). Каждое: иконка (alert-triangle/info-circle) +
+  заголовок (семантический ink) + текст (`--ink`) + dismiss (`aria-label`, закрытие делегированным
+  click-JS). Цвета `--error-ink`/`--signal-ink`/`--spark-ink` на `*-wash`.
+- **QA (§9):** detector exit 0; AA обе темы все пары ≥4.5 (семантический ink на wash: error
+  5.52/5.24, signal 6.54/6.87, spark 5.41/7.76; текст ink на wash 11–14); прозе без em-dash.
+- **Ledgers:** CRITIQUE C12 (закрыт inline-alert/error, остаются 4) + журнал cr.15; matrix
+  †-сноска; registry notes/gaps_found. C12 остаётся IN_PROGRESS.
+- **Следующий тик:** worst-first — следующее состояние C12 (generationUnavailable / loading /
+  no-js; diagram отложить — Mermaid self-authorship запрещён §4) ЛИБО C13 (result) / C16 (stats),
+  ЛИБО Фаза E (порт) по разблокировке `base.css`.

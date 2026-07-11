@@ -41,10 +41,12 @@
 | print | TODO | не инвентаризован. |
 
 `†` focus-training: покрыты 4 ядровых (active/result/empty/done) **+ flashcard** (изучение/
-study-LEARN: reveal→grade, R0.12); НЕ покрыты generationUnavailable, loading, inline-alert/
-error, no-js, diagram (CRITIQUE C12 **IN_PROGRESS**; порт focus-training BLOCKED параллельным
-WIP). flashcard QA: detector exit 0 (после фиксов side-tab→1px border + em-dash→двоеточия);
-AA обе темы все пары ≥4.5 (flash-h2 signal-ink/surface 6.41/8.32; flash-body 14.4; ink3 5.31).
+study-LEARN: reveal→grade, R0.12) **+ alert** (inline-alert error/info/warn, R0.13); НЕ покрыты
+generationUnavailable, loading, no-js, diagram (CRITIQUE C12 **IN_PROGRESS**; порт focus-training
+BLOCKED параллельным WIP). flashcard QA: detector exit 0 (после фиксов side-tab→1px border +
+em-dash→двоеточия); AA ≥4.5 (flash-h2 6.41/8.32; flash-body 14.4). alert QA: detector exit 0;
+AA семантический-ink на wash обе темы ≥4.5 (error 5.52/5.24, signal 6.54/6.87, spark 5.41/7.76);
+role=alert/status, dismiss aria-label.
 
 `‡` focus-training AA: все ТЕКСТОВЫЕ пары ≥4.5 обе темы (light worst 4.95 badge, dark 5.24);
 единственная пара ниже 4.5 — `opt-mark` галочка верного `success-on/success` = 4.28 light,
