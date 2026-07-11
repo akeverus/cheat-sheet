@@ -37,6 +37,16 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+- **cr.29 (ROUND-RESET, R0.27)** — **Фаза E, ПЕРВАЯ прод-правка раунда: микро-фикс NAMES
+  (instrument) в header.html.** base.css всё ещё dirty (порт CSS блокирован), но
+  header.html чист → применена независимая правка из находки cr.28: `instrument:
+  'Instrument'` добавлен в NAMES-словарь дизайн-тоггла и в фолбэк-список order()
+  (реальный источник __design.list уже содержал instrument — фолбэк догнал). Теперь
+  aria-label/title тоггла показывают «Instrument», а не сырой id. Заодно комментарий
+  «реестр из 10» → «из 11» (+опечатка «роестр»). **QA:** живого bootRun нет (проверено
+  ps) → TemplateFragmentContractTest прогнан — зелёный (exit 0). Прод-WIP параллельной
+  сессии не тронут (правка только header.html, explicit pathspec). Схема §6 соблюдена:
+  правка не касается ни одного dirty-файла.
 - **cr.28 (ROUND-RESET, R0.26)** — **D-маппинг shell/хром — ФАЗА D ИСЧЕРПАНА (7/7).**
   base.css/app.js/head.html dirty (header.html/icons/today-widget ЧИСТЫ); снят финальный
   маппинг: `PORT_MAPPING_shell.md`. **Крит-решения:** (1) мобильный drawer макета НЕ

@@ -1226,3 +1226,16 @@ Dirty changes created by loop: 0
 - **Следующий тик:** разблокировка → Фаза E (черновики); если dirty — микро-фикс NAMES
   instrument в header.html (Фаза E, независимая правка чистого файла, explicit pathspec
   + прогон контракт-теста).
+
+### 2026-07-12 — R0.27: Фаза E — первая прод-правка: NAMES instrument (header.html)
+
+- **Collision guard:** base.css dirty (CSS-порт блокирован); header.html ЧИСТ → применён
+  микро-фикс из находки R0.26.
+- **Правка:** header.html — instrument добавлен в NAMES дизайн-тоггла + фолбэк order();
+  aria/title теперь «Instrument», не сырой id. Комментарий 10→11 дизайнов.
+- **QA:** живого bootRun нет → TemplateFragmentContractTest прогнан, зелёный.
+- **Ledgers:** CRITIQUE cr.29; registry shell (находка → применено).
+- **Следующий тик:** проверка разблокировки base.css → применение черновиков C7-i/C6-i
+  (порт error + session-summary, бамп v=, live parity QA). Если dirty — независимых
+  прод-правок больше нет; read-only опции: пересверка черновиков на свежесть ИЛИ
+  подготовка parity-QA чеклиста (страницы×вьюпорты×темы) для быстрого прохода Фазы F.
