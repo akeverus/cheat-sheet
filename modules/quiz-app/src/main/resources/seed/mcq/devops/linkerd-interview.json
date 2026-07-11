@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главное отличие в том, что `Istio` работает только на Kubernetes, а `Linkerd` умеет mesh-ить VM и bare-metal вне кластера.",
+              "text": "Главное отличие в том, что `Istio` работает только на Kubernetes, а `Linkerd` умеет mesh-ить VM и bare-metal вне кластера через свой `linkerd2-proxy`: именно поэтому Linkerd, а не Istio, сравнивают с `Consul` по multi-platform-возможностям.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: Linkerd — K8s-only, а Istio как раз поддерживает VM и расширение mesh за пределы кластера.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Оба mesh используют один и тот же прокси `Envoy`, а отличаются только цветом дашборда и названием CLI.",
+              "text": "Оба mesh используют один и тот же прокси `Envoy` (~50-100 MB sidecar) и одинаковый набор CRD, а отличаются лишь цветом дашборда, названием CLI и деталями `mTLS`-конфигурации — по latency и размеру sidecar они практически идентичны.",
               "correct": false,
               "sections": {
                 "what_actually": "Linkerd использует собственный `linkerd2-proxy` на `Rust`, а не Envoy; именно поэтому он легче и быстрее.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Linkerd` сложнее и тяжелее `Istio`: у него больше CRD, выше latency overhead и дольше установка.",
+              "text": "`Linkerd` сложнее и тяжелее `Istio`: у него больше CRD (30+ против ~10), выше latency overhead (5-10 ms) и дольше установка, а `Rust`-прокси `linkerd2-proxy` не даёт выигрыша против `Envoy`.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё ровно наоборот: у Linkerd меньше CRD (~10 vs 30+), latency <1 ms vs 5-10 ms и установка за минуты.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Linkerd` с самого первого релиза в 2016 был написан на `Rust` и никогда не использовал JVM.",
+              "text": "`Linkerd` с самого первого релиза в 2016 был написан на `Rust` и никогда не использовал JVM: `linkerd2-proxy` существует ещё с ветки 1.x, поэтому никакого «complete rewrite» между 1.x и 2.0 не было — сменили только дашборд.",
               "correct": false,
               "sections": {
                 "what_actually": "Linkerd 1.x был на `Scala`/JVM; Rust появился только в data plane при переписывании в 2.0 (2018).",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Linkerd 2.0` — это просто минорное обновление 1.x с тем же кодом, в котором добавили дашборд.",
+              "text": "`Linkerd 2.0` — это просто минорное обновление 1.x на той же `Scala`/JVM-базе, куда добавили дашборд и переименовали бинарь: control plane и прокси остались прежними, а не переписаны на `Go` и `Rust`.",
               "correct": false,
               "sections": {
                 "what_actually": "2.0 — это complete rewrite с нуля: новый control plane на Go и новый прокси на Rust, а не патч поверх 1.x.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В 2025 рекомендуемой и единственно поддерживаемой остаётся ветка `Linkerd 1.x` на Scala, а 2.x ещё в бете.",
+              "text": "В 2025 рекомендуемой и единственно поддерживаемой остаётся ветка `Linkerd 1.x` на `Scala`/JVM, а 2.x с `Rust`-прокси всё ещё в бете и не годится для production-кластеров.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: в 2025 поддерживается только 2.x, а 1.x давно deprecated; 2.x — стабильная и единственно живая ветка.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Control plane — это и есть sidecar-прокси внутри каждого пода, а data plane — отдельный центральный сервер маршрутизации.",
+              "text": "Control plane — это и есть sidecar-прокси `linkerd2-proxy` внутри каждого пода, а data plane — отдельный центральный сервер маршрутизации, через который проходят и конфигурация, и пользовательский трафик mesh.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё перевёрнуто: sidecar-прокси — это data plane, а control plane — отдельные управляющие компоненты (destination, identity, injector).",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Весь пользовательский трафик проходит через control plane, а data plane только хранит YAML-конфиги.",
+              "text": "Весь пользовательский трафик проходит через центральный control plane, а data plane лишь хранит YAML-конфиги маршрутов и `ServiceProfile` и сам запросы между подами не переносит.",
               "correct": false,
               "sections": {
                 "what_actually": "Реальный трафик несут прокси data plane; control plane его не проксирует, а лишь конфигурирует и наблюдает.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В control plane входит сам прокси `linkerd2-proxy`, а компоненты `identity` и `destination` — это часть data plane.",
+              "text": "В control plane входит сам прокси `linkerd2-proxy`, а компоненты `identity` (выдача сертификатов) и `destination` (service discovery) относятся к data plane, которая несёт трафик между подами.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: identity и destination — это control plane, а linkerd2-proxy — data plane.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`linkerd2-proxy` — это форк `Envoy`, в который добавили mTLS, а Rust используется только для CLI `linkerd`.",
+              "text": "`linkerd2-proxy` — это форк `Envoy`, в который добавили `mTLS` и метрики, а `Rust` используется только для CLI `linkerd`: сам data-plane прокси, как и у Istio, остаётся C++-кодом Envoy.",
               "correct": false,
               "sections": {
                 "what_actually": "linkerd2-proxy написан с нуля на Rust и не является форком Envoy; именно отказ от Envoy даёт меньший размер и отсутствие GC.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`linkerd2-proxy` — это general-purpose прокси, который призван заменить `Envoy` и `Nginx` в любых сценариях.",
+              "text": "`linkerd2-proxy` — это general-purpose L7-прокси, который призван заменить `Envoy` и `Nginx` в любых сценариях: от mesh-sidecar до edge-роутинга и балансировки внешнего трафика.",
               "correct": false,
               "sections": {
                 "what_actually": "Прокси сознательно ограничен mesh-сценарием и не претендует на универсальность — он не заменяет Envoy/Nginx для general-purpose proxying.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Прокси написали на `Rust` ради красоты языка, но по размеру и скорости он не отличается от прокси на JVM.",
+              "text": "Прокси написали на `Rust` ради красоты языка, но по размеру (~100 MB) и скорости он не отличается от JVM-прокси из `Linkerd 1.x`: GC-пауз нет, но latency и потребление памяти те же.",
               "correct": false,
               "sections": {
                 "what_actually": "Rust даёт реальный выигрыш: ~30 MB sidecar и отсутствие GC-пауз против тяжёлого JVM-прокси из Linkerd 1.x.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Linkerd` ставится только через публичный Helm-чарт из Bitnami, а собственного CLI `linkerd` не существует.",
+              "text": "`Linkerd` ставится только через публичный Helm-чарт из Bitnami, а собственного CLI `linkerd` не существует — команды вроде `linkerd check` или `linkerd viz` выполняет сам Helm через post-install хуки.",
               "correct": false,
               "sections": {
                 "what_actually": "У Linkerd есть собственный CLI `linkerd` (install, check, viz); Helm-установка возможна, но не единственный и не «только Bitnami» путь.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Перед установкой обязательно вручную сгенерировать и подложить root CA, иначе control plane не стартует.",
+              "text": "Перед установкой обязательно вручную сгенерировать и подложить root CA и issuer-сертификаты, иначе control plane и `identity` не стартуют: автогенерации trust anchor у `linkerd install` нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Linkerd при install сам генерирует trust anchor и issuer-сертификаты; ручной CA нужен только для продвинутого/мульти-кластерного сценария.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "После `linkerd install` все существующие поды в кластере мгновенно и автоматически получают sidecar без перезапуска.",
+              "text": "После `linkerd install` все существующие поды в кластере мгновенно и автоматически получают sidecar через webhook, без `rollout restart` и повторного применения манифестов Deployment.",
               "correct": false,
               "sections": {
                 "what_actually": "Existing-поды требуют перезапуска (rollout restart) для инъекции; install сам по себе их не меняет.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Traffic split в Linkerd настраивается через `VirtualService` и `DestinationRule`, как в Istio.",
+              "text": "Traffic split в Linkerd настраивается через `VirtualService` и `DestinationRule` с весами backends, ровно как в Istio: те же CRD, только применяются в namespace `linkerd` рядом с sidecar'ами.",
               "correct": false,
               "sections": {
                 "what_actually": "`VirtualService`/`DestinationRule` — объекты Istio; Linkerd использует SMI-ресурс `TrafficSplit`.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`TrafficSplit` умеет только полное переключение 100/0 между версиями и не поддерживает дробные веса вроде 90/10.",
+              "text": "Ресурс `TrafficSplit` умеет только полное переключение 100/0 между версиями (blue-green) и не поддерживает дробные веса вроде 90/10, поэтому постепенный canary с ростом процента через него не сделать.",
               "correct": false,
               "sections": {
                 "what_actually": "TrafficSplit как раз задаёт произвольные веса backends (например 90/10), что и делает возможным canary.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для traffic split обязательно править код приложения, чтобы оно само маршрутизировало часть запросов в новую версию.",
+              "text": "Для traffic split обязательно править код приложения, чтобы оно само маршрутизировало часть запросов в новую версию: mesh лишь пробрасывает заголовок версии, а распределение весов остаётся на стороне сервиса.",
               "correct": false,
               "sections": {
                 "what_actually": "Распределение задаёт mesh через TrafficSplit без изменений кода — приложение о сплите не знает.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Retries и timeouts задаются глобально одним числом на весь mesh и не могут отличаться между маршрутами.",
+              "text": "Retries и timeouts задаются глобально одним числом на весь mesh через флаг установки и не могут отличаться между маршрутами одного сервиса: пометить retryable только идемпотентный `GET`, оставив `POST` без повторов, нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Конфигурация per-route через ServiceProfile: разные маршруты одного сервиса могут иметь разные retries/timeouts.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Linkerd по умолчанию ретраит любые запросы, включая POST, поэтому `isRetryable` указывать не нужно.",
+              "text": "Linkerd по умолчанию ретраит любые запросы, включая `POST`, поэтому `isRetryable` в `ServiceProfile` указывать не нужно — mesh сам повторит всё подряд ради надёжности, не разбирая идемпотентность.",
               "correct": false,
               "sections": {
                 "what_actually": "Retry включается явно (`isRetryable: true`) и обычно только для идемпотентных маршрутов; автоматический повтор всего подряд опасен.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Retries и timeouts в Linkerd работают только если приложение само реализует Circuit Breaker в коде.",
+              "text": "Retries и timeouts в Linkerd работают только если приложение само реализует Circuit Breaker в коде (например, через `Resilience4j`): прокси лишь пробрасывает запрос, а логику повторов держит сам сервис.",
               "correct": false,
               "sections": {
                 "what_actually": "Прокси выполняет retries/timeouts на уровне mesh по ServiceProfile; код приложения для этого менять не нужно.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ServiceProfile` — это объект, который описывает RBAC-права ServiceAccount на доступ к Kubernetes API.",
+              "text": "`ServiceProfile` — это объект, который описывает RBAC-права ServiceAccount на доступ к Kubernetes API, задавая роли и разрешённые глаголы, а не L7-маршруты и их `isRetryable`/`timeout`.",
               "correct": false,
               "sections": {
                 "what_actually": "ServiceProfile описывает маршруты сервиса (retries/timeouts/per-route метрики), а не RBAC; права задаются Role/RoleBinding.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ServiceProfile` обязателен для работы Linkerd, и без него sidecar не пропускает трафик и не включает mTLS.",
+              "text": "`ServiceProfile` обязателен для работы Linkerd: без него sidecar не пропускает трафик, не включает `mTLS` и не отдаёт даже базовые RED-метрики — mesh без профиля просто не поднимется.",
               "correct": false,
               "sections": {
                 "what_actually": "ServiceProfile опционален: mesh, mTLS и базовые метрики работают и без него; профиль лишь добавляет per-route детализацию.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ServiceProfile` нельзя сгенерировать автоматически — каждый маршрут приходится прописывать вручную.",
+              "text": "`ServiceProfile` нельзя сгенерировать автоматически — каждый маршрут с `pathRegex` и `isRetryable` приходится прописывать вручную, флага вроде `--open-api` у `linkerd profile` не существует.",
               "correct": false,
               "sections": {
                 "what_actually": "Профиль можно автогенерировать из OpenAPI: `linkerd profile --open-api spec.yml my-service`.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Multi-cluster в Linkerd означает, что один control plane напрямую управляет подами во всех кластерах сразу через общий API-server.",
+              "text": "Multi-cluster в Linkerd означает, что один control plane напрямую управляет подами во всех кластерах сразу через общий API-server и единый `identity`, без отдельных установок в каждом кластере.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый кластер держит свой control plane; Multicluster связывает их через mirror-сервисы и общий trust anchor, а не единый API-server.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для multi-cluster трафик между кластерами идёт в открытом виде, потому что mTLS работает только внутри одного кластера.",
+              "text": "Для multi-cluster трафик между кластерами идёт в открытом виде, потому что `mTLS` и общий trust anchor работают только внутри одного кластера, а через его границу шифрование не тянется.",
               "correct": false,
               "sections": {
                 "what_actually": "Cross-cluster трафик тоже защищён mTLS через общий trust anchor — identity сохраняется across clusters.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Чтобы вызвать удалённый сервис, приложение должно знать внешний IP другого кластера и ходить мимо mesh.",
+              "text": "Чтобы вызвать удалённый сервис, приложение должно знать внешний IP другого кластера и ходить мимо mesh напрямую: зеркалирования через `mirror.linkerd.io/exported` и локальный Service в Linkerd нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Удалённый сервис зеркалируется как локальный Service (mirror), и приложение обращается к нему обычным DNS-именем через mesh.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Linkerd из коробки собирает только метрики потребления CPU и памяти подов, как `metrics-server`.",
+              "text": "Linkerd из коробки собирает только метрики потребления CPU и памяти подов, как `metrics-server`, а success rate, RPS и latency-перцентили нужно добирать отдельным стеком поверх mesh.",
               "correct": false,
               "sections": {
                 "what_actually": "Linkerd собирает L7 RED-метрики трафика (success rate, RPS, latency), а не node/pod ресурсы — это задача metrics-server.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы получить success rate и latency, нужно вручную инструментировать каждый сервис клиентом Prometheus.",
+              "text": "Чтобы получить success rate и latency, нужно вручную инструментировать каждый сервис клиентом `Prometheus` или `Micrometer`: сам sidecar-прокси RED-метрики по сетевому трафику не считает.",
               "correct": false,
               "sections": {
                 "what_actually": "Метрики собирает sidecar-прокси автоматически по сетевому трафику — инструментировать код не требуется.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Linkerd предоставляет только request rate (RPS), а success rate и latency-перцентили нужно считать самому.",
+              "text": "Linkerd предоставляет только request rate (RPS) через `viz top`, а success rate и latency-перцентили (p50/p95/p99) приходится вычислять самому поверх сырых счётчиков прокси.",
               "correct": false,
               "sections": {
                 "what_actually": "Linkerd отдаёт полный набор RED: rate, errors (success rate) и duration (p50/p95/p99) — всё из коробки.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Linkerd Viz` — это обязательный core-компонент control plane, без которого mTLS и трафик не работают.",
+              "text": "`Linkerd Viz` — это обязательный core-компонент control plane, без которого не работают ни `mTLS`, ни маршрутизация трафика, ни сбор метрик: удалив Viz, ты кладёшь весь mesh целиком.",
               "correct": false,
               "sections": {
                 "what_actually": "Viz опционален: mTLS, маршрутизация и сбор метрик работают и без него; Viz лишь добавляет UI и визуализацию.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Linkerd Viz` заменяет `Prometheus` и `Grafana`, поэтому ставить их отдельно при использовании Viz нельзя.",
+              "text": "`Linkerd Viz` полностью заменяет `Prometheus` и `Grafana` собственным движком, поэтому ставить их отдельно при использовании Viz нельзя — он несовместим с внешним `Prometheus` и своего под капотом не держит.",
               "correct": false,
               "sections": {
                 "what_actually": "Viz как раз интегрируется с Prometheus и Grafana (включает свой Prometheus), а не запрещает их — он на них опирается.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Linkerd Viz` — это CLI-only инструмент без какого-либо веб-интерфейса, только текстовый вывод в терминал.",
+              "text": "`Linkerd Viz` — это CLI-only инструмент без какого-либо веб-интерфейса: команды `viz top` и `viz routes` выводят только текст в терминал, а `linkerd viz dashboard` и topology-графа не существует.",
               "correct": false,
               "sections": {
                 "what_actually": "У Viz есть полноценный веб-дашборд (`linkerd viz dashboard`) с topology-графом и метриками, не только CLI.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Tap` пишет полный дамп тел всех запросов и ответов на диск, фактически работая как пакетный sniffer уровня tcpdump.",
+              "text": "`Tap` пишет полный дамп тел всех запросов и ответов на диск, фактически работая как пакетный sniffer уровня `tcpdump`, поэтому создаёт заметную нагрузку и хранит payload'ы целиком.",
               "correct": false,
               "sections": {
                 "what_actually": "Tap стримит метаданные (метод, путь, статус, latency), а не полные payload'ы, и не сохраняет дампы на диск, как tcpdump.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Tap` показывает только агрегированные исторические метрики за прошлый час и не умеет стримить запросы в реальном времени.",
+              "text": "`Tap` показывает только агрегированные исторические метрики за прошлый час (как `viz routes`) и не умеет стримить идущие прямо сейчас запросы в реальном времени.",
               "correct": false,
               "sections": {
                 "what_actually": "Tap — это именно live-стрим запросов в реальном времени, а не исторический агрегат; за историю отвечают метрики/Prometheus.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы использовать `Tap`, нужно встроить в приложение специальную библиотеку-агент и пересобрать сервис.",
+              "text": "Чтобы использовать `Tap`, нужно встроить в приложение специальную библиотеку-агент и пересобрать сервис, как при APM-инструментации: через один sidecar-прокси `linkerd2-proxy` он не работает.",
               "correct": false,
               "sections": {
                 "what_actually": "Tap работает через sidecar-прокси и не требует ни библиотек, ни пересборки приложения.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Linkerd стоит выбирать прежде всего тогда, когда нужен mesh поверх VM и bare-metal вне Kubernetes.",
+              "text": "Linkerd стоит выбирать прежде всего тогда, когда нужен mesh поверх VM и bare-metal вне Kubernetes: его multi-platform data plane покрывает и не-K8s workload лучше, чем `Consul` или `Istio`.",
               "correct": false,
               "sections": {
                 "what_actually": "Linkerd — K8s-only; для VM/bare-metal mesh выбирают Consul или Istio, а не Linkerd.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Linkerd выбирают, когда нужен максимально полный набор L7-фич и сложных политик авторизации через JWT.",
+              "text": "Linkerd выбирают, когда нужен максимально полный набор L7-фич и сложных политик авторизации через JWT-claims на каждом маршруте — по богатству L7-возможностей он опережает `Istio`.",
               "correct": false,
               "sections": {
                 "what_actually": "Максимум фич и L7-authz через JWT — сильная сторона Istio; Linkerd сознательно покрывает core-подмножество.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Linkerd выбирают, когда команда хочет максимум гибкости и тонкой настройки каждого аспекта mesh.",
+              "text": "Linkerd выбирают, когда команда хочет максимум гибкости и тонкой настройки каждого аспекта mesh: десятки CRD и параметров дают больше контроля, чем opinionated-дефолты `Istio`.",
               "correct": false,
               "sections": {
                 "what_actually": "Linkerd намеренно opinionated — он даёт меньше гибкости ради простоты; за максимум настроек идут к Istio.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главный минус Linkerd — высокий latency overhead и большой sidecar, из-за чего он тормозит трафик сильнее Istio.",
+              "text": "Главный минус Linkerd — высокий latency overhead (5-10 ms) и большой sidecar (~100 MB), из-за чего он тормозит трафик сильнее `Istio` и дороже обходится по памяти на больших кластерах.",
               "correct": false,
               "sections": {
                 "what_actually": "Низкий overhead и малый sidecar — как раз сильные стороны Linkerd (latency <1 ms, ~30 MB), а не минус.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "У Linkerd нет недостатков: он функционально полностью покрывает Istio и работает на любой платформе.",
+              "text": "У Linkerd нет недостатков: он функционально полностью покрывает `Istio` — те же L7-политики, JWT-authz и multi-platform mesh с VM — и при этом работает на любой платформе.",
               "correct": false,
               "sections": {
                 "what_actually": "Минусы есть: меньше фич, K8s-only, нет L7-authz через JWT, меньше экосистема — он не покрывает Istio целиком.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Основной минус Linkerd в том, что он не умеет mTLS и шифрование трафика, в отличие от Istio.",
+              "text": "Основной минус Linkerd в том, что он не умеет `mTLS` и шифрование трафика из коробки, в отличие от `Istio`: для защиты east-west приходится встраивать TLS прямо в код сервисов.",
               "correct": false,
               "sections": {
                 "what_actually": "Automatic zero-config mTLS — флагманская фича Linkerd, а не пробел; шифрование у него из коробки.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В 2024 Linkerd полностью стал проприетарным и закрыл исходный код — бесплатной open source версии больше нет.",
+              "text": "В 2024 Linkerd полностью стал проприетарным и закрыл исходный код: бесплатной open source версии под `Apache 2.0` больше нет, а `Buoyant` продаёт единственную закрытую сборку.",
               "correct": false,
               "sections": {
                 "what_actually": "Linkerd Open Source остался под Apache 2.0; платным стал Enterprise со stable-сборками, но ядро по-прежнему открыто.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Изменение 2024 года коснулось только цены коммерческой поддержки, а stable-релизы по-прежнему бесплатны для всех.",
+              "text": "Изменение 2024 года коснулось только цены коммерческой поддержки от `Buoyant`, а stable-релизы и edge-сборки по-прежнему бесплатны для всех под `Apache 2.0`.",
               "correct": false,
               "sections": {
                 "what_actually": "Как раз stable-релизы ушли в платный Enterprise; бесплатно остаются edge-релизы, а не stable.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В 2024 Buoyant, наоборот, сделал все enterprise-фичи и support полностью бесплатными и open source.",
+              "text": "В 2024 `Buoyant`, наоборот, сделал все enterprise-фичи, stable-релизы и support полностью бесплатными и open source, окончательно убрав платный слой из Linkerd.",
               "correct": false,
               "sections": {
                 "what_actually": "Buoyant ввёл платный Enterprise (advanced features, support), а не раздал их бесплатно — это монетизация, а не наоборот.",
