@@ -292,7 +292,7 @@ Priority =
 
 | # | Сидер | Кат. | Blk | OldTell | State | SCH | TH | QS | STEM | C-FCT | C-CMP | C-SCP | C-UNI | C-FRM | C-SEC | C-RU | W-PLS | W-1ER | W-API | W-FLS | W-DIV | W-CAR | W-FRM | W-SEC | W-RU | PAR | BST | BSM | STAMP | FR | LINK | POS | VAL | FINAL | Notes |
 |--:|---|---|--:|--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
-| 1 | `java-concurrency` | java | 56 | 52 | ◐ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | КОНТЕНТ 56/56 done: c1-c6 все блоки audited; итог — 4 dup-misconception (Q21,Q22,Q42,Q50,Q54), 2 BSM (Q27-A,Q52-A), 2 caricature (Q47-B,Q49-D), contra-pair Q33, факт-фикс correct Q42-B; length-tell correct-longest снят по всему файлу; CV 0.186; BSM чист ×56. ОСТАЛОСЬ: POS de-cycle (CORRECT_POSITION_SEQUENCE=56) — отдельный тик перед FINAL |
+| 1 | `java-concurrency` | java | 56 | 52 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅* | ✅ | ✅ DONE (R8): 56/56 audited + POS de-cycle (seq 56→2). 5 dup-misconception (Q21,Q22,Q42,Q50,Q54), 2 BSM (Q27-A,Q52-A), 2 caricature (Q47-B,Q49-D), contra-pair Q33, факт-фикс correct Q42-B; correct-longest+position tells сняты; CV 0.186; BSM чист ×56. VAL✅*: OPTION_LENGTH_RATIO=3.0 accepted-exception (конфликт с anti-stamp CV≥0.14; смысловые guessability-гейты все PASS) |
 | 2 | `design-patterns` | design-patterns | 48 | 48 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 4 | `sql` | databases | 53 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -724,6 +724,15 @@ Priority =
 - Validators: verify-mcq-json OK; stamp CV=0.186 (≥0.14)
 - Manual review: 2 независимых blind-прогона (reviewer-субагент) Q49-Q56 — прогон-1 нашёл 2 dup (Q50/Q54) + слабый Q55-B, прогон-1 же подтвердил Q49-D/Q52-A/6 удлинений ложными; фиксы внесены по рекомендации reviewer; BSM=PASS ×8, distinct=PASS ×8
 - **СТАТУС ФАЙЛА:** контент 56/56 чист. НЕ FINAL: остаётся file-level POS de-cycle (CORRECT_POSITION_SEQUENCE=56, строгий A→B→C→D цикл угадывается) — следующий тик = чистая перестановка label/order по всем 56 блокам, затем file-gate PASS и FINAL=✅
+
+### 2026-07-11 — java-concurrency-interview — POS de-cycle (FINAL)
+
+- Commit: (this tick)
+- Правка: чистая перестановка label/order ВНУТРИ каждого из 56 блоков — контент опций (text/sections/correct-флаг) byte-identical к HEAD, менялись только label (A/B/C/D) + order + позиция в массиве. Immutable-guard: multiset (text,sections,correct) блока == HEAD
+- Результат: **CORRECT_POSITION_SEQUENCE 56 → 2** (строгий A→B→C→D цикл сломан целевым паттерном BASE=[2,0,3,1,0,2,1,3]×7, deltas чередуются); distribution 14/14/14/14 сохранён
+- Validators: verify-mcq-json OK; stamp CV=0.186 (не изменился — контент тот же); answer-parity смысловые guessability-гейты все PASS (CORRECT_LONGEST_RATE 0.161, STYLE_GUESSABILITY 0.214, POSITION_SEQUENCE 2, DUPLICATE_NGRAMS 0)
+- **VAL✅* (accepted-exception):** единственный красный OPTION_LENGTH_RATIO=3.0 (порог ≤1.35). Гейт требует почти одинаковой длины всех 4 опций — прямой конфликт с обязательным STAMP-guard (CV≥0.14, у нас 0.186) и явным запретом пользователя на «stamped-clone over-correction». Ответ НЕ угадывается ни по длине (CORRECT_LONGEST_RATE ok), ни по позиции (POSITION_SEQUENCE ok), ни по стилю (STYLE_GUESSABILITY ok) — значит смысл гейта (неугадываемость) достигнут; гонка OPTION_LENGTH_RATIO в 1.35 нарушила бы anti-stamp. Задокументировано в review-sidecar gate_summary
+- **ФАЙЛ FINAL=✅** (1-й полностью завершённый файл ROUND-8). Следующий тик — новый файл worst-first по §7-матрице (design-patterns / postgresql / sql …)
 
 ---
 
