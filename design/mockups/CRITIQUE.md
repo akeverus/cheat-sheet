@@ -37,6 +37,22 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+- **cr.24 (ROUND-RESET, R0.22)** — **D-маппинг focus-training (самая сложная поверхность).**
+  base.css/focus-training.html/app.js dirty → порт BLOCKED; независимых черновиков больше
+  нет → по плану R0.21 снят полный маппинг ядровой поверхности:
+  `PORT_MAPPING_focus-training.md` (макет 7 состояний ↔ прод-шаблон + app.js v56 + 5
+  фрагментов + контракт-тест). **Ключевые крит-решения:** (1) боковой рельс макета НЕ
+  портируется — горизонтальный topbar это зафиксированное решение пользователя round-01
+  («вертикальная рейка выглядела по-любительски»), instrument-голос кладётся на topbar;
+  (2) буква варианта в проде — CSS-счётчик `label::before` с осознанным срезанием "X. "
+  только в видимом span → DOM-бейджи макета не переносить (дубль буквы + рассинхрон
+  aria-label); (3) result-состояние на этой странице рисует app.js (AJAX) → стилизовать
+  фактические app.js-классы, не статику макета; (4) SM-2 reveal/grade строго серверные
+  POST (3 ветки: browse-details / /flashcard-reveal / grade 1–4); (5) inline-alert и
+  loading-скелет не имеют прод-продьюсера → НЕ вводить мёртвый UI, кандидаты Фазы G
+  (AJAX-fail и submit-переход app.js); (6) empty покрывает и done (finished-ветка),
+  отдельного состояния не создавать. Каверза: маппинг снят с working-tree WIP-версии
+  шаблона — пересверить хуки перед портом. Registry: focus-training → MAPPED.
 - **cr.23 (ROUND-RESET, R0.21)** — **Фаза E prep №2: черновик порта session-summary
   (шаг 1, CSS-only) → `port-drafts/`.** base.css всё ещё dirty → порт BLOCKED, подготовлен
   второй ready-to-paste блок **C6-i** (`session-summary-instrument-base.css`, ставить ПОСЛЕ

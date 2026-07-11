@@ -1151,3 +1151,19 @@ Dirty changes created by loop: 0
   если dirty — черновиков для независимых поверхностей больше нет (остальные 5 заблокированы
   и шаблонами) → read-only аудит следующей очереди (D-маппинг одной из 5 блокированных
   поверхностей: стартовать с focus-training как ядровой).
+
+### 2026-07-12 — R0.22: D-маппинг focus-training (ядровая поверхность)
+
+- **Collision guard:** base.css + focus-training.html + app.js dirty → порт BLOCKED;
+  независимые черновики исчерпаны (error, summary) → снят маппинг сложнейшей поверхности.
+- **Создано:** `PORT_MAPPING_focus-training.md` — макет focus-question (7 состояний) ↔
+  прод (серверные th:if-ветки + AJAX app.js v56 + 5 фрагментов + TemplateFragmentContractTest).
+- **Крит-решения:** рельс НЕ портировать (topbar = решение пользователя round-01); буква
+  варианта = CSS-счётчик (DOM-бейджи макета не переносить); result-состояние стилизовать
+  по фактическим app.js-классам; SM-2 reveal/grade серверные POST; inline-alert/skeleton
+  без продьюсера не вводить (кандидаты Фазы G); done = finished-ветка empty.
+- **Каверза:** маппинг снят с working-tree (шаблон в чужом WIP) — пересверка перед портом.
+- **Ledgers:** CRITIQUE cr.24; registry focus-training → MAPPED.
+- **Следующий тик:** проверка разблокировки → Фаза E (черновики error/summary);
+  если dirty — D-маппинг следующей блокированной поверхности (result: AJAX+no-JS
+  двойной рендер, самый тонкий контракт).
