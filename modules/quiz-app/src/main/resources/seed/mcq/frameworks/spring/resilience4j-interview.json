@@ -11,11 +11,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Resilience4j` — легковесная библиотека отказоустойчивости для Java/Kotlin, вдохновлённая `Hystrix`, но современная: минимальные зависимости, `Semaphore` по умолчанию, есть `RateLimiter` и поддержка `Spring Boot 3`; `Hystrix` deprecated с 2018 года.",
+              "text": "`Resilience4j` — самостоятельная библиотека отказоустойчивости для Java, вдохновлённая `Hystrix`, но написанная заново на функциональном API и совместимая со `Spring Boot 3`.",
               "correct": true,
               "sections": {
-                "explanation": "`Resilience4j` — легковесная библиотека отказоустойчивости для Java/Kotlin, вдохновлённая `Netflix Hystrix`, но более современная: минимальные зависимости (`Vavr`), `Semaphore` по умолчанию вместо `ThreadPool`, есть `RateLimiter`, поддержка реактивных стеков (`RxJava`, `Reactor`) и полная совместимость со `Spring Boot 3`.",
-                "example": "Модульный API: `CircuitBreaker`, `Retry`, `RateLimiter`, `Bulkhead`, `TimeLimiter`. В отличие от `Hystrix`, который deprecated с 2018 года и тянул `RxJava` + `Archaius`, `Resilience4j` подключается одной зависимостью `resilience4j-spring-boot3`.",
+                "explanation": "`Resilience4j` — легковесная библиотека отказоустойчивости для Java/Kotlin, вдохновлённая `Netflix Hystrix`, но написанная заново на собственном функциональном API (в 2.x без `Vavr`): минимальные зависимости, `Semaphore`-изоляция по умолчанию (не `ThreadPool`), реактивные стеки (`RxJava`, `Reactor`) и полная совместимость со `Spring Boot 3`.",
+                "example": "Модульный API: `CircuitBreaker`, `Retry`, `RateLimiter`, `Bulkhead`, `TimeLimiter`. В отличие от `Hystrix`, deprecated с 2018 года и тянувшего `RxJava` + `Archaius`, `Resilience4j` подключается одной зависимостью `resilience4j-spring-boot3`.",
                 "when_to_apply": "Берут для новых микросервисов на `Spring Boot 2/3`, где нужна отказоустойчивость без legacy-зависимостей `Hystrix`.",
                 "edge_cases": "Пример: миграция с `Hystrix` требует переписать `@HystrixCommand` на `@CircuitBreaker` и убрать `command groups` — прямого drop-in нет.",
                 "related": "[[resilience4j-interview#Q2]] модули библиотеки; [[resilience4j-interview#Q3]] как работает CircuitBreaker; [[resilience4j-interview#Q19]] зависимости для Spring Boot."
@@ -24,22 +24,22 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Resilience4j` — это форк `Hystrix`, который продолжает разработку под новым именем с тем же кодом и API.",
+              "text": "`Resilience4j` — это форк `Hystrix`, продолжающий его разработку под новым именем с тем же кодом, теми же аннотациями и прежней моделью `ThreadPool`-изоляции.",
               "correct": false,
               "sections": {
-                "what_actually": "Это не форк: `Resilience4j` написан с нуля на функциональном API (`Vavr`), у него другая модель декораторов и другие аннотации.",
+                "what_actually": "Это не форк: `Resilience4j` написан с нуля на собственном функциональном API (в 2.x без `Vavr`), у него другая модель декораторов и другие аннотации.",
                 "source_of_confusion": "Обе библиотеки решают одну задачу — отказоустойчивость, отсюда впечатление преемственности кода.",
-                "if_it_were_true": "Если бы это был форк, `@HystrixCommand` работал бы без изменений, но аннотации и конфигурация полностью отличаются.",
+                "if_it_were_true": "Если бы это был форк, `@HystrixCommand` работал бы без изменений и осталась бы `ThreadPool`-изоляция по умолчанию, но аннотации и конфигурация полностью другие.",
                 "how_it_should_be": "Это самостоятельная библиотека, лишь вдохновлённая `Hystrix`; код и API написаны заново."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Resilience4j` использует `ThreadPool`-изоляцию по умолчанию, как и `Hystrix`, поэтому каждый вызов уходит в отдельный пул потоков.",
+              "text": "`Resilience4j` по умолчанию применяет `ThreadPool`-изоляцию, как и `Hystrix`, поэтому каждый вызов уходит в отдельный пул потоков ради разделения ресурсов.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию `Resilience4j` использует `Semaphore`-изоляцию (легче по ресурсам); `ThreadPool` доступен только для `Bulkhead` типа `THREADPOOL`.",
+                "what_actually": "По умолчанию `Resilience4j` использует `Semaphore`-изоляцию в `Bulkhead` (легче по ресурсам); `ThreadPool` доступен только для `Bulkhead` типа `THREADPOOL`. У `CircuitBreaker` вообще нет собственной изоляции потоков — это отдельный паттерн.",
                 "source_of_confusion": "В `Hystrix` `ThreadPool` действительно был дефолтом, и это ожидание переносят на `Resilience4j`.",
                 "if_it_were_true": "Если бы дефолтом был `ThreadPool`, каждый `@CircuitBreaker` создавал бы пул потоков, но семафор работает в вызывающем потоке.",
                 "how_it_should_be": "Дефолт — `Semaphore`; отдельный пул потоков задаётся явно через `Bulkhead.Type.THREADPOOL`."
@@ -48,12 +48,12 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Resilience4j` и `Hystrix` одинаково актуальны, и `Netflix` продолжает активно развивать `Hystrix` параллельно.",
+              "text": "`Resilience4j` и `Hystrix` одинаково актуальны, и `Netflix` активно развивает обе библиотеки параллельно, выпуская для них свежие релизы под новые проекты.",
               "correct": false,
               "sections": {
-                "what_actually": "`Hystrix` официально deprecated с 2018 года и в maintenance-режиме; активно развивается именно `Resilience4j`.",
+                "what_actually": "`Hystrix` официально deprecated с 2018 года и в maintenance-режиме; `Netflix` развивает не его, а рекомендует `Resilience4j`.",
                 "source_of_confusion": "`Hystrix` всё ещё встречается в старых проектах, что создаёт иллюзию его поддержки.",
-                "if_it_were_true": "Если бы `Hystrix` развивался, он поддерживал бы `Spring Boot 3`, но официальной поддержки нет.",
+                "if_it_were_true": "Если бы `Netflix` развивал `Hystrix`, тот получил бы поддержку `Spring Boot 3` и `jakarta`, но официальных релизов под них нет.",
                 "how_it_should_be": "`Hystrix` заморожен; стандарт де-факто сегодня — `Resilience4j`."
               }
             }
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Resilience4j` всё собрано в единственном модуле `resilience4j-core`: `circuitbreaker`, `retry`, `ratelimiter`, `bulkhead` и `timelimiter` лежат внутри него одним артефактом, поэтому подключить отдельный паттерн, не притянув остальные, нельзя.",
+              "text": "В `Resilience4j` всё собрано в едином артефакте `resilience4j-core`, поэтому подключить отдельный паттерн вроде `Retry`, не притянув остальные модули, нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Библиотека модульная: каждый паттерн (`circuitbreaker`, `retry`, `ratelimiter`, `bulkhead`, `timelimiter`) — отдельный артефакт; `core` содержит лишь общие абстракции.",
@@ -83,11 +83,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Основные модули — отдельные паттерны: `circuitbreaker`, `retry`, `ratelimiter`, `bulkhead`, `timelimiter`; плюс вспомогательные `cache`, `micrometer` и `spring-boot3` для auto-configuration; подключать можно выборочно.",
+              "text": "Основные модули — отдельные артефакты под каждый паттерн (`resilience4j-circuitbreaker`, `resilience4j-retry` и другие), а поверх них ставят стартер `resilience4j-spring-boot3`.",
               "correct": true,
               "sections": {
                 "explanation": "Основные модули: `resilience4j-circuitbreaker`, `resilience4j-retry`, `resilience4j-ratelimiter`, `resilience4j-bulkhead`, `resilience4j-timelimiter`, плюс вспомогательные `resilience4j-cache`, `resilience4j-micrometer` и `resilience4j-spring-boot3` для auto-configuration.",
-                "example": "Каждый модуль — отдельный паттерн отказоустойчивости: `CircuitBreaker` против каскадных сбоев, `Retry` для повторов, `RateLimiter` для ограничения частоты, `Bulkhead` для изоляции конкурентных вызовов, `TimeLimiter` для таймаутов асинхронных операций.",
+                "example": "Каждый модуль — отдельный паттерн: `CircuitBreaker` против каскадных сбоев, `Retry` для повторов, `RateLimiter` для ограничения частоты, `Bulkhead` для изоляции конкурентных вызовов, `TimeLimiter` для таймаутов async-операций.",
                 "when_to_apply": "В `Spring Boot` достаточно подключить одну зависимость `resilience4j-spring-boot3` — она тянет все основные модули.",
                 "edge_cases": "Пример: `resilience4j-cache` реализует `JSR-107` и используется реже остальных; его подключают отдельно при необходимости кэшировать результаты.",
                 "related": "[[resilience4j-interview#Q1]] что такое Resilience4j; [[resilience4j-interview#Q12]] Bulkhead; [[resilience4j-interview#Q19]] зависимости для Spring Boot."
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Resilience4j` включает модуль `resilience4j-loadbalancer`: наряду с `circuitbreaker` и `retry` он отвечает за клиентскую балансировку между инстансами, заменяя `Spring Cloud LoadBalancer` в общей связке паттернов.",
+              "text": "`Resilience4j` включает модуль `resilience4j-loadbalancer`, который наряду с паттернами отвечает за клиентскую балансировку между инстансами, заменяя `Spring Cloud LoadBalancer`.",
               "correct": false,
               "sections": {
                 "what_actually": "Балансировки нагрузки в `Resilience4j` нет — это задача `Spring Cloud LoadBalancer`; библиотека занимается только паттернами отказоустойчивости.",
@@ -108,10 +108,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`RateLimiter` не входит в модули `Resilience4j` отдельным `ratelimiter`-артефактом — ограничение частоты вынесено в `Spring Cloud Gateway`, а за библиотекой остаются только `circuitbreaker`, `retry` и `bulkhead`.",
+              "text": "Ограничение частоты вынесено из `Resilience4j` в `Spring Cloud Gateway`, поэтому отдельного модуля `resilience4j-ratelimiter` в библиотеке нет — остаются лишь circuit breaker и retry.",
               "correct": false,
               "sections": {
-                "what_actually": "`resilience4j-ratelimiter` — полноценный отдельный модуль с алгоритмом token bucket; это одно из ключевых отличий от `Hystrix`, где `RateLimiter` отсутствовал.",
+                "what_actually": "`resilience4j-ratelimiter` — полноценный отдельный модуль, ограничивающий число вызовов за `limit-refresh-period`; это одно из ключевых отличий от `Hystrix`, где `RateLimiter` отсутствовал.",
                 "source_of_confusion": "`Spring Cloud Gateway` тоже умеет rate limiting, отсюда путаница с местом реализации.",
                 "if_it_were_true": "Если бы `RateLimiter` отсутствовал, нельзя было бы поставить `@RateLimiter` на метод сервиса, но аннотация существует.",
                 "how_it_should_be": "`RateLimiter` — самостоятельный модуль `Resilience4j`, независимый от `Gateway`."
@@ -131,10 +131,10 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`CircuitBreaker` повторяет упавший вызов несколько раз с задержкой, пока тот не выполнится успешно.",
+              "text": "`CircuitBreaker` повторяет упавший вызов с нарастающей задержкой, пока `downstream` не ответит успешно или пока не кончатся попытки.",
               "correct": false,
               "sections": {
-                "what_actually": "Повторы — это задача `Retry`, а не `CircuitBreaker`; CB не повторяет вызов, а быстро отклоняет его в состоянии `OPEN`.",
+                "what_actually": "Повторы — задача `Retry`, а не `CircuitBreaker`; CB не повторяет вызов, а в состоянии `OPEN` быстро отклоняет его с `CallNotPermittedException`.",
                 "source_of_confusion": "Оба паттерна про обработку сбоев, поэтому их функции путают.",
                 "if_it_were_true": "Если бы CB повторял вызовы, он усиливал бы нагрузку на падающий сервис, но его цель — наоборот разгрузить его.",
                 "how_it_should_be": "За повторы отвечает `@Retry`; `CircuitBreaker` размыкает цепь и отклоняет вызовы."
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`CircuitBreaker` кэширует последний успешный ответ и отдаёт его, пока downstream недоступен.",
+              "text": "`CircuitBreaker` кэширует последний успешный ответ `downstream` и продолжает отдавать его из памяти, пока сервис снова не станет доступен.",
               "correct": false,
               "sections": {
                 "what_actually": "CB не кэширует ответы — он возвращает ошибку или результат `fallbackMethod`; кэширование делает отдельный модуль `resilience4j-cache`.",
@@ -155,7 +155,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`CircuitBreaker` защищает от каскадных сбоев: когда доля отказов downstream превышает порог, он 'размыкает цепь' и сразу отдаёт `CallNotPermittedException` или fallback, не дожидаясь таймаута на каждый вызов.",
+              "text": "`CircuitBreaker` навсегда блокирует все вызовы `downstream` после первого же отказа и отключает интеграцию вплоть до ручного рестарта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CB размыкается только при превышении `failure-rate-threshold` на минимуме вызовов и сам восстанавливается через `HALF_OPEN` после `wait-duration-in-open-state`; вечной блокировки нет.",
+                "source_of_confusion": "Слово 'размыкает цепь' звучит как необратимое отключение.",
+                "if_it_were_true": "Если бы блокировка была вечной, сервис не восстанавливался бы после починки downstream, но `HALF_OPEN` это исправляет.",
+                "how_it_should_be": "CB временно размыкается и сам пробует восстановиться через тестовые вызовы в `HALF_OPEN`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CircuitBreaker` при превышении доли отказов `downstream` размыкает цепь и сразу отклоняет вызовы, не дожидаясь таймаута на каждый запрос.",
               "correct": true,
               "sections": {
                 "explanation": "`CircuitBreaker` защищает систему от каскадных сбоев: когда downstream-сервис нестабилен и доля отказов превышает порог, он 'размыкает цепь' и сразу возвращает ошибку (`CallNotPermittedException`) или fallback, не дожидаясь таймаута на каждый вызов.",
@@ -163,18 +175,6 @@
                 "when_to_apply": "Применяют для защиты межсервисных вызовов: когда `paymentService` начинает отказывать, CB не даёт потоку висеть на каждом запросе.",
                 "edge_cases": "Пример: при `failure-rate-threshold: 50` и 10 вызовах в окне, 5 ошибок переводят CB в `OPEN`, и следующие вызовы сразу падают с `CallNotPermittedException`.",
                 "related": "[[resilience4j-interview#Q4]] состояния CircuitBreaker; [[resilience4j-interview#Q5]] sliding window; [[resilience4j-interview#Q6]] параметры конфигурации."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`CircuitBreaker` блокирует все вызовы навсегда после первого же отказа downstream-сервиса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "CB размыкается только при превышении `failureRate` на минимуме вызовов и автоматически восстанавливается через `HALF_OPEN` после `waitDurationInOpenState`.",
-                "source_of_confusion": "Слово 'размыкает цепь' звучит как необратимое отключение.",
-                "if_it_were_true": "Если бы блокировка была вечной, сервис не восстанавливался бы после починки downstream, но `HALF_OPEN` это исправляет.",
-                "how_it_should_be": "CB временно размыкается и сам пробует восстановиться через тестовые вызовы в `HALF_OPEN`."
               }
             }
           ]
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "У `CircuitBreaker` всего два состояния: `OPEN` и `CLOSED`, а промежуточного тестового состояния нет.",
+              "text": "У `CircuitBreaker` всего два рабочих состояния — `OPEN` и `CLOSED`; ни `HALF_OPEN`, ни ручные `DISABLED` и `FORCED_OPEN` библиотекой не предусмотрены.",
               "correct": false,
               "sections": {
                 "what_actually": "Кроме `OPEN` и `CLOSED` есть ключевое `HALF_OPEN`, через которое CB безопасно проверяет восстановление downstream несколькими тестовыми вызовами.",
@@ -203,10 +203,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Переход `OPEN → HALF_OPEN` происходит мгновенно сразу после первого отклонённого вызова.",
+              "text": "У `CircuitBreaker` переход `OPEN → HALF_OPEN` из `CLOSED` происходит мгновенно после первого отклонённого вызова, минуя ручные `DISABLED` и `FORCED_OPEN`.",
               "correct": false,
               "sections": {
-                "what_actually": "Переход в `HALF_OPEN` происходит только по истечении `waitDurationInOpenState` (по умолчанию 60s), а не сразу.",
+                "what_actually": "Переход в `HALF_OPEN` происходит только по истечении `wait-duration-in-open-state` (по умолчанию 60s), а не сразу после первого отклонённого вызова.",
                 "source_of_confusion": "Хочется, чтобы система восстанавливалась как можно быстрее, отсюда идея мгновенного перехода.",
                 "if_it_were_true": "Если бы переход был мгновенным, CB пускал бы тестовые вызовы в всё ещё падающий сервис без паузы на восстановление.",
                 "how_it_should_be": "Переход в `HALF_OPEN` отложен на `waitDurationInOpenState`."
@@ -215,10 +215,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Состояния `DISABLED` и `FORCED_OPEN` переключаются автоматически на основе `failureRate`, как и остальные.",
+              "text": "У `CircuitBreaker` ручные `DISABLED` и `FORCED_OPEN` переключаются автоматически по `failureRate`, ровно так же как рабочие `CLOSED`, `OPEN` и `HALF_OPEN`.",
               "correct": false,
               "sections": {
-                "what_actually": "`DISABLED` и `FORCED_OPEN` — ручные состояния для maintenance/debugging; автоматические переходы по метрикам на них не действуют.",
+                "what_actually": "`DISABLED`, `FORCED_OPEN` и `METRICS_ONLY` — ручные состояния для maintenance/наблюдения; автоматические переходы по `failureRate` на них не действуют.",
                 "source_of_confusion": "Они выглядят как обычные состояния в списке, поэтому кажутся частью авто-логики.",
                 "if_it_were_true": "Если бы они переключались автоматически, нельзя было бы зафиксировать CB в нужном состоянии вручную, что и есть их назначение.",
                 "how_it_should_be": "`DISABLED` и `FORCED_OPEN` устанавливаются только вручную и не подчиняются `failureRate`."
@@ -227,13 +227,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Три основных состояния: `CLOSED` (запросы проходят), `OPEN` (вызовы отклоняются), `HALF_OPEN` (несколько тестовых вызовов); плюс два ручных — `DISABLED` и `FORCED_OPEN` для maintenance.",
+              "text": "У `CircuitBreaker` есть три автоматических состояния — `CLOSED`, `OPEN`, `HALF_OPEN` — и ещё три ручных для maintenance: `DISABLED`, `FORCED_OPEN`, `METRICS_ONLY`.",
               "correct": true,
               "sections": {
-                "explanation": "Три основных состояния: `CLOSED` (нормальная работа, запросы проходят), `OPEN` (вызовы сразу отклоняются), `HALF_OPEN` (пропускается несколько тестовых вызовов); плюс два ручных — `DISABLED` (CB выключен, всё проходит) и `FORCED_OPEN` (принудительно разомкнут).",
-                "example": "`CLOSED → OPEN` происходит при `failureRate >= threshold`; `OPEN → HALF_OPEN` — после `waitDurationInOpenState`; из `HALF_OPEN` CB возвращается в `CLOSED` или `OPEN` по результату тестовых вызовов. `DISABLED` и `FORCED_OPEN` переключаются только вручную и не меняются автоматически.",
+                "explanation": "Три автоматических состояния: `CLOSED` (запросы проходят и считается `failureRate`), `OPEN` (вызовы сразу отклоняются), `HALF_OPEN` (пропускается несколько тестовых вызовов). Плюс три ручных из enum `CircuitBreaker.State`: `DISABLED` (CB выключен, всё проходит, метрики не считаются), `FORCED_OPEN` (принудительно разомкнут) и `METRICS_ONLY` (вызовы всегда пропускаются, но метрики и события собираются).",
+                "example": "`CLOSED → OPEN` — при `failureRate >= threshold`; `OPEN → HALF_OPEN` — после `wait-duration-in-open-state`; из `HALF_OPEN` CB идёт в `CLOSED` или `OPEN` по результату тестовых вызовов. Состояния `DISABLED`, `FORCED_OPEN` и `METRICS_ONLY` переключаются только вручную и метриками не управляются.",
                 "when_to_apply": "Знание состояний нужно при отладке: по метрике `resilience4j.circuitbreaker.state` видно, в каком состоянии находится инстанс.",
-                "edge_cases": "Пример: `FORCED_OPEN` ставят вручную на время maintenance downstream — все вызовы отклоняются, но метрики продолжают собираться.",
+                "edge_cases": "Пример: `METRICS_ONLY` ставят, чтобы наблюдать `failureRate` сервиса, ещё не разрешая CB отклонять вызовы; `FORCED_OPEN` — наоборот, жёстко отклоняет всё на время maintenance downstream.",
                 "related": "[[resilience4j-interview#Q3]] как работает CircuitBreaker; [[resilience4j-interview#Q6]] параметры конфигурации; [[resilience4j-interview#Q17]] метрики Actuator."
               }
             }
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Sliding window` определяет, как измеряется `failureRate`. Есть два типа: `COUNT_BASED` (по последним N вызовам) и `TIME_BASED` (по вызовам за N секунд); `minimum-number-of-calls` задаёт минимум вызовов до начала подсчёта.",
+              "text": "`Sliding window` задаёт, как измеряется `failureRate`: бывает `COUNT_BASED` (по последним N вызовам) и `TIME_BASED` (по вызовам за N секунд).",
               "correct": true,
               "sections": {
                 "explanation": "`Sliding window` определяет, как измеряется `failureRate`. Есть два типа: `COUNT_BASED` (по последним N вызовам) и `TIME_BASED` (по вызовам за последние N секунд). Параметр `minimum-number-of-calls` задаёт минимум вызовов, прежде чем CB начнёт считать долю отказов.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Sliding window` — это период, в течение которого `CircuitBreaker` находится в состоянии `OPEN` перед переходом в `HALF_OPEN`.",
+              "text": "`Sliding window` — это период, в течение которого `CircuitBreaker` держится в состоянии `OPEN`, прежде чем перейти в `HALF_OPEN` и пропустить тестовые вызовы.",
               "correct": false,
               "sections": {
                 "what_actually": "Период в `OPEN` задаётся параметром `wait-duration-in-open-state`; `sliding window` — это окно измерения `failureRate`, а не таймер восстановления.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Существует только один тип `sliding window` — `COUNT_BASED`, измерение по времени не поддерживается.",
+              "text": "`Sliding window` бывает только одного типа — `COUNT_BASED` по числу вызовов; измерение `failureRate` по времени через `TIME_BASED` библиотека не поддерживает.",
               "correct": false,
               "sections": {
                 "what_actually": "Поддерживаются два типа: `COUNT_BASED` и `TIME_BASED`; последний считает отказы за окно времени, что важно при переменном трафике.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`minimum-number-of-calls` задаёт максимальное число вызовов, после которого `CircuitBreaker` принудительно размыкается.",
+              "text": "`Sliding window` управляется параметром `minimum-number-of-calls`, который задаёт максимум вызовов, после которого `CircuitBreaker` принудительно размыкает цепь и сразу отклоняет новые вызовы.",
               "correct": false,
               "sections": {
                 "what_actually": "`minimum-number-of-calls` — это минимум вызовов, прежде чем CB начнёт вычислять `failureRate`; это не лимит и не триггер размыкания.",
@@ -311,7 +311,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ignore-exceptions` перечисляет исключения, при которых `CircuitBreaker` обязан немедленно разомкнуться, тогда как `record-exceptions` и `failure-rate-threshold` лишь считают статистику отказов постфактум.",
+              "text": "У `CircuitBreaker` ключевые параметры — доля отказов `failure-rate-threshold`, пауза `wait-duration-in-open-state` и размер окна `sliding-window-size` — плюс списки записываемых и игнорируемых исключений.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевые параметры: `failure-rate-threshold` (% отказов для открытия, default 50), `slow-call-duration-threshold` (порог, выше которого завершённый вызов считается медленным для статистики), `wait-duration-in-open-state` (пауза перед `HALF_OPEN`, default 60s), `permitted-number-of-calls-in-half-open-state`, `minimum-number-of-calls`, `sliding-window-size`/`sliding-window-type`, а также `record-exceptions`/`ignore-exceptions`.",
+                "example": "`record-exceptions` перечисляет исключения, считающиеся сбоями (например `IOException`, `TimeoutException`), а `ignore-exceptions` — те, что не учитываются (например бизнес-исключения). `slow-call-rate-threshold` ловит медленные, но формально успешные вызовы.",
+                "when_to_apply": "Настраивают per-instance в `application.yml` под каждый downstream-сервис отдельно, исходя из его SLA.",
+                "edge_cases": "Пример: для платёжного API ставят `slow-call-duration-threshold: 2s`, чтобы вызовы дольше 2 секунд учитывались как медленные и влияли на `slow-call-rate-threshold`.",
+                "related": "[[resilience4j-interview#Q4]] состояния CircuitBreaker; [[resilience4j-interview#Q5]] sliding window; [[resilience4j-interview#Q7]] настройка в Spring Boot."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "У `CircuitBreaker` список `ignore-exceptions` перечисляет ошибки, при которых он обязан немедленно разомкнуться, а `record-exceptions` лишь считает статистику постфактум.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `ignore-exceptions` указывает исключения, которые НЕ считаются сбоями и игнорируются при подсчёте `failureRate`; за сбои отвечает `record-exceptions`.",
@@ -321,22 +334,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Ключевые параметры: `failure-rate-threshold`, `slow-call-duration-threshold`, `wait-duration-in-open-state`, `permitted-number-of-calls-in-half-open-state`, `minimum-number-of-calls`, `sliding-window-size`/`type`, `record-exceptions`/`ignore-exceptions`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ключевые параметры: `failure-rate-threshold` (% отказов для открытия, default 50), `slow-call-duration-threshold` (что считать медленным вызовом), `wait-duration-in-open-state` (пауза перед `HALF_OPEN`, default 60s), `permitted-number-of-calls-in-half-open-state`, `minimum-number-of-calls`, `sliding-window-size`/`sliding-window-type`, а также `record-exceptions`/`ignore-exceptions`.",
-                "example": "`record-exceptions` перечисляет исключения, считающиеся сбоями (например `IOException`, `TimeoutException`), а `ignore-exceptions` — те, что не учитываются (например бизнес-исключения). `slow-call-rate-threshold` ловит медленные, но формально успешные вызовы.",
-                "when_to_apply": "Настраивают per-instance в `application.yml` под каждый downstream-сервис отдельно, исходя из его SLA.",
-                "edge_cases": "Пример: для платёжного API ставят `slow-call-duration-threshold: 2s`, чтобы вызовы дольше 2 секунд учитывались как медленные и влияли на `slow-call-rate-threshold`.",
-                "related": "[[resilience4j-interview#Q4]] состояния CircuitBreaker; [[resilience4j-interview#Q5]] sliding window; [[resilience4j-interview#Q7]] настройка в Spring Boot."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "Параметр `failure-rate-threshold` задаётся в абсолютном числе отказавших вызовов, а не в процентах: вместе с `minimum-number-of-calls` и `sliding-window-size` он сравнивает счётчик ошибок с фиксированным лимитом, а не долю в окне.",
+              "text": "У `CircuitBreaker` параметр `failure-rate-threshold` задаётся абсолютным числом отказов, а не процентом, и сравнивается со счётчиком ошибок в `sliding-window-size`.",
               "correct": false,
               "sections": {
                 "what_actually": "`failure-rate-threshold` — это процент отказов (default 50), а не абсолютное число; CB размыкается, когда доля отказов в окне превышает порог.",
@@ -348,10 +348,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`wait-duration-in-open-state` определяет, сколько ждать ответа от downstream-сервиса перед тем, как засчитать таймаут, наравне с `slow-call-duration-threshold` и настройками `TimeLimiter`.",
+              "text": "У `CircuitBreaker` параметр `wait-duration-in-open-state` определяет, сколько ждать ответа `downstream` перед тем, как `TimeLimiter` засчитает вызову таймаут.",
               "correct": false,
               "sections": {
-                "what_actually": "`wait-duration-in-open-state` — это пауза, в течение которой CB остаётся в `OPEN` перед переходом в `HALF_OPEN`; таймаут вызова задаёт `TimeLimiter` или `slow-call-duration-threshold`.",
+                "what_actually": "`wait-duration-in-open-state` — пауза, в течение которой CB остаётся в `OPEN` перед переходом в `HALF_OPEN`; реальный лимит времени вызова даёт `TimeLimiter` (только для async), а `slow-call-duration-threshold` лишь помечает завершённый вызов как медленный.",
                 "source_of_confusion": "Оба параметра связаны с длительностью, поэтому их функции путают.",
                 "if_it_were_true": "Если бы это был таймаут вызова, изменение параметра влияло бы на каждый запрос, а не только на восстановление CB.",
                 "how_it_should_be": "Это длительность состояния `OPEN`; таймаут вызова настраивается отдельно."
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно поставить `@CircuitBreaker` на метод — никакая дополнительная зависимость или AOP не нужны.",
+              "text": "Чтобы `@CircuitBreaker` заработал, достаточно повесить его на метод: ни `spring-boot-starter-aop`, ни отдельный `proxy` для перехвата вызова не требуются.",
               "correct": false,
               "sections": {
                 "what_actually": "Для работы аннотаций обязателен `spring-boot-starter-aop`: без него proxy не создаётся и `@CircuitBreaker` молча игнорируется.",
@@ -383,19 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Имя в `@CircuitBreaker(name = \"...\")` произвольное и ни с чем в `application.yml` не связано.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Имя должно совпадать с ключом инстанса в `resilience4j.circuitbreaker.instances.<name>` — именно по нему подтягивается конфигурация; иначе применится `default`.",
-                "source_of_confusion": "Кажется, что `name` — это просто метка для логов.",
-                "if_it_were_true": "Если бы имя было произвольным, нельзя было бы задать разные настройки разным сервисам, но именно по нему резолвится конфиг.",
-                "how_it_should_be": "`name` связывает аннотацию с конкретным инстансом конфигурации в `yml`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Параметры задают в `application.yml` под `resilience4j.circuitbreaker.instances.<name>`, а на метод вешают `@CircuitBreaker(name = \"...\", fallbackMethod = \"...\")`; `CallNotPermittedException` ловят `@ExceptionHandler` и отдают `503`.",
+              "text": "Параметры задают в `application.yml` под секцией `resilience4j.circuitbreaker.instances`, а на метод вешают `@CircuitBreaker` с fallback-методом, ловя исключение разомкнутой цепи.",
               "correct": true,
               "sections": {
                 "explanation": "Параметры задают в `application.yml` под `resilience4j.circuitbreaker.instances.<name>`, а на метод вешают аннотацию `@CircuitBreaker(name = \"...\", fallbackMethod = \"...\")`. При разомкнутой цепи бросается `CallNotPermittedException`, которую можно перехватить `@ExceptionHandler` и вернуть `503`.",
@@ -406,9 +394,21 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Имя в `@CircuitBreaker(name = \"...\")` произвольное и ни с чем в `application.yml` не связано, поэтому конфигурация из `resilience4j.circuitbreaker.instances` подтягивается независимо от него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя должно совпадать с ключом инстанса в `resilience4j.circuitbreaker.instances.<name>` — именно по нему подтягивается конфигурация; иначе применится `default`.",
+                "source_of_confusion": "Кажется, что `name` — это просто метка для логов.",
+                "if_it_were_true": "Если бы имя было произвольным, нельзя было бы задать разные настройки разным сервисам, но именно по нему резолвится конфиг.",
+                "how_it_should_be": "`name` связывает аннотацию с конкретным инстансом конфигурации в `yml`."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`fallbackMethod` может находиться в любом другом Spring-бине, на который указывает имя метода.",
+              "text": "Метод `fallbackMethod` для `@CircuitBreaker` может лежать в любом другом Spring-бине, на который указывает имя, и вызываться кросс-бин через `proxy`.",
               "correct": false,
               "sections": {
                 "what_actually": "Из-за ограничений AOP `fallbackMethod` обязан быть в том же классе, что и защищённый метод; в другом бине его не найдут.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Resilience4j Retry` и `Spring Retry` используют одну и ту же аннотацию `@Retryable` с одинаковой конфигурацией.",
+              "text": "`Resilience4j Retry` и `Spring Retry` используют одну и ту же аннотацию `@Retryable` с одинаковой конфигурацией `backoff` и общими метриками `Micrometer`.",
               "correct": false,
               "sections": {
                 "what_actually": "Аннотации разные: `Spring Retry` — `@Retryable`, `Resilience4j` — `@Retry`; конфигурация и backoff задаются по-разному.",
@@ -443,7 +443,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Retry` даёт метрики `Micrometer` из коробки, а `Resilience4j Retry` требует писать их вручную.",
+              "text": "`Spring Retry` включается через `@EnableRetry` и `@Retryable`, а `Resilience4j Retry` даёт свою аннотацию, метрики `Micrometer` из коробки и интеграцию с circuit breaker.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оба реализуют повтор операций, но `Spring Retry` подключается через `@EnableRetry` + AOP и использует `@Retryable`/`@Backoff`, а `Resilience4j Retry` идёт в `resilience4j-spring-boot3` с аннотацией `@Retry`, даёт метрики `Micrometer` из коробки, интеграцию с `@CircuitBreaker` в одной экосистеме и поддержку реактивного стека (`RxJava`/`Reactor`).",
+                "example": "Ключевое преимущество `Resilience4j Retry` — консистентность метрик и комбинирование с другими паттернами одной библиотеки; backoff задаётся через `wait-duration` + `exponential-backoff-multiplier`.",
+                "when_to_apply": "В проекте, уже использующем `Resilience4j`, предпочитают его `Retry` для единых метрик; чистый `Spring Retry` берут, если других паттернов resilience не нужно.",
+                "edge_cases": "Пример: `@Retry(name = \"orderService\")` рядом с `@CircuitBreaker(name = \"orderService\")` на одном методе работает консистентно, тогда как `@Retryable` из `Spring Retry` с CB напрямую не интегрирован.",
+                "related": "[[resilience4j-interview#Q9]] настройка Retry в Spring Boot; [[resilience4j-interview#Q15]] комбинирование аннотаций; [[resilience4j-interview#Q1]] что такое Resilience4j."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Retry` отдаёт метрики `Micrometer` из коробки, тогда как `Resilience4j Retry` со своим `@Retry` требует публиковать метрики вручную через `MeterBinder`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `Resilience4j Retry` публикует метрики через `Micrometer` автоматически, тогда как `Spring Retry` штатных метрик не имеет.",
@@ -453,28 +466,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`Spring Retry` поддерживает реактивный стек `Reactor`, а `Resilience4j Retry` работает только синхронно.",
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Retry` поддерживает реактивный стек `Reactor` через оператор `RetryOperator`, а `Resilience4j Retry` со своим `@Retry` работает только в синхронном блокирующем режиме.",
               "correct": false,
               "sections": {
                 "what_actually": "Реактивную поддержку (`RxJava`/`Reactor`) даёт именно `Resilience4j`; `Spring Retry` ориентирован на императивный стек.",
                 "source_of_confusion": "`Spring WebFlux` ассоциируется со `Spring`, отсюда перенос на `Spring Retry`.",
                 "if_it_were_true": "Если бы `Resilience4j` работал только синхронно, не было бы операторов вроде `RetryOperator` для `Mono`/`Flux`, но они есть.",
                 "how_it_should_be": "Реактивный стек поддерживает `Resilience4j`; `Spring Retry` — преимущественно синхронный."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Spring Retry` — это `@EnableRetry` + `@Retryable`; `Resilience4j Retry` — аннотация `@Retry`, метрики `Micrometer` из коробки, интеграция с `@CircuitBreaker` в одной экосистеме и поддержка реактивного стека.",
-              "correct": true,
-              "sections": {
-                "explanation": "Оба реализуют повтор операций, но `Spring Retry` подключается через `@EnableRetry` + AOP и использует `@Retryable`/`@Backoff`, а `Resilience4j Retry` идёт в `resilience4j-spring-boot3` с аннотацией `@Retry`, даёт метрики `Micrometer` из коробки, интеграцию с `@CircuitBreaker` в одной экосистеме и поддержку реактивного стека (`RxJava`/`Reactor`).",
-                "example": "Ключевое преимущество `Resilience4j Retry` — консистентность метрик и комбинирование с другими паттернами одной библиотеки; backoff задаётся через `wait-duration` + `exponential-backoff-multiplier`.",
-                "when_to_apply": "В проекте, уже использующем `Resilience4j`, предпочитают его `Retry` для единых метрик; чистый `Spring Retry` берут, если других паттернов resilience не нужно.",
-                "edge_cases": "Пример: `@Retry(name = \"orderService\")` рядом с `@CircuitBreaker(name = \"orderService\")` на одном методе работает консистентно, тогда как `@Retryable` из `Spring Retry` с CB напрямую не интегрирован.",
-                "related": "[[resilience4j-interview#Q9]] настройка Retry в Spring Boot; [[resilience4j-interview#Q15]] комбинирование аннотаций; [[resilience4j-interview#Q1]] что такое Resilience4j."
               }
             }
           ]
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Параметры задают под `resilience4j.retry.instances.<name>`: `max-attempts`, `wait-duration`, `exponential-backoff-multiplier`, `retry-exceptions`, `ignore-exceptions`; на метод вешают `@Retry(name = \"...\", fallbackMethod = \"...\")`.",
+              "text": "Параметры задают под `resilience4j.retry.instances`: число попыток `max-attempts`, паузу `wait-duration` и список `retry-exceptions`; на метод вешают `@Retry` с fallback-методом.",
               "correct": true,
               "sections": {
                 "explanation": "Параметры задают под `resilience4j.retry.instances.<name>`: `max-attempts` (всего попыток, включая первую), `wait-duration` (пауза между попытками), `exponential-backoff-multiplier` (множитель), `retry-exceptions` (на какие исключения повторять) и `ignore-exceptions`. На метод вешают `@Retry(name = \"...\", fallbackMethod = \"...\")`.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`max-attempts: 3` под `resilience4j.retry.instances.<name>` означает три ДОПОЛНИТЕЛЬНЫХ повтора после первого вызова: с учётом `wait-duration` и `exponential-backoff-multiplier` выходит всего четыре обращения к сервису, а не три.",
+              "text": "Параметр `max-attempts: 3` под `resilience4j.retry.instances` означает три ДОПОЛНИТЕЛЬНЫХ повтора после первого вызова, то есть суммарно четыре обращения через `@Retry` к `downstream`.",
               "correct": false,
               "sections": {
                 "what_actually": "`max-attempts` включает первую попытку: при значении 3 будет один исходный вызов плюс два повтора, то есть три обращения суммарно.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@Retry` повторяет вызов на любое исключение, поэтому списки `retry-exceptions` и `ignore-exceptions` под `resilience4j.retry.instances.<name>` ни на что не влияют — повтор идёт даже на `ValidationException` или `400 Bad Request`.",
+              "text": "Аннотация `@Retry` повторяет вызов на любое исключение, поэтому списки `retry-exceptions` и `ignore-exceptions` под `resilience4j.retry.instances` при любом `max-attempts` игнорируются.",
               "correct": false,
               "sections": {
                 "what_actually": "Повторы происходят только для исключений из `retry-exceptions`; всё остальное (например `ValidationException` в `ignore-exceptions`) пробрасывается сразу без повтора.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`exponential-backoff-multiplier` задаёт фиксированную паузу в миллисекундах между всеми `max-attempts`-попытками: как и `wait-duration`, он не меняется от попытки к попытке, поэтому интервалы под `resilience4j.retry.instances.<name>` остаются равными.",
+              "text": "Параметр `exponential-backoff-multiplier` задаёт фиксированную паузу между всеми попытками `max-attempts`, поэтому интервалы под `resilience4j.retry.instances` остаются постоянными и равными.",
               "correct": false,
               "sections": {
                 "what_actually": "Фиксированную паузу задаёт `wait-duration`; `exponential-backoff-multiplier` умножает её с каждой попыткой, давая растущие интервалы (500ms, 1s, 2s).",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RateLimiter` ограничивает число ОДНОВРЕМЕННЫХ вызовов, а не их частоту за период времени.",
+              "text": "`RateLimiter` ограничивает число ОДНОВРЕМЕННЫХ вызовов через `max-concurrent-calls`, а не их частоту за период `limit-refresh-period` с `limit-for-period`.",
               "correct": false,
               "sections": {
                 "what_actually": "Ограничение конкурентных вызовов — это `Bulkhead`; `RateLimiter` ограничивает именно частоту (число вызовов за `limit-refresh-period`).",
@@ -563,10 +563,22 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`RateLimiter` ограничивает частоту вызовов по token bucket: в начале каждого `limit-refresh-period` выдаётся `limit-for-period` разрешений; при их исчерпании вызов ждёт `timeout-duration`, затем бросается `RequestNotPermitted`.",
+              "text": "`RateLimiter` при исчерпании `limit-for-period` бесконечно копит вызовы в очереди и выполняет их позже без `timeout-duration` и `RequestNotPermitted`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вызов ждёт не дольше `timeout-duration`; если за это время разрешение не появилось, бросается `RequestNotPermitted`, а не бесконечное ожидание.",
+                "source_of_confusion": "Rate limiting интуитивно ассоциируется с буферизацией и очередью, отсюда идея безграничного накопления вызовов.",
+                "if_it_were_true": "Если бы очередь была бесконечной, поток висел бы неограниченно и копился backlog, чего паттерн как раз избегает.",
+                "how_it_should_be": "Ожидание ограничено `timeout-duration`, после чего вызов отклоняется с `RequestNotPermitted`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`RateLimiter` в начале каждого `limit-refresh-period` выдаёт фиксированные `limit-for-period` разрешений, а при нехватке ждёт таймаут и бросает `RequestNotPermitted`.",
               "correct": true,
               "sections": {
-                "explanation": "`RateLimiter` ограничивает число вызовов за период времени по алгоритму token bucket: в начале каждого `limit-refresh-period` выдаётся `limit-for-period` разрешений. Если разрешения кончились, вызов блокируется на `timeout-duration`, после чего бросается `RequestNotPermitted`.",
+                "explanation": "`RateLimiter` (реализация `AtomicRateLimiter`) ограничивает число вызовов за период: в начале каждого `limit-refresh-period` выдаётся фиксированное число разрешений `limit-for-period` (это не token bucket с накоплением токенов — разрешения сбрасываются каждый период). Если разрешения кончились, вызов ждёт `timeout-duration`, после чего бросается `RequestNotPermitted`.",
                 "example": "Защищает downstream от перегрузки и не даёт превысить лимиты внешнего API. При `limit-for-period: 10` и `limit-refresh-period: 1s` пропускается не более 10 вызовов в секунду; `timeout-duration: 0` означает мгновенную ошибку без ожидания.",
                 "when_to_apply": "Применяют перед сторонним API с жёстким rate limit (например 10 RPS), чтобы не получить бан, и для защиты собственных эндпоинтов.",
                 "edge_cases": "Пример: `@RateLimiter(name = \"externalApi\")` + `@ExceptionHandler(RequestNotPermitted.class)` с `HttpStatus.TOO_MANY_REQUESTS` (429) при превышении лимита.",
@@ -574,21 +586,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "При превышении лимита `RateLimiter` бесконечно ставит вызовы в очередь и выполняет их позже без ошибок.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Вызов ждёт не дольше `timeout-duration`; если за это время слот не освободился, бросается `RequestNotPermitted`, а не бесконечное ожидание.",
-                "source_of_confusion": "Token bucket ассоциируется с буферизацией, отсюда идея безграничной очереди.",
-                "if_it_were_true": "Если бы очередь была бесконечной, поток висел бы неограниченно и копился backlog, чего паттерн как раз избегает.",
-                "how_it_should_be": "Ожидание ограничено `timeout-duration`, после чего вызов отклоняется с `RequestNotPermitted`."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`limit-refresh-period` задаёт, на сколько блокируется вызов при отсутствии свободных разрешений.",
+              "text": "`RateLimiter` берёт `limit-refresh-period` как время блокировки вызова при нехватке разрешений, а не как период пополнения `limit-for-period` и `timeout-duration`.",
               "correct": false,
               "sections": {
                 "what_actually": "За блокировку вызова отвечает `timeout-duration`; `limit-refresh-period` — это период, в начале которого пополняется `limit-for-period` разрешений.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RateLimiter` нельзя настроить под `resilience4j.ratelimiter.instances.<name>` в `application.yml` — параметры вроде `limit-for-period` и `timeout-duration` задаются только программно через `RateLimiterConfig.custom()`.",
+              "text": "`RateLimiter` нельзя настроить в `application.yml`: число разрешений и таймаут ожидания задаются только программно через `RateLimiterConfig.custom()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`RateLimiter` полноценно настраивается декларативно в `application.yml` под `resilience4j.ratelimiter.instances`; программный билдер — лишь альтернатива.",
@@ -623,19 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`timeout-duration: 500ms` означает, что разрешения `limit-for-period` пополняются каждые 500ms — тот же смысл, что закладывают в `limit-refresh-period`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Пополнение разрешений задаёт `limit-refresh-period`; `timeout-duration` — максимальное время ожидания свободного слота перед `RequestNotPermitted`.",
-                "source_of_confusion": "Оба значения в единицах времени, отсюда смешение.",
-                "if_it_were_true": "Если бы `timeout-duration` управлял пополнением, нельзя было бы поставить `timeout-duration: 0` для мгновенной ошибки без изменения частоты.",
-                "how_it_should_be": "`timeout-duration` — время ожидания слота, а не период пополнения."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Конфигурацию задают под `resilience4j.ratelimiter.instances.<name>`: `limit-for-period`, `limit-refresh-period`, `timeout-duration`, `event-consumer-buffer-size`; альтернатива — программный билдер `RateLimiterConfig.custom()`.",
+              "text": "`RateLimiter` настраивают декларативно под `resilience4j.ratelimiter.instances`, задавая число разрешений, период их пополнения и таймаут ожидания, либо программно через `RateLimiterConfig.custom()`.",
               "correct": true,
               "sections": {
                 "explanation": "Конфигурацию задают под `resilience4j.ratelimiter.instances.<name>`: `limit-for-period` (число разрешений), `limit-refresh-period` (период пополнения), `timeout-duration` (сколько ждать слот), `event-consumer-buffer-size`. Альтернативно — программно через `RateLimiterConfig.custom()`.",
@@ -646,9 +634,21 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`RateLimiter` трактует `timeout-duration` как период пополнения разрешений, то есть в том же смысле, что и `limit-refresh-period` в конфигурации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пополнение разрешений задаёт `limit-refresh-period`; `timeout-duration` — максимальное время ожидания свободного слота перед `RequestNotPermitted`.",
+                "source_of_confusion": "Оба значения в единицах времени, отсюда смешение.",
+                "if_it_were_true": "Если бы `timeout-duration` управлял пополнением, нельзя было бы поставить `timeout-duration: 0` для мгновенной ошибки без изменения частоты.",
+                "how_it_should_be": "`timeout-duration` — время ожидания слота, а не период пополнения."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Программная конфигурация через `RateLimiterConfig.custom()` отменяет необходимость аннотации `@RateLimiter` на методе: собранный билдером `limit-for-period` применяется к вызову автоматически, без `Decorators`.",
+              "text": "`RateLimiter` через `RateLimiterConfig.custom()` применяет заданный лимит к методу автоматически, поэтому аннотация `@RateLimiter` или ручной декоратор уже не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Программный `RateLimiterConfig` лишь собирает параметры; чтобы декларативно защитить метод, аннотация `@RateLimiter` (или ручной декоратор) всё равно нужна.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Bulkhead` ограничивает частоту вызовов downstream-сервиса за единицу времени.",
+              "text": "`Bulkhead` ограничивает частоту вызовов `downstream` за единицу времени через `limit-refresh-period`, отсекая любые слишком частые повторные обращения к сервису.",
               "correct": false,
               "sections": {
                 "what_actually": "Ограничение частоты — это `RateLimiter`; `Bulkhead` ограничивает число ОДНОВРЕМЕННЫХ (конкурентных) вызовов, а не их частоту.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Bulkhead` нужен, чтобы повторять упавшие вызовы в изолированном пуле потоков.",
+              "text": "`Bulkhead` нужен, чтобы повторять упавшие вызовы `downstream` в изолированном пуле потоков, объединяя изоляцию ресурсов с логикой повторов.",
               "correct": false,
               "sections": {
                 "what_actually": "Повторами занимается `Retry`; `Bulkhead` лишь изолирует ресурсы, ограничивая число конкурентных вызовов, и не выполняет повторов.",
@@ -695,19 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Bulkhead` объединяет все downstream-вызовы в один общий пул для экономии потоков.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Смысл `Bulkhead` обратный — РАЗДЕЛИТЬ ресурсы: каждому downstream свой ограниченный пул/семафор, чтобы сбой одного не затронул другие.",
-                "source_of_confusion": "Экономия потоков звучит как разумная оптимизация, отсюда идея общего пула.",
-                "if_it_were_true": "Если бы пул был общим, зависание одного API исчерпало бы его для всех — ровно та проблема, которую `Bulkhead` решает.",
-                "how_it_should_be": "`Bulkhead` изолирует каждый downstream в собственном пуле, а не объединяет их."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Bulkhead` (переборка) — изоляция ресурсов: каждому downstream даётся ограниченный пул потоков или семафор, чтобы зависание одного вызова не исчерпало все потоки сервиса и не 'утопило' остальные.",
+              "text": "`Bulkhead` изолирует ресурсы: каждому `downstream` даётся ограниченный пул или семафор, чтобы зависание одного вызова не исчерпало потоки сервиса.",
               "correct": true,
               "sections": {
                 "explanation": "`Bulkhead` (переборка) — паттерн изоляции ресурсов: каждый downstream получает ограниченный пул потоков или семафоров, чтобы зависание одного вызова не исчерпало все потоки сервиса и не 'утопило' остальные здоровые вызовы.",
@@ -715,6 +703,18 @@
                 "when_to_apply": "Применяют, когда сервис вызывает несколько независимых downstream и нужно не дать одному медленному исчерпать общий пул потоков.",
                 "edge_cases": "Пример: `@Bulkhead(name = \"inventoryService\")` с `max-concurrent-calls: 20` ограничивает параллельные обращения к складскому API, сохраняя потоки для остальных.",
                 "related": "[[resilience4j-interview#Q13]] типы Bulkhead; [[resilience4j-interview#Q10]] RateLimiter; [[resilience4j-interview#Q14]] TimeLimiter."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Bulkhead` объединяет все вызовы `downstream` в один общий пул потоков ради экономии ресурсов и меньшего числа семафоров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл `Bulkhead` обратный — РАЗДЕЛИТЬ ресурсы: каждому downstream свой ограниченный пул/семафор, чтобы сбой одного не затронул другие.",
+                "source_of_confusion": "Экономия потоков звучит как разумная оптимизация, отсюда идея общего пула.",
+                "if_it_were_true": "Если бы пул был общим, зависание одного API исчерпало бы его для всех — ровно та проблема, которую `Bulkhead` решает.",
+                "how_it_should_be": "`Bulkhead` изолирует каждый downstream в собственном пуле, а не объединяет их."
               }
             }
           ]
@@ -731,20 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Два типа: `SEMAPHORE` (по умолчанию) на базе `Semaphore` — для синхронных вызовов; и `THREADPOOL` — выделенный `ExecutorService` для асинхронных операций с `CompletableFuture`; тип задаётся через `Bulkhead.Type`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Два типа: `SEMAPHORE` (по умолчанию) — на основе `java.util.concurrent.Semaphore`, для синхронных вызовов; и `THREADPOOL` — выделенный `ExecutorService`, для асинхронных операций с `CompletableFuture`. Тип задаётся через `Bulkhead.Type` в аннотации `@Bulkhead`.",
-                "example": "`SEMAPHORE` ограничивает `max-concurrent-calls` и ждёт слот до `max-wait-duration`, выполняясь в вызывающем потоке. `THREADPOOL` (`thread-pool-bulkhead`) задаёт `max-thread-pool-size`, `core-thread-pool-size` и `queue-capacity`, перенося выполнение в отдельный пул.",
-                "when_to_apply": "`SEMAPHORE` берут для обычных синхронных вызовов (минимум overhead), `THREADPOOL` — когда нужна изоляция по потокам и работа с `CompletableFuture`.",
-                "edge_cases": "Пример: `@Bulkhead(name = \"inventoryService\", type = Bulkhead.Type.SEMAPHORE)` для синхронного `checkInventory`; `@Bulkhead(name = \"asyncService\", type = Bulkhead.Type.THREADPOOL)` для метода, возвращающего `CompletableFuture`.",
-                "related": "[[resilience4j-interview#Q12]] что такое Bulkhead; [[resilience4j-interview#Q14]] TimeLimiter; [[resilience4j-interview#Q1]] что такое Resilience4j."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Resilience4j` поддерживает единственный тип `Bulkhead` — `THREADPOOL`, семафорной реализации нет.",
+              "text": "У `Bulkhead` есть единственный тип `THREADPOOL` на базе `ExecutorService`; семафорной реализации через `Semaphore` в библиотеке нет вообще.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию используется именно `SEMAPHORE` (легче по ресурсам); `THREADPOOL` — второй, опциональный тип для асинхронных вызовов.",
@@ -754,9 +741,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Тип `SEMAPHORE` предназначен для асинхронных вызовов с `CompletableFuture`, а `THREADPOOL` — для синхронных.",
+              "order": 1,
+              "label": "B",
+              "text": "У `Bulkhead` тип `SEMAPHORE` предназначен для асинхронных вызовов с `CompletableFuture`, а `THREADPOOL` на базе `ExecutorService` — для синхронных.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `SEMAPHORE` — для синхронных вызовов, `THREADPOOL` — для асинхронных (`CompletableFuture`), так как там нужен отдельный пул потоков.",
@@ -766,15 +753,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Параметр `max-concurrent-calls` относится к `THREADPOOL`-bulkhead и задаёт размер пула потоков.",
+              "order": 2,
+              "label": "C",
+              "text": "У `Bulkhead` параметр `max-concurrent-calls` относится к типу `THREADPOOL` и задаёт размер его пула потоков вместо `max-thread-pool-size`.",
               "correct": false,
               "sections": {
                 "what_actually": "`max-concurrent-calls` — параметр `SEMAPHORE`-bulkhead (число разрешений семафора); размер пула в `THREADPOOL` задают `max-thread-pool-size`/`core-thread-pool-size`.",
                 "source_of_confusion": "Оба типа ограничивают конкурентность, поэтому параметры путают между собой.",
                 "if_it_were_true": "Если бы `max-concurrent-calls` относился к `THREADPOOL`, он дублировал бы `max-thread-pool-size`, но это разные настройки разных типов.",
                 "how_it_should_be": "`max-concurrent-calls` — для `SEMAPHORE`; пул `THREADPOOL` настраивается своими параметрами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "У `Bulkhead` два типа: `SEMAPHORE` (по умолчанию) на базе `Semaphore` — для синхронных вызовов, и `THREADPOOL` — отдельный `ExecutorService` для асинхронных операций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Два типа: `SEMAPHORE` (по умолчанию) — на основе `java.util.concurrent.Semaphore`, для синхронных вызовов; и `THREADPOOL` — выделенный `ExecutorService`, для асинхронных операций с `CompletableFuture`. Тип задаётся через `Bulkhead.Type` в аннотации `@Bulkhead`.",
+                "example": "`SEMAPHORE` ограничивает `max-concurrent-calls` и ждёт слот до `max-wait-duration`, выполняясь в вызывающем потоке. `THREADPOOL` (`thread-pool-bulkhead`) задаёт `max-thread-pool-size`, `core-thread-pool-size` и `queue-capacity`, перенося выполнение в отдельный пул.",
+                "when_to_apply": "`SEMAPHORE` берут для обычных синхронных вызовов (минимум overhead), `THREADPOOL` — когда нужна изоляция по потокам и работа с `CompletableFuture`.",
+                "edge_cases": "Пример: `@Bulkhead(name = \"inventoryService\", type = Bulkhead.Type.SEMAPHORE)` для синхронного `checkInventory`; `@Bulkhead(name = \"asyncService\", type = Bulkhead.Type.THREADPOOL)` для метода, возвращающего `CompletableFuture`.",
+                "related": "[[resilience4j-interview#Q12]] что такое Bulkhead; [[resilience4j-interview#Q14]] TimeLimiter; [[resilience4j-interview#Q1]] что такое Resilience4j."
               }
             }
           ]
@@ -791,32 +791,32 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`TimeLimiter` ставит timeout на СИНХРОННЫЕ вызовы, прерывая обычный блокирующий метод по истечении времени.",
+              "text": "`TimeLimiter` ставит timeout на СИНХРОННЫЕ блокирующие вызовы вроде `RestTemplate`, прерывая метод по `timeout-duration` через `Thread.interrupt()` в его `Thread`.",
               "correct": false,
               "sections": {
-                "what_actually": "`TimeLimiter` работает с асинхронными типами (`CompletableFuture`/`Mono`/`Flux`); для синхронных вызовов потолок времени задаёт `CircuitBreaker.slowCallDurationThreshold`.",
+                "what_actually": "`TimeLimiter` работает только с асинхронными типами (`CompletableFuture`/`Mono`/`Flux`) и не прерывает синхронный блокирующий метод. Для синхронных вызовов встроенного жёсткого таймаута нет: `slow-call-duration-threshold` лишь помечает уже ЗАВЕРШЁННЫЙ вызов как медленный для статистики CB, но не обрывает его.",
                 "source_of_confusion": "Кажется, что таймаут одинаково применим к любому методу.",
                 "if_it_were_true": "Если бы `TimeLimiter` прерывал синхронный метод, ему пришлось бы убивать чужой поток, что в JVM небезопасно и не делается.",
-                "how_it_should_be": "Для синхронных вызовов используют `slow-call-duration-threshold`, а `TimeLimiter` — для асинхронных."
+                "how_it_should_be": "Синхронный блокирующий вызов Resilience4j не прерывает; `TimeLimiter` — для async, а `slow-call-duration-threshold` только классифицирует медленные завершённые вызовы."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`TimeLimiter` ставит timeout на АСИНХРОННЫЕ вызовы (`CompletableFuture`, `Mono`, `Flux`): при превышении `timeout-duration` бросается `TimeoutException`; для синхронных вызовов берут `CircuitBreaker.slowCallDurationThreshold`.",
+              "text": "`TimeLimiter` ставит timeout на АСИНХРОННЫЕ вызовы вроде `CompletableFuture` или `Mono`: если операция не уложилась в `timeout-duration`, он бросает `TimeoutException`.",
               "correct": true,
               "sections": {
-                "explanation": "`TimeLimiter` устанавливает timeout для АСИНХРОННЫХ вызовов (`CompletableFuture`, `Mono`, `Flux`): если операция не завершилась за `timeout-duration`, бросается `TimeoutException`. Для синхронных вызовов вместо него используют `CircuitBreaker.slowCallDurationThreshold`.",
+                "explanation": "`TimeLimiter` устанавливает timeout для АСИНХРОННЫХ вызовов (`CompletableFuture`, `Mono`, `Flux`): если операция не завершилась за `timeout-duration`, бросается `TimeoutException`. Для синхронных блокирующих вызовов встроенного таймаута нет — `slow-call-duration-threshold` только помечает завершённый вызов как медленный для статистики CircuitBreaker, но не прерывает его.",
                 "example": "Параметр `cancel-running-future: true` отменяет зависший `Future` при таймауте, освобождая ресурсы. `TimeLimiter` оборачивает асинхронный метод и не даёт вызову висеть дольше заданного времени.",
                 "when_to_apply": "Применяют к асинхронным обращениям к медленным сервисам, где нужен жёсткий потолок времени ответа, особенно в реактивном стеке.",
-                "edge_cases": "Пример: `@TimeLimiter(name = \"slowService\", fallbackMethod = \"timeoutFallback\")` над методом, возвращающим `CompletableFuture`; `@ExceptionHandler(TimeoutException.class)` возвращает `408 REQUEST_TIMEOUT`.",
+                "edge_cases": "Пример: `@TimeLimiter(name = \"slowService\", fallbackMethod = \"timeoutFallback\")` над методом, возвращающим `CompletableFuture`; при таймауте `@ExceptionHandler(TimeoutException.class)` отдаёт `408 REQUEST_TIMEOUT`.",
                 "related": "[[resilience4j-interview#Q13]] типы Bulkhead; [[resilience4j-interview#Q6]] slow-call-duration-threshold; [[resilience4j-interview#Q15]] комбинирование аннотаций."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`TimeLimiter` повторяет вызов, если он не уложился в `timeout-duration`.",
+              "text": "`TimeLimiter` при превышении `timeout-duration` не прерывает вызов, а сам повторяет его заново, дублируя поведение `Retry` с его `max-attempts`.",
               "correct": false,
               "sections": {
                 "what_actually": "`TimeLimiter` не повторяет — он лишь прерывает превысивший таймаут вызов с `TimeoutException`; повторы делает `Retry`.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Параметр `cancel-running-future: true` заставляет `TimeLimiter` дождаться завершения `Future` несмотря на таймаут.",
+              "text": "`TimeLimiter` с флагом `cancel-running-future: true` дожидается завершения зависшего `CompletableFuture` несмотря на истёкший `timeout-duration`, не отменяя его выполнения.",
               "correct": false,
               "sections": {
                 "what_actually": "`cancel-running-future: true` наоборот ОТМЕНЯЕТ зависший `Future` при таймауте, освобождая ресурсы, а не ждёт его завершения.",
@@ -851,19 +851,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Порядок применения аннотаций произвольный и зависит от того, как они написаны в коде сверху вниз.",
+              "text": "Порядок аннотаций `Resilience4j` произвольный и зависит от того, как `@Retry` и `@CircuitBreaker` написаны в исходнике сверху вниз.",
               "correct": false,
               "sections": {
-                "what_actually": "Порядок декораторов фиксирован библиотекой (`TimeLimiter → CircuitBreaker → RateLimiter → Bulkhead → Retry`) и не зависит от порядка строк в исходнике.",
+                "what_actually": "Порядок декораторов фиксирован библиотекой — `Retry( CircuitBreaker( RateLimiter( TimeLimiter( Bulkhead( метод )))))` — и не зависит от того, в каком порядке аннотации написаны в исходнике.",
                 "source_of_confusion": "В коде аннотации идут друг за другом, поэтому кажется, что верхняя оборачивает нижнюю.",
                 "if_it_were_true": "Если бы порядок зависел от написания, перестановка строк меняла бы поведение, но через аннотации его вообще нельзя переопределить.",
-                "how_it_should_be": "Порядок задан жёстко; явно изменить его можно только программным `Decorators`."
+                "how_it_should_be": "Порядок задан библиотекой; изменить его можно свойствами `*AspectOrder` (например `circuitBreakerAspectOrder`/`retryAspectOrder`) или программным `Decorators`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "На один метод можно повесить максимум одну аннотацию `Resilience4j`, иначе будет конфликт декораторов.",
+              "text": "На один метод можно повесить максимум одну аннотацию `Resilience4j`, иначе `@Retry` и `@CircuitBreaker` дадут конфликт декораторов.",
               "correct": false,
               "sections": {
                 "what_actually": "Несколько аннотаций штатно комбинируются на одном методе и оборачиваются в цепочку декораторов без конфликта.",
@@ -875,26 +875,26 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Несколько аннотаций оборачиваются в цепочку декораторов в фиксированном порядке (внешний → внутренний): `Retry → CircuitBreaker → RateLimiter → TimeLimiter → Bulkhead → Method`; явный порядок задаётся через `Decorators`. Раз `Retry` самый внешний, каждая retry-попытка заново проходит через `CircuitBreaker`.",
-              "correct": true,
+              "text": "Порядок декораторов `Resilience4j` независимый: `@Retry` и `@CircuitBreaker` применяются изолированно, поэтому повторные попытки никак не влияют на статистику circuit breaker'а.",
+              "correct": false,
               "sections": {
-                "explanation": "Несколько аннотаций можно повесить на один метод — они оборачиваются в цепочку декораторов в фиксированном порядке (внешний → внутренний): `Retry( CircuitBreaker( RateLimiter( TimeLimiter( Bulkhead( метод )))))`. Для явного контроля порядка используют программный API `Decorators`.",
-                "example": "Порядок важен: `Retry` находится СНАРУЖИ `CircuitBreaker`, поэтому каждая повторная попытка заново проходит через CB и засчитывается им как отдельный вызов. Известный подвох: агрессивные ретраи сами накручивают статистику отказов и могут разомкнуть цепь — тогда очередная попытка получит `CallNotPermittedException`.",
-                "when_to_apply": "Комбинируют, когда нужны несколько паттернов на одном вызове: ограничить частоту, защитить от каскада и повторять временные сбои.",
-                "edge_cases": "Пример: `@CircuitBreaker(name=\"paymentCB\") @RateLimiter(name=\"paymentRL\") @Retry(name=\"paymentRetry\")` над `processPayment`; программно — `Decorators.ofSupplier(...).withCircuitBreaker(cb).withRetry(retry).withRateLimiter(rl).decorate()`.",
-                "related": "[[resilience4j-interview#Q8]] Retry vs Spring Retry; [[resilience4j-interview#Q16]] fallback; [[resilience4j-interview#Q20]] ограничения аннотаций."
+                "what_actually": "Порядок фиксирован: `Retry` — самый внешний (`Retry( CircuitBreaker( … ( Bulkhead( метод )))`), поэтому каждая retry-попытка проходит через `CircuitBreaker` и учитывается им; ретраи напрямую влияют на статистику CB.",
+                "source_of_confusion": "Кажется, что независимые аннотации работают изолированно, но Resilience4j оборачивает их в строгую вложенную цепочку с заданным порядком.",
+                "if_it_were_true": "Если бы порядок не имел значения, нельзя было бы объяснить, почему агрессивные ретраи сами размыкают цепь и получают `CallNotPermittedException`.",
+                "how_it_should_be": "Порядок по умолчанию — `Retry( CircuitBreaker( RateLimiter( TimeLimiter( Bulkhead( метод )))))`; меняется свойствами `*AspectOrder` или программным `Decorators`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Порядок декораторов произвольный: `Retry`, `CircuitBreaker` и остальные аннотации применяются независимо друг от друга, поэтому повторные попытки никак не влияют на статистику circuit breaker'а.",
-              "correct": false,
+              "text": "Аннотации оборачиваются в фиксированную цепочку `Retry( CircuitBreaker( RateLimiter( TimeLimiter( Bulkhead ))))`, а изменить её порядок позволяют свойства `*AspectOrder` вроде `circuitBreakerAspectOrder`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Порядок фиксирован библиотекой: `Retry` — самый внешний (`Retry( CircuitBreaker( … ( Bulkhead( метод )))`), поэтому каждая retry-попытка проходит через `CircuitBreaker` и учитывается им; ретраи напрямую влияют на статистику CB.",
-                "source_of_confusion": "Кажется, что независимые аннотации работают изолированно, но Resilience4j оборачивает их в строгую вложенную цепочку с заданным порядком.",
-                "if_it_were_true": "Если бы порядок не имел значения, нельзя было бы объяснить, почему агрессивные ретраи сами размыкают цепь и получают `CallNotPermittedException`.",
-                "how_it_should_be": "Порядок по умолчанию: `Retry( CircuitBreaker( RateLimiter( TimeLimiter( Bulkhead( метод )))))`; переопределяется только программным API `Decorators`."
+                "explanation": "Несколько аннотаций на одном методе оборачиваются в фиксированную цепочку декораторов (внешний → внутренний): `Retry( CircuitBreaker( RateLimiter( TimeLimiter( Bulkhead( метод )))))`. `Retry` — самый внешний, поэтому каждая повторная попытка заново проходит через `CircuitBreaker` и засчитывается им как отдельный вызов. Порядок меняют свойствами `*AspectOrder` (`circuitBreakerAspectOrder`, `retryAspectOrder`) или программным API `Decorators`.",
+                "example": "Порядок важен: `Retry` находится СНАРУЖИ `CircuitBreaker`, поэтому каждая повторная попытка заново проходит через CB и засчитывается им как отдельный вызов. Известный подвох: агрессивные ретраи сами накручивают статистику отказов и могут разомкнуть цепь — тогда очередная попытка получит `CallNotPermittedException`.",
+                "when_to_apply": "Комбинируют, когда нужны несколько паттернов на одном вызове: ограничить частоту, защитить от каскада и повторять временные сбои.",
+                "edge_cases": "Подвох: агрессивные ретраи сами накручивают статистику отказов CB и могут разомкнуть цепь — тогда очередная попытка получит `CallNotPermittedException`. В `Spring Boot 3` дефолтный порядок может ставить `Retry` внутрь CB, поэтому `circuitBreakerAspectOrder` явно делают ниже (приоритетнее) `retryAspectOrder`.",
+                "related": "[[resilience4j-interview#Q8]] Retry vs Spring Retry; [[resilience4j-interview#Q16]] fallback; [[resilience4j-interview#Q20]] ограничения аннотаций."
               }
             }
           ]
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`fallbackMethod` вызывается только при срабатывании `CircuitBreaker` и не реагирует на исключения других паттернов.",
+              "text": "Метод `fallbackMethod` вызывается только при срабатывании `@CircuitBreaker` и не реагирует на `BulkheadFullException` или ошибки других паттернов.",
               "correct": false,
               "sections": {
                 "what_actually": "Fallback срабатывает на ЛЮБОЕ исключение защищённого метода, включая `BulkheadFullException`, `RequestNotPermitted` и обычные ошибки бизнес-логики, а не только на CB.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Сигнатура `fallbackMethod` должна точно совпадать с исходным методом без дополнительного параметра исключения.",
+              "text": "Сигнатура `fallbackMethod` должна точно совпадать с сигнатурой метода под `@CircuitBreaker`, без дополнительного параметра `Exception` или `Throwable`.",
               "correct": false,
               "sections": {
                 "what_actually": "Fallback должен принимать те же аргументы ПЛЮС параметр `Exception` (или подтип) — именно по нему и резолвится нужная перегрузка.",
@@ -935,19 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`fallbackMethod` может располагаться в любом сервисе и вызываться кросс-бин по полному имени класса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Из-за AOP-ограничения fallback обязан быть в том же классе/бине, что и защищённый метод; ссылок на внешние бины нет.",
-                "source_of_confusion": "Хочется вынести общий fallback в отдельный утилитный сервис.",
-                "if_it_were_true": "Если бы fallback жил в другом бине, proxy должен был бы знать о внешних классах, но он работает в границах одного бина.",
-                "how_it_should_be": "Fallback размещают в том же классе, что и защищённый метод."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`fallbackMethod` — метод того же класса, вызываемый при любом исключении (включая `CallNotPermittedException`, `BulkheadFullException`); сигнатура — те же аргументы плюс параметр-`Exception`; можно объявить несколько перегрузок под разные типы.",
+              "text": "Метод `fallbackMethod` того же класса вызывается на любое исключение (`CallNotPermittedException`, `BulkheadFullException`); сигнатура — те же аргументы плюс `Exception`.",
               "correct": true,
               "sections": {
                 "explanation": "`fallbackMethod` — метод того же класса, который вызывается при любом исключении (включая `CallNotPermittedException`, `BulkheadFullException`, `RequestNotPermitted`). Он должен иметь ту же сигнатуру аргументов плюс один параметр-`Exception` (или его подтип). Можно объявить несколько перегрузок под разные типы исключений.",
@@ -955,6 +943,18 @@
                 "when_to_apply": "Применяют, чтобы при сбое вернуть деградированный, но валидный ответ — кэш, дефолт, `anonymous`-объект — вместо проброса ошибки наружу.",
                 "edge_cases": "Пример: `@CircuitBreaker(name=\"userService\", fallbackMethod=\"userFallback\")` над `getUser`; общий fallback возвращает `User.anonymous()`, а специфичный под `CallNotPermittedException` — `User.cached(id)`.",
                 "related": "[[resilience4j-interview#Q7]] настройка CircuitBreaker; [[resilience4j-interview#Q15]] комбинирование аннотаций; [[resilience4j-interview#Q20]] ограничения аннотаций."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Метод `fallbackMethod` для `@CircuitBreaker` может лежать в любом сервисе и вызываться кросс-бин по имени класса через `ApplicationContext`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из-за AOP-ограничения fallback обязан быть в том же классе/бине, что и защищённый метод; ссылок на внешние бины нет.",
+                "source_of_confusion": "Хочется вынести общий fallback в отдельный утилитный сервис.",
+                "if_it_were_true": "Если бы fallback жил в другом бине, proxy должен был бы знать о внешних классах, но он работает в границах одного бина.",
+                "how_it_should_be": "Fallback размещают в том же классе, что и защищённый метод."
               }
             }
           ]
@@ -971,20 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Подключают `spring-boot-starter-actuator`, открывают эндпоинты `circuitbreakers`/`retries` в `exposure.include` и включают health через `management.health.circuitbreakers.enabled: true`; метрики идут через `Micrometer`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Нужно подключить `spring-boot-starter-actuator`, открыть эндпоинты (`circuitbreakers`, `retries`) в `management.endpoints.web.exposure.include` и включить health-индикаторы (`management.health.circuitbreakers.enabled: true`). Метрики публикуются через `Micrometer` модулем `resilience4j-micrometer`.",
-                "example": "Доступны эндпоинты `/actuator/circuitbreakers`, `/actuator/retries`, `/actuator/health` (со статусом CB) и метрики вроде `resilience4j.circuitbreaker.state`, `resilience4j.circuitbreaker.calls{kind=\"failed\"}`, `resilience4j.circuitbreaker.failure.rate`.",
-                "when_to_apply": "Включают всегда в продакшене, чтобы видеть состояние CB на дашбордах (`Grafana`) и настраивать алерты по `failure.rate`.",
-                "edge_cases": "Пример: метрика `resilience4j.circuitbreaker.state{name=\"svc\"}` отдаёт `CLOSED(0)`/`OPEN(1)`/`HALF_OPEN(2)`, и по ней строят алерт 'CB открыт дольше N минут'.",
-                "related": "[[resilience4j-interview#Q4]] состояния CircuitBreaker; [[resilience4j-interview#Q18]] события Events; [[resilience4j-interview#Q19]] зависимости для Spring Boot."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Метрики `Resilience4j` собираются автоматически и не требуют ни `actuator`, ни открытия эндпоинтов.",
+              "text": "Метрики `Resilience4j` собираются автоматически и не требуют ни `spring-boot-starter-actuator`, ни открытия эндпоинтов `circuitbreakers` в настройке `exposure.include`.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужны `spring-boot-starter-actuator` и явное включение эндпоинтов/health через `management.*`; по умолчанию `circuitbreakers` и `retries` закрыты.",
@@ -994,9 +981,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Метрики `Resilience4j` доступны только в формате `Prometheus` и несовместимы с `Micrometer`.",
+              "order": 1,
+              "label": "B",
+              "text": "Метрики `Resilience4j` доступны только в формате `Prometheus` и напрямую несовместимы с `Micrometer` и его экспортёрами вроде `Datadog`.",
               "correct": false,
               "sections": {
                 "what_actually": "Метрики публикуются именно через `Micrometer` (`resilience4j-micrometer`), а `Micrometer` уже умеет экспортировать их в `Prometheus`, `Datadog` и другие системы.",
@@ -1006,15 +993,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Эндпоинт `/actuator/health` не отражает состояние `CircuitBreaker` — для этого нет health-индикатора.",
+              "order": 2,
+              "label": "C",
+              "text": "Эндпоинт `/actuator/health` не отражает текущее состояние `CircuitBreaker`, поскольку отдельного health-индикатора `circuitbreakers` для этого в библиотеке нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть health-индикатор: при `management.health.circuitbreakers.enabled: true` состояние CB попадает в `/actuator/health`.",
                 "source_of_confusion": "Health обычно ассоциируют только с БД и дисковым местом, а не с CB.",
                 "if_it_were_true": "Если бы индикатора не было, нельзя было бы помечать сервис `DOWN` при разомкнутой цепи, но такая возможность есть.",
                 "how_it_should_be": "Состояние CB отражается в health при включённом индикаторе `circuitbreakers`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Метрики включают через стартер `spring-boot-starter-actuator`, открывая эндпоинты circuitbreakers и retries в настройке `exposure.include`; сами данные идут через `Micrometer`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Нужно подключить `spring-boot-starter-actuator`, открыть эндпоинты (`circuitbreakers`, `retries`) в `management.endpoints.web.exposure.include` и включить health-индикаторы (`management.health.circuitbreakers.enabled: true`). Метрики публикуются через `Micrometer` модулем `resilience4j-micrometer`.",
+                "example": "Доступны эндпоинты `/actuator/circuitbreakers`, `/actuator/retries`, `/actuator/health` (со статусом CB) и метрики вроде `resilience4j.circuitbreaker.state`, `resilience4j.circuitbreaker.calls{kind=\"failed\"}`, `resilience4j.circuitbreaker.failure.rate`.",
+                "when_to_apply": "Включают всегда в продакшене, чтобы видеть состояние CB на дашбордах (`Grafana`) и настраивать алерты по `failure.rate`.",
+                "edge_cases": "Пример: метрика `resilience4j.circuitbreaker.state{name=\"svc\"}` отдаёт `CLOSED(0)`/`OPEN(1)`/`HALF_OPEN(2)`, и по ней строят алерт 'CB открыт дольше N минут'.",
+                "related": "[[resilience4j-interview#Q4]] состояния CircuitBreaker; [[resilience4j-interview#Q18]] события Events; [[resilience4j-interview#Q19]] зависимости для Spring Boot."
               }
             }
           ]
@@ -1031,32 +1031,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "События `Resilience4j` — это обычные Spring `ApplicationEvent`, публикуемые через `ApplicationEventPublisher`.",
+              "text": "События `Resilience4j` — это обычные Spring `ApplicationEvent`, собственного `EventPublisher` у модулей нет, подписка идёт через `@EventListener` в контексте.",
               "correct": false,
               "sections": {
-                "what_actually": "В core-модулях события идут через собственный `EventPublisher` (pull-model); это не Spring `ApplicationEvent`, хотя в `Spring Boot` доступны и обёртки вроде `CircuitBreakerOnStateTransitionEvent`.",
+                "what_actually": "В core-модулях события идут через собственный `EventPublisher` (push/observer-модель: регистрируешь consumer-ы `onEvent`/`onStateTransition`), это не Spring `ApplicationEvent`, хотя в `Spring Boot` есть и обёртки вроде `CircuitBreakerOnStateTransitionEvent`.",
                 "source_of_confusion": "В Spring-проектах все события привычно ассоциируют с `ApplicationEvent`.",
-                "if_it_were_true": "Если бы это были Spring-события, их можно было бы слушать вне инстанса без обращения к `getEventPublisher()`, но базовая модель — pull.",
-                "how_it_should_be": "Базовая модель — собственный `EventPublisher`, отдельный от механизма Spring-событий."
+                "if_it_were_true": "Если бы это были Spring-события, их слушал бы любой `@EventListener` без обращения к `getEventPublisher()`, но базовая модель — собственный publisher с регистрацией consumer-ов.",
+                "how_it_should_be": "Базовая модель — собственный `EventPublisher` (push/observer), отдельный от механизма Spring-событий."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Каждый модуль публикует события через `EventPublisher` (pull-model, это НЕ Spring `ApplicationEvent`); подписку оформляют на инстансе из реестра: `circuitBreaker(\"svc\").getEventPublisher().onStateTransition(...)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Каждый модуль публикует события через `EventPublisher` (pull-model, это НЕ Spring `ApplicationEvent`). Подписку оформляют на конкретном инстансе из реестра: `circuitBreakerRegistry.circuitBreaker(\"svc\").getEventPublisher().onStateTransition(...)`, `onFailureRateExceeded(...)`, `onCallNotPermitted(...)`.",
-                "example": "Через события логируют переходы состояний и аномалии: например логировать `CB state: CLOSED → OPEN` или превышение `failureRate`. В `Spring Boot` дополнительно можно слушать типизированные события вроде `CircuitBreakerOnStateTransitionEvent` через `@EventListener`.",
-                "when_to_apply": "Используют для аудита, алертинга и кастомной реакции на переходы CB, которых не покрывают стандартные метрики.",
-                "edge_cases": "Пример: `circuitBreaker.getEventPublisher().onStateTransition(e -> log.info(\"CB: {} -> {}\", e.getStateTransition().getFromState(), e.getStateTransition().getToState()))`.",
-                "related": "[[resilience4j-interview#Q17]] метрики Actuator; [[resilience4j-interview#Q4]] состояния CircuitBreaker; [[resilience4j-interview#Q3]] как работает CircuitBreaker."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Подписаться на события можно только глобально на весь реестр, а не на отдельный инстанс `CircuitBreaker`.",
+              "text": "Подписаться на события можно только глобально на весь `CircuitBreakerRegistry`, а не на отдельный инстанс `CircuitBreaker` через `getEventPublisher()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Подписка оформляется на конкретном инстансе через `circuitBreakerRegistry.circuitBreaker(\"svc\").getEventPublisher()`; есть и реестровый publisher, но per-instance — основной способ.",
@@ -1066,9 +1053,22 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Каждый модуль публикует события через `EventPublisher` (push-модель, не Spring `ApplicationEvent`); consumer вешают на инстансе: `getEventPublisher().onStateTransition(...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый модуль публикует события через `EventPublisher` — это push/observer-модель: ты регистрируешь consumer-ы (`onEvent`, `onSuccess`, `onError`, `onStateTransition`), которые вызываются при наступлении события; это НЕ Spring `ApplicationEvent`. Подписку оформляют на конкретном инстансе из реестра: `circuitBreakerRegistry.circuitBreaker(\"svc\").getEventPublisher().onStateTransition(...)`.",
+                "example": "Через события логируют переходы состояний и аномалии: например логировать `CB state: CLOSED → OPEN` или превышение `failureRate`. В `Spring Boot` дополнительно можно слушать типизированные события вроде `CircuitBreakerOnStateTransitionEvent` через `@EventListener`.",
+                "when_to_apply": "Используют для аудита, алертинга и кастомной реакции на переходы CB, которых не покрывают стандартные метрики.",
+                "edge_cases": "Пример: `circuitBreaker.getEventPublisher().onStateTransition(e -> log.info(\"CB: {} -> {}\", e.getStateTransition().getFromState(), e.getStateTransition().getToState()))`.",
+                "related": "[[resilience4j-interview#Q17]] метрики Actuator; [[resilience4j-interview#Q4]] состояния CircuitBreaker; [[resilience4j-interview#Q3]] как работает CircuitBreaker."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "События `Resilience4j` автоматически отправляются во внешний брокер сообщений вроде `Kafka`.",
+              "text": "События `Resilience4j` через встроенный `EventPublisher` автоматически отправляются во внешний брокер вроде `Kafka` без дополнительного кода в подписчике.",
               "correct": false,
               "sections": {
                 "what_actually": "События остаются внутри JVM и доставляются подписчикам через `EventPublisher`; никакой автоматической отправки в `Kafka` нет — это пишут вручную в обработчике.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно `resilience4j-spring-boot3` — `spring-boot-starter-aop` подключать не нужно, он не используется.",
+              "text": "Для аннотаций достаточно `resilience4j-spring-boot3`: `spring-boot-starter-aop` подключать не нужно, ведь proxy для `@CircuitBreaker` стартер не использует.",
               "correct": false,
               "sections": {
                 "what_actually": "AOP обязателен: без `spring-boot-starter-aop` proxy не создаётся и аннотации (`@CircuitBreaker`, `@Retry` и т.д.) молча не срабатывают.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для каждого паттерна нужно подключать отдельный модуль (`circuitbreaker`, `retry` и т.д.) вручную.",
+              "text": "Для каждого паттерна вручную подключают отдельный модуль (`resilience4j-circuitbreaker`, `resilience4j-retry`, `resilience4j-bulkhead`), так как стартер `resilience4j-spring-boot3` их транзитивно не тянет.",
               "correct": false,
               "sections": {
                 "what_actually": "Стартер `resilience4j-spring-boot3` уже включает все основные модули транзитивно — отдельно их подключать не требуется.",
@@ -1115,7 +1115,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для `Spring Boot 3`: `resilience4j-spring-boot3`, обязательный `spring-boot-starter-aop` (без него аннотации не работают) и `spring-boot-starter-actuator` для метрик; для `Spring Boot 2` — `resilience4j-spring-boot2`.",
+              "text": "Для `Spring Boot 3` берут стартер `resilience4j-spring-boot3`, обязательный `spring-boot-starter-aop` (иначе аннотации молчат) и `spring-boot-starter-actuator` для сбора метрик и health.",
               "correct": true,
               "sections": {
                 "explanation": "Для `Spring Boot 3` подключают `resilience4j-spring-boot3`, обязательно `spring-boot-starter-aop` (без него аннотации не работают) и `spring-boot-starter-actuator` для метрик и health. Для `Spring Boot 2` вместо первого берут `resilience4j-spring-boot2`.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для `Spring Boot 3` нужно использовать `resilience4j-spring-boot2`, так как версии полностью совместимы.",
+              "text": "Для `Spring Boot 3` подключают `resilience4j-spring-boot2` вместе с `spring-boot-starter-aop`, так как эти стартеры полностью взаимозаменяемы по неймспейсу `jakarta`.",
               "correct": false,
               "sections": {
                 "what_actually": "Для `Spring Boot 3` предназначен `resilience4j-spring-boot3`; `spring-boot2` рассчитан на `Spring Boot 2` и `javax`-неймспейс, а не `jakarta`.",
@@ -1151,19 +1151,32 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Аннотации `Resilience4j` работают через байткод-инструментирование, поэтому self-invocation перехватывается корректно.",
+              "text": "Аннотации работают через `proxy` Spring AOP, поэтому ограничения как у `@Transactional`: self-invocation мимо proxy, только `public`-методы, не `final`-классы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотации работают через Spring AOP proxy — отсюда те же ограничения, что у `@Transactional`: self-invocation не перехватывается (вызов другого метода того же бина через `this` идёт мимо proxy), перехватываются только `public`-методы (proxy-based), с `final`-классами/методами не работает CGLIB-proxy, и порядок декораторов через сами аннотации не задать — только через `*AspectOrder` или `Decorators`.",
+                "example": "Self-invocation решают self-injection (`@Autowired private OrderService self;`) и вызовом через `self.method(...)`, либо выносом метода в отдельный бин. Для fine-grained контроля и явного порядка используют программный API (`CircuitBreakerRegistry`, `RetryRegistry`, `Decorators`).",
+                "when_to_apply": "Помнить про ограничения нужно при отладке 'почему `@CircuitBreaker` не срабатывает' — почти всегда причина в self-invocation или non-public методе.",
+                "edge_cases": "Пример: `public void placeOrder(...)` вызывает `this.processWithCircuitBreaker(...)` — CB НЕ сработает; нужно вызвать `self.processWithCircuitBreaker(...)` через self-injection.",
+                "related": "[[resilience4j-interview#Q7]] настройка CircuitBreaker; [[resilience4j-interview#Q15]] комбинирование аннотаций; [[resilience4j-interview#Q16]] fallback."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Аннотации `Resilience4j` работают через байткод-инструментирование как у `AspectJ`, поэтому self-invocation через `this` перехватывается так же корректно, как внешний вызов.",
               "correct": false,
               "sections": {
-                "what_actually": "Механизм — Spring AOP proxy, а не байткод-инструментирование; именно поэтому self-invocation (вызов через `this`) проходит мимо защиты.",
+                "what_actually": "Механизм — proxy-based Spring AOP, а не байткод-инструментирование как у `AspectJ` с weaving; именно поэтому self-invocation (вызов через `this`) проходит мимо защиты.",
                 "source_of_confusion": "AspectJ с weaving действительно ловит self-invocation, и это переносят на `Resilience4j`.",
                 "if_it_were_true": "Если бы использовалось weaving, `this.method(...)` был бы защищён, но через proxy внутренний вызов не перехватывается.",
                 "how_it_should_be": "Используется proxy-based AOP, поэтому self-invocation не перехватывается без self-injection."
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Аннотации `Resilience4j` работают и на `private`-методах, поскольку proxy видит все методы класса.",
+              "order": 2,
+              "label": "C",
+              "text": "Аннотации `Resilience4j` работают и на `private`-методах, поскольку `proxy` видит и перехватывает все методы класса, а не только публичные.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring AOP proxy перехватывает только `public`-методы; `private`/`protected` остаются без защиты.",
@@ -1173,28 +1186,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Через аннотации можно явно задать порядок декораторов, указав атрибут `order` в каждой аннотации.",
+              "order": 3,
+              "label": "D",
+              "text": "Через аннотации можно явно задать порядок декораторов, указав атрибут `order` в каждой из `@Retry` и `@CircuitBreaker`, подобно `@Order`.",
               "correct": false,
               "sections": {
                 "what_actually": "Атрибута порядка у аннотаций нет — порядок декораторов фиксирован библиотекой; явно его задают только программным API `Decorators`.",
                 "source_of_confusion": "Опыт с `@Order` для Spring-бинов наводит на мысль о similar-атрибуте.",
                 "if_it_were_true": "Если бы порядок задавался аннотацией, не было бы рекомендации переходить на программный API ради контроля порядка.",
                 "how_it_should_be": "Порядок через аннотации не настраивается; для этого используют `Decorators`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Аннотации работают через Spring AOP proxy — ограничения как у `@Transactional`: self-invocation не перехватывается, только `public`-методы, не работает с `final`-классами, нельзя явно задать порядок декораторов.",
-              "correct": true,
-              "sections": {
-                "explanation": "Аннотации работают через Spring AOP proxy — отсюда те же ограничения, что у `@Transactional`: self-invocation не перехватывается (вызов другого метода того же бина идёт мимо proxy), работают только `public`-методы, не работает с `final`-классами под CGLIB, и нельзя явно задать порядок декораторов через аннотации.",
-                "example": "Self-invocation решают self-injection (`@Autowired private OrderService self;`) и вызовом через `self.method(...)`, либо выносом метода в отдельный бин. Для fine-grained контроля и явного порядка используют программный API (`CircuitBreakerRegistry`, `RetryRegistry`, `Decorators`).",
-                "when_to_apply": "Помнить про ограничения нужно при отладке 'почему `@CircuitBreaker` не срабатывает' — почти всегда причина в self-invocation или non-public методе.",
-                "edge_cases": "Пример: `public void placeOrder(...)` вызывает `this.processWithCircuitBreaker(...)` — CB НЕ сработает; нужно вызвать `self.processWithCircuitBreaker(...)` через self-injection.",
-                "related": "[[resilience4j-interview#Q7]] настройка CircuitBreaker; [[resilience4j-interview#Q15]] комбинирование аннотаций; [[resilience4j-interview#Q16]] fallback."
               }
             }
           ]
