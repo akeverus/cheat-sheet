@@ -7,16 +7,17 @@
     "Q1-Q10",
     "Q11-Q20",
     "Q21-Q30",
-    "Q31-Q40"
+    "Q31-Q40",
+    "Q41-Q47"
   ],
   "gate_summary": {
     "verify_mcq_json": "OK",
-    "note": "Q1-Q40 audited. Baseline файла: CORRECT_LONGEST 0.642, STYLE 0.66, CORRECT_WRONG_AVG 1.444, POSITION_SEQUENCE=53 (строгий A→B→C→D), CV 0.218, freshness отсутствовал. После chunk4: CORRECT_LONGEST 0.226, STYLE 0.363 (length 0.23), CORRECT_WRONG_AVG 0.906 (⚠ у нижней границы 0.9 — чанкам 5-6 не перекачивать дистракторы), CV 0.151, DUPLICATE 0 — все смысловые гейты зелёные. ВНИМАНИЕ для чанков 4-6: CV 0.151 близок к порогу 0.14 — не выравнивать длины механически, сохранять естественную вариативность. Осталось: Q41-Q53 (чанки 5-6) + POS de-cycle → FINAL.",
+    "note": "Q1-Q47 audited. Baseline файла: CORRECT_LONGEST 0.642, STYLE 0.66, CORRECT_WRONG_AVG 1.444, POSITION_SEQUENCE=53 (строгий A→B→C→D), CV 0.218, freshness отсутствовал. После chunk5 (+trim-pass 15 wrong-текстов): CORRECT_LONGEST 0.189, STYLE 0.363 (length 0.23), CORRECT_WRONG_AVG 0.912, CV 0.143, DUPLICATE 0 — все смысловые гейты зелёные. ВНИМАНИЕ для chunk6: CV 0.143 впритык к порогу 0.14 — не выравнивать длины механически, сохранять естественную вариативность. Осталось: Q48-Q53 (chunk6) + POS de-cycle → FINAL.",
     "option_length_ratio": "ACCEPTED EXCEPTION (как в java-concurrency/design-patterns): гейт ≤1.35 конфликтует со STAMP-guard (CV≥0.14) и запретом на stamped-clone; гоним смысловые метрики."
   },
   "blocks_total": 53,
-  "blocks_reviewed": 40,
-  "notes": "ROUND-8 chunk1 Q1-Q10 (файл sql, строка 4 плана §1). Доминантный дефект — Golden anti-pattern #1 (correct = развёрнутый конспект 150-260ch, дистракторы = заглушки 57-115ch; худший CV-блок Q1 0.567). Правка: подняты 30 дистракторов до правдоподобных параллельно-ложных моделей с псевдо-обоснованием (то же заблуждение → sections сохранены), correct-longest в чанке 10/10 → 3/10 (Q1 каталог DDL/DML/DCL/TCL — подлинный enumeration-экстремум; Q5/Q10 — малый зазор). Blind-reviewer (все 10 VERDICT совпали, BSM нет, MULTI нет): (1) Q7 — все 3 дистрактора один приём «определение соседней НФ сдвинуто» → Q7-A заменён на wrong-trade-off «выше НФ = быстрее чтение, цель 5NF» (text+sections); (2) Q8-A карикатура (абсолютные кванторы «на любом профиле») → смягчён до «проигрывает даже в аналитике, от JOIN избавляют индексы»; (3) Q1-C/D зеркальный дубль DCL↔TCL → Q1-D заменён на классику «TRUNCATE — это DML» (text+sections). Пограничные DUP-пары Q2/Q4/Q6/Q9 (одно заблуждение, разные атрибуты) — приняты как различимые по вердикту ревьюера. Факты verified по теории: DDL/DML/DCL/TCL каталог; UNIQUE допускает NULL (PG — несколько); FK может быть NULL без NOT NULL; = NULL даёт UNKNOWN, 5+NULL=NULL, COUNT(*) считает все строки; MySQL DATETIME как есть/TIMESTAMP UTC до 2038, TIMESTAMPTZ 8 байт; 3NF = нет транзитивных зависимостей; денормализация для OLAP/DWH; View не хранит данные, MatView требует REFRESH; Function в SELECT, Procedure через CALL с COMMIT (PG 11+). Chunk2 Q11-Q20: length-tell мягче (Q13/Q17 уже в паритете — не тронуты). Подняты 21 дистрактор + 2 dict-spec. НАХОДКА (существующий BSM в сидере): Q16-B «MERGE за один проход выполняет и INSERT, и UPDATE, обновляя совпавшие и вставляя новые» — текст был защитимо-ИСТИННЫМ (это определение MERGE) при sections, описывающих заблуждение «обе операции к одной строке»; текст переписан под заявленное заблуждение. CORRECT-precision (whitelist) Q14-B: «в GROUP BY нельзя алиасы» верно лишь для стандарта — PostgreSQL/MySQL резолвят выходные имена как расширение; text+sections хеджированы. Blind-reviewer chunk2 (8 блоков, все VERDICT совпали, MULTI нет): Q16-C карикатура (буквальное чтение DO NOTHING опровергает «затирание NULL-ами») → заменён на миф «DO NOTHING откатывает sequence, дырок нет» (text+sections); Q20-C пересекался с Q20-A («отдельный SELECT») → уведён в миф «RETURNING нельзя в CTE» (text+sections, data-modifying CTE); Q19-A pre-PG12 ловушка — sections уже оговаривают PG12/MATERIALIZED. Факты verified: INSTEAD OF только на view; BEFORE имеет OLD/NEW; PG требует trigger-функцию; # локальная/## глобальная в SQL Server; temp-таблицы поддерживают индексы; MERGE с PG15, ON CONFLICT с 9.5; RETURNING нет в MySQL 8; recursive CTE поддерживает UNION ALL; CTE можно в UPDATE/DELETE. Chunk3 Q21-Q30: подняты 22 дистрактора + 2 dict-spec; Q24/Q28 уже в паритете — не тронуты. Blind-reviewer chunk3 (8 блоков, 8/8 VERDICT, MULTI нет): Q21-B/C дубль «outer = только пересечение» → Q21-C заменён на миф «FULL OUTER = CROSS, все комбинации» (text+sections); Q22-A/D взаимоисключающая пара (ON раньше/WHERE раньше = мета-подсказка) → Q22-D уведён в миф «различие — диалектная особенность MySQL» (text+sections); Q27-B ужесточён кванторами («без ограничений в любой СУБД») против защитимости через functional dependency PG16/ONLY_FULL_GROUP_BY. Пост-гейт фикс: Q30-C перефразирован (10-грамм дубль с Q33-B, DUPLICATE 3→0). Факты verified: outer-JOIN сохраняют строки без пары; RIGHT=LEFT со сменой таблиц; коррелированный подзапрос per-row; UNION dedup дороже UNION ALL; CROSS = |A|×|B| (×|C|); SELF JOIN = алиасы; NULL образует свою группу в GROUP BY; COUNT(1)≡COUNT(*); окна не схлопывают строки, OVER() = одно окно на всё. Chunk4 Q31-Q40: точечные raises (13 текстов + 2 dict-spec), CV-осторожно; Q31/Q38/Q40 в паритете — не тронуты. Blind-reviewer chunk4 (7 блоков, 7/7 VERDICT) поймал 3 СУЩЕСТВУЮЩИХ дефекта сидера: Q32-A двусмыслен («строка минус два» читалась как offset = второй защитимый) → уточнён до арифметической поправки; Q37-D BSM — защитимо-истинное «индекс ускоряет через дерево» → абсолютизирован («всегда, даже на 50 строках»); Q39-A карикатурная инверсия (RU предотвращает всё) → заменён на PG-миф «RU реально читает грязные данные» (text+sections, MVCC/синоним RC); + Q34-C внутренне противоречивая GIN-карикатура → миф «индекс ускоряет и запись» (text+sections); Q39-D де-карикатура («вовсе» → SSI-обоснование при том же заблуждении из sections). Факты verified: левый префикс; InnoDB PK=кластерный, в PG кластерных нет (CLUSTER — разовая перегруппировка); Index Only Scan; INCLUDE = non-key; LIKE %suffix и функция на столбце ломают B-tree; RR по стандарту допускает Phantom Read; SERIALIZABLE наименее производительный (SSI/aborts); deadlock = цикл, СУБД обнаруживает сама.",
+  "blocks_reviewed": 47,
+  "notes": "ROUND-8 chunk1 Q1-Q10 (файл sql, строка 4 плана §1). Доминантный дефект — Golden anti-pattern #1 (correct = развёрнутый конспект 150-260ch, дистракторы = заглушки 57-115ch; худший CV-блок Q1 0.567). Правка: подняты 30 дистракторов до правдоподобных параллельно-ложных моделей с псевдо-обоснованием (то же заблуждение → sections сохранены), correct-longest в чанке 10/10 → 3/10 (Q1 каталог DDL/DML/DCL/TCL — подлинный enumeration-экстремум; Q5/Q10 — малый зазор). Blind-reviewer (все 10 VERDICT совпали, BSM нет, MULTI нет): (1) Q7 — все 3 дистрактора один приём «определение соседней НФ сдвинуто» → Q7-A заменён на wrong-trade-off «выше НФ = быстрее чтение, цель 5NF» (text+sections); (2) Q8-A карикатура (абсолютные кванторы «на любом профиле») → смягчён до «проигрывает даже в аналитике, от JOIN избавляют индексы»; (3) Q1-C/D зеркальный дубль DCL↔TCL → Q1-D заменён на классику «TRUNCATE — это DML» (text+sections). Пограничные DUP-пары Q2/Q4/Q6/Q9 (одно заблуждение, разные атрибуты) — приняты как различимые по вердикту ревьюера. Факты verified по теории: DDL/DML/DCL/TCL каталог; UNIQUE допускает NULL (PG — несколько); FK может быть NULL без NOT NULL; = NULL даёт UNKNOWN, 5+NULL=NULL, COUNT(*) считает все строки; MySQL DATETIME как есть/TIMESTAMP UTC до 2038, TIMESTAMPTZ 8 байт; 3NF = нет транзитивных зависимостей; денормализация для OLAP/DWH; View не хранит данные, MatView требует REFRESH; Function в SELECT, Procedure через CALL с COMMIT (PG 11+). Chunk2 Q11-Q20: length-tell мягче (Q13/Q17 уже в паритете — не тронуты). Подняты 21 дистрактор + 2 dict-spec. НАХОДКА (существующий BSM в сидере): Q16-B «MERGE за один проход выполняет и INSERT, и UPDATE, обновляя совпавшие и вставляя новые» — текст был защитимо-ИСТИННЫМ (это определение MERGE) при sections, описывающих заблуждение «обе операции к одной строке»; текст переписан под заявленное заблуждение. CORRECT-precision (whitelist) Q14-B: «в GROUP BY нельзя алиасы» верно лишь для стандарта — PostgreSQL/MySQL резолвят выходные имена как расширение; text+sections хеджированы. Blind-reviewer chunk2 (8 блоков, все VERDICT совпали, MULTI нет): Q16-C карикатура (буквальное чтение DO NOTHING опровергает «затирание NULL-ами») → заменён на миф «DO NOTHING откатывает sequence, дырок нет» (text+sections); Q20-C пересекался с Q20-A («отдельный SELECT») → уведён в миф «RETURNING нельзя в CTE» (text+sections, data-modifying CTE); Q19-A pre-PG12 ловушка — sections уже оговаривают PG12/MATERIALIZED. Факты verified: INSTEAD OF только на view; BEFORE имеет OLD/NEW; PG требует trigger-функцию; # локальная/## глобальная в SQL Server; temp-таблицы поддерживают индексы; MERGE с PG15, ON CONFLICT с 9.5; RETURNING нет в MySQL 8; recursive CTE поддерживает UNION ALL; CTE можно в UPDATE/DELETE. Chunk3 Q21-Q30: подняты 22 дистрактора + 2 dict-spec; Q24/Q28 уже в паритете — не тронуты. Blind-reviewer chunk3 (8 блоков, 8/8 VERDICT, MULTI нет): Q21-B/C дубль «outer = только пересечение» → Q21-C заменён на миф «FULL OUTER = CROSS, все комбинации» (text+sections); Q22-A/D взаимоисключающая пара (ON раньше/WHERE раньше = мета-подсказка) → Q22-D уведён в миф «различие — диалектная особенность MySQL» (text+sections); Q27-B ужесточён кванторами («без ограничений в любой СУБД») против защитимости через functional dependency PG16/ONLY_FULL_GROUP_BY. Пост-гейт фикс: Q30-C перефразирован (10-грамм дубль с Q33-B, DUPLICATE 3→0). Факты verified: outer-JOIN сохраняют строки без пары; RIGHT=LEFT со сменой таблиц; коррелированный подзапрос per-row; UNION dedup дороже UNION ALL; CROSS = |A|×|B| (×|C|); SELF JOIN = алиасы; NULL образует свою группу в GROUP BY; COUNT(1)≡COUNT(*); окна не схлопывают строки, OVER() = одно окно на всё. Chunk4 Q31-Q40: точечные raises (13 текстов + 2 dict-spec), CV-осторожно; Q31/Q38/Q40 в паритете — не тронуты. Blind-reviewer chunk4 (7 блоков, 7/7 VERDICT) поймал 3 СУЩЕСТВУЮЩИХ дефекта сидера: Q32-A двусмыслен («строка минус два» читалась как offset = второй защитимый) → уточнён до арифметической поправки; Q37-D BSM — защитимо-истинное «индекс ускоряет через дерево» → абсолютизирован («всегда, даже на 50 строках»); Q39-A карикатурная инверсия (RU предотвращает всё) → заменён на PG-миф «RU реально читает грязные данные» (text+sections, MVCC/синоним RC); + Q34-C внутренне противоречивая GIN-карикатура → миф «индекс ускоряет и запись» (text+sections); Q39-D де-карикатура («вовсе» → SSI-обоснование при том же заблуждении из sections). Факты verified: левый префикс; InnoDB PK=кластерный, в PG кластерных нет (CLUSTER — разовая перегруппировка); Index Only Scan; INCLUDE = non-key; LIKE %suffix и функция на столбце ломают B-tree; RR по стандарту допускает Phantom Read; SERIALIZABLE наименее производительный (SSI/aborts); deadlock = цикл, СУБД обнаруживает сама. Chunk5 Q41-Q47 (JPA/Spring-хвост): умеренные raises 15 текстов + 1 dict-spec + 1 CORRECT-precision. Blind-reviewer chunk5 (7 блоков, 7/7 VERDICT) поймал БЛОКЕР Q47-D: «readOnly=true запрещает запись на уровне БД» защитимо-ИСТИНЕН в заявленном стеке (PG16+Hibernate6: setReadOnly(true) → транзакция READ ONLY → cannot execute INSERT) → переформулирован в явно ложный абсолют («в любой СУБД…, транслируется в права доступа»); Q46-C слабый CHECK-дистрактор → миф «unique=true живёт только в Hibernate-валидации» (text+sections); CORRECT-precision Q44-D: формула N+1 сходится буквально (1 запрос за родителями + N за связями). Пост-гейт trim-pass: chunk5-raises увели CORRECT_WRONG_AVG в 0.872 (<0.9) и CV в 0.14 → подрезаны псевдо-обоснования 15 самых многословных wrong-текстов (~100 слов, text-only, заблуждения сохранены) → AVG 0.912, CV 0.143. Факты verified: оптимистичная @Version/OptimisticLockException; EXPLAIN не выполняет запрос (ANALYZE выполняет); keyset > OFFSET; N+1 из LAZY-циклов, @BatchSize чанкует; JDBC vs JPA trade-off; индексы в проде через миграции CONCURRENTLY; self-invocation мимо proxy.",
   "records": [
     {
       "q_number": 1,
@@ -2240,6 +2241,398 @@
           "sections_consistent": true
         },
         "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 41,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 42,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 43,
+      "block_idx": 0,
+      "correct_label": "C",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 44,
+      "block_idx": 0,
+      "correct_label": "D",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 45,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 46,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 47,
+      "block_idx": 0,
+      "correct_label": "C",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
