@@ -293,7 +293,7 @@ Priority =
 | # | Сидер | Кат. | Blk | OldTell | State | SCH | TH | QS | STEM | C-FCT | C-CMP | C-SCP | C-UNI | C-FRM | C-SEC | C-RU | W-PLS | W-1ER | W-API | W-FLS | W-DIV | W-CAR | W-FRM | W-SEC | W-RU | PAR | BST | BSM | STAMP | FR | LINK | POS | VAL | FINAL | Notes |
 |--:|---|---|--:|--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
 | 1 | `java-concurrency` | java | 56 | 52 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅* | ✅ | ✅ DONE (R8): 56/56 audited + POS de-cycle (seq 56→2). 5 dup-misconception (Q21,Q22,Q42,Q50,Q54), 2 BSM (Q27-A,Q52-A), 2 caricature (Q47-B,Q49-D), contra-pair Q33, факт-фикс correct Q42-B; correct-longest+position tells сняты; CV 0.186; BSM чист ×56. VAL✅*: OPTION_LENGTH_RATIO=3.0 accepted-exception (конфликт с anti-stamp CV≥0.14; смысловые guessability-гейты все PASS) |
-| 2 | `design-patterns` | design-patterns | 48 | 48 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
+| 2 | `design-patterns` | design-patterns | 48 | 48 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ Q1-Q8/48 (R8 chunk1): Golden AP#1 (correct-конспект+дистр-заглушки) — подняты дистракторы, correct-longest 8/8→2/8 (Q1/Q4 конспект оставлены), de-caricature Q4-B, reviewer поймал BSM Q6-C (поднятый стал истинным → переписан на drop-inner-check). Факты GoF verified. STYLE 0.84→0.74, CORRECT_LONGEST 0.83→0.73 (файловые, падают по чанкам). Дальше Q9-Q48+POS |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 4 | `sql` | databases | 53 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 5 | `project-reactor` | reactive | 48 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -733,6 +733,17 @@ Priority =
 - Validators: verify-mcq-json OK; stamp CV=0.186 (не изменился — контент тот же); answer-parity смысловые guessability-гейты все PASS (CORRECT_LONGEST_RATE 0.161, STYLE_GUESSABILITY 0.214, POSITION_SEQUENCE 2, DUPLICATE_NGRAMS 0)
 - **VAL✅* (accepted-exception):** единственный красный OPTION_LENGTH_RATIO=3.0 (порог ≤1.35). Гейт требует почти одинаковой длины всех 4 опций — прямой конфликт с обязательным STAMP-guard (CV≥0.14, у нас 0.186) и явным запретом пользователя на «stamped-clone over-correction». Ответ НЕ угадывается ни по длине (CORRECT_LONGEST_RATE ok), ни по позиции (POSITION_SEQUENCE ok), ни по стилю (STYLE_GUESSABILITY ok) — значит смысл гейта (неугадываемость) достигнут; гонка OPTION_LENGTH_RATIO в 1.35 нарушила бы anti-stamp. Задокументировано в review-sidecar gate_summary
 - **ФАЙЛ FINAL=✅** (1-й полностью завершённый файл ROUND-8). Следующий тик — новый файл worst-first по §7-матрице (design-patterns / postgresql / sql …)
+
+### ROUND-8 · design-patterns · chunk1 Q1-Q8 (2026-07-12)
+- Файл: `design-patterns-interview.json` (48 блоков, 1/Q). Новый файл, worst-first после java-concurrency
+- Baseline: correct-longest 40/48 (83%), STYLE_GUESSABILITY 0.84, CORRECT_WRONG_AVG 1.455, POSITION_SEQUENCE=48 (строгий A→B→C→D), CV 0.251, SOURCE_COVERAGE missing. Доминант — Golden anti-pattern #1 (correct = развёрнутый конспект + backticks, дистракторы = заглушки)
+- Правка Q1-Q8: подняты дистракторы до правдоподобных параллельно-ложных моделей с той же плотностью `backtick` (то же заблуждение → sections сохранены) КРОМЕ Q4-B — был caricature «паттерны ⇒ авто-соответствие OWASP/ISO» → правдоподобное «паттерны ⇒ готовый оттестированный код, тесты не нужны» (sections переписаны)
+- correct-longest в чанке **8/8 → 2/8**: Q1 (258ch, def+GoF-история) и Q4 (225ch, риск+преимущества) оставлены длиннейшими по директиве «поднимать дистракторы, НЕ сокращать correct» (length-tell вторичен); Q2/Q3/Q5/Q6/Q7/Q8 флипнуты
+- **Blind-reviewer (2 прогона) поймал BSM-дефект Q6-C**: поднятый дистрактор «одной проверки внутри `synchronized` достаточно, внешняя на корректность не влияет» стал ЗАЩИТИМО-ИСТИННЫМ (внешняя проверка DCL — perf-оптимизация, не корректность). Переписан на «опустить ВНУТРЕННЮЮ проверку под локом» = однозначная гонка; distinct от A/D; sections уже подходили. Re-verify PASS
+- Факты GoF verified: Creational 5 / Structural 7 / Behavioral 11 = 23; DCL volatile (JSR-133); enum reflection-safe + readResolve не нужен; race condition
+- Sidecars: review `docs/mcq-quality/reviews/design-patterns-interview.json` (IN_PROGRESS, Q1-Q8), freshness `docs/mcq-quality/fact-freshness/design-patterns-interview.json` (GoF version-insensitive + Java JLS-стабильные claims) → SOURCE_COVERAGE ok
+- Validators: verify-mcq-json OK; файловые STYLE 0.84→0.74, CORRECT_LONGEST 0.83→0.73 (падают по мере чанков, финальный замер после всех блоков); DUPLICATE_NGRAMS 0 сохранён
+- Дальше: Q9-Q18, Q19-Q28, … затем POS de-cycle (POSITION_SEQUENCE=48) в отдельном финальном тике
 
 ---
 
