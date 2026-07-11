@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "synchronized int даёт более высокий throughput на 64-ядерной машине, чем AtomicInteger.",
+              "text": "synchronized int даёт более высокий throughput на 64-ядерной машине, чем AtomicInteger, за счёт отсутствия spin-retry в CAS.",
               "correct": false,
               "sections": {
                 "what_actually": "synchronized сериализует все потоки на одном мониторе → throughput не растёт с ядрами. AtomicInteger масштабируется лучше.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ReentrantLock даёт только производительный прирост над synchronized, но никакой функциональности не добавляет.",
+              "text": "ReentrantLock даёт над synchronized только прирост производительности за счёт biased locking, но никаких новых возможностей вроде tryLock или fairness не добавляет.",
               "correct": false,
               "sections": {
                 "what_actually": "ReentrantLock даёт функциональные возможности (tryLock/timeout/interruptible/fairness/Condition), а производительность сравнима с Java 6+.",
@@ -1187,7 +1187,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Реентерабельная блокировка с tryLock, таймаутом, прерываемым ожиданием, fairness и несколькими Condition; требует явного unlock() в finally.",
+              "text": "Реентерабельная блокировка с tryLock, таймаутом, fairness и несколькими Condition; требует явного unlock() в finally.",
               "correct": true,
               "sections": {
                 "explanation": "Реализован через AbstractQueuedSynchronizer (AQS), семантически реентерабелен как synchronized. Дополнительно даёт: tryLock()/tryLock(timeout), lockInterruptibly(), справедливый режим new ReentrantLock(true) и множественные Condition через newCondition(). Главная плата за гибкость — отсутствие автоматического release: забыли unlock() в finally → монитор удерживается навечно и потоки зависнут. По умолчанию берут synchronized, переходят на ReentrantLock только ради этих возможностей.",
@@ -1236,13 +1236,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ReadWriteLock допускает одновременно множество читателей И писателей.",
+              "text": "StampedLock реентерабелен: повторный writeLock из того же потока безопасен, как у ReentrantReadWriteLock.",
               "correct": false,
               "sections": {
-                "what_actually": "Writer эксклюзивен: пока он держит lock, ни один reader не пройдёт; одновременные writer'ы тоже исключены.",
-                "source_of_confusion": "Желание ещё большего параллелизма заставляет предположить, что и читатели, и писатели работают разом. На деле это привело бы к гонке read-write; writer всегда эксклюзивен.",
-                "if_it_were_true": "Гонок между writer и reader не было бы — реально data race.",
-                "how_it_should_be": "Допустимы либо много читателей одновременно, либо ровно один писатель эксклюзивно — но никогда читатели и писатель вместе."
+                "what_actually": "StampedLock НЕ реентерабелен: повторный writeLock (или readLock) из того же потока приводит к самоблокировке; реентерабелен только ReentrantReadWriteLock.",
+                "source_of_confusion": "По аналогии с ReentrantLock/ReentrantReadWriteLock ждут реентерабельности и от StampedLock, но он её сознательно не поддерживает ради производительности.",
+                "if_it_were_true": "Вложенный writeLock из того же потока проходил бы — реально поток виснет на себе.",
+                "how_it_should_be": "StampedLock не реентерабелен; нельзя брать повторный lock из того же потока."
               }
             },
             {
@@ -1308,13 +1308,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "На каждом Lock допускается завести только один Condition, и несколько каналов ожидания невозможны.",
+              "text": "Condition.await() не освобождает Lock во время ожидания, поэтому сигналящий поток не сможет захватить Lock.",
               "correct": false,
               "sections": {
-                "what_actually": "lock.newCondition() можно вызывать сколько угодно; на одном Lock несколько независимых Condition.",
-                "source_of_confusion": "Та же аналогия с единственным wait-set монитора, перенесённая на Lock. На деле ArrayBlockingQueue использует на одном Lock сразу два Condition (notFull и notEmpty).",
-                "if_it_were_true": "ArrayBlockingQueue не мог бы реализовать notFull+notEmpty — реально использует оба.",
-                "how_it_should_be": "Несколько Condition на одном Lock — норма."
+                "what_actually": "Condition.await() атомарно освобождает Lock и паркует поток; сигналящий поток спокойно берёт тот же Lock, вызывает signal() и отпускает его — как wait() освобождает монитор.",
+                "source_of_confusion": "Переносят на Condition ложное представление, будто ожидание удерживает Lock; тогда никакой поток не смог бы signal() — но await() именно освобождает Lock.",
+                "if_it_were_true": "Producer не смог бы захватить Lock, чтобы дать signal() — реально захватывает без проблем.",
+                "how_it_should_be": "await() освобождает Lock на время ожидания и повторно берёт его при пробуждении."
               }
             }
           ]
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Deadlock автоматически разрешается JVM через прерывание одного из потоков.",
+              "text": "Deadlock автоматически разрешается JVM: встроенный watchdog обнаруживает цикл ожидания и прерывает один из потоков.",
               "correct": false,
               "sections": {
                 "what_actually": "JVM НЕ разрешает deadlock автоматически; потоки висят, пока процесс не убьют.",
@@ -1391,13 +1391,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Livelock — это просто другое название deadlock; никакой разницы между ними нет.",
+              "text": "Deadlock, livelock и starvation — три названия одного явления «поток завис»; по сути и по диагностике различий между ними нет.",
               "correct": false,
               "sections": {
-                "what_actually": "Deadlock = потоки заблокированы (BLOCKED/WAITING); livelock = потоки активны (RUNNABLE), но без прогресса.",
-                "source_of_confusion": "Похожие имена `deadlock` и `livelock` и общее ощущение «зависло» заставляют считать их синонимами, хотя состояние потоков (`BLOCKED` vs `RUNNABLE`) различно.",
-                "if_it_were_true": "Не существовало бы двух разных терминов — реально различимы по thread state.",
-                "how_it_should_be": "Deadlock: stuck blocked; Livelock: active but no progress."
+                "what_actually": "Это три разных явления: deadlock — потоки BLOCKED/WAITING в цикле; livelock — RUNNABLE, но без прогресса; starvation — поток систематически не получает ресурс из-за scheduling.",
+                "source_of_confusion": "Общее ощущение «поток завис» стирает различия, хотя состояние потоков (BLOCKED vs RUNNABLE vs готов-но-обойдён) у них разное.",
+                "if_it_were_true": "Хватало бы одного термина и одного способа диагностики — реально нужны разные (jstack / метрики throughput / latency tail).",
+                "how_it_should_be": "Deadlock: заблокированы в цикле; Livelock: активны без прогресса; Starvation: обойдён планировщиком."
               }
             },
             {
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Баг, при котором результат зависит от порядка выполнения потоков; типичные паттерны — check-then-act и read-modify-write.",
+              "text": "Баг, где результат зависит от порядка выполнения потоков (типичные паттерны — check-then-act, read-modify-write).",
               "correct": true,
               "sections": {
                 "explanation": "Race condition не всегда даёт исключение — часто это тихая порча данных. if(map.containsKey(k)) return map.get(k); — между двумя вызовами другой поток мог удалить ключ → NPE на get. Лечится атомарными операциями (map.computeIfAbsent, AtomicLong.incrementAndGet), синхронизацией (synchronized/Lock) либо устранением shared mutable state (immutability). Ловят статическим анализом (SpotBugs/IDEA), стресс-тестами с JCStress.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Race condition можно полностью устранить, объявив все участвующие переменные `volatile`.",
+              "text": "Race condition можно полностью устранить, объявив все участвующие переменные `volatile`, ведь volatile сериализует доступ потоков к ним.",
               "correct": false,
               "sections": {
                 "what_actually": "`volatile` гарантирует видимость записей между потоками, но не атомарность. Составные операции (`check-then-act`, `i++`) остаются гонкой даже на `volatile`-полях.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "ThreadLocal автоматически очищается, когда поток возвращается в пул после задачи.",
+              "text": "ThreadLocal автоматически очищается сборщиком мусора, как только поток возвращается в пул и берёт следующую задачу.",
               "correct": false,
               "sections": {
                 "what_actually": "Пул не очищает ThreadLocal; значение сохраняется между задачами на переиспользуемом потоке — типичная утечка и security-баг.",
@@ -1571,13 +1571,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "InheritableThreadLocal копирует значение в дочерние потоки автоматически.",
+              "text": "InheritableThreadLocal делает значение видимым сразу во всех потоках приложения, а не только в дочерних.",
               "correct": false,
               "sections": {
-                "what_actually": "Часть верно, но НЕ упомянуто что не работает с пулами — главное ограничение.",
-                "source_of_confusion": "Частичный ответ: верхняя половина определения (наследование значения в дочерний поток) верна, но опускается ключевая оговорка — копирование происходит только при new Thread() и поэтому ломается с пулами потоков.",
-                "if_it_were_true": "Тот же ответ без указания ограничения был бы 'полным' — реально неполный.",
-                "how_it_should_be": "Указать и наследование, и ограничение с пулами."
+                "what_actually": "InheritableThreadLocal передаёт значение только дочерним потокам, созданным этим потоком (копия в Thread.init), а не всем потокам приложения — для остальных оно невидимо.",
+                "source_of_confusion": "Слово «Inheritable» преувеличивают до глобальной видимости; на деле наследование однонаправленное — только родитель→ребёнок в момент new Thread().",
+                "if_it_were_true": "Любой поток приложения читал бы это значение — реально видит только дочерний, созданный напрямую.",
+                "how_it_should_be": "Значение копируется лишь дочернему потоку при его создании; глобальной видимости между потоками нет."
               }
             },
             {
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Executor и ExecutorService — синонимы, исторически оставленные для обратной совместимости.",
+              "text": "Executor и ExecutorService — синонимы: ExecutorService оставлен для обратной совместимости и просто делегирует все вызовы в Executor.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные интерфейсы с разной ответственностью: execute vs lifecycle+submit+future.",

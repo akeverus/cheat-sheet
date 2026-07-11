@@ -292,7 +292,7 @@ Priority =
 
 | # | Сидер | Кат. | Blk | OldTell | State | SCH | TH | QS | STEM | C-FCT | C-CMP | C-SCP | C-UNI | C-FRM | C-SEC | C-RU | W-PLS | W-1ER | W-API | W-FLS | W-DIV | W-CAR | W-FRM | W-SEC | W-RU | PAR | BST | BSM | STAMP | FR | LINK | POS | VAL | FINAL | Notes |
 |--:|---|---|--:|--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
-| 1 | `java-concurrency` | java | 56 | 52 | ◐ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | Q1-Q18 done (18/56): chunk1 5 BST-tells (Q3/4/6/8/9) fixed; chunk2 length-tell (correct lone-longest 7/9) снят, CV 0.142; факт-ошибок 0, BSM чист ×18; Q19-Q56 TODO |
+| 1 | `java-concurrency` | java | 56 | 52 | ◐ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | Q1-Q28 done (28/56): c1 5 BST-tells fixed; c2 length-tell снят; c3 Q19-Q28 — 2 dup-misconception (Q21-C,Q22-D) + 1 BSM-дефект (Q27-A был истинен) исправлены, length-tell correct-longest 10/10→0/10, CV 0.149; факт-ошибок 0, BSM чист ×28; Q29-Q56 TODO |
 | 2 | `design-patterns` | design-patterns | 48 | 48 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 4 | `sql` | databases | 53 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -672,6 +672,19 @@ Priority =
 - Freshness updated: freshness-sidecar расширен утверждениями Q10-Q19
 - Validators: verify-mcq-json OK; stamp CV=0.142 (≥0.14); file CLR 0.643→0.536, STYLE 0.679→0.571 (нарастающе по 2 чанкам)
 - Manual review: независимый blind-прогон (reviewer-субагент) Q10-Q18 — BST=PASS, BSM=PASS ×9, 3 удлинённых дистрактора подтверждены однозначно ложными и не карикатурными; Q12/Q16 — мягкий completeness-сигнал (не дефект)
+
+### 2026-07-11 — java-concurrency-interview — Q19..Q28
+
+- Commit: (this tick)
+- Blocks reviewed: 10 (Q19-Q28), review-sidecar расширен до 28/56
+- Correct answers fixed: 0 фактических ошибок (все correct верны)
+- Дефекты устранены: **2 duplicate-misconception (W-DIV)** — Q21 B≈C (оба «RWLock допускает много писателей») → C переписан на «StampedLock реентерабелен» (ложь, self-deadlock); Q22 C≈D (оба «один Condition на Lock») → D переписан на «await() не освобождает Lock» (ложь). **1 BSM-дефект** — Q27-A был фактически ИСТИНЕН («InheritableThreadLocal копирует в дочерние потоки») → переписан в ложное «видно во всех потоках приложения»
+- Length-tell снят: correct lone-longest 10/10 → 0/10 (подъём дистрактора-аутлайера Q19-B/Q20-C/Q23-B/Q25-C/Q26-A/Q28-C + подрезка verbose correct Q20-D/Q25-A; Q24-A расширен параллельной 3-term ложной структурой против completeness-leak)
+- Sections rewritten: Q21-C, Q22-D, Q24-A, Q27-A (синхронизированы под новый text)
+- Theory synchronized: не требовалось (факты correct не менялись; дефекты были только в дистракторах)
+- Freshness updated: freshness-sidecar расширен утверждениями Q20-Q28
+- Validators: verify-mcq-json OK; stamp CV=0.149 (≥0.14); SOURCE_COVERAGE ok
+- Manual review: независимый blind-прогон (reviewer-субагент) Q19-Q28 — BSM=PASS ×10, distinct=PASS ×10, скрытой истины в 10 поднятых/переписанных дистракторах НЕ найдено (Q27-A подтверждён теперь ложным); остаётся мягкий сквозной сигнал «correct — самый полный» в Q20/Q23/Q24/Q28 (definitional-stem, не дефект, длина уже выровнена)
 
 ---
 
