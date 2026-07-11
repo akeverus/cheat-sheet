@@ -24,7 +24,7 @@
 | shell (chrome) | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | RECHECK | TODO | B_MOCKUP_RECHECK |
 | focus-training | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
 | result | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | RECHECK | B_MOCKUP_RECHECK |
-| session-summary | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
+| session-summary | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.3) |
 | settings | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
 | stats | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
 | error | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (макет R0.2) |
@@ -40,9 +40,15 @@
 | no-js | TODO | result.html живой fallback (RECHECK); прочие — TODO. |
 | print | TODO | не инвентаризован. |
 
-`*` full-width для error верифицирован **структурно** (edge-to-edge `.wrap` + `.error-grid`
-main+рельс, брейк 1080px = проверенный паттерн других экранов), не живым screenshot
-(capture в этой сессии флапал) — переподтвердить на bootRun при parity-фазе.
+`*` full-width для error и session-summary верифицирован **структурно** (edge-to-edge
+`.wrap width:100%` + грид main+рельс, брейк 1080px = проверенный паттерн других экранов),
+не живым screenshot (capture в этой сессии флапал) — переподтвердить на bootRun при
+parity-фазе. **session-summary (R0.3):** detector exit 0; AA обе темы 18 пар worst 4.95
+(light badge error-on/error) / 5.24 (dark) — все ≥4.5; a11y-каркас полный (skip→main,
+main tabindex=-1, aria-labelledby секции, table caption+th scope, mock-switch aria-pressed,
+reduced-motion `.anim{opacity:1}`). Наблюдение (не блокер, на parity-фазу): `thead th`
+sticky top:0 в `overflow-x`-only обёртке на 4-строчной таблице фактически не активируется
+и может уходить под sticky-шапку — решить при порте, где прод-таблица иначе устроена.
 
 ## Пробелы покрытия (из registry.gaps_found)
 

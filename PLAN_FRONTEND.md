@@ -761,3 +761,30 @@ Dirty changes created by loop: 0
 - **registry+matrix обновлены:** error phase A_DISCOVER→B_MOCKUP_RECHECK, gap закрыт.
 - **Следующий тик:** worst-first — B_MOCKUP_RECHECK независимой поверхности (session-summary
   — не в WIP) ИЛИ D_PORT_MAPPING error (прод error.html чист → можно готовить перенос).
+
+### 2026-07-11 — R0.3: RECHECK макета `session-summary.html` (независимая поверхность)
+
+- **Worst-first выбор:** collision guard (§6) — параллельная сессия держит dirty
+  base.css/app.js/stats.js/head.html/result.html/settings.html/stats.html/focus-training.html/
+  тест → 5 поверхностей BLOCKED. Независимы: error (макет уже R0.2) и **session-summary**
+  (прод `session-summary.html` НЕ в WIP). Взят session-summary — RECHECK его макета.
+- **Проверено (§9 mockup-gates):**
+  - **detector** exit 0.
+  - **AA обе темы** — 18 пар (семантические тона на wash-заливках + ink-иерархия + кнопки/
+    бейджи): light worst 4.95 (badge error-on/error), dark worst 5.24 (acc-tile-err) — все
+    ≥4.5. Скрипт `scratchpad/aa_summary.py` (OKLCH→linear-sRGB→WCAG).
+  - **a11y-каркас** полный: skip-link→#main-content, `main[tabindex=-1]`, секции
+    `aria-labelledby`, таблица `caption`+`th scope=col`, mock-switch `role=group`+`aria-pressed`,
+    nav `aria-current`, theme-toggle `aria-label` обновляется в цикле, иконки `aria-hidden`,
+    reduced-motion fail-safe (`.anim{opacity:1}`, анимация только в no-preference).
+  - **full-width** структурно (`.wrap{width:100%}` edge-to-edge, 1-кол→2-кол на 1080px со
+    sticky-рельсом) — живой screenshot отложен на parity-фазу.
+  - **states** покрыты: strong/weak (mock-switch), topic-table, mistakes-list, recommendations,
+    copy/print. `empty(no-summary)` = redirect контроллера, корректно не mockup-state.
+- **Наблюдение (не блокер, на parity/port-фазу):** `thead th{position:sticky;top:0}` внутри
+  `overflow-x`-only обёртки на 4-строчной таблице фактически не активируется и может уходить
+  под sticky-шапку. Решить при порте (прод-таблица устроена иначе) — не правлю макет в RECHECK.
+- **Ledgers:** matrix session-summary detector/AA/full-width*/a11y/states → PASS (parity/
+  contract/no-js остаются TODO — нужен bootRun); registry notes = RECHECK ПРОЙДЕН.
+- **Следующий тик:** worst-first — `D_PORT_MAPPING` для error ИЛИ session-summary (обе прод-
+  поверхности чисты, не в WIP) — подготовить маппинг разметки макета на DOM-хуки контракта.
