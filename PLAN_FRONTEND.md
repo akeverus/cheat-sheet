@@ -1006,3 +1006,19 @@ Dirty changes created by loop: 0
 - **Следующий тик:** worst-first — следующее состояние C12 (generationUnavailable / loading /
   no-js; diagram отложить — Mermaid self-authorship запрещён §4) ЛИБО C13 (result) / C16 (stats),
   ЛИБО Фаза E (порт) по разблокировке `base.css`.
+
+### 2026-07-12 — R0.14: C12 дальше — состояние `loading` (скелет загрузки)
+
+- **Worst-first:** после inline-alert (R0.13) следующий недостающий кусок C12 — loading-
+  placeholder (P1 loading-state). Collision-guard: mockups+PLAN чисты, прод-WIP dirty (порт BLOCKED).
+- **Добавлено состояние `loading`** (mock-switch «Загрузка»): скелет **повторяет раскладку
+  вопроса** (не спиннер) — рейка (узкая строка + трек), тема, 2 строки вопроса (полная+короткая),
+  4 опции-скелета (квадратный badge + 1–2 строки). Блоки `.skeleton` (surface-2, `sk-pulse` 1.4s)
+  декоративны `aria-hidden`; регион `.focus-main` = `role=status`+`aria-live=polite`+`aria-busy`
+  с visually-hidden «Загрузка вопроса…». Пульс off под `prefers-reduced-motion`. JS не нужен.
+- **QA (§9):** detector exit 0; AA не применяется (скелет — чистая декорация, WCAG 1.4.11
+  исключает); блоки видимы светло-серыми на paper/surface.
+- **Ledgers:** CRITIQUE C12 (закрыт loading-placeholder, остаются 3) + журнал cr.16; matrix
+  †-сноска; registry notes/gaps_found. C12 остаётся IN_PROGRESS.
+- **Следующий тик:** worst-first — generationUnavailable / no-js (diagram отложен §4) ЛИБО
+  C13 (result) / C16 (stats), ЛИБО Фаза E (порт) по разблокировке `base.css`.

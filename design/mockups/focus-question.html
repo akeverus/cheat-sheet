@@ -410,6 +410,27 @@
     .inline-alert--info  { border-color: var(--signal-ink); background: var(--signal-wash); color: var(--signal-ink); }
     .inline-alert--warn  { border-color: var(--spark-ink); background: var(--spark-wash); color: var(--spark-ink); }
 
+    /* --- Скелет загрузки (loading-placeholder): повторяет раскладку вопроса.
+       Блоки декоративны (aria-hidden), а SR получает visually-hidden статус.
+       Пульс отключается под reduced-motion. --------------------------------- */
+    .skeleton { background: var(--surface-2); border-radius: var(--r-sm); }
+    @keyframes sk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    @media (prefers-reduced-motion: no-preference) {
+      .skeleton { animation: sk-pulse 1.4s var(--ease-in-out) infinite; }
+    }
+    .sk-topic { height: 0.85rem; width: 11rem; margin-bottom: var(--s-4); }
+    .sk-question { height: 2.1rem; border-radius: var(--r-md); margin-bottom: var(--s-3); }
+    .sk-question.is-short { width: 58%; margin-bottom: var(--s-6); }
+    .opt-skeleton {
+      display: grid; grid-template-columns: auto 1fr; gap: var(--s-4);
+      padding: var(--s-4) var(--s-5); margin-bottom: var(--s-3);
+      border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
+    }
+    .sk-badge { width: 1.75rem; height: 1.75rem; border-radius: var(--r-sm); }
+    .sk-opt-lines { display: flex; flex-direction: column; gap: var(--s-2); padding-top: 0.2rem; }
+    .sk-opt-lines .sk-line { height: 0.85rem; }
+    .sk-line { height: 1rem; }
+
     /* --- Сабмит + подсказка хоткеев -------------------------------------- */
     .submit-row {
       display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap;
@@ -582,6 +603,7 @@
         <button type="button" data-state="result" aria-pressed="false">Разбор ответа</button>
         <button type="button" data-state="flashcard" aria-pressed="false">Флешкарта (изучение)</button>
         <button type="button" data-state="alert" aria-pressed="false">Уведомления</button>
+        <button type="button" data-state="loading" aria-pressed="false">Загрузка</button>
         <button type="button" data-state="empty" aria-pressed="false">Нет вопросов</button>
         <button type="button" data-state="done" aria-pressed="false">Завершено</button>
       </div>
@@ -880,6 +902,46 @@ public class OrderService {
               <button type="button" class="ia-dismiss" aria-label="Закрыть уведомление">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= СОСТОЯНИЕ: загрузка (скелет) ================= -->
+    <section class="state" data-state="loading" hidden>
+      <div class="wrap">
+        <div class="focus-grid">
+          <aside class="focus-aside">
+            <div class="rail">
+              <div class="rail-progress">
+                <div class="skeleton sk-line" style="width: 8rem; height: 0.75rem; margin-bottom: var(--s-2);" aria-hidden="true"></div>
+                <div class="skeleton" style="height: 6px; border-radius: var(--r-pill);" aria-hidden="true"></div>
+              </div>
+            </div>
+          </aside>
+
+          <div class="focus-main" role="status" aria-live="polite" aria-busy="true">
+            <span class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;">Загрузка вопроса…</span>
+            <div class="skeleton sk-topic" aria-hidden="true"></div>
+            <div class="skeleton sk-question" aria-hidden="true"></div>
+            <div class="skeleton sk-question is-short" aria-hidden="true"></div>
+
+            <div class="opt-skeleton" aria-hidden="true">
+              <span class="skeleton sk-badge"></span>
+              <span class="sk-opt-lines"><span class="skeleton sk-line" style="width: 92%"></span><span class="skeleton sk-line" style="width: 64%"></span></span>
+            </div>
+            <div class="opt-skeleton" aria-hidden="true">
+              <span class="skeleton sk-badge"></span>
+              <span class="sk-opt-lines"><span class="skeleton sk-line" style="width: 88%"></span><span class="skeleton sk-line" style="width: 52%"></span></span>
+            </div>
+            <div class="opt-skeleton" aria-hidden="true">
+              <span class="skeleton sk-badge"></span>
+              <span class="sk-opt-lines"><span class="skeleton sk-line" style="width: 80%"></span></span>
+            </div>
+            <div class="opt-skeleton" aria-hidden="true">
+              <span class="skeleton sk-badge"></span>
+              <span class="sk-opt-lines"><span class="skeleton sk-line" style="width: 90%"></span><span class="skeleton sk-line" style="width: 58%"></span></span>
             </div>
           </div>
         </div>
