@@ -880,3 +880,20 @@ Dirty changes created by loop: 0
   registry port_status → BLOCKED + recheck-заметка; CRITIQUE C13 + журнал cr.9; gaps_found +1.
 - **Следующий тик:** worst-first — recheck `settings` ЛИБО `stats` (оба чистых макета),
   ЛИБО вход в Фазу E по разблокировке `base.css`.
+
+### 2026-07-11 — R0.8: B_MOCKUP_RECHECK экрана `settings` (вкладки, богатейший a11y)
+
+- **Worst-first:** база всё ещё BLOCKED; recheck следующего чистого макета. Взят `settings`
+  (ARIA-вкладки Сессия/Оформление/Данные — богатейшая a11y-поверхность).
+- **Проверено (§9):** detector exit 0. **AA обе темы** — все пары ≥4.5 (light worst 4.95
+  btn-danger error-on/error, dark 5.24; danger-карта ink-2/error-wash 6.71; seg-btn 6.56–6.93;
+  поля ink/paper 15.55). **a11y ОБРАЗЦОВЫЙ WAI-ARIA:** tablist (roving tabindex + стрелки
+  ↑↓←→/Home/End), seg-control radiogroup+aria-checked+стрелки, font-stepper role=status+
+  aria-live, toggle focus-ring, label for/id — паритет §3 (#filters-form/#session-form)/§8.
+  **full-width** структурно (settings-grid rail+panels 1080px; set-grid auto-fit).
+- **Coverage-gap (CRITIQUE C14):** покрыты 3 вкладки + export json/csv + 7 осей + filters +
+  session + streak; НЕ покрыт reset-options-confirm (danger-кнопка есть, шаг подтверждения нет).
+- **Ledgers:** matrix settings detector/AA/full-width*/a11y✦ → PASS, states → PASS(core)◊;
+  registry port_status → BLOCKED + recheck-заметка; CRITIQUE C14 + журнал cr.10; gaps_found +1.
+- **Следующий тик:** worst-first — recheck `stats` (последний чистый макет, замкнёт recheck
+  всех 7 поверхностей), ЛИБО вход в Фазу E по разблокировке `base.css`.

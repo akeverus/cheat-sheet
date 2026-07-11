@@ -25,7 +25,7 @@
 | focus-training | PASS | PASS‡ | PASS* | PASS | PASS(core)† | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.6) |
 | result | PASS | PASS‡ | PASS* | PASS | PASS(core)§ | TODO | TODO | RECHECK | B_MOCKUP_RECHECK (recheck R0.7) |
 | session-summary | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.3) |
-| settings | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
+| settings | PASS | PASS | PASS* | PASS✦ | PASS(core)◊ | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.8) |
 | stats | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
 | error | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (макет R0.2) |
 
@@ -54,6 +54,16 @@ related) + favorite; НЕ покрыты confidence-виджет, regenerate, no
 coverage-gap). AA все текст-пары ≥4.5 обе темы (worst 5.52/5.24); opt-mark галочка = граф.
 объект (C11). Наблюдение на порт: verdict `<p>` не live-region — `aria-live` (§8
 `#result-feedback`) проводится при порте, не дефект макета. Порт result BLOCKED (WIP).
+
+`✦` settings a11y образцовый WAI-ARIA: tablist (`role=tablist/tab/tabpanel`, roving tabindex,
+стрелки+Home/End), seg-control `role=radiogroup`+`aria-checked`+стрелки, font-stepper
+`role=status`+`aria-live=polite`, toggle focus-ring на `input:focus-visible+.switch`, label
+for/id на select/input. Паритет §3 (#filters-form/#session-form)/§8. AA все пары ≥4.5 обе
+темы (worst 4.95 btn-danger / 5.24 dark).
+
+`◊` settings states: покрыты 3 вкладки + export json/csv + 7 осей персонализации + filters +
+session + streak; НЕ покрыт reset-options-confirm (кнопка Danger есть, шаг подтверждения нет
+— CRITIQUE C14). Порт settings BLOCKED (WIP).
 
 `*` full-width для error и session-summary верифицирован **структурно** (edge-to-edge
 `.wrap width:100%` + грид main+рельс, брейк 1080px = проверенный паттерн других экранов),

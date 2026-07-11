@@ -29,9 +29,24 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 | C11 | — | `opt-mark` (галочка верного варианта): `success-on` на заливке `success` = AA 4.28 < 4.5 (light) | **РЕШЕНО (compliant):** галочка — **графический объект** (WCAG 1.4.11, порог 3:1), `aria-hidden`, избыточна с зелёной обводкой `.opt--correct` + тегом «верный ответ» + тинтом бейджа. 4.28 ≥ 3:1 → проходит. Единственная пара ниже строгого 4.5-бара (сестра `error-on/error` = 4.95). Общий токен `--success` НЕ риплю в recheck-тик (задел на 8 макетов). Если понадобится симметрия ≥4.5 — точечно затемнить `--success` fill в отдельном тике | `focus-question.html` (tokens) | **РЕШЕНО** |
 | C12 | P3 | `focus-question` покрывает 4 состояния (active/result/empty/done), но registry-список focus-training шире | Reference-экран задал ЯЗЫК на 4 ядровых состояниях; недостающие: flashcard-reveal/grade(1-4), study-LEARN(study-confirm), generationUnavailable, loading-placeholder, inline-alert/error, no-js-fallback, diagram/mermaid. Coverage-gap — доработать состояния reference-экрана (порт focus-training всё равно BLOCKED параллельным WIP) | `focus-question.html` | TODO |
 | C13 | P3 | `result` покрывает correct/incorrect/analysis/favorite, но registry-список result шире | Недостающие состояния: confidence-виджет (🎲🤔💪, оставлен намеренно в проде), regenerate, no-js-fallback (живой `/answer`). Coverage-gap reference-разбора (порт result BLOCKED параллельным WIP). Отдельно — при ПОРТЕ провести `aria-live` на вердикт (§8 `#result-feedback`): в макете вердикт статичный `<p>`, live-region проводится в прод, не дефект макета | `result.html` | TODO |
+| C14 | P3 | `settings` покрывает 3 вкладки/export/7 осей/filters/session/streak, но не reset-options-confirm | Danger-кнопка «Сбросить банк вариантов» есть, шага ПОДТВЕРЖДЕНИЯ (необратимое действие) в макете нет. Coverage-gap: показать/застабить confirm-модалку сброса. Порт settings BLOCKED параллельным WIP | `settings.html` | TODO |
 
 ## Журнал критики
 
+- **cr.10 (ROUND-RESET, R0.8)** — **B_MOCKUP_RECHECK экрана `settings` (вкладки Сессия/
+  Оформление/Данные).** detector exit 0. **AA обе темы:** все пары ≥4.5 (light worst 4.95
+  btn-danger `error-on/error`, dark 5.24); danger-карта `ink-2/error-wash` 6.71, `error-ink/
+  error-wash` 5.52; seg-btn 6.56–6.93; вкладка выбранная `signal-ink/signal-wash` 6.54; поля
+  `ink/paper` 15.55. **a11y ОБРАЗЦОВЫЙ WAI-ARIA:** `role=tablist/tab/tabpanel` + roving
+  tabindex + стрелки ↑↓←→/Home/End; seg-control `role=radiogroup`+`aria-checked`+стрелки;
+  font-stepper `role=group` + `step-value role=status aria-live=polite`; toggle — скрытый
+  checkbox + `.switch aria-hidden` + focus-ring на `input:focus-visible+.switch`; `label
+  for/id` на всех select/input. **Паритет §3** (#filters-form/#session-form)/**§8**.
+  **full-width** структурно (settings-grid rail+panels, брейк 1080px; set-grid auto-fit
+  наполняет ширину; вкладки → гориз-скролл на узких). **states:** покрыты 3 вкладки + export
+  json/csv + 7 осей персонализации + filters + session + streak; НЕ покрыт reset-options-
+  confirm → **C14** (шаг подтверждения danger-сброса). Дальше worst-first — recheck `stats`
+  (последний чистый макет) ЛИБО Фаза E по разблокировке `base.css`.
 - **cr.9 (ROUND-RESET, R0.7)** — **B_MOCKUP_RECHECK экрана `result` (разбор ответа).**
   detector exit 0. **AA обе темы:** все текст-пары ≥4.5 (light worst 5.52, dark 5.24);
   ключевое — проза на семантических wash-заливках держит с запасом (ink на signal/success/
