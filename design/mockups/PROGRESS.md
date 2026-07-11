@@ -40,7 +40,7 @@ empty/done = **(b)** app-shell (при развороте); focus-order = **(c)*
 |---|---|---|---|
 | **Экран вопроса (эталон)** | `focus-question.html` | 🟢 draft v3 · detector✅ · QA✅ | **Полноширинный app-shell (it.11):** `.wrap` edge-to-edge + `.focus-grid` (main + правый рельс с сессией/хоткеями) для active/result. 4 состояния + обе темы. Снова на аппруве языка |
 | **Результат/фидбек** | `result.html` | 🟢 **Фаза B 1/5 · detector✅ · AA обе темы✅ · вьюпорты✅** | **ГОТОВ (it.17).** Полноширинный app-shell (main + рельс «разбор глубже»+действия). Оба варианта (верно/неверно). Осталось глобальное: ultra-wide мера option-строк (#4, общее с эталоном) |
-| Итоги сессии | `session-summary.html` | ⬜ | — |
+| **Итоги сессии** | `session-summary.html` | 🟢 **Фаза B 2/5 · detector✅ · AA обе темы✅ · вьюпорты✅** | **ГОТОВ (it.18).** Полноширинный app-shell: main (редакц. вердикт + stat-плитки + таблица по темам + ошибки) + рельс (действия + рекомендации). Оба тона (сильная/слабая). Без hero-цифры (ban) |
 | Настройки | `settings.html` | ⬜ | — |
 | Статистика | `stats.html` | ⬜ | — |
 | Shell/шапка | `shell.html` | ⬜ | — |
@@ -135,6 +135,26 @@ empty/done = **(b)** app-shell (при развороте); focus-order = **(c)*
 
 ## Журнал
 
+- **it.18** — **ФАЗА B, экран 2/5: `session-summary.html` собран с нуля.** Данные из
+  контракта (`summary.*`): accuracy/correctCount/wrongCount/totalQuestions/formattedDuration/
+  mode/topicResults/mistakes/recommendations. **Ключевое решение:** `DESIGN.md` банит
+  «hero-metric шаблон» → НЕ дженерик-дашборд с гигант-цифрой. Веду редакционно: заголовок-
+  предложение (serif, данные внутри фразы) + сбалансированный ряд stat-плиток (mono, `fs-lg`,
+  не одна доминанта). Полноширинный app-shell: **main** = вердикт + плитки + таблица по темам
+  (тянется на всю ширину, скроллится внутри враппера) + список ошибок (кликабельны→тренировка);
+  **рельс** = действия (Повторить ошибки / Новая тренировка / Скопировать+Печать) + карта
+  рекомендаций. Тон точности через success/spark(warn)/error. **QA (§3):** detector exit 0;
+  **AA обе темы × оба тона (сильная/слабая) fails=[]** (worst light: acc-warn 5.95, weak-acc
+  5.52; dark всё ≥5.2); вьюпорты 375/768/1280/2560 — overflow 0, chrome span=vw, gutter
+  симметр. (20→56px), брейк 1080px, на 2560 stat-strip = 5 плиток ×373px на всю ширину
+  (void 0), таблица скроллится внутри, не рвёт страницу; reorder рекомендации→действия на
+  одноколоночном (≤1079) покрыл мобайл+планшет; focus-ring + table-семантика (caption/scope=col);
+  reduced-motion fail-safe. **Маппинг DOM-хуков:** `.summary-headline`/`.stat-tile[data-stat-field]`
+  → summary.accuracy/correct/wrong/total/duration; `.topic-table` tbody → summary.topicResults
+  (topic/total/correct/wrong/accuracy + тон-класс); `.mistake[href]` → summary.mistakes
+  (клик→тренировка по теме); `.recs` → summary.recommendations; действия → onlyWrong/weakTopics
+  сессия + self-contained copy/print (как в проде, app.js не грузится на /session-summary).
+  Дальше — экран 3/5 settings (6 осей персонализации).
 - **it.17** — **ФАЗА B, экран 1/5: `result.html` финализирован.** Аппрув языка получен
   → черновик доведён до эталонного качества и прогнан по полному QA-гейту (§3) на живом
   рендере (chrome-devtools, метрики; screenshot по-прежнему таймаутит — §3-фолбэк).
