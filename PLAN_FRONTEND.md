@@ -1115,3 +1115,21 @@ Dirty changes created by loop: 0
 - **Следующий тик:** проверить разблокировку base.css → Фаза E (порт error, самый простой,
   маппинг готов R0.5); если dirty — read-only подготовка порта (черновик CSS-блока error
   в отдельном файле design/mockups/port-drafts/).
+
+### 2026-07-12 — R0.20: Фаза E (read-only prep) — черновик порта error в port-drafts/
+
+- **Collision guard:** base.css по-прежнему dirty (чужой WIP, 15 файлов) → сам порт BLOCKED;
+  по плану R0.19 выполнена read-only подготовка.
+- **Создано:** `design/mockups/port-drafts/README.md` (процедура применения, токен-маппинг
+  словарей макет→прод, правило специфичности: `="instrument"` равен по весу общему
+  `html[data-design]` → блок ставить ПОСЛЕ §C7) и `port-drafts/error-instrument-base.css`
+  (блок C7-i: левосторонняя instrument-композиция — lowercase mono-eyebrow, призрачный
+  clamp-номер 4rem→8.5rem (aria-hidden декор), title 3xl/balance/20ch, details на
+  bg-tertiary/line, actions flex-start). Файлы никем не загружаются.
+- **Ключевое решение (риск №2 PORT_MAPPING_error.md):** `.error-rail` НЕ портируется —
+  дублирует `.error-actions` дословно; `rail-hint` покрыт серверным 403-body →
+  порт error = чистый append в base.css, **ноль правок Thymeleaf**.
+- **Ledgers:** CRITIQUE cr.22; registry error → port_status DRAFT_READY.
+- **Следующий тик:** проверить разблокировку base.css → применить черновик (Фаза E, порт
+  error) + live parity QA; если dirty — аналогичный черновик для session-summary
+  (маппинг R0.4, второй независимый; сложнее: PE copy/print + ARIA-таблица).

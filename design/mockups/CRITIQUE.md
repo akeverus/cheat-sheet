@@ -37,6 +37,22 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+- **cr.22 (ROUND-RESET, R0.20)** — **Фаза E, read-only подготовка: черновик порта error →
+  `port-drafts/`.** Collision guard: base.css по-прежнему dirty (чужой WIP) → сам порт BLOCKED,
+  подготовлен ready-to-paste черновик. Созданы `port-drafts/README.md` (процедура применения,
+  токен-маппинг словарей, правило специфичности: блок `="instrument"` равен по весу общему
+  `html[data-design]` → обязан стоять ПОСЛЕ §C7) и `port-drafts/error-instrument-base.css`
+  (блок C7-i: левосторонняя instrument-композиция поверх общей центрированной — lowercase
+  mono-eyebrow text-tertiary, призрачный clamp-номер 4rem→8.5rem в тоне границы (декор,
+  aria-hidden), title 3xl balance 20ch, детали на bg-tertiary/line, actions flex-start).
+  **Ключевое решение (риск №2 PORT_MAPPING_error.md):** `.error-rail` НЕ портируется — все
+  3 ссылки рельса дословно дублируют `.error-actions`, уникальный `rail-hint` уже покрыт
+  серверным 403-body → порт error = чистый append в base.css, **ноль правок Thymeleaf**
+  (минимальная поверхность конфликта, DOM-контракт §2/§8 не тронут). Черновик никем не
+  загружается (не подключён ни к макетам, ни к проду). QA черновика: только токен-ревью
+  (все роли на AA-токенах instrument; detector неприменим — не HTML-страница). Применение
+  (по разблокировке): вставка после §C7 + бамп `?v=` в head.html + live parity QA + удаление
+  черновика тем же коммитом.
 - **cr.21 (ROUND-RESET, R0.19)** — **print-дименсия: print-CSS для `session-summary`.**
   Единственная страница с реальным печатным сценарием (в проде кнопка «Печать» в
   `.summary-tools`; в макете — в `.share-row`). Принцип: бумага получает ДОКУМЕНТ, не
