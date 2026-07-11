@@ -2928,13 +2928,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Structured Concurrency для работы требует подключения сторонней библиотеки LMAX Disruptor и не входит в стандартный JDK.",
+              "text": "Structured Concurrency в Java 21 — уже стабильная финальная возможность стандартного JDK, доступная без флага --enable-preview и без ограничений на использование в production.",
               "correct": false,
               "sections": {
-                "what_actually": "Это часть стандартного JDK (java.util.concurrent), Disruptor не требуется.",
-                "source_of_confusion": "Связь с другими concurrent-фреймворками: считают, что нужна сторонняя библиотека вроде Disruptor.",
-                "if_it_were_true": "JEP 453 ссылался бы на сторонние библиотеки — реально нет.",
-                "how_it_should_be": "Часть JDK; никаких сторонних зависимостей."
+                "what_actually": "В Java 21 Structured Concurrency — PREVIEW-фича (JEP 453): для компиляции и запуска нужен флаг --enable-preview, API может измениться в следующих версиях; финализируется она позже.",
+                "source_of_confusion": "Виртуальные потоки в Java 21 стали стабильными (JEP 444), и по аналогии Structured Concurrency ошибочно считают тоже финальной — хотя она осталась в preview.",
+                "if_it_were_true": "Можно было бы тянуть StructuredTaskScope в prod без оговорок — реально preview-API требует явного флага и рискует сломаться при обновлении JDK.",
+                "how_it_should_be": "В Java 21 это preview: включать через --enable-preview и следить за изменениями API в JEP следующих версий."
               }
             }
           ]
@@ -2988,13 +2988,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "ScopedValue, как и ThreadLocal, требует ручного вызова remove() для очистки, иначе значение протекает между задачами.",
+              "text": "ScopedValue хранит данные в той же ThreadLocalMap каждого потока, поэтому по скорости доступа и накладным расходам ничем не отличается от обычного ThreadLocal, только имя другое.",
               "correct": false,
               "sections": {
-                "what_actually": "ScopedValue автоматически очищается при выходе из runWhere; remove() не существует.",
-                "source_of_confusion": "Перенос привычек ThreadLocal: ждут обязательного remove(), которого у ScopedValue нет.",
-                "if_it_were_true": "Не было бы преимущества над ThreadLocal — реально это главная фишка.",
-                "how_it_should_be": "ScopedValue auto-cleanup; remove не нужен."
+                "what_actually": "ScopedValue НЕ использует ThreadLocalMap: связывание значения с областью иммутабельно и разрешается через сам объект ScopedValue, без хеш-поиска в per-thread map — доступ дешевле и без риска утечки.",
+                "source_of_confusion": "И ThreadLocal, и ScopedValue дают per-поток видимость, поэтому внутреннюю реализацию считают одинаковой; но у ScopedValue модель другая — неизменяемое связывание на время scope.",
+                "if_it_were_true": "Не было бы смысла вводить ScopedValue — реально он выигрывает и по скорости, и по автоочистке, и по наследованию в structured concurrency.",
+                "how_it_should_be": "ScopedValue — иммутабельное scope-связывание без ThreadLocalMap; дешевле по доступу и памяти, чем ThreadLocal."
               }
             }
           ]
@@ -3023,7 +3023,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "ForkJoinPool рассчитан только на задачи с блокирующим I/O и не предназначен для CPU-bound рекурсивных вычислений.",
+              "text": "ForkJoinPool рассчитан исключительно на задачи с блокирующим I/O и сетевые ожидания, а для CPU-bound рекурсивных вычислений типа divide-and-conquer он не предназначен и выигрыша не даёт.",
               "correct": false,
               "sections": {
                 "what_actually": "FJP спроектирован для CPU-bound recursive tasks; блокирующий I/O в FJP — антипаттерн.",
@@ -3071,13 +3071,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Использовать только thenApply без exceptionally и handle — исключение всё равно всплывёт при вызове Future.get().",
+              "text": "Достаточно только thenApply без exceptionally и handle: при ошибке цепочка просто вернёт null вместо результата, а само исключение нигде не всплывёт и потеряется без следа.",
               "correct": false,
               "sections": {
-                "what_actually": "Без exceptionally/handle ошибка пробрасывается в CompletionException, цепочка обрывается, нет partial fallback.",
-                "source_of_confusion": "Минималистичный подход: ограничиваются цепочкой `thenApply` и забывают, что без `exceptionally`/`handle` исключение «прячется» в CF до первого `get()`.",
-                "if_it_were_true": "Production system без graceful degradation — реально нужна обработка.",
-                "how_it_should_be": "exceptionally per-subtask + общий handle на финале."
+                "what_actually": "Исключение в стадии CompletableFuture не теряется: оно запоминается в completed-exceptionally future и всплывает как CompletionException при join()/get(), а зависимые thenApply пропускаются, не выполняя тело.",
+                "source_of_confusion": "Отсутствие try/catch в лямбде создаёт иллюзию, что ошибка «проглатывается»; на деле CF переносит её по цепочке до терминальной операции.",
+                "if_it_were_true": "Ошибки молча превращались бы в null и портили данные без следа — реально при get() прилетит CompletionException с исходной причиной.",
+                "how_it_should_be": "Для обработки в самой цепочке — exceptionally/handle; get() лишь выбрасывает накопленное исключение, а не гасит его."
               }
             },
             {
@@ -3144,7 +3144,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "StampedLock доступен только как нестабильная preview-фича Java 21 и не может применяться в обычном production-коде без флага --enable-preview.",
+              "text": "StampedLock доступен только как нестабильная preview-фича Java 21 и не может применяться в обычном production-коде без флага --enable-preview и явного согласия на нестабильный API.",
               "correct": false,
               "sections": {
                 "what_actually": "`StampedLock` — стабильный (GA) API ещё с Java 8, а вовсе не preview-фича Java 21; он давно используется в production без ограничений.",
@@ -3216,7 +3216,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Phaser не умеет динамически добавлять или удалять участников: их число задаётся при создании и больше не меняется.",
+              "text": "Phaser не умеет динамически добавлять или удалять участников во время работы: их число жёстко задаётся в конструкторе при создании и потом уже никогда не меняется.",
               "correct": false,
               "sections": {
                 "what_actually": "register() / arriveAndDeregister() — динамическое управление участниками; ключевая фича.",
@@ -3228,13 +3228,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Phaser поддерживает только одну фазу за всё время жизни и после первого срабатывания становится бесполезным.",
+              "text": "Phaser, в отличие от CyclicBarrier, не умеет выполнять никакой код на переходе между фазами: аналога barrier action у него нет.",
               "correct": false,
               "sections": {
-                "what_actually": "Phaser specifically поддерживает неограниченные фазы; arriveAndAwaitAdvance переключает фазу.",
-                "source_of_confusion": "Перепутан с одноразовым Latch, у которого действительно одна «фаза».",
-                "if_it_were_true": "Не было бы преимущества над Latch — реально много фаз.",
-                "how_it_should_be": "Phaser поддерживает неограниченное число фаз: arriveAndAwaitAdvance() переключает на следующую фазу."
+                "what_actually": "Phaser поддерживает действие на переходе фазы через переопределяемый onAdvance(int phase, int registeredParties) — аналог barrier action CyclicBarrier; он же управляет условием терминации Phaser.",
+                "source_of_confusion": "onAdvance() менее заметен, чем Runnable-параметр конструктора CyclicBarrier, поэтому считают, что у Phaser такого хука нет.",
+                "if_it_were_true": "Нельзя было бы агрегировать результаты между фазами или останавливать Phaser по условию — реально onAdvance() именно для этого.",
+                "how_it_should_be": "Переопределить onAdvance(): там выполняется код на каждом переходе фазы и решается, продолжать ли синхронизацию."
               }
             }
           ]
@@ -3251,7 +3251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Exchanger обменивает данные сразу между любым числом потоков, рассылая значение всем участникам как broadcast.",
+              "text": "Exchanger обменивает данные сразу между любым числом потоков, рассылая переданное значение всем участникам одновременно как широковещательный broadcast.",
               "correct": false,
               "sections": {
                 "what_actually": "Exchanger ограничен ровно ДВУМЯ потоками за раз; не broadcast.",
@@ -3263,13 +3263,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "После обмена Exchanger автоматически обнуляет переданные буферы, чтобы старые данные не утекли между потоками.",
+              "text": "Exchanger не блокирует: если второй поток ещё не вызвал exchange(), метод сразу возвращает null, и обмен можно спокойно повторить позже.",
               "correct": false,
               "sections": {
-                "what_actually": "Exchanger не очищает — просто атомарно обменивает ссылки между двумя потоками.",
-                "source_of_confusion": "Желание «безопасности»: думают, что Exchanger обнуляет буфер после обмена.",
-                "if_it_were_true": "Mutable buffer обнулялся бы — реально остаётся как есть.",
-                "how_it_should_be": "Обмен ссылками; чистка — забота потоков."
+                "what_actually": "exchange(v) БЛОКИРУЕТ вызывающий поток, пока парный поток не вызовет exchange() (или пока не истечёт таймаут в exchange(v, timeout) → TimeoutException); null сам по себе не возвращается.",
+                "source_of_confusion": "По аналогии с неблокирующими offer()/poll() у очередей ждут, что и exchange() «попробует и вернёт» — но его контракт именно рандеву-блокировка двух потоков.",
+                "if_it_were_true": "Обмен был бы ненадёжен — потоки могли бы разойтись, не встретившись; реально Exchanger гарантирует встречу ровно двух потоков.",
+                "how_it_should_be": "exchange() ждёт партнёра; для ограниченного ожидания — exchange(v, timeout, unit), бросающий TimeoutException."
               }
             },
             {
@@ -3323,7 +3323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "StructuredTaskScope не поддерживает таймаут на всю группу задач — можно только ждать join() без ограничения по времени.",
+              "text": "StructuredTaskScope не поддерживает таймаут на всю группу задач сразу: можно лишь вызвать join() и ждать завершения всех подзадач без какого-либо ограничения по времени.",
               "correct": false,
               "sections": {
                 "what_actually": "joinUntil(Instant) задаёт deadline на всю группу; кроме того, fork-tasks могут иметь свои таймауты.",

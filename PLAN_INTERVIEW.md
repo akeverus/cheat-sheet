@@ -292,7 +292,7 @@ Priority =
 
 | # | Сидер | Кат. | Blk | OldTell | State | SCH | TH | QS | STEM | C-FCT | C-CMP | C-SCP | C-UNI | C-FRM | C-SEC | C-RU | W-PLS | W-1ER | W-API | W-FLS | W-DIV | W-CAR | W-FRM | W-SEC | W-RU | PAR | BST | BSM | STAMP | FR | LINK | POS | VAL | FINAL | Notes |
 |--:|---|---|--:|--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
-| 1 | `java-concurrency` | java | 56 | 52 | ◐ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | Q1-Q48 done (48/56): c1-c2 tells сняты; c3 2 dup+1 BSM (Q27-A); c4 contra-pair Q33; c5 Q39-Q48 — dup Q42 C≈D (D→Segments), caricature Q47-B (GPU→backpressure), факт-фикс correct Q42-B (>8→≥8+cap≥64), length-tell 9/10→0/10; CV 0.176; факт-ошибок 0, BSM чист ×48; Q49-Q56 TODO |
+| 1 | `java-concurrency` | java | 56 | 52 | ◐ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | КОНТЕНТ 56/56 done: c1-c6 все блоки audited; итог — 4 dup-misconception (Q21,Q22,Q42,Q50,Q54), 2 BSM (Q27-A,Q52-A), 2 caricature (Q47-B,Q49-D), contra-pair Q33, факт-фикс correct Q42-B; length-tell correct-longest снят по всему файлу; CV 0.186; BSM чист ×56. ОСТАЛОСЬ: POS de-cycle (CORRECT_POSITION_SEQUENCE=56) — отдельный тик перед FINAL |
 | 2 | `design-patterns` | design-patterns | 48 | 48 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 4 | `sql` | databases | 53 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -711,6 +711,19 @@ Priority =
 - Freshness updated: freshness-sidecar расширен Q39-Q48 (VT/pinning сверены с JEP 444 JDK21; JEP 491 JDK24 как forward-note)
 - Validators: verify-mcq-json OK; stamp CV=0.176 (≥0.14)
 - Manual review: независимый blind-прогон (reviewer-субагент) Q39-Q48 — BSM=PASS ×10, distinct=PASS ×10, Q42 C≠D подтверждён распутанным, ни один удлинённый дистрактор не стал истинным (тонкие Q39-B IMSE, Q41-C null-в-CHM, Q43-D SynchronousQueue-буфер-0, Q48-B pinning-от-volatile — подтверждены ложными); Q42-B ≥8 и Q47-B замена caricature внесены по прямой рекомендации reviewer
+
+### 2026-07-11 — java-concurrency-interview — Q49..Q56 (финальный контент-чанк)
+
+- Commit: (this tick)
+- Blocks reviewed: 8 (Q49-Q56), review-sidecar расширен до 56/56 — ВЕСЬ файл контент-audited
+- Дефекты устранены: **2 duplicate-misconception (W-DIV)** — Q50 A≈D (оба «ScopedValue как ThreadLocal, требует remove()») → Q50-D на «та же ThreadLocalMap, та же скорость» (ложь: ScopedValue без ThreadLocalMap); Q54 A≈D (оба «Phaser не многоразовый/однофазный») → Q54-D на «у Phaser нет onAdvance/barrier action» (ложь: onAdvance есть). **Caricature Q49-D (W-CAR)** — «SC требует LMAX Disruptor» → «SC финальна в Java 21» (ложь: preview JEP 453). **BSM-softness Q52-A** — формулировка «исключение всплывёт при get()» была защитимо-ИСТИННОЙ → переписана в однозначно ложную «исключение потеряется, цепочка вернёт null». **Слабый дистрактор Q55-B** — «обнуляет буферы» (пустое) → «exchange() неблокирующий, вернёт null» (правдоподобно-ложно)
+- Length-tell снят: correct lone-longest 8/8 → 0/8 (перефразировка/подъём одного дистрактора на блок, то же заблуждение)
+- Sections rewritten: Q49-D, Q50-D, Q52-A, Q54-D, Q55-B (5 блоков); остальные text-only
+- Theory synchronized: не требовалось (факты correct не менялись)
+- Freshness updated: freshness-sidecar расширен Q49-Q56 — весь файл; SC/ScopedValue помечены preview (JEP 453/446), StampedLock/Phaser/Exchanger стабильны
+- Validators: verify-mcq-json OK; stamp CV=0.186 (≥0.14)
+- Manual review: 2 независимых blind-прогона (reviewer-субагент) Q49-Q56 — прогон-1 нашёл 2 dup (Q50/Q54) + слабый Q55-B, прогон-1 же подтвердил Q49-D/Q52-A/6 удлинений ложными; фиксы внесены по рекомендации reviewer; BSM=PASS ×8, distinct=PASS ×8
+- **СТАТУС ФАЙЛА:** контент 56/56 чист. НЕ FINAL: остаётся file-level POS de-cycle (CORRECT_POSITION_SEQUENCE=56, строгий A→B→C→D цикл угадывается) — следующий тик = чистая перестановка label/order по всем 56 блокам, затем file-gate PASS и FINAL=✅
 
 ---
 
