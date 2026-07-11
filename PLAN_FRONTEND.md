@@ -740,3 +740,24 @@ Dirty changes created by loop: 0
 - **Reset завершён** (§2 done-условие): registry+matrix существуют, все surfaces/production
   = RECHECK/TODO, 0 carried-forward. **Следующий тик:** worst-first — либо `error.html`-макет
   (missing surface, дерево чисто), либо B_MOCKUP_RECHECK независимой поверхности.
+
+### 2026-07-11 — R0.2: MOCKUP `error.html` создан (missing surface §7.2)
+
+- **Worst-first выбор:** error — единственная поверхность БЕЗ макета (§7.2 missing surface);
+  прод `error.html` НЕ в параллельном WIP → задача независима, не заблокирована.
+- **Создан `design/mockups/error.html`** по контракту прод-`error.html`: 5 состояний
+  (400/401/403/404/500) через switcher + `?code=`-param, детерминированно, без backend.
+  Композиция: editorial `error-code` (крупный serif, декор aria-hidden) + `error-title`
+  (serif) + `error-body` (проза) + `error-details` (dev-мета: путь/статус/причина/время) +
+  `error-actions` (На главную/Аналитика/Настроить). **App-shell main+рельс** «куда пойти»
+  (edge-to-edge `.wrap` + `.error-grid`, брейк 1080px) — исполняет мандат полной ширины.
+  Канонический хром (skip-link/site-head/mobile-menu/theme-toggle) переиспользован из shell.
+- **QA-гейт §9:** detector exit 0; **AA обе темы** — все текст-пары ≥4.5 (title 15.55,
+  body 7.77, eyebrow 5.75, btn-primary 6.01, rail-hint ink-3/surface 5.31 light; dark выше
+  7.18–10.66); 0 em-dash; reduced-motion fail-safe (`.anim` opacity 1 дефолт); a11y
+  (h1#error-heading aria-labelledby, mock-switch aria-pressed, mobile aria-expanded/controls,
+  focus-visible ring, skip-link→main). Full-width — **структурно** (тот же паттерн, что и
+  верифицированные экраны); живой screenshot отложен (capture флапает) на parity-фазу.
+- **registry+matrix обновлены:** error phase A_DISCOVER→B_MOCKUP_RECHECK, gap закрыт.
+- **Следующий тик:** worst-first — B_MOCKUP_RECHECK независимой поверхности (session-summary
+  — не в WIP) ИЛИ D_PORT_MAPPING error (прод error.html чист → можно готовить перенос).

@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ошибка · макет Instrument</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    /* ===== Reset / основа (общий язык Instrument) ========================== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; min-height: 100dvh; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); font-family: var(--font-ui); font-size: var(--fs-base); line-height: var(--lh-normal); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    a { color: var(--signal-ink); }
+    code, kbd { font-family: var(--font-mono); }
+    [hidden] { display: none !important; }
+    .wrap { width: 100%; padding-inline: var(--gutter); }
+    .skip-link { position: absolute; left: var(--s-4); top: -4rem; background: var(--signal-strong); color: var(--signal-on); padding: var(--s-2) var(--s-4); border-radius: var(--r-sm); z-index: 60; transition: top var(--dur-1) var(--ease-out); }
+    .skip-link:focus { top: var(--s-4); }
+    :where(a, button, input, select, summary):focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; border-radius: var(--r-sm); }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+    /* ===== Макет-лейбл ==================================================== */
+    .mock-bar { border-bottom: 1px dashed var(--line-strong); background: var(--surface); }
+    .mock-bar__inner { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; padding-block: var(--s-2); }
+    .mock-tag { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); color: var(--ink-3); }
+    .mock-switch { display: flex; gap: var(--s-1); margin-left: auto; flex-wrap: wrap; }
+    .mock-switch button { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-2); background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 2px var(--s-2); cursor: pointer; }
+    .mock-switch button[aria-pressed="true"] { color: var(--signal-ink); border-color: var(--signal-edge); background: var(--signal-wash); }
+
+    /* ===== Шапка (канонический хром) ===================================== */
+    .site-head { position: sticky; top: 0; z-index: 40; border-bottom: 1px solid var(--line); background: var(--paper); }
+    .site-head__inner { display: flex; align-items: center; gap: var(--s-4); padding-block: var(--s-4); }
+    .brand { display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--font-mono); font-weight: var(--fw-semi); font-size: var(--fs-sm); letter-spacing: var(--track-mono); color: var(--ink); text-decoration: none; margin-right: auto; }
+    .brand-mark { width: 0.9rem; height: 0.9rem; border-radius: 3px; background: var(--signal); box-shadow: inset 0 0 0 3px var(--paper), 0 0 0 1px var(--signal); }
+    .brand > span:last-child { color: var(--ink-3); }
+    .site-nav { display: flex; gap: var(--s-1); }
+    .site-nav a { font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); text-decoration: none; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); transition: color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out); }
+    .site-nav a:hover { color: var(--ink); background: var(--surface); }
+    .head-tools { display: flex; align-items: center; gap: var(--s-2); }
+    .theme-toggle { display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pill); padding: var(--s-2) var(--s-3); cursor: pointer; transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+    .theme-toggle:hover { border-color: var(--line-strong); color: var(--ink); }
+    .icon-btn { display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); cursor: pointer; transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+    .icon-btn:hover { border-color: var(--line-strong); color: var(--ink); }
+    .icon-btn svg { width: 1.15rem; height: 1.15rem; }
+    .nav-menu-btn { display: none; }
+    .mobile-menu { display: none; border-bottom: 1px solid var(--line); background: var(--surface); }
+    .mobile-menu[data-open="true"] { display: block; }
+    .mobile-menu nav { display: flex; flex-direction: column; padding-block: var(--s-2); }
+    .mobile-menu a { font-size: var(--fs-base); font-weight: var(--fw-medium); color: var(--ink); text-decoration: none; padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
+    .mobile-menu a:last-child { border-bottom: 0; }
+
+    /* ===== Main / app-shell (полная ширина: main + рельс) ================= */
+    main { flex: 1 0 auto; }
+    .error-wrap { padding-block: var(--s-8) var(--s-9); }
+    .error-grid { display: grid; gap: var(--s-7); }
+    @media (min-width: 1080px) {
+      .error-grid { grid-template-columns: minmax(0, 1fr) 21rem; align-items: start; }
+      .error-rail { position: sticky; top: calc(var(--s-8) + var(--s-5)); }
+    }
+
+    /* ===== Композиция ошибки ============================================= */
+    .error-eyebrow { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); text-transform: lowercase; color: var(--ink-3); margin: 0 0 var(--s-4); }
+    .error-code { font-family: var(--font-hero); font-weight: var(--fw-medium); font-size: clamp(4rem, 2rem + 12vw, 8.5rem); line-height: 0.95; letter-spacing: var(--track-hero); color: var(--line-strong); margin: 0 0 var(--s-4); }
+    .error-title { font-family: var(--font-hero); font-weight: var(--fw-medium); font-size: var(--fs-hero); line-height: var(--lh-hero); letter-spacing: var(--track-hero); color: var(--ink); margin: 0 0 var(--s-4); max-width: 20ch; text-wrap: balance; }
+    .error-body { color: var(--ink-2); font-size: var(--fs-md); line-height: var(--lh-normal); margin: 0 0 var(--s-6); max-width: var(--measure); }
+
+    .error-details { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); margin: 0 0 var(--s-6); max-width: 46rem; }
+    .error-details summary { font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); padding: var(--s-3) var(--s-4); cursor: pointer; }
+    .error-details[open] summary { border-bottom: 1px solid var(--line); }
+    .error-meta { display: grid; grid-template-columns: max-content 1fr; gap: var(--s-2) var(--s-5); margin: 0; padding: var(--s-4); }
+    .error-meta dt { font-size: var(--fs-xs); color: var(--ink-3); font-family: var(--font-mono); letter-spacing: var(--track-mono); }
+    .error-meta dd { margin: 0; font-size: var(--fs-sm); color: var(--ink); }
+    .error-meta dd code { font-size: var(--fs-xs); background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 1px var(--s-2); }
+
+    .error-actions { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2); font-family: var(--font-ui); font-size: var(--fs-base); font-weight: var(--fw-semi); border-radius: var(--r-md); padding: var(--s-3) var(--s-6); cursor: pointer; text-decoration: none; border: 1px solid transparent; transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out); }
+    .btn-primary { background: var(--signal-strong); color: var(--signal-on); box-shadow: var(--shadow-sm); }
+    .btn-primary:hover { background: var(--signal-ink); }
+    .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+    .btn-ghost:hover { border-color: var(--ink-3); }
+
+    /* ===== Рельс «что дальше» ============================================ */
+    .rail-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-5); }
+    .rail-title { font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-semi); letter-spacing: var(--track-tight); color: var(--ink); margin: 0 0 var(--s-4); }
+    .rail-links { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+    .rail-links li + li { border-top: 1px solid var(--line); }
+    .rail-links a { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) 0; color: var(--ink); text-decoration: none; font-size: var(--fs-sm); font-weight: var(--fw-medium); }
+    .rail-links a:hover { color: var(--signal-ink); }
+    .rail-links svg { width: 1.05rem; height: 1.05rem; color: var(--ink-3); flex: none; }
+    .rail-hint { margin: var(--s-4) 0 0; font-size: var(--fs-xs); color: var(--ink-3); line-height: var(--lh-snug); }
+
+    /* ===== Motion (fail-safe reduced-motion) ============================= */
+    .anim { opacity: 1; }
+    @media (prefers-reduced-motion: no-preference) {
+      .anim { opacity: 0; animation: rise var(--dur-3) var(--ease-out) forwards; }
+      @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    }
+
+    /* ===== Адаптив шапки ================================================= */
+    @media (max-width: 720px) {
+      .site-nav { display: none; }
+      .nav-menu-btn { display: inline-grid; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Перейти к сообщению об ошибке</a>
+
+  <div class="mock-bar">
+    <div class="wrap mock-bar__inner">
+      <span class="mock-tag">макет · экран ошибки (400 · 401 · 403 · 404 · 500)</span>
+      <div class="mock-switch" role="group" aria-label="Переключатель состояния ошибки">
+        <button type="button" data-code="400" aria-pressed="false">400</button>
+        <button type="button" data-code="401" aria-pressed="false">401</button>
+        <button type="button" data-code="403" aria-pressed="false">403</button>
+        <button type="button" data-code="404" aria-pressed="true">404</button>
+        <button type="button" data-code="500" aria-pressed="false">500</button>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-head">
+    <div class="wrap site-head__inner">
+      <a class="brand" href="#" aria-label="собес/трек, на главную">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span><b>собес</b>/трек</span>
+      </a>
+      <nav class="site-nav" aria-label="Основная навигация">
+        <a href="#">Фокус</a>
+        <a href="#">Аналитика</a>
+        <a href="#">Настройки</a>
+      </nav>
+      <div class="head-tools">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Тема оформления: авто">
+          <span class="tt-glyph" id="theme-glyph" aria-hidden="true">◐</span>
+          <span class="tt-word" id="theme-word">Авто</span>
+        </button>
+        <button class="icon-btn nav-menu-btn" id="nav-menu-btn" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Меню">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="mobile-menu" id="mobile-menu" data-open="false">
+    <div class="wrap">
+      <nav aria-label="Мобильная навигация">
+        <a href="#">Фокус</a>
+        <a href="#">Аналитика</a>
+        <a href="#">Настройки</a>
+      </nav>
+    </div>
+  </div>
+
+  <main id="main-content" tabindex="-1">
+    <div class="wrap error-wrap">
+      <div class="error-grid">
+        <section class="error-main" aria-labelledby="error-heading">
+          <p class="error-eyebrow" aria-hidden="true">ошибка</p>
+          <div class="error-code anim" id="error-code" aria-hidden="true">404</div>
+          <h1 id="error-heading" class="error-title anim">Такой страницы нет</h1>
+          <p class="error-body anim" id="error-body">Возможно, ссылка устарела или ты свернул не туда. Загляни на главную и продолжи тренировку.</p>
+
+          <details class="error-details">
+            <summary>Подробности для разработчика</summary>
+            <dl class="error-meta">
+              <dt>Путь</dt><dd><code>/training/17</code></dd>
+              <dt>HTTP-статус</dt><dd id="error-meta-status">404</dd>
+              <dt>Причина</dt><dd id="error-meta-reason">Not Found</dd>
+              <dt>Время</dt><dd>2026-07-11 21:57:04</dd>
+            </dl>
+          </details>
+
+          <nav class="error-actions" aria-label="Что дальше">
+            <a href="#" class="btn btn-primary">На главную →</a>
+            <a href="#" class="btn btn-ghost">Аналитика</a>
+            <a href="#" class="btn btn-ghost">Настроить сессию</a>
+          </nav>
+        </section>
+
+        <aside class="error-rail" aria-label="Что дальше">
+          <div class="rail-card">
+            <p class="rail-title">Куда пойти</p>
+            <ul class="rail-links">
+              <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg> Продолжить тренировку</a></li>
+              <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg> Посмотреть аналитику</a></li>
+              <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Настроить сессию</a></li>
+            </ul>
+            <p class="rail-hint">Если ошибка повторяется на каждом шаге, обнови страницу целиком: часто помогает сброс устаревшего токена формы.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Переключатель состояния ошибки (макет: демонстрирует 5 статусов на одном экране).
+    (function () {
+      var STATES = {
+        '400': { title: 'Некорректный запрос', reason: 'Bad Request',
+          body: 'Запрос составлен неверно. Проверь введённые данные и попробуй ещё раз.' },
+        '401': { title: 'Требуется авторизация', reason: 'Unauthorized',
+          body: 'Нужно представиться, чтобы продолжить.' },
+        '403': { title: 'Доступ запрещён', reason: 'Forbidden',
+          body: 'Похоже, защитный токен формы устарел. Так бывает, если страница была открыта долго, открыта в нескольких вкладках или сессия сбросилась. Обнови страницу и повтори действие.' },
+        '404': { title: 'Такой страницы нет', reason: 'Not Found',
+          body: 'Возможно, ссылка устарела или ты свернул не туда. Загляни на главную и продолжи тренировку.' },
+        '500': { title: 'Внутренняя ошибка сервера', reason: 'Internal Server Error',
+          body: 'Запрос не дошёл до результата. Попробуй обновить страницу или вернуться на главную. Если повторится, посмотри в логи приложения.' }
+      };
+      var codeEl = document.getElementById('error-code');
+      var titleEl = document.getElementById('error-heading');
+      var bodyEl = document.getElementById('error-body');
+      var statusEl = document.getElementById('error-meta-status');
+      var reasonEl = document.getElementById('error-meta-reason');
+      var btns = document.querySelectorAll('.mock-switch button');
+      function apply(code) {
+        var s = STATES[code]; if (!s) return;
+        codeEl.textContent = code;
+        titleEl.textContent = s.title;
+        bodyEl.textContent = s.body;
+        statusEl.textContent = code;
+        reasonEl.textContent = s.reason;
+        btns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.code === code)); });
+      }
+      btns.forEach(function (b) { b.addEventListener('click', function () { apply(b.dataset.code); }); });
+      var initial = new URLSearchParams(location.search).get('code');
+      if (initial && STATES[initial]) apply(initial);
+    })();
+
+    // Тема (макет): циклический тогл авто → светлая → тёмная на data-theme.
+    (function () {
+      var root = document.documentElement, order = ['auto', 'light', 'dark'], i = 0;
+      var glyph = document.getElementById('theme-glyph'), word = document.getElementById('theme-word');
+      var G = { auto: '◐', light: '☀', dark: '☾' }, W = { auto: 'Авто', light: 'Светлая', dark: 'Тёмная' };
+      document.getElementById('theme-toggle').addEventListener('click', function () {
+        i = (i + 1) % order.length; var t = order[i];
+        if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t);
+        glyph.textContent = G[t]; word.textContent = W[t];
+        this.setAttribute('aria-label', 'Тема оформления: ' + W[t].toLowerCase());
+      });
+    })();
+
+    // Мобильное меню.
+    (function () {
+      var btn = document.getElementById('nav-menu-btn'), menu = document.getElementById('mobile-menu');
+      btn.addEventListener('click', function () {
+        var open = menu.getAttribute('data-open') === 'true';
+        menu.setAttribute('data-open', String(!open));
+        btn.setAttribute('aria-expanded', String(!open));
+      });
+    })();
+  </script>
+</body>
+</html>

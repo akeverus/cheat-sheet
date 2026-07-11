@@ -27,7 +27,7 @@
 | session-summary | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
 | settings | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
 | stats | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
-| error | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | A_DISCOVER (макета нет) |
+| error | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (макет R0.2) |
 
 ## Дименсиональные оси (кросс-поверхностные) — статус
 
@@ -40,9 +40,13 @@
 | no-js | TODO | result.html живой fallback (RECHECK); прочие — TODO. |
 | print | TODO | не инвентаризован. |
 
+`*` full-width для error верифицирован **структурно** (edge-to-edge `.wrap` + `.error-grid`
+main+рельс, брейк 1080px = проверенный паттерн других экранов), не живым screenshot
+(capture в этой сессии флапал) — переподтвердить на bootRun при parity-фазе.
+
 ## Пробелы покрытия (из registry.gaps_found)
 
-- **error.html — нет макета** (нужен: 404/500/503, обе темы, edge-to-edge). ← worst-first кандидат §7.2 (missing surface).
+- ~~error.html — нет макета~~ **ЗАКРЫТ R0.2** (макет с 5 состояниями создан).
 - print-CSS не проверен ни на одной странице.
 - zoom 200% / DPR1 не покрыты.
 - toast/success-подтверждения не инвентаризованы отдельно от inline-alert.
