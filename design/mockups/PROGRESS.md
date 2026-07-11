@@ -41,7 +41,7 @@ empty/done = **(b)** app-shell (при развороте); focus-order = **(c)*
 | **Экран вопроса (эталон)** | `focus-question.html` | 🟢 draft v3 · detector✅ · QA✅ | **Полноширинный app-shell (it.11):** `.wrap` edge-to-edge + `.focus-grid` (main + правый рельс с сессией/хоткеями) для active/result. 4 состояния + обе темы. Снова на аппруве языка |
 | **Результат/фидбек** | `result.html` | 🟢 **Фаза B 1/5 · detector✅ · AA обе темы✅ · вьюпорты✅** | **ГОТОВ (it.17).** Полноширинный app-shell (main + рельс «разбор глубже»+действия). Оба варианта (верно/неверно). Осталось глобальное: ultra-wide мера option-строк (#4, общее с эталоном) |
 | **Итоги сессии** | `session-summary.html` | 🟢 **Фаза B 2/5 · detector✅ · AA обе темы✅ · вьюпорты✅** | **ГОТОВ (it.18).** Полноширинный app-shell: main (редакц. вердикт + stat-плитки + таблица по темам + ошибки) + рельс (действия + рекомендации). Оба тона (сильная/слабая). Без hero-цифры (ban) |
-| Настройки | `settings.html` | ⬜ | — |
+| **Настройки** | `settings.html` | 🟢 **Фаза B 3/5 · detector✅ · AA обе темы✅ · вьюпорты✅** | **ГОТОВ (it.19).** Полноширинный app-shell: рельс-вкладки (Сессия/Оформление/Данные, WAI-ARIA) + панель. Оформление = сетка из 7 setting-карт (все оси персонализации). Сессия (фильтры+запуск+стрик), Данные (экспорт+опасная зона) |
 | Статистика | `stats.html` | ⬜ | — |
 | Shell/шапка | `shell.html` | ⬜ | — |
 
@@ -135,6 +135,31 @@ empty/done = **(b)** app-shell (при развороте); focus-order = **(c)*
 
 ## Журнал
 
+- **it.19** — **ФАЗА B, экран 3/5: `settings.html` собран с нуля** + **системный AA-фикс
+  primary-кнопки на 4 файлах.** По контракту (продовый settings.html): tablist
+  (Сессия/Оформление/Данные), панели `panel-*`. Полноширинный app-shell: **рельс-вкладки**
+  (вертикальные на широких, горизонтальный скролл ≤1079) + **панель**. **Оформление** =
+  сетка `set-grid` (auto-fit minmax 20rem) из **7 setting-карт** = все реальные оси
+  персонализации: Дизайн / Тема / Размер шрифта (степпер A−A+) / Раскладка / Ширина чтения /
+  Плотность / Движение (продакшн имеет 7, не 6 — включил полный набор для портируемости).
+  **Сессия** = 2-кол launcher (фильтры: группа/тема/флаги-switch/порядок + запуск:
+  режим/count/кнопка + стрик). **Данные** = экспорт JSON/CSV + опасная зона (полная
+  error-рамка+wash, НЕ side-stripe). WAI-ARIA tabs (roving tabindex + стрелки/Home/End) и
+  seg-control radiogroups (roving + стрелки) на JS. **QA (§3):** detector exit 0. **AA:**
+  свип 3 панелей обе темы нашёл 1 провал — **`.btn-primary` текст (`signal-on` на `--signal`)
+  = 4.40** в светлой (near-white на teal 0.55L). **Системный фикс:** фон primary → `--signal-strong`
+  (темнее light / светлее dark) → **6.01 light / 10.66 dark**. Применён на ВСЕ 4 файла
+  (`settings` + `result` + `session-summary` + эталон `focus-question`) — общий компонент,
+  когерентность дизайн-системы; hover → `--signal-ink`. Прочее fails=[] (danger-кнопка 4.95,
+  seg-checked 6.93/8.96). **Лейаут §4:** 375/768/1280/2560 — overflow 0, chrome span=vw,
+  gutter симметр. (20→56px), брейк 1080px (рельс vertical↔horizontal), set-grid тянется на
+  всю панель (2560: 6 кол×332px, void 0; 7 карт нечётно → штатный остаток последнего ряда,
+  не void); launcher 2-кол ≥720px; сегменты не переполняют карту. reduced-motion fail-safe.
+  **Маппинг DOM-хуков:** `role=tablist` `tab-session/appearance/data` + `panel-*`; seg-control
+  `role=radiogroup` (design/theme/layout/reading-width/density/motion-pref) + font-stepper;
+  `#filters-form` (group/topic/important/onlyWrong/shuffle/weakTopics/ordered), `#session-form`
+  (mode/count), reset-options (data-confirm), export (X-Admin-Token fetch). Дальше — экран
+  4/5 stats (дашборд, Chart.js-зоны заглушками).
 - **it.18** — **ФАЗА B, экран 2/5: `session-summary.html` собран с нуля.** Данные из
   контракта (`summary.*`): accuracy/correctCount/wrongCount/totalQuestions/formattedDuration/
   mode/topicResults/mistakes/recommendations. **Ключевое решение:** `DESIGN.md` банит

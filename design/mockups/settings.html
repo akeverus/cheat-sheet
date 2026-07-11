@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Настройки · макет Instrument</title>
+
+  <!-- Шрифты: Newsreader (проза), Space Grotesk (UI), JetBrains Mono (числа/лейблы) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    /* ===== Reset / основа (общий язык Instrument) ========================== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; background: var(--paper); color: var(--ink);
+      font-family: var(--font-ui); font-size: var(--fs-base); line-height: var(--lh-normal);
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    }
+    a { color: var(--signal-ink); }
+    code, kbd, pre { font-family: var(--font-mono); }
+    [hidden] { display: none !important; }
+    .wrap { width: 100%; padding-inline: var(--gutter); }
+
+    .skip-link {
+      position: absolute; left: var(--s-4); top: -4rem;
+      background: var(--signal); color: var(--signal-on);
+      padding: var(--s-2) var(--s-4); border-radius: var(--r-sm);
+      z-index: 30; transition: top var(--dur-1) var(--ease-out);
+    }
+    .skip-link:focus { top: var(--s-4); }
+    :where(a, button, input, select, summary):focus-visible {
+      outline: 2px solid var(--signal); outline-offset: 2px; border-radius: var(--r-sm);
+    }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+    /* ===== Макет-каркас (слим-лейбл) ====================================== */
+    .mock-bar { border-bottom: 1px dashed var(--line-strong); background: var(--surface); }
+    .mock-bar__inner { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; padding-block: var(--s-2); }
+    .mock-tag { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); color: var(--ink-3); }
+
+    /* ===== Шапка ========================================================== */
+    .site-head { border-bottom: 1px solid var(--line); background: var(--paper); }
+    .site-head__inner { display: flex; align-items: center; gap: var(--s-4); padding-block: var(--s-4); }
+    .brand { display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--font-mono); font-weight: var(--fw-semi); font-size: var(--fs-sm); letter-spacing: var(--track-mono); color: var(--ink); text-decoration: none; margin-right: auto; }
+    .brand-mark { width: 0.85rem; height: 0.85rem; border-radius: 3px; background: var(--signal); box-shadow: inset 0 0 0 3px var(--paper), 0 0 0 1px var(--signal); }
+    .brand span { color: var(--ink-3); }
+    .site-nav { display: flex; gap: var(--s-1); }
+    .site-nav a { font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); text-decoration: none; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); transition: color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out); }
+    .site-nav a:hover { color: var(--ink); background: var(--surface); }
+    .site-nav a[aria-current="page"] { color: var(--signal-ink); background: var(--signal-wash); }
+    .nav-menu-btn { display: none; }
+    .theme-toggle { display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pill); padding: var(--s-2) var(--s-3); cursor: pointer; transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+    .theme-toggle:hover { border-color: var(--line-strong); color: var(--ink); }
+    .theme-toggle .tt-glyph { font-size: 1em; line-height: 1; }
+
+    /* ===== Раскладка настроек: рельс-вкладки + панель ===================== */
+    .settings { padding: var(--s-7) 0 var(--s-9); }
+    .settings-head { margin: 0 0 var(--s-6); }
+    .settings-kicker { font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: var(--fw-medium); letter-spacing: var(--track-mono); color: var(--ink-3); margin: 0 0 var(--s-2); }
+    .settings-title { font-family: var(--font-hero); font-size: var(--fs-xl); font-weight: var(--fw-medium); line-height: var(--lh-hero); letter-spacing: var(--track-hero); color: var(--ink); margin: 0; }
+
+    .settings-grid { display: grid; gap: var(--s-6); grid-template-columns: 1fr; }
+    .settings-rail { min-width: 0; }
+    .settings-panels { min-width: 0; }
+    @media (min-width: 1080px) {
+      .settings-grid { grid-template-columns: clamp(14rem, 18vw, 20rem) minmax(0, 1fr); gap: var(--s-8); align-items: start; }
+      .settings-rail { position: sticky; top: var(--s-5); }
+    }
+
+    /* Вкладки: вертикальные на широких, горизонтальный скролл на узких */
+    .settings-tabs { display: flex; flex-direction: column; gap: var(--s-1); }
+    .settings-tab {
+      font-family: var(--font-ui); font-size: var(--fs-base); font-weight: var(--fw-medium);
+      text-align: left; color: var(--ink-2); background: none;
+      border: 1px solid transparent; border-radius: var(--r-md);
+      padding: var(--s-3) var(--s-4); cursor: pointer; white-space: nowrap;
+      display: flex; align-items: center; gap: var(--s-3);
+      transition: color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+    }
+    .settings-tab svg { width: 1.1rem; height: 1.1rem; color: var(--ink-3); flex: none; }
+    .settings-tab:hover { color: var(--ink); background: var(--surface); }
+    .settings-tab[aria-selected="true"] { color: var(--signal-ink); background: var(--signal-wash); border-color: var(--signal-edge); }
+    .settings-tab[aria-selected="true"] svg { color: var(--signal-ink); }
+
+    .settings-panel:not(.is-active) { display: none; }
+    .settings-panel-title { font-family: var(--font-ui); font-size: var(--fs-lg); font-weight: var(--fw-semi); letter-spacing: var(--track-tight); color: var(--ink); margin: 0 0 var(--s-2); }
+    .settings-panel-lead { color: var(--ink-2); margin: 0 0 var(--s-6); max-width: 60ch; }
+
+    /* ===== Оформление: сетка setting-карт (наполняет ширину) ============== */
+    .set-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: var(--s-4); }
+    .set-card { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-5); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); }
+    .set-card-head { display: flex; flex-direction: column; gap: var(--s-1); }
+    .set-card-label { font-family: var(--font-ui); font-size: var(--fs-base); font-weight: var(--fw-semi); color: var(--ink); }
+    .set-card-hint { font-size: var(--fs-sm); color: var(--ink-2); line-height: var(--lh-snug); }
+    .set-card-control { margin-top: auto; }
+
+    /* Сегмент-контрол */
+    .seg-control { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); }
+    .seg-btn { font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); background: none; border: 0; border-radius: var(--r-sm); padding: var(--s-2) var(--s-4); cursor: pointer; transition: color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out); }
+    .seg-btn:hover { color: var(--ink); }
+    .seg-btn[aria-checked="true"] { color: var(--signal-ink); background: var(--paper); box-shadow: inset 0 0 0 1px var(--signal-edge), var(--shadow-sm); }
+
+    /* Степпер размера шрифта */
+    .font-stepper { display: inline-flex; align-items: center; gap: var(--s-2); }
+    .step-btn { font-family: var(--font-ui); font-weight: var(--fw-semi); color: var(--ink); background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--r-sm); width: 2.25rem; height: 2.25rem; cursor: pointer; transition: border-color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out); }
+    .step-btn:hover { border-color: var(--ink-3); background: var(--surface); }
+    .step-value { font-family: var(--font-mono); font-size: var(--fs-sm); font-weight: var(--fw-semi); color: var(--ink); min-width: 3.5rem; text-align: center; }
+    .step-reset { font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); background: none; border: 0; border-radius: var(--r-sm); padding: var(--s-1) var(--s-2); cursor: pointer; margin-left: var(--s-1); }
+    .step-reset:hover { color: var(--signal-ink); text-decoration: underline; }
+
+    /* ===== Сессия: две колонки фильтров и запуска ======================== */
+    .launcher { display: grid; grid-template-columns: 1fr; gap: var(--s-5); }
+    @media (min-width: 720px) { .launcher { grid-template-columns: 1fr 1fr; align-items: start; } }
+    .launcher-col { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-5); }
+    .launcher-col h3 { font-family: var(--font-ui); font-size: var(--fs-md); font-weight: var(--fw-semi); color: var(--ink); margin: 0 0 var(--s-4); }
+
+    .field { display: flex; flex-direction: column; gap: var(--s-2); margin-bottom: var(--s-4); }
+    .field-label { font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); }
+    .field select, .field input[type="number"] {
+      font-family: var(--font-ui); font-size: var(--fs-base); color: var(--ink);
+      background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--r-md);
+      padding: var(--s-3) var(--s-4); width: 100%; appearance: none;
+    }
+    .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23777' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right var(--s-3) center; padding-right: var(--s-8); }
+    .field select:hover, .field input:hover { border-color: var(--ink-3); }
+
+    /* Переключатели-флаги */
+    .toggles { display: flex; flex-direction: column; gap: var(--s-1); margin-bottom: var(--s-4); }
+    .toggle { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); padding: var(--s-2) 0; cursor: pointer; }
+    .toggle-text { font-size: var(--fs-sm); color: var(--ink); }
+    .toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .switch { flex: none; width: 2.4rem; height: 1.4rem; border-radius: var(--r-pill); background: var(--surface-2); border: 1px solid var(--line-strong); position: relative; transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out); }
+    .switch::after { content: ""; position: absolute; top: 1px; left: 1px; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: var(--paper); box-shadow: var(--shadow-sm); transition: transform var(--dur-2) var(--ease-out); }
+    .toggle input:checked + .switch { background: var(--signal); border-color: var(--signal); }
+    .toggle input:checked + .switch::after { transform: translateX(1rem); }
+    .toggle input:focus-visible + .switch { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+    .control-hint { font-size: var(--fs-sm); color: var(--ink-2); margin: 0 0 var(--s-4); line-height: var(--lh-snug); }
+    .btn { font-family: var(--font-ui); font-size: var(--fs-base); font-weight: var(--fw-semi); border-radius: var(--r-md); padding: var(--s-3) var(--s-6); cursor: pointer; border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2); transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+    .btn svg { width: 1.05rem; height: 1.05rem; }
+    /* Фон primary — signal-strong (AA: near-white/near-dark текст на заливке ≥4.5
+       в обеих темах; чистый --signal давал 4.40 в светлой). */
+    .btn-primary { background: var(--signal-strong); color: var(--signal-on); box-shadow: var(--shadow-sm); width: 100%; }
+    .btn-primary:hover { background: var(--signal-ink); }
+    .btn-primary:active { transform: translateY(1px); }
+    .btn-secondary { background: var(--paper); color: var(--ink); border-color: var(--line-strong); }
+    .btn-secondary:hover { border-color: var(--ink-3); background: var(--surface); }
+    .btn-danger { background: var(--error); color: var(--error-on); }
+    .btn-danger:hover { background: var(--error-ink); }
+
+    /* Стрик-полоса */
+    .streak { margin-top: var(--s-5); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-5); }
+    .streak-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-3); }
+    .streak-label { display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--ink-2); }
+    .streak-label .spark { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--spark); }
+    .streak-count { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--ink-2); }
+    .streak-count b { color: var(--ink); font-weight: var(--fw-semi); }
+    .streak-track { height: 6px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
+    .streak-fill { height: 100%; border-radius: inherit; background: var(--spark); }
+
+    /* ===== Данные: экспорт + опасная зона =============================== */
+    .data-grid { display: grid; grid-template-columns: 1fr; gap: var(--s-4); }
+    @media (min-width: 860px) { .data-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+    .data-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-5); }
+    .data-card h3 { font-family: var(--font-ui); font-size: var(--fs-md); font-weight: var(--fw-semi); color: var(--ink); margin: 0 0 var(--s-2); }
+    .data-card p { color: var(--ink-2); font-size: var(--fs-sm); margin: 0 0 var(--s-4); line-height: var(--lh-snug); }
+    .data-actions { display: flex; gap: var(--s-3); flex-wrap: wrap; }
+    /* Опасная зона — полная error-рамка + wash (НЕ side-stripe), необратимое отделено */
+    .data-card.is-danger { border-color: var(--error); background: var(--error-wash); }
+    .data-card.is-danger h3 { color: var(--error-ink); }
+
+    /* ===== Motion (emil) ================================================== */
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .anim { opacity: 1; }
+    @media (prefers-reduced-motion: no-preference) {
+      .anim { animation: rise var(--dur-3) var(--ease-out) both; }
+      .stagger > * { animation: rise var(--dur-3) var(--ease-out) both; }
+      .stagger > *:nth-child(1) { animation-delay: 40ms; }
+      .stagger > *:nth-child(2) { animation-delay: 80ms; }
+      .stagger > *:nth-child(3) { animation-delay: 120ms; }
+      .stagger > *:nth-child(4) { animation-delay: 160ms; }
+      .stagger > *:nth-child(5) { animation-delay: 200ms; }
+      .stagger > *:nth-child(6) { animation-delay: 240ms; }
+      .stagger > *:nth-child(7) { animation-delay: 280ms; }
+    }
+
+    /* ===== Мобильная / планшетная адаптация ============================== */
+    @media (max-width: 640px) {
+      .site-head__inner { gap: var(--s-3); }
+      .site-nav { display: none; }
+      .nav-menu-btn { display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); cursor: pointer; }
+      .nav-menu-btn svg { width: 1.15rem; height: 1.15rem; }
+      .theme-toggle .tt-word { display: none; }
+      .theme-toggle { padding: var(--s-2); width: 2.25rem; height: 2.25rem; justify-content: center; }
+    }
+    /* Одноколоночный режим: вкладки горизонтальны, скроллятся */
+    @media (max-width: 1079px) {
+      .settings-tabs { flex-direction: row; overflow-x: auto; gap: var(--s-2); padding-bottom: var(--s-2); border-bottom: 1px solid var(--line); }
+      .settings-tab { border: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Перейти к настройкам</a>
+
+  <div class="mock-bar">
+    <div class="wrap mock-bar__inner">
+      <span class="mock-tag">макет · экран настроек · активна вкладка «Оформление»</span>
+    </div>
+  </div>
+
+  <header class="site-head">
+    <div class="wrap site-head__inner">
+      <a class="brand" href="#" aria-label="собес/трек, на главную">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span><b>собес</b>/трек</span>
+      </a>
+      <nav class="site-nav" aria-label="Основная навигация">
+        <a href="#">Фокус</a>
+        <a href="#">Аналитика</a>
+        <a href="#" aria-current="page">Настройки</a>
+      </nav>
+      <button class="nav-menu-btn" type="button" aria-label="Меню">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Тема оформления: авто">
+        <span class="tt-glyph" id="theme-glyph" aria-hidden="true">◐</span>
+        <span class="tt-word" id="theme-word">Авто</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1" class="settings">
+    <div class="wrap">
+      <div class="settings-head">
+        <p class="settings-kicker">настройки</p>
+        <h1 class="settings-title">Настройки</h1>
+      </div>
+
+      <div class="settings-grid">
+        <!-- Рельс вкладок -->
+        <aside class="settings-rail">
+          <div class="settings-tabs" role="tablist" aria-label="Разделы настроек" aria-orientation="vertical">
+            <button type="button" class="settings-tab" role="tab" id="tab-session" aria-controls="panel-session" aria-selected="false" tabindex="-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+              Сессия
+            </button>
+            <button type="button" class="settings-tab" role="tab" id="tab-appearance" aria-controls="panel-appearance" aria-selected="true" tabindex="0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
+              Оформление
+            </button>
+            <button type="button" class="settings-tab" role="tab" id="tab-data" aria-controls="panel-data" aria-selected="false" tabindex="-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+              Данные
+            </button>
+          </div>
+        </aside>
+
+        <!-- Панели -->
+        <div class="settings-panels">
+
+          <!-- ===================== СЕССИЯ ===================== -->
+          <section class="settings-panel" role="tabpanel" id="panel-session" aria-labelledby="tab-session" tabindex="0">
+            <h2 class="settings-panel-title">Сессия</h2>
+            <p class="settings-panel-lead">Собери набор вопросов и запусти тренировку. Фильтры сужают выборку, режим задаёт правила.</p>
+
+            <div class="launcher">
+              <div class="launcher-col">
+                <h3>Фильтры</h3>
+                <div class="field">
+                  <label class="field-label" for="f-group">Группа тем</label>
+                  <select id="f-group" name="group">
+                    <option>Все группы</option>
+                    <option selected>Spring</option>
+                    <option>Java Core</option>
+                    <option>Базы данных</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field-label" for="f-topic">Тема</label>
+                  <select id="f-topic" name="topic">
+                    <option selected>Все темы группы</option>
+                    <option>Транзакции</option>
+                    <option>Бины и контекст</option>
+                    <option>AOP и прокси</option>
+                  </select>
+                </div>
+                <div class="toggles">
+                  <label class="toggle"><span class="toggle-text">Только важные</span><input type="checkbox" name="important" value="true"><span class="switch" aria-hidden="true"></span></label>
+                  <label class="toggle"><span class="toggle-text">Только мои ошибки</span><input type="checkbox" name="onlyWrong" value="true"><span class="switch" aria-hidden="true"></span></label>
+                  <label class="toggle"><span class="toggle-text">Перемешать</span><input type="checkbox" name="shuffle" value="true" checked><span class="switch" aria-hidden="true"></span></label>
+                  <label class="toggle"><span class="toggle-text">Слабые темы</span><input type="checkbox" name="weakTopics" value="true"><span class="switch" aria-hidden="true"></span></label>
+                </div>
+                <div class="field">
+                  <label class="field-label" for="f-order">Порядок</label>
+                  <select id="f-order" name="ordered">
+                    <option selected>Учебный: от базы к сложному</option>
+                    <option>Свободный</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="launcher-col">
+                <h3>Запуск</h3>
+                <div class="field">
+                  <label class="field-label" for="s-mode">Режим</label>
+                  <select id="s-mode" name="mode">
+                    <option>Тренировка</option>
+                    <option selected>Экзамен</option>
+                    <option>Марафон</option>
+                    <option>Изучение</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field-label" for="s-count">Сколько вопросов</label>
+                  <input type="number" id="s-count" name="count" min="1" max="200" value="20">
+                </div>
+                <p class="control-hint">Экзамен: без подсказок, разбор в конце. Тренировка: разбор после каждого ответа.</p>
+                <button type="submit" class="btn btn-primary">Начать сессию</button>
+
+                <div class="streak">
+                  <div class="streak-top">
+                    <span class="streak-label"><span class="spark" aria-hidden="true"></span>Ежедневный стрик</span>
+                    <span class="streak-count"><b>5</b> из 10 дней</span>
+                  </div>
+                  <div class="streak-track"><div class="streak-fill" style="width: 50%"></div></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===================== ОФОРМЛЕНИЕ ===================== -->
+          <section class="settings-panel is-active" role="tabpanel" id="panel-appearance" aria-labelledby="tab-appearance" tabindex="0">
+            <h2 class="settings-panel-title">Оформление</h2>
+            <p class="settings-panel-lead">Семь осей персонализации. Изменения применяются сразу и сохраняются на этом устройстве.</p>
+
+            <div class="set-grid stagger">
+              <div class="set-card">
+                <div class="set-card-head">
+                  <span class="set-card-label" id="ax-design">Дизайн</span>
+                  <span class="set-card-hint">Цветовая система и типографика интерфейса.</span>
+                </div>
+                <div class="set-card-control">
+                  <div class="seg-control" role="radiogroup" aria-labelledby="ax-design">
+                    <button type="button" class="seg-btn" role="radio" aria-checked="true">Instrument</button>
+                    <button type="button" class="seg-btn" role="radio" aria-checked="false" tabindex="-1">Редакционный</button>
+                    <button type="button" class="seg-btn" role="radio" aria-checked="false" tabindex="-1">Швейцарский</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="set-card">
+                <div class="set-card-head">
+                  <span class="set-card-label" id="ax-theme">Тема оформления</span>
+                  <span class="set-card-hint">«Авто» следует системной теме устройства.</span>
+                </div>
+                <div class="set-card-control">
+                  <div class="seg-control" role="radiogroup" aria-labelledby="ax-theme">
+                    <button type="button" class="seg-btn" role="radio" aria-checked="true">Авто</button>
+                    <button type="button" class="seg-btn" role="radio" aria-checked="false" tabindex="-1">Светлая</button>
+                    <button type="button" class="seg-btn" role="radio" aria-checked="false" tabindex="-1">Тёмная</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="set-card">
+                <div class="set-card-head">
+                  <span class="set-card-label" id="ax-font">Размер шрифта</span>
+                  <span class="set-card-hint">Масштабирует весь интерфейс.</span>
+                </div>
+                <div class="set-card-control">
+                  <div class="font-stepper" role="group" aria-labelledby="ax-font">
+                    <button type="button" class="step-btn" aria-label="Уменьшить размер шрифта">A−</button>
+                    <span class="step-value" role="status" aria-live="polite">100%</span>
+                    <button type="button" class="step-btn" aria-label="Увеличить размер шрифта">A+</button>
+                    <button type="button" class="step-reset">Сбросить</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="set-card">
+                <div class="set-card-head">
+                  <span class="set-card-label" id="ax-layout">Раскладка</span>
+                  <span class="set-card-hint">Композиция экрана «Фокус».</span>
+                </div>
+                <div class="set-card-control">
+                  <div class="seg-control" role="radiogroup" aria-labelledby="ax-layout">
+                    <button type="button" class="seg-btn" role="radio" aria-checked="true">Поток</button>
+                    <button type="button" class="seg-btn" role="radio" aria-checked="false" tabindex="-1">Две колонки</button>
+                    <button type="button" class="seg-btn" role="radio" aria-checked="false" tabindex="-1">Сетка</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="set-card">
+                <div class="set-card-head">
+                  <span class="set-card-label" id="ax-width">Ширина чтения</span>
+                  <span class="set-card-hint">Длина строки в ответах и пояснениях.</span>
+                </div>
+                <div class="set-card-control">
+                  <div class="seg-control" role="radiogroup" aria-labelledby="ax-width">
+                    <button type="button" class="seg-btn" role="radio" aria-checked="false" tabindex="-1">Узкая</button>
+                    <button type="button" class="seg-btn" role="radio" aria-checked="true">Средняя</button>
+                    <button type="button" class="seg-btn" role="radio" aria-checked="false" tabindex="-1">Широкая</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="set-card">
+                <div class="set-card-head">
+                  <span class="set-card-label" id="ax-density">Плотность</span>
+                  <span class="set-card-hint">Сжатость отступов. Размер текста не меняется.</span>
+                </div>
+                <div class="set-card-control">
+                  <div class="seg-control" role="radiogroup" aria-labelledby="ax-density">
+                    <button type="button" class="seg-btn" role="radio" aria-checked="true">Просторно</button>
+                    <button type="button" class="seg-btn" role="radio" aria-checked="false" tabindex="-1">Компактно</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="set-card">
+                <div class="set-card-head">
+                  <span class="set-card-label" id="ax-motion">Движение</span>
+                  <span class="set-card-hint">«Авто» следует системной настройке «Уменьшить движение».</span>
+                </div>
+                <div class="set-card-control">
+                  <div class="seg-control" role="radiogroup" aria-labelledby="ax-motion">
+                    <button type="button" class="seg-btn" role="radio" aria-checked="true">Авто</button>
+                    <button type="button" class="seg-btn" role="radio" aria-checked="false" tabindex="-1">Включено</button>
+                    <button type="button" class="seg-btn" role="radio" aria-checked="false" tabindex="-1">Выключено</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===================== ДАННЫЕ ===================== -->
+          <section class="settings-panel" role="tabpanel" id="panel-data" aria-labelledby="tab-data" tabindex="0">
+            <h2 class="settings-panel-title">Данные</h2>
+            <p class="settings-panel-lead">Выгрузи прогресс для бэкапа или сбрось банк вариантов ответов.</p>
+
+            <div class="data-grid">
+              <div class="data-card">
+                <h3>Экспорт данных</h3>
+                <p>Прогресс и статистика в машиночитаемом формате.</p>
+                <div class="data-actions">
+                  <button type="button" class="btn btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Экспорт JSON
+                  </button>
+                  <button type="button" class="btn btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Экспорт CSV
+                  </button>
+                </div>
+              </div>
+
+              <div class="data-card is-danger">
+                <h3>Опасная зона</h3>
+                <p>Сброс удалит варианты ответов у всех вопросов. До перезапуска они откроются как флешкарты. Это необратимо.</p>
+                <div class="data-actions">
+                  <button type="button" class="btn btn-danger">Сбросить банк вариантов</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Тема: авто → светлая → тёмная (для ревью макета в обеих темах).
+    (function () {
+      var root = document.documentElement, btn = document.getElementById('theme-toggle'),
+          glyph = document.getElementById('theme-glyph'), word = document.getElementById('theme-word'),
+          modes = [ { name:'Авто', glyph:'◐', attr:null }, { name:'Светлая', glyph:'☀', attr:'light' }, { name:'Тёмная', glyph:'☾', attr:'dark' } ], i = 0;
+      btn.addEventListener('click', function () {
+        i = (i + 1) % modes.length; var m = modes[i];
+        if (m.attr) root.setAttribute('data-theme', m.attr); else root.removeAttribute('data-theme');
+        glyph.textContent = m.glyph; word.textContent = m.name;
+        btn.setAttribute('aria-label', 'Тема оформления: ' + m.name.toLowerCase());
+      });
+    })();
+
+    // Вкладки: выбор + роуминг-tabindex + стрелки (WAI-ARIA tabs).
+    (function () {
+      var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+      var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
+      function select(idx, focus) {
+        tabs.forEach(function (t, i) {
+          var on = i === idx;
+          t.setAttribute('aria-selected', String(on));
+          t.tabIndex = on ? 0 : -1;
+          panels[i].classList.toggle('is-active', on);
+        });
+        if (focus) tabs[idx].focus();
+      }
+      tabs.forEach(function (t, i) {
+        t.addEventListener('click', function () { select(i, false); });
+        t.addEventListener('keydown', function (e) {
+          var n = tabs.length, k = e.key, j = -1;
+          if (k === 'ArrowDown' || k === 'ArrowRight') j = (i + 1) % n;
+          else if (k === 'ArrowUp' || k === 'ArrowLeft') j = (i - 1 + n) % n;
+          else if (k === 'Home') j = 0; else if (k === 'End') j = n - 1;
+          if (j >= 0) { e.preventDefault(); select(j, true); }
+        });
+      });
+    })();
+
+    // Сегмент-контролы: одиночный выбор + стрелки внутри группы.
+    (function () {
+      document.querySelectorAll('.seg-control[role="radiogroup"]').forEach(function (grp) {
+        var radios = Array.prototype.slice.call(grp.querySelectorAll('[role="radio"]'));
+        function pick(idx, focus) {
+          radios.forEach(function (r, i) {
+            var on = i === idx;
+            r.setAttribute('aria-checked', String(on));
+            r.tabIndex = on ? 0 : -1;
+          });
+          if (focus) radios[idx].focus();
+        }
+        radios.forEach(function (r, i) {
+          r.addEventListener('click', function () { pick(i, false); });
+          r.addEventListener('keydown', function (e) {
+            var n = radios.length, k = e.key, j = -1;
+            if (k === 'ArrowRight' || k === 'ArrowDown') j = (i + 1) % n;
+            else if (k === 'ArrowLeft' || k === 'ArrowUp') j = (i - 1 + n) % n;
+            if (j >= 0) { e.preventDefault(); pick(j, true); }
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
