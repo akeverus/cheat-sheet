@@ -292,7 +292,7 @@ Priority =
 
 | # | Сидер | Кат. | Blk | OldTell | State | SCH | TH | QS | STEM | C-FCT | C-CMP | C-SCP | C-UNI | C-FRM | C-SEC | C-RU | W-PLS | W-1ER | W-API | W-FLS | W-DIV | W-CAR | W-FRM | W-SEC | W-RU | PAR | BST | BSM | STAMP | FR | LINK | POS | VAL | FINAL | Notes |
 |--:|---|---|--:|--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
-| 1 | `java-concurrency` | java | 56 | 52 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
+| 1 | `java-concurrency` | java | 56 | 52 | ◐ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | Q1-Q9: 5 BST-tells (Q3/4/6/8/9) fixed, freshness sidecar+review sidecar added; Q10-Q56 TODO |
 | 2 | `design-patterns` | design-patterns | 48 | 48 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 4 | `sql` | databases | 53 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -648,6 +648,18 @@ Priority =
 - Validators:
 - Manual review:
 ```
+
+### 2026-07-11 — java-concurrency-interview — Q1..Q9
+
+- Commit: (this tick)
+- Blocks reviewed: 9 (Q1-Q9), review-sidecar создан
+- Correct answers fixed: 0 фактических ошибок (все correct верны); подрезаны correct-тексты Q6/Q8 ради parity (факт сохранён)
+- Distractors rewritten: Q3-B (→ложное перечисление), Q4-C (→hedged-but-wrong), Q6-A (→дефиниция), Q8-A (→все три сущности), Q9-B/C/D (сняты абсолюты)
+- Sections rewritten: Q3-B, Q4-C, Q9-B/C/D (синхронизированы под новый text)
+- Theory synchronized: не требовалось (style-only, факты не менялись)
+- Freshness updated: создан docs/mcq-quality/fact-freshness/java-concurrency-interview.json (JLS SE21 + JDK21 javadoc)
+- Validators: verify-mcq-json OK; SOURCE_COVERAGE ok; stamp CV=0.143 (≥0.14); structure-tell блоков 1.0-5.0 (healthy)
+- Manual review: 2 независимых blind-прогонa (reviewer-субагент) — round-1 нашёл 5 BST-tells, round-2 подтвердил все 5 закрыты (BST=PASS, BSM=PASS); факт-ошибок нет, multiple-defensible нет
 
 ---
 

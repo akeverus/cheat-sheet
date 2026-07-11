@@ -143,19 +143,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "ACTIVE и INACTIVE — только два состояния, остальное определяется флагами.",
+              "text": "NEW, RUNNABLE, WAITING, DEAD — четыре состояния; BLOCKED и TIMED_WAITING отдельно не выделяются.",
               "correct": false,
               "sections": {
-                "what_actually": "Thread.State содержит 6 различных значений, а не битовые флаги.",
-                "source_of_confusion": "Модель упрощают до boolean «активен/неактивен», тогда как Thread.State содержит шесть различных значений, а не битовые флаги. Без этого различия невозможно по thread dump отличить BLOCKED от WAITING.",
-                "if_it_were_true": "thread dump не различал бы BLOCKED от WAITING — невозможно диагностировать deadlock.",
-                "how_it_should_be": "Шесть отдельных состояний, переходы фиксированы JLS."
+                "what_actually": "В enum Thread.State шесть значений: BLOCKED (ожидание монитора) и TIMED_WAITING (ожидание с таймаутом) — самостоятельные состояния, а не часть RUNNABLE или WAITING; DEAD как имени состояния в Java нет.",
+                "source_of_confusion": "Схему упрощают до старой модели с DEAD и без разделения видов ожидания; тогда по thread dump не отличить contention на synchronized от ожидания с таймаутом.",
+                "if_it_were_true": "jstack не показывал бы TIMED_WAITING для sleep — реально это отдельное состояние.",
+                "how_it_should_be": "Шесть состояний: NEW, RUNNABLE, BLOCKED, WAITING, TIMED_WAITING, TERMINATED."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "NEW, RUNNABLE, BLOCKED, WAITING, TIMED_WAITING, TERMINATED — шесть состояний enum Thread.State.",
+              "text": "NEW, RUNNABLE, BLOCKED, WAITING, TIMED_WAITING, TERMINATED — шесть состояний потока.",
               "correct": true,
               "sections": {
                 "explanation": "Шесть состояний из enum Thread.State: NEW (создан, start() не вызван), RUNNABLE (выполняется или готов — JVM не различает эти два, решает ОС), BLOCKED (ждёт монитор synchronized), WAITING (wait/join/park без таймаута), TIMED_WAITING (sleep, wait/join/park с таймаутом), TERMINATED (run() завершён). Ожидание Lock.lock() классифицируется как WAITING/TIMED_WAITING, а не BLOCKED.",
@@ -215,13 +215,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Приоритет нельзя изменить после start() — он фиксируется конструктором Thread.",
+              "text": "Целое от 1 до 10 — подсказка планировщику, но на всех ОС он гарантированно соблюдает её, когда несколько потоков готовы к выполнению.",
               "correct": false,
               "sections": {
-                "what_actually": "setPriority(int) можно вызвать в любой момент, в том числе после start().",
-                "source_of_confusion": "Путаница с setDaemon, который действительно нельзя менять после start.",
-                "if_it_were_true": "Метод setPriority был бы помечен deprecated после start — реально работает.",
-                "how_it_should_be": "Приоритет меняется в любое время через setPriority."
+                "what_actually": "Планировщик ОС волен игнорировать приоритет; на Linux setPriority часто вовсе не влияет на то, какой готовый поток получит CPU.",
+                "source_of_confusion": "Раз есть setPriority с диапазоном 1..10, кажется, что ОС обязана его соблюдать; на деле это лишь hint поверх политики планировщика.",
+                "if_it_were_true": "Поток с MAX_PRIORITY всегда вытеснял бы MIN_PRIORITY — реально на Linux разницы часто нет.",
+                "how_it_should_be": "Приоритет — необязательная подсказка; строить на нём корректность нельзя."
               }
             },
             {
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Daemon-поток отличается только высоким приоритетом и всегда выполняется первым.",
+              "text": "Фоновый поток с повышенным приоритетом: планировщик отдаёт ему CPU раньше обычных потоков.",
               "correct": false,
               "sections": {
                 "what_actually": "Daemon — это про lifecycle JVM, а не про приоритет. Приоритет и daemon-флаг независимы.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Фоновый поток, не удерживающий JVM от завершения; JVM выходит, как только завершились все non-daemon потоки.",
+              "text": "Фоновый поток, не удерживающий JVM: она завершается, когда остаются только daemon-потоки.",
               "correct": true,
               "sections": {
                 "explanation": "Daemon-флаг наследуется от родителя по умолчанию и должен выставляться через setDaemon(true) ДО start(), иначе IllegalThreadStateException. Используется для фоновых задач (GC, JIT, мониторинг, heartbeat), которые не должны держать JVM живой. Нельзя применять для критичной финализации — JVM может убить поток в середине I/O без выполнения finally.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "yield() и sleep() освобождают мониторы synchronized, поэтому их используют для предотвращения deadlock.",
+              "text": "yield(), sleep() и join() освобождают мониторы synchronized, поэтому их применяют, чтобы избежать deadlock.",
               "correct": false,
               "sections": {
                 "what_actually": "Ни sleep, ни yield, ни join не освобождают мониторы; только Object.wait() освобождает.",
@@ -467,7 +467,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Решают разные задачи: yield уступает CPU, sleep делает паузу, join ждёт другой поток; ни один не освобождает мониторы.",
+              "text": "yield() уступает CPU, sleep() приостанавливает на время, join() ждёт завершения другого потока.",
               "correct": true,
               "sections": {
                 "explanation": "Ключевое: ни yield(), ни sleep(), ни join() не освобождают мониторы synchronized — это частая ошибка; монитор отпускает только wait(). sleep() и join() бросают InterruptedException, yield() — нет. yield() и sleep() — статические методы на текущем потоке; join() — instance-метод другого потока. join(0) = join() = ждать бесконечно.",
@@ -504,37 +504,37 @@
             {
               "order": 1,
               "label": "B",
-              "text": "JMM — это про управление heap-памятью и сборщик мусора, без отношения к видимости между потоками.",
+              "text": "JMM описывает layout объектов в heap и работу сборщика мусора.",
               "correct": false,
               "sections": {
-                "what_actually": "JMM — про concurrency-видимость; GC и распределение памяти регулируются другой частью JLS и runtime.",
-                "source_of_confusion": "Слово «Memory» в названии воспринимается как «GC heap».",
-                "if_it_were_true": "JLS Chapter 17 описывал бы heap layout — реально описывает happens-before и data races.",
+                "what_actually": "JMM (JLS Chapter 17) описывает видимость и happens-before; layout объектов в куче и работа GC — отдельная область runtime, не JMM.",
+                "source_of_confusion": "Слово «Memory» в названии наводит на мысль о heap и сборщике мусора.",
+                "if_it_were_true": "JLS Chapter 17 задавал бы формат объектов в куче — реально описывает data races и happens-before.",
                 "how_it_should_be": "JMM = правила видимости и переупорядочения для многопоточных программ."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "JMM гарантирует, что любая запись поля видна другим потокам мгновенно даже без синхронизации.",
+              "text": "JMM даёт видимость записей между потоками автоматически, поэтому volatile нужен лишь для атомарности.",
               "correct": false,
               "sections": {
-                "what_actually": "Без синхронизации видимость не гарантирована: значение может кэшироваться в регистре или L1.",
-                "source_of_confusion": "Желание принять «memory consistency» на веру.",
-                "if_it_were_true": "volatile и synchronized были бы не нужны — реально нужны.",
-                "how_it_should_be": "Видимость требует happens-before edge (volatile, synchronized, final, Atomic)."
+                "what_actually": "Без happens-before видимость не гарантирована; volatile и synchronized нужны именно для видимости, а не только для атомарности.",
+                "source_of_confusion": "volatile ассоциируют лишь с атомарностью, а базовую видимость считают данной по умолчанию.",
+                "if_it_were_true": "Флаг остановки без volatile всегда виделся бы другим потоком — реально поток может крутиться вечно на закэшированном значении.",
+                "how_it_should_be": "Видимость требует happens-before edge (volatile, synchronized, final, Atomic), а не даётся сама собой."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "JMM запрещает любые переупорядочения инструкций компилятором.",
+              "text": "JMM требует, чтобы компилятор сохранял порядок инструкций ровно в том виде, как они написаны в исходнике.",
               "correct": false,
               "sections": {
-                "what_actually": "Переупорядочения разрешены при сохранении as-if-serial семантики в одном потоке; межпоточно — только с happens-before.",
-                "source_of_confusion": "Программисты ждут sequential consistency by default.",
-                "if_it_were_true": "JIT не мог бы оптимизировать порядок load/store — реально оптимизирует.",
-                "how_it_should_be": "Reordering разрешён; happens-before задаёт границы для межпоточной видимости."
+                "what_actually": "Переупорядочение разрешено, пока сохраняется as-if-serial семантика в одном потоке; межпоточная видимость задаётся happens-before.",
+                "source_of_confusion": "Ожидают sequential consistency и построчного исполнения, как написано.",
+                "if_it_were_true": "JIT не мог бы менять порядок load/store ради оптимизаций — реально меняет.",
+                "how_it_should_be": "Reordering разрешён; happens-before ограничивает лишь межпоточную видимость."
               }
             }
           ]

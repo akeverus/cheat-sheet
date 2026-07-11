@@ -1,0 +1,24 @@
+{
+  "topic_slug": "java-concurrency-interview",
+  "version_sensitive": true,
+  "product_version": "Java SE 21 (LTS); core java.lang / java.util.concurrent semantics",
+  "checked_date": "2026-07-11",
+  "sources": [
+    "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html",
+    "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.State.html",
+    "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html",
+    "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Callable.html",
+    "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Runnable.html"
+  ],
+  "version_sensitive_claims": [
+    "Thread.State — enum из шести значений: NEW, RUNNABLE, BLOCKED, WAITING, TIMED_WAITING, TERMINATED (введён в Java 5; RUNNING и READY объединены в RUNNABLE, различает их ОС). Ожидание ReentrantLock.lock() классифицируется как WAITING/TIMED_WAITING (через LockSupport.park), а BLOCKED — только ожидание входа в synchronized-монитор [Q3]",
+    "Runnable существует с Java 1.0 (java.lang), Callable добавлен в Java 5 в составе java.util.concurrent; Callable.call() возвращает V и объявляет throws Exception, Runnable.run() возвращает void и checked-исключений не бросает [Q5]",
+    "Thread priority: диапазон 1 (MIN_PRIORITY) .. 10 (MAX_PRIORITY), по умолчанию 5 (NORM_PRIORITY), наследуется от родительского потока; setPriority — лишь hint планировщику ОС, на Linux часто игнорируется; значение вне 1..10 → IllegalArgumentException [Q4]",
+    "Daemon-флаг: setDaemon(true) допустим только ДО start(), иначе IllegalThreadStateException; JVM завершается, когда остаются только daemon-потоки, и прерывает их без гарантии выполнения finally [Q6]",
+    "interrupt() лишь выставляет флаг прерывания (кооперативная модель, не Thread.stop()); isInterrupted() читает флаг без сброса, статический Thread.interrupted() читает и сбрасывает; sleep/wait/join при срабатывании бросают InterruptedException и СБРАСЫВАЮТ флаг — в catch его восстанавливают через Thread.currentThread().interrupt() либо пробрасывают [Q7]",
+    "yield(), sleep(), join() не освобождают мониторы synchronized (монитор отпускает только Object.wait()); sleep()/join() бросают InterruptedException, yield() — нет; join(0) эквивалентно join() (ждать бесконечно); поведение sleep(0) и yield() платформозависимо [Q8]",
+    "Java Memory Model определена в JLS Chapter 17: задаёт межпоточную видимость и допустимые переупорядочения (не heap layout и не GC); без happens-before (volatile/synchronized/final/Atomic) видимость записей не гарантирована; переупорядочение разрешено при сохранении as-if-serial семантики в одном потоке [Q9]",
+    "Thread.ofVirtual().start(runnable) — виртуальные потоки, финализированы в Java 21 (JEP 444); в проде создание потоков обычно через ExecutorService, а не new Thread [Q2]"
+  ],
+  "notes": "ROUND-8 покрыты version-sensitive утверждения Q1-Q9. Остальные Q будут добавлены по мере аудита следующих чанков. Все факты — стабильная семантика core JDK, сверено с JLS SE21 и javadoc JDK 21."
+}
