@@ -24,10 +24,26 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 | C6 | P4 | Подвал только на `shell` (домашний), у 5 задача-экранов его нет | **РЕШЕНО (осознанно):** подвал — только на hub-экране (home). Задача-экраны (вопрос/разбор/итоги/настройки/аналитика) намеренно БЕЗ подвала — фокус, ethos «инструмент не шумит»; кросс-нав уже в шапке на каждом экране, так что навигация не теряется. Не «чинить» | — | **РЕШЕНО** |
 | C7 | P1 | skip-link `signal-on` на `--signal` = AA 4.40 < 4.5 (light) на 5 из 6 | Тот же слоп-класс, что и раньше в btn-primary (общий компонент), но в focus-only skip-link — пропустили; skip-link = видимый по фокусу текст (WCAG 2.4.1), обязан держать AA | 5 экранов (кроме shell) | **DONE** |
 | C8 | — | focus-ring/reduced-motion/AA-каркас | Верифицированы по PROGRESS it.10–21; при каждой правке — re-check, не регресс | все | RECHECK |
+| C10 | P4 | Type-scale: `.state-title` (empty/done, font-hero fs-xl) держит `--track-tight`, а 3 других serif-page-title того же размера (`settings/stats/summary`) — `--track-hero` | Кросс-экранная консистентность типографики: одна роль (serif page-title @fs-xl) = одна трактовка tracking. Сам scale КОГЕРЕНТЕН (2 tier: content-hero clamp vs page-title fixed) — дрейф только в одном letter-spacing | `focus-question.html` | **DONE** |
 | C9 | P2 | Кнопочный компонент дрейфует на `shell`: 3 расхождения с остальными 5 экранами | Кросс-экранная консистентность: одна кнопка = один компонент. (1) `.btn` padding `s-5` vs `s-6` у 4 других; (2) `.btn-primary` без `box-shadow: shadow-sm` (у всех 4 — есть → плоский CTA на home); (3) `.btn-quiet` = байт-идентичен `.btn-ghost` у focus/result/summary, но result/summary держат `.btn-quiet` для ДРУГОЙ безрамочной третичной → коллизия имени (одно имя → два вида) | `shell.html` | **DONE** |
 
 ## Журнал критики
 
+- **cr.7 (Фаза 1, тик 7)** — **кросс-экранный аудит type-scale → система когерентна,
+  1 микро-дрейф закрыт (C10).** Разобрал page-title/hero-трактовку всех 6 макетов.
+  **Вывод: шкала НЕ дрейфует — это осознанный 2-tier дизайн:** (a) content-hero
+  (`shell.home-headline` clamp 2.1→3.15, `focus.focus-question` fs-hero clamp 1.75→3.05) —
+  responsive, крупный, потому что ЭТО фокус экрана; (b) page-title (`settings/stats-title`,
+  `summary-headline`, `state-title`) — фикс `--fs-xl` 2rem, спокойный. Различия внутри
+  tier-а оправданы/задокументированы (floor focus-hero занижен it.3 под перенос вопроса).
+  **Реальный дефект — только 1:** среди serif-page-title @fs-xl три (`settings/stats/summary`)
+  держат `letter-spacing: --track-hero`, а `.state-title` (empty/done, тот же serif@2rem) —
+  `--track-tight` → рассинхрон. Одна роль = один tracking. **Фикс:** state-title
+  `--track-tight`→`--track-hero` (1 файл). **QA:** detector exit 0; все 4 serif-page-title
+  теперь `--track-hero`; правка letter-spacing → AA/лейаут не затронуты (0.005em при 32px,
+  консистентность важнее заметности). **Type-scale помечен verified-clean** (2-tier
+  осознан) → не переаудировать. Следующий тик Фазы 1 — иная дименсия (focus-ring/spacing-
+  ритм консистентность) или обратно в Фазу 2 (по готовности дерева/bootRun).
 - **cr.6 (Фаза 1, тик 6)** — **углублённый кросс-экранный аудит компонентов → нашёл и закрыл C9 (дрейф кнопок на `shell`).**
   Сравнил определения `.btn*` через все 6 макетов. Три расхождения, все на `shell`:
   (1) базовый `.btn` padding `var(--s-3) var(--s-5)` против `s-6` у остальных 4 →
