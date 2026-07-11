@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Resilience4j` есть единственный модуль `resilience4j-core`, в котором собраны все паттерны сразу.",
+              "text": "В `Resilience4j` всё собрано в единственном модуле `resilience4j-core`: `circuitbreaker`, `retry`, `ratelimiter`, `bulkhead` и `timelimiter` лежат внутри него одним артефактом, поэтому подключить отдельный паттерн, не притянув остальные, нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Библиотека модульная: каждый паттерн (`circuitbreaker`, `retry`, `ratelimiter`, `bulkhead`, `timelimiter`) — отдельный артефакт; `core` содержит лишь общие абстракции.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Resilience4j` включает модуль `resilience4j-loadbalancer`, отвечающий за клиентскую балансировку нагрузки между инстансами.",
+              "text": "`Resilience4j` включает модуль `resilience4j-loadbalancer`: наряду с `circuitbreaker` и `retry` он отвечает за клиентскую балансировку между инстансами, заменяя `Spring Cloud LoadBalancer` в общей связке паттернов.",
               "correct": false,
               "sections": {
                 "what_actually": "Балансировки нагрузки в `Resilience4j` нет — это задача `Spring Cloud LoadBalancer`; библиотека занимается только паттернами отказоустойчивости.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`RateLimiter` не является отдельным модулем `Resilience4j` — ограничение частоты вынесено в `Spring Cloud Gateway`.",
+              "text": "`RateLimiter` не входит в модули `Resilience4j` отдельным `ratelimiter`-артефактом — ограничение частоты вынесено в `Spring Cloud Gateway`, а за библиотекой остаются только `circuitbreaker`, `retry` и `bulkhead`.",
               "correct": false,
               "sections": {
                 "what_actually": "`resilience4j-ratelimiter` — полноценный отдельный модуль с алгоритмом token bucket; это одно из ключевых отличий от `Hystrix`, где `RateLimiter` отсутствовал.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ignore-exceptions` перечисляет исключения, при которых `CircuitBreaker` обязан немедленно разомкнуться.",
+              "text": "`ignore-exceptions` перечисляет исключения, при которых `CircuitBreaker` обязан немедленно разомкнуться, тогда как `record-exceptions` и `failure-rate-threshold` лишь считают статистику отказов постфактум.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `ignore-exceptions` указывает исключения, которые НЕ считаются сбоями и игнорируются при подсчёте `failureRate`; за сбои отвечает `record-exceptions`.",
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Параметр `failure-rate-threshold` задаётся в абсолютном числе отказавших вызовов, а не в процентах.",
+              "text": "Параметр `failure-rate-threshold` задаётся в абсолютном числе отказавших вызовов, а не в процентах: вместе с `minimum-number-of-calls` и `sliding-window-size` он сравнивает счётчик ошибок с фиксированным лимитом, а не долю в окне.",
               "correct": false,
               "sections": {
                 "what_actually": "`failure-rate-threshold` — это процент отказов (default 50), а не абсолютное число; CB размыкается, когда доля отказов в окне превышает порог.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`wait-duration-in-open-state` определяет, сколько ждать ответа от downstream-сервиса перед тем, как засчитать таймаут.",
+              "text": "`wait-duration-in-open-state` определяет, сколько ждать ответа от downstream-сервиса перед тем, как засчитать таймаут, наравне с `slow-call-duration-threshold` и настройками `TimeLimiter`.",
               "correct": false,
               "sections": {
                 "what_actually": "`wait-duration-in-open-state` — это пауза, в течение которой CB остаётся в `OPEN` перед переходом в `HALF_OPEN`; таймаут вызова задаёт `TimeLimiter` или `slow-call-duration-threshold`.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`max-attempts: 3` означает три ДОПОЛНИТЕЛЬНЫХ повтора после первого вызова, то есть всего четыре обращения.",
+              "text": "`max-attempts: 3` под `resilience4j.retry.instances.<name>` означает три ДОПОЛНИТЕЛЬНЫХ повтора после первого вызова: с учётом `wait-duration` и `exponential-backoff-multiplier` выходит всего четыре обращения к сервису, а не три.",
               "correct": false,
               "sections": {
                 "what_actually": "`max-attempts` включает первую попытку: при значении 3 будет один исходный вызов плюс два повтора, то есть три обращения суммарно.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Retry` повторяет вызов на любое исключение, и список `retry-exceptions` ни на что не влияет.",
+              "text": "`@Retry` повторяет вызов на любое исключение, поэтому списки `retry-exceptions` и `ignore-exceptions` под `resilience4j.retry.instances.<name>` ни на что не влияют — повтор идёт даже на `ValidationException` или `400 Bad Request`.",
               "correct": false,
               "sections": {
                 "what_actually": "Повторы происходят только для исключений из `retry-exceptions`; всё остальное (например `ValidationException` в `ignore-exceptions`) пробрасывается сразу без повтора.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`exponential-backoff-multiplier` задаёт фиксированную паузу в миллисекундах между всеми попытками.",
+              "text": "`exponential-backoff-multiplier` задаёт фиксированную паузу в миллисекундах между всеми `max-attempts`-попытками: как и `wait-duration`, он не меняется от попытки к попытке, поэтому интервалы под `resilience4j.retry.instances.<name>` остаются равными.",
               "correct": false,
               "sections": {
                 "what_actually": "Фиксированную паузу задаёт `wait-duration`; `exponential-backoff-multiplier` умножает её с каждой попыткой, давая растущие интервалы (500ms, 1s, 2s).",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RateLimiter` нельзя настроить через `application.yml` — конфигурация задаётся только программно в Java-коде.",
+              "text": "`RateLimiter` нельзя настроить под `resilience4j.ratelimiter.instances.<name>` в `application.yml` — параметры вроде `limit-for-period` и `timeout-duration` задаются только программно через `RateLimiterConfig.custom()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`RateLimiter` полноценно настраивается декларативно в `application.yml` под `resilience4j.ratelimiter.instances`; программный билдер — лишь альтернатива.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`timeout-duration: 500ms` означает, что разрешения пополняются каждые 500ms.",
+              "text": "`timeout-duration: 500ms` означает, что разрешения `limit-for-period` пополняются каждые 500ms — тот же смысл, что закладывают в `limit-refresh-period`.",
               "correct": false,
               "sections": {
                 "what_actually": "Пополнение разрешений задаёт `limit-refresh-period`; `timeout-duration` — максимальное время ожидания свободного слота перед `RequestNotPermitted`.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Программная конфигурация через `RateLimiterConfig` отменяет необходимость аннотации `@RateLimiter` на методе.",
+              "text": "Программная конфигурация через `RateLimiterConfig.custom()` отменяет необходимость аннотации `@RateLimiter` на методе: собранный билдером `limit-for-period` применяется к вызову автоматически, без `Decorators`.",
               "correct": false,
               "sections": {
                 "what_actually": "Программный `RateLimiterConfig` лишь собирает параметры; чтобы декларативно защитить метод, аннотация `@RateLimiter` (или ручной декоратор) всё равно нужна.",
