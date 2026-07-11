@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "volatile даёт видимость и запрет переупорядочения, но НЕ обеспечивает атомарность составных операций.",
+              "text": "volatile даёт видимость и запрет переупорядочения, но не обеспечивает атомарность составных операций.",
               "correct": true,
               "sections": {
                 "explanation": "Запись volatile видна последующему чтению другим потоком: транслируется в store с memory barrier (StoreStore+StoreLoad), чтение — load с barrier (на x86 обычно MFENCE). count++ = read+modify+write — три операции, атомарности нет, нужен AtomicInteger или synchronized. volatile идеален для флагов-семафоров (single writer, many readers), но не для счётчиков.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "volatile только запрещает компилятору инлайнить значение, но не влияет на CPU-кэш.",
+              "text": "volatile только запрещает компилятору инлайнить значение и переставлять доступы, но никак не влияет на CPU-кэш и store buffer.",
               "correct": false,
               "sections": {
                 "what_actually": "volatile генерирует memory barrier, который влияет и на CPU-кэш (flush из store buffer, invalidate других ядер).",
@@ -707,7 +707,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Частичный порядок над операциями: если A happens-before B, результаты A гарантированно видны потоку, выполняющему B.",
+              "text": "Частичный порядок над операциями: если A happens-before B, результаты A видны потоку, выполняющему B.",
               "correct": true,
               "sections": {
                 "explanation": "Без happens-before между записью и чтением JMM позволяет считывающему потоку увидеть устаревшее или частично записанное значение — это основа всей concurrency-видимости. Правила: unlock(m) hb последующего lock(m); volatile write hb последующего volatile read; thread.start() hb первой инструкции run(); последняя инструкция run() hb возврата из join(); транзитивность A hb B и B hb C → A hb C. happens-before — про видимость, а не про физический порядок во времени.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "synchronized захватывает монитор объекта и даёт сразу взаимное исключение, видимость (unlock hb lock) и реентерабельность.",
+              "text": "synchronized захватывает монитор объекта и даёт взаимное исключение, видимость (unlock hb lock) и реентерабельность.",
               "correct": true,
               "sections": {
                 "explanation": "Монитор — это this для instance-метода, Class-объект для static-метода, явный объект для блока. На уровне байткода: monitorenter/monitorexit. Монитор реентерабелен — внутри synchronized-метода можно безопасно вызвать другой synchronized-метод того же объекта без самоблокировки. Видимость обеспечивается happens-before между unlock и последующим lock того же монитора, поэтому отдельный volatile поверх synchronized не нужен.",
@@ -875,7 +875,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Instance-синхронизация берёт монитор this, а static — единый монитор Class-объекта на все экземпляры.",
+              "text": "Instance-синхронизация берёт монитор this, а static — единый монитор Class-объекта.",
               "correct": true,
               "sections": {
                 "explanation": "synchronized на instance-методе = synchronized(this); на static-методе = synchronized(MyClass.class). Это разные мониторы, которые не пересекаются: поток в instance synchronized-методе и поток в static synchronized-методе того же класса друг друга не блокируют. Два потока для разных объектов в instance-методе параллельны; для static synchronized — всегда последовательны (монитор один на класс).",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Класс, у которого все методы помечены synchronized.",
+              "text": "Класс, у которого все публичные методы помечены synchronized, — этого достаточно для полной потокобезопасности.",
               "correct": false,
               "sections": {
                 "what_actually": "synchronized на всех методах не гарантирует thread-safety: compound operations внешнего кода (например, iteration) остаются небезопасны.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Atomic-классы доступны только через рефлексию из sun.misc.Unsafe.",
+              "text": "Atomic-классы доступны только через рефлексию из внутреннего sun.misc.Unsafe, публичного API у них нет вовсе.",
               "correct": false,
               "sections": {
                 "what_actually": "Atomic — публичный API java.util.concurrent.atomic с Java 5; sun.misc.Unsafe — внутренняя реализация.",

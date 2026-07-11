@@ -292,7 +292,7 @@ Priority =
 
 | # | Сидер | Кат. | Blk | OldTell | State | SCH | TH | QS | STEM | C-FCT | C-CMP | C-SCP | C-UNI | C-FRM | C-SEC | C-RU | W-PLS | W-1ER | W-API | W-FLS | W-DIV | W-CAR | W-FRM | W-SEC | W-RU | PAR | BST | BSM | STAMP | FR | LINK | POS | VAL | FINAL | Notes |
 |--:|---|---|--:|--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
-| 1 | `java-concurrency` | java | 56 | 52 | ◐ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | Q1-Q9: 5 BST-tells (Q3/4/6/8/9) fixed, freshness sidecar+review sidecar added; Q10-Q56 TODO |
+| 1 | `java-concurrency` | java | 56 | 52 | ◐ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | Q1-Q18 done (18/56): chunk1 5 BST-tells (Q3/4/6/8/9) fixed; chunk2 length-tell (correct lone-longest 7/9) снят, CV 0.142; факт-ошибок 0, BSM чист ×18; Q19-Q56 TODO |
 | 2 | `design-patterns` | design-patterns | 48 | 48 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 4 | `sql` | databases | 53 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -660,6 +660,18 @@ Priority =
 - Freshness updated: создан docs/mcq-quality/fact-freshness/java-concurrency-interview.json (JLS SE21 + JDK21 javadoc)
 - Validators: verify-mcq-json OK; SOURCE_COVERAGE ok; stamp CV=0.143 (≥0.14); structure-tell блоков 1.0-5.0 (healthy)
 - Manual review: 2 независимых blind-прогонa (reviewer-субагент) — round-1 нашёл 5 BST-tells, round-2 подтвердил все 5 закрыты (BST=PASS, BSM=PASS); факт-ошибок нет, multiple-defensible нет
+
+### 2026-07-11 — java-concurrency-interview — Q10..Q18
+
+- Commit: (this tick)
+- Blocks reviewed: 9 (Q10-Q18), review-sidecar расширен до 18/56
+- Correct answers fixed: 0 фактических ошибок (все correct верны); подрезаны verbose correct-тексты Q12/Q13/Q15 ради parity
+- Distractors rewritten: подняты stub-дистракторы Q10-C/Q17-D/Q18-C до правдоподобных длинных ложных вариантов (сняли length-tell «correct самый длинный 7/9»); Q10-B: капс «НЕ»→«не» (микро-tell)
+- Sections rewritten: 0 (все правки text-only, sections уже консистентны)
+- Theory synchronized: не требовалось (style-only)
+- Freshness updated: freshness-sidecar расширен утверждениями Q10-Q19
+- Validators: verify-mcq-json OK; stamp CV=0.142 (≥0.14); file CLR 0.643→0.536, STYLE 0.679→0.571 (нарастающе по 2 чанкам)
+- Manual review: независимый blind-прогон (reviewer-субагент) Q10-Q18 — BST=PASS, BSM=PASS ×9, 3 удлинённых дистрактора подтверждены однозначно ложными и не карикатурными; Q12/Q16 — мягкий completeness-сигнал (не дефект)
 
 ---
 
