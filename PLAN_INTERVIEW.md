@@ -292,7 +292,7 @@ Priority =
 
 | # | Сидер | Кат. | Blk | OldTell | State | SCH | TH | QS | STEM | C-FCT | C-CMP | C-SCP | C-UNI | C-FRM | C-SEC | C-RU | W-PLS | W-1ER | W-API | W-FLS | W-DIV | W-CAR | W-FRM | W-SEC | W-RU | PAR | BST | BSM | STAMP | FR | LINK | POS | VAL | FINAL | Notes |
 |--:|---|---|--:|--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
-| 1 | `java-concurrency` | java | 56 | 52 | ◐ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | Q1-Q38 done (38/56): c1 5 BST-tells fixed; c2 length-tell снят; c3 Q19-Q28 — 2 dup-misconception + 1 BSM-дефект (Q27-A был истинен) исправлены; c4 Q29-Q38 — факт-чисто, length-tell 9/10→0/10, устранён contra-pair Q33 A↔D (D переписан); CV 0.161; факт-ошибок 0, BSM чист ×38; Q39-Q56 TODO |
+| 1 | `java-concurrency` | java | 56 | 52 | ◐ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | Q1-Q48 done (48/56): c1-c2 tells сняты; c3 2 dup+1 BSM (Q27-A); c4 contra-pair Q33; c5 Q39-Q48 — dup Q42 C≈D (D→Segments), caricature Q47-B (GPU→backpressure), факт-фикс correct Q42-B (>8→≥8+cap≥64), length-tell 9/10→0/10; CV 0.176; факт-ошибок 0, BSM чист ×48; Q49-Q56 TODO |
 | 2 | `design-patterns` | design-patterns | 48 | 48 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 4 | `sql` | databases | 53 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -698,6 +698,19 @@ Priority =
 - Freshness updated: freshness-sidecar расширен утверждениями Q29-Q38
 - Validators: verify-mcq-json OK; stamp CV=0.161 (≥0.14)
 - Manual review: независимый blind-прогон (reviewer-субагент) Q29-Q38 — BSM=PASS ×10, distinct=PASS ×10, фактически чисто, ни один удлинённый дистрактор не стал истинным (тонкие Q29-C каст→CCE, Q32-B направление steal, Q33-D FutureTask=RunnableFuture, Q38-C нет reset() — подтверждены ложными); accepted-minor: «correct — самый multi-clause» в comparison-стемах Q30/Q33/Q35/Q36 (перечисление присуще вопросу, длина выровнена, не гоним structure-tell в 0)
+
+### 2026-07-11 — java-concurrency-interview — Q39..Q48
+
+- Commit: (this tick)
+- Blocks reviewed: 10 (Q39-Q48), review-sidecar расширен до 48/56
+- Дефекты устранены: **duplicate-misconception Q42 (W-DIV)** — дистракторы C и D тестировали одно заблуждение («CHM полностью lock-free, только CAS, без synchronized») → Q42-D переписан на отдельное «CHM всё ещё делит данные на 16 Segment из Java 7» (ложь: сегменты убраны в Java 8) + sections; **caricature Q47-B (W-CAR)** — «VT только для GPU/видеокарты» отсеивался по абсурдности → заменён на правдоподобное «VT дёшевы ⇒ не нужен backpressure, можно исчерпать пул соединений к БД» + sections
+- Correct answer fixed: **Q42-B факт-неточность** — treeification «при длине цепочки > 8» → «≥ 8 и ёмкости таблицы ≥ 64» (TREEIFY_THRESHOLD=8, MIN_TREEIFY_CAPACITY=64; подтверждено reviewer). Единственная правка correct-опции в чанке, доказанная фактическая ошибка
+- Length-tell снят: correct lone-longest 9/10 → 0/10 — перефразировка одного дистрактора на блок (Q39-A/Q41-B/Q42-C/Q43-B/Q44-B/Q45-C/Q46-C/Q48-C) в более полную форму с тем же заблуждением (sections не тронуты); Q40 уже был чист
+- Sections rewritten: Q42-D, Q47-B (2 блока); остальные text-only
+- Theory synchronized: не требовалось (Q42-B — уточнение того же факта, теория treeification не меняется концептуально)
+- Freshness updated: freshness-sidecar расширен Q39-Q48 (VT/pinning сверены с JEP 444 JDK21; JEP 491 JDK24 как forward-note)
+- Validators: verify-mcq-json OK; stamp CV=0.176 (≥0.14)
+- Manual review: независимый blind-прогон (reviewer-субагент) Q39-Q48 — BSM=PASS ×10, distinct=PASS ×10, Q42 C≠D подтверждён распутанным, ни один удлинённый дистрактор не стал истинным (тонкие Q39-B IMSE, Q41-C null-в-CHM, Q43-D SynchronousQueue-буфер-0, Q48-B pinning-от-volatile — подтверждены ложными); Q42-B ≥8 и Q47-B замена caricature внесены по прямой рекомендации reviewer
 
 ---
 

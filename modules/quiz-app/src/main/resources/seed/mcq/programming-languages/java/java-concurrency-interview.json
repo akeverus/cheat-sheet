@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Semaphore — это просто synchronized, расширенный на несколько ресурсов: он захватывает мониторы объектов так же, как блок synchronized.",
+              "text": "Semaphore — это просто synchronized, расширенный на несколько ресурсов: под капотом он захватывает мониторы объектов ровно так же, как обычный блок synchronized, только с внутренним счётчиком разрешений.",
               "correct": false,
               "sections": {
                 "what_actually": "Semaphore — счётчик permits, не использует мониторов; AQS-based.",
@@ -2424,7 +2424,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Concurrent collections — это просто обёртки с одним synchronized над обычными HashMap и ArrayList, без отдельного механизма.",
+              "text": "Concurrent collections — это просто обёртки с одним общим synchronized над обычными HashMap и ArrayList, без какого-либо отдельного механизма конкурентного доступа под капотом.",
               "correct": false,
               "sections": {
                 "what_actually": "Это специализированные структуры с fine-grained lock, CAS, COW; не synchronized wrapper.",
@@ -2483,7 +2483,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В Java 8+ это fine-grained locking: CAS для вставки в пустой bucket, synchronized на голове bucket'а при коллизии и treeification при длине цепочки > 8.",
+              "text": "В Java 8+ это fine-grained locking: CAS для вставки в пустой bucket, synchronized на голове bucket'а при коллизии и treeification при длине цепочки ≥ 8 и ёмкости таблицы ≥ 64.",
               "correct": true,
               "sections": {
                 "explanation": "Списки в bucket'е превращаются в красно-чёрное дерево при длине > 8 (и обратно при < 6). Потоки конкурируют только в рамках одного bucket'а, а не всей мапы. До Java 8 использовались сегменты (segments) — массив отдельных мини-мап с уникальным lock. Java 8 убрала segments и перешла на CAS + bucket-level synchronized + treeification. Размер size() считается через counter cells (similar LongAdder).",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ConcurrentHashMap полностью lock-free: использует только CAS и никогда не берёт synchronized, даже при коллизии в bucket'е.",
+              "text": "ConcurrentHashMap полностью lock-free: он использует исключительно CAS-операции и никогда не берёт synchronized — даже при коллизии в одном и том же bucket'е несколько потоков пишут туда одновременно без единой блокировки.",
               "correct": false,
               "sections": {
                 "what_actually": "При коллизии bucket'а используется synchronized на голове — не fully lock-free.",
@@ -2508,13 +2508,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "ConcurrentHashMap работает целиком на CAS без единого synchronized, что делает его полностью неблокирующей структурой.",
+              "text": "ConcurrentHashMap делит данные на 16 фиксированных сегментов (Segment) и на запись блокирует лишь один сегмент — эта схема из Java 7 не изменилась и в Java 8+.",
               "correct": false,
               "sections": {
-                "what_actually": "При коллизии bucket'а используется synchronized на первом узле — не полностью lock-free.",
-                "source_of_confusion": "Маркетинговое «lock-free» обобщают на весь класс, упуская synchronized на первом узле bucket'а при коллизии.",
-                "if_it_were_true": "Не было бы блокировок никогда — реально per-bucket synchronized при коллизии.",
-                "how_it_should_be": "CAS + synchronized per bucket; не fully lock-free."
+                "what_actually": "В Java 8 сегментная блокировка (класс Segment) убрана: синхронизация идёт на уровне отдельного bucket'а — CAS для пустого, synchronized на голове цепочки при коллизии; фиксированных 16 сегментов больше нет.",
+                "source_of_confusion": "Классическое описание CHM из Java 7 (concurrencyLevel=16 сегментов) кочует по статьям и собеседованиям, хотя внутренняя реализация в Java 8 полностью переписана.",
+                "if_it_were_true": "Конкурентность записи была бы жёстко ограничена 16 потоками одновременно — реально в Java 8+ параллелизм масштабируется с числом bucket'ов.",
+                "how_it_should_be": "С Java 8 — per-bucket CAS/synchronized вместо сегментов; аргумент concurrencyLevel в конструкторе оставлен лишь для обратной совместимости."
               }
             }
           ]
@@ -2543,7 +2543,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Все реализации BlockingQueue ограничены по размеру (bounded), задать неограниченную очередь нельзя ни в одной из них.",
+              "text": "Все реализации BlockingQueue строго ограничены по размеру (bounded), и задать неограниченную по ёмкости очередь нельзя ни в одной из стандартных реализаций пакета java.util.concurrent.",
               "correct": false,
               "sections": {
                 "what_actually": "LinkedBlockingQueue (по умолчанию unbounded = Integer.MAX_VALUE), PriorityBlockingQueue, DelayQueue — unbounded.",
@@ -2603,7 +2603,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Корректно решить Producer-Consumer на стандартной Java нельзя — без библиотеки LMAX Disruptor задача в принципе не решается.",
+              "text": "Корректно решить Producer-Consumer на стандартной Java невозможно: без сторонней библиотеки вроде LMAX Disruptor задача синхронизации producer и consumer в принципе не имеет надёжного решения.",
               "correct": false,
               "sections": {
                 "what_actually": "BlockingQueue полностью решает большинство case'ов; Disruptor — оптимизация под extreme throughput (LMAX).",
@@ -2676,7 +2676,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Thread dump можно получить исключительно через визуальные инструменты вроде VisualVM, без какого-либо CLI-способа.",
+              "text": "Thread dump можно получить исключительно через визуальные инструменты вроде VisualVM или Mission Control, и никакого CLI-способа снять дамп в стандартном JDK попросту не предусмотрено.",
               "correct": false,
               "sections": {
                 "what_actually": "Базовые способы — командные: jstack, jcmd, kill -3 (SIGQUIT).",
@@ -2736,7 +2736,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Virtual threads ускоряют CPU-bound вычисления, давая дополнительный параллелизм поверх обычных ядер процессора.",
+              "text": "Virtual threads ускоряют именно CPU-bound вычисления, давая дополнительный параллелизм поверх физических ядер процессора сверх их реального числа.",
               "correct": false,
               "sections": {
                 "what_actually": "VT не дают преимуществ для CPU-bound — там работают platform threads.",
@@ -2783,13 +2783,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Virtual threads применяются только для GPU-вычислений и параллельной обработки на видеокарте, а не для обычных JVM-задач.",
+              "text": "Раз virtual threads дешёвые, они полностью снимают нужду в пулах и ограничении параллелизма: их можно порождать без backpressure, не боясь исчерпать пул соединений к БД или другие внешние ресурсы.",
               "correct": false,
               "sections": {
-                "what_actually": "Virtual threads никак не связаны с GPU: это механизм управления JVM-потоками поверх carrier-потоков, а не вычисления на видеокарте.",
-                "source_of_confusion": "Слова «новые лёгкие потоки» путают с GPU-параллелизмом, хотя virtual threads — про эффективный I/O в обычной JVM, а не про GPU-compute.",
-                "if_it_were_true": "Будь VT про GPU, JEP 444 обсуждал бы драйверы и CUDA-подобные API — реально он целиком про модель потоков для I/O-bound нагрузки.",
-                "how_it_should_be": "VT нужны для I/O-bound задач в обычной JVM; GPU-вычисления — это отдельные API (`Vector API`, `Project Babylon`), не имеющие отношения к VT."
+                "what_actually": "Дешёвые VT снимают ограничение на ЧИСЛО потоков, но не на внешние ресурсы: пул соединений к БД, rate limit API, память по-прежнему конечны и требуют ограничения (семафор, bounded-пул), иначе тысячи VT разом исчерпают connection pool.",
+                "source_of_confusion": "Тезис «VT почти бесплатны» ошибочно расширяют до «ресурсы бесплатны»; дешевизна планирования потоков не отменяет конечности того, к чему они обращаются.",
+                "if_it_were_true": "Можно было бы запускать неограниченно много одновременных запросов к БД — реально пул соединений исчерпается и запросы начнут падать или висеть.",
+                "how_it_should_be": "VT убирают поток-пул как узкое место, но доступ к ограниченным ресурсам всё равно ограничивают семафором или bounded-пулом."
               }
             },
             {
@@ -2855,7 +2855,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Pinning невозможно обнаружить штатными средствами JVM: ни флага, ни JFR-события для его диагностики не существует.",
+              "text": "Pinning невозможно обнаружить штатными средствами JVM: для него не существует ни системного флага диагностики, ни JFR-события, ни какого-либо иного встроенного способа.",
               "correct": false,
               "sections": {
                 "what_actually": "Диагностируется через -Djdk.tracePinnedThreads=full или JFR-событие jdk.VirtualThreadPinned.",
