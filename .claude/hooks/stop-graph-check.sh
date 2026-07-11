@@ -4,6 +4,14 @@
 
 set -e
 
+# Читаем вход от Claude Code. Если этот Stop уже вызван самим stop-хуком
+# (stop_hook_active=true), выходим тихо — иначе additionalContext заставит
+# модель продолжить, она снова остановится, хук снова сработает → бесконечный цикл.
+INPUT=$(cat 2>/dev/null || true)
+if printf '%s' "$INPUT" | grep -q '"stop_hook_active"[[:space:]]*:[[:space:]]*true'; then
+  exit 0
+fi
+
 # Если графа нет — выходим тихо.
 [ -f graphify-out/graph.json ] || exit 0
 
