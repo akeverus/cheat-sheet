@@ -292,7 +292,7 @@ Priority =
 
 | # | Сидер | Кат. | Blk | OldTell | State | SCH | TH | QS | STEM | C-FCT | C-CMP | C-SCP | C-UNI | C-FRM | C-SEC | C-RU | W-PLS | W-1ER | W-API | W-FLS | W-DIV | W-CAR | W-FRM | W-SEC | W-RU | PAR | BST | BSM | STAMP | FR | LINK | POS | VAL | FINAL | Notes |
 |--:|---|---|--:|--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
-| 1 | `java-concurrency` | java | 56 | 52 | ◐ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | Q1-Q28 done (28/56): c1 5 BST-tells fixed; c2 length-tell снят; c3 Q19-Q28 — 2 dup-misconception (Q21-C,Q22-D) + 1 BSM-дефект (Q27-A был истинен) исправлены, length-tell correct-longest 10/10→0/10, CV 0.149; факт-ошибок 0, BSM чист ×28; Q29-Q56 TODO |
+| 1 | `java-concurrency` | java | 56 | 52 | ◐ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | Q1-Q38 done (38/56): c1 5 BST-tells fixed; c2 length-tell снят; c3 Q19-Q28 — 2 dup-misconception + 1 BSM-дефект (Q27-A был истинен) исправлены; c4 Q29-Q38 — факт-чисто, length-tell 9/10→0/10, устранён contra-pair Q33 A↔D (D переписан); CV 0.161; факт-ошибок 0, BSM чист ×38; Q39-Q56 TODO |
 | 2 | `design-patterns` | design-patterns | 48 | 48 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 4 | `sql` | databases | 53 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -685,6 +685,19 @@ Priority =
 - Freshness updated: freshness-sidecar расширен утверждениями Q20-Q28
 - Validators: verify-mcq-json OK; stamp CV=0.149 (≥0.14); SOURCE_COVERAGE ok
 - Manual review: независимый blind-прогон (reviewer-субагент) Q19-Q28 — BSM=PASS ×10, distinct=PASS ×10, скрытой истины в 10 поднятых/переписанных дистракторах НЕ найдено (Q27-A подтверждён теперь ложным); остаётся мягкий сквозной сигнал «correct — самый полный» в Q20/Q23/Q24/Q28 (definitional-stem, не дефект, длина уже выровнена)
+
+### 2026-07-11 — java-concurrency-interview — Q29..Q38
+
+- Commit: (this tick)
+- Blocks reviewed: 10 (Q29-Q38), review-sidecar расширен до 38/56
+- Correct answers fixed: 0 фактических ошибок (все 10 correct верны, сверено с JDK 21 javadoc)
+- Дефекты устранены: **contra-pair eliminate-hint Q33** — дистракторы A и D прямо спорили про факт «FutureTask реализует Runnable» (A утверждал, D отрицал), учащийся элиминирует по контр-паре → Q33-D переписан на отдельное заблуждение «cancel(true) принудительно останавливает выполняющуюся задачу» (ложь: кооперативное прерывание) + sections
+- Length-tell снят: correct lone-longest 9/10 → 0/10 — перефразировка одного дистрактора на блок (Q30-A/Q31-B/Q32-A/Q33-B/Q34-C/Q35-A/Q36-A/Q37-B/Q38-A) в более полную форму с ТЕМ ЖЕ заблуждением (sections не тронуты)
+- Sections rewritten: Q33-D (1 блок; остальные 9 правок text-only)
+- Theory synchronized: не требовалось (факты correct не менялись)
+- Freshness updated: freshness-sidecar расширен утверждениями Q29-Q38
+- Validators: verify-mcq-json OK; stamp CV=0.161 (≥0.14)
+- Manual review: независимый blind-прогон (reviewer-субагент) Q29-Q38 — BSM=PASS ×10, distinct=PASS ×10, фактически чисто, ни один удлинённый дистрактор не стал истинным (тонкие Q29-C каст→CCE, Q32-B направление steal, Q33-D FutureTask=RunnableFuture, Q38-C нет reset() — подтверждены ложными); accepted-minor: «correct — самый multi-clause» в comparison-стемах Q30/Q33/Q35/Q36 (перечисление присуще вопросу, длина выровнена, не гоним structure-tell в 0)
 
 ---
 
