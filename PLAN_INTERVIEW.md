@@ -67,6 +67,30 @@
 > Band#6 (in-flight, verify-hang) — **остановлен и отброшен** до коммита: его 6 файлов остаются current-worst
 > и будут переделаны как ROUND-5 band#1 под новым стандартом (чистая lineage, без old-rules churn).
 > Очередь ROUND 5 — все ~318 файлов, worst-first, workflow-бэндами ≤3 concurrent (offset против парал. сессии).
+>
+> ## 🔄 RESET #5 — 2026-07-11 (GOLDEN-EXAMPLES — единый эталон вкуса)
+>
+> Пользователь прислал **`docs/golden-examples.md`** — 12 golden-примеров MCQ-блоков (`CascadeType`,
+> `orphanRemoval`, N+1, `@ManyToMany`, `@OneToOne`, Hibernate-ошибки, функц. интерфейс,
+> `@FunctionalInterface`, лямбда vs аноним, `Function/Consumer/Supplier/Predicate`,
+> `Runnable/Callable/Supplier`, кастомный SAM) + anti-golden + шаблоны дистракторов + 6-проверочный
+> стандарт качества (Option / Plausibility / Russian-Readability / **Visual Format** parity + Single-Delta +
+> «не ответы, а mental models») и распорядился: (1) **положить файл в проект** (`docs/golden-examples.md`);
+> (2) **скилл должен сверяться с ним при каждом редактировании** MCQ (закреплено в `mcq-quality-fixer`);
+> (3) **внести проверку с этим файлом в таблицу**, **сбросить весь старый прогресс** и **удалить старые
+> прогоны** — работаем **заново по каждому файлу**.
+>
+> Выполнено: (a) `docs/golden-examples.md` в репозитории; (b) `mcq-quality-fixer` — новый раздел
+> «Golden Examples (АВТОРИТЕТНЫЙ few-shot эталон)» + пункт в «Checklist before finishing» требуют читать
+> golden-examples.md перед КАЖДОЙ правкой и прогонять 8-вопросный «убери correct» глаз-тест; (c) §7
+> заменён на **свежую reset-таблицу** `scripts/gen-interview-plan.py` — один ряд на interview-сидер,
+> колонка **Golden** (⬜ QUEUED · 🔄 WIP · ✅ DONE) = статус проверки файла против golden-examples.md;
+> все статусы сброшены в ⬜; (d) старые прогоны (§8 ROUND 3/4/5/6) **удалены** — начинаем чистый прогон.
+>
+> **Главный критерий приёмки файла (golden):** если убрать поле `correct`, правильный ответ **нельзя
+> угадать глазами** — ни по длине, ни по пунктуации, ни по числу `backticks`, ни по структуре, ни по
+> качеству редактуры. correct отличается **только истинностью**. Все 4 варианта — правдоподобные mental
+> models одного уровня зрелости, естественный русский, без карикатур и машинных `→`-цепочек.
 
 ## 1. Правило (закреплено в skills)
 
@@ -176,6 +200,8 @@
 
 | Инструмент | Назначение |
 |---|---|
+| **`docs/golden-examples.md`** | **АВТОРИТЕТНЫЙ few-shot эталон вкуса** — читать ПЕРЕД каждой правкой файла (12 golden-блоков + anti-golden + шаблоны дистракторов + 8-вопросный «убери correct» глаз-тест). Единый стандарт RESET #5 |
+| `scripts/gen-interview-plan.py` | Регенерирует таблицу §7 (`--write`; `--reset` сбрасывает статусы в ⬜). Статусы Golden сохраняются между прогонами |
 | `scripts/audit-mcq-parity.py` | Аудит-скрипт: находит кандидатов (per-block + file-level). `--top N`, `-v`. Решение за человеком |
 | `scratchpad/goal_loop/diagnose.py` | Строгий per-block детектор (LENGTH/SURFACE/THIN/DUP) → tells=0 |
 | `scratchpad/goal_loop/gate_struct.py` | HEAD-vs-current: q_number/question_text/order/label/correct неизменны |
@@ -200,725 +226,360 @@
 4. Адверс-ревьюер (fidelity_ok + parity_ok).
 5. Атомарный per-file коммит: `pedago(mcq): <topic> — single-delta паритет опций (N блоков)`.
 
-## 7. Гигантская матрица «файл × проверка» (живой план, авто-регенерация)
+## 7. Таблица «файл × golden-проверка» (живой план — новый прогон RESET #5)
 
-**Это и есть план, по которому идёт работа.** Строка = MCQ-сидер, столбец = **одна конкретная проверка**
-аудита, ячейка = **сколько блоков файла ещё её проваливают** (`·` = по этой оси чисто/поправлено).
-Строки отсортированы worst-first (ΣCAR↓, затем Σ parity-сигналов↓) — верх таблицы = что править дальше.
+**Это и есть план, по которому идёт работа.** Строка = interview-сидер, колонка **Golden** =
+статус проверки файла против `docs/golden-examples.md`. Каждый файл приводится к golden-стилю:
+все 4 варианта — правдоподобные mental models одного уровня, correct **нельзя угадать глазами**
+(8-вопросный «убери correct» тест из golden-examples.md пройден).
 
-Источник — детерминированный `scripts/audit-mcq-parity.py`. Матрица **регенерируется одной командой**
-(каждый тик после коммитов), поэтому всегда отражает актуальное закоммиченное состояние:
+Порядок работы за тик: взять верхний ⬜ (worst-first по **Tell**) → collision-guard
+(`git status --porcelain`) → прочитать `docs/golden-examples.md` для калибровки → переписать
+только `text`/`sections` дистракторов в golden-стиле → гейты (`verify-mcq-json.sh`=0, immutables
+без дрейфа) → коммит `pedago(mcq): <stem> — golden-style (N блоков)` → отметить ✅.
+
+Таблица регенерируется детерминированно (статусы сохраняются между прогонами):
 
 ```bash
-python3 scripts/gen-plan-matrix.py --write   # перезаписывает блок между MATRIX:START/END
+python3 scripts/gen-interview-plan.py --write            # регенерировать, сохранив статусы
+python3 scripts/gen-interview-plan.py --write --reset      # + сбросить всё в ⬜ (новый прогон)
 ```
 
-Легенда всех колонок — прямо под маркером ниже (каждая колонка описана: какую именно правку она требует).
+<!-- INTERVIEW-PLAN:START (auto: scripts/gen-interview-plan.py) -->
 
-<!-- MATRIX:START (auto: scripts/gen-plan-matrix.py) -->
+_Сводка: сидеров=318 · ✅DONE=0 · 🔄WIP=0 · ⬜QUEUED=318 · остаток визуально-палящих блоков (по не-DONE)=9070. Проверка каждого файла — против `docs/golden-examples.md`._
 
-_Сводка: файлов=318 · caricature-clean(CAR0)=317/318 · остаток CAR-блоков=1 · строки worst-first (ΣCAR↓, затем Σparity↓). Ячейка=число блоков, где проверка ещё срабатывает; `·`=0 (по этой оси чисто)._
+**Golden** = статус проверки файла против `docs/golden-examples.md` (⬜ QUEUED · 🔄 WIP · ✅ DONE). **Tell** = сколько блоков ещё визуально палят correct (самый длинный / единств. с `:` / больше backtick'ов / единств. с перечислением) — worst-first ключ, диагностика, не авто-гейт.
 
-**Как читать (каждая колонка = отдельная проверка аудита; ячейка = сколько блоков ещё править, `·`=0):**
+| # | Сидер | Категория | Бл | Tell | Golden |
+|--:|---|---|--:|--:|:--:|
+| 1 | `java-concurrency` | java | 56 | 52 | ⬜ |
+| 2 | `design-patterns` | design-patterns | 48 | 48 | ⬜ |
+| 3 | `postgresql` | databases | 55 | 47 | ⬜ |
+| 4 | `sql` | databases | 53 | 47 | ⬜ |
+| 5 | `project-reactor` | reactive | 48 | 47 | ⬜ |
+| 6 | `hibernate` | databases | 50 | 46 | ⬜ |
+| 7 | `java-collections` | java | 46 | 46 | ⬜ |
+| 8 | `application-security` | security | 45 | 45 | ⬜ |
+| 9 | `authentication-authorization-patterns` | security | 45 | 45 | ⬜ |
+| 10 | `hexagonal-architecture` | architecture | 45 | 45 | ⬜ |
+| 11 | `kotlin` | kotlin | 45 | 45 | ⬜ |
+| 12 | `owasp-top10` | security | 45 | 45 | ⬜ |
+| 13 | `test-strategies` | testing | 45 | 45 | ⬜ |
+| 14 | `tls-ssl` | security | 45 | 45 | ⬜ |
+| 15 | `unit-testing` | testing | 45 | 45 | ⬜ |
+| 16 | `spring-security` | spring | 46 | 44 | ⬜ |
+| 17 | `cassandra` | databases | 44 | 44 | ⬜ |
+| 18 | `elasticsearch` | databases | 44 | 44 | ⬜ |
+| 19 | `mongodb` | databases | 46 | 43 | ⬜ |
+| 20 | `rxjava` | reactive | 46 | 43 | ⬜ |
+| 21 | `helm` | devops | 43 | 43 | ⬜ |
+| 22 | `java-oop` | java | 43 | 43 | ⬜ |
+| 23 | `jwt` | security | 43 | 43 | ⬜ |
+| 24 | `kotlin-collections` | kotlin | 43 | 43 | ⬜ |
+| 25 | `kotlin-serialization` | kotlin | 43 | 43 | ⬜ |
+| 26 | `networking` | architecture | 43 | 43 | ⬜ |
+| 27 | `resilience-patterns` | architecture | 43 | 43 | ⬜ |
+| 28 | `saga-pattern` | architecture | 43 | 43 | ⬜ |
+| 29 | `spring-batch` | spring | 43 | 43 | ⬜ |
+| 30 | `spring-boot-actuator` | spring | 43 | 43 | ⬜ |
+| 31 | `spring-cloud` | spring | 43 | 43 | ⬜ |
+| 32 | `spring-mvc` | spring | 43 | 43 | ⬜ |
+| 33 | `chaos-engineering` | testing | 44 | 42 | ⬜ |
+| 34 | `git` | devops | 43 | 42 | ⬜ |
+| 35 | `java-annotations` | java | 43 | 42 | ⬜ |
+| 36 | `spring-data-jpa` | spring | 43 | 42 | ⬜ |
+| 37 | `application-profiling` | performance | 42 | 42 | ⬜ |
+| 38 | `argocd` | devops | 42 | 42 | ⬜ |
+| 39 | `caching-strategies` | architecture | 42 | 42 | ⬜ |
+| 40 | `cap-theorem` | architecture | 42 | 42 | ⬜ |
+| 41 | `contract-testing` | testing | 42 | 42 | ⬜ |
+| 42 | `database-transactions` | databases | 42 | 42 | ⬜ |
+| 43 | `flyway-liquibase` | databases | 42 | 42 | ⬜ |
+| 44 | `java-17-21` | java | 42 | 42 | ⬜ |
+| 45 | `java-stream` | java | 42 | 42 | ⬜ |
+| 46 | `microservices` | architecture | 42 | 42 | ⬜ |
+| 47 | `oauth2` | security | 42 | 42 | ⬜ |
+| 48 | `openapi-swagger` | api | 42 | 42 | ⬜ |
+| 49 | `performance-testing` | performance | 42 | 42 | ⬜ |
+| 50 | `terraform` | devops | 42 | 42 | ⬜ |
+| 51 | `mockito` | testing | 45 | 41 | ⬜ |
+| 52 | `java-8` | java | 42 | 41 | ⬜ |
+| 53 | `java-exceptions` | java | 42 | 41 | ⬜ |
+| 54 | `logging` | logging | 42 | 41 | ⬜ |
+| 55 | `clean-architecture` | architecture | 41 | 41 | ⬜ |
+| 56 | `cqrs-event-sourcing` | architecture | 41 | 41 | ⬜ |
+| 57 | `database-architecture` | databases | 41 | 41 | ⬜ |
+| 58 | `docker` | devops | 41 | 41 | ⬜ |
+| 59 | `metrics-tracing` | monitoring | 41 | 41 | ⬜ |
+| 60 | `rabbitmq` | messaging | 41 | 41 | ⬜ |
+| 61 | `scalability-patterns` | architecture | 41 | 41 | ⬜ |
+| 62 | `system-design` | system-design | 41 | 41 | ⬜ |
+| 63 | `consistency-patterns` | architecture | 42 | 40 | ⬜ |
+| 64 | `observability` | monitoring | 42 | 40 | ⬜ |
+| 65 | `spring-framework` | spring | 41 | 40 | ⬜ |
+| 66 | `code-review-practices` | leadership | 40 | 40 | ⬜ |
+| 67 | `distributed-systems` | architecture | 40 | 40 | ⬜ |
+| 68 | `grpc` | api | 40 | 40 | ⬜ |
+| 69 | `integration-testing` | testing | 40 | 40 | ⬜ |
+| 70 | `java-generics` | java | 40 | 40 | ⬜ |
+| 71 | `java-io-nio` | java | 40 | 40 | ⬜ |
+| 72 | `java-serialization` | java | 40 | 40 | ⬜ |
+| 73 | `kotlin-dsl` | kotlin | 40 | 40 | ⬜ |
+| 74 | `kotlin-exceptions` | kotlin | 40 | 40 | ⬜ |
+| 75 | `load-balancing` | architecture | 40 | 40 | ⬜ |
+| 76 | `scala` | scala | 40 | 40 | ⬜ |
+| 77 | `team-leadership` | leadership | 40 | 40 | ⬜ |
+| 78 | `technical-debt` | code-quality | 40 | 40 | ⬜ |
+| 79 | `testcontainers` | testing | 40 | 40 | ⬜ |
+| 80 | `deployment-strategies` | cicd | 39 | 39 | ⬜ |
+| 81 | `java-core` | java | 39 | 39 | ⬜ |
+| 82 | `kotlin-coroutines` | kotlin | 39 | 39 | ⬜ |
+| 83 | `http-rest` | api | 43 | 38 | ⬜ |
+| 84 | `redis` | databases | 43 | 38 | ⬜ |
+| 85 | `prometheus-grafana` | monitoring | 39 | 38 | ⬜ |
+| 86 | `api-gateway` | architecture | 38 | 38 | ⬜ |
+| 87 | `gradle-maven` | devops | 38 | 38 | ⬜ |
+| 88 | `java-modules` | java | 38 | 38 | ⬜ |
+| 89 | `jvm-performance-tuning` | performance | 38 | 38 | ⬜ |
+| 90 | `kotlin-interop-java` | kotlin | 38 | 38 | ⬜ |
+| 91 | `logging-strategies` | monitoring | 38 | 38 | ⬜ |
+| 92 | `pipeline-design` | cicd | 38 | 38 | ⬜ |
+| 93 | `websocket` | api | 38 | 38 | ⬜ |
+| 94 | `graphql` | api | 40 | 37 | ⬜ |
+| 95 | `memory-management` | performance | 39 | 37 | ⬜ |
+| 96 | `java-types` | java | 38 | 37 | ⬜ |
+| 97 | `jvm` | jvm | 40 | 36 | ⬜ |
+| 98 | `arrays-strings` | data-structures | 36 | 36 | ⬜ |
+| 99 | `go` | go | 36 | 36 | ⬜ |
+| 100 | `inference-optimization` | ai-ml | 36 | 36 | ⬜ |
+| 101 | `spring-webflux` | spring | 43 | 35 | ⬜ |
+| 102 | `behavioral` | behavioral | 38 | 35 | ⬜ |
+| 103 | `fine-tuning-llm` | ai-ml | 35 | 35 | ⬜ |
+| 104 | `go-concurrency` | go | 35 | 35 | ⬜ |
+| 105 | `test-automation` | testing | 50 | 34 | ⬜ |
+| 106 | `apache-spark` | data-engineering | 35 | 34 | ⬜ |
+| 107 | `database-sharding` | databases | 34 | 34 | ⬜ |
+| 108 | `hash-tables` | data-structures | 34 | 34 | ⬜ |
+| 109 | `open-source-llms` | ai-ml | 34 | 34 | ⬜ |
+| 110 | `trees` | data-structures | 34 | 33 | ⬜ |
+| 111 | `dynamic-programming` | algorithmic-paradigms | 33 | 33 | ⬜ |
+| 112 | `kafka` | messaging | 50 | 32 | ⬜ |
+| 113 | `spring-boot` | spring | 43 | 32 | ⬜ |
+| 114 | `ddd` | architecture | 38 | 32 | ⬜ |
+| 115 | `graphs` | data-structures | 34 | 32 | ⬜ |
+| 116 | `ai-compliance-governance` | ai-ml | 32 | 32 | ⬜ |
+| 117 | `ktor` | jvm-alternatives | 32 | 32 | ⬜ |
+| 118 | `linked-lists` | data-structures | 32 | 32 | ⬜ |
+| 119 | `two-pointers-sliding-window` | algorithmic-paradigms | 33 | 31 | ⬜ |
+| 120 | `typescript` | typescript | 33 | 31 | ⬜ |
+| 121 | `ai-application-architecture` | ai-ml | 32 | 31 | ⬜ |
+| 122 | `apache-flink` | data-engineering | 31 | 31 | ⬜ |
+| 123 | `complexity-analysis` | complexity | 31 | 31 | ⬜ |
+| 124 | `database-replication` | databases | 31 | 31 | ⬜ |
+| 125 | `java-jackson` | java | 31 | 31 | ⬜ |
+| 126 | `multimodal-ai` | ai-ml | 31 | 31 | ⬜ |
+| 127 | `quarkus` | jvm-alternatives | 31 | 31 | ⬜ |
+| 128 | `searching-algorithms` | sorting-searching | 31 | 31 | ⬜ |
+| 129 | `sorting-algorithms` | sorting-searching | 31 | 31 | ⬜ |
+| 130 | `kubernetes` | devops | 45 | 30 | ⬜ |
+| 131 | `design-ecommerce-delivery` | system-design | 36 | 30 | ⬜ |
+| 132 | `linux` | devops | 33 | 30 | ⬜ |
+| 133 | `api-design-best-practices` | api | 30 | 30 | ⬜ |
+| 134 | `cdn` | architecture | 30 | 30 | ⬜ |
+| 135 | `design-dropbox` | system-design | 30 | 30 | ⬜ |
+| 136 | `design-feed-system` | system-design | 30 | 30 | ⬜ |
+| 137 | `design-key-value-store` | system-design | 30 | 30 | ⬜ |
+| 138 | `design-netflix` | system-design | 30 | 30 | ⬜ |
+| 139 | `design-pastebin` | system-design | 30 | 30 | ⬜ |
+| 140 | `design-payment-system` | system-design | 30 | 30 | ⬜ |
+| 141 | `design-rate-limiter` | system-design | 30 | 30 | ⬜ |
+| 142 | `design-url-shortener` | system-design | 30 | 30 | ⬜ |
+| 143 | `dns` | architecture | 30 | 30 | ⬜ |
+| 144 | `dynamodb` | databases | 30 | 30 | ⬜ |
+| 145 | `go-stdlib` | go | 30 | 30 | ⬜ |
+| 146 | `llm-basics` | ai-ml | 30 | 30 | ⬜ |
+| 147 | `llm-evaluation` | ai-ml | 30 | 30 | ⬜ |
+| 148 | `long-context-vs-rag` | ai-ml | 30 | 30 | ⬜ |
+| 149 | `mcp` | ai-ml | 30 | 30 | ⬜ |
+| 150 | `multi-agent-orchestration` | ai-ml | 30 | 30 | ⬜ |
+| 151 | `neo4j` | databases | 30 | 30 | ⬜ |
+| 152 | `reactive-streams` | reactive | 30 | 30 | ⬜ |
+| 153 | `reasoning-models` | ai-ml | 30 | 30 | ⬜ |
+| 154 | `service-discovery` | architecture | 30 | 30 | ⬜ |
+| 155 | `code-review` | code-quality | 40 | 29 | ⬜ |
+| 156 | `java-string` | java | 39 | 29 | ⬜ |
+| 157 | `embeddings` | ai-ml | 29 | 29 | ⬜ |
+| 158 | `heaps` | data-structures | 29 | 29 | ⬜ |
+| 159 | `ai-agents` | ai-ml | 28 | 28 | ⬜ |
+| 160 | `ai-observability` | ai-ml | 28 | 28 | ⬜ |
+| 161 | `apache-airflow` | data-engineering | 28 | 28 | ⬜ |
+| 162 | `clickhouse` | databases | 28 | 28 | ⬜ |
+| 163 | `dbt` | data-engineering | 28 | 28 | ⬜ |
+| 164 | `design-parking-lot-oo` | system-design | 28 | 28 | ⬜ |
+| 165 | `design-youtube` | system-design | 28 | 28 | ⬜ |
+| 166 | `go-testing` | go | 28 | 28 | ⬜ |
+| 167 | `greedy-algorithms` | algorithmic-paradigms | 28 | 28 | ⬜ |
+| 168 | `java-mapstruct` | java | 28 | 28 | ⬜ |
+| 169 | `kafka-streams` | data-engineering | 28 | 28 | ⬜ |
+| 170 | `llm-integration-patterns` | ai-ml | 28 | 28 | ⬜ |
+| 171 | `mlops` | ai-ml | 28 | 28 | ⬜ |
+| 172 | `model-serving` | ai-ml | 28 | 28 | ⬜ |
+| 173 | `opentelemetry` | monitoring | 28 | 28 | ⬜ |
+| 174 | `prompt-engineering` | ai-ml | 28 | 28 | ⬜ |
+| 175 | `reactive-testing` | reactive | 28 | 28 | ⬜ |
+| 176 | `serverless` | cloud | 28 | 28 | ⬜ |
+| 177 | `stream-processing` | data-engineering | 28 | 28 | ⬜ |
+| 178 | `tries` | data-structures | 28 | 28 | ⬜ |
+| 179 | `vector-databases` | ai-ml | 28 | 28 | ⬜ |
+| 180 | `webflux` | reactive | 28 | 28 | ⬜ |
+| 181 | `rust` | rust | 33 | 27 | ⬜ |
+| 182 | `vertx` | jvm-alternatives | 31 | 27 | ⬜ |
+| 183 | `backtracking` | algorithmic-paradigms | 27 | 27 | ⬜ |
+| 184 | `clean-code-practices` | code-quality | 27 | 27 | ⬜ |
+| 185 | `code-smells` | code-quality | 27 | 27 | ⬜ |
+| 186 | `design-instagram` | system-design | 27 | 27 | ⬜ |
+| 187 | `design-twitter` | system-design | 27 | 27 | ⬜ |
+| 188 | `divide-and-conquer` | algorithmic-paradigms | 27 | 27 | ⬜ |
+| 189 | `go-memory-gc` | go | 27 | 27 | ⬜ |
+| 190 | `go-modules` | go | 27 | 27 | ⬜ |
+| 191 | `java-initialization` | java | 27 | 27 | ⬜ |
+| 192 | `java-lombok` | java | 27 | 27 | ⬜ |
+| 193 | `recursion` | algorithmic-paradigms | 27 | 27 | ⬜ |
+| 194 | `java-conditional-statements` | java | 42 | 26 | ⬜ |
+| 195 | `data-lake-lakehouse` | data-engineering | 28 | 26 | ⬜ |
+| 196 | `database-performance` | performance | 27 | 26 | ⬜ |
+| 197 | `elk-stack` | monitoring | 26 | 26 | ⬜ |
+| 198 | `go-generics` | go | 26 | 26 | ⬜ |
+| 199 | `istio-service-mesh` | devops | 26 | 26 | ⬜ |
+| 200 | `micronaut` | jvm-alternatives | 26 | 26 | ⬜ |
+| 201 | `reactive-patterns` | reactive | 26 | 26 | ⬜ |
+| 202 | `static-analysis` | code-quality | 26 | 26 | ⬜ |
+| 203 | `vault` | devops | 26 | 26 | ⬜ |
+| 204 | `design-google-maps` | system-design | 30 | 25 | ⬜ |
+| 205 | `message-brokers-comparison` | messaging | 26 | 25 | ⬜ |
+| 206 | `ansible` | devops | 25 | 25 | ⬜ |
+| 207 | `code-coverage` | code-quality | 25 | 25 | ⬜ |
+| 208 | `stacks-queues` | data-structures | 25 | 25 | ⬜ |
+| 209 | `function-calling` | ai-ml | 30 | 24 | ⬜ |
+| 210 | `design-elevator-oo` | system-design | 26 | 24 | ⬜ |
+| 211 | `design-web-crawler` | system-design | 26 | 24 | ⬜ |
+| 212 | `cockroachdb` | databases | 24 | 24 | ⬜ |
+| 213 | `consul` | devops | 24 | 24 | ⬜ |
+| 214 | `design-vending-machine-oo` | system-design | 24 | 24 | ⬜ |
+| 215 | `latency-numbers` | architecture | 24 | 24 | ⬜ |
+| 216 | `nats` | messaging | 24 | 24 | ⬜ |
+| 217 | `network-performance` | performance | 24 | 24 | ⬜ |
+| 218 | `supply-chain-security` | security | 24 | 24 | ⬜ |
+| 219 | `refactoring-patterns` | code-quality | 42 | 23 | ⬜ |
+| 220 | `event-driven-patterns` | architecture | 40 | 23 | ⬜ |
+| 221 | `code-agents` | ai-ml | 31 | 23 | ⬜ |
+| 222 | `data-warehousing` | data-engineering | 30 | 23 | ⬜ |
+| 223 | `design-search` | system-design | 30 | 23 | ⬜ |
+| 224 | `caching-performance` | performance | 23 | 23 | ⬜ |
+| 225 | `jaeger-zipkin` | monitoring | 23 | 23 | ⬜ |
+| 226 | `scylladb` | databases | 23 | 23 | ⬜ |
+| 227 | `ai-safety-guardrails` | ai-ml | 32 | 22 | ⬜ |
+| 228 | `aws-lambda` | cloud | 32 | 22 | ⬜ |
+| 229 | `aws-sqs-sns` | messaging | 22 | 22 | ⬜ |
+| 230 | `conflict-stories` | behavioral | 22 | 22 | ⬜ |
+| 231 | `culture-fit` | behavioral | 22 | 22 | ⬜ |
+| 232 | `failure-stories` | behavioral | 22 | 22 | ⬜ |
+| 233 | `leadership-stories` | behavioral | 22 | 22 | ⬜ |
+| 234 | `load-testing` | testing | 22 | 22 | ⬜ |
+| 235 | `pulsar` | messaging | 22 | 22 | ⬜ |
+| 236 | `secrets-management` | security | 22 | 22 | ⬜ |
+| 237 | `star-method` | behavioral | 22 | 22 | ⬜ |
+| 238 | `technical-decisions` | leadership | 22 | 22 | ⬜ |
+| 239 | `cloud-native-patterns` | cloud | 30 | 21 | ⬜ |
+| 240 | `reverse-proxy` | architecture | 30 | 21 | ⬜ |
+| 241 | `azure` | cloud | 25 | 21 | ⬜ |
+| 242 | `spring-aop` | spring | 22 | 21 | ⬜ |
+| 243 | `design-chat-system` | system-design | 21 | 21 | ⬜ |
+| 244 | `property-based-testing` | testing | 21 | 21 | ⬜ |
+| 245 | `loki-grafana` | monitoring | 28 | 20 | ⬜ |
+| 246 | `api-versioning` | api | 20 | 20 | ⬜ |
+| 247 | `conflict-resolution` | leadership | 20 | 20 | ⬜ |
+| 248 | `estimations-planning` | leadership | 20 | 20 | ⬜ |
+| 249 | `linkerd` | devops | 20 | 20 | ⬜ |
+| 250 | `mtls` | security | 20 | 20 | ⬜ |
+| 251 | `resilience4j` | spring | 20 | 20 | ⬜ |
+| 252 | `tech-interviewing` | leadership | 20 | 20 | ⬜ |
+| 253 | `gcp` | cloud | 28 | 19 | ⬜ |
+| 254 | `zero-trust` | security | 19 | 19 | ⬜ |
+| 255 | `redpanda` | messaging | 20 | 18 | ⬜ |
+| 256 | `spring-cache` | spring | 18 | 18 | ⬜ |
+| 257 | `strangler-fig` | architecture | 18 | 18 | ⬜ |
+| 258 | `kotlin-flow` | kotlin | 17 | 17 | ⬜ |
+| 259 | `rest-maturity` | api | 17 | 17 | ⬜ |
+| 260 | `design-uber` | system-design | 30 | 16 | ⬜ |
+| 261 | `rag` | ai-ml | 30 | 16 | ⬜ |
+| 262 | `spring-ai` | spring | 18 | 16 | ⬜ |
+| 263 | `java-reflection` | java | 16 | 16 | ⬜ |
+| 264 | `spring-data-jdbc` | spring | 16 | 16 | ⬜ |
+| 265 | `spring-events` | spring | 16 | 16 | ⬜ |
+| 266 | `spring-scheduling` | spring | 16 | 16 | ⬜ |
+| 267 | `spring-validation` | spring | 16 | 16 | ⬜ |
+| 268 | `aws` | cloud | 34 | 15 | ⬜ |
+| 269 | `design-typeahead` | system-design | 30 | 15 | ⬜ |
+| 270 | `spring-testing` | spring | 16 | 15 | ⬜ |
+| 271 | `graalvm-native` | jvm | 15 | 15 | ⬜ |
+| 272 | `hibernate-caching` | databases | 15 | 15 | ⬜ |
+| 273 | `hibernate-relationships` | databases | 15 | 15 | ⬜ |
+| 274 | `java-optional` | java | 15 | 15 | ⬜ |
+| 275 | `java-pattern-matching` | java | 15 | 15 | ⬜ |
+| 276 | `java-records` | java | 15 | 15 | ⬜ |
+| 277 | `java-virtual-threads` | java | 15 | 15 | ⬜ |
+| 278 | `junit` | testing | 15 | 15 | ⬜ |
+| 279 | `kotlin-sealed-classes` | kotlin | 15 | 15 | ⬜ |
+| 280 | `kotlin-spring` | kotlin | 15 | 15 | ⬜ |
+| 281 | `rest-assured` | testing | 15 | 15 | ⬜ |
+| 282 | `spring-async` | spring | 15 | 15 | ⬜ |
+| 283 | `spring-boot-3-migration` | spring | 15 | 15 | ⬜ |
+| 284 | `spring-graphql` | spring | 15 | 15 | ⬜ |
+| 285 | `spring-integration` | spring | 15 | 15 | ⬜ |
+| 286 | `spring-kafka` | spring | 15 | 15 | ⬜ |
+| 287 | `spring-messaging` | spring | 15 | 15 | ⬜ |
+| 288 | `spring-modulith` | spring | 15 | 15 | ⬜ |
+| 289 | `spring-r2dbc` | spring | 15 | 15 | ⬜ |
+| 290 | `spring-session` | spring | 15 | 15 | ⬜ |
+| 291 | `spring-state-machine` | spring | 15 | 15 | ⬜ |
+| 292 | `spring-transaction` | spring | 15 | 15 | ⬜ |
+| 293 | `spring-vault` | spring | 15 | 15 | ⬜ |
+| 294 | `agentic-patterns` | ai-ml | 30 | 14 | ⬜ |
+| 295 | `hibernate-jpql-criteria` | databases | 16 | 14 | ⬜ |
+| 296 | `kotlin-value-classes` | kotlin | 15 | 14 | ⬜ |
+| 297 | `spring-rest-client` | spring | 13 | 13 | ⬜ |
+| 298 | `java-completable-future` | java | 15 | 11 | ⬜ |
+| 299 | `mentoring` | leadership | 25 | 10 | ⬜ |
+| 300 | `java-22-25` | java | 22 | 10 | ⬜ |
+| 301 | `algorithms` | algorithms | 16 | 7 | ⬜ |
+| 302 | `crac` | jvm | 16 | 6 | ⬜ |
+| 303 | `micrometer` | monitoring | 20 | 5 | ⬜ |
+| 304 | `mutation-testing` | testing | 20 | 5 | ⬜ |
+| 305 | `langchain4j` | ai-ml | 18 | 5 | ⬜ |
+| 306 | `jmh-microbenchmarking` | performance | 18 | 4 | ⬜ |
+| 307 | `jooq` | databases | 18 | 4 | ⬜ |
+| 308 | `bff-pattern` | architecture | 17 | 4 | ⬜ |
+| 309 | `selenium` | testing | 15 | 4 | ⬜ |
+| 310 | `java-functional-interface` | java | 14 | 4 | ⬜ |
+| 311 | `spring-retry` | spring | 17 | 3 | ⬜ |
+| 312 | `archunit` | testing | 15 | 3 | ⬜ |
+| 313 | `cucumber-bdd` | testing | 15 | 3 | ⬜ |
+| 314 | `kotlin-testing` | kotlin | 20 | 1 | ⬜ |
+| 315 | `edge-computing` | architecture | 18 | 1 | ⬜ |
+| 316 | `apache-camel` | messaging | 16 | 1 | ⬜ |
+| 317 | `jms-activemq` | messaging | 16 | 1 | ⬜ |
+| 318 | `scala-effects` | scala | 16 | 1 | ⬜ |
 
-| Колонка | Проверка (что править) |
-|---|---|
-| **Бл** | всего MCQ-блоков в файле |
-| **Sev** | severity файла (худший блок) |
-| **ΣCAR** | всего блоков с карикатурой — главный таргет цикла (loop чинит именно это) |
-| **Lavg** | correct/avg-wrong length ratio (correct длиннее в среднем) |
-| **Lspd** | max/min длина опций (разброс) |
-| **Word** | WORD_COUNT_GAP (correct больше слов) |
-| **Sent** | SENTENCE_COUNT_GAP (correct больше предложений) |
-| **Shrt** | SHORT_DISTR (есть дистрактор-заглушка < порога) |
-| **Uniq** | UNIQ_MARKER (только correct несёт →/;/backtick-enum) |
-| **Enum** | ONLY_ONE_ENUMERATION_OPTION (только correct — перечисление) |
-| **Caus** | ONLY_ONE_CAUSAL_OPTION (только один вариант — причинно-следств.) |
-| **Sden** | STRUCTURE_DENSITY_GAP (структурная плотность correct выше) |
-| **Tech** | TECH_DENSITY_GAP (технических терминов у correct больше) |
-| **Btk** | BACKTICK_GAP (backtick'ов у correct больше) |
-| **Num** | NUMBER_GAP (чисел у correct больше) |
-| **Cma** | COMMA_GAP (запятых/смысловых частей у correct больше) |
-| **Infl** | INFLATED_CARICATURE (дистрактор раздут до формы correct, но карикатурен) |
-| **Fdsh** | Format Parity: тире `—` только у correct (или только у него нет) — «тире не в общем месте» |
-| **(Cabs удалён)** | категоричность (всегда/никогда) БОЛЬШЕ не карикатура — допустима в правдоподобном заблуждении (2026-07-07) |
-| **Fper** | Format Parity: завершающая точка есть только у correct (или только у него нет) |
-| **Fopn** | Format Parity: только correct открывается backtick-идентификатором (или только он — нет) |
-| **Ctox** | карикатура: токсичный менеджмент (заставить/угрожать/…) |
-| **Cabd** | карикатура: абсурдное действие (просто игнорировать/забить/…) |
-| **Cdis** | карикатура: обесценивание (без амбиций/оставить в покое/…) |
-| **Cfak** | карикатура: псевдо-обоснование (якобы/очевидно же/…) |
-| **Rlong** | readability: слишком длинное предложение |
-| **Rpun** | readability: склейка пунктуации |
-| **Rcyr** | readability: мало кириллицы (непереведённая англ. проза) |
-| **Reng** | readability: длинный английский run |
-| **Rfil** | readability: вода/filler-фраза |
-| **Sch** | schema-ошибки (INVALID_*/MISSING/LABEL_ORDER) — обязано быть 0 |
-| **Статус** | `✅CAR0` = карикатура вычищена (round-3), но НЕ значит «готово по ROUND 4»: файл ещё перебирается под 20 правил · `CAR<N>` = остаток caricature-сигнала |
-
-> **Приоритет цикла:** loop чинит **ΣCAR/Cxxx-колонки** (Plausibility). Length/structure-колонки (Lavg…Cma)
-> у длинных энумеративных correct снимаются НЕ обрезкой correct (запрещено), а поднятием дистракторов —
-> это делается попутно в тех же блоках. Readability (Rxxx) — независимая ось. Матрица регенерируется
-> каждый тик: `python3 scripts/gen-plan-matrix.py --write`.
-
-| # | Сидер | Бл | Sev | ΣCAR | Lavg | Lspd | Word | Sent | Shrt | Uniq | Enum | Caus | Sden | Tech | Btk | Num | Cma | Infl | Fdsh | Fper | Fopn | Ctox | Cabd | Cdis | Cfak | Rlong | Rpun | Rcyr | Reng | Rfil | Sch | Статус |
-|--:|---|--:|:--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|:--:|
-| 1 | agentic-patterns | 29 | CRIT | 1 | 3 | 25 | 1 | · | 2 | 19 | 9 | 8 | 3 | 12 | · | 1 | 3 | 1 | 6 | · | · | · | · | · | 1 | · | · | · | · | · | · | CAR1 |
-| 2 | owasp-top10 | 45 | CRIT | · | 45 | 45 | 45 | 31 | 45 | 34 | 28 | 17 | 14 | 44 | 35 | 14 | 29 | · | 7 | · | 9 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 3 | argocd | 42 | CRIT | · | 42 | 42 | 42 | 35 | 42 | 33 | 30 | 17 | 19 | 41 | 42 | 4 | 26 | · | 17 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 4 | networking | 43 | CRIT | · | 43 | 43 | 43 | 36 | 43 | 33 | 18 | 13 | 24 | 43 | 31 | 17 | 29 | · | 15 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 5 | java-collections | 46 | CRIT | · | 46 | 46 | 45 | 28 | 46 | 34 | 29 | 18 | 9 | 43 | 41 | 7 | 20 | · | 16 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 6 | caching-strategies | 42 | CRIT | · | 42 | 42 | 42 | 30 | 42 | 37 | 30 | 17 | 20 | 39 | 35 | 12 | 19 | · | 12 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 7 | spring-mvc | 43 | CRIT | · | 43 | 43 | 43 | 12 | 43 | 39 | 34 | 14 | 24 | 41 | 41 | 2 | 26 | · | 11 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 8 | authentication-authorization-patterns | 45 | CRIT | · | 45 | 45 | 43 | 28 | 45 | 30 | 24 | 17 | 8 | 44 | 42 | 6 | 23 | · | 10 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 9 | elasticsearch | 44 | CRIT | · | 44 | 44 | 43 | 26 | 44 | 34 | 31 | 18 | 5 | 41 | 38 | 3 | 29 | · | 12 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 10 | unit-testing | 45 | CRIT | · | 45 | 45 | 43 | 30 | 45 | 35 | 27 | 16 | 20 | 42 | 32 | 4 | 15 | · | 7 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 11 | cassandra | 44 | CRIT | · | 44 | 44 | 41 | 3 | 43 | 36 | 25 | 19 | 19 | 42 | 26 | 8 | 30 | · | 18 | · | 6 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 12 | performance-testing | 42 | CRIT | · | 42 | 42 | 41 | 19 | 42 | 34 | 30 | 13 | 15 | 42 | 23 | 20 | 28 | · | 9 | · | 3 | · | · | · | · | 1 | · | · | · | · | · | ✅CAR0 |
-| 13 | spring-cloud | 43 | CRIT | · | 43 | 43 | 42 | 29 | 43 | 29 | 24 | 12 | 7 | 43 | 39 | 4 | 33 | · | 9 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 14 | jwt | 43 | CRIT | · | 43 | 43 | 39 | 32 | 39 | 30 | 26 | 11 | 19 | 41 | 28 | 9 | 24 | · | 8 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 15 | contract-testing | 42 | CRIT | · | 42 | 42 | 40 | 22 | 41 | 37 | 25 | 10 | 18 | 41 | 30 | 8 | 28 | · | 8 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 16 | tls-ssl | 45 | CRIT | · | 45 | 45 | 40 | 21 | 44 | 27 | 20 | 14 | 14 | 40 | 39 | 15 | 18 | · | 6 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 17 | scala | 40 | CRIT | · | 40 | 40 | 39 | 28 | 40 | 31 | 24 | 11 | 18 | 40 | 39 | 7 | 26 | · | 7 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 18 | integration-testing | 40 | CRIT | · | 40 | 40 | 40 | 27 | 40 | 32 | 25 | 18 | 16 | 39 | 36 | 8 | 17 | · | 10 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 19 | fine-tuning-llm | 35 | CRIT | · | 35 | 35 | 35 | 25 | 35 | 29 | 15 | 16 | 22 | 34 | 24 | 26 | 29 | · | 14 | · | 13 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 20 | code-review-practices | 40 | CRIT | · | 40 | 40 | 40 | 27 | 40 | 29 | 9 | 6 | 23 | 40 | 32 | 17 | 32 | · | 8 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 21 | application-security | 45 | CRIT | · | 45 | 45 | 45 | 13 | 45 | 27 | 25 | 25 | 5 | 38 | 33 | 2 | 23 | · | 6 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 22 | spring-security | 43 | CRIT | · | 43 | 43 | 37 | 30 | 42 | 30 | 17 | 13 | 3 | 41 | 41 | 3 | 19 | · | 14 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 23 | test-strategies | 45 | CRIT | · | 44 | 44 | 44 | 14 | 43 | 32 | 23 | 7 | 11 | 40 | 29 | 8 | 32 | · | 5 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 24 | helm | 43 | CRIT | · | 43 | 43 | 42 | 36 | 42 | 22 | 18 | 8 | 8 | 41 | 39 | 4 | 17 | · | 13 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 25 | database-transactions | 42 | CRIT | · | 42 | 42 | 39 | 26 | 41 | 30 | 21 | 16 | 18 | 37 | 31 | 2 | 23 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 26 | spring-boot-actuator | 43 | CRIT | · | 43 | 43 | 40 | 22 | 43 | 36 | 27 | 9 | 6 | 41 | 37 | 3 | 15 | · | 9 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 27 | spring-batch | 43 | CRIT | · | 43 | 43 | 34 | 21 | 43 | 36 | 31 | 5 | 8 | 40 | 37 | 3 | 16 | · | 10 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 28 | java-8 | 42 | CRIT | · | 41 | 42 | 41 | 30 | 41 | 28 | 17 | 14 | 15 | 37 | 30 | 4 | 19 | · | 10 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 29 | resilience-patterns | 43 | CRIT | · | 43 | 43 | 39 | 27 | 43 | 24 | 18 | 13 | 12 | 36 | 30 | 9 | 20 | · | 8 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 30 | spring-framework | 40 | CRIT | · | 40 | 40 | 40 | 21 | 40 | 35 | 32 | 6 | 15 | 34 | 34 | 4 | 20 | · | 4 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 31 | saga-pattern | 43 | CRIT | · | 43 | 43 | 42 | 7 | 43 | 41 | 22 | 12 | 16 | 39 | 24 | 2 | 21 | · | 8 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 32 | jvm-performance-tuning | 38 | CRIT | · | 38 | 38 | 34 | 27 | 38 | 23 | 6 | 13 | 27 | 38 | 29 | 21 | 26 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 33 | database-sharding | 34 | CRIT | · | 33 | 33 | 33 | 28 | 33 | 31 | 9 | 14 | 30 | 33 | 28 | 23 | 26 | · | 7 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 34 | flyway-liquibase | 42 | CRIT | · | 42 | 42 | 39 | 11 | 42 | 35 | 31 | 15 | 9 | 33 | 28 | 3 | 25 | · | 7 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 35 | oauth2 | 42 | CRIT | · | 42 | 42 | 42 | 12 | 42 | 24 | 22 | 12 | 4 | 39 | 37 | 4 | 18 | · | 17 | · | 6 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 36 | cqrs-event-sourcing | 41 | CRIT | · | 40 | 40 | 38 | 19 | 40 | 37 | 22 | 14 | 14 | 32 | 20 | 8 | 29 | · | 8 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 37 | project-reactor | 47 | CRIT | · | 47 | 47 | 46 | 9 | 47 | 37 | 18 | 7 | 4 | 44 | 29 | 2 | 8 | · | 14 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 38 | scalability-patterns | 41 | CRIT | · | 41 | 41 | 38 | 25 | 41 | 33 | 21 | 18 | 11 | 38 | 28 | 3 | 18 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 39 | logging-strategies | 38 | CRIT | · | 38 | 38 | 37 | 22 | 38 | 33 | 25 | 12 | 19 | 36 | 35 | 5 | 14 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 40 | pipeline-design | 38 | CRIT | · | 34 | 34 | 33 | 26 | 34 | 32 | 21 | 11 | 19 | 36 | 33 | 8 | 25 | · | 8 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 41 | inference-optimization | 36 | CRIT | · | 36 | 36 | 36 | 24 | 35 | 28 | 23 | 18 | 8 | 35 | 12 | 24 | 25 | · | 14 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 42 | java-oop | 43 | CRIT | · | 43 | 43 | 42 | 3 | 43 | 34 | 20 | 12 | 16 | 38 | 26 | 2 | 18 | · | 9 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 43 | java-17-21 | 42 | CRIT | · | 42 | 42 | 42 | 9 | 42 | 37 | 24 | 10 | 8 | 39 | 24 | 8 | 12 | · | 5 | · | 7 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 44 | system-design | 41 | CRIT | · | 38 | 40 | 27 | · | 37 | 39 | 15 | 17 | 23 | 40 | 31 | 11 | 22 | · | 6 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 45 | kotlin-serialization | 43 | CRIT | · | 43 | 43 | 42 | 23 | 43 | 25 | 18 | 11 | 5 | 38 | 34 | 4 | 13 | · | 4 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 46 | spring-data-jpa | 40 | CRIT | · | 40 | 37 | 36 | 23 | 37 | 32 | 25 | 14 | 4 | 36 | 35 | · | 11 | · | 11 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 47 | microservices | 42 | CRIT | · | 42 | 41 | 40 | 16 | 41 | 34 | 34 | 19 | 13 | 32 | · | 2 | 22 | · | 7 | · | · | · | · | · | · | · | · | · | 1 | · | · | ✅CAR0 |
-| 48 | api-gateway | 38 | CRIT | · | 38 | 38 | 36 | 20 | 38 | 28 | 23 | 9 | 11 | 35 | 32 | 5 | 24 | · | 4 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 49 | hexagonal-architecture | 45 | CRIT | · | 45 | 45 | 40 | 2 | 45 | 35 | 22 | 14 | 8 | 35 | 24 | 2 | 12 | · | 11 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 50 | redis | 37 | CRIT | · | 37 | 37 | 37 | 5 | 37 | 37 | 28 | 7 | 12 | 35 | 30 | 4 | 18 | · | 14 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 51 | kotlin-dsl | 40 | CRIT | · | 39 | 39 | 38 | 23 | 38 | 30 | 21 | 12 | 10 | 34 | 29 | 1 | 16 | · | 3 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 52 | kotlin-collections | 43 | CRIT | · | 43 | 43 | 31 | 2 | 42 | 40 | 24 | 16 | 11 | 35 | 30 | · | 8 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 53 | application-profiling | 42 | CRIT | · | 42 | 42 | 38 | 10 | 42 | 34 | 27 | 11 | 11 | 34 | 14 | 9 | 11 | · | 7 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 54 | load-balancing | 40 | CRIT | · | 40 | 40 | 40 | 15 | 40 | 26 | 18 | 8 | 9 | 33 | 26 | 4 | 13 | · | 19 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 55 | java-generics | 40 | CRIT | · | 40 | 40 | 38 | 25 | 40 | 22 | 12 | 19 | 7 | 33 | 30 | 2 | 15 | · | 7 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 56 | gradle-maven | 38 | CRIT | · | 38 | 38 | 38 | 24 | 38 | 23 | 19 | 12 | 9 | 34 | 30 | · | 16 | · | 8 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 57 | deployment-strategies | 38 | CRIT | · | 37 | 37 | 36 | 24 | 37 | 26 | 22 | 11 | 11 | 32 | 22 | 2 | 17 | · | 11 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 58 | openapi-swagger | 42 | CRIT | · | 42 | 42 | 41 | 5 | 42 | 36 | 19 | 2 | 6 | 34 | 28 | · | 16 | · | 9 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 59 | logging | 40 | CRIT | · | 38 | 38 | 35 | 20 | 36 | 28 | 21 | 12 | 2 | 35 | 32 | 4 | 14 | · | 5 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 60 | testcontainers | 40 | CRIT | · | 40 | 40 | 32 | 26 | 40 | 21 | 20 | 14 | 6 | 32 | 31 | · | 15 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 61 | kotlin-interop-java | 38 | CRIT | · | 38 | 38 | 35 | 14 | 38 | 36 | 22 | 14 | 8 | 34 | 29 | · | 3 | · | 8 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 62 | long-context-vs-rag | 30 | CRIT | · | 30 | 30 | 30 | 25 | 30 | 28 | 16 | 10 | 20 | 30 | 17 | 23 | 17 | · | 6 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 63 | clean-architecture | 41 | CRIT | · | 41 | 41 | 41 | 7 | 41 | 27 | 16 | 9 | 15 | 30 | 26 | 2 | 13 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 64 | websocket | 38 | CRIT | · | 38 | 38 | 28 | 7 | 37 | 33 | 21 | 12 | 12 | 38 | 30 | 5 | 12 | · | 2 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 65 | design-key-value-store | 30 | CRIT | · | 30 | 30 | 30 | 26 | 30 | 26 | 11 | 6 | 16 | 30 | 21 | 18 | 20 | · | 15 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 66 | go | 36 | CRIT | · | 36 | 36 | 36 | 16 | 36 | 26 | 21 | 10 | 7 | 34 | 20 | 3 | 15 | · | 11 | · | 6 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 67 | open-source-llms | 33 | CRIT | · | 33 | 33 | 33 | 12 | 33 | 27 | 21 | 11 | 4 | 32 | 17 | 25 | 23 | · | 6 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 68 | design-feed-system | 29 | CRIT | · | 29 | 29 | 26 | 21 | 27 | 25 | 14 | 15 | 27 | 29 | 19 | 23 | 20 | · | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 69 | memory-management | 38 | CRIT | · | 33 | 33 | 33 | 12 | 33 | 30 | 23 | 20 | 4 | 32 | 16 | 10 | 16 | · | 12 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 70 | hash-tables | 34 | CRIT | · | 34 | 33 | 32 | 28 | 33 | 28 | 20 | 7 | 9 | 33 | 22 | 7 | 10 | · | 14 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 71 | dynamic-programming | 33 | CRIT | · | 33 | 33 | 33 | 24 | 33 | 29 | 19 | 14 | 4 | 31 | 26 | 16 | 5 | · | 9 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 72 | design-rate-limiter | 30 | CRIT | · | 30 | 30 | 30 | 26 | 30 | 28 | 13 | 8 | 23 | 30 | 11 | 20 | 21 | · | 10 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 73 | technical-debt | 40 | CRIT | · | 40 | 40 | 40 | 22 | 40 | 34 | 28 | 6 | 17 | 18 | 5 | 1 | 13 | · | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 74 | java-stream | 42 | CRIT | · | 42 | 41 | 27 | 17 | 40 | 19 | 13 | 9 | 7 | 35 | 31 | 2 | 18 | · | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 75 | team-leadership | 40 | CRIT | · | 40 | 40 | 39 | 31 | 40 | 24 | 11 | 5 | 12 | 25 | 9 | 2 | 26 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 76 | design-pastebin | 30 | CRIT | · | 30 | 30 | 30 | 24 | 30 | 24 | 10 | 10 | 25 | 30 | 19 | 15 | 20 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 77 | cap-theorem | 42 | CRIT | · | 42 | 42 | 36 | 16 | 41 | 23 | 15 | 17 | 6 | 24 | 20 | 3 | 12 | · | 7 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 78 | design-payment-system | 30 | CRIT | · | 30 | 30 | 30 | 23 | 30 | 23 | 6 | 10 | 25 | 30 | 15 | 19 | 25 | · | 8 | · | 1 | · | · | · | · | · | · | 1 | 1 | · | · | ✅CAR0 |
-| 79 | ai-compliance-governance | 32 | CRIT | · | 32 | 32 | 30 | 19 | 32 | 27 | 14 | 12 | 13 | 31 | 9 | 16 | 28 | · | 7 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 80 | java-modules | 38 | CRIT | · | 38 | 38 | 27 | 13 | 38 | 35 | 25 | 8 | 9 | 32 | 23 | 1 | 8 | · | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 81 | searching-algorithms | 31 | CRIT | · | 31 | 31 | 31 | 25 | 31 | 24 | 17 | 8 | 10 | 31 | 28 | 11 | 11 | · | 12 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 82 | service-discovery | 30 | CRIT | · | 30 | 30 | 29 | 19 | 30 | 24 | 11 | 16 | 19 | 30 | 17 | 17 | 23 | · | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 83 | metrics-tracing | 41 | CRIT | · | 41 | 41 | 34 | 13 | 41 | 25 | 19 | 7 | 10 | 27 | 22 | 4 | 11 | · | 2 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 84 | java-serialization | 40 | CRIT | · | 40 | 40 | 28 | 7 | 39 | 32 | 24 | 10 | 9 | 32 | 19 | 2 | 7 | · | 7 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 85 | java-types | 37 | CRIT | · | 36 | 36 | 31 | 17 | 35 | 23 | 17 | 12 | 7 | 29 | 27 | 6 | 6 | · | 12 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 86 | arrays-strings | 36 | CRIT | · | 36 | 36 | 32 | 21 | 36 | 27 | 16 | 12 | 3 | 33 | 30 | 7 | 5 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 87 | apache-spark | 35 | CRIT | · | 35 | 35 | 28 | 22 | 35 | 23 | 18 | 12 | 9 | 35 | 16 | 5 | 13 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 88 | ai-observability | 28 | CRIT | · | 28 | 28 | 28 | 21 | 28 | 24 | 15 | 8 | 22 | 28 | 23 | 17 | 24 | · | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 89 | database-architecture | 41 | CRIT | · | 40 | 40 | 35 | 1 | 40 | 35 | 23 | 14 | 5 | 29 | 17 | 1 | 10 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 90 | terraform | 40 | CRIT | · | 38 | 37 | 36 | 14 | 36 | 28 | 19 | 4 | 1 | 32 | 21 | · | 17 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 91 | design-netflix | 30 | CRIT | · | 30 | 30 | 29 | 17 | 30 | 23 | 12 | 12 | 15 | 29 | 16 | 17 | 23 | · | 7 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 92 | multimodal-ai | 31 | CRIT | · | 31 | 31 | 31 | 17 | 31 | 26 | 15 | 12 | 10 | 28 | 16 | 16 | 20 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 93 | java-core | 39 | CRIT | · | 39 | 38 | 31 | 10 | 33 | 37 | 20 | 12 | 4 | 28 | 23 | · | 3 | · | 9 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 94 | sorting-algorithms | 31 | CRIT | · | 31 | 30 | 28 | 22 | 29 | 23 | 20 | 15 | 7 | 30 | 23 | 2 | 17 | · | 10 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 95 | database-replication | 31 | CRIT | · | 31 | 31 | 31 | 14 | 31 | 25 | 15 | 11 | 14 | 29 | 24 | 6 | 18 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 96 | mcp | 30 | CRIT | · | 30 | 30 | 29 | 21 | 30 | 24 | 17 | 6 | 14 | 29 | 26 | 4 | 22 | · | 3 | · | 2 | · | · | · | · | · | · | · | 1 | · | · | ✅CAR0 |
-| 97 | opentelemetry | 28 | CRIT | · | 28 | 28 | 28 | 24 | 28 | 25 | 23 | 11 | 11 | 27 | 19 | 5 | 18 | · | 9 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 98 | design-parking-lot-oo | 28 | CRIT | · | 28 | 28 | 27 | 23 | 28 | 22 | 11 | 13 | 18 | 28 | 28 | 6 | 19 | · | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 99 | java-jackson | 31 | CRIT | · | 31 | 31 | 31 | 24 | 31 | 22 | 22 | 11 | 7 | 29 | 24 | 2 | 9 | · | 6 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 100 | design-instagram | 27 | CRIT | · | 27 | 26 | 26 | 27 | 26 | 23 | 3 | 11 | 23 | 27 | 16 | 22 | 20 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 101 | divide-and-conquer | 27 | CRIT | · | 27 | 27 | 27 | 22 | 27 | 27 | 19 | 9 | 11 | 27 | 26 | 11 | 12 | · | 9 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 102 | serverless | 28 | CRIT | · | 28 | 28 | 28 | 21 | 28 | 22 | 15 | 8 | 16 | 27 | 22 | 8 | 23 | · | 8 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 103 | mongodb | 45 | CRIT | · | 32 | 32 | 32 | 9 | 32 | 25 | 15 | 7 | 5 | 34 | 27 | 4 | 14 | · | 11 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 104 | kotlin-coroutines | 39 | CRIT | · | 39 | 39 | 24 | 5 | 36 | 31 | 20 | 19 | 4 | 26 | 20 | · | 2 | · | 11 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 105 | design-youtube | 28 | CRIT | · | 28 | 28 | 28 | 25 | 28 | 24 | 8 | 7 | 24 | 28 | 8 | 16 | 18 | · | 11 | · | · | · | · | · | · | · | · | 1 | · | · | · | ✅CAR0 |
-| 106 | java-io-nio | 40 | CRIT | · | 40 | 40 | 36 | 4 | 40 | 29 | 10 | 10 | 1 | 27 | 23 | · | 3 | · | 11 | · | 6 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 107 | kotlin-exceptions | 40 | CRIT | · | 40 | 40 | 30 | 2 | 39 | 26 | 14 | 18 | 1 | 24 | 21 | · | 11 | · | 11 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 108 | trees | 31 | CRIT | · | 28 | 28 | 28 | 22 | 28 | 26 | 21 | 11 | 9 | 28 | 23 | 5 | 11 | · | 12 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 109 | cdn | 30 | CRIT | · | 27 | 28 | 27 | 15 | 27 | 21 | 17 | 10 | 7 | 28 | 17 | 14 | 20 | · | 10 | · | 12 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 110 | design-url-shortener | 30 | CRIT | · | 30 | 30 | 30 | 27 | 30 | 25 | 4 | 11 | 18 | 30 | · | 24 | 17 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 111 | distributed-systems | 40 | CRIT | · | 40 | 40 | 39 | 4 | 40 | 30 | 28 | 7 | 2 | 22 | 8 | · | 12 | · | 6 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 112 | apache-flink | 31 | CRIT | · | 31 | 31 | 29 | 27 | 27 | 21 | 16 | 11 | 8 | 28 | 17 | 5 | 14 | · | 8 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 113 | ai-application-architecture | 32 | CRIT | · | 31 | 31 | 25 | 6 | 31 | 28 | 16 | 15 | 19 | 30 | 10 | 10 | 19 | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 114 | docker | 41 | CRIT | · | 41 | 41 | 40 | 2 | 41 | 14 | 10 | 7 | · | 28 | 28 | · | 9 | · | 8 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 115 | kotlin | 45 | CRIT | · | 44 | 43 | 33 | 1 | 39 | 36 | 11 | 5 | · | 22 | 13 | · | 7 | · | 14 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 116 | consistency-patterns | 42 | CRIT | · | 41 | 42 | 26 | 2 | 41 | 30 | 20 | 16 | 4 | 18 | 5 | 1 | 6 | · | 14 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 117 | mlops | 28 | CRIT | · | 28 | 28 | 28 | 23 | 28 | 21 | 14 | 6 | 13 | 27 | 17 | 6 | 24 | · | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 118 | mockito | 45 | CRIT | · | 42 | 45 | 14 | 7 | 40 | 27 | 22 | 20 | 1 | 20 | 13 | 1 | 5 | · | 6 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 119 | quarkus | 30 | CRIT | · | 29 | 27 | 25 | 23 | 26 | 18 | 18 | 5 | 8 | 27 | 20 | 6 | 18 | · | 10 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 120 | elk-stack | 26 | CRIT | · | 26 | 26 | 26 | 16 | 26 | 25 | 22 | 9 | 14 | 26 | 19 | 7 | 17 | · | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 121 | grpc | 40 | CRIT | · | 39 | 37 | 22 | 6 | 32 | 26 | 22 | 11 | 1 | 28 | 21 | · | 5 | · | 6 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 122 | dynamodb | 30 | CRIT | · | 30 | 30 | 30 | 14 | 30 | 20 | 20 | 4 | 4 | 29 | 17 | 6 | 19 | · | 6 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 123 | clean-code-practices | 27 | CRIT | · | 27 | 27 | 27 | 17 | 27 | 26 | 20 | 14 | 10 | 24 | 17 | 1 | 12 | · | 11 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 124 | go-concurrency | 35 | CRIT | · | 35 | 34 | 32 | 11 | 34 | 24 | 20 | 12 | 1 | 24 | 13 | 2 | 7 | · | 10 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 125 | heaps | 29 | CRIT | · | 29 | 29 | 29 | 16 | 29 | 25 | 22 | 13 | 4 | 26 | 19 | 3 | 8 | · | 7 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 126 | ai-agents | 28 | CRIT | · | 28 | 28 | 27 | 19 | 28 | 23 | 18 | 7 | 8 | 26 | 18 | 4 | 22 | · | 1 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 127 | multi-agent-orchestration | 30 | CRIT | · | 30 | 30 | 29 | 9 | 30 | 18 | 10 | 12 | 10 | 29 | 17 | 5 | 23 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 128 | reasoning-models | 30 | CRIT | · | 30 | 30 | 27 | 12 | 28 | 20 | 8 | 12 | 7 | 28 | 19 | 14 | 15 | · | 7 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 129 | model-serving | 28 | CRIT | · | 28 | 27 | 26 | 19 | 26 | 21 | 18 | 7 | 8 | 26 | 20 | 10 | 15 | · | 4 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 130 | go-testing | 28 | CRIT | · | 28 | 28 | 28 | 24 | 28 | 21 | 18 | 10 | 4 | 27 | 15 | · | 11 | · | 14 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 131 | design-twitter | 27 | CRIT | · | 27 | 27 | 27 | 24 | 27 | 19 | 11 | 8 | 19 | 27 | · | 16 | 16 | · | 7 | · | · | · | · | · | · | · | · | · | 1 | · | · | ✅CAR0 |
-| 132 | tries | 28 | CRIT | · | 28 | 28 | 28 | 21 | 28 | 21 | 9 | 12 | 2 | 26 | 23 | 6 | 7 | · | 8 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 133 | design-vending-machine-oo | 24 | CRIT | · | 24 | 24 | 21 | 17 | 24 | 21 | 16 | 13 | 16 | 24 | 22 | 5 | 15 | · | 3 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 134 | ktor | 32 | CRIT | · | 32 | 32 | 27 | 21 | 32 | 11 | 13 | 6 | 5 | 29 | 19 | 3 | 11 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 135 | ansible | 25 | CRIT | · | 25 | 25 | 24 | 22 | 25 | 20 | 17 | 11 | 10 | 25 | 21 | 3 | 15 | · | 3 | · | · | · | · | · | · | · | · | 1 | · | · | · | ✅CAR0 |
-| 136 | cockroachdb | 24 | CRIT | · | 24 | 24 | 23 | 17 | 24 | 22 | 17 | 10 | 14 | 24 | 18 | 6 | 14 | · | 5 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 137 | llm-evaluation | 30 | CRIT | · | 30 | 30 | 26 | 7 | 30 | 25 | 17 | 12 | 11 | 28 | · | 9 | 17 | · | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 138 | network-performance | 24 | CRIT | · | 24 | 24 | 24 | 21 | 24 | 23 | 16 | 10 | 13 | 23 | 7 | 18 | 13 | · | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 139 | linked-lists | 31 | CRIT | · | 31 | 31 | 27 | 10 | 31 | 28 | 14 | 7 | 6 | 25 | 18 | 4 | 2 | · | 7 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 140 | backtracking | 27 | CRIT | · | 27 | 27 | 27 | 19 | 27 | 20 | 17 | 9 | 2 | 24 | 19 | 4 | 13 | · | 4 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 141 | java-exceptions | 42 | CRIT | · | 42 | 42 | 28 | 7 | 40 | 7 | 14 | 12 | · | 19 | 17 | · | 5 | · | 4 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 142 | kafka-streams | 27 | CRIT | · | 27 | 27 | 26 | 23 | 27 | 23 | 16 | 8 | 8 | 25 | 12 | 5 | 7 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 143 | go-memory-gc | 27 | CRIT | · | 27 | 27 | 27 | 25 | 27 | 17 | 12 | 6 | 11 | 25 | 10 | 11 | 9 | · | 6 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 144 | rxjava | 45 | CRIT | · | 29 | 24 | 17 | 4 | 21 | 27 | 24 | 13 | 4 | 24 | 24 | 2 | 9 | · | 16 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 145 | llm-integration-patterns | 28 | CRIT | · | 28 | 28 | 27 | 5 | 28 | 25 | 16 | 8 | 7 | 26 | 20 | 2 | 12 | · | 3 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 146 | java-initialization | 27 | CRIT | · | 27 | 27 | 27 | 22 | 27 | 16 | 13 | 8 | 6 | 21 | 16 | 4 | 13 | · | 6 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 147 | graphql | 39 | CRIT | · | 37 | 35 | 27 | 7 | 31 | 20 | 16 | 10 | 5 | 21 | 12 | 2 | 4 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 148 | stream-processing | 28 | CRIT | · | 28 | 27 | 25 | 8 | 27 | 24 | 18 | 8 | 8 | 23 | 11 | 5 | 11 | · | 4 | · | 8 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 149 | greedy-algorithms | 28 | CRIT | · | 28 | 28 | 28 | 19 | 28 | 24 | 13 | 9 | 4 | 19 | 15 | 5 | 4 | · | 8 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 150 | dbt | 28 | CRIT | · | 28 | 28 | 28 | 11 | 28 | 22 | 15 | 6 | 6 | 25 | 22 | 1 | 11 | · | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 151 | stacks-queues | 25 | CRIT | · | 25 | 25 | 25 | 19 | 25 | 17 | 14 | 9 | 6 | 25 | 23 | 2 | 7 | · | 9 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 152 | neo4j | 30 | CRIT | · | 30 | 30 | 28 | 2 | 30 | 23 | 14 | 8 | 8 | 22 | 10 | 1 | 9 | · | 14 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 153 | latency-numbers | 24 | CRIT | · | 24 | 24 | 19 | 14 | 20 | 21 | 10 | 2 | 8 | 24 | 24 | 24 | 10 | · | 6 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 154 | reactive-streams | 30 | CRIT | · | 30 | 30 | 26 | 14 | 30 | 15 | 11 | 9 | 11 | 22 | 19 | 1 | 5 | · | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 155 | webflux | 28 | CRIT | · | 28 | 28 | 24 | 20 | 28 | 18 | 12 | 10 | 2 | 22 | 21 | 2 | 6 | · | 6 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 156 | design-patterns | 45 | CRIT | · | 42 | 36 | 16 | 2 | 28 | 29 | 15 | 9 | 1 | 19 | 14 | 1 | 6 | · | 6 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 157 | embeddings | 29 | CRIT | · | 29 | 28 | 19 | 8 | 28 | 25 | 13 | 5 | 2 | 26 | 15 | 12 | 11 | · | 4 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 158 | caching-performance | 23 | CRIT | · | 23 | 23 | 22 | 16 | 22 | 22 | 8 | 8 | 17 | 23 | 14 | 13 | 14 | · | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 159 | go-stdlib | 30 | CRIT | · | 30 | 30 | 27 | 12 | 30 | 18 | 11 | 9 | 2 | 25 | 17 | · | 7 | · | 6 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 160 | hibernate | 45 | CRIT | · | 43 | 43 | 24 | 5 | 38 | 18 | 4 | 10 | · | 15 | 12 | · | 2 | · | 8 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 161 | secrets-management | 22 | CRIT | · | 22 | 22 | 22 | 19 | 22 | 19 | 13 | 4 | 12 | 22 | 21 | 4 | 16 | · | 3 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 162 | observability | 40 | CRIT | · | 38 | 35 | 16 | 5 | 31 | 18 | 11 | 14 | 3 | 27 | · | 4 | 13 | · | 6 | · | · | · | · | · | · | · | · | · | 1 | · | · | ✅CAR0 |
-| 163 | prompt-engineering | 28 | CRIT | · | 28 | 28 | 27 | 9 | 27 | 21 | 18 | 10 | 4 | 20 | 8 | 2 | 11 | · | 6 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 164 | clickhouse | 28 | CRIT | · | 28 | 28 | 27 | 10 | 28 | 16 | 16 | 7 | 1 | 23 | 12 | 3 | 12 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 165 | java-mapstruct | 28 | CRIT | · | 28 | 28 | 21 | 12 | 27 | 17 | 17 | 10 | 6 | 21 | 14 | 2 | 3 | · | 3 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 166 | go-generics | 26 | CRIT | · | 26 | 26 | 26 | 15 | 26 | 15 | 11 | 8 | 2 | 22 | 17 | 3 | 9 | · | 6 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 167 | data-lake-lakehouse | 24 | CRIT | · | 22 | 22 | 22 | 15 | 22 | 14 | 12 | 10 | 5 | 23 | 18 | 6 | 17 | · | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 168 | complexity-analysis | 31 | CRIT | · | 18 | 18 | 14 | 18 | 17 | 18 | 6 | 11 | 8 | 27 | 26 | 11 | 5 | · | 7 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 169 | scylladb | 23 | CRIT | · | 23 | 23 | 23 | 10 | 23 | 22 | 16 | 7 | 3 | 22 | 10 | 7 | 12 | · | 3 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 170 | design-elevator-oo | 23 | CRIT | · | 20 | 20 | 20 | 13 | 20 | 19 | 13 | 8 | 11 | 20 | 17 | 2 | 13 | · | 6 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 171 | istio-service-mesh | 24 | CRIT | · | 21 | 20 | 20 | 16 | 20 | 17 | 14 | 3 | 8 | 22 | 12 | 5 | 13 | · | 9 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 172 | nats | 24 | CRIT | · | 24 | 23 | 22 | 15 | 23 | 17 | 14 | 6 | 3 | 22 | 10 | 2 | 9 | · | 6 | · | 7 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 173 | http-rest | 40 | CRIT | · | 32 | 32 | 11 | · | 26 | 23 | 16 | 12 | 4 | 18 | 10 | · | 7 | · | 7 | · | 4 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 174 | postgresql | 38 | CRIT | · | 31 | 31 | 29 | 1 | 31 | 27 | 3 | 3 | · | 16 | 10 | 1 | 3 | · | 15 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 175 | jaeger-zipkin | 23 | CRIT | · | 23 | 23 | 22 | 18 | 23 | 14 | 9 | 6 | 9 | 22 | 10 | 9 | 14 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 176 | java-annotations | 40 | CRIT | · | 38 | 37 | 20 | 4 | 34 | 17 | 7 | 5 | · | 17 | 9 | · | 4 | · | 6 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 177 | consul | 24 | CRIT | · | 24 | 24 | 24 | 7 | 24 | 20 | 17 | 5 | 6 | 21 | 8 | 4 | 13 | · | 2 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 178 | reactive-testing | 28 | CRIT | · | 28 | 28 | 22 | 14 | 26 | 19 | 17 | 10 | 1 | 15 | 13 | · | 1 | · | 3 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 179 | supply-chain-security | 24 | CRIT | · | 24 | 23 | 21 | 13 | 21 | 20 | 14 | 7 | 5 | 19 | 11 | 1 | 18 | · | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 180 | message-brokers-comparison | 25 | CRIT | · | 23 | 22 | 20 | 5 | 21 | 18 | 14 | 7 | 6 | 20 | 17 | 3 | 16 | · | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 181 | rabbitmq | 38 | CRIT | · | 35 | 30 | 17 | 1 | 22 | 26 | 9 | 5 | 4 | 25 | 13 | · | 1 | · | 8 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 182 | technical-decisions | 22 | CRIT | · | 22 | 22 | 22 | 10 | 22 | 20 | 18 | 3 | 16 | 19 | 11 | 4 | 6 | · | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 183 | pulsar | 22 | CRIT | · | 22 | 22 | 22 | 18 | 22 | 14 | 7 | 7 | 6 | 21 | 14 | 3 | 11 | · | 7 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 184 | static-analysis | 26 | CRIT | · | 26 | 26 | 24 | 15 | 26 | 13 | 11 | 3 | 2 | 19 | 4 | 3 | 17 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 185 | micrometer | 20 | CRIT | · | 20 | 19 | 15 | 17 | 19 | 16 | 11 | 4 | 6 | 19 | 19 | 6 | 15 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 186 | database-performance | 27 | CRIT | · | 21 | 17 | 16 | 20 | 15 | 13 | 5 | 8 | 2 | 25 | 17 | 8 | 16 | · | 7 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 187 | aws-sqs-sns | 22 | CRIT | · | 22 | 22 | 22 | 17 | 22 | 15 | 11 | 8 | 5 | 19 | 12 | 3 | 8 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 188 | linkerd | 20 | CRIT | · | 20 | 20 | 20 | 14 | 20 | 16 | 17 | 5 | 3 | 19 | 9 | 8 | 11 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 189 | star-method | 22 | CRIT | · | 22 | 22 | 22 | 11 | 22 | 19 | 15 | 7 | 7 | 14 | 8 | 4 | 12 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 190 | micronaut | 25 | CRIT | · | 25 | 25 | 24 | 3 | 25 | 17 | 8 | 6 | 1 | 24 | 13 | 3 | 9 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 191 | api-versioning | 20 | CRIT | · | 20 | 20 | 20 | 13 | 20 | 18 | 14 | 6 | 9 | 15 | 7 | 7 | 9 | · | 9 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 192 | prometheus-grafana | 38 | CRIT | · | 36 | 33 | 20 | 5 | 30 | 14 | 3 | 4 | 2 | 16 | 11 | · | 8 | · | 1 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 193 | java-lombok | 27 | CRIT | · | 27 | 27 | 19 | 2 | 26 | 15 | 12 | 9 | 1 | 17 | 17 | · | 3 | · | 6 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 194 | mutation-testing | 20 | CRIT | · | 20 | 18 | 15 | 13 | 18 | 14 | 12 | 10 | 11 | 19 | 12 | 10 | 5 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 195 | recursion | 27 | CRIT | · | 25 | 24 | 18 | 3 | 20 | 23 | 11 | 8 | 3 | 19 | 13 | 4 | 3 | · | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 196 | code-coverage | 25 | CRIT | · | 25 | 25 | 23 | 3 | 25 | 17 | 8 | 7 | 2 | 18 | 9 | 3 | 10 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 197 | design-chat-system | 21 | CRIT | · | 19 | 18 | 15 | 7 | 16 | 19 | 9 | 11 | 13 | 20 | 10 | 8 | 7 | · | 4 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 198 | leadership-stories | 22 | CRIT | · | 22 | 22 | 22 | 3 | 22 | 20 | 19 | 2 | 9 | 14 | 2 | 3 | 9 | · | 9 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 199 | reactive-patterns | 26 | CRIT | · | 26 | 26 | 20 | 5 | 25 | 21 | 14 | 7 | 3 | 12 | 8 | 1 | 2 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 200 | sql | 44 | CRIT | · | 30 | 31 | 17 | · | 20 | 13 | 7 | 13 | · | 13 | 11 | · | 2 | · | 14 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 201 | code-smells | 27 | CRIT | · | 27 | 27 | 27 | 3 | 26 | 13 | 10 | 2 | 2 | 12 | 7 | 3 | 10 | · | 3 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 202 | conflict-stories | 22 | CRIT | · | 22 | 22 | 22 | 8 | 22 | 21 | 17 | 1 | 13 | 15 | 3 | 1 | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 203 | load-testing | 22 | CRIT | · | 20 | 18 | 16 | 8 | 17 | 16 | 10 | 7 | 11 | 21 | 5 | 8 | 11 | · | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 204 | edge-computing | 18 | CRIT | · | 18 | 18 | 18 | 11 | 18 | 16 | 7 | 2 | 6 | 18 | 8 | 11 | 16 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 205 | vector-databases | 28 | CRIT | · | 26 | 24 | 19 | 1 | 21 | 16 | 12 | 5 | 4 | 25 | 3 | 2 | 7 | · | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 206 | rest-maturity | 17 | CRIT | · | 17 | 17 | 17 | 14 | 17 | 13 | 10 | 6 | 9 | 15 | 12 | 8 | 11 | · | 3 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 207 | vault | 24 | CRIT | · | 20 | 20 | 19 | 11 | 20 | 17 | 12 | 1 | · | 22 | 13 | · | 7 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 208 | property-based-testing | 21 | CRIT | · | 21 | 21 | 18 | 9 | 21 | 13 | 9 | 8 | 1 | 16 | 13 | 3 | 10 | · | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 209 | go-modules | 27 | CRIT | · | 27 | 27 | 24 | 7 | 27 | 18 | 6 | 2 | · | 16 | 3 | 1 | · | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 210 | mtls | 20 | CRIT | · | 20 | 19 | 19 | 3 | 19 | 18 | 13 | 5 | 7 | 17 | 6 | 3 | 13 | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 211 | llm-basics | 29 | CRIT | · | 28 | 27 | 17 | 4 | 22 | 16 | 9 | 8 | 3 | 13 | 5 | 3 | 4 | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 212 | resilience4j | 20 | CRIT | · | 20 | 20 | 15 | 5 | 20 | 20 | 13 | 4 | 3 | 16 | 15 | 1 | 3 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 213 | estimations-planning | 20 | CRIT | · | 20 | 20 | 19 | 11 | 20 | 14 | 9 | 5 | 3 | 18 | 3 | 4 | 14 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 214 | bff-pattern | 17 | CRIT | · | 17 | 17 | 17 | 8 | 17 | 16 | 5 | 7 | 10 | 17 | 6 | 2 | 15 | · | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 215 | culture-fit | 22 | CRIT | · | 22 | 22 | 22 | 22 | 22 | 16 | 16 | 1 | 3 | 3 | 1 | · | 5 | · | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 216 | spring-retry | 17 | CRIT | · | 17 | 17 | 17 | 11 | 17 | 12 | 11 | 5 | 2 | 16 | 16 | 2 | 8 | · | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 217 | zero-trust | 19 | CRIT | · | 19 | 19 | 18 | 2 | 19 | 16 | 10 | 6 | 4 | 17 | 9 | · | 14 | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 218 | java-conditional-statements | 39 | CRIT | · | 21 | 28 | 13 | 6 | 17 | 10 | 10 | 12 | 2 | 16 | 11 | 2 | 1 | · | · | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 219 | typescript | 31 | CRIT | · | 29 | 26 | 16 | · | 22 | 16 | 7 | 6 | 1 | 10 | 8 | · | 3 | · | 3 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 220 | design-web-crawler | 23 | CRIT | · | 22 | 22 | 17 | 1 | 21 | 12 | 6 | 4 | 5 | 17 | 3 | 2 | 5 | · | 11 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 221 | api-design-best-practices | 30 | CRIT | · | 22 | 25 | 8 | 2 | 21 | 17 | 8 | 4 | 3 | 13 | 8 | 5 | 4 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 222 | selenium | 15 | CRIT | · | 15 | 15 | 15 | 12 | 15 | 14 | 12 | 5 | 7 | 14 | 11 | 2 | 7 | · | 1 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 223 | dns | 28 | CRIT | · | 12 | 11 | · | 21 | 10 | 21 | 14 | 10 | 5 | 18 | 4 | 9 | 2 | · | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 224 | test-automation | 41 | CRIT | · | 11 | 17 | · | 6 | 10 | 23 | 16 | 12 | 5 | 17 | 12 | 1 | 6 | · | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 225 | behavioral | 33 | CRIT | · | 27 | 26 | 11 | · | 17 | 13 | 14 | 8 | 4 | 9 | · | 2 | 1 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 226 | spring-aop | 20 | CRIT | · | 16 | 16 | 16 | 6 | 16 | 13 | 9 | 6 | 2 | 14 | 15 | 1 | 5 | · | 4 | · | · | · | · | · | · | 1 | · | · | · | · | · | ✅CAR0 |
-| 227 | java-reflection | 16 | CRIT | · | 16 | 16 | 10 | 10 | 16 | 10 | 8 | 10 | 1 | 16 | 16 | 1 | 4 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 228 | java-concurrency | 47 | CRIT | · | 29 | 23 | 2 | 2 | 6 | 33 | 17 | 11 | · | 6 | · | · | 2 | · | 6 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 229 | git | 40 | CRIT | · | 23 | 17 | 2 | · | 8 | 27 | 10 | 10 | 1 | 18 | 9 | · | 1 | · | 5 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 230 | two-pointers-sliding-window | 31 | CRIT | · | 4 | 9 | · | 12 | 4 | 24 | 15 | 9 | 1 | 25 | 24 | 2 | 2 | · | 1 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 231 | spring-boot-3-migration | 15 | CRIT | · | 15 | 15 | 14 | 10 | 15 | 9 | 10 | 4 | 2 | 15 | 13 | 4 | 6 | · | · | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 232 | conflict-resolution | 20 | CRIT | · | 20 | 20 | 20 | 6 | 20 | 9 | 6 | 2 | 3 | 8 | 2 | · | 16 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 233 | spring-data-jdbc | 16 | CRIT | · | 16 | 16 | 16 | 1 | 16 | 15 | 8 | 3 | 1 | 15 | 15 | · | 7 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 234 | java-optional | 15 | CRIT | · | 15 | 15 | 15 | 4 | 15 | 10 | 10 | 5 | 3 | 13 | 14 | · | 4 | · | 6 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 235 | failure-stories | 22 | CRIT | · | 21 | 22 | 15 | · | 18 | 14 | 3 | 11 | 7 | 7 | · | 2 | 1 | · | 8 | · | · | · | · | · | · | · | · | 2 | 4 | · | · | ✅CAR0 |
-| 236 | spring-messaging | 15 | CRIT | · | 15 | 15 | 13 | 10 | 15 | 11 | 5 | 5 | 1 | 15 | 13 | 1 | 6 | · | 3 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 237 | hibernate-relationships | 15 | CRIT | · | 15 | 15 | 14 | 6 | 15 | 8 | 9 | 3 | 2 | 15 | 15 | 1 | 4 | · | 3 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 238 | spring-state-machine | 15 | CRIT | · | 15 | 15 | 15 | 11 | 15 | 11 | 5 | 6 | 2 | 14 | 13 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 239 | spring-kafka | 15 | CRIT | · | 15 | 15 | 10 | 8 | 15 | 14 | 11 | 8 | 1 | 13 | 13 | · | 2 | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 240 | spring-cache | 18 | CRIT | · | 18 | 17 | 13 | 4 | 15 | 11 | 7 | 3 | 4 | 13 | 10 | 1 | 3 | · | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 241 | algorithms | 16 | CRIT | · | 16 | 16 | 11 | 2 | 15 | 9 | 6 | 9 | 4 | 15 | 8 | 1 | 13 | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 242 | spring-graphql | 15 | CRIT | · | 15 | 15 | 11 | 10 | 14 | 12 | 7 | 5 | 3 | 15 | 14 | 1 | 1 | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 243 | spring-testing | 15 | CRIT | · | 15 | 15 | 14 | 7 | 15 | 11 | 10 | 5 | · | 12 | 12 | 1 | 7 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 244 | java-string | 31 | CRIT | · | 10 | 12 | 9 | 5 | 7 | 14 | 18 | 13 | 1 | 9 | 8 | 2 | 2 | · | 8 | · | 6 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 245 | design-search | 30 | CRIT | · | 3 | 6 | · | 15 | 1 | 18 | 10 | 16 | 10 | 25 | 4 | 5 | 5 | · | 6 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 246 | function-calling | 26 | CRIT | · | 15 | 21 | · | 2 | 13 | 17 | 9 | 10 | 4 | 16 | 8 | · | 2 | · | 5 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 247 | spring-vault | 15 | CRIT | · | 15 | 15 | 12 | 3 | 15 | 14 | 10 | 4 | 2 | 14 | 13 | · | 4 | · | 1 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 248 | java-virtual-threads | 15 | CRIT | · | 15 | 15 | 14 | 4 | 15 | 13 | 8 | 5 | 1 | 14 | 8 | 1 | 3 | · | 6 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 249 | spring-ai | 16 | CRIT | · | 15 | 15 | 15 | 7 | 15 | 9 | 5 | 4 | 2 | 13 | 13 | · | 6 | · | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 250 | graalvm-native | 15 | CRIT | · | 15 | 15 | 15 | 7 | 15 | 11 | 8 | 5 | 2 | 14 | 9 | 2 | 4 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 251 | rest-assured | 15 | CRIT | · | 15 | 15 | 8 | 12 | 14 | 8 | 10 | 4 | 1 | 14 | 10 | · | 7 | · | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 252 | spring-integration | 15 | CRIT | · | 15 | 15 | 13 | 4 | 15 | 15 | 10 | 1 | 1 | 14 | 13 | · | 3 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 253 | spring-r2dbc | 15 | CRIT | · | 15 | 15 | 15 | 8 | 15 | 8 | 6 | 3 | 1 | 13 | 13 | · | 2 | · | 3 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 254 | design-dropbox | 29 | CRIT | · | 7 | 7 | 2 | 6 | 3 | 23 | 15 | 11 | 5 | 23 | · | 5 | 6 | · | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 255 | jvm | 34 | CRIT | · | 22 | 21 | 4 | 2 | 12 | 10 | 10 | 10 | 2 | 6 | 5 | 1 | 3 | · | 7 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 256 | spring-transaction | 15 | CRIT | · | 15 | 15 | 14 | 3 | 15 | 14 | 6 | 7 | 1 | 12 | 8 | · | 1 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 257 | java-functional-interface | 14 | CRIT | · | 14 | 13 | 13 | 9 | 13 | 10 | 4 | 4 | 7 | 11 | 10 | 2 | 5 | · | 1 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 258 | linux | 30 | HIGH | · | · | 2 | · | 4 | · | 21 | 14 | 10 | 6 | 22 | 22 | · | 2 | · | 11 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 259 | design-uber | 29 | HIGH | · | · | 12 | · | 4 | · | 19 | 9 | 14 | 15 | 25 | 6 | 3 | 3 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 260 | hibernate-caching | 15 | CRIT | · | 15 | 15 | 15 | 3 | 15 | 10 | 9 | 4 | · | 10 | 8 | · | 6 | · | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 261 | spring-events | 16 | CRIT | · | 16 | 16 | 14 | 4 | 16 | 10 | 7 | 4 | · | 10 | 8 | · | 2 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 262 | spring-session | 15 | CRIT | · | 15 | 15 | 13 | 4 | 15 | 9 | 3 | 4 | 1 | 13 | 12 | · | 1 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 263 | kotlin-flow | 16 | CRIT | · | 15 | 14 | 11 | 3 | 12 | 10 | 8 | 4 | 4 | 13 | 9 | · | 2 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 264 | junit | 15 | CRIT | · | 15 | 15 | 10 | 4 | 14 | 8 | 7 | 4 | 2 | 12 | 10 | · | 3 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 265 | design-google-maps | 28 | HIGH | · | · | · | · | 6 | · | 22 | 15 | 13 | 9 | 16 | 3 | 7 | 7 | · | 8 | · | 2 | · | · | · | · | · | · | · | 1 | · | · | ✅CAR0 |
-| 266 | java-records | 15 | CRIT | · | 15 | 15 | 15 | 6 | 15 | 9 | 9 | · | 1 | 11 | 5 | · | 4 | · | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 267 | spring-validation | 16 | CRIT | · | 16 | 16 | 7 | 1 | 15 | 11 | 6 | 4 | · | 13 | 9 | · | 5 | · | 2 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 268 | spring-webflux | 39 | HIGH | · | · | · | · | 5 | · | 26 | 19 | 14 | 1 | 17 | 12 | 1 | 3 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 269 | graphs | 32 | CRIT | · | 1 | 3 | 1 | 1 | 1 | 27 | 19 | 12 | 2 | 18 | 11 | · | 2 | · | 7 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 270 | spring-boot | 34 | CRIT | · | 7 | 8 | · | 2 | 5 | 23 | 14 | 9 | 3 | 15 | 8 | · | 3 | · | 4 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 271 | reverse-proxy | 26 | HIGH | · | · | · | · | 7 | · | 16 | 11 | 15 | 10 | 18 | 11 | 1 | 2 | · | 5 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 272 | rust | 31 | CRIT | · | 5 | 7 | · | 2 | 3 | 20 | 15 | 13 | 1 | 8 | 4 | 1 | 3 | · | 5 | 10 | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 273 | apache-airflow | 26 | CRIT | · | 1 | 3 | · | 1 | 1 | 23 | 15 | 8 | 2 | 19 | 13 | 1 | 3 | · | 3 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 274 | strangler-fig | 18 | CRIT | · | 18 | 18 | 12 | · | 13 | 11 | 11 | 9 | · | 3 | · | · | 1 | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 275 | teching | 19 | CRIT | · | 19 | 19 | 15 | 1 | 18 | 3 | 7 | 4 | · | 5 | · | 3 | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 276 | code-review | 36 | CRIT | · | 7 | 11 | · | · | 3 | 17 | 9 | 13 | 2 | 10 | 5 | · | 10 | · | 8 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 277 | spring-modulith | 15 | CRIT | · | 15 | 14 | 12 | 2 | 14 | 9 | 7 | 5 | 1 | 7 | 5 | 1 | 1 | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 278 | spring-rest-client | 13 | CRIT | · | 13 | 13 | 8 | 7 | 12 | 6 | 3 | 6 | 4 | 11 | 8 | 1 | 2 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 279 | spring-async | 15 | CRIT | · | 14 | 14 | 9 | 2 | 12 | 10 | 5 | 2 | · | 11 | 7 | · | · | · | 3 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 280 | chaos-engineering | 37 | CRIT | · | 7 | 4 | 1 | · | 1 | 26 | 14 | 5 | 1 | 9 | 6 | · | 3 | · | 9 | · | 2 | · | · | · | · | · | · | 1 | 1 | · | · | ✅CAR0 |
-| 281 | design-typeahead | 29 | CRIT | · | 1 | 10 | · | 4 | 2 | 18 | 5 | 4 | 7 | 24 | 2 | 5 | 2 | · | 4 | · | · | · | · | · | · | · | · | 1 | · | · | · | ✅CAR0 |
-| 282 | kotlin-sealed-classes | 15 | CRIT | · | 15 | 14 | 11 | 1 | 14 | 10 | 6 | 2 | 1 | 6 | 4 | · | 1 | · | 1 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 283 | ai-safety-guardrails | 29 | HIGH | · | · | 3 | · | 2 | 1 | 18 | 14 | 9 | · | 16 | 6 | 2 | 7 | · | 3 | · | 5 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 284 | azure | 24 | CRIT | · | 1 | 5 | · | 1 | · | 18 | 15 | 7 | 2 | 20 | 9 | · | 4 | · | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 285 | code-agents | 28 | CRIT | · | 2 | 7 | 1 | 6 | 3 | 14 | 7 | 10 | 4 | 14 | 3 | 2 | 5 | · | 5 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 286 | loki-grafana | 27 | HIGH | · | · | · | · | 1 | · | 16 | 15 | 6 | 2 | 16 | 9 | 2 | 3 | · | 4 | · | 8 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 287 | vertx | 28 | CRIT | · | 1 | 2 | · | 11 | · | 15 | 12 | 12 | 1 | 10 | 8 | · | 3 | · | 4 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 288 | java-pattern-matching | 15 | CRIT | · | 15 | 14 | 11 | · | 13 | 7 | 3 | 4 | 2 | 6 | 2 | 1 | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 289 | redpanda | 17 | CRIT | · | 16 | 15 | 9 | · | 13 | 4 | 4 | 4 | 1 | 5 | · | · | 3 | · | 4 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 290 | spring-scheduling | 16 | CRIT | · | 13 | 11 | 2 | 2 | 4 | 11 | 7 | 5 | 2 | 9 | 8 | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 291 | kotlin-value-classes | 14 | CRIT | · | 13 | 13 | 7 | · | 10 | 7 | 4 | 3 | 3 | 6 | 5 | 1 | 1 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 292 | ddd | 30 | HIGH | · | · | 5 | · | · | · | 21 | 14 | 2 | · | 10 | 9 | · | 6 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 293 | rag | 29 | HIGH | · | · | 3 | · | 1 | · | 13 | 13 | 15 | 2 | 12 | 1 | · | 4 | · | 5 | · | · | · | · | · | · | · | · | · | 1 | · | · | ✅CAR0 |
-| 294 | aws-lambda | 29 | HIGH | · | · | 1 | · | 5 | · | 12 | 9 | 12 | 3 | 10 | 3 | 3 | 4 | · | 7 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 295 | event-driven-patterns | 32 | HIGH | · | 2 | 12 | · | · | 1 | 14 | 9 | 8 | · | 4 | 3 | · | 2 | · | 10 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 296 | aws | 32 | HIGH | · | · | 5 | · | 3 | · | 12 | 14 | 15 | · | 3 | 2 | 1 | 4 | · | 5 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 297 | refactoring-patterns | 31 | HIGH | · | · | 1 | · | 1 | · | 16 | 18 | 7 | 1 | 6 | 1 | · | · | · | 5 | · | 7 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 298 | kubernetes | 28 | HIGH | · | 3 | 6 | 1 | 1 | · | 15 | 6 | 3 | 1 | 9 | 3 | · | 1 | · | 7 | · | 3 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 299 | cloud-native-patterns | 21 | HIGH | · | · | 1 | · | · | · | 13 | 12 | 8 | 2 | 8 | 1 | · | 2 | · | 7 | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 300 | kotlin-spring | 13 | CRIT | · | 11 | 12 | 3 | 1 | 9 | 3 | · | 2 | · | 6 | 5 | · | 2 | · | · | · | 2 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 301 | data-warehousing | 24 | HIGH | · | · | · | · | · | · | 18 | 12 | 7 | 1 | 9 | 2 | · | 1 | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 302 | hibernate-jpql-criteria | 15 | CRIT | · | 11 | 11 | 3 | 1 | 4 | 7 | 6 | 6 | · | 2 | · | · | · | · | 3 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 303 | gcp | 20 | HIGH | · | · | 3 | · | · | · | 14 | 4 | 8 | 2 | 9 | 4 | · | · | · | 4 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 304 | design-ecommerce-delivery | 26 | HIGH | · | · | · | 2 | · | · | 12 | 5 | 8 | 1 | 3 | · | · | 2 | · | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 305 | mentoring | 17 | HIGH | · | · | · | · | 6 | · | · | 1 | 1 | 10 | 3 | · | · | · | · | 2 | · | 1 | · | · | · | · | 1 | · | · | · | · | · | ✅CAR0 |
-| 306 | kafka | 12 | HIGH | · | 8 | 5 | 2 | · | 1 | · | · | · | · | 2 | · | 1 | · | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 307 | java-completable-future | 11 | HIGH | · | 5 | 3 | 1 | · | · | 1 | 1 | 2 | · | · | 1 | · | · | · | 2 | · | 1 | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 308 | java-22-25 | 8 | MED | · | · | · | · | 1 | · | 1 | 2 | 3 | · | 1 | 1 | · | 1 | · | 2 | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 309 | crac | 4 | MED | · | · | · | · | · | · | 1 | 3 | 2 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 310 | jooq | 2 | MED | · | 1 | 1 | · | 1 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 311 | langchain4j | 2 | MED | · | · | · | · | · | · | · | 1 | · | · | 1 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 312 | archunit | 1 | MED | · | 1 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 313 | apache-camel | 1 | LOW | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 314 | jms-activemq | 1 | LOW | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 315 | cucumber-bdd | 1 | LOW | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 316 | jmh-microbenchmarking | 0 | NONE | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 317 | kotlin-testing | 0 | NONE | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-| 318 | scala-effects | 0 | NONE | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | ✅CAR0 |
-
-<!-- MATRIX:END -->
-
+<!-- INTERVIEW-PLAN:END -->
 
 ## 8. Прогресс
 
-### ROUND 5 — Полный full-redo по дефинитивному 20-rule канону (RESET #4, старт 2026-07-07)
+**Новый прогон (RESET #5, старт 2026-07-11, golden-examples.md).** Старые прогоны (ROUND 3/4/5/6)
+удалены по указанию пользователя — начинаем чисто. Коммиты прежних раундов остаются в git-истории.
 
-**Прогресс сброшен (RESET #4), переписываем ВСЕ файлы worst-first, без исключения ранее-обработанных.**
-Стандарт: дефинитивный свод 20 правил + gold `rxjava-interview` (агенты читают его как планку). Воркфлоу
-`mcq-round5-redo-band` (≤3 concurrent gen + adversarial-verify → главный цикл применяет+гейтит+коммитит).
-
-- ✅ **ROUND-5 band#1** (2026-07-07, workflow `wf_00fc7d35-742`, 12 агентов / 0 ошибок / 631K токенов):
-  **36 блоков, 106 дистракторов** (2 отклонено verify: cockroachdb Q14/C SERIALIZABLE-ambig, cassandra
-  Q34/A double-fabrication): `hexagonal-architecture` (**486b1e98**, Q31/32/36/42/44/45 — fake=stub role-swap,
-  Hexagonal/Clean годы swap, ArchUnit↔Checkstyle scope), `secrets-management` (**4bc29dc6**, Q10/14/15/17/18/19
-  — Base64=encryption, IRSA static-key, Vault-Agent server-side), `redis` (**59327d35**, Q23/29/30/31/32/37 —
-  Stampede↔Avalanche swap, SETNX-no-TTL, Pub/Sub=Streams role-swap), `cockroachdb` (**d1778fbf**, Q14/17/18/19/20/21
-  — TrueTime-not-HLC, both-multi-master, TiDB-is-PostgreSQL), `mcp` (**24552d2e**, Q11/19/23/24/28/29 —
-  list_changed client→server swap, 2-scopes-not-3), `cassandra` (**3861472b**, Q4/34/37/41/42/44 — Snitch=CL,
-  OFFSET-pagination, token-aware adds-latency). **Качество — скачок:** дистракторы полностью зеркалят структуру
-  correct и несут свой правдоподобно-ложный механизм; ни один не отбрасывается по форме/тону/длине. ratio
-  4.2-6.0x→0.9-2.4x (redis <1.0 = correct больше НЕ длиннейший), все гейты OK, 106/106 через ручной semantic-gate.
-- ✅ **ROUND-5 band#2** (2026-07-07, workflow `wf_c6f81641-387`, **108 дистракторов / 36 блоков**): `spring-batch`
-  (**14d822d1**, Q19/25/35/38/39/42 — listener-cardinality, gridSize↔chunk, TaskExecutor↔MessageChannel handler),
-  `design-feed-system` (**3d1d4d09**, Q11/12/16/19/25/29 — ML→косметика, negative-signal знак, sync-fanout, SSE two-way,
-  Redis крупнейший-бакет), `argocd` (**cf3b8b67**, sync-hook=webhook, rollback=git-revert, PostSync-order), `ansible`
-  (**77bb3a69**, agent-based перенос, Vault=сервис, state-swap Terraform), `kotlin-serialization` (**8e7f8ebc**, Moshi-платформы, Java-Ser безопаснее,
-  @SerialName направление), `aws-sqs-sns` (**84cecf8a**, visibility↔retention↔delay, DLQ=бэкап, fanout=fan-in). Verify:
-  4 stems rejected=[], 2 (aws/design-feed) conn-error → gen+ручной gate; kotlin Q33/B оставлен gen (verify-текст имел
-  unicode-порчу). ratio 3.7-5.6x→1.3-3.9x, все гейты OK.
-- ⏳ **ROUND-5 band#3 partial (4/6)** (workflow `wf_1e278b21-faa`, **72 дистрактора**): `spring-cloud` (**40b41853**),
-  `spring-security` (**fc2624a4**), `spring-mvc` (**d181fa23**), `helm` (**b01dec05**) — R4j/Hystrix swaps, SS6
-  adapter-removed, @ResponseBody↔ViewResolver, OCI↔ChartMuseum. **Band#3 хитнул shared session token-limit** (resets
-  15:30 MSK): `scala`+`performance-testing` gen-агенты упали → **requeue в band#4**. ratio 4.2-5.0x→1.4-2.6x.
-- ✅ **ROUND-5 band#4** (2026-07-07, workflow `wf_863324fc-091`, **108 дистракторов / 36 блоков**): `networking`
-  (**28e6c251**, TLS-handshake порядок, L4↔L7 роли, IPv4↔IPv6 разрядность, SNAT↔DNAT), `performance-testing`
-  (**b4ee4ffc**, percentile-инверсия, open↔closed injection, k6 setup-scope, DORA-gating), `contract-testing`
-  (**26fb3737**, Pact @TestTemplate, SCC producer-driven, StubRunner LOCAL↔REMOTE, tolerant-reader matcher),
-  `scala` (**261884ef**, ZIO[R,E,A] роли, given↔using, immutable-дефолт, Spark-на-Scala), `database-transactions`
-  (**826713b4**, WAL write-ahead направление, 2PC vs 3PC блокировка, XA=TM↔RM интерфейс, pool-lifecycle),
-  `deployment-strategies` (**01b35c4a**, backward↔forward compat, feature-flag runtime, idempotent declarative,
-  Argo blueGreen vs canary). Gen harvested из transcripts (clean); verify perf/deploy conn-dropped (benign, 4/6 verified
-  rejected=[]). ratio 3.9-5.2x→1.2-3.5x, все гейты OK. **ROUND-5 итог: 22/318 файлов.**
-- ✅ **ROUND-5 band#5** (2026-07-07, workflow `wf_b3495533-2ad`, **108 дистракторов / 36 блоков**): `design-elevator-oo`
-  (**1df96a67**, pull↔push Display, ArrayDeque vs LinkedBlockingQueue, State↔Strategy, FCFS-рейтинг, fire-mode scope),
-  `design-vending-machine-oo` (**9aae1c03**, compile-vs-runtime FSM, Singleton↔State роли, DP-сдача asymptotics,
-  OCP-нарушения), `dynamodb` (**845960ab**, on-demand↔provisioned, Get/Query/Scan роли, conditional-write ordering,
-  DAX write-back, PITR 35d-vs-min), `edge-computing` (**3ae3011d**, heavy-ML scope, SubtleCrypto false-excl, KV read↔write,
-  D1-SQL property-transfer), `micrometer` (**734ed851**, Timer vs LongTaskTimer, MeterBinder SPI-vs-annotation,
-  publishPercentiles client↔server, MeterFilter stage), `mlops` (**f88b4b64**, feature-store vs data-lake vs registry,
-  data-drift P(X) vs concept-drift P(Y|X), CT-vs-CI, maturity levels). Gen harvested early (verify ещё шёл, benign).
-  ratio 4.3-5.2x→1.0-3.5x (elevator near-1.0 parity), все гейты OK. **ROUND-5 итог: 28/318 файлов.**
-- ✅ **ROUND-5 band#6** (2026-07-07, workflow `wf_41370edb-1e5`, **108 дистракторов / 36 блоков**): `ai-observability`
-  (**d5596802**, LangSmith/Langfuse/Phoenix/Helicone tool-swaps, proxy-vs-SDK, continuous-eval async), `database-sharding`
-  (**cecf3786**, co-located/broadcast/2PC-Saga-outbox, Vitess VTGate↔VTTablet, MongoDB config-servers, DynamoDB key —
-  **Q28 gen пропустил, дописан вручную** CockroachDB shard-key/Raft/auto-split), `design-payment-system` (**bb71755a**,
-  reconciliation key-swap, refund idempotency, chargeback roles, double-money fix), `mtls` (**96d23f0a**, SPIFFE↔SPIRE,
-  CRL↔OCSP, mTLS-vs-JWT layers, short-lived cert), `quarkus` (**5ceb8dd7**, MicroProfile ordinal, Mutiny Uni↔Multi,
-  @QuarkusTest lifecycle, perf-inversion), `sorting-algorithms` (**1c7f2094**, Heap worst-case guarantee, TimSort
-  misid, external-sort mmap, topological criterion, cache-locality). ratio 4.3-5.3x→1.2-3.9x (ai-obs enum-heavy correct
-  = 3.1-3.9 ceiling), все гейты OK. **ROUND-5 итог: 34/318 файлов.**
-- ✅ **ROUND-5 band#7** (2026-07-07, **90 дистракторов / 30 блоков** — 5/6, `design-chat-system` gen-fail→requeue): `ai-compliance-governance`
-  (**869a5d8b**, EO 14110 rescinded Jan-2025 знание, NIST AI RMF vs ISO 42001 роли, GDPR Art.22 scope, bias-audit
-  timing), `design-parking-lot-oo` (**2896a236**, Strategy vs Factory роли, spot-assignment cardinality, State-паттерн
-  переход, fee-calc precondition), `design-url-shortener` (**487a3edd**, base62 vs hash collision, cache-aside vs
-  write-through, 301 vs 302 семантика, counter-vs-random key — enum-heavy correct = ceiling), `spring-retry`
-  (**17ca2dbc**, @Recover signature match, backoff multiplier, retryable vs non-retryable exception scope, circuit-breaker
-  layering), `supply-chain-security` (**a86d26e2**, SLSA level требования, Sigstore/cosign роли, SBOM формат scope,
-  provenance vs attestation). ratio 3.6-4.0x→1.2-3.5x, все гейты OK. **ROUND-5 итог: 39/318 файлов.**
-- ✅ **ROUND-5 band#8** (2026-07-07, workflow `wf_95782360-6b8`, **108 дистракторов / 36 блоков**):
-  `integration-testing` (**493926b8**, Testcontainers lifecycle, @DirtiesContext scope, transactional rollback,
-  WireMock, slice-тесты, flaky-изоляция; 4.3-4.7x→2.1-2.5x), `opentelemetry` (**361ca5c9**, tail/head sampling timing,
-  push/pull роли, log↔trace correlation, OTLP vendor-совместимость, overhead/cardinality, ingest-стоимость;
-  4.1-5.0x→2.4-3.3x), `data-lake-lakehouse` (**de6eb56b**, schema-on-read/write, Delta/Iceberg/Hudi ACID роли,
-  time-travel, medallion-слои scope, compaction; 4.6-5.1x→1.0-1.3x), `bff-pattern` (**975bbc74**, BFF vs API Gateway
-  роли, per-client ownership, aggregation vs orchestration scope, GraphQL-BFF; 4.2-5.2x→2.7-3.1x), `design-chat-system`
-  (**d2008e42**, WebSocket/SSE/long-poll, fan-out on-write vs on-read, message ordering/дедуп, presence, Kafka-partition
-  ключ; 4.0-4.7x→1.2-1.5x — requeue из band#7 успешно), `spring-aop` (**1691b972**, JDK-proxy vs CGLIB условия,
-  self-invocation, @Around vs @Before роли, pointcut execution vs within scope; 4.0-4.8x→0.9-1.3x). Все гейты OK.
-  **ROUND-5 итог: 45/318 файлов.**
-- ✅ **ROUND-5 band#9** (2026-07-07, workflow `wf_94b4d1bd-d76`, **108 дистракторов / 36 блоков**):
-  `design-netflix` (**5c86a842**, CDN Open Connect vs origin, adaptive-bitrate, chaos scope, EVCache; 4.0-4.3x→1.9-2.5x),
-  `fine-tuning-llm` (**c4257af8**, LoRA vs full-FT, RLHF vs DPO роли, catastrophic-forgetting, QLoRA scope; 4.1-4.2x→2.5-3.1x),
-  `open-source-llms` (**c988db64**, лицензии scope, GGUF/safetensors, quantization роли, MoE, vLLM/Ollama; 4.4-5.1x→1.3-2.6x),
-  `istio-service-mesh` (**9a081218**, Envoy sidecar vs control-plane, mTLS scope, VirtualService vs DestinationRule;
-  4.2-5.1x→1.1-1.5x), `service-discovery` (**4f99353d**, client vs server-side, Eureka self-preservation, Consul/etcd
-  health-check scope; 4.5-4.9x→2.5-3.8x), `serverless` (**821bffb0**, cold start, event-source mapping, concurrency-лимиты;
-  Q28 enum-heavy correct=673симв. → 3 дистрактора удлинены вручную до HEAD-паритета с одиночной ошибкой; 4.0-4.7x→2.6-4.1x).
-  Все гейты OK. **ROUND-5 итог: 51/318 файлов.**
-- ✅ **ROUND-5 band#10** (2026-07-07, workflow `wf_dc362cb1-08e`, **90 дистракторов / 30 блоков** — 5/6,
-  `searching-algorithms` gen conn-fail→requeue band#11): `design-instagram` (**c5664506**, push vs pull feed fan-out,
-  celebrity-problem, media-transcoding, шардирование по user_id; 4.0-4.6x→2.4-3.6x), `design-key-value-store`
-  (**47184926**, consistent hashing vs mod-N, quorum R+W>N, vector-clock vs LWW, Merkle anti-entropy; 4.1-4.6x→1.9-2.6x),
-  `kotlin-flow` (**9e9213f8**, cold vs hot, StateFlow vs SharedFlow, flowOn scope, buffer/conflate; 3.8-4.3x→1.2-1.5x),
-  `trees` (**b3ee4585**, AVL vs Red-Black tradeoff — TreeMap=RB, B-tree vs B+-tree, trie; 4.0-4.6x→1.0-1.3x), `kotlin-dsl`
-  (**5b74c2e4**, @DslMarker scope, lambda-with-receiver, type-safe builder, invoke-конвенция; 4.0-5.0x→1.1-2.1x —
-  harvest из verify-echo, чистого от corruption/entities, gen отдельно не заджорналился). Все гейты OK.
-  **ROUND-5 итог: 56/318 файлов.**
-- ✅ **ROUND-5 band#11** (2026-07-07, workflow `wf_d80889f1-2c9`, **72 дистрактора / 24 блока** — 4/6,
-  `searching-algorithms`+`static-analysis` gen conn-fail→requeue band#12): `cqrs-event-sourcing` (**fbf37bc2**, command
-  vs query, event store append-only, projection rebuild, saga vs 2PC; 4.2-4.8x→1.2-2.7x), `design-youtube` (**1bf5d0d8**,
-  GGC vs commercial CDN, view-count async-агрегация, Content ID perceptual fingerprint vs SHA/CSAM, CENC single-asset
-  DRM, Kafka two-tier push; 3.9-4.1x→2.2-2.6x), `message-brokers-comparison` (**db60a1d5**, Kafka log vs RabbitMQ queue,
-  push vs pull consumer, partition vs exchange routing, ack/redelivery; 3.9-4.4x→1.0-1.6x), `zero-trust` (**ef4cf526**,
-  ZTNA vs VPN модель, per-request vs perimeter, BeyondCorp device-trust, PDP/PEP; 3.9-4.3x→2.0-2.4x). Все гейты OK.
-  **ROUND-5 итог: 60/318 файлов.**
-- ✅ **ROUND-5 band#12** (2026-07-07, workflow `wf_90256762-d84`, **108 дистракторов / 36 блоков**): `jaeger-zipkin`
-  (**3558186a**, storage-at-rest cost-driver, Jaeger UI features, Tempo роли, head vs tail sampling; 3.9-5.3x→1.9-3.0x),
-  `pulsar` (**7bbc6ca3**, geo-replication async, Pulsar Functions scope, tiered-storage offload, создатель Yahoo!;
-  Q16-C переписан вручную после verify-reject за 2 ошибки; 3.9-4.7x→2.7-4.1x), `apache-flink` (**bb38b9c4**, event-time vs
-  processing-time, watermark, checkpoint vs savepoint, keyed-state; 3.9-4.2x→1.3-2.0x), `code-review-practices`
-  (**f16eca79**, чек-лист приоритеты, review-size, nitpick vs blocker; Q33-C переписан вручную после verify-reject за
-  самопротиворечивость; 4.2-4.9x→2.6-3.4x), `static-analysis` (**683ad745**, SAST vs DAST, AST vs data-flow, taint,
-  SonarQube gate; 3.7-4.8x→1.5-2.6x), `searching-algorithms` (**45ee14f1**, **ручная де-каррикатуризация** — gen падал
-  3× подряд на conn-drop; binary-search-on-answer границы/монотонность, DFS vs BFS, Arrays vs Collections.binarySearch;
-  4.0-5.1x→1.9-2.3x). **Первые 2 verify-reject'а за все банды** (pulsar Q16-C + code-review Q33-C — оба заменены чистой
-  одной-ошибкой). Все гейты OK. **ROUND-5 итог: 66/318 файлов.**
-- ✅ **ROUND-5 band#13** (2026-07-07, workflow `wf_03842cd4-eb0`, **108 дистракторов / 36 блоков**): `model-serving`
-  (**d527421b**), `design-twitter` (**f17b68c6**), `java-types` (**d9a54752**), `test-strategies` (**985b3aa8**),
-  `long-context-vs-rag` (**7813d053**, Q15-A переписан вручную после verify-reject за §7 surface-tell — расшифровка
-  «Time To First Token» затем противоречие «до последнего токена»; 4.65→2.58x), `kafka-streams` (**795298e2**). Все
-  гейты OK. **ROUND-5 итог: 72/318 файлов.**
-- ✅ **ROUND-5 band#14** (2026-07-07, workflow `wf_a548360b-870`, **108 дистракторов / 36 блоков**): `nats` (**5ecaaf4a**),
-  `memory-management` (**cb1ebcd1**, G1-регионы/humongous/ZGC/GC-log), `load-testing` (**fc5152a6**, JMeter-как-k6
-  tool-misattribution, think-time, fixed-payload realism), `design-rate-limiter` (**e2331ffb**, fail-open/deny reversal),
-  `design-pastebin` (**5e21ad87**, OAuth-stores-passwords, TOAST-blobs, private full-text leak),
-  `multi-agent-orchestration` (**4e91cd69** + Q15-D reconcile **de018adf**). **1 verify-reject** (multi-agent Q15-D — handoff-
-  половина совпадала с correct-C, читалась как истинная → чистый role-swap async/sync); Q19-A/Q21-B доп. смягчены
-  (убраны absolute-tells «гарантирует»/«полностью»). Все гейты OK. **ROUND-5 итог: 78/318 файлов.**
-- ⚠️ **ROUND-5 band#15** (2026-07-07, workflow `wf_638fbbd8-8b5`, **частично — session-limit 20:30 MSK**): 3/6 done —
-  `jwt` (**9544e137**, alg-none variants, AT/RT role-swap, Nested-JWT invented, Paseto misconc.), `estimations-planning`
-  (**a71fba47**, padding-vs-optimism, #NoEstimates mischar, Scrum/Kanban role-swap), `spring-data-jpa` (**aa838768**,
-  REQUIRES_NEW-joins, merge-mutates-same-instance, FetchType reversed; Q22-C/Q39-B absolute-tells смягчены). 3 gen-агента
-  упали (terraform/resilience-patterns — session-limit, java-functional-interface — conn-drop) → **requeue в band#16**.
-  Все гейты OK. **ROUND-5 итог: 81/318 файлов.**
-- ✅ **ROUND-5 band#16** (2026-07-07, workflow `wf_4b8df053-b59`, **108 дистракторов / 36 блоков**): `terraform`
-  (**127a06d2**, init→apply→plan wrong-order, Ansible-declarative, moved-relocates), `mutation-testing` (**0ba4652a**,
-  PIT-for-JS, Stryker-for-Java, in-process contradiction), `resilience-patterns` (**7ed69cf9**, Retry env-only, INCREMENT-
-  idempotent, hedged-request swap, TimeLimiter HTTP-only, flag-replaces-CB), `vault` (**25614731**, JWT signature-only,
-  BSL-forbids-internal; positional-qnum remap fix), `java-functional-interface` (**77051a50**, Runnable-returns-T,
-  `::new`-is-static, Predicate.and-no-short-circuit, custom-SAM-must-be-apply), `logging` (**b03745be**, GELF-binary,
-  acks=0-guarantees, Kafka-appender-no-fallback; verify conn-drop→ручной гейт). Requeue-3 закрыты; terraform Q35-B +
-  mutation Q12-C absolute-tells смягчены. Все гейты OK. **ROUND-5 итог: 87/318 файлов.**
-- ✅ **ROUND-5 band#17** (2026-07-07, workflow `wf_57dcc115-94a`): 3/6 закоммичены под length-parity — `rest-maturity`
-  (**fce73997**), `java-initialization` (**05fae726**), `saga-pattern` (**d292a5ec**); `java-records`/`api-gateway`/
-  `scalability-patterns` НЕ закоммичены (пользователь остановил на structure-parity замечании) → откачены, уйдут в ROUND-6.
-  **ROUND-5 итог: 90 файлов length-parity (коммиты сохранены как улучшения).**
-
-### ROUND 6 — STRUCTURE/FORMAT PARITY (RESET #4, старт 2026-07-07, по прямому указанию пользователя)
-
-**Новый governing-бар.** Пользователь указал: даже в переработанных файлах у correct одна структура/
-формат, а у дистракторов — другая; это неверно — **структура и формат обязаны совпадать у всех опций**.
-Дистрактор = **клон скелета correct с ОДНОЙ смысловой подменой** (то же число предложений, перечислений,
-скобочных уточнений, код-спанов, тот же паттерн `;`/`—`/нумерации), а не плоская проза с одним неверным
-тезисом. Иначе correct угадывается по ФОРМЕ.
-
-- **Метрика/гейт:** `scripts/mcq-structure-parity.py` — `structure-tell` блока = Σ|feat(correct) −
-  mean(feat(distractors))| по {предложения,`;`,`:`,`(`,код-спаны,нумерация,`—`,`,`}. Эталон rxjava ≈ **9**;
-  плоские файлы дают 18–27. Ранжирование `--rank` (worst-first), гейт в apply-harness: `structure-tell CUR ≤ HEAD`.
-- **Инструменты обновлены:** skill `mcq-quality-fixer` (§ Structural-richness parity + measurable gate);
-  workflow gen/verify prompt (ПРАВИЛО 0 — structure parity, worked example, verify-rejection); apply-harness
-  (structure-tell gate рядом с length-ratio).
-- **Reset:** ROUND-5 done-set (87 стемов) заархивирован в ledger; ROUND-5 pedago-коммиты СОХРАНЕНЫ (это
-  улучшения по длине/правдоподобию). ROUND-6 переоткрывает все файлы под structure-parity, worst-first по
-  `structure-tell`. Топ-худшие: database-sharding 27.7, design-vending-machine-oo 26.4, ai-observability 25.0,
-  divide-and-conquer 24.7, design-instagram 24.1 (130 файлов выше 1.4×gold).
-- **Cron:** остановлен пользователем 2026-07-07 (автономный `/loop 15m` цикл отменён; ROUND-6 продолжится по запросу).
-- Off-limits (чужая сессия): agentic-patterns/git/chaos-engineering/postgresql/testcontainers/mentoring.
-
-### ROUND 4 — Каноничный свод из 20 правил (RESET #3, старт 2026-07-07)
-
-**Бар поднят до полного 20-правильного стандарта** (см. RESET #3). `CAR0` из round-3 **больше не
-означает «готово»** — файл может проходить caricature-гейт, но нарушать правила 2/4/9/10/11/16. Все
-статусы §7 переоткрыты под ROUND 4; перебор worst-first по остаточным сигналам.
-
-- ✅ **Правила закреплены** (2026-07-07): `mcq-quality-fixer` — раздел «Каноничные 20 правил…» +
-  формула + критерий + 12-пунктовый финальный чек + чеклист-пункт; workflow-RULES переписаны на 20
-  правил; `interview-writer` gate обновлён. Старый блокет-бан `всегда/никогда` отменён (группа
-  `absolute` удалена из аудита, колонка `Cabs` убрана).
-- ✅ **Эталон применён:** `reactive/rxjava-interview` (**db720dc3**, 46 блоков, 138 дистракторов) —
-  золотой пример пользователя, первый готовый файл ROUND 4. Референс «как должны выглядеть варианты».
-- ✅ **saga-pattern** (**440238a8**, Q17 B/C/D + Q34 C): absurd-каррикатуры («ничего не делать»,
-  «просто игнорирует», «удалить чтобы не мешала», «единственно верное») → правдоподобные модели с
-  одной точечной ошибкой (premature COMPLETED+reliance на recovery-job; naive unbounded retry без
-  backoff/DLQ; replay уже проведённых шагов = double side-effect; dedup по таймстемпу вместо
-  messageId). caric 2→0, length-tell Q17 3.24→1.87 / Q34 4.75→4.11 (подъём дистракторов).
-- ✅ **Батч de-caricature** (2026-07-07): `unit-testing` (20092ac6, Q10 Fake↔Dummy), `team-leadership`
-  (c0414169, Q19 эскалация через голову вместо «пригрозить»), `go-concurrency` (9b965739, Q17 фейк
-  `wg.Reset()`→гонка reuse + counter-clamp panic вместо «просто игнорирует»), `reactive-streams`
-  (7c2b81a2, Q11 n<=0 как пауза вместо «ничего не делают»). Все caric→0, length-tell улучшен.
-- ✅ **Батч de-caricature #2** (2026-07-07): `serverless` (Q28 A/B/C — 3 инвертированные каррикатуры),
-  `junit` (Q9 C/D — фейк `Extension.extend()` + Mockito-only), `langchain4j` (Q14 B — RetrievalAugmentor
-  role-swap), `redpanda` (Q19 A/B/D — 3 каррикатуры → throughput/Kafka-API/ZooKeeper), `design-feed-system`
-  (Q4 A/C — write/read swap + hybrid-not-used), `data-lake-lakehouse` (Q16 B — enforcement drop-columns).
-- ✅ **CARICATURE-ОСЬ ПОЛНОСТЬЮ ЗАКРЫТА** (2026-07-07): caricature во всём корпусе (все группы —
-  absurd/dismissive/fake/toxic) = **0**. Детектор очищен от over-broad маркеров: группа `absolute`
-  (всегда/никогда) и `заставить/заставля` в toxic_management убраны (29/29 «заставля» — ложные
-  технические «forces», ни одного «злодейского менеджера»). Последней правкой — `property-based-testing`
-  (Q9 negation-echo→in-memory model; Q16 over-generalization→persistence-confusion).
-- ✅ **Ось LENGTH-TELL открыта** (2026-07-07): скан correct/avg-wrong по всему корпусу (9541 блоков) —
-  экстремальный хвост ratio≥6 = стаб-дистракторы (~60 симв.) при correct-конспекте (400–520 симв.).
-  Это исходный DoD-дефект «correct угадывается по наполненности». Worst-файл — `cassandra` (8× в top-30).
-  Фикс `cassandra` Q21/Q28/Q36/Q40 (c007ede5, 12 дистракторов): стаб→полная правдоподобная ошибочная
-  модель в том же перечислительном стиле, ratio 6.5x→~2.0-2.5x. **Правило:** усиливать дистракторы, НЕ
-  сокращать correct (per промпт). Каждый остаётся ложным vs реальность; correct/label/order не тронуты.
-- ✅ **`cockroachdb` Q22/Q23/Q24** (66d72b33, 9 дистракторов): worst-tail корпуса (Q23 correct=752 симв. —
-  самый длинный correct в корпусе, ratio 8.12x). Стабы→полные ошибочные модели: ratio Q23 8.12x→3.23x,
-  Q22 6.15x→2.48x, Q24 6.60x→3.27x. Essay-correct блоки капаются ~3x (дистрактор >260 симв. становится
-  неправдоподобно раздутым) — это потолок при no-touch-correct инварианте, но 8x→3x убирает главный tell.
-- ✅ **`saga-pattern` Q37/Q42** (4067ec2c) + **`database-sharding` Q25/Q34** (fae7a661), 12 дистракторов:
-  Q37 6.92x→2.94x (убран dismissive-тон вредны/засоряющие/рутинные), Q42 7.50x→3.60x, Q25 6.47x→4.20x,
-  Q34 6.40x→4.10x (Q34 correct=892 симв. — самый длинный чек-лист). saga-дистракторы были стаб+dismissive
-  → правдоподобные mistaken-models; sharding-дистракторы уже были хорошие модели, подняты по стилю.
-- ✅ **`ai-compliance-governance` Q25/Q28/Q31/Q32** (6953f814, 12 дистракторов): смесь стаб/абсолютных
-  (всегда/любое/полностью)/dismissive при correct-конспекте (494-649). Все → правдоподобные mistaken-models,
-  абсолютные и dismissive маркеры сняты. ratio Q31 7.72x→2.51x, Q32 6.93x→3.36x, Q25 6.30x→2.72x,
-  Q28 6.15x→2.41x. Ложность vs EU AI Act сохранена (Q31/A provider↔deployer, Q28/C AI Act как copyright-закон,
-  Q32/C single-deadline вместо фазового применения). Not-essay блоки (correct ~500) чистятся до ratio ~2.5.
-- ✅ **`cassandra` Q25/Q32/Q33** (9f6f6c4f) + **`stream-processing` Q28** (e2836b4d), 12 дистракторов:
-  стаб+абсолютные (всегда/любому/без ограничений) → правдоподобные mistaken-models. Q32 6.30x→**1.64x**
-  (near-parity, correct=353 — не-essay), Q25 6.47x→2.41x, Q33 6.29x→2.27x, stream Q28 7.06x→2.87x.
-  Ложность сохранена (Q25/C full-transfer вместо Merkle-diff; Q33/D fixed-coordinator; stream/A инвертирует
-  event↔processing time). **Правило пути:** short-correct (≤380) блоки достижимы до ratio ~1.6, essay-correct капается ~2.5-4.
-- ✅ **`data-lake-lakehouse` Q25/Q28** (339c8677) + **`secrets-management` Q21/Q22** (fc8379bb), 12 дистракторов:
-  стаб/инвертированные при correct-конспекте (483-710). ratio Q25 6.71x→2.47x, Q28 6.41x→2.44x,
-  Q21 6.14x→3.21x, Q22 6.49x→3.58x. Много чистых инверсий факта (Q28/C зрелость Hudi+Flink для CDC,
-  Q22/A rotation-harmful vs lack-of-rotation, Q22/D unseal-loss recoverable) → правдоподобные mistaken-models
-  с сохранённой ложностью. correct/label/order не тронуты.
-- ✅ **`redis` Q43** (a8cad1ad) + **`hexagonal-architecture` Q38** (e43591f6) + **`mcp` Q30** (6807c90e), 9 дистракторов:
-  крошечные стаб/абсурд дистракторы (hex Q38 C/D = 37-46 симв., «антипаттернов нет») → правдоподобные
-  mistaken-models. ratio Q38 6.49x→**1.69x** (near-parity, correct=346), Q43 6.54x→2.45x, Q30 6.20x→2.76x.
-  Ложность сохранена (redis A binary-incompatible / D pubsub-removed; hex A structure-guarantees-purity /
-  D Lombok-as-main-sin; mcp A failed-adoption / D MCP↔A2A competing). Убран маркер «полностью».
-- ✅ **`performance-testing` Q14/Q25/Q26/Q27/Q32** (f993b8f4, 15 дистракторов): worst untouched non-essay
-  файл (9 flagged блоков, correct 381-411). Свежий скан хвоста: приоритет non-essay correct (≤420) —
-  лучший parity-gain. Короткие false-fact стабы (52-89) → правдоподобные mistaken-models: много role-swap
-  (Q14 SLI↔SLA/SLO, Q26 Checks↔Assertions) и wrong-tool-fact (Q27 k6=Java/Scala/GUI, Q32 Locust=Go/JS).
-  ratio 5.3-6.3x → 2.2-2.6x. Убраны всегда/любые. correct/label/order не тронуты.
-- ⚠️ **Negation-echo (rule 11) скан = почти всё false-positive:** высокий Jaccard с correct ловит ХОРОШИЕ
-  minimal-pair дистракторы (одна точечная ошибка, та же структура — ровно чего требуют 20 правил).
-  langchain4j Q12/Q17/Q18, scala-effects Q9/A, crac Q16/C — все legit, НЕ трогать. Единственный genuine
-  слабый — `jmh-microbenchmarking` Q9/B (оба типа итераций «отбрасываются» → в отчёт не идёт ничего;
-  rule 9). Кандидат на след. тик. **Урок:** heuristic-скан-по-форме над-флагует; каждый кандидат — ручной суд.
-- ✅ **WORKFLOW-RESTART band#1** (2026-07-07, workflow `wf_722cfd52-a5c`, 12 агентов / 0 ошибок / 564K токенов):
-  переход от «одна ось length-tell» к **полному 20-правильному переписыванию** worst-first банда из 6 файлов.
-  Конвейер: gen-агент (general-purpose, читает файл, переписывает ВСЕ 3 дистрактора каждого worst-блока по
-  20 правилам с `error_model`) → adversarial-verify-агент (подтверждает однозначную ложность vs correct,
-  реальный API, одну ошибку) → мой ручной semantic-gate (просмотрел все 90) → детерминированные гейты.
-  **30 блоков, 89 дистракторов** (+1 verbatim-репродукция валидного): `design-elevator-oo` (**40c05d28**,
-  Q19/21/24/25/26 — synchronized-over-generalization, fire-mode-scope, auth role-swap, wall-clock, door-as-boolean),
-  `load-testing` (**5f621584**, Q11/12/17/22 — inverted perf-rating, `k6/core` fake-module, CPU-only bottleneck,
-  coordinated-omission direction-swap), `design-feed-system` (**e40bf395**, Q24/25/28/29/30 — freshness↔latency
-  merge, block cardinality-swap, bulkhead-inversion, Redis↔CDN cost-swap), `mlops` (**053bef59**, Q11/13/23/24/28 —
-  registry↔tracker, batch↔online swap, LLMOps=from-scratch), `service-discovery` (**67ac3476**, Q20/23/24/27/30 —
-  kube-proxy↔CoreDNS role-swap, iptables O(1) property-transfer, Eureka=CP), `database-transactions` (**6c504a78**,
-  Q25/37/38/41/42 — readOnly=SERIALIZABLE, advisory=row-lock, XA-brokers, RYW=isolation-level, WAL=SELECT-cache).
-  Все ratio 5-6x→1.9-5.5x, caric=0, tone=0, fidelity+schema OK. Это первая жатва restart-конвейера.
-- ✅ **WORKFLOW-RESTART band#2** (2026-07-07, workflow `wf_74744495-021`, 12 агентов / 0 ошибок / 569K токенов):
-  worst-first по 6 блоков/файл. **36 блоков, 107 дистракторов** (1 отклонён verify-стадией): `spring-cloud`
-  (**b58d388d**, Q32/33/35/39/40/42 — Consul=AP, RateLimiter-in-memory, 503-vs-429, Auth-Code-for-m2m,
-  OpenFeign-как-сервер), `spring-security` (**88229c41**, Q16/32/39/40/41/42 — RS-issues-token, withSecretKey↔RSA
-  swap, SameSite=None-strictest, @WithMockUser↔@WithUserDetails, WebFlux-ThreadLocal), `spring-mvc` (**8d202176**,
-  Q17/21/30/38/40/42 — ViewResolver-десериализует, Commons-default, MockMvc-real-Tomcat, advice-before-local),
-  `scala` (**1c4ef79c**, Q22/27/28/30/37/40 — implicit=access-modifier, ArrayBuffer-immutable, Future-lazy,
-  Akka-still-Apache), `integration-testing` (**6c329134**, Q24/27/30/31/35/38 — mock-DB-real-services swap,
-  JUnit-parallel-default-on, flaky=always-fails, H2-replaces-Testcontainers), `helm` (**e9aa1eb9**, Q35/36/37/40/41/43 —
-  ArgoCD-helm-install, SOPS-encrypts-keys-not-values, post-renderer-before-template, provenance-encrypts).
-  ratio 4.5-5.7x→2.9-4.1x, caric=0, tone=0, fidelity+schema OK. Все 107 прошли ручной semantic-gate.
-- ✅ **WORKFLOW-RESTART band#3** (2026-07-07, workflow `wf_d1f033bd-51e`, 12 агентов / 0 ошибок / 568K токенов):
-  **36 блоков, 108 дистракторов** (0 отклонено verify): `contract-testing` (**821621cc**, Q19/27/29/31/40/41 —
-  @State-once-per-context, message-pact-checks-delivery, StubRunner-real-service, LOCAL↔REMOTE swap, big-bang-rollout),
-  `quarkus` (**bebe6fd7**, Q12/16/19/20/21/30 — reflection-without-registration, /actuator-paths, Uni/Multi cardinality-swap,
-  Netty-not-Vertx, Panache-replaces-Hibernate), `design-url-shortener` (**e33851b8**, Q16/19/23/24/28/29 — scan-once,
-  single-Redis-INCR, honeypot-visible, sync-cross-region-quorum, eternal-TTL-fixes-stampede), `fine-tuning-llm`
-  (**a16df73c**, Q14/19/24/27/28/29 — RLHF-two-stages, TRL↔bitsandbytes role-swap, perplexity-enough, Llama2-tokenizer-safe),
-  `java-types` (**fb5ec5c5**, Q17/23/25/26/27/32 — sealed=final, arrays-invariant/ArrayStoreException, Optional-for-fields,
-  static-serialized, value-based-synchronized), `design-payment-system` (**603f2f1b**, Q11/16/20/25/26/27 —
-  frictionless↔challenge swap, liability-shift-to-acquirer, settlement=capture, monolith-single-DB, sync-2PC-cross-region).
-  ratio 4.3-5.6x→2.2-4.3x, все гейты OK, 108/108 через ручной semantic-gate. 1 reword (заставля→требует): tone-guard был
-  over-broad на benign «forces» — убран из apply-TONE regex (согласовано с audit-удалением caricature-группы).
-- ✅ **WORKFLOW-RESTART band#4** (2026-07-07, workflow `wf_51905ab5-41d`, 12 агентов / 0 ошибок / 590K токенов):
-  **36 блоков, 108 дистракторов** (0 отклонено verify): `deployment-strategies` (**1ae83416**, Q5/25/35/36/37/38 —
-  liveness↔readiness swap, Argo push-vs-pull), `design-netflix` (**a988b874**, Q12/15/17/19/20/21 — SSAI↔CSAI swap,
-  VAST-as-JS-API), `design-parking-lot-oo` (**3bab8f52**, Q11/15/18/21/26/28 — TOCTOU races, wrong-lock-scope),
-  `ai-observability` (**6f081256**, Q15/17/20/21/24/25 — BOLA rate-vs-buffer, wrong-metric-source), `test-strategies`
-  (**4aec07b2**, Q26/30/32/38/40/44 — Three-Amigos-as-3-devs, Stub=Mock), `design-youtube` (**3de7e447**,
-  Q6/14/18/19/21/27 — shard-by-wrong-key, sha256-as-reversible). ratio 4.2-5.6x→2.2-3.9x, все гейты OK, 108/108 через
-  ручной semantic-gate, 0 tone false-trips (regex-фикс из band#3 держится).
-- ✅ **WORKFLOW-RESTART band#5** (2026-07-07, workflow `wf_0a42d685-818`, 12 агентов / 0 ошибок / 566K токенов):
-  **36 блоков, 106 дистракторов** (2 отклонено verify — оба справедливо: saga Q31/D orderId-correlation реально валиден,
-  ai-compliance Q22/C blockchain-реестр валиден): `performance-testing` (**63bc35cc**, Q18/34/39/40/41/42 —
-  coordinated-omission direction-swap, HTTP-Sampler-does-JDBC), `ai-compliance-governance` (**e77d3b6c**, Q17/20/22/24/26/29 —
-  SHAP↔LIME swap, attention-as-faithful-attribution), `database-sharding` (**e7111afc**, Q12/19/22/24/26/28 —
-  VTGate↔VTTablet, config-servers↔shards, CockroachDB-needs-shard-key), `data-lake-lakehouse` (**7cd4cffd**,
-  Q11/17/20/24/26/27 — Iceberg-as-file-format, Z-Order-single-column), `cassandra` (**a54a79b6**, Q12/23/26/35/38/39 —
-  LCS↔STCS swap, Cassandra-as-masterless-AP, compaction-in-place), `saga-pattern` (**46faf41c**, Q22/30/35/36/39 —
-  2PC-non-blocking, Outbox-as-2PC). ratio 4.6-6.2x→1.4-5.3x, все гейты OK, 106/106 через ручной semantic-gate.
-  Verify-агент cassandra завис на 8 мин → harvest из journal.jsonl (min-patch-count per stem) как fallback, но воркфлоу
-  всё же дозавершился всеми 12 агентами — итог взят из авторитетного `.output`.
-- ⏳ **Дальше — worst-first банды по 6 файлов через тот же workflow** (матрица §7 = worst-first очередь).
-  Band#6 в работе (`wf_2bcd59ef-4be`): hexagonal-architecture/secrets-management/redis/cockroachdb/mcp/spring-batch.
-  Каждый файл переписывается по ПОЛНЫМ 20 правилам (не только length-tell). Остаток очереди ~282 файла (worst-first по §7).
-  Off-limits: agentic-patterns/git/chaos-engineering/postgresql/testcontainers + любой dirty файл.
-
----
-
-### ROUND 3 (архив — Plausibility + Readability, старт 2026-07-01)
-
-**RESET #1 + #2 выполнены 2026-07-01** (см. баннер). Прогресс round 2 (Option Parity) обнулён в таблице;
-коммиты round 2 остаются в git-истории (~30 сидеров: `java-concurrency` 7c013c0d … `design-uber` f0119a42,
-`kubernetes` 00bf1489). Под объединённым баром Option Parity + **Plausibility Parity** + **Human-Readability**
-файлы переоткрыты.
-
-- ✅ Plausibility Parity + анти-паттерн **Inflated Caricature Distractor** закреплены в `mcq-quality-fixer` и `interview-writer`.
-- ✅ `scripts/audit-mcq-parity.py` переписан в **audit v2** (commit 92fb5d46): severity LOW/MED/HIGH/CRIT, technical-density, structural-symmetry, caricature v2 (группы+сниппет), INFLATED_CARICATURE, SHORT_DISTR v2, file-level rate'ы, `--json-report`/`--markdown-report`/`--fail-on`/`--selftest`.
-- ✅ **Третья линза — человекочитаемость русской прозы** (commit 3fc4745d, `--readability`): сигналы `LOW_CYRILLIC`/`ENGLISH_RUN`/`LONG_SENTENCE`/`FILLER_PHRASE`/`PUNCT` на `text`+прозаических `sections`. Калибровано адверс-выборкой (3-агентный workflow судил FP-rate; корпус легитимно code-switch'ит → язык-сигнал требует англ. ПРОЗЫ со служебными+содержательными словами). Высокая точность: 9265→19 блоков-кандидатов, FP-файл 31→1. Колонка **RDB** в §7 (независимая ось, не в Σ).
-- ✅ §7 пересобран **детальным re-аудитом** (audit v2 + readability): per-signal разбивка (LEN/STR/DEN/CAR/INF/SHRT/RDB по блокам), severity-распределение C/H/M/L, file-rate'ы long%/tech%/ustr%/rank. Все статусы → QUEUED.
-- ✅ Закоммичено в round 3 (workflow `wn86pui6x`, fidelity_ok+parity_ok): `ai-safety-guardrails` (ad6ca9c7, 32 бл.), `spring-webflux` (b701ac76, 43 бл.), `test-automation` (5f9d63fb, 50 бл.) — length-tell снят.
-- ✅ Round-3 **de-caricature** band-1 (workflow по 3 файла, fidelity+parity+plausibility triple-ok): `leadership/mentoring` (f75faad6, CAR 27→0), `ai-ml/rag` (a545c58e, CAR 17→0), `ai-ml/design-search` (d0dfcebf, CAR 24→0) — length-tell остался 0, 0 регрессий.
-- ✅ Round-3 de-caricature band-2: `refactoring-patterns` (87d04acf), `aws-lambda` (b238f382), `graphs` (5d4decdd) — каждый CAR→0, дистракторы раздуты до реалистичных ошибочных моделей без токсичных маркеров.
-- ✅ Round-3 de-caricature band-3/4/5 (workflow, до weekly-limit): `sql`/`kotlin-collections`/`caching-performance` (band-12), `greedy-algorithms`/`graphql`/`ai-application-architecture` (band-13).
-- ✅ **Ручной режим** (weekly-limit до 2026-07-06 18:00 MSK — воркфлоу-ревьюеры недоступны, 1 файл/тик, детерминированные гейты + inline fidelity): `code-review-practices` (f932b593), `spring-data-jpa` (f08756ea), `design-patterns` (d04ae935), `technical-debt` (a5b3bf33, 18 бл.), `microservices` (f937bec0, 16 бл.), `distributed-systems` (687a7949, 16 бл.), `testcontainers` (97ce53db, 19 бл.), `reverse-proxy` (be9ec7ae, 18 бл.), `recursion` (082bc208, 19 бл.), `networking` (5ea7ef10, 19 бл.), `multi-agent-orchestration` (7757350a, 21 бл.), `memory-management` (2077af27, 20 бл.), `long-context-vs-rag` (efab9c5a, 21 бл.), `load-balancing` (ed15ae97, 16 бл.), `searching-algorithms` (25fd614d, 17 бл., первый CAR=10), `prompt-engineering` (3e7b4fe5, 22 бл.), `culture-fit` (cbbdcbff, 26 бл.), `backtracking` (f70d268a, 20 бл.), `aws` (4f1ffcf5, 42 бл., последний CAR=10), `rxjava` (ed41330b, 26 бл., первый CAR=9), `opentelemetry` (6cf7d2be, 24 бл.) — каждый CAR→0, audit-gap «единственн/полностью/любой/исключительно/абсолютно/невозможн/заставля/принципиально/гарантир» дочищены extended tone-regex, correct не тронут.
-- ✅ **Воркфлоу-режим возвращён** (weekly-limit снят; ultracode: dynamic workflow orchestration). Workflow `wf_1e99746a-378` (task `w9s0p26cc`, 6 агентов, 0 ошибок, 618K токенов) — фан-аут ≤3 concurrent по CAR=11 тиру **со смещением ranks 9-16** (чтобы разойтись с параллельной сессией, идущей top-down). Агенты возвращают structured patch-sets (не пишут на диск), оркестратор применяет+гейчит+коммитит по одному: `integration-testing` (97c3deb6, 19 бл.), `hash-tables` (74155a3e, 11 бл. +3 ручных block22 ConcurrentHashMap-энумерация), `fine-tuning-llm` (36de1e08, 11 бл.), `design-instagram` (17d19331, 11 бл. +6 ручных blocks 7/8/17 arch-raise), `design-dropbox` (ff1d15e1, 12 бл.), `database-sharding` (3ce51d87, 11 бл.) — каждый CAR→0, length-tell CUR≤HEAD, correct не тронут. Агенты иногда пропускают блоки с длинной энумеративной correct → оркестратор дописывает ручные patch-и (raise дистракторов, не shrink correct).
-- ✅ **Воркфлоу-батч #2** (`wf_e2758d33-b91`, task `wg85itgy0`, 6 агентов, 0 ошибок, 514K токенов), offset-band ranks 6-11: `argocd` (ba1128c5, 27 бл.), `test-automation` (ab40368f, 10 бл.), `spring-batch` (fed3dee6, 10 бл.), `two-pointers-sliding-window` (1ce06375, 10 бл.), `kotlin-exceptions` (b26ed884, 11 бл. +8 topup), `typescript` (510987b1, 10 бл. +3 topup) — каждый CAR→0. Topup-паттерн: агент осознанно оставляет часть блоков (форбидден-маркер смыслонесущ в мисконцепции); оркестратор дочищает механические срабатывания, в т.ч. **ложные `toxic_management` на техническом «заставляет компилятор»** (forces the compiler) — переформулировка глагола (`заставляет`→`обязывает`/`вынуждает`/`требует`) с сохранением ложности.
-- ✅ **§7 переделана в гигантскую матрицу** «файл × проверка» (`scripts/gen-plan-matrix.py`, детерминированно, регенерация `--write`): 318 строк × 30 колонок, каждая колонка = отдельный сигнал аудита (Lavg/Lspd/Word/Sent/Shrt/Uniq/Enum/Caus/Sden/Tech/Btk/Num/Cma/Infl/Cabs/Ctox/Cabd/Cdis/Cfak/Rlong/Rpun/Rcyr/Reng/Rfil/Sch), ячейка = блоков к правке (`·`=чисто). Worst-first. На момент генерации: CAR0=61/318, остаток 1415 CAR-блоков.
-- ✅ **Воркфлоу-батч #3** (`wf_5818d55b-6f5`, task `wwatexzuc`, 6 агентов, 0 ошибок, 610K токенов), offset-band ranks 6-11: `multimodal-ai` (10 бл.), `llm-evaluation` (10 бл.), `event-driven-patterns` (10 бл.), `design-pastebin` (12 бл.), `java-types` (10 бл. +3 topup), `ddd` (10 бл. +1 topup) — каждый CAR→0. Topup java-types bl.4 = полный raise (агент пропустил, дистракторы 92-122c vs correct 232c).
-- ✅ **НОВОЕ ПРАВИЛО: Format Parity** (запрос пользователя «правильный и неправильный ответы — один формат, тире в общем месте»). Закреплено: (1) `mcq-quality-fixer` секция `### Format Parity (MANDATORY)` + question-formulation; (2) `interview-writer` quality-gate; (3) §1b каталог R4.1–R4.5; (4) детектор `format_scan` в `audit-mcq-parity.py` (`FORMAT_DASH`/`FORMAT_PERIOD`/`FORMAT_OPEN` — флагует, когда correct уникальный выброс по формат-оси; colon/semicolon НЕ дублируем — они в `UNIQ_MARKER`); (5) колонки Fdsh/Fper/Fopn в матрице §7 (теперь 34 колонки). Корпус: FORMAT-tell в 309/318 файлов (dash=1931, open=557, period=10 блоков).
-- ✅ **Воркфлоу-батч #4** (`wf_30a568dd-cf2`, task `w59kyo3vk`, 6 агентов, 1 упал на connection-error), offset-band ranks 6-11: `application-profiling` (10 бл.), `authentication-authorization-patterns` (10 бл. +block42 topup A/C/D), `arrays-strings` (10 бл. +block10 topup C), `tls-ssl` (9 бл. +block37 verb-fix), `sorting-algorithms` (9 бл.) — каждый CAR→0. `aws` упал (connection closed mid-response) → вернётся следующим тиком. Topup'ы выровнены и по Format+Sentence-Structure Parity (открывающий backtick + тире в общем месте).
-- ✅ **УСИЛЕНИЕ ПРАВИЛА: Sentence-Structure Parity** (повторный запрос пользователя: «один формат **И структуру предложения**, тире в общем месте»). К Format Parity добавлена ось строя предложения. Закреплено: (1) `mcq-quality-fixer` — раздел переименован в `### Format & Sentence-Structure Parity (MANDATORY — one of the strongest rules)`, добавлен пункт **Sentence structure (mirror the syntactic template)**: одинаковый зачин · число/порядок клауз · форма сказуемого (глагольная/именная) · тип связки; «выпиши скелет correct → перепиши дистракторы по тому же скелету, меняя только факт»; question-formulation поднят в главные правила; новый чеклист-пункт; (2) `interview-writer` quality-gate; (3) §1b каталог — строка **R4.6 Sentence-Structure Parity**. Детектор частично — `STRUCTURE_DENSITY_GAP`; финально верифицирует адверс-ревьюер/ручной проход (синтаксический строй детерминированно не ловится).
-- ⏳ Следующая цель round 3: верх матрицы §7 (CAR=10 тир). CAR=10 тир закрыт, CAR=9 стартовал. В очереди CAR=9: `java-concurrency`/`ai-safety-guardrails`/`ai-agents`/… (extended tone-regex: добавлен `любое`). Продолжать воркфлоу-бэндами ≤3 concurrent с offset-band против гонки; после каждого батча — `gen-plan-matrix.py --write`. Format + Sentence-Structure Parity — попутно в тех же блоках.
-
-**Честно:** round 3 объединяет три линзы. Под объединённым баром 297/318 файлов = CRITICAL (correct
-выделяется по длине+структуре+плотности). Length/structure-tell и caricature-tell чинятся вместе:
-дистрактор поднимается до паритета по форме И остаётся правдоподобной ошибочной моделью (без токсичных
-маркеров). Readability — независимая ось (русская проза), 19 блоков-кандидатов. Round-2-фиксы убрали
-length-tell, но НЕ caricature (CAR/INF) — это round-3 остаток. «Все сидеры исправлены» — цель цикла,
-не одного тика.
+- _(пока пусто — первый golden-файл будет здесь)_
 
 ## 9. Координация
 
