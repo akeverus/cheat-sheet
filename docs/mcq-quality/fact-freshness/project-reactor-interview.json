@@ -1,0 +1,22 @@
+{
+  "topic_slug": "project-reactor-interview",
+  "version_sensitive": true,
+  "product_version": "Project Reactor 3.6.x (reactor-core), Reactive Streams 1.0.4, JDK 9+ Flow API",
+  "checked_date": "2026-07-12",
+  "sources": [
+    "https://projectreactor.io/docs/core/release/reference/",
+    "https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html",
+    "https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Mono.html",
+    "https://github.com/reactive-streams/reactive-streams-jvm",
+    "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Flow.html"
+  ],
+  "version_sensitive_claims": [
+    "Reactive Streams включена в JDK 9 как java.util.concurrent.Flow (Publisher/Subscriber/Subscription/Processor) [Q2]. Стабильно, актуально для JDK 17/21.",
+    "RxJava 3: backpressure только у Flowable (Observable — без); Project Reactor: встроен во все типы, null в потоке запрещён, есть Context [Q3]. Актуально для RxJava 3.x / Reactor 3.6.",
+    "Mono.just(null) бросает NullPointerException; для nullable-значений — Mono.justOrEmpty [Q6]. Стабильный контракт Reactor 3.x.",
+    "Flux.create: FluxSink потокобезопасен (многопоточная эмиссия), OverflowStrategy задаётся параметром, дефолт BUFFER; Flux.push — однопоточная эмиссия, тоже имеет перегрузку с OverflowStrategy [Q9]. Актуально в Reactor 3.6.",
+    "Flux.generate: синхронный генератор (SynchronousSink), ровно один sink.next() за итерацию, pull-based backpressure; вариант с stateSupplier [Q10]. Стабильный контракт Reactor 3.x.",
+    "Flux.range(start, count) — начало и количество (не границы); Flux.interval — бесконечный поток тиков [Q7]. Стабильный контракт Reactor 3.x."
+  ],
+  "notes": "Ядро (Reactive Streams протокол, Mono/Flux контракты, фабрики) стабильно с Reactor 3.1+; претензий к свежести нет. Покрывает Q1-Q10; расширяется по мере обработки остальных чанков."
+}

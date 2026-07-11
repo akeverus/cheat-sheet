@@ -22,7 +22,7 @@
               "order": 0
             },
             {
-              "text": "Реактивный подход — это многопоточность через `ExecutorService` и `CompletableFuture` для распараллеливания задач.",
+              "text": "Реактивное программирование — это работа с асинхронностью через `CompletableFuture` и пулы `ExecutorService`: композиция `thenApply`/`thenCompose` делает код неблокирующим, что и называют реактивностью.",
               "correct": false,
               "sections": {
                 "what_actually": "Многопоточность не равна реактивности: `CompletableFuture.get()` блокирует поток и не поддерживает backpressure, тогда как реактивность — это push-модель с обратным давлением.",
@@ -34,7 +34,7 @@
               "order": 1
             },
             {
-              "text": "Реактивное программирование — это синоним функционального стиля с цепочками `Stream.map().filter()` над коллекциями.",
+              "text": "Реактивное программирование — это функциональный стиль работы с данными: те же цепочки `map`/`filter`/`reduce`, что и в `Stream API`, только оформленные библиотекой с другими именами типов.",
               "correct": false,
               "sections": {
                 "what_actually": "`Stream API` — pull-based и синхронный, без сигналов завершения, ошибок и backpressure, а реактивность push-based с обратной связью.",
@@ -46,7 +46,7 @@
               "order": 2
             },
             {
-              "text": "Реактивность — это подход, при котором каждый запрос обрабатывается в отдельном потоке через `@Async`.",
+              "text": "Реактивность — это модель «поток на запрос», где `@Async` выделяет каждому вызову отдельный поток из пула, и сервер остаётся отзывчивым, пока пул не исчерпан.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Async` создаёт модель thread-per-request, которая не масштабируется до 10K соединений и не передаёт backpressure вверх по цепочке.",
@@ -69,7 +69,7 @@
           "question_text": "Что такое спецификация Reactive Streams?",
           "options": [
             {
-              "text": "`Reactive Streams` определяет четыре интерфейса: `Publisher`, `Subscriber`, `Observer` и `Subject`.",
+              "text": "`Reactive Streams` определяет четыре интерфейса — `Publisher`, `Subscriber`, `Observer` и `Subject`: пара последних унаследована из паттерна Observer, на котором спецификация и построена.",
               "correct": false,
               "sections": {
                 "what_actually": "`Observer` и `Subject` — термины из `RxJava`, в спецификации `Reactive Streams` их нет; там `Publisher`, `Subscriber`, `Subscription`, `Processor`.",
@@ -94,7 +94,7 @@
               "order": 1
             },
             {
-              "text": "`Publisher.subscribe()` сразу отправляет все элементы через `onNext` без участия подписчика.",
+              "text": "`Publisher.subscribe()` сразу начинает доставку: все элементы уходят через `onNext` по мере готовности источника, а роль подписчика — лишь успевать их обрабатывать.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `request(n)` `Publisher` обязан ждать запрос: отправка `onNext` до запроса нарушает Rule 1 спецификации.",
@@ -106,7 +106,7 @@
               "order": 2
             },
             {
-              "text": "Реализация спецификации возможна только через `Project Reactor`, других совместимых нет.",
+              "text": "Реализация спецификации есть только в `Project Reactor` — `RxJava` и `Akka Streams` используют собственные несовместимые контракты, поэтому мосты между библиотеками невозможны.",
               "correct": false,
               "sections": {
                 "what_actually": "Спецификация многоплатформенная: `RxJava 3`, `Akka Streams`, `Mutiny` из `Quarkus` — независимые совместимые реализации.",
@@ -129,7 +129,7 @@
           "question_text": "Что такое Project Reactor и чем он отличается от RxJava?",
           "options": [
             {
-              "text": "`Reactor` и `RxJava 3` идентичны: `Mono ≡ Single`, `Flux ≡ Observable`, отличия только в неймспейсах.",
+              "text": "`Reactor` и `RxJava 3` функционально идентичны: `Mono ≡ Single`, `Flux ≡ Observable`, обе не допускают `null` и обе несут backpressure во всех типах — различие сводится к пакетам и неймингу.",
               "correct": false,
               "sections": {
                 "what_actually": "`RxJava` различает `Single`/`Maybe`/`Observable`/`Flowable` (4 типа), `Reactor` — только `Mono`/`Flux`; `Observable` без backpressure, `Flux` всегда с ним.",
@@ -141,7 +141,7 @@
               "order": 0
             },
             {
-              "text": "`Project Reactor` — это просто Spring-обёртка над `RxJava 3`.",
+              "text": "`Project Reactor` — это Spring-обёртка над `RxJava 3`: `Mono` и `Flux` делегируют вызовы `Single` и `Flowable`, а свой API добавлен ради интеграции с `WebFlux`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Reactor` — независимая библиотека от `Pivotal/VMware`, написанная с нуля поверх `reactive-streams` API, без зависимости от `RxJava`.",
@@ -166,7 +166,7 @@
               "order": 2
             },
             {
-              "text": "`RxJava` поддерживает настоящую реактивность, а `Reactor` — только функциональные стримы.",
+              "text": "Настоящую реактивность со спецификацией `Reactive Streams` поддерживает только `RxJava`; `Reactor` реализует лишь функциональные стримы поверх `Stream API`, поэтому в `Spring` его дополняют адаптерами.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба полностью реализуют Reactive Streams TCK; `Reactor.Flux` совместим с `RxJava.Flowable` через `Flux.from(publisher)`.",
@@ -189,19 +189,19 @@
           "question_text": "Что такое backpressure и почему это важно?",
           "options": [
             {
-              "text": "Backpressure — это retry-механизм, который срабатывает после `OutOfMemoryError`, чтобы восстановить поток.",
+              "text": "Backpressure — это автоматическая буферизация: излишек элементов копится в неограниченном внутреннем буфере, и consumer разбирает его в своём темпе без участия producer-а.",
               "correct": false,
               "sections": {
-                "what_actually": "Backpressure — превентивный контроль скорости, а не реакция post-mortem; OOM наступает уже после того, как давление не было применено.",
-                "source_of_confusion": "И backpressure, и retry связывают с устойчивостью к сбоям, поэтому их смешивают.",
-                "if_it_were_true": "Если бы это было так, OOM «лечился» бы повтором, но команда лишь перезапускает под каждый час, а p99 деградирует до 10s.",
-                "how_it_should_be": "Backpressure заранее ограничивает темп через `request(n)`, чтобы OOM вовсе не возник, а не чинит его задним числом."
+                "what_actually": "Backpressure — противоположность бесконтрольному буферу: подписчик через `Subscription.request(n)` сам ограничивает, сколько producer вправе отправить; неограниченное накопление — то, от чего механизм защищает.",
+                "source_of_confusion": "Стратегия `BUFFER` у `Flux.create`/`onBackpressureBuffer` действительно копит элементы, и частный обработчик переполнения принимают за суть всего механизма.",
+                "if_it_were_true": "«Неограниченный буфер» — это и есть сценарий аварии: при быстром producer-е и медленном consumer-е память растёт до `OutOfMemoryError`, ровно от этого backpressure и придуман.",
+                "how_it_should_be": "Помнить направление: спрос идёт от подписчика (`request(n)`), а буферы — лишь настраиваемые стратегии (`BUFFER`/`DROP`/`LATEST`) на случай, когда предложение обгоняет спрос."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "Backpressure — это автоматическое сжатие данных в потоке (gzip/Snappy) для снижения нагрузки.",
+              "text": "Backpressure — это прозрачное сжатие потока данных (gzip/Snappy) между producer-ом и consumer-ом: меньше байтов в буферах — ниже нагрузка на память и сеть.",
               "correct": false,
               "sections": {
                 "what_actually": "Сжатие — отдельная техника уменьшения размера сообщений; backpressure управляет скоростью потребления, а не объёмом байтов.",
@@ -213,7 +213,7 @@
               "order": 1
             },
             {
-              "text": "Backpressure — это паттерн Circuit Breaker, отключающий upstream при ошибках.",
+              "text": "Backpressure — это реактивный Circuit Breaker: при росте ошибок downstream разрывает соединение с upstream и периодически проверяет, можно ли возобновить поток.",
               "correct": false,
               "sections": {
                 "what_actually": "Circuit Breaker (`Resilience4j`) реагирует на failure-rate и размыкает цепь, а backpressure управляет скоростью потребления данных.",
@@ -262,7 +262,7 @@
               "order": 0
             },
             {
-              "text": "`Mono` — синхронный тип, а `Flux` — асинхронный.",
+              "text": "`Mono` описывает синхронно доступное значение, а `Flux` — асинхронную доставку: планировщики и неблокирующий режим относятся к многоэлементным потокам.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба асинхронные; разница только в количестве элементов: `Mono` не более одного, `Flux` — 0..N.",
@@ -274,7 +274,7 @@
               "order": 1
             },
             {
-              "text": "`Mono` всегда содержит ровно один элемент, иначе бросает исключение.",
+              "text": "`Mono` рассчитан ровно на один элемент: пустое завершение нарушает его контракт, и «может не быть результата» принято моделировать через `Flux` с `take(1)`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Mono.empty()` полностью валиден: `Mono` может завершиться `onComplete` без `onNext`, как пустой `Optional`.",
@@ -286,7 +286,7 @@
               "order": 2
             },
             {
-              "text": "`Flux` обязательно бесконечен, а `Mono` всегда конечен.",
+              "text": "`Flux` предназначен для бесконечных потоков — конечный набор принято сворачивать в `Mono` с коллекцией (`collectList`), поэтому явный `onComplete` типичен именно для `Mono`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Flux` чаще конечен (`Flux.just(1,2,3)`), бесконечность — частный случай вроде `Flux.interval`.",
@@ -309,13 +309,13 @@
           "question_text": "Какие способы создания Mono существуют?",
           "options": [
             {
-              "text": "Единственный способ создать `Mono` — это `Mono.just(value)`.",
+              "text": "`Mono` создаётся через `just`, `empty`, `error`, `fromCallable` и `create`, но все перечисленные фабрики — eager: значение вычисляется в момент сборки, ленивых среди них нет.",
               "correct": false,
               "sections": {
-                "what_actually": "`Mono.just` — лишь один из многих фабричных методов: есть `empty`, `error`, `defer`, `fromCallable`, `fromFuture`, `justOrEmpty`, `create`.",
-                "source_of_confusion": "`Mono.just` встречается чаще всего в примерах, поэтому кажется единственным.",
-                "if_it_were_true": "Если бы это было так, нельзя было бы создать пустой `Mono` или ленивый `Mono`, но `Mono.empty()` и `Mono.defer()` существуют.",
-                "how_it_should_be": "`Mono` создаётся десятком способов под разные сценарии: готовое значение, пустота, ошибка, ленивое вычисление, адаптация Future/Optional."
+                "what_actually": "Eager — только `just` (и `justOrEmpty`): аргумент вычисляется в точке вызова. `defer`, `fromCallable`, `fromSupplier`, `fromFuture` и `create` откладывают работу до подписки — это ленивые фабрики.",
+                "source_of_confusion": "Поведение `Mono.just(compute())` — вычисление при сборке — обобщают на все фабрики, не замечая, что лямбда (`Callable`, `Supplier`) в аргументе исполняется позже.",
+                "if_it_were_true": "`Mono.fromCallable(() -> blockingCall())` блокировал бы поток уже при сборке цепочки — оборачивать блокирующие вызовы было бы бессмысленно.",
+                "how_it_should_be": "Разделять группы: eager `just`/`justOrEmpty`; lazy `defer`/`fromCallable`/`fromSupplier`/`fromFuture`; ручная эмиссия `create` с `MonoSink` — тоже на подписку."
               },
               "label": "A",
               "order": 0
@@ -334,7 +334,7 @@
               "order": 1
             },
             {
-              "text": "`Mono.just(null)` — штатный способ создать пустой `Mono`.",
+              "text": "`Mono.just(null)` — штатный способ получить пустой `Mono`: `null` интерпретируется как отсутствие значения и превращается в чистый `onComplete` без элемента.",
               "correct": false,
               "sections": {
                 "what_actually": "`Reactor` запрещает `null` в потоке: `Mono.just(null)` сразу бросает `NullPointerException`; пустоту даёт `Mono.empty()`.",
@@ -346,7 +346,7 @@
               "order": 2
             },
             {
-              "text": "`Mono.create()` работает синхронно и блокирует поток до получения значения.",
+              "text": "`Mono.create()` работает синхронно: вызов блокирует текущий поток, пока `MonoSink` не получит `success`/`error`, поэтому для неблокирующего кода его избегают.",
               "correct": false,
               "sections": {
                 "what_actually": "`Mono.create(sink)` неблокирующий: значение приходит когда вызовут `sink.success()`, в том числе из колбэка другого потока.",
@@ -369,7 +369,7 @@
           "question_text": "Какие способы создания Flux существуют?",
           "options": [
             {
-              "text": "`Flux` создаётся только из заранее готовой коллекции через `Flux.fromIterable`.",
+              "text": "`Flux` создаётся из готовой коллекции через `Flux.fromIterable` — это базовый путь; бесконечные и программные источники подключаются сторонними адаптерами, а не фабриками самого `Flux`.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть множество фабрик: `just`, `fromIterable`, `fromArray`, `range`, `empty`, `error`, `interval`, `generate`, `create`.",
@@ -381,7 +381,7 @@
               "order": 0
             },
             {
-              "text": "`Flux.interval(Duration)` создаёт конечный поток из одного элемента.",
+              "text": "`Flux.interval(Duration)` эмитирует один элемент по истечении задержки — таймер срабатывает единожды, а периодические тики строятся поверх него через `repeat()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Flux.interval` — бесконечный поток, эмитящий 0, 1, 2... с заданной задержкой, пока подписку не отменят.",
@@ -406,13 +406,13 @@
               "order": 2
             },
             {
-              "text": "`Flux.generate` и `Flux.create` — это синонимы, отличаются только названием.",
+              "text": "`Flux` создаётся через `just(vararg)`, `fromIterable`, `fromArray`, `range(start,end)` (границы включительно), `empty`, `error`, `interval` (однократный таймер) и `generate` (асинхронный многопоточный генератор).",
               "correct": false,
               "sections": {
-                "what_actually": "`generate` синхронный и однопоточный (ровно один `sink.next()` за итерацию), `create` многопоточный и допускает любое число эмиссий с `OverflowStrategy`.",
-                "source_of_confusion": "Оба позволяют программно создавать `Flux`, поэтому их считают взаимозаменяемыми.",
-                "if_it_were_true": "Если бы это было так, `generate` тоже принимал бы `OverflowStrategy`, но backpressure в нём встроен через pull-модель.",
-                "how_it_should_be": "`generate` — для синхронных генераторов с состоянием, `create` — для async/callback API из нескольких потоков."
+                "what_actually": "Подписи другие: `range(start, count)` принимает начало и количество, а не границы; `interval` — бесконечная последовательность тиков; `generate` — строго синхронный однопоточный генератор (`SynchronousSink`), а асинхронная многопоточная фабрика — `create`.",
+                "source_of_confusion": "Сигнатуры смешиваются с аналогами из других API (`IntStream.rangeClosed(start, end)`, одноразовый `Timer`), а `create`/`generate` меняются ролями, потому что имена не подсказывают семантику.",
+                "if_it_were_true": "`Flux.range(1, 10)` выдавал бы 1..10 «включительно» вместо десяти элементов начиная с 1, `interval` завершался бы после первого тика, а из `generate` можно было бы эмитить из пула потоков — все три контракта иные.",
+                "how_it_should_be": "Запомнить триаду: `range(start, count)`; `interval` бесконечен (ограничивают `take`); `generate` — синхронный с состоянием, `create` — асинхронный многопоточный."
               },
               "label": "D",
               "order": 3
@@ -429,7 +429,7 @@
           "question_text": "В чём разница между Mono.just() и Mono.defer()?",
           "options": [
             {
-              "text": "`Mono.just(supplier.get())` и `Mono.defer(supplier)` полностью идентичны.",
+              "text": "`Mono.just(supplier.get())` и `Mono.defer(supplier)` эквивалентны: обе формы вычисляют значение при сборке цепочки, `defer` лишь добавляет читаемости при длинных лямбдах.",
               "correct": false,
               "sections": {
                 "what_actually": "`just` вычисляет значение в момент вызова метода (eager), а `defer` — на каждой подписке (lazy), что критично для `LocalDateTime.now()` и счётчиков.",
@@ -441,7 +441,7 @@
               "order": 0
             },
             {
-              "text": "`Mono.defer` блокирует поток до получения значения, а `Mono.just` — нет.",
+              "text": "`Mono.defer` блокирует вызывающий поток до готовности значения — этим он отличается от `Mono.just`, который отдаёт значение асинхронно при подписке.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба не блокируют; разница лишь в моменте вычисления supplier'а, а не в блокировке потока.",
@@ -453,7 +453,7 @@
               "order": 1
             },
             {
-              "text": "`Mono.defer` создаёт hot-поток, а `Mono.just` — cold.",
+              "text": "`Mono.defer` создаёт hot-источник, начинающий эмиссию сразу, а `Mono.just` — cold, ждущий подписки; поэтому `defer` используют для широковещательных сценариев.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба cold: каждая подписка независима; hot-поведение дают `share()`/`publish()`/`Sinks`, а не `defer`.",
@@ -502,7 +502,7 @@
               "order": 0
             },
             {
-              "text": "`Flux.push` поддерживает многопоточную эмиссию, а `Flux.create` — только однопоточную.",
+              "text": "`Flux.push(consumer)` рассчитан на многопоточную эмиссию: его `FluxSink` синхронизирован и сериализует конкурентные `next()`. `Flux.create(consumer)` — то же, но для одного потока-эмиттера, поэтому для шин событий и многопоточных источников берут именно `push`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `create` безопасен для эмиссии из нескольких потоков, а `push` рассчитан строго на один поток-эмиттер.",
@@ -514,19 +514,19 @@
               "order": 1
             },
             {
-              "text": "`Flux.create` всегда отбрасывает лишние элементы при переполнении буфера.",
+              "text": "`Flux.push`, в отличие от `Flux.create`, не принимает `OverflowStrategy`: при медленном подписчике он всегда молча отбрасывает новые элементы.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию `create` использует `OverflowStrategy.BUFFER` (буферизует), а отбрасывание — это явная стратегия `DROP`/`LATEST`.",
-                "source_of_confusion": "Раз буфер может переполниться, кажется, что лишнее автоматически выкидывается.",
-                "if_it_were_true": "Если бы это было так, аргумент `OverflowStrategy` был бы не нужен, но он позволяет выбрать `BUFFER`/`DROP`/`LATEST`/`ERROR`.",
-                "how_it_should_be": "Поведение при переполнении задаёт `OverflowStrategy`; дефолт `BUFFER` копит элементы, а не отбрасывает их."
+                "what_actually": "У `Flux.push` есть перегрузка с `OverflowStrategy`, а стратегия по умолчанию у обоих — `BUFFER` (копить), не `DROP`: молчаливое отбрасывание нужно включать явно.",
+                "source_of_confusion": "«Облегчённый однопоточный вариант» додумывают до «урезанного по функциональности», перенося ограничение с потокобезопасности на настройку переполнения.",
+                "if_it_were_true": "Обёртка над callback-API через `push` тихо теряла бы события при каждом всплеске нагрузки — пришлось бы всегда брать `create`, даже для однопоточных источников.",
+                "how_it_should_be": "Выбирать `push` против `create` по числу потоков-эмиттеров, а стратегию переполнения задавать параметром фабрики в обоих случаях (дефолт — `BUFFER`)."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Flux.create` блокирует поток-эмиттер до тех пор, пока подписчик не запросит элементы.",
+              "text": "`Flux.create` блокирует поток-эмиттер, пока подписчик не вызовет `request(n)`: обратное давление реализовано ожиданием на `sink.next()`, как в blocking queue.",
               "correct": false,
               "sections": {
                 "what_actually": "`create` неблокирующий: эмиттер зовёт `sink.next()` свободно, а давление регулирует выбранная `OverflowStrategy`, а не блокировка.",
@@ -549,7 +549,7 @@
           "question_text": "Что такое Flux.generate() и чем он отличается от Flux.create()?",
           "options": [
             {
-              "text": "`Flux.generate` многопоточный и допускает несколько вызовов `sink.next()` за одну итерацию.",
+              "text": "`Flux.generate` — многопоточная фабрика: генератор можно дёргать из нескольких потоков, и за одну итерацию допустимо несколько `sink.next()`, пока хватает `request`-а.",
               "correct": false,
               "sections": {
                 "what_actually": "`generate` строго синхронный и однопоточный: за итерацию допустим ровно один `sink.next()` (или `complete`/`error`).",
@@ -574,19 +574,19 @@
               "order": 1
             },
             {
-              "text": "`Flux.generate` и `Flux.create` идентичны и взаимозаменяемы.",
+              "text": "`Flux.generate` — реактивный аналог `Stream.generate`: бесконечный источник без состояния, где генератор — чистый `Supplier`, а состояние и остановку добавляют операторами `scan` и `takeWhile`.",
               "correct": false,
               "sections": {
-                "what_actually": "Они различаются: `generate` синхронный/однопоточный с pull-backpressure, `create` многопоточный с `OverflowStrategy`.",
-                "source_of_confusion": "Обе фабрики дают `Flux` через sink, поэтому кажутся одинаковыми.",
-                "if_it_were_true": "Если бы это было так, не существовало бы двух разных методов, но они решают разные задачи генерации.",
-                "how_it_should_be": "`generate` — для синхронных генераторов, `create` — для асинхронных callback-источников; это не синонимы."
+                "what_actually": "`Flux.generate` — не `Supplier`-фабрика: генератор получает `SynchronousSink` (а в основной форме — ещё и состояние от `stateSupplier`), сам эмитит `next`/`complete`/`error`; состояние и остановка встроены.",
+                "source_of_confusion": "Одинаковое имя со `Stream.generate(Supplier)` подталкивает перенести его контракт «бесконечно и без состояния» на Reactor.",
+                "if_it_were_true": "Конечные последовательности через `generate` были бы невозможны без внешних операторов, а генератор с состоянием (Фибоначчи) требовал бы мутабельных замыканий вместо `stateSupplier`.",
+                "how_it_should_be": "Использовать перегрузку `generate(stateSupplier, (state, sink) -> …)`: состояние передаётся явно, завершение — `sink.complete()`, ровно один `next` за итерацию."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Flux.generate` не поддерживает backpressure, в отличие от `create`.",
+              "text": "`Flux.generate` не поддерживает backpressure — элементы производятся независимо от `request(n)`, поэтому медленным подписчикам рекомендуют `create` со стратегией `BUFFER`.",
               "correct": false,
               "sections": {
                 "what_actually": "У `generate` backpressure встроен через pull-модель: генератор вызывается только когда downstream запросил очередной элемент.",
