@@ -57,8 +57,10 @@ role=status+aria-live+aria-busy+visually-hidden текст, пульс off по�
 
 `§` result: покрыты correct/incorrect (mock-switch) + post-answer-analysis (takeaway/trace/
 related) + favorite **+ confidence** (R0.15: 🎲/🤔/💪 radiogroup + roving tabindex + стрелки/
-Home/End, эмодзи aria-hidden + текст; прод намеренно держит эмодзи → порт-решение); НЕ покрыты
-regenerate, no-js-fallback (CRITIQUE C13 **IN_PROGRESS**). confidence QA: detector exit 0
+Home/End, эмодзи aria-hidden + текст; прод намеренно держит эмодзи → порт-решение). regenerate =
+**мёртвый прод-UI** (R0.17: `aiEnabled` захардкожен false → кнопка не рендерится; НЕ портировать;
+dead-code кандидат Фазы G); no-js = живой `/answer`, parity-концерн → CRITIQUE C13 **DONE**.
+confidence QA: detector exit 0
 (после фикса flat-type-hierarchy — убран 1.15em глиф), AA ≥4.5 (conf-q 7.18/8.57, checked
 6.54/6.87). AA все текст-пары ≥4.5 обе темы (worst 5.52/5.24); opt-mark галочка = граф.
 объект (C11). Наблюдение на порт: verdict `<p>` не live-region — `aria-live` (§8

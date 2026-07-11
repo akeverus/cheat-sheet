@@ -1059,3 +1059,20 @@ Dirty changes created by loop: 0
   empty/cold-start намеренно не делаем (прод-решение, memory project_design_elevation_round1).
 - **Следующий тик:** worst-first — C13-остаток (regenerate-кнопка в result) ЛИБО Фаза E (порт)
   по разблокировке `base.css`; после — независимые дименсии (zoom200/DPR1 методология).
+
+### 2026-07-12 — R0.17: закрыт C13 — regenerate оказался мёртвым прод-UI (аудит-тик)
+
+- **Loop → пересоздан** (cron 94ac32f3, `*/10 * * * *`; старый e2e2b139 удалён — сброс 7-дневного
+  истечения по повторному /loop).
+- **Read-only аудит прод:** `btn-regenerate` гейтится `th:if="${aiEnabled}"`, а `aiEnabled`
+  захардкожен `false` в обоих местах модели (`MvcModelAttributeMapper.java:152`,
+  `InterviewPageMvcService.java:166`) — следствие полного AI-вырезания 2026-07-07. Кнопка в
+  проде НИКОГДА не рендерится → «недостающее состояние regenerate» было фантомом registry-списка;
+  макет правильно его не содержит.
+- **Решения:** при порте btn-regenerate/regen-badge НЕ портировать; для Фазы G зафиксирован
+  dead-code кандидат (btn-regenerate + regen-badge + app.js regenerateQuestion + API.REGENERATE;
+  прод сейчас BLOCKED — только заметка). Остаток no-js = живой /answer (parity-концерн) →
+  **C13 DONE**. Изменений в макетах нет, QA-прогоны не требуются.
+- **Итог бэклога:** C1–C17 ВСЕ закрыты (DONE/РЕШЕНО). Mockup-фаза исчерпана по бэклогу.
+- **Следующий тик:** Фаза E (порт error/session-summary) по разблокировке `base.css` ЛИБО
+  независимые дименсии-методологии (zoom200/DPR1/print на макетах).
