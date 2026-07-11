@@ -19,8 +19,18 @@ import json, glob, os, statistics, argparse
 
 ROOT = "modules/quiz-app/src/main/resources/seed/mcq"
 GOLD_CV = 0.195            # rxjava — нижняя планка "естественности"
-STAMP_MAX = 0.14           # файл ниже этого считается отштампованным (в очередь)
 FLAT_MIN_FRAC = 0.30       # дистрактор тоньше этой доли correct + без кода = flat
+
+# --- TRUE "padded-clone" (hibernate) signature, а НЕ голый низкий CV. ---
+# Урок 2026-07-11: низкий length-CV сам по себе НЕ дефект. terse-parallel файлы
+# (короткие параллельные варианты-кандидаты, вся дидактика в sections — напр.
+# jms-activemq, kotlin-testing, archunit) и естественно-варьирующие (vertx,
+# loki-grafana) имеют низкий CV, но это ХОРОШИЙ дизайн. Настоящий дефект
+# ROUND-6 — дистракторы, РАЗДУТЫЕ до клона ДЛИННОГО example-rich correct:
+#   corLen велик  И  disMean/corLen ~1  И  все 4 опции одной длины (низкий CV).
+STAMP_COR_MIN = 260        # correct длинный/богатый
+STAMP_RATIO   = 0.82       # дистракторы раздуты почти до его длины
+STAMP_CV_MAX  = 0.13       # и все 4 одной длины
 
 def block_cv(opts):
     L = [len(o["text"]) for o in opts]
@@ -42,18 +52,27 @@ def block_flat(opts):
 
 def file_stats(path):
     d = json.load(open(path))
-    cvs, flats, nblk = [], 0, 0
+    cvs, flats, nblk, corl, disl = [], 0, 0, [], []
     for q in d.get("questions", []):
         for b in q.get("blocks", []):
             opts = b.get("options", [])
             if len(opts) < 3:
                 continue
+            cor = [o for o in opts if o.get("correct")]
+            if not cor:
+                continue
             cvs.append(block_cv(opts))
             flats += block_flat(opts)
+            corl.append(len(cor[0]["text"]))
+            disl += [len(o["text"]) for o in opts if not o.get("correct")]
             nblk += 1
     if not cvs:
         return None
-    return round(statistics.mean(cvs), 3), nblk, flats
+    cv = statistics.mean(cvs)
+    corm = statistics.mean(corl)
+    ratio = statistics.mean(disl) / corm if corm else 0
+    stamped = corm > STAMP_COR_MIN and ratio > STAMP_RATIO and cv < STAMP_CV_MAX
+    return round(cv, 3), nblk, flats, round(corm), round(ratio, 2), stamped
 
 def cmd_rank(args):
     rows = []
@@ -61,23 +80,23 @@ def cmd_rank(args):
         st = file_stats(f)
         if st:
             stem = os.path.basename(f)[:-len("-interview.json")]
-            rows.append((st[0], st[1], st[2], stem))
-    rows.sort()
-    print(f"GOLD rxjava length-CV={GOLD_CV} | STAMP_MAX={STAMP_MAX} (ниже = в очередь на gold-style redo)")
-    print(f"{'CV':>6} {'blk':>4} {'flat':>4}  stem")
-    top = args.top or len(rows)
-    stamped = 0
-    for cv, n, fl, s in rows[:top]:
-        mark = "  <<STAMPED" if cv < STAMP_MAX else ""
-        if cv < STAMP_MAX:
-            stamped += 1
-        print(f"{cv:>6} {n:>4} {fl:>4}  {s}{mark}")
-    tot_stamped = sum(1 for r in rows if r[0] < STAMP_MAX)
-    print(f"\nвсего файлов: {len(rows)}; отштамповано (CV<{STAMP_MAX}): {tot_stamped}")
+            rows.append((*st, stem))
+    # очередь: только настоящие padded-clone, worst = самый длинный correct первым
+    q = [r for r in rows if r[5]]
+    q.sort(key=lambda r: -r[3])
+    print("PADDED-CLONE queue (corLen>{} & disMean/corLen>{} & CV<{}) — worst=longest correct first"
+          .format(STAMP_COR_MIN, STAMP_RATIO, STAMP_CV_MAX))
+    print(f"{'CV':>6} {'blk':>4} {'corLen':>7} {'ratio':>6}  stem")
+    for cv, n, fl, cm, ratio, _, s in q:
+        print(f"{cv:>6} {n:>4} {cm:>7} {ratio:>6}  {s}  <<REDO")
+    print(f"\nвсего файлов: {len(rows)}; genuine padded-clone: {len(q)} "
+          f"(низкий CV сам по себе НЕ дефект — terse-parallel/varied файлы пропущены)")
 
 def cmd_file(args):
     d = json.load(open(args.file))
-    print(f"{os.path.relpath(args.file)}  (GOLD-CV={GOLD_CV}, STAMP_MAX={STAMP_MAX})")
+    st = file_stats(args.file)
+    verdict = "PADDED-CLONE — redo" if st and st[5] else "OK (not padded-clone)"
+    print(f"{os.path.relpath(args.file)}  (GOLD-CV={GOLD_CV})  verdict: {verdict}")
     rows = []
     for q in d["questions"]:
         for b in q["blocks"]:
@@ -87,10 +106,9 @@ def cmd_file(args):
             rows.append((round(block_cv(opts), 3), block_flat(opts), q["q_number"],
                          [len(o["text"]) for o in opts]))
     for cv, fl, qn, L in sorted(rows):
-        mark = "  STAMPED" if cv < STAMP_MAX else ""
         flatm = f" FLAT×{fl}" if fl else ""
-        print(f"  Q{qn:>3}  CV={cv:>5}  lens={L}{mark}{flatm}")
-    print(f"file mean CV = {round(statistics.mean(r[0] for r in rows),3)}")
+        print(f"  Q{qn:>3}  CV={cv:>5}  lens={L}{flatm}")
+    print(f"file: mean CV={st[0]}  corLen={st[3]}  disMean/corLen={st[4]}")
 
 def main():
     ap = argparse.ArgumentParser()
