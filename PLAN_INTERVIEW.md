@@ -293,7 +293,7 @@ Priority =
 | # | Сидер | Кат. | Blk | OldTell | State | SCH | TH | QS | STEM | C-FCT | C-CMP | C-SCP | C-UNI | C-FRM | C-SEC | C-RU | W-PLS | W-1ER | W-API | W-FLS | W-DIV | W-CAR | W-FRM | W-SEC | W-RU | PAR | BST | BSM | STAMP | FR | LINK | POS | VAL | FINAL | Notes |
 |--:|---|---|--:|--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
 | 1 | `java-concurrency` | java | 56 | 52 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅* | ✅ | ✅ DONE (R8): 56/56 audited + POS de-cycle (seq 56→2). 5 dup-misconception (Q21,Q22,Q42,Q50,Q54), 2 BSM (Q27-A,Q52-A), 2 caricature (Q47-B,Q49-D), contra-pair Q33, факт-фикс correct Q42-B; correct-longest+position tells сняты; CV 0.186; BSM чист ×56. VAL✅*: OPTION_LENGTH_RATIO=3.0 accepted-exception (конфликт с anti-stamp CV≥0.14; смысловые guessability-гейты все PASS) |
-| 2 | `design-patterns` | design-patterns | 48 | 48 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ Q1-Q8/48 (R8 chunk1): Golden AP#1 (correct-конспект+дистр-заглушки) — подняты дистракторы, correct-longest 8/8→2/8 (Q1/Q4 конспект оставлены), de-caricature Q4-B, reviewer поймал BSM Q6-C (поднятый стал истинным → переписан на drop-inner-check). Факты GoF verified. STYLE 0.84→0.74, CORRECT_LONGEST 0.83→0.73 (файловые, падают по чанкам). Дальше Q9-Q48+POS |
+| 2 | `design-patterns` | design-patterns | 48 | 48 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ Q1-Q18/48 (R8 chunk1-2): Golden AP#1 (correct-конспект+дистр-заглушки) — подняты дистракторы, correct-longest в чанках 18/18→4/18 (Q1/Q4/Q14/Q18 конспект/enum/пример оставлены). De-caricature Q4-B. Reviewer поймал 2 BSM: Q6-C (стал истинным→drop-inner-check), Q9-B (memory-leak защитим→гарант.OOM). Факты GoF verified (5/7/11, DCL/volatile, enum, Simple-Factory-не-GoF, clone=shallow, Structural=7). STYLE 0.84→0.62, CORRECT_LONGEST 0.83→0.60 (файловые, падают по чанкам). Дальше Q19-Q48+POS |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 4 | `sql` | databases | 53 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 5 | `project-reactor` | reactive | 48 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -744,6 +744,14 @@ Priority =
 - Sidecars: review `docs/mcq-quality/reviews/design-patterns-interview.json` (IN_PROGRESS, Q1-Q8), freshness `docs/mcq-quality/fact-freshness/design-patterns-interview.json` (GoF version-insensitive + Java JLS-стабильные claims) → SOURCE_COVERAGE ok
 - Validators: verify-mcq-json OK; файловые STYLE 0.84→0.74, CORRECT_LONGEST 0.83→0.73 (падают по мере чанков, финальный замер после всех блоков); DUPLICATE_NGRAMS 0 сохранён
 - Дальше: Q9-Q18, Q19-Q28, … затем POS de-cycle (POSITION_SEQUENCE=48) в отдельном финальном тике
+
+### ROUND-8 · design-patterns · chunk2 Q9-Q18 (2026-07-12)
+- Тот же Golden anti-pattern #1. Все 10 correct факт-верны (Singleton-тестируемость, Factory Method OCP, Abstract Factory=семейство, Builder=telescoping, clone=shallow, Structural=7, Adapter/Bridge/Decorator)
+- Правка: подняты дистракторы (pattern-confusion: Strategy/Prototype/Composite/Facade/Bridge), text-only, sections сохранены. correct-longest в чанке **10/10 → 2/10** (Q14 — полное перечисление 7 структурных, Q18 — java.io канонический пример — оставлены длиннейшими, но получили параллельную enumeration/структуру)
+- **Blind-reviewer поймал Q9-B**: удлинённый дистрактор «memory leak неизбежно» стал ЗАЩИТИМО-ИСТИННЫМ под стемом «недостатки Singleton?» (несколько верных недостатков; falsifier держался лишь на слове «неизбежно»). Переписан на механически-ложное «гарантированный `OutOfMemoryError`, экземпляр раздувается и исчерпывает heap» (2 re-verify PASS, distinct от final/LSP). Sections уже подходили
+- Факты verified: Simple Factory НЕ в каталоге GoF (идиома, не паттерн); clone() = shallow, нужен `Cloneable` (не «Prototype base class»); Structural ровно 7; Adapter/Facade/Bridge не перепутаны; Builder решает telescoping-constructor
+- Sidecars обновлены (review Q1-Q18, freshness +clone/Structural-7 claims). Validators: verify-mcq-json OK; файловые STYLE 0.74→0.62, CORRECT_LONGEST 0.73→0.60 (18/48); CV 0.226; DUPLICATE_NGRAMS 0
+- Дальше: Q19-Q28, … затем POS de-cycle
 
 ---
 
