@@ -29,12 +29,29 @@
     code, kbd, pre { font-family: var(--font-mono); }
     [hidden] { display: none !important; }
 
-    /* Единая сетка: шапка и контент делят один центрированный контейнер-шелл.
-       Шелл мягко растёт на крупных дисплеях (Retina/Studio 1512–2560), чтобы не
-       «теряться» в пустоте; читаемая колонка держит меру ~46rem и центрируется
-       внутри шелла — симметричная композиция на всех ширинах. */
-    .wrap { width: min(100% - 2 * var(--gutter), clamp(60rem, 52rem + 8vw, 72rem)); margin-inline: auto; }
-    .col  { max-width: 46rem; margin-inline: auto; }
+    /* Полноширинный «инструмент»: хром и контент занимают ВСЮ ширину вьюпорта,
+       без центрированных колонок с боковыми пустотами. Ширину крупных дисплеев
+       наполняет правый рельс (сессия/хоткеи); проза держит читаемую меру по ch
+       ВНУТРИ основной зоны. */
+    .wrap { width: 100%; padding-inline: var(--gutter); }
+
+    /* App-shell: основная зона + правый рельс. Узкий экран — одна колонка,
+       рельс (прогресс/стрик) встаёт сверху; широкий — рельс уходит вправо. */
+    .focus-grid { display: grid; gap: var(--s-6); grid-template-columns: 1fr; }
+    .focus-main { min-width: 0; }
+    .focus-aside { min-width: 0; }
+    @media (min-width: 1080px) {
+      .focus-grid { grid-template-columns: minmax(0, 1fr) clamp(20rem, 23vw, 30rem); gap: var(--s-8); align-items: start; }
+      .focus-main { order: 1; }
+      .focus-aside { order: 2; position: sticky; top: var(--s-5); }
+      .focus-aside .rail {
+        flex-direction: column; align-items: stretch; gap: var(--s-4);
+        margin-bottom: 0;
+        background: var(--surface); border: 1px solid var(--line);
+        border-radius: var(--r-lg); padding: var(--s-5);
+      }
+      .focus-aside .rail-finish { align-self: flex-start; }
+    }
 
     .skip-link {
       position: absolute; left: var(--s-4); top: -4rem;
@@ -346,6 +363,24 @@
       border-radius: 4px; padding: 0.05em 0.4em;
     }
 
+    /* Хоткеи — карта в правом рельсе (только десктоп с клавиатурой) */
+    .aside-hints { display: none; }
+    @media (min-width: 1080px) and (hover: hover) and (pointer: fine) {
+      .aside-hints {
+        display: block; margin-top: var(--s-4);
+        border: 1px solid var(--line); border-radius: var(--r-lg);
+        background: var(--surface); padding: var(--s-5);
+      }
+      .aside-hints h2 {
+        font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: var(--fw-medium);
+        letter-spacing: var(--track-mono); color: var(--ink-3); margin: 0 0 var(--s-3);
+      }
+      .aside-hints dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: var(--s-3) var(--s-4); align-items: center; }
+      .aside-hints dt, .aside-hints dd { margin: 0; }
+      .aside-hints dt { white-space: nowrap; }
+      .aside-hints dd { font-size: var(--fs-sm); color: var(--ink-2); }
+    }
+
     /* --- Пустое / завершено (центрированные состояния) ------------------- */
     .centered { text-align: center; padding: var(--s-8) 0; max-width: 42ch; margin: 0 auto; }
     .state-mark {
@@ -409,7 +444,7 @@
         padding-bottom: calc(var(--s-3) + env(safe-area-inset-bottom));
       }
       .state--active .submit-row .btn-primary { width: 100%; }
-      .state--active .col { padding-bottom: var(--s-9); }
+      .state--active .focus-main { padding-bottom: var(--s-9); }
     }
   </style>
 </head>
@@ -455,27 +490,38 @@
     <!-- ================= СОСТОЯНИЕ: активный вопрос ===================== -->
     <section class="state state--active" data-state="active">
       <div class="wrap">
-        <div class="col">
-          <div class="rail anim">
-            <div class="rail-progress">
-              <div class="rail-count">Вопрос <b>7</b> из 20</div>
-              <div class="progress-track" role="progressbar" aria-label="Прогресс сессии"
-                   aria-valuemin="0" aria-valuemax="20" aria-valuenow="7">
-                <div class="progress-fill" style="transform: scaleX(0.35)"></div>
+        <div class="focus-grid">
+          <aside class="focus-aside">
+            <div class="rail anim">
+              <div class="rail-progress">
+                <div class="rail-count">Вопрос <b>7</b> из 20</div>
+                <div class="progress-track" role="progressbar" aria-label="Прогресс сессии"
+                     aria-valuemin="0" aria-valuemax="20" aria-valuenow="7">
+                  <div class="progress-fill" style="transform: scaleX(0.35)"></div>
+                </div>
               </div>
+              <span class="streak-chip"><span class="spark" aria-hidden="true"></span>стрик 5 дней</span>
+              <button type="button" class="rail-finish">Завершить сессию</button>
             </div>
-            <span class="streak-chip"><span class="spark" aria-hidden="true"></span>стрик 5 дней</span>
-            <button type="button" class="rail-finish">Завершить сессию</button>
-          </div>
+            <div class="aside-hints">
+              <h2>Горячие клавиши</h2>
+              <dl>
+                <dt><kbd>1</kbd>–<kbd>9</kbd></dt><dd>выбрать вариант</dd>
+                <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>навигация по списку</dd>
+                <dt><kbd>Enter</kbd></dt><dd>проверить ответ</dd>
+              </dl>
+            </div>
+          </aside>
 
-          <p class="focus-topic anim">spring<span class="dot">·</span>транзакции</p>
-          <h1 class="focus-question anim">
-            В какой транзакции выполнится внутренний вызов <span class="nowrap"><code>writeAudit()</code></span> — по коду ниже?
-          </h1>
+          <div class="focus-main">
+            <p class="focus-topic anim">spring<span class="dot">·</span>транзакции</p>
+            <h1 class="focus-question anim">
+              В какой транзакции выполнится внутренний вызов <span class="nowrap"><code>writeAudit()</code></span> — по коду ниже?
+            </h1>
 
-          <details class="question-code-details anim" open>
-            <summary class="code-summary">Код к вопросу</summary>
-            <pre class="code-body"><code>@Service
+            <details class="question-code-details anim" open>
+              <summary class="code-summary">Код к вопросу</summary>
+              <pre class="code-body"><code>@Service
 public class OrderService {
 
     @Transactional
@@ -486,45 +532,41 @@ public class OrderService {
     @Transactional(propagation = REQUIRES_NEW)
     public void writeAudit() { /* пишем запись аудита */ }
 }</code></pre>
-          </details>
+            </details>
 
-          <form id="interview-form" onsubmit="return false">
-            <input type="hidden" name="questionId" value="demo-7">
-            <div class="options stagger" id="interview-options" role="radiogroup" aria-label="Варианты ответа">
-              <label class="opt" data-option-id="a">
-                <input type="radio" name="optionId" value="a">
-                <span class="opt-badge" aria-hidden="true">A</span>
-                <span class="opt-text"><code>writeAudit()</code> выполнится в текущей транзакции: <code>REQUIRES_NEW</code> игнорируется, внутренний вызов идёт мимо прокси Spring.</span>
-                <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-              </label>
-              <label class="opt" data-option-id="b">
-                <input type="radio" name="optionId" value="b" checked>
-                <span class="opt-badge" aria-hidden="true">B</span>
-                <span class="opt-text">Стартует новая транзакция: аннотация <code>REQUIRES_NEW</code> на <code>writeAudit()</code> приостановит внешнюю.</span>
-                <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-              </label>
-              <label class="opt" data-option-id="c">
-                <input type="radio" name="optionId" value="c">
-                <span class="opt-badge" aria-hidden="true">C</span>
-                <span class="opt-text">Spring выбросит исключение о вложенных транзакциях при входе в <code>writeAudit()</code>.</span>
-                <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-              </label>
-              <label class="opt" data-option-id="d">
-                <input type="radio" name="optionId" value="d">
-                <span class="opt-badge" aria-hidden="true">D</span>
-                <span class="opt-text">Внешняя транзакция откатится, а <code>writeAudit()</code> зафиксируется в собственной новой транзакции.</span>
-                <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-              </label>
-            </div>
-            <div class="submit-row">
-              <button type="submit" id="interview-submit" class="btn btn-primary">Проверить ответ</button>
-              <span class="kbd-hint">
-                <span><kbd>1</kbd>–<kbd>9</kbd> выбрать</span>
-                <span><kbd>↑</kbd><kbd>↓</kbd> навигация</span>
-                <span><kbd>Enter</kbd> ответить</span>
-              </span>
-            </div>
-          </form>
+            <form id="interview-form" onsubmit="return false">
+              <input type="hidden" name="questionId" value="demo-7">
+              <div class="options stagger" id="interview-options" role="radiogroup" aria-label="Варианты ответа">
+                <label class="opt" data-option-id="a">
+                  <input type="radio" name="optionId" value="a">
+                  <span class="opt-badge" aria-hidden="true">A</span>
+                  <span class="opt-text"><code>writeAudit()</code> выполнится в текущей транзакции: <code>REQUIRES_NEW</code> игнорируется, внутренний вызов идёт мимо прокси Spring.</span>
+                  <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                </label>
+                <label class="opt" data-option-id="b">
+                  <input type="radio" name="optionId" value="b" checked>
+                  <span class="opt-badge" aria-hidden="true">B</span>
+                  <span class="opt-text">Стартует новая транзакция: аннотация <code>REQUIRES_NEW</code> на <code>writeAudit()</code> приостановит внешнюю.</span>
+                  <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                </label>
+                <label class="opt" data-option-id="c">
+                  <input type="radio" name="optionId" value="c">
+                  <span class="opt-badge" aria-hidden="true">C</span>
+                  <span class="opt-text">Spring выбросит исключение о вложенных транзакциях при входе в <code>writeAudit()</code>.</span>
+                  <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                </label>
+                <label class="opt" data-option-id="d">
+                  <input type="radio" name="optionId" value="d">
+                  <span class="opt-badge" aria-hidden="true">D</span>
+                  <span class="opt-text">Внешняя транзакция откатится, а <code>writeAudit()</code> зафиксируется в собственной новой транзакции.</span>
+                  <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                </label>
+              </div>
+              <div class="submit-row">
+                <button type="submit" id="interview-submit" class="btn btn-primary">Проверить ответ</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </section>
@@ -532,18 +574,21 @@ public class OrderService {
     <!-- ================= СОСТОЯНИЕ: разбор ответа ====================== -->
     <section class="state" data-state="result" hidden>
       <div class="wrap">
-        <div class="col">
-          <div class="rail">
-            <div class="rail-progress">
-              <div class="rail-count">Вопрос <b>7</b> из 20</div>
-              <div class="progress-track" role="progressbar" aria-label="Прогресс сессии"
-                   aria-valuemin="0" aria-valuemax="20" aria-valuenow="7">
-                <div class="progress-fill" style="transform: scaleX(0.35)"></div>
+        <div class="focus-grid">
+          <aside class="focus-aside">
+            <div class="rail">
+              <div class="rail-progress">
+                <div class="rail-count">Вопрос <b>7</b> из 20</div>
+                <div class="progress-track" role="progressbar" aria-label="Прогресс сессии"
+                     aria-valuemin="0" aria-valuemax="20" aria-valuenow="7">
+                  <div class="progress-fill" style="transform: scaleX(0.35)"></div>
+                </div>
               </div>
+              <span class="streak-chip"><span class="spark" aria-hidden="true"></span>стрик 5 дней</span>
             </div>
-            <span class="streak-chip"><span class="spark" aria-hidden="true"></span>стрик 5 дней</span>
-          </div>
+          </aside>
 
+          <div class="focus-main">
           <p class="focus-topic">spring<span class="dot">·</span>транзакции</p>
           <h2 class="focus-question" style="font-size: var(--fs-lg)">
             В какой транзакции выполнится внутренний вызов <span class="nowrap"><code>writeAudit()</code></span>?
@@ -585,6 +630,7 @@ public class OrderService {
 
           <div class="submit-row">
             <button type="button" class="btn btn-primary">Следующий вопрос</button>
+          </div>
           </div>
         </div>
       </div>

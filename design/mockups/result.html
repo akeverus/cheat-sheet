@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Разбор ответа · макет Instrument</title>
+
+  <!-- Шрифты: Newsreader (проза/вопрос), Space Grotesk (UI), JetBrains Mono (код/лейблы) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    /* ===== Reset / основа (общий язык Instrument, как в focus-question) ==== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; background: var(--paper); color: var(--ink);
+      font-family: var(--font-ui); font-size: var(--fs-base); line-height: var(--lh-normal);
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    }
+    a { color: var(--signal-ink); }
+    code, kbd, pre { font-family: var(--font-mono); }
+    [hidden] { display: none !important; }
+
+    /* Полноширинный «инструмент»: без центральной колонки с пустотами по бокам.
+       Хром и контент занимают ВСЮ ширину вьюпорта, только внутренний gutter. */
+    .wrap { width: 100%; padding-inline: var(--gutter); }
+
+    .skip-link {
+      position: absolute; left: var(--s-4); top: -4rem;
+      background: var(--signal); color: var(--signal-on);
+      padding: var(--s-2) var(--s-4); border-radius: var(--r-sm);
+      z-index: 30; transition: top var(--dur-1) var(--ease-out);
+    }
+    .skip-link:focus { top: var(--s-4); }
+    :where(a, button, input, summary):focus-visible {
+      outline: 2px solid var(--signal); outline-offset: 2px; border-radius: var(--r-sm);
+    }
+
+    /* ===== Макет-каркас (НЕ UI продукта): переключатель варианта разбора === */
+    .mock-bar { border-bottom: 1px dashed var(--line-strong); background: var(--surface); }
+    .mock-bar__inner { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; padding: var(--s-2) 0; }
+    .mock-tag { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); color: var(--ink-3); }
+    .mock-states { display: inline-flex; gap: var(--s-1); flex-wrap: wrap; }
+    .mock-states button {
+      font-family: var(--font-ui); font-size: var(--fs-xs); font-weight: var(--fw-medium);
+      color: var(--ink-2); background: var(--paper);
+      border: 1px solid var(--line); border-radius: var(--r-pill);
+      padding: var(--s-1) var(--s-3); cursor: pointer;
+      transition: color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+    }
+    .mock-states button:hover { border-color: var(--line-strong); color: var(--ink); }
+    .mock-states button[aria-pressed="true"] { color: var(--signal-ink); border-color: var(--signal-edge); background: var(--signal-wash); }
+
+    /* ===== Шапка ========================================================== */
+    .site-head { border-bottom: 1px solid var(--line); background: var(--paper); }
+    .site-head__inner { display: flex; align-items: center; gap: var(--s-4); padding: var(--s-4) 0; }
+    .brand {
+      display: inline-flex; align-items: center; gap: var(--s-2);
+      font-family: var(--font-mono); font-weight: var(--fw-semi); font-size: var(--fs-sm);
+      letter-spacing: var(--track-mono); color: var(--ink); text-decoration: none; margin-right: auto;
+    }
+    .brand-mark { width: 0.85rem; height: 0.85rem; border-radius: 3px; background: var(--signal); box-shadow: inset 0 0 0 3px var(--paper), 0 0 0 1px var(--signal); }
+    .brand span { color: var(--ink-3); }
+    .site-nav { display: flex; gap: var(--s-1); }
+    .site-nav a {
+      font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); text-decoration: none;
+      padding: var(--s-2) var(--s-3); border-radius: var(--r-sm);
+      transition: color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+    }
+    .site-nav a:hover { color: var(--ink); background: var(--surface); }
+    .site-nav a[aria-current="page"] { color: var(--signal-ink); background: var(--signal-wash); }
+    .nav-menu-btn { display: none; }
+    .theme-toggle {
+      display: inline-flex; align-items: center; gap: var(--s-2);
+      font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium);
+      color: var(--ink-2); background: var(--surface);
+      border: 1px solid var(--line); border-radius: var(--r-pill);
+      padding: var(--s-2) var(--s-3); cursor: pointer;
+      transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+    }
+    .theme-toggle:hover { border-color: var(--line-strong); color: var(--ink); }
+    .theme-toggle .tt-glyph { font-size: 1em; line-height: 1; }
+
+    /* ===== Контент разбора ================================================ */
+    .result { padding: var(--s-7) 0 var(--s-9); }
+
+    /* Раскладка на всю ширину: основная зона + правый рельс.
+       Узкий экран — одна колонка; широкий — рельс наполняет правое поле. */
+    .result-grid { display: grid; gap: var(--s-6); grid-template-columns: 1fr; }
+    .result-main { min-width: 0; }
+    .result-aside { min-width: 0; }
+    @media (min-width: 1080px) {
+      .result-grid { grid-template-columns: minmax(0, 1fr) clamp(22rem, 27vw, 34rem); gap: var(--s-8); align-items: start; }
+      .result-aside { position: sticky; top: var(--s-5); }
+    }
+
+    /* Сессионная рейка */
+    .rail { display: flex; align-items: center; gap: var(--s-4); margin-bottom: var(--s-6); }
+    .rail-progress { flex: 1 1 auto; min-width: 0; }
+    .rail-count { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); color: var(--ink-2); margin-bottom: var(--s-2); }
+    .rail-count b { color: var(--ink); font-weight: var(--fw-semi); }
+    .progress-track { height: 6px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: inherit; background: var(--signal); transform-origin: left center; }
+    .streak-chip {
+      display: inline-flex; align-items: center; gap: var(--s-2);
+      font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-2);
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pill);
+      padding: var(--s-1) var(--s-3); white-space: nowrap;
+    }
+    .streak-chip .spark { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--spark); }
+
+    /* Тема-кикер + переформулированный вопрос */
+    .focus-topic { font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: var(--fw-medium); letter-spacing: var(--track-mono); color: var(--ink-3); margin: 0 0 var(--s-3); }
+    .focus-topic .dot { color: var(--signal-ink); padding: 0 0.35em; }
+    .result-question {
+      font-family: var(--font-hero); font-size: var(--fs-lg); font-weight: var(--fw-medium);
+      line-height: var(--lh-hero); letter-spacing: var(--track-hero); color: var(--ink);
+      margin: 0 0 var(--s-5); text-wrap: balance; max-width: 32ch;
+    }
+    .result-question code { font-size: 0.85em; color: var(--signal-ink); background: none; border: 0; padding: 0; white-space: nowrap; }
+    .nowrap { white-space: nowrap; }
+
+    /* Вердикт */
+    .verdict {
+      display: flex; align-items: center; gap: var(--s-3);
+      padding: var(--s-3) var(--s-4); margin: 0 0 var(--s-5);
+      border-radius: var(--r-md); border: 1px solid var(--error-ink);
+      background: var(--error-wash); color: var(--error-ink); font-weight: var(--fw-semi);
+    }
+    .verdict.is-ok { border-color: var(--success-ink); background: var(--success-wash); color: var(--success-ink); }
+    .verdict svg { width: 1.15rem; height: 1.15rem; flex: none; }
+    .verdict .v-sub { font-weight: var(--fw-medium); color: inherit; opacity: 0.85; margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-xs); }
+
+    /* Разбор вариантов */
+    .options { display: flex; flex-direction: column; gap: var(--s-3); margin: 0 0 var(--s-6); }
+    .opt {
+      display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: var(--s-4);
+      padding: var(--s-4) var(--s-5); border: 1px solid var(--line-strong); border-radius: var(--r-md);
+      background: var(--surface); cursor: default;
+    }
+    .opt-badge {
+      display: grid; place-items: center; width: 1.75rem; height: 1.75rem;
+      font-family: var(--font-mono); font-size: var(--fs-sm); font-weight: var(--fw-semi);
+      color: var(--ink-2); background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+    }
+    .opt-text { color: var(--ink); line-height: var(--lh-snug); padding-top: 0.1rem; }
+    .opt-text code { font-size: 0.85em; background: var(--surface-2); padding: 0.06em 0.3em; border-radius: 4px; border: 1px solid var(--line); }
+    .opt-mark {
+      width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; border-radius: 50%;
+      border: 2px solid var(--line-strong); display: grid; place-items: center; color: transparent;
+    }
+    .opt-mark svg { width: 0.85rem; height: 0.85rem; }
+    .opt--correct { border-color: var(--success); background: var(--success-wash); box-shadow: inset 0 0 0 1px var(--success); }
+    .opt--correct .opt-badge { color: var(--success-ink); border-color: var(--success); }
+    .opt--correct .opt-mark { border-color: var(--success); background: var(--success); color: var(--success-on); }
+    .opt--incorrect { border-color: var(--error); background: var(--error-wash); box-shadow: inset 0 0 0 1px var(--error); }
+    .opt--incorrect .opt-badge { color: var(--error-ink); border-color: var(--error); }
+    .opt--incorrect .opt-mark { border-color: var(--error); background: var(--error); color: var(--error-on); }
+    .opt-tag {
+      display: inline-block; margin-left: var(--s-2); font-family: var(--font-mono); font-size: 0.85em;
+      font-weight: var(--fw-medium); vertical-align: 0.1em; color: var(--ink-3);
+      border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 0 0.4em;
+    }
+
+    /* Объяснение (serif-проза) */
+    .explain { font-family: var(--font-hero); font-size: var(--fs-md); line-height: var(--lh-normal); color: var(--ink); max-width: 62ch; margin: 0 0 var(--s-6); }
+    .explain code { font-family: var(--font-mono); font-size: 0.85em; background: var(--surface-2); padding: 0.06em 0.3em; border-radius: 4px; border: 1px solid var(--line); }
+    .explain em { font-style: italic; }
+
+    /* Код к вопросу — свёрнут, доступен для повторного разбора */
+    .question-code-details { margin: 0 0 var(--s-6); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); overflow: hidden; }
+    .code-summary { display: flex; align-items: center; gap: var(--s-2); font-family: var(--font-mono); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); padding: var(--s-3) var(--s-4); cursor: pointer; list-style: none; }
+    .code-summary::-webkit-details-marker { display: none; }
+    .code-summary::before { content: "▸"; color: var(--signal); font-size: 0.85em; transition: transform var(--dur-1) var(--ease-out); }
+    .question-code-details[open] .code-summary::before { transform: rotate(90deg); }
+    .code-body { margin: 0; padding: var(--s-4); overflow-x: auto; border-top: 1px solid var(--line); background: var(--paper); }
+    .code-body code { font-size: var(--fs-sm); line-height: var(--lh-snug); color: var(--ink); }
+
+    /* ===== Разбор глубже (пост-ответный анализ) — карта правого рельса ===== */
+    .analysis { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-5); }
+    .analysis-kicker { font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: var(--fw-medium); letter-spacing: var(--track-mono); color: var(--ink-3); margin: 0 0 var(--s-4); }
+    /* Ключевой вывод — тихая teal-акцент-карта (граница-акцент, не заливка) */
+    .takeaway {
+      display: grid; grid-template-columns: auto 1fr; gap: var(--s-3);
+      padding: var(--s-4) var(--s-5); margin: 0 0 var(--s-6);
+      border: 1px solid var(--signal-edge); border-radius: var(--r-md); background: var(--signal-wash);
+    }
+    .takeaway svg { width: 1.2rem; height: 1.2rem; color: var(--signal-ink); margin-top: 0.15rem; }
+    .takeaway p { margin: 0; color: var(--ink); font-size: var(--fs-md); line-height: var(--lh-snug); }
+    .takeaway b { font-weight: var(--fw-semi); }
+
+    /* Мини-трасса вызова (как течёт исполнение) — компактный mono-список */
+    .trace { margin: 0 0 var(--s-6); }
+    .trace-title { font-size: var(--fs-sm); font-weight: var(--fw-semi); color: var(--ink-2); margin: 0 0 var(--s-3); }
+    .trace ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-2); }
+    .trace li { display: grid; grid-template-columns: auto 1fr; gap: var(--s-3); align-items: baseline; font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--ink-2); }
+    .trace .n { color: var(--signal-ink); font-weight: var(--fw-semi); }
+    .trace .hl { color: var(--ink); }
+
+    /* Связанные темы — чипы */
+    .related-title { font-size: var(--fs-sm); font-weight: var(--fw-semi); color: var(--ink-2); margin: 0 0 var(--s-3); }
+    .chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+    .chip {
+      display: inline-flex; align-items: center; gap: var(--s-2);
+      font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); text-decoration: none;
+      background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-pill);
+      padding: var(--s-1) var(--s-3);
+      transition: color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+    }
+    .chip:hover { color: var(--signal-ink); border-color: var(--signal-edge); background: var(--signal-wash); }
+    .chip .arr { color: var(--ink-3); }
+    .chip:hover .arr { color: var(--signal-ink); }
+
+    /* ===== Действия ======================================================= */
+    .result-actions { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-5); }
+    /* В правом рельсе действия стоят колонкой на всю ширину рельса */
+    .result-aside .result-actions { flex-direction: column; align-items: stretch; }
+    .result-aside .result-actions .btn { width: 100%; }
+    .result-aside .result-actions .btn-quiet { margin-left: 0; }
+    .btn {
+      font-family: var(--font-ui); font-size: var(--fs-base); font-weight: var(--fw-semi);
+      border-radius: var(--r-md); padding: var(--s-3) var(--s-6); cursor: pointer;
+      border: 1px solid transparent; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+      transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+    }
+    .btn svg { width: 1.05rem; height: 1.05rem; }
+    .btn-primary { background: var(--signal); color: var(--signal-on); box-shadow: var(--shadow-sm); }
+    .btn-primary:hover { background: var(--signal-strong); }
+    .btn-primary:active { transform: translateY(1px); }
+    .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+    .btn-ghost:hover { border-color: var(--ink-3); background: var(--surface); }
+    .btn-quiet { background: transparent; color: var(--ink-2); border-color: transparent; padding-inline: var(--s-3); margin-left: auto; }
+    .btn-quiet:hover { color: var(--ink); background: var(--surface); }
+
+    /* ===== Motion (emil) ================================================== */
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .anim { opacity: 1; }
+    @media (prefers-reduced-motion: no-preference) {
+      .anim { animation: rise var(--dur-3) var(--ease-out) both; }
+      .stagger > * { animation: rise var(--dur-3) var(--ease-out) both; }
+      .stagger > *:nth-child(1) { animation-delay: 40ms; }
+      .stagger > *:nth-child(2) { animation-delay: 80ms; }
+      .stagger > *:nth-child(3) { animation-delay: 120ms; }
+      .stagger > *:nth-child(4) { animation-delay: 160ms; }
+    }
+
+    /* ===== Мобильная адаптация =========================================== */
+    @media (max-width: 640px) {
+      .site-head__inner { gap: var(--s-3); }
+      .site-nav { display: none; }
+      .nav-menu-btn {
+        display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem;
+        color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); cursor: pointer;
+      }
+      .nav-menu-btn svg { width: 1.15rem; height: 1.15rem; }
+      .theme-toggle .tt-word { display: none; }
+      .theme-toggle { padding: var(--s-2); width: 2.25rem; height: 2.25rem; justify-content: center; }
+      .result-question { max-width: none; }
+      .rail { flex-wrap: wrap; gap: var(--s-3); }
+      .verdict .v-sub { display: none; }
+      .btn-quiet { margin-left: 0; }
+      .result-actions .btn-primary { width: 100%; order: -1; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Перейти к разбору</a>
+
+  <!-- Каркас макета (не UI продукта): вариант разбора -->
+  <div class="mock-bar">
+    <div class="wrap mock-bar__inner">
+      <span class="mock-tag">макет · вариант разбора:</span>
+      <div class="mock-states" role="group" aria-label="Варианты разбора (демо макета)">
+        <button type="button" data-variant="wrong" aria-pressed="true">Ответ неверный</button>
+        <button type="button" data-variant="right" aria-pressed="false">Ответ верный</button>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-head">
+    <div class="wrap site-head__inner">
+      <a class="brand" href="#" aria-label="собес/трек, на главную">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span><b>собес</b>/трек</span>
+      </a>
+      <nav class="site-nav" aria-label="Основная навигация">
+        <a href="#" aria-current="page">Фокус</a>
+        <a href="#">Аналитика</a>
+        <a href="#">Настройки</a>
+      </nav>
+      <button class="nav-menu-btn" type="button" aria-label="Меню">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Тема оформления: авто">
+        <span class="tt-glyph" id="theme-glyph" aria-hidden="true">◐</span>
+        <span class="tt-word" id="theme-word">Авто</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1" class="result">
+    <div class="wrap">
+      <div class="result-grid">
+        <div class="result-main">
+
+        <div class="rail anim">
+          <div class="rail-progress">
+            <div class="rail-count">Вопрос <b>7</b> из 20</div>
+            <div class="progress-track" role="progressbar" aria-label="Прогресс сессии" aria-valuemin="0" aria-valuemax="20" aria-valuenow="7">
+              <div class="progress-fill" style="transform: scaleX(0.35)"></div>
+            </div>
+          </div>
+          <span class="streak-chip"><span class="spark" aria-hidden="true"></span>стрик 5 дней</span>
+        </div>
+
+        <p class="focus-topic anim">spring<span class="dot">·</span>транзакции</p>
+        <h1 class="result-question anim">
+          В какой транзакции выполнится внутренний вызов <span class="nowrap"><code>writeAudit()</code></span>?
+        </h1>
+
+        <!-- Вердикт: два варианта через data-variant на body -->
+        <p class="verdict is-err anim" data-when="wrong">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          Неверно. Правильный ответ A
+          <span class="v-sub">B → A</span>
+        </p>
+        <p class="verdict is-ok anim" data-when="right" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          Верно. Так и есть
+          <span class="v-sub">+1 к стрику</span>
+        </p>
+
+        <!-- Разбор вариантов -->
+        <div class="options anim" role="group" aria-label="Разбор вариантов">
+          <div class="opt opt--correct">
+            <span class="opt-badge" aria-hidden="true">A</span>
+            <span class="opt-text"><code>writeAudit()</code> выполнится в текущей транзакции: <code>REQUIRES_NEW</code> игнорируется, внутренний вызов идёт мимо прокси Spring.<span class="opt-tag" data-when="right">ваш ответ · верно</span><span class="opt-tag" data-when="wrong">верный ответ</span></span>
+            <span class="opt-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+          </div>
+          <div class="opt anim-b" data-variant-class="incorrect-when-wrong">
+            <span class="opt-badge" aria-hidden="true">B</span>
+            <span class="opt-text">Стартует новая транзакция: аннотация <code>REQUIRES_NEW</code> на <code>writeAudit()</code> приостановит внешнюю.<span class="opt-tag" data-when="wrong">ваш ответ</span></span>
+            <span class="opt-mark" aria-hidden="true"><svg class="mark-cross" data-when="wrong" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>
+          </div>
+          <div class="opt">
+            <span class="opt-badge" aria-hidden="true">C</span>
+            <span class="opt-text">Spring выбросит исключение о вложенных транзакциях при входе в <code>writeAudit()</code>.</span>
+            <span class="opt-mark" aria-hidden="true"></span>
+          </div>
+          <div class="opt">
+            <span class="opt-badge" aria-hidden="true">D</span>
+            <span class="opt-text">Внешняя транзакция откатится, а <code>writeAudit()</code> зафиксируется в собственной новой транзакции.</span>
+            <span class="opt-mark" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <p class="explain">
+          Прокси Spring перехватывает только <em>входящие извне</em> вызовы бина. Когда
+          <code>placeOrder()</code> вызывает <code>writeAudit()</code> напрямую, вызов идёт через
+          <code>this</code>, минуя прокси, поэтому <code>@Transactional(REQUIRES_NEW)</code> не
+          срабатывает, и аудит пишется в той же транзакции. Чтобы получить отдельную транзакцию,
+          <code>writeAudit()</code> нужно вызвать через инжектированный прокси (self-injection) или
+          вынести в другой бин.
+        </p>
+
+        <details class="question-code-details">
+          <summary class="code-summary">Код к вопросу</summary>
+          <pre class="code-body"><code>@Service
+public class OrderService {
+
+    @Transactional
+    public void placeOrder() {
+        writeAudit();          // внутренний вызов того же бина
+    }
+
+    @Transactional(propagation = REQUIRES_NEW)
+    public void writeAudit() { /* пишем запись аудита */ }
+}</code></pre>
+        </details>
+        </div><!-- /.result-main -->
+
+        <aside class="result-aside anim">
+          <div class="result-actions">
+            <button type="button" class="btn btn-primary">
+              Следующий вопрос
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <button type="button" class="btn btn-ghost">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 4 2.5 5 5.5.8-4 3.9.9 5.5L12 22l-4.9-2.6.9-5.5-4-3.9 5.5-.8z"/></svg>
+              В избранное
+            </button>
+            <button type="button" class="btn btn-quiet">Завершить сессию</button>
+          </div>
+
+          <!-- ===== Разбор глубже (пост-ответный анализ) ===== -->
+          <section class="analysis" aria-label="Разбор глубже">
+          <p class="analysis-kicker">разбор глубже</p>
+
+          <div class="takeaway">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+            <p><b>Главное:</b> самовызов метода бина (<code>this.method()</code>) не проходит через прокси, поэтому <code>@Transactional</code>, <code>@Cacheable</code>, <code>@Async</code> на нём молча не срабатывают.</p>
+          </div>
+
+          <div class="trace">
+            <p class="trace-title">Как течёт вызов</p>
+            <ol>
+              <li><span class="n">1</span><span>внешний код → <span class="hl">proxy.placeOrder()</span>: прокси открывает транзакцию T1</span></li>
+              <li><span class="n">2</span><span>внутри: <span class="hl">this.writeAudit()</span> идёт напрямую, минуя прокси</span></li>
+              <li><span class="n">3</span><span><code>REQUIRES_NEW</code> не виден → запись аудита остаётся в <span class="hl">T1</span></span></li>
+            </ol>
+          </div>
+
+          <p class="related-title">Связанные темы</p>
+          <div class="chips">
+            <a class="chip" href="#">Propagation-уровни <span class="arr" aria-hidden="true">→</span></a>
+            <a class="chip" href="#">Self-injection <span class="arr" aria-hidden="true">→</span></a>
+            <a class="chip" href="#">AOP-прокси Spring <span class="arr" aria-hidden="true">→</span></a>
+            <a class="chip" href="#">@Transactional: подводные камни <span class="arr" aria-hidden="true">→</span></a>
+          </div>
+          </section>
+        </aside>
+
+      </div><!-- /.result-grid -->
+    </div>
+  </main>
+
+  <script>
+    // Тема: авто → светлая → тёмная (для ревью макета в обеих темах).
+    (function () {
+      var root = document.documentElement, btn = document.getElementById('theme-toggle'),
+          glyph = document.getElementById('theme-glyph'), word = document.getElementById('theme-word'),
+          modes = [ { name:'Авто', glyph:'◐', attr:null }, { name:'Светлая', glyph:'☀', attr:'light' }, { name:'Тёмная', glyph:'☾', attr:'dark' } ], i = 0;
+      btn.addEventListener('click', function () {
+        i = (i + 1) % modes.length; var m = modes[i];
+        if (m.attr) root.setAttribute('data-theme', m.attr); else root.removeAttribute('data-theme');
+        glyph.textContent = m.glyph; word.textContent = m.name;
+        btn.setAttribute('aria-label', 'Тема оформления: ' + m.name.toLowerCase());
+      });
+    })();
+
+    // Макет-переключатель варианта разбора: верный / неверный ответ.
+    (function () {
+      var buttons = document.querySelectorAll('.mock-states button');
+      var optB = document.querySelector('[data-variant-class]');
+      function apply(variant) {
+        // вердикт + теги, зависящие от варианта
+        document.querySelectorAll('[data-when]').forEach(function (el) {
+          el.hidden = (el.getAttribute('data-when') !== variant);
+        });
+        // вариант B: «неверно» только когда ответ был неверным
+        optB.classList.toggle('opt--incorrect', variant === 'wrong');
+        buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-variant') === variant)); });
+      }
+      buttons.forEach(function (b) { b.addEventListener('click', function () { apply(b.getAttribute('data-variant')); }); });
+      apply('wrong');
+    })();
+  </script>
+</body>
+</html>
