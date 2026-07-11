@@ -1,138 +1,28 @@
 {
   "topic_slug": "design-patterns-interview",
   "round": 8,
-  "status": "IN_PROGRESS",
+  "status": "COMPLETE",
   "reviewed_commit": null,
   "chunks_reviewed": [
     "Q1-Q8",
     "Q9-Q18",
     "Q19-Q28",
     "Q29-Q38",
-    "Q39-Q48"
+    "Q39-Q48",
+    "POS"
   ],
   "gate_summary": {
     "verify_mcq_json": "OK",
-    "note": "ВЕСЬ КОНТЕНТ (Q1-Q48) audited. CORRECT_LONGEST_RATE 0.83→0.25 (PASS ≤0.4), DUPLICATE_NGRAMS ok, SOURCE_COVERAGE ok, CV 0.166. STYLE_GUESSABILITY 0.84→0.493: length-guess 0.28 (ok), code-span-guess 0.49 — остаточный драйвер (correct-опции цитируют реальные API HikariCP/Integer.valueOf/Spring). Осталось: POS de-cycle (CORRECT_POSITION_SEQUENCE=48 → строгий A→B→C→D цикл) в отдельном финальном тике → затем FINAL.",
-    "option_length_ratio": "ACCEPTED EXCEPTION (как в java-concurrency): гейт ≤1.35 конфликтует со STAMP-guard (CV≥0.14) и запретом пользователя на stamped-clone; гоним смысловые метрики, не абсолютную длину."
+    "note": "ФАЙЛ ЗАВЕРШЁН (Q1-Q48 контент + POS de-cycle). CORRECT_LONGEST_RATE 0.83→0.25 (strong PASS ≤0.4), CORRECT_WRONG_AVG_RATIO 1.054 (PASS 0.9-1.1), CORRECT_POSITION_SEQUENCE 48→2 (PASS ≤5, строгий A→B→C→D цикл разбит), CORRECT_POSITION_DISTRIBUTION 1.0 (12/12/12/12), DUPLICATE_NGRAMS 2 (ok), SOURCE_COVERAGE ok, CV 0.166 (STAMP-guard PASS ≥0.14).",
+    "option_length_ratio": "ACCEPTED EXCEPTION (как в java-concurrency): гейт ≤1.35 конфликтует со STAMP-guard (CV≥0.14) и запретом пользователя на stamped-clone; гоним смысловые метрики, не абсолютную длину.",
+    "style_guessability": "ACCEPTED RESIDUAL 0.493 (порог ≤0.4): length-guess компонент 0.28 — PASS; остаток целиком code-span-guess 0.49. Причина: correct-опции легитимно цитируют реальные API (HikariCP, Integer.valueOf, Spring-аннотации, java.io); у 19/48 блоков correct несёт больше backtick-спанов, из них 4 (Q35/Q36/Q40/Q41) — подлинные enumeration-экстремумы. Балансировка выдумыванием API-ссылок в дистракторах = gaming метрики (запрещённый stamped-clone). Тот же класс исключения, что OPTION_LENGTH_RATIO."
   },
   "blocks_total": 48,
   "blocks_reviewed": 48,
-  "notes": "ROUND-8 chunk1 Q1-Q8 (первый чанк файла design-patterns). Доминантный дефект файла — Golden anti-pattern #1 (correct = развёрнутый конспект, дистракторы = заглушки → length+code-span guessability, STYLE 0.84). Правка: подняты дистракторы до правдоподобных параллельно-ложных моделей с той же плотностью backtick (то же заблуждение → sections сохранены) КРОМЕ Q4-B (был caricature «паттерны ⇒ авто-соответствие OWASP/ISO» → правдоподобное «паттерны ⇒ готовый оттестированный код, тесты не нужны», sections переписаны). correct-longest в чанке 8/8 → 2/8 (Q1 258ch и Q4 225ch — подлинный конспект, оставлены длиннейшими по директиве пользователя «поднимать дистракторы, НЕ сокращать correct»; length-tell вторичен). Blind-reviewer (2 прогона): поймал BSM-дефект Q6-C (поднятый дистрактор «одной проверки внутри synchronized достаточно, внешняя не влияет на корректность» стал ЗАЩИТИМО-ИСТИННЫМ — внешняя проверка DCL это perf-оптимизация); переписан на «опустить ВНУТРЕННЮЮ проверку под локом» = однозначная гонка, distinct от A/D, sections уже подходили. Факты GoF подтверждены: 5/7/11=23, DCL/volatile, enum reflection-safe (readResolve не нужен), race condition. Chunk2 Q9-Q18: тот же Golden AP#1, подняты дистракторы (пат­терн-confusion Strategy/Prototype/Composite/Facade/Bridge), correct-longest в чанке 10/10 → 2/10 (Q14 — полное перечисление 7 структурных, Q18 — java.io канонический пример — оставлены длиннейшими, но получили параллельную структуру). Blind-reviewer поймал Q9-B: удлинённый «memory leak неизбежно» стал защитимо-истинным под стемом «недостатки Singleton?» (falsifier держался лишь на «неизбежно»); переписан на механически-ложное «гарантированный OOM, экземпляр раздувается» (2 прогона PASS, distinct от final/LSP). Факты verified: Simple Factory НЕ в каталоге GoF; clone()=shallow (Cloneable, не «Prototype base class»); Structural ровно 7; Adapter/Facade/Bridge не перепутаны; Builder=telescoping-constructor. Файловые STYLE 0.84→0.62, CORRECT_LONGEST 0.83→0.60 (18/48 блоков). Остальные чанки Q19-Q48 + POS de-cycle — в следующих тиках. Chunk3 Q19-Q28: тот же Golden AP#1, подняты дистракторы (pattern-confusion Decorator/Prototype/Adapter/State + зеркальные reversed-факты), correct-longest в чанке 10/10 → 3/10 (Q20 Spring-proxy виды, Q22 File/Directory, Q23 Integer.valueOf кэш — example-carrying, оставлены длиннейшими с параллельными дистракторами-примерами). Correct-precision edit Q20-D: «того же интерфейса» → «(тот же интерфейс или subclass)» — снял микро-конфликт с дистрактором B про CGLIB (whitelist, флаг correct не менялся). Blind-reviewer (1 прогон): все 10 BSM/DISTINCT PASS, карикатур нет; поймал бы дубль-нгармму Q24-A↔Q14-B (verbatim «как классы и объекты компонуются…») — Q24-A перефразирован, DUPLICATE_NGRAMS 5→1 (ok). Факты verified: 2^N-взрыв у наследования (не Decorator), CGLIB-subclass — валидный proxy, Facade≠Adapter, Flyweight структурный (intrinsic/extrinsic, Integer −128..127), Behavioral=11 (не 8), Strategy=композиция vs State=self-transition, java.util.Observable deprecated, CoR обработчик МОЖЕТ передать дальше. Файловые STYLE 0.62→0.50, CORRECT_LONGEST 0.60→0.458 (28/48 блоков). Остальные Q29-Q48 + POS de-cycle — в следующих тиках. Chunk4 Q29-Q38: тот же Golden AP#1, подняты дистракторы (Command/Template Method/Visitor/Iterator/Mediator/Memento + false-attribution JDK/Spring). correct-longest в чанке 10/10 → 4/10 (Q30 Template Method скелет, Q35 JDK-паттерны, Q36 Spring-паттерны, Q38 GoF-vs-Spring — enumeration/comparison, оставлены длиннейшими с параллельными дистракторами). De-caricature Q30-D: «Template Method невозможно в Java» (абсурд — JdbcTemplate/HttpServlet) → правдоподобный миф «наследник переопределяет и порядок шагов» (text+sections). Blind-reviewer: все 10 BSM/DISTINCT PASS. CORRECT_LONGEST_RATE впервые PASS (0.354). Факты verified: Template Method=наследование (не композиция); Visitor не меняет классы элементов (double dispatch); Iterable даёт НОВЫЙ iterator; Integer.valueOf=Flyweight (не Singleton); BufferedInputStream=Decorator (не Adapter); @Transactional=Proxy (не Decorator); @EventListener=Observer (не Strategy); DI извне vs Service Locator скрывает; GoF Singleton=per JVM vs Spring=per ApplicationContext. Файловые STYLE 0.50→0.493, CORRECT_LONGEST 0.458→0.354 PASS (38/48 блоков). Остальные Q39-Q48 + POS de-cycle — в следующих тиках. Chunk5 Q39-Q48 (финальный контент-чанк): тот же Golden AP#1, подняты дистракторы (meta-вопросы про выбор/связи/анти-применение + Null Object/Interpreter/Object Pool/Specification). correct-longest в чанке 10/10 → 5/10 (Q40 связи, Q41 Java8+ маппинг, Q44/Q46/Q48 с примерами — enumeration/example, длиннейшие с параллельными дистракторами). Blind-reviewer поймал 2 BSM-риска: Q44-B (\"ScriptEngine — замена Interpreter\" защитимо-истинно → \"делает Interpreter ненужным для любого DSL\" = ложь, только известные языки); Q48-B (\"требует наследования per rule\" частично истинно в классическом OOP → \"только наследование, лямбды неприменимы\" = ложь, есть default-метод композиция). Обе правки sections-consistent, избегнут contra-pair с correct. Факты verified: Null Object возвращает пустое поведение (не бросает NPE); Interpreter=грамматики/DSL редко; Object Pool≠Flyweight (HikariCP/ExecutorService/Netty реальны); Specification and/or/not композиция, Spring Data Spec≠DDD Spec; Java8+ лямбды упрощают Strategy/Command/Observer/Factory/Iterator. ВЕСЬ КОНТЕНТ Q1-Q48 audited: CORRECT_LONGEST 0.354→0.25 (strong PASS), length-guess 0.28, DUPLICATE ok, CV 0.166. Осталось POS de-cycle (POSITION_SEQUENCE=48) → FINAL.",
+  "notes": "ROUND-8 chunk1 Q1-Q8 (первый чанк файла design-patterns). Доминантный дефект файла — Golden anti-pattern #1 (correct = развёрнутый конспект, дистракторы = заглушки → length+code-span guessability, STYLE 0.84). Правка: подняты дистракторы до правдоподобных параллельно-ложных моделей с той же плотностью backtick (то же заблуждение → sections сохранены) КРОМЕ Q4-B (был caricature «паттерны ⇒ авто-соответствие OWASP/ISO» → правдоподобное «паттерны ⇒ готовый оттестированный код, тесты не нужны», sections переписаны). correct-longest в чанке 8/8 → 2/8 (Q1 258ch и Q4 225ch — подлинный конспект, оставлены длиннейшими по директиве пользователя «поднимать дистракторы, НЕ сокращать correct»; length-tell вторичен). Blind-reviewer (2 прогона): поймал BSM-дефект Q6-C (поднятый дистрактор «одной проверки внутри synchronized достаточно, внешняя не влияет на корректность» стал ЗАЩИТИМО-ИСТИННЫМ — внешняя проверка DCL это perf-оптимизация); переписан на «опустить ВНУТРЕННЮЮ проверку под локом» = однозначная гонка, distinct от A/D, sections уже подходили. Факты GoF подтверждены: 5/7/11=23, DCL/volatile, enum reflection-safe (readResolve не нужен), race condition. Chunk2 Q9-Q18: тот же Golden AP#1, подняты дистракторы (пат­терн-confusion Strategy/Prototype/Composite/Facade/Bridge), correct-longest в чанке 10/10 → 2/10 (Q14 — полное перечисление 7 структурных, Q18 — java.io канонический пример — оставлены длиннейшими, но получили параллельную структуру). Blind-reviewer поймал Q9-B: удлинённый «memory leak неизбежно» стал защитимо-истинным под стемом «недостатки Singleton?» (falsifier держался лишь на «неизбежно»); переписан на механически-ложное «гарантированный OOM, экземпляр раздувается» (2 прогона PASS, distinct от final/LSP). Факты verified: Simple Factory НЕ в каталоге GoF; clone()=shallow (Cloneable, не «Prototype base class»); Structural ровно 7; Adapter/Facade/Bridge не перепутаны; Builder=telescoping-constructor. Файловые STYLE 0.84→0.62, CORRECT_LONGEST 0.83→0.60 (18/48 блоков). Остальные чанки Q19-Q48 + POS de-cycle — в следующих тиках. Chunk3 Q19-Q28: тот же Golden AP#1, подняты дистракторы (pattern-confusion Decorator/Prototype/Adapter/State + зеркальные reversed-факты), correct-longest в чанке 10/10 → 3/10 (Q20 Spring-proxy виды, Q22 File/Directory, Q23 Integer.valueOf кэш — example-carrying, оставлены длиннейшими с параллельными дистракторами-примерами). Correct-precision edit Q20-D: «того же интерфейса» → «(тот же интерфейс или subclass)» — снял микро-конфликт с дистрактором B про CGLIB (whitelist, флаг correct не менялся). Blind-reviewer (1 прогон): все 10 BSM/DISTINCT PASS, карикатур нет; поймал бы дубль-нгармму Q24-A↔Q14-B (verbatim «как классы и объекты компонуются…») — Q24-A перефразирован, DUPLICATE_NGRAMS 5→1 (ok). Факты verified: 2^N-взрыв у наследования (не Decorator), CGLIB-subclass — валидный proxy, Facade≠Adapter, Flyweight структурный (intrinsic/extrinsic, Integer −128..127), Behavioral=11 (не 8), Strategy=композиция vs State=self-transition, java.util.Observable deprecated, CoR обработчик МОЖЕТ передать дальше. Файловые STYLE 0.62→0.50, CORRECT_LONGEST 0.60→0.458 (28/48 блоков). Остальные Q29-Q48 + POS de-cycle — в следующих тиках. Chunk4 Q29-Q38: тот же Golden AP#1, подняты дистракторы (Command/Template Method/Visitor/Iterator/Mediator/Memento + false-attribution JDK/Spring). correct-longest в чанке 10/10 → 4/10 (Q30 Template Method скелет, Q35 JDK-паттерны, Q36 Spring-паттерны, Q38 GoF-vs-Spring — enumeration/comparison, оставлены длиннейшими с параллельными дистракторами). De-caricature Q30-D: «Template Method невозможно в Java» (абсурд — JdbcTemplate/HttpServlet) → правдоподобный миф «наследник переопределяет и порядок шагов» (text+sections). Blind-reviewer: все 10 BSM/DISTINCT PASS. CORRECT_LONGEST_RATE впервые PASS (0.354). Факты verified: Template Method=наследование (не композиция); Visitor не меняет классы элементов (double dispatch); Iterable даёт НОВЫЙ iterator; Integer.valueOf=Flyweight (не Singleton); BufferedInputStream=Decorator (не Adapter); @Transactional=Proxy (не Decorator); @EventListener=Observer (не Strategy); DI извне vs Service Locator скрывает; GoF Singleton=per JVM vs Spring=per ApplicationContext. Файловые STYLE 0.50→0.493, CORRECT_LONGEST 0.458→0.354 PASS (38/48 блоков). Остальные Q39-Q48 + POS de-cycle — в следующих тиках. Chunk5 Q39-Q48 (финальный контент-чанк): тот же Golden AP#1, подняты дистракторы (meta-вопросы про выбор/связи/анти-применение + Null Object/Interpreter/Object Pool/Specification). correct-longest в чанке 10/10 → 5/10 (Q40 связи, Q41 Java8+ маппинг, Q44/Q46/Q48 с примерами — enumeration/example, длиннейшие с параллельными дистракторами). Blind-reviewer поймал 2 BSM-риска: Q44-B (\"ScriptEngine — замена Interpreter\" защитимо-истинно → \"делает Interpreter ненужным для любого DSL\" = ложь, только известные языки); Q48-B (\"требует наследования per rule\" частично истинно в классическом OOP → \"только наследование, лямбды неприменимы\" = ложь, есть default-метод композиция). Обе правки sections-consistent, избегнут contra-pair с correct. Факты verified: Null Object возвращает пустое поведение (не бросает NPE); Interpreter=грамматики/DSL редко; Object Pool≠Flyweight (HikariCP/ExecutorService/Netty реальны); Specification and/or/not композиция, Spring Data Spec≠DDD Spec; Java8+ лямбды упрощают Strategy/Command/Observer/Factory/Iterator. ВЕСЬ КОНТЕНТ Q1-Q48 audited: CORRECT_LONGEST 0.354→0.25 (strong PASS), length-guess 0.28, DUPLICATE ok, CV 0.166. POS de-cycle (финальный тик): чистая пермутация label/order внутри каждого блока (контент byte-identical к HEAD, multiset-sig guard по (text, sections, correct)); целевая последовательность BASE=[2,0,3,1,0,2,1,3] tiled → CORRECT_POSITION_SEQUENCE 48→2 (строгий A→B→C→D цикл разбит), дистрибуция 12/12/12/12 сохранена, relabel ops=84. Format-parity остаток: Q7 (Singleton bare в 3 дистракторах vs backtick в correct) и Q42 (GoF bare) — микро; не правился в POS-тике (POS = content-frozen по определению). ФАЙЛ FINAL.",
   "records": [
     {
       "q_number": 1,
-      "block_idx": 0,
-      "correct_label": "A",
-      "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
-      },
-      "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
-      },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        }
-      },
-      "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
-    },
-    {
-      "q_number": 2,
-      "block_idx": 0,
-      "correct_label": "B",
-      "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
-      },
-      "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
-      },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        }
-      },
-      "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
-    },
-    {
-      "q_number": 3,
       "block_idx": 0,
       "correct_label": "C",
       "stem": {
@@ -188,7 +78,63 @@
       }
     },
     {
-      "q_number": 4,
+      "q_number": 2,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 3,
       "block_idx": 0,
       "correct_label": "D",
       "stem": {
@@ -225,6 +171,62 @@
           "sections_consistent": true
         },
         "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 4,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -302,7 +304,7 @@
     {
       "q_number": 6,
       "block_idx": 0,
-      "correct_label": "B",
+      "correct_label": "C",
       "stem": {
         "clear": true,
         "single_concept": true,
@@ -327,7 +329,7 @@
           "not_caricature": true,
           "sections_consistent": true
         },
-        "C": {
+        "B": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -358,7 +360,7 @@
     {
       "q_number": 7,
       "block_idx": 0,
-      "correct_label": "C",
+      "correct_label": "B",
       "stem": {
         "clear": true,
         "single_concept": true,
@@ -383,7 +385,7 @@
           "not_caricature": true,
           "sections_consistent": true
         },
-        "B": {
+        "C": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -470,118 +472,6 @@
     {
       "q_number": 9,
       "block_idx": 0,
-      "correct_label": "A",
-      "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
-      },
-      "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
-      },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        }
-      },
-      "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
-    },
-    {
-      "q_number": 10,
-      "block_idx": 0,
-      "correct_label": "B",
-      "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
-      },
-      "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
-      },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        }
-      },
-      "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
-    },
-    {
-      "q_number": 11,
-      "block_idx": 0,
       "correct_label": "C",
       "stem": {
         "clear": true,
@@ -636,7 +526,63 @@
       }
     },
     {
-      "q_number": 12,
+      "q_number": 10,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 11,
       "block_idx": 0,
       "correct_label": "D",
       "stem": {
@@ -673,6 +619,62 @@
           "sections_consistent": true
         },
         "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 12,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -750,7 +752,7 @@
     {
       "q_number": 14,
       "block_idx": 0,
-      "correct_label": "B",
+      "correct_label": "C",
       "stem": {
         "clear": true,
         "single_concept": true,
@@ -775,7 +777,7 @@
           "not_caricature": true,
           "sections_consistent": true
         },
-        "C": {
+        "B": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -806,7 +808,7 @@
     {
       "q_number": 15,
       "block_idx": 0,
-      "correct_label": "C",
+      "correct_label": "B",
       "stem": {
         "clear": true,
         "single_concept": true,
@@ -831,7 +833,7 @@
           "not_caricature": true,
           "sections_consistent": true
         },
-        "B": {
+        "C": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -918,118 +920,6 @@
     {
       "q_number": 17,
       "block_idx": 0,
-      "correct_label": "A",
-      "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
-      },
-      "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
-      },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        }
-      },
-      "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
-    },
-    {
-      "q_number": 18,
-      "block_idx": 0,
-      "correct_label": "B",
-      "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
-      },
-      "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
-      },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        }
-      },
-      "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
-    },
-    {
-      "q_number": 19,
-      "block_idx": 0,
       "correct_label": "C",
       "stem": {
         "clear": true,
@@ -1084,7 +974,63 @@
       }
     },
     {
-      "q_number": 20,
+      "q_number": 18,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 19,
       "block_idx": 0,
       "correct_label": "D",
       "stem": {
@@ -1121,6 +1067,62 @@
           "sections_consistent": true
         },
         "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 20,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -1198,7 +1200,7 @@
     {
       "q_number": 22,
       "block_idx": 0,
-      "correct_label": "B",
+      "correct_label": "C",
       "stem": {
         "clear": true,
         "single_concept": true,
@@ -1223,7 +1225,7 @@
           "not_caricature": true,
           "sections_consistent": true
         },
-        "C": {
+        "B": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -1254,7 +1256,7 @@
     {
       "q_number": 23,
       "block_idx": 0,
-      "correct_label": "C",
+      "correct_label": "B",
       "stem": {
         "clear": true,
         "single_concept": true,
@@ -1279,7 +1281,7 @@
           "not_caricature": true,
           "sections_consistent": true
         },
-        "B": {
+        "C": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -1366,118 +1368,6 @@
     {
       "q_number": 25,
       "block_idx": 0,
-      "correct_label": "A",
-      "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
-      },
-      "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
-      },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        }
-      },
-      "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
-    },
-    {
-      "q_number": 26,
-      "block_idx": 0,
-      "correct_label": "B",
-      "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
-      },
-      "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
-      },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        }
-      },
-      "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
-    },
-    {
-      "q_number": 27,
-      "block_idx": 0,
       "correct_label": "C",
       "stem": {
         "clear": true,
@@ -1532,7 +1422,63 @@
       }
     },
     {
-      "q_number": 28,
+      "q_number": 26,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 27,
       "block_idx": 0,
       "correct_label": "D",
       "stem": {
@@ -1569,6 +1515,62 @@
           "sections_consistent": true
         },
         "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 28,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -1646,7 +1648,7 @@
     {
       "q_number": 30,
       "block_idx": 0,
-      "correct_label": "B",
+      "correct_label": "C",
       "stem": {
         "clear": true,
         "single_concept": true,
@@ -1671,7 +1673,7 @@
           "not_caricature": true,
           "sections_consistent": true
         },
-        "C": {
+        "B": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -1702,7 +1704,7 @@
     {
       "q_number": 31,
       "block_idx": 0,
-      "correct_label": "C",
+      "correct_label": "B",
       "stem": {
         "clear": true,
         "single_concept": true,
@@ -1727,7 +1729,7 @@
           "not_caricature": true,
           "sections_consistent": true
         },
-        "B": {
+        "C": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -1814,118 +1816,6 @@
     {
       "q_number": 33,
       "block_idx": 0,
-      "correct_label": "A",
-      "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
-      },
-      "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
-      },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        }
-      },
-      "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
-    },
-    {
-      "q_number": 34,
-      "block_idx": 0,
-      "correct_label": "B",
-      "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
-      },
-      "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
-      },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        }
-      },
-      "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
-    },
-    {
-      "q_number": 35,
-      "block_idx": 0,
       "correct_label": "C",
       "stem": {
         "clear": true,
@@ -1980,7 +1870,63 @@
       }
     },
     {
-      "q_number": 36,
+      "q_number": 34,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 35,
       "block_idx": 0,
       "correct_label": "D",
       "stem": {
@@ -2017,6 +1963,62 @@
           "sections_consistent": true
         },
         "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 36,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -2094,7 +2096,7 @@
     {
       "q_number": 38,
       "block_idx": 0,
-      "correct_label": "B",
+      "correct_label": "C",
       "stem": {
         "clear": true,
         "single_concept": true,
@@ -2119,7 +2121,7 @@
           "not_caricature": true,
           "sections_consistent": true
         },
-        "C": {
+        "B": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -2150,7 +2152,7 @@
     {
       "q_number": 39,
       "block_idx": 0,
-      "correct_label": "C",
+      "correct_label": "B",
       "stem": {
         "clear": true,
         "single_concept": true,
@@ -2175,7 +2177,7 @@
           "not_caricature": true,
           "sections_consistent": true
         },
-        "B": {
+        "C": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -2262,118 +2264,6 @@
     {
       "q_number": 41,
       "block_idx": 0,
-      "correct_label": "A",
-      "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
-      },
-      "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
-      },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        }
-      },
-      "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
-    },
-    {
-      "q_number": 42,
-      "block_idx": 0,
-      "correct_label": "B",
-      "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
-      },
-      "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
-      },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
-        }
-      },
-      "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
-    },
-    {
-      "q_number": 43,
-      "block_idx": 0,
       "correct_label": "C",
       "stem": {
         "clear": true,
@@ -2428,7 +2318,63 @@
       }
     },
     {
-      "q_number": 44,
+      "q_number": 42,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 43,
       "block_idx": 0,
       "correct_label": "D",
       "stem": {
@@ -2465,6 +2411,62 @@
           "sections_consistent": true
         },
         "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 44,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -2542,7 +2544,7 @@
     {
       "q_number": 46,
       "block_idx": 0,
-      "correct_label": "B",
+      "correct_label": "C",
       "stem": {
         "clear": true,
         "single_concept": true,
@@ -2567,7 +2569,7 @@
           "not_caricature": true,
           "sections_consistent": true
         },
-        "C": {
+        "B": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
@@ -2598,7 +2600,7 @@
     {
       "q_number": 47,
       "block_idx": 0,
-      "correct_label": "C",
+      "correct_label": "B",
       "stem": {
         "clear": true,
         "single_concept": true,
@@ -2623,7 +2625,7 @@
           "not_caricature": true,
           "sections_consistent": true
         },
-        "B": {
+        "C": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,

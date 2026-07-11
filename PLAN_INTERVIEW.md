@@ -293,7 +293,7 @@ Priority =
 | # | Сидер | Кат. | Blk | OldTell | State | SCH | TH | QS | STEM | C-FCT | C-CMP | C-SCP | C-UNI | C-FRM | C-SEC | C-RU | W-PLS | W-1ER | W-API | W-FLS | W-DIV | W-CAR | W-FRM | W-SEC | W-RU | PAR | BST | BSM | STAMP | FR | LINK | POS | VAL | FINAL | Notes |
 |--:|---|---|--:|--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
 | 1 | `java-concurrency` | java | 56 | 52 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅* | ✅ | ✅ DONE (R8): 56/56 audited + POS de-cycle (seq 56→2). 5 dup-misconception (Q21,Q22,Q42,Q50,Q54), 2 BSM (Q27-A,Q52-A), 2 caricature (Q47-B,Q49-D), contra-pair Q33, факт-фикс correct Q42-B; correct-longest+position tells сняты; CV 0.186; BSM чист ×56. VAL✅*: OPTION_LENGTH_RATIO=3.0 accepted-exception (конфликт с anti-stamp CV≥0.14; смысловые guessability-гейты все PASS) |
-| 2 | `design-patterns` | design-patterns | 48 | 48 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ Q1-Q48 КОНТЕНТ ВЕСЬ audited (R8 chunk1-5): Golden AP#1 — подняты дистракторы, correct-longest 48/48→16/48, CORRECT_LONGEST_RATE 0.83→0.25 (strong PASS), length-guess 0.28. De-caricature Q4-B/Q30-D. Reviewer поймал 4 BSM (Q6-C,Q9-B,Q44-B,Q48-B). Correct-precision Q20-D. Факты GoF/JDK/Spring/Java8+ verified. STYLE 0.84→0.493 (остаток code-span 0.49, correct цитирует API), DUP ok, CV 0.166. ОСТАЛОСЬ: POS de-cycle (POSITION_SEQUENCE=48) → FINAL |
+| 2 | `design-patterns` | design-patterns | 48 | 48 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅* | ✅ | ✅ DONE (R8): 48/48 audited + POS de-cycle (seq 48→2, dist 12/12/12/12). Golden AP#1 снят: подняты дистракторы, CORRECT_LONGEST_RATE 0.83→0.25, CORRECT_WRONG_AVG 1.455→1.054, length-guess 0.28. De-caricature Q4-B/Q30-D; reviewer поймал 4 BSM (Q6-C,Q9-B,Q44-B,Q48-B); correct-precision Q20-D; DUP 2 ok; CV 0.166; факты GoF/JDK/Spring verified (freshness sidecar 13 claims). VAL✅*: OPTION_LENGTH_RATIO=3.75 accepted-exception (анти-stamp) + STYLE 0.493 accepted-residual (code-span 0.49 — correct легитимно цитирует API; length-компонент 0.28 PASS) |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 4 | `sql` | databases | 53 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 5 | `project-reactor` | reactive | 48 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -779,6 +779,16 @@ Priority =
 - Sidecars: review Q1-Q48 (ВЕСЬ контент, status IN_PROGRESS до POS), freshness +Java8+/ObjectPool/Specification claims
 - **ВЕСЬ КОНТЕНТ Q1-Q48 audited.** Validators: verify-mcq-json OK; CORRECT_LONGEST 0.354→**0.25 (strong PASS)**, length-guess 0.28, DUPLICATE ok, CV 0.166; STYLE 0.493 (остаток — code-span 0.49, correct-опции цитируют реальные API — тот же класс accepted-residual, что OPTION_LENGTH_RATIO)
 - **ОСТАЛОСЬ: POS de-cycle** (CORRECT_POSITION_SEQUENCE=48, строгий A→B→C→D цикл) в отдельном финальном тике → затем FINAL=✅
+
+### ROUND-8 · design-patterns · POS de-cycle (2026-07-12) — FINAL
+- Чистая пермутация label/order внутри каждого из 48 блоков; контент byte-identical к HEAD (multiset-sig guard по (text, sections, correct) на каждый блок)
+- Целевая последовательность `BASE=[2,0,3,1,0,2,1,3]` tiled ×6 → relabel ops=84, дистрибуция A/B/C/D = 12/12/12/12
+- **CORRECT_POSITION_SEQUENCE 48→2** (строгий A→B→C→D цикл разбит, порог ≤5); CORRECT_POSITION_DISTRIBUTION 1.0
+- Все смысловые гейты PASS: CORRECT_LONGEST 0.25, CORRECT_WRONG_AVG **1.054** (кумулятивный эффект поднятия дистракторов — с baseline 1.455), DUPLICATE 2, SOURCE ok, CV 0.166
+- Accepted: OPTION_LENGTH_RATIO 3.75 (анти-stamp exception) + STYLE 0.493 (length-guess 0.28 PASS; code-span 0.49 — correct легитимно цитирует реальные API, 4 подлинных enumeration-экстремума Q35/Q36/Q40/Q41; балансировка выдумыванием API в дистракторах = запрещённый stamped-clone)
+- Микро-остаток format-parity на будущий раунд: Q7 (`Singleton` bare в дистракторах vs backtick в correct), Q42 (`GoF` bare) — не правился (POS-тик content-frozen по определению)
+- Sidecars: review → status **COMPLETE** (+chunk POS, style_guessability задокументирован как accepted-residual); freshness notes → покрытие Q1-Q48
+- **Файл design-patterns-interview.json — FINAL ✅** (строка 2 таблицы §1). Следующий worst-first: строка 4 `sql` (строка 3 `postgresql` — off-limits)
 
 ---
 
