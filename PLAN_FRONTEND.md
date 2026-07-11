@@ -1167,3 +1167,18 @@ Dirty changes created by loop: 0
 - **Следующий тик:** проверка разблокировки → Фаза E (черновики error/summary);
   если dirty — D-маппинг следующей блокированной поверхности (result: AJAX+no-JS
   двойной рендер, самый тонкий контракт).
+
+### 2026-07-12 — R0.23: D-маппинг result (живой no-JS фоллбэк)
+
+- **Collision guard:** base.css/result.html/app.js dirty → порт BLOCKED; продолжаю
+  D-маппинги блокированных поверхностей.
+- **Создано:** `PORT_MAPPING_result.md`. Крит: no-JS цел (confidence/v-sub НЕ портировать);
+  прод-опции богаче макета (порт ОТ прода); related-questions прямой потомок .ed-page;
+  takeaway/trace AI-вырезаны.
+- **Находки:** (а) прод-фрагмент inline-alert появился (#interview-alert, app.js-продьюсер) —
+  R0.22-заметка частично устарела; (б) НОВЫЙ дефект-кандидат: .question-side (код вопроса)
+  за aiEnabled=false → на no-JS result код никогда не рендерится; Фаза G/решение
+  пользователя (рядом с btn-regenerate R0.17).
+- **Ledgers:** CRITIQUE cr.25; registry result → MAPPED (4/7 замаплено).
+- **Следующий тик:** разблокировка → Фаза E; иначе D-маппинг stats (Chart.js-зоны,
+  сортируемая таблица, forecast) или settings (7 осей, ARIA-вкладки).
