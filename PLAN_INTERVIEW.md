@@ -293,7 +293,7 @@ Priority =
 | # | Сидер | Кат. | Blk | OldTell | State | SCH | TH | QS | STEM | C-FCT | C-CMP | C-SCP | C-UNI | C-FRM | C-SEC | C-RU | W-PLS | W-1ER | W-API | W-FLS | W-DIV | W-CAR | W-FRM | W-SEC | W-RU | PAR | BST | BSM | STAMP | FR | LINK | POS | VAL | FINAL | Notes |
 |--:|---|---|--:|--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
 | 1 | `java-concurrency` | java | 56 | 52 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅* | ✅ | ✅ DONE (R8): 56/56 audited + POS de-cycle (seq 56→2). 5 dup-misconception (Q21,Q22,Q42,Q50,Q54), 2 BSM (Q27-A,Q52-A), 2 caricature (Q47-B,Q49-D), contra-pair Q33, факт-фикс correct Q42-B; correct-longest+position tells сняты; CV 0.186; BSM чист ×56. VAL✅*: OPTION_LENGTH_RATIO=3.0 accepted-exception (конфликт с anti-stamp CV≥0.14; смысловые guessability-гейты все PASS) |
-| 2 | `design-patterns` | design-patterns | 48 | 48 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ Q1-Q18/48 (R8 chunk1-2): Golden AP#1 (correct-конспект+дистр-заглушки) — подняты дистракторы, correct-longest в чанках 18/18→4/18 (Q1/Q4/Q14/Q18 конспект/enum/пример оставлены). De-caricature Q4-B. Reviewer поймал 2 BSM: Q6-C (стал истинным→drop-inner-check), Q9-B (memory-leak защитим→гарант.OOM). Факты GoF verified (5/7/11, DCL/volatile, enum, Simple-Factory-не-GoF, clone=shallow, Structural=7). STYLE 0.84→0.62, CORRECT_LONGEST 0.83→0.60 (файловые, падают по чанкам). Дальше Q19-Q48+POS |
+| 2 | `design-patterns` | design-patterns | 48 | 48 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ Q1-Q28/48 (R8 chunk1-3): Golden AP#1 — подняты дистракторы, correct-longest в чанках 28/28→7/28 (конспект/enum/пример-несущие оставлены). De-caricature Q4-B. Reviewer поймал 2 BSM (Q6-C, Q9-B) + 1 dup-ngram (Q24-A↔Q14-B). Correct-precision edit Q20-D (CGLIB). Факты GoF verified (5/7/11, Behavioral=11, Simple-Factory-не-GoF, clone=shallow, Structural=7, Flyweight/Integer-cache, Observable-deprecated, CoR). STYLE 0.84→0.50, CORRECT_LONGEST 0.83→0.458, DUP ok. Дальше Q29-Q48+POS |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 4 | `sql` | databases | 53 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 5 | `project-reactor` | reactive | 48 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -752,6 +752,15 @@ Priority =
 - Факты verified: Simple Factory НЕ в каталоге GoF (идиома, не паттерн); clone() = shallow, нужен `Cloneable` (не «Prototype base class»); Structural ровно 7; Adapter/Facade/Bridge не перепутаны; Builder решает telescoping-constructor
 - Sidecars обновлены (review Q1-Q18, freshness +clone/Structural-7 claims). Validators: verify-mcq-json OK; файловые STYLE 0.74→0.62, CORRECT_LONGEST 0.73→0.60 (18/48); CV 0.226; DUPLICATE_NGRAMS 0
 - Дальше: Q19-Q28, … затем POS de-cycle
+
+### ROUND-8 · design-patterns · chunk3 Q19-Q28 (2026-07-12)
+- Тот же Golden anti-pattern #1. Все 10 correct факт-верны (Decorator-vs-наследование, Proxy, Facade/Composite/Flyweight, Strategy/State/Observer/CoR)
+- Правка: подняты дистракторы (pattern-confusion + зеркальные reversed-факты), text-only, sections сохранены. correct-longest в чанке **10/10 → 3/10** (Q20 Spring-proxy виды, Q22 File/Directory, Q23 `Integer.valueOf` кэш — example-carrying, оставлены длиннейшими, но с параллельными дистракторами-примерами)
+- **Correct-precision edit Q20-D** (whitelist, флаг correct не менялся): «того же интерфейса» → «(тот же интерфейс или subclass)» — снял микро-конфликт с дистрактором B про CGLIB
+- **Blind-reviewer**: все 10 BSM/DISTINCT PASS, карикатур нет. Гейт поймал dup-ngram Q24-A↔Q14-B (verbatim «как классы и объекты компонуются…») → Q24-A перефразирован, DUPLICATE_NGRAMS 5→1 (ok)
+- Факты verified: 2^N-взрыв классов у наследования (не Decorator); CGLIB-subclass — валидный proxy; Facade≠Adapter; Flyweight структурный (intrinsic/extrinsic, `Integer` −128..127); Behavioral=11 (не 8); Strategy=композиция vs State=self-transition; `java.util.Observable` deprecated с Java 9; CoR обработчик МОЖЕТ передать дальше
+- Sidecars обновлены (review Q1-Q28; freshness +Behavioral-11/Flyweight-cache/Observable-deprecated/CGLIB claims). Validators: verify-mcq-json OK; STYLE 0.62→0.50, CORRECT_LONGEST 0.60→0.458 (28/48); CV 0.206; DUPLICATE_NGRAMS ok
+- Дальше: Q29-Q38, Q39-Q48, затем POS de-cycle
 
 ---
 
