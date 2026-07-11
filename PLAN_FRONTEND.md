@@ -1195,3 +1195,16 @@ Dirty changes created by loop: 0
 - **Следующий тик:** разблокировка → Фаза E; иначе D-маппинг settings (последняя
   страничная; ARIA-вкладки, 7 осей персонализации, формы контракта §3) — после неё
   останется только shell/head (хром-фрагменты).
+
+### 2026-07-12 — R0.25: D-маппинг settings (последняя страничная)
+
+- **Collision guard:** settings.html/base.css/app.js dirty → порт BLOCKED.
+- **Создано:** `PORT_MAPPING_settings.md`. Находка: прод уже прошёл вкладочный редизайн
+  (0eb762a5) → структуры изоморфны макету; шаг 1 = чистый CSS-рестайл (set-card сетка
+  осей, switch-тогглы, вкладки); шаг 2 = вертикальный tablist-рельс (+app.js ↑/↓);
+  alertdialog сброса = Фаза G low-prio (нативный confirm остаётся). Не задеть:
+  контракт-тест, data-default-count SET-15, PE-паттерны.
+- **Ledgers:** CRITIQUE cr.27; registry settings → MAPPED (6/7).
+- **Следующий тик:** разблокировка → Фаза E; иначе финальный D-маппинг shell/head
+  (хром: header.html/head.html/icons.html + today-widget) — после него фаза D
+  исчерпана полностью, останется только ждать разблокировку.

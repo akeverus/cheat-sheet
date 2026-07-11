@@ -37,6 +37,21 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+- **cr.27 (ROUND-RESET, R0.25)** — **D-маппинг settings (последняя страничная поверхность).**
+  settings.html/base.css/app.js dirty → порт BLOCKED; снят маппинг:
+  `PORT_MAPPING_settings.md`. **Главная находка — структуры уже изоморфны:** прод прошёл
+  вкладочный редизайн (0eb762a5, ARIA-вкладки + PE) до макета, поэтому settings — самый
+  дешёвый из «блокированных» портов: **шаг 1 = чистый CSS-рестайл прод-DOM** (карточная
+  сетка 7 осей `.personalization-row`→set-card вид через auto-fit minmax(min(20rem,100%),1fr);
+  switch-вид тогглов на существующих checkbox БЕЗ смены порядка узлов; вкладки; danger-zone
+  уже концептуально совпадает). **Шаг 2 (отдельное решение):** вертикальный tablist-рельс
+  макета = шаблон (aria-orientation) + app.js (стрелки ↑/↓ по WAI-APG) + иконки; panel-lead
+  копия. **Alertdialog сброса (макет R0.10) НЕ портируется в шаг 1** — прод-`data-confirm`
+  (нативный confirm) доступен и прост; кастомный диалог = Фаза G low-prio. Не задеть:
+  контракт-тест ID форм/вкладок, `data-default-count` (SET-15), TRAINING-скрытие счётчика,
+  PE-паттерны (tablist/personalization/export скрыты без JS, экспорт = fetch с
+  X-Admin-Token). Registry: settings → MAPPED. **Замаплено 6/7 — остался только
+  shell/head (хром-фрагменты header/head/icons).**
 - **cr.26 (ROUND-RESET, R0.24)** — **D-маппинг stats (JS-тяжёлая: Chart.js + сортировка +
   PE-скрипты).** stats.html/stats.js/base.css dirty → порт BLOCKED; снят маппинг:
   `PORT_MAPPING_stats.md`. **Крит-решения:** (1) статические SVG-графики макета — это
