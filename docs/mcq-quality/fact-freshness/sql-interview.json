@@ -22,7 +22,13 @@
     "RETURNING поддерживают PostgreSQL, Oracle (RETURNING INTO), MariaDB 10.5+, SQL Server (OUTPUT); MySQL 8.0 НЕ поддерживает RETURNING [Q20].",
     "CTE: до PostgreSQL 12 всегда материализовался (optimization fence); с PG12 инлайнится по умолчанию, управление — MATERIALIZED/NOT MATERIALIZED. Data-modifying CTE (WITH ... DELETE/UPDATE/INSERT RETURNING) — специфика PostgreSQL [Q19, Q20].",
     "GROUP BY по алиасу из SELECT: запрещён стандартом SQL, но PostgreSQL и MySQL резолвят имена выходных столбцов как расширение [Q14].",
-    "SQL Server temp-таблицы: #name — локальная (сессия), ##name — глобальная (все сессии). PostgreSQL: CREATE TEMP TABLE — сессионная, поддерживает индексы и ограничения [Q12]."
+    "SQL Server temp-таблицы: #name — локальная (сессия), ##name — глобальная (все сессии). PostgreSQL: CREATE TEMP TABLE — сессионная, поддерживает индексы и ограничения [Q12].",
+    "Клауза CYCLE для рекурсивных CTE — с PostgreSQL 14, явная opt-in (не включается автоматически); до неё защита от циклов — ручная (массив пути / лимит глубины) [Q48]. Актуально в PostgreSQL 16.",
+    "Hash-индексы WAL-logged (crash-safe, реплицируются) начиная с PostgreSQL 10; до 10 не журналировались и требовали REINDEX после сбоя [Q51]. Актуально в PostgreSQL 16.",
+    "Декларативное партиционирование (PARTITION BY RANGE/LIST/HASH) — с PostgreSQL 10; глобальных индексов по партициям в PostgreSQL 16 нет (CREATE INDEX создаёт набор локальных) [Q50].",
+    "EXPLAIN ANALYZE реально выполняет запрос, включая DML (UPDATE/DELETE меняют данные — замер оборачивают в BEGIN/ROLLBACK); просто EXPLAIN не выполняет [Q49]. Стабильная семантика PostgreSQL.",
+    "Autovacuum срабатывает по порогам dead tuples (autovacuum_vacuum_threshold + scale_factor 20%), не по расписанию; VACUUM FULL берёт ACCESS EXCLUSIVE [Q52]. Актуально в PostgreSQL 16.",
+    "MVCC PostgreSQL: xmin/xmax, 32-битный xid с wraparound ~2 млрд (freeze через VACUUM); READ COMMITTED — снимок на каждый оператор, REPEATABLE READ — на транзакцию [Q53]."
   ],
-  "notes": "Ядро SQL (constraints, NULL-семантика, нормальные формы, View) — стандарт SQL:2016, стабильно. Диалектная специфика привязана к PostgreSQL 16 / MySQL 8.0. Покрывает Q1-Q20; расширяется по мере обработки остальных чанков файла."
+  "notes": "Ядро SQL (constraints, NULL-семантика, нормальные формы, View) — стандарт SQL:2016, стабильно. Диалектная специфика привязана к PostgreSQL 16 / MySQL 8.0. Покрывает все чанки Q1-Q53."
 }

@@ -295,7 +295,7 @@ Priority =
 | 1 | `java-concurrency` | java | 56 | 52 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅* | ✅ | ✅ DONE (R8): 56/56 audited + POS de-cycle (seq 56→2). 5 dup-misconception (Q21,Q22,Q42,Q50,Q54), 2 BSM (Q27-A,Q52-A), 2 caricature (Q47-B,Q49-D), contra-pair Q33, факт-фикс correct Q42-B; correct-longest+position tells сняты; CV 0.186; BSM чист ×56. VAL✅*: OPTION_LENGTH_RATIO=3.0 accepted-exception (конфликт с anti-stamp CV≥0.14; смысловые guessability-гейты все PASS) |
 | 2 | `design-patterns` | design-patterns | 48 | 48 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅* | ✅ | ✅ DONE (R8): 48/48 audited + POS de-cycle (seq 48→2, dist 12/12/12/12). Golden AP#1 снят: подняты дистракторы, CORRECT_LONGEST_RATE 0.83→0.25, CORRECT_WRONG_AVG 1.455→1.054, length-guess 0.28. De-caricature Q4-B/Q30-D; reviewer поймал 4 BSM (Q6-C,Q9-B,Q44-B,Q48-B); correct-precision Q20-D; DUP 2 ok; CV 0.166; факты GoF/JDK/Spring verified (freshness sidecar 13 claims). VAL✅*: OPTION_LENGTH_RATIO=3.75 accepted-exception (анти-stamp) + STYLE 0.493 accepted-residual (code-span 0.49 — correct легитимно цитирует API; length-компонент 0.28 PASS) |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
-| 4 | `sql` | databases | 53 | 47 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ Q1-Q47 audited (R8 chunk1-5). Chunk5 (JPA/Spring): raises 15+1 dict-spec; reviewer 7/7 VERDICT, поймал БЛОКЕР Q47-D («readOnly запрещает на уровне БД» защитимо-истинен в PG16+Hibernate6) → явно ложный абсолют; Q46-C слабый CHECK → миф «только Hibernate-валидация» (dict-spec); CORRECT-precision Q44-D (формула N+1). Пост-гейт trim-pass: AVG 0.872→0.912, CV 0.14→0.143 (подрезаны 15 многословных wrong, ~100 слов). Гейты: CORRECT_LONGEST 0.189, STYLE 0.363, DUP 0. ОСТАЛОСЬ: Q48-Q53 (chunk6, CV-впритык — минимальные правки) + POS de-cycle (seq=53) |
+| 4 | `sql` | databases | 53 | 47 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ Все 53 блока audited (R8 chunk1-6). Chunk6 Q48-Q53 (PG-хвост): минимально-инвазивный, 7 дистракторов dict-spec + офсет-тримы Q10-D/Q23-D (word-бюджет: лимит +28 слов wrong-пула, факт +21). Reviewer 6/6 VERDICT, MULTI нет; фиксы: Q48-A зеркальная пара с correct → self-join миф; Q48-B/C, Q50-C, Q53-C карикатуры → когерентные мифы (UNION-остановка, CYCLE-default PG14, глобальный индекс, «удаляет после коммита»); Q49-B overlap с correct → gotcha «EXPLAIN ANALYZE не выполняет DML»; Q51-A → stale «hash не в WAL» (истина до PG10). Гейты: CORRECT_LONGEST 0.151, STYLE 0.373, AVG 0.903 (впритык!), CV 0.143 (впритык!), DUP 0. ОСТАЛОСЬ: POS de-cycle (seq=53, dist 14/13/13/13 уже ровный) → FINAL |
 | 5 | `project-reactor` | reactive | 48 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 6 | `hibernate` | databases | 50 | 46 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 7 | `java-collections` | java | 46 | 46 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -837,6 +837,21 @@ Priority =
 - Validators: verify-mcq-json OK; CORRECT_LONGEST 0.226→0.189, STYLE 0.363 (length 0.23), CORRECT_WRONG_AVG 0.912, CV 0.143, DUPLICATE 0
 - ⚠ CV 0.143 впритык к 0.14: chunk6 (Q48-Q53) — минимальные правки, сохранять вариативность
 - ОСТАЛОСЬ: Q48-Q53 (chunk6) + POS de-cycle → FINAL
+
+### ROUND-8 · sql · chunk6 Q48-Q53 (2026-07-12)
+
+Финальный контент-чанк (PG-хвост: рекурсивные CTE, EXPLAIN, партиционирование, индексы, VACUUM, MVCC). Режим минимальной инвазии: оба лексических гейта были впритык, word-бюджет считался явно (words() гейта стрипает code-spans) — лимит +28 слов wrong-пула, факт +21 после офсет-тримов Q10-D/Q23-D (-8 слов, мои же raised-тексты).
+
+Blind-reviewer (6 блоков, 6/6 VERDICT совпали, MULTI нет). Фиксы (все dict-spec, text+sections):
+- **Q48-A** — зеркальная пара с correct («якорь многократно» ↔ «якорь один раз» = мета-подсказка «ответ один из двух») → уведён в self-join миф «рекурсивная часть не видит предыдущий шаг, глубина = число JOIN-ов»;
+- **Q48-B** CAR («обязательно UNION») → миф «дедупликация UNION и есть условие остановки»;
+- **Q48-C** CAR («автоматически обнаруживает циклы») → PG14-миф «клауза CYCLE включена по умолчанию»;
+- **Q49-B** — тематический overlap с correct (оба про rows vs actual → наводка) → классический gotcha «EXPLAIN ANALYZE выполняет DML в откатываемой песочнице» (на деле реально меняет данные);
+- **Q50-C** CAR («партиционирование устраняет индексы») → Oracle-перенос «глобальный индекс единой структурой»;
+- **Q51-A** — general-CS отбрасываемый (hash без диапазонов) → stale-знание «hash-индекс не журналируется в WAL» (истина до PG10);
+- **Q53-C** — внутренне противоречив («удаляет сразу после создания») → когерентный миф «удаляет сразу после коммита, xmax/VACUUM не нужны» (+гасит уникальность xmax/VACUUM в correct).
+
+Q52 целиком и остальные опции чанка подтверждены ревьюером — не тронуты (форм-телл хвоста принят: выравнивание убило бы CV, см. gate_summary сайдкара). Гейты после: verify-mcq-json OK; CORRECT_LONGEST 0.151; AVG 0.903 (впритык ≥0.9); CV 0.143 (впритык ≥0.14); STYLE 0.373; DUP 0; POSITION_SEQUENCE 53 — закрывает следующий POS-тик. Freshness-сайдкар расширен до Q1-Q53 (18 claims: +CYCLE PG14, hash-WAL PG10, декларативное партиционирование PG10/нет глобальных индексов, EXPLAIN ANALYZE-DML, autovacuum-пороги, xid wraparound).
 
 ---
 
