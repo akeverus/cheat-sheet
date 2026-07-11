@@ -1182,3 +1182,16 @@ Dirty changes created by loop: 0
 - **Ledgers:** CRITIQUE cr.25; registry result → MAPPED (4/7 замаплено).
 - **Следующий тик:** разблокировка → Фаза E; иначе D-маппинг stats (Chart.js-зоны,
   сортируемая таблица, forecast) или settings (7 осей, ARIA-вкладки).
+
+### 2026-07-12 — R0.24: D-маппинг stats (Chart.js + PE-скрипты)
+
+- **Collision guard:** stats.html/stats.js/base.css dirty → порт BLOCKED.
+- **Создано:** `PORT_MAPPING_stats.md`. Крит: SVG-графики макета = заглушки (прод =
+  Chart.js из topicStatsJson [(...)] unescaped); цвета графиков в stats.js → шаг 1 не
+  красит; сорт-стрелка CSS [aria-sort]::after; сохранить collapse/Intl-даты/stacked-card/
+  формы фильтров; live-фильтр тем = Фаза G кандидат (≠ серверный поиск вопросов);
+  одноколонка в шаге 1, рейка = шаг 2; stats-grid фрагмент общий с result.
+- **Ledgers:** CRITIQUE cr.26; registry stats → MAPPED (5/7).
+- **Следующий тик:** разблокировка → Фаза E; иначе D-маппинг settings (последняя
+  страничная; ARIA-вкладки, 7 осей персонализации, формы контракта §3) — после неё
+  останется только shell/head (хром-фрагменты).
