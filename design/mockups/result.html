@@ -170,6 +170,28 @@
     .explain code { font-family: var(--font-mono); font-size: 0.85em; background: var(--surface-2); padding: 0.06em 0.3em; border-radius: 4px; border: 1px solid var(--line); }
     .explain em { font-style: italic; }
 
+    /* Уверенность (пост-ответная самооценка; порядок вердикт→уверенность→кнопка,
+       memory project_post_answer_js). Прод НАМЕРЕННО держит эмодзи 🎲🤔💪
+       (memory project_icon_system) — здесь тот же смысл; при порте это точка
+       решения (эмодзи vs монохром). radiogroup: одна из трёх, стрелки+Home/End. */
+    .confidence {
+      margin: 0 0 var(--s-6); padding: var(--s-4) var(--s-5);
+      border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
+    }
+    .confidence-q { font-size: var(--fs-sm); font-weight: var(--fw-semi); color: var(--ink-2); margin: 0 0 var(--s-3); }
+    .confidence-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-3); }
+    .conf {
+      display: flex; align-items: center; justify-content: center; gap: var(--s-2);
+      padding: var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-md);
+      background: var(--paper); color: var(--ink); cursor: pointer;
+      font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium);
+      transition: border-color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out);
+    }
+    .conf:hover { border-color: var(--signal-edge); background: var(--surface); transform: translateY(-1px); }
+    .conf[aria-checked="true"] { border-color: var(--signal); background: var(--signal-wash); color: var(--signal-ink); }
+    .conf .g { line-height: 1; }
+    @media (max-width: 460px) { .conf .conf-word { display: none; } }
+
     /* Код к вопросу — свёрнут, доступен для повторного разбора */
     .question-code-details { margin: 0 0 var(--s-6); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); overflow: hidden; }
     .code-summary { display: flex; align-items: center; gap: var(--s-2); font-family: var(--font-mono); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); padding: var(--s-3) var(--s-4); cursor: pointer; list-style: none; }
@@ -343,6 +365,16 @@
           <span class="v-sub">+1 к стрику</span>
         </p>
 
+        <!-- Уверенность: самооценка после вердикта (вердикт→уверенность→кнопка) -->
+        <div class="confidence anim">
+          <p class="confidence-q" id="conf-q">Насколько был уверен в ответе?</p>
+          <div class="confidence-row" role="radiogroup" aria-labelledby="conf-q">
+            <button type="button" class="conf" role="radio" aria-checked="false" tabindex="-1"><span class="g" aria-hidden="true">🎲</span><span class="conf-word">Угадал</span></button>
+            <button type="button" class="conf" role="radio" aria-checked="false" tabindex="-1"><span class="g" aria-hidden="true">🤔</span><span class="conf-word">Не уверен</span></button>
+            <button type="button" class="conf" role="radio" aria-checked="true" tabindex="0"><span class="g" aria-hidden="true">💪</span><span class="conf-word">Уверен</span></button>
+          </div>
+        </div>
+
         <!-- Разбор вариантов -->
         <div class="options anim" role="group" aria-label="Разбор вариантов">
           <div class="opt opt--correct">
@@ -466,6 +498,31 @@ public class OrderService {
       }
       buttons.forEach(function (b) { b.addEventListener('click', function () { apply(b.getAttribute('data-variant')); }); });
       apply('wrong');
+    })();
+
+    // Уверенность: radiogroup с roving tabindex, стрелки + Home/End (паттерн seg-control).
+    (function () {
+      var radios = [].slice.call(document.querySelectorAll('.confidence-row [role="radio"]'));
+      if (!radios.length) return;
+      function select(idx, focus) {
+        radios.forEach(function (r, i) {
+          var on = i === idx;
+          r.setAttribute('aria-checked', String(on));
+          r.tabIndex = on ? 0 : -1;
+        });
+        if (focus) radios[idx].focus();
+      }
+      radios.forEach(function (r, i) {
+        r.addEventListener('click', function () { select(i, false); });
+        r.addEventListener('keydown', function (e) {
+          var last = radios.length - 1, ni = null;
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') ni = i === last ? 0 : i + 1;
+          else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') ni = i === 0 ? last : i - 1;
+          else if (e.key === 'Home') ni = 0;
+          else if (e.key === 'End') ni = last;
+          if (ni !== null) { e.preventDefault(); select(ni, true); }
+        });
+      });
     })();
   </script>
 </body>

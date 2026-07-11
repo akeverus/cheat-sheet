@@ -56,8 +56,11 @@ role=status+aria-live+aria-busy+visually-hidden текст, пульс off по�
 (CRITIQUE C11, РЕШЕНО).
 
 `§` result: покрыты correct/incorrect (mock-switch) + post-answer-analysis (takeaway/trace/
-related) + favorite; НЕ покрыты confidence-виджет, regenerate, no-js-fallback (CRITIQUE C13,
-coverage-gap). AA все текст-пары ≥4.5 обе темы (worst 5.52/5.24); opt-mark галочка = граф.
+related) + favorite **+ confidence** (R0.15: 🎲/🤔/💪 radiogroup + roving tabindex + стрелки/
+Home/End, эмодзи aria-hidden + текст; прод намеренно держит эмодзи → порт-решение); НЕ покрыты
+regenerate, no-js-fallback (CRITIQUE C13 **IN_PROGRESS**). confidence QA: detector exit 0
+(после фикса flat-type-hierarchy — убран 1.15em глиф), AA ≥4.5 (conf-q 7.18/8.57, checked
+6.54/6.87). AA все текст-пары ≥4.5 обе темы (worst 5.52/5.24); opt-mark галочка = граф.
 объект (C11). Наблюдение на порт: verdict `<p>` не live-region — `aria-live` (§8
 `#result-feedback`) проводится при порте, не дефект макета. Порт result BLOCKED (WIP).
 

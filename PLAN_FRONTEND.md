@@ -1022,3 +1022,23 @@ Dirty changes created by loop: 0
   †-сноска; registry notes/gaps_found. C12 остаётся IN_PROGRESS.
 - **Следующий тик:** worst-first — generationUnavailable / no-js (diagram отложен §4) ЛИБО
   C13 (result) / C16 (stats), ЛИБО Фаза E (порт) по разблокировке `base.css`.
+
+### 2026-07-12 — R0.15: пивот на C13 — confidence-виджет в `result`
+
+- **Worst-first по ценности:** остаток C12 обесценился (generationUnavailable ≈ покрыт
+  flashcard+info-alert; no-js — parity-фазный контракт-концерн; diagram — §4-бан Mermaid) →
+  переключение на C13 confidence (реальный компонент, намеренно живущий в проде).
+  Collision-guard: mockups+PLAN чисты, прод-WIP dirty (порт BLOCKED).
+- **Добавлен confidence-виджет** после вердикта (порядок вердикт→уверенность→кнопка, memory
+  `project_post_answer_js`): «Насколько был уверен в ответе?» + 3 уровня 🎲 Угадал / 🤔 Не
+  уверен / 💪 Уверен. `role=radiogroup` (`aria-labelledby`), кнопки `role=radio`+`aria-checked`,
+  roving tabindex + стрелки/Home/End (паттерн settings seg-control), эмодзи `aria-hidden` +
+  текст-лейбл (<460px только глиф). Прод намеренно держит 🎲🤔💪 (memory `project_icon_system`)
+  → при порте точка решения эмодзи-vs-монохром (CSS-коммент).
+- **Слоп-ловушка (детектор):** `1.15em` глиф = 18.4px рядом с 16px → [flat-type-hierarchy];
+  убран кастомный размер (эмодзи наследует fs-sm), exit 0.
+- **QA (§9):** detector exit 0; AA обе темы ≥4.5 (conf-q ink2/surface 7.18/8.57; текст ink/paper
+  15.55; checked signal-ink/signal-wash 6.54/6.87).
+- **Ledgers:** CRITIQUE C13 IN_PROGRESS + журнал cr.17; matrix §-сноска; registry notes/gaps.
+- **Следующий тик:** worst-first — C13 regenerate ЛИБО C16 (stats search), ЛИБО Фаза E (порт)
+  по разблокировке `base.css`.
