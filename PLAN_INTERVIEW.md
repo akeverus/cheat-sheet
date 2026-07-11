@@ -247,7 +247,7 @@ python3 scripts/gen-interview-plan.py --write --reset      # + сбросить 
 
 <!-- INTERVIEW-PLAN:START (auto: scripts/gen-interview-plan.py) -->
 
-_Сводка: сидеров=318 · ✅DONE=0 · 🔄WIP=0 · ⬜QUEUED=318 · остаток визуально-палящих блоков (по не-DONE)=9070. Проверка каждого файла — против `docs/golden-examples.md`._
+_Сводка: сидеров=318 · ✅DONE=1 · 🔄WIP=0 · ⬜QUEUED=317 · остаток визуально-палящих блоков (по не-DONE)=9050. Проверка каждого файла — против `docs/golden-examples.md`._
 
 **Golden** = статус проверки файла против `docs/golden-examples.md` (⬜ QUEUED · 🔄 WIP · ✅ DONE). **Tell** = сколько блоков ещё визуально палят correct (самый длинный / единств. с `:` / больше backtick'ов / единств. с перечислением) — worst-first ключ, диагностика, не авто-гейт.
 
@@ -498,18 +498,18 @@ _Сводка: сидеров=318 · ✅DONE=0 · 🔄WIP=0 · ⬜QUEUED=318 · 
 | 243 | `design-chat-system` | system-design | 21 | 21 | ⬜ |
 | 244 | `property-based-testing` | testing | 21 | 21 | ⬜ |
 | 245 | `loki-grafana` | monitoring | 28 | 20 | ⬜ |
-| 246 | `api-versioning` | api | 20 | 20 | ⬜ |
-| 247 | `conflict-resolution` | leadership | 20 | 20 | ⬜ |
-| 248 | `estimations-planning` | leadership | 20 | 20 | ⬜ |
-| 249 | `linkerd` | devops | 20 | 20 | ⬜ |
-| 250 | `mtls` | security | 20 | 20 | ⬜ |
-| 251 | `resilience4j` | spring | 20 | 20 | ⬜ |
-| 252 | `tech-interviewing` | leadership | 20 | 20 | ⬜ |
-| 253 | `gcp` | cloud | 28 | 19 | ⬜ |
-| 254 | `zero-trust` | security | 19 | 19 | ⬜ |
-| 255 | `redpanda` | messaging | 20 | 18 | ⬜ |
-| 256 | `spring-cache` | spring | 18 | 18 | ⬜ |
-| 257 | `strangler-fig` | architecture | 18 | 18 | ⬜ |
+| 246 | `conflict-resolution` | leadership | 20 | 20 | ⬜ |
+| 247 | `estimations-planning` | leadership | 20 | 20 | ⬜ |
+| 248 | `linkerd` | devops | 20 | 20 | ⬜ |
+| 249 | `mtls` | security | 20 | 20 | ⬜ |
+| 250 | `resilience4j` | spring | 20 | 20 | ⬜ |
+| 251 | `tech-interviewing` | leadership | 20 | 20 | ⬜ |
+| 252 | `gcp` | cloud | 28 | 19 | ⬜ |
+| 253 | `zero-trust` | security | 19 | 19 | ⬜ |
+| 254 | `redpanda` | messaging | 20 | 18 | ⬜ |
+| 255 | `spring-cache` | spring | 18 | 18 | ⬜ |
+| 256 | `strangler-fig` | architecture | 18 | 18 | ⬜ |
+| 257 | `api-versioning` | api | 20 | 17 | ✅ |
 | 258 | `kotlin-flow` | kotlin | 17 | 17 | ⬜ |
 | 259 | `rest-maturity` | api | 17 | 17 | ⬜ |
 | 260 | `design-uber` | system-design | 30 | 16 | ⬜ |
