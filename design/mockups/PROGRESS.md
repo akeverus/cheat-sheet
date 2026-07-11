@@ -42,7 +42,7 @@ empty/done = **(b)** app-shell (при развороте); focus-order = **(c)*
 | **Результат/фидбек** | `result.html` | 🟢 **Фаза B 1/5 · detector✅ · AA обе темы✅ · вьюпорты✅** | **ГОТОВ (it.17).** Полноширинный app-shell (main + рельс «разбор глубже»+действия). Оба варианта (верно/неверно). Осталось глобальное: ultra-wide мера option-строк (#4, общее с эталоном) |
 | **Итоги сессии** | `session-summary.html` | 🟢 **Фаза B 2/5 · detector✅ · AA обе темы✅ · вьюпорты✅** | **ГОТОВ (it.18).** Полноширинный app-shell: main (редакц. вердикт + stat-плитки + таблица по темам + ошибки) + рельс (действия + рекомендации). Оба тона (сильная/слабая). Без hero-цифры (ban) |
 | **Настройки** | `settings.html` | 🟢 **Фаза B 3/5 · detector✅ · AA обе темы✅ · вьюпорты✅** | **ГОТОВ (it.19).** Полноширинный app-shell: рельс-вкладки (Сессия/Оформление/Данные, WAI-ARIA) + панель. Оформление = сетка из 7 setting-карт (все оси персонализации). Сессия (фильтры+запуск+стрик), Данные (экспорт+опасная зона) |
-| Статистика | `stats.html` | ⬜ | — |
+| **Статистика** | `stats.html` | 🟢 **Фаза B 4/5 · detector✅ · AA обе темы✅ · вьюпорты✅** | **ГОТОВ (it.20).** Полноширинный app-shell дашборд: main (что-делать-дальше + обзор-плитки + 2 SVG-графика как Chart.js-заглушки + сортируемая таблица тем) + рельс (прогноз 7 дней + пробелы банка). Chart.js-зоны = статичные SVG-бары с id-хуками |
 | Shell/шапка | `shell.html` | ⬜ | — |
 
 **ЧЕКПОИНТ (it.2):** эталон чист по detector + читаем на 5 вьюпортах в обеих темах →
@@ -135,6 +135,36 @@ empty/done = **(b)** app-shell (при развороте); focus-order = **(c)*
 
 ## Журнал
 
+- **it.20** — **ФАЗА B, экран 4/5: `stats.html` собран с нуля** (дашборд аналитики). По
+  контракту (продовый stats.html + stats.js): секции next-actions / обзор / 2 графика /
+  таблица тем / прогноз / пробелы. **Ключевое решение:** Chart.js в макет не грузится →
+  зоны `#topicProgressChart` / `#topicAccuracyChart` реализованы **статичными SVG-барами**
+  (viewBox-масштаб, role=img + осмысленный aria-label + скрытый `*Fallback` role=status) —
+  честная заглушка Chart.js-зоны без внешней зависимости. Полноширинный app-shell: **main**
+  = «что делать дальше» (3 карты, is-recommended = signal-акцент) + обзор (6 плиток
+  total/выучено/к-повтору/точность/верно/ошибки) + charts-row (2 карты, 1fr 1fr ≥900px,
+  стек ниже) + сортируемая **таблица тем** (Тема/Всего/Прогресс[мини-бар learned+due]/
+  Точность[тон hi/mid/lo]/Сброшено/Зрелость) в `topic-table-wrap[overflow-x:auto]`; **рельс**
+  = прогноз повторений 7 дней (day-row: имя+бар+счётчик, сегодня=spark) + пробелы банка
+  (topic + spark-чип «N из M»). **QA (§3):** detector — сначала flat-type-hierarchy
+  (хардкод `11px` c-label/c-value + `0.85em` стрелка th → кластер 11/13.6/16); фикс:
+  оба литерала → `var(--fs-xs)` / убрал em-стрелку → **exit 0**. **AA:** OKLCH→linear
+  свип 30 узлов обе темы, **fails=[]** (light min 5.31 = th/rail-kick/mock-tag; dark min
+  6.67; тон-точности acc lo/mid/hi 5.96–6.9 light, chart-лейблы 14.4). **Лейаут §4:**
+  375/768/1280/1728/2560 — overflow 0, chrome span=vw, gutter симметр. (20→56px), брейк
+  1080px (main+рельс ↔ одна колонка, main над aside — верный порядок чтения), charts стек
+  <900px; на 2560 grid 95.6% (main 1912 + рельс 480), **все блоки main = 100% ширины**
+  (charts/table/overview/next-actions), void 0; широкая таблица (677px на 375) скроллится
+  ВНУТРИ `topic-table-wrap`, страницу не рвёт (overflowX=0). **Клавиатура:** сортируемые th
+  tabindex=0 + Enter/Space (toggle asc↔desc + live-region `#table-sort-status`),
+  `topic-table-wrap` role=region tabindex=0 (скролл широкой таблицы с клавиатуры), 16
+  фокус-целей. **reduced-motion** fail-safe (`.anim`/`.stagger` opacity 1 по умолчанию).
+  **Маппинг DOM-хуков:** `#topic-stats-data` (JSON topicStatsJson) → таблица+графики;
+  `#topicProgressChart`/`#topicAccuracyChart` (+`*Fallback` role=status) → Chart.js-зоны;
+  `#topic-table` th.sortable[data-col][aria-sort] + `#table-sort-status` → сортировка stats.js;
+  `#topic-table-wrap`[data-collapse-rows/role=region] + `#topic-table-expander` → сворачивание;
+  next-actions → due/onlyWrong/weakTopics; forecast → reviewForecast[Max]; gaps → coverageGaps.
+  Дальше — экран 5/5 `shell.html` (shell/шапка), затем §8 стоп-условие.
 - **it.19** — **ФАЗА B, экран 3/5: `settings.html` собран с нуля** + **системный AA-фикс
   primary-кнопки на 4 файлах.** По контракту (продовый settings.html): tablist
   (Сессия/Оформление/Данные), панели `panel-*`. Полноширинный app-shell: **рельс-вкладки**

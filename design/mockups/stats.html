@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Аналитика · макет Instrument</title>
+
+  <!-- Шрифты: Newsreader (проза), Space Grotesk (UI), JetBrains Mono (числа/лейблы) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    /* ===== Reset / основа (общий язык Instrument) ========================== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-ui); font-size: var(--fs-base); line-height: var(--lh-normal); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    a { color: var(--signal-ink); }
+    code, kbd, pre { font-family: var(--font-mono); }
+    [hidden] { display: none !important; }
+    .wrap { width: 100%; padding-inline: var(--gutter); }
+    .skip-link { position: absolute; left: var(--s-4); top: -4rem; background: var(--signal); color: var(--signal-on); padding: var(--s-2) var(--s-4); border-radius: var(--r-sm); z-index: 30; transition: top var(--dur-1) var(--ease-out); }
+    .skip-link:focus { top: var(--s-4); }
+    :where(a, button, input, select, summary):focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; border-radius: var(--r-sm); }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+    /* ===== Макет-каркас (слим-лейбл) ====================================== */
+    .mock-bar { border-bottom: 1px dashed var(--line-strong); background: var(--surface); }
+    .mock-bar__inner { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; padding-block: var(--s-2); }
+    .mock-tag { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); color: var(--ink-3); }
+
+    /* ===== Шапка ========================================================== */
+    .site-head { border-bottom: 1px solid var(--line); background: var(--paper); }
+    .site-head__inner { display: flex; align-items: center; gap: var(--s-4); padding-block: var(--s-4); }
+    .brand { display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--font-mono); font-weight: var(--fw-semi); font-size: var(--fs-sm); letter-spacing: var(--track-mono); color: var(--ink); text-decoration: none; margin-right: auto; }
+    .brand-mark { width: 0.85rem; height: 0.85rem; border-radius: 3px; background: var(--signal); box-shadow: inset 0 0 0 3px var(--paper), 0 0 0 1px var(--signal); }
+    .brand span { color: var(--ink-3); }
+    .site-nav { display: flex; gap: var(--s-1); }
+    .site-nav a { font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); text-decoration: none; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); transition: color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out); }
+    .site-nav a:hover { color: var(--ink); background: var(--surface); }
+    .site-nav a[aria-current="page"] { color: var(--signal-ink); background: var(--signal-wash); }
+    .nav-menu-btn { display: none; }
+    .theme-toggle { display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pill); padding: var(--s-2) var(--s-3); cursor: pointer; transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+    .theme-toggle:hover { border-color: var(--line-strong); color: var(--ink); }
+    .theme-toggle .tt-glyph { font-size: 1em; line-height: 1; }
+
+    /* ===== Дашборд: main + рельс ========================================= */
+    .stats { padding: var(--s-7) 0 var(--s-9); }
+    .stats-head { margin: 0 0 var(--s-6); }
+    .stats-kicker { font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: var(--fw-medium); letter-spacing: var(--track-mono); color: var(--ink-3); margin: 0 0 var(--s-2); }
+    .stats-title { font-family: var(--font-hero); font-size: var(--fs-xl); font-weight: var(--fw-medium); line-height: var(--lh-hero); letter-spacing: var(--track-hero); color: var(--ink); margin: 0; }
+
+    .stats-grid { display: grid; gap: var(--s-6); grid-template-columns: 1fr; }
+    .stats-main { min-width: 0; }
+    .stats-aside { min-width: 0; }
+    @media (min-width: 1080px) {
+      .stats-grid { grid-template-columns: minmax(0, 1fr) clamp(20rem, 24vw, 30rem); gap: var(--s-8); align-items: start; }
+      .stats-aside { position: sticky; top: var(--s-5); }
+    }
+
+    .section-title { font-family: var(--font-ui); font-size: var(--fs-md); font-weight: var(--fw-semi); letter-spacing: var(--track-tight); color: var(--ink); margin: 0 0 var(--s-4); }
+    .stats-block { margin: 0 0 var(--s-7); }
+
+    /* --- «Что делать дальше»: карты рекомендаций ------------------------- */
+    .next-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--s-4); }
+    .action-card { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-5); border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--surface); text-decoration: none; color: var(--ink); transition: border-color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out); }
+    .action-card:hover { border-color: var(--signal-edge); background: var(--paper); transform: translateY(-2px); }
+    .action-card.is-recommended { border-color: var(--signal); background: var(--signal-wash); box-shadow: inset 0 0 0 1px var(--signal); }
+    .action-num { font-family: var(--font-mono); font-size: var(--fs-xl); font-weight: var(--fw-semi); letter-spacing: var(--track-tight); color: var(--ink); line-height: 1; }
+    .action-card.is-recommended .action-num { color: var(--signal-ink); }
+    .action-label { font-size: var(--fs-sm); color: var(--ink-2); line-height: var(--lh-snug); }
+    .action-go { margin-top: auto; font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--signal-ink); display: inline-flex; align-items: center; gap: var(--s-2); }
+    .action-go svg { width: 0.95rem; height: 0.95rem; }
+
+    /* --- Overview-плитки ------------------------------------------------- */
+    .overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: var(--s-3); }
+    .ov-tile { border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--surface); padding: var(--s-4) var(--s-5); }
+    .ov-num { font-family: var(--font-mono); font-size: var(--fs-lg); font-weight: var(--fw-semi); letter-spacing: var(--track-tight); color: var(--ink); line-height: 1.1; }
+    .ov-num.is-signal { color: var(--signal-ink); }
+    .ov-label { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); color: var(--ink-2); margin-top: var(--s-2); }
+
+    /* --- Графики (Chart.js-зоны как статичные SVG-заглушки) -------------- */
+    .charts-row { display: grid; grid-template-columns: 1fr; gap: var(--s-4); }
+    @media (min-width: 900px) { .charts-row { grid-template-columns: 1fr 1fr; } }
+    .chart-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-5); }
+    .chart-card h3 { font-family: var(--font-ui); font-size: var(--fs-base); font-weight: var(--fw-semi); color: var(--ink); margin: 0 0 var(--s-1); }
+    .chart-subtitle { font-size: var(--fs-sm); color: var(--ink-2); margin: 0 0 var(--s-4); }
+    .chart-wrap { width: 100%; }
+    .chart-svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .chart-svg .bar-track { fill: var(--surface-2); }
+    .chart-svg .bar-learned { fill: var(--signal); }
+    .chart-svg .bar-due { fill: var(--spark); }
+    .chart-svg .bar-acc-hi { fill: var(--success); }
+    .chart-svg .bar-acc-mid { fill: var(--spark); }
+    .chart-svg .bar-acc-lo { fill: var(--error); }
+    .chart-svg .c-label { font-family: var(--font-mono); font-size: var(--fs-xs); fill: var(--ink-2); }
+    .chart-svg .c-value { font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: 600; fill: var(--ink); }
+    .chart-legend { display: flex; flex-wrap: wrap; gap: var(--s-4); margin-top: var(--s-4); font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-2); }
+    .chart-legend span { display: inline-flex; align-items: center; gap: var(--s-2); }
+    .chart-legend .sw { width: 0.7rem; height: 0.7rem; border-radius: 3px; }
+    .sw-learned { background: var(--signal); }
+    .sw-due { background: var(--spark); }
+
+    /* --- Таблица детализации по темам ------------------------------------ */
+    .topic-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-md); }
+    .topic-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+    .topic-table th, .topic-table td { padding: var(--s-3) var(--s-4); text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .topic-table thead th { font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: var(--fw-medium); letter-spacing: var(--track-mono); color: var(--ink-3); background: var(--surface); }
+    .topic-table th.sortable { cursor: pointer; user-select: none; }
+    .topic-table th.sortable:hover { color: var(--ink); }
+    .topic-table th[aria-sort] .arw { color: var(--signal-ink); }
+    .topic-table th .arw { margin-left: var(--s-1); }
+    .topic-table tbody tr:last-child td { border-bottom: 0; }
+    .topic-table tbody tr:hover td { background: var(--surface); }
+    .topic-table .t-name { color: var(--ink); font-weight: var(--fw-medium); white-space: normal; }
+    .topic-table .num { text-align: right; font-family: var(--font-mono); color: var(--ink-2); }
+    .topic-table .acc { text-align: right; font-family: var(--font-mono); font-weight: var(--fw-semi); }
+    .topic-table .acc.hi { color: var(--success-ink); }
+    .topic-table .acc.mid { color: var(--spark-ink); }
+    .topic-table .acc.lo { color: var(--error-ink); }
+    /* Мини-прогресс в ячейке */
+    .cell-progress { display: flex; align-items: center; gap: var(--s-3); min-width: 9rem; }
+    .cp-track { flex: 1 1 auto; height: 6px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; display: flex; }
+    .cp-learned { height: 100%; background: var(--signal); }
+    .cp-due { height: 100%; background: var(--spark); }
+    .cp-text { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-2); white-space: nowrap; }
+
+    /* ===== Рельс: прогноз + пробелы ====================================== */
+    .rail-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-5); margin-bottom: var(--s-5); }
+    .rail-card-kicker { font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: var(--fw-medium); letter-spacing: var(--track-mono); color: var(--ink-3); margin: 0 0 var(--s-4); }
+    /* Прогноз повторений — 7 строк-дней */
+    .forecast { display: flex; flex-direction: column; gap: var(--s-3); }
+    .fc-day { display: grid; grid-template-columns: 3.5rem 1fr auto; gap: var(--s-3); align-items: center; }
+    .fc-name { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-2); }
+    .fc-track { height: 0.7rem; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
+    .fc-fill { height: 100%; border-radius: inherit; background: var(--signal); }
+    .fc-fill.is-today { background: var(--spark); }
+    .fc-count { font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: var(--fw-semi); color: var(--ink); min-width: 1.5rem; text-align: right; }
+    /* Пробели в банке */
+    .gaps { display: flex; flex-direction: column; gap: var(--s-3); }
+    .gap-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); font-size: var(--fs-sm); }
+    .gap-name { color: var(--ink); }
+    .gap-chip { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--spark-ink); background: var(--spark-wash); border: 1px solid var(--spark); border-radius: var(--r-pill); padding: 0 var(--s-2); white-space: nowrap; }
+
+    /* ===== Motion (emil) ================================================== */
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .anim { opacity: 1; }
+    @media (prefers-reduced-motion: no-preference) {
+      .anim { animation: rise var(--dur-3) var(--ease-out) both; }
+      .stagger > * { animation: rise var(--dur-3) var(--ease-out) both; }
+      .stagger > *:nth-child(1) { animation-delay: 40ms; }
+      .stagger > *:nth-child(2) { animation-delay: 80ms; }
+      .stagger > *:nth-child(3) { animation-delay: 120ms; }
+      .stagger > *:nth-child(4) { animation-delay: 160ms; }
+    }
+
+    /* ===== Адаптация ===================================================== */
+    @media (max-width: 640px) {
+      .site-head__inner { gap: var(--s-3); }
+      .site-nav { display: none; }
+      .nav-menu-btn { display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); cursor: pointer; }
+      .nav-menu-btn svg { width: 1.15rem; height: 1.15rem; }
+      .theme-toggle .tt-word { display: none; }
+      .theme-toggle { padding: var(--s-2); width: 2.25rem; height: 2.25rem; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Перейти к аналитике</a>
+
+  <div class="mock-bar">
+    <div class="wrap mock-bar__inner">
+      <span class="mock-tag">макет · дашборд аналитики · графики — статичные заглушки Chart.js-зон</span>
+    </div>
+  </div>
+
+  <header class="site-head">
+    <div class="wrap site-head__inner">
+      <a class="brand" href="#" aria-label="собес/трек, на главную">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span><b>собес</b>/трек</span>
+      </a>
+      <nav class="site-nav" aria-label="Основная навигация">
+        <a href="#">Фокус</a>
+        <a href="#" aria-current="page">Аналитика</a>
+        <a href="#">Настройки</a>
+      </nav>
+      <button class="nav-menu-btn" type="button" aria-label="Меню">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Тема оформления: авто">
+        <span class="tt-glyph" id="theme-glyph" aria-hidden="true">◐</span>
+        <span class="tt-word" id="theme-word">Авто</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1" class="stats">
+    <div class="wrap">
+      <div class="stats-head">
+        <p class="stats-kicker">аналитика</p>
+        <h1 class="stats-title">Аналитика</h1>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stats-main">
+
+          <!-- Что делать дальше -->
+          <section class="stats-block" aria-labelledby="sec-next">
+            <h2 class="section-title" id="sec-next">Что делать дальше</h2>
+            <div class="next-actions stagger">
+              <a class="action-card is-recommended" href="#">
+                <span class="action-num">18</span>
+                <span class="action-label">вопросов ждут повтора сегодня</span>
+                <span class="action-go">Повторить <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+              </a>
+              <a class="action-card" href="#">
+                <span class="action-num">7</span>
+                <span class="action-label">тем с ошибками, где стоит разобраться</span>
+                <span class="action-go">Разобрать ошибки <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+              </a>
+              <a class="action-card" href="#">
+                <span class="action-num">3</span>
+                <span class="action-label">слабые темы для стратегии добивания</span>
+                <span class="action-go">Слабые темы <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+              </a>
+            </div>
+          </section>
+
+          <!-- Overview -->
+          <section class="stats-block" aria-labelledby="sec-ov">
+            <h2 class="section-title" id="sec-ov">Обзор</h2>
+            <div class="overview">
+              <div class="ov-tile"><div class="ov-num">312</div><div class="ov-label">всего</div></div>
+              <div class="ov-tile"><div class="ov-num is-signal">184</div><div class="ov-label">выучено</div></div>
+              <div class="ov-tile"><div class="ov-num">18</div><div class="ov-label">к повтору</div></div>
+              <div class="ov-tile"><div class="ov-num">78%</div><div class="ov-label">точность</div></div>
+              <div class="ov-tile"><div class="ov-num">1240</div><div class="ov-label">верно</div></div>
+              <div class="ov-tile"><div class="ov-num">352</div><div class="ov-label">ошибок</div></div>
+            </div>
+          </section>
+
+          <!-- Графики -->
+          <section class="stats-block" aria-labelledby="sec-charts">
+            <h2 class="section-title" id="sec-charts">Темы в разрезе</h2>
+            <div class="charts-row">
+              <div class="chart-card">
+                <h3>Прогресс по темам</h3>
+                <p class="chart-subtitle">Самые активные темы</p>
+                <div class="chart-wrap">
+                  <!-- Chart.js-зона #topicProgressChart — здесь статичная SVG-заглушка -->
+                  <svg id="topicProgressChart" class="chart-svg" viewBox="0 0 320 190" role="img" aria-label="Гистограмма прогресса по активным темам: выучено и осталось. Полные данные — в таблице ниже.">
+                    <g>
+                      <text class="c-label" x="0" y="16">Транзакции</text>
+                      <rect class="bar-track" x="0" y="22" width="320" height="12" rx="6"/>
+                      <rect class="bar-learned" x="0" y="22" width="240" height="12" rx="6"/>
+                      <text class="c-value" x="248" y="32">40/52</text>
+                    </g>
+                    <g>
+                      <text class="c-label" x="0" y="60">Бины и контекст</text>
+                      <rect class="bar-track" x="0" y="66" width="320" height="12" rx="6"/>
+                      <rect class="bar-learned" x="0" y="66" width="196" height="12" rx="6"/>
+                      <text class="c-value" x="204" y="76">33/44</text>
+                    </g>
+                    <g>
+                      <text class="c-label" x="0" y="104">AOP и прокси</text>
+                      <rect class="bar-track" x="0" y="110" width="320" height="12" rx="6"/>
+                      <rect class="bar-learned" x="0" y="110" width="120" height="12" rx="6"/>
+                      <text class="c-value" x="128" y="120">18/38</text>
+                    </g>
+                    <g>
+                      <text class="c-label" x="0" y="148">Конфигурация</text>
+                      <rect class="bar-track" x="0" y="154" width="320" height="12" rx="6"/>
+                      <rect class="bar-learned" x="0" y="154" width="150" height="12" rx="6"/>
+                      <text class="c-value" x="158" y="164">22/30</text>
+                    </g>
+                  </svg>
+                  <p id="topicProgressChartFallback" class="visually-hidden" role="status" aria-live="polite"></p>
+                </div>
+                <div class="chart-legend">
+                  <span><span class="sw sw-learned" aria-hidden="true"></span>выучено</span>
+                  <span><span class="sw sw-due" aria-hidden="true"></span>к повтору</span>
+                </div>
+              </div>
+
+              <div class="chart-card">
+                <h3>Точность по темам</h3>
+                <p class="chart-subtitle">Сначала самые слабые</p>
+                <div class="chart-wrap">
+                  <!-- Chart.js-зона #topicAccuracyChart — статичная SVG-заглушка -->
+                  <svg id="topicAccuracyChart" class="chart-svg" viewBox="0 0 320 190" role="img" aria-label="Гистограмма точности по темам от слабых к сильным, в процентах. Полные данные — в таблице ниже.">
+                    <g>
+                      <text class="c-label" x="0" y="16">AOP и прокси</text>
+                      <rect class="bar-track" x="0" y="22" width="320" height="12" rx="6"/>
+                      <rect class="bar-acc-lo" x="0" y="22" width="150" height="12" rx="6"/>
+                      <text class="c-value" x="158" y="32">47%</text>
+                    </g>
+                    <g>
+                      <text class="c-label" x="0" y="60">Конфигурация</text>
+                      <rect class="bar-track" x="0" y="66" width="320" height="12" rx="6"/>
+                      <rect class="bar-acc-mid" x="0" y="66" width="205" height="12" rx="6"/>
+                      <text class="c-value" x="213" y="76">64%</text>
+                    </g>
+                    <g>
+                      <text class="c-label" x="0" y="104">Бины и контекст</text>
+                      <rect class="bar-track" x="0" y="110" width="320" height="12" rx="6"/>
+                      <rect class="bar-acc-hi" x="0" y="110" width="262" height="12" rx="6"/>
+                      <text class="c-value" x="270" y="120">82%</text>
+                    </g>
+                    <g>
+                      <text class="c-label" x="0" y="148">Транзакции</text>
+                      <rect class="bar-track" x="0" y="154" width="320" height="12" rx="6"/>
+                      <rect class="bar-acc-hi" x="0" y="154" width="288" height="12" rx="6"/>
+                      <text class="c-value" x="296" y="164">90%</text>
+                    </g>
+                  </svg>
+                  <p id="topicAccuracyChartFallback" class="visually-hidden" role="status" aria-live="polite"></p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Детализация по темам -->
+          <section class="stats-block" aria-labelledby="sec-detail">
+            <h2 class="section-title" id="sec-detail">Детализация по темам</h2>
+            <div class="topic-table-wrap" id="topic-table-wrap" tabindex="0" role="region" aria-label="Детализация по темам">
+              <table class="topic-table" id="topic-table">
+                <caption class="visually-hidden">Статистика по темам</caption>
+                <thead>
+                  <tr>
+                    <th scope="col" class="sortable" data-col="0">Тема</th>
+                    <th scope="col" class="sortable num" data-col="1">Всего</th>
+                    <th scope="col">Прогресс</th>
+                    <th scope="col" class="sortable acc" data-col="3" aria-sort="ascending">Точность <span class="arw" aria-hidden="true">▲</span></th>
+                    <th scope="col" class="sortable num" data-col="4">Сброшено</th>
+                    <th scope="col" class="sortable num" data-col="5">Зрелость</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row" class="t-name">AOP и прокси</th>
+                    <td class="num">38</td>
+                    <td><div class="cell-progress"><div class="cp-track"><div class="cp-learned" style="width:47%"></div><div class="cp-due" style="width:13%"></div></div><span class="cp-text">18/38</span></div></td>
+                    <td class="acc lo">47%</td>
+                    <td class="num">2</td>
+                    <td class="num">1.8</td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class="t-name">Конфигурация</th>
+                    <td class="num">30</td>
+                    <td><div class="cell-progress"><div class="cp-track"><div class="cp-learned" style="width:73%"></div><div class="cp-due" style="width:10%"></div></div><span class="cp-text">22/30</span></div></td>
+                    <td class="acc mid">64%</td>
+                    <td class="num">0</td>
+                    <td class="num">2.4</td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class="t-name">Бины и контекст</th>
+                    <td class="num">44</td>
+                    <td><div class="cell-progress"><div class="cp-track"><div class="cp-learned" style="width:75%"></div><div class="cp-due" style="width:9%"></div></div><span class="cp-text">33/44</span></div></td>
+                    <td class="acc hi">82%</td>
+                    <td class="num">1</td>
+                    <td class="num">3.1</td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class="t-name">Транзакции</th>
+                    <td class="num">52</td>
+                    <td><div class="cell-progress"><div class="cp-track"><div class="cp-learned" style="width:77%"></div><div class="cp-due" style="width:8%"></div></div><span class="cp-text">40/52</span></div></td>
+                    <td class="acc hi">90%</td>
+                    <td class="num">0</td>
+                    <td class="num">3.6</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p id="table-sort-status" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+          </section>
+
+        </div><!-- /.stats-main -->
+
+        <aside class="stats-aside">
+          <div class="rail-card anim">
+            <p class="rail-card-kicker">прогноз повторений · 7 дней</p>
+            <div class="forecast">
+              <div class="fc-day"><span class="fc-name">сегодня</span><div class="fc-track"><div class="fc-fill is-today" style="width:90%"></div></div><span class="fc-count">18</span></div>
+              <div class="fc-day"><span class="fc-name">завтра</span><div class="fc-track"><div class="fc-fill" style="width:60%"></div></div><span class="fc-count">12</span></div>
+              <div class="fc-day"><span class="fc-name">ср</span><div class="fc-track"><div class="fc-fill" style="width:35%"></div></div><span class="fc-count">7</span></div>
+              <div class="fc-day"><span class="fc-name">чт</span><div class="fc-track"><div class="fc-fill" style="width:50%"></div></div><span class="fc-count">10</span></div>
+              <div class="fc-day"><span class="fc-name">пт</span><div class="fc-track"><div class="fc-fill" style="width:25%"></div></div><span class="fc-count">5</span></div>
+              <div class="fc-day"><span class="fc-name">сб</span><div class="fc-track"><div class="fc-fill" style="width:15%"></div></div><span class="fc-count">3</span></div>
+              <div class="fc-day"><span class="fc-name">вс</span><div class="fc-track"><div class="fc-fill" style="width:40%"></div></div><span class="fc-count">8</span></div>
+            </div>
+          </div>
+
+          <div class="rail-card anim">
+            <p class="rail-card-kicker">пробелы в банке</p>
+            <div class="gaps">
+              <div class="gap-row"><span class="gap-name">Реактивный стек</span><span class="gap-chip">4 из 12</span></div>
+              <div class="gap-row"><span class="gap-name">Kafka-интеграция</span><span class="gap-chip">6 из 15</span></div>
+              <div class="gap-row"><span class="gap-name">Безопасность</span><span class="gap-chip">9 из 20</span></div>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Тема: авто → светлая → тёмная (для ревью макета в обеих темах).
+    (function () {
+      var root = document.documentElement, btn = document.getElementById('theme-toggle'),
+          glyph = document.getElementById('theme-glyph'), word = document.getElementById('theme-word'),
+          modes = [ { name:'Авто', glyph:'◐', attr:null }, { name:'Светлая', glyph:'☀', attr:'light' }, { name:'Тёмная', glyph:'☾', attr:'dark' } ], i = 0;
+      btn.addEventListener('click', function () {
+        i = (i + 1) % modes.length; var m = modes[i];
+        if (m.attr) root.setAttribute('data-theme', m.attr); else root.removeAttribute('data-theme');
+        glyph.textContent = m.glyph; word.textContent = m.name;
+        btn.setAttribute('aria-label', 'Тема оформления: ' + m.name.toLowerCase());
+      });
+    })();
+
+    // Демо сортировки таблицы (переключение aria-sort на клик по заголовку).
+    (function () {
+      var status = document.getElementById('table-sort-status');
+      document.querySelectorAll('.topic-table th.sortable').forEach(function (th) {
+        th.setAttribute('tabindex', '0');
+        th.setAttribute('aria-keyshortcuts', 'Enter Space');
+        function toggle() {
+          var cur = th.getAttribute('aria-sort'); var next = cur === 'ascending' ? 'descending' : 'ascending';
+          document.querySelectorAll('.topic-table th').forEach(function (o) { o.removeAttribute('aria-sort'); var a = o.querySelector('.arw'); if (a) a.remove(); });
+          th.setAttribute('aria-sort', next);
+          var arw = document.createElement('span'); arw.className = 'arw'; arw.setAttribute('aria-hidden', 'true');
+          arw.textContent = next === 'ascending' ? '▲' : '▼'; th.appendChild(arw);
+          if (status) status.textContent = 'Отсортировано по колонке, ' + (next === 'ascending' ? 'по возрастанию' : 'по убыванию');
+        }
+        th.addEventListener('click', toggle);
+        th.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+      });
+    })();
+  </script>
+</body>
+</html>
