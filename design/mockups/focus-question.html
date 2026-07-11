@@ -330,6 +330,59 @@
       padding: 0.06em 0.3em; border-radius: 4px; border: 1px solid var(--line);
     }
 
+    /* --- Флешкарта (изучение / study-LEARN): скрытый ответ → раскрытие →
+       самооценка 1–4 (интервальный повтор). Тот же язык, что разбор, но без
+       вариантов: вопрос → «Показать ответ» → ответ-проза + четыре оценки. ---- */
+    .flash-prompt { font-size: var(--fs-sm); color: var(--ink-2); margin: 0 0 var(--s-6); }
+    .flash-answer {
+      border: 1px solid var(--line); border-radius: var(--r-md);
+      background: var(--surface); padding: var(--s-5); margin: 0 0 var(--s-6);
+    }
+    .flash-answer h2 {
+      display: flex; align-items: center; gap: var(--s-2);
+      font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: var(--fw-medium);
+      letter-spacing: var(--track-mono); color: var(--signal-ink); margin: 0 0 var(--s-3);
+    }
+    .flash-answer h2::before {
+      content: ""; width: 0.5rem; height: 0.5rem; border-radius: 2px;
+      background: var(--signal); flex: none;
+    }
+    .flash-answer:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+    .flash-body {
+      font-family: var(--font-hero); font-size: var(--fs-md);
+      line-height: var(--lh-normal); color: var(--ink); max-width: 62ch;
+    }
+    .flash-body code {
+      font-family: var(--font-mono); font-size: 0.85em; background: var(--surface-2);
+      padding: 0.06em 0.3em; border-radius: 4px; border: 1px solid var(--line);
+    }
+    /* Самооценка 1–4: две колонки на мобиле, четыре на широком */
+    .grade-label {
+      font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono);
+      color: var(--ink-3); margin: 0 0 var(--s-3);
+    }
+    .grade-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s-3); }
+    @media (min-width: 560px) { .grade-row { grid-template-columns: repeat(4, 1fr); } }
+    .grade {
+      display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-1);
+      padding: var(--s-3) var(--s-4);
+      border: 1px solid var(--line-strong); border-radius: var(--r-md);
+      background: var(--surface); color: var(--ink); cursor: pointer;
+      font-family: var(--font-ui); text-align: left;
+      transition: border-color var(--dur-1) var(--ease-out),
+                  background var(--dur-1) var(--ease-out),
+                  transform var(--dur-1) var(--ease-out);
+    }
+    .grade:hover { border-color: var(--signal-edge); background: var(--paper); transform: translateY(-1px); }
+    .grade:active { transform: translateY(0); }
+    /* Крайние оценки — семантический край на hover (в дополнение к тексту, не вместо) */
+    .grade--again:hover { border-color: var(--error); }
+    .grade--easy:hover { border-color: var(--success); }
+    .grade .g-key {
+      font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-3);
+    }
+    .grade .g-name { font-size: var(--fs-sm); font-weight: var(--fw-semi); }
+
     /* --- Сабмит + подсказка хоткеев -------------------------------------- */
     .submit-row {
       display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap;
@@ -500,6 +553,7 @@
       <div class="mock-states" role="group" aria-label="Состояния экрана (демо макета)">
         <button type="button" data-state="active" aria-pressed="true">Активный вопрос</button>
         <button type="button" data-state="result" aria-pressed="false">Разбор ответа</button>
+        <button type="button" data-state="flashcard" aria-pressed="false">Флешкарта (изучение)</button>
         <button type="button" data-state="empty" aria-pressed="false">Нет вопросов</button>
         <button type="button" data-state="done" aria-pressed="false">Завершено</button>
       </div>
@@ -681,6 +735,70 @@ public class OrderService {
       </div>
     </section>
 
+    <!-- ================= СОСТОЯНИЕ: флешкарта (изучение) =============== -->
+    <section class="state" data-state="flashcard" hidden>
+      <div class="wrap">
+        <div class="focus-grid">
+          <aside class="focus-aside">
+            <div class="rail">
+              <div class="rail-progress">
+                <div class="rail-count">Карточка <b>4</b> из 15</div>
+                <div class="progress-track" role="progressbar" aria-label="Прогресс изучения"
+                     aria-valuemin="0" aria-valuemax="15" aria-valuenow="4">
+                  <div class="progress-fill" style="transform: scaleX(0.27)"></div>
+                </div>
+              </div>
+              <span class="streak-chip"><span class="spark" aria-hidden="true"></span>стрик 5 дней</span>
+              <button type="button" class="rail-finish">Завершить изучение</button>
+            </div>
+            <div class="aside-hints">
+              <h2>Горячие клавиши</h2>
+              <dl>
+                <dt><kbd>Пробел</kbd></dt><dd>показать ответ</dd>
+                <dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>самооценка</dd>
+                <dt><kbd>→</kbd></dt><dd>следующая карточка</dd>
+              </dl>
+            </div>
+          </aside>
+
+          <div class="focus-main">
+            <p class="focus-topic">spring<span class="dot">·</span>bean scope</p>
+            <h1 class="focus-question">
+              Чем scope <span class="nowrap"><code>prototype</code></span> отличается от <span class="nowrap"><code>singleton</code></span> у Spring-бина?
+            </h1>
+            <p class="flash-prompt">Вспомни ответ, затем открой карточку и честно оцени, насколько уверенно знал.</p>
+
+            <!-- Под-состояние 1: ответ скрыт -->
+            <div class="submit-row" id="flash-reveal-row">
+              <button type="button" class="btn btn-primary" id="flash-reveal" aria-expanded="false" aria-controls="flash-revealed">Показать ответ</button>
+              <span class="kbd-hint"><span><kbd>Пробел</kbd> открыть</span></span>
+            </div>
+
+            <!-- Под-состояние 2: ответ раскрыт + самооценка -->
+            <div id="flash-revealed" hidden>
+              <div class="flash-answer" tabindex="-1" aria-live="polite">
+                <h2>Ответ</h2>
+                <div class="flash-body">
+                  <code>singleton</code>: один экземпляр на контейнер. Spring создаёт бин при
+                  старте и кэширует его. <code>prototype</code>: новый экземпляр на каждый
+                  запрос из контекста (<code>getBean()</code> или инъекция). Контейнер его
+                  <em>не</em> хранит и не управляет полным жизненным циклом, поэтому метод
+                  <code>@PreDestroy</code> у prototype-бина не вызывается.
+                </div>
+              </div>
+              <p class="grade-label">насколько уверенно вспомнил?</p>
+              <div class="grade-row" role="group" aria-label="Самооценка знания карточки">
+                <button type="button" class="grade grade--again"><span class="g-key">1</span><span class="g-name">Снова</span></button>
+                <button type="button" class="grade"><span class="g-key">2</span><span class="g-name">Трудно</span></button>
+                <button type="button" class="grade"><span class="g-key">3</span><span class="g-name">Хорошо</span></button>
+                <button type="button" class="grade grade--easy"><span class="g-key">4</span><span class="g-name">Легко</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ================= СОСТОЯНИЕ: нет вопросов ======================= -->
     <section class="state" data-state="empty" hidden>
       <div class="wrap">
@@ -776,6 +894,32 @@ public class OrderService {
       }
       buttons.forEach(function (b) {
         b.addEventListener('click', function () { show(b.getAttribute('data-state')); });
+      });
+    })();
+
+    // Флешкарта: раскрытие ответа (disclosure). «Показать ответ»/Пробел → показать
+    // ответ + самооценку, фокус на ответ, кнопка раскрытия скрыта. Пробел работает,
+    // только пока видно состояние флешкарты и ответ ещё скрыт.
+    (function () {
+      var revealBtn = document.getElementById('flash-reveal'),
+          revealRow = document.getElementById('flash-reveal-row'),
+          revealed = document.getElementById('flash-revealed'),
+          section = document.querySelector('.state[data-state="flashcard"]'),
+          answer = revealed ? revealed.querySelector('.flash-answer') : null;
+      if (!revealBtn) return;
+      function reveal() {
+        revealed.hidden = false;
+        revealRow.hidden = true;
+        revealBtn.setAttribute('aria-expanded', 'true');
+        if (answer) answer.focus();
+      }
+      revealBtn.addEventListener('click', reveal);
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== ' ' && e.code !== 'Space') return;
+        if (section.hidden || !revealed.hidden) return;
+        var isText = /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test((e.target && e.target.tagName) || '');
+        if (isText) return;               // не перехватывать пробел на контролах
+        e.preventDefault(); reveal();
       });
     })();
 

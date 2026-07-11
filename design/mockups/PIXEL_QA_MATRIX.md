@@ -40,9 +40,11 @@
 | no-js | TODO | result.html живой fallback (RECHECK); прочие — TODO. |
 | print | TODO | не инвентаризован. |
 
-`†` focus-training: покрыты 4 ядровых состояния (active/result/empty/done); НЕ покрыты
-flashcard-reveal/grade, study-LEARN, generationUnavailable, loading, inline-alert/error,
-no-js, diagram (CRITIQUE C12, coverage-gap; порт focus-training BLOCKED параллельным WIP).
+`†` focus-training: покрыты 4 ядровых (active/result/empty/done) **+ flashcard** (изучение/
+study-LEARN: reveal→grade, R0.12); НЕ покрыты generationUnavailable, loading, inline-alert/
+error, no-js, diagram (CRITIQUE C12 **IN_PROGRESS**; порт focus-training BLOCKED параллельным
+WIP). flashcard QA: detector exit 0 (после фиксов side-tab→1px border + em-dash→двоеточия);
+AA обе темы все пары ≥4.5 (flash-h2 signal-ink/surface 6.41/8.32; flash-body 14.4; ink3 5.31).
 
 `‡` focus-training AA: все ТЕКСТОВЫЕ пары ≥4.5 обе темы (light worst 4.95 badge, dark 5.24);
 единственная пара ниже 4.5 — `opt-mark` галочка верного `success-on/success` = 4.28 light,

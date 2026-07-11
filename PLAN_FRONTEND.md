@@ -966,3 +966,25 @@ Dirty changes created by loop: 0
 - **Следующий тик:** worst-first — coverage-gaps C12 (focus states: flashcard/study-LEARN/
   generationUnavailable/loading/inline-alert/no-js/diagram) / C13 (result: confidence/regenerate/
   no-js) / C16 (stats: search) ЛИБО Фаза E (порт) по разблокировке `base.css`.
+
+### 2026-07-12 — R0.12: C12 частично — состояние `flashcard` (изучение/study-LEARN) в reference
+
+- **Worst-first:** после замыкания 7-поверхностного recheck (R0.11) крупнейший coverage-gap —
+  `focus-question` (7 недостающих состояний, C12). Collision-guard: mockups+PLAN чисты,
+  прод-WIP dirty (порт BLOCKED). Взял самую ценную единицу — целый ОТСУТСТВОВАВШИЙ режим.
+- **Добавлено состояние `flashcard`** (mock-switch «Флешкарта (изучение)»): reveal→grade.
+  Под-состояние 1 — ответ скрыт, «Показать ответ» (disclosure: `aria-expanded`/`aria-controls`,
+  Пробел или click, скоуп-гард). Под-состояние 2 — ответ-проза (карточка `1px` border +
+  mono-заголовок «Ответ» signal-ink с dot-маркером; фокус на ответ, `aria-live=polite`) +
+  самооценка 1–4 (Снова/Трудно/Хорошо/Легко, `role=group`, key+имя, крайние оценки —
+  семантический край error/success на hover в дополнение к тексту). Рейка изучения + aside-хинты.
+- **Слоп-ловушки (детектор поймал, исправлено):** (1) `border-left: 3px solid` = [side-tab]
+  (главный AI-tell) → полный `1px` border + dot-акцент; (2) [em-dash-overuse] в прозе → тире→
+  двоеточия/точки.
+- **QA (§9):** detector exit 0 (после фиксов); AA обе темы все пары ≥4.5 (flash-h2 signal-ink/
+  surface 6.41/8.32; flash-body ink/surface 14.4; ink3/surface 5.31; grade uniform).
+- **Ledgers:** CRITIQUE C12 **IN_PROGRESS** + журнал cr.14; matrix †-сноска (flashcard покрыт);
+  registry focus-training notes + states + gaps_found. Остаются 5 состояний C12.
+- **Следующий тик:** worst-first — следующее состояние C12 (generationUnavailable / loading /
+  inline-alert / no-js / diagram) ЛИБО C13 (result states) / C16 (stats search), ЛИБО Фаза E
+  (порт) по разблокировке `base.css`.
