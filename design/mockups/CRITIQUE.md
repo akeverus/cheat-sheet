@@ -31,11 +31,24 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 | C13 | P3 | `result` покрывает correct/incorrect/analysis/favorite, но registry-список result шире | **R0.15: добавлен confidence-виджет** — самооценка после вердикта (вердикт→уверенность→кнопка, memory `project_post_answer_js`): 3 уровня 🎲 Угадал / 🤔 Не уверен / 💪 Уверен, `role=radiogroup` + roving tabindex + стрелки/Home/End (паттерн seg-control), эмодзи `aria-hidden` + текст-лейбл. Прод НАМЕРЕННО держит 🎲🤔💪 (memory `project_icon_system`) → при порте точка решения эмодзи-vs-монохром (отмечено в CSS). Остаются: regenerate, no-js-fallback (живой `/answer`). При ПОРТЕ провести `aria-live` на вердикт (§8 `#result-feedback`). Порт result BLOCKED параллельным WIP | `result.html` | IN_PROGRESS |
 | C14 | P3 | `settings` покрывает 3 вкладки/export/7 осей/filters/session/streak, но не reset-options-confirm | Danger-кнопка «Сбросить банк вариантов» есть, шага ПОДТВЕРЖДЕНИЯ (необратимое действие) в макете нет. **ФИКС (R0.10):** добавлена confirm-модалка `role=alertdialog` (aria-labelledby/describedby, focus-trap, Esc, возврат фокуса, дефолт-фокус на «Отмена» = безопасно, scrim-click close); кнопка Danger получила `aria-haspopup=dialog`. Устанавливает паттерн подтверждения деструктива для порта (`POST /settings/reset-options`) | `settings.html` | **DONE** |
 | C15 | P2 | `stats`: амбер-заливки данных (`bar-due`, `bar-acc-mid`, `cp-due`, `fc-fill.is-today`) на треке `surface-2` = **2.06:1 < 3:1** (light) | **Реальный дефект** (не «граф. объект compliant», как C11): столбцы данных ДОЛЖНЫ отличаться от трека ≥3:1 (WCAG 1.4.11) — иначе амбер-бары «к повтору»/mid-точность не видны в светлой теме. Яркий `--spark` (L 0.720) слишком светлый на светлом треке. **ФИКС:** заливки данных → `--spark-ink` (L 0.500) = 5.02 light / 8.72 dark ≥3:1; легенда `.sw-due` синхронизирована. Правка ЛОКАЛЬНА в `stats.html` (`--spark` — декор-акцент, не тронут). learned↔due различаются ПО ТОНУ (teal↔амбер, CVD-safe blue-yellow ось) + числовой лейбл | `stats.html` | **DONE** |
-| C16 | P3 | `stats` покрывает overview/charts+fallback/sortable-table/forecast/gaps, но registry-список шире | Недостающие состояния: empty/cold-start (в проде — осознанный вид, memory `project_design_elevation_round1`), search (поиск по темам). Coverage-gap. Порт stats BLOCKED параллельным WIP | `stats.html` | TODO |
+| C16 | P3 | `stats` покрывает overview/charts+fallback/sortable-table/forecast/gaps, но registry-список шире | **R0.16: добавлен поиск по темам** — панель в секции «Детализация» (в проде GET /stats?q= + хоткей «/»): `role=search` форма + visually-hidden label + иконка + kbd-подсказка («/» фокус · Esc сброс); live-фильтр строк таблицы; счётчик «N из M тем» `role=status aria-live`; empty-строка «Ничего не нашлось» + скрытие таблицы. «/» не срабатывает из текстовых полей; Esc в инпуте сбрасывает (`stopPropagation` — не конфликтует с модалкой). empty/cold-start НЕ делаем — в проде осознанный вид (memory `project_design_elevation_round1`). Порт stats BLOCKED параллельным WIP | `stats.html` | **DONE** |
 | C17 | P2 | `shell`: заливка стрика `.streak-fill` `--spark` на треке `surface-2` = **2.06:1 < 3:1** (light) | **Реальный дефект того же класса, что C15** (не «граф. объект compliant» как C11): полоса стрика показывает ДОЛЮ прогресса (`width:72%`) → графобъект (WCAG 1.4.11, 3:1), а яркий `--spark` (L 0.720) на светлом треке `surface-2` не виден в light. **ФИКС:** `.streak-fill` → `--spark-ink` (L 0.500) = 5.02 light / 8.72 dark ≥3:1. Локально в `shell.html` (`--spark` декор-акцент не тронут; `.streak-flame`/`.streak-count` уже `--spark-ink`). Найден при замыкании 7-поверхностного recheck (R0.11) | `shell.html` | **DONE** |
 
 ## Журнал критики
 
+- **cr.18 (ROUND-RESET, R0.16)** — **закрыт C16: поиск по темам в `stats`.** Проверил прод
+  (read-only): поиск реально существует (`stats.html` search-pane, `stats.js` хоткей «/» +
+  guard модалки) — фича заметная, важнее мелкой admin-gated кнопки regenerate (C13-остаток).
+  Добавил в секцию «Детализация по темам»: `role=search` форма (visually-hidden label,
+  иконка-лупа, `type=search`, placeholder с примерами) + kbd-подсказка «/» фокус · Esc сброс
+  (`aria-hidden` — дубль хоткеев, SR получает label формы). Live-фильтр по имени темы:
+  скрытие строк, счётчик «N из M тем» (`role=status aria-live=polite`), при нуле — скрытие
+  таблицы + строка «Ничего не нашлось. Попробуй короче: „aop", „транз"» (конструктивный
+  empty, не тупик). Хоткей «/» глобальный, но не из текстовых полей; Esc в инпуте сбрасывает
+  запрос со `stopPropagation` (не закрывает будущие оверлеи). **QA:** detector exit 0; AA обе
+  темы ≥4.5 (input 15.55/15.49, placeholder/hint ink3 5.75/7.18, счётчик 7.77/9.23,
+  kbd 6.56/7.72). C16 **DONE** (empty/cold-start намеренно не делаем — прод-решение). Дальше —
+  C13-остаток (regenerate) / порт по разблокировке.
 - **cr.17 (ROUND-RESET, R0.15)** — **пивот на C13: добавлен confidence-виджет в `result`.**
   C12 остаточные состояния обесценились (generationUnavailable ≈ покрыт flashcard+info-alert
   R0.12/R0.13; no-js — parity-фазный контракт-концерн, не отдельный визуал; diagram — §4-бан

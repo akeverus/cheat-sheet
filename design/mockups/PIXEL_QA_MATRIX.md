@@ -70,8 +70,10 @@ regenerate, no-js-fallback (CRITIQUE C13 **IN_PROGRESS**). confidence QA: detect
 for/id на select/input. Паритет §3 (#filters-form/#session-form)/§8. AA все пары ≥4.5 обе
 темы (worst 4.95 btn-danger / 5.24 dark).
 
-`◊` stats states: покрыты overview/charts+fallback/sortable-table/forecast/gaps; НЕ покрыты
-empty/cold-start (осознан в проде) + search (CRITIQUE C16, coverage-gap). Порт stats BLOCKED (WIP).
+`◊` stats states: покрыты overview/charts+fallback/sortable-table/forecast/gaps **+ search**
+(R0.16: `role=search` форма + live-фильтр + счётчик `role=status` + empty-строка + хоткей «/»
+с guard текст-полей + Esc-сброс; detector exit 0; AA ≥4.5, worst placeholder ink3 5.75/7.18) —
+CRITIQUE C16 **DONE**. empty/cold-start намеренно не делаем (прод-решение). Порт stats BLOCKED (WIP).
 
 _settings states — теперь ПОЛНЫ (R0.10):_ 3 вкладки + export json/csv + 7 осей + filters +
 session + streak + **reset-options-confirm** (role=alertdialog, focus-trap, Esc, дефолт-фокус

@@ -1042,3 +1042,20 @@ Dirty changes created by loop: 0
 - **Ledgers:** CRITIQUE C13 IN_PROGRESS + журнал cr.17; matrix §-сноска; registry notes/gaps.
 - **Следующий тик:** worst-first — C13 regenerate ЛИБО C16 (stats search), ЛИБО Фаза E (порт)
   по разблокировке `base.css`.
+
+### 2026-07-12 — R0.16: закрыт C16 — поиск по темам в `stats`
+
+- **Worst-first:** из двух остатков (C13 regenerate — мелкая admin-gated иконка, C16 search —
+  заметная фича) взял search. Проверил прод read-only: поиск существует (`stats.html`
+  search-pane, `stats.js` «/» + guard модалки). Collision-guard: mockups+PLAN чисты.
+- **Добавлено в секцию «Детализация по темам»:** `role=search` форма (visually-hidden label,
+  иконка-лупа, `type=search`) + kbd-подсказка «/» фокус · Esc сброс; live-фильтр строк по имени
+  темы; счётчик «N из M тем» (`role=status aria-live=polite`); при нуле — скрытие таблицы +
+  конструктивная empty-строка («Попробуй короче: „aop", „транз"»). «/» не срабатывает из
+  текстовых полей; Esc в инпуте сбрасывает со `stopPropagation`.
+- **QA (§9):** detector exit 0; AA обе темы ≥4.5 (input 15.55/15.49, placeholder/hint 5.75/7.18,
+  счётчик 7.77/9.23, kbd 6.56/7.72).
+- **Ledgers:** CRITIQUE C16 **DONE** + журнал cr.18; matrix ◊-сноска; registry notes/gaps.
+  empty/cold-start намеренно не делаем (прод-решение, memory project_design_elevation_round1).
+- **Следующий тик:** worst-first — C13-остаток (regenerate-кнопка в result) ЛИБО Фаза E (порт)
+  по разблокировке `base.css`; после — независимые дименсии (zoom200/DPR1 методология).

@@ -104,6 +104,32 @@
     .sw-learned { background: var(--signal); }
     .sw-due { background: var(--spark-ink); }  /* легенда = цвет столбца bar-due */
 
+    /* --- Поиск по темам (фильтр таблицы; в проде GET /stats?q= + хоткей «/»).
+       Инпут + иконка + kbd-подсказка; счётчик результатов — role=status. ---- */
+    .topic-search { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; margin: 0 0 var(--s-4); }
+    .search-field { position: relative; flex: 1 1 16rem; max-width: 26rem; }
+    .search-field svg {
+      position: absolute; left: var(--s-3); top: 50%; transform: translateY(-50%);
+      width: 1.05rem; height: 1.05rem; color: var(--ink-3); pointer-events: none;
+    }
+    .search-input {
+      width: 100%; font-family: var(--font-ui); font-size: var(--fs-sm); color: var(--ink);
+      background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--r-md);
+      padding: var(--s-2) var(--s-3) var(--s-2) calc(var(--s-3) + 1.5rem);
+      transition: border-color var(--dur-1) var(--ease-out);
+    }
+    .search-input::placeholder { color: var(--ink-3); }
+    .search-input:hover { border-color: var(--ink-3); }
+    .search-input:focus-visible { outline: 2px solid var(--signal); outline-offset: 1px; }
+    .search-hint { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-3); white-space: nowrap; }
+    .search-hint kbd {
+      font-size: 0.9em; color: var(--ink-2); background: var(--surface-2);
+      border: 1px solid var(--line-strong); border-bottom-width: 2px;
+      border-radius: 4px; padding: 0.05em 0.4em;
+    }
+    .search-count { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-2); margin: 0 0 var(--s-3); }
+    .search-empty { color: var(--ink-2); font-size: var(--fs-sm); padding: var(--s-4) 0; margin: 0; }
+
     /* --- Таблица детализации по темам ------------------------------------ */
     .topic-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-md); }
     .topic-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
@@ -326,6 +352,18 @@
           <!-- Детализация по темам -->
           <section class="stats-block" aria-labelledby="sec-detail">
             <h2 class="section-title" id="sec-detail">Детализация по темам</h2>
+
+            <!-- Поиск: фильтрует таблицу ниже (в проде GET /stats?q=, хоткей «/») -->
+            <form class="topic-search" role="search" aria-label="Поиск по темам" onsubmit="return false">
+              <label class="visually-hidden" for="topic-search-input">Поиск по темам</label>
+              <div class="search-field">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                <input class="search-input" id="topic-search-input" type="search" placeholder="Тема: транзакции, AOP…" autocomplete="off">
+              </div>
+              <span class="search-hint" aria-hidden="true"><kbd>/</kbd> фокус · <kbd>Esc</kbd> сброс</span>
+            </form>
+            <p class="search-count" id="topic-search-count" role="status" aria-live="polite">4 из 4 тем</p>
+
             <div class="topic-table-wrap" id="topic-table-wrap" tabindex="0" role="region" aria-label="Детализация по темам">
               <table class="topic-table" id="topic-table">
                 <caption class="visually-hidden">Статистика по темам</caption>
@@ -375,6 +413,7 @@
                 </tbody>
               </table>
             </div>
+            <p class="search-empty" id="topic-search-empty" hidden>Ничего не нашлось. Попробуй короче: «aop», «транз».</p>
             <p id="table-sort-status" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
           </section>
 
@@ -438,6 +477,38 @@
         }
         th.addEventListener('click', toggle);
         th.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+      });
+    })();
+
+    // Поиск по темам: live-фильтр строк таблицы, счётчик role=status,
+    // «/» фокусирует инпут (не из текстовых полей), Esc сбрасывает.
+    (function () {
+      var input = document.getElementById('topic-search-input'),
+          count = document.getElementById('topic-search-count'),
+          empty = document.getElementById('topic-search-empty'),
+          wrap = document.getElementById('topic-table-wrap'),
+          rows = [].slice.call(document.querySelectorAll('#topic-table tbody tr'));
+      if (!input) return;
+      function filter() {
+        var q = input.value.trim().toLowerCase(), shown = 0;
+        rows.forEach(function (tr) {
+          var name = tr.querySelector('.t-name').textContent.toLowerCase();
+          var hit = !q || name.indexOf(q) !== -1;
+          tr.hidden = !hit; if (hit) shown++;
+        });
+        count.textContent = shown + ' из ' + rows.length + ' тем';
+        empty.hidden = shown !== 0;
+        wrap.hidden = shown === 0;
+      }
+      input.addEventListener('input', filter);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && input.value) { e.stopPropagation(); input.value = ''; filter(); }
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== '/') return;
+        var isText = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '');
+        if (isText) return;
+        e.preventDefault(); input.focus();
       });
     })();
   </script>
