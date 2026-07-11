@@ -788,3 +788,28 @@ Dirty changes created by loop: 0
   contract/no-js остаются TODO — нужен bootRun); registry notes = RECHECK ПРОЙДЕН.
 - **Следующий тик:** worst-first — `D_PORT_MAPPING` для error ИЛИ session-summary (обе прод-
   поверхности чисты, не в WIP) — подготовить маппинг разметки макета на DOM-хуки контракта.
+
+### 2026-07-11 — R0.4: D_PORT_MAPPING для session-summary (планирование, прод не тронут)
+
+- **Worst-first выбор:** обе независимые поверхности (error, session-summary) на
+  B_MOCKUP_RECHECK-PASS; следующая стадия пайплайна — `D_PORT_MAPPING` (нельзя прыгать
+  из MOCKUP_APPROVED в PORT без полного маппинга). Взят session-summary (крупнее, богаче
+  на контракт). **Read-only планирование — правок прод НЕ вносит** → безопасно под §6.
+- **Создан `design/mockups/PORT_MAPPING_session-summary.md`:** таблица «mockup-элемент →
+  прод-хук → действие/риск» + сводка контракта (роут `GET /session-summary`, model-attr
+  `summary`, бины `@modeUtils`/`@topicUtils`/`@markdownRenderService`, PE-инъекция
+  `.summary-tools`, фрагменты head/header, app.js не грузится).
+- **Зафиксированы КРИТ-риски порта (Фаза E):**
+  1. Таблица тем: вернуть `role=table/rowgroup/columnheader/cell` + `tabindex=0` +
+     `td[role=rowheader]` (макет их не содержит; иначе a11y-регресс §8 в Safari/VO).
+  2. `recommendations[]` — плоские строки: bold/link из макета недостижим без backend
+     (**ЗАПРЕЩЕНО §4**) → порт оставляет плоский текст, иконка декоративная.
+  3. `mistakes` вопрос — через `th:utext=toInlineHtml` (inline-markdown), не `th:text`.
+  4. score → verdict-headline: новый визуальный элемент из `summary` (без новых model-attr),
+     `h2.visually-hidden` «Результат сессии» сохранить для SR-heading-нав.
+  5. SSR `data-design="editorial"` не менять (Instrument = opt-in 11-й, решение пользователя).
+  6. Наблюдение R0.3 (sticky thead) — решать на паритет-фазе, в макет не тащить.
+- **Ledgers:** registry session-summary phase B_MOCKUP_RECHECK→**D_PORT_MAPPING**,
+  port_status **MAPPED**, `port_mapping_doc` проставлен.
+- **Следующий тик:** `D_PORT_MAPPING` для **error** (замкнуть маппинг обеих независимых
+  поверхностей) ЛИБО — когда прод-дерево очистится — вход в Фазу E (порт по §5).
