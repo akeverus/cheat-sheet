@@ -1,0 +1,23 @@
+{
+  "topic_slug": "resilience4j-interview",
+  "version_sensitive": true,
+  "product_version": "2.2.0",
+  "checked_date": "2026-07-11",
+  "sources": [
+    "https://github.com/resilience4j/resilience4j/blob/master/README.adoc",
+    "https://github.com/resilience4j/resilience4j/blob/master/resilience4j-spring-boot3/README.adoc",
+    "https://resilience4j.readme.io/docs/getting-started",
+    "https://github.com/resilience4j/resilience4j/blob/master/resilience4j/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/CircuitBreaker.java",
+    "https://github.com/resilience4j/resilience4j/blob/master/resilience4j/resilience4j-ratelimiter/src/main/java/io/github/resilience4j/ratelimiter/internal/AtomicRateLimiter.java"
+  ],
+  "version_sensitive_claims": [
+    "CircuitBreaker.State enum содержит 6 состояний: CLOSED, OPEN, HALF_OPEN, DISABLED, FORCED_OPEN, METRICS_ONLY (METRICS_ONLY добавлен в 1.4.0 — считает метрики/события, но никогда не отклоняет вызовы)",
+    "RateLimiter (AtomicRateLimiter) — фиксированное число разрешений limitForPeriod, пополняемое в начале каждого limitRefreshPeriod, а НЕ token bucket с накоплением токенов",
+    "slowCallDurationThreshold только КЛАССИФИЦИРУЕТ завершённый вызов как медленный для статистики failure/slow-rate CircuitBreaker; он не прерывает вызов и не является таймаутом — реальный лимит времени даёт TimeLimiter (только для async CompletableFuture/Mono/Flux)",
+    "Дефолтный порядок аспектов в Spring Boot: Retry( CircuitBreaker( RateLimiter( TimeLimiter( Bulkhead( метод ))))); меняется свойствами *AspectOrder (circuitBreakerAspectOrder / retryAspectOrder / rateLimiterAspectOrder). В Spring Boot 3 порядок по умолчанию может ставить Retry внутрь CircuitBreaker — рекомендуется явно задать circuitBreakerAspectOrder ниже retryAspectOrder",
+    "EventPublisher — push/observer-модель: регистрируются consumer-ы onEvent/onSuccess/onError/onStateTransition на инстансе (getEventPublisher()), а не pull",
+    "Дефолты CircuitBreakerConfig 2.2.0: failureRateThreshold=50%, slowCallRateThreshold=100%, waitDurationInOpenState=60s, slidingWindowSize=100, minimumNumberOfCalls=100, permittedNumberOfCallsInHalfOpenState=10, slowCallDurationThreshold=60s, slidingWindowType=COUNT_BASED",
+    "Стартер для Spring Boot 3 — resilience4j-spring-boot3 (jakarta), для Spring Boot 2 — resilience4j-spring-boot2 (javax); аннотации требуют spring-boot-starter-aop (proxy-based Spring AOP)",
+    "Bulkhead: два типа — SEMAPHORE (по умолчанию) и THREADPOOL; Hystrix deprecated с 2018 года"
+  ]
+}
