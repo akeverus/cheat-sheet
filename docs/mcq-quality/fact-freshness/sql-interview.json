@@ -1,0 +1,23 @@
+{
+  "topic_slug": "sql-interview",
+  "version_sensitive": true,
+  "product_version": "SQL:2016 стандарт; PostgreSQL 16, MySQL 8.0 — диалектная специфика",
+  "checked_date": "2026-07-12",
+  "sources": [
+    "https://www.postgresql.org/docs/16/ddl-constraints.html",
+    "https://www.postgresql.org/docs/16/datatype-datetime.html",
+    "https://www.postgresql.org/docs/16/sql-createprocedure.html",
+    "https://dev.mysql.com/doc/refman/8.0/en/datetime.html",
+    "https://www.postgresql.org/docs/16/rules-materializedviews.html"
+  ],
+  "version_sensitive_claims": [
+    "UNIQUE в PostgreSQL допускает несколько NULL (считаются различными); в SQL Server по умолчанию один NULL. С PostgreSQL 15 доступно UNIQUE NULLS NOT DISTINCT [Q2, Q3]. Актуально в PostgreSQL 16.",
+    "EXCLUDE-ограничение (запрет пересечения диапазонов через GiST-операторы) — специфика PostgreSQL, в стандарте SQL его нет [Q2]. Актуально в PostgreSQL 16.",
+    "MySQL TIMESTAMP: 32-битное хранение, диапазон 1970-01-01 — 2038-01-19 («проблема 2038»), 4 байта, конвертация в UTC; DATETIME: 1000-9999, 8 байт, хранит «как есть» [Q6]. Актуально в MySQL 8.0.",
+    "PostgreSQL TIMESTAMPTZ: 8 байт (как и TIMESTAMP), зону НЕ хранит — конвертирует в UTC при записи и в зону сессии при чтении [Q6]. Актуально в PostgreSQL 16.",
+    "Процедуры с COMMIT/ROLLBACK внутри — начиная с PostgreSQL 11 (CREATE PROCEDURE + CALL); функции управлять транзакцией не могут [Q10]. Актуально в PostgreSQL 16.",
+    "REFRESH MATERIALIZED VIEW CONCURRENTLY требует уникального индекса на matview; автоматического инкрементального обновления matview в PostgreSQL 16 нет (IVM — сторонние расширения) [Q9].",
+    "TRUNCATE — DDL: в PostgreSQL транзакционен (можно ROLLBACK), в MySQL/Oracle выполняет неявный COMMIT [Q1]. Диалектно-чувствительно."
+  ],
+  "notes": "Ядро SQL (constraints, NULL-семантика, нормальные формы, View) — стандарт SQL:2016, стабильно. Диалектная специфика привязана к PostgreSQL 16 / MySQL 8.0. Покрывает Q1-Q10; расширяется по мере обработки остальных чанков файла."
+}

@@ -295,7 +295,7 @@ Priority =
 | 1 | `java-concurrency` | java | 56 | 52 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅* | ✅ | ✅ DONE (R8): 56/56 audited + POS de-cycle (seq 56→2). 5 dup-misconception (Q21,Q22,Q42,Q50,Q54), 2 BSM (Q27-A,Q52-A), 2 caricature (Q47-B,Q49-D), contra-pair Q33, факт-фикс correct Q42-B; correct-longest+position tells сняты; CV 0.186; BSM чист ×56. VAL✅*: OPTION_LENGTH_RATIO=3.0 accepted-exception (конфликт с anti-stamp CV≥0.14; смысловые guessability-гейты все PASS) |
 | 2 | `design-patterns` | design-patterns | 48 | 48 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅* | ✅ | ✅ DONE (R8): 48/48 audited + POS de-cycle (seq 48→2, dist 12/12/12/12). Golden AP#1 снят: подняты дистракторы, CORRECT_LONGEST_RATE 0.83→0.25, CORRECT_WRONG_AVG 1.455→1.054, length-guess 0.28. De-caricature Q4-B/Q30-D; reviewer поймал 4 BSM (Q6-C,Q9-B,Q44-B,Q48-B); correct-precision Q20-D; DUP 2 ok; CV 0.166; факты GoF/JDK/Spring verified (freshness sidecar 13 claims). VAL✅*: OPTION_LENGTH_RATIO=3.75 accepted-exception (анти-stamp) + STYLE 0.493 accepted-residual (code-span 0.49 — correct легитимно цитирует API; length-компонент 0.28 PASS) |
 | 3 | `postgresql` | databases | 55 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
-| 4 | `sql` | databases | 53 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
+| 4 | `sql` | databases | 53 | 47 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ◐ Q1-Q10 audited (R8 chunk1): Golden AP#1 — подняты 30 дистракторов (+2 sections-rewrite), correct-longest 10/10→3/10 (Q1 каталог — подлинный экстремум). Reviewer: BSM 0, все VERDICT совпали; пофиксено Q7-A (3 дистрактора один приём → wrong-trade-off 5NF), Q8-A де-карикатура, Q1-D дубль DCL↔TCL → «TRUNCATE=DML». Файловые: CORRECT_LONGEST 0.642→0.453, STYLE 0.66→0.472, CV 0.168, DUP 0, freshness создан (7 claims, PG16/MySQL8.0). ОСТАЛОСЬ: Q11-Q53 (чанки 2-6) + POS de-cycle (seq=53) |
 | 5 | `project-reactor` | reactive | 48 | 47 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 6 | `hibernate` | databases | 50 | 46 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 7 | `java-collections` | java | 46 | 46 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -789,6 +789,15 @@ Priority =
 - Микро-остаток format-parity на будущий раунд: Q7 (`Singleton` bare в дистракторах vs backtick в correct), Q42 (`GoF` bare) — не правился (POS-тик content-frozen по определению)
 - Sidecars: review → status **COMPLETE** (+chunk POS, style_guessability задокументирован как accepted-residual); freshness notes → покрытие Q1-Q48
 - **Файл design-patterns-interview.json — FINAL ✅** (строка 2 таблицы §1). Следующий worst-first: строка 4 `sql` (строка 3 `postgresql` — off-limits)
+
+### ROUND-8 · sql · chunk1 Q1-Q10 (2026-07-12)
+- Baseline файла: CORRECT_LONGEST 0.642 (34/53), STYLE 0.66, CORRECT_WRONG_AVG 1.444, POSITION_SEQUENCE=53 (строгий A→B→C→D), CV 0.218, freshness отсутствовал. Доминант — Golden anti-pattern #1 (correct 150-260ch vs дистракторы-заглушки 57-115ch, худший блок Q1 CV=0.567)
+- Правка: подняты 30 дистракторов (псевдо-обоснование при том же заблуждении, text-only) + 2 dict-spec rewrite. correct-longest в чанке **10/10 → 3/10** (Q1 каталог DDL/DML/DCL/TCL — подлинный enumeration-экстремум; Q5/Q10 малый зазор)
+- **Blind-reviewer** (все 10 VERDICT совпали, BSM/MULTI нет): Q7 — все 3 дистрактора один приём «определение соседней НФ» → Q7-A заменён на wrong-trade-off «выше НФ = быстрее, цель 5NF» (text+sections); Q8-A карикатура (абсолютные кванторы) → смягчён; Q1-C/D зеркальный дубль DCL↔TCL → Q1-D заменён на «`TRUNCATE` — это `DML`» (text+sections)
+- Факты verified: DDL/DML/DCL/TCL; UNIQUE допускает NULL (PG несколько, PG15+ NULLS NOT DISTINCT); FK NULL допустим; `= NULL`→UNKNOWN, `5+NULL=NULL`, `COUNT(*)` считает все строки; MySQL TIMESTAMP до 2038/4 байта vs DATETIME 1000-9999/8 байт; TIMESTAMPTZ 8 байт (зону не хранит); 3NF=транзитивные; денормализация OLAP/DWH; View/MatView; Function-vs-Procedure (COMMIT в PG 11+)
+- Sidecars: review создан (10 recs, IN_PROGRESS), freshness создан (7 claims, PG16/MySQL8.0) → SOURCE_COVERAGE ok
+- Validators: verify-mcq-json OK; CORRECT_LONGEST 0.642→0.453, STYLE 0.66→0.472 (length 0.47), CORRECT_WRONG_AVG 1.444→1.141, CV 0.168, DUPLICATE 0
+- ОСТАЛОСЬ: Q11-Q53 (чанки 2-6) + POS de-cycle → FINAL
 
 ---
 
