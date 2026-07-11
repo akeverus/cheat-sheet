@@ -1,0 +1,113 @@
+{
+  "$comment": "ROUND-RESET surface registry (PROMPT_PLAN_FRONTEND.md §2/§3). Единый источник инвентаря поверхностей frontend quiz-app. RESET 2026-07-11: ни один статус НЕ переносит старый PASS — все surfaces RECHECK/TODO. Новый найденный state добавляется СЮДА немедленно (§3). Фазы: A_DISCOVER B_MOCKUP_RECHECK C_MOCKUP_APPROVED D_PORT_MAPPING E_PORT_TO_PRODUCTION F_PRODUCTION_PARITY G_FULL_REFACTOR H_REGRESSION_QA I_VERIFIED J_MAINTENANCE.",
+  "round": "reset-2026-07-11",
+  "reset": {
+    "old_pass_carried_forward": 0,
+    "mockup_approved_surfaces": 0,
+    "port_ready_surfaces": 0,
+    "production_parity_surfaces": 0,
+    "fully_refactored_surfaces": 0,
+    "final_verified_surfaces": 0
+  },
+  "dimensions": {
+    "themes": ["light", "dark"],
+    "designs": ["editorial", "linear", "swiss", "notion", "mintlify", "broadsheet", "superhuman", "stripe", "claude", "theverge", "instrument"],
+    "viewports": [375, 768, 1280, 1440, 1728, 1920, 2560],
+    "dpr": [1, 2],
+    "zoom": [100, 200],
+    "a11y_axes": ["keyboard", "focus-visible", "reduced-motion", "no-js", "print", "screen-reader"]
+  },
+  "surfaces": [
+    {
+      "id": "shell",
+      "kind": "global-chrome",
+      "routes": ["(все страницы)"],
+      "production": ["templates/fragments/head.html", "templates/fragments/header.html", "templates/fragments/icons.html"],
+      "mockup": "design/mockups/shell.html",
+      "states": ["header-nav", "mobile-drawer", "theme-toggle(auto/light/dark)", "kbd-help-modal", "skip-link", "footer"],
+      "server_contract": ["§8 a11y-каркас", "§9 CSP/шрифты/тема data-theme"],
+      "phase": "B_MOCKUP_RECHECK",
+      "port_status": "RECHECK",
+      "notes": "instrument зарегистрирован (f2.1); header/шрифты частично тронуты параллельным WIP — BLOCKED на порт до чистого дерева."
+    },
+    {
+      "id": "focus-training",
+      "kind": "page",
+      "routes": ["GET /", "GET /training", "GET /review"],
+      "production": ["templates/focus-training.html", "static/js/app.js", "templates/fragments/training-actions.html", "templates/fragments/post-answer-controls.html", "templates/fragments/today-widget.html", "templates/fragments/inline-alert.html"],
+      "mockup": "design/mockups/focus-question.html",
+      "states": ["active-mcq", "flashcard-reveal", "flashcard-grade(1-4)", "study-LEARN(study-confirm)", "empty(no-questions)", "generationUnavailable", "reviewMode", "loading-placeholder", "inline-alert/error", "no-js-fallback", "diagram/mermaid"],
+      "server_contract": ["§2 model-attrs", "§3 #interview-form", "§5 DOM-хуки", "§7 th:utext studyAnswerHtml", "§8 radiogroup/progressbar/kbd-help"],
+      "phase": "B_MOCKUP_RECHECK",
+      "port_status": "TODO",
+      "notes": "Эталон утверждён в прошлом раунде — по reset статус аннулирован, RECHECK. focus-training.html тронут параллельным WIP → BLOCKED."
+    },
+    {
+      "id": "result",
+      "kind": "page",
+      "routes": ["POST /answer", "POST /api/answer (AJAX)"],
+      "production": ["templates/result.html", "static/js/app.js", "templates/fragments/result-zone-head.html", "templates/fragments/post-answer-controls.html"],
+      "mockup": "design/mockups/result.html",
+      "states": ["correct", "incorrect", "favorite-toggle", "post-answer-analysis(takeaway/trace/related)", "confidence", "regenerate", "no-js-fallback(живой /answer)"],
+      "server_contract": ["§2 result+answerHtml", "§4 /api/answer", "§5 #result-feedback/#next-question", "§7 th:utext answerHtml/optionExplanations", "§8 aria-live"],
+      "phase": "B_MOCKUP_RECHECK",
+      "port_status": "TODO",
+      "notes": "result.html тронут параллельным WIP → BLOCKED на порт."
+    },
+    {
+      "id": "session-summary",
+      "kind": "page",
+      "routes": ["GET /session-summary", "POST /finish → redirect"],
+      "production": ["templates/session-summary.html"],
+      "mockup": "design/mockups/session-summary.html",
+      "states": ["strong-accuracy", "weak-accuracy", "empty(no-summary→redirect:/)", "topic-table", "mistakes-list", "recommendations", "copy/print(self-contained, app.js не грузится)"],
+      "server_contract": ["§2 summary", "§8 table caption/scope, rowheader/share"],
+      "phase": "B_MOCKUP_RECHECK",
+      "port_status": "TODO",
+      "notes": "Не тронут параллельным WIP — кандидат на независимый порт при готовности mapping."
+    },
+    {
+      "id": "settings",
+      "kind": "page",
+      "routes": ["GET /settings", "POST /start", "POST /settings/reset-options"],
+      "production": ["templates/settings.html", "static/js/app.js"],
+      "mockup": "design/mockups/settings.html",
+      "states": ["tab-Сессия", "tab-Оформление", "tab-Данные", "reset-options-confirm", "export(json/csv)", "personalization(design/theme/font/layout/reading-width/density/motion)", "filters-form", "session-form", "streak"],
+      "server_contract": ["§2 settings model", "§3 #filters-form/#session-form", "§9 тема/дизайн персистенс"],
+      "phase": "B_MOCKUP_RECHECK",
+      "port_status": "TODO",
+      "notes": "instrument seg-btn добавлена (f2.1). settings.html тронут параллельным WIP → BLOCKED."
+    },
+    {
+      "id": "stats",
+      "kind": "page",
+      "routes": ["GET /stats", "GET /api/stats", "GET /api/topic-stats"],
+      "production": ["templates/stats.html", "static/js/stats.js", "templates/fragments/stats-grid.html"],
+      "mockup": "design/mockups/stats.html",
+      "states": ["overview-tiles", "charts(topicProgress/topicAccuracy + fallback)", "sortable-topic-table", "review-forecast", "coverage-gaps", "empty/cold-start", "search"],
+      "server_contract": ["§2 topicStatsJson", "§5 stats.js хуки", "§6 inline JSON #topic-stats-data"],
+      "phase": "B_MOCKUP_RECHECK",
+      "port_status": "TODO",
+      "notes": "stats.html/stats.js тронуты параллельным WIP → BLOCKED."
+    },
+    {
+      "id": "error",
+      "kind": "page",
+      "routes": ["exception handler"],
+      "production": ["templates/error.html"],
+      "mockup": null,
+      "states": ["404", "500", "503"],
+      "server_contract": ["§2 status attr"],
+      "phase": "A_DISCOVER",
+      "port_status": "TODO",
+      "notes": "МАКЕТА НЕТ — пробел покрытия (§3 требует каждый error-state). Нужен mockup error.html."
+    }
+  ],
+  "gaps_found": [
+    "error.html — нет макета (нужен: 404/500/503, обе темы, edge-to-edge).",
+    "print-state — ни один макет не проверен на print CSS.",
+    "no-js fallback — result.html живой fallback подтверждён прошлым раундом, но по reset RECHECK; остальные страницы no-js не инвентаризованы.",
+    "zoom 200% / DPR1 — не покрыто ни в одном QA-прогоне прошлого раунда.",
+    "toast/success-state — есть inline-alert fragment, но toast/success-подтверждения не инвентаризованы отдельно."
+  ]
+}
