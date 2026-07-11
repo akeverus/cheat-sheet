@@ -1096,3 +1096,22 @@ Dirty changes created by loop: 0
 - **Ledgers:** CRITIQUE +C18 DONE + журнал cr.20; matrix дименсия zoom200 TODO→PASS(макеты);
   registry gaps_found. Остаток дименсий: print (TODO), no-js (parity).
 - **Следующий тик:** print-дименсия на макетах (emulate print) ЛИБО Фаза E по разблокировке.
+
+### 2026-07-12 — R0.19: print-дименсия — print-CSS для session-summary
+
+- **Worst-first:** порт BLOCKED (base.css dirty); из оставшихся дименсий print был полностью
+  непокрыт. Печатный сценарий реален только у session-summary (кнопка «Печать» в проде).
+- **Добавлен @media print:** бумага получает документ, не приложение — скрыты
+  mock-bar/шапка/skip-link/кнопки/стрелки/интерактивная подсказка; grid→block (1 колонка),
+  sticky→static; чёрным по белому 11pt; таблица с рамками 1px; break-inside: avoid; анимации off.
+- **QA (§9):** detector exit 0; CSSMediaRule распарсен (16 правил); автопроверка селекторов
+  print-блока против DOM — 0 мёртвых (нет опечаток); экранный рендер не тронут (overflow 0).
+  Живой print-preview — при parity (MCP не эмулирует media:print).
+- **Ledgers:** matrix print TODO→PASS(summary)/TODO(остальные — намеренно, нет сценариев);
+  CRITIQUE cr.21; registry gaps_found.
+- **Итог дименсий макетов:** detector/AA/states/a11y/reflow320+640/print(там, где сценарий) —
+  ЗАКРЫТЫ; no-js и parity — фазные (нужен прод). Mockup-фаза ПОЛНОСТЬЮ исчерпана: дальше
+  только Фаза E по разблокировке base.css.
+- **Следующий тик:** проверить разблокировку base.css → Фаза E (порт error, самый простой,
+  маппинг готов R0.5); если dirty — read-only подготовка порта (черновик CSS-блока error
+  в отдельном файле design/mockups/port-drafts/).

@@ -38,7 +38,7 @@
 | viewports 375–2560 DPR2 | RECHECK | покрыты метриками прошлого раунда; screenshot был сломан (capture timeout). |
 | DPR1 / zoom 200% | PASS (макеты, R0.18) | живой аудит chrome-devtools: эмуляция 320px (WCAG 1.4.10 reflow) + 640px (zoom200@1280), все 7 макетов × все mock-состояния; 2 дефекта найдены и пофикшены (C18: explain-code токен, set-grid minmax); прод — на parity-фазе. |
 | no-js | TODO | result.html живой fallback (RECHECK); прочие — TODO. |
-| print | TODO | не инвентаризован. |
+| print | PASS (summary) / TODO (остальные) | R0.19: print-CSS добавлен в session-summary (единственная страница с кнопкой «Печать» в проде): без хрома/кнопок/стрелок, 1 колонка, чёрным по белому, таблица с рамками, break-inside: avoid. Верификация: CSSMediaRule распарсен (16 правил), 0 мёртвых селекторов, экран не тронут; живой print-preview — на parity-фазе. Остальные 6 макетов — низкий приоритет (нет печатных сценариев). |
 
 `†` focus-training: покрыты 4 ядровых (active/result/empty/done) **+ flashcard** (изучение/
 study-LEARN: reveal→grade, R0.12) **+ alert** (inline-alert error/info/warn, R0.13) **+ loading**
