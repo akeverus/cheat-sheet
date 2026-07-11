@@ -23,7 +23,7 @@
 |---|---|---|---|---|---|---|---|---|---|
 | shell (chrome) | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | RECHECK | TODO | B_MOCKUP_RECHECK |
 | focus-training | PASS | PASS‡ | PASS* | PASS | PASS(core)† | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.6) |
-| result | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | RECHECK | B_MOCKUP_RECHECK |
+| result | PASS | PASS‡ | PASS* | PASS | PASS(core)§ | TODO | TODO | RECHECK | B_MOCKUP_RECHECK (recheck R0.7) |
 | session-summary | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.3) |
 | settings | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
 | stats | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
@@ -48,6 +48,12 @@ no-js, diagram (CRITIQUE C12, coverage-gap; порт focus-training BLOCKED па
 единственная пара ниже 4.5 — `opt-mark` галочка верного `success-on/success` = 4.28 light,
 но это **графический объект** (WCAG 1.4.11, порог 3:1), `aria-hidden`, избыточна → compliant
 (CRITIQUE C11, РЕШЕНО).
+
+`§` result: покрыты correct/incorrect (mock-switch) + post-answer-analysis (takeaway/trace/
+related) + favorite; НЕ покрыты confidence-виджет, regenerate, no-js-fallback (CRITIQUE C13,
+coverage-gap). AA все текст-пары ≥4.5 обе темы (worst 5.52/5.24); opt-mark галочка = граф.
+объект (C11). Наблюдение на порт: verdict `<p>` не live-region — `aria-live` (§8
+`#result-feedback`) проводится при порте, не дефект макета. Порт result BLOCKED (WIP).
 
 `*` full-width для error и session-summary верифицирован **структурно** (edge-to-edge
 `.wrap width:100%` + грид main+рельс, брейк 1080px = проверенный паттерн других экранов),

@@ -862,3 +862,21 @@ Dirty changes created by loop: 0
   registry port_status → BLOCKED + recheck-заметка; CRITIQUE C11/C12 + журнал cr.8; gaps_found +1.
 - **Следующий тик:** worst-first — recheck следующего чистого макета (`result` / `settings` /
   `stats`) ЛИБО вход в Фазу E по разблокировке `base.css`.
+
+### 2026-07-11 — R0.7: B_MOCKUP_RECHECK экрана `result` (разбор ответа)
+
+- **Worst-first:** база всё ещё BLOCKED (base.css в WIP); recheck следующего чистого макета.
+  Взят `result` (разбор ответа + пост-ответный анализ).
+- **Проверено (§9):** detector exit 0. **AA обе темы** — все текст-пары ≥4.5 (light worst
+  5.52, dark 5.24); проза на wash-заливках 11–14; opt-mark галочка 4.28 = граф. объект
+  (C11, compliant). **a11y-каркас полный** (progressbar aria-valuenow, options `role=group`,
+  analysis aria-label, focus-ring, reduced-motion, aria-hidden иконки). **full-width**
+  структурно (result-grid main+aside, брейк 1080px; рельс = «разбор глубже»).
+- **Coverage-gap (CRITIQUE C13):** покрыты correct/incorrect/analysis(takeaway+trace+related)/
+  favorite; НЕ покрыты confidence-виджет (🎲🤔💪), regenerate, no-js-fallback.
+- **Наблюдение на порт:** вердикт — статичный `<p>`, не live-region; `aria-live` (§8
+  `#result-feedback`) проводить при порте, НЕ дефект макета.
+- **Ledgers:** matrix result detector/AA‡/full-width*/a11y → PASS, states → PASS(core)§;
+  registry port_status → BLOCKED + recheck-заметка; CRITIQUE C13 + журнал cr.9; gaps_found +1.
+- **Следующий тик:** worst-first — recheck `settings` ЛИБО `stats` (оба чистых макета),
+  ЛИБО вход в Фазу E по разблокировке `base.css`.

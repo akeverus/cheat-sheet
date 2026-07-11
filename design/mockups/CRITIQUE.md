@@ -28,9 +28,24 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 | C9 | P2 | Кнопочный компонент дрейфует на `shell`: 3 расхождения с остальными 5 экранами | Кросс-экранная консистентность: одна кнопка = один компонент. (1) `.btn` padding `s-5` vs `s-6` у 4 других; (2) `.btn-primary` без `box-shadow: shadow-sm` (у всех 4 — есть → плоский CTA на home); (3) `.btn-quiet` = байт-идентичен `.btn-ghost` у focus/result/summary, но result/summary держат `.btn-quiet` для ДРУГОЙ безрамочной третичной → коллизия имени (одно имя → два вида) | `shell.html` | **DONE** |
 | C11 | — | `opt-mark` (галочка верного варианта): `success-on` на заливке `success` = AA 4.28 < 4.5 (light) | **РЕШЕНО (compliant):** галочка — **графический объект** (WCAG 1.4.11, порог 3:1), `aria-hidden`, избыточна с зелёной обводкой `.opt--correct` + тегом «верный ответ» + тинтом бейджа. 4.28 ≥ 3:1 → проходит. Единственная пара ниже строгого 4.5-бара (сестра `error-on/error` = 4.95). Общий токен `--success` НЕ риплю в recheck-тик (задел на 8 макетов). Если понадобится симметрия ≥4.5 — точечно затемнить `--success` fill в отдельном тике | `focus-question.html` (tokens) | **РЕШЕНО** |
 | C12 | P3 | `focus-question` покрывает 4 состояния (active/result/empty/done), но registry-список focus-training шире | Reference-экран задал ЯЗЫК на 4 ядровых состояниях; недостающие: flashcard-reveal/grade(1-4), study-LEARN(study-confirm), generationUnavailable, loading-placeholder, inline-alert/error, no-js-fallback, diagram/mermaid. Coverage-gap — доработать состояния reference-экрана (порт focus-training всё равно BLOCKED параллельным WIP) | `focus-question.html` | TODO |
+| C13 | P3 | `result` покрывает correct/incorrect/analysis/favorite, но registry-список result шире | Недостающие состояния: confidence-виджет (🎲🤔💪, оставлен намеренно в проде), regenerate, no-js-fallback (живой `/answer`). Coverage-gap reference-разбора (порт result BLOCKED параллельным WIP). Отдельно — при ПОРТЕ провести `aria-live` на вердикт (§8 `#result-feedback`): в макете вердикт статичный `<p>`, live-region проводится в прод, не дефект макета | `result.html` | TODO |
 
 ## Журнал критики
 
+- **cr.9 (ROUND-RESET, R0.7)** — **B_MOCKUP_RECHECK экрана `result` (разбор ответа).**
+  detector exit 0. **AA обе темы:** все текст-пары ≥4.5 (light worst 5.52, dark 5.24);
+  ключевое — проза на семантических wash-заливках держит с запасом (ink на signal/success/
+  error-wash = 13–14 light, 11–12 dark); verdict `success-ink/success-wash` 5.58, `error-ink/
+  error-wash` 5.52; chip-hover/takeaway-icon `signal-ink/signal-wash` 6.54. `opt-mark` галочка
+  верного = 4.28 = граф. объект (C11, compliant). **a11y-каркас полный:** progressbar
+  aria-valuenow, `role=group` разбора вариантов, `.analysis` aria-label «Разбор глубже»,
+  focus-visible ring, reduced-motion fail-safe, иконки aria-hidden, mock-switch aria-pressed.
+  **full-width** структурно (result-grid main+aside, брейк 1080px; рельс наполняет правое
+  поле — «разбор глубже» takeaway/trace/related). **states:** покрыты correct/incorrect
+  (mock-switch) + post-answer-analysis + favorite; НЕ покрыты confidence/regenerate/no-js
+  → **C13** (coverage-gap). **Наблюдение на порт:** вердикт — статичный `<p>`, не live-region;
+  `aria-live` (§8 `#result-feedback`) проводится при порте, НЕ дефект макета. Дальше worst-first
+  — recheck `settings`/`stats` ЛИБО Фаза E по разблокировке `base.css`.
 - **cr.8 (ROUND-RESET, R0.6)** — **B_MOCKUP_RECHECK reference-экрана `focus-question`.**
   detector exit 0. **AA обе темы:** все ТЕКСТОВЫЕ пары ≥4.5 (light worst 4.95 badge
   error-on/error, dark 5.24); единственная пара ниже 4.5 — `opt-mark` галочка верного
