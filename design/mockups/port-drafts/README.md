@@ -7,6 +7,7 @@
 | Черновик | Целевой файл | Куда вставлять | Блокер |
 |---|---|---|---|
 | `error-instrument-base.css` | `modules/quiz-app/src/main/resources/static/css/base.css` | СРАЗУ ПОСЛЕ общего блока §C7 (`html[data-design] .error-page ...`, ~строка 2060) | base.css dirty (чужой WIP) |
+| `session-summary-instrument-base.css` | тот же base.css | СРАЗУ ПОСЛЕ общего блока §C6 (`html[data-design] .summary-page ...`, ~строка 1972) | base.css dirty (чужой WIP) |
 
 ## error-instrument-base.css — решения порта (по PORT_MAPPING_error.md)
 
@@ -31,6 +32,24 @@
    `--line`→`--color-border-primary` · `--line-strong` (ghost-номер)→`--color-border-primary`+комментарий ·
    `--signal-strong/-on/-ink`→`--color-accent-primary/-on/-strong` ·
    `--font-hero/ui/mono`→`--font-family-display/body/mono`.
+
+## session-summary-instrument-base.css — решения порта (по PORT_MAPPING_session-summary.md)
+
+1. **Шаг 1 (этот черновик) = CSS-only**, DOM прод-шаблона не меняется: рестайл
+   существующих хуков (`.card`→bg-tertiary/line, mono-цифры `.stat-value`,
+   тихие body-заголовки секций, lowercase `.summary-mode-line`, hover ошибок
+   paper+accent). Тон-классы точности не трогаем — instrument переопределяет
+   статус-токены сам.
+2. **Шаг 2 (отдельный тик Фазы E, правки session-summary.html)** — отложенные
+   единицы, требующие шаблона: вердикт-headline (`summary-headline` + серверный
+   `th:classappend`, п.32 маппинга), двухколоночный грид main+aside со sticky
+   (п. mockup `.summary-grid` ≥1080px), перенос `.summary-actions` в aside.
+   При шаге 2 ОБЯЗАТЕЛЬНО: сохранить a11y-роли таблицы (`role=table/rowgroup/…`,
+   риск №1), PE-инъекцию `.summary-tools` (риск №3), плоские recommendations
+   (риск №2, backend запрещён §4).
+3. **Print НЕ портируется:** прод base.css уже несёт общий `@media print`
+   (~строка 3208) с полным покрытием summary (скрытие actions/tools, ч/б,
+   break-inside) — print-блок макета был mockup-QA (R0.19), дубль не нужен.
 
 ## Процедура применения (когда base.css чист)
 

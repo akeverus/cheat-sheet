@@ -37,6 +37,23 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+- **cr.23 (ROUND-RESET, R0.21)** — **Фаза E prep №2: черновик порта session-summary
+  (шаг 1, CSS-only) → `port-drafts/`.** base.css всё ещё dirty → порт BLOCKED, подготовлен
+  второй ready-to-paste блок **C6-i** (`session-summary-instrument-base.css`, ставить ПОСЛЕ
+  общего §C6): instrument-рестайл СУЩЕСТВУЮЩИХ прод-хуков без правок DOM — `.card` на
+  приподнятой bg-tertiary/line (кольца вместо утопленных фонов), mono-цифры плиток
+  (`tabular-nums`, «приборная панель»), тихие body-семиболд заголовки секций вместо
+  display-xl, lowercase mono-шёпот `.summary-mode-line` (text-tertiary 5.4:1), hover
+  ошибок paper+accent-strong. Тон-классы точности не трогаются — instrument-токены сами
+  переопределяют статусы. **Скоуп-решения:** (а) двухколоночный грид main+aside и
+  вердикт-headline требуют правок шаблона → отложены на шаг 2 Фазы E (в README перечислены
+  с рисками №1 a11y-роли таблицы / №3 PE-инъекция tools / №2 плоские recommendations);
+  (б) **print НЕ портируется** — прод base.css уже несёт общий `@media print` (~3208) с
+  полным summary-покрытием, print-блок макета был mockup-QA (R0.19), дубль не нужен.
+  QA черновика: токен-ревью (text-tertiary/primary пары на tertiary/paper ≥5.4:1 обе темы
+  по f2.2-верифицированным токенам); detector неприменим (не HTML). Оба независимых
+  черновика готовы: error (cr.22) + session-summary шаг 1 — Фаза E стартует мгновенно
+  по разблокировке base.css.
 - **cr.22 (ROUND-RESET, R0.20)** — **Фаза E, read-only подготовка: черновик порта error →
   `port-drafts/`.** Collision guard: base.css по-прежнему dirty (чужой WIP) → сам порт BLOCKED,
   подготовлен ready-to-paste черновик. Созданы `port-drafts/README.md` (процедура применения,

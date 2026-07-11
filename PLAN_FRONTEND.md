@@ -1133,3 +1133,21 @@ Dirty changes created by loop: 0
 - **Следующий тик:** проверить разблокировку base.css → применить черновик (Фаза E, порт
   error) + live parity QA; если dirty — аналогичный черновик для session-summary
   (маппинг R0.4, второй независимый; сложнее: PE copy/print + ARIA-таблица).
+
+### 2026-07-12 — R0.21: Фаза E prep №2 — черновик порта session-summary (шаг 1, CSS-only)
+
+- **Collision guard:** base.css dirty → порт BLOCKED; подготовлен второй черновик.
+- **Создано:** `port-drafts/session-summary-instrument-base.css` (блок C6-i, ПОСЛЕ общего
+  §C6): CSS-only рестайл существующих прод-хуков — карты bg-tertiary/line, mono-цифры
+  плиток (tabular-nums), тихие body-заголовки секций, lowercase mode-line, hover ошибок
+  paper+accent. DOM session-summary.html не меняется. README дополнен: таблица черновиков,
+  скоуп шага 2 (headline+грид main+aside — шаблонные правки, риски №1/№2/№3 маппинга).
+- **Находка:** print НЕ портируется — прод base.css уже несёт общий @media print (~3208)
+  с полным summary-покрытием; print-блок макета был mockup-QA (R0.19).
+- **Ledgers:** CRITIQUE cr.23; registry session-summary → DRAFT_READY.
+- **Итог prep:** ОБА независимых черновика готовы (error C7-i + summary C6-i) — Фаза E
+  стартует мгновенно по разблокировке base.css.
+- **Следующий тик:** проверка разблокировки → применение черновиков (порт + parity QA);
+  если dirty — черновиков для независимых поверхностей больше нет (остальные 5 заблокированы
+  и шаблонами) → read-only аудит следующей очереди (D-маппинг одной из 5 блокированных
+  поверхностей: стартовать с focus-training как ядровой).
