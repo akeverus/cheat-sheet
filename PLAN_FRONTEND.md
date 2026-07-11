@@ -1076,3 +1076,23 @@ Dirty changes created by loop: 0
 - **Итог бэклога:** C1–C17 ВСЕ закрыты (DONE/РЕШЕНО). Mockup-фаза исчерпана по бэклогу.
 - **Следующий тик:** Фаза E (порт error/session-summary) по разблокировке `base.css` ЛИБО
   независимые дименсии-методологии (zoom200/DPR1/print на макетах).
+
+### 2026-07-12 — R0.18: живой reflow-аудит (zoom200/320px) всех 7 макетов — 2 дефекта пофикшены
+
+- **Worst-first:** бэклог C1–C17 закрыт, порт BLOCKED (base.css dirty) → независимая дименсия
+  «zoom 200% / DPR1» (TODO, «не покрыто ни разу»). Впервые ЖИВОЙ браузер-аудит через
+  chrome-devtools MCP: окно Chrome не жмётся <485px → resize_page недостаточен, использована
+  эмуляция вьюпорта (320x900x2 и 640x900x2).
+- **Методика:** `scrollWidth > clientWidth` по каждому mock-состоянию: focus 7 состояний +
+  flashcard-revealed; result 2 + details-open; settings 3 вкладки + reset-confirm; shell +
+  mobile-menu + kbd-help; stats + search-empty; summary 2; error. Скролл-контейнеры
+  (pre.code-body, tablist overflow-x:auto) — легитимное исключение 1.4.10.
+- **Найдено и пофикшено (C18, P1):** (1) `.explain code` — токен `@Transactional(REQUIRES_NEW)`
+  286px распирал документ на 1px (focus «Разбор», result оба варианта) → `overflow-wrap:
+  break-word` (2 файла); (2) settings «Оформление» — `.set-grid minmax(20rem,1fr)` форсит 320px
+  колонку → 35px overflow всех 7 карт → `minmax(min(20rem,100%),1fr)`.
+- **QA (§9):** ре-верификация 320 чисто по всем 7 × состояния; 640 (zoom200@1280) чисто;
+  detector exit 0 ×3 правленных файла.
+- **Ledgers:** CRITIQUE +C18 DONE + журнал cr.20; matrix дименсия zoom200 TODO→PASS(макеты);
+  registry gaps_found. Остаток дименсий: print (TODO), no-js (parity).
+- **Следующий тик:** print-дименсия на макетах (emulate print) ЛИБО Фаза E по разблокировке.
