@@ -22,7 +22,7 @@
 | Surface | detector | AA | full-width | a11y | states | parity | contract | no-js/print | Фаза |
 |---|---|---|---|---|---|---|---|---|---|
 | shell (chrome) | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | RECHECK | TODO | B_MOCKUP_RECHECK |
-| focus-training | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
+| focus-training | PASS | PASS‡ | PASS* | PASS | PASS(core)† | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.6) |
 | result | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | RECHECK | B_MOCKUP_RECHECK |
 | session-summary | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.3) |
 | settings | RECHECK | RECHECK | RECHECK | RECHECK | RECHECK | TODO | TODO | TODO | B_MOCKUP_RECHECK |
@@ -39,6 +39,15 @@
 | DPR1 / zoom 200% | TODO | не покрыто ни разу. |
 | no-js | TODO | result.html живой fallback (RECHECK); прочие — TODO. |
 | print | TODO | не инвентаризован. |
+
+`†` focus-training: покрыты 4 ядровых состояния (active/result/empty/done); НЕ покрыты
+flashcard-reveal/grade, study-LEARN, generationUnavailable, loading, inline-alert/error,
+no-js, diagram (CRITIQUE C12, coverage-gap; порт focus-training BLOCKED параллельным WIP).
+
+`‡` focus-training AA: все ТЕКСТОВЫЕ пары ≥4.5 обе темы (light worst 4.95 badge, dark 5.24);
+единственная пара ниже 4.5 — `opt-mark` галочка верного `success-on/success` = 4.28 light,
+но это **графический объект** (WCAG 1.4.11, порог 3:1), `aria-hidden`, избыточна → compliant
+(CRITIQUE C11, РЕШЕНО).
 
 `*` full-width для error и session-summary верифицирован **структурно** (edge-to-edge
 `.wrap width:100%` + грид main+рельс, брейк 1080px = проверенный паттерн других экранов),

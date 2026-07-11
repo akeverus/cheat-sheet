@@ -837,3 +837,28 @@ Dirty changes created by loop: 0
   отдельным тиком §5); (б) 5 BLOCKED-поверхностей ждут коммита параллельной сессии.
 - **Следующий тик:** начать **Фазу E** — порт error (простейшая, прод чист) отдельным
   §5-изолированным тиком, ЛИБО re-audit BLOCKED-поверхностей на разблокировку.
+
+### 2026-07-11 — R0.6: B_MOCKUP_RECHECK reference-экрана `focus-question`
+
+- **Уточнение блокировки:** порт error/session-summary (Фаза E) **тоже BLOCKED** — их
+  структурные `.error-*`/`.summary-*` стили живут в `base.css`, который держит параллельный
+  WIP. Значит порт ЛЮБОЙ поверхности сейчас упирается в `base.css`. Независимая работа без
+  прод — **recheck чистых макетов** (`design/mockups/*.html` не в WIP). Взят reference-экран
+  `focus-question` (дизайн-якорь, ещё не rechecked в этом раунде).
+- **Проверено (§9):** detector exit 0. **AA обе темы** — все ТЕКСТОВЫЕ пары ≥4.5 (light
+  worst 4.95 badge error-on/error, dark 5.24). Единственная пара ниже 4.5 — `opt-mark`
+  галочка верного варианта `success-on/success` = **4.28 light**; это **графический объект**
+  (WCAG 1.4.11, порог 3:1), `aria-hidden`, избыточна с обводкой `.opt--correct` + тегом
+  «верный ответ» + тинтом бейджа → **compliant** (CRITIQUE **C11**, РЕШЕНО; общий токен
+  `--success` не риплю в recheck). **a11y-каркас образцовый, паритет §8:** radiogroup,
+  progressbar aria-valuenow, kbd-help `role=dialog`+focus-trap+`?`/Esc+возврат фокуса,
+  focus-visible ring, reduced-motion fail-safe, kbd-hint гейт (нет touch-мёртвых подсказок),
+  моб. sticky submit-bar + safe-area. **full-width** структурно.
+- **Coverage-gap (CRITIQUE C12):** макет покрывает 4 ядровых состояния (active/result/empty/
+  done); НЕ покрыты 7 из registry-списка focus-training (flashcard-reveal/grade, study-LEARN,
+  generationUnavailable, loading, inline-alert/error, no-js, diagram). Задел на доработку
+  reference-экрана (порт focus-training всё равно BLOCKED).
+- **Ledgers:** matrix focus-training detector/AA‡/full-width*/a11y → PASS, states → PASS(core)†;
+  registry port_status → BLOCKED + recheck-заметка; CRITIQUE C11/C12 + журнал cr.8; gaps_found +1.
+- **Следующий тик:** worst-first — recheck следующего чистого макета (`result` / `settings` /
+  `stats`) ЛИБО вход в Фазу E по разблокировке `base.css`.

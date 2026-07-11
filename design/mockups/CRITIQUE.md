@@ -26,9 +26,27 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 | C8 | — | focus-ring/reduced-motion/AA-каркас | Верифицированы по PROGRESS it.10–21; при каждой правке — re-check, не регресс | все | RECHECK |
 | C10 | P4 | Type-scale: `.state-title` (empty/done, font-hero fs-xl) держит `--track-tight`, а 3 других serif-page-title того же размера (`settings/stats/summary`) — `--track-hero` | Кросс-экранная консистентность типографики: одна роль (serif page-title @fs-xl) = одна трактовка tracking. Сам scale КОГЕРЕНТЕН (2 tier: content-hero clamp vs page-title fixed) — дрейф только в одном letter-spacing | `focus-question.html` | **DONE** |
 | C9 | P2 | Кнопочный компонент дрейфует на `shell`: 3 расхождения с остальными 5 экранами | Кросс-экранная консистентность: одна кнопка = один компонент. (1) `.btn` padding `s-5` vs `s-6` у 4 других; (2) `.btn-primary` без `box-shadow: shadow-sm` (у всех 4 — есть → плоский CTA на home); (3) `.btn-quiet` = байт-идентичен `.btn-ghost` у focus/result/summary, но result/summary держат `.btn-quiet` для ДРУГОЙ безрамочной третичной → коллизия имени (одно имя → два вида) | `shell.html` | **DONE** |
+| C11 | — | `opt-mark` (галочка верного варианта): `success-on` на заливке `success` = AA 4.28 < 4.5 (light) | **РЕШЕНО (compliant):** галочка — **графический объект** (WCAG 1.4.11, порог 3:1), `aria-hidden`, избыточна с зелёной обводкой `.opt--correct` + тегом «верный ответ» + тинтом бейджа. 4.28 ≥ 3:1 → проходит. Единственная пара ниже строгого 4.5-бара (сестра `error-on/error` = 4.95). Общий токен `--success` НЕ риплю в recheck-тик (задел на 8 макетов). Если понадобится симметрия ≥4.5 — точечно затемнить `--success` fill в отдельном тике | `focus-question.html` (tokens) | **РЕШЕНО** |
+| C12 | P3 | `focus-question` покрывает 4 состояния (active/result/empty/done), но registry-список focus-training шире | Reference-экран задал ЯЗЫК на 4 ядровых состояниях; недостающие: flashcard-reveal/grade(1-4), study-LEARN(study-confirm), generationUnavailable, loading-placeholder, inline-alert/error, no-js-fallback, diagram/mermaid. Coverage-gap — доработать состояния reference-экрана (порт focus-training всё равно BLOCKED параллельным WIP) | `focus-question.html` | TODO |
 
 ## Журнал критики
 
+- **cr.8 (ROUND-RESET, R0.6)** — **B_MOCKUP_RECHECK reference-экрана `focus-question`.**
+  detector exit 0. **AA обе темы:** все ТЕКСТОВЫЕ пары ≥4.5 (light worst 4.95 badge
+  error-on/error, dark 5.24); единственная пара ниже 4.5 — `opt-mark` галочка верного
+  `success-on/success` = **4.28 light** → но это **графический объект** (порог 3:1),
+  `aria-hidden`, избыточна с обводкой/тегом/бейджем → compliant (C11, РЕШЕНО, без риппла
+  общего токена). **a11y-каркас образцовый, паритет §8:** `role=radiogroup`+aria-label,
+  `progressbar` aria-valuemin/max/now, kbd-help `role=dialog aria-modal aria-labelledby/
+  describedby` + focus-trap + `?`-toggle + Esc + возврат фокуса + `aria-haspopup=dialog`,
+  focus-visible ring на `:has(input:focus-visible)`, reduced-motion fail-safe, kbd-hint
+  гейт `hover:hover+pointer:fine+≥641` (нет touch-мёртвых подсказок), моб. sticky submit-bar
+  c `env(safe-area-inset-bottom)`. **full-width** структурно (`.wrap width:100%` + focus-grid
+  main+aside, брейк 1080px). **states:** покрыты 4 ядровых (active/result/empty/done); НЕ
+  покрыты 7 из registry-списка focus-training (flashcard/study-LEARN/generationUnavailable/
+  loading/inline-alert/no-js/diagram) → **C12** (coverage-gap, TODO; порт всё равно BLOCKED).
+  **Вывод:** reference-язык verified-clean на ядровых состояниях. Дальше worst-first —
+  recheck остальных чистых макетов (result/settings/stats) ЛИБО вход в Фазу E по разблокировке.
 - **cr.7 (Фаза 1, тик 7)** — **кросс-экранный аудит type-scale → система когерентна,
   1 микро-дрейф закрыт (C10).** Разобрал page-title/hero-трактовку всех 6 макетов.
   **Вывод: шкала НЕ дрейфует — это осознанный 2-tier дизайн:** (a) content-hero
