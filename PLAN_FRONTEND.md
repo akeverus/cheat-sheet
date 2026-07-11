@@ -1208,3 +1208,21 @@ Dirty changes created by loop: 0
 - **Следующий тик:** разблокировка → Фаза E; иначе финальный D-маппинг shell/head
   (хром: header.html/head.html/icons.html + today-widget) — после него фаза D
   исчерпана полностью, останется только ждать разблокировку.
+
+### 2026-07-12 — R0.26: D-маппинг shell/хром — ФАЗА D ИСЧЕРПАНА (7/7)
+
+- **Collision guard:** base.css/app.js/head.html dirty; header.html/icons/today-widget ЧИСТЫ.
+- **Создано:** `PORT_MAPPING_shell.md` (финал). Крит: drawer НЕ портировать (прод-нав
+  проще, без JS); футер — в проде нет вообще, вопрос юзеру (Фаза G); ?-кнопка — шаг 2
+  (kbd-help уже в app.js); порт shell ≈ чистый base.css-рестайл; 4 inline-скрипта
+  header = контракт.
+- **Находки:** (а) шрифты instrument уже в head.html (Newsreader/Space Grotesk) — риск
+  снят; (б) NAMES дизайн-тоггла в header.html без instrument (aria/title кажут сырой id) —
+  2-строчный микро-фикс НЕ блокирован (header.html чист) = единственная доступная
+  прод-правка.
+- **Ledgers:** CRITIQUE cr.28; registry shell → MAPPED.
+- **Итог фазы D:** 7/7 поверхностей замаплено (error/summary/focus/result/stats/settings/
+  shell), 2 черновика ready-to-paste (C7-i, C6-i).
+- **Следующий тик:** разблокировка → Фаза E (черновики); если dirty — микро-фикс NAMES
+  instrument в header.html (Фаза E, независимая правка чистого файла, explicit pathspec
+  + прогон контракт-теста).
