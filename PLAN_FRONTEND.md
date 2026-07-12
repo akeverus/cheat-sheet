@@ -1429,3 +1429,10 @@ Dirty changes created by loop: 0
 - QA flashcard (оба дизайна): вопрос/тема несут C1-i; reveal = отдельный teal r10-чип (токены); reveal вне формы — безопасный клиентский toggle; grade-кнопок в browse-режиме нет (SM2 = due-flow, session-gated).
 - QA empty: кнопки token-only корректны. Найден дефект голоса: h2 вне явных правил = semibold 600 (у instrument не было SIGNATURE-секции). Фикс: INSTRUMENT — SIGNATURES (h1..h6 medium) после SWISS-сигнатур; QA 600→500, editorial 500 (свой), swiss 650 цел. head v80→81.
 - **Дальше:** контракт-тест при окне без bootRun (7¤); session-gated parity (summary/result/grade-кнопки/.session-progress) — ждёт решения юзера про EXAM-сессию; либо maintenance/полиш по бэклогу Фазы G.
+
+### R0.56 (2026-07-12) — Мультивьюпорт-свип instrument-портов: VERIFIED-CLEAN (0 правок)
+- Collision guard чист; bootRun жив → контракт-тест PENDING; session-parity ждёт юзера.
+- Свип 375/2560 × light/dark × instrument по read-only поверхностям: /settings, /stats, focus/flashcard (?topic=preparation/interview-preparation), error 404. Все: overflow 0, токены/C*-i-правила несутся на краях диапазона (детали в cr.53).
+- Ложный кандидат: CODE шире вьюпорта на flashcard@375 — лежит в pre.question-code overflow-x:auto (паттерн «широкое скроллится в своём контейнере»), не дефект.
+- Правок кода нет, v=81 не бампался. По протоколу §28 — verified-clean нота, не «улучшать нечего».
+- **Дальше:** контракт-тест при окне без bootRun (7¤); session-gated parity — ждёт EXAM-решения юзера; иначе — следующая maintenance-цель (кандидаты Фазы G: dead-regenerate UI, stats.js instrument-палитра графиков, ?-кнопка, футер-вопрос).
