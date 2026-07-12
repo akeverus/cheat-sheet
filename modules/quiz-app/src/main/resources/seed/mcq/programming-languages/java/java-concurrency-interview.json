@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "yield() освобождает мониторы, sleep() освобождает мониторы, join() освобождает мониторы synchronized.",
+              "text": "yield() и sleep() освобождают удерживаемые мониторы на паузу, а join() ждёт завершения другого потока.",
               "correct": false,
               "sections": {
                 "what_actually": "Ни sleep, ни yield, ни join не освобождают мониторы; только Object.wait() освобождает.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "yield() уступает CPU, sleep() освобождает монитор на паузу, join() заставляет вызываемый поток ждать вызывающий.",
+              "text": "yield() уступает CPU, sleep() приостанавливает на время, join() заставляет вызываемый поток ждать вызывающий.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: t.join() заставляет текущий (вызывающий) поток ждать завершения t.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "JMM описывает layout объектов в heap и работу сборщика мусора.",
+              "text": "Описание layout объектов в куче, выравнивания полей и работы сборщика мусора.",
               "correct": false,
               "sections": {
                 "what_actually": "JMM (JLS Chapter 17) описывает видимость и happens-before; layout объектов в куче и работа GC — отдельная область runtime, не JMM.",
@@ -503,7 +503,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "JMM даёт видимость записей между потоками автоматически, поэтому volatile нужен лишь для атомарности.",
+              "text": "Механизм автоматической межпоточной видимости записей, где volatile нужен лишь для атомарности.",
               "correct": false,
               "sections": {
                 "what_actually": "Без happens-before видимость не гарантирована; volatile и synchronized нужны именно для видимости, а не только для атомарности.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "JMM требует, чтобы компилятор сохранял порядок инструкций ровно в том виде, как они написаны в исходнике.",
+              "text": "Требование к компилятору сохранять порядок инструкций ровно как в исходном коде потоков.",
               "correct": false,
               "sections": {
                 "what_actually": "Переупорядочение разрешено, пока сохраняется as-if-serial семантика в одном потоке; межпоточная видимость задаётся happens-before.",
@@ -564,7 +564,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "volatile делает все операции с полем атомарными, включая инкремент и декремент.",
+              "text": "volatile делает все операции с полем атомарными, включая инкремент count++ и декремент count--.",
               "correct": false,
               "sections": {
                 "what_actually": "volatile не даёт атомарности составных операций; count++ — три операции, между ними возможна гонка.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "volatile только запрещает компилятору инлайнить значение и переставлять доступы, но никак не влияет на CPU-кэш и store buffer.",
+              "text": "volatile лишь запрещает компилятору инлайнить значение и переставлять доступы, но не влияет на CPU-кэш и store buffer.",
               "correct": false,
               "sections": {
                 "what_actually": "volatile генерирует memory barrier, который влияет и на CPU-кэш (flush из store buffer, invalidate других ядер).",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "volatile эквивалентен synchronized-блоку вокруг каждого обращения к полю.",
+              "text": "volatile эквивалентен synchronized-блоку вокруг каждого чтения и записи поля, давая ту же эксклюзивность.",
               "correct": false,
               "sections": {
                 "what_actually": "synchronized дороже и даёт mutual exclusion; volatile — только видимость и барьеры, без эксклюзивности.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "final поля автоматически делают любую коллекцию внутри объекта потокобезопасной.",
+              "text": "final поля автоматически делают потокобезопасной любую коллекцию, на которую они ссылаются внутри объекта.",
               "correct": false,
               "sections": {
                 "what_actually": "final гарантирует видимость самой ссылки; содержимое мутабельной коллекции остаётся опасным.",
@@ -635,7 +635,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "final поля можно менять через рефлексию без потери thread-safety гарантий JMM.",
+              "text": "final поля можно свободно менять через рефлексию (setAccessible), не теряя thread-safety гарантий JMM.",
               "correct": false,
               "sections": {
                 "what_actually": "Изменение final через рефлексию разрушает все гарантии JMM для этого поля; behavior undefined.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Частичный порядок над операциями: если A happens-before B через synchronized, результаты A видны, а volatile к happens-before отношения не имеет.",
+              "text": "Частичный порядок: если A happens-before B через synchronized, результаты A видны, но не через volatile.",
               "correct": false,
               "sections": {
                 "what_actually": "volatile write happens-before subsequent volatile read — это одно из ключевых правил JMM.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "synchronized не реентерабелен — повторный захват тем же потоком приводит к deadlock.",
+              "text": "synchronized захватывает монитор объекта и даёт взаимное исключение, видимость (flush кэша) и одноразовый вход того же потока.",
               "correct": false,
               "sections": {
                 "what_actually": "synchronized в Java реентерабелен: тот же поток может повторно захватить монитор без deadlock.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "synchronized только обеспечивает mutual exclusion, без гарантий видимости — для видимости нужен дополнительный volatile.",
+              "text": "synchronized захватывает монитор объекта и даёт взаимное исключение, реентерабельность и видимость (только с volatile).",
               "correct": false,
               "sections": {
                 "what_actually": "synchronized даёт ОБА: mutex и видимость через happens-before unlock→lock.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "synchronized-метод и synchronized(this) внутри метода используют разные мониторы.",
+              "text": "synchronized для метода и synchronized(this) берёт разные мониторы, давая mutex, видимость (unlock→lock) и реентерабельность.",
               "correct": false,
               "sections": {
                 "what_actually": "synchronized instance-метод и synchronized(this) внутри метода — это один и тот же монитор this.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Блок поддерживает tryLock с таймаутом, в отличие от метода.",
+              "text": "Блок поддерживает tryLock с таймаутом и прерывание, в отличие от synchronized-метода.",
               "correct": false,
               "sections": {
                 "what_actually": "synchronized (ни блок, ни метод) не имеет tryLock/timeout — это возможности ReentrantLock.",
@@ -876,7 +876,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Class lock автоматически блокирует все instance-методы того же класса.",
+              "text": "Захват static synchronized (class lock) автоматически блокирует и все instance-методы класса.",
               "correct": false,
               "sections": {
                 "what_actually": "Class lock и instance lock независимы; вход в static synchronized не блокирует instance synchronized разных объектов.",
@@ -888,13 +888,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "static synchronized не существует в Java — синхронизация работает только на instance-методах.",
+              "text": "static synchronized берёт монитор экземпляра, а не Class-объекта, блокируя лишь этот объект.",
               "correct": false,
               "sections": {
-                "what_actually": "static synchronized — валидный модификатор, использует монитор Class-объекта.",
-                "source_of_confusion": "Незнание JLS: разработчик видел только `synchronized` на instance-методах и делает вывод, что `static synchronized` синтаксически невозможен.",
-                "if_it_were_true": "Singleton.getInstance() через static synchronized был бы невозможен — реально возможен.",
-                "how_it_should_be": "static synchronized → монитор Class-объекта; полностью валиден."
+                "what_actually": "static synchronized использует монитор Class-объекта (единый на весь класс), а не монитор какого-либо экземпляра.",
+                "source_of_confusion": "Привычную instance-блокировку переносят на static: думают, что монитором служит некий объект, а не сам `Class`.",
+                "if_it_were_true": "Два потока в static synchronized разных методов одного класса работали бы параллельно — реально их сериализует общий Class-монитор.",
+                "how_it_should_be": "static synchronized → монитор Class-объекта, общий для всех экземпляров; instance synchronized → монитор this."
               }
             }
           ]
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Потокобезопасным считается класс с volatile-полями, независимо от composite-операций.",
+              "text": "Класс, корректный в многопоточном доступе за счёт volatile-полей даже при составных операциях.",
               "correct": false,
               "sections": {
                 "what_actually": "volatile не делает класс thread-safe для composite-операций (read-modify-write); нужно больше.",
@@ -983,7 +983,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Любой класс с приватными полями автоматически потокобезопасен из-за инкапсуляции.",
+              "text": "Класс, корректный при доступе из нескольких потоков за счёт приватных полей и инкапсуляции.",
               "correct": false,
               "sections": {
                 "what_actually": "Encapsulation не имеет отношения к thread-safety; приватные мутабельные поля под race condition.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Класс, у которого все публичные методы помечены synchronized, — этого достаточно для полной потокобезопасности.",
+              "text": "Класс, корректный в многопоточном доступе, так как все публичные методы объявлены synchronized.",
               "correct": false,
               "sections": {
                 "what_actually": "synchronized на всех методах не гарантирует thread-safety: compound operations внешнего кода (например, iteration) остаются небезопасны.",
