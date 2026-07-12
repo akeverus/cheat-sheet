@@ -609,7 +609,7 @@
           "question_text": "Как использовать `Mockito`?",
           "options": [
             {
-              "text": "Для подключения Mockito к JUnit 5 используют `@RunWith(MockitoJUnitRunner.class)` над классом теста.",
+              "text": "Подключают `@RunWith(MockitoJUnitRunner.class)` над классом теста, поля помечают `@Mock`, тестируемый класс — `@InjectMocks`. Stubbing: `when(repo.findById(1L)).thenReturn(Optional.of(user))`. Verification: `verify(repo).save(any())`, `verify(email, never()).send(...)`. Void: `doThrow(...)/doNothing().when(mock).method()`. Matchers: `any()`, `eq()`, `anyString()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@RunWith` — это JUnit 4; в JUnit 5 Mockito подключают через `@ExtendWith(MockitoExtension.class)`.",
@@ -621,7 +621,7 @@
               "label": "A"
             },
             {
-              "text": "Чтобы замокировать void-метод на выброс исключения, пишут `when(mock.voidMethod()).thenThrow(...)`, как для обычных методов.",
+              "text": "Подключают `@ExtendWith(MockitoExtension.class)`, поля помечают `@Mock`, тестируемый класс — `@InjectMocks`. Stubbing: `when(repo.findById(1L)).thenReturn(Optional.of(user))`. Verification: `verify(repo).save(any())`, `verify(email, never()).send(...)`. Void-метод на выброс: `when(mock.voidMethod()).thenThrow(...)`, как и для обычных методов. Matchers: `any()`, `eq()`, `anyString()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Для void-методов `when(...)` не компилируется (метод ничего не возвращает); используют `doThrow(...).when(mock).voidMethod()`.",
@@ -646,7 +646,7 @@
               "label": "C"
             },
             {
-              "text": "В одном `verify`/`when` можно свободно смешивать matcher и конкретное значение: `verify(repo).save(user, anyString())` — корректно.",
+              "text": "Подключают `@ExtendWith(MockitoExtension.class)`, поля помечают `@Mock`, тестируемый класс — `@InjectMocks`. Stubbing: `when(repo.findById(1L)).thenReturn(Optional.of(user))`. Verification: `verify(repo).save(user, anyString())` — matcher и конкретное значение можно свободно смешивать. Void: `doThrow(...)/doNothing().when(mock).method()`. Matchers: `any()`, `eq()`, `anyString()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Mockito требует, чтобы при наличии хотя бы одного matcher **все** аргументы были matchers: нужно `eq(user)` вместо сырого `user`.",
@@ -669,7 +669,7 @@
           "question_text": "Как работает `ArgumentCaptor` в `Mockito`?",
           "options": [
             {
-              "text": "`ArgumentCaptor` предназначен для stubbing: его передают в `when(repo.save(captor.capture())).thenReturn(...)`, чтобы задать возвращаемое значение.",
+              "text": "`ArgumentCaptor` предназначен для stubbing: его передают в `when(repo.save(captor.capture())).thenReturn(...)`, чтобы задать возвращаемое значение. Создаётся через `ArgumentCaptor.forClass(User.class)`; работает внутри `when`, а не `verify`. Удобен, когда нужно застабить метод по значению аргумента.",
               "correct": false,
               "sections": {
                 "what_actually": "Captor работает с `verify()` для проверки переданных аргументов, а не для stubbing; для stubbing используют `ArgumentMatcher`.",
@@ -681,7 +681,7 @@
               "label": "A"
             },
             {
-              "text": "`ArgumentCaptor` подменяет аргумент вызова на свой объект, поэтому тестируемый метод получает не реальное значение, а заглушку из captor.",
+              "text": "`ArgumentCaptor` подменяет аргумент вызова на свой объект, поэтому тестируемый метод получает не реальное значение, а заглушку из captor. Создаётся через `ArgumentCaptor.forClass(User.class)`; подмена происходит в момент `capture()`. Значение читают через `captor.getValue()` уже после вызова.",
               "correct": false,
               "sections": {
                 "what_actually": "Captor ничего не подменяет: метод получает реальный аргумент, а captor лишь сохраняет его копию для проверки.",
@@ -693,7 +693,7 @@
               "label": "B"
             },
             {
-              "text": "`captor.getValue()` можно вызывать сразу после вызова тестируемого метода, до `verify(...).save(captor.capture())` — порядок не важен.",
+              "text": "`captor.getValue()` можно вызывать сразу после тестируемого метода, до `verify(...).save(captor.capture())` — порядок не важен. Создаётся через `ArgumentCaptor.forClass(User.class)`; захват и чтение независимы. Значение доступно в любой момент теста.",
               "correct": false,
               "sections": {
                 "what_actually": "Сначала нужен `verify(...).save(captor.capture())`, который и наполняет captor; без него `getValue()` бросит исключение.",
@@ -742,7 +742,7 @@
               "label": "A"
             },
             {
-              "text": "У `mock` методы по умолчанию вызывают реальный код объекта, а у `spy` — возвращают `null`/`0`/`false`.",
+              "text": "`mock(List.class)` по умолчанию вызывает реальный код объекта, а `spy(new ArrayList<>())` — возвращает пустые значения (`null`/`0`/`false`); mock — обёртка реального объекта с переопределением, spy — полная замена зависимости.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: реальный код по умолчанию исполняет **spy**, а **mock** возвращает пустые значения.",
@@ -754,7 +754,7 @@
               "label": "B"
             },
             {
-              "text": "`spy` нельзя создать из существующего экземпляра — он принимает только `Class`, как и `mock(SomeClass.class)`.",
+              "text": "`spy` нельзя создать из существующего экземпляра — он принимает только `Class`, как и `mock(SomeClass.class)`; поэтому вызов `spy(new ArrayList<>())` не скомпилируется. Оба создаются одинаково — из типа, а не из готового объекта.",
               "correct": false,
               "sections": {
                 "what_actually": "`spy` как раз оборачивает уже существующий объект: `spy(new ArrayList<>())`; именно поэтому он вызывает реальный код.",
@@ -766,7 +766,7 @@
               "label": "C"
             },
             {
-              "text": "Для stubbing метода у `spy` всегда безопасно использовать `when(spy.method()).thenReturn(...)`, как и у обычного мока.",
+              "text": "`spy(new ArrayList<>())` при stubbing можно безопасно использовать через `when(spy.method()).thenReturn(...)`, как и у обычного `mock`; реальный метод при этом не вызывается, `doReturn(...)` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "У spy `when(spy.method())` **реально вызывает** метод при настройке (возможны побочные эффекты); безопаснее `doReturn(...).when(spy).method()`.",
@@ -789,7 +789,7 @@
           "question_text": "Как тестировать статические методы?",
           "options": [
             {
-              "text": "Статические методы Mockito мокирует «из коробки» в любой версии без дополнительных зависимостей и без `try-with-resources`.",
+              "text": "С Mockito статику мокируют «из коробки» в любой версии без `mockito-inline` и без `try-with-resources` — просто `MockedStatic<UUID> m = mockStatic(UUID.class); m.when(UUID::randomUUID).thenReturn(fixed);` где угодно в тесте. Вне метода статический мок автоматически снимается. Альтернатива не нужна, подходит и для `final`-классов без доп. зависимостей.",
               "correct": false,
               "sections": {
                 "what_actually": "Мокирование статики требует `mockito-inline` (3.4.0+) и `MockedStatic` в `try`-блоке; в старых версиях это невозможно.",
@@ -814,7 +814,7 @@
               "label": "B"
             },
             {
-              "text": "`MockedStatic`-мок действует глобально на всю JVM до конца прогона, поэтому его не нужно закрывать.",
+              "text": "С Mockito статический мок через `MockedStatic` действует глобально на всю JVM до конца прогона: `MockedStatic<UUID> m = mockStatic(UUID.class); m.when(UUID::randomUUID).thenReturn(fixed);` ставится один раз и не закрывается. Снятие происходит при завершении всего набора тестов, поэтому `try-with-resources` избыточен. Другие тесты видят тот же мок.",
               "correct": false,
               "sections": {
                 "what_actually": "Мок действует только внутри `try-with-resources` и в текущем потоке; по выходу из блока он автоматически снимается.",
@@ -826,7 +826,7 @@
               "label": "C"
             },
             {
-              "text": "Чтобы протестировать класс, зовущий `UUID.randomUUID()`, обязательно мокировать статику — обернуть вызов в отдельный класс нельзя.",
+              "text": "С Mockito, чтобы протестировать класс с `UUID.randomUUID()`, статику обязательно мокировать через `MockedStatic`: `try (MockedStatic<UUID> m = mockStatic(UUID.class)) { m.when(UUID::randomUUID).thenReturn(fixed); }` — обернуть вызов в инстанс-метод и мокировать его нельзя. Иначе значение остаётся случайным. Чистые методы тоже приходится мокировать.",
               "correct": false,
               "sections": {
                 "what_actually": "Можно и обычно нужно: обернуть `UUID.randomUUID()` в `UuidGenerator.generate()` и мокировать обёртку обычным `mock(...)`.",
@@ -849,7 +849,7 @@
           "question_text": "Что такое `BDD`-стиль тестирования с `Mockito`?",
           "options": [
             {
-              "text": "BDD-стиль с `BDDMockito` — это отдельный фреймворк, заменяющий Mockito и работающий с feature-файлами на Gherkin.",
+              "text": "`BDDMockito` — отдельный фреймворк, заменяющий Mockito и работающий с feature-файлами на Gherkin: сценарии `Given-When-Then` пишут в `.feature`, а Java-код `given()`/`then()` генерируется из них. Для проверки вызовов есть собственный раннер.",
               "correct": false,
               "sections": {
                 "what_actually": "`BDDMockito` — часть самого Mockito (синтаксический сахар), а Gherkin/feature-файлы — это Cucumber, другой инструмент.",
@@ -861,7 +861,7 @@
               "label": "A"
             },
             {
-              "text": "В BDD-стиле `given(...).willReturn(...)` ведёт себя иначе, чем `when(...).thenReturn(...)`: он откладывает стабинг до вызова `then()`.",
+              "text": "`given(repo.save(any())).willReturn(user)` в BDD-стиле ведёт себя иначе, чем `when(...).thenReturn(...)`: он откладывает стабинг до вызова `then(repo).should()`, поэтому до верификации мок возвращает `null`. Порядок Given-Then строго обязателен.",
               "correct": false,
               "sections": {
                 "what_actually": "Поведение идентично `when().thenReturn()`; `given/willReturn` — лишь переименование, без отложенного стабинга.",
@@ -886,7 +886,7 @@
               "label": "C"
             },
             {
-              "text": "Проверку вызовов в BDD-стиле делают через `verify(mock)`, потому что у `BDDMockito` своего метода верификации нет.",
+              "text": "`verify(mock)` в BDD-стиле используют для проверки вызовов, потому что у `BDDMockito` своего метода верификации нет: есть `given().willReturn()`, но аналога `then(repo).should()` не существует. Приходится смешивать BDD- и классический стили.",
               "correct": false,
               "sections": {
                 "what_actually": "BDD-эквивалент `verify` — это `then(mock).should().method()`; у BDDMockito есть собственный verify-синтаксис.",
@@ -909,7 +909,7 @@
           "question_text": "Как правильно использовать `@InjectMocks`?",
           "options": [
             {
-              "text": "`@InjectMocks` создаёт мок тестируемого класса, поэтому его собственные методы по умолчанию возвращают `null`/`0`.",
+              "text": "`@InjectMocks` создаёт мок тестируемого класса, поэтому его собственные методы по умолчанию возвращают `null`/`0`. Внутрь подставляются объявленные `@Mock`-поля. Инъекция идёт по типу. Реальный код класса при этом не выполняется.",
               "correct": false,
               "sections": {
                 "what_actually": "`@InjectMocks` создаёт **реальный** экземпляр (не мок); мокируются только его зависимости, помеченные `@Mock`.",
@@ -921,7 +921,7 @@
               "label": "A"
             },
             {
-              "text": "`@InjectMocks` — это то же самое, что Spring-овский `@MockBean`, и поднимает контекст приложения для инъекции.",
+              "text": "`@InjectMocks` — это то же самое, что Spring-овский `@MockBean`, и поднимает контекст приложения для инъекции. Bean-ы берутся из `ApplicationContext`. Работает только внутри `@SpringBootTest`. Инъекция идёт по имени бина.",
               "correct": false,
               "sections": {
                 "what_actually": "`@InjectMocks` — чистый Mockito без Spring и без контекста; `@MockBean` — отдельная аннотация Spring Test.",
@@ -933,7 +933,7 @@
               "label": "B"
             },
             {
-              "text": "`@InjectMocks` автоматически подставляет и примитивы/строки (например, URL или таймаут) из значений по умолчанию.",
+              "text": "`@InjectMocks` автоматически подставляет и примитивы/строки (например, URL или таймаут) из значений по умолчанию. Объектные `@Mock` инъектируются по типу. Числа берутся как `0`, строки как пустые. Конструктор с примитивами заполняется целиком.",
               "correct": false,
               "sections": {
                 "what_actually": "Mockito инъектирует по типу только моки; примитивы, строки и числа нужно задавать вручную в тесте.",
@@ -982,7 +982,7 @@
               "label": "A"
             },
             {
-              "text": "`TDD` означает писать тесты после реализации, чтобы зафиксировать уже работающее поведение и поднять покрытие.",
+              "text": "`TDD` — методология, при которой тест пишется после реализации, по циклу Code-Test-Refactor: CODE — написать рабочий код функции; TEST — зафиксировать уже готовое поведение; REFACTOR — поднять покрытие. Тест лишь подтверждает код, а не ведёт разработку.",
               "correct": false,
               "sections": {
                 "what_actually": "В TDD тест пишется именно **до** кода (Red-Green-Refactor); написание тестов после — это обычный test-after подход.",
@@ -994,7 +994,7 @@
               "label": "B"
             },
             {
-              "text": "Цикл TDD — это Green-Red-Deploy: сначала пишут реализацию (green), потом тест (red), потом сразу деплоят.",
+              "text": "`TDD` — методология, при которой сначала пишут код, по циклу Green-Red-Deploy: GREEN — написать реализацию функции; RED — добавить тест на неё; DEPLOY — сразу выкатить без фазы рефакторинга. Тест закрепляет уже написанный код.",
               "correct": false,
               "sections": {
                 "what_actually": "Реальный цикл — Red-Green-Refactor: падающий тест → минимальная реализация → рефакторинг; деплой в цикл не входит.",
@@ -1006,7 +1006,7 @@
               "label": "C"
             },
             {
-              "text": "На фазе GREEN нужно сразу написать полную, оптимизированную и обобщённую реализацию, а не минимальную.",
+              "text": "`TDD` — методология, при которой тест пишется перед кодом, по циклу Red-Green-Refactor: RED — написать падающий тест; GREEN — сразу полная, оптимизированная реализация, а не минимальная; REFACTOR уже не нужен. Иначе тест считается непройденным.",
               "correct": false,
               "sections": {
                 "what_actually": "GREEN требует именно **минимального** кода, чтобы тест прошёл; оптимизацию и обобщение оставляют на фазу REFACTOR.",
@@ -1029,7 +1029,7 @@
           "question_text": "Чем `TDD` отличается от `BDD`?",
           "options": [
             {
-              "text": "`BDD` использует чисто технический язык (`assertEquals`) и нацелен только на разработчиков, а `TDD` — доменный `Given-When-Then` для бизнеса.",
+              "text": "`BDD` фокусируется на корректности реализации техническим языком (`assertEquals`), аудитория — разработчики, гранулярность — метод/класс, инструменты `JUnit`/`Mockito`. `TDD` описывает поведение с точки зрения бизнеса доменным языком (`Given-When-Then`), вовлекает аналитиков, инструменты `Cucumber`/`Spock`.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны: доменный `Given-When-Then` для бизнеса — это BDD, а технический `assertEquals` для разработчиков — TDD.",
@@ -1054,7 +1054,7 @@
               "label": "B"
             },
             {
-              "text": "TDD и BDD — это синонимы: одно и то же, просто BDD — более новое маркетинговое название для TDD.",
+              "text": "`TDD` и `BDD` — по сути синонимы: оба пишут тест перед кодом техническим языком (`assertEquals`), аудитория одна — разработчики, инструменты общие `JUnit`/`Mockito`. `BDD` — лишь более новое маркетинговое название того же `Given-When-Then` поверх тех же тестов.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные практики с разным фокусом (реализация vs поведение), языком и инструментами, хотя BDD и вырос из TDD.",
@@ -1066,7 +1066,7 @@
               "label": "C"
             },
             {
-              "text": "Инструмент BDD по умолчанию — это `JUnit` с `Mockito`, тогда как TDD требует специальных фреймворков вроде `Cucumber`.",
+              "text": "`JUnit` с `Mockito` — инструмент `BDD` по умолчанию, с техническим `assertEquals`, тогда как `TDD` требует специальных фреймворков (вроде `Cucumber`/`Spock`) с `Given-When-Then`. Аудитория BDD — разработчики, а TDD — бизнес-аналитики.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `Cucumber`/`Spock`/`JBehave` — инструменты BDD, а `JUnit`/`Mockito` чаще ассоциируют с TDD.",
@@ -1089,7 +1089,7 @@
           "question_text": "Что такое `parameterized tests`?",
           "options": [
             {
-              "text": "`Parameterized tests` запускают весь тестовый класс параллельно в нескольких потоках для ускорения сборки.",
+              "text": "`Parameterized tests` — запуск тестового класса параллельно в нескольких потоках для ускорения сборки (зависимость `junit-jupiter-params`). Источники параллелизма: `@Execution` (`CONCURRENT`/`SAME_THREAD`), `@ResourceLock`, `@Timeout`, `@Isolated`, `@ThreadCount`, число потоков в `@ValueSource`. Метод помечают `@ParameterizedTest` вместо `@Test`.",
               "correct": false,
               "sections": {
                 "what_actually": "Параметризация — про прогон одного метода на разных данных, а не про параллелизм; многопоточный запуск настраивается отдельно.",
@@ -1101,7 +1101,7 @@
               "label": "A"
             },
             {
-              "text": "Параметризованный метод помечают обычной `@Test`, а наборы данных передают через `@BeforeEach`.",
+              "text": "`Parameterized tests` — прогон одного теста с наборами данных, которые готовит `@BeforeEach` (зависимость `junit-jupiter-params`). Источники: `@BeforeEach` (готовит набор), `@BeforeAll` (общий набор), `@RepeatedTest`, `@TestFactory`, `@Nested`-фикстуры, поля тестового класса. Метод помечают обычной `@Test`.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод помечают `@ParameterizedTest`, а данные приходят из источников (`@ValueSource` и т.п.), не из `@BeforeEach`.",
@@ -1126,7 +1126,7 @@
               "label": "C"
             },
             {
-              "text": "Параметризованные тесты работают без дополнительных зависимостей — `junit-jupiter-params` не требуется.",
+              "text": "`Parameterized tests` — запуск одного теста с разными наборами данных без отдельной зависимости `junit-jupiter-params`, всё в `junit-jupiter-api`. Источники: `@ValueSource` (примитивы/строки), `@NullAndEmptySource` (null и пустая строка), `@EnumSource` (значения enum), `@MethodSource`, `@CsvSource`, `@ArgumentsSource`. Метод помечают `@ParameterizedTest` вместо `@Test`.",
               "correct": false,
               "sections": {
                 "what_actually": "Для `@ParameterizedTest` и источников нужна зависимость `junit-jupiter-params`, иначе аннотации недоступны.",
@@ -1149,7 +1149,7 @@
           "question_text": "Как использовать `@MethodSource` и `@CsvSource`?",
           "options": [
             {
-              "text": "`@MethodSource` ссылается на нестатический метод тестового класса, который вызывается отдельно для каждого набора данных во время теста.",
+              "text": "`@MethodSource(\"provider\")` ссылается на нестатический метод тестового класса, вызываемый заново для каждого набора и возвращающий `Stream<Arguments>` (`Arguments.of(\"user@example.com\", \"example.com\")`). `@CsvSource` задаёт табличные данные прямо в аннотации (`textBlock`/строки, настраиваемый `delimiter`). `@CsvFileSource(resources=\"/data.csv\", numLinesToSkip=1)` читает из ресурса-файла.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод-провайдер обычно должен быть `static` (нестатический допустим только в `PER_CLASS`) и вызывается один раз для построения потока аргументов.",
@@ -1161,7 +1161,7 @@
               "label": "A"
             },
             {
-              "text": "`@CsvSource` умеет читать данные только из внешнего `.csv`-файла; задать строки прямо в аннотации нельзя.",
+              "text": "`@MethodSource(\"provider\")` берёт аргументы из статического метода, возвращающего `Stream<Arguments>` (`Arguments.of(\"user@example.com\", \"example.com\")`). `@CsvSource` читает данные только из внешнего `.csv` (`resources=\"/data.csv\"`), задать строки прямо в аннотации нельзя. `@CsvFileSource` при этом лишь синоним `@CsvSource` для того же файла.",
               "correct": false,
               "sections": {
                 "what_actually": "`@CsvSource` принимает данные **в самой аннотации** (массив строк/`textBlock`); чтение из файла — это `@CsvFileSource`.",
@@ -1173,7 +1173,7 @@
               "label": "B"
             },
             {
-              "text": "Провайдер `@MethodSource` должен возвращать `void` и заполнять статический список аргументов внутри себя.",
+              "text": "`@MethodSource(\"provider\")`-провайдер возвращает `void` и заполняет статический список (`args.add(Arguments.of(\"user@example.com\", \"example.com\"))`), который затем читает `@ParameterizedTest`. `@CsvSource` задаёт табличные данные прямо в аннотации (`textBlock`/строки, настраиваемый `delimiter`). `@CsvFileSource(resources=\"/data.csv\", numLinesToSkip=1)` читает из ресурса-файла.",
               "correct": false,
               "sections": {
                 "what_actually": "Провайдер возвращает `Stream<Arguments>` (или коллекцию/массив `Arguments`), а не `void`; JUnit сам разворачивает поток.",
