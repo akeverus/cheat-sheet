@@ -1357,3 +1357,7 @@ Dirty changes created by loop: 0
 ### R0.43 (2026-07-12) — Maintenance-тик: блокер жив (23), WIP без изменений
 
 - Fingerprint диффа base.css идентичен (5741ff12). Действий нет. Ожидание разблокировки → error C7-i.
+
+### R0.44 (2026-07-12) — Maintenance-тик: блокер жив (24), WIP без изменений
+
+- Fingerprint диффа base.css идентичен (5741ff12). Действий нет. Ожидание разблокировки → error C7-i.
