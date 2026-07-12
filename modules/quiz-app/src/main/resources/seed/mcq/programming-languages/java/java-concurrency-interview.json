@@ -23,7 +23,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Process и Thread эквивалентны в Java и отличаются только именованием в API.",
+              "text": "Process и Thread эквивалентны в Java и отличаются преимущественно именованием в API.",
               "correct": false,
               "sections": {
                 "what_actually": "Process — это ProcessBuilder и нативный OS-процесс; Thread — поток внутри JVM. Совершенно разные сущности.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Thread в Java всегда создаётся через fork() и имеет копию heap родителя.",
+              "text": "Thread в Java часто создаётся через fork() и имеет копию heap родителя.",
               "correct": false,
               "sections": {
                 "what_actually": "Thread.start() не вызывает fork — это создание потока в текущей JVM. fork() — Unix system call для процесса.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "RUNNING, READY, SUSPENDED, INTERRUPTED, STOPPED — 5 состояний по аналогии с OS scheduler.",
+              "text": "RUNNING, READY, SUSPENDED, INTERRUPTED, STOPPED — пять состояний по аналогии с OS scheduler.",
               "correct": false,
               "sections": {
                 "what_actually": "JVM использует enum Thread.State с 6 значениями; RUNNING/READY объединены в RUNNABLE.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "NEW, RUNNABLE, WAITING, DEAD — четыре состояния; BLOCKED и TIMED_WAITING отдельно не выделяются.",
+              "text": "NEW, RUNNABLE, WAITING, DEAD — четыре состояния без отдельного BLOCKED и TIMED_WAITING.",
               "correct": false,
               "sections": {
                 "what_actually": "В enum Thread.State шесть значений: BLOCKED (ожидание монитора) и TIMED_WAITING (ожидание с таймаутом) — самостоятельные состояния, а не часть RUNNABLE или WAITING; DEAD как имени состояния в Java нет.",
@@ -155,7 +155,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "BLOCKED и WAITING — синонимы; различия нет, оба означают «поток заблокирован».",
+              "text": "BLOCKED и WAITING — синонимы без различия, оба означают «поток заблокирован».",
               "correct": false,
               "sections": {
                 "what_actually": "BLOCKED — конкретно ожидание входа в synchronized (монитор); WAITING — ожидание сигнала (wait/join/park).",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Приоритет жёстко гарантирует, что поток с большим значением всегда получит CPU раньше потоков с меньшим.",
+              "text": "Целое от 1 до 10 — жёсткая гарантия планировщику; порядок выполнения фиксирован и не зависит от платформы.",
               "correct": false,
               "sections": {
                 "what_actually": "Это только подсказка планировщику ОС; в реальности порядок не гарантирован, зависит от платформы.",
@@ -216,7 +216,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Диапазон приоритетов 0..100, значение по умолчанию 50.",
+              "text": "Целое от 0 до 100 — лишь подсказка планировщику; порядок выполнения не гарантирует и зависит от платформы, дефолт 50.",
               "correct": false,
               "sections": {
                 "what_actually": "В Java диапазон 1..10, NORM_PRIORITY=5, MIN=1, MAX=10.",
@@ -228,7 +228,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Целое от 1 до 10 — подсказка планировщику, но на всех ОС он гарантированно соблюдает её, когда несколько потоков готовы к выполнению.",
+              "text": "Целое от 1 до 10 — лишь подсказка планировщику; порядок выполнения на всех ОС обычно соблюдается, когда несколько потоков готовы.",
               "correct": false,
               "sections": {
                 "what_actually": "Планировщик ОС волен игнорировать приоритет; на Linux setPriority часто вовсе не влияет на то, какой готовый поток получит CPU.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Runnable может возвращать значение через побочный эффект, а Callable не работает с лямбдами.",
+              "text": "Runnable.run() возвращает значение через побочный эффект, а Callable.call() — не работает с лямбдами.",
               "correct": false,
               "sections": {
                 "what_actually": "Runnable.run() имеет тип void; Callable — функциональный интерфейс, поддерживает лямбды.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Callable существует с Java 1.0, Runnable добавлен в Java 5.",
+              "text": "Callable<V>.call() существует с Java 1.0, а Runnable.run() — добавлен в Java 5.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: Runnable с Java 1.0, Callable с Java 5 (в составе java.util.concurrent).",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Callable не может бросить исключение, поэтому он безопаснее Runnable.",
+              "text": "Callable<V>.call() не может бросить checked Exception, а Runnable.run() — может, поэтому Callable безопаснее.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: call() throws Exception, Callable может бросать checked; Runnable.run() — нет.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "interrupt() немедленно останавливает поток, аналогично устаревшему Thread.stop().",
+              "text": "interrupt() немедленно останавливает поток как stop(); isInterrupted() читает флаг без сброса, Thread.interrupted() — со сбросом.",
               "correct": false,
               "sections": {
                 "what_actually": "interrupt() лишь выставляет флаг; поток должен сам его проверять и реагировать.",
@@ -396,7 +396,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "isInterrupted() сбрасывает флаг при чтении, а Thread.interrupted() — нет.",
+              "text": "interrupt() лишь выставляет флаг; isInterrupted() сбрасывает флаг при чтении, Thread.interrupted() — без сброса.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: isInterrupted() не сбрасывает; Thread.interrupted() читает и сбрасывает.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "После catch (InterruptedException e) флаг прерывания остаётся выставленным и его не надо восстанавливать.",
+              "text": "interrupt() лишь выставляет флаг; isInterrupted() читает его без сброса, а после catch (InterruptedException) флаг остаётся и восстанавливать его не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "При выбросе InterruptedException флаг сбрасывается; восстанавливать через Thread.currentThread().interrupt() — это лучшая практика.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "yield(), sleep() и join() освобождают мониторы synchronized, поэтому их применяют, чтобы избежать deadlock.",
+              "text": "yield() освобождает мониторы, sleep() освобождает мониторы, join() освобождает мониторы synchronized.",
               "correct": false,
               "sections": {
                 "what_actually": "Ни sleep, ни yield, ни join не освобождают мониторы; только Object.wait() освобождает.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "join() заставляет вызываемый поток ждать вызывающий, а sleep() освобождает монитор на время паузы.",
+              "text": "yield() уступает CPU, sleep() освобождает монитор на паузу, join() заставляет вызываемый поток ждать вызывающий.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: t.join() заставляет текущий (вызывающий) поток ждать завершения t.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "sleep(0) гарантированно эквивалентен yield() на всех платформах.",
+              "text": "yield() уступает CPU, sleep(0) гарантированно равен yield(), join() ждёт завершения другого потока.",
               "correct": false,
               "sections": {
                 "what_actually": "Поведение sleep(0) platform-specific; на Linux часто no-op, на Windows бывает yield. Не гарантировано.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "happens-before — это про физический порядок выполнения инструкций во времени.",
+              "text": "Физический порядок во времени: если A раньше B по wall-clock, результаты A видны потоку, выполняющему B.",
               "correct": false,
               "sections": {
                 "what_actually": "Это абстрактное отношение видимости, не про реальное время. Операция, которая «happens-before», может фактически выполниться позже.",
@@ -696,7 +696,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "happens-before автоматически выполняется между любыми операциями двух потоков.",
+              "text": "Полный порядок над любыми операциями: если A и B в разных потоках, результаты A всегда видны потоку, выполняющему B.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию между операциями разных потоков НЕТ happens-before; его надо явно устанавливать через volatile/synchronized/Atomic/final.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "happens-before можно установить только через synchronized; volatile к нему отношения не имеет.",
+              "text": "Частичный порядок над операциями: если A happens-before B через synchronized, результаты A видны, а volatile к happens-before отношения не имеет.",
               "correct": false,
               "sections": {
                 "what_actually": "volatile write happens-before subsequent volatile read — это одно из ключевых правил JMM.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Это методы класса Thread; их можно вызывать без synchronized, прямо на ссылке на поток.",
+              "text": "Методы Thread: вызываются без synchronized, прямо на ссылке на поток; wait() освобождает монитор, а проверять условие нужно в цикле while.",
               "correct": false,
               "sections": {
                 "what_actually": "Это методы Object, и они обязательно требуют владения монитором того объекта, на котором вызываются.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "wait() достаточно вызывать в одиночном if, потому что spurious wakeup — миф для старых JVM.",
+              "text": "Методы Object: вызываются только внутри synchronized; wait() освобождает монитор, а проверять условие достаточно одиночным if без while.",
               "correct": false,
               "sections": {
                 "what_actually": "Spurious wakeups реальны и не зависят от версии JVM; if вместо while может пропустить инвариант.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "notify() гарантированно будит конкретный (FIFO) поток из очереди ожидающих на мониторе.",
+              "text": "Методы Object: вызываются только внутри synchronized; notify() будит конкретный FIFO-поток, а проверять условие нужно в цикле while.",
               "correct": false,
               "sections": {
                 "what_actually": "notify() будит ОДИН произвольный (не FIFO) поток; выбор зависит от JVM.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Atomic-классы доступны только через рефлексию из внутреннего sun.misc.Unsafe, публичного API у них нет вовсе.",
+              "text": "Atomic-классы доступны преимущественно через рефлексию из внутреннего sun.misc.Unsafe, публичного API у них нет вовсе.",
               "correct": false,
               "sections": {
                 "what_actually": "Atomic — публичный API java.util.concurrent.atomic с Java 5; sun.misc.Unsafe — внутренняя реализация.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "CAS — это software emulation, доступная только в Java 8+.",
+              "text": "CAS — это software emulation, доступная преимущественно в Java 8+.",
               "correct": false,
               "sections": {
                 "what_actually": "CAS — аппаратная инструкция CPU (CMPXCHG на x86, LDREX/STREX на ARM), доступна с Java 5 через sun.misc.Unsafe.",
@@ -1103,13 +1103,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "synchronized int даёт более высокий throughput на 64-ядерной машине, чем AtomicInteger, за счёт отсутствия spin-retry в CAS.",
+              "text": "LongAdder выгоднее AtomicInteger уже при одном писателе и редких чтениях: ячейки всегда снижают latency get и sum.",
               "correct": false,
               "sections": {
-                "what_actually": "synchronized сериализует все потоки на одном мониторе → throughput не растёт с ядрами. AtomicInteger масштабируется лучше.",
-                "source_of_confusion": "Незнание sequential bottleneck: думают, что synchronized масштабируется с числом ядер. На деле он сериализует все потоки на одном мониторе, поэтому throughput не растёт с ядрами, а AtomicInteger масштабируется лучше.",
-                "if_it_were_true": "Параллелизация была бы тривиальной с synchronized — реально упирается в монитор.",
-                "how_it_should_be": "AtomicInteger масштабируется, synchronized — нет."
+                "what_actually": "LongAdder выигрывает при высокой write-contention многих потоков; при одном писателе AtomicInteger проще и обычно быстрее на get/sum, а LongAdder добавляет накладные расходы ячеек.",
+                "source_of_confusion": "Переносят пользу striped-счётчика на любой сценарий: раз LongAdder «для высокой нагрузки», его считают универсально быстрее AtomicInteger.",
+                "if_it_were_true": "AtomicInteger почти не использовали бы для простых счётчиков — реально он предпочтителен при умеренной contention и частых чтениях.",
+                "how_it_should_be": "LongAdder — для очень высокой write-contention; AtomicInteger — для умеренной нагрузки и точечных чтений."
               }
             },
             {
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "ReentrantLock не поддерживает реентерабельность — повторный lock() из того же потока вызывает deadlock.",
+              "text": "Нереентерабельная блокировка с tryLock, таймаутом, fairness и несколькими Condition; повторный lock() из того же потока даёт deadlock.",
               "correct": false,
               "sections": {
                 "what_actually": "ReentrantLock реентерабелен по дизайну (имя «Reentrant»); счётчик удержаний на потоке.",
@@ -1176,7 +1176,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ReentrantLock автоматически освобождает монитор при выходе из метода, как synchronized.",
+              "text": "Реентерабельная блокировка с tryLock, таймаутом, fairness и несколькими Condition; unlock() вызывается автоматически при выходе из метода, как у synchronized.",
               "correct": false,
               "sections": {
                 "what_actually": "ReentrantLock требует явного lock.unlock() в finally — JVM не освобождает автоматически.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "ReentrantLock даёт над synchronized только прирост производительности за счёт biased locking, но никаких новых возможностей вроде tryLock или fairness не добавляет.",
+              "text": "Реентерабельная блокировка без tryLock, fairness и Condition — только быстрее synchronized за счёт biased locking; требует явного unlock() в finally.",
               "correct": false,
               "sections": {
                 "what_actually": "ReentrantLock даёт функциональные возможности (tryLock/timeout/interruptible/fairness/Condition), а производительность сравнима с Java 6+.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "ReadWriteLock допускает одновременно много читателей И много писателей.",
+              "text": "ReadWriteLock — много читателей и много писателей одновременно; StampedLock добавляет оптимистичное чтение.",
               "correct": false,
               "sections": {
                 "what_actually": "Writer эксклюзивен: пока он держит lock, ни reader, ни другой writer не пройдут.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "StampedLock реентерабелен: повторный writeLock из того же потока безопасен, как у ReentrantReadWriteLock.",
+              "text": "ReadWriteLock — много читателей или один писатель; StampedLock реентерабелен при повторном writeLock, как ReentrantReadWriteLock.",
               "correct": false,
               "sections": {
                 "what_actually": "StampedLock НЕ реентерабелен: повторный writeLock (или readLock) из того же потока приводит к самоблокировке; реентерабелен только ReentrantReadWriteLock.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "StampedLock — это устаревший API из Java 5, заменённый ReentrantReadWriteLock.",
+              "text": "ReadWriteLock — много читателей или один писатель; StampedLock — устаревший API Java 5, заменённый ReentrantReadWriteLock.",
               "correct": false,
               "sections": {
                 "what_actually": "Обратное: ReentrantReadWriteLock с Java 5, StampedLock новее (Java 8) — добавляет оптимистичное чтение.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Condition полностью заменяет synchronized и работает самостоятельно, без привязки к Lock.",
+              "text": "Аналог wait/notify без Lock: Condition работает самостоятельно и заменяет synchronized.",
               "correct": false,
               "sections": {
                 "what_actually": "Condition обязательно требует Lock и создаётся через lock.newCondition(); вне удерживаемого Lock — IllegalMonitorStateException.",
@@ -1283,7 +1283,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "На одном Lock можно завести только один Condition, как единственный wait-set у монитора.",
+              "text": "Аналог wait/notify для Lock: на одном Lock можно завести только один Condition, как wait-set монитора.",
               "correct": false,
               "sections": {
                 "what_actually": "lock.newCondition() можно вызвать несколько раз; на одном Lock возможны несколько Condition.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Condition.await() не освобождает Lock во время ожидания, поэтому сигналящий поток не сможет захватить Lock.",
+              "text": "Аналог wait/notify для Lock: await() не освобождает Lock, поэтому сигналящий поток не сможет его захватить.",
               "correct": false,
               "sections": {
                 "what_actually": "Condition.await() атомарно освобождает Lock и паркует поток; сигналящий поток спокойно берёт тот же Lock, вызывает signal() и отпускает его — как wait() освобождает монитор.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Deadlock возникает только при использовании ReentrantLock и не случается с synchronized.",
+              "text": "Циклическое ожидание потоков только на ReentrantLock, с synchronized не бывает; ломают его lock ordering и tryLock с таймаутом.",
               "correct": false,
               "sections": {
                 "what_actually": "synchronized тоже подвержен deadlock — например, вложенные synchronized на разных мониторах в обратном порядке.",
@@ -1356,7 +1356,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Deadlock автоматически разрешается JVM: встроенный watchdog обнаруживает цикл ожидания и прерывает один из потоков.",
+              "text": "Циклическое ожидание потоков, каждый держит ресурс и ждёт чужой; ломает его JVM-watchdog, который прерывает одного участника цикла.",
               "correct": false,
               "sections": {
                 "what_actually": "JVM НЕ разрешает deadlock автоматически; потоки висят, пока процесс не убьют.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Deadlock невозможен между только двумя потоками — нужно минимум четыре участника.",
+              "text": "Циклическое ожидание минимум четырёх потоков, двум участникам deadlock недоступен; ломают его lock ordering и tryLock с таймаутом.",
               "correct": false,
               "sections": {
                 "what_actually": "Минимум — два потока (классика lock1+lock2 в обратном порядке).",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Deadlock, livelock и starvation — три названия одного явления «поток завис»; по сути и по диагностике различий между ними нет.",
+              "text": "Deadlock — потоки зависли; Livelock — то же зависание другим именем; Starvation — ещё одно имя того же явления без прогресса.",
               "correct": false,
               "sections": {
                 "what_actually": "Это три разных явления: deadlock — потоки BLOCKED/WAITING в цикле; livelock — RUNNABLE, но без прогресса; starvation — поток систематически не получает ресурс из-за scheduling.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Starvation — это частный случай deadlock, в котором участвует ровно один поток.",
+              "text": "Deadlock — потоки заблокированы; Livelock — активны, но без прогресса; Starvation — частный deadlock ровно одного потока.",
               "correct": false,
               "sections": {
                 "what_actually": "Starvation — поток не получает ресурс из-за scheduling/fairness, но другие работают нормально; deadlock — циклическое ожидание.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Deadlock и livelock возникают только в Java; в других языках с потоками их не бывает.",
+              "text": "Deadlock — потоки заблокированы только в Java; Livelock — активны, но без прогресса только в Java; Starvation — поток не получает CPU/lock только в Java.",
               "correct": false,
               "sections": {
                 "what_actually": "Это общие concurrency-проблемы любого языка с shared-memory (C++, Go, Rust, уровень ОС), не специфичные для Java.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Race condition всегда выбрасывает ConcurrentModificationException и легко диагностируется.",
+              "text": "Баг, где результат зависит от порядка выполнения потоков (типичный симптом — ConcurrentModificationException, легко диагностируется).",
               "correct": false,
               "sections": {
                 "what_actually": "Race condition обычно молчалив — порча данных без исключения; CME — частный случай fail-fast.",
@@ -1463,7 +1463,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Race condition можно полностью устранить, объявив все участвующие переменные `volatile`, ведь volatile сериализует доступ потоков к ним.",
+              "text": "Баг, где результат зависит от порядка выполнения потоков (типичное лечение — объявить всё `volatile`, он сериализует доступ).",
               "correct": false,
               "sections": {
                 "what_actually": "`volatile` гарантирует видимость записей между потоками, но не атомарность. Составные операции (`check-then-act`, `i++`) остаются гонкой даже на `volatile`-полях.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Race condition невозможен на immutable объектах, поэтому достаточно сделать поля final.",
+              "text": "Баг, где результат зависит от порядка выполнения потоков (типичная защита — immutable объекты и final-поля).",
               "correct": false,
               "sections": {
                 "what_actually": "На immutable объектах действительно нет race (внутри объекта), но shared mutable container с ссылками всё ещё подвержен.",
@@ -1524,7 +1524,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "ThreadLocal автоматически очищается сборщиком мусора, как только поток возвращается в пул и берёт следующую задачу.",
+              "text": "Переменная с изолированной копией для каждого потока; в пуле очищается GC сама, когда поток берёт следующую задачу, без remove().",
               "correct": false,
               "sections": {
                 "what_actually": "Пул не очищает ThreadLocal; значение сохраняется между задачами на переиспользуемом потоке — типичная утечка и security-баг.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ThreadLocal медленнее ConcurrentHashMap, поэтому в production не используется.",
+              "text": "Переменная с изолированной копией для каждого потока; в пуле слишком медленна против ConcurrentHashMap и в production не используется.",
               "correct": false,
               "sections": {
                 "what_actually": "ThreadLocal быстрее любой Map для per-thread данных: нет блокировок и contention, доступ идёт напрямую в Thread.threadLocals; в production он широко применяется (Spring, Hibernate).",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "ThreadLocal — это просто статическое поле, общее и видимое для всех потоков сразу.",
+              "text": "Переменная без изоляции — обычное static-поле, общее для всех потоков; в пуле требует remove() в finally во избежание утечки.",
               "correct": false,
               "sections": {
                 "what_actually": "ThreadLocal специально создан для НЕ-разделяемого состояния: значение per-thread, хранится в Thread.threadLocals; общей видимости между потоками нет.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Executor — это конкретный класс пула, а ExecutorService — его прокси для мониторинга.",
+              "text": "Executor — конкретный класс пула с методом execute; ExecutorService — прокси для мониторинга без lifecycle и submit.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба — интерфейсы; Executor базовый (execute), ExecutorService расширяет управлением lifecycle.",
@@ -1656,7 +1656,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ExecutorService не поддерживает submit с Callable — только execute с Runnable.",
+              "text": "Executor — базовый интерфейс с методом execute; ExecutorService добавляет lifecycle, но submit с Callable не поддерживает — только execute с Runnable.",
               "correct": false,
               "sections": {
                 "what_actually": "ExecutorService.submit принимает и Runnable, и Callable, возвращает Future.",
@@ -1668,7 +1668,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Executor и ExecutorService — синонимы: ExecutorService оставлен для обратной совместимости и просто делегирует все вызовы в Executor.",
+              "text": "Executor — базовый интерфейс с методом execute; ExecutorService — синоним для совместимости и просто делегирует все вызовы в Executor.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные интерфейсы с разной ответственностью: execute vs lifecycle+submit+future.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Все фабричные методы Executors безопасны для production без дополнительной настройки.",
+              "text": "Готовые типы пулов под разные нагрузки: fixed, cached, single, scheduled — все сразу безопасны для production без настройки.",
               "correct": false,
               "sections": {
                 "what_actually": "newFixedThreadPool с unbounded queue и newCachedThreadPool с unbounded threads опасны — OOM.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`newSingleThreadExecutor()` можно скастовать к `ThreadPoolExecutor` и увеличить пул через `setCorePoolSize`.",
+              "text": "Готовые типы пулов под разные нагрузки: single можно скастовать к ThreadPoolExecutor и расширить через setCorePoolSize.",
               "correct": false,
               "sections": {
                 "what_actually": "`newSingleThreadExecutor` оборачивается в `FinalizableDelegatedExecutorService`; каст к `ThreadPoolExecutor` бросит `ClassCastException`.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "newCachedThreadPool создаёт фиксированное число потоков и не растёт под нагрузкой.",
+              "text": "Готовые типы пулов под разные нагрузки: cached даёт фиксированный размер и не растёт под нагрузкой.",
               "correct": false,
               "sections": {
                 "what_actually": "newCachedThreadPool растёт неограниченно (max = Integer.MAX_VALUE), reuse потоков 60 сек idle.",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "shutdown() немедленно прерывает уже выполняющиеся задачи, тогда как shutdownNow(), наоборот, дожидается их штатного завершения и только после этого останавливает пул.",
+              "text": "shutdown() — прерывает выполняющиеся; shutdownNow() — graceful, доделывает принятые; awaitTermination() — ждёт завершения после остановки приёма.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: shutdown() — graceful (дорабатывает), shutdownNow() — попытка прервать (interrupt).",
@@ -1763,7 +1763,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "awaitTermination() само принудительно прерывает выполняющиеся задачи по истечении переданного timeout и завершает пул.",
+              "text": "shutdown() — graceful, доделывает принятые; shutdownNow() — прерывает выполняющиеся; awaitTermination() — само прерывает задачи по timeout и гасит пул.",
               "correct": false,
               "sections": {
                 "what_actually": "awaitTermination только БЛОКИРУЕТСЯ до завершения или истечения таймаута; никого не прерывает.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "После `shutdown()` можно продолжать отправлять задачи через `execute()`, пока пул не опустеет.",
+              "text": "shutdown() — graceful, доделывает принятые; shutdownNow() — прерывает выполняющиеся; после shutdown() — execute() ещё принимает задачи, пока пул не опустеет.",
               "correct": false,
               "sections": {
                 "what_actually": "После `shutdown()` пул перестаёт принимать новые задачи — `execute()` бросит `RejectedExecutionException`.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "submit() и execute() полностью идентичны: оба возвращают Future с результатом задачи и одинаково отдают исключение через get().",
+              "text": "execute возвращает Future с результатом, исключение через get(); submit возвращает Future, и исключение доступно только через get.",
               "correct": false,
               "sections": {
                 "what_actually": "execute возвращает void; submit возвращает Future.",
@@ -1836,7 +1836,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "execute() умеет принимать Callable и возвращать его результат вызывающему коду, тогда как submit() работает исключительно с Runnable и никакого значения вернуть не может.",
+              "text": "execute принимает Callable и возвращает результат вызывающему; submit работает только с Runnable и значения вернуть не может.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: execute(Runnable) только; submit(Callable|Runnable) поддерживает оба.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Метод execute() удалён из Executor в Java 21 как устаревший и везде заменён вызовом submit().",
+              "text": "execute удалён из Executor в Java 21 как устаревший; submit — единственный способ отправить задачу в пул.",
               "correct": false,
               "sections": {
                 "what_actually": "execute() остаётся базовым методом Executor; не deprecated.",
@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "ForkJoinPool держит одну общую очередь задач на все потоки, и каждый worker просто забирает из неё следующую работу, без каких-либо персональных очередей.",
+              "text": "Пул для рекурсивных divide-and-conquer задач: одна общая очередь на всех worker'ов без персональных deque — это work-stealing.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый worker имеет свою deque; общая очередь была бы bottleneck.",
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Work-stealing — это когда занятый поток с полной очередью забирает задачи у освободившегося соседа.",
+              "text": "Пул для рекурсивных divide-and-conquer задач: занятый worker с полной очередью крадёт задачи у свободного соседа — это work-stealing.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: освободившийся ворует у занятого (у которого ещё есть работа в очереди).",
@@ -1895,7 +1895,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ForkJoinPool принимает только Runnable-задачи и не работает с Callable или ForkJoinTask через submit.",
+              "text": "Пул для рекурсивных divide-and-conquer задач: принимает только Runnable и не работает с Callable/ForkJoinTask — это work-stealing.",
               "correct": false,
               "sections": {
                 "what_actually": "ForkJoinPool работает с ForkJoinTask (RecursiveTask/RecursiveAction), а также может принимать Runnable/Callable через execute/submit.",
@@ -1931,7 +1931,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Future.get() работает полностью неблокирующе и сразу возвращает Optional: пустой, пока задача не завершилась, и заполненный результатом, как только вычисление готово.",
+              "text": "Future<V> — асинхронный результат с get()/cancel()/isDone(); FutureTask — реализация Future+Runnable; ключевое ограничение Future — get() сразу отдаёт Optional без блокировки.",
               "correct": false,
               "sections": {
                 "what_actually": "Future.get() блокирует до готовности или таймаута; Optional не возвращает.",
@@ -1943,7 +1943,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Повторный вызов `Future.get()` перезапускает задачу заново и возвращает свежий результат.",
+              "text": "Future<V> — асинхронный результат с get()/cancel()/isDone(); FutureTask — реализация Future+Runnable; ключевое ограничение Future — повторный get() перезапускает задачу.",
               "correct": false,
               "sections": {
                 "what_actually": "Задача выполняется один раз; `get()` возвращает уже вычисленный (закэшированный) результат при каждом вызове.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "FutureTask.cancel(true) гарантированно и немедленно останавливает уже выполняющийся код задачи, прерывая его на любой инструкции.",
+              "text": "Future<V> — асинхронный результат с get()/cancel()/isDone(); FutureTask — реализация Future+Runnable; ключевое ограничение Future — cancel(true) мгновенно рвёт код на любой инструкции.",
               "correct": false,
               "sections": {
                 "what_actually": "cancel(true) лишь выставляет флаг прерывания выполняющему потоку (кооперативная модель); если код задачи не проверяет Thread.interrupted() и не реагирует на InterruptedException, он спокойно доработает до конца — принудительной остановки нет.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Async-API из Java 8 с цепочками, комбинированием и обработкой ошибок поверх Future + CompletionStage.",
+              "text": "CompletableFuture — async-API из Java 8 с цепочками, комбинированием и обработкой ошибок поверх Future и CompletionStage.",
               "correct": true,
               "sections": {
                 "explanation": "Категории методов: создание (supplyAsync/runAsync/completedFuture), трансформация (thenApply/thenCompose/thenCombine), потребление (thenAccept/thenRun), ошибки (exceptionally/handle/whenComplete), комбинирование (allOf/anyOf), async-варианты с executor. CompletableFuture реализует Future + CompletionStage. По умолчанию использует ForkJoinPool.commonPool(); для I/O рекомендуется передавать свой executor вторым аргументом async-методов. allOf возвращает CF<Void>, anyOf — CF<Object>.",
@@ -2004,7 +2004,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "CompletableFuture только реализует Future — никаких дополнительных методов не предоставляет.",
+              "text": "CompletableFuture — преимущественно обёртка над Future без дополнительных методов комбинирования и обработки ошибок.",
               "correct": false,
               "sections": {
                 "what_actually": "CompletableFuture реализует Future + CompletionStage с десятками методов цепочек и комбинирования.",
@@ -2016,7 +2016,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "CompletableFuture по умолчанию выполняет все стадии в новых потоках, которые создаёт под капотом через Executors.newFixedThreadPool.",
+              "text": "CompletableFuture — API, где все стадии по умолчанию идут в новых потоках через Executors.newFixedThreadPool под капотом.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию — ForkJoinPool.commonPool(); НЕ newFixedThreadPool.",
@@ -2028,7 +2028,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`thenApply` и `thenApplyAsync` идентичны — оба всегда выполняются в `ForkJoinPool.commonPool()`.",
+              "text": "CompletableFuture — API, где thenApply и thenApplyAsync идентичны и оба часто идут в ForkJoinPool.commonPool.",
               "correct": false,
               "sections": {
                 "what_actually": "`thenApply` выполняется в потоке, завершившем предыдущий этап (или в вызывающем); `thenApplyAsync` — в `commonPool` или переданном `Executor`.",
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "thenApply и thenCompose делают абсолютно одно и то же, и выбор между ними — исключительно вопрос личного стиля разработчика, а не какой-либо семантической разницы.",
+              "text": "thenApply — синхронная трансформация как map; thenCompose — то же самое, что thenApply; thenCombine — объединение двух независимых CF.",
               "correct": false,
               "sections": {
                 "what_actually": "thenApply возвращает CF<U> для fn: T->U; thenCompose разворачивает fn: T->CF<U> в CF<U>. Семантически разные.",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "thenCompose — это параллельное выполнение двух CompletableFuture, аналог allOf.",
+              "text": "thenApply — синхронная трансформация как map; thenCompose — параллельное allOf двух CF; thenCombine — объединение двух независимых CF.",
               "correct": false,
               "sections": {
                 "what_actually": "thenCompose — sequential chaining (после первого CF запускается второй); параллельное — thenCombine/allOf.",
@@ -2075,7 +2075,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "thenCombine принимает сразу три CompletableFuture и объединяет результаты всех трёх одним вызовом.",
+              "text": "thenApply — синхронная трансформация как map; thenCompose — chaining как flatMap; thenCombine — объединение сразу трёх независимых CF одним вызовом.",
               "correct": false,
               "sections": {
                 "what_actually": "thenCombine принимает один второй CF; для трёх+ — thenCombine цепочкой или allOf.",
@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "exceptionally срабатывает при любом завершении стадии — и при нормальном результате, и при исключении, работая как единый универсальный обработчик на оба случая.",
+              "text": "exceptionally — вызывается при любом завершении, и при результате, и при ошибке; handle вызывается всегда и может изменить результат; whenComplete — побочный эффект, результат не меняет.",
               "correct": false,
               "sections": {
                 "what_actually": "exceptionally срабатывает ТОЛЬКО при ошибке; при успехе пропускается.",
@@ -2136,7 +2136,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "handle не способен изменить результат стадии — это чистый side-effect для логирования, как whenComplete.",
+              "text": "exceptionally — fallback только при ошибке; handle вызывается всегда, но результат не меняет; whenComplete — побочный эффект, результат не меняет.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: handle возвращает U, может полностью изменить значение/тип; whenComplete — sideEffect.",
@@ -2148,7 +2148,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "whenComplete возвращает изменённое значение и тип результата, точно так же, как это делает метод handle.",
+              "text": "exceptionally — fallback только при ошибке; handle вызывается всегда и может изменить результат; whenComplete — тоже возвращает изменённое значение, как handle.",
               "correct": false,
               "sections": {
                 "what_actually": "whenComplete возвращает CF<T> исходного типа; не меняет значение, только наблюдает.",
@@ -2171,7 +2171,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "allOf ждёт ВСЕ и возвращает CF<Void>, результаты берутся join'ом; anyOf возвращает первый завершившийся как CF<Object>.",
+              "text": "allOf ждёт все и возвращает CF<Void>, результаты берутся join'ом; anyOf возвращает первый завершившийся как CF<Object>.",
               "correct": true,
               "sections": {
                 "explanation": "allOf(cf1, cf2, ...) собирает результаты через join() на каждом исходном CF и пропагирует первую ошибку, остальные продолжают выполняться. allOf удобен для fan-out + barrier; anyOf — для гонки (winner takes it). Стандартный паттерн: var all = allOf(cf1, cf2, cf3); all.thenApply(v -> aggregateResults(cf1.join(), cf2.join(), cf3.join())).",
@@ -2184,7 +2184,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "allOf сразу возвращает готовый список результатов List<T> в порядке передачи, поэтому отдельно вызывать join на каждом исходном CF уже не требуется.",
+              "text": "allOf ждёт все и сразу отдаёт List<T> в порядке аргументов без join; anyOf возвращает первый завершившийся как CF<Object>.",
               "correct": false,
               "sections": {
                 "what_actually": "allOf возвращает CF<Void>; результаты надо извлекать join'ом из каждого исходного CF.",
@@ -2196,7 +2196,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`allOf` сразу бросает исключение, если хотя бы один `CompletableFuture` ещё не завершён.",
+              "text": "allOf сразу бросает исключение, если хотя бы один CF ещё не завершён; anyOf возвращает первый завершившийся как CF<Object>.",
               "correct": false,
               "sections": {
                 "what_actually": "`allOf` возвращает `CompletableFuture<Void>`, который завершается когда готовы ВСЕ; он не бросает из-за незавершённости.",
@@ -2208,7 +2208,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "anyOf автоматически отменяет проигравшие CompletableFuture после первого завершения.",
+              "text": "allOf ждёт все и возвращает CF<Void>, результаты берутся join'ом; anyOf после первого завершения автоматически отменяет остальных.",
               "correct": false,
               "sections": {
                 "what_actually": "anyOf НЕ отменяет проигравших — они продолжают выполнение и тратят ресурсы.",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "CountDownLatch и CyclicBarrier — по сути взаимозаменяемые синонимы с одинаковой семантикой ожидания, и выбор между ними сводится к чисто стилистическому предпочтению.",
+              "text": "CountDownLatch — переиспользуемый симметричный барьер; CyclicBarrier — одноразовый асимметричный счётчик с той же семантикой ожидания.",
               "correct": false,
               "sections": {
                 "what_actually": "Latch — одноразовый, асимметричный; Barrier — переиспользуемый, симметричный.",
@@ -2243,7 +2243,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "CountDownLatch можно сбросить и переиспользовать заново методом reset(), как переиспользуемый барьер.",
+              "text": "CountDownLatch — одноразовый асимметричный счётчик с методом reset() для повторного использования; CyclicBarrier — переиспользуемый симметричный барьер, где N потоков ждут друг друга.",
               "correct": false,
               "sections": {
                 "what_actually": "Latch одноразовый, метода reset() нет; reset есть у CyclicBarrier.",
@@ -2268,7 +2268,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `CyclicBarrier` нельзя задать barrier action — он умеет только блокировать потоки.",
+              "text": "CountDownLatch — одноразовый асимметричный счётчик; CyclicBarrier — переиспользуемый симметричный барьер без barrier action, только блокировка.",
               "correct": false,
               "sections": {
                 "what_actually": "`CyclicBarrier(n, barrierAction)` принимает `Runnable`, который выполняется последним пришедшим потоком при срабатывании барьера.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Semaphore — это просто synchronized, расширенный на несколько ресурсов: под капотом он захватывает мониторы объектов ровно так же, как обычный блок synchronized, только с внутренним счётчиком разрешений.",
+              "text": "Счётчик разрешений через synchronized по объектам-ресурсам: acquire() уменьшает и блокируется при 0, release() увеличивает; release может вызвать не тот поток, что acquire.",
               "correct": false,
               "sections": {
                 "what_actually": "Semaphore — счётчик permits, не использует мониторов; AQS-based.",
@@ -2316,7 +2316,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "release() должен вызвать тот же поток, что и acquire() — иначе IllegalMonitorStateException.",
+              "text": "Счётчик разрешений: acquire() уменьшает и блокируется при 0, release() увеличивает; release обязан вызвать тот же поток, что acquire, иначе IllegalMonitorStateException.",
               "correct": false,
               "sections": {
                 "what_actually": "Semaphore не отслеживает owner; release() может вызвать любой поток (это отличает от Lock).",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Semaphore(0) бесполезен: вызвать acquire() без предварительного release() невозможно, поэтому такой счётчик навсегда заблокирован.",
+              "text": "Счётчик разрешений: Semaphore(0) бесполезен, acquire() без предварительного release() невозможен; release может вызвать не тот поток, что acquire.",
               "correct": false,
               "sections": {
                 "what_actually": "Semaphore(0) — валидный кейс: handoff (один поток release, другой acquire).",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Phaser и Exchanger — устаревшие классы из Java 1.4, давно заменённые на CountDownLatch и помеченные deprecated.",
+              "text": "Phaser — устаревший одноразовый счётчик из Java 1.4; Exchanger<V> — deprecated-замена CountDownLatch для обмена между двумя потоками.",
               "correct": false,
               "sections": {
                 "what_actually": "Phaser добавлен в Java 7, Exchanger в Java 5; оба актуальны, не deprecated.",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Phaser работает только с заранее заданным фиксированным числом участников и не позволяет регистрировать или снимать их в рантайме.",
+              "text": "Phaser — многофазный синхронизатор с фиксированным числом участников без register/arrive; Exchanger<V> — точка обмена значениями между ДВУМЯ потоками.",
               "correct": false,
               "sections": {
                 "what_actually": "Phaser — главное преимущество над CyclicBarrier именно в ДИНАМИЧЕСКОМ числе участников (register/deregister).",
@@ -2375,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Exchanger обменивает данные сразу между любым числом потоков, рассылая значение всем подписчикам как broadcast.",
+              "text": "Phaser — многофазный синхронизатор с динамическим числом участников; Exchanger<V> — broadcast-обмен значением сразу между любым числом потоков.",
               "correct": false,
               "sections": {
                 "what_actually": "Exchanger обменивает только между ДВУМЯ потоками за раз; не broadcast.",
@@ -2411,7 +2411,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Concurrent collections — это просто обёртки с одним общим synchronized над обычными HashMap и ArrayList, без какого-либо отдельного механизма конкурентного доступа под капотом.",
+              "text": "Потокобезопасные обёртки над HashMap и ArrayList с одним global synchronized: допускают конкурентные операции только через общий монитор.",
               "correct": false,
               "sections": {
                 "what_actually": "Это специализированные структуры с fine-grained lock, CAS, COW; не synchronized wrapper.",
@@ -2423,7 +2423,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ConcurrentHashMap` допускает `null` в качестве ключа и значения, как обычный `HashMap`.",
+              "text": "Потокобезопасные коллекции java.util.concurrent вроде ConcurrentHashMap и CopyOnWriteArrayList: допускают null-ключи и null-значения, как HashMap.",
               "correct": false,
               "sections": {
                 "what_actually": "`ConcurrentHashMap` запрещает `null` ключи и значения — бросает `NullPointerException`.",
@@ -2448,7 +2448,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "CopyOnWriteArrayList оптимален для частой записи и редкого чтения за счёт ленивого копирования массива.",
+              "text": "Потокобезопасные коллекции java.util.concurrent вроде ConcurrentHashMap и CopyOnWriteArrayList: CopyOnWriteArrayList оптимален при частой записи и редком чтении.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: CoW оптимален для read-heavy, редкой записи; запись копирует массив O(N).",
@@ -2474,7 +2474,7 @@
               "text": "В Java 8+ это fine-grained locking: CAS для вставки в пустой bucket, synchronized на голове bucket'а при коллизии и treeification при длине цепочки ≥ 8 и ёмкости таблицы ≥ 64.",
               "correct": true,
               "sections": {
-                "explanation": "Списки в bucket'е превращаются в красно-чёрное дерево при длине > 8 (и обратно при < 6). Потоки конкурируют только в рамках одного bucket'а, а не всей мапы. До Java 8 использовались сегменты (segments) — массив отдельных мини-мап с уникальным lock. Java 8 убрала segments и перешла на CAS + bucket-level synchronized + treeification. Размер size() считается через counter cells (similar LongAdder).",
+                "explanation": "Списки в bucket'е превращаются в красно-чёрное дерево при длине цепочки ≥ 8 и ёмкости таблицы ≥ 64 (TREEIFY_THRESHOLD; обратно при ≤ 6). Потоки конкурируют только в рамках одного bucket'а, а не всей мапы. До Java 8 использовались сегменты (segments) — массив отдельных мини-мап с уникальным lock. Java 8 убрала segments и перешла на CAS + bucket-level synchronized + treeification. Размер size() считается через counter cells (similar LongAdder).",
                 "example": "putIfAbsent, computeIfAbsent, merge — все атомарные. map.merge(k, 1, Integer::sum) — атомарный counter без race.",
                 "when_to_apply": "Любой shared mutable Map в multi-thread; кэши; counters per key; LRU замена через ConcurrentHashMap + размер контроль вручную.",
                 "edge_cases": "computeIfAbsent с долгой функцией удерживает bucket lock — другие writers на тот же bucket ждут. size() приблизительный. Recursive update в computeIfAbsent на ту же мапу → StackOverflowError или странности.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ConcurrentHashMap полностью lock-free: он использует исключительно CAS-операции и никогда не берёт synchronized — даже при коллизии в одном и том же bucket'е несколько потоков пишут туда одновременно без единой блокировки.",
+              "text": "ConcurrentHashMap полностью lock-free: он использует в первую очередь CAS-операции и никогда не берёт synchronized — даже при коллизии в одном и том же bucket'е несколько потоков пишут туда одновременно без единой блокировки.",
               "correct": false,
               "sections": {
                 "what_actually": "При коллизии bucket'а используется synchronized на голове — не fully lock-free.",
@@ -2531,7 +2531,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "BlockingQueue — обычная FIFO-очередь без какой-либо концепции блокировки на пустоте или заполненности.",
+              "text": "Очередь без блокирующих put()/take() на пустоте и заполненности; есть bounded и unbounded реализации под разные задачи.",
               "correct": false,
               "sections": {
                 "what_actually": "Суть BlockingQueue именно в блокирующих put/take при заполненности/пустоте.",
@@ -2543,7 +2543,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Все реализации BlockingQueue строго ограничены по размеру (bounded), и задать неограниченную по ёмкости очередь нельзя ни в одной из стандартных реализаций пакета java.util.concurrent.",
+              "text": "Очередь с блокирующими методами put() и take(); все стандартные реализации только bounded, unbounded в java.util.concurrent нет.",
               "correct": false,
               "sections": {
                 "what_actually": "LinkedBlockingQueue (по умолчанию unbounded = Integer.MAX_VALUE), PriorityBlockingQueue, DelayQueue — unbounded.",
@@ -2555,7 +2555,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "SynchronousQueue держит во внутреннем буфере до одного элемента между вызовами put() и take().",
+              "text": "Очередь с блокирующими методами put() и take(); SynchronousQueue держит во внутреннем буфере до одного элемента между put и take.",
               "correct": false,
               "sections": {
                 "what_actually": "SynchronousQueue не имеет буфера: put блокируется пока take не примет — direct handoff.",
@@ -2591,7 +2591,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Самый эффективный способ — ArrayList под synchronized с ручным wait/notify для координации producer и consumer.",
+              "text": "Идиоматично — через ArrayList под synchronized с wait/notify: producer кладёт элемент, consumer забирает; для graceful shutdown — poison pill или shutdown с флагом.",
               "correct": false,
               "sections": {
                 "what_actually": "ArrayList + synchronized требует ручного wait/notify, легко порождает race conditions и не даёт back-pressure — это неэффективно.",
@@ -2616,7 +2616,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Корректно решить Producer-Consumer на стандартной Java невозможно: без сторонней библиотеки вроде LMAX Disruptor задача синхронизации producer и consumer в принципе не имеет надёжного решения.",
+              "text": "Идиоматично — только через сторонний LMAX Disruptor: на стандартной Java надёжного Producer-Consumer нет; для graceful shutdown — poison pill или shutdown с флагом.",
               "correct": false,
               "sections": {
                 "what_actually": "BlockingQueue полностью решает большинство case'ов; Disruptor — оптимизация под extreme throughput (LMAX).",
@@ -2628,7 +2628,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать busy-wait цикл в consumer, который постоянно опрашивает буфер, пока producer не положит данные.",
+              "text": "Идиоматично — через busy-wait в consumer: producer кладёт элемент в буфер, consumer крутит опрос; для graceful shutdown — poison pill или shutdown с флагом.",
               "correct": false,
               "sections": {
                 "what_actually": "Busy-wait сжигает CPU; BlockingQueue.take() блокирует поток в WAITING.",
@@ -2664,7 +2664,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Thread dump автоматически генерируется JVM при каждом выброшенном исключении и попадает в лог приложения.",
+              "text": "Снимок состояния всех потоков JVM — стеки, состояния, мониторы; снимается автоматически при каждом исключении и пишется в лог приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "JVM генерирует stack trace для исключения, но не thread dump всех потоков.",
@@ -2676,7 +2676,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Thread dump можно получить исключительно через визуальные инструменты вроде VisualVM или Mission Control, и никакого CLI-способа снять дамп в стандартном JDK попросту не предусмотрено.",
+              "text": "Снимок состояния всех потоков JVM — стеки, состояния, мониторы; снимается только через VisualVM/Mission Control, CLI в JDK нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Базовые способы — командные: jstack, jcmd, kill -3 (SIGQUIT).",
@@ -2688,7 +2688,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Снятие thread dump останавливает JVM до ручного перезапуска, поэтому на проде его делать опасно.",
+              "text": "Снимок состояния всех потоков JVM — стеки, состояния, мониторы; снятие останавливает JVM до ручного перезапуска, на проде опасно.",
               "correct": false,
               "sections": {
                 "what_actually": "`jstack`/`jcmd Thread.print`/`kill -3` снимают дамп без остановки приложения — это безопасная live-диагностика.",
@@ -2711,7 +2711,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Virtual threads — это пул системных потоков, которые JVM переиспользует между задачами через ThreadLocal.",
+              "text": "Лёгкие потоки как пул системных потоков: монтируются через ThreadLocal между задачами, при блокирующем I/O размонтируются.",
               "correct": false,
               "sections": {
                 "what_actually": "Virtual threads — НЕ системные потоки; они выполняются на нескольких carrier'ах, монтируясь и размонтируясь на блокирующих операциях.",
@@ -2723,7 +2723,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Virtual threads ускоряют именно CPU-bound вычисления, давая дополнительный параллелизм поверх физических ядер процессора сверх их реального числа.",
+              "text": "Лёгкие потоки под управлением JVM: ускоряют CPU-bound, давая параллелизм сверх числа физических ядер carrier-потоков.",
               "correct": false,
               "sections": {
                 "what_actually": "VT не дают преимуществ для CPU-bound — там работают platform threads.",
@@ -2748,7 +2748,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Каждый virtual thread занимает отдельный поток ОС, просто с меньшим размером стека.",
+              "text": "Лёгкие потоки под управлением JVM: каждый занимает отдельный поток ОС с меньшим стеком и при I/O не размонтируется.",
               "correct": false,
               "sections": {
                 "what_actually": "Virtual threads НЕ привязаны 1:1 к потокам ОС; миллионы VT мультиплексируются на немногих carrier-потоках (M:N).",
@@ -2771,7 +2771,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Virtual threads подходят для любых задач и должны заменить platform threads везде.",
+              "text": "Использовать для любых задач вместо platform threads; НЕ использовать только если JVM ниже Java 21.",
               "correct": false,
               "sections": {
                 "what_actually": "Для CPU-bound VT не дают выгоды; тяжёлый synchronized→pinning; heavy ThreadLocal→память.",
@@ -2796,7 +2796,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Раз virtual threads дешёвые, они полностью снимают нужду в пулах и ограничении параллелизма: их можно порождать без backpressure, не боясь исчерпать пул соединений к БД или другие внешние ресурсы.",
+              "text": "Использовать для I/O-bound без пулов и backpressure; НЕ использовать лишь для редких CPU-bound, а внешние ресурсы можно не ограничивать.",
               "correct": false,
               "sections": {
                 "what_actually": "Дешёвые VT снимают ограничение на ЧИСЛО потоков, но не на внешние ресурсы: пул соединений к БД, rate limit API, память по-прежнему конечны и требуют ограничения (семафор, bounded-пул), иначе тысячи VT разом исчерпают connection pool.",
@@ -2808,7 +2808,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Virtual threads в Java 21 остаются preview-функцией и не допускаются к использованию в продакшене.",
+              "text": "Использовать только после --enable-preview; НЕ использовать в production, пока virtual threads остаются preview в Java 21.",
               "correct": false,
               "sections": {
                 "what_actually": "Virtual threads в Java 21 — GA (stable, JEP 444), не preview.",
@@ -2826,7 +2826,7 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое thread pinning в контексте Virtual Threads и как с ним бороться?",
+          "question_text": "Что такое thread pinning в контексте Virtual Threads (Java 21) и как с ним бороться?",
           "options": [
             {
               "order": 0,
@@ -2846,10 +2846,10 @@
               "text": "Pinning происходит исключительно при работе с volatile-переменными и устраняется удалением модификатора volatile.",
               "correct": false,
               "sections": {
-                "what_actually": "volatile никак не связан с pinning; pinning — про synchronized + блокирующий I/O или JNI.",
+                "what_actually": "volatile никак не связан с pinning; в Java 21 pinning — про synchronized + блокирующий I/O или JNI.",
                 "source_of_confusion": "Желание простого триггера: ищут одну причину и приписывают её volatile.",
                 "if_it_were_true": "Достаточно было бы убрать volatile — реально другие причины.",
-                "how_it_should_be": "Pinning: synchronized+I/O или JNI; не volatile."
+                "how_it_should_be": "В Java 21 pinning: synchronized+I/O или JNI; не volatile."
               }
             },
             {
@@ -2867,13 +2867,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Когда virtual thread нельзя размонтировать с carrier и carrier застревает: бывает при synchronized вокруг блокирующего I/O и в нативном методе.",
+              "text": "Когда virtual thread нельзя размонтировать с carrier и carrier застревает: в Java 21 бывает при synchronized вокруг блокирующего I/O и в нативном методе.",
               "correct": true,
               "sections": {
-                "explanation": "Решение — заменить synchronized на ReentrantLock. Диагностика через -Djdk.tracePinnedThreads=full или JFR-событие jdk.VirtualThreadPinned. Pinning сводит на нет преимущество VT — если 1000 VT pinned на 10 carrier'ах, throughput ограничен 10 параллельными I/O. ReentrantLock не вызывает pinning, потому что JVM учитывает его при scheduling.",
-                "example": "synchronized(this) { httpClient.send(request, ...); } — pinning! Заменить: lock.lock(); try { httpClient.send(...); } finally { lock.unlock(); }.",
-                "when_to_apply": "Любая миграция кода на VT: ревью synchronized-блоков. Особенно legacy-классы с synchronized вокруг I/O.",
-                "edge_cases": "Pinning от JNI в JDBC-драйверах. Класс java.io.PrintStream использует synchronized — может pinning. JEP 491 (Java 24) — частично решает synchronized-pinning.",
+                "explanation": "В Java 21 решение типичного synchronized-pinning — заменить synchronized на ReentrantLock. Диагностика: -Djdk.tracePinnedThreads=full или JFR jdk.VirtualThreadPinned. Pinning сводит на нет преимущество VT — если 1000 VT pinned на 10 carrier'ах, throughput ограничен 10 параллельными I/O. ReentrantLock в Java 21 не пинит carrier.",
+                "example": "synchronized(this) { httpClient.send(request, ...); } — pinning в Java 21. Заменить: lock.lock(); try { httpClient.send(...); } finally { lock.unlock(); }.",
+                "when_to_apply": "Миграция на VT в Java 21: ревью synchronized-блоков вокруг I/O и JNI. Особенно legacy-классы с монитором на сетевых вызовах.",
+                "edge_cases": "JNI/JDBC могут пинить и после Java 21. JEP 491 (Java 24) убирает почти все случаи pinning от synchronized; native/FFI pinning остаётся. Флаг jdk.tracePinnedThreads в Java 24+ более не нужен для synchronized-кейсов.",
                 "related": "[[java-concurrency-interview#Q46]] Virtual Threads; [[java-concurrency-interview#Q20]] ReentrantLock; [[java-concurrency-interview#Q13]] synchronized."
               }
             }
@@ -2886,12 +2886,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое Structured Concurrency (JEP 453) и какие преимущества она даёт?",
+          "question_text": "Что такое Structured Concurrency (JEP 453, Java 21 preview) и какие преимущества она даёт?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Structured Concurrency — это просто другое название механизма synchronized для взаимного исключения потоков.",
+              "text": "Подход, где потоки исключают друг друга через монитор: synchronized вместо StructuredTaskScope; ошибка одной не отменяет остальные.",
               "correct": false,
               "sections": {
                 "what_actually": "Структурная конкурентность — про lifecycle подзадач, не про mutex.",
@@ -2903,7 +2903,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "StructuredTaskScope требует вызывать Thread.join() вручную для каждой подзадачи, как в классической потоковой модели.",
+              "text": "Подход, где жизнь дочерних задач привязана к области родителя: StructuredTaskScope с ручным Thread.join() на каждую; ошибка одной отменяет остальные.",
               "correct": false,
               "sections": {
                 "what_actually": "`scope.join()` ждёт все подзадачи разом; ручной join каждого потока не нужен.",
@@ -2919,16 +2919,16 @@
               "correct": true,
               "sections": {
                 "explanation": "При выходе из блока все дочерние задачи гарантированно завершены — нет утечек потоков. Реализуется через try-with-resources со StructuredTaskScope: fork() запускает подзадачи, join() ждёт всех. Преимущества: нет потерянных потоков, каскадная отмена при ошибке, читаемый стек вызовов в thread dump, проще debug. Два стандартных варианта: ShutdownOnFailure (нужны все) и ShutdownOnSuccess (нужен первый успешный).",
-                "example": "try (var scope = new StructuredTaskScope.ShutdownOnFailure()) { Subtask<User> u = scope.fork(() -> fetchUser()); Subtask<Order> o = scope.fork(() -> fetchOrder()); scope.join().throwIfFailed(); return new Response(u.get(), o.get()); }.",
+                "example": "Java 21 (JEP 453): try (var scope = new StructuredTaskScope.ShutdownOnFailure()) { Subtask<User> u = scope.fork(() -> fetchUser()); Subtask<Order> o = scope.fork(() -> fetchOrder()); scope.join().throwIfFailed(); return new Response(u.get(), o.get()); }.",
                 "when_to_apply": "Fan-out из serverless/microservice-handler: parallel calls с auto-cancellation. Замена CompletableFuture+allOf для блокирующего кода с VT.",
-                "edge_cases": "В Java 21 — preview; в Java 25 — stabilizing. scope.join() throws InterruptedException — обязательная обработка. fork() после join() — IllegalStateException.",
+                "edge_cases": "В Java 21 — preview (`--enable-preview`). В JDK 25 API всё ещё preview (JEP 505) и переписан на `StructuredTaskScope.open(Joiner...)` — примеры ниже про API JEP 453. scope.join() throws InterruptedException; fork() после join() — IllegalStateException.",
                 "related": "[[java-concurrency-interview#Q56]] StructuredTaskScope; [[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q46]] Virtual Threads."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Structured Concurrency в Java 21 — уже стабильная финальная возможность стандартного JDK, доступная без флага --enable-preview и без ограничений на использование в production.",
+              "text": "Подход, где жизнь дочерних задач привязана к области родителя: StructuredTaskScope как стабильный API Java 21 без preview; ошибка одной отменяет остальные.",
               "correct": false,
               "sections": {
                 "what_actually": "В Java 21 Structured Concurrency — PREVIEW-фича (JEP 453): для компиляции и запуска нужен флаг --enable-preview, API может измениться в следующих версиях; финализируется она позже.",
@@ -2946,25 +2946,25 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое ScopedValue (JEP 446) и чем он лучше ThreadLocal?",
+          "question_text": "Что такое ScopedValue (JEP 446, Java 21 preview) и чем он лучше ThreadLocal?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Иммутабельная переменная области (runWhere): задаётся один раз на блок, наследуется в дочерние задачи и сама очищается на выходе из scope.",
+              "text": "Иммутабельная переменная области: задаётся один раз на блок (runWhere / where(...).run), наследуется в дочерние задачи и сама очищается на выходе из scope.",
               "correct": true,
               "sections": {
-                "explanation": "Это безопасная замена ThreadLocal для virtual threads. Устанавливается через ScopedValue.runWhere(VALUE, x, () -> {...}); нет set/remove, наследуется в подзадачи через StructuredTaskScope. ScopedValue быстрее ThreadLocal (стек-based lookup vs hash-map) и не подвержен утечкам памяти — автоматически очищается при выходе из runWhere. Идеален для миллионов virtual threads.",
-                "example": "static final ScopedValue<String> REQUEST_ID = ScopedValue.newInstance(); ScopedValue.runWhere(REQUEST_ID, \"req-123\", () -> processRequest()); внутри: REQUEST_ID.get() → \"req-123\".",
+                "explanation": "Безопасная замена ThreadLocal для virtual threads. В Java 21: `ScopedValue.runWhere(VALUE, x, () -> {...})`; с JEP 487+ предпочтителен fluent `ScopedValue.where(VALUE, x).run(...)`. Нет set/remove, автоочистка, наследование в StructuredTaskScope.",
+                "example": "Java 21: ScopedValue.runWhere(REQUEST_ID, \"req-123\", () -> processRequest()); позже: ScopedValue.where(REQUEST_ID, \"req-123\").run(() -> processRequest()); внутри — REQUEST_ID.get().",
                 "when_to_apply": "Контекст запроса в server-handler; user/transaction info, MDC-замена. С Virtual Threads и StructuredTaskScope — каноничный паттерн.",
-                "edge_cases": "Иммутабельность — нельзя «обновить» VALUE; только bind новый scope. ScopedValue.get() вне runWhere → NoSuchElementException. В Java 21 — preview.",
+                "edge_cases": "Иммутабельность — нельзя «обновить» VALUE; только bind новый scope. get() вне binding → NoSuchElementException. В Java 21 — preview; в Java 25 Scoped Values финализированы (JEP 506), `runWhere` убран.",
                 "related": "[[java-concurrency-interview#Q26]] ThreadLocal; [[java-concurrency-interview#Q27]] InheritableThreadLocal; [[java-concurrency-interview#Q49]] StructuredConcurrency."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "ScopedValue — это просто переименованный ThreadLocal с тем же изменяемым per-thread API (set, get, remove).",
+              "text": "Изменяемая переменная области: задаётся через set/get/remove как ThreadLocal, наследуется в дочерние задачи и сама очищается на выходе из scope.",
               "correct": false,
               "sections": {
                 "what_actually": "Разный API: ScopedValue immutable, scope-based, без set/remove; ThreadLocal — mutable per-thread.",
@@ -2976,7 +2976,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ScopedValue несовместим с virtual threads и structured concurrency, и его нельзя наследовать в дочерние задачи.",
+              "text": "Иммутабельная переменная области: задаётся один раз на блок (runWhere / where(...).run), не наследуется в virtual threads и structured concurrency.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: ScopedValue специально создан для VT и StructuredTaskScope (нативно наследуется).",
@@ -2988,7 +2988,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "ScopedValue хранит данные в той же ThreadLocalMap каждого потока, поэтому по скорости доступа и накладным расходам ничем не отличается от обычного ThreadLocal, только имя другое.",
+              "text": "Иммутабельная переменная области: хранится в ThreadLocalMap потока как ThreadLocal, наследуется в дочерние задачи и сама очищается на выходе из scope.",
               "correct": false,
               "sections": {
                 "what_actually": "ScopedValue НЕ использует ThreadLocalMap: связывание значения с областью иммутабельно и разрешается через сам объект ScopedValue, без хеш-поиска в per-thread map — доступ дешевле и без риска утечки.",
@@ -3011,7 +3011,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Воровство задач происходит с головы (HEAD) чужой deque — с той же стороны, с которой задачи берёт сам владелец.",
+              "text": "У каждого worker своя deque: владелец берёт с HEAD (LIFO), вор — тоже с HEAD чужой (LIFO); fork() кладёт задачу, compute() считает, join() ждёт результат.",
               "correct": false,
               "sections": {
                 "what_actually": "Владелец берёт с HEAD (LIFO), вор — с TAIL (FIFO).",
@@ -3023,7 +3023,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "ForkJoinPool рассчитан исключительно на задачи с блокирующим I/O и сетевые ожидания, а для CPU-bound рекурсивных вычислений типа divide-and-conquer он не предназначен и выигрыша не даёт.",
+              "text": "У каждого worker своя deque: владелец берёт с HEAD (LIFO), вор — с TAIL чужой (FIFO); fork()/compute()/join() заточены под блокирующий I/O, а не под CPU-bound divide-and-conquer.",
               "correct": false,
               "sections": {
                 "what_actually": "FJP спроектирован для CPU-bound recursive tasks; блокирующий I/O в FJP — антипаттерн.",
@@ -3035,7 +3035,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ForkJoinPool.commonPool() всегда имеет размер ровно 1, то есть ведёт себя как single-thread executor.",
+              "text": "У каждого worker своя deque: владелец берёт с HEAD (LIFO), вор — с TAIL чужой (FIFO); commonPool() часто размера 1 и ведёт себя как single-thread executor.",
               "correct": false,
               "sections": {
                 "what_actually": "commonPool = availableProcessors() - 1 (минимум 1); обычно 7-15+ потоков.",
@@ -3131,7 +3131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Производительная альтернатива RWLock из Java 8 с почти бесплатным оптимистичным чтением; ВАЖНО — не реентерабелен, повторный writeLock даёт self-deadlock.",
+              "text": "Производительная альтернатива RWLock из Java 8 с почти бесплатным оптимистичным чтением; не реентерабелен — повторный writeLock даёт self-deadlock.",
               "correct": true,
               "sections": {
                 "explanation": "tryOptimisticRead() даёт чтение без блокировки, validate(stamp) проверяет, не было ли записи. Помимо writeLock/readLock поддерживает upgrade read→write через tryConvertToWriteLock. Оптимистичное чтение работает на read-heavy + редко-write нагрузках: 95% read-операций не блокируются. Stamp — long, не объект, не имеет owner-tracking. Lock-stamp нельзя «перепутать» с другим.",
@@ -3144,7 +3144,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "StampedLock доступен только как нестабильная preview-фича Java 21 и не может применяться в обычном production-коде без флага --enable-preview и явного согласия на нестабильный API.",
+              "text": "Производительная альтернатива RWLock, но только как preview Java 21; не реентерабелен — повторный writeLock даёт self-deadlock.",
               "correct": false,
               "sections": {
                 "what_actually": "`StampedLock` — стабильный (GA) API ещё с Java 8, а вовсе не preview-фича Java 21; он давно используется в production без ограничений.",
@@ -3156,7 +3156,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "StampedLock реентерабелен: тот же поток может повторно захватить writeLock рекурсивно, как в ReentrantLock.",
+              "text": "Производительная альтернатива RWLock из Java 8 с почти бесплатным оптимистичным чтением; реентерабелен — повторный writeLock из того же потока безопасен.",
               "correct": false,
               "sections": {
                 "what_actually": "StampedLock НЕ реентерабелен; recursive writeLock тем же потоком → self-deadlock.",
@@ -3168,7 +3168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Оптимистичное чтение — фича ReadWriteLock, а StampedLock такого режима не поддерживает.",
+              "text": "Производительная альтернатива RWLock из Java 8 без оптимистичного чтения; не реентерабелен — повторный writeLock даёт self-deadlock.",
               "correct": false,
               "sections": {
                 "what_actually": "Optimistic read — главная фича именно StampedLock; RWLock её НЕ имеет.",
@@ -3191,7 +3191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Phaser — это просто синоним CountDownLatch, добавленный в JDK для удобства записи того же одноразового счётчика.",
+              "text": "Phaser — одноразовый синоним CountDownLatch без фаз и без динамических участников; объединяет запись того же счётчика другим именем.",
               "correct": false,
               "sections": {
                 "what_actually": "Phaser принципиально мощнее: динамическая регистрация участников, произвольные фазы и hook onAdvance, тогда как CountDownLatch — одноразовый счётчик.",
@@ -3203,7 +3203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Phaser не умеет динамически добавлять или удалять участников во время работы: их число жёстко задаётся в конструкторе при создании и потом уже никогда не меняется.",
+              "text": "Phaser — многоразовый синхронизатор с фиксированным числом участников из конструктора и неограниченным числом фаз; объединяет возможности Latch и Barrier.",
               "correct": false,
               "sections": {
                 "what_actually": "register() / arriveAndDeregister() — динамическое управление участниками; ключевая фича.",
@@ -3215,7 +3215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Phaser — многоразовый синхронизатор с ДИНАМИЧЕСКИМ числом участников и НЕОГРАНИЧЕННЫМ числом фаз; объединяет возможности Latch и Barrier.",
+              "text": "Phaser — многоразовый синхронизатор с динамическим числом участников и неограниченным числом фаз; объединяет возможности Latch и Barrier.",
               "correct": true,
               "sections": {
                 "explanation": "Участники управляются через register/arriveAndDeregister. CountDownLatch одноразовый и асимметричный; CyclicBarrier переиспользуемый, но с фиксированным числом участников; Phaser поддерживает onAdvance() hook между фазами для custom-логики. arriveAndAwaitAdvance() — атомарное «прибыл и жду остальных». onAdvance возвращает true, чтобы завершить Phaser окончательно.",
@@ -3228,7 +3228,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Phaser, в отличие от CyclicBarrier, не умеет выполнять никакой код на переходе между фазами: аналога barrier action у него нет.",
+              "text": "Phaser — многоразовый синхронизатор с динамическим числом участников и неограниченным числом фаз; в отличие от Barrier не умеет выполнять код на фазовом переходе.",
               "correct": false,
               "sections": {
                 "what_actually": "Phaser поддерживает действие на переходе фазы через переопределяемый onAdvance(int phase, int registeredParties) — аналог barrier action CyclicBarrier; он же управляет условием терминации Phaser.",
@@ -3251,7 +3251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Exchanger обменивает данные сразу между любым числом потоков, рассылая переданное значение всем участникам одновременно как широковещательный broadcast.",
+              "text": "Синхронизатор для обмена значениями между ЛЮБЫМ числом потоков: каждый вызывает exchange(v) и рассылает значение всем как broadcast.",
               "correct": false,
               "sections": {
                 "what_actually": "Exchanger ограничен ровно ДВУМЯ потоками за раз; не broadcast.",
@@ -3276,7 +3276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Exchanger не блокирует: если второй поток ещё не вызвал exchange(), метод сразу возвращает null, и обмен можно спокойно повторить позже.",
+              "text": "Синхронизатор для обмена значениями между ровно ДВУМЯ потоками: каждый вызывает exchange(v) и сразу получает null, если второго ещё нет.",
               "correct": false,
               "sections": {
                 "what_actually": "exchange(v) БЛОКИРУЕТ вызывающий поток, пока парный поток не вызовет exchange() (или пока не истечёт таймаут в exchange(v, timeout) → TimeoutException); null сам по себе не возвращается.",
@@ -3288,7 +3288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Exchanger — устаревший API, который полностью вытеснен CompletableFuture и больше не рекомендуется к использованию.",
+              "text": "Синхронизатор для обмена значениями между ровно ДВУМЯ потоками: каждый вызывает exchange(v), но API устарел в пользу CompletableFuture.",
               "correct": false,
               "sections": {
                 "what_actually": "Exchanger активный, не deprecated; CompletableFuture — другая концепция (async pipeline).",
@@ -3306,12 +3306,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как использовать StructuredTaskScope для параллельных запросов с отменой?",
+          "question_text": "Как в Java 21 (JEP 453) использовать StructuredTaskScope для параллельных запросов с отменой?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "StructuredTaskScope требует вручную отменять остальные подзадачи при ошибке одной — автоматической отмены он не даёт.",
+              "text": "В API JEP 453 (Java 21): ShutdownOnFailure — нужны все, но отмену остальных делает вызывающий код вручную; ShutdownOnSuccess — берёт первый успех без авто-interrupt остальных.",
               "correct": false,
               "sections": {
                 "what_actually": "ShutdownOnFailure/ShutdownOnSuccess автоматически interrupt остальные — это главная фича.",
@@ -3323,7 +3323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "StructuredTaskScope не поддерживает таймаут на всю группу задач сразу: можно лишь вызвать join() и ждать завершения всех подзадач без какого-либо ограничения по времени.",
+              "text": "В API JEP 453 (Java 21): ShutdownOnFailure — нужны все, но общего deadline на группу нет; ShutdownOnSuccess — первый успех, а joinUntil на весь scope не предусмотрен.",
               "correct": false,
               "sections": {
                 "what_actually": "joinUntil(Instant) задаёт deadline на всю группу; кроме того, fork-tasks могут иметь свои таймауты.",
@@ -3335,25 +3335,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "StructuredTaskScope входит ещё в Java 8 и доступен в любой современной JVM без флагов preview.",
+              "text": "В API JEP 453 (Java 21): ShutdownOnFailure — доступен с Java 8 без preview-флага; ShutdownOnSuccess — финальный API стандартного JDK без --enable-preview.",
               "correct": false,
               "sections": {
                 "what_actually": "StructuredTaskScope добавлен в Java 21 (preview, JEP 453); в Java 8 его нет.",
                 "source_of_confusion": "Перепутаны версии: `StructuredTaskScope` — это preview Java 21+, а его ошибочно относят к Java 8, как и многие async-API того релиза.",
                 "if_it_were_true": "Можно было бы использовать в legacy — реально требует Java 21+.",
-                "how_it_should_be": "Java 21 preview; в Java 25+ стабилизируется."
+                "how_it_should_be": "Java 21 preview; в Java 25 Structured Concurrency всё ещё preview (JEP 505), API с Joiner."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Даёт два готовых варианта: ShutdownOnFailure — нужны ВСЕ, при первой ошибке остальные отменяются; ShutdownOnSuccess — нужен ПЕРВЫЙ успешный результат.",
+              "text": "В API JEP 453 (Java 21): ShutdownOnFailure — нужны все, при первой ошибке остальные отменяются; ShutdownOnSuccess — нужен первый успешный результат, остальные отменяются.",
               "correct": true,
               "sections": {
                 "explanation": "Работа через fork()/join() в try-with-resources: scope.fork(callable) для подзадач, scope.join() или joinUntil(deadline), потом throwIfFailed() или result(); все дочерние задачи гарантированно завершены до выхода из try-блока. Используется с virtual threads под капотом (fork создаёт VT). Каскадная отмена: при ошибке/успехе одной — interrupt на остальные. joinUntil(Instant) добавляет общий таймаут на всю группу.",
-                "example": "try(var s = new StructuredTaskScope.ShutdownOnFailure()){ Subtask<User> u = s.fork(()->fetchUser()); Subtask<Order> o = s.fork(()->fetchOrder()); s.join().throwIfFailed(); return new Response(u.get(), o.get()); }",
+                "example": "Java 21: try(var s = new StructuredTaskScope.ShutdownOnFailure()){ Subtask<User> u = s.fork(()->fetchUser()); Subtask<Order> o = s.fork(()->fetchOrder()); s.join().throwIfFailed(); return new Response(u.get(), o.get()); }",
                 "when_to_apply": "Server-handler fan-out с auto-cancellation; race-to-first-success (multiple regions/endpoints); replacement для CompletableFuture.allOf/anyOf в blocking-style коде.",
-                "edge_cases": "В Java 21 — preview, JEP 453. ShutdownOnFailure.throwIfFailed() оборачивает в ExecutionException. fork() после join() — IllegalStateException.",
+                "edge_cases": "Только Java 21 preview (JEP 453). В JDK 25 политики задают через `Joiner` (`allSuccessfulOrThrow` / `anySuccessfulResultOrThrow`), а не вложенные классы ShutdownOn*.",
                 "related": "[[java-concurrency-interview#Q49]] Structured Concurrency basic; [[java-concurrency-interview#Q46]] Virtual Threads; [[java-concurrency-interview#Q50]] ScopedValue."
               }
             }

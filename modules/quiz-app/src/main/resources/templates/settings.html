@@ -12,7 +12,7 @@
     <!-- Подтверждение сброса банка — на уровне страницы (над вкладками), чтобы было
          видно независимо от того, какая вкладка активна после редиректа /reset-options. -->
     <p th:if="${resetDeleted != null}" class="toast toast-success"
-       th:text="${'Удалено ' + resetDeleted + ' ' + @plural.pick(resetDeleted, 'вариант', 'варианта', 'вариантов') + '. Они будут сгенерированы заново при следующем показе вопросов.'}">
+       th:text="${'Удалено ' + resetDeleted + ' ' + @plural.pick(resetDeleted, 'вариант', 'варианта', 'вариантов') + '. До перезапуска приложения вопросы будут открываться как флешкарты.'}">
         Удалено N вариантов.
     </p>
 
@@ -244,6 +244,8 @@
                         <p class="control-inline-hint" id="motion-pref-hint">«Авто» следует системной настройке «Уменьшить движение».</p>
                     </div>
                 </div>
+                <p class="control-inline-hint hidden" id="personalization-status"
+                   role="status" aria-live="polite" aria-atomic="true"></p>
             </div>
         </section>
 
@@ -257,7 +259,8 @@
                  а не ссылки: app.js (initExportButtons) делает fetch с заголовком.
                  Блок скрыт без JS (.hidden) — без скриптов экспорт невозможен. -->
             <div class="data-export-block hidden" id="data-export-block">
-                <p class="control-inline-hint">Экспорт прогресса и статистики:</p>
+                <h3>Экспорт данных</h3>
+                <p class="control-inline-hint">Скачай прогресс и статистику в удобном формате.</p>
                 <div class="data-export-actions">
                     <button type="button" class="btn secondary-btn" data-export-format="json" aria-label="Экспорт JSON — прогресс и статистика"><svg class="ed-icon" aria-hidden="true"><use href="#i-download"></use></svg> Экспорт JSON</button>
                     <button type="button" class="btn secondary-btn" data-export-format="csv" aria-label="Экспорт CSV — прогресс и статистика"><svg class="ed-icon" aria-hidden="true"><use href="#i-download"></use></svg> Экспорт CSV</button>
@@ -273,14 +276,14 @@
                     <svg class="ed-icon" aria-hidden="true"><use href="#i-flag"></use></svg>Опасная зона
                 </h3>
                 <form method="post" th:action="@{/settings/reset-options}" class="data-management-form">
-                    <p>Удалить все сгенерированные AI варианты ответов. Полезно, если сменил AI-модель или хочешь перегенерировать всё. Действие необратимо.</p>
+                    <p>Удалить варианты ответов у всех вопросов. До перезапуска приложения вопросы будут открываться как флешкарты; при запуске варианты восстановятся из JSON-сидеров. Действие необратимо.</p>
                     <button type="submit" class="btn danger-btn"
-                            data-confirm="Удалить все сгенерированные варианты? Они будут перегенерированы заново. Это нельзя отменить.">Сбросить банк вариантов</button>
+                            data-confirm="Удалить варианты ответов у всех вопросов? До перезапуска приложения они будут открываться как флешкарты. Это нельзя отменить.">Сбросить банк вариантов</button>
                 </form>
             </div>
         </section>
     </div>
 </main>
-<script th:src="@{/js/app.js(v=55)}"></script>
+<script th:src="@{/js/app.js(v=56)}"></script>
 </body>
 </html>

@@ -159,24 +159,41 @@ an obvious absurdity
 + filler added only to match length
 ```
 
-## Visual Format Parity
+## Visual Format Parity — HARD: shared surface skeleton (`SKEL`)
 
-Correct and incorrect options must look as if one careful author wrote all four.
+Correct and incorrect options must look as if one careful author wrote all four
+**on the same surface skeleton**. This is a hard gate (`SKEL` in
+`PLAN_INTERVIEW.md` / `PROMPT_PLAN_INTERVIEW.md` §18). Scripts do not pass `SKEL`.
 
-Align, without mechanical cloning:
+Before drafting, lock one skeleton line for the block, then write **all four**
+`option.text` only inside it:
 
-- number of sentences;
-- opening shape;
+- same opening class;
+- same sentence/clause count class;
+- same `;` / `:` / `—` / parentheses class;
+- same backtick/list density class;
+- same answer type (definition↔definition, API-pair↔API-pair, comparison↔comparison).
+
+Also align, without mechanical cloning of meaning:
+
 - grammatical form;
 - punctuation rhythm;
-- `backtick` usage;
-- parentheses and enumerations;
 - number of technical claims;
 - tone and confidence;
 - presence of examples or consequences.
 
-Use a shared semantic skeleton, not literal carbon copies. Natural Russian is more
-important than forcing identical character counts.
+Shared surface + semantic skeleton ≠ stamped clone. Empty punctuation cloning
+without distinct mental models fails `STAMP`, not passes `SKEL`. Natural Russian
+beats identical character counts, but **different skeletons are forbidden**.
+
+Pre-check (optional helper, not acceptance):
+
+```bash
+python3 scripts/mcq-skel-gate.py <json>
+```
+
+Green script ≠ `SKEL` pass. Always confirm the shared skeleton by reading all four
+options (LLM / human).
 
 ## Validation
 

@@ -164,13 +164,28 @@
       charts.forEach(function (c) { try { c.destroy(); } catch (_) {} });
       charts = [];
 
+      // STA-5/STJ-1: крупнее tick/legend labels; убрать декоративную x-сетку
+      // (категориальная ось не нуждается в вертикальных линиях); y-сетка мягче
+      // (без tick-marks). Tooltips Chart.js включены по умолчанию.
       var commonOpts = {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, color: p.text, font: { size: 11 } } } },
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 14, color: p.text, font: { size: 12 } } },
+          tooltip: { enabled: true }
+        },
         scales: {
-          x: { ticks: { maxRotation: 60, color: p.text, font: { size: 10 } }, grid: { color: p.grid }, border: { color: p.grid } },
-          y: { beginAtZero: true, ticks: { color: p.text }, grid: { color: p.grid }, border: { color: p.grid } }
+          x: {
+            ticks: { maxRotation: 45, color: p.text, font: { size: 12 } },
+            grid: { display: false },
+            border: { color: p.grid }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { color: p.text, font: { size: 12 } },
+            grid: { color: p.grid, drawTicks: false },
+            border: { color: p.grid }
+          }
         }
       };
 

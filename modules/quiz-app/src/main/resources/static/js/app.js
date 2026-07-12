@@ -527,13 +527,19 @@
     const card = document.getElementById('personalization-card');
     if (!card || !window.__theme || !window.__fontScale) return;
     card.classList.remove('hidden');
+    const statusEl = document.getElementById('personalization-status');
+    const announceSaved = (label, value) => {
+      if (!statusEl) return;
+      statusEl.textContent = 'Сохранено на этом устройстве: ' + label + ' — ' + value + '.';
+      statusEl.classList.remove('hidden');
+    };
 
     // Универсальная привязка seg-control (radiogroup персонализации) к
     // window.__X-API. Заменяет 5 почти одинаковых блоков (тема/дизайн/раскладка/
     // движение/ширина-чтения): подсветка активной кнопки + aria-checked + roving
     // tabindex, клик = set, ←→↑↓ = переход и set, ре-синк по событию X-change.
     // Единый контракт клавиатуры/a11y — меньше копипасты и мест для рассинхрона.
-    const wireSegControl = (controlId, attr, getCurrent, setValue, eventName) => {
+    const wireSegControl = (controlId, attr, label, getCurrent, setValue, eventName) => {
       const ctl = document.getElementById(controlId);
       if (!ctl) return;
       const btns = Array.from(ctl.querySelectorAll('[' + attr + ']'));
@@ -547,15 +553,21 @@
           b.tabIndex = on ? 0 : -1;
         });
       };
+      const apply = (button) => {
+        const next = button.getAttribute(attr);
+        if (getCurrent() === next) return;
+        setValue(next);
+        announceSaved(label, button.textContent.trim());
+      };
       btns.forEach((b, i) => {
-        b.addEventListener('click', () => setValue(b.getAttribute(attr)));
+        b.addEventListener('click', () => apply(b));
         b.addEventListener('keydown', (e) => {
           let idx = -1;
           if (e.key === 'ArrowRight' || e.key === 'ArrowDown') idx = (i + 1) % btns.length;
           else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') idx = (i - 1 + btns.length) % btns.length;
           if (idx < 0) return;
           e.preventDefault();
-          setValue(btns[idx].getAttribute(attr));
+          apply(btns[idx]);
           btns[idx].focus();
         });
       });
@@ -565,17 +577,17 @@
 
     // Источник истины каждого сегмента — соответствующий window.__X (head.html);
     // переключение мгновенное (флип data-* на <html>, без перезагрузки).
-    wireSegControl('theme-pref-control', 'data-theme-pref',
+    wireSegControl('theme-pref-control', 'data-theme-pref', 'Тема оформления',
       () => window.__theme.pref(), (v) => window.__theme.set(v), 'themechange');
-    if (window.__design) wireSegControl('design-pref-control', 'data-design-pref',
+    if (window.__design) wireSegControl('design-pref-control', 'data-design-pref', 'Дизайн',
       () => window.__design.current(), (v) => window.__design.set(v), 'designchange');
-    if (window.__layout) wireSegControl('layout-pref-control', 'data-layout-pref',
+    if (window.__layout) wireSegControl('layout-pref-control', 'data-layout-pref', 'Раскладка',
       () => window.__layout.current(), (v) => window.__layout.set(v), 'layoutchange');
-    if (window.__motion) wireSegControl('motion-pref-control', 'data-motion-pref',
+    if (window.__motion) wireSegControl('motion-pref-control', 'data-motion-pref', 'Движение',
       () => window.__motion.current(), (v) => window.__motion.set(v), 'motionchange');
-    if (window.__readingWidth) wireSegControl('reading-width-pref-control', 'data-reading-width-pref',
+    if (window.__readingWidth) wireSegControl('reading-width-pref-control', 'data-reading-width-pref', 'Ширина чтения',
       () => window.__readingWidth.current(), (v) => window.__readingWidth.set(v), 'readingwidthchange');
-    if (window.__density) wireSegControl('density-pref-control', 'data-density-pref',
+    if (window.__density) wireSegControl('density-pref-control', 'data-density-pref', 'Плотность',
       () => window.__density.current(), (v) => window.__density.set(v), 'densitychange');
 
     const valEl = document.getElementById('font-scale-value');
@@ -590,9 +602,16 @@
       if (incBtn) incBtn.setAttribute('aria-disabled', s >= fs.max ? 'true' : 'false');
       if (resetBtn) resetBtn.setAttribute('aria-disabled', s === 1 ? 'true' : 'false');
     };
-    if (decBtn) decBtn.addEventListener('click', () => { if (decBtn.getAttribute('aria-disabled') !== 'true') fs.stepBy(-fs.STEP); });
-    if (incBtn) incBtn.addEventListener('click', () => { if (incBtn.getAttribute('aria-disabled') !== 'true') fs.stepBy(fs.STEP); });
-    if (resetBtn) resetBtn.addEventListener('click', () => { if (resetBtn.getAttribute('aria-disabled') !== 'true') fs.reset(); });
+    const announceFontScale = () => announceSaved('Размер шрифта', Math.round(fs.get() * 100) + '%');
+    if (decBtn) decBtn.addEventListener('click', () => {
+      if (decBtn.getAttribute('aria-disabled') !== 'true') { fs.stepBy(-fs.STEP); announceFontScale(); }
+    });
+    if (incBtn) incBtn.addEventListener('click', () => {
+      if (incBtn.getAttribute('aria-disabled') !== 'true') { fs.stepBy(fs.STEP); announceFontScale(); }
+    });
+    if (resetBtn) resetBtn.addEventListener('click', () => {
+      if (resetBtn.getAttribute('aria-disabled') !== 'true') { fs.reset(); announceFontScale(); }
+    });
     document.addEventListener('fontscalechange', syncFont);
     syncFont();
   }

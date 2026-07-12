@@ -4,6 +4,22 @@
 
 set -e
 
+# Читаем вход от Claude Code (JSON c session_id и пр.).
+INPUT=$(cat 2>/dev/null || true)
+SID=$(printf '%s' "$INPUT" | python3 -c 'import json,sys
+try: print(json.load(sys.stdin).get("session_id","") or "")
+except Exception: print("")' 2>/dev/null || true)
+[ -n "$SID" ] || SID="default"
+
+# Снимок modules/-файлов, которые УЖЕ грязные на старте сессии.
+# Stop-хук будет игнорировать их — напоминает только про правки этой сессии.
+STATE_DIR=".claude/hooks/state"
+mkdir -p "$STATE_DIR" 2>/dev/null || true
+{
+  git diff --name-only HEAD -- 'modules/**/*.java' 'modules/**/*.kt' 'modules/**/*.sql' 'modules/**/*.yml' 2>/dev/null
+  git ls-files --others --exclude-standard 'modules/**/*.java' 'modules/**/*.kt' 'modules/**/*.sql' 'modules/**/*.yml' 2>/dev/null
+} | sed '/^$/d' | sort -u > "${STATE_DIR}/graph-baseline-${SID}.txt" 2>/dev/null || true
+
 if [ -f graphify-out/graph.json ] && [ -f graphify-out/GRAPH_REPORT.md ]; then
   GRAPH_STATE="ready"
 else

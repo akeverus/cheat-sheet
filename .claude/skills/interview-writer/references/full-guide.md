@@ -985,6 +985,7 @@ At minimum enforce:
 - Plausibility Parity;
 - Russian Readability Parity;
 - Visual Format Parity;
+- **shared surface skeleton (`SKEL`) for all 4 options — hard gate**;
 - no visually distinguishable correct option;
 - no inflated caricature;
 - no stamped clone;
@@ -994,6 +995,7 @@ The test:
 
 ```text
 If correct=true is hidden, the correct option must not be guessable by appearance.
+All four options share one surface skeleton (opening/clauses/punctuation/backticks class).
 ```
 
 This guide does not duplicate the full distractor canon.

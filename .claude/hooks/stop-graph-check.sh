@@ -15,17 +15,31 @@ fi
 # Если графа нет — выходим тихо.
 [ -f graphify-out/graph.json ] || exit 0
 
-# Список модифицированных source-файлов в modules/ относительно HEAD.
-CHANGED=$(git diff --name-only HEAD -- 'modules/**/*.java' 'modules/**/*.kt' 'modules/**/*.sql' 'modules/**/*.yml' 2>/dev/null | head -5)
+SID=$(printf '%s' "$INPUT" | python3 -c 'import json,sys
+try: print(json.load(sys.stdin).get("session_id","") or "")
+except Exception: print("")' 2>/dev/null || true)
+[ -n "$SID" ] || SID="default"
+BASELINE=".claude/hooks/state/graph-baseline-${SID}.txt"
 
-# Плюс untracked файлы.
-UNTRACKED=$(git ls-files --others --exclude-standard 'modules/**/*.java' 'modules/**/*.kt' 2>/dev/null | head -5)
+# Все грязные modules/-source файлы сейчас.
+CURRENT=$( {
+  git diff --name-only HEAD -- 'modules/**/*.java' 'modules/**/*.kt' 'modules/**/*.sql' 'modules/**/*.yml' 2>/dev/null
+  git ls-files --others --exclude-standard 'modules/**/*.java' 'modules/**/*.kt' 'modules/**/*.sql' 'modules/**/*.yml' 2>/dev/null
+} | sed '/^$/d' | sort -u )
 
-if [ -z "$CHANGED" ] && [ -z "$UNTRACKED" ]; then
+# Вычитаем baseline сессии — остаются только правки, сделанные В ЭТОЙ сессии.
+# Файлы, что были грязными на старте (чужой pre-existing diff), не напоминаем.
+if [ -f "$BASELINE" ]; then
+  NEW=$(comm -23 <(printf '%s\n' "$CURRENT") "$BASELINE")
+else
+  NEW="$CURRENT"
+fi
+
+if [ -z "$NEW" ]; then
   exit 0
 fi
 
-FILES=$(printf '%s\n%s' "$CHANGED" "$UNTRACKED" | sed '/^$/d' | head -5 | tr '\n' ',' | sed 's/,$//')
+FILES=$(printf '%s\n' "$NEW" | sed '/^$/d' | head -5 | tr '\n' ',' | sed 's/,$//')
 
 CONTEXT="graphify: uncommitted changes in modules/ (${FILES}). Graph may be stale. To refresh: \$(cat graphify-out/.graphify_python) -c 'from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path(\".\"))'"
 

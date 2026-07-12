@@ -596,3 +596,65 @@ label-reflow. Все 14 размеров различны (нет stale-frame ra
 | 5 | InterviewControllerApiTest (открытие) | Тесты `/api/takeaway·comparison·code-trace·wrong-feedback·regenerate·hint` остались после вырезания эндпоинтов и падали 404 — базлайн был КРАСНЫМ (скрыто `-x test`). | Удалены 6 семейств тест-методов + осиротевшие импорты (отдельный коммит `0ed95133`). | — |
 
 Проверки: `node --check app.js` OK. `./gradlew :quiz-app:test` по затронутым классам — `InterviewControllerApiTest` BUILD SUCCESSFUL (мёртвые тесты сняты); `TemplateFragmentContractTest`, `VisualBaselineContractTest`, `SessionFlowServiceTest`, `InterviewControllerTest` (кнопка-текст) — зелёные; **новый RIA-2 render-тест `studyModeLearnPhaseRendersConfirmButtonThenQuizShowsOptions` — `tests=1 skipped=0`, ассерты исполнились** (LEARN: card+«Проверить себя», форма вариантов скрыта; /study-confirm → QUIZ: форма вариантов есть, карточки нет). CSRF-урок: session-POST-флоу проверять MockMvc `.with(csrf())`, не raw curl (`CookieCsrfTokenRepository.withHttpOnlyFalse()` не пишет XSRF cookie на GET). **⚠️ Оставлено пользователю:** `statsTableHeadersExposeKeyboardSortableContract` красный из-за WIP-правки `stats.html` (добавлен `scope="col"` → `th class="sortable"` больше не подстрока) — территория незавершённого a11y-pass юзера, не трогаю.
+
+### Раунд 44 — 2026-07-09 — правдивый сброс банка + heading/SR/контраст
+Коммит: не создавался · CSS `tokens.css` v=61→62, `base.css` v=69→70 · Находок применено: 4/4
+
+| # | Область | Проблема | Правка | Impact/Risk/Conf |
+|---|---------|----------|--------|------------------|
+| 1 | `/settings` → опасная зона (SET-17) | UI обещал удалить «AI-варианты» и автоматически перегенерировать их при следующем показе. Реально `clearOptions()` удаляет весь `answer_options`, а пустой банк даёт flashcard до стартового импорта | Описание, confirm и success-toast теперь называют полный scope, временный flashcard-режим и восстановление JSON-сидеров после перезапуска. Добавлен контрактный тест против возврата старого обещания | H/L/H |
+| 2 | `/settings` → Данные (SET-14) | Экспорт не имел h3, heading-nav перескакивала с h2 «Данные» на h3 «Опасная зона» | Добавлен h3 «Экспорт данных», hint стал самостоятельной инструкцией | L/L/H |
+| 3 | `.today-hero-hint` (BAS-21) | 14px helper использовал tertiary-токен; 4 из 20 design×theme сочетаний проваливали AA-small, минимум 2.96:1 | `text-tertiary → text-secondary`; live editorial-light 5.67:1, ранее рассчитанный полный гейт 10×2 ≥5.50:1 | M/L/H |
+| 4 | `/stats` forecast (STA-18) | `.forecast-count` повторял число из accessible name соседнего `role=img` | Визуальный count получил `aria-hidden=true`; полное «N вопросов» остаётся на bar. Контракт закреплён тестом | L/L/H |
+
+Проверки: `git diff --check` и IDE lint — чисто. `./gradlew :quiz-app:test --tests "com.cheatsheet.quiz.ui.TemplateFragmentContractTest" --tests "com.cheatsheet.quiz.ui.VisualBaselineContractTest"` — BUILD SUCCESSFUL. Live Chrome: CSS `tokens?v=62`/`base?v=70`; `/settings` accessibility tree = h2 «Данные» → h3 «Экспорт данных» → h3 «Опасная зона»; 320/375/768/1024/1440/1920 без horizontal overflow, touch targets ≥44px. Обе темы проверены на изменённой settings-поверхности. Деструктивный reset не выполнен: попытка автоматизированной проверки cancel ушла в POST, но сервер отклонил её 403 до контроллера; повтор не делался. `/stats` forecast пуст в текущей БД, поэтому STA-18 live-позитив недостижим, проверен контрактным тестом/by-construction. Консоль: известный CSP-блок только для `chart.umd.min.js.map`; рабочие document/CSS/JS запросы — 200.
+
+Следующая рекомендуемая задача: live keyboard-проверка FNO-1 (не скрывает ли sticky `thead` фокус при сортировке); при подтверждении — минимальный `scroll-margin-top`, иначе зафиксировать verified-clean и перейти к SET-7.
+
+### Раунд 45 — 2026-07-09 — keyboard-collapse таблицы аналитики
+Коммит: не создавался · CSS `base.css` v=70→71 · Находок применено: 1; кандидат FNO-1 закрыт как verified-clean
+
+| # | Область | Проблема | Правка | Impact/Risk/Conf |
+|---|---------|----------|--------|------------------|
+| 1 | `/stats` → свёрнутая таблица тем (STA-19) | Height-clip показывал 9 строк, но оставлял все 319 topic-ссылок в Tab/SR-порядке. Tab после последней видимой строки прокручивал `overflow-y:hidden` и раскрывал скрытый контент без изменения `aria-expanded` | Строки после `data-collapse-rows=12` получают нативный `hidden`; scoped CSS сохраняет `display:none` в mobile stacked-layout, print разворачивает все строки. `MutationObserver` повторно применяет лимит после сортировки | H/L/H |
+
+FNO-1 не подтвердился: `thead th { position: sticky }` привязан к `.topic-table-wrap` из-за `overflow-x:auto`, но expanded-wrapper не имеет вертикального scroll-range. При прокрутке страницы заголовок уходит вместе с таблицей и не перекрывает row-links; `scroll-margin-top` не добавлялся.
+
+Проверки: `git diff --check`, IDE lint — чисто. `./gradlew :quiz-app:test --tests "com.cheatsheet.quiz.ui.TemplateFragmentContractTest" --tests "com.cheatsheet.quiz.ui.VisualBaselineContractTest"` — BUILD SUCCESSFUL. Live Chrome 1024×600/900: 12 видимых/focusable строк + 307 hidden; Tab с 12-й ссылки переходит на `#topic-table-expander`, `wrap.scrollTop=0`; Enter-сортировка сохраняет 12/307 и live-status. Mobile 375×812: hidden-строки имеют `display:none`, 12 строк остаются grid, horizontal overflow страницы отсутствует. Загружен `base.css?v=71`.
+
+Следующая рекомендуемая задача: SET-7 — сделать изменение персонализации в `/settings` понятным для screen reader без навязчивого live-region.
+
+### Раунд 46 — 2026-07-10 — подтверждение сохранения персонализации
+Коммит: не создавался · `app.js` v=55→56 · Находок применено: 1/1
+
+| # | Область | Проблема | Правка | Impact/Risk/Conf |
+|---|---------|----------|--------|------------------|
+| 1 | `/settings` → Оформление (SET-7) | Переключатели применяли и сохраняли значение сразу, но интерфейс не подтверждал персистентность; `aria-checked` сообщал выбор, но не факт сохранения на устройстве | Добавлена единая видимая polite-status строка «Сохранено на этом устройстве: Параметр — Значение». Она обновляется только после реального изменения, не шумит при initial sync и повторном клике; font-stepper сообщает итоговый процент | M/L/H |
+
+Проверки: `node --check app.js`, `git diff --check`, IDE lint — чисто. `./gradlew :quiz-app:test --tests "com.cheatsheet.quiz.ui.TemplateFragmentContractTest" --tests "com.cheatsheet.quiz.ui.VisualBaselineContractTest"` — BUILD SUCCESSFUL. Live Chrome 1024×900: до изменения status отсутствует из accessibility tree; ArrowRight «Светлая»→«Тёмная» оставляет фокус на checked-radio и создаёт atomic polite-status «Сохранено на этом устройстве: Тема оформления — Тёмная.»; A+ обновляет его до «Размер шрифта — 110%.»; horizontal overflow отсутствует, загружен `app.js?v=56`. После QA browser-настройки возвращены к исходным light/100%/вкладке «Данные».
+
+Следующая рекомендуемая задача: перепроверить SET-6 — текущий font-stepper уже показывает процент и кнопку «Сбросить»; если критерий фактически выполнен, закрыть как verified-clean без косметических правок.
+
+### Раунд 47 — 2026-07-10 — SET-6/SET-5 verified-clean + читаемые графики
+Коммит: не создавался · `stats.js` v=12→13 · Находок применено: 3 (2 verified-clean + 1 фикс)
+
+| # | Область | Проблема | Правка | Impact/Risk/Conf |
+|---|---------|----------|--------|------------------|
+| 1 | `/settings` font-stepper (SET-6) | Бэклог требовал явный % и reset | Уже реализовано: `100%` + «Сбросить», disable на 100%, restore после A+. Live + контрактный тест | M/L/H |
+| 2 | tabs ↔ seg-control (SET-5/BAS-15) | Подозрение, что сегменты похожи на вкладки | Live: tabs = underline 18px; seg = boxed fill 16px; design-pref = chips. Косметика не нужна | M/L/H |
+| 3 | `/stats` Chart.js (STA-5/STJ-1) | Tick/legend 10–11px + декоративная x-сетка | Labels 12px, x-grid off, y без tick-marks, tooltip enabled, maxRotation 45° | M/L/H |
+
+Проверки: `node --check stats.js`, `git diff --check`, `./gradlew :quiz-app:test --tests TemplateFragmentContractTest --tests VisualBaselineContractTest` — BUILD SUCCESSFUL. Live: font-stepper 100%→110%→reset; tabs/seg computed styles разведены; `stats.js?v=13` отдаётся сервером. Позитив отрисовки графиков в текущей БД недоступен (activity=0 → empty fallback) — конфиг закреплён контрактом.
+
+Следующая рекомендуемая задача: HDR-1 — компактный header во время активной тренировочной сессии (проверить высоту masthead vs вопрос).
+
+### Раунд 48 — 2026-07-10 — HDR-1: шапка уступает вопросу на мобиле
+Коммит: не создавался · CSS `base.css` v=71→72 · Находок применено: 1/1
+
+| # | Область | Проблема | Правка | Impact/Risk/Conf |
+|---|---------|----------|--------|------------------|
+| 1 | `/` focus во время сессии (HDR-1) | Desktop OK (ratio 1.29), но на 375px focus-page title rule (0,3,1) перебивал mobile compact-clamp → title≈25px рядом с вопросом≈26px (ratio 1.05), header занимал 24% viewport | Restated compact clamp на `.focus-page .ed-masthead-title` ≤600px; session `:has(.ed-masthead-progress)` уплотняет padding. Sticky не добавлялся (FNO) | M/L/H |
+
+Проверки: `git diff --check`, `./gradlew :quiz-app:test --tests TemplateFragmentContractTest --tests VisualBaselineContractTest` — BUILD SUCCESSFUL. Live Chrome: `base.css?v=72`; 375×812 header 197→143px (24%→18%), title 24.8→18.4px, ratio 1.05→1.41, questionTop 378→323; 1024×900 ratio 1.29, position relative, overflow нет.
+
+Следующая рекомендуемая задача: APP-8 — `aria-busy` + re-entrancy guard на regenerate (admin-only, низкий impact) или ICO-3 (decorative polish, low). Предпочтительнее проверить TR-4 sticky CTA на focus — medium impact на тренировке.

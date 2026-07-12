@@ -237,10 +237,10 @@
             aria-expanded="false" aria-controls="topic-table-wrap"></button>
     <p id="table-sort-status" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
 </section>
-<!-- B6: длинная таблица тем сворачивается по высоте. Скоупится на /stats.
-     Sort-agnostic: ограничивает высоту обёртки, строки не трогает.
+<!-- B6: длинная таблица тем сворачивается по числу строк. Скоупится на /stats.
+     Строки за лимитом получают hidden: они недоступны и визуально, и для Tab/SR.
      PE: таблица рендерится РАЗВЁРНУТОЙ (no-JS видит все строки). is-collapsed
-     навешивает этот скрипт — иначе без JS строки обрезались бы CSS-ом, а
+     навешивает этот скрипт — иначе без JS строки скрылись бы, а
      кнопка-разворот остаётся hidden → данные были бы недоступны. Скрипт
      инлайновый сразу после таблицы → сворачивает до первой отрисовки (без FOUC). -->
 <script>
@@ -249,16 +249,24 @@
     var btn = document.getElementById('topic-table-expander');
     var table = document.getElementById('topic-table');
     if (!wrap || !btn || !table || !table.tBodies[0]) return;
-    var rowCount = table.tBodies[0].rows.length;
+    var tbody = table.tBodies[0];
+    var rowCount = tbody.rows.length;
     var limit = parseInt(wrap.getAttribute('data-collapse-rows'), 10) || 12;
     if (rowCount <= limit) return; // короткие таблицы не сворачиваем
     var hidden = rowCount - limit;
     wrap.classList.add('is-collapsed');
     function sync() {
       var collapsed = wrap.classList.contains('is-collapsed');
+      Array.prototype.forEach.call(tbody.rows, function (row, index) {
+        row.hidden = collapsed && index >= limit;
+      });
+      if (collapsed) wrap.scrollTop = 0;
       btn.textContent = collapsed ? ('Показать все темы (' + hidden + ' ниже)') : 'Свернуть таблицу';
       btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
     }
+    // Сортировка переставляет строки в tbody. После неё заново оставляем видимыми
+    // первые limit строк уже в новом порядке.
+    new MutationObserver(sync).observe(tbody, { childList: true });
     btn.classList.remove('hidden');
     sync();
     btn.addEventListener('click', function () { wrap.classList.toggle('is-collapsed'); sync(); });
@@ -275,7 +283,7 @@
                 <span class="forecast-bar-fill"
                       th:attr="data-progress=${day.count() * 100 / (maxCnt > 0 ? maxCnt : 1)}"></span>
             </span>
-            <span class="forecast-count" th:text="${day.count()}">0</span>
+            <span class="forecast-count" aria-hidden="true" th:text="${day.count()}">0</span>
         </li>
     </ul>
 </section>
@@ -330,6 +338,6 @@
      JSON.parse в stats.js. [(...)] (unescaped) кладёт literal-JSON,
      который Chart.js потом успешно парсит. -->
 <script type="application/json" id="topic-stats-data" th:inline="text">[(${topicStatsJson})]</script>
-<script th:src="@{/js/stats.js(v=12)}"></script>
+<script th:src="@{/js/stats.js(v=13)}"></script>
 </body>
 </html>

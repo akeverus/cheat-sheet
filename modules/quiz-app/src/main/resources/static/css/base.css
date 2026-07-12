@@ -465,9 +465,17 @@ html[data-design] .ed-masthead-title {
    на что отвечают. Опускаем тайтл шапки до 2xl=36px → вопрос (48px) доминирует
    (ratio 1.33 ≥ 1.25). Только .focus-page: на stats/settings/summary тайтл
    шапки САМ герой страницы (ничего не конкурирует) — там остаётся 48px.
-   Спецификация (0,3,1) > generic (0,2,1). Мобильный clamp-этаж не трогаем. */
+   Спецификация (0,3,1) > generic (0,2,1). Мобильный clamp-этаж — в @media
+   ≤600 ниже: иначе этот же (0,3,1) перебивает компактный mobile-clamp и
+   держит ~25px рядом с вопросом (~26px) → снова плоская иерархия (HDR-1). */
 html[data-design] .focus-page .ed-masthead-title {
   font-size: clamp(1.55rem, 1.1rem + 1.6vw, var(--font-size-2xl));
+}
+/* Во время активной сессии (progress strip рендерится только при
+   progressPercent!=null) уплотняем вертикальный chrome — вопрос ближе к
+   первому вьюпорту. Sticky НЕ делаем: site-header sticky создал бы FNO-риск. */
+html[data-design] .focus-page .ed-masthead:has(.ed-masthead-progress) .ed-masthead-inner {
+  padding-block: var(--space-3);
 }
 .ed-masthead-actions { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
 /* Тогглы дизайна+темы — единый блок: на узких экранах переносятся вместе (не
@@ -1788,11 +1796,11 @@ html[data-design] .stats-page .maturity-low { color: var(--color-text-secondary)
 
 /* сворачивание таблицы */
 html[data-design] .stats-page .topic-table-wrap { position: relative; overflow-x: auto; }
-/* overflow-x:auto (не overflow:hidden) в свёрнутом виде: при A+/375 широкая
-   таблица иначе клипала правые колонки без скролла — недоступны до разворота.
-   Вертикаль клипаем (overflow-y:hidden) для эффекта сворачивания. */
-html[data-design] .stats-page .topic-table-wrap.is-collapsed { max-height: 540px; overflow-x: auto; overflow-y: hidden; }
-html[data-design] .stats-page .topic-table-wrap.is-collapsed::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: linear-gradient(to bottom, transparent, var(--color-bg-secondary)); pointer-events: none; }
+/* JS скрывает строки за data-collapse-rows через hidden, а не визуальный clip:
+   скрытые topic-link не остаются в Tab-порядке и не прокручивают контейнер.
+   !important сохраняет hidden и в мобильном stacked-table режиме, где tr
+   получает author-level display:block. */
+html[data-design] .stats-page .topic-table tr[hidden] { display: none !important; }
 html[data-design] .stats-page .table-expander {
   /* C3: дельты к .btn (class="btn secondary-btn table-expander") — отступ сверху + плоский
      радиус (B5; во всех дизайнах, как было). Размер/цвет/рамка/ховер — из .btn/.secondary-btn;
@@ -2761,7 +2769,7 @@ html[data-design] .today-hero-due-label {
   font-family: var(--font-family-body); font-size: var(--font-size-md); color: var(--color-text-secondary);
 }
 html[data-design] .today-hero-cta { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
-html[data-design] .today-hero-hint { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-tertiary); }
+html[data-design] .today-hero-hint { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-secondary); }
 
 @media (max-width: 600px) {
   html[data-design] .today-hero-body { flex-direction: column; align-items: flex-start; gap: var(--space-4); }
@@ -3225,16 +3233,10 @@ html[data-design] .summary-tools-status {
   html[data-design] .summary-td-correct,
   html[data-design] .summary-td-wrong { color: #141413 !important; }
   html[data-design] a { color: #141413 !important; text-decoration: none; }
-  /* /stats: таблица тем сворачивается JS-ом (.is-collapsed → max-height:540px,
-     overflow-y:hidden) — при печати это обрезало бы прогресс до ~12 тем, а
-     fade-градиент ::after печатался бы серой полосой. На печать разворачиваем
-     таблицу полностью и прячем фейд + кнопку-разворот. thead длинной таблицы
-     повторяется на каждой странице нативно при разрыве по страницам. */
-  html[data-design] .stats-page .topic-table-wrap.is-collapsed {
-    max-height: none !important;
-    overflow: visible !important;
-  }
-  html[data-design] .stats-page .topic-table-wrap.is-collapsed::after { display: none !important; }
+  /* /stats: JS скрывает строки после лимита атрибутом hidden. На печать
+     разворачиваем их обратно; thead длинной таблицы повторяется на каждой
+     странице нативно при разрыве по страницам. */
+  html[data-design] .stats-page .topic-table tr[hidden] { display: table-row !important; }
   html[data-design] .table-expander { display: none !important; }
   /* Код-блоки печатаются на белом листе (браузер не печатает фоны). В тёмной теме
      --color-text-primary = светлый крем (#F0EEE6) → светлый-по-белому, контраст
@@ -3585,6 +3587,18 @@ html[data-design] #interview-options label.option-wrong:has(input:checked) {
     overflow-wrap: normal;
     word-break: normal;
     hyphens: auto;
+  }
+
+  /* HDR-1: без этого focus-page title (0,3,1) перебивает compact-clamp выше
+     и оставляет ~25px рядом с вопросом ~26px (ratio ≈1.05). */
+  html[data-design] .focus-page .ed-masthead-title {
+    font-size: clamp(1.15rem, 5vw, 1.35rem);
+    line-height: 1.12;
+  }
+
+  html[data-design] .focus-page .ed-masthead:has(.ed-masthead-progress) .ed-masthead-inner {
+    padding-block: var(--space-2);
+    row-gap: var(--space-1);
   }
 
   html[data-design] .ed-masthead-kicker {

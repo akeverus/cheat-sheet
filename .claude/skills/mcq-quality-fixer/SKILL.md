@@ -5,7 +5,8 @@ description: >-
   cheatsheets/interview. Скилл отвечает за схему MCQ v3, ровно 4 варианта и один
   correct, качество question_text, mental-model-first генерацию, Single-Delta,
   правдоподобные дистракторы, естественный русский язык, Option/Plausibility/
-  Russian Readability/Visual Format Parity, соответствие text и sections,
+  Russian Readability/Visual Format Parity, HARD shared surface skeleton (SKEL)
+  для всех 4 option.text, соответствие text и sections,
   fact-freshness, распределение correct A/B/C/D и полный набор валидаторов.
   Использовать для JSON MCQ. Не использовать для написания теории cheatsheet.
 ---
@@ -83,13 +84,15 @@ modules/quiz-app/src/main/resources/seed/mcq/<category>/<topic>-interview.json
 4. **Согласованность option text с его sections.**
 5. **Правдоподобность дистракторов.**
 6. **Естественный и человекочитаемый русский язык.**
-7. **Visual Format / Option / Structure Parity.**
+7. **Visual Format / Option / Structure Parity — включая HARD `SKEL`
+   (единый surface skeleton всех 4 `option.text`).**
 8. **Числовые метрики и автоматические эвристики.**
 9. **Косметическая симметрия.**
 
 Нельзя сделать утверждение спорным или фактически неверным только ради
 `OPTION_LENGTH_RATIO`. Нельзя превращать живые ответы в карбон-копии ради
-`structure-tell = 0`.
+`structure-tell = 0`. Нельзя закрывать блок зелёным parity-gate при разном
+скелете у correct и wrong (`SKEL` FAIL).
 
 Если hard gate и естественный текст невозможно совместить в рамках разрешённой
 поверхности изменений, остановиться и пометить блок как `manual review`, а не
@@ -776,10 +779,50 @@ Single-Delta означает, что варианты отличаются од
 Правильные и неправильные ответы должны быть визуально неотличимы по качеству
 оформления.
 
+## HARD GATE: единый surface skeleton (`SKEL`)
+
+**Жёсткое правило.** Все четыре `option.text` обязаны делить **один surface
+skeleton**. Это колонка `SKEL` в `PLAN_INTERVIEW.md` и поле `llm_review.skel` в
+review-sidecar.
+
+### Pre-check + LLM (оба обязательны, роли разные)
+
+```bash
+python3 scripts/mcq-skel-gate.py <json>   # грубые mismatch (зачин / ; / sent / code)
+```
+
+| | Скрипт `mcq-skel-gate.py` | LLM §18 / §31 |
+|---|---|---|
+| Роль | детерминированный **pre-check** | **приёмка** `SKEL=✅` / `skel: true` |
+| Достаточно ли одного? | **нет** | **нет** — без чтения 4 options нельзя |
+| Зелёный скрипт | не даёт `SKEL=✅` | всё равно вручную подтвердить скелет |
+| Красный скрипт | сигнал чинить / объяснить | всё равно прочитать блок глазами |
+
+Скрипты (`mcq-form-balance.py`, parity-gate, **skel-gate**) **не** закрывают
+`SKEL`. Без LLM-`SKEL=✅` / `skel: true` запрещены: `C-FRM`, `W-FRM`, `PAR`,
+`FINAL`, `four_option_pass`.
+
+Skeleton = класс формы, не посимвольный clone:
+
+| Ось | Совпадение у A/B/C/D |
+|---|---|
+| Зачин | один тип открытия |
+| Предложения / клаузы | одно число (или сопоставимый каркас) |
+| Пунктуация | один класс `;` / `:` / `—` / скобок |
+| Backticks / списки | один класс плотности |
+| Тип ответа | определение↔определение, API-пара↔API-пара, сравнение↔сравнение |
+
+**FAIL:** correct — каталог с `;` и двумя API; wrong — короткая проза.
+**PASS:** все четыре на одном шаблоне, mental models разные.
+**Не stamped clone:** пустое клонирование пунктуации без смысла — `STAMP` FAIL.
+
+Перед правкой зафиксируй skeleton одной строкой, затем перепиши **все четыре**
+текста только в нём.
+
 ## Проверяемые признаки
 
 - количество предложений;
-- общий синтаксический шаблон;
+- общий синтаксический шаблон (**`SKEL`**);
 - зачин;
 - число и порядок клауз;
 - форма сказуемого;
@@ -799,7 +842,7 @@ Single-Delta означает, что варианты отличаются од
 
 ## Единый формат блока
 
-Перед написанием options выбрать surface template.
+Перед написанием options выбрать **один** surface template и применить ко всем 4.
 
 Примеры:
 
@@ -819,7 +862,11 @@ Single-Delta означает, что варианты отличаются од
 <понятие A> отличается от <понятия B> тем, что <критерий>. <практический вывод>.
 ```
 
-Все варианты используют близкий шаблон, но не обязаны быть буквальными клонами.
+```text
+В API <spec>: <A> — <роль A>; <B> — <роль B>.
+```
+
+Все варианты используют **тот же** шаблон; не буквальные клоны смысла.
 
 ## Пунктуационная дисциплина
 
@@ -885,18 +932,19 @@ python3 scripts/mcq-structure-parity.py --block <path> <q_number>
 - tell нельзя снижать пустым клонированием пунктуации;
 - после снижения tell обязательно запустить stamp/readability review.
 
-## Semantic skeleton, не literal clone
+## Semantic + surface skeleton, не literal clone
 
-Клонировать нужно **тип ответа**, а не символы:
+Клонировать нужно **тип ответа и surface каркас**, а не символы:
 
 - определение → определения;
 - сравнение → сравнения;
 - алгоритм → алгоритмы;
-- decision rationale → decision rationales.
+- decision rationale → decision rationales;
+- API-пара с `;` → API-пара с `;` у всех четырёх.
 
 Не нужно искусственно добавлять три скобки только потому, что они есть в correct.
-Нужно дать distractor-у сопоставимую содержательную насыщенность естественным
-способом.
+Нужно дать distractor-у сопоставимую содержательную насыщенность **в том же
+скелете** естественным способом. Разный скелет при похожей длине = `SKEL` FAIL.
 
 ---
 
@@ -1089,6 +1137,18 @@ python3 scripts/mcq-answer-parity-gate.py <json>
 2. попробовать естественную редактуру;
 3. не штамповать текст;
 4. если конфликт остаётся, пометить manual review и показать конкретную метрику.
+
+## 20.2b Surface skeleton gate — pre-check only
+
+```bash
+python3 scripts/mcq-skel-gate.py <json>
+python3 scripts/mcq-skel-gate.py --verbose <json>
+```
+
+Ловит грубые mismatch: opening class, sentence max−min>1, наличие `;`,
+code-bucket. **Exit 0 не принимает `SKEL`.** Приёмка — только LLM-чтение всех
+4 `option.text` (§14). Красный гейт — сигнал к правке/объяснению, не отмена
+LLM-прохода.
 
 ## 20.3 Structure parity — diagnostic + loop gate
 
@@ -1462,13 +1522,14 @@ Plausible wrong:
 19. Correct не единственный с примером или cause-effect?
 20. Wrong выглядят так же хорошо отредактированными?
 21. При скрытом `correct` ответ не угадывается глазами?
-22. При этом options не выглядят stamped clones?
+22. **Все 4 `option.text` на одном surface skeleton (`SKEL`)?**
+23. При этом options не выглядят stamped clones?
 
 ## Sections
 
-23. Sections соответствуют текущему text?
-24. Sections добавляют знание, а не повторяют option?
-25. Related links существуют?
+24. Sections соответствуют текущему text?
+25. Sections добавляют знание, а не повторяют option?
+26. Related links существуют?
 
 Если хотя бы один ответ `нет`, блок не готов.
 
@@ -1492,15 +1553,19 @@ Plausible wrong:
 - [ ] Нет caricature distractors.
 - [ ] Нет short stubs.
 - [ ] Нет visually distinguishable correct.
+- [ ] **`SKEL`: все 4 `option.text` на одном surface skeleton (LLM HARD).**
 - [ ] Нет stamped-clone over-correction.
 - [ ] Text и sections согласованы.
 - [ ] Позиции correct сбалансированы.
 - [ ] Fact-freshness sidecar обновлён, если требуется.
 - [ ] `verify-mcq-json.sh` exit 0.
 - [ ] `mcq-answer-parity-gate.py` PASS.
+- [ ] `mcq-skel-gate.py` pre-check (FAIL → чинить; PASS ≠ `SKEL=✅`).
+- [ ] **LLM вручную:** единый surface skeleton на каждый блок (`SKEL`).
 - [ ] `mcq-structure-parity.py` проверен.
 - [ ] `mcq-stamp-audit.py` verdict OK.
 - [ ] Blind review выполнен.
+- [ ] Plan column `SKEL=✅` только после LLM (не после скрипта).
 - [ ] Integration tests выполнены или честно отмечены как не запущенные.
 - [ ] Diff содержит только ожидаемые изменения.
 
@@ -1532,6 +1597,7 @@ Plausible wrong:
 - Unique answer: пройден / manual review
 - Russian readability: пройдена / замечания
 - Visual format parity: пройдена / замечания
+- **Surface skeleton (`SKEL`): пройден / FAIL**
 - Sections consistency: пройдена / замечания
 - Fact freshness: not applicable / updated
 
@@ -1539,6 +1605,7 @@ Plausible wrong:
 
 - `verify-mcq-json.sh`: exit <code>
 - `mcq-answer-parity-gate.py`: PASS/FAIL/not available
+- `mcq-skel-gate.py`: PASS/FAIL + reminder LLM-SKEL still required
 - `mcq-structure-parity.py`: <summary>
 - `mcq-stamp-audit.py`: OK/FAIL/not available
 - Integration tests: PASS/FAIL/not run

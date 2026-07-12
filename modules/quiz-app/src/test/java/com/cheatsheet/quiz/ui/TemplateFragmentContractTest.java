@@ -153,6 +153,59 @@ class TemplateFragmentContractTest {
     }
 
     @Test
+    void settingsResetOptionsExplainsActualRecoveryFlow() throws IOException {
+        String settings = readTemplate("templates/settings.html");
+
+        assertThat(settings).contains("<h3>Экспорт данных</h3>");
+        assertThat(settings).contains("Удалить варианты ответов у всех вопросов");
+        assertThat(settings).contains("До перезапуска приложения");
+        assertThat(settings).contains("при запуске варианты восстановятся из JSON-сидеров");
+        assertThat(settings).doesNotContain("сгенерированные AI варианты ответов");
+        assertThat(settings).doesNotContain("сгенерированы заново при следующем показе");
+        assertThat(settings).doesNotContain("будут перегенерированы заново");
+    }
+
+    @Test
+    void settingsPersonalizationAnnouncesPersistedChanges() throws IOException {
+        String settings = readTemplate("templates/settings.html");
+        String appJs = readTemplate("static/js/app.js");
+
+        assertThat(settings).contains("id=\"personalization-status\"");
+        assertThat(settings).contains("role=\"status\" aria-live=\"polite\" aria-atomic=\"true\"");
+        assertThat(appJs).contains("Сохранено на этом устройстве: ");
+        assertThat(appJs).contains("if (getCurrent() === next) return;");
+        assertThat(appJs).contains("announceSaved('Размер шрифта'");
+    }
+
+    @Test
+    void settingsFontStepperExposesPercentAndResetExplicitly() throws IOException {
+        String settings = readTemplate("templates/settings.html");
+        String appJs = readTemplate("static/js/app.js");
+
+        assertThat(settings).contains("id=\"font-scale-value\"");
+        assertThat(settings).contains(">100%</span>");
+        assertThat(settings).contains("id=\"font-reset\">Сбросить</button>");
+        assertThat(appJs).contains("valEl.textContent = Math.round(s * 100) + '%'");
+        assertThat(appJs).contains("resetBtn.setAttribute('aria-disabled', s === 1 ? 'true' : 'false')");
+    }
+
+    @Test
+    void focusPageMastheadYieldsToQuestionOnMobile() throws IOException {
+        String css = readTemplate("static/css/base.css");
+
+        // Desktop focus: title capped at 2xl so question (3xl) dominates.
+        assertThat(css).contains("html[data-design] .focus-page .ed-masthead-title {");
+        assertThat(css).contains("var(--font-size-2xl)");
+        // Mobile focus must restate the compact clamp — otherwise the desktop
+        // focus rule (higher specificity) blocks the generic mobile title rule.
+        assertThat(css).contains("html[data-design] .focus-page .ed-masthead-title {\n    font-size: clamp(1.15rem, 5vw, 1.35rem);");
+        // Session-only compact padding; never sticky (FNO).
+        assertThat(css).contains(".focus-page .ed-masthead:has(.ed-masthead-progress) .ed-masthead-inner");
+        assertThat(css).doesNotContain(".ed-masthead { position: sticky");
+        assertThat(css).doesNotContain(".ed-masthead{\n  position: sticky");
+    }
+
+    @Test
     void statsTemplateKeepsSortableLiveRegionAccessibilityContract() throws IOException {
         String stats = readTemplate("templates/stats.html");
         String statsJs = readTemplate("static/js/stats.js");
@@ -167,6 +220,18 @@ class TemplateFragmentContractTest {
         assertThat(stats).contains("id=\"topicAccuracyChartFallback\"");
         assertThat(stats).contains("class=\"chart-fallback hidden\"");
         assertThat(stats).contains("role=\"status\"");
+        assertThat(stats).contains("class=\"forecast-count\" aria-hidden=\"true\"");
+        // Свёрнутые строки исключаются из layout/accessibility tree, а после
+        // сортировки лимит применяется заново к новому DOM-порядку.
+        assertThat(stats).contains("row.hidden = collapsed && index >= limit");
+        assertThat(stats).contains("new MutationObserver(sync).observe(tbody, { childList: true })");
+        assertThat(readTemplate("static/css/base.css"))
+            .contains(".stats-page .topic-table tr[hidden] { display: none !important; }")
+            .contains(".stats-page .topic-table tr[hidden] { display: table-row !important; }");
+        // STA-5/STJ-1: читаемые labels + без декоративной x-сетки.
+        assertThat(statsJs).contains("font: { size: 12 }");
+        assertThat(statsJs).contains("grid: { display: false }");
+        assertThat(statsJs).contains("tooltip: { enabled: true }");
     }
 
     @Test

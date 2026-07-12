@@ -23,6 +23,8 @@ edge cases, источники заблуждений, related-ссылки и v
 8. Не возвращать inline MCQ в Markdown.
 9. Не создавать новый legacy-контент.
 10. Иметь независимую покритериальную запись проверки для каждого блока.
+11. Пройти **четырёхстороннюю LLM-проверку** всех A/B/C/D (логика, факты, форма) —
+    скрипты сами по себе приёмку **не закрывают** (см. §2.1, §31).
 
 ---
 
@@ -194,6 +196,50 @@ JSON MCQ является современной основной поверхн
 Legacy обрабатывать только после завершения JSON-корпуса либо как отдельный
 audit/manual-review.
 
+## 2.1. Скрипты vs LLM — кто что решает
+
+```text
+Скрипты  = детерминированный pre-check (schema, пороги, smoke-тесты)
+LLM      = обязательная приёмка логики, фактов, SKEL и визуальной невыделяемости
+```
+
+**Скрипты умеют:** длину слов, число `` ` ``-span, абсолютные маркеры, позиции,
+дубликаты n-gram, schema, caricature-heuristics.
+
+**Скрипты НЕ умеют:**
+
+- понять, защитим ли distractor под конкретным stem;
+- увидеть «частично правду» и multiple-defensible answer;
+- оценить, выглядит ли correct «учебником» на фоне трёх заглушек;
+- проверить **единый surface skeleton** всех 4 `option.text` (колонка `SKEL`);
+- проверить согласованность `text` ↔ `sections` по смыслу;
+- заметить зеркальные пары, contra-hints, meta-подсказки между A/B/C/D;
+- отличить правдоподобный wrong от карикатуры в контексте темы.
+
+**Запрещено:**
+
+- закрывать блок/chunk только потому, что `mcq-answer-parity-gate.py` зелёный;
+- считать `mcq-form-balance.py` или `mcq-skel-gate.py` заменой blind/style
+  review **или** LLM-`SKEL`;
+- ставить `C-FRM=✅`, `SKEL=✅`, `BST=✅`, `BSM=✅`, `PAR=✅`, `FINAL=✅`
+  без §31 на **каждый** блок (включая ручную LLM-проверку скелета);
+- ставить `PAR=✅` / `FINAL=✅` / `skel: true` только потому, что
+  `mcq-skel-gate.py` зелёный;
+- ставить `PAR=✅` / `FINAL=✅` при `SKEL≠✅`;
+- массово проставлять `true` в review-sidecar без фактического чтения 4 options.
+
+**Обязательный порядок на блок:**
+
+```text
+1. Прочитать stem + все 4 option.text + sections (LLM)
+2. §31 Four-option review (LLM, покритериально)
+3. Правки text/sections при необходимости
+4. Скрипты (schema + parity gates)
+5. §31 повтор на изменённых блоках
+6. Независимый reviewer-subagent (BST + BSM), если правил другой агент
+7. Запись в review-sidecar
+```
+
 ---
 
 # 3. Основные поверхности
@@ -257,7 +303,7 @@ modules/quiz-app/src/main/resources/prompts/option.txt
 - `C-CMP` — correct достаточно полный для stem.
 - `C-SCP` — scope/version/provider/config корректны.
 - `C-UNI` — correct единственный защитимый.
-- `C-FRM` — correct не выделяется визуально.
+- `C-FRM` — correct не выделяется длиной/тоном/code-density (**структурный скелет — `SKEL`**).
 - `C-SEC` — correct sections точны и согласованы.
 - `C-RU` — correct написан естественным русским.
 
@@ -269,20 +315,26 @@ modules/quiz-app/src/main/resources/prompts/option.txt
 - `W-FLS` — distractor ложен под stem.
 - `W-DIV` — разные misconceptions.
 - `W-CAR` — нет карикатуры, абсурда и negation echo.
-- `W-FRM` — format/density parity.
+- `W-FRM` — format/density parity (**единый скелет — `SKEL`**).
+- `SKEL` — HARD GATE (LLM): все 4 `option.text` делят один surface skeleton
+  (зачин, число предложений/клауз, плотность `;`/`:`/`—`/скобок, класс
+  backticks/перечислений). Correct нельзя отличить от wrong по структуре одной
+  глазами. Pre-check: `scripts/mcq-skel-gate.py` (грубые mismatch). Зелёный
+  скрипт **не** даёт `SKEL=✅`; приёмка только LLM. Без `SKEL=✅` запрещены `PAR=✅`
+  и `FINAL=✅`.
 - `W-SEC` — wrong sections согласованы.
 - `W-RU` — естественный русский.
 
 ## Итоговые gates
 
-- `PAR` — общий parity.
+- `PAR` — общий parity (**требует `SKEL=✅`**).
 - `BST` — blind style.
 - `BSM` — blind semantic.
 - `STAMP` — нет stamped clone.
 - `VAL` — все validators.
-- `FINAL` — файл полностью принят.
+- `FINAL` — файл полностью принят (**требует `SKEL=✅` на весь файл**).
 
-Не заменяй эти критерии одной колонкой `Golden`.
+Не заменяй эти критерии одной колонкой `Golden`. Не сливай `SKEL` в `C-FRM`/`W-FRM`.
 
 ---
 
@@ -523,14 +575,18 @@ git add -A
 2. Прочитай theory целиком.
 3. Прочитай sidecars.
 4. Найди inbound/outbound references.
-5. Запусти доступные validators.
+5. Запусти доступные validators (**pre-check**, не приёмка).
 6. Сохрани baseline в review-sidecar и plan notes.
+7. **Не начинай правки**, пока не выполнишь §31 preview-read на выбранный chunk.
 
-Минимум:
+Минимум (скрипты — после LLM-read, см. §2.1; зелёный gate ≠ DONE):
 
 ```bash
 bash scripts/verify-mcq-json.sh <json>
 python3 scripts/mcq-answer-parity-gate.py <json>
+python3 scripts/mcq-form-balance.py <json>          # если form-tell gates красные (§18.1)
+python3 scripts/mcq-answer-parity-gate.py <json>   # повтор после баланса
+python3 scripts/mcq-skel-gate.py <json>            # SKEL pre-check; PASS ≠ SKEL=✅ (нужен LLM)
 python3 scripts/mcq-structure-parity.py --file <json>
 ```
 
@@ -591,6 +647,9 @@ python3 scripts/audit-mcq-parity.py --caricature <json>
 ```json
 "correct": true
 ```
+
+Проверку correct выполняй **в контексте §31** — сразу сравнивая все 4 options.
+Изолированная проверка correct без cross-option review **не засчитывается**.
 
 Проверь:
 
@@ -741,7 +800,65 @@ Correct нельзя угадывать по:
 
 Если убрать `correct`, правильный ответ нельзя угадать глазами.
 
-Сравни:
+## HARD: единый surface skeleton (`SKEL`)
+
+**Жёсткое правило без исключений.** Все четыре `option.text` в блоке обязаны
+делить **один и тот же surface skeleton**. Это отдельная колонка `SKEL` в
+`PLAN_INTERVIEW.md` и отдельная ось §31 — не «желательно», не «в среднем по
+файлу».
+
+Перед написанием/правкой options зафиксируй skeleton блока одной строкой, затем
+пиши **все четыре** текста только в нём.
+
+Skeleton включает (совпадение по классу, не посимвольный clone):
+
+| Ось скелета | Что должно совпадать у A/B/C/D |
+|---|---|
+| Зачин | одинаковый тип открытия (термин в `` ` `` / «В API…» / тезис / сравнение) |
+| Число предложений | одинаково (или max−min ≤ 0 при однопредложном шаблоне) |
+| Число клауз | сопоставимо; не «correct — 3 клаузы, wrong — 1» |
+| Пунктуационный каркас | одинаковый класс `;` / `:` / `—` / скобок |
+| Backticks / списки | один класс плотности (каталог vs проза — запрещено) |
+| Ритм ответа | сравнение↔сравнение, определение↔определение, API-пара↔API-пара |
+
+**Пример PASS (один скелет):**
+
+```text
+В API JEP 453 (Java 21): ShutdownOnFailure — …; ShutdownOnSuccess — ….
+В API JEP 453 (Java 21): ShutdownOnFailure — …; ShutdownOnSuccess — ….
+В API JEP 453 (Java 21): ShutdownOnFailure — …; ShutdownOnSuccess — ….
+В API JEP 453 (Java 21): ShutdownOnFailure — …; ShutdownOnSuccess — ….
+```
+
+(смысл разный; каркас один)
+
+**Пример FAIL:** correct — двуклаузовый каталог с `;` и двумя `` `API` ``;
+wrong — короткие прозаические тезисы без того же каркаса.
+
+**Не путать с stamped clone:** скелет общий, mental models и факты разные.
+Пустое клонирование пунктуации без смысла — `STAMP` FAIL, не `SKEL` PASS.
+
+Без `SKEL=✅` на **каждый** блок файла запрещены: `C-FRM=✅`, `W-FRM=✅`,
+`PAR=✅`, `FINAL=✅`.
+
+### Pre-check скрипт (не замена LLM)
+
+```bash
+python3 scripts/mcq-skel-gate.py <json>
+```
+
+`mcq-skel-gate.py` — **детерминированный pre-check** грубых mismatch
+(зачин / предложения / `;` / code-bucket).
+
+| Результат скрипта | Что делать |
+|---|---|
+| FAIL | чинить каркас или объяснить в notes; LLM всё равно читает блок |
+| PASS | **всё равно** LLM вручную подтверждает единый skeleton (§31 `SKEL`) |
+
+Зелёный `mcq-skel-gate.py` **не** даёт `SKEL=✅` / `llm_review.skel=true`.
+Красный — сигнал, не автоматический приговор без чтения глазами.
+
+Сравни также:
 
 - opening shape;
 - число предложений;
@@ -772,7 +889,86 @@ Correct не должен быть единственным, который:
 - звучит профессионально;
 - содержит precise caveat.
 
-Используй общий semantic skeleton, а не буквальное клонирование.
+Используй общий **surface + semantic** skeleton, а не буквальное клонирование.
+
+---
+
+# 18.1. Form-Tell Prevention (обязательно перед commit chunk)
+
+Цель: correct нельзя угадать по форме, wrong не выделяются как «явно ложные по
+тону», **и все 4 варианта на одном surface skeleton (`SKEL`)**.
+
+## Hard gates (блокируют chunk без исключений)
+
+После правки **каждого chunk**:
+
+```bash
+python3 scripts/mcq-answer-parity-gate.py <json>
+```
+
+Должны быть **PASS**:
+
+| Gate | Порог | Что ловит |
+|---|---|---|
+| `STYLE_GUESSABILITY` | ≤ 0.40 | угадывание correct по длине или числу `` `code` `` |
+| `ABSOLUTE_MARKER_GAP` | ≤ 0.25 | wrong насыщены «всегда/только/полностью», correct — нет |
+| `CORRECT_LONGEST_RATE` | ≤ 0.40 | correct систематически самый длинный |
+| `CORRECT_WRONG_AVG_RATIO` | 0.90–1.10 | средняя длина correct vs wrong |
+| `SENTENCE_PARITY` | max-min ≤ 1 | correct — единственный двухпредложный «конспект» |
+| `DETAIL_PARITY` | ≤ 0.40 | correct — единственный лидер по code/числам/скобкам |
+
+`OPTION_LENGTH_RATIO` может быть FAIL только как **documented accepted-exception**
+(конфликт с anti-stamp CV≥0.14). Это не отменяет обязанность пройти gates выше
+**и** §31 LLM-review на каждый блок.
+
+## Типовые form-tells и fix
+
+**A. Code-span parity:** correct — каталог `` `API` ``, distractors — проза.
+→ Сжать correct до 2–3 терминов; поднять `` ` `` на wrong; убрать `` `Type` (`full.name`) ``.
+
+**B. Absolute-marker gap:** wrong с «всегда/только», correct нейтральный.
+→ Смягчить wrong («часто», «преимущественно») или один обоснованный маркер в correct.
+
+**C. Catalog tell:** correct с `;` и 4+ перечислениями.
+→ Одна мысль в text, списки в `sections`.
+
+**D. Hedge-only correct:** только correct с «обычно/может».
+→ Hedge в 1–2 distractor или убрать из correct.
+
+**E. Skeleton mismatch (`SKEL` FAIL):** correct и wrong на разных каркасах
+(разный зачин / число клауз / `;` vs проза / каталог vs тезис).
+→ Выбрать один surface template блока; переписать **все четыре** `option.text`
+в нём; смысл/ошибки сохранить. Pre-check: `mcq-skel-gate.py`. Приёмка `SKEL` —
+только LLM; `mcq-form-balance.py` / зелёный skel-gate **не** закрывают `SKEL`.
+
+## Автобалансировка (вспомогательная)
+
+После LLM-§31 и правок, если hard gate красный:
+
+```bash
+python3 scripts/mcq-form-balance.py <json>
+python3 scripts/mcq-answer-parity-gate.py <json>
+```
+
+Скript меняет только `option.text`. После него — **обязательны** повтор §31
+и reviewer-subagent (BST/BSM); скрипт не подтверждает логику.
+
+## Чеклист блока
+
+```text
+[ ] §31 Four-option review (LLM, все 4 варианта в одном проходе)
+[ ] mcq-skel-gate.py pre-check (грубые mismatch; не замена LLM)
+[ ] SKEL: все 4 option.text на одном surface skeleton (LLM вручную, HARD)
+[ ] correct не единственный лидер по backticks (LLM + gate)
+[ ] ABSOLUTE_MARKER_GAP ≤ 0.25 (gate)
+[ ] STYLE_GUESSABILITY ≤ 0.40 (gate)
+[ ] BST: reviewer не угадывает correct по форме
+[ ] BSM: ни один wrong не защитим под stem
+```
+
+Без **LLM**-`SKEL` блок не получает `SKEL=✅` / `C-FRM=✅` / `W-FRM=✅` /
+`PAR=✅` — даже при зелёном `mcq-skel-gate.py`.
+Без `SKEL=✅` на весь файл — нет `FINAL=✅`.
 
 ---
 
@@ -1114,6 +1310,9 @@ json.dumps(data, ensure_ascii=False, indent=2)
 ```bash
 bash scripts/verify-mcq-json.sh <json>
 python3 scripts/mcq-answer-parity-gate.py <json>
+python3 scripts/mcq-form-balance.py <json>          # если form-tell gates красные (§18.1)
+python3 scripts/mcq-answer-parity-gate.py <json>   # повтор после баланса
+python3 scripts/mcq-skel-gate.py <json>            # SKEL pre-check; PASS ≠ SKEL=✅ (нужен LLM)
 python3 scripts/mcq-structure-parity.py --file <json>
 ```
 
@@ -1154,11 +1353,38 @@ fi
 
 ---
 
-# 30. Answer-parity gates
+# 30. Answer-parity gates (скрипты — pre-check)
+
+Скриптовые gates **необходимы, но недостаточны**. Зелёный
+`mcq-answer-parity-gate.py` / `mcq-skel-gate.py` без §31 LLM на каждый блок
+**не даёт** права ставить `SKEL=✅`, `PAR=✅`, `C-FRM=✅`, `FINAL=✅`.
+
+`mcq-skel-gate.py` ловит только грубые mismatch; semantic/«почти тот же каркас»
+— только LLM.
 
 Все обязательные gates текущего `mcq-quality-fixer` должны быть `ok`.
 
-Ожидаемые проверки могут включать:
+## Hard gates (блокируют chunk/file без исключений)
+
+- `STYLE_GUESSABILITY` ≤ 0.40;
+- `ABSOLUTE_MARKER_GAP` ≤ 0.25;
+- `CORRECT_LONGEST_RATE` ≤ 0.40;
+- `CORRECT_WRONG_AVG_RATIO` в [0.90, 1.10];
+- `SENTENCE_PARITY` — нет блоков с разрывом > 1;
+- `DETAIL_PARITY` ≤ 0.40;
+- `CORRECT_POSITION_SEQUENCE` ≤ 5;
+- `DUPLICATE_NGRAMS` ≤ 3;
+- `SOURCE_COVERAGE` — для version-sensitive файлов.
+
+Подробные правила снятия form-tells — §18.1. Автопроход: `scripts/mcq-form-balance.py`.
+
+## Soft / documented exceptions
+
+- `OPTION_LENGTH_RATIO` > 1.35 допустим **только** при documented accepted-exception
+  (конфликт с anti-stamp CV≥0.14) и при условии, что все hard gates выше — PASS
+  **и** §31 LLM-review закрыт на каждый блок chunk.
+
+Ожидаемые проверки гейта могут также включать:
 
 - `CORRECT_LONGEST_RATE`;
 - `OPTION_LENGTH_RATIO`;
@@ -1183,63 +1409,141 @@ fi
 
 ---
 
-# 31. Blind review
+# 31. Четырёхсторонняя LLM-проверка (обязательная)
 
-## Style blind check
+**Каждый** MCQ-блок проходит полную сверку всех четырёх вариантов в **одном**
+логическом проходе. Нельзя проверять correct и distractors по отдельности без
+сравнения друг с другом.
 
-Скрыть:
+Минимум: **один LLM-проход на блок** до правок; **повтор** после любого изменения
+`question_text` / `option.text` / `sections`.
 
-- stem;
-- correct;
-- sections.
+## 31.1. Входные данные
 
-Оставить только options.
-
-Независимый reviewer/subagent пытается выбрать вариант, который выглядит correct
-по форме.
-
-Если correct угадывается:
+Для блока `Q<N>` прочитай целиком:
 
 ```text
-BST = FAIL
+question_text
+options[A].text, options[B].text, options[C].text, options[D].text
+options[*].sections (все ключи)
+параллельный фрагмент theory ## Q<N>
 ```
 
-## Semantic defense check
+Пометь, какой label сейчас `correct: true` — но при form-check (BST) временно
+игнорируй эту метку.
 
-Показать stem и options без correct.
+## 31.2. Покритериальная таблица (заполняется в sidecar)
 
-Reviewer пытается защитить каждый wrong.
+Для **каждого** из четырёх вариантов ответь явно (не `null`, не «в целом ок»):
 
-Если wrong разумно защитим:
+| Ось | Correct | Каждый distractor |
+|---|---|---|
+| **FCT** | фактически верен под stem? | ложен под stem (не «частично верен»)? |
+| **UNI** | единственный защитимый? | — |
+| **PLS** | — | правдоподобен middle/senior? |
+| **1ER** | — | ровно одна главная ошибка? |
+| **SEC** | text ↔ sections согласованы? | text ↔ sections согласованы? |
+| **FRM** | не выделяется длиной/тоном/code? | сопоставим с correct по форме? |
+| **SKEL** | на том же surface skeleton, что и остальные 3? | на том же skeleton, что correct? |
+| **DIV** | — | три разных misconception (не дубль)? |
 
-```text
-BSM = FAIL
+**`SKEL` — HARD:** если хотя бы один вариант на другом каркасе (зачин / число
+предложений-клауз / класс `;`:`—`/скобок / backticks-vs-проза) — блок FAIL,
+даже при зелёных скриптах и «примерно похожей» длине.
+
+Если любой пункт FAIL — блок остаётся `TODO` / `❌`, даже при зелёных скриптах.
+
+## 31.3. Cross-option сравнение (только LLM)
+
+Смотри на **набор из 4 options** одновременно:
+
+1. **Зеркальные пары** — два distractor спорят друг с другом, выдавая correct
+   (напр. «ON раньше» vs «WHERE раньше»).
+2. **Meta-hint** — один wrong отсекает другой, сужая выбор до 2 вариантов.
+3. **Contra-pair** — A и D взаимоисключающие формулировки одного факта.
+4. **Catalog tell** — только один вариант перечисляет 4+ API/оператора.
+5. **Tone tell** — только correct без absolutes / только wrong с absolutes.
+6. **Length/code tell** — correct единственный лидер по словам или `` ` `` (gate
+   может не поймать контекстный tell — LLM обязан).
+7. **Skeleton tell (`SKEL`)** — варианты на разных surface templates (разный
+   зачин, клаузы, пунктуационный каркас, класс backticks/списков).
+8. **Partial truth** — wrong верен в первой половине фразы, ложен в выводе.
+9. **Second defensible** — ещё один вариант можно защитить под stem.
+
+При нахождении — правка **до** commit; тип fix записать в sidecar `notes`.
+
+## 31.4. Blind sub-checks (отдельный reviewer-subagent)
+
+После LLM-прохода и правок запусти **независимого** subagent (не того, кто правил):
+
+### Style blind (BST)
+
+Скрыть: stem, correct-метку, sections. Показать только 4 текста A/B/C/D.
+
+Reviewer: «Какой вариант выглядит правильным **только по форме**?»
+
+- угадывает correct → `BST = FAIL`
+- «два кандидата» → `BST = FAIL` (meta-hint)
+
+### Semantic defense (BSM)
+
+Показать: stem + 4 options без correct-метки.
+
+Reviewer пытается **защитить каждый** distractor как correct.
+
+- любой wrong защитим → `BSM = FAIL`
+
+Subagent обязателен на **каждый chunk** (10–20 блоков). Spot-check на 2–3 блока
+**не** заменяет полный прогон chunk.
+
+## 31.5. Запись в review-sidecar
+
+На каждый блок — запись с флагами §31.2 + итог:
+
+```json
+{
+  "q_number": 12,
+  "llm_review": {
+    "four_option_pass": true,
+    "skel": true,
+    "cross_option_issues": [],
+    "bst": true,
+    "bsm": true,
+    "reviewed_by": "agent|subagent",
+    "notes": []
+  }
+}
 ```
 
-Blind checks должен выполнять отдельный reviewer/subagent, не тот же генератор.
+`skel: true` только если все 4 `option.text` на одном surface skeleton (§18).
+`four_option_pass: true` только если FCT/UNI/PLS/1ER/SEC/FRM/**SKEL**/DIV
+закрыты **и** BST/BSM PASS. Без `skel: true` — `four_option_pass` запрещён.
+
+> Blind review (BST/BSM) — см. §31.4. Отдельный reviewer-subagent обязателен.
 
 ---
 
-# 32. Финиш файла или chunk
+# 33. Финиш файла или chunk
 
 Единица готова, только когда:
 
-1. Все выбранные blocks проверены.
-2. Correct фактически верен.
-3. Correct единственный.
-4. Wrong правдоподобны.
-5. Wrong однозначно ложны.
-6. Misconceptions различаются.
-7. Sections согласованы.
-8. Visual parity пройдена.
-9. Русский естественный.
-10. Нет stamped clones.
-11. Theory синхронизирована.
-12. Freshness обновлена.
-13. Validators проходят.
-14. Diff bounded.
-15. Sidecar обновлён.
-16. Plan обновлён.
+1. Все выбранные blocks проверены **§31 (LLM four-option review)**.
+2. Correct фактически верен (FCT).
+3. Correct единственный (UNI).
+4. Wrong правдоподобны (PLS).
+5. Wrong однозначно ложны (BSM PASS).
+6. Misconceptions различаются (DIV).
+7. Sections согласованы (SEC).
+8. **Единый surface skeleton (`SKEL=✅`, `llm_review.skel=true`) на каждый блок.**
+9. Visual parity пройдена (FRM + BST PASS) — только после SKEL.
+10. Русский естественный.
+11. Нет stamped clones.
+12. Theory синхронизирована.
+13. Freshness обновлена.
+14. Скриптовые validators проходят (pre-check, §30).
+15. Diff bounded.
+16. Sidecar обновлён (`llm_review.skel=true` и `four_option_pass=true` на каждый блок).
+17. Plan обновлён (колонка `SKEL` и остальные).
 
 Для chunk:
 
@@ -1250,7 +1554,7 @@ Blind checks должен выполнять отдельный reviewer/subagen
 
 ---
 
-# 33. Обновление мастер-плана
+# 34. Обновление мастер-плана
 
 После review обновляй каждую колонку отдельно.
 
@@ -1258,15 +1562,16 @@ Blind checks должен выполнять отдельный reviewer/subagen
 
 - массово ставить все `✅`;
 - ставить `FINAL=✅` при `⬜`, `◐`, `❌`, `🟠`;
+- ставить `PAR=✅` / `FINAL=✅` при `SKEL≠✅`;
 - переносить старые statuses;
-- считать schema PASS достаточным;
+- считать schema PASS или зелёный form-balance достаточным для `SKEL`;
 - закрывать полный файл после одного chunk.
 
 Если файл изменился после `reviewed_commit`, сбрось затронутые criteria в `RECHECK`.
 
 ---
 
-# 34. Commit protocol
+# 35. Commit protocol
 
 Один тик — один атомарный commit.
 
@@ -1300,7 +1605,7 @@ git commit -m "pedago(mcq): <topic> — ROUND-8 full quality audit Q<X>-Q<Y>" --
 
 ---
 
-# 35. Отчёт каждого тика
+# 36. Отчёт каждого тика
 
 ```markdown
 ## MCQ corpus sweep tick
@@ -1313,15 +1618,24 @@ git commit -m "pedago(mcq): <topic> — ROUND-8 full quality audit Q<X>-Q<Y>" --
 - Mode:
 - Reason selected:
 
-### Baseline
+### Baseline (скрипты = pre-check)
 
 - Schema:
-- Answer parity:
+- Answer parity (gate):
 - Structure:
 - Stamp:
 - Caricature:
 - Theory sync:
 - Freshness:
+
+### LLM four-option review (§31 — обязательно)
+
+- Blocks reviewed LLM:
+- Cross-option issues (mirrors, meta-hints, catalog tells):
+- FCT/UNI/PLS/1ER/SEC/FRM/DIV fails:
+- BST (subagent):
+- BSM (subagent):
+- Blocks with `four_option_pass: false`:
 
 ### Correct findings
 
@@ -1385,7 +1699,7 @@ git commit -m "pedago(mcq): <topic> — ROUND-8 full quality audit Q<X>-Q<Y>" --
 
 ---
 
-# 36. Глобальные запреты
+# 37. Глобальные запреты
 
 Никогда:
 
@@ -1409,25 +1723,34 @@ git commit -m "pedago(mcq): <topic> — ROUND-8 full quality audit Q<X>-Q<Y>" --
 - не игнорировать dirty collision;
 - не обходить validators;
 - не объявлять DONE по одному schema check;
+- **не закрывать блок/chunk только зелёным `mcq-answer-parity-gate.py`** — без §31 LLM-review;
+- **не считать `mcq-form-balance.py` / `mcq-skel-gate.py` заменой BST/BSM,
+  LLM-`SKEL` и логической сверки 4 options**;
+- **не ставить `skel: true` / `SKEL=✅` только по зелёному `mcq-skel-gate.py`**;
+- **не ставить `PAR=✅` / `FINAL=✅` / `four_option_pass: true` при `SKEL≠✅`**;
+- **не оставлять correct и wrong на разных surface skeletons**;
+- не ставить `four_option_pass: true` без чтения всех A/B/C/D и без `skel: true`;
 - не использовать `git add -A`;
 - не откатывать чужие изменения;
 - не push.
 
 ---
 
-# 37. Stop condition полного sweep
+# 38. Stop condition полного sweep
 
 Loop останавливается, только когда:
 
 1. Все JSON MCQ представлены в plan.
 2. Для каждого файла существует review-sidecar.
-3. Каждый block имеет заполненные checks.
-4. Все обязательные file criteria `✅`.
+3. Каждый block имеет заполненные checks, `llm_review.skel: true` **и**
+   `llm_review.four_option_pass: true`.
+4. Все обязательные file criteria `✅` (включая `SKEL`, BST/BSM через §31.4).
 5. Фактически неверных correct = 0.
 6. Multiple defensible answers = 0.
 7. Partially true distractors = 0.
 8. Obvious/caricature distractors = 0.
 9. Visually Distinguishable Correct Option = 0.
+9a. Skeleton mismatch (`SKEL≠✅`) = 0 на каждый блок каждого файла.
 10. Stamped clones = 0.
 11. Sections согласованы.
 12. Theory dangling = 0.

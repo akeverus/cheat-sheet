@@ -764,9 +764,22 @@ Align the following at block level:
 - confidence;
 - level of editorial polish.
 
-## 15.2 Shared semantic skeleton
+## 15.2 Shared surface + semantic skeleton (`SKEL` — HARD)
 
-Before drafting, describe the correct option's skeleton.
+**Hard gate.** All four `option.text` must share one surface skeleton. This maps
+to plan column `SKEL` and `llm_review.skel`. Without it: no `PAR`, no `FINAL`,
+no `four_option_pass`. Scripts cannot close `SKEL`.
+
+Before drafting, describe the block skeleton in one line, then write **all four**
+options only in that shape:
+
+| Axis | Must match across A/B/C/D |
+|---|---|
+| Opening | same class |
+| Sentences / clauses | same class |
+| Punctuation frame | same `;` / `:` / `—` / parentheses class |
+| Backticks / lists | same density class |
+| Answer type | definition↔definition, API-pair↔API-pair, etc. |
 
 Example:
 
@@ -774,10 +787,13 @@ Example:
 <term comparison>. <default or consequence>.
 ```
 
-Then write all options with that semantic shape.
+```text
+In API <spec>: <A> — <role A>; <B> — <role B>.
+```
 
-Do not copy punctuation mechanically. A natural two-sentence distractor is better
-than a distorted sentence created to match the exact number of commas.
+Do not copy punctuation mechanically for stamp. A natural distractor in the **same
+skeleton** beats a distorted sentence made only to match comma counts. Different
+skeletons with similar length = `SKEL` FAIL.
 
 ## 15.3 Visual blind test
 
