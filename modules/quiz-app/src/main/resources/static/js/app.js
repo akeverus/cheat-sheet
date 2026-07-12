@@ -1915,7 +1915,12 @@ function initKeyboardHelp() {
     }
   });
   document.addEventListener('keydown', (event) => {
-    if (event.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) return;
+    // Гасим «?» только на текстовых полях — там знак вопроса легитимный ввод.
+    // radio/checkbox текст не принимают, а radio — основная клавиатурная
+    // позиция на странице вопроса: без исключения справка недоступна с опций
+    // (тот же принцип, что у гарда шорткатов 1-9 выше).
+    if (event.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)
+        && !['radio', 'checkbox'].includes(event.target.type)) return;
     if (event.key === '?') {
       event.preventDefault();
       overlay.classList.contains('hidden') ? open() : close();

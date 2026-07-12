@@ -382,7 +382,11 @@
         close();
         return;
       }
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      // Текстовые поля глушат хоткеи — там «?» и «/» легитимный ввод. Но
+      // radio/checkbox текст не принимают: с фокуса на фильтре-чекбоксе
+      // справка («?») и прыжок в поиск («/») должны работать.
+      if ((tag === 'INPUT' && ['radio', 'checkbox'].indexOf(event.target.type) === -1)
+          || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (event.key === '?') {
         event.preventDefault();
         overlay.classList.contains('hidden') ? open() : close();
