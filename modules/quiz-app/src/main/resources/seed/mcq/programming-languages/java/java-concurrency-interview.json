@@ -11,7 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Thread имеет своё адресное пространство, а Process разделяет память с другими процессами.",
+              "text": "`Thread` имеет своё изолированное адресное пространство, а `Process` разделяет кучу и `static`-поля с другими процессами.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: изолировано адресное пространство у процесса, потоки одного процесса разделяют heap и static.",
@@ -23,7 +23,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Process и Thread эквивалентны в Java и отличаются преимущественно именованием в API.",
+              "text": "`Process` и `Thread` в Java эквивалентны и различаются преимущественно именованием в API и обёрткой ProcessBuilder.",
               "correct": false,
               "sections": {
                 "what_actually": "Process — это ProcessBuilder и нативный OS-процесс; Thread — поток внутри JVM. Совершенно разные сущности.",
@@ -35,7 +35,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Process изолирован в своём адресном пространстве, а потоки одного процесса разделяют кучу и static-поля.",
+              "text": "`Process` изолирован в своём адресном пространстве, а потоки одного процесса разделяют кучу и `static`-поля.",
               "correct": true,
               "sections": {
                 "explanation": "Процесс — экземпляр программы со своим адресным пространством, дескрипторами и ресурсами. Поток — единица выполнения внутри процесса: разделяет heap/static, но имеет собственный стек и счётчик команд. Переключение между потоками одного процесса дешевле, чем между процессами: не нужно менять page table и сбрасывать TLB.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Thread в Java часто создаётся через fork() и имеет копию heap родителя.",
+              "text": "`Thread` в Java часто создаётся через `fork()` и получает собственную копию кучи и `static`-полей родителя.",
               "correct": false,
               "sections": {
                 "what_actually": "Thread.start() не вызывает fork — это создание потока в текущей JVM. fork() — Unix system call для процесса.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Передать Runnable в new Thread(runnable) и вызвать start() (а не run()).",
+              "text": "Передать `Runnable` в `new Thread(runnable)` и вызвать `start()` (а не `run()`).",
               "correct": true,
               "sections": {
                 "explanation": "start() планирует поток в ОС и вызывает run() в новом потоке; прямой вызов run() выполнит код в текущем потоке без создания нового — частая ошибка. Второй способ — унаследовать Thread и переопределить run(), но Runnable предпочтительнее: Java не поддерживает множественное наследование, и задача отделяется от механизма запуска. Повторный start() на завершённом потоке → IllegalThreadStateException.",
@@ -84,7 +84,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Вызвать run() напрямую — это создаёт новый поток и запускает в нём код.",
+              "text": "Вызвать `run()` напрямую вместо `start()` — это создаёт новый `Thread` и запускает `Runnable`.",
               "correct": false,
               "sections": {
                 "what_actually": "run() — обычный метод; его прямой вызов выполняется в текущем потоке без создания нового.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Создать класс, унаследованный от Runnable, и вызвать его метод start().",
+              "text": "Создать класс, унаследованный от `Runnable`, и вызвать `start()`, как у `new Thread()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Runnable — интерфейс без метода start(). start() есть только у Thread. Runnable передаётся в конструктор Thread.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать Thread.exec(runnable) — основной способ запуска с Java 8+.",
+              "text": "Использовать `Thread.exec(runnable)` — основной способ запуска с Java 8+ вместо `new Thread()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Метода Thread.exec() не существует. Точка входа — Thread.start() или Executor.execute().",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "RUNNING, READY, SUSPENDED, INTERRUPTED, STOPPED — пять состояний по аналогии с OS scheduler.",
+              "text": "`RUNNING`, `READY`, `SUSPENDED`, `WAITING`, `INTERRUPTED`, `STOPPED` — шесть состояний OS-модели.",
               "correct": false,
               "sections": {
                 "what_actually": "JVM использует enum Thread.State с 6 значениями; RUNNING/READY объединены в RUNNABLE.",
@@ -143,19 +143,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "NEW, RUNNABLE, WAITING, DEAD — четыре состояния без отдельного BLOCKED и TIMED_WAITING.",
+              "text": "`NEW`, `RUNNABLE`, `BLOCKED`, `WAITING`, `SLEEPING`, `DEAD` — шесть состояний потока JVM.",
               "correct": false,
               "sections": {
-                "what_actually": "В enum Thread.State шесть значений: BLOCKED (ожидание монитора) и TIMED_WAITING (ожидание с таймаутом) — самостоятельные состояния, а не часть RUNNABLE или WAITING; DEAD как имени состояния в Java нет.",
-                "source_of_confusion": "Схему упрощают до старой модели с DEAD и без разделения видов ожидания; тогда по thread dump не отличить contention на synchronized от ожидания с таймаутом.",
-                "if_it_were_true": "jstack не показывал бы TIMED_WAITING для sleep — реально это отдельное состояние.",
-                "how_it_should_be": "Шесть состояний: NEW, RUNNABLE, BLOCKED, WAITING, TIMED_WAITING, TERMINATED."
+                "what_actually": "Enum-значения — `TIMED_WAITING` и `TERMINATED`; состояний `SLEEPING` и `DEAD` в `Thread.State` нет.",
+                "source_of_confusion": "`Thread.sleep()` наводит на мысль о состоянии «SLEEPING», а старые учебники звали финал `DEAD`.",
+                "if_it_were_true": "`thread.getState()` для спящего потока возвращал бы `SLEEPING` — реально `TIMED_WAITING`.",
+                "how_it_should_be": "Шесть значений: `NEW`, `RUNNABLE`, `BLOCKED`, `WAITING`, `TIMED_WAITING`, `TERMINATED`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "BLOCKED и WAITING — синонимы без различия, оба означают «поток заблокирован».",
+              "text": "`NEW`, `RUNNABLE`, `BLOCKED`, `WAITING`, `TIMED_WAITING`, `TERMINATED` — шесть, `BLOCKED` = `WAITING`.",
               "correct": false,
               "sections": {
                 "what_actually": "BLOCKED — конкретно ожидание входа в synchronized (монитор); WAITING — ожидание сигнала (wait/join/park).",
@@ -167,7 +167,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "NEW, RUNNABLE, BLOCKED, WAITING, TIMED_WAITING, TERMINATED — шесть состояний потока.",
+              "text": "`NEW`, `RUNNABLE`, `BLOCKED`, `WAITING`, `TIMED_WAITING`, `TERMINATED` — шесть состояний потока.",
               "correct": true,
               "sections": {
                 "explanation": "Шесть состояний из enum Thread.State: NEW (создан, start() не вызван), RUNNABLE (выполняется или готов — JVM не различает эти два, решает ОС), BLOCKED (ждёт монитор synchronized), WAITING (wait/join/park без таймаута), TIMED_WAITING (sleep, wait/join/park с таймаутом), TERMINATED (run() завершён). Ожидание Lock.lock() классифицируется как WAITING/TIMED_WAITING, а не BLOCKED.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Целое от 1 до 10 — жёсткая гарантия планировщику; порядок выполнения фиксирован и не зависит от платформы.",
+              "text": "Целое от `1` до `10` — жёсткая гарантия планировщику; порядок выполнения фиксирован и не зависит от платформы.",
               "correct": false,
               "sections": {
                 "what_actually": "Это только подсказка планировщику ОС; в реальности порядок не гарантирован, зависит от платформы.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Целое от 1 до 10 — лишь подсказка планировщику; порядок выполнения не гарантирует и зависит от платформы.",
+              "text": "Целое от `1` до `10` — лишь подсказка планировщику; порядок выполнения не гарантирует и зависит от платформы.",
               "correct": true,
               "sections": {
                 "explanation": "Константы: MIN_PRIORITY=1, NORM_PRIORITY=5 (по умолчанию), MAX_PRIORITY=10. setPriority задаёт hint планировщику ОС, который часто игнорируется (особенно на Linux из-за разных policy). Приоритет наследуется от родительского потока (main = 5). Полагаться на приоритеты для корректности нельзя.",
@@ -216,7 +216,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Целое от 0 до 100 — лишь подсказка планировщику; порядок выполнения не гарантирует и зависит от платформы, дефолт 50.",
+              "text": "Целое от `0` до `100` — лишь подсказка планировщику; порядок не гарантирован и зависит от платформы, дефолт `50`.",
               "correct": false,
               "sections": {
                 "what_actually": "В Java диапазон 1..10, NORM_PRIORITY=5, MIN=1, MAX=10.",
@@ -228,7 +228,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Целое от 1 до 10 — лишь подсказка планировщику; порядок выполнения на всех ОС обычно соблюдается, когда несколько потоков готовы.",
+              "text": "Целое от `1` до `10` — лишь подсказка планировщику; порядок на всех ОС обычно соблюдается, когда несколько потоков готовы.",
               "correct": false,
               "sections": {
                 "what_actually": "Планировщик ОС волен игнорировать приоритет; на Linux setPriority часто вовсе не влияет на то, какой готовый поток получит CPU.",
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Callable<V>.call() возвращает V и может бросить checked Exception, а Runnable.run() — нет.",
+              "text": "`Callable<V>.call()` возвращает `V` и может бросить checked `Exception`, а `Runnable.run()` — нет.",
               "correct": true,
               "sections": {
                 "explanation": "Runnable — функциональный интерфейс из java.lang, существует с Java 1.0. Callable — из java.util.concurrent с Java 5, создан специально для ExecutorService: его submit() возвращает Future<V>, через который доступны и результат, и обёрнутое в ExecutionException checked-исключение. Thread принимает только Runnable.",
@@ -264,19 +264,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Runnable.run() возвращает значение через побочный эффект, а Callable.call() — не работает с лямбдами.",
+              "text": "`Runnable.run()` возвращает `V`, а `Callable<V>.call()` возвращает `void` и не бросает checked `Exception`.",
               "correct": false,
               "sections": {
-                "what_actually": "Runnable.run() имеет тип void; Callable — функциональный интерфейс, поддерживает лямбды.",
-                "source_of_confusion": "Неверное представление о функциональных интерфейсах.",
-                "if_it_were_true": "() -> 42 не компилировалось бы как Callable<Integer> — реально работает.",
-                "how_it_should_be": "Runnable.run() = void; Callable.call() = V; оба функциональные интерфейсы."
+                "what_actually": "Наоборот: `Runnable.run()` имеет тип `void` и ничего не возвращает, а `Callable<V>.call()` возвращает `V` и бросает checked `Exception`.",
+                "source_of_confusion": "Путают, какой из двух интерфейсов несёт результат вычисления.",
+                "if_it_were_true": "`exec.submit(runnable)` давал бы осмысленный результат — реально `Future<?>` с `null`.",
+                "how_it_should_be": "`run()` даёт `void`, `call()` даёт `V` плюс checked `Exception`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Callable<V>.call() существует с Java 1.0, а Runnable.run() — добавлен в Java 5.",
+              "text": "`Callable<V>.call()` существует с Java `1.0`, а `Runnable.run()` добавлен в Java `5`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: Runnable с Java 1.0, Callable с Java 5 (в составе java.util.concurrent).",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Callable<V>.call() не может бросить checked Exception, а Runnable.run() — может, поэтому Callable безопаснее.",
+              "text": "`Callable<V>.call()` возвращает `V`, но не может бросить checked `Exception`, а `Runnable.run()` — может.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: call() throws Exception, Callable может бросать checked; Runnable.run() — нет.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Фоновый поток с повышенным приоритетом: планировщик отдаёт ему CPU раньше обычных потоков.",
+              "text": "Фоновый `daemon`-поток с повышенным приоритетом: планировщик отдаёт ему CPU раньше обычных потоков.",
               "correct": false,
               "sections": {
                 "what_actually": "Daemon — это про lifecycle JVM, а не про приоритет. Приоритет и daemon-флаг независимы.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "setDaemon(true) можно вызвать после start() — изменение применится при следующем yield.",
+              "text": "Флаг `setDaemon(true)` можно вызвать после `start()`: изменение применится при следующем yield.",
               "correct": false,
               "sections": {
                 "what_actually": "После start() вызов setDaemon бросает IllegalThreadStateException.",
@@ -335,7 +335,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Фоновый поток, не удерживающий JVM: она завершается, когда остаются только daemon-потоки.",
+              "text": "Фоновый поток, не удерживающий JVM: она завершается, когда остаются только `daemon`-потоки.",
               "correct": true,
               "sections": {
                 "explanation": "Daemon-флаг наследуется от родителя по умолчанию и должен выставляться через setDaemon(true) ДО start(), иначе IllegalThreadStateException. Используется для фоновых задач (GC, JIT, мониторинг, heartbeat), которые не должны держать JVM живой. Нельзя применять для критичной финализации — JVM может убить поток в середине I/O без выполнения finally.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "JVM ждёт завершения daemon-потоков перед выходом для корректной финализации ресурсов.",
+              "text": "Фоновый поток, который JVM ждёт перед выходом: она завершается только после финализации всех `daemon`-потоков.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: JVM выходит, не дожидаясь daemon, и резко прерывает их.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "interrupt() немедленно останавливает поток как stop(); isInterrupted() читает флаг без сброса, Thread.interrupted() — со сбросом.",
+              "text": "`interrupt()` немедленно останавливает поток как `stop()`; `isInterrupted()` читает флаг без сброса, `Thread.interrupted()` — со сбросом.",
               "correct": false,
               "sections": {
                 "what_actually": "interrupt() лишь выставляет флаг; поток должен сам его проверять и реагировать.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "interrupt() лишь выставляет флаг; isInterrupted() читает его без сброса, Thread.interrupted() — со сбросом.",
+              "text": "`interrupt()` лишь выставляет флаг; `isInterrupted()` читает его без сброса, `Thread.interrupted()` — со сбросом.",
               "correct": true,
               "sections": {
                 "explanation": "Прерывание в Java кооперативное: код должен явно проверять флаг или ловить InterruptedException. При срабатывании из sleep/wait/join JVM бросает InterruptedException и СБРАСЫВАЕТ флаг, поэтому в catch нужно либо восстановить его через Thread.currentThread().interrupt(), либо пробросить исключение. Молча глотать InterruptedException — антипаттерн: верхний уровень не узнает о запросе на остановку.",
@@ -396,7 +396,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "interrupt() лишь выставляет флаг; isInterrupted() сбрасывает флаг при чтении, Thread.interrupted() — без сброса.",
+              "text": "`interrupt()` лишь выставляет флаг; `isInterrupted()` читает его без сброса, а после перехвата `InterruptedException` флаг остаётся сам.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: isInterrupted() не сбрасывает; Thread.interrupted() читает и сбрасывает.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "interrupt() лишь выставляет флаг; isInterrupted() читает его без сброса, а после catch (InterruptedException) флаг остаётся и восстанавливать его не нужно.",
+              "text": "`interrupt()` лишь выставляет флаг; `isInterrupted()` сбрасывает флаг при чтении, `Thread.interrupted()` — без сброса.",
               "correct": false,
               "sections": {
                 "what_actually": "При выбросе InterruptedException флаг сбрасывается; восстанавливать через Thread.currentThread().interrupt() — это лучшая практика.",
