@@ -114,6 +114,29 @@ light/dark × **вьюпорты** 375 / 768 / 1280 / 1440 / 1728 / 1920 / 2560 
   на design-toggle: title называет «Instrument» — фикс R0.27), back-to-top после
   1.5 экрана (уважает data-motion), kbd-help по `?`, noscript-алерт (при выкл. JS).
 - 375: нав-строка без переполнения (drawer нет — переносы).
+- **МЕТОДОЛОГИЯ (каверза R0.35):** у `.ed-nav-link`/тогглов `transition: color .15s` —
+  после флипа data-theme/data-design ждать ≥400ms до чтения computed-цветов,
+  иначе ложные диффы (значения замораживаются на прежней теме). Стабильные
+  свойства (bg/border masthead, kicker, title) читаются сразу.
+- **Численный baseline shell ДО порта (R0.35, GET / @1280, живой инстанс):**
+  - *Общее для всех 4 состояний:* masthead `position: relative` (sticky ЗАПРЕЩЁН),
+    inner padding `12px 50.6px` max-width 1280 gap 16; kicker 12px uppercase mono;
+    title 36px lh 41.4; nav-link 12px uppercase mono, hit-area 44px; тогглы 44×44
+    r999; progress-полоса h2.
+  - *editorial light:* bg/masthead `rgb(250,249,245)`, border `rgb(209,207,197)`,
+    kicker `rgb(94,93,89)` ls 1.08, title Lora 500 `rgb(20,20,19)`, nav
+    `rgb(20,20,19)`, active border-bottom `2px rgb(217,119,87)`.
+  - *editorial dark:* masthead `rgb(38,38,36)`, border `rgb(62,60,54)`, kicker
+    `rgb(197,193,180)`, title/nav `rgb(240,238,230)`, active `rgb(217,119,87)`.
+  - *instrument light (token-only):* masthead `oklch(0.985 0.003 262)`, border
+    `oklch(0.876 0.007 262)`, kicker teal `oklch(0.435 0.105 205)` ls 0.24, title
+    Newsreader **700** `oklch(0.245 0.015 264)`, active `oklch(0.47 0.115 205)`.
+  - *instrument dark:* masthead `oklch(0.19 0.012 264)`, border
+    `oklch(0.36 0.015 264)`, kicker `oklch(0.76 0.11 205)`, title/nav
+    `oklch(0.94 0.008 258)`, active `oklch(0.8 0.115 205)`.
+  - *Кандидат дельты порта shell:* title weight 700→500 (в макете shell брендинг
+    medium — сверить с mockup при порте); остальное instrument-состояние уже
+    близко к языку. Editorial-числа — контроль бит-в-бит.
 
 ## 3. Порядок применения при разблокировке (сжатый план Фазы E)
 
