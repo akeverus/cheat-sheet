@@ -1692,3 +1692,26 @@ Dirty changes created by loop: 0
 
 - lang="ru" на 6/6 шаблонах; англо-фрагменты (темы/код/термины) — изъятия 3.1.2, span lang="en" осознанно не размечаем (прыжки голосов SR хуже). Console: /, /settings — 0 сообщений; /stats — только известный CSP-sourcemap-шум (deferred §5).
 - Правок нет. Чужой WIP в seed/mcq не тронут. Контракт-тест PENDING; след. тик — window-тик либо сводный ре-скан плана.
+
+### R0.99 (2026-07-12) — СВОДКА РАУНДА R0.75–R0.98 (консолидация; window-тик всё ещё заблокирован живым bootRun)
+
+**Закрытые размерности раунда (живой QA + статический аудит):**
+- /stats функциональный QA (R0.75); клавиатурная операбельность всех read-only поверхностей + фикс «?»/«/» с radio/checkbox (R0.76–77); input-robustness 8 whitelist'ов + XSS-эхо (R0.78).
+- Dead-code гигиена целиком: −173 строки CSS, −4 файла (~201KB), −apiPost, 6 stale-комментариев (R0.79–82); DOM-integrity 6 страниц (R0.83).
+- Live-a11y ВСЕ 11 дизайнов × 2 темы на / + spot-check /settings на полюсных палитрах (R0.84–87; методология исправлена в R0.88 — верифицировать data-атрибуты, не localStorage).
+- Reflow 320px + стресс 320×fontScale 1.4 (R0.88–89); print-гигиена фокус-страницы (R0.90, v=88); aria-live протокол (R0.91); prefers-reduced-motion (R0.92); forced-colors — 3 фикса (R0.93, v=89); target-size 2.5.8 + фикс невидимого фокуса th (R0.94, v=90); focus-order 2.4.3 (R0.95); эргономика полей (R0.96); ::selection 22/22 + навигация 3.2.3 (R0.97); язык 3.1.1/3.1.2 + console (R0.98).
+
+**Код-фиксы раунда:** 82f662f5 (print), debf26ba (forced-colors), a6ba720b (th focus), c4fcaa36 (kbd-help), 50911849/9f0c425c/f81f8221 (dead-code). base.css v=87→90, head.html тронут 5 раз.
+
+**Уроки тулинга (копить, не повторять ошибки):** (1) CSSStyleRule.cssRules существует в nested-CSS — матчить по selectorText; (2) ancestor display:none → фильтровать getClientRects; (3) oklch-цвета парсить только canvas-нормализацией; (4) localStorage-ключи осей БЕЗ префикса + верифицировать data-атрибут после reload.
+
+**Гейты (заблокированное — НЕ трогать до разблокировки):**
+| Гейт | Что ждёт |
+|------|----------|
+| Window-тик (:8080 свободен) | ПРИОРИТЕТ №1: контракт-тесты (5 касаний head.html, base.css v87→90, накоплено с R0.76) + regenerate-removal-plan.md (строки СДВИНУТЫ — re-grep) |
+| Решение юзера EXAM | Phase F: summary/result parity, grade-flow, no-JS /answer |
+| Решение юзера §5 | self-host Chart.js, favorite, analytics CTA, футер, вертикальный tablist |
+| Данные в БД | stats.js instrument-палитра графиков |
+| Тулинг | live-эмуляция prefers-reduced-motion / forced-colors (MCP emulate умеет только colorScheme) |
+
+**Read-only поверхности исчерпаны по глубине текущего инструментария.** Следующие тики до разблокировки гейтов: регрессия-ре-скан ранее фиксированных зон (по одной за тик, против дрейфа), либо новые размерности по мере появления идей/тулинга.
