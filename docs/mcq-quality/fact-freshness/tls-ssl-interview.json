@@ -1,0 +1,44 @@
+{
+  "topic_slug": "tls-ssl-interview",
+  "version_sensitive": true,
+  "product_version": "TLS 1.3 (RFC 8446) / TLS 1.2 (RFC 5246) baseline; PKI per RFC 5280; browser policy Chrome 58+ (2017)",
+  "checked_date": "2026-07-13",
+  "knowledge_cutoff": "2026-01",
+  "sources": [
+    "https://datatracker.ietf.org/doc/html/rfc8446",
+    "https://datatracker.ietf.org/doc/html/rfc8996",
+    "https://datatracker.ietf.org/doc/html/rfc7568",
+    "https://datatracker.ietf.org/doc/html/rfc5280",
+    "https://datatracker.ietf.org/doc/html/rfc6962",
+    "https://datatracker.ietf.org/doc/html/rfc9162",
+    "https://datatracker.ietf.org/doc/html/rfc7469",
+    "https://datatracker.ietf.org/doc/html/rfc7507",
+    "https://datatracker.ietf.org/doc/html/rfc6797",
+    "https://datatracker.ietf.org/doc/html/rfc9147",
+    "https://datatracker.ietf.org/doc/html/rfc8555",
+    "https://datatracker.ietf.org/doc/html/rfc9110",
+    "https://datatracker.ietf.org/doc/draft-ietf-tls-esni/"
+  ],
+  "version_sensitive_claims": [
+    "TLS 1.3 = RFC 8446 (август 2018): 1-RTT handshake, 0-RTT resumption, удалены RSA key exchange/CBC/RC4/compression, только AEAD+forward-secrecy [Q2, Q3, Q6, Q7, Q22, Q23, Q24].",
+    "TLS 1.0/1.1 официально deprecated = RFC 8996 (март 2021, MUST NOT use); SSLv3 deprecated ранее = RFC 7568 (2015) [Q1, Q2, Q21, Q30].",
+    "DTLS 1.3 = RFC 9147 (2022) [Q4].",
+    "X.509 cert/CRL profile = RFC 5280; CSR = PKCS#10 / RFC 2986; PKCS#12 keystore = RFC 7292 [Q11, Q18, Q28].",
+    "Certificate Transparency v1 = RFC 6962 (2013); CT 2.0 = RFC 9162 (2021). ⚠ Браузерная экосистема (Chrome/Safari SCT-политики) на практике всё ещё опирается на 6962-логи; 9162 внедряется постепенно [Q7, Q17, Q19, Q39].",
+    "Chrome 58 (2017) требует SAN и полностью игнорирует CN при валидации hostname; CN-only сертификаты отвергаются. Идентичность из RFC 2818 обновлена RFC 9110 (2022) [Q5, Q13].",
+    "HPKP = RFC 7469 (2015); на практике мёртв — удалён из Chrome 72 (2018) из-за риска самоблокировки; современная замена — CAA-записи + CT-мониторинг [Q15, Q41].",
+    "SNI = RFC 6066; ESNI (Encrypted SNI, IETF draft) заброшен в пользу ECH (Encrypted Client Hello). ⚠ ECH на момент knowledge-cutoff (янв-2026) — всё ещё IETF draft (draft-ietf-tls-esni), НЕ полноценный RFC; проверить статус при обновлении [Q5, Q10].",
+    "TLS_FALLBACK_SCSV = RFC 7507 (защита от downgrade-атак) [Q38].",
+    "HSTS = RFC 6797 (2012) [Q40]; OCSP = RFC 6960; OCSP stapling = TLS Certificate Status Request ext (RFC 6066) [Q18].",
+    "Session resumption: session tickets = RFC 5077 (в TLS 1.3 заменены на PSK+tickets из RFC 8446) [Q9].",
+    "ACME (автовыдача, Let's Encrypt) = RFC 8555 (2019) [Q25].",
+    "PSK ciphersuites = RFC 4279 [Q20]."
+  ],
+  "staleness_risks": [
+    "ECH (Encrypted Client Hello): на янв-2026 — IETF draft, не RFC. Если вопросы утверждают «ECH — это RFC XXXX», перепроверить: возможно draft ещё не финализирован. Текущие формулировки сидера («ECH — преемник ESNI, шифрует ClientHello/SNI») корректны без привязки к номеру RFC.",
+    "CT 2.0 (RFC 9162): формально опубликован, но браузерные CT-политики (требуемое число SCT, набор qualified-логов) меняются independently от RFC и от политик Chrome/Apple — числовые пороги в сидере не фигурируют, что безопасно.",
+    "Deprecation-даты (TLS 1.0/1.1 через RFC 8996) стабильны; браузеры уже удалили поддержку (2020). Дальнейших изменений не ожидается."
+  ],
+  "verdict": "FRESH",
+  "notes": "TEMPORAL-39 проверка: все RFC-привязки и браузерные политики в сидере соответствуют состоянию на checked_date и находятся в пределах knowledge-cutoff (янв-2026). Единственные эволюционирующие пункты — ECH (draft, не RFC) и точные браузерные CT-пороги; оба в сидере сформулированы без хрупких числовых/номерных привязок, поэтому корректны. Фактических ошибок, требующих правки correct-текстов, не найдено. Correct-тексты иммутабельны — правок не вносилось."
+}
