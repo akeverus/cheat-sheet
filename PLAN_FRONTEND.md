@@ -2059,3 +2059,10 @@ Canvas-замер контраста границ/заливок/focus-инди�
 **Реальный узкий a11y-gap:** дефолтный editorial в нормальном режиме — глобальный outline #C6613F ≈2.69:1 к телу страницы (маргинал), а box-shadow-only контролы (settings-tab/seg-btn) берут `--shadow-focus` rgba(198,97,63,0.40) ≈1.4:1. HC/forced-colors/prefers-contrast уже покрыты автором (system Highlight). Пробел — нормальный режим дефолта.
 
 **Ремедиация decision-gated** (см. cr.135): editorial `--shadow-focus` → solid double-ring (паттерн уже в файле у linear/др.) и/или затемнить editorial `--color-border-focus` до ≥3:1. Правка дизайн-токенов → гейт design-token-audit + обе темы + тесты; затрагивает editorial-идентичность. **Ожидает решения пользователя** (аналогично R1.37). Правок не вносил.
+
+
+### R1.41 — WCAG 1.3.1 / 2.4.6 Heading & Landmark structure (verified-clean)
+
+fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`, `/settings`.
+
+**Итог — чисто.** Ровно 1 h1 на страницу; пропусков уровней нет (корректная h2→h3 вложенность на /settings); пустых/фейковых `role=heading` нет — всё на реальных `<h*>`. Landmarks: единичные main+header, помеченный nav, `<aside aria-label>` на /, `role=search` + `role=region` на /stats. Правок кода нет. Детали — cr.136.
