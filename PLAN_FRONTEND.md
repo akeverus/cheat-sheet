@@ -1422,3 +1422,10 @@ Dirty changes created by loop: 0
 - (2) Отложенный live-QA checked-состояния (R0.49 → parity) вскрыл дефект: «UX REVIEW PASS 2026-07-01» (низ base.css) переопределяет checked для всех дизайнов равной специфичностью ПОЗЖЕ C1-i → teal-checked был мёртв. Фикс: instrument-checked перенесён за generic (паттерн swiss) — raised bg-tertiary + double-ring + ink-чип сохранены, кольцо/рамка accent-strong; мёртвое правило удалено с указателем. QA: teal 0.435/0.76, editorial-контроль цел. head v79→80.
 - Урок: при равной специфичности грепать ВЕСЬ файл на селектор (checked — 9 вхождений), а не только зону вставки.
 - **Дальше:** TemplateFragmentContractTest при первом окне без bootRun (7 PENDING-TEST¤); flashcard/empty ветки focus — проверить достижимость read-only; session-gated parity (summary/result) — ждёт решения юзера про EXAM-сессию.
+
+### R0.55 (2026-07-12) — Flashcard+empty ветки read-only + INSTRUMENT-SIGNATURE (v=81)
+- Collision guard чист; bootRun жив → контракт-тест PENDING.
+- Разведка: единственная тема без seed-JSON = preparation/interview-preparation (42Q без опций; read-only SELECT к quiz-postgres, docker exec). Рецепты read-only QA (вписаны в матрицу): flashcard = GET /?topic=preparation/interview-preparation; empty = GET /review?topic=… («Сейчас нет вопросов»).
+- QA flashcard (оба дизайна): вопрос/тема несут C1-i; reveal = отдельный teal r10-чип (токены); reveal вне формы — безопасный клиентский toggle; grade-кнопок в browse-режиме нет (SM2 = due-flow, session-gated).
+- QA empty: кнопки token-only корректны. Найден дефект голоса: h2 вне явных правил = semibold 600 (у instrument не было SIGNATURE-секции). Фикс: INSTRUMENT — SIGNATURES (h1..h6 medium) после SWISS-сигнатур; QA 600→500, editorial 500 (свой), swiss 650 цел. head v80→81.
+- **Дальше:** контракт-тест при окне без bootRun (7¤); session-gated parity (summary/result/grade-кнопки/.session-progress) — ждёт решения юзера про EXAM-сессию; либо maintenance/полиш по бэклогу Фазы G.
