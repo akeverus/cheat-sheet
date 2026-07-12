@@ -11,19 +11,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JPA` (`jakarta.persistence.*`) — это спецификация (набор интерфейсов), а `Hibernate` — одна из её конкретных реализаций (наряду с `EclipseLink`, `OpenJPA`).",
-              "correct": true,
-              "sections": {
-                "explanation": "`JPA` определяет стандартный API ORM в `Java`, а `Hibernate` его реализует и добавляет собственные расширения вроде `@Formula`, `@BatchSize`, `@NaturalId` и язык `HQL`.",
-                "example": "Класс `org.hibernate.Session` расширяет `jakarta.persistence.EntityManager`: код на чистом `JPA` API запускается поверх `Hibernate` без изменений.",
-                "when_to_apply": "Программируйте против `JPA` API ради переносимости, а специфичные аннотации `Hibernate` подключайте только когда стандартных средств не хватает.",
-                "edge_cases": "`HQL` — надмножество `JPQL`: запрос с `Hibernate`-функциями не перенесётся на `EclipseLink`, поэтому такие места нужно помечать как непереносимые.",
-                "related": "[[hibernate-interview#Q2]] преимущества над `JDBC`; [[hibernate-interview#Q3]] ключевые интерфейсы; [[hibernate-interview#Q28]] `HQL` и `JPQL`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`JPA` (`jakarta.persistence.*`) — это эталонная реализация ORM (конкретные классы), а `Hibernate` — спецификация-надстройка (набор интерфейсов поверх `EclipseLink`, `OpenJPA`).",
               "correct": false,
               "sections": {
@@ -34,8 +21,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`JPA` (`jakarta.persistence.*`) — это отдельный ORM-фреймворк (собственный рантайм), а `Hibernate` — конкурирующий стек (свой API `org.hibernate.*`), совместимость между ними ограничена общими аннотациями.",
               "correct": false,
               "sections": {
@@ -43,6 +30,19 @@
                 "source_of_confusion": "Оба упоминаются рядом как ORM-инструменты, и кажется, что это конкурирующие, а не вложенные технологии.",
                 "if_it_were_true": "Тогда `spring-boot-starter-data-jpa` не мог бы использовать `Hibernate` как провайдер по умолчанию, но он это и делает.",
                 "how_it_should_be": "`Hibernate` — реализация спецификации `JPA`, поэтому они связаны как контракт и его исполнитель."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JPA` (`jakarta.persistence.*`) — это спецификация (набор интерфейсов), а `Hibernate` — одна из её конкретных реализаций (наряду с `EclipseLink`, `OpenJPA`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`JPA` определяет стандартный API ORM в `Java`, а `Hibernate` его реализует и добавляет собственные расширения вроде `@Formula`, `@BatchSize`, `@NaturalId` и язык `HQL`.",
+                "example": "Класс `org.hibernate.Session` расширяет `jakarta.persistence.EntityManager`: код на чистом `JPA` API запускается поверх `Hibernate` без изменений.",
+                "when_to_apply": "Программируйте против `JPA` API ради переносимости, а специфичные аннотации `Hibernate` подключайте только когда стандартных средств не хватает.",
+                "edge_cases": "`HQL` — надмножество `JPQL`: запрос с `Hibernate`-функциями не перенесётся на `EclipseLink`, поэтому такие места нужно помечать как непереносимые.",
+                "related": "[[hibernate-interview#Q2]] преимущества над `JDBC`; [[hibernate-interview#Q3]] ключевые интерфейсы; [[hibernate-interview#Q28]] `HQL` и `JPQL`."
               }
             },
             {
@@ -71,18 +71,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Hibernate` строит трансляцию объект → SQL сам (`HQL` поверх маппинга) и не допускает нативных запросов, тогда как в `JDBC` пишется чистый SQL.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Hibernate` разрешает нативный SQL через `entityManager.createNativeQuery()`; `HQL`/`JPQL` лишь убирает рутину в типовых сценариях.",
-                "source_of_confusion": "Раз `HQL` работает с объектами, кажется, что низкоуровневый SQL стал недоступен совсем.",
-                "if_it_were_true": "Тогда нельзя было бы вызвать оконную функцию или хранимую процедуру, но `Hibernate` это позволяет через нативный запрос.",
-                "how_it_should_be": "`Hibernate` сокращает объём SQL для CRUD, но оставляет нативный SQL для сложных и БД-специфичных случаев."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Hibernate` устраняет ручной маппинг `ResultSet` → объект и предоставляет встроенный кэш L1/L2, тогда как в `JDBC` всё пишется руками.",
               "correct": true,
               "sections": {
@@ -91,6 +79,18 @@
                 "when_to_apply": "`Hibernate` выгоден в типовых CRUD-приложениях с богатой доменной моделью; для редких сверхпроизводительных запросов остаётся нативный SQL.",
                 "edge_cases": "`Hibernate` всё ещё позволяет нативный SQL через `createNativeQuery()` — это не «или ORM, или JDBC», а ORM с escape hatch.",
                 "related": "[[hibernate-interview#Q1]] `Hibernate` и `JPA`; [[hibernate-interview#Q24]] L1 и L2 кэш; [[hibernate-interview#Q31]] нативные SQL-запросы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Hibernate` строит трансляцию объект → SQL сам (`HQL` поверх маппинга) и не допускает нативных запросов, тогда как в `JDBC` пишется чистый SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Hibernate` разрешает нативный SQL через `entityManager.createNativeQuery()`; `HQL`/`JPQL` лишь убирает рутину в типовых сценариях.",
+                "source_of_confusion": "Раз `HQL` работает с объектами, кажется, что низкоуровневый SQL стал недоступен совсем.",
+                "if_it_were_true": "Тогда нельзя было бы вызвать оконную функцию или хранимую процедуру, но `Hibernate` это позволяет через нативный запрос.",
+                "how_it_should_be": "`Hibernate` сокращает объём SQL для CRUD, но оставляет нативный SQL для сложных и БД-специфичных случаев."
               }
             },
             {
@@ -155,6 +155,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`Transaction` — часть `SessionFactory`, разделяемая всеми сессиями (общие границы), `Session` — точка входа в запросы, плюс `Configuration`, `Query` и кэш L2 на уровне фабрики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Transaction` создаётся внутри конкретной `Session` через `session.beginTransaction()` и не разделяется между сессиями.",
+                "source_of_confusion": "Кажется логичным, что транзакции живут на уровне фабрики, раз она «главная», но изоляция работы требует обратного.",
+                "if_it_were_true": "Тогда одна транзакция охватывала бы несколько потоков сразу, нарушая `ACID`-изоляцию единицы работы.",
+                "how_it_should_be": "Каждая `Session` управляет своими транзакциями независимо; `SessionFactory` в этом не участвует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`SessionFactory` — потокобезопасный синглтон с кэшем L2 и метаданными маппинга, `Session` — не потокобезопасный объект единицы работы с кэшем L1, плюс `Configuration`, `Transaction` и `Query`.",
               "correct": true,
               "sections": {
@@ -163,18 +175,6 @@
                 "when_to_apply": "Понимание ролей нужно при ручной настройке `Hibernate` без `Spring` и при отладке проблем потокобезопасности и кэширования.",
                 "edge_cases": "Создание `SessionFactory` — дорогая операция (парсинг и валидация маппингов), поэтому его держат синглтоном на всё приложение.",
                 "related": "[[hibernate-interview#Q4]] `Session` и `SessionFactory`; [[hibernate-interview#Q5]] потокобезопасность `Session`; [[hibernate-interview#Q24]] L1 и L2 кэш."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Transaction` — часть `SessionFactory`, разделяемая всеми сессиями (общие границы), `Session` — точка входа в запросы, плюс `Configuration`, `Query` и кэш L2 на уровне фабрики.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Transaction` создаётся внутри конкретной `Session` через `session.beginTransaction()` и не разделяется между сессиями.",
-                "source_of_confusion": "Кажется логичным, что транзакции живут на уровне фабрики, раз она «главная», но изоляция работы требует обратного.",
-                "if_it_were_true": "Тогда одна транзакция охватывала бы несколько потоков сразу, нарушая `ACID`-изоляцию единицы работы.",
-                "how_it_should_be": "Каждая `Session` управляет своими транзакциями независимо; `SessionFactory` в этом не участвует."
               }
             }
           ]
@@ -203,6 +203,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Session` не потокобезопасна: в `Spring` каждый поток получает свою сессию через `ThreadLocal`-привязку при `@Transactional`, а `SessionFactory` — тяжёлый синглтон.",
+              "correct": true,
+              "sections": {
+                "explanation": "Правило: одна `Session` на один поток. `Spring` реализует это через `TransactionSynchronizationManager`, который хранит сессию в `ThreadLocal` и связывает её с транзакцией.",
+                "example": "`SessionFactory sf = new Configuration().configure().buildSessionFactory();` создаётся один раз; `try (Session s = sf.openSession()) {...}` — под единицу работы.",
+                "when_to_apply": "Эта модель применяется во всех `Spring`-приложениях: сервис с `@Transactional` получает сессию, привязанную к текущему потоку и транзакции.",
+                "edge_cases": "Внутри одной `Session` повторный `get(User.class, 1L)` берёт объект из кэша L1 без SQL — это даёт ссылочную идентичность (`u1 == u2`).",
+                "related": "[[hibernate-interview#Q5]] потокобезопасность `Session`; [[hibernate-interview#Q24]] кэш L1 внутри сессии; [[hibernate-interview#Q41]] `getCurrentSession` и `openSession`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`SessionFactory` не потокобезопасна: в `Spring` под каждый поток фабрика поднимается заново через `@Bean`-прототип, а `Session` — долгоживущий синглтон с общим кэшем.",
               "correct": false,
               "sections": {
@@ -213,8 +226,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Session` соответствует пользовательской web-сессии: в `Spring` она привязывается к `HttpSession` и переживает несколько запросов, а `SessionFactory` — синглтон, выдающий сессию на пользователя.",
               "correct": false,
               "sections": {
@@ -222,19 +235,6 @@
                 "source_of_confusion": "Совпадение слова «session» в двух стеках: web-разработчику привычна долгоживущая пользовательская сессия, и это значение переносится на `org.hibernate.Session`.",
                 "if_it_were_true": "Сессия копила бы L1-кэш и незакоммиченные изменения между запросами — любой сбой обрывал бы «хвост» работы, а память росла бы с каждым кликом пользователя.",
                 "how_it_should_be": "Держать в голове паттерн session-per-request: одна `Session` = одна транзакция/запрос; долгие «разговоры» решаются detached-объектами и `merge()`, а не растягиванием сессии."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Session` не потокобезопасна: в `Spring` каждый поток получает свою сессию через `ThreadLocal`-привязку при `@Transactional`, а `SessionFactory` — тяжёлый синглтон.",
-              "correct": true,
-              "sections": {
-                "explanation": "Правило: одна `Session` на один поток. `Spring` реализует это через `TransactionSynchronizationManager`, который хранит сессию в `ThreadLocal` и связывает её с транзакцией.",
-                "example": "`SessionFactory sf = new Configuration().configure().buildSessionFactory();` создаётся один раз; `try (Session s = sf.openSession()) {...}` — под единицу работы.",
-                "when_to_apply": "Эта модель применяется во всех `Spring`-приложениях: сервис с `@Transactional` получает сессию, привязанную к текущему потоку и транзакции.",
-                "edge_cases": "Внутри одной `Session` повторный `get(User.class, 1L)` берёт объект из кэша L1 без SQL — это даёт ссылочную идентичность (`u1 == u2`).",
-                "related": "[[hibernate-interview#Q5]] потокобезопасность `Session`; [[hibernate-interview#Q24]] кэш L1 внутри сессии; [[hibernate-interview#Q41]] `getCurrentSession` и `openSession`."
               }
             }
           ]
@@ -323,6 +323,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Dialect`-слой (например `PostgreSQLDialect`) берёт роль драйвера — генерирует и исполняет SQL под конкретную СУБД, а `Session` держит соединение; `JDBC` задействуется только без диалекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Dialect` — генератор SQL под синтаксис конкретной СУБД (пагинация, типы, sequences); исполняет запросы всё равно `JDBC`-драйвер через обычный `Connection`/`PreparedStatement` — Hibernate надстраивается над JDBC, а не заменяет его.",
+                "source_of_confusion": "В конфигурации диалект и драйвер указываются рядом (`hibernate.dialect` + `driver_class`), и кажется, что это взаимозаменяемые способы «подключить БД».",
+                "if_it_were_true": "Hibernate пришлось бы реализовывать сетевые протоколы всех СУБД и собственные пулы соединений; несовместимость с `DataSource`, JTA и мониторингом JDBC-уровня сделала бы его неприменимым в контейнерах.",
+                "how_it_should_be": "Разделять роли: драйвер — транспорт и протокол, `Dialect` — синтаксис SQL; поэтому диалект можно менять при том же драйвере, а Hibernate 6 определяет его автоматически по метаданным соединения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`SessionFactory` хранит L2-кэш и метаданные маппинга, а `Session` хранит L1-кэш и координирует dirty checking; всё это строится поверх `JDBC`.",
               "correct": true,
               "sections": {
@@ -331,18 +343,6 @@
                 "when_to_apply": "Эту модель держат в голове при диагностике производительности: где живёт кэш, где dirty checking, где границы транзакции.",
                 "edge_cases": "`Hibernate` никогда не работает с сокетами БД напрямую — за сетевой обмен отвечает `JDBC`-драйвер, а `Hibernate` лишь генерирует SQL.",
                 "related": "[[hibernate-interview#Q3]] ключевые интерфейсы; [[hibernate-interview#Q8]] dirty checking и flush; [[hibernate-interview#Q24]] L1 и L2 кэш."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Dialect`-слой (например `PostgreSQLDialect`) берёт роль драйвера — генерирует и исполняет SQL под конкретную СУБД, а `Session` держит соединение; `JDBC` задействуется только без диалекта.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Dialect` — генератор SQL под синтаксис конкретной СУБД (пагинация, типы, sequences); исполняет запросы всё равно `JDBC`-драйвер через обычный `Connection`/`PreparedStatement` — Hibernate надстраивается над JDBC, а не заменяет его.",
-                "source_of_confusion": "В конфигурации диалект и драйвер указываются рядом (`hibernate.dialect` + `driver_class`), и кажется, что это взаимозаменяемые способы «подключить БД».",
-                "if_it_were_true": "Hibernate пришлось бы реализовывать сетевые протоколы всех СУБД и собственные пулы соединений; несовместимость с `DataSource`, JTA и мониторингом JDBC-уровня сделала бы его неприменимым в контейнерах.",
-                "how_it_should_be": "Разделять роли: драйвер — транспорт и протокол, `Dialect` — синтаксис SQL; поэтому диалект можно менять при том же драйвере, а Hibernate 6 определяет его автоматически по метаданным соединения."
               }
             },
             {
@@ -383,18 +383,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Detached` (Evicted) — объект, чья строка удалена из БД командой `remove()`, но сам он жив в памяти и чтение полей безопасно; строку возвращает повторный `persist()` или `merge()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Detached`-объект существует в БД, но не отслеживается текущей сессией; его можно снова привязать через `merge()`.",
-                "source_of_confusion": "Слово «detached» («отсоединённый») путают с «удалённый», смешивая его с `Removed`.",
-                "if_it_were_true": "Тогда `merge()` на `Detached` создавал бы новую строку, но он лишь возвращает managed-копию существующей.",
-                "how_it_should_be": "`Detached` — объект в БД, отсоединённый от сессии; данные в БД целы, просто не tracked."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Persistent` (Managed) отслеживается сессией через dirty checking, и изменения автоматически синхронизируются с БД при flush; всего состояний четыре: `Transient`, `Persistent`, `Detached`, `Removed`.",
               "correct": true,
               "sections": {
@@ -403,6 +391,18 @@
                 "when_to_apply": "Понимание состояний нужно, чтобы знать, какие изменения попадут в БД автоматически, а какие потеряются (например, после `detach`).",
                 "edge_cases": "`remove()` лишь помечает объект к удалению — фактический `DELETE` выполняется при flush перед commit, а не мгновенно.",
                 "related": "[[hibernate-interview#Q8]] dirty checking и flush; [[hibernate-interview#Q9]] `persist`/`save`/`merge`/`update`; [[hibernate-interview#Q22]] `LazyInitializationException`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Detached` (Evicted) — объект, чья строка удалена из БД командой `remove()`, но сам он жив в памяти и чтение полей безопасно; строку возвращает повторный `persist()` или `merge()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Detached`-объект существует в БД, но не отслеживается текущей сессией; его можно снова привязать через `merge()`.",
+                "source_of_confusion": "Слово «detached» («отсоединённый») путают с «удалённый», смешивая его с `Removed`.",
+                "if_it_were_true": "Тогда `merge()` на `Detached` создавал бы новую строку, но он лишь возвращает managed-копию существующей.",
+                "how_it_should_be": "`Detached` — объект в БД, отсоединённый от сессии; данные в БД целы, просто не tracked."
               }
             },
             {
@@ -491,19 +491,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`merge()` копирует состояние detached-объекта в новую managed-копию и возвращает её, а не переприсоединяет исходный объект.",
-              "correct": true,
-              "sections": {
-                "explanation": "Это ключевое отличие `merge()` от `update()`: merge возвращает новый managed-экземпляр, и работать дальше нужно именно с ним, а не с исходным detached-объектом.",
-                "example": "`User managed = em.merge(detached); managed.setName(\"Bob\");` синхронизируется с БД, а `detached` остаётся detached и его изменения игнорируются.",
-                "when_to_apply": "`merge()` применяют для объектов, пришедших из другой сессии или десериализации; `persist()` — для новых (transient) сущностей.",
-                "edge_cases": "`save()` (Hibernate) возвращает `Serializable` id, а `persist()` (JPA) — `void`; рекомендуется придерживаться стандартных `persist`/`merge`.",
-                "related": "[[hibernate-interview#Q7]] состояния `Entity`; [[hibernate-interview#Q8]] dirty checking; [[hibernate-interview#Q10]] `get` и `load`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`persist()` возвращает сгенерированный идентификатор сразу, а `save()` — ничего, поэтому для получения id годится только первый.",
               "correct": false,
               "sections": {
@@ -514,8 +501,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`merge()` переприсоединяет к контексту сам переданный detached-объект и делает управляемым именно его, а не отдельную копию.",
               "correct": false,
               "sections": {
@@ -523,6 +510,19 @@
                 "source_of_confusion": "Поведение `merge()` путают с `update()`, который действительно переприсоединяет тот же объект.",
                 "if_it_were_true": "Тогда изменения в исходном detached-объекте после merge попадали бы в БД, но они теряются.",
                 "how_it_should_be": "Работать нужно с возвращённой managed-копией; исходный detached-объект merge не отслеживает."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`merge()` копирует состояние detached-объекта в новую managed-копию и возвращает её, а не переприсоединяет исходный объект.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это ключевое отличие `merge()` от `update()`: merge возвращает новый managed-экземпляр, и работать дальше нужно именно с ним, а не с исходным detached-объектом.",
+                "example": "`User managed = em.merge(detached); managed.setName(\"Bob\");` синхронизируется с БД, а `detached` остаётся detached и его изменения игнорируются.",
+                "when_to_apply": "`merge()` применяют для объектов, пришедших из другой сессии или десериализации; `persist()` — для новых (transient) сущностей.",
+                "edge_cases": "`save()` (Hibernate) возвращает `Serializable` id, а `persist()` (JPA) — `void`; рекомендуется придерживаться стандартных `persist`/`merge`.",
+                "related": "[[hibernate-interview#Q7]] состояния `Entity`; [[hibernate-interview#Q8]] dirty checking; [[hibernate-interview#Q10]] `get` и `load`."
               }
             },
             {
@@ -551,18 +551,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`get()`/`find()` возвращает лёгкий proxy для отложенной загрузки, а `load()`/`getReference()` выполняет `SELECT` сразу и отдаёт полностью инициализированный объект, если запись существует.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: `load()`/`getReference()` возвращает proxy (ленивая загрузка), а `get()`/`find()` — реальный загруженный объект.",
-                "source_of_confusion": "Названия методов не подсказывают, какой из них ленивый, и роли легко перепутать.",
-                "if_it_were_true": "Тогда `get` не делал бы немедленный `SELECT`, но он как раз загружает данные сразу.",
-                "how_it_should_be": "`load`/`getReference` отдаёт прокси с отложенным `SELECT`, `get`/`find` — готовый объект."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`get()`/`find()` выполняет `SELECT` сразу и возвращает `null`, если запись не найдена, а `load()`/`getReference()` возвращает proxy и бросает исключение при обращении к полю несуществующей записи.",
               "correct": true,
               "sections": {
@@ -571,6 +559,18 @@
                 "when_to_apply": "`get` используют, когда не уверены в существовании записи; `load`/`getReference` — когда запись точно есть и нужна лишь ссылка по id.",
                 "edge_cases": "Обращение к полю прокси несуществующей записи бросает `ObjectNotFoundException`, тогда как `get` молча вернул бы `null`.",
                 "related": "[[hibernate-interview#Q9]] `persist`/`merge`/`update`; [[hibernate-interview#Q12]] proxy и `final`-классы; [[hibernate-interview#Q19]] lazy и eager загрузка."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`get()`/`find()` возвращает лёгкий proxy для отложенной загрузки, а `load()`/`getReference()` выполняет `SELECT` сразу и отдаёт полностью инициализированный объект, если запись существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `load()`/`getReference()` возвращает proxy (ленивая загрузка), а `get()`/`find()` — реальный загруженный объект.",
+                "source_of_confusion": "Названия методов не подсказывают, какой из них ленивый, и роли легко перепутать.",
+                "if_it_were_true": "Тогда `get` не делал бы немедленный `SELECT`, но он как раз загружает данные сразу.",
+                "how_it_should_be": "`load`/`getReference` отдаёт прокси с отложенным `SELECT`, `get`/`find` — готовый объект."
               }
             },
             {
@@ -635,6 +635,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`Hibernate` дособирает no-arg конструктор через bytecode enhancement (`hibernate-enhance`-плагин), поэтому объявлять его руками не нужно; сборка без плагина падает на старте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Hibernate` не добавляет конструкторы автоматически — разработчик объявляет его сам; enhancement добавляет лишь служебные поля и методы.",
+                "source_of_confusion": "Bytecode enhancement действительно модифицирует классы, и кажется, что он закрывает и эту потребность.",
+                "if_it_were_true": "Тогда сущность без конструктора грузилась бы нормально, но без него бросается `InstantiationException`.",
+                "how_it_should_be": "Конструктор объявляет разработчик; enhancement решает задачи lazy loading и dirty checking, но не создаёт конструкторов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Hibernate` создаёт сущности через рефлексию при загрузке из БД, поэтому нужен no-arg конструктор; без него будет `InstantiationException`.",
               "correct": true,
               "sections": {
@@ -643,18 +655,6 @@
                 "when_to_apply": "Правило применяется ко всем entity-классам независимо от стратегии генерации id или наличия других конструкторов.",
                 "edge_cases": "Конструктор может быть `public` или `protected` — рефлексия вызывает и непубличные; `protected` часто предпочтительнее ради инкапсуляции.",
                 "related": "[[hibernate-interview#Q7]] состояния `Entity`; [[hibernate-interview#Q12]] proxy и `final`-классы; [[hibernate-interview#Q13]] аннотации маппинга."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Hibernate` дособирает no-arg конструктор через bytecode enhancement (`hibernate-enhance`-плагин), поэтому объявлять его руками не нужно; сборка без плагина падает на старте.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Hibernate` не добавляет конструкторы автоматически — разработчик объявляет его сам; enhancement добавляет лишь служебные поля и методы.",
-                "source_of_confusion": "Bytecode enhancement действительно модифицирует классы, и кажется, что он закрывает и эту потребность.",
-                "if_it_were_true": "Тогда сущность без конструктора грузилась бы нормально, но без него бросается `InstantiationException`.",
-                "how_it_should_be": "Конструктор объявляет разработчик; enhancement решает задачи lazy loading и dirty checking, но не создаёт конструкторов."
               }
             }
           ]
@@ -683,6 +683,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Для `final` entity ленивая загрузка не работает: `Hibernate` не может создать proxy-подкласс, поэтому `load()`/`getReference()` вернёт реальный объект.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Hibernate` использует `CGLIB`/`Byte Buddy` для генерации proxy-подклассов; финальный класс расширить нельзя, поэтому фреймворк вынужден грузить реальный объект сразу.",
+                "example": "Если связь ссылается на `final`-сущность, `getReference()` вернёт не прокси, а полностью загруженный объект, делая lazy-оптимизацию невозможной.",
+                "when_to_apply": "Избегайте `final` на entity-классах; для неизменяемости данных используйте `@Immutable`, а не `final`.",
+                "edge_cases": "Приложение не упадёт при старте с `final`-сущностью — просто молча потеряется ленивая загрузка, что тяжело заметить.",
+                "related": "[[hibernate-interview#Q10]] `get` и `load`; [[hibernate-interview#Q19]] lazy и eager загрузка; [[hibernate-interview#Q38]] `@Immutable`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Для `final` entity включается режим неизменяемости: `Hibernate` трактует модификатор как `@Immutable`, поэтому dirty checking пропускает такие объекты при flush.",
               "correct": false,
               "sections": {
@@ -693,8 +706,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Для `final` entity прокси строится через интерфейс: `Hibernate` переключается с подкласса на `java.lang.reflect.Proxy`, поэтому ленивая загрузка продолжает работать без ограничений.",
               "correct": false,
               "sections": {
@@ -702,19 +715,6 @@
                 "source_of_confusion": "В Spring AOP действительно есть выбор JDK dynamic proxy (интерфейсы) vs CGLIB (подклассы), и этот механизм переносят на Hibernate-прокси.",
                 "if_it_were_true": "`final` на entity был бы бесплатным — Hibernate тихо переключался бы на интерфейсы, и рекомендация «не делайте entity final» исчезла бы из документации.",
                 "how_it_should_be": "Не объявлять entity `final`; неизменяемость выражать `@Immutable`; критичные к lazy места проверять: вернулся реальный объект из `getReference()` вместо прокси — значит proxy не создался."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Для `final` entity ленивая загрузка не работает: `Hibernate` не может создать proxy-подкласс, поэтому `load()`/`getReference()` вернёт реальный объект.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Hibernate` использует `CGLIB`/`Byte Buddy` для генерации proxy-подклассов; финальный класс расширить нельзя, поэтому фреймворк вынужден грузить реальный объект сразу.",
-                "example": "Если связь ссылается на `final`-сущность, `getReference()` вернёт не прокси, а полностью загруженный объект, делая lazy-оптимизацию невозможной.",
-                "when_to_apply": "Избегайте `final` на entity-классах; для неизменяемости данных используйте `@Immutable`, а не `final`.",
-                "edge_cases": "Приложение не упадёт при старте с `final`-сущностью — просто молча потеряется ленивая загрузка, что тяжело заметить.",
-                "related": "[[hibernate-interview#Q10]] `get` и `load`; [[hibernate-interview#Q19]] lazy и eager загрузка; [[hibernate-interview#Q38]] `@Immutable`."
               }
             }
           ]
@@ -803,6 +803,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`TABLE_PER_CLASS` хранит всю иерархию в одной таблице с колонкой `class_type`; главный минус — разреженные строки, поэтому стратегию применяют только к мелким иерархиям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TABLE_PER_CLASS` создаёт отдельную таблицу на каждый конкретный класс; полиморфные запросы выполняются через `UNION`.",
+                "source_of_confusion": "Стратегии легко перепутать: discriminator-колонка относится к `SINGLE_TABLE`, а не к `TABLE_PER_CLASS`.",
+                "if_it_were_true": "Тогда не было бы дублирования колонок суперкласса в каждой таблице, но оно характерно именно для `TABLE_PER_CLASS`.",
+                "how_it_should_be": "`TABLE_PER_CLASS` — таблица на каждый конкретный класс, а единая таблица с discriminator — это `SINGLE_TABLE`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`SINGLE_TABLE` создаёт одну таблицу для всей иерархии с discriminator-колонкой; главный минус — NULL-колонки для полей подклассов, поэтому NOT NULL на них недопустим.",
               "correct": true,
               "sections": {
@@ -811,18 +823,6 @@
                 "when_to_apply": "`SINGLE_TABLE` — выбор по умолчанию; `JOINED` — когда важна нормализация и NOT NULL; `TABLE_PER_CLASS` — редко.",
                 "edge_cases": "Поле подкласса физически хранится как NULL для строк других подклассов, поэтому `NOT NULL` на нём приведёт к ошибке при `INSERT`.",
                 "related": "[[hibernate-interview#Q13]] аннотации маппинга; [[hibernate-interview#Q15]] связь `One-To-Many`; [[hibernate-interview#Q18]] `@Embeddable`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`TABLE_PER_CLASS` хранит всю иерархию в одной таблице с колонкой `class_type`; главный минус — разреженные строки, поэтому стратегию применяют только к мелким иерархиям.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`TABLE_PER_CLASS` создаёт отдельную таблицу на каждый конкретный класс; полиморфные запросы выполняются через `UNION`.",
-                "source_of_confusion": "Стратегии легко перепутать: discriminator-колонка относится к `SINGLE_TABLE`, а не к `TABLE_PER_CLASS`.",
-                "if_it_were_true": "Тогда не было бы дублирования колонок суперкласса в каждой таблице, но оно характерно именно для `TABLE_PER_CLASS`.",
-                "how_it_should_be": "`TABLE_PER_CLASS` — таблица на каждый конкретный класс, а единая таблица с discriminator — это `SINGLE_TABLE`."
               }
             },
             {
@@ -863,18 +863,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`mappedBy` обозначает владельца связи, поэтому FK-колонка живёт в таблице `Department`, а изменения на этой стороне синхронизируются с БД автоматически.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Владельцем всегда является сторона без `mappedBy`, то есть та, что имеет `@JoinColumn` и физически хранит FK — здесь это `Employee`.",
-                "source_of_confusion": "«Один ко многим» интуитивно кажется управляемым со стороны «один», но FK хранит сторона «многие».",
-                "if_it_were_true": "Тогда изменение коллекции в `Department` обновляло бы FK, но синхронизирует БД только owning side `Employee`.",
-                "how_it_should_be": "Владелец — `Employee` с `@JoinColumn(department_id)`, а `Department` лишь ссылается через `mappedBy`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`@ManyToOne` по умолчанию `EAGER`, поэтому для избежания N+1 нужно явно указывать `fetch = FetchType.LAZY` на каждой такой ассоциации.",
               "correct": true,
               "sections": {
@@ -883,6 +871,18 @@
                 "when_to_apply": "Ставьте `LAZY` на все `@ManyToOne`/`@OneToOne`; владельцем связи делайте сторону с `@JoinColumn`, а коллекцию помечайте `mappedBy`.",
                 "edge_cases": "Изменения на стороне `mappedBy` не синхронизируются с БД — нужно поддерживать обе стороны через helper-методы (`addEmployee`).",
                 "related": "[[hibernate-interview#Q17]] `@JoinColumn` и `mappedBy`; [[hibernate-interview#Q19]] lazy и eager; [[hibernate-interview#Q20]] проблема N+1."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`mappedBy` обозначает владельца связи, поэтому FK-колонка живёт в таблице `Department`, а изменения на этой стороне синхронизируются с БД автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Владельцем всегда является сторона без `mappedBy`, то есть та, что имеет `@JoinColumn` и физически хранит FK — здесь это `Employee`.",
+                "source_of_confusion": "«Один ко многим» интуитивно кажется управляемым со стороны «один», но FK хранит сторона «многие».",
+                "if_it_were_true": "Тогда изменение коллекции в `Department` обновляло бы FK, но синхронизирует БД только owning side `Employee`.",
+                "how_it_should_be": "Владелец — `Employee` с `@JoinColumn(department_id)`, а `Department` лишь ссылается через `mappedBy`."
               }
             },
             {
@@ -971,19 +971,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@JoinColumn` маркирует owning side — сторону, на которой физически хранится FK-колонка в таблице.",
-              "correct": true,
-              "sections": {
-                "explanation": "Owning side всегда хранит FK в своей таблице; при `@ManyToOne` с `@JoinColumn(name = \"department_id\")` колонка `department_id` находится в таблице `employee`.",
-                "example": "У `Employee`: `@ManyToOne @JoinColumn(name = \"department_id\")` (owning), у `Department`: `@OneToMany(mappedBy = \"department\")` (inverse).",
-                "when_to_apply": "Используйте `@JoinColumn` на стороне с FK и `mappedBy` на обратной стороне; обновляйте связь именно через owning side.",
-                "edge_cases": "Изменения на стороне `mappedBy` не синхронизируются с БД — FK обновится, только если изменить owning side.",
-                "related": "[[hibernate-interview#Q15]] связь `One-To-Many`; [[hibernate-interview#Q16]] связь `Many-To-Many`; [[hibernate-interview#Q18]] `@Embeddable`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`mappedBy` задаёт имя FK-колонки в таблице БД — строку, по которой строится сам `JOIN` при загрузке.",
               "correct": false,
               "sections": {
@@ -994,8 +981,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`mappedBy` маркирует сторону записи — изменения именно на ней синхронизируются с БД при flush.",
               "correct": false,
               "sections": {
@@ -1003,6 +990,19 @@
                 "source_of_confusion": "Кажется, что обе стороны связи равноправны и любое изменение попадёт в БД.",
                 "if_it_were_true": "Тогда добавление в коллекцию `mappedBy` обновляло бы FK, но БД увидит изменение лишь через owning side.",
                 "how_it_should_be": "Чтобы изменить связь, нужно менять owning side; коллекция `mappedBy` — только для навигации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@JoinColumn` маркирует owning side — сторону, на которой физически хранится FK-колонка в таблице.",
+              "correct": true,
+              "sections": {
+                "explanation": "Owning side всегда хранит FK в своей таблице; при `@ManyToOne` с `@JoinColumn(name = \"department_id\")` колонка `department_id` находится в таблице `employee`.",
+                "example": "У `Employee`: `@ManyToOne @JoinColumn(name = \"department_id\")` (owning), у `Department`: `@OneToMany(mappedBy = \"department\")` (inverse).",
+                "when_to_apply": "Используйте `@JoinColumn` на стороне с FK и `mappedBy` на обратной стороне; обновляйте связь именно через owning side.",
+                "edge_cases": "Изменения на стороне `mappedBy` не синхронизируются с БД — FK обновится, только если изменить owning side.",
+                "related": "[[hibernate-interview#Q15]] связь `One-To-Many`; [[hibernate-interview#Q16]] связь `Many-To-Many`; [[hibernate-interview#Q18]] `@Embeddable`."
               }
             },
             {
@@ -1031,18 +1031,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Embeddable` — облегчённая связь один-к-одному с отдельной таблицей; FK на родителя создаётся автоматически, без явной аннотации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Отдельная таблица не создаётся — все поля embeddable располагаются в колонках таблицы родителя; этим он и отличается от `@OneToOne`.",
-                "source_of_confusion": "Вложенный объект кажется отдельной сущностью со своей таблицей, как при ассоциации.",
-                "if_it_were_true": "Тогда был бы `JOIN` для загрузки `Address`, но поля embeddable читаются из той же строки родителя.",
-                "how_it_should_be": "Embeddable встраивается в таблицу родителя; отдельную таблицу с FK даёт `@OneToOne`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`@Embeddable` — value object без собственного id и таблицы; его поля встраиваются в таблицу родительской сущности.",
               "correct": true,
               "sections": {
@@ -1051,6 +1039,18 @@
                 "when_to_apply": "Применяйте для группировки связанных полей, у которых нет собственной идентичности и которые живут только внутри родителя.",
                 "edge_cases": "Два вхождения одного embeddable разруливаются через `@AttributeOverrides`, которые переименовывают колонки для конкретного вхождения.",
                 "related": "[[hibernate-interview#Q13]] аннотации маппинга; [[hibernate-interview#Q15]] связь `One-To-Many`; [[hibernate-interview#Q17]] `@JoinColumn` и `mappedBy`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Embeddable` — облегчённая связь один-к-одному с отдельной таблицей; FK на родителя создаётся автоматически, без явной аннотации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отдельная таблица не создаётся — все поля embeddable располагаются в колонках таблицы родителя; этим он и отличается от `@OneToOne`.",
+                "source_of_confusion": "Вложенный объект кажется отдельной сущностью со своей таблицей, как при ассоциации.",
+                "if_it_were_true": "Тогда был бы `JOIN` для загрузки `Address`, но поля embeddable читаются из той же строки родителя.",
+                "how_it_should_be": "Embeddable встраивается в таблицу родителя; отдельную таблицу с FK даёт `@OneToOne`."
               }
             },
             {
@@ -1115,6 +1115,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Радикальное решение N+1 — `EAGER` на всех ассоциациях: связи приходят одним `JOIN`-запросом, и лишних обращений к БД не остаётся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EAGER` лишь заменяет N+1 на принудительную загрузку данных в каждом запросе, что даёт избыточный трафик и `JOIN`.",
+                "source_of_confusion": "Раз `EAGER` грузит всё сразу, кажется, что отдельных запросов не будет вовсе.",
+                "if_it_were_true": "Тогда `EAGER` был бы рекомендуемым решением, но best practice — явный `JOIN FETCH`/`@EntityGraph`.",
+                "how_it_should_be": "N+1 решают точечной загрузкой по месту, а не глобальным `EAGER`, который грузит лишнее."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Best practice — ставить `FetchType.LAZY` на все ассоциации и загружать нужные данные через `JOIN FETCH` или `@EntityGraph` по месту.",
               "correct": true,
               "sections": {
@@ -1123,18 +1135,6 @@
                 "when_to_apply": "Применяйте `LAZY` повсеместно и переключайтесь на явную загрузку (`JOIN FETCH`, `@EntityGraph`) только там, где данные действительно нужны.",
                 "edge_cases": "`LAZY` возвращает proxy или обёртку коллекции; реальный `SELECT` идёт при первом вызове метода, кроме `getId()`.",
                 "related": "[[hibernate-interview#Q15]] связь `One-To-Many`; [[hibernate-interview#Q20]] проблема N+1; [[hibernate-interview#Q21]] решение N+1."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Радикальное решение N+1 — `EAGER` на всех ассоциациях: связи приходят одним `JOIN`-запросом, и лишних обращений к БД не остаётся.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`EAGER` лишь заменяет N+1 на принудительную загрузку данных в каждом запросе, что даёт избыточный трафик и `JOIN`.",
-                "source_of_confusion": "Раз `EAGER` грузит всё сразу, кажется, что отдельных запросов не будет вовсе.",
-                "if_it_were_true": "Тогда `EAGER` был бы рекомендуемым решением, но best practice — явный `JOIN FETCH`/`@EntityGraph`.",
-                "how_it_should_be": "N+1 решают точечной загрузкой по месту, а не глобальным `EAGER`, который грузит лишнее."
               }
             }
           ]
@@ -1163,6 +1163,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Один запрос для списка из N сущностей плюс N дополнительных запросов при обращении к lazy-ассоциациям каждой из них.",
+              "correct": true,
+              "sections": {
+                "explanation": "Первый запрос возвращает список, а затем `Hibernate` делает отдельный `SELECT` по каждой сущности при обращении к её lazy-коллекции или связи.",
+                "example": "`FROM Author` даёт 1 запрос, а цикл `for (Author a : authors) a.getBooks().size()` — ещё N запросов; при N=1000 авторов это 1001 запрос.",
+                "when_to_apply": "Распознавайте N+1, когда видите в логах серию однотипных `SELECT ... WHERE author_id = ?` после загрузки списка.",
+                "edge_cases": "Запросы в N+1 выполняются строго последовательно — нельзя обратиться к следующей сущности, пока предыдущий `SELECT` не завершён.",
+                "related": "[[hibernate-interview#Q19]] lazy и eager загрузка; [[hibernate-interview#Q21]] решение N+1; [[hibernate-interview#Q39]] `Hibernate Statistics`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "N запросов постраничной выборки (по одному на страницу) плюс один COUNT-запрос для общего числа строк — накладные расходы Page-методов в Spring Data.",
               "correct": false,
               "sections": {
@@ -1173,8 +1186,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Один лишний запрос на каждую EAGER-ассоциацию `@OneToOne` — на других типах связей проблема не воспроизводится.",
               "correct": false,
               "sections": {
@@ -1182,19 +1195,6 @@
                 "source_of_confusion": "`@OneToOne EAGER` действительно может давать N+1, и его ошибочно считают единственной причиной.",
                 "if_it_were_true": "Тогда отказ от `@OneToOne` устранял бы N+1, но проблема массово возникает и на коллекциях.",
                 "how_it_should_be": "N+1 — общая проблема lazy-связей в цикле, не привязанная только к `@OneToOne`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Один запрос для списка из N сущностей плюс N дополнительных запросов при обращении к lazy-ассоциациям каждой из них.",
-              "correct": true,
-              "sections": {
-                "explanation": "Первый запрос возвращает список, а затем `Hibernate` делает отдельный `SELECT` по каждой сущности при обращении к её lazy-коллекции или связи.",
-                "example": "`FROM Author` даёт 1 запрос, а цикл `for (Author a : authors) a.getBooks().size()` — ещё N запросов; при N=1000 авторов это 1001 запрос.",
-                "when_to_apply": "Распознавайте N+1, когда видите в логах серию однотипных `SELECT ... WHERE author_id = ?` после загрузки списка.",
-                "edge_cases": "Запросы в N+1 выполняются строго последовательно — нельзя обратиться к следующей сущности, пока предыдущий `SELECT` не завершён.",
-                "related": "[[hibernate-interview#Q19]] lazy и eager загрузка; [[hibernate-interview#Q21]] решение N+1; [[hibernate-interview#Q39]] `Hibernate Statistics`."
               }
             }
           ]
@@ -1283,6 +1283,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`LazyInitializationException` лечится штатно включением `open-in-view = true`: сессия живёт до конца HTTP-запроса, правок кода не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OSIV считается антипаттерном в production: он маскирует проблему, но создаёт скрытые SQL в view-слое; правильнее грузить данные явно в сервисе.",
+                "source_of_confusion": "OSIV действительно устраняет симптом, и его принимают за единственное решение.",
+                "if_it_were_true": "Тогда `JOIN FETCH` и DTO-проекции были бы лишними, но именно они — рекомендуемый подход.",
+                "how_it_should_be": "Данные загружают явно (`JOIN FETCH`, `@EntityGraph`, DTO) в транзакции, а OSIV отключают."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`LazyInitializationException` возникает при обращении к lazy-ассоциации вне открытой `Session`/транзакции.",
               "correct": true,
               "sections": {
@@ -1291,18 +1303,6 @@
                 "when_to_apply": "Избегайте его, загружая нужные данные заранее через `JOIN FETCH`, `@EntityGraph` или DTO-проекцию в сервисном слое.",
                 "edge_cases": "`Open Session in View` (`open-in-view=true`) маскирует проблему, держа сессию до конца запроса, но это антипаттерн с риском N+1.",
                 "related": "[[hibernate-interview#Q19]] lazy и eager; [[hibernate-interview#Q21]] решение N+1; [[hibernate-interview#Q43]] Open-in-View антипаттерн."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`LazyInitializationException` лечится штатно включением `open-in-view = true`: сессия живёт до конца HTTP-запроса, правок кода не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "OSIV считается антипаттерном в production: он маскирует проблему, но создаёт скрытые SQL в view-слое; правильнее грузить данные явно в сервисе.",
-                "source_of_confusion": "OSIV действительно устраняет симптом, и его принимают за единственное решение.",
-                "if_it_were_true": "Тогда `JOIN FETCH` и DTO-проекции были бы лишними, но именно они — рекомендуемый подход.",
-                "how_it_should_be": "Данные загружают явно (`JOIN FETCH`, `@EntityGraph`, DTO) в транзакции, а OSIV отключают."
               }
             },
             {
@@ -1343,18 +1343,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`createEntityGraph` задаёт граф программно в рантайме, а декларативной аннотации спецификация не предусматривает — статичные графы собирают вручную.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@NamedEntityGraph` — стандартная JPA-аннотация: объявляется на сущности и используется через `em.getEntityGraph(name)`.",
-                "source_of_confusion": "Программный `createEntityGraph` нагляднее, и про декларативный вариант иногда забывают.",
-                "if_it_were_true": "Тогда нельзя было бы переиспользовать именованные графы, но `@NamedEntityGraph` именно для этого.",
-                "how_it_should_be": "Entity Graph задают и аннотацией `@NamedEntityGraph`, и программно через API."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`loadgraph` загружает указанные атрибуты плюс те, что по умолчанию `EAGER`, дополняя дефолтное поведение.",
               "correct": true,
               "sections": {
@@ -1363,6 +1351,18 @@
                 "when_to_apply": "Entity Graph применяют как декларативную альтернативу `JOIN FETCH`; в `Spring Data` — через `@EntityGraph` на методе репозитория.",
                 "edge_cases": "`fetchgraph` грузит ТОЛЬКО указанные атрибуты (остальные становятся `LAZY`), тогда как `loadgraph` уважает дефолтный `EAGER`.",
                 "related": "[[hibernate-interview#Q21]] решение N+1; [[hibernate-interview#Q22]] `LazyInitializationException`; [[hibernate-interview#Q45]] projections."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`createEntityGraph` задаёт граф программно в рантайме, а декларативной аннотации спецификация не предусматривает — статичные графы собирают вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@NamedEntityGraph` — стандартная JPA-аннотация: объявляется на сущности и используется через `em.getEntityGraph(name)`.",
+                "source_of_confusion": "Программный `createEntityGraph` нагляднее, и про декларативный вариант иногда забывают.",
+                "if_it_were_true": "Тогда нельзя было бы переиспользовать именованные графы, но `@NamedEntityGraph` именно для этого.",
+                "how_it_should_be": "Entity Graph задают и аннотацией `@NamedEntityGraph`, и программно через API."
               }
             },
             {
@@ -1451,19 +1451,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для включения L2 нужны три элемента: зависимость провайдера, `hibernate.cache.use_second_level_cache=true` и `@Cacheable`/`@Cache` на сущности.",
-              "correct": true,
-              "sections": {
-                "explanation": "Все три обязательны: без провайдера нет реализации, без флага L2 отключён, без аннотации конкретная сущность не попадает в кэш.",
-                "example": "Зависимость `hibernate-jcache` + `ehcache`, флаг в `application.yml` и `@Cacheable @Cache(usage = READ_WRITE)` на `Country` дают рабочий L2.",
-                "when_to_apply": "L2 наиболее эффективен для сущностей, которые часто читаются и редко изменяются — справочники, конфигурации.",
-                "edge_cases": "Для часто изменяемых данных L2 невыгоден: частая инвалидация при `UPDATE` сводит на нет выигрыш от кэширования.",
-                "related": "[[hibernate-interview#Q24]] L1 и L2 кэш; [[hibernate-interview#Q26]] Query Cache; [[hibernate-interview#Q27]] concurrency strategy."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Для включения L2 в `Spring`-приложении хватает свойства `spring.jpa.properties.hibernate.cache.use_second_level_cache=true`: стартер сам подтянет провайдер и пометит сущности кэшируемыми.",
               "correct": false,
               "sections": {
@@ -1474,8 +1461,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Для часто изменяемых данных L2 настраивают первым (`Order`, `Cart`): записи обновляют кэш, чтения бьют в горячие строки.",
               "correct": false,
               "sections": {
@@ -1483,6 +1470,19 @@
                 "source_of_confusion": "Кажется, что кэшировать стоит самые «горячие» по записи данные, хотя выигрыш даёт стабильность чтения.",
                 "if_it_were_true": "Тогда L2 ускорял бы постоянно обновляемые таблицы, но каждое изменение выбрасывает запись из кэша.",
                 "how_it_should_be": "L2 нацелен на стабильные данные с большим числом чтений и редкими изменениями."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для включения L2 нужны три элемента: зависимость провайдера, `hibernate.cache.use_second_level_cache=true` и `@Cacheable`/`@Cache` на сущности.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все три обязательны: без провайдера нет реализации, без флага L2 отключён, без аннотации конкретная сущность не попадает в кэш.",
+                "example": "Зависимость `hibernate-jcache` + `ehcache`, флаг в `application.yml` и `@Cacheable @Cache(usage = READ_WRITE)` на `Country` дают рабочий L2.",
+                "when_to_apply": "L2 наиболее эффективен для сущностей, которые часто читаются и редко изменяются — справочники, конфигурации.",
+                "edge_cases": "Для часто изменяемых данных L2 невыгоден: частая инвалидация при `UPDATE` сводит на нет выигрыш от кэширования.",
+                "related": "[[hibernate-interview#Q24]] L1 и L2 кэш; [[hibernate-interview#Q26]] Query Cache; [[hibernate-interview#Q27]] concurrency strategy."
               }
             },
             {
@@ -1511,18 +1511,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Query Cache хранит полные объекты сущностей вместе с их ассоциациями: повторный запрос собирается без обращения и к L2, и к БД.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Query Cache хранит только список ID, а сами сущности достаются из L2 cache; поэтому L2 обязателен для его работы.",
-                "source_of_confusion": "Раз кэш «запросов», кажется логичным, что он держит готовые объекты результата.",
-                "if_it_were_true": "Тогда Query Cache работал бы и без L2, но без L2 сущности по ID всё равно грузятся из БД.",
-                "how_it_should_be": "Query Cache держит ID результата; объекты по ним предоставляет L2 cache."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Query Cache хранит список ID результата и работает в паре с L2 cache: сами сущности достаются из L2 по этим ID.",
               "correct": true,
               "sections": {
@@ -1531,6 +1519,18 @@
                 "when_to_apply": "Используют для часто повторяющихся запросов с одинаковыми параметрами по редко меняющимся сущностям.",
                 "edge_cases": "При любом `INSERT`/`UPDATE`/`DELETE` в таблице Query Cache для неё инвалидируется целиком, поэтому на часто изменяемых данных он невыгоден.",
                 "related": "[[hibernate-interview#Q24]] L1 и L2 кэш; [[hibernate-interview#Q25]] настройка L2; [[hibernate-interview#Q27]] concurrency strategy."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Query Cache хранит полные объекты сущностей вместе с их ассоциациями: повторный запрос собирается без обращения и к L2, и к БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Query Cache хранит только список ID, а сами сущности достаются из L2 cache; поэтому L2 обязателен для его работы.",
+                "source_of_confusion": "Раз кэш «запросов», кажется логичным, что он держит готовые объекты результата.",
+                "if_it_were_true": "Тогда Query Cache работал бы и без L2, но без L2 сущности по ID всё равно грузятся из БД.",
+                "how_it_should_be": "Query Cache держит ID результата; объекты по ним предоставляет L2 cache."
               }
             },
             {
@@ -1595,6 +1595,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`TRANSACTIONAL` — дефолт для большинства сущностей, `READ_WRITE` — ручной выбор для оптимизации, `READ_ONLY` — исключение для enum-таблиц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стратегия всегда выбирается явно через `@Cache(usage=...)`; `TRANSACTIONAL` требует `JTA` и используется только в распределённых сценариях.",
+                "source_of_confusion": "Звучит «надёжно», и кажется, что фреймворк применяет её по умолчанию ради безопасности.",
+                "if_it_were_true": "Тогда любой проект требовал бы `JTA`, но большинству хватает `READ_WRITE` без распределённых транзакций.",
+                "how_it_should_be": "Стратегию задают явно; `TRANSACTIONAL` нужен лишь для кластерного кэша с `JTA`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`READ_ONLY` — для неизменяемых справочников, `READ_WRITE` — soft-lock для данных с изменениями, `TRANSACTIONAL` — для XA-транзакций (`JTA`).",
               "correct": true,
               "sections": {
@@ -1603,18 +1615,6 @@
                 "when_to_apply": "Выбирайте стратегию по характеру данных: статичные — `READ_ONLY`, изменяемые с нужной консистентностью — `READ_WRITE`, кластер с `JTA` — `TRANSACTIONAL`.",
                 "edge_cases": "`NONSTRICT_READ_WRITE` обновляет кэш после commit и допускает чтение устаревших данных (eventual consistency).",
                 "related": "[[hibernate-interview#Q25]] настройка L2; [[hibernate-interview#Q26]] Query Cache; [[hibernate-interview#Q38]] `@Immutable`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`TRANSACTIONAL` — дефолт для большинства сущностей, `READ_WRITE` — ручной выбор для оптимизации, `READ_ONLY` — исключение для enum-таблиц.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стратегия всегда выбирается явно через `@Cache(usage=...)`; `TRANSACTIONAL` требует `JTA` и используется только в распределённых сценариях.",
-                "source_of_confusion": "Звучит «надёжно», и кажется, что фреймворк применяет её по умолчанию ради безопасности.",
-                "if_it_were_true": "Тогда любой проект требовал бы `JTA`, но большинству хватает `READ_WRITE` без распределённых транзакций.",
-                "how_it_should_be": "Стратегию задают явно; `TRANSACTIONAL` нужен лишь для кластерного кэша с `JTA`."
               }
             }
           ]
@@ -1643,6 +1643,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`HQL` — надмножество `JPQL` с `Hibernate`-специфичными расширениями, поэтому весь `JPQL`-код работает и в `HQL`, но не наоборот.",
+              "correct": true,
+              "sections": {
+                "explanation": "Любой `JPQL`-запрос валиден в `HQL`, но обратное неверно: `HQL` может использовать специфичные `Hibernate`-функции, которых нет в стандарте.",
+                "example": "`SELECT u FROM User u WHERE u.name LIKE :name AND u.active = true` — это `JPQL`, работающий и в `Hibernate` как `HQL`.",
+                "when_to_apply": "Пишите запросы на `JPQL` ради переносимости и переходите к `HQL`-расширениям, только когда стандартных средств не хватает.",
+                "edge_cases": "`JPQL` работает с сущностями и полями (`FROM User u`, `u.name`), а не с таблицами/колонками; `Hibernate` транслирует его в SQL на лету.",
+                "related": "[[hibernate-interview#Q1]] `Hibernate` и `JPA`; [[hibernate-interview#Q29]] `Criteria API`; [[hibernate-interview#Q30]] `NamedQuery`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`JPQL` — язык только для выборок, поэтому bulk-операции `UPDATE`/`DELETE` выполняются исключительно нативным `SQL` или `Criteria API`.",
               "correct": false,
               "sections": {
@@ -1653,8 +1666,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`JPQL` — язык скалярных проекций, поэтому полноценные сущности возвращает только `Criteria API`, а `SELECT u` отдаёт массив полей.",
               "correct": false,
               "sections": {
@@ -1662,19 +1675,6 @@
                 "source_of_confusion": "Раз `Criteria API` строит запросы типобезопасно, кажется, что только он умеет возвращать сущности.",
                 "if_it_were_true": "Тогда нельзя было бы написать `TypedQuery<User>` на `JPQL`, но это базовый сценарий.",
                 "how_it_should_be": "`JPQL` возвращает сущности, скаляры и DTO; `Criteria API` решает ту же задачу программно."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`HQL` — надмножество `JPQL` с `Hibernate`-специфичными расширениями, поэтому весь `JPQL`-код работает и в `HQL`, но не наоборот.",
-              "correct": true,
-              "sections": {
-                "explanation": "Любой `JPQL`-запрос валиден в `HQL`, но обратное неверно: `HQL` может использовать специфичные `Hibernate`-функции, которых нет в стандарте.",
-                "example": "`SELECT u FROM User u WHERE u.name LIKE :name AND u.active = true` — это `JPQL`, работающий и в `Hibernate` как `HQL`.",
-                "when_to_apply": "Пишите запросы на `JPQL` ради переносимости и переходите к `HQL`-расширениям, только когда стандартных средств не хватает.",
-                "edge_cases": "`JPQL` работает с сущностями и полями (`FROM User u`, `u.name`), а не с таблицами/колонками; `Hibernate` транслирует его в SQL на лету.",
-                "related": "[[hibernate-interview#Q1]] `Hibernate` и `JPA`; [[hibernate-interview#Q29]] `Criteria API`; [[hibernate-interview#Q30]] `NamedQuery`."
               }
             }
           ]
@@ -1763,6 +1763,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`NamedQuery` принимает только нативный `SQL` через `@NamedNativeQuery`, а `JPQL`-вариант объявляется обычным `createQuery` в коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NamedQuery` поддерживает `JPQL` (`@NamedQuery`) и нативный SQL (`@NamedNativeQuery`) — обе аннотации являются частью JPA.",
+                "source_of_confusion": "Наличие отдельной `@NamedNativeQuery` наводит на мысль, что базовая аннотация только для SQL.",
+                "if_it_were_true": "Тогда `@NamedQuery` с `JPQL`-текстом не работал бы, но это самый частый случай его использования.",
+                "how_it_should_be": "`@NamedQuery` — для `JPQL`, `@NamedNativeQuery` — для нативного SQL; обе стандартны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`NamedQuery` объявляется через `@NamedQuery` на сущности и проверяется `Hibernate` при старте приложения, а не в рантайме.",
               "correct": true,
               "sections": {
@@ -1771,18 +1783,6 @@
                 "when_to_apply": "Используют для часто применяемых запросов, чтобы получить раннюю валидацию, кэширование плана и единое место объявления.",
                 "edge_cases": "`NamedQuery` поддерживает `JPQL` (`@NamedQuery`) и нативный SQL (`@NamedNativeQuery`), а также именованные и позиционные параметры.",
                 "related": "[[hibernate-interview#Q28]] `HQL` и `JPQL`; [[hibernate-interview#Q29]] `Criteria API`; [[hibernate-interview#Q31]] нативные SQL-запросы."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`NamedQuery` принимает только нативный `SQL` через `@NamedNativeQuery`, а `JPQL`-вариант объявляется обычным `createQuery` в коде.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`NamedQuery` поддерживает `JPQL` (`@NamedQuery`) и нативный SQL (`@NamedNativeQuery`) — обе аннотации являются частью JPA.",
-                "source_of_confusion": "Наличие отдельной `@NamedNativeQuery` наводит на мысль, что базовая аннотация только для SQL.",
-                "if_it_were_true": "Тогда `@NamedQuery` с `JPQL`-текстом не работал бы, но это самый частый случай его использования.",
-                "how_it_should_be": "`@NamedQuery` — для `JPQL`, `@NamedNativeQuery` — для нативного SQL; обе стандартны."
               }
             },
             {
@@ -1823,18 +1823,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Да, но результат нативного SQL маппится только на массивы `Object[]` и на управляемые `Entity` его привязать нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Результат маппится на `Entity` через `createNativeQuery(sql, User.class)` или `@SqlResultSetMapping` для сложных DTO-случаев.",
-                "source_of_confusion": "Запрос без указания класса возвращает `Object[]`, и это принимают за единственный вариант.",
-                "if_it_were_true": "Тогда `createNativeQuery(sql, User.class)` не существовал бы, но это распространённая форма вызова.",
-                "how_it_should_be": "Нативный SQL маппится и на `Entity`, и на DTO, не только на `Object[]`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Да, нативные SQL-запросы поддерживаются через `createNativeQuery()` и полезны для специфичных возможностей СУБД.",
               "correct": true,
               "sections": {
@@ -1843,6 +1831,18 @@
                 "when_to_apply": "Применяйте нативный SQL как escape hatch, когда `JPQL`/`HQL` недостаточно выразителен или нужна оптимизация под конкретную СУБД.",
                 "edge_cases": "Результат нативного запроса с managed-сущностями попадает в L1 cache и может конфликтовать с уже загруженными объектами — нужна осторожность.",
                 "related": "[[hibernate-interview#Q28]] `HQL` и `JPQL`; [[hibernate-interview#Q30]] `NamedQuery`; [[hibernate-interview#Q45]] projections."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Да, но результат нативного SQL маппится только на массивы `Object[]` и на управляемые `Entity` его привязать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Результат маппится на `Entity` через `createNativeQuery(sql, User.class)` или `@SqlResultSetMapping` для сложных DTO-случаев.",
+                "source_of_confusion": "Запрос без указания класса возвращает `Object[]`, и это принимают за единственный вариант.",
+                "if_it_were_true": "Тогда `createNativeQuery(sql, User.class)` не существовал бы, но это распространённая форма вызова.",
+                "how_it_should_be": "Нативный SQL маппится и на `Entity`, и на DTO, не только на `Object[]`."
               }
             },
             {
@@ -1931,19 +1931,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Version` добавляет колонку version в `WHERE` при `UPDATE`; если обновлено 0 строк — бросается `OptimisticLockException`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Механизм прост: `UPDATE ... WHERE id=? AND version=?`; если другой поток уже увеличил version, текущий `UPDATE` затронет 0 строк, и `Hibernate` превратит это в исключение.",
-                "example": "`UPDATE products SET name='New', version=3 WHERE id=1 AND version=2` — при несовпадении version обновится 0 строк и сработает блокировка.",
-                "when_to_apply": "Оптимистичную блокировку применяют, когда конфликты редки (большинство web-приложений), ловя `OptimisticLockException` и повторяя операцию.",
-                "edge_cases": "Тип `@Version` — `Integer`, `Long`, `Short`, `Timestamp`, `Instant`; числовые предпочтительнее из-за проблем с точностью времени.",
-                "related": "[[hibernate-interview#Q34]] оптимистичная и пессимистичная; [[hibernate-interview#Q35]] транзакции; [[hibernate-interview#Q13]] аннотации маппинга."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`@Version` переводит `find()` в `SELECT ... FOR UPDATE`; пока строка заблокирована — конкурентные `UPDATE` ждут снятия блокировки.",
               "correct": false,
               "sections": {
@@ -1954,8 +1941,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`@Version` работает только с типом `Timestamp`; числовые типы не попадают в `WHERE` — конфликт по ним не детектируется.",
               "correct": false,
               "sections": {
@@ -1963,6 +1950,19 @@
                 "source_of_confusion": "Версия ассоциируется со «временем изменения», а timestamp-колонки updated_at в схемах встречаются чаще счётчиков — кажется, что и версия обязана быть временем.",
                 "if_it_were_true": "Два обновления в один тик часов получали бы одинаковую «версию», и конфликт остался бы незамеченным — оптимистичная блокировка переставала бы работать под нагрузкой.",
                 "how_it_should_be": "Выбирать `Integer`/`Long` по умолчанию; `Timestamp`/`Instant` — только когда нужна человекочитаемая отметка, помня о риске коллизий точности времени."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Version` добавляет колонку version в `WHERE` при `UPDATE`; если обновлено 0 строк — бросается `OptimisticLockException`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Механизм прост: `UPDATE ... WHERE id=? AND version=?`; если другой поток уже увеличил version, текущий `UPDATE` затронет 0 строк, и `Hibernate` превратит это в исключение.",
+                "example": "`UPDATE products SET name='New', version=3 WHERE id=1 AND version=2` — при несовпадении version обновится 0 строк и сработает блокировка.",
+                "when_to_apply": "Оптимистичную блокировку применяют, когда конфликты редки (большинство web-приложений), ловя `OptimisticLockException` и повторяя операцию.",
+                "edge_cases": "Тип `@Version` — `Integer`, `Long`, `Short`, `Timestamp`, `Instant`; числовые предпочтительнее из-за проблем с точностью времени.",
+                "related": "[[hibernate-interview#Q34]] оптимистичная и пессимистичная; [[hibernate-interview#Q35]] транзакции; [[hibernate-interview#Q13]] аннотации маппинга."
               }
             },
             {
@@ -1991,18 +1991,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Пессимистичная блокировка даёт больший throughput под нагрузкой и исключает deadlock по построению, а оптимистичная через `@Version` проигрывает из-за повторов при `OptimisticLockException`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: пессимистичная блокировка снижает throughput (потоки ждут освобождения) и может привести к deadlock; оптимистичная не блокирует.",
-                "source_of_confusion": "Слово «пессимистичная» звучит как «более надёжная», и надёжность путают с производительностью.",
-                "if_it_were_true": "Тогда блокировки ускоряли бы конкурентный доступ, но ожидание на `FOR UPDATE` его замедляет.",
-                "how_it_should_be": "Оптимистичная даёт больший throughput без deadlock; пессимистичная — наоборот."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Оптимистичная блокировка через `@Version` не блокирует строку в БД и обнаруживает конфликт при `UPDATE`, а пессимистичная использует `SELECT ... FOR UPDATE`.",
               "correct": true,
               "sections": {
@@ -2011,6 +1999,18 @@
                 "when_to_apply": "Оптимистичная — для большинства web-приложений с редкими конфликтами; пессимистичная — для финансовых и критичных операций с высокой конкуренцией.",
                 "edge_cases": "Пессимистичная снижает throughput (потоки ждут) и может привести к deadlock; оптимистичная не блокирует и deadlock не вызывает.",
                 "related": "[[hibernate-interview#Q33]] `@Version`; [[hibernate-interview#Q35]] транзакции; [[hibernate-interview#Q24]] кэш и консистентность."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Пессимистичная блокировка даёт больший throughput под нагрузкой и исключает deadlock по построению, а оптимистичная через `@Version` проигрывает из-за повторов при `OptimisticLockException`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: пессимистичная блокировка снижает throughput (потоки ждут освобождения) и может привести к deadlock; оптимистичная не блокирует.",
+                "source_of_confusion": "Слово «пессимистичная» звучит как «более надёжная», и надёжность путают с производительностью.",
+                "if_it_were_true": "Тогда блокировки ускоряли бы конкурентный доступ, но ожидание на `FOR UPDATE` его замедляет.",
+                "how_it_should_be": "Оптимистичная даёт больший throughput без deadlock; пессимистичная — наоборот."
               }
             },
             {
@@ -2075,6 +2075,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`@Transactional` в `Spring` без атрибутов применяет изоляцию `SERIALIZABLE`: строгий уровень выбран дефолтом, чтобы транзакции были корректны без настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `Spring` использует уровень изоляции БД (`Isolation.DEFAULT`), для `PostgreSQL` это `READ COMMITTED`; `SERIALIZABLE` не навязывается.",
+                "source_of_confusion": "`SERIALIZABLE` ассоциируют с «безопасным по умолчанию», хотя дефолт — уровень самой БД.",
+                "if_it_were_true": "Тогда любая транзакция была бы максимально строгой и медленной, но дефолт берётся из настроек СУБД.",
+                "how_it_should_be": "Без явного указания применяется уровень изоляции БД, а не `SERIALIZABLE`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`@Transactional` в `Spring` декларативно управляет границами транзакции: commit при успехе и rollback при `RuntimeException`.",
               "correct": true,
               "sections": {
@@ -2083,18 +2095,6 @@
                 "when_to_apply": "В `Spring`-приложениях управление транзакциями выносят на `@Transactional`; без `Spring` используют `Transaction` API вручную.",
                 "edge_cases": "По умолчанию rollback идёт только для `RuntimeException`/`Error`; для checked-исключений нужно явно указать `rollbackFor = Exception.class`.",
                 "related": "[[hibernate-interview#Q33]] `@Version`; [[hibernate-interview#Q34]] виды блокировок; [[hibernate-interview#Q41]] `getCurrentSession` и `openSession`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@Transactional` в `Spring` без атрибутов применяет изоляцию `SERIALIZABLE`: строгий уровень выбран дефолтом, чтобы транзакции были корректны без настройки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию `Spring` использует уровень изоляции БД (`Isolation.DEFAULT`), для `PostgreSQL` это `READ COMMITTED`; `SERIALIZABLE` не навязывается.",
-                "source_of_confusion": "`SERIALIZABLE` ассоциируют с «безопасным по умолчанию», хотя дефолт — уровень самой БД.",
-                "if_it_were_true": "Тогда любая транзакция была бы максимально строгой и медленной, но дефолт берётся из настроек СУБД.",
-                "how_it_should_be": "Без явного указания применяется уровень изоляции БД, а не `SERIALIZABLE`."
               }
             }
           ]
@@ -2123,6 +2123,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`GenerationType.SEQUENCE` с большим `allocationSize` позволяет `Hibernate` батчить `INSERT`, так как id известен до выполнения SQL.",
+              "correct": true,
+              "sections": {
+                "explanation": "SEQUENCE-генератор заранее берёт блок id (например, 50 штук), поэтому `Hibernate` знает id до `INSERT` и может собрать batch и отправить одним запросом.",
+                "example": "`@SequenceGenerator(allocationSize = 50)` плюс `hibernate.jdbc.batch_size: 50`, `order_inserts: true` и периодический `flush()`+`clear()` дают эффективный bulk insert.",
+                "when_to_apply": "Применяют для массовых `INSERT`/`UPDATE`/`DELETE`, настраивая `batch_size`, `order_inserts`/`order_updates` и `SEQUENCE`-генерацию id.",
+                "edge_cases": "Без периодического `flush()`+`clear()` при вставке 100K записей все сущности останутся в L1 cache, что приведёт к `OutOfMemoryError`.",
+                "related": "[[hibernate-interview#Q13]] стратегии `@GeneratedValue`; [[hibernate-interview#Q46]] `StatelessSession`; [[hibernate-interview#Q47]] ошибки производительности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`hibernate.jdbc.batch_size=50` сам закрывает массовые вставки, так как `Hibernate` вызывает `flush()` и очищает контекст после каждого пакета.",
               "correct": false,
               "sections": {
@@ -2133,8 +2146,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`order_inserts=true` ускоряет и единичные `INSERT`, так как `Hibernate` группирует statement-ы на уровне драйвера даже без включённого `batch_size`.",
               "correct": false,
               "sections": {
@@ -2142,19 +2155,6 @@
                 "source_of_confusion": "Слово «order» наводит на мысль о самостоятельной оптимизации сортировки запросов.",
                 "if_it_were_true": "Тогда `order_inserts` ускорял бы одиночные вставки, но без батчинга группировать нечего.",
                 "how_it_should_be": "`order_inserts` работает в паре с `batch_size`, группируя однотипные `INSERT` в один batch."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`GenerationType.SEQUENCE` с большим `allocationSize` позволяет `Hibernate` батчить `INSERT`, так как id известен до выполнения SQL.",
-              "correct": true,
-              "sections": {
-                "explanation": "SEQUENCE-генератор заранее берёт блок id (например, 50 штук), поэтому `Hibernate` знает id до `INSERT` и может собрать batch и отправить одним запросом.",
-                "example": "`@SequenceGenerator(allocationSize = 50)` плюс `hibernate.jdbc.batch_size: 50`, `order_inserts: true` и периодический `flush()`+`clear()` дают эффективный bulk insert.",
-                "when_to_apply": "Применяют для массовых `INSERT`/`UPDATE`/`DELETE`, настраивая `batch_size`, `order_inserts`/`order_updates` и `SEQUENCE`-генерацию id.",
-                "edge_cases": "Без периодического `flush()`+`clear()` при вставке 100K записей все сущности останутся в L1 cache, что приведёт к `OutOfMemoryError`.",
-                "related": "[[hibernate-interview#Q13]] стратегии `@GeneratedValue`; [[hibernate-interview#Q46]] `StatelessSession`; [[hibernate-interview#Q47]] ошибки производительности."
               }
             }
           ]
@@ -2243,6 +2243,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`@Immutable` сам включает сущность в L2 cache — явный `@Cache` не нужен, `Hibernate` применит стратегию `READ_ONLY` автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Immutable` не включает L2 cache — это отдельная настройка; в паре с `@Cache(usage = READ_ONLY)` даёт оптимальную комбинацию для справочников.",
+                "source_of_confusion": "Неизменяемость и кэширование часто идут вместе, и их ошибочно считают одним механизмом.",
+                "if_it_were_true": "Тогда `@Immutable` сам клал бы сущность в L2, но без `@Cache` и провайдера кэш не активен.",
+                "how_it_should_be": "`@Immutable` отключает `UPDATE`; кэширование требует отдельной аннотации `@Cache`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`@Immutable` отключает dirty checking и игнорирует вызовы `update()`/`merge()` — `Hibernate` не сгенерирует `UPDATE` для такой сущности.",
               "correct": true,
               "sections": {
@@ -2251,18 +2263,6 @@
                 "when_to_apply": "Применяют для справочников, конфигураций и исторических данных, которые только читаются; идеально сочетается с `READ_ONLY` кэш-стратегией.",
                 "edge_cases": "`@Immutable` запрещает только `UPDATE`; создание через `persist()` и удаление через `remove()` работают штатно.",
                 "related": "[[hibernate-interview#Q12]] `final`-классы; [[hibernate-interview#Q27]] concurrency strategy; [[hibernate-interview#Q8]] dirty checking."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`@Immutable` сам включает сущность в L2 cache — явный `@Cache` не нужен, `Hibernate` применит стратегию `READ_ONLY` автоматически.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Immutable` не включает L2 cache — это отдельная настройка; в паре с `@Cache(usage = READ_ONLY)` даёт оптимальную комбинацию для справочников.",
-                "source_of_confusion": "Неизменяемость и кэширование часто идут вместе, и их ошибочно считают одним механизмом.",
-                "if_it_were_true": "Тогда `@Immutable` сам клал бы сущность в L2, но без `@Cache` и провайдера кэш не активен.",
-                "how_it_should_be": "`@Immutable` отключает `UPDATE`; кэширование требует отдельной аннотации `@Cache`."
               }
             },
             {
@@ -2303,18 +2303,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Statistics ограничен счётчиками запросов и кэша, а медленные запросы ищут в `slow query log` СУБД.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Statistics содержит `getQueryExecutionMaxTimeQueryString()` и `getQueryExecutionMaxTime()` — это самый долгий запрос с момента последнего `clear()`.",
-                "source_of_confusion": "Кажется, что встроенные метрики слишком просты для поиска медленных запросов.",
-                "if_it_were_true": "Тогда для поиска узкого места всегда требовался бы внешний инструмент, но эти данные есть в Statistics.",
-                "how_it_should_be": "Самый медленный запрос виден прямо в Statistics через специальные методы."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Statistics включается через `hibernate.generate_statistics=true` и доступен через `sessionFactory.getStatistics()`.",
               "correct": true,
               "sections": {
@@ -2323,6 +2311,18 @@
                 "when_to_apply": "Используют для обнаружения N+1 (неожиданно большое число запросов) и проверки эффективности кэша; в production — через `Actuator`/`Micrometer`.",
                 "edge_cases": "Сбор статистики по умолчанию выключен из-за накладных расходов — нужно явно включить флагом или `stats.setStatisticsEnabled(true)`.",
                 "related": "[[hibernate-interview#Q20]] проблема N+1; [[hibernate-interview#Q24]] L1 и L2 кэш; [[hibernate-interview#Q48]] тестирование `Hibernate`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Statistics ограничен счётчиками запросов и кэша, а медленные запросы ищут в `slow query log` СУБД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Statistics содержит `getQueryExecutionMaxTimeQueryString()` и `getQueryExecutionMaxTime()` — это самый долгий запрос с момента последнего `clear()`.",
+                "source_of_confusion": "Кажется, что встроенные метрики слишком просты для поиска медленных запросов.",
+                "if_it_were_true": "Тогда для поиска узкого места всегда требовался бы внешний инструмент, но эти данные есть в Statistics.",
+                "how_it_should_be": "Самый медленный запрос виден прямо в Statistics через специальные методы."
               }
             },
             {
@@ -2411,19 +2411,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`getCurrentSession()` возвращает сессию, привязанную к текущей транзакции (через `ThreadLocal`), и закрывается автоматически, а `openSession()` создаёт независимую сессию, закрывать которую нужно вручную.",
-              "correct": true,
-              "sections": {
-                "explanation": "Это ключевое отличие: `getCurrentSession` — для managed-среды (`Spring`, `JEE`), `openSession` — для standalone-кода, где нужен полный контроль над жизненным циклом.",
-                "example": "`sf.getCurrentSession()` сама закрывается при commit, а `sf.openSession()` требует `session.close()` в `finally`, иначе будет утечка соединения.",
-                "when_to_apply": "В `Spring`/`JEE` используют `getCurrentSession`; в standalone-приложениях — `openSession` с явным управлением закрытием.",
-                "edge_cases": "Также существует `openStatelessSession()` — сессия без кэша L1 и dirty checking, предназначенная для bulk-операций.",
-                "related": "[[hibernate-interview#Q4]] `Session` и `SessionFactory`; [[hibernate-interview#Q35]] транзакции; [[hibernate-interview#Q46]] `StatelessSession`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`getCurrentSession()` и `openSession()` возвращают один и тот же объект внутри потока (общий `ThreadLocal`), а различаются только проверкой активной транзакции при выдаче.",
               "correct": false,
               "sections": {
@@ -2434,8 +2421,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`openSession()` выдаёт сессию из пула `SessionFactory` (переиспользование, как у соединений), а закрытие возвращает её в пул вместо реального `close()`.",
               "correct": false,
               "sections": {
@@ -2443,6 +2430,19 @@
                 "source_of_confusion": "Аналогия с пулом соединений: раз `SessionFactory` дорогая и одна на приложение, кажется, что и сессии она раздаёт из пула, как DataSource — соединения.",
                 "if_it_were_true": "Состояние L1-кэша протекало бы между несвязанными единицами работы — «чужие» managed-сущности всплывали бы в новых запросах после переиспользования.",
                 "how_it_should_be": "Помнить, что пулятся соединения (DataSource), а не сессии: `Session` создаётся на единицу работы и закрывается; переиспользование в рамках транзакции — задача `getCurrentSession()`/Spring."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`getCurrentSession()` возвращает сессию, привязанную к текущей транзакции (через `ThreadLocal`), и закрывается автоматически, а `openSession()` создаёт независимую сессию, закрывать которую нужно вручную.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это ключевое отличие: `getCurrentSession` — для managed-среды (`Spring`, `JEE`), `openSession` — для standalone-кода, где нужен полный контроль над жизненным циклом.",
+                "example": "`sf.getCurrentSession()` сама закрывается при commit, а `sf.openSession()` требует `session.close()` в `finally`, иначе будет утечка соединения.",
+                "when_to_apply": "В `Spring`/`JEE` используют `getCurrentSession`; в standalone-приложениях — `openSession` с явным управлением закрытием.",
+                "edge_cases": "Также существует `openStatelessSession()` — сессия без кэша L1 и dirty checking, предназначенная для bulk-операций.",
+                "related": "[[hibernate-interview#Q4]] `Session` и `SessionFactory`; [[hibernate-interview#Q35]] транзакции; [[hibernate-interview#Q46]] `StatelessSession`."
               }
             },
             {
@@ -2471,18 +2471,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Dialect определяет стиль генерируемого `Java`-кода при маппинге (имена геттеров, типы полей) и настраивается на уровне annotation processor-а.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Dialect влияет на генерируемый SQL, а не на `Java`-код; он описывает особенности СУБД: синтаксис пагинации, типы и функции.",
-                "source_of_confusion": "Раз dialect — часть конфигурации `Hibernate`, кажется, что он влияет и на код приложения.",
-                "if_it_were_true": "Тогда смена СУБД меняла бы аннотации сущностей, но они остаются прежними, меняется лишь SQL.",
-                "how_it_should_be": "Dialect управляет генерацией SQL под конкретную СУБД, не затрагивая `Java`-код."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Dialect описывает особенности конкретной СУБД (синтаксис SQL, типы, функции, пагинацию) и в `Hibernate 6` определяется автоматически по `JDBC` URL.",
               "correct": true,
               "sections": {
@@ -2491,6 +2479,18 @@
                 "when_to_apply": "Явно задают dialect, когда нужно зафиксировать конкретную версию или использовать кастомный; в остальных случаях полагаются на auto-detection.",
                 "edge_cases": "Каждая СУБД имеет свой dialect из-за различий в синтаксисе (пагинация `LIMIT`/`OFFSET` против `ROWNUM`, типы, функции) — один общий невозможен.",
                 "related": "[[hibernate-interview#Q40]] настройка в `Spring Boot`; [[hibernate-interview#Q31]] нативные SQL-запросы; [[hibernate-interview#Q2]] преимущества над `JDBC`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Dialect определяет стиль генерируемого `Java`-кода при маппинге (имена геттеров, типы полей) и настраивается на уровне annotation processor-а.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dialect влияет на генерируемый SQL, а не на `Java`-код; он описывает особенности СУБД: синтаксис пагинации, типы и функции.",
+                "source_of_confusion": "Раз dialect — часть конфигурации `Hibernate`, кажется, что он влияет и на код приложения.",
+                "if_it_were_true": "Тогда смена СУБД меняла бы аннотации сущностей, но они остаются прежними, меняется лишь SQL.",
+                "how_it_should_be": "Dialect управляет генерацией SQL под конкретную СУБД, не затрагивая `Java`-код."
               }
             },
             {
@@ -2555,6 +2555,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "OSIV управляет изоляцией транзакции на время запроса (`spring.jpa.open-in-view` задаёт уровень чтения), не касаясь ленивой загрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OSIV — это паттерн удержания persistence context на время запроса, не имеющий отношения к уровням изоляции (`READ_COMMITTED`, `SERIALIZABLE`).",
+                "source_of_confusion": "Оба понятия относятся к транзакциям, и их легко смешать без знания деталей.",
+                "if_it_were_true": "Тогда `open-in-view` настраивал бы изоляцию, но он лишь управляет временем жизни сессии.",
+                "how_it_should_be": "OSIV — про время жизни persistence context; уровни изоляции — отдельная характеристика транзакции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "OSIV в `Spring Boot` включён по умолчанию (`spring.jpa.open-in-view=true`) и должен быть явно отключён в production.",
               "correct": true,
               "sections": {
@@ -2563,18 +2575,6 @@
                 "when_to_apply": "Отключают OSIV в production и переходят на явную загрузку (`JOIN FETCH`, `@EntityGraph`) или DTO-проекции на уровне запроса.",
                 "edge_cases": "OSIV удерживает соединение с БД на всё время запроса (включая сериализацию и внешние вызовы), делая производительность непредсказуемой.",
                 "related": "[[hibernate-interview#Q22]] `LazyInitializationException`; [[hibernate-interview#Q40]] настройка в `Spring Boot`; [[hibernate-interview#Q45]] projections."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "OSIV управляет изоляцией транзакции на время запроса (`spring.jpa.open-in-view` задаёт уровень чтения), не касаясь ленивой загрузки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "OSIV — это паттерн удержания persistence context на время запроса, не имеющий отношения к уровням изоляции (`READ_COMMITTED`, `SERIALIZABLE`).",
-                "source_of_confusion": "Оба понятия относятся к транзакциям, и их легко смешать без знания деталей.",
-                "if_it_were_true": "Тогда `open-in-view` настраивал бы изоляцию, но он лишь управляет временем жизни сессии.",
-                "how_it_should_be": "OSIV — про время жизни persistence context; уровни изоляции — отдельная характеристика транзакции."
               }
             }
           ]
@@ -2603,6 +2603,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`@Audited` на сущности заставляет Envers создать audit-таблицу `<name>_aud` с колонками `rev`, `revtype` и копией данных при каждом изменении.",
+              "correct": true,
+              "sections": {
+                "explanation": "Envers автоматически создаёт таблицу с суффиксом `_aud` и таблицу `revinfo` с метаданными ревизий; каждый `INSERT`/`UPDATE`/`DELETE` порождает запись с `revtype` 0/1/2.",
+                "example": "`@Entity @Audited public class Product { ... }` создаёт `products_aud` (id, rev, revtype, ...) и `revinfo` (rev, revtstmp).",
+                "when_to_apply": "Применяют для автоматического ведения истории изменений сущностей: аудит, compliance, восстановление состояния на дату.",
+                "edge_cases": "`@NotAudited` на поле исключает только это поле (полезно для больших blob-ов/thumbnail), а чтение истории идёт через `AuditReader` API.",
+                "related": "[[hibernate-interview#Q33]] `@Version`; [[hibernate-interview#Q7]] состояния `Entity`; [[hibernate-interview#Q13]] аннотации маппинга."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`@NotAudited` на любом поле отключает `@Audited` всей сущности (Envers требует полный снимок строки), а точечные исключения настраиваются через `revinfo`.",
               "correct": false,
               "sections": {
@@ -2613,8 +2626,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`AuditReader` в Envers отсутствует, поэтому историю читают нативным SQL из `<name>_aud`, соединяя её с `revinfo` по номеру ревизии.",
               "correct": false,
               "sections": {
@@ -2622,19 +2635,6 @@
                 "source_of_confusion": "Раз данные в отдельной таблице, кажется, что читать их можно только сырым SQL.",
                 "if_it_were_true": "Тогда восстановление по дате требовало бы ручных запросов, но `AuditReader` решает это из коробки.",
                 "how_it_should_be": "Историю читают через `AuditReader` API, а не только нативным SQL."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@Audited` на сущности заставляет Envers создать audit-таблицу `<name>_aud` с колонками `rev`, `revtype` и копией данных при каждом изменении.",
-              "correct": true,
-              "sections": {
-                "explanation": "Envers автоматически создаёт таблицу с суффиксом `_aud` и таблицу `revinfo` с метаданными ревизий; каждый `INSERT`/`UPDATE`/`DELETE` порождает запись с `revtype` 0/1/2.",
-                "example": "`@Entity @Audited public class Product { ... }` создаёт `products_aud` (id, rev, revtype, ...) и `revinfo` (rev, revtstmp).",
-                "when_to_apply": "Применяют для автоматического ведения истории изменений сущностей: аудит, compliance, восстановление состояния на дату.",
-                "edge_cases": "`@NotAudited` на поле исключает только это поле (полезно для больших blob-ов/thumbnail), а чтение истории идёт через `AuditReader` API.",
-                "related": "[[hibernate-interview#Q33]] `@Version`; [[hibernate-interview#Q7]] состояния `Entity`; [[hibernate-interview#Q13]] аннотации маппинга."
               }
             }
           ]
@@ -2723,6 +2723,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`StatelessSession` сохраняет ленивую загрузку — ассоциации приходят proxy-объектами, но дозагрузка работает лишь до закрытия сессии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stateless-сессия не поддерживает lazy loading — она возвращает реальные объекты; это компромисс за отсутствие кэша L1, нужного для работы proxy.",
+                "source_of_confusion": "Раз это «сессия `Hibernate`», ожидают привычного поведения с proxy и ленивой загрузкой.",
+                "if_it_were_true": "Тогда обращение к связи догружало бы её лениво, но без L1 и persistence context это невозможно.",
+                "how_it_should_be": "Stateless-сессия отдаёт реальные объекты без proxy и lazy loading."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`StatelessSession` отключает L1 cache, dirty checking и cascade — ускоряет bulk-операции, но требует ручного управления версиями и каскадами.",
               "correct": true,
               "sections": {
@@ -2731,18 +2743,6 @@
                 "when_to_apply": "Используют для массового импорта, ETL и batch-обработки, где не нужно накапливать объекты в памяти и каскадировать операции.",
                 "edge_cases": "Stateless-сессия не поддерживает lazy loading и возвращает реальные объекты, а не proxy — это часть компромисса за отсутствие кэша L1.",
                 "related": "[[hibernate-interview#Q36]] batch processing; [[hibernate-interview#Q41]] `getCurrentSession` и `openSession`; [[hibernate-interview#Q47]] ошибки производительности."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`StatelessSession` сохраняет ленивую загрузку — ассоциации приходят proxy-объектами, но дозагрузка работает лишь до закрытия сессии.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Stateless-сессия не поддерживает lazy loading — она возвращает реальные объекты; это компромисс за отсутствие кэша L1, нужного для работы proxy.",
-                "source_of_confusion": "Раз это «сессия `Hibernate`», ожидают привычного поведения с proxy и ленивой загрузкой.",
-                "if_it_were_true": "Тогда обращение к связи догружало бы её лениво, но без L1 и persistence context это невозможно.",
-                "how_it_should_be": "Stateless-сессия отдаёт реальные объекты без proxy и lazy loading."
               }
             },
             {
@@ -2783,18 +2783,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Флаг `@Transactional(readOnly = true)` остаётся чисто декларативной пометкой; dirty checking и `flush` работают в том же объёме, что и при записи.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`readOnly = true` даёт реальные выигрыши: `Hibernate` отключает dirty checking и flush, а некоторые драйверы (`PostgreSQL`) используют read-only соединения.",
-                "source_of_confusion": "Флаг выглядит как простая аннотация-метка, и его эффект на производительность недооценивают.",
-                "if_it_were_true": "Тогда `readOnly` можно было бы не ставить на запросы чтения, но он экономит snapshot-ы и flush.",
-                "how_it_should_be": "`readOnly = true` отключает dirty checking и flush, ускоряя операции чтения."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Cartesian Product при двух `JOIN FETCH` с коллекциями приводит к `MultipleBagFetchException` или дубликатам; решается через `@EntityGraph` или разделение запросов.",
               "correct": true,
               "sections": {
@@ -2803,6 +2791,18 @@
                 "when_to_apply": "Помните об этом при загрузке двух и более коллекций сразу: используйте `@EntityGraph`, раздельные запросы или `@BatchSize` вместо двойного `JOIN FETCH`.",
                 "edge_cases": "`DISTINCT` уменьшает дубликаты, но два `JOIN FETCH` на коллекции всё равно запрещены — `Hibernate` бросит `MultipleBagFetchException`.",
                 "related": "[[hibernate-interview#Q20]] проблема N+1; [[hibernate-interview#Q21]] решение N+1; [[hibernate-interview#Q36]] batch processing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Флаг `@Transactional(readOnly = true)` остаётся чисто декларативной пометкой; dirty checking и `flush` работают в том же объёме, что и при записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`readOnly = true` даёт реальные выигрыши: `Hibernate` отключает dirty checking и flush, а некоторые драйверы (`PostgreSQL`) используют read-only соединения.",
+                "source_of_confusion": "Флаг выглядит как простая аннотация-метка, и его эффект на производительность недооценивают.",
+                "if_it_were_true": "Тогда `readOnly` можно было бы не ставить на запросы чтения, но он экономит snapshot-ы и flush.",
+                "how_it_should_be": "`readOnly = true` отключает dirty checking и flush, ускоряя операции чтения."
               }
             },
             {
@@ -2891,19 +2891,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Поле помечается `@JdbcTypeCode(SqlTypes.JSON)`, и `Hibernate 6` сам сериализует объект, `Map` или коллекцию в JSON-колонку без сторонней библиотеки.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Hibernate 6` встроил поддержку JSON-маппинга прямо в ядро, поэтому отдельная библиотека `hibernate-types` больше не нужна. Аннотация `@JdbcTypeCode(SqlTypes.JSON)` на поле говорит Hibernate сериализовать его значение в JSON-документ. Работает не только с `Map`, но и с embeddable/POJO и коллекциями.",
-                "example": "@Entity\npublic class Product {\n    @Id @GeneratedValue\n    private Long id;\n\n    @JdbcTypeCode(SqlTypes.JSON)\n    @Column(columnDefinition = \"jsonb\")\n    private Map<String, Object> attributes;\n}",
-                "when_to_apply": "Когда нужно сохранить гибкую/полуструктурированную структуру (атрибуты товара, настройки, метаданные) в одной колонке на `Hibernate 6`. Для `PostgreSQL` объявляйте колонку как `jsonb` через `columnDefinition`.",
-                "edge_cases": "Маппиться может не только `Map`, но и embeddable/POJO и коллекции — все они складываются в один JSON-документ. В `PostgreSQL` выбирайте `jsonb` (индексируемо и компактнее), а не текстовый `json`.",
-                "related": "Связано с переходом от внешней библиотеки `hibernate-types` к нативной поддержке ядра, а также с типами хранения JSON в `PostgreSQL` (`jsonb` против `json`)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Поле помечается `@Type(JsonType.class)` из библиотеки `hibernate-types`, и только она умеет сериализовать объект, `Map` или коллекцию в JSON-колонку.",
               "correct": false,
               "sections": {
@@ -2914,8 +2901,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Поле помечается `@JdbcTypeCode(SqlTypes.JSON)`, но это работает только с типом `Map`, а embeddable/POJO и коллекции так маппить нельзя.",
               "correct": false,
               "sections": {
@@ -2923,6 +2910,19 @@
                 "source_of_confusion": "Канонический пример обычно показывают на `Map<String, Object>`, и кажется, будто это единственный поддерживаемый тип.",
                 "if_it_were_true": "Тогда для хранения POJO в JSON-колонке пришлось бы вручную конвертировать его в `Map`, что лишало бы смысла нативный маппинг.",
                 "how_it_should_be": "Помечайте `@JdbcTypeCode(SqlTypes.JSON)` любое поле — `Map`, embeddable/POJO или коллекцию — и `Hibernate` сериализует его в один JSON-документ."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Поле помечается `@JdbcTypeCode(SqlTypes.JSON)`, и `Hibernate 6` сам сериализует объект, `Map` или коллекцию в JSON-колонку без сторонней библиотеки.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Hibernate 6` встроил поддержку JSON-маппинга прямо в ядро, поэтому отдельная библиотека `hibernate-types` больше не нужна. Аннотация `@JdbcTypeCode(SqlTypes.JSON)` на поле говорит Hibernate сериализовать его значение в JSON-документ. Работает не только с `Map`, но и с embeddable/POJO и коллекциями.",
+                "example": "@Entity\npublic class Product {\n    @Id @GeneratedValue\n    private Long id;\n\n    @JdbcTypeCode(SqlTypes.JSON)\n    @Column(columnDefinition = \"jsonb\")\n    private Map<String, Object> attributes;\n}",
+                "when_to_apply": "Когда нужно сохранить гибкую/полуструктурированную структуру (атрибуты товара, настройки, метаданные) в одной колонке на `Hibernate 6`. Для `PostgreSQL` объявляйте колонку как `jsonb` через `columnDefinition`.",
+                "edge_cases": "Маппиться может не только `Map`, но и embeddable/POJO и коллекции — все они складываются в один JSON-документ. В `PostgreSQL` выбирайте `jsonb` (индексируемо и компактнее), а не текстовый `json`.",
+                "related": "Связано с переходом от внешней библиотеки `hibernate-types` к нативной поддержке ядра, а также с типами хранения JSON в `PostgreSQL` (`jsonb` против `json`)."
               }
             },
             {
@@ -2951,18 +2951,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Аннотация `@Struct` раскладывает `@Embeddable` на отдельные плоские колонки `street`/`city`/`zip` с заданным общим префиксом имени для всех колонок.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Раскладку на отдельные плоские колонки делает обычный `@Embeddable` без `@Struct`. `@Struct`, наоборот, сохраняет embeddable в одну колонку структурного типа БД, где поля становятся атрибутами этой структуры.",
-                "source_of_confusion": "По умолчанию `@Embeddable` действительно даёт несколько колонок, и кажется, что `@Struct` лишь добавляет к этому префикс имён, а не меняет способ хранения.",
-                "if_it_were_true": "Тогда `@Struct` не требовал бы объявления `CREATE TYPE ... AS (...)` и не отличался бы по смыслу от плоского `@Embeddable` — атрибут `name` задавал бы префикс, а не имя SQL-структуры.",
-                "how_it_should_be": "`@Struct` маппит embeddable на единый структурный тип БД (одна колонка типа `address_type`), а поля становятся атрибутами этой структуры, а не отдельными колонками."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Аннотация `@Struct` маппит `@Embeddable` не на отдельные колонки, а на структурный пользовательский тип БД (`CREATE TYPE ... AS (...)` в `PostgreSQL`, object types в `Oracle`).",
               "correct": true,
               "sections": {
@@ -2971,6 +2959,18 @@
                 "when_to_apply": "Применяйте, когда в схеме БД уже используется структурный тип (например, `address_type` объявлен через `CREATE TYPE` в `PostgreSQL` или как object type в `Oracle`) и embeddable должен лечь именно в одну колонку такого типа.",
                 "edge_cases": "Если требования к структурному типу нет — обычный `@Embeddable` с плоскими колонками проще и портируемее между СУБД. `@Struct` завязан на нативную поддержку composite/object типов, поэтому переносимость между разными СУБД снижается.",
                 "related": "Контрастирует с обычным `@Embeddable`, который раскладывает поля по отдельным колонкам. Тесно связан с понятием пользовательских типов БД: composite types в `PostgreSQL` и object types в `Oracle`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Аннотация `@Struct` раскладывает `@Embeddable` на отдельные плоские колонки `street`/`city`/`zip` с заданным общим префиксом имени для всех колонок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Раскладку на отдельные плоские колонки делает обычный `@Embeddable` без `@Struct`. `@Struct`, наоборот, сохраняет embeddable в одну колонку структурного типа БД, где поля становятся атрибутами этой структуры.",
+                "source_of_confusion": "По умолчанию `@Embeddable` действительно даёт несколько колонок, и кажется, что `@Struct` лишь добавляет к этому префикс имён, а не меняет способ хранения.",
+                "if_it_were_true": "Тогда `@Struct` не требовал бы объявления `CREATE TYPE ... AS (...)` и не отличался бы по смыслу от плоского `@Embeddable` — атрибут `name` задавал бы префикс, а не имя SQL-структуры.",
+                "how_it_should_be": "`@Struct` маппит embeddable на единый структурный тип БД (одна колонка типа `address_type`), а поля становятся атрибутами этой структуры, а не отдельными колонками."
               }
             },
             {
