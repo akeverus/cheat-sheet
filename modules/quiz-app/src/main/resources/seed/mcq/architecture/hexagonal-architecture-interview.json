@@ -11,19 +11,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Hexagonal Architecture` (`Ports & Adapters`) инвертирует зависимости: ядро объявляет `ports` (интерфейсы), а `adapters` снаружи их реализуют, превращая `Spring MVC`, `JPA`, `Kafka`, CLI в подключаемые модули вокруг домена.",
-              "correct": true,
-              "sections": {
-                "explanation": "Главная идея — направление зависимостей внутрь ядра: домен не знает о фреймворках и общается с внешним миром только через интерфейсы. Это разрывает сильную связанность бизнес-логики с инфраструктурой.",
-                "example": "В банковском `bookkeeper` Хомбергса ядро вызывает `LoadAccountPort`, а `AccountPersistenceAdapter` на `JPA` его реализует; смена `PostgreSQL` на другой стор затрагивает только адаптер, не use-case.",
-                "when_to_apply": "Применяют, когда нужна изоляция домена от инфраструктуры, несколько каналов входа (REST + Kafka + CLI) и возможность тестировать бизнес-логику без БД и HTTP-сервера.",
-                "edge_cases": "Паттерн не про количество слоёв, а про направление стрелок; на простом CRUD он избыточен и добавляет лишние мапперы без выгоды.",
-                "related": "[[hexagonal-architecture-interview#Q4]] что входит в Application Core; [[hexagonal-architecture-interview#Q6]] что такое Port; [[hexagonal-architecture-interview#Q32]] отличие от Clean Architecture."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Hexagonal Architecture` упорядочивает те же `N-tier`-слои: `Controller`, `Service` и `Repository` остаются, но связываются через `@Autowired` по интерфейсам, а `Spring MVC`, `JPA` и `Kafka` считаются частью ядра, раз без них приложение всё равно не работает.",
               "correct": false,
               "sections": {
@@ -34,8 +21,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Hexagonal Architecture` — паттерн декомпозиции распределённых систем: границы микросервисов проводят по граням гексагона, и каждый сервис получает свой набор входов (`REST`, `MQ`) вместе с независимым деплоем.",
               "correct": false,
               "sections": {
@@ -43,6 +30,19 @@
                 "source_of_confusion": "Слово «шестиугольник» и популярность гексагона в микросервисах создают впечатление, что это правило топологии.",
                 "if_it_were_true": "Тогда команда строила бы «6 микросервисов на гексагон» и получала distributed monolith с десятками HTTP-вызовов на одну бизнес-операцию.",
                 "how_it_should_be": "Гексагон описывает внутренние границы сервиса; число входов произвольно и определяется доменными портами, а не формой фигуры."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Hexagonal Architecture` (`Ports & Adapters`) инвертирует зависимости: ядро объявляет `ports` (интерфейсы), а `adapters` снаружи их реализуют, превращая `Spring MVC`, `JPA`, `Kafka`, CLI в подключаемые модули вокруг домена.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная идея — направление зависимостей внутрь ядра: домен не знает о фреймворках и общается с внешним миром только через интерфейсы. Это разрывает сильную связанность бизнес-логики с инфраструктурой.",
+                "example": "В банковском `bookkeeper` Хомбергса ядро вызывает `LoadAccountPort`, а `AccountPersistenceAdapter` на `JPA` его реализует; смена `PostgreSQL` на другой стор затрагивает только адаптер, не use-case.",
+                "when_to_apply": "Применяют, когда нужна изоляция домена от инфраструктуры, несколько каналов входа (REST + Kafka + CLI) и возможность тестировать бизнес-логику без БД и HTTP-сервера.",
+                "edge_cases": "Паттерн не про количество слоёв, а про направление стрелок; на простом CRUD он избыточен и добавляет лишние мапперы без выгоды.",
+                "related": "[[hexagonal-architecture-interview#Q4]] что входит в Application Core; [[hexagonal-architecture-interview#Q6]] что такое Port; [[hexagonal-architecture-interview#Q32]] отличие от Clean Architecture."
               }
             },
             {
@@ -71,18 +71,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Форму Кокбёрн взял из сетевых диаграмм: над физическим уровнем `OSI`-модели ровно шесть уровней; каждому уровню соответствует своя грань гексагона.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это выдуманное обоснование: `OSI` к гексагону отношения не имеет, и в `OSI` семь уровней, а не шесть.",
-                "source_of_confusion": "Желание найти «техническую» причину числа 6 толкает к натянутой связи с известной семиуровневой моделью.",
-                "if_it_were_true": "Тогда ответ на собеседовании выглядел бы как заученная мифология, и интервьюер сделал бы вывод «не знает первоисточника».",
-                "how_it_should_be": "Число граней произвольно и выбрано ради удобной симметричной картинки, а не по аналогии с сетевыми уровнями."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Шестиугольник — визуальная метафора Кокбёрна против ассоциации со «слоями» (`layer cake`); симметричная фигура без верха и низа подчёркивает равноправие driving- и driven-сторон, а число граней структурного значения не имеет.",
               "correct": true,
               "sections": {
@@ -91,6 +79,18 @@
                 "when_to_apply": "Эту трактовку приводят на собеседовании, объясняя, почему нельзя привязывать число портов к числу граней и почему driving/driven равноправны.",
                 "edge_cases": "Можно было бы взять пятиугольник или восьмиугольник — Кокбёрн это подчёркивает; «каждая грань = один порт» — частая ошибка.",
                 "related": "[[hexagonal-architecture-interview#Q3]] история и авторство паттерна; [[hexagonal-architecture-interview#Q5]] три зоны гексагона."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Форму Кокбёрн взял из сетевых диаграмм: над физическим уровнем `OSI`-модели ровно шесть уровней; каждому уровню соответствует своя грань гексагона.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это выдуманное обоснование: `OSI` к гексагону отношения не имеет, и в `OSI` семь уровней, а не шесть.",
+                "source_of_confusion": "Желание найти «техническую» причину числа 6 толкает к натянутой связи с известной семиуровневой моделью.",
+                "if_it_were_true": "Тогда ответ на собеседовании выглядел бы как заученная мифология, и интервьюер сделал бы вывод «не знает первоисточника».",
+                "how_it_should_be": "Число граней произвольно и выбрано ради удобной симметричной картинки, а не по аналогии с сетевыми уровнями."
               }
             },
             {
@@ -155,6 +155,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Паттерн придумали инженеры `Netflix` при миграции с монолита в 2010-х; известным термин сделала публикация в их техблоге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это подмена истории: `Netflix` продвигал `Hystrix` и `Eureka`, но к авторству гексагона отношения не имеет.",
+                "source_of_confusion": "Netflix ассоциируется с архитектурными инновациями, поэтому ему приписывают чужие паттерны.",
+                "if_it_were_true": "Тогда обсуждение гексагона уходило бы в circuit breakers и service discovery, а не в инверсию зависимостей и порты.",
+                "how_it_should_be": "Авторство принадлежит Кокбёрну (2005); вклад Netflix — в resilience-инструменты, а не в `Ports & Adapters`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Паттерн опубликовал Алистер Кокбёрн в 2005 году под именем `Ports & Adapters`; «Hexagonal» — визуальная метафора. Каноничный гайд по реализации — `Get Your Hands Dirty on Clean Architecture` Тома Хомбергса (2019).",
               "correct": true,
               "sections": {
@@ -163,18 +175,6 @@
                 "when_to_apply": "Знание авторства и дат нужно, когда на собеседовании просят сравнить Hexagonal, Clean и Onion и объяснить их генеалогию.",
                 "edge_cases": "Сам Кокбёрн предпочитает имя `Ports & Adapters`, считая «hexagonal» лишь рисунком; имена путают чаще всего.",
                 "related": "[[hexagonal-architecture-interview#Q1]] суть паттерна; [[hexagonal-architecture-interview#Q32]] отличие от Clean; [[hexagonal-architecture-interview#Q33]] отличие от Onion."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Паттерн придумали инженеры `Netflix` при миграции с монолита в 2010-х; известным термин сделала публикация в их техблоге.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это подмена истории: `Netflix` продвигал `Hystrix` и `Eureka`, но к авторству гексагона отношения не имеет.",
-                "source_of_confusion": "Netflix ассоциируется с архитектурными инновациями, поэтому ему приписывают чужие паттерны.",
-                "if_it_were_true": "Тогда обсуждение гексагона уходило бы в circuit breakers и service discovery, а не в инверсию зависимостей и порты.",
-                "how_it_should_be": "Авторство принадлежит Кокбёрну (2005); вклад Netflix — в resilience-инструменты, а не в `Ports & Adapters`."
               }
             }
           ]
@@ -203,6 +203,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Application Core` = `Domain Model` (агрегаты, Value Objects, доменные сервисы) + `Use Cases` + `Driving Ports` + `Driven Ports`, описанные на чистой Java без `Spring`/`JPA`/`Jackson`-аннотаций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ядро задаёт «что приложение умеет» (input ports) и «что ему нужно от мира» (output ports), не зная ни про фреймворки, ни про форматы передачи данных (`JSON`, `XML`, `protobuf`).",
+                "example": "Модуль `bookkeeper-application` у Хомбергса собирается без `spring-web` и `spring-data-jpa`, а интерфейсы `PlaceOrderUseCase` и `OrderRepository` живут именно в ядре.",
+                "when_to_apply": "Эту границу проводят, когда нужно тестировать сценарии без БД и HTTP и сохранять возможность переиспользовать домен вне Spring (например, в desktop-приложении).",
+                "edge_cases": "Прагматичный компромисс допускает `@Transactional` и минимум Spring на реализациях use-case, но это должен быть осознанный выбор, а не случайная протечка.",
+                "related": "[[hexagonal-architecture-interview#Q5]] три зоны гексагона; [[hexagonal-architecture-interview#Q16]] структура пакетов; [[hexagonal-architecture-interview#Q19]] @Service на use-case."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Application Core` — это только доменные сущности и Value Objects (`Order`, `Customer`, `Money`), а `Use Cases` вместе с портами выносят в слой инфраструктуры, поскольку оркестрация уже знает про транспорт.",
               "correct": false,
               "sections": {
@@ -213,8 +226,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Application Core` включает и DI-сборку: `@Configuration` с `@Bean`-фабриками use-case'ов держат в ядре, ведь wiring сценариев — часть его контракта.",
               "correct": false,
               "sections": {
@@ -222,19 +235,6 @@
                 "source_of_confusion": "Кажется логичным держать сборку зависимостей там же, где объявлены use-cases.",
                 "if_it_were_true": "Тогда ядро нельзя было бы использовать без Spring, и главное преимущество — переносимость — терялось бы.",
                 "how_it_should_be": "Ядро остаётся чистым, а `@Configuration`/`@Bean` собираются в модуле `app`, который знает обо всех остальных."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Application Core` = `Domain Model` (агрегаты, Value Objects, доменные сервисы) + `Use Cases` + `Driving Ports` + `Driven Ports`, описанные на чистой Java без `Spring`/`JPA`/`Jackson`-аннотаций.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ядро задаёт «что приложение умеет» (input ports) и «что ему нужно от мира» (output ports), не зная ни про фреймворки, ни про форматы передачи данных (`JSON`, `XML`, `protobuf`).",
-                "example": "Модуль `bookkeeper-application` у Хомбергса собирается без `spring-web` и `spring-data-jpa`, а интерфейсы `PlaceOrderUseCase` и `OrderRepository` живут именно в ядре.",
-                "when_to_apply": "Эту границу проводят, когда нужно тестировать сценарии без БД и HTTP и сохранять возможность переиспользовать домен вне Spring (например, в desktop-приложении).",
-                "edge_cases": "Прагматичный компромисс допускает `@Transactional` и минимум Spring на реализациях use-case, но это должен быть осознанный выбор, а не случайная протечка.",
-                "related": "[[hexagonal-architecture-interview#Q5]] три зоны гексагона; [[hexagonal-architecture-interview#Q16]] структура пакетов; [[hexagonal-architecture-interview#Q19]] @Service на use-case."
               }
             }
           ]
@@ -323,6 +323,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Port` — это интерфейс, помеченный аннотацией `@Port` из `spring-context`: по ней контейнер отличает доменные контракты от обычных бинов и строит прокси с проверкой направления вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такой аннотации в Spring нет; гексагональные порты — обычные Java-интерфейсы без специальной разметки.",
+                "source_of_confusion": "Аналогия с `@Component`/`@Service` подсказывает несуществующую аннотацию `@Port`.",
+                "if_it_were_true": "Тогда разработчик искал бы `@Port` в `spring-boot-starter-web`, не находил и решал, что «гексагон неприменим в Spring».",
+                "how_it_should_be": "Порт — это просто `interface` в ядре; никакой аннотации не требуется, реализуют его адаптеры."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Port` — интерфейс, выражающий доменное намерение (`LoadAccountPort`, `SendMoneyUseCase`): он определяется в ядре, принадлежит `Ubiquitous Language` и возвращает доменные типы, а не технические.",
               "correct": true,
               "sections": {
@@ -331,18 +343,6 @@
                 "when_to_apply": "Различие важно при проектировании границ: всё, что описывает доменную потребность, — порт в ядре; всё технологическое (DAO) — деталь адаптера.",
                 "edge_cases": "Порт — это purposeful conversation, а не CRUD; `JpaRepository` портом не считается, даже если им удобно пользоваться напрямую.",
                 "related": "[[hexagonal-architecture-interview#Q7]] driving vs driven; [[hexagonal-architecture-interview#Q8]] именование портов; [[hexagonal-architecture-interview#Q9]] гранулярность портов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Port` — это интерфейс, помеченный аннотацией `@Port` из `spring-context`: по ней контейнер отличает доменные контракты от обычных бинов и строит прокси с проверкой направления вызова.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Такой аннотации в Spring нет; гексагональные порты — обычные Java-интерфейсы без специальной разметки.",
-                "source_of_confusion": "Аналогия с `@Component`/`@Service` подсказывает несуществующую аннотацию `@Port`.",
-                "if_it_were_true": "Тогда разработчик искал бы `@Port` в `spring-boot-starter-web`, не находил и решал, что «гексагон неприменим в Spring».",
-                "how_it_should_be": "Порт — это просто `interface` в ядре; никакой аннотации не требуется, реализуют его адаптеры."
               }
             },
             {
@@ -383,18 +383,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Driving` и `Driven` — роли на диаграмме, а не свойства кода: разница лишь в направлении стрелки; в коде оба — обычные интерфейсы ядра (`LoadAccountPort`), и место их реализации паттерн не регламентирует.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это фундаментальное разделение по направлению вызова (input vs output); путать их — ломать архитектуру.",
-                "source_of_confusion": "Оба слова звучат похоже и оба относятся к портам, поэтому кажутся взаимозаменяемыми.",
-                "if_it_were_true": "Тогда команда делала бы «двунаправленные» порты, и в use-case проникали бы `RestTemplate` и `KafkaTemplate` напрямую.",
-                "how_it_should_be": "Driving — вход (реализуется в ядре), driven — выход (реализуется в адаптере); это разные роли с разным направлением."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Driving Port` реализуется в ядре (use-case) и вызывается primary-адаптером; `Driven Port` реализуется в адаптере и вызывается самим use-case'ом. Практическое правило: «кто реализует — там и живёт реализация».",
               "correct": true,
               "sections": {
@@ -403,6 +391,18 @@
                 "when_to_apply": "Различие используют при проектировании: входной сценарий описывают `*UseCase`-портом, а потребность во внешней системе — `*Port`-портом.",
                 "edge_cases": "Синхронность определяется типом возврата (`Mono`, `CompletableFuture`), а не классом порта; и driving, и driven могут быть любого вида.",
                 "related": "[[hexagonal-architecture-interview#Q11]] primary-адаптер; [[hexagonal-architecture-interview#Q12]] secondary-адаптер; [[hexagonal-architecture-interview#Q21]] Composition Root."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Driving` и `Driven` — роли на диаграмме, а не свойства кода: разница лишь в направлении стрелки; в коде оба — обычные интерфейсы ядра (`LoadAccountPort`), и место их реализации паттерн не регламентирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это фундаментальное разделение по направлению вызова (input vs output); путать их — ломать архитектуру.",
+                "source_of_confusion": "Оба слова звучат похоже и оба относятся к портам, поэтому кажутся взаимозаменяемыми.",
+                "if_it_were_true": "Тогда команда делала бы «двунаправленные» порты, и в use-case проникали бы `RestTemplate` и `KafkaTemplate` напрямую.",
+                "how_it_should_be": "Driving — вход (реализуется в ядре), driven — выход (реализуется в адаптере); это разные роли с разным направлением."
               }
             },
             {
@@ -491,19 +491,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Гранулярность определяет `Interface Segregation Principle`: use-case должен видеть только методы, которые реально использует. CRUD-`Repository` допустим, а специализированные действия выносят в отдельные порты.",
-              "correct": true,
-              "sections": {
-                "explanation": "Прагматичный компромисс Хомбергса: для CRUD один порт `OrderRepository` в DDD-стиле, а для специфики — мелкозернистые порты вроде `SendMoneyPort`, чтобы use-case не зависел от лишнего.",
-                "example": "`SendMoneyService` зависит от `LoadAccountPort` + `UpdateAccountStatePort`, а не от монолитного `AccountRepository` с методами `save/find/delete/findAll`.",
-                "when_to_apply": "Правило применяют при проектировании каждого use-case: если он не пользуется методом — этого метода не должно быть в его зависимостях.",
-                "edge_cases": "Мелкозернистость даёт больше классов, но проще подмена в тестах; крайность «один gigantic-port» нарушает ISP и раздувает моки.",
-                "related": "[[hexagonal-architecture-interview#Q8]] именование портов; [[hexagonal-architecture-interview#Q10]] адаптер с несколькими портами."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Оптимальны крупные порты: один `AccountRepository` с полным набором `save`/`findById`/`delete` закрывает агрегат целиком. Лишние методы в зависимостях use-case'а проблемой не считаются — интерфейсов меньше и навигация проще.",
               "correct": false,
               "sections": {
@@ -514,8 +501,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Портов должно быть ровно по числу `Bounded Context`-ов: один контекст — один порт. Более мелкое дробление ломает целостность контекста, поэтому все операции агрегатов идут через общий контракт.",
               "correct": false,
               "sections": {
@@ -523,6 +510,19 @@
                 "source_of_confusion": "Bounded Context — крупная единица DDD, поэтому кажется естественной мерой для портов.",
                 "if_it_were_true": "Тогда команда втиснула бы 25 методов в `OrderContextPort`, и каждый новый use-case ломал бы все реализации.",
                 "how_it_should_be": "В одном контексте много портов; их число определяет ISP и потребности use-case'ов, а не граница контекста."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Гранулярность определяет `Interface Segregation Principle`: use-case должен видеть только методы, которые реально использует. CRUD-`Repository` допустим, а специализированные действия выносят в отдельные порты.",
+              "correct": true,
+              "sections": {
+                "explanation": "Прагматичный компромисс Хомбергса: для CRUD один порт `OrderRepository` в DDD-стиле, а для специфики — мелкозернистые порты вроде `SendMoneyPort`, чтобы use-case не зависел от лишнего.",
+                "example": "`SendMoneyService` зависит от `LoadAccountPort` + `UpdateAccountStatePort`, а не от монолитного `AccountRepository` с методами `save/find/delete/findAll`.",
+                "when_to_apply": "Правило применяют при проектировании каждого use-case: если он не пользуется методом — этого метода не должно быть в его зависимостях.",
+                "edge_cases": "Мелкозернистость даёт больше классов, но проще подмена в тестах; крайность «один gigantic-port» нарушает ISP и раздувает моки.",
+                "related": "[[hexagonal-architecture-interview#Q8]] именование портов; [[hexagonal-architecture-interview#Q10]] адаптер с несколькими портами."
               }
             },
             {
@@ -551,18 +551,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Single Responsibility требует держать адаптер на одном порте: несколько контрактов — несколько причин для изменения класса. Поэтому соотношение 1-к-1 соблюдают как жёсткое правило.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это чрезмерное ограничение: `AccountPersistenceAdapter` нормально реализует `LoadAccountPort` + `UpdateAccountStatePort` для одного агрегата.",
-                "source_of_confusion": "Принцип «одна ответственность» ошибочно трактуют как «один интерфейс на класс».",
-                "if_it_were_true": "Тогда маппинг и JPA-зависимости дублировались бы в двух классах ради «правила», а транзакционные границы рассыпались бы между адаптерами.",
-                "how_it_should_be": "Один driven-адаптер на агрегат может реализовать несколько его портов, сохраняя единый mapper и транзакцию."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Да: один secondary-адаптер нормально реализует несколько портов одного агрегата (или одного транспорта). Разделять стоит, когда порты относятся к разным bounded contexts или разным технологиям.",
               "correct": true,
               "sections": {
@@ -571,6 +559,18 @@
                 "when_to_apply": "Несколько портов на адаптере применяют для driven-стороны одного агрегата; для primary-стороны слушатель и публикатор лучше разнести.",
                 "edge_cases": "Не объединяют, если порты разных контекстов, требуют разных технологий или имеют разный жизненный цикл (один кешируется, другой нет).",
                 "related": "[[hexagonal-architecture-interview#Q9]] гранулярность портов; [[hexagonal-architecture-interview#Q15]] primary и secondary в одном классе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Single Responsibility требует держать адаптер на одном порте: несколько контрактов — несколько причин для изменения класса. Поэтому соотношение 1-к-1 соблюдают как жёсткое правило.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это чрезмерное ограничение: `AccountPersistenceAdapter` нормально реализует `LoadAccountPort` + `UpdateAccountStatePort` для одного агрегата.",
+                "source_of_confusion": "Принцип «одна ответственность» ошибочно трактуют как «один интерфейс на класс».",
+                "if_it_were_true": "Тогда маппинг и JPA-зависимости дублировались бы в двух классах ради «правила», а транзакционные границы рассыпались бы между адаптерами.",
+                "how_it_should_be": "Один driven-адаптер на агрегат может реализовать несколько его портов, сохраняя единый mapper и транзакцию."
               }
             },
             {
@@ -635,6 +635,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Primary-адаптер — это `@Configuration`-класс приложения; он собирает зависимости ядра в Composition Root.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это другая роль (Composition Root); primary-адаптер преобразует внешний вызов в вызов порта, а не конфигурирует bean'ы.",
+                "source_of_confusion": "И то, и другое — «инфраструктурный» код вне ядра, поэтому роли смешивают.",
+                "if_it_were_true": "Тогда `@Configuration` пытался бы обрабатывать HTTP-запросы через `@Bean`-методы, и Spring не понимал бы такую конструкцию.",
+                "how_it_should_be": "Composition Root собирает граф зависимостей отдельно, а primary-адаптер занимается только переводом транспорта в вызов порта."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Primary-адаптер принимает внешний вызов (HTTP/CLI/MQ), валидирует синтаксис, маппит DTO → Command, вызывает driving-порт и маппит результат обратно; бизнес-логики в нём нет.",
               "correct": true,
               "sections": {
@@ -643,18 +655,6 @@
                 "when_to_apply": "Эту роль реализуют для каждого канала входа — REST, CLI, Kafka-listener, scheduler — превращая транспорт в вызов одного и того же use-case.",
                 "edge_cases": "Адаптер не содержит бизнес-правил, не ходит в репозиторий напрямую и не решает «разрешена ли операция» — это делает ядро.",
                 "related": "[[hexagonal-architecture-interview#Q12]] secondary-адаптер; [[hexagonal-architecture-interview#Q14]] маппинг данных; [[hexagonal-architecture-interview#Q44]] обработка ошибок."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Primary-адаптер — это `@Configuration`-класс приложения; он собирает зависимости ядра в Composition Root.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это другая роль (Composition Root); primary-адаптер преобразует внешний вызов в вызов порта, а не конфигурирует bean'ы.",
-                "source_of_confusion": "И то, и другое — «инфраструктурный» код вне ядра, поэтому роли смешивают.",
-                "if_it_were_true": "Тогда `@Configuration` пытался бы обрабатывать HTTP-запросы через `@Bean`-методы, и Spring не понимал бы такую конструкцию.",
-                "how_it_should_be": "Composition Root собирает граф зависимостей отдельно, а primary-адаптер занимается только переводом транспорта в вызов порта."
               }
             }
           ]
@@ -683,6 +683,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Secondary-адаптер реализует driven-порт: маппит доменную модель в технический формат (JPA/HTTP/protobuf), общается с внешней системой, маппит ответ обратно в домен и переводит технические ошибки в доменные.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевое: тип возврата метода порта — доменная модель, а mapper живёт в адаптере, поэтому домен не узнаёт про `jakarta.persistence` и форматы данных.",
+                "example": "`AccountPersistenceAdapter` ловит `DataAccessException`, бросает `AccountNotFoundException` и возвращает доменный `Account`, а не `AccountJpaEntity`.",
+                "when_to_apply": "Роль реализуют для каждой внешней зависимости — БД, платёжный шлюз, шина сообщений, объектное хранилище — пряча технологию за доменным контрактом.",
+                "edge_cases": "Гексагон не диктует технологию: адаптер может быть на JDBC, R2DBC, Cassandra-driver или HTTP-клиенте, а не обязательно на Spring Data.",
+                "related": "[[hexagonal-architecture-interview#Q11]] primary-адаптер; [[hexagonal-architecture-interview#Q14]] маппинг данных; [[hexagonal-architecture-interview#Q44]] обработка ошибок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Secondary-адаптер сам публикует свой интерфейс, а ядро подстраивается: контракт диктует владелец технологии, ведь только адаптер знает реальные возможности драйвера и схему данных.",
               "correct": false,
               "sections": {
@@ -693,8 +706,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Secondary-адаптер строят на `Spring Data JPA`: декларативные репозитории дают транзакции и пагинацию из коробки, поэтому иные технологии хранения оформляют как тестовые заглушки.",
               "correct": false,
               "sections": {
@@ -702,19 +715,6 @@
                 "source_of_confusion": "Большинство примеров используют Spring Data, поэтому её считают обязательной.",
                 "if_it_were_true": "Тогда при выборе MongoDB команда отказалась бы от гексагона, решив, что «без `@Repository` не получится».",
                 "how_it_should_be": "Адаптер свободен в выборе технологии; важно лишь, чтобы он реализовывал доменный порт и возвращал доменную модель."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Secondary-адаптер реализует driven-порт: маппит доменную модель в технический формат (JPA/HTTP/protobuf), общается с внешней системой, маппит ответ обратно в домен и переводит технические ошибки в доменные.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ключевое: тип возврата метода порта — доменная модель, а mapper живёт в адаптере, поэтому домен не узнаёт про `jakarta.persistence` и форматы данных.",
-                "example": "`AccountPersistenceAdapter` ловит `DataAccessException`, бросает `AccountNotFoundException` и возвращает доменный `Account`, а не `AccountJpaEntity`.",
-                "when_to_apply": "Роль реализуют для каждой внешней зависимости — БД, платёжный шлюз, шина сообщений, объектное хранилище — пряча технологию за доменным контрактом.",
-                "edge_cases": "Гексагон не диктует технологию: адаптер может быть на JDBC, R2DBC, Cassandra-driver или HTTP-клиенте, а не обязательно на Spring Data.",
-                "related": "[[hexagonal-architecture-interview#Q11]] primary-адаптер; [[hexagonal-architecture-interview#Q14]] маппинг данных; [[hexagonal-architecture-interview#Q44]] обработка ошибок."
               }
             }
           ]
@@ -803,6 +803,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Mapper не нужен: `Spring Data JPA` сам собирает доменные модели через `@Projection` и `@Query`, а для веба хватает `@JsonView` на сущности. `OrderWebMapper` и `OrderJpaMapper` — лишние классы, дублирующие то, что `MapStruct` и так генерирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Projection` создаёт интерфейс над `@Entity`, и ядро всё равно зависит от JPA — это декорирование, а не изоляция.",
+                "source_of_confusion": "Проекции Spring Data выглядят как «бесплатное» преобразование без ручного маппинга.",
+                "if_it_were_true": "Тогда проекция работала бы только в JPA-сессии и вне `@Transactional` падала бы с `LazyInitializationException`.",
+                "how_it_should_be": "Преобразование выполняет явный mapper в адаптере, возвращая независимую от сессии доменную модель."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Через `Mapper`, который живёт в адаптере: `OrderWebMapper` в `adapter/in/web/` конвертирует DTO ↔ Command/Result, `OrderJpaMapper` в `adapter/out/persistence/` — JPA Entity ↔ Domain. Альтернатива — `MapStruct`, но тоже в пакете адаптера.",
               "correct": true,
               "sections": {
@@ -811,18 +823,6 @@
                 "when_to_apply": "Mapper добавляют на каждой границе адаптера, где формат внешнего мира (JSON, JPA-строка) отличается от доменной модели.",
                 "edge_cases": "Можно автогенерировать маппинг `MapStruct`, но код всё равно держат в пакете адаптера, чтобы не тащить зависимость в ядро.",
                 "related": "[[hexagonal-architecture-interview#Q11]] primary-адаптер; [[hexagonal-architecture-interview#Q12]] secondary-адаптер; [[hexagonal-architecture-interview#Q40]] утечка модели."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Mapper не нужен: `Spring Data JPA` сам собирает доменные модели через `@Projection` и `@Query`, а для веба хватает `@JsonView` на сущности. `OrderWebMapper` и `OrderJpaMapper` — лишние классы, дублирующие то, что `MapStruct` и так генерирует.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Projection` создаёт интерфейс над `@Entity`, и ядро всё равно зависит от JPA — это декорирование, а не изоляция.",
-                "source_of_confusion": "Проекции Spring Data выглядят как «бесплатное» преобразование без ручного маппинга.",
-                "if_it_were_true": "Тогда проекция работала бы только в JPA-сессии и вне `@Transactional` падала бы с `LazyInitializationException`.",
-                "how_it_should_be": "Преобразование выполняет явный mapper в адаптере, возвращая независимую от сессии доменную модель."
               }
             },
             {
@@ -863,18 +863,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Только в streaming-RPC: двунаправленный `StreamObserver` в gRPC делает один класс и приёмником, и отправителем — роли совмещены по построению. Для остальных технологий разделение обязательно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "gRPC-stub'ы автогенерируются, но в гексагоне их оборачивают в раздельные адаптеры (server primary, client secondary).",
-                "source_of_confusion": "Сгенерированный stub содержит и серверную, и клиентскую часть, что выглядит как обязательное совмещение.",
-                "if_it_were_true": "Тогда `gRPC stub` выставлялся бы прямо в use-case, ядро узнавало бы про `Channel` и `StreamObserver`, и миграция на REST была бы невозможна.",
-                "how_it_should_be": "Сгенерированный stub прячут за двумя адаптерами — driving для сервера и driven для клиента."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Технически возможно, но это антипаттерн: Kafka-listener (primary) и Kafka-publisher (secondary) разносят на два класса — `OrderKafkaListener` и `OrderEventKafkaPublisher` — даже при одной технологии.",
               "correct": true,
               "sections": {
@@ -883,6 +871,18 @@
                 "when_to_apply": "Разделение применяют всегда, когда одна технология обслуживает и вход, и выход (Kafka, gRPC), чтобы каждая сторона жила отдельно.",
                 "edge_cases": "gRPC-stub автогенерируется с сервером и клиентом, но в гексагоне их оборачивают в раздельные адаптеры (server-side primary, client-side secondary).",
                 "related": "[[hexagonal-architecture-interview#Q10]] адаптер с несколькими портами; [[hexagonal-architecture-interview#Q13]] примеры адаптеров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только в streaming-RPC: двунаправленный `StreamObserver` в gRPC делает один класс и приёмником, и отправителем — роли совмещены по построению. Для остальных технологий разделение обязательно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "gRPC-stub'ы автогенерируются, но в гексагоне их оборачивают в раздельные адаптеры (server primary, client secondary).",
+                "source_of_confusion": "Сгенерированный stub содержит и серверную, и клиентскую часть, что выглядит как обязательное совмещение.",
+                "if_it_were_true": "Тогда `gRPC stub` выставлялся бы прямо в use-case, ядро узнавало бы про `Channel` и `StreamObserver`, и миграция на REST была бы невозможна.",
+                "how_it_should_be": "Сгенерированный stub прячут за двумя адаптерами — driving для сервера и driven для клиента."
               }
             },
             {
@@ -971,19 +971,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Driving Port` — это `interface ...UseCase` с методами-сценариями плюс `Command`-record (self-validating), а реализация — класс в `application/service/`, помеченный мета-аннотацией `@UseCase` (внутри `@Service`).",
-              "correct": true,
-              "sections": {
-                "explanation": "Command содержит компактный валидационный блок (`requireNonNull`, проверки в compact-конструкторе record), порт описывает контракт, а service оркеструет домен и driven-порты.",
-                "example": "`SendMoneyUseCase` (порт) + `SendMoneyCommand` (record с проверкой `amount.isPositive()`) + `SendMoneyService` (реализация) у Хомбергса.",
-                "when_to_apply": "Подход применяют для каждого сценария: контракт, валидируемый ввод и реализация — три отдельные сущности порт + command + service.",
-                "edge_cases": "Кастомная `@UseCase` нужна, чтобы не тащить `@Service` в ядро напрямую и чтобы ArchUnit проверял, что её ставят только на use-cases.",
-                "related": "[[hexagonal-architecture-interview#Q19]] @Service на use-case; [[hexagonal-architecture-interview#Q20]] транзакционные границы; [[hexagonal-architecture-interview#Q28]] тестирование use-case."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Driving Port` — это сам `@RestController` с `@PostMapping`-методами, а `Use Case` — `@Service`, который контроллер вызывает напрямую: `SendMoneyController` и есть входной контракт (`API`) приложения, отдельный `interface` был бы дублированием.",
               "correct": false,
               "sections": {
@@ -994,8 +981,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Use Case` — это `static`-метод утилитного класса: зависимости (`LoadAccountPort`) передают параметрами при каждом вызове, состояния нет, и класс тестируется без контейнера.",
               "correct": false,
               "sections": {
@@ -1003,6 +990,19 @@
                 "source_of_confusion": "Утилитный класс кажется самым простым способом «сложить логику».",
                 "if_it_were_true": "Тогда тестируемость падала бы, command-объект разбухал бы до 15 параметров, и на ревью решили бы, что «гексагон не работает в Java».",
                 "how_it_should_be": "Use-case — обычный класс с зависимостями-портами в конструкторе, что позволяет подменять их в тестах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Driving Port` — это `interface ...UseCase` с методами-сценариями плюс `Command`-record (self-validating), а реализация — класс в `application/service/`, помеченный мета-аннотацией `@UseCase` (внутри `@Service`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Command содержит компактный валидационный блок (`requireNonNull`, проверки в compact-конструкторе record), порт описывает контракт, а service оркеструет домен и driven-порты.",
+                "example": "`SendMoneyUseCase` (порт) + `SendMoneyCommand` (record с проверкой `amount.isPositive()`) + `SendMoneyService` (реализация) у Хомбергса.",
+                "when_to_apply": "Подход применяют для каждого сценария: контракт, валидируемый ввод и реализация — три отдельные сущности порт + command + service.",
+                "edge_cases": "Кастомная `@UseCase` нужна, чтобы не тащить `@Service` в ядро напрямую и чтобы ArchUnit проверял, что её ставят только на use-cases.",
+                "related": "[[hexagonal-architecture-interview#Q19]] @Service на use-case; [[hexagonal-architecture-interview#Q20]] транзакционные границы; [[hexagonal-architecture-interview#Q28]] тестирование use-case."
               }
             },
             {
@@ -1031,18 +1031,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JpaRepository<AccountJpaEntity, Long>` — уже готовый Driven Port: `Spring Data` генерирует реализацию сам; отдельные `LoadAccountPort` и `AccountPersistenceAdapter` дублируют то, что даёт `interface AccountJpaRepository`, и mapper `Entity → Domain` становится лишним.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`JpaRepository` — технический Spring Data интерфейс; ядро не должно его видеть, иначе потянется зависимость на `org.springframework.data`.",
-                "source_of_confusion": "`JpaRepository` уже предоставляет `findById`/`save`, поэтому кажется готовым портом.",
-                "if_it_were_true": "Тогда ядро импортировало бы `Pageable` и `PagingAndSortingRepository`, и multi-module проект ломался бы на compile в `bookkeeper-application`.",
-                "how_it_should_be": "Порт `LoadAccountPort` объявляют в ядре, а `JpaRepository` остаётся внутри адаптера как деталь реализации."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Driven Port` — это `interface LoadAccountPort` в `application/port/out/` с доменными типами; адаптер `AccountPersistenceAdapter implements LoadAccountPort` внутри использует `AccountJpaRepository` (Spring Data) и mapper для конвертации Entity → Domain.",
               "correct": true,
               "sections": {
@@ -1051,6 +1039,18 @@
                 "when_to_apply": "Так реализуют любую внешнюю зависимость: интерфейс-порт в ядре, конкретная технология (JPA, HTTP) — в адаптере.",
                 "edge_cases": "`AccountJpaRepository` — не driven-порт, а технический интерфейс Spring Data; портом остаётся `LoadAccountPort`.",
                 "related": "[[hexagonal-architecture-interview#Q12]] обязанности secondary; [[hexagonal-architecture-interview#Q14]] маппинг; [[hexagonal-architecture-interview#Q40]] утечка модели."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JpaRepository<AccountJpaEntity, Long>` — уже готовый Driven Port: `Spring Data` генерирует реализацию сам; отдельные `LoadAccountPort` и `AccountPersistenceAdapter` дублируют то, что даёт `interface AccountJpaRepository`, и mapper `Entity → Domain` становится лишним.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JpaRepository` — технический Spring Data интерфейс; ядро не должно его видеть, иначе потянется зависимость на `org.springframework.data`.",
+                "source_of_confusion": "`JpaRepository` уже предоставляет `findById`/`save`, поэтому кажется готовым портом.",
+                "if_it_were_true": "Тогда ядро импортировало бы `Pageable` и `PagingAndSortingRepository`, и multi-module проект ломался бы на compile в `bookkeeper-application`.",
+                "how_it_should_be": "Порт `LoadAccountPort` объявляют в ядре, а `JpaRepository` остаётся внутри адаптера как деталь реализации."
               }
             },
             {
@@ -1115,6 +1115,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Обе стороны примиряет `@ComponentScan(basePackages = \".domain\")`: purist-ядро остаётся без аннотаций, а прагматики получают автосборку — сканирование домена снимает сам вопрос. Отдельные аннотации на use-case тогда не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`domain/` не должен сканироваться Spring'ом — именно это и исключает доменную модель из IoC, что нам и нужно.",
+                "source_of_confusion": "Расширение component-scan на весь проект кажется удобным «чтобы Spring видел всё».",
+                "if_it_were_true": "Тогда Spring пытался бы инстанцировать `Money` (Value Object), падал без `@Bean`-конструктора, а разработчик добавил бы `@Component` в VO, сделав его изменяемым singleton.",
+                "how_it_should_be": "Сканируют `application` и `adapter`, но не `domain`; доменные объекты создаются обычным `new`, а не Spring'ом."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Компромисс Хомбергса — кастомная мета-аннотация `@UseCase` (с `@Service` внутри): ядро ссылается на `@UseCase`, а ArchUnit проверяет, что её ставят только на классы из `application/service/`. Это одна точка контроля, легко заменяемая на ручной DI.",
               "correct": true,
               "sections": {
@@ -1123,18 +1135,6 @@
                 "when_to_apply": "Выбор зависит от контекста: библиотека или standalone — чище без Spring; монолит — удобнее с `@UseCase`/`@Service` и авто-сборкой графа.",
                 "edge_cases": "На собеседовании ценится не «правильный» ответ, а объяснение trade-offs; жёсткость изоляции и состав команды влияют на выбор.",
                 "related": "[[hexagonal-architecture-interview#Q21]] Composition Root; [[hexagonal-architecture-interview#Q42]] проверка правил через ArchUnit."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Обе стороны примиряет `@ComponentScan(basePackages = \".domain\")`: purist-ядро остаётся без аннотаций, а прагматики получают автосборку — сканирование домена снимает сам вопрос. Отдельные аннотации на use-case тогда не нужны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`domain/` не должен сканироваться Spring'ом — именно это и исключает доменную модель из IoC, что нам и нужно.",
-                "source_of_confusion": "Расширение component-scan на весь проект кажется удобным «чтобы Spring видел всё».",
-                "if_it_were_true": "Тогда Spring пытался бы инстанцировать `Money` (Value Object), падал без `@Bean`-конструктора, а разработчик добавил бы `@Component` в VO, сделав его изменяемым singleton.",
-                "how_it_should_be": "Сканируют `application` и `adapter`, но не `domain`; доменные объекты создаются обычным `new`, а не Spring'ом."
               }
             }
           ]
@@ -1163,6 +1163,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`@Transactional` ставят на use-case (Application Service); для read-only — `@Transactional(readOnly = true)`. Транзакция охватывает бизнес-операцию, а не адаптеры и не домен.",
+              "correct": true,
+              "sections": {
+                "explanation": "Транзакция — application concern: use-case определяет бизнес-границу, поэтому именно он, а не контроллер или репозиторий, задаёт `@Transactional`.",
+                "example": "`SendMoneyService` у Хомбергса помечен `@Transactional` целиком, и `source.withdraw()` + `target.deposit()` выполняются в одной транзакции.",
+                "when_to_apply": "Границу ставят на каждый use-case, меняющий состояние; read-only сценарии помечают `readOnly = true` ради меньших накладных расходов на JDBC.",
+                "edge_cases": "В «чистом ядре» `@Transactional` — протечка Spring; её выносят в декоратор или `TransactionTemplate`, чтобы минимизировать связанность.",
+                "related": "[[hexagonal-architecture-interview#Q19]] @Service на use-case; [[hexagonal-architecture-interview#Q26]] доменные события; [[hexagonal-architecture-interview#Q44]] обработка ошибок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`@Transactional` ставят на каждый метод репозитория; granular control позволяет короткие транзакции и меньше блокировок, а use-case собирает их последовательно.",
               "correct": false,
               "sections": {
@@ -1173,8 +1186,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`@Transactional` ставят на доменные сущности (`@Entity Order`); изменение состояния тогда атомарно само по себе.",
               "correct": false,
               "sections": {
@@ -1182,19 +1195,6 @@
                 "source_of_confusion": "Аннотации на сущности привычны по JPA, поэтому туда добавляют и `@Transactional`.",
                 "if_it_were_true": "Тогда `@Transactional` молча не работал бы (это аннотация для proxy на bean, а не для сущности), но никто не заметил бы до production.",
                 "how_it_should_be": "Домен остаётся без транзакционных аннотаций, а `@Transactional` живёт на use-case."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@Transactional` ставят на use-case (Application Service); для read-only — `@Transactional(readOnly = true)`. Транзакция охватывает бизнес-операцию, а не адаптеры и не домен.",
-              "correct": true,
-              "sections": {
-                "explanation": "Транзакция — application concern: use-case определяет бизнес-границу, поэтому именно он, а не контроллер или репозиторий, задаёт `@Transactional`.",
-                "example": "`SendMoneyService` у Хомбергса помечен `@Transactional` целиком, и `source.withdraw()` + `target.deposit()` выполняются в одной транзакции.",
-                "when_to_apply": "Границу ставят на каждый use-case, меняющий состояние; read-only сценарии помечают `readOnly = true` ради меньших накладных расходов на JDBC.",
-                "edge_cases": "В «чистом ядре» `@Transactional` — протечка Spring; её выносят в декоратор или `TransactionTemplate`, чтобы минимизировать связанность.",
-                "related": "[[hexagonal-architecture-interview#Q19]] @Service на use-case; [[hexagonal-architecture-interview#Q26]] доменные события; [[hexagonal-architecture-interview#Q44]] обработка ошибок."
               }
             }
           ]
@@ -1283,6 +1283,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Зависимости направляют наружу: `domain` подключает `adapter-web` и `adapter-persistence` как `implementation project(...)`, ведь доменные методы вызывают репозитории. Тогда `application` видит `domain`, а `app` собирает только `spring-boot-starter` и `Composition Root`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это перевёрнутые зависимости: гексагон требует обратного — адаптеры зависят от `application`, который зависит от `domain`.",
+                "source_of_confusion": "«Снаружи» интуитивно ассоциируется с «выше по зависимости».",
+                "if_it_were_true": "Тогда `domain` тянул бы `spring-web` и `jakarta.persistence`, и главная цель multi-module — изоляция ядра — исчезла бы.",
+                "how_it_should_be": "Зависимости направлены внутрь: `app` → адаптеры → `application` → `domain`, и `domain` не зависит ни от кого."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Multi-module: `domain` (чистая Java), `application` (зависит от `domain`), `adapter-web`/`adapter-persistence` (зависят от `application`), `app` (Composition Root, зависит от всех). Gradle/Maven физически запрещает импорт Spring в `domain`.",
               "correct": true,
               "sections": {
@@ -1291,18 +1303,6 @@
                 "when_to_apply": "Multi-module выбирают для крупных долгоживущих систем, где дисциплина пакетов недостаточна и нужна автоматическая защита границ.",
                 "edge_cases": "Плюс — физическая изоляция и параллельная сборка; минус — больше `build.gradle`-файлов и более сложный рефакторинг между модулями.",
                 "related": "[[hexagonal-architecture-interview#Q16]] структура пакетов; [[hexagonal-architecture-interview#Q42]] проверка правил через ArchUnit."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Зависимости направляют наружу: `domain` подключает `adapter-web` и `adapter-persistence` как `implementation project(...)`, ведь доменные методы вызывают репозитории. Тогда `application` видит `domain`, а `app` собирает только `spring-boot-starter` и `Composition Root`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это перевёрнутые зависимости: гексагон требует обратного — адаптеры зависят от `application`, который зависит от `domain`.",
-                "source_of_confusion": "«Снаружи» интуитивно ассоциируется с «выше по зависимости».",
-                "if_it_were_true": "Тогда `domain` тянул бы `spring-web` и `jakarta.persistence`, и главная цель multi-module — изоляция ядра — исчезла бы.",
-                "how_it_should_be": "Зависимости направлены внутрь: `app` → адаптеры → `application` → `domain`, и `domain` не зависит ни от кого."
               }
             },
             {
@@ -1343,18 +1343,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Тактические паттерны DDD — инфраструктурные: `Aggregate` — в `infrastructure/model/`; `Repository` — в `infrastructure/dao/`; `Domain Service` — в `infrastructure/logic/`; в `domain/` остаются только интерфейсы и Value Objects, как того требует инверсия зависимостей и чистота ядра.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это анти-DDD: агрегат — ядро домена, а не инфраструктура; такая структура воспроизводит анемичную модель под видом «гексагона».",
-                "source_of_confusion": "Repository ассоциируется с БД, и за ним в `infrastructure/` тянут и агрегаты.",
-                "if_it_were_true": "Тогда бизнес-правила расползались бы по `infrastructure/`, и при изменении правила было бы непонятно «куда смотреть».",
-                "how_it_should_be": "Агрегаты, VO и доменные сервисы — в `domain/`, интерфейс репозитория — в `port/out`, реализация — в адаптере."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Aggregate/Entity/VO/DomainEvent — в `domain/`; Application Service — в `application/service/`; Repository-интерфейс — в `application/port/out/`; его реализация — в `adapter/out/persistence/`; Bounded Context = модуль/пакет; ACL = secondary-адаптер между контекстами.",
               "correct": true,
               "sections": {
@@ -1363,6 +1351,18 @@
                 "when_to_apply": "Сочетание применяют, когда домен сложен: DDD обогащает модель поведением, а гексагон изолирует её от инфраструктуры.",
                 "edge_cases": "Repository как интерфейс — в `port/out`, как реализация — в адаптере; это разные места одного DDD-понятия.",
                 "related": "[[hexagonal-architecture-interview#Q24]] где живут агрегаты и VO; [[hexagonal-architecture-interview#Q25]] Application vs Domain Service; [[hexagonal-architecture-interview#Q40]] утечка модели."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Тактические паттерны DDD — инфраструктурные: `Aggregate` — в `infrastructure/model/`; `Repository` — в `infrastructure/dao/`; `Domain Service` — в `infrastructure/logic/`; в `domain/` остаются только интерфейсы и Value Objects, как того требует инверсия зависимостей и чистота ядра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это анти-DDD: агрегат — ядро домена, а не инфраструктура; такая структура воспроизводит анемичную модель под видом «гексагона».",
+                "source_of_confusion": "Repository ассоциируется с БД, и за ним в `infrastructure/` тянут и агрегаты.",
+                "if_it_were_true": "Тогда бизнес-правила расползались бы по `infrastructure/`, и при изменении правила было бы непонятно «куда смотреть».",
+                "how_it_should_be": "Агрегаты, VO и доменные сервисы — в `domain/`, интерфейс репозитория — в `port/out`, реализация — в адаптере."
               }
             },
             {
@@ -1451,19 +1451,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Application Service` оркеструет use-case (порты, транзакции, безопасность) и живёт в `application/service/`; `Domain Service` — чистая доменная логика без I/O в `domain/`. Если логика требует портов — Application, если выражается без БД/HTTP — Domain.",
-              "correct": true,
-              "sections": {
-                "explanation": "Application Service знает о портах и транзакциях и вызывает доменные сервисы и агрегаты; Domain Service знает только о домене и вызывает лишь агрегаты.",
-                "example": "`SendMoneyService` (`@UseCase`, `@Transactional`) грузит `Account` через порт и зовёт `MoneyTransferDomainService.transfer()`, который без I/O делает `withdraw`/`deposit`.",
-                "when_to_apply": "Правило применяют, решая, куда положить логику: можно выразить без I/O — в Domain Service, нужна оркестрация с портами — в Application Service.",
-                "edge_cases": "Domain Service без аннотаций; `@Transactional`/`@UseCase` — только на Application Service, иначе транзакция протечёт в домен.",
-                "related": "[[hexagonal-architecture-interview#Q24]] где живут агрегаты; [[hexagonal-architecture-interview#Q26]] доменные события."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Application Service` и `Domain Service` — синонимы разных школ: первый термин из `Spring`-мира, второй — из DDD-книг; оба означают `@Service`-класс со сценарием (`SendMoneyService`, `PricingService`), и различать их на практике не требуется — оба слоя оркеструют домен.",
               "correct": false,
               "sections": {
@@ -1474,8 +1461,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Domain Service` всегда несёт `@Transactional` — он меняет агрегаты; `Application Service` транзакций не открывает, потому что лишь маршрутизирует вызовы к домену и портам.",
               "correct": false,
               "sections": {
@@ -1483,6 +1470,19 @@
                 "source_of_confusion": "«Сервис» ассоциируется с транзакциями, и их приписывают любому сервису.",
                 "if_it_were_true": "Тогда транзакции в домене были бы leakage инфраструктуры и ломали бы чистоту ядра.",
                 "how_it_should_be": "Domain Service остаётся без транзакций, а `@Transactional` живёт на Application Service."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Application Service` оркеструет use-case (порты, транзакции, безопасность) и живёт в `application/service/`; `Domain Service` — чистая доменная логика без I/O в `domain/`. Если логика требует портов — Application, если выражается без БД/HTTP — Domain.",
+              "correct": true,
+              "sections": {
+                "explanation": "Application Service знает о портах и транзакциях и вызывает доменные сервисы и агрегаты; Domain Service знает только о домене и вызывает лишь агрегаты.",
+                "example": "`SendMoneyService` (`@UseCase`, `@Transactional`) грузит `Account` через порт и зовёт `MoneyTransferDomainService.transfer()`, который без I/O делает `withdraw`/`deposit`.",
+                "when_to_apply": "Правило применяют, решая, куда положить логику: можно выразить без I/O — в Domain Service, нужна оркестрация с портами — в Application Service.",
+                "edge_cases": "Domain Service без аннотаций; `@Transactional`/`@UseCase` — только на Application Service, иначе транзакция протечёт в домен.",
+                "related": "[[hexagonal-architecture-interview#Q24]] где живут агрегаты; [[hexagonal-architecture-interview#Q26]] доменные события."
               }
             },
             {
@@ -1511,18 +1511,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "События публикуют прямо из агрегата: статический `DomainEvents.raise(new OrderPlaced(...))` внутри `place()` шлёт событие сразу; use-case и порт-посредник не нужны, а доставка гарантируется синхронностью вызова.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Тогда агрегат знает про инфраструктуру (DIP нарушен), и его тестируемость гибнет.",
-                "source_of_confusion": "Удобно «сразу» опубликовать событие там, где оно возникло — в агрегате.",
-                "if_it_were_true": "Тогда нельзя было бы протестировать агрегат без реального publisher, и static-состояние мешало бы изоляции тестов.",
-                "how_it_should_be": "Агрегат лишь накапливает события, а публикует их use-case через driven-порт."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Агрегат накапливает события (`List<DomainEvent>`), use-case после `save()` вызывает `aggregate.pullDomainEvents()` и публикует их через driven-порт `DomainEventPublisher`; адаптер шлёт в Kafka. Для гарантий доставки — `Transactional Outbox`.",
               "correct": true,
               "sections": {
@@ -1531,6 +1519,18 @@
                 "when_to_apply": "Подход применяют, когда изменение агрегата должно порождать события для других контекстов/сервисов с явным контролем момента публикации.",
                 "edge_cases": "Антипаттерн — `@DomainEvents` Spring Data: события уходят за пределами транзакции use-case и гоняются с retry; лучше явный `publish()`.",
                 "related": "[[hexagonal-architecture-interview#Q25]] Application vs Domain Service; [[hexagonal-architecture-interview#Q27]] стратегия тестирования."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "События публикуют прямо из агрегата: статический `DomainEvents.raise(new OrderPlaced(...))` внутри `place()` шлёт событие сразу; use-case и порт-посредник не нужны, а доставка гарантируется синхронностью вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тогда агрегат знает про инфраструктуру (DIP нарушен), и его тестируемость гибнет.",
+                "source_of_confusion": "Удобно «сразу» опубликовать событие там, где оно возникло — в агрегате.",
+                "if_it_were_true": "Тогда нельзя было бы протестировать агрегат без реального publisher, и static-состояние мешало бы изоляции тестов.",
+                "how_it_should_be": "Агрегат лишь накапливает события, а публикует их use-case через driven-порт."
               }
             },
             {
@@ -1595,6 +1595,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Тестировать только адаптеры: use-case — тонкая оркестрация, его покрывает `@WebMvcTest` транзитивно, а отдельные юнит-тесты дублируют проверки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тогда бизнес-логика оркестрации (порядок вызовов, ветки happy/failure) остаётся непокрытой.",
+                "source_of_confusion": "Оркестрация выглядит «тонкой», как будто там нечего ломать.",
+                "if_it_were_true": "Тогда регрессии в координации портов и обработке отказов уходили бы прямо в прод.",
+                "how_it_should_be": "Use-case покрывают ~30% тестов с моками/fakes портов, проверяя сценарии и ветки ошибок."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Пирамида: Domain ~50% (`JUnit` без Spring, чистая Java) + Use Case ~30% (`Mockito`/fakes без Spring) + Adapter ~15% (`@WebMvcTest`, `@DataJpaTest` + Testcontainers) + E2E ~5% (`@SpringBootTest`). Около 80% тестов идут миллисекунды.",
               "correct": true,
               "sections": {
@@ -1603,18 +1615,6 @@
                 "when_to_apply": "Эту раскладку применяют для всего сервиса, держа основную массу тестов на быстрых нижних уровнях.",
                 "edge_cases": "Антипаттерн — писать только `@SpringBootTest`: медленно, ненадёжно и не проверяет архитектурную изоляцию.",
                 "related": "[[hexagonal-architecture-interview#Q28]] тест use-case без инфраструктуры; [[hexagonal-architecture-interview#Q29]] тестирование адаптеров."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Тестировать только адаптеры: use-case — тонкая оркестрация, его покрывает `@WebMvcTest` транзитивно, а отдельные юнит-тесты дублируют проверки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Тогда бизнес-логика оркестрации (порядок вызовов, ветки happy/failure) остаётся непокрытой.",
-                "source_of_confusion": "Оркестрация выглядит «тонкой», как будто там нечего ломать.",
-                "if_it_were_true": "Тогда регрессии в координации портов и обработке отказов уходили бы прямо в прод.",
-                "how_it_should_be": "Use-case покрывают ~30% тестов с моками/fakes портов, проверяя сценарии и ветки ошибок."
               }
             }
           ]
@@ -1643,6 +1643,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Создать use-case обычным `new` и подставить `Mockito`-моки портов; проверять поведение (`verify` на `withdraw`, lock/release), без `@SpringBootTest` и `@MockBean`; покрывать happy path и failure-сценарии. 8+ портов — знак нарушения SRP.",
+              "correct": true,
+              "sections": {
+                "explanation": "Use-case — сердце тестирования гексагона: тест выполняется за миллисекунды, проверяя, что нужные методы портов и домена были вызваны в правильном порядке.",
+                "example": "`SendMoneyServiceTest` делает `new SendMoneyService(loadAccount, lock, updateState, props)` с моками и проверяет `then(accountLock).should().lockAccount(...)` и `releaseAccount(...)`.",
+                "when_to_apply": "Так тестируют каждый use-case при изменении бизнес-логики, оставаясь полностью без Spring-контекста.",
+                "edge_cases": "Если конструктор просит 8+ портов — use-case стоит разбить на более мелкие; это сигнал нарушения SRP.",
+                "related": "[[hexagonal-architecture-interview#Q27]] стратегия тестирования; [[hexagonal-architecture-interview#Q29]] тестирование адаптеров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Брать реальные адаптеры с in-memory БД (`H2`); скорость сопоставима с моками, зато поведение персистентности настоящее, и регрессии маппинга ловятся в тех же тестах.",
               "correct": false,
               "sections": {
@@ -1653,8 +1666,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Применять `PowerMock` для static-моков инфраструктуры; выделять порты ради тестируемости не обязательно — статические вызовы (`LocalDateTime.now()`, фабрики клиентов) подменяются точечно, и use-case тестируется без правки его дизайна.",
               "correct": false,
               "sections": {
@@ -1662,19 +1675,6 @@
                 "source_of_confusion": "PowerMock «может замокать что угодно», поэтому им пытаются обойти статику.",
                 "if_it_were_true": "Тогда наличие static-зависимостей в гексагоне считалось бы нормой, хотя это противоречит инверсии.",
                 "how_it_should_be": "Зависимости делают портами в конструкторе и мокают обычным `Mockito`, без PowerMock."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Создать use-case обычным `new` и подставить `Mockito`-моки портов; проверять поведение (`verify` на `withdraw`, lock/release), без `@SpringBootTest` и `@MockBean`; покрывать happy path и failure-сценарии. 8+ портов — знак нарушения SRP.",
-              "correct": true,
-              "sections": {
-                "explanation": "Use-case — сердце тестирования гексагона: тест выполняется за миллисекунды, проверяя, что нужные методы портов и домена были вызваны в правильном порядке.",
-                "example": "`SendMoneyServiceTest` делает `new SendMoneyService(loadAccount, lock, updateState, props)` с моками и проверяет `then(accountLock).should().lockAccount(...)` и `releaseAccount(...)`.",
-                "when_to_apply": "Так тестируют каждый use-case при изменении бизнес-логики, оставаясь полностью без Spring-контекста.",
-                "edge_cases": "Если конструктор просит 8+ портов — use-case стоит разбить на более мелкие; это сигнал нарушения SRP.",
-                "related": "[[hexagonal-architecture-interview#Q27]] стратегия тестирования; [[hexagonal-architecture-interview#Q29]] тестирование адаптеров."
               }
             }
           ]
@@ -1763,6 +1763,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Каждой реализации порта пишут собственный набор тестов; дублирование осознанное — у JPA-версии и in-memory-версии разные сценарии отказа, и общий abstract-класс их бы усреднил.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тогда тесты расходятся (drift), и баг fake не воспроизводится в real, потому что наборы кейсов разные.",
+                "source_of_confusion": "Кажется проще скопировать тесты, чем заводить общий abstract-класс.",
+                "if_it_were_true": "Тогда fake мог бы вести себя иначе, чем адаптер, и use-case-тесты на fake давали бы ложную уверенность.",
+                "how_it_should_be": "Один abstract-класс контракта переиспользуют для обеих реализаций, исключая drift."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Один и тот же набор тестов в abstract-классе применяется и к реальной (JPA), и к fake (in-memory) реализации порта; это гарантирует, что fake корректно имитирует real, и use-case-тесты на fake надёжны. Известно как Consumer-Driven Contract Testing для внутренних портов.",
               "correct": true,
               "sections": {
@@ -1771,18 +1783,6 @@
                 "when_to_apply": "Подход применяют, когда в unit-тестах use-case используются fakes — чтобы fake не разошёлся (drift) с реальным адаптером.",
                 "edge_cases": "Это внутренний port-level контракт, его не путают с external HTTP-contract testing между микросервисами (Pact).",
                 "related": "[[hexagonal-architecture-interview#Q29]] тестирование адаптеров; [[hexagonal-architecture-interview#Q31]] fake-реализации портов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Каждой реализации порта пишут собственный набор тестов; дублирование осознанное — у JPA-версии и in-memory-версии разные сценарии отказа, и общий abstract-класс их бы усреднил.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Тогда тесты расходятся (drift), и баг fake не воспроизводится в real, потому что наборы кейсов разные.",
-                "source_of_confusion": "Кажется проще скопировать тесты, чем заводить общий abstract-класс.",
-                "if_it_were_true": "Тогда fake мог бы вести себя иначе, чем адаптер, и use-case-тесты на fake давали бы ложную уверенность.",
-                "how_it_should_be": "Один abstract-класс контракта переиспользуют для обеих реализаций, исключая drift."
               }
             },
             {
@@ -1823,18 +1823,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Fake — это заранее заготовленные (canned) ответы порта: он не хранит состояния и на любой вызов возвращает подготовленный `Account`; balance после операций не меняется, поэтому в assert'ах сверяют только факт возврата объекта.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Fake имеет настоящую упрощённую логику (хранит и возвращает состояние), а mock отдаёт скриптованные ответы без логики.",
-                "source_of_confusion": "И fake, и mock — «тестовые двойники», поэтому их отождествляют.",
-                "if_it_were_true": "Тогда fake не мог бы отражать реальное поведение порта, и проверка итогового стейта была бы невозможна.",
-                "how_it_should_be": "Fake реализует поведение порта (например, `Map`-хранилище), а mock лишь возвращает заранее заданные значения."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Fake — реальная, но упрощённая реализация порта (`InMemoryAccountRepository` на `Map`): проверяют state (balance == 700), а не interactions; это менее хрупко и читаемее. Для бизнес-логики предпочитают fakes, для «событие опубликовано» — моки; нужен contract test, чтобы fake не дрейфил от real.",
               "correct": true,
               "sections": {
@@ -1843,6 +1831,18 @@
                 "when_to_apply": "Fakes выбирают для use-case-тестов бизнес-логики, где важен итоговый стейт; моки оставляют для проверки факта взаимодействия.",
                 "edge_cases": "Риск fake — необнаруженный баг в самой fake-реализации; его закрывают port-level contract-тестом против реального адаптера.",
                 "related": "[[hexagonal-architecture-interview#Q30]] contract testing; [[hexagonal-architecture-interview#Q32]] Hexagonal vs Clean."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Fake — это заранее заготовленные (canned) ответы порта: он не хранит состояния и на любой вызов возвращает подготовленный `Account`; balance после операций не меняется, поэтому в assert'ах сверяют только факт возврата объекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fake имеет настоящую упрощённую логику (хранит и возвращает состояние), а mock отдаёт скриптованные ответы без логики.",
+                "source_of_confusion": "И fake, и mock — «тестовые двойники», поэтому их отождествляют.",
+                "if_it_were_true": "Тогда fake не мог бы отражать реальное поведение порта, и проверка итогового стейта была бы невозможна.",
+                "how_it_should_be": "Fake реализует поведение порта (например, `Map`-хранилище), а mock лишь возвращает заранее заданные значения."
               }
             },
             {
@@ -1931,19 +1931,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Onion (Palermo 2008) — 4 кольца (Domain Model, Domain Services, Application Services, Infrastructure) с явным разделением Domain Service vs Application Service как в DDD; он менее явно говорит про порты. В реальном коде Onion и Hexagonal трудно отличить — оба про DIP.",
-              "correct": true,
-              "sections": {
-                "explanation": "Главная идея Onion — последовательные кольца, где каждый внутренний слой не знает о внешнем; Domain Model в центре, Infrastructure снаружи, зависимости направлены внутрь.",
-                "example": "Onion рисуют как луковицу `Infrastructure → Application Services → Domain Services → Domain Model`; Hexagonal — как ядро с портами и адаптерами вокруг.",
-                "when_to_apply": "Onion-стиль выбирают при сильном DDD-фокусе, где явно разделяют доменные и прикладные сервисы; Hexagonal — когда акцент на границах-портах.",
-                "edge_cases": "В реальном коде Onion и Hexagonal почти неразличимы; Onion лишь менее явно вводит понятия port/adapter, говоря просто «Infrastructure-слой».",
-                "related": "[[hexagonal-architecture-interview#Q32]] отличие от Clean; [[hexagonal-architecture-interview#Q34]] сравнительная таблица."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Onion — переупакованный Layered: те же слои, только нарисованные кольцами; Infrastructure сверху заменена кольцом снаружи, а зависимости, как и в N-tier, идут от UI к данным. Palermo лишь сменил визуализацию, не направление связей: те же контроллеры сверху, та же БД снизу, тот же запрет прыгать через слой.",
               "correct": false,
               "sections": {
@@ -1954,8 +1941,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Onion отказывается от интерфейсов между кольцами: `ApplicationService` вызывает `DomainService` напрямую, DI оставлен только для Infrastructure; в этом его отличие от Hexagonal, где каждый контракт — явный порт.",
               "correct": false,
               "sections": {
@@ -1963,6 +1950,19 @@
                 "source_of_confusion": "В Onion акцент на кольцах, а не на терминах port/adapter, поэтому кажется, что портов нет.",
                 "if_it_were_true": "Тогда внутренние кольца зависели бы от внешних напрямую, и инверсия зависимостей сломалась бы.",
                 "how_it_should_be": "Onion инвертирует зависимости через интерфейсы на границах колец, как и Hexagonal через порты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Onion (Palermo 2008) — 4 кольца (Domain Model, Domain Services, Application Services, Infrastructure) с явным разделением Domain Service vs Application Service как в DDD; он менее явно говорит про порты. В реальном коде Onion и Hexagonal трудно отличить — оба про DIP.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная идея Onion — последовательные кольца, где каждый внутренний слой не знает о внешнем; Domain Model в центре, Infrastructure снаружи, зависимости направлены внутрь.",
+                "example": "Onion рисуют как луковицу `Infrastructure → Application Services → Domain Services → Domain Model`; Hexagonal — как ядро с портами и адаптерами вокруг.",
+                "when_to_apply": "Onion-стиль выбирают при сильном DDD-фокусе, где явно разделяют доменные и прикладные сервисы; Hexagonal — когда акцент на границах-портах.",
+                "edge_cases": "В реальном коде Onion и Hexagonal почти неразличимы; Onion лишь менее явно вводит понятия port/adapter, говоря просто «Infrastructure-слой».",
+                "related": "[[hexagonal-architecture-interview#Q32]] отличие от Clean; [[hexagonal-architecture-interview#Q34]] сравнительная таблица."
               }
             },
             {
@@ -1991,18 +1991,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Различия — только в визуализации: Layered рисует слои, Hexagonal — шестиугольник, Onion и Clean — кольца; направление зависимостей, изоляция домена и число зон совпадают у всех четырёх, так что выбор — вопрос вкуса команды.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это упускает ключевую разницу: в Layered домен зависит от persistence, а в Hexagonal/Onion/Clean — наоборот.",
-                "source_of_confusion": "Три инверсных подхода действительно близки, и их обобщают на Layered тоже.",
-                "if_it_were_true": "Тогда Layered давал бы такую же изоляцию домена, как остальные, чего на деле нет.",
-                "how_it_should_be": "Layered принципиально отличается направлением зависимостей от трёх инверсных архитектур."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Layered (1970-е): домен зависит от persistence (JPA-сущности напрямую), 3-4 слоя, для CRUD. Hexagonal/Onion/Clean: домен независим, зависимости инвертированы — Hexagonal 2 зоны (core/adapters), Onion 4 кольца, Clean 4 кольца + Presenter; все три для сложного домена.",
               "correct": true,
               "sections": {
@@ -2011,6 +1999,18 @@
                 "when_to_apply": "Выбор делают по сложности: простой CRUD и прототипы — Layered, сложный долгоживущий домен — Hexagonal/Onion/Clean.",
                 "edge_cases": "Clean отличается от Onion/Hexagonal явным Presenter; для простого CRUD все три «инверсных» подхода избыточны.",
                 "related": "[[hexagonal-architecture-interview#Q33]] отличие от Onion; [[hexagonal-architecture-interview#Q35]] миграция из слоистой."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Различия — только в визуализации: Layered рисует слои, Hexagonal — шестиугольник, Onion и Clean — кольца; направление зависимостей, изоляция домена и число зон совпадают у всех четырёх, так что выбор — вопрос вкуса команды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это упускает ключевую разницу: в Layered домен зависит от persistence, а в Hexagonal/Onion/Clean — наоборот.",
+                "source_of_confusion": "Три инверсных подхода действительно близки, и их обобщают на Layered тоже.",
+                "if_it_were_true": "Тогда Layered давал бы такую же изоляцию домена, как остальные, чего на деле нет.",
+                "how_it_should_be": "Layered принципиально отличается направлением зависимостей от трёх инверсных архитектур."
               }
             },
             {
@@ -2075,6 +2075,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Начать с пакетов: переименование в `adapter/in/web` и `adapter/out/persistence` сразу даёт гексагональную навигацию → команда привыкает к структуре → инверсия зависимостей подтягивается позже сама, по мере правок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это косметическая правка: зависимости остались layered, и по сути ничего не изменилось.",
+                "source_of_confusion": "Правильные имена пакетов создают иллюзию завершённой миграции.",
+                "if_it_were_true": "Тогда домен всё ещё зависел бы от persistence, несмотря на «гексагональные» имена пакетов.",
+                "how_it_should_be": "Помимо переименования инвертируют зависимости, вводят порты и отделяют домен от JPA."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Постепенно: покрыть тестами → выделить bounded contexts → создать `domain/` (убрать JPA из сущностей) → разбить Service на Use Cases → инвертировать Repository → вынести адаптеры → внедрить ArchUnit-правила. Главное правило — не мигрировать ради миграции.",
               "correct": true,
               "sections": {
@@ -2083,18 +2095,6 @@
                 "when_to_apply": "План применяют, когда легаси-монолит со сложным доменом нужно довести до гексагона без остановки разработки.",
                 "edge_cases": "Если система работает и команда довольна, мигрировать не нужно: сложность архитектуры должна соответствовать сложности задачи.",
                 "related": "[[hexagonal-architecture-interview#Q36]] разбиение жирного Service; [[hexagonal-architecture-interview#Q37]] отделение JPA от домена."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Начать с пакетов: переименование в `adapter/in/web` и `adapter/out/persistence` сразу даёт гексагональную навигацию → команда привыкает к структуре → инверсия зависимостей подтягивается позже сама, по мере правок.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это косметическая правка: зависимости остались layered, и по сути ничего не изменилось.",
-                "source_of_confusion": "Правильные имена пакетов создают иллюзию завершённой миграции.",
-                "if_it_were_true": "Тогда домен всё ещё зависел бы от persistence, несмотря на «гексагональные» имена пакетов.",
-                "how_it_should_be": "Помимо переименования инвертируют зависимости, вводят порты и отделяют домен от JPA."
               }
             }
           ]
@@ -2123,6 +2123,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Каждый метод `OrderService` превращают в отдельный `*UseCase`-интерфейс (`PlaceOrderUseCase`, `CancelOrderUseCase`, `ConfirmPaymentUseCase`) + impl-класс; query-операции выносят в отдельные Query-сервисы (`GetOrderQuery`, `@Transactional(readOnly = true)`). Правило Хомбергса — один класс, один публичный метод.",
+              "correct": true,
+              "sections": {
+                "explanation": "Толстый сервис с 20+ методами нарушает SRP и тянет все зависимости разом; разбиение даёт по use-case-классу со своими портами и компактными тестами.",
+                "example": "`PlaceOrderService implements PlaceOrderUseCase` зависит только от `CustomerRepository`, `ProductRepository`, `OrderRepository` и `DomainEventPublisher`, а не от всех 15 полей старого сервиса.",
+                "when_to_apply": "Разбиение применяют при рефакторинге enterprise-сервисов, где один класс обслуживает множество несвязанных операций.",
+                "edge_cases": "«Один класс — один публичный метод» — предельный случай, дающий чистейшую структуру; query-сервисы помечают `readOnly`.",
+                "related": "[[hexagonal-architecture-interview#Q35]] миграция из слоистой; [[hexagonal-architecture-interview#Q37]] отделение JPA от домена."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Класс дробят строго по CRUD: `CreateOrderService`, `ReadOrderService`, `UpdateOrderService`, `DeleteOrderService`; каждому — свой интерфейс (`CreateOrderUseCase`, `ReadOrderUseCase`) и свой `@Transactional`-профиль, а доменные сценарии (`confirmPayment`, `shipOrder`) распределяют по этим четырём классам.",
               "correct": false,
               "sections": {
@@ -2133,8 +2146,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Логику оставляют в одном `OrderService`, но точки входа помечают `@Qualifier`-ами и внедряют нужную через `@Autowired`; ответственность разносится на уровне Spring-контекста без дробления класса.",
               "correct": false,
               "sections": {
@@ -2142,19 +2155,6 @@
                 "source_of_confusion": "`@Qualifier` кажется способом «разнести» поведение без разбиения класса.",
                 "if_it_were_true": "Тогда один класс по-прежнему держал бы 20 методов, лишь помеченных квалификаторами.",
                 "how_it_should_be": "Класс реально разбивают на отдельные use-case-классы, а не маскируют размер квалификаторами."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Каждый метод `OrderService` превращают в отдельный `*UseCase`-интерфейс (`PlaceOrderUseCase`, `CancelOrderUseCase`, `ConfirmPaymentUseCase`) + impl-класс; query-операции выносят в отдельные Query-сервисы (`GetOrderQuery`, `@Transactional(readOnly = true)`). Правило Хомбергса — один класс, один публичный метод.",
-              "correct": true,
-              "sections": {
-                "explanation": "Толстый сервис с 20+ методами нарушает SRP и тянет все зависимости разом; разбиение даёт по use-case-классу со своими портами и компактными тестами.",
-                "example": "`PlaceOrderService implements PlaceOrderUseCase` зависит только от `CustomerRepository`, `ProductRepository`, `OrderRepository` и `DomainEventPublisher`, а не от всех 15 полей старого сервиса.",
-                "when_to_apply": "Разбиение применяют при рефакторинге enterprise-сервисов, где один класс обслуживает множество несвязанных операций.",
-                "edge_cases": "«Один класс — один публичный метод» — предельный случай, дающий чистейшую структуру; query-сервисы помечают `readOnly`.",
-                "related": "[[hexagonal-architecture-interview#Q35]] миграция из слоистой; [[hexagonal-architecture-interview#Q37]] отделение JPA от домена."
               }
             }
           ]
@@ -2243,6 +2243,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Главный грех — избыточная гранулярность: порт на каждый вызов (`LoadAccountPort`, `SaveAccountPort`, `DeleteAccountPort`), адаптер на каждую технологию (`JpaAdapter`, `RedisAdapter`, `S3Adapter`) и `Mapper` на каждую пару. Boilerplate растёт квадратично — правильнее один универсальный адаптер на подсистему с широким интерфейсом на все её операции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это подмена тезиса: реальные проблемы — утечки инфраструктуры и обход use-case, а число адаптеров вторично.",
+                "source_of_confusion": "Много классов-адаптеров визуально «пугает» и кажется проблемой.",
+                "if_it_were_true": "Тогда сокращение числа адаптеров решало бы проблемы, но утечки и анемия от этого не исчезают.",
+                "how_it_should_be": "Фокус держат на утечках в ядро и обходе use-case, а не на количестве адаптеров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Топ-грехи: адаптер обходит use-case (Controller → Repository), «жирный» порт (нарушение ISP), домен зависит от `@Entity`/`@Column`/`Jackson`, анемичная модель, утечка JPA-entity через порт, толстый `@Service` вместо use-cases, «магические» `@DomainEvents`, отсутствие ACL на границах контекстов, `@Transactional` в адаптере и отсутствие ArchUnit.",
               "correct": true,
               "sections": {
@@ -2251,18 +2263,6 @@
                 "when_to_apply": "Этот список используют как code review checklist при проверке гексагональных сервисов.",
                 "edge_cases": "Отсутствие ArchUnit делает все остальные правила «устной договорённостью», которая разрушается за полгода.",
                 "related": "[[hexagonal-architecture-interview#Q39]] анемичная модель; [[hexagonal-architecture-interview#Q40]] утечка модели; [[hexagonal-architecture-interview#Q42]] ArchUnit."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Главный грех — избыточная гранулярность: порт на каждый вызов (`LoadAccountPort`, `SaveAccountPort`, `DeleteAccountPort`), адаптер на каждую технологию (`JpaAdapter`, `RedisAdapter`, `S3Adapter`) и `Mapper` на каждую пару. Boilerplate растёт квадратично — правильнее один универсальный адаптер на подсистему с широким интерфейсом на все её операции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это подмена тезиса: реальные проблемы — утечки инфраструктуры и обход use-case, а число адаптеров вторично.",
-                "source_of_confusion": "Много классов-адаптеров визуально «пугает» и кажется проблемой.",
-                "if_it_were_true": "Тогда сокращение числа адаптеров решало бы проблемы, но утечки и анемия от этого не исчезают.",
-                "how_it_should_be": "Фокус держат на утечках в ядро и обходе use-case, а не на количестве адаптеров."
               }
             },
             {
@@ -2303,18 +2303,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Перевести домен на `record`: `Order`, `Money`, `Email` получают immutability по построению и лишаются сеттеров физически; поведение переносят в компактные конструкторы и статические фабрики (`Order.place(...)`), а доменные глаголы вроде `submit()`/`withdraw()` становятся методами record'а — этого для борьбы с анемией достаточно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`record` без бизнес-методов — та же анемия, только в неизменяемой обёртке.",
-                "source_of_confusion": "`record` ассоциируется с «современной чистой» моделью.",
-                "if_it_were_true": "Тогда смена ключевого слова устраняла бы анемию, но поведение по-прежнему жило бы в сервисах.",
-                "how_it_should_be": "Богатство модели даёт поведение (методы-глаголы), а не выбор `record` против `class`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Логику держат в агрегате (`order.submit()`), use-case только оркеструет (`findById → submit → save → publish`); запрещают сеттеры в домене, оставляя доменные глаголы; вводят Value Objects (`Money`, `Email`) вместо `String` и стремятся к immutability с `final`-полями.",
               "correct": true,
               "sections": {
@@ -2323,6 +2311,18 @@
                 "when_to_apply": "Приёмы применяют при моделировании любого агрегата, чтобы поведение жило рядом с данными.",
                 "edge_cases": "`record` без бизнес-методов — это анемия в другой обёртке; immutability сама по себе не делает модель богатой.",
                 "related": "[[hexagonal-architecture-interview#Q24]] где живут агрегаты; [[hexagonal-architecture-interview#Q40]] утечка модели."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Перевести домен на `record`: `Order`, `Money`, `Email` получают immutability по построению и лишаются сеттеров физически; поведение переносят в компактные конструкторы и статические фабрики (`Order.place(...)`), а доменные глаголы вроде `submit()`/`withdraw()` становятся методами record'а — этого для борьбы с анемией достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`record` без бизнес-методов — та же анемия, только в неизменяемой обёртке.",
+                "source_of_confusion": "`record` ассоциируется с «современной чистой» моделью.",
+                "if_it_were_true": "Тогда смена ключевого слова устраняла бы анемию, но поведение по-прежнему жило бы в сервисах.",
+                "how_it_should_be": "Богатство модели даёт поведение (методы-глаголы), а не выбор `record` против `class`."
               }
             },
             {
@@ -2411,19 +2411,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Избыточен для простого CRUD, MVP/прототипа, маленького сервиса (<5000 LOC), короткоживущего кода (миграции/скрипты) и команды новичков. Нужен для сложной бизнес-логики, долгоживущих систем (5+ лет), команд 5+ инженеров, нескольких каналов входа (REST+Kafka+CLI) и ожидаемой смены инфраструктуры.",
-              "correct": true,
-              "sections": {
-                "explanation": "Гексагон окупается на сложных системах, а простым проектам добавляет лишние слои и мапперы без выгоды; сложность архитектуры должна соответствовать сложности задачи (правило Фаулера).",
-                "example": "Сервис «таблица → API» без бизнес-логики лучше написать слоисто; финансовый или e-commerce домен с REST + Kafka + Scheduler выигрывает от портов.",
-                "when_to_apply": "Оценку делают при выборе архитектуры нового сервиса, взвешивая сложность домена, срок жизни, размер команды и число каналов входа.",
-                "edge_cases": "Команда новичков с плохой реализацией гексагона может получить результат хуже слоистой архитектуры из-за высокой кривой обучения.",
-                "related": "[[hexagonal-architecture-interview#Q40]] утечка модели; [[hexagonal-architecture-interview#Q42]] проверка правил через ArchUnit."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Гексагон — дефолт любого нового Java-сервиса: слоистую архитектуру индустрия относит к легаси, а порты и мапперы окупаются даже в CRUD с первого рефакторинга. Исключение — одноразовые скрипты и миграции: там адаптеры не успевают окупиться.",
               "correct": false,
               "sections": {
@@ -2434,8 +2421,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Слоистая архитектура с дисциплиной ревью решает те же задачи: `@Transactional`-сервисы тестируются через `Mockito`, а замену PostgreSQL→DynamoDB бизнес не заказывает. Гексагон оправдан там, где входов больше одного (REST плюс Kafka), а при единственном REST-входе он избыточен всегда.",
               "correct": false,
               "sections": {
@@ -2443,6 +2430,19 @@
                 "source_of_confusion": "Простота Layered подкупает и кажется достаточной всегда.",
                 "if_it_were_true": "Тогда финансовые и e-commerce системы прекрасно жили бы на Layered, но связанность душит их развитие.",
                 "how_it_should_be": "Для сложного долгоживущего домена выбирают гексагон, для простого — Layered."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Избыточен для простого CRUD, MVP/прототипа, маленького сервиса (<5000 LOC), короткоживущего кода (миграции/скрипты) и команды новичков. Нужен для сложной бизнес-логики, долгоживущих систем (5+ лет), команд 5+ инженеров, нескольких каналов входа (REST+Kafka+CLI) и ожидаемой смены инфраструктуры.",
+              "correct": true,
+              "sections": {
+                "explanation": "Гексагон окупается на сложных системах, а простым проектам добавляет лишние слои и мапперы без выгоды; сложность архитектуры должна соответствовать сложности задачи (правило Фаулера).",
+                "example": "Сервис «таблица → API» без бизнес-логики лучше написать слоисто; финансовый или e-commerce домен с REST + Kafka + Scheduler выигрывает от портов.",
+                "when_to_apply": "Оценку делают при выборе архитектуры нового сервиса, взвешивая сложность домена, срок жизни, размер команды и число каналов входа.",
+                "edge_cases": "Команда новичков с плохой реализацией гексагона может получить результат хуже слоистой архитектуры из-за высокой кривой обучения.",
+                "related": "[[hexagonal-architecture-interview#Q40]] утечка модели; [[hexagonal-architecture-interview#Q42]] проверка правил через ArchUnit."
               }
             },
             {
@@ -2471,18 +2471,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Через `@ArchTest`-правила обратной защиты: `adapter` не зависит от `application`, `application` — от `domain`, а `domain` свободен от `Spring`/`JPA`/`Jackson`; DSL `layeredArchitecture()` описывает зависимости от центра наружу, use-case-реализации при этом относят к `adapter.out`, а порты — к `port.in`. Запускают отдельным `gradle archTest`-таском, не в общем `JUnit`-прогоне.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В Java нет ESLint; для проверки классовых зависимостей нужен ArchUnit или JDepend.",
-                "source_of_confusion": "Опыт фронтенда с ESLint переносят на Java-проекты.",
-                "if_it_were_true": "Тогда правила границ описывались бы конфигом линтера, но в Java-экосистеме такого инструмента нет.",
-                "how_it_should_be": "Правила пишут на ArchUnit как JUnit-тесты, проверяющие зависимости между пакетами и классами."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Через `@ArchTest`-правила: `domain` не зависит от `application`/`adapter`, `application` не зависит от `adapter`, `domain` без Spring/JPA/Jackson; use-cases реализуют порты из `port.in`; контроллеры не вызывают `adapter.out`; есть DSL `layeredArchitecture()`. Запускается как обычный JUnit-тест, нарушение валит CI.",
               "correct": true,
               "sections": {
@@ -2491,6 +2479,18 @@
                 "when_to_apply": "Правила внедряют после выделения адаптеров (шаг миграции) и держат в CI, чтобы регрессия не сломала структуру.",
                 "edge_cases": "ArchUnit — это просто JUnit-тесты без vendor lock-in; он проверяет классовые зависимости, а не POM, как Maven enforcer.",
                 "related": "[[hexagonal-architecture-interview#Q22]] multi-module проект; [[hexagonal-architecture-interview#Q43]] гексагон в микросервисах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Через `@ArchTest`-правила обратной защиты: `adapter` не зависит от `application`, `application` — от `domain`, а `domain` свободен от `Spring`/`JPA`/`Jackson`; DSL `layeredArchitecture()` описывает зависимости от центра наружу, use-case-реализации при этом относят к `adapter.out`, а порты — к `port.in`. Запускают отдельным `gradle archTest`-таском, не в общем `JUnit`-прогоне.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Java нет ESLint; для проверки классовых зависимостей нужен ArchUnit или JDepend.",
+                "source_of_confusion": "Опыт фронтенда с ESLint переносят на Java-проекты.",
+                "if_it_were_true": "Тогда правила границ описывались бы конфигом линтера, но в Java-экосистеме такого инструмента нет.",
+                "how_it_should_be": "Правила пишут на ArchUnit как JUnit-тесты, проверяющие зависимости между пакетами и классами."
               }
             },
             {
@@ -2555,6 +2555,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Внутри одного сервиса заводят несколько гексагонов — по одному на агрегат: модульность растёт, общие адаптеры (БД, брокер) переиспользуются, и каждый агрегат получает собственный набор портов; для сервисов с единственным агрегатом схема вырождается в обычный один гексагон.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это over-engineering: гексагон уже даёт модульность через порты, и плодить вложенные гексагоны незачем.",
+                "source_of_confusion": "Стремление к «максимальной модульности» толкает дробить сервис на под-гексагоны.",
+                "if_it_were_true": "Тогда внутри сервиса появлялись бы лишние границы и накладные расходы без реальной выгоды.",
+                "how_it_should_be": "Один сервис — один гексагон; модульность внутри обеспечивают порты и пакеты по контекстам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Один сервис = один гексагон (Bounded Context per service + DB per service): это даёт независимую эволюцию транспорта (REST→gRPC), тестируемость, ACL на границах и Consumer-Driven Contracts (Pact). Shared library с доменом между сервисами — антипаттерн; для простых CRUD-микросервисов гексагон может быть избыточен.",
               "correct": true,
               "sections": {
@@ -2563,18 +2575,6 @@
                 "when_to_apply": "Гексагон в микросервисах применяют для сервисов со сложной логикой и несколькими каналами входа; межсервисно общаются через DTO/Events.",
                 "edge_cases": "Общая доменная shared-library между сервисами создаёт скрытую связанность; для тонких CRUD-сервисов достаточно лёгкого слоя.",
                 "related": "[[hexagonal-architecture-interview#Q42]] ArchUnit; [[hexagonal-architecture-interview#Q44]] обработка ошибок."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Внутри одного сервиса заводят несколько гексагонов — по одному на агрегат: модульность растёт, общие адаптеры (БД, брокер) переиспользуются, и каждый агрегат получает собственный набор портов; для сервисов с единственным агрегатом схема вырождается в обычный один гексагон.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это over-engineering: гексагон уже даёт модульность через порты, и плодить вложенные гексагоны незачем.",
-                "source_of_confusion": "Стремление к «максимальной модульности» толкает дробить сервис на под-гексагоны.",
-                "if_it_were_true": "Тогда внутри сервиса появлялись бы лишние границы и накладные расходы без реальной выгоды.",
-                "how_it_should_be": "Один сервис — один гексагон; модульность внутри обеспечивают порты и пакеты по контекстам."
               }
             }
           ]
@@ -2603,6 +2603,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Доменные исключения — в `domain/` (`InsufficientFundsException`, `OrderNotFoundException`, чистая Java); use-case бросает доменные; primary-адаптер (`@ControllerAdvice`) переводит их в HTTP (422, 404 + `ErrorDto`); secondary-адаптер ловит `DataAccessException` и превращает в `PersistenceUnavailableException`. Альтернатива — sealed `Result`-type для явного контракта ошибок.",
+              "correct": true,
+              "sections": {
+                "explanation": "Принцип: доменные исключения живут в домене, технические — в адаптерах; HTTP-маппинг и трансляция инфраструктурных ошибок не проникают в ядро.",
+                "example": "`@ExceptionHandler(InsufficientFundsException.class)` возвращает `422` + `ErrorDto(\"INSUFFICIENT_FUNDS\", ...)`, а secondary-адаптер оборачивает `DataAccessException` в инфраструктурное исключение.",
+                "when_to_apply": "Схему применяют для каждого сценария, где возможны и доменные, и технические сбои, чтобы каждый обрабатывался на своём уровне.",
+                "edge_cases": "Sealed `Result`-type (`Success`/`InsufficientFunds`/`AccountNotFound`) даёт явный контракт ошибок без скрытого control flow, но код становится многословнее.",
+                "related": "[[hexagonal-architecture-interview#Q20]] транзакционные границы; [[hexagonal-architecture-interview#Q43]] гексагон в микросервисах; [[hexagonal-architecture-interview#Q45]] реактивность."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Единый канал сбоев: все исключения заворачивают в `RuntimeException` с кодом в сообщении (`\"404: order missing\"`); `@ControllerAdvice` парсит префикс и выбирает статус — 404, 422 или 500; доменная иерархия исключений не нужна, а новые коды добавляются без новых классов.",
               "correct": false,
               "sections": {
@@ -2613,8 +2626,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Use-case сразу возвращает `ResponseEntity` с нужным статусом (404, 422) и телом `ErrorDto`; primary-адаптер пробрасывает ответ без маппинга, и слой перевода исключений исчезает вместе с дублированием кодов.",
               "correct": false,
               "sections": {
@@ -2622,19 +2635,6 @@
                 "source_of_confusion": "Удобно сразу вернуть готовый ответ, не маппя ошибку в адаптере.",
                 "if_it_were_true": "Тогда тот же use-case из Kafka возвращал бы `ResponseEntity`, что бессмысленно вне HTTP.",
                 "how_it_should_be": "Use-case возвращает доменный результат или бросает доменное исключение, а HTTP-маппинг делает адаптер."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Доменные исключения — в `domain/` (`InsufficientFundsException`, `OrderNotFoundException`, чистая Java); use-case бросает доменные; primary-адаптер (`@ControllerAdvice`) переводит их в HTTP (422, 404 + `ErrorDto`); secondary-адаптер ловит `DataAccessException` и превращает в `PersistenceUnavailableException`. Альтернатива — sealed `Result`-type для явного контракта ошибок.",
-              "correct": true,
-              "sections": {
-                "explanation": "Принцип: доменные исключения живут в домене, технические — в адаптерах; HTTP-маппинг и трансляция инфраструктурных ошибок не проникают в ядро.",
-                "example": "`@ExceptionHandler(InsufficientFundsException.class)` возвращает `422` + `ErrorDto(\"INSUFFICIENT_FUNDS\", ...)`, а secondary-адаптер оборачивает `DataAccessException` в инфраструктурное исключение.",
-                "when_to_apply": "Схему применяют для каждого сценария, где возможны и доменные, и технические сбои, чтобы каждый обрабатывался на своём уровне.",
-                "edge_cases": "Sealed `Result`-type (`Success`/`InsufficientFunds`/`AccountNotFound`) даёт явный контракт ошибок без скрытого control flow, но код становится многословнее.",
-                "related": "[[hexagonal-architecture-interview#Q20]] транзакционные границы; [[hexagonal-architecture-interview#Q43]] гексагон в микросервисах; [[hexagonal-architecture-interview#Q45]] реактивность."
               }
             }
           ]
