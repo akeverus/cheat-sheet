@@ -1656,7 +1656,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Executor — базовый интерфейс с методом execute; ExecutorService добавляет lifecycle, но submit с Callable не поддерживает — только execute с Runnable.",
+              "text": "Executor — базовый интерфейс с execute; ExecutorService добавляет lifecycle, но submit не принимает Callable, только Runnable.",
               "correct": false,
               "sections": {
                 "what_actually": "ExecutorService.submit принимает и Runnable, и Callable, возвращает Future.",
@@ -1668,7 +1668,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Executor — базовый интерфейс с методом execute; ExecutorService — синоним для совместимости и просто делегирует все вызовы в Executor.",
+              "text": "Executor — базовый интерфейс с методом execute; ExecutorService — синоним для совместимости, делегирует всё в Executor.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные интерфейсы с разной ответственностью: execute vs lifecycle+submit+future.",
@@ -1704,37 +1704,37 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Готовые типы пулов под разные нагрузки: fixed, cached, single, scheduled — все сразу безопасны для production без настройки.",
+              "text": "Готовые типы пулов под разные нагрузки: fixed, cached, single, scheduled, fork-join, virtual-per-task.",
               "correct": false,
               "sections": {
-                "what_actually": "newFixedThreadPool с unbounded queue и newCachedThreadPool с unbounded threads опасны — OOM.",
-                "source_of_confusion": "Доверие к JDK-фабрикам: раз метод в стандартной библиотеке, его считают безопасным «из коробки».",
-                "if_it_were_true": "Goetz не писал бы про это в JCIP — реально известный pitfall.",
-                "how_it_should_be": "В production — ThreadPoolExecutor вручную с bounded queue + RejectedExecutionHandler."
+                "what_actually": "Work-stealing-пул создаёт `Executors.newWorkStealingPool`; отдельной фабрики `newForkJoinPool` в `Executors` нет — сам `ForkJoinPool` создаётся конструктором или берётся как `commonPool()`.",
+                "source_of_confusion": "`newWorkStealingPool` под капотом возвращает `ForkJoinPool`, поэтому фабрику ошибочно называют `newForkJoinPool`.",
+                "if_it_were_true": "Существовал бы дублирующий метод; реально API даёт единственную фабрику `newWorkStealingPool` для work-stealing-пула.",
+                "how_it_should_be": "Для work-stealing — `Executors.newWorkStealingPool(parallelism)`; для прямого доступа — `ForkJoinPool.commonPool()` или `new ForkJoinPool(...)`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Готовые типы пулов под разные нагрузки: single можно скастовать к ThreadPoolExecutor и расширить через setCorePoolSize.",
+              "text": "Готовые типы пулов под разные нагрузки: fixed, cached, single, scheduled, work-stealing, direct-executor.",
               "correct": false,
               "sections": {
-                "what_actually": "`newSingleThreadExecutor` оборачивается в `FinalizableDelegatedExecutorService`; каст к `ThreadPoolExecutor` бросит `ClassCastException`.",
-                "source_of_confusion": "У `newFixedThreadPool` каст к `ThreadPoolExecutor` работает — ждут того же от single.",
-                "if_it_were_true": "Можно было бы превратить однопоточный executor в многопоточный, нарушив гарантию последовательного выполнения.",
-                "how_it_should_be": "Для настраиваемого пула создавать `new ThreadPoolExecutor(...)` напрямую."
+                "what_actually": "`Executors` не содержит `newDirectExecutor`: синхронное исполнение в вызывающем потоке даёт Guava (`MoreExecutors.directExecutor`) или просто `Runnable.run()`.",
+                "source_of_confusion": "Guava-фабрику `directExecutor` переносят в стандартный `java.util.concurrent.Executors`, где её нет.",
+                "if_it_were_true": "JDK предлагал бы готовый inline-executor; реально его собирают вручную (`cmd -> cmd.run()`).",
+                "how_it_should_be": "Для синхронного исполнения — `Runnable::run` как `Executor` или Guava `directExecutor`; штатной JDK-фабрики нет."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Готовые типы пулов под разные нагрузки: cached даёт фиксированный размер и не растёт под нагрузкой.",
+              "text": "Готовые типы пулов под разные нагрузки: fixed, cached, single, scheduled, work-stealing, cached-scheduled.",
               "correct": false,
               "sections": {
-                "what_actually": "newCachedThreadPool растёт неограниченно (max = Integer.MAX_VALUE), reuse потоков 60 сек idle.",
-                "source_of_confusion": "Имя «Cached» воспринимают как «фиксированный кэш потоков», хотя пул растёт неограниченно.",
-                "if_it_were_true": "Не было бы риска OOM от newCachedThreadPool — реально есть.",
-                "how_it_should_be": "newCachedThreadPool unbounded; для bounded используйте свой ThreadPoolExecutor."
+                "what_actually": "Фабрики `newCachedScheduledThreadPool` не существует: периодику покрывает `newScheduledThreadPool`, а рост под нагрузкой — отдельный `newCachedThreadPool`.",
+                "source_of_confusion": "Хотят «и периодику, и рост потоков» одной фабрикой и достраивают несуществующее имя из двух реальных.",
+                "if_it_were_true": "Один пул совмещал бы cached-рост и scheduled-периодику; реально это разные фабрики с разными очередями.",
+                "how_it_should_be": "Периодические задачи — `newScheduledThreadPool`; всплески коротких задач — `newCachedThreadPool`; совмещение — вручную."
               }
             }
           ]
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "execute возвращает Future с результатом, исключение через get(); submit возвращает Future, и исключение доступно только через get.",
+              "text": "execute возвращает Future с результатом, исключение доступно через get(); submit тоже возвращает Future, исключение только через get().",
               "correct": false,
               "sections": {
                 "what_actually": "execute возвращает void; submit возвращает Future.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "execute удалён из Executor в Java 21 как устаревший; submit — единственный способ отправить задачу в пул.",
+              "text": "execute удалён из интерфейса Executor в Java 21 как устаревший; submit остаётся единственным способом отправить задачу в пул.",
               "correct": false,
               "sections": {
                 "what_actually": "execute() остаётся базовым методом Executor; не deprecated.",
@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Пул для рекурсивных divide-and-conquer задач: одна общая очередь на всех worker'ов без персональных deque — это work-stealing.",
+              "text": "Пул для рекурсивных divide-and-conquer задач: одна общая очередь заданий на всех worker'ов без персональных deque — это work-stealing.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый worker имеет свою deque; общая очередь была бы bottleneck.",
@@ -1931,7 +1931,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Future<V> — асинхронный результат с get()/cancel()/isDone(); FutureTask — реализация Future+Runnable; ключевое ограничение Future — get() сразу отдаёт Optional без блокировки.",
+              "text": "Future<V> — асинхронный результат с get()/cancel()/isDone(); FutureTask — реализация Future+Runnable; ключевое ограничение Future — get() отдаёт Optional без блокировки.",
               "correct": false,
               "sections": {
                 "what_actually": "Future.get() блокирует до готовности или таймаута; Optional не возвращает.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Future<V> — асинхронный результат с get()/cancel()/isDone(); FutureTask — реализация Future+Runnable; ключевое ограничение Future — cancel(true) мгновенно рвёт код на любой инструкции.",
+              "text": "Future<V> — асинхронный результат с get()/cancel()/isDone(); FutureTask — реализация Future+Runnable; ключевое ограничение Future — cancel(true) рвёт код на любой инструкции.",
               "correct": false,
               "sections": {
                 "what_actually": "cancel(true) лишь выставляет флаг прерывания выполняющему потоку (кооперативная модель); если код задачи не проверяет Thread.interrupted() и не реагирует на InterruptedException, он спокойно доработает до конца — принудительной остановки нет.",
@@ -2004,37 +2004,37 @@
             {
               "order": 1,
               "label": "B",
-              "text": "CompletableFuture — преимущественно обёртка над Future без дополнительных методов комбинирования и обработки ошибок.",
+              "text": "CompletableFuture — async-API из Java 8 с цепочками, комбинированием и обработкой ошибок поверх Future и CompletionService.",
               "correct": false,
               "sections": {
-                "what_actually": "CompletableFuture реализует Future + CompletionStage с десятками методов цепочек и комбинирования.",
-                "source_of_confusion": "Поверхностное знание иерархии: видят слово Future и думают, что новых методов нет.",
-                "if_it_were_true": "thenApply не существовал бы — реально базовый метод.",
-                "how_it_should_be": "CompletableFuture = Future + богатый CompletionStage API."
+                "what_actually": "CompletableFuture реализует `Future` и `CompletionStage`; `CompletionService` — иной механизм (`ExecutorCompletionService`, очередь готовых задач), к CF отношения не имеющий.",
+                "source_of_confusion": "Похожие имена `CompletionStage` и `CompletionService` путают — оба из `java.util.concurrent`.",
+                "if_it_were_true": "CF отдавал бы результаты через `take()`/`poll()` очереди, а не через `thenApply`-цепочки — реально это API `CompletionService`.",
+                "how_it_should_be": "CF = `Future` + `CompletionStage`; `CompletionService` используют отдельно для сбора результатов пачки задач."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "CompletableFuture — API, где все стадии по умолчанию идут в новых потоках через Executors.newFixedThreadPool под капотом.",
+              "text": "CompletableFuture — async-API из Java 8 с цепочками, комбинированием и обработкой ошибок поверх Future и Callable.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию — ForkJoinPool.commonPool(); НЕ newFixedThreadPool.",
-                "source_of_confusion": "Аналогия с newCachedThreadPool: думают, что async-методы плодят новые потоки, хотя дефолт — commonPool.",
-                "if_it_were_true": "Не было бы дискуссий «не используй commonPool для I/O» — реально стандартная проблема.",
-                "how_it_should_be": "По умолчанию commonPool; для I/O — свой Executor."
+                "what_actually": "Второй интерфейс CF — `CompletionStage`, а не `Callable`: `Callable` описывает вычисление-задачу, а не асинхронную стадию с комбинаторами.",
+                "source_of_confusion": "`Callable` привычен как «то, что возвращает результат», и его подставляют вместо `CompletionStage`.",
+                "if_it_were_true": "У CF был бы единственный метод `call()`, а не `thenApply`/`thenCompose`/`exceptionally` — реально этих методов десятки.",
+                "how_it_should_be": "CF реализует `Future` + `CompletionStage`; `Callable` лишь передают в `supplyAsync` как источник значения."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "CompletableFuture — API, где thenApply и thenApplyAsync идентичны и оба часто идут в ForkJoinPool.commonPool.",
+              "text": "CompletableFuture — async-API из Java 8 с цепочками, комбинированием и обработкой ошибок поверх FutureTask и CompletionStage.",
               "correct": false,
               "sections": {
-                "what_actually": "`thenApply` выполняется в потоке, завершившем предыдущий этап (или в вызывающем); `thenApplyAsync` — в `commonPool` или переданном `Executor`.",
-                "source_of_confusion": "Имена почти одинаковые, разницу в потоке выполнения упускают.",
-                "if_it_were_true": "Не было бы смысла в двух разных вариантах метода.",
-                "how_it_should_be": "`*Async`-варианты выносят выполнение в отдельный executor; не-async продолжают в текущем потоке."
+                "what_actually": "CF реализует интерфейс `Future`, а не наследует `FutureTask`: `FutureTask` — конкретная `Runnable`+`Future` обёртка для однократного запуска.",
+                "source_of_confusion": "`FutureTask` — самая известная реализация `Future`, поэтому его называют базой и для CompletableFuture.",
+                "if_it_were_true": "CF был бы `Runnable` с методом `run()`, запускался бы через `Thread`/executor вручную — реально он завершается `complete()`/цепочкой.",
+                "how_it_should_be": "CF строится на интерфейсе `Future` + `CompletionStage`; `FutureTask` — независимая реализация `Future`."
               }
             }
           ]
@@ -2075,7 +2075,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "thenApply — синхронная трансформация как map; thenCompose — chaining как flatMap; thenCombine — объединение сразу трёх независимых CF одним вызовом.",
+              "text": "thenApply — синхронная трансформация как map; thenCompose — chaining как flatMap; thenCombine — объединение трёх CF одним вызовом.",
               "correct": false,
               "sections": {
                 "what_actually": "thenCombine принимает один второй CF; для трёх+ — thenCombine цепочкой или allOf.",
@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "exceptionally — вызывается при любом завершении, и при результате, и при ошибке; handle вызывается всегда и может изменить результат; whenComplete — побочный эффект, результат не меняет.",
+              "text": "exceptionally — вызывается при любом завершении, и при успехе, и при ошибке; handle вызывается всегда и меняет результат; whenComplete — побочный эффект.",
               "correct": false,
               "sections": {
                 "what_actually": "exceptionally срабатывает ТОЛЬКО при ошибке; при успехе пропускается.",
