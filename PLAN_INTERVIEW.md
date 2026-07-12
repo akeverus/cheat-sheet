@@ -303,7 +303,7 @@ Priority =
 | 7 | `java-collections` | java | 46 | 46 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (reviewed_commit 0c9df11c): Q1-Q46 138 raised + 14 code-span бустов, blind 46/46; финал LONGEST 0.239, AVG 1.024, DUP 3, SEQ 2, STYLE 0.315, hard=0, stamp OK; RATIO 2.47 = accepted exception. Следующий worst-first по §1 |
 | 8 | `application-security` | security | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (reviewed_commit bc743ff0): Q1-Q45 135 raised + 21 span-boost за 5 чанков + POS; blind 45/45, MULTI-фиксы Q19/Q41; hard 42→0, stamp OK, SEQ 45→2, STYLE .81→.36, LONGEST .93→.27, AVG 1.80→1.07 |
 | 9 | `authentication-authorization-patterns` | security | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (3db01537): 150 raised за 5 чанков + POS; blind 45/45; hard 43→0/45, LONGEST .96→.31, AVG 1.89→1.1, STYLE .97→.35, DETAIL .98→.13, SEQ 45→2, stamp OK; RATIO 3.1 accepted exception |
-| 10 | `hexagonal-architecture` | architecture | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
+| 10 | `hexagonal-architecture` | architecture | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1 Q1-Q10 (30 raised, blind 10/10, фиксы Q4 FORM-TELL/Q7 CAR/Q10 DUP SRP-vs-LSP); зона hard=0 (файл 35→29); freshness создан; осталось c2-c5+POS(SEQ=45)+FINAL |
 | 11 | `kotlin` | kotlin | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 12 | `owasp-top10` | security | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 13 | `test-strategies` | testing | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -1066,4 +1066,12 @@ Known factually wrong correct answers: 0
 - **FINAL**: сайдкар COMPLETE (reviewed_commit 3db01537), строка 9 плана закрыта (✅/✅/✅/✅*/✅).
 - **Итог файла (baseline → final)**: hard 43→0/45; LONGEST 0.956→0.311; AVG 1.893→1.1; DETAIL 0.978→0.133; STYLE 0.967→0.352; SENTENCE 3→1; SEQ 45→2; DUP 0; stamp OK; RATIO 3.1 — accepted exception. 150 дистракторов, blind 45/45.
 - **Дальше**: следующий worst-first файл из §1 (кандидаты 45Q: hexagonal-architecture р10, kotlin р11, owasp-top10 р12, test-strategies р13, tls-ssl р14, unit-testing р15).
+### hexagonal-architecture — ROUND-8 chunk 1 (2026-07-12)
 
+- **Чанк**: Q1-Q10 (суть паттерна, шестиугольник, история, Application Core, три зоны, Port, Driving/Driven, именование, гранулярность/ISP, адаптер-на-несколько-портов), 10 блоков, 30 дистракторов (text-only, оси сохранены).
+- **Baseline файла**: LONGEST 0.933 (42/45), RATIO 14.0 (Q19 — худший в корпусе), AVG 2.261 (23сл vs 10сл), DETAIL 0.733, STYLE 0.956 (spans 0.70), SEQ 45, hard=35/45, freshness MISSING, stamp CV=0.525.
+- **Blind-review**: 10/10 верных вердиктов. Фиксы до применения: Q4 FORM-TELL (компакт-абсолютизация → «DI-сборка — часть контракта ядра»); Q7 CAR («ради красоты диаграмм» → «роли на диаграмме, место реализации не регламентировано»); Q10 DUP (A/D оба «ровно один порт» → разведены: A=SRP-трактовка, D=LSP-миф — принцип стал дифференциатором).
+- **Де-карикатуризация**: Q1 «ровно шесть входов» → декомпозиция микросервисов по граням; Q2 OSI с псевдообоснованием; Q9 «6 портов» → список из шести ролей как «ориентир». Q3-история: все дистракторы механически ложны (Мартин-2012, Spring Boot 2-2018, Netflix).
+- **Зона Q1-Q10**: skel HARD=0 (файл 35→29), correct нигде не самый длинный, per-block CV 0.16-0.26, semi-дисциплина Q2/Q3/Q7/Q8, один компакт + один rich-по-спанам в каждом блоке.
+- **Сайдкары**: review IN_PROGRESS (10/45) + fact-freshness создан (7 claims: Кокбёрн-2005, Палермо-2008, Мартин-2012, Хомбергс-2019, ISP-именование, AccountPersistenceAdapter) — SOURCE_COVERAGE теперь ok.
+- **Остаток**: c2 Q11-Q20 → c5 Q41-Q45, затем POS (SEQ=45) + FINAL.
