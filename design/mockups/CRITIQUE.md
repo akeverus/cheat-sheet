@@ -37,6 +37,24 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.135 — WCAG 1.4.11/2.4.11 focus-ring: полная энумерация по 11 дизайнам (R1.39 завершён, decision-gated)
+
+**Продолжение cr.134.** Прочитаны CSS-правила фокуса (`base.css` 229/326/345/1337) + все токены `--shadow-focus`/`--color-border-focus` (`tokens.css`). Картина полная.
+
+**Два паттерна focus-ринга в системе:**
+- **Solid double-ring (сильный):** `0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus)` — непрозрачный ринг фокус-цветом; у linear и ~8 дизайнов (`tokens.css` 385/505/551/743/784/856/908/1326…).
+- **Альфа-ринг (слабее):** `0 0 0 3px rgba(accent, 0.30–0.45)` — у **editorial (дефолт)** (196 light / 263+300 dark) и ряда других (623/664/981/1022/1095/1136/1210/1251).
+
+**Editorial дефолт — маргинально-слабый фокус в нормальном режиме:**
+- Глобальный `:focus-visible` outline = `--color-border-focus` #C6613F (light) / #D97757 (dark). #C6613F vs тело страницы ≈ **2.69:1** (маргинал; ~3.5–3.85 только на карточке с иным bg).
+- Box-shadow-only контролы (`.settings-tab` L1337, `.seg-btn`) гасят outline и берут `--shadow-focus` = rgba(198,97,63,0.40) → эффективный контраст ≈ **1.4:1** (замер реальным Tab, cr.134).
+
+**Уже сделано автором (не дефект):** `@media (forced-colors: active)` (L345-363) возвращает системный `Highlight` outline для box-shadow-only контролов + кодирует seg-active/checked-MCQ системной парой; `prefers-contrast: more` → outline 3px. HC/forced-colors юзеры покрыты. Пробел — **нормальный режим дефолтного editorial**.
+
+**Вердикт:** реальный, но узкий a11y-gap (focus-индикатор дефолтного дизайна <3:1 в нормальном режиме) — в отличие от resting-границ/accent-fill (осознанный editorial-язык, cr.134) фокус-контраст это a11y, не эстетика; авторские аннотации (`--color-border-focus` 4.2–7:1 у ряда дизайнов) подтверждают целевые ≥3:1.
+
+**Ремедиация — decision-gated:** перевести editorial (и прочие альфа-ринг дизайны) `--shadow-focus` на solid double-ring паттерн, уже применённый linear/др. в том же файле, и/или затемнить editorial `--color-border-focus` до ≥3:1 vs тело страницы. Это правка дизайн-токенов → гейт `scripts/design-token-audit.py` + AA-перепроверка обеих тем + прогон тестов; **затрагивает editorial-идентичность → решение пользователя.** Правок не вносил.
+
 ### cr.134 — WCAG 1.4.11 Non-text Contrast: замер границ/состояний/focus-ring (частичный, actionable lead)
 
 **Метод:** canvas-нормализация цветов (oklch→sRGB) + расчёт контраста для границ и заливок UI-компонентов на `/settings`, тема light. Focus-индикаторы мерены **реальным Tab** (не `.focus()` — тот не триггерит `:focus-visible`).
