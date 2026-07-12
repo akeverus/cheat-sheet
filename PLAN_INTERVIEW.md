@@ -302,7 +302,7 @@ Priority =
 | 6 | `hibernate` | databases | 50 | 46 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | ✅ FINAL (R8, 5 чанков + POS, commit 5b7ed428+POS). Baseline: LONGEST 0.76, AVG 1.617, STYLE 0.81, seq=50, skel hard=29. Поднят 141 дистрактор (115 text + 26 dict-spec) + 35 стрижек AVG-ре-баланса, blind-reviewer 48/48 VERDICT (68444a1b файл не трогал — restore не требовался). Итог: LONGEST 0.02, AVG 0.90, STYLE 0.308, DUP 0, DETAIL 0.08, SEQ 2 (A/B/C/D=13/12/13/12), skel-gate PASS hard=0, stamp OK; freshness 30 claims (в §11 chunk5 ошибочно указан 31). OPTION_LENGTH_RATIO — принятое исключение. Следующий worst-first по §1 (строка 3 postgresql — off-limits) |
 | 7 | `java-collections` | java | 46 | 46 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (reviewed_commit 0c9df11c): Q1-Q46 138 raised + 14 code-span бустов, blind 46/46; финал LONGEST 0.239, AVG 1.024, DUP 3, SEQ 2, STYLE 0.315, hard=0, stamp OK; RATIO 2.47 = accepted exception. Следующий worst-first по §1 |
 | 8 | `application-security` | security | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (reviewed_commit bc743ff0): Q1-Q45 135 raised + 21 span-boost за 5 чанков + POS; blind 45/45, MULTI-фиксы Q19/Q41; hard 42→0, stamp OK, SEQ 45→2, STYLE .81→.36, LONGEST .93→.27, AVG 1.80→1.07 |
-| 9 | `authentication-authorization-patterns` | security | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1 Q1-Q10: 30 raised, blind 10/10 (Q6-C MULTI закрыт zero-trust-инверсией), zone hard=0 (file 34), stamp OK, CV .12-.27; c2 Q11-Q20 next |
+| 9 | `authentication-authorization-patterns` | security | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1-c2 Q1-Q20: 60 raised, blind 20/20, zone hard=0 (file 24), stamp OK; c2: DUP-мотив Q11/Q17 разведён, semi-хроника Q12/Q13/Q19 закрыта; c3 Q21-Q30 next |
 | 10 | `hexagonal-architecture` | architecture | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 11 | `kotlin` | kotlin | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 12 | `owasp-top10` | security | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -1032,3 +1032,11 @@ Known factually wrong correct answers: 0
 - Превентив: rich-дистрактор выше correct по code-spans в каждом блоке уже в драфте (урок appsec POS-тика).
 - Per-block CV 0.118-0.265, stamp OK; SKEL Q1-Q10 hard=0 (файл 43→34). Сайдкары: review 10 records, freshness 10 claims (RFC 9700 Implicit/ROPC, JWE vs JWS, RFC 9110, NIST 800-63B SMS, zero-trust 800-207).
 - Дальше: c2 Q11-Q20.
+### authentication-authorization-patterns — ROUND-8 chunk2 Q11-Q20 (2026-07-12)
+
+- **Чанк**: Q11-Q20 (API Gateway, OIDC, SSO, Claims-based, token rotation, Zero Trust, Rate Limiting, mTLS, аудит, CBAC), 10 блоков, 30 дистракторов подняты (text-only).
+- **Blind-review**: 10/10, verdict 4 у Q12/Q13/Q14/Q17/Q18; MULTI нет. Фиксы: Q16-C/Q19-A/Q20-B/Q20-C де-карикатура, Q17-D развод DUP-мотива с Q11-B (sticky вместо локальных счётчиков).
+- **Хроника закрыта**: semi=1 у Q12-B/C, Q13-C, Q19-B устранена (все corrects semi=0); rich-дистрактор выше correct по code-spans в каждом блоке (превентив appsec-POS).
+- **Гейты**: schema OK; SKEL zone hard=0, file 34→24; stamp OK (not padded-clone), per-block CV 0.085-0.256; SOURCE_COVERAGE ok (freshness 10→19 claims: OIDC Core, SCIM RFC 7644, introspection RFC 7662, RFC 6585/429, TLS 1.3 RFC 8446 + RFC 5280, Spring Security events, NIST 800-207/800-63B).
+- **Дальше**: c3 Q21-Q30 (Service Mesh security и далее), затем c4/c5, POS (SEQ=45) + FINAL.
+

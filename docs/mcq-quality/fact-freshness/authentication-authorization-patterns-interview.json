@@ -11,6 +11,15 @@
     "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"
   ],
   "version_sensitive_claims": [
+    "OIDC Core 1.0: scope openid ОБЯЗАТЕЛЕН для выдачи id_token; id_token — JWT для клиента (аутентификация), не для Authorization: Bearer к ресурсам; /userinfo и discovery /.well-known/openid-configuration — часть стандарта [Q12].",
+    "SSO: сессия IdP переиспользуется между приложениями (OIDC/SAML/CAS); SCIM (RFC 7644) — провижининг учёток, НЕ репликация паролей и не механизм SSO [Q13].",
+    "Claims в подписанном JWT — снапшот на момент выпуска, живут до exp; realtime-отзыв требует introspection (RFC 7662) или короткого TTL [Q14].",
+    "OAuth 2.0 Security BCP (RFC 9700): ротация refresh-токенов + детекция повторного использования с отзывом всей цепочки; браузерное хранение refresh — httpOnly cookie, не localStorage (XSS) [Q15].",
+    "Zero Trust (NIST SP 800-207): verify explicitly / least privilege / assume breach — проверка каждого запроса, не разовая на входе [Q16].",
+    "RFC 6585: превышение лимита = 429 Too Many Requests (+ Retry-After); в кластере счётчики в общем хранилище (Redis), локальные/sticky-схемы ломаются на failover [Q17].",
+    "TLS 1.3 (RFC 8446): клиентская аутентификация через CertificateRequest + CertificateVerify; X.509 всегда имеет notAfter (RFC 5280), ротация обязательна (cert-manager, SPIFFE/SPIRE) [Q18].",
+    "Spring Security 6.x: AuthenticationSuccessEvent/AbstractAuthenticationFailureEvent публикуются AuthenticationEventPublisher для всех механизмов (формы, Basic, JWT resource server) — @EventListener работает декларативно; секреты (пароли, полные токены) в логи не пишут (OWASP Logging Cheat Sheet) [Q19].",
+    "Context-based/ABAC: контекст — дополнительный сигнал поверх ролей/атрибутов; реакция — step-up аутентификация, не постоянная блокировка (NIST 800-63B AAL step-up) [Q20].",
     "Implicit grant deprecated (OAuth 2.0 Security BCP RFC 9700, 2025; удалён в OAuth 2.1 draft); для SPA — Authorization Code + PKCE [Q2].",
     "Resource Owner Password Credentials (ROPC) не рекомендован Security BCP и удалён из OAuth 2.1 draft; основной поток — Authorization Code [Q2].",
     "JWT (RFC 7519): подпись JWS = целостность, payload Base64url БЕЗ шифрования; шифрование содержимого — отдельный стандарт JWE (RFC 7516), в аутентификационных JWT не используется по умолчанию [Q3].",
