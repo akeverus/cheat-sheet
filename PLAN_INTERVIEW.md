@@ -305,7 +305,7 @@ Priority =
 | 9 | `authentication-authorization-patterns` | security | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (3db01537): 150 raised за 5 чанков + POS; blind 45/45; hard 43→0/45, LONGEST .96→.31, AVG 1.89→1.1, STYLE .97→.35, DETAIL .98→.13, SEQ 45→2, stamp OK; RATIO 3.1 accepted exception |
 | 10 | `hexagonal-architecture` | architecture | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (18e364f3): 135 raised за 5 чанков + POS; blind 45/45; hard 35→0/45, LONGEST .93→.18, AVG 2.26→1.02, STYLE .96→.19, DETAIL .73→.24, SEQ 45→2, stamp CV .53→.20; RATIO 2.29 accepted exception (анти-штамп компакт) |
 | 11 | `kotlin` | kotlin | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE: c1-c5 135 raised (blind 45/45), POS SEQ 45→2 (moved 34), FINAL: LONGEST 0.911→0.089, STYLE 0.922→0.141, skel hard 36→0, stamp CV 0.306→0.223; 2 documented-exception FAIL (RATIO 3.12 anti-stamp, DUP_NGRAMS 12 каталог-клоны Q21/Q43); +freshness-сайдкар |
-| 12 | `owasp-top10` | security | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1-c3 Q1-Q30 (90 raised, blind 30/30; c3: CAR×8/BSM×2/DUP×2/MULTI×2 вылечены, Q25 тройная «серебряная пуля» разведена, Q30 числовой паритет); зона Q1-Q30 hard=0 (файл 41→15); осталось c4-c5 Q31-Q45 + POS + FINAL(+freshness) |
+| 12 | `owasp-top10` | security | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1-c4 Q1-Q40 (120 raised, blind 40/40; c4: CAR×5/DUP×2/MULTI×3, кросс-вопросный TLS-дубль Q33/Q34 снят, «НЕ …»-оговорка и цитатные зачины зеркалированы); зона Q1-Q40 hard=0 (файл 41→8); осталось c5 Q41-Q45 + POS + FINAL(+freshness) |
 | 13 | `test-strategies` | testing | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 14 | `tls-ssl` | security | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 15 | `unit-testing` | testing | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -1172,3 +1172,10 @@ Known factually wrong correct answers: 0
 - Q28A MULTI оставлен осознанно: ядро «выполнить код нельзя» механически ложно (ysoserial), ревьюер признал дистрактор сильным.
 - Гейты: schema OK, зона Q1-Q30 hard=0 (файл 41→15), stamp CV 0.417→0.325, disMean/corLen 0.52→0.62.
 - Остаток: c4-c5 (Q31-Q45) + POS (SEQ=45) + FINAL (+freshness-сайдкар).
+### 2026-07-12 — owasp-top10 ROUND-8 chunk 4 (Q31-Q40)
+
+- Подняты 30 дистракторов (логирование, алертинг, SSRF, CI-гейты, security-тесты, секреты, приоритизация, DiD, интервью). Blind review 10/10.
+- Ключевые лечения: кросс-вопросный дубль (TLS-handshake-с-внутренними-IP жил и в Q33D, и в Q34A) — в Q34 заменён осью string-блэклиста с ложным дефолтом followRedirects(NEVER); свалка Q31A сведена к одному ядру «полные снапшоты, маскирует SIEM»; hard-shell-soft-core вместо «убрать слои» в Q39; три MULTI дожаты явной ложью (выдуманная пометка OWASP Cheat Sheet, plaintext-ступень, «Environmental учитывается автоматически»).
+- FORM-TELL: оговорка «НЕ …» из correct Q31 зеркалирована во все опции; цитатные тезисы-зачины в Q32; коды A10:2021 дистракторам Q33.
+- Гейты: schema OK, зона Q1-Q40 hard=0 (файл 41→8), stamp CV 0.325→0.241, disMean/corLen 0.62→0.72.
+- Остаток: c5 (Q41-Q45) + POS (SEQ=45) + FINAL (+freshness-сайдкар).
