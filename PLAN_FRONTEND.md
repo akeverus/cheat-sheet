@@ -1436,3 +1436,10 @@ Dirty changes created by loop: 0
 - Ложный кандидат: CODE шире вьюпорта на flashcard@375 — лежит в pre.question-code overflow-x:auto (паттерн «широкое скроллится в своём контейнере»), не дефект.
 - Правок кода нет, v=81 не бампался. По протоколу §28 — verified-clean нота, не «улучшать нечего».
 - **Дальше:** контракт-тест при окне без bootRun (7¤); session-gated parity — ждёт EXAM-решения юзера; иначе — следующая maintenance-цель (кандидаты Фазы G: dead-regenerate UI, stats.js instrument-палитра графиков, ?-кнопка, футер-вопрос).
+
+### R0.57 (2026-07-12) — kbd-help/prompt-модалки: тайтлы medium (v=82); 2 кандидата отложены с обоснованием
+- Collision guard чист; bootRun жив → контракт-тест PENDING.
+- Отложены (не молча): stats.js-палитра графиков (canvas hidden на вымытой базе — QA невозможен); удаление regenerate-UI/.question-side (result.html недостижим read-only — Thymeleaf-рендер нечем проверить; делать одним тиком с контракт-тестом при окне без bootRun).
+- QA kbd-help модалки (client-side `?`): токены несут оверлей/карточку целиком; kbd голым mono = общий тихий язык (keyboard-hint такой же) — не дефект. Дельта: тайтлы модалок semibold ((0,2,2)/(0,2,1) бьют сигнатуру (0,1,2)) → фикс в SIGNATURES: kbd-help h3 + prompt-modal-title medium. QA: instrument 500 / editorial 600 цел; Esc работает. head v81→82.
+- Урок-артефакт: borderTopColor репортит currentColor при border:none — не принимать за стиль.
+- **Дальше:** контракт-тест + regenerate-удаление одним тиком при окне без bootRun; session-gated parity — ждёт юзера; графики — ждут данных.
