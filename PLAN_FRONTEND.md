@@ -1284,3 +1284,17 @@ Dirty changes created by loop: 0
 - **Ledgers:** CRITIQUE cr.32.
 - **Следующий тик:** проверка разблокировки → порт error (C7-i). Baseline готов —
   сравнение до/после будет предметным.
+
+### 2026-07-12 — R0.31: живой baseline stats — зелёный; каверза cold-start графиков
+
+- **Collision guard:** base.css dirty (11-й тик); baseline Фазы F продолжен (read-only).
+- **Разобрана ложная тревога:** «мёртвые графики» = легитимный cold-start фолбэк
+  stats.js после wipe базы (Chart.js 4.5.0 жив, JSON 319 тем парсится, canvas скрыт
+  осознанно). В PARITY_QA_CHECKLIST внесено различение двух фолбэков + требование
+  3–5 ответов перед замером цветов графиков.
+- **Baseline stats:** reflow чист 1280/375; stacked-card на 375 живой (data-label);
+  collapse 319→12 работает; next-actions/фильтры/cold-copy ок. Скрин 1280 light.
+- **Ledgers:** CRITIQUE cr.33; чеклист дополнен.
+- **Следующий тик:** проверка разблокировки → порт error (C7-i). Baseline покрыл
+  focus/settings/error/stats; остаток (summary/result no-JS) требует сессии/ответов —
+  снимется в parity-фазе по чеклисту.
