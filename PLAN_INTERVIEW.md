@@ -304,7 +304,7 @@ Priority =
 | 8 | `application-security` | security | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (reviewed_commit bc743ff0): Q1-Q45 135 raised + 21 span-boost за 5 чанков + POS; blind 45/45, MULTI-фиксы Q19/Q41; hard 42→0, stamp OK, SEQ 45→2, STYLE .81→.36, LONGEST .93→.27, AVG 1.80→1.07 |
 | 9 | `authentication-authorization-patterns` | security | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (3db01537): 150 raised за 5 чанков + POS; blind 45/45; hard 43→0/45, LONGEST .96→.31, AVG 1.89→1.1, STYLE .97→.35, DETAIL .98→.13, SEQ 45→2, stamp OK; RATIO 3.1 accepted exception |
 | 10 | `hexagonal-architecture` | architecture | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (18e364f3): 135 raised за 5 чанков + POS; blind 45/45; hard 35→0/45, LONGEST .93→.18, AVG 2.26→1.02, STYLE .96→.19, DETAIL .73→.24, SEQ 45→2, stamp CV .53→.20; RATIO 2.29 accepted exception (анти-штамп компакт) |
-| 11 | `kotlin` | kotlin | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1-c2 Q1-Q20 (60 raised + 4 ретро-фикса зачинов c1, blind 20/20; c2: Q11 DUP разведён, Q17 MULTI заострён, Q19 CAR→private-set-аналогия); зона Q1-Q20 hard=0 (файл 36→19); осталось c3-c5 Q21-Q45 + POS + FINAL |
+| 11 | `kotlin` | kotlin | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1-c3 Q1-Q30 (90 raised, blind 30/30; c3: 3 FORM-TELL — Q21 каталог-клон, Q26 дефиниционные зачины, Q28 насыщенный multi-claim); зона Q1-Q30 hard=0 (файл 36→11); осталось c4-c5 Q31-Q45 + POS + FINAL |
 | 12 | `owasp-top10` | security | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 13 | `test-strategies` | testing | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 14 | `tls-ssl` | security | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -1125,3 +1125,9 @@ Known factually wrong correct answers: 0
 - Blind review 10/10; флаги: Q11 DUP (оба дистрактора били в «ровно один параметр» → A=арность, B=членство), Q17 MULTI (частично защитимая «разноструктурность» → механически ложное «свойство из тела константы доступно снаружи»), Q19 CAR («только стиль» → аналогия с private set).
 - Гейты: schema OK; зона Q1-Q20 hard=0 (файл 36→19); per-block CV 0.12-0.30; сайдкар 20/45.
 - Остаток: c3-c5 (Q21-Q45), POS (SEQ=45), FINAL.
+### 2026-07-12 — kotlin ROUND-8 chunk 3 (Q21-Q30)
+
+- Подняты 30 дистракторов (видимость, open/final, get/set, generics, reified, inference, делегирование, when, операторы, ==/===). Blind review 10/10.
+- Три FORM-TELL вылечены структурно: Q21 — дистрактор стал каталог-клоном четырёх модификаторов с одной подменой (Single-Delta: «private не принимается top-level»); Q26 — все дистракторы получили дефиниционный зачин «Type inference — …», как у correct; Q28 — дистрактор-каталог с ядром ложности fall-through (correct перестал быть единственным «полным» вариантом).
+- Гейты: schema OK; зона Q21-Q30 hard=0 (файл 19→11, остаток в Q31-Q45); per-block CV 0.13-0.28; сайдкар 30/45.
+- Остаток: c4 (Q31-Q40), c5 (Q41-Q45), POS (SEQ=45), FINAL.
