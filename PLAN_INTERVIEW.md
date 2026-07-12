@@ -305,7 +305,7 @@ Priority =
 | 9 | `authentication-authorization-patterns` | security | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (3db01537): 150 raised за 5 чанков + POS; blind 45/45; hard 43→0/45, LONGEST .96→.31, AVG 1.89→1.1, STYLE .97→.35, DETAIL .98→.13, SEQ 45→2, stamp OK; RATIO 3.1 accepted exception |
 | 10 | `hexagonal-architecture` | architecture | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (18e364f3): 135 raised за 5 чанков + POS; blind 45/45; hard 35→0/45, LONGEST .93→.18, AVG 2.26→1.02, STYLE .96→.19, DETAIL .73→.24, SEQ 45→2, stamp CV .53→.20; RATIO 2.29 accepted exception (анти-штамп компакт) |
 | 11 | `kotlin` | kotlin | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE: c1-c5 135 raised (blind 45/45), POS SEQ 45→2 (moved 34), FINAL: LONGEST 0.911→0.089, STYLE 0.922→0.141, skel hard 36→0, stamp CV 0.306→0.223; 2 documented-exception FAIL (RATIO 3.12 anti-stamp, DUP_NGRAMS 12 каталог-клоны Q21/Q43); +freshness-сайдкар |
-| 12 | `owasp-top10` | security | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1 Q1-Q10 (30 raised, blind 10/10; лечёные CAR×6/BSM×1/DUP×1 + обратный FORM-TELL Q9 «Единственный правильный подход» зеркалирован; known limitation Q3: survey-категорий 3 в correct vs 2 официально); зона Q1-Q10 hard=0 (файл 41→32); осталось c2-c5 Q11-Q45 + POS + FINAL(+freshness) |
+| 12 | `owasp-top10` | security | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1-c2 Q1-Q20 (60 raised, blind 20/20; c2: BSM×5/CAR×4/DUP×2 вылечены, Q12 one-vs-three ORDER BY-tell снят, Q16 «Процесс:» зеркалирован, Q17/Q20 твин-пары по прецеденту); зона Q1-Q20 hard=0 (файл 41→24); осталось c3-c5 Q21-Q45 + POS + FINAL(+freshness) |
 | 13 | `test-strategies` | testing | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 14 | `tls-ssl` | security | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 15 | `unit-testing` | testing | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -1158,3 +1158,10 @@ Known factually wrong correct answers: 0
 - Known limitation Q3 (correct вне мандата): «3 категории из опроса» vs официальные 2 (A09+A10); теория .md консистентна — кандидат на отдельный факт-фикс.
 - Файл version-sensitive (TEMPORAL=21) — freshness-сайдкар завести на FINAL-тике.
 - Остаток: c2-c5 (Q11-Q45) + POS (SEQ=45) + FINAL.
+### 2026-07-12 — owasp-top10 ROUND-8 chunk 2 (Q11-Q20)
+
+- Подняты 30 дистракторов (Injection-виды, SQLi/JPA, XSS, Command Injection, Insecure Design, threat modeling, паттерны, misconfiguration, headers, профили). Blind review 10/10.
+- Ключевые лечения: Q12 — DUP+one-vs-three tell по ORDER BY снят разведением осей (native-only / «Hibernate валидирует диалектом» / «? универсален»); 5×BSM заземлены в реальные API (X-XSS-Protection, Pattern.quote, Role Separation); 4×CAR одеты в механизмы (chroot без shell, изоляция профилей, CSP report-only, CI-sed-шаблоны); Q16 — рубрика «Процесс:» дана всем четырём опциям.
+- Q17/Q20 — твин-пары каталог-клонов с Single-Delta (осознанный дуэль-паттерн, прецедент kotlin Q21/Q43).
+- Гейты: schema OK, зона Q1-Q20 hard=0 (файл 41→24), stamp CV 0.498→0.417, disMean/corLen 0.42→0.52.
+- Остаток: c3-c5 (Q21-Q45) + POS (SEQ=45) + FINAL (+freshness-сайдкар).
