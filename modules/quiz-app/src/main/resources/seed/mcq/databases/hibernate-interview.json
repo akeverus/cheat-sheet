@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Hibernate` строит трансляцию объект → SQL целиком сам (`HQL` поверх маппинга) и потому не допускает нативных запросов к БД, тогда как в `JDBC` пишется чистый SQL.",
+              "text": "`Hibernate` строит трансляцию объект → SQL сам (`HQL` поверх маппинга) и не допускает нативных запросов, тогда как в `JDBC` пишется чистый SQL.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hibernate` разрешает нативный SQL через `entityManager.createNativeQuery()`; `HQL`/`JPQL` лишь убирает рутину в типовых сценариях.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Session` соответствует пользовательской web-сессии: в `Spring` она привязывается к `HttpSession` и переживает несколько запросов одного пользователя, а `SessionFactory` — синглтон, выдающий по одной сессии на пользователя.",
+              "text": "`Session` соответствует пользовательской web-сессии: в `Spring` она привязывается к `HttpSession` и переживает несколько запросов, а `SessionFactory` — синглтон, выдающий сессию на пользователя.",
               "correct": false,
               "sections": {
                 "what_actually": "`Session` Hibernate не имеет отношения к HTTP-сессии: это короткоживущая единица работы — в `Spring` она открывается на границе `@Transactional` и закрывается при её завершении (обычно в рамках одного запроса), а привязка идёт через `ThreadLocal`, не через web-слой.",
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Dialect`-слой (например `PostgreSQLDialect`) берёт на себя роль драйвера — генерирует и исполняет SQL под конкретную СУБД, а `Session` держит соединение; `JDBC` задействуется только без указанного диалекта.",
+              "text": "`Dialect`-слой (например `PostgreSQLDialect`) берёт роль драйвера — генерирует и исполняет SQL под конкретную СУБД, а `Session` держит соединение; `JDBC` задействуется только без диалекта.",
               "correct": false,
               "sections": {
                 "what_actually": "`Dialect` — генератор SQL под синтаксис конкретной СУБД (пагинация, типы, sequences); исполняет запросы всё равно `JDBC`-драйвер через обычный `Connection`/`PreparedStatement` — Hibernate надстраивается над JDBC, а не заменяет его.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Transient` (New) уже сохранён в БД первичным `INSERT`, но ещё не привязан к сессии, и dirty checking его не видит; обратно в managed возвращают `merge()`, `update()` или `saveOrUpdate()`.",
+              "text": "`Transient` (New) уже сохранён первичным `INSERT`, но не привязан к сессии, и dirty checking его не видит; в managed возвращают `merge()`, `update()` или `saveOrUpdate()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Transient` — это объект, созданный через `new`, который никогда не был связан с сессией и не имеет записи в БД.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Detached` (Evicted) — объект, чья строка удалена из БД командой `remove()`, но сам он жив в памяти, и чтение его полей безопасно; вернуть строку можно повторным `persist()` или `merge()`.",
+              "text": "`Detached` (Evicted) — объект, чья строка удалена из БД командой `remove()`, но сам он жив в памяти и чтение полей безопасно; строку возвращает повторный `persist()` или `merge()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Detached`-объект существует в БД, но не отслеживается текущей сессией; его можно снова привязать через `merge()`.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`persist()` возвращает сгенерированный идентификатор сразу, а `save()` — ничего, поэтому для получения id после вставки годится только первый, а не второй.",
+              "text": "`persist()` возвращает сгенерированный идентификатор сразу, а `save()` — ничего, поэтому для получения id годится только первый.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `Hibernate`-специфичный `save()` возвращает `Serializable` (id), а JPA-стандартный `persist()` возвращает `void`.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Hibernate` дособирает no-arg конструктор сам через bytecode enhancement (`hibernate-enhance`-плагин), поэтому объявлять его руками не требуется; сборка без плагина падает уже на старте.",
+              "text": "`Hibernate` дособирает no-arg конструктор через bytecode enhancement (`hibernate-enhance`-плагин), поэтому объявлять его руками не нужно; сборка без плагина падает на старте.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hibernate` не добавляет конструкторы автоматически — разработчик объявляет его сам; enhancement добавляет лишь служебные поля и методы.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для `@ManyToMany` с дополнительными полями связи (дата, оценка) достаточно расширить `@JoinTable` новыми колонками, так как `Hibernate` замаппит их на поля обеих сущностей.",
+              "text": "Для `@ManyToMany` с дополнительными полями связи достаточно расширить `@JoinTable` новыми колонками, так как `Hibernate` замаппит их на поля обеих сущностей.",
               "correct": false,
               "sections": {
                 "what_actually": "`@JoinTable` не позволяет маппить дополнительные поля; при их наличии нужна отдельная `@Entity` с составным ключом и двумя `@ManyToOne`.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`LazyInitializationException` возникает при исчерпании пула соединений: прокси не получает `Connection` для дозагрузки и падает по таймауту ожидания.",
+              "text": "`LazyInitializationException` возникает при исчерпании пула соединений: прокси не получает `Connection` и падает по таймауту.",
               "correct": false,
               "sections": {
                 "what_actually": "`LazyInitializationException` не связан с пулом: он бросается, когда прокси пытается дозагрузиться при уже закрытой `Session` — соединение даже не запрашивается. Исчерпание пула даёт другую ошибку: таймаут `Connection is not available` от `HikariCP`.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`LazyInitializationException` лечится штатно включением `open-in-view = true`: сессия живёт до конца HTTP-запроса, и других изменений код не требует.",
+              "text": "`LazyInitializationException` лечится штатно включением `open-in-view = true`: сессия живёт до конца HTTP-запроса, правок кода не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "OSIV считается антипаттерном в production: он маскирует проблему, но создаёт скрытые SQL в view-слое; правильнее грузить данные явно в сервисе.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`LazyInitializationException` откатывает активную транзакцию автоматически, поэтому главный его риск — потерянные изменения текущей единицы работы.",
+              "text": "`LazyInitializationException` автоматически откатывает активную транзакцию, поэтому главный риск — потерянные изменения единицы работы.",
               "correct": false,
               "sections": {
                 "what_actually": "Исключение не затрагивает транзакцию — к моменту его возникновения она обычно уже закрыта; это unchecked runtime exception.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`createEntityGraph` задаёт граф программно в рантайме, а декларативной аннотации спецификация не предусматривает — статичные графы собирают при старте вручную.",
+              "text": "`createEntityGraph` задаёт граф программно в рантайме, а декларативной аннотации спецификация не предусматривает — статичные графы собирают вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "`@NamedEntityGraph` — стандартная JPA-аннотация: объявляется на сущности и используется через `em.getEntityGraph(name)`.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для транзакционных данных с частыми изменениями L2 настраивают в первую очередь (`Order`, `Cart`): каждая запись обновляет кэш, и чтения попадают в горячие строки.",
+              "text": "Для часто изменяемых данных L2 настраивают первым (`Order`, `Cart`): записи обновляют кэш, чтения бьют в горячие строки.",
               "correct": false,
               "sections": {
                 "what_actually": "L2 эффективен для редко изменяемых данных (справочники, конфигурации); частые изменения вызывают инвалидацию и сводят выгоду на нет.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для старта с L2 внешний провайдер необязателен: `Hibernate` включает встроенный in-memory кэш, который позже меняют на `Ehcache` конфигурацией без правок кода.",
+              "text": "Для старта с L2 провайдер необязателен: `Hibernate` включает встроенный in-memory кэш, позже заменяемый `Ehcache` без правок кода.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hibernate` не содержит встроенного L2; нужен JCache-провайдер: `Ehcache`, `Infinispan`, `Caffeine`, `Hazelcast` или `Redis`.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`READ_ONLY` — уровень БД: запрет `UPDATE` таблицы (как `@Immutable`), `READ_WRITE` — уровень драйвера: блокировки строк при чтении, `TRANSACTIONAL` — уровень приложения: `synchronized` вокруг кэша.",
+              "text": "`READ_ONLY` — уровень БД: запрет `UPDATE` (как `@Immutable`), `READ_WRITE` — уровень драйвера: блокировки строк, `TRANSACTIONAL` — уровень приложения: `synchronized` вокруг кэша.",
               "correct": false,
               "sections": {
                 "what_actually": "Стратегии описывают поведение КЭША, а не блокировки БД или драйвера: `READ_ONLY` запрещает обновлять кэшированную сущность (в БД `UPDATE` никто не блокирует), `READ_WRITE` ставит soft-lock в самом кэше на время записи, `TRANSACTIONAL` синхронизирует кэш с JTA-транзакцией.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JPQL` — язык уровня таблиц и колонок (тонкая обёртка над `SQL`), поэтому запросы пишутся в терминах схемы БД, а маппинг применяется после.",
+              "text": "`JPQL` — язык уровня таблиц и колонок (тонкая обёртка над `SQL`), поэтому запросы пишутся в терминах схемы, а маппинг применяется после.",
               "correct": false,
               "sections": {
                 "what_actually": "`JPQL` работает с сущностями и полями класса (`FROM User u`, `u.name`), а не с таблицами/колонками; `Hibernate` транслирует его в SQL.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Criteria API` — программный способ с разбором запроса на этапе сборки, за счёт чего повторные вызовы выполняются быстрее `JPQL`-строк.",
+              "text": "`Criteria API` — программный способ с разбором на этапе сборки, поэтому повторные вызовы выполняются быстрее `JPQL`-строк.",
               "correct": false,
               "sections": {
                 "what_actually": "`Criteria API` и `JPQL` компилируются в один и тот же SQL с сопоставимой производительностью; выбор — вопрос читаемости и динамичности, а не скорости.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Нет, нативные SQL-запросы напрямую не выполняются, а специфичные возможности СУБД доступны через функции, зарегистрированные в `Dialect`-е.",
+              "text": "Нет, нативные SQL-запросы напрямую не выполняются, а специфика СУБД доступна через функции, зарегистрированные в `Dialect`-е.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hibernate` всегда позволял нативный SQL; это важный escape hatch, когда `JPQL`/`HQL` недостаточно выразителен.",
@@ -1895,7 +1895,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Criteria API` уязвим при динамической сборке условий; строковые значения в `Predicate`-ах попадают в итоговый SQL без экранирования, как при конкатенации.",
+              "text": "`Criteria API` уязвим при динамической сборке условий; строковые значения в `Predicate`-ах попадают в SQL без экранирования, как конкатенация.",
               "correct": false,
               "sections": {
                 "what_actually": "`Criteria API` безопасен: значения, переданные через `cb.equal(root.get(\"name\"), userInput)`, автоматически становятся параметрами `PreparedStatement`.",
@@ -2123,7 +2123,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`hibernate.jdbc.batch_size=50` сам по себе закрывает массовые вставки, так как `Hibernate` вызывает `flush()` и очищает persistence context после каждого пакета.",
+              "text": "`hibernate.jdbc.batch_size=50` сам закрывает массовые вставки, так как `Hibernate` вызывает `flush()` и очищает контекст после каждого пакета.",
               "correct": false,
               "sections": {
                 "what_actually": "Без периодического `flush()`+`clear()` persistence context растёт, пока не съест всю память — частая причина `OutOfMemoryError` при bulk insert.",
@@ -2196,7 +2196,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`setFetchSize(n)` работает через cursor у любого драйвера (единый контракт `JDBC`), а различия между `PostgreSQL` и `MySQL` — только в размере порции по умолчанию.",
+              "text": "`setFetchSize(n)` работает через cursor у любого драйвера (единый контракт `JDBC`), а `PostgreSQL` и `MySQL` различаются только размером порции.",
               "correct": false,
               "sections": {
                 "what_actually": "Поведение `setFetchSize` зависит от драйвера: `PostgreSQL` использует cursor, `MySQL` требует особых флагов, некоторые драйверы игнорируют hint.",
@@ -2208,7 +2208,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`setMaxResults(n)` усекает результат на стороне клиента после полной выборки (в SQL `LIMIT n` не попадает), а `setFetchSize(n)` — единственный способ ограничить само сканирование в БД.",
+              "text": "`setMaxResults(n)` усекает результат на клиенте после полной выборки (в SQL `LIMIT n` не попадает), а `setFetchSize(n)` — единственный способ ограничить сканирование.",
               "correct": false,
               "sections": {
                 "what_actually": "`setMaxResults(n)` транслируется в `LIMIT n` (или аналог диалекта) в самом SQL: СУБД возвращает не больше n строк, полная выборка на клиента не приезжает. `setFetchSize` сканирование не ограничивает вовсе — это размер порции доставки уже отобранных строк.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Statistics включается программно вызовом `stats.setStatisticsEnabled(true)` на работающей фабрике, а свойство `hibernate.generate_statistics` оставлено для legacy-конфигураций.",
+              "text": "Statistics включается программно через `stats.setStatisticsEnabled(true)`, а свойство `hibernate.generate_statistics` оставлено для legacy-конфигураций.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба пути рабочие и равноправные: `hibernate.generate_statistics=true` включает сбор со старта, а `setStatisticsEnabled(true)` — переключатель в рантайме; ни один не legacy. По умолчанию сбор ВЫКЛЮЧЕН — без явного включения счётчики остаются нулевыми.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Statistics ограничен счётчиками запросов и попаданий в кэш, а самый медленный запрос ищут через `slow query log` или `pg_stat_statements`.",
+              "text": "Statistics ограничен счётчиками запросов и кэша, а медленные запросы ищут в `slow query log` СУБД.",
               "correct": false,
               "sections": {
                 "what_actually": "Statistics содержит `getQueryExecutionMaxTimeQueryString()` и `getQueryExecutionMaxTime()` — это самый долгий запрос с момента последнего `clear()`.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Statistics подключается через `Spring Boot Actuator` и доступен в endpoint-е `/actuator/metrics`, отдельного API у Hibernate нет.",
+              "text": "Statistics подключается через `Spring Boot Actuator` и доступен в `/actuator/metrics`, отдельного API у Hibernate нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Statistics — встроенная часть `Hibernate ORM` и работает без `Spring Boot`; `Actuator` нужен лишь для экспорта метрик наружу.",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для production рекомендуется `ddl-auto: update` без внешних миграций (`Hibernate` вычисляет дифф схемы по метаданным маппинга).",
+              "text": "Для production рекомендуется `ddl-auto: update` без миграций (`Hibernate` вычисляет дифф схемы по маппингу).",
               "correct": false,
               "sections": {
                 "what_actually": "`update` категорически не рекомендуется для production: он меняет схему непредсказуемо и не отслеживает миграции; нужен `validate` + `Flyway`/`Liquibase`.",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для production рекомендуется `open-in-view: true` вместо правок кода (`LazyInitializationException` уходит, сессия живёт до конца HTTP-запроса).",
+              "text": "Для production рекомендуется `open-in-view: true` вместо правок кода (`LazyInitializationException` уходит, сессия живёт весь запрос).",
               "correct": false,
               "sections": {
                 "what_actually": "OSIV считается антипаттерном в production: он маскирует N+1 и создаёт скрытые SQL в view-слое; рекомендуется выключить и грузить данные явно.",
@@ -2375,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для production подходит `ddl-auto: create-drop` при рестартах без потери данных (`Hibernate` пересоздаёт схему при старте, а данные переживают остановку).",
+              "text": "Для production подходит `ddl-auto: create-drop` при штатных рестартах (`Hibernate` пересоздаёт схему, данные переживают остановку).",
               "correct": false,
               "sections": {
                 "what_actually": "`create-drop` удаляет все данные при остановке приложения; это стратегия для тестов, в production она ведёт к полной потере данных.",
@@ -2424,7 +2424,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Обе функции возвращают одну и ту же сессию внутри одного потока.",
+              "text": "`getCurrentSession()` и `openSession()` возвращают один и тот же объект внутри потока (общий `ThreadLocal`), а различаются только проверкой активной транзакции при выдаче.",
               "correct": false,
               "sections": {
                 "what_actually": "`openSession()` каждый раз создаёт новую независимую `Session`; `getCurrentSession()` в рамках одной транзакции возвращает одну и ту же сессию через `ThreadLocal`.",
@@ -2436,19 +2436,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`openSession()` автоматически закрывается при commit/rollback транзакции.",
+              "text": "`openSession()` выдаёт сессию из пула `SessionFactory` (переиспользование, как у соединений), а закрытие возвращает её в пул вместо реального `close()`.",
               "correct": false,
               "sections": {
-                "what_actually": "Автозакрытие при commit/rollback — это поведение `getCurrentSession()`; `openSession()` требует явного `session.close()`, иначе будет утечка.",
-                "source_of_confusion": "Хочется верить, что фреймворк сам приберёт ресурсы, но `openSession` отдаёт контроль разработчику.",
-                "if_it_were_true": "Тогда блок `finally` с `close()` был бы не нужен, но без него соединение не вернётся в пул.",
-                "how_it_should_be": "`openSession` закрывают вручную; автозакрытие — у `getCurrentSession`."
+                "what_actually": "`openSession()` каждый раз создаёт новую сессию — пула сессий у `SessionFactory` нет: `Session` — дешёвый короткоживущий объект, в отличие от JDBC-соединений, которые действительно пулятся (`HikariCP`). Закрытие сессии освобождает её, а соединение возвращается в пул на уровне DataSource.",
+                "source_of_confusion": "Аналогия с пулом соединений: раз `SessionFactory` дорогая и одна на приложение, кажется, что и сессии она раздаёт из пула, как DataSource — соединения.",
+                "if_it_were_true": "Состояние L1-кэша протекало бы между несвязанными единицами работы — «чужие» managed-сущности всплывали бы в новых запросах после переиспользования.",
+                "how_it_should_be": "Помнить, что пулятся соединения (DataSource), а не сессии: `Session` создаётся на единицу работы и закрывается; переиспользование в рамках транзакции — задача `getCurrentSession()`/Spring."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`getCurrentSession()` создаёт новую сессию при каждом вызове из того же потока.",
+              "text": "`getCurrentSession()` создаёт новую сессию при каждом вызове (фабричный метод, как `openSession()`), а переиспользование достигается только ручным кэшированием ссылки.",
               "correct": false,
               "sections": {
                 "what_actually": "`getCurrentSession()` привязывает сессию к контексту (обычно к транзакции); повторные вызовы в рамках одной транзакции возвращают ту же сессию.",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Dialect определяет синтаксис `Java`-кода при маппинге сущностей.",
+              "text": "Dialect определяет стиль генерируемого `Java`-кода при маппинге (имена геттеров, типы полей) и настраивается на уровне annotation processor-а.",
               "correct": false,
               "sections": {
                 "what_actually": "Dialect влияет на генерируемый SQL, а не на `Java`-код; он описывает особенности СУБД: синтаксис пагинации, типы и функции.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Dialect необязателен и используется только для экзотических СУБД.",
+              "text": "Dialect нужен только экзотическим СУБД без `JDBC`-метаданных (SQLite, embedded-базы) и для мейнстрима давно заменён универсальным `ANSI SQL`-генератором.",
               "correct": false,
               "sections": {
                 "what_actually": "Dialect обязателен всегда — без него `Hibernate` не сгенерирует корректный SQL; просто в современных версиях он определяется автоматически.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Один и тот же dialect подходит для `PostgreSQL` и `MySQL`, если включён auto-detection.",
+              "text": "Dialect у `PostgreSQL` и MySQL общий при включённом auto-detection (различия скрывает JDBC-драйвер) и разделяется только для Oracle со специфичной пагинацией.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждая СУБД имеет свой dialect из-за различий в синтаксисе (пагинация, типы, функции); один общий невозможен.",
@@ -2531,19 +2531,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "OSIV — best practice для production, ускоряющий обработку запросов за счёт долгоживущей сессии.",
+              "text": "OSIV действует только на серверный рендеринг view (`spring.jpa.open-in-view` игнорируется для REST-контроллеров), поэтому в JSON-API отключение ничего не меняет.",
               "correct": false,
               "sections": {
-                "what_actually": "OSIV — антипаттерн в production: он удерживает соединение с БД на всё время запроса, создаёт скрытые SQL в view-слое и делает производительность непредсказуемой.",
-                "source_of_confusion": "Долгоживущая сессия кажется удобной и «быстрой», скрывая накладные расходы в слое представления.",
-                "if_it_were_true": "Тогда отключать OSIV не рекомендовали бы, но именно это считается правильным для прода.",
-                "how_it_should_be": "OSIV отключают в production и грузят данные явно в сервисном слое."
+                "what_actually": "OSIV держит `EntityManager` открытым на весь HTTP-запрос независимо от типа ответа: JSON-сериализация в REST-контроллере точно так же дозагружает lazy-поля, как серверный шаблонизатор. Именно в REST-API это и болит — Jackson «трогает» геттеры и порождает скрытые запросы к БД.",
+                "source_of_confusion": "Название Open Session In View читается буквально как «про view-шаблоны», и паттерн кажется неактуальным для API без серверного рендеринга.",
+                "if_it_were_true": "В REST-приложениях отключение open-in-view не меняло бы поведения — на деле именно там после отключения всплывают `LazyInitializationException`, требующие явных fetch-стратегий.",
+                "how_it_should_be": "Считать «view» любой фазой после выхода из сервиса: JSON-сериализатор — тоже view; отключать OSIV и загружать данные явно в `@Transactional`-слое."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Отключение OSIV автоматически решает проблему `LazyInitializationException` без изменений в коде.",
+              "text": "OSIV достаточно выключить одной настройкой (`spring.jpa.open-in-view=false`), и код продолжит работать без правок и без `LazyInitializationException`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: выключение OSIV приводит к `LazyInitializationException` при доступе к lazy-коллекциям вне транзакции — это индикатор, что данные нужно грузить явно.",
@@ -2568,7 +2568,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "OSIV — это альтернативное название для уровня изоляции транзакции.",
+              "text": "OSIV управляет изоляцией транзакции на время запроса (`spring.jpa.open-in-view` задаёт уровень чтения), не касаясь ленивой загрузки.",
               "correct": false,
               "sections": {
                 "what_actually": "OSIV — это паттерн удержания persistence context на время запроса, не имеющий отношения к уровням изоляции (`READ_COMMITTED`, `SERIALIZABLE`).",
@@ -2591,7 +2591,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Audited` сохраняет только последнюю версию сущности, перезаписывая предыдущие ревизии.",
+              "text": "`@Audited` хранит в audit-таблице только последний снимок (колонка `revtype` перезаписывается), а полную историю включает отдельная опция `store_data_at_delete`.",
               "correct": false,
               "sections": {
                 "what_actually": "Envers хранит всю историю изменений — это главное его назначение; для каждой ревизии создаётся отдельная строка в audit-таблице.",
@@ -2603,7 +2603,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@NotAudited` на поле отключает аудит всей сущности целиком.",
+              "text": "`@NotAudited` на любом поле отключает `@Audited` всей сущности (Envers требует полный снимок строки), а точечные исключения настраиваются через `revinfo`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@NotAudited` на поле исключает только это поле из аудита (полезно для blob-ов, thumbnail); для отключения всей сущности убирают `@Audited`.",
@@ -2615,7 +2615,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтение истории возможно только через нативный SQL — специального API нет.",
+              "text": "`AuditReader` в Envers отсутствует, поэтому историю читают нативным SQL из `<name>_aud`, соединяя её с `revinfo` по номеру ревизии.",
               "correct": false,
               "sections": {
                 "what_actually": "Envers предоставляет `AuditReader` API: `forRevisionsOfEntity()` для истории, `find(Class, id, revNumber)` для состояния на ревизию, `getRevisionNumberForDate()` для поиска по дате.",
@@ -2664,7 +2664,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Interface-based projection в `Spring Data JPA` всегда генерирует `SELECT` только нужных колонок.",
+              "text": "Interface-based projection в `Spring Data JPA` — надёжный способ сузить `SELECT`, причём открытая проекция сокращает выборку так же, как закрытая.",
               "correct": false,
               "sections": {
                 "what_actually": "Interface-based projection даёт оптимизированный `SELECT` только для «закрытых» проекций (getter-ы без SpEL); для «открытых» (с `@Value`) грузится вся `Entity`.",
@@ -2676,7 +2676,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Загрузка полной `Entity` всегда эффективнее projection, так как `Hibernate` оптимизирует её автоматически.",
+              "text": "Загрузка полной `Entity` — разумный дефолт и для чтения пары полей, так как `Hibernate` сужает `SELECT` до реально прочитанных геттеров.",
               "correct": false,
               "sections": {
                 "what_actually": "Загрузка `Entity` грузит все поля и может вызвать N+1; projection обычно эффективнее, так как грузит только необходимое.",
@@ -2688,7 +2688,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Native query не может вернуть DTO — только массив `Object[]` или `Entity`.",
+              "text": "Native query с агрегатами — источник массивов `Object[]`, а маппинг в DTO остаётся за JPQL-конструктором `SELECT new`.",
               "correct": false,
               "sections": {
                 "what_actually": "Native query может вернуть DTO через `@SqlResultSetMapping` + `@ConstructorResult`, который маппит колонки SQL-результата на конструктор DTO-класса.",
@@ -2711,7 +2711,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`StatelessSession` автоматически использует `batch_size` и не требует периодического `flush`/`clear`.",
+              "text": "`StatelessSession` сам применяет батчинг — освобождает от ручного сброса контекста, но требует включённой группировки statement-ов в конфигурации.",
               "correct": false,
               "sections": {
                 "what_actually": "Stateless-сессия не имеет L1 cache, поэтому `flush`/`clear` действительно не нужны, но `batch_size` всё равно нужно настроить через `hibernate.jdbc.batch_size`.",
@@ -2736,7 +2736,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`StatelessSession` поддерживает lazy loading и возвращает proxy-объекты.",
+              "text": "`StatelessSession` сохраняет ленивую загрузку — ассоциации приходят proxy-объектами, но дозагрузка работает лишь до закрытия сессии.",
               "correct": false,
               "sections": {
                 "what_actually": "Stateless-сессия не поддерживает lazy loading — она возвращает реальные объекты; это компромисс за отсутствие кэша L1, нужного для работы proxy.",
@@ -2748,7 +2748,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`StatelessSession` подходит для обычной CRUD-операции одной сущности в транзакции.",
+              "text": "`StatelessSession` подходит и для точечного CRUD — отсутствие dirty checking удешевляет транзакцию, но экономия заметна лишь на фоне крупных графов.",
               "correct": false,
               "sections": {
                 "what_actually": "Для одиночных CRUD stateless-сессия не нужна — нет преимуществ перед обычной `Session`; её смысл проявляется только при bulk-операциях.",
@@ -2771,19 +2771,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Cartesian Product при множественных `JOIN FETCH` решается автоматически `Hibernate` через `DISTINCT`.",
+              "text": "Пагинация с `JOIN FETCH` коллекции выполняется в SQL; `setMaxResults` применяется до соединения, поэтому память не страдает.",
               "correct": false,
               "sections": {
-                "what_actually": "`DISTINCT` уменьшает дубликаты, но два `JOIN FETCH` на коллекции всё равно запрещены — `Hibernate` бросит `MultipleBagFetchException`; нужен `@EntityGraph` или раздельные запросы.",
-                "source_of_confusion": "`DISTINCT` помогает с дубликатами строк, и кажется, что он закрывает и проблему двух коллекций.",
-                "if_it_were_true": "Тогда `SELECT DISTINCT ... JOIN FETCH orders JOIN FETCH roles` работал бы, но он падает с исключением.",
-                "how_it_should_be": "Две коллекции грузят через `@EntityGraph` или раздельные запросы, а не двойным `JOIN FETCH` с `DISTINCT`."
+                "what_actually": "Пагинация вместе с `JOIN FETCH` коллекции НЕ уходит в SQL: Hibernate пишет предупреждение `firstResult/maxResults specified with collection fetch; applying in memory`, тянет ВСЕ строки соединения и усекает результат уже в памяти приложения. Это один из самых дорогих скрытых дефектов производительности.",
+                "source_of_confusion": "С to-one ассоциациями `setMaxResults` действительно транслируется в `LIMIT`, и привычка переносится на коллекции, где строки размножаются соединением.",
+                "if_it_were_true": "Страница из 20 пользователей с заказами стоила бы константно дёшево — на деле такой запрос съедает память пропорционально всей выборке таблицы.",
+                "how_it_should_be": "Разделять: сначала пагинированный запрос за ID (или за корнями без коллекций), затем догрузка коллекций отдельным запросом/`@BatchSize`; `JOIN FETCH` + пагинация — только для to-one."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@Transactional(readOnly = true)` не влияет на производительность и является чисто декларативным флагом.",
+              "text": "Флаг `@Transactional(readOnly = true)` остаётся чисто декларативной пометкой; dirty checking и `flush` работают в том же объёме, что и при записи.",
               "correct": false,
               "sections": {
                 "what_actually": "`readOnly = true` даёт реальные выигрыши: `Hibernate` отключает dirty checking и flush, а некоторые драйверы (`PostgreSQL`) используют read-only соединения.",
@@ -2808,7 +2808,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`flush()` внутри цикла — рекомендуемая практика для быстрых bulk insert.",
+              "text": "Вызов `flush()` на каждой итерации цикла считается рекомендуемым приёмом для bulk `INSERT`; ранний сброс держит persistence context маленьким без потери батчинга.",
               "correct": false,
               "sections": {
                 "what_actually": "`flush()` на каждой итерации вызывает отдельный `INSERT` для каждого элемента, обнуляя выгоду от batching; правильно — `flush`+`clear` каждые N элементов.",
@@ -2831,19 +2831,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@DataJpaTest` использует реальную БД из production-конфигурации без изоляции между тестами.",
+              "text": "`@DataJpaTest` поднимает полный `Spring`-контекст вместе с web-слоем (`@Controller`-ы доступны в тестах) и коммитит транзакцию после каждого теста.",
               "correct": false,
               "sections": {
-                "what_actually": "`@DataJpaTest` по умолчанию заменяет DataSource на embedded (`H2`) и оборачивает каждый тест в транзакцию с rollback; для реальной БД нужен `Testcontainers`.",
-                "source_of_confusion": "Кажется, что тест репозитория должен использовать ту же БД, что и приложение в проде.",
-                "if_it_were_true": "Тогда тесты меняли бы production-данные, но `@DataJpaTest` изолирует их на `H2` с откатом.",
-                "how_it_should_be": "`@DataJpaTest` использует embedded `H2` с авто-rollback; реальную БД даёт `Testcontainers`."
+                "what_actually": "`@DataJpaTest` — срезовый (slice) тест: поднимает только JPA-инфраструктуру (репозитории, `EntityManager`, `TestEntityManager`); web-слой и `@Service`/`@Controller`-бины в контекст не попадают. Транзакция каждого теста по умолчанию ОТКАТЫВАЕТСЯ, а не коммитится.",
+                "source_of_confusion": "Привычка к `@SpringBootTest`, который действительно поднимает весь контекст, переносится на все тестовые аннотации со словом Test.",
+                "if_it_were_true": "Срезовые тесты потеряли бы смысл — скорость `@DataJpaTest` как раз в том, что большая часть контекста не создаётся, а откат избавляет от очистки данных между тестами.",
+                "how_it_should_be": "Выбирать срез по слою: `@DataJpaTest` — репозитории, `@WebMvcTest` — контроллеры, `@SpringBootTest` — сквозные сценарии; коммит в тесте — только явным `@Commit`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Для проверки отсутствия N+1 в тестах достаточно посмотреть на количество `SELECT` в лог-файле вручную.",
+              "text": "`N+1` в тестах проверяется логом SQL (`show-sql=true` выводит каждый `SELECT`) и ручной подсчёт строк заменяет специализированный счётчик запросов.",
               "correct": false,
               "sections": {
                 "what_actually": "Ручная проверка ненадёжна и хрупка; правильный подход — счётчик запросов через `datasource-proxy` или `assertSelectCount(1, ...)` из Hypersistence Utils.",
@@ -2855,7 +2855,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Testcontainers` использует только in-memory БД, не поддерживая реальный `PostgreSQL`.",
+              "text": "`Testcontainers` эмулирует СУБД in-memory движком (`H2` в режиме совместимости с `PostgreSQL`) и выигрывает в скорости у реального контейнера.",
               "correct": false,
               "sections": {
                 "what_actually": "`Testcontainers` как раз запускает реальный `PostgreSQL` в Docker-контейнере — это главное его преимущество над `H2`: настоящий диалект и SQL-поведение.",

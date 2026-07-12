@@ -33,7 +33,13 @@
     "hibernate.jdbc.batch_size покрывает INSERT/UPDATE/DELETE; order_inserts/order_updates группируют по типу сущности; batch_versioned_data для @Version-сущностей [Q36].",
     "setFetchSize — JDBC-hint, поведение драйверозависимо (PostgreSQL — cursor при autocommit=false; MySQL — свой механизм) [Q37]. Стабильный контракт JDBC.",
     "hibernate.generate_statistics=true + sessionFactory.getStatistics(); в production экспорт через Micrometer/Actuator опционален [Q39]. Стабильно в Hibernate 5/6.",
-    "spring.jpa.hibernate.ddl-auto: validate + Flyway/Liquibase — рекомендация для production; open-in-view=false рекомендован (Spring Boot до сих пор дефолтит true с warning-ом) [Q40]."
+    "spring.jpa.hibernate.ddl-auto: validate + Flyway/Liquibase — рекомендация для production; open-in-view=false рекомендован (Spring Boot до сих пор дефолтит true с warning-ом) [Q40].",
+    "getCurrentSession() требует hibernate.current_session_context_class вне managed-среды; в Spring сессию к транзакции привязывает @Transactional-инфраструктура [Q41]. Стабильно.",
+    "Hibernate 6: Dialect определяется автоматически по JDBC-метаданным; версионные диалекты (PostgreSQL95Dialect и т.п.) упразднены в пользу единых [Q42].",
+    "spring.jpa.open-in-view=true — дефолт Spring Boot 3.x (с warning-ом при неявном включении); рекомендация production — false [Q43].",
+    "Envers: hibernate-envers артефакт в группе org.hibernate.orm (Hibernate 6); revtype 0=ADD/1=MOD/2=DEL; AuditReaderFactory.get(em) [Q44].",
+    "Пагинация + collection JOIN FETCH = in-memory (предупреждение HHH90003004 в Hibernate 6, бывший HHH000104 в 5.x) [Q47].",
+    "@DataJpaTest: in-memory H2 по умолчанию; @AutoConfigureTestDatabase(replace=NONE) + Testcontainers — для реальной СУБД; rollback после каждого теста [Q48]."
   ],
   "notes": "Ядро (Session/SessionFactory, состояния entity, dirty checking, get/load) стабильно с Hibernate 5.x; покрывает Q1-Q10; расширяется по мере обработки остальных чанков."
 }
