@@ -1516,3 +1516,8 @@ Dirty changes created by loop: 0
 - Методика R0.68 на остальные read-only поверхности (instrument): MCQ-label :has-ринг живьём; submit disabled→enable по выбору радио (клиентски, без POST) → ринг; /stats: search/select shadow-focus, apply/экспандер/ссылки глобальный ринг, sortable th inset −2px; flashcard: reveal/summary ринг, code-copy в свёрнутом details легитимно не фокусируем (content-visibility-квирк задокументирован), после открытия — ринг.
 - error 404 покрыт архитектурно (нет outline:none-правил на его элементах). Итог размерности: единственный дефект был R0.68 (tabpanel), всё остальное чисто.
 - **Дальше:** гейты прежние (window-тик + контракт-тест, EXAM, данные); режим поддержки.
+
+### R0.70 (2026-07-12) — Reflow-свип 320px (WCAG 1.4.10): VERIFIED-CLEAN (0 правок)
+- Пробел: прежние свипы от 375px, стандарт требует 320. Прогнано 320×800 dpr2: editorial — /, /settings (3 вкладки), /stats (+раскрытая таблица), flashcard, empty, 404; instrument — /settings, /. Везде scrollWidth==320; единственный широкий элемент (CODE flashcard) — в собственном overflow-x:auto (законное исключение 1.4.10).
+- Браузер/localStorage возвращены к дефолтам. Правок кода нет.
+- **Дальше:** гейты прежние (window-тик + контракт-тест, EXAM, данные); режим поддержки.
