@@ -1622,3 +1622,8 @@ Dirty changes created by loop: 0
 - **Прогнано:** notion, superhuman, theverge × / (MCQ) × dark+light = 6 прогонов: a11y 100, BP 100, color-contrast PASS везде (провалы — только вечный SEO-шум). Token-only дизайны второй волны впервые подтверждены живым инструментом.
 - **Механика:** localStorage design/theme → pre-paint до первого кадра → LH меряет настоящий дизайн (паттерн R0.58). Дефолты возвращены.
 - **Остаток серии:** linear+swiss+mintlify (2/3), broadsheet+stripe+claude (3/3), затем spot-check /settings. Контракт-тест PENDING (bootRun жив). Гейты прежние.
+
+### R0.85 (2026-07-12) — Live-a11y серия 2/3: linear+swiss+mintlify — 6/6 чисто (0 правок)
+
+- Та же механика (localStorage → pre-paint → LH на /): linear, swiss, mintlify × dark+light — a11y 100, BP 100, контраст PASS во всех шести прогонах; SEO-шум единственные провалы.
+- Счёт размерности: 8/11 дизайнов подтверждены живым axe. Остаток: broadsheet+stripe+claude (серия 3/3), затем spot-check /settings. Дефолты возвращены. Контракт-тест PENDING (bootRun жив). Гейты прежние.
