@@ -1567,3 +1567,11 @@ Dirty changes created by loop: 0
 - **Seg-контрол (ширина чтения, паттерн един для 6 осей):** одно нажатие стрелки = фокус + aria-checked + html-атрибут + localStorage + live-region + применение --measure 72ch→100ch; возврат стрелкой — ось сама вычищает дефолт (attr и ключ сняты).
 - **Степпер:** Space → 110% (inline + live-region); reset → чисто, кнопка сама уходит в aria-disabled=true (фокус не сбрасывается — осознанная замена native disabled).
 - **Итог:** дефектов нет; размерность «клавиатурная операбельность» закрыта на всех read-only поверхностях (/ + /stats в R0.76, /settings здесь); result/summary — в parity-фазу. Все 8 ключей localStorage возвращены к null. Контракт-тест PENDING (bootRun жив). Гейты прежние.
+
+### R0.78 (2026-07-12) — Входная устойчивость: мусор в localStorage и GET-параметрах, XSS-echo — VERIFIED-CLEAN (0 правок)
+
+- **Единица:** новая размерность §28 — устойчивость к мусорному вводу по двум каналам: localStorage (8 ключей персонализации) и GET-параметры (q/important/topic).
+- **localStorage:** все оси живьём подтвердили белые списки head.html: XSS-пейлоад в design не попадает в атрибут (→editorial), мусорные значения → дефолты, fontScale=1e10 → кламп 1.4 (страница юзабельна). Консоль пуста. Нюанс (не дефект): read-path не перезаписывает мусорный ключ — лежит до первого set(), вреда нет.
+- **GET:** q=`<script>` эскейплен в input и echo (0 внедрённых тегов); important=junk → graceful-редирект на / без 500/stacktrace (бэкенд, вне §4); topic-траверсал на /stats игнорируется; мусорный topic на / и /review → штатный empty-state с CTA. Утечек Whitelabel/stacktrace нет нигде.
+- **Каверза проб:** «exception» на /stats = слаг java-exceptions-interview в data-island, не утечка — контекст матча проверять до классификации.
+- **Гигиена:** ключи сняты, браузер на чистом /. Контракт-тест PENDING (bootRun жив). Гейты прежние.
