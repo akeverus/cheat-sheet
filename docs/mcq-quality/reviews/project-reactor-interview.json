@@ -7,7 +7,8 @@
     "Q1-Q10",
     "Q11-Q20",
     "Q21-Q30",
-    "Q31-Q40"
+    "Q31-Q40",
+    "Q41-Q48"
   ],
   "gate_summary": {
     "verify_mcq_json": "OK",
@@ -15,8 +16,8 @@
     "option_length_ratio": "ACCEPTED EXCEPTION (как в java-concurrency/design-patterns/sql): гейт ≤1.35 конфликтует со STAMP-guard (CV≥0.14) и запретом на stamped-clone; гоним смысловые метрики."
   },
   "blocks_total": 48,
-  "blocks_reviewed": 40,
-  "notes": "ROUND-8 chunk1 Q1-Q10 (файл project-reactor, строка 5 плана §1). Доминантный дефект — заглушки-дистракторы 48-116ch при correct-конспектах 130-252ch. Подняты все 30 дистракторов чанка (25 text-only + 5 dict-spec). Blind-reviewer (10 блоков, 10/10 VERDICT совпали, MULTI/BSM нет; фактура correct подтверждена: JDK9 Flow, Flowable-only backpressure, BUFFER-дефолт create, SynchronousSink у generate) потребовал: (1) Q4-A OOM-retry общежитейски абсурден → миф «backpressure = безлимитная буферизация» (dict-spec); (2) Q6-A/Q7-D enumeration-tell («какие способы» → только correct был перечислением) → оба дистрактора переписаны в отравленные перечисления: Q6-A «все фабрики eager» (dict-spec), Q7-D сигнатуры-мутанты range(start,end)/interval-однократный/generate-многопоточный (dict-spec); (3) Q10-C/D дубль «generate имеет семантику create» → Q10-C уведён в перенос контракта Stream.generate (dict-spec); (4) Q9 покрытие: Q9-C переписан на «push без OverflowStrategy» (кроет оба метода, dict-spec), Q9-B зеркален correct по структуре; (5) кванторный tell Q5/Q7-A смягчён псевдо-обоснованиями («принято моделировать», «типичен», «базовый путь»). Факты verified по теории: push-модель + request(n); 4 интерфейса RS (Publisher/Subscriber/Subscription/Processor), JDK9 Flow; Reactor: backpressure во всех типах, null запрещён, Context есть — RxJava3: только Flowable; Mono 0..1/Flux 0..N; фабрики Mono (just eager; defer/fromCallable/fromFuture lazy; create/MonoSink); фабрики Flux (range(start,count), interval бесконечный, generate синхронный 1×next, create async многопоточный + OverflowStrategy, у push есть перегрузка со стратегией; дефолт BUFFER); just vs defer (eager/lazy на подписку); Mono.just(null) → NPE (justOrEmpty для nullable). Chunk2 Q11-Q20 (операторы: map/flatMap-семейство, transform/as, doOn*, фильтрация, слияние): подняты все 30 дистракторов (24 text-only + 6 dict-spec). Blind-reviewer (10 блоков, 10/10 VERDICT, MULTI нет, фактических ошибок в correct нет) потребовал: Q11-A/Q18-A swap-карикатуры → мифы уровня «map сам разворачивает Publisher» и «take(n) не отменяет подписку, отмена — только limitRequest» (dict-spec); Q12-A + Q19-A кросс-вопросный дубль карикатуры «синонимы из разных версий API» → prefetch-миф (256/32/1) и zip-padding гибрид с combineLatest (dict-spec); Q14-C DUP per-element с Q14-A + form-tell дженериков (только correct нёс сигнатуру) → «as = псевдоним transform, ограничен Flux<R>» с полной сигнатурой (dict-spec); Q15-B получил слэш-перечисление doOnNext/doOnComplete/doOnError (anti form-tell «учебниковой» формы correct); Q16-A отравленное перечисление добито до полноты correct (минус filterWhen + ложный тезис «все фильтры синхронные», dict-spec); Q17-D получил пре-эмпт оговорку «ни на пустом завершении, ни на ошибке» (у correct была своя защитная оговорка — теперь не уникальна); Q13-C оставлен с одобрения ревьюера (spec-подфакт о serial-доставке — лучший дистрактор пачки). Факты verified: map=sync 1:1 (Flux<Mono<R>> — ловушка), flatMap конкурентен (дефолт 256)/concatMap FIFO/switchMap отменяет предыдущий; flatMapSequential = параллельные подписки + буфер порядка; transform при сборке (transformDeferred — per-subscriber), as → произвольный тип (as(Flux::collectList)); doOn* не меняют поток и не гасят ошибку; filterWhen(T→Publisher<Boolean>) — единственный async-фильтр; switchIfEmpty только на пустоту (defaultIfEmpty — значение); take(n) отменяет подписку (limitRate/limitRequest — контроль спроса); merge interleave/concat встык/zip по короткому; combineLatest = последние известные значения, стартует после первого элемента от каждого. SKEL-пасс (новый HARD-гейт §18/§31, тик 2026-07-12): все 11 блоков Q1-Q20 с HARD-несовпадениями скелета (Q2,Q3,Q7,Q8,Q11,Q14,Q16,Q17,Q18,Q19,Q20 — semicolon_presence, opening_class) выровнены под скелет correct: точка-с-запятой в общем месте у всех четырёх, единый зачин с backtick-идентификатора; смысловая ложность дистракторов сохранена (пунктуационная перестройка, не рерайт). mcq-skel-gate: Q1-Q20 HARD-чист; остаток 22 HARD — целиком Q21-Q48, зона будущих чанков. Chunk3 Q21-Q30 (ошибки/backpressure/Schedulers): 10 correct-восстановлений из 68444a1b^ (SKEL-прогон вырезал сигнатуры/скобки: request(n), retry(N), catch (LowLevelEx e) { throw new HighLevelEx(e); } и т.д. — деградация доказана против theory .md, whitelist CORRECT_EDITS) + 30 raises (26 text + 4 dict-spec: Q21-D zip-length-myth, Q28-B Hooks-global-myth, Q30-A commonPool-myth, Q30-C elastic-инверсия deprecation). Blind-reviewer 10/10 VERDICT, MULTI нет; его фиксы: Q21 dup развязан (zip-length вместо второго swap), Q22/Q25/Q29/Q30 form-tell плотности закрыты (перечисления/скобки/цифры добавлены дистракторам), Q27-B/Q28-A/Q28-B/Q30-A де-карикатуризированы. SKEL: Q1-Q30 HARD-чист. Факты verified: zip попарно/по короткому, withLatestFrom пропускает до первого other; onErrorReturn value / onErrorResume Publisher-лямбда / onErrorMap смена типа (onError остаётся) / retry(N) без задержки / retryWhen backoff+jitter+filter; Exceptions.propagate оборачивает checked (Error/RE как есть), unwrap обратно; request(n)+overflow-стратегии, буферы между операторами; Buffer/Drop/Latest/Error; limitRate 75% replenish; immediate/single/parallel(=CPU)/boundedElastic(10×CPU+очередь), elastic deprecated. Chunk4 Q31-Q40 (threading/Context/hot-cold/время/тестирование): 8 correct-восстановлений из 68444a1b^ (Q32-Q34, Q36-Q40 — та же деградация SKEL-прогона) + 30 raises (29 text + 1 dict-spec Q31-D placement-миф «subscribeOn перед subscribe»). Blind-reviewer 10/10 VERDICT, MULTI нет; фиксы: Q31 DUP A/D развязан (swap vs placement), Q36-A/Q39-D де-карикатуризированы (поздний подписчик hot; delayElements-принятие), Q38 перечисления дистракторов подняты до 4-6 позиций (delaySequence/timed — реальные API), Q40-B зачин StepVerifier. SKEL Q1-Q40 HARD-чист (Q35-A получил code-spans). Факты verified: subscribeOn=источник/позиция не важна/ближайший к источнику побеждает, publishOn=downstream от точки вызова; ParallelFlux: parallel(n) только рельсы, параллелизм даёт runOn, порядок не сохраняется, sequential() сводит; Context: иммутабельный, к Subscription, снизу вверх, contextWrite/deferContextual; cold=запуск на подписку/hot=общий поток (share/publish/cache/Sinks); ConnectableFlux=publish()+connect() (connect возвращает Disposable); interval/delayElements/delaySubscription/timeout/elapsed/timestamp/timed; timeout=между элементами, сброс на onNext, форма с fallbackPublisher; StepVerifier=create+expect*+verify.",
+  "blocks_reviewed": 48,
+  "notes": "ROUND-8 chunk1 Q1-Q10 (файл project-reactor, строка 5 плана §1). Доминантный дефект — заглушки-дистракторы 48-116ch при correct-конспектах 130-252ch. Подняты все 30 дистракторов чанка (25 text-only + 5 dict-spec). Blind-reviewer (10 блоков, 10/10 VERDICT совпали, MULTI/BSM нет; фактура correct подтверждена: JDK9 Flow, Flowable-only backpressure, BUFFER-дефолт create, SynchronousSink у generate) потребовал: (1) Q4-A OOM-retry общежитейски абсурден → миф «backpressure = безлимитная буферизация» (dict-spec); (2) Q6-A/Q7-D enumeration-tell («какие способы» → только correct был перечислением) → оба дистрактора переписаны в отравленные перечисления: Q6-A «все фабрики eager» (dict-spec), Q7-D сигнатуры-мутанты range(start,end)/interval-однократный/generate-многопоточный (dict-spec); (3) Q10-C/D дубль «generate имеет семантику create» → Q10-C уведён в перенос контракта Stream.generate (dict-spec); (4) Q9 покрытие: Q9-C переписан на «push без OverflowStrategy» (кроет оба метода, dict-spec), Q9-B зеркален correct по структуре; (5) кванторный tell Q5/Q7-A смягчён псевдо-обоснованиями («принято моделировать», «типичен», «базовый путь»). Факты verified по теории: push-модель + request(n); 4 интерфейса RS (Publisher/Subscriber/Subscription/Processor), JDK9 Flow; Reactor: backpressure во всех типах, null запрещён, Context есть — RxJava3: только Flowable; Mono 0..1/Flux 0..N; фабрики Mono (just eager; defer/fromCallable/fromFuture lazy; create/MonoSink); фабрики Flux (range(start,count), interval бесконечный, generate синхронный 1×next, create async многопоточный + OverflowStrategy, у push есть перегрузка со стратегией; дефолт BUFFER); just vs defer (eager/lazy на подписку); Mono.just(null) → NPE (justOrEmpty для nullable). Chunk2 Q11-Q20 (операторы: map/flatMap-семейство, transform/as, doOn*, фильтрация, слияние): подняты все 30 дистракторов (24 text-only + 6 dict-spec). Blind-reviewer (10 блоков, 10/10 VERDICT, MULTI нет, фактических ошибок в correct нет) потребовал: Q11-A/Q18-A swap-карикатуры → мифы уровня «map сам разворачивает Publisher» и «take(n) не отменяет подписку, отмена — только limitRequest» (dict-spec); Q12-A + Q19-A кросс-вопросный дубль карикатуры «синонимы из разных версий API» → prefetch-миф (256/32/1) и zip-padding гибрид с combineLatest (dict-spec); Q14-C DUP per-element с Q14-A + form-tell дженериков (только correct нёс сигнатуру) → «as = псевдоним transform, ограничен Flux<R>» с полной сигнатурой (dict-spec); Q15-B получил слэш-перечисление doOnNext/doOnComplete/doOnError (anti form-tell «учебниковой» формы correct); Q16-A отравленное перечисление добито до полноты correct (минус filterWhen + ложный тезис «все фильтры синхронные», dict-spec); Q17-D получил пре-эмпт оговорку «ни на пустом завершении, ни на ошибке» (у correct была своя защитная оговорка — теперь не уникальна); Q13-C оставлен с одобрения ревьюера (spec-подфакт о serial-доставке — лучший дистрактор пачки). Факты verified: map=sync 1:1 (Flux<Mono<R>> — ловушка), flatMap конкурентен (дефолт 256)/concatMap FIFO/switchMap отменяет предыдущий; flatMapSequential = параллельные подписки + буфер порядка; transform при сборке (transformDeferred — per-subscriber), as → произвольный тип (as(Flux::collectList)); doOn* не меняют поток и не гасят ошибку; filterWhen(T→Publisher<Boolean>) — единственный async-фильтр; switchIfEmpty только на пустоту (defaultIfEmpty — значение); take(n) отменяет подписку (limitRate/limitRequest — контроль спроса); merge interleave/concat встык/zip по короткому; combineLatest = последние известные значения, стартует после первого элемента от каждого. SKEL-пасс (новый HARD-гейт §18/§31, тик 2026-07-12): все 11 блоков Q1-Q20 с HARD-несовпадениями скелета (Q2,Q3,Q7,Q8,Q11,Q14,Q16,Q17,Q18,Q19,Q20 — semicolon_presence, opening_class) выровнены под скелет correct: точка-с-запятой в общем месте у всех четырёх, единый зачин с backtick-идентификатора; смысловая ложность дистракторов сохранена (пунктуационная перестройка, не рерайт). mcq-skel-gate: Q1-Q20 HARD-чист; остаток 22 HARD — целиком Q21-Q48, зона будущих чанков. Chunk3 Q21-Q30 (ошибки/backpressure/Schedulers): 10 correct-восстановлений из 68444a1b^ (SKEL-прогон вырезал сигнатуры/скобки: request(n), retry(N), catch (LowLevelEx e) { throw new HighLevelEx(e); } и т.д. — деградация доказана против theory .md, whitelist CORRECT_EDITS) + 30 raises (26 text + 4 dict-spec: Q21-D zip-length-myth, Q28-B Hooks-global-myth, Q30-A commonPool-myth, Q30-C elastic-инверсия deprecation). Blind-reviewer 10/10 VERDICT, MULTI нет; его фиксы: Q21 dup развязан (zip-length вместо второго swap), Q22/Q25/Q29/Q30 form-tell плотности закрыты (перечисления/скобки/цифры добавлены дистракторам), Q27-B/Q28-A/Q28-B/Q30-A де-карикатуризированы. SKEL: Q1-Q30 HARD-чист. Факты verified: zip попарно/по короткому, withLatestFrom пропускает до первого other; onErrorReturn value / onErrorResume Publisher-лямбда / onErrorMap смена типа (onError остаётся) / retry(N) без задержки / retryWhen backoff+jitter+filter; Exceptions.propagate оборачивает checked (Error/RE как есть), unwrap обратно; request(n)+overflow-стратегии, буферы между операторами; Buffer/Drop/Latest/Error; limitRate 75% replenish; immediate/single/parallel(=CPU)/boundedElastic(10×CPU+очередь), elastic deprecated. Chunk4 Q31-Q40 (threading/Context/hot-cold/время/тестирование): 8 correct-восстановлений из 68444a1b^ (Q32-Q34, Q36-Q40 — та же деградация SKEL-прогона) + 30 raises (29 text + 1 dict-spec Q31-D placement-миф «subscribeOn перед subscribe»). Blind-reviewer 10/10 VERDICT, MULTI нет; фиксы: Q31 DUP A/D развязан (swap vs placement), Q36-A/Q39-D де-карикатуризированы (поздний подписчик hot; delayElements-принятие), Q38 перечисления дистракторов подняты до 4-6 позиций (delaySequence/timed — реальные API), Q40-B зачин StepVerifier. SKEL Q1-Q40 HARD-чист (Q35-A получил code-spans). Факты verified: subscribeOn=источник/позиция не важна/ближайший к источнику побеждает, publishOn=downstream от точки вызова; ParallelFlux: parallel(n) только рельсы, параллелизм даёт runOn, порядок не сохраняется, sequential() сводит; Context: иммутабельный, к Subscription, снизу вверх, contextWrite/deferContextual; cold=запуск на подписку/hot=общий поток (share/publish/cache/Sinks); ConnectableFlux=publish()+connect() (connect возвращает Disposable); interval/delayElements/delaySubscription/timeout/elapsed/timestamp/timed; timeout=между элементами, сброс на onNext, форма с fallbackPublisher; StepVerifier=create+expect*+verify. Chunk5 Q41-Q48 (тестирование времени/TestPublisher/отладка/WebFlux/block/context-propagation — финальный контент-чанк): 7 correct-восстановлений из 68444a1b^ (Q41-Q46, Q48; Q41-A был синтаксически сломан — withVirtualTime -> flux); Q47-C совпадал) + 22 raises (16 text + 6 dict-spec: Q42-C backpressure-миф TestPublisher, Q43-D logging-config-миф, Q44-C log-marker-миф, Q47-A/B/D ложные-причины Context/OOM/переупорядочивание). Blind-reviewer 8/8 VERDICT, MULTI нет; фиксы: Q42 DUP compliance-зеркала развязан (C -> backpressure-миф), Q44 DUP breakpoint-пары развязан (C -> log-миф) + дистракторам даны свои backtick-артефакты (Frames, AssertionError-цитата), Q43 перечисления подняты до 4-5 инструментов у каждого + btick-зачины, Q46 DUP servlet-пары развязан, Q47 form-tell «только correct отвечает на почему» устранён — все дистракторы отвечают ложными причинами. Пост-ревью re-balance file-wide: подъём чанка вскрыл перекос wrong>correct (AVG-гейт 0.861) — тримы прозы-филлера дистракторов в 14 блоках (Q2/Q6/Q13/Q16/Q28/Q30/Q34/Q38/Q40 + chunk5), cs-паритет Q2/Q40/Q45/Q46 (correct был unique-max по code-spans). Итог гейтов: LONGEST 0.042, AVG 0.922, STYLE 0.391, DUP 0, SENTENCE ok, DETAIL 0.25, stamp verdict OK; SKEL Q1-Q48 HARD-чист (LLM-вычитка принята). Факты verified: withVirtualTime требует Supplier; TestPublisher next/error/complete + createNoncompliant + assertMinRequested/awaitRequest; Hooks.onOperatorDebug глобальный/дорогой vs checkpoint error-path-only vs ReactorDebugAgent production-safe; onErrorDropped логирует по умолчанию; WebFlux = Reactor+event-loop, аннотации поддерживаются; block() на NonBlocking-потоке -> IllegalStateException, изоляция fromCallable+boundedElastic; contextCapture()/ThreadLocalAccessor/ContextRegistry (Reactor 3.5+). Остаток файла: только POS de-cycle (seq=48) -> FINAL.",
   "records": [
     {
       "q_number": 1,
@@ -2204,6 +2205,454 @@
     },
     {
       "q_number": 40,
+      "block_idx": 0,
+      "correct_label": "D",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 41,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 42,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 43,
+      "block_idx": 0,
+      "correct_label": "C",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 44,
+      "block_idx": 0,
+      "correct_label": "D",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 45,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 46,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 47,
+      "block_idx": 0,
+      "correct_label": "C",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 48,
       "block_idx": 0,
       "correct_label": "D",
       "stem": {

@@ -69,7 +69,7 @@
           "question_text": "Что такое спецификация Reactive Streams?",
           "options": [
             {
-              "text": "`Reactive Streams` определяет 4 интерфейса (`Publisher`, `Subscriber`, `Observer`, `Subject`) из паттерна Observer; протокол подписки унаследован оттуда же, на нём спецификация и построена.",
+              "text": "`Reactive Streams` определяет 4 интерфейса (`Publisher`, `Subscriber`, `Observer`, `Subject`) из паттерна `Observer`; протокол `onSubscribe`/`request(n)`/`onNext` унаследован оттуда же.",
               "correct": false,
               "sections": {
                 "what_actually": "`Observer` и `Subject` — термины из `RxJava`, в спецификации `Reactive Streams` их нет; там `Publisher`, `Subscriber`, `Subscription`, `Processor`.",
@@ -94,7 +94,7 @@
               "order": 1
             },
             {
-              "text": "`Publisher.subscribe()` сразу начинает доставку (без запроса `request(n)`); все элементы уходят через `onNext` по мере готовности источника, а подписчик лишь успевает их обрабатывать.",
+              "text": "`Publisher.subscribe()` сразу начинает доставку (без запроса `request(n)`); все элементы уходят через `onNext` по мере готовности источника.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `request(n)` `Publisher` обязан ждать запрос: отправка `onNext` до запроса нарушает Rule 1 спецификации.",
@@ -106,7 +106,7 @@
               "order": 2
             },
             {
-              "text": "`Project Reactor`, единственная реализация спецификации (эталонная, от Pivotal); `RxJava` и `Akka Streams` используют собственные несовместимые контракты, поэтому мосты между библиотеками невозможны.",
+              "text": "`Project Reactor`, единственная реализация спецификации (эталонная, от Pivotal); `RxJava` и `Akka Streams` используют собственные несовместимые контракты.",
               "correct": false,
               "sections": {
                 "what_actually": "Спецификация многоплатформенная: `RxJava 3`, `Akka Streams`, `Mutiny` из `Quarkus` — независимые совместимые реализации.",
@@ -309,7 +309,7 @@
           "question_text": "Какие способы создания Mono существуют?",
           "options": [
             {
-              "text": "`Mono` создаётся через `just()`, `empty`, `error`, `fromCallable` и `create`, но все перечисленные фабрики, eager, значение вычисляется в момент сборки, ленивых среди них нет.",
+              "text": "`Mono` создают `just()`, `empty`, `error`, `fromCallable` и `create` — но все эти фабрики eager, ленивых среди них нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Eager — только `just` (и `justOrEmpty`): аргумент вычисляется в точке вызова. `defer`, `fromCallable`, `fromSupplier`, `fromFuture` и `create` откладывают работу до подписки — это ленивые фабрики.",
@@ -334,7 +334,7 @@
               "order": 1
             },
             {
-              "text": "`Mono.just(null)`, штатный способ получить пустой `Mono`, `null` интерпретируется как отсутствие значения и превращается в чистый `onComplete` без элемента.",
+              "text": "`Mono.just(null)` — штатный способ получить пустой `Mono`: `null` превращается в чистый `onComplete` без элемента.",
               "correct": false,
               "sections": {
                 "what_actually": "`Reactor` запрещает `null` в потоке: `Mono.just(null)` сразу бросает `NullPointerException`; пустоту даёт `Mono.empty()`.",
@@ -346,7 +346,7 @@
               "order": 2
             },
             {
-              "text": "`Mono.create()` работает синхронно, вызов блокирует текущий поток, пока `MonoSink` не получит `success`/`error`, поэтому для неблокирующего кода его избегают.",
+              "text": "`Mono.create()` синхронен — блокирует поток до `success`/`error` в `MonoSink`, поэтому в неблокирующем коде его избегают.",
               "correct": false,
               "sections": {
                 "what_actually": "`Mono.create(sink)` неблокирующий: значение приходит когда вызовут `sink.success()`, в том числе из колбэка другого потока.",
@@ -754,7 +754,7 @@
               "order": 1
             },
             {
-              "text": "`flatMapSequential` не сохраняет порядок результатов, как и обычный `flatMap`: Sequential в имени относится к последовательной доставке сигналов подписчику, обязательной по спецификации.",
+              "text": "`flatMapSequential` не сохраняет порядок результатов, как обычный `flatMap`: Sequential относится к последовательной доставке сигналов подписчику по спецификации.",
               "correct": false,
               "sections": {
                 "what_actually": "Он именно сохраняет порядок результатов через буферизацию — это его ключевое отличие от `flatMap`.",
@@ -766,7 +766,7 @@
               "order": 2
             },
             {
-              "text": "`flatMapSequential` медленнее `concatMap`: помимо ожидания очереди он ещё и буферизует результаты, поэтому его берут только когда порядок не важен — а память не ограничена.",
+              "text": "`flatMapSequential` медленнее `concatMap`: помимо ожидания очереди он буферизует результаты, поэтому его берут, когда порядок не важен.",
               "correct": false,
               "sections": {
                 "what_actually": "Он быстрее `concatMap`: запросы идут параллельно, буфер лишь переупорядочивает уже полученные результаты.",
@@ -909,7 +909,7 @@
           "question_text": "Какие операторы фильтрации предоставляет Project Reactor?",
           "options": [
             {
-              "text": "`Reactor` даёт `filter`, `distinct`/`distinctUntilChanged`, `take`/`takeLast`/`takeWhile`, `skip`/`skipWhile` и `elementAt`/`ignoreElements`, все они синхронные предикаты `T → boolean`, а асинхронная проверка делается только связкой `flatMap` + ветвление.",
+              "text": "`Reactor` даёт `filter`, `distinct`/`distinctUntilChanged`, `take`/`takeLast`/`takeWhile`, `skip`/`skipWhile` и `elementAt`/`ignoreElements` — все предикаты синхронные `T → boolean`, асинхронная проверка — только связкой `flatMap` + ветвление.",
               "correct": false,
               "sections": {
                 "what_actually": "Асинхронный фильтр в базовом API есть — `filterWhen(T → Publisher<Boolean>)`: элемент проверяется запросом к БД/сервису без ручного ветвления во `flatMap`.",
@@ -921,7 +921,7 @@
               "order": 0
             },
             {
-              "text": "`distinct` и `distinctUntilChanged` работают одинаково, оба убирают все дубликаты за историю потока, вариант `UntilChanged` лишь оптимизирован по памяти для отсортированных данных.",
+              "text": "`distinct` и `distinctUntilChanged` работают одинаково — оба убирают дубликаты за всю историю потока, `UntilChanged` лишь оптимизирован по памяти для отсортированных данных.",
               "correct": false,
               "sections": {
                 "what_actually": "`distinct` убирает все повторы за всю историю потока, а `distinctUntilChanged` — только последовательные дубликаты.",
@@ -933,7 +933,7 @@
               "order": 1
             },
             {
-              "text": "`filterWhen` принимает тот же синхронный предикат `T → boolean`, что и `filter`, но применяет его с задержкой, когда подписчик запросит элемент, отсюда и `When` в названии.",
+              "text": "`filterWhen` — тот же синхронный предикат, что и `filter`, но применённый с задержкой, когда подписчик запросит элемент, — отсюда `When` в названии.",
               "correct": false,
               "sections": {
                 "what_actually": "`filterWhen` принимает асинхронный предикат `T → Publisher<Boolean>` (например, `Mono<Boolean>`), что позволяет проверять условие через I/O.",
@@ -1629,7 +1629,7 @@
           "question_text": "Какие стратегии backpressure существуют?",
           "options": [
             {
-              "text": "Стратегия в ядре одна: `Block` (производитель приостанавливается до следующего `request`) — её реализует сам протокол `Reactive Streams`, а операторы `onBackpressureBuffer`/`Drop`/`Latest`/`Error` лишь меняют таймаут этого ожидания.",
+              "text": "Стратегия в ядре одна: `Block` (производитель ждёт следующего `request`) — её реализует сам протокол `Reactive Streams`, а `onBackpressureBuffer`/`Drop`/`Latest`/`Error` лишь меняют таймаут ожидания.",
               "correct": false,
               "sections": {
                 "what_actually": "Блокировка producer'а — антипаттерн в async; стратегии работают через буфер, отбрасывание или ошибку, не через блокировку.",
@@ -1641,7 +1641,7 @@
               "order": 0
             },
             {
-              "text": "Стратегии: `Buffer`, `Drop`, `Latest`, `Error` — порядок надёжности фиксирован (каждая следующая жёстче предыдущей), а выбирается стратегия глобально на конвейер через `Hooks`, точечно оператором её не задать.",
+              "text": "Стратегии: `Buffer`, `Drop`, `Latest`, `Error` — порядок надёжности фиксирован (следующая жёстче предыдущей), а выбирается стратегия глобально через `Hooks`, точечно оператором не задать.",
               "correct": false,
               "sections": {
                 "what_actually": "Стратегия выбирается точечно — конкретным оператором `onBackpressure*` в конкретном месте цепочки; глобального переключателя стратегий в `Hooks` нет, а «порядка надёжности» между ними не существует — это разные компромиссы память/полнота/свежесть.",
@@ -1653,7 +1653,7 @@
               "order": 1
             },
             {
-              "text": "Стратегии: `Buffer` (по умолчанию ограничен 256 элементами, дальше `OverflowException`), `Drop` (отбрасывает новые), `Latest` (хранит последний непрочитанный) — задаются через `onBackpressureBuffer/Drop/Latest`, а встроенный лимит буфера защищает от OOM из коробки.",
+              "text": "Стратегии: `Buffer` (ограничен 256 элементами, дальше `OverflowException`), `Drop` (отбрасывает новые), `Latest` (последний непрочитанный) — задаются через `onBackpressureBuffer/Drop/Latest`, встроенный лимит защищает от OOM из коробки.",
               "correct": false,
               "sections": {
                 "what_actually": "Дефолтный `onBackpressureBuffer()` без аргументов — unbounded; лимит надо задавать явно через `onBackpressureBuffer(maxSize)`.",
@@ -1749,7 +1749,7 @@
           "question_text": "Какие Schedulers существуют в Project Reactor?",
           "options": [
             {
-              "text": "`single()`, `parallel()` и `boundedElastic()` — обёртки над общим `ForkJoinPool.commonPool()` (как у `CompletableFuture` без экзекьютора), отдельные имена дают только метки потоков в логах, а свой пул подключается через `fromExecutor`.",
+              "text": "`single()`, `parallel()` и `boundedElastic()` — обёртки над общим `ForkJoinPool.commonPool()` (как `CompletableFuture` без экзекьютора): имена дают лишь метки потоков в логах, свой пул — через `fromExecutor`.",
               "correct": false,
               "sections": {
                 "what_actually": "У каждого планировщика свой пул: `single` держит один поток, `parallel` — фиксированный набор по числу ядер, `boundedElastic` — растущий до 10×CPU с очередью; `ForkJoinPool.commonPool()` Reactor не использует.",
@@ -1774,7 +1774,7 @@
               "order": 1
             },
             {
-              "text": "`elastic()` (актуальный планировщик для I/O: поток на задачу с переиспользованием), `boundedElastic()` (его устаревший предшественник с жёстким лимитом 10×CPU), `parallel()` (по числу ядер) — начиная с Reactor 3.4 рекомендован первый.",
+              "text": "`elastic()` (актуальный планировщик для I/O: поток на задачу с переиспользованием), `boundedElastic()` (устаревший предшественник с лимитом 10×CPU), `parallel()` (по числу ядер) — с Reactor 3.4 рекомендован первый.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `elastic()` — старый планировщик без верхней границы числа потоков, deprecated с Reactor 3.3 и удалённый в новых версиях; `boundedElastic()` — его актуальная замена с лимитом 10×CPU и очередью задач.",
@@ -1786,7 +1786,7 @@
               "order": 2
             },
             {
-              "text": "`parallel()` (пул для блокирующего I/O: `JDBC`, файловые API), `boundedElastic()` (CPU-bound вычисления, размер = число CPU), `single()` (тесты и синхронный код) — блокирующие вызовы принято уводить в `parallel()`, чей пул шире.",
+              "text": "`parallel()` (пул для блокирующего I/O: `JDBC`, файловые API), `boundedElastic()` (CPU-bound, размер = число CPU), `single()` (тесты и синхронный код) — блокирующее принято уводить в `parallel()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`parallel` — для non-blocking CPU-задач с фиксированным числом потоков; блокирующий I/O идёт на `boundedElastic`.",
@@ -1989,7 +1989,7 @@
           "question_text": "Как записывать и читать данные из Context?",
           "options": [
             {
-              "text": "Запись — обычным `ctx.put(key, value)` в начале цепочки (карта наполняется до подписки); чтение — синхронным `Context.get(key)` из любого места, включая тело `map(item -> ...)` и `filter`.",
+              "text": "Запись — обычным `ctx.put(key, value)` в начале цепочки (карта наполняется до подписки); чтение — синхронным `Context.get(key)` из любого места цепочки.",
               "correct": false,
               "sections": {
                 "what_actually": "Запись делают через `contextWrite` (применяется снизу вверх), а чтение — через `deferContextual`/`transformDeferredContextual`, а не прямым синхронным `get`.",
@@ -2014,7 +2014,7 @@
               "order": 1
             },
             {
-              "text": "Запись — через `contextWrite(ctx -> ctx.put(key, value))` (действует как присваивание для операторов ниже по цепочке); чтение — в любом операторе после него, потому что контекст течёт сверху вниз вместе с данными.",
+              "text": "Запись — через `contextWrite(ctx -> ctx.put(key, value))` (присваивание для операторов ниже по цепочке); чтение — в любом операторе после него: контекст течёт сверху вниз.",
               "correct": false,
               "sections": {
                 "what_actually": "`Context` распространяется снизу вверх, поэтому `contextWrite` виден операторам ВЫШЕ него (ближе к источнику), а не ниже.",
@@ -2026,7 +2026,7 @@
               "order": 2
             },
             {
-              "text": "Запись — аннотацией на методе-продюсере (контекст собирается при сборке цепочки); чтение — параметром лямбды: перегрузки `map((item, ctx) -> ...)` и `filter((item, ctx) -> ...)` дают карту рядом с элементом.",
+              "text": "Запись — аннотацией на методе-продюсере (контекст собирается при сборке цепочки); чтение — параметром лямбды: `map((item, ctx) -> ...)` и `filter((item, ctx) -> ...)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Внутри `map` доступа к `Context` нет; для чтения нужны контекстные операторы `deferContextual`/`transformDeferredContextual`.",
@@ -2229,7 +2229,7 @@
           "question_text": "Какие операторы для работы со временем предоставляет Project Reactor?",
           "options": [
             {
-              "text": "`delay`-семейство закрывает все временные сценарии: `delay` (пауза перед потоком), `delayElements` (между элементами), `delayElement` (перед значением `Mono`), `delaySubscription` (перед подпиской), `delaySequence` (сдвиг меток времени) — периодику и таймауты строят их комбинациями с `repeat` и `take`.",
+              "text": "`delay`-семейство закрывает все временные сценарии: `delay` (перед потоком), `delayElements` (между элементами), `delayElement` (перед значением `Mono`), `delaySubscription` (перед подпиской), `delaySequence` (сдвиг меток) — периодику и таймауты строят их комбинациями.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть целый набор: `interval`, `delayElements`, `delaySubscription`, `delayElement` (Mono), `timeout`, `elapsed`, `timestamp`.",
@@ -2254,7 +2254,7 @@
               "order": 1
             },
             {
-              "text": "`delayElements` (задержка только перед первым элементом), `delayElement` (между всеми элементами), `delaySubscription` (после завершения подписки), `interval` (одиночный тик по таймеру), `timeout` (пауза между элементами), `elapsed` (замер общей длительности) — набор, различающийся точкой применения задержки.",
+              "text": "`delayElements` (только перед первым элементом), `delayElement` (между всеми элементами), `delaySubscription` (после завершения подписки), `interval` (одиночный тик), `timeout` (пауза между элементами), `elapsed` (общая длительность) — различаются точкой применения задержки.",
               "correct": false,
               "sections": {
                 "what_actually": "`delayElements(duration)` добавляет задержку между КАЖДЫМ элементом, а не только перед первым.",
@@ -2266,7 +2266,7 @@
               "order": 2
             },
             {
-              "text": "`elapsed` (абсолютная Unix-метка каждого элемента), `timestamp` (интервал с прошлого элемента), `timed` (обе метки разом), `interval` (время создания цепочки) — измерительная четвёрка, оборачивающая элементы в `Tuple2` со временем.",
+              "text": "`elapsed` (абсолютная Unix-метка элемента), `timestamp` (интервал с прошлого), `timed` (обе метки разом), `interval` (время создания цепочки) — измерительная четвёрка в `Tuple2` со временем.",
               "correct": false,
               "sections": {
                 "what_actually": "`elapsed` даёт время, прошедшее с предыдущего элемента (в мс); абсолютную Unix-метку добавляет `timestamp`.",
@@ -2349,7 +2349,7 @@
           "question_text": "Что такое StepVerifier и как его использовать?",
           "options": [
             {
-              "text": "`StepVerifier` — необязательная надстройка из `reactor-test`: то же самое даёт `assertEquals(expected, mono.block())` с `assertThrows` для ошибок, а отдельный инструмент нужен только ради виртуального времени.",
+              "text": "`StepVerifier` — необязательная надстройка из `reactor-test`: то же даёт `assertEquals(expected, mono.block())` с `assertThrows`, инструмент нужен лишь ради `withVirtualTime`.",
               "correct": false,
               "sections": {
                 "what_actually": "`block()` теряет реактивную семантику (порядок сигналов, ошибки, timing, backpressure), проверяя лишь итоговое значение.",
@@ -2373,7 +2373,7 @@
               "order": 1
             },
             {
-              "text": "`StepVerifier` — замена тестовых аннотаций из `reactor-test`: `@StepVerifier` над методом сам подписывается на возвращённый поток и валидирует `onComplete`, снимая нужду в `assert`-цепочках.",
+              "text": "`StepVerifier` — замена тестовых аннотаций из `reactor-test`: `@StepVerifier` над методом сам подписывается на возвращённый `Flux`/`Mono` и валидирует `onComplete` вместо `assert`-цепочек.",
               "correct": false,
               "sections": {
                 "what_actually": "`StepVerifier` работает ВНУТРИ `@Test`-метода JUnit, а не вместо него.",
@@ -2409,7 +2409,7 @@
           "question_text": "Как тестировать потоки, зависящие от времени?",
           "options": [
             {
-              "text": "`StepVerifier.withVirtualTime -> flux)` подставляет виртуальный планировщик, позволяя «перематывать» время через `thenAwait`/`expectNoEvent` без реального ожидания. `Supplier` обязателен — он гарантирует правильную подстановку VirtualTimeScheduler.",
+              "text": "`StepVerifier.withVirtualTime(() -> flux)` подставляет виртуальный планировщик, позволяя «перематывать» время через `thenAwait`/`expectNoEvent` без реального ожидания. `Supplier` обязателен — он гарантирует правильную подстановку VirtualTimeScheduler.",
               "correct": true,
               "sections": {
                 "explanation": "Тест с `Flux.interval(Duration.ofHours(1)).take(3)` отрабатывает мгновенно: `expectNoEvent(ofHours(1))` и `thenAwait(ofHours(1))` сдвигают виртуальные часы.",
@@ -2422,7 +2422,7 @@
               "order": 0
             },
             {
-              "text": "`Временные` потоки тестируют через `Thread.sleep` в тесте — дожидаясь реального срабатывания.",
+              "text": "`StepVerifier.create(flux)` с `Thread.sleep` в тесте покрывает временные операторы, дожидаясь реального срабатывания таймеров. Виртуализация времени ломает детерминированность теста.",
               "correct": false,
               "sections": {
                 "what_actually": "`Thread.sleep` делает тесты медленными и флаки; для временных операторов используют виртуальное время `StepVerifier.withVirtualTime`.",
@@ -2434,7 +2434,7 @@
               "order": 1
             },
             {
-              "text": "`withVirtualTime` принимает уже созданный `Flux` — а не `Supplier`.",
+              "text": "`StepVerifier.withVirtualTime(flux)` принимает уже собранный поток, подменяя планировщик на лету через `thenAwait`/`expectNoEvent`. `Supplier` опционален — перегрузка с лямбдой оставлена для ленивых источников вроде `defer`.",
               "correct": false,
               "sections": {
                 "what_actually": "`withVirtualTime` принимает именно `Supplier<Publisher>`: поток должен создаваться внутри лямбды, чтобы подхватить VirtualTimeScheduler.",
@@ -2446,7 +2446,7 @@
               "order": 2
             },
             {
-              "text": "`expectNoEvent` проверяет — что поток завершился без ошибок за указанное время.",
+              "text": "`StepVerifier.expectNoEvent(Duration)` проверяет, что поток успешно завершился за это время, перематывая его виртуальным планировщиком. Незавершённый поток проваливает проверку.",
               "correct": false,
               "sections": {
                 "what_actually": "`expectNoEvent(duration)` утверждает, что в течение интервала НЕ было НИКАКИХ сигналов (включая `onComplete`), продвигая виртуальные часы.",
@@ -2469,7 +2469,7 @@
           "question_text": "Что такое TestPublisher?",
           "options": [
             {
-              "text": "`TestPublisher`, это assertion-инструмент, проверяющий ожидаемые сигналы, как `StepVerifier`.",
+              "text": "`TestPublisher<T>` — assertion-инструмент из `reactor-test` для сверки ожидаемых сигналов: вызывая `assertNext()`, `assertError()`, `assertComplete()`, проверяют фактическую последовательность событий, как в `StepVerifier` (дублирующий API).",
               "correct": false,
               "sections": {
                 "what_actually": "`TestPublisher` — управляемый источник эмиссии (`next`/`error`/`complete`), а проверкой сигналов занимается `StepVerifier`.",
@@ -2481,7 +2481,7 @@
               "order": 0
             },
             {
-              "text": "`TestPublisher<T>`, инструмент из `reactor-test` для ручного управления эмиссией в тестах, вызывая `next`, `error`, `complete`, можно проигрывать произвольные последовательности событий, включая нарушающие спецификацию.",
+              "text": "`TestPublisher<T>` — инструмент из `reactor-test` для ручного управления эмиссией в тестах: вызывая `next()`, `error()`, `complete()`, можно проигрывать произвольные последовательности событий, включая нарушающие спецификацию (`createNoncompliant`).",
               "correct": true,
               "sections": {
                 "explanation": "Это даёт точный контроль над тем, что и когда увидит тестируемая цепочка, и позволяет проверять реакцию на ошибки и нестандартное поведение источника.",
@@ -2494,19 +2494,19 @@
               "order": 1
             },
             {
-              "text": "`TestPublisher` строго соблюдает спецификацию `Reactive` `Streams` и не может её нарушать.",
+              "text": "`TestPublisher<T>` — источник без поддержки backpressure из `reactor-test`: он игнорирует `request(n)` и эмитит немедленно, поэтому спрос тестируют на `Flux.range` с `limitRate`.",
               "correct": false,
               "sections": {
-                "what_actually": "`TestPublisher.createNoncompliant(Violation...)` специально умеет нарушать spec (например, `ALLOW_NULL`) для тестирования устойчивости операторов.",
-                "source_of_confusion": "Тестовый инструмент кажется «правильным по умолчанию».",
-                "if_it_were_true": "Если бы это было так, нельзя было бы проверить поведение при невалидном источнике, но это одна из ключевых возможностей.",
-                "how_it_should_be": "`TestPublisher` умеет и соблюдать, и намеренно нарушать спецификацию через `createNoncompliant`."
+                "what_actually": "`TestPublisher` полностью соблюдает backpressure: эмиссия учитывает `request(n)`, а для проверки спроса есть `assertMinRequested(n)`/`awaitRequest()`; игнорировать спрос может только вариант из `createNoncompliant(REQUEST_OVERFLOW)`.",
+                "source_of_confusion": "Ручные вызовы `next()` выглядят как «принудительная эмиссия мимо спроса», поэтому кажется, что backpressure-контракт в тестовом источнике не работает.",
+                "if_it_were_true": "Тестировать операторы управления спросом (`limitRate`, `onBackpressureBuffer`) с `TestPublisher` было бы нельзя — а это одна из его штатных задач.",
+                "how_it_should_be": "Для проверки спроса — `testPublisher.assertMinRequested(n)`/`awaitRequest()`; нарушения контракта включать осознанно через `createNoncompliant(...)`."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`TestPublisher` автоматически эмитит заранее заданный набор элементов при подписке.",
+              "text": "`TestPublisher<T>` — декларативный источник из `reactor-test`, автоматически эмитящий набор при подписке: элементы передаются фабрике заранее (`TestPublisher.createWith(values)`), ручные вызовы оставлены для legacy-тестов.",
               "correct": false,
               "sections": {
                 "what_actually": "`TestPublisher` ничего не эмитит сам: элементы проталкиваются вручную через `next()`/`error()`/`complete()` в нужный момент теста.",
@@ -2529,7 +2529,7 @@
           "question_text": "Как отлаживать реактивные цепочки в Project Reactor?",
           "options": [
             {
-              "text": "`Достаточно` поставить breakpoint в `IDE` на `flatMap`; чтобы увидеть путь ошибки.",
+              "text": "`flatMap` под breakpoint в IDE даёт путь ошибки; `checkpoint(\"name\")` — аналог для CI; `log()` — локальная отладка; `doOnError` — перехват на месте; `ReactorDebugAgent` — то же без IDE.",
               "correct": false,
               "sections": {
                 "what_actually": "Breakpoint в реактивной цепочке не показывает upstream-stack из-за async-разрыва: виден лишь текущий operator-frame, а не путь до источника ошибки.",
@@ -2541,7 +2541,7 @@
               "order": 0
             },
             {
-              "text": "`Лучший` способ; `e.printStackTrace` в `onErrorResume`.",
+              "text": "`e.printStackTrace()` в `onErrorResume` — базовый способ; `doOnError` — то же с логгером; `log()` избыточен при перехвате; `checkpoint` лишь украшает стек, где путь через операторы уже есть.",
               "correct": false,
               "sections": {
                 "what_actually": "Stack-trace в реактивке усечён из-за async-разрыва: без assembly-trace `printStackTrace` не покажет место возникновения ошибки.",
@@ -2553,7 +2553,7 @@
               "order": 1
             },
             {
-              "text": "`Hooks.onOperatorDebug` глобально, дорого восстанавливает полный assembly-trace для всех операторов; `checkpoint`, точечный маркер; `log`, per-step логирование сигналов; `doOnEach`, трейсинг каждого сигнала; `ReactorDebugAgent`, production-safe инструментирование байткода.",
+              "text": "`Hooks.onOperatorDebug()` (глобально, дорого) восстанавливает полный assembly-trace для всех операторов; `checkpoint(\"name\")` — точечный маркер; `log()` — per-step логирование сигналов; `doOnEach` — трейсинг каждого сигнала; `ReactorDebugAgent` — production-safe инструментирование байткода.",
               "correct": true,
               "sections": {
                 "explanation": "Глобальный `Hooks.onOperatorDebug()` подходит для dev (тяжёлый); `checkpoint` ставят точечно даже в prod; `ReactorDebugAgent.init()` даёт лёгкий overhead через bytecode-инструментирование.",
@@ -2566,13 +2566,13 @@
               "order": 2
             },
             {
-              "text": "`Реактивные` цепочки отлаживают; включив `SQL`-debug через `logging.level.sql=DEBUG`.",
+              "text": "`logging.level.reactor=DEBUG` включает отладку целиком — сигналы всех операторов, как `log()` на каждом шаге; `checkpoint`, `Hooks.onOperatorDebug` и `ReactorDebugAgent` — программные дубли для не-Spring приложений.",
               "correct": false,
               "sections": {
-                "what_actually": "SQL-debug не относится к отладке `Reactor`: он показывает запросы `R2DBC`/JPA, но не assembly-trace цепочки операторов.",
-                "source_of_confusion": "Раз многие реактивные приложения ходят в БД, SQL-логи кажутся универсальным дебагом.",
-                "if_it_were_true": "Если бы это было так, баг в `flatMap` без БД ловился бы SQL-логами, но цепочка осталась бы непрозрачной.",
-                "how_it_should_be": "Цепочку дебажат assembly-инструментами Reactor; SQL-логи помогают только при проблемах с запросами к БД."
+                "what_actually": "`logging.level.reactor=DEBUG` включит внутренние логи библиотеки, но не сигналы вашей цепочки: per-step логирование даёт только оператор `log()` в конкретном месте, а assembly-trace для ошибок — `Hooks.onOperatorDebug()`/`checkpoint()`/`ReactorDebugAgent`; конфигом логгера они не включаются.",
+                "source_of_confusion": "В Spring-мире многое действительно включается строчкой в `application.yml` (`logging.level.sql`, wiretap у `WebClient`), и привычка «отладка = уровень логов» переносится на реактивные цепочки.",
+                "if_it_were_true": "Не понадобились бы ни `ReactorDebugAgent`, ни цена глобального debug-режима — все держали бы DEBUG-логгер в production и получали assembly-trace бесплатно.",
+                "how_it_should_be": "Локально — `log()` на подозрительном участке; при ошибках — `checkpoint(\"name\")` в узловых местах; глобально — `ReactorDebugAgent` (production-safe) или `Hooks.onOperatorDebug()` (только dev)."
               },
               "label": "D",
               "order": 3
@@ -2589,7 +2589,7 @@
           "question_text": "Что такое checkpoint() и как он помогает при отладке?",
           "options": [
             {
-              "text": "`checkpoint()`: это breakpoint в IDE, адаптированный для async-кода.",
+              "text": "`checkpoint(description)` ставит асинхронный breakpoint: при попадании сигнала выполнение приостанавливается, и отладчик показывает состояние конвейера в окне `Frames`. Работает и на data-, и на error-пути.",
               "correct": false,
               "sections": {
                 "what_actually": "`checkpoint` — оператор `Reactor`, а не IDE-фича: он добавляет assembly-информацию в stack trace при ошибке, без остановки выполнения.",
@@ -2601,7 +2601,7 @@
               "order": 0
             },
             {
-              "text": "`checkpoint()`: это аналог `assertEquals` для проверки значений в потоке.",
+              "text": "`checkpoint(description)` сверяет проходящие значения с ожидаемыми: при расхождении бросает `AssertionError: checkpoint <description> mismatch` (аналог `assertEquals`, встроенный в цепочку). Проверка ленивая и не влияет на производительность.",
               "correct": false,
               "sections": {
                 "what_actually": "Для assertion'ов служит `StepVerifier`/`assertNext`; `checkpoint` лишь маркирует место в цепочке, не проверяя значения.",
@@ -2613,19 +2613,19 @@
               "order": 1
             },
             {
-              "text": "`checkpoint()` останавливает поток до ручного продолжения: чтобы рассмотреть состояние.",
+              "text": "`checkpoint(description)` логирует каждый проходящий сигнал с меткой — `log()` с произвольным описанием: вывод идёт и на data-, и на error-пути, поэтому в production его ставят на тихие участки.",
               "correct": false,
               "sections": {
-                "what_actually": "`checkpoint` non-blocking и не приостанавливает поток; он лишь обогащает stack trace при ошибке.",
-                "source_of_confusion": "Аналогия с breakpoint тянет за собой идею «остановки на дебаг».",
-                "if_it_were_true": "Если бы это было так, поток ждал бы у `checkpoint`, но он идёт дальше, а маркер всплывает только при ошибке.",
-                "how_it_should_be": "`checkpoint` не приостанавливает выполнение; он работает на error-пути, добавляя assembly-trace."
+                "what_actually": "`checkpoint` ничего не логирует и не касается data-пути: он лишь запоминает точку сборки и обогащает stack trace, когда через него проходит `onError`. Per-signal логирование — это отдельный оператор `log()`.",
+                "source_of_confusion": "Оба оператора «диагностические» и часто стоят рядом в примерах, а строковый аргумент `checkpoint(\"name\")` выглядит как тег логгера.",
+                "if_it_were_true": "`checkpoint` в горячей цепочке заспамил бы логи на каждом элементе и перестал быть production-safe — исчезло бы его главное достоинство.",
+                "how_it_should_be": "Нужны следы сигналов — `log(\"tag\")`; нужна идентификация места ошибки — `checkpoint(\"name\")`: он молчит до первого `onError`."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`checkpoint(description)` добавляет «точку сборки» в цепочку: при ошибке в stack trace появляется `Assembly trace from producer [Flux.checkpoint(\"name\")]`, что помогает идентифицировать проблемный участок. Lightweight и production-safe, работает только на error-пути.",
+              "text": "`checkpoint(description)` добавляет «точку сборки» в цепочку: при ошибке в stack trace появляется `Assembly trace from producer [Flux.checkpoint(\"name\")]`, что помогает идентифицировать проблемный участок. Lightweight и production-safe — работает только на error-пути.",
               "correct": true,
               "sections": {
                 "explanation": "Это альтернатива глобальному `Hooks.onOperatorDebug` без общего overhead: можно расставить точечно на критичных шагах. Форма `checkpoint(desc, true)` принудительно снимает полный стек.",
@@ -2649,7 +2649,7 @@
           "question_text": "Что такое Hooks и как использовать Hooks.onOperatorDebug()?",
           "options": [
             {
-              "text": "`Hooks`, класс для глобальной настройки поведения операторов `Reactor`. `Hooks.onOperatorDebug` включает полные assembly-стектрейсы для ВСЕХ операторов вызывается один раз при старте, заметно влияет на производительность, сбрасывается через `Hooks.resetOnOperatorDebug`.",
+              "text": "`Hooks` — класс для глобальной настройки поведения операторов `Reactor`. `Hooks.onOperatorDebug()` включает полные assembly-стектрейсы для ВСЕХ операторов (вызывается один раз при старте, заметно влияет на производительность); сбрасывается через `Hooks.resetOnOperatorDebug()`.",
               "correct": true,
               "sections": {
                 "explanation": "Помимо debug, `Hooks` перехватывает `onErrorDropped`/`onNextDropped`. Для прода рекомендуют `ReactorDebugAgent` — Java-agent, инструментирующий байткод с минимальным overhead.",
@@ -2662,7 +2662,7 @@
               "order": 0
             },
             {
-              "text": "`Hooks.onOperatorDebug()` можно безопасно держать включённым в production без накладных расходов.",
+              "text": "`Hooks` — класс тонкой диагностики из `reactor-core` без накладных расходов. `Hooks.onOperatorDebug()` можно держать включённым в production постоянно (инструментирование ленивое, только на `onError`-пути); выключение через `reset` нужно лишь тестам.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hooks.onOperatorDebug()` заметно бьёт по производительности (захватывает stack на каждом операторе); для прода предназначен лёгкий `ReactorDebugAgent`.",
@@ -2674,7 +2674,7 @@
               "order": 1
             },
             {
-              "text": "`Hooks` настраивает поведение операторов только для конкретной цепочки, локально.",
+              "text": "`Hooks` — настройка операторов в пределах одной цепочки. `Hooks.onOperatorDebug()` действует локально от места вызова до `subscribe()` (область видимости ограничена сборкой); для глобального эффекта его повторяют в каждом потоке.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hooks` — глобальная настройка на уровне всего приложения/JVM, а не отдельной цепочки; точечный аналог — `checkpoint`.",
@@ -2686,7 +2686,7 @@
               "order": 2
             },
             {
-              "text": "`Hooks.onErrorDropped` подавляет ошибки, чтобы они не доходили до подписчика.",
+              "text": "`Hooks` — центр перехвата ошибок `Reactor`. `Hooks.onErrorDropped()` подавляет «осиротевшие» ошибки, чтобы они не доходили до подписчика (глушитель для отменённых подписок); включён по умолчанию и не требует сброса.",
               "correct": false,
               "sections": {
                 "what_actually": "`onErrorDropped` лишь перехватывает ошибки, которые уже некому доставить (нет активного подписчика), для логирования; он не подавляет ошибки в живой цепочке.",
@@ -2709,7 +2709,7 @@
           "question_text": "Как Project Reactor интегрируется со Spring WebFlux?",
           "options": [
             {
-              "text": "`Spring` `WebFlux` работает поверх Servlet API, как `Spring MVC`.",
+              "text": "WebFlux работает поверх `Servlet API`: `@RestController` возвращает `Mono`/`Flux`, но запросы идут через `DispatcherServlet` и пул `Tomcat`, как в `Spring MVC`. Реактивна лишь сериализация ответа через `DataBuffer`.",
               "correct": false,
               "sections": {
                 "what_actually": "WebFlux по умолчанию работает на Reactor Netty (event-loop), а не на Servlet API; запуск под Tomcat/Jetty возможен в non-blocking режиме, но native-стек — Reactor Netty.",
@@ -2721,7 +2721,7 @@
               "order": 0
             },
             {
-              "text": "`WebFlux` построен на `Reactor`, контроллер возвращает `Mono`/`Flux`, request-цепочка работает на event-loop без thread-per-request, а I/O идёт через `WebClient`/`R2DBC`. Ошибки обрабатываются `@ExceptionHandler`, возвращающим `Mono`.",
+              "text": "WebFlux построен на `Reactor`: контроллер возвращает `Mono`/`Flux`, request-цепочка работает на event-loop без thread-per-request, а I/O идёт через `WebClient`/`R2DBC`. Ошибки обрабатываются `@ExceptionHandler`, возвращающим `Mono`.",
               "correct": true,
               "sections": {
                 "explanation": "Reactor Netty event-loop (число потоков ≈ числу CPU) обслуживает все запросы; блокирующий I/O нужно выносить на `Schedulers.boundedElastic()`, иначе он встанет колом.",
@@ -2734,7 +2734,7 @@
               "order": 1
             },
             {
-              "text": "`WebFlux`, это `RestTemplate` на `Spring MVC` с реактивной обёрткой.",
+              "text": "WebFlux — реактивная обёртка над `Spring MVC`: контроллеры остаются сервлетными, а `RestTemplate` заменён на `WebClient` с адаптером `Mono`/`Flux`. Миграция сводится к смене клиентского слоя.",
               "correct": false,
               "sections": {
                 "what_actually": "Это полностью отдельный стек: `RouterFunction`, `WebClient`, `WebFilter` вместо MVC-аналогов; `RestTemplate` блокирующий и не часть WebFlux.",
@@ -2746,7 +2746,7 @@
               "order": 2
             },
             {
-              "text": "`WebFlux` не поддерживает аннотации `@RestController`/`@GetMapping`.",
+              "text": "WebFlux отказывается от аннотаций в пользу функционального стиля: `@RestController`/`@GetMapping` не поддерживаются, маршруты объявляются только через `RouterFunction`/`HandlerFunction`. Аннотационная модель оставлена MVC.",
               "correct": false,
               "sections": {
                 "what_actually": "WebFlux поддерживает annotation-based стиль (`@RestController`/`@GetMapping`) наравне с functional `RouterFunction`; отличается лишь thread-модель.",
@@ -2769,25 +2769,25 @@
           "question_text": "Почему нельзя вызывать block() в WebFlux-приложении?",
           "options": [
             {
-              "text": "`Вызов` `block()` внутри `WebFlux`-контроллера; нормальный безопасный паттерн.",
+              "text": "`block()` нельзя из-за потери `Context`: блокирующий вызов отрывает цепочку от `Subscription`, и `traceId`/`SecurityContext` дальше не распространяются; потоки `Netty` не страдают — их пул расширяется под нагрузкой.",
               "correct": false,
               "sections": {
-                "what_actually": "`block()` на потоке Netty event-loop бросает `IllegalStateException` (Reactor 3.2+ блокирует это явно) и нарушает неблокирующую модель.",
-                "source_of_confusion": "Привычка к синхронному коду MVC создаёт ложное чувство безопасности.",
-                "if_it_were_true": "Если бы это было так, `.block()` в контроллере работал бы, но в логах появляется `IllegalStateException: blocking is not supported in thread reactor-http-nio-1`, и запросы падают.",
-                "how_it_should_be": "`block()` в WebFlux запрещён на event-loop; для блокирующего кода нужен `subscribeOn(boundedElastic)`, а не `block()`."
+                "what_actually": "`Context` тут ни при чём — причина в потоках: event-loop `Netty` фиксированного размера (≈ число CPU) не расширяется, и занятый `block()`-ом поток выпадает из обслуживания всех запросов; отсюда starvation, рост latency и возможный дедлок.",
+                "source_of_confusion": "`block()` действительно «выход» из реактивного мира, и знание, что `Context` привязан к подписке, наводит на мысль о его потере как о главной опасности.",
+                "if_it_were_true": "Проблема лечилась бы ручным пробросом `traceId`, и `Reactor` не бросал бы `IllegalStateException` — а он бросает именно из-за блокировки NonBlocking-потока.",
+                "how_it_should_be": "Помнить механику: мало event-loop-потоков + блокировка = starvation/дедлок; блокирующие вызовы изолировать на `Schedulers.boundedElastic()`."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "`block()` безопасен; если вызвать его на отдельном потоке через `new `Thread`()`.",
+              "text": "`block()` нельзя из-за протечки памяти: заблокированный поток удерживает буферы конвейера до завершения источника — на длинных потоках это OOM; event-loop же просто переключится на другие задачи.",
               "correct": false,
               "sections": {
-                "what_actually": "Ручное создание потоков — антипаттерн (нет управления, нет интеграции с reactor-scheduler) и всё равно блокирует; правильный мост — `boundedElastic`.",
-                "source_of_confusion": "Кажется, что «увод» блокировки на свой поток решает проблему.",
-                "if_it_were_true": "Если бы это было так, `new Thread()` для обхода защиты был бы приемлем, но JVM забивается unbound-потоками и ловит OOM thread stacks.",
-                "how_it_should_be": "Блокирующий код изолируют на `Schedulers.boundedElastic()`, а не на самодельных `new Thread()`."
+                "what_actually": "Дело не в буферах: `block()` останавливает сам event-loop-поток, и тот не «переключается на другие задачи» — event-loop однозадачен, пока управление не вернётся; отказ обслуживания наступает раньше любого OOM.",
+                "source_of_confusion": "OOM — привычная страшилка про `onBackpressureBuffer` и неограниченные буферы, и её переносят на любой анти-паттерн, включая `block()`.",
+                "if_it_were_true": "Опасность зависела бы от длины потока, и короткий `Mono` можно было бы блокировать безнаказанно — но `Reactor` запрещает `block()` на NonBlocking-потоках независимо от размера данных.",
+                "how_it_should_be": "Разделять риски: буферные OOM лечатся backpressure-стратегиями; `block()` в WebFlux — изоляцией на `boundedElastic` или полностью реактивной цепочкой."
               },
               "label": "B",
               "order": 1
@@ -2806,13 +2806,13 @@
               "order": 2
             },
             {
-              "text": "`Достаточно` поставить `@Async` над методом с `block()`; чтобы это стало безопасным.",
+              "text": "`block()` нельзя потому, что он нарушает порядок сигналов: синхронное ожидание переупорядочивает `onNext` относительно `onComplete`, downstream получает неконсистентный поток; страдает не производительность, а корректность данных.",
               "correct": false,
               "sections": {
-                "what_actually": "`@Async` использует свой `TaskExecutor`, не интегрируется с Reactor backpressure/`Context` и не масштабируется под нагрузкой, оставаясь thread-per-request.",
-                "source_of_confusion": "`@Async` звучит как «асинхронность», поэтому кажется решением.",
-                "if_it_were_true": "Если бы это было так, `@Async`+`block()` сохранял бы преимущества WebFlux, но получается thread-per-request с latency и памятью как у обычного MVC.",
-                "how_it_should_be": "Блокирующий код мостят через `boundedElastic`, а `@Async`+`block()` сводит на нет выгоды реактивной модели."
+                "what_actually": "`block()` не переупорядочивает сигналы — последовательность `onNext`/`onComplete` гарантирована спецификацией (serial-доставка); он синхронно ждёт, занимая поток, и опасность именно в блокировке event-loop, а не в корректности данных.",
+                "source_of_confusion": "Асинхронность ассоциируется с гонками и переупорядочиванием, поэтому синхронной «вставке» приписывают разрушение порядка сигналов.",
+                "if_it_were_true": "`block()` был бы запрещён везде, включая тесты и batch-приложения, где он штатно используется, — испорченные данные недопустимы нигде.",
+                "how_it_should_be": "Про порядок сигналов заботится спецификация Reactive Streams; про `block()` думать в терминах занятых потоков — и держать его вне event-loop."
               },
               "label": "D",
               "order": 3
@@ -2831,7 +2831,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Подключить библиотеку `io.micrometer:context-propagation` и захватить `ThreadLocal` в `Reactor Context` через оператор `subscribeOn)`.",
+              "text": "Подключить библиотеку `io.micrometer:context-propagation` и захватить `ThreadLocal` в `Reactor Context` через оператор `subscribeOn(Schedulers.boundedElastic())`.",
               "correct": false,
               "sections": {
                 "what_actually": "За захват `ThreadLocal` отвечает оператор `contextCapture()` (или глобальный `Hooks.enableAutomaticContextPropagation()`), а не `subscribeOn`. `subscribeOn` лишь задаёт, на каком `Scheduler` выполнять подписку, и сам по себе значения `ThreadLocal` в `Reactor Context` не переносит.",
@@ -2867,7 +2867,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Подключить библиотеку `io.micrometer:context-propagation` и захватить `ThreadLocal` в `Reactor Context` через оператор `contextCapture`.",
+              "text": "Подключить библиотеку `io.micrometer:context-propagation` и захватить `ThreadLocal` в `Reactor Context` через оператор `contextCapture()`.",
               "correct": true,
               "sections": {
                 "explanation": "`context-propagation` — это мост между императивным `ThreadLocal`-миром и `Reactor Context`. `ThreadLocalAccessor` описывает, как читать/писать конкретный `ThreadLocal`, и регистрируется в `ContextRegistry`, а `ContextSnapshot` захватывает зарегистрированные значения и восстанавливает их вокруг выполнения. Оператор `contextCapture()` захватывает эти значения в `Reactor Context`, благодаря чему MDC и `SecurityContext` не теряются при переключении потоков.",

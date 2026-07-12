@@ -27,7 +27,13 @@
     "subscribeOn позиционно-независим (побеждает ближайший к источнику), publishOn переключает downstream от точки вызова [Q31]. Стабильный контракт Reactor 3.x.",
     "ParallelFlux: parallel(n) делит на рельсы, реальный параллелизм только после runOn(Scheduler); Context иммутабелен, распространяется снизу вверх, contextWrite/deferContextual (API с Reactor 3.4) [Q32-Q34].",
     "Hot-преобразования: share()=publish().refCount(1), publish()+connect()/autoConnect(n), cache() replay, Sinks.many() (Sinks API с 3.4 вместо *Processor) [Q35-Q37].",
-    "Временные операторы interval/delayElements/delaySubscription/timeout/elapsed/timestamp/timed на Schedulers.parallel() по умолчанию; timeout считается между элементами [Q38, Q39]. StepVerifier из reactor-test [Q40]."
+    "Временные операторы interval/delayElements/delaySubscription/timeout/elapsed/timestamp/timed на Schedulers.parallel() по умолчанию; timeout считается между элементами [Q38, Q39]. StepVerifier из reactor-test [Q40].",
+    "StepVerifier.withVirtualTime требует Supplier<Publisher> (сборка после подмены VirtualTimeScheduler); thenAwait/expectNoEvent перематывают виртуальное время [Q41]. Стабильно в reactor-test 3.x.",
+    "TestPublisher: ручные next()/error()/complete(), контроль спроса assertMinRequested/awaitRequest; createNoncompliant(REQUEST_OVERFLOW и др.) — осознанные нарушения спецификации [Q42]. Актуально в reactor-test 3.6.",
+    "Отладка: Hooks.onOperatorDebug() глобален и дорог (сброс — resetOnOperatorDebug); checkpoint(\"name\") — error-path-only, production-safe; ReactorDebugAgent (reactor-tools) — инструментирование байткода без runtime-цены [Q43-Q45]. Актуально в Reactor 3.6.",
+    "WebFlux работает на Reactor Netty event-loop (не Servlet API); поддерживает и аннотационную модель (@RestController), и функциональную (RouterFunction); реактивный I/O — WebClient/R2DBC [Q46]. Актуально для Spring Framework 6.x.",
+    "block() на потоке с маркером NonBlocking (Netty event-loop) бросает IllegalStateException; изоляция блокирующего кода — Mono.fromCallable(...).subscribeOn(Schedulers.boundedElastic()) [Q47]. Стабильный контракт Reactor 3.2+.",
+    "context-propagation: io.micrometer:context-propagation, ThreadLocalAccessor регистрируется в ContextRegistry, оператор contextCapture() с Reactor 3.5; Hooks.enableAutomaticContextPropagation() — автоматический режим [Q48]. Актуально на 2026."
   ],
-  "notes": "Ядро стабильно с Reactor 3.1+ (Context/Sinks — с 3.4); претензий к свежести нет. Покрывает Q1-Q40; расширяется по мере обработки остальных чанков."
+  "notes": "Ядро (Reactive Streams протокол, Mono/Flux контракты, фабрики) стабильно с Reactor 3.1+; претензий к свежести нет. Покрывает Q1-Q48 (все 48 блоков)."
 }
