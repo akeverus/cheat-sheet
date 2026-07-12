@@ -805,6 +805,55 @@ html[data-design="stripe"] #interview-options label { box-shadow: var(--shadow-s
 html[data-design="stripe"] #interview-options label:hover { box-shadow: var(--shadow-md); }
 html[data-design="stripe"] #interview-options label:has(input:checked) { box-shadow: var(--shadow-md); }
 
+/* =============================================================================
+   C1-i — Instrument: фокус-тренировка. CSS-only рестайл СУЩЕСТВУЮЩИХ хуков
+   (DOM focus-training.html и app.js НЕ меняются): paper-карты вариантов с
+   ring-hover вместо заливки, строчный mono-шёпот темы, medium-вопрос,
+   mono-цифры прогресса. Буква варианта остаётся CSS-счётчиком ::before,
+   пост-ответные классы app.js (.option-correct/-wrong/-dimmed) работают через
+   статус-токены instrument сами; grade-1/4-акценты уже design-agnostic.
+   Специфичность равна generic-правилам выше — выигрыш по порядку. =========== */
+
+/* Тема вопроса: строчный mono-шёпот (подпись instrument), не upper-акцент. */
+html[data-design="instrument"] .focus-question-topic {
+  text-transform: lowercase;
+  color: var(--color-text-tertiary);
+}
+
+/* Вопрос: Newsreader medium — instrument не кричит болдом (та же линия,
+   что error-title/summary-score в C7-i/C6-i). */
+html[data-design="instrument"] .focus-question {
+  font-weight: var(--font-weight-medium);
+}
+
+/* Цифры прогресса сессии: mono/tabular — приборная панель. */
+html[data-design="instrument"] .focus-progress-line .session-progress {
+  font-family: var(--font-family-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Карты вариантов: paper-слой (не утопленная secondary); hover — щелчок
+   прибора: акцентная граница БЕЗ заливки (как hover ошибок в C6-i). */
+html[data-design="instrument"] #interview-options label {
+  background: var(--color-bg-primary);
+}
+html[data-design="instrument"] #interview-options label:hover {
+  border-color: var(--color-accent-strong);
+  background: var(--color-bg-primary);
+}
+
+/* Выбранный вариант: та же строгая граница accent-strong (wash из токенов). */
+html[data-design="instrument"] #interview-options label:has(input:checked) {
+  border-color: var(--color-accent-strong);
+}
+
+/* Ring-бейдж буквы: тише (tertiary); при выборе общий checked::before зальёт
+   его accent-ом — не дублируем. */
+html[data-design="instrument"] #interview-options label::before {
+  color: var(--color-text-tertiary);
+}
+
 /* Объяснения вариантов (app.js/result.html: .option-explanation +
    .explanation-correct/.explanation-wrong). Старые правила тянут холодный
    лавандовый фон/текст — приводим к тёплой палитре. */

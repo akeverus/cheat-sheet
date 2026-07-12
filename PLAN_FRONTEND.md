@@ -1381,3 +1381,8 @@ Dirty changes created by loop: 0
 
 - **Сделано:** пересверка хуков focus по свежему дереву (WIP закоммичен): app.js option-классы и grade-акценты уже покрыты design-agnostic кодом; submit-«гибрид» cr.40 снят (editorial-решение, instrument-токены дают отдельный чип). Черновик C1-i (port-drafts/focus-instrument-base.css, 7 правил поверх существующих хуков) + решения в README §R0.48. DOM/app.js не трогаются.
 - **Следующий тик:** применить C1-i (после блока опций §C1, bump v=75) + QA live по baseline R0.38 (дельта: topic lowercase/tertiary, вопрос 500, опции paper+ring-hover) + editorial-контроль + 320; контракт-тест при остановленном bootRun.
+
+### R0.49 (2026-07-12) — Порт focus C1-i применён (v=75): третий порт, шаг 1
+
+- **Сделано:** C1-i вставлен после stripe-блока опций (выигрыш по порядку), head v74→75, live-синк. QA: дельта = прогноз (topic lowercase/tertiary, вопрос 500, опции paper, буква tertiary); ring-hover подтверждён реальным hover (teal accent-strong, без заливки); editorial = baseline R0.38 бит-в-бит; геометрия не менялась (320 валиден по R0.39). Черновик удалён. Матрица: focus parity PASS(active). Отложено на parity: checked-состояние, flashcard/empty ветки, result-инъекции app.js, .session-progress.
+- **Следующий тик:** порт result (маппинг R0.23) — пересверка хуков result.html/app.js-инъекций по свежему дереву → черновик или прямое применение (v=76); контракт-тест при остановленном bootRun.

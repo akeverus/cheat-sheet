@@ -12,7 +12,7 @@
 **Оба черновика применены — каталог port-drafts дальше живёт как журнал решений
 порта (таблица выше + секции решений + пересверки R0.29/R0.33).**
 
-| `focus-instrument-base.css` | base.css | после блока опций §C1 (за `.option-dimmed`/пост-ответной зоной, ~строка 800) | ГОТОВ К ПРИМЕНЕНИЮ (R0.49) |
+| ~~`focus-instrument-base.css`~~ | base.css | **ПРИМЕНЁН R0.49** (после stripe-блока опций, v=75; QA: дельта = прогноз — topic lowercase/tertiary, вопрос 500, опции paper 0.985, ring-hover teal 0.435 БЕЗ заливки подтверждён реальным hover; editorial-контроль = baseline R0.38 бит-в-бит; геометрия не менялась → 320 не перемерялся; flashcard/empty ветки + .session-progress — parity-фаза) | — |
 
 ## focus-instrument-base.css — решения порта (R0.48, по PORT_MAPPING_focus-training.md)
 

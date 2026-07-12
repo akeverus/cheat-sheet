@@ -22,7 +22,7 @@
 | Surface | detector | AA | full-width | a11y | states | parity | contract | no-js/print | Фаза |
 |---|---|---|---|---|---|---|---|---|---|
 | shell (chrome) | PASS | PASS✧ | PASS* | PASS✧ | PASS | TODO▲ | TODO | RECHECK | D done; E BLOCKED (baseline R0.35+R0.39) |
-| focus-training | PASS | PASS‡ | PASS* | PASS | PASS(core)† | TODO▲ | TODO | PASS(static R0.32) | D done; E BLOCKED (baseline R0.38+R0.39) |
+| focus-training | PASS | PASS‡ | PASS* | PASS | PASS(core)† | PASS(active, R0.49) | PENDING-TEST¤ | PASS(static R0.32) | **E DONE шаг 1 (C1-i применён, v=75)**; flashcard/empty/result-инъекции — parity-фаза |
 | result | PASS | PASS‡ | PASS* | PASS | PASS(core)§ | TODO▽ | TODO | RECHECK | D done; E BLOCKED (baseline требует сессии §4) |
 | session-summary | PASS | PASS | PASS* | PASS | PASS | APPLIED▽(R0.47) | PENDING-TEST¤ | TODO | **E DONE шаг 1 (C6-i применён, v=74)**; визуальный паритет + шаг 2 (headline/grid) — parity-фаза |
 | settings | PASS | PASS | PASS* | PASS✦ | PASS | TODO▲ | TODO | PASS(static R0.32) | D done; E BLOCKED (baseline R0.36) |
