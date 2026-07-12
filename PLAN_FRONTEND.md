@@ -1493,3 +1493,9 @@ Dirty changes created by loop: 0
 - Замеры (Slow 4G + CPU 4x, холодный кэш): / desktop 0.0012 (LABEL, шрифт) / mobile 0; /stats 0; flashcard 0; empty 0; error 404 0; /settings mobile 0 (baseline был 0.35 — фикс R0.64 закрыл и mobile).
 - CLS-строка Фазы G закрыта полностью; result/summary — parity-фаза. Эмуляция сброшена.
 - **Дальше:** window-тик (regenerate-план + контракт-тест — head.html тронут в R0.64); EXAM-решение; данные для графиков.
+
+### R0.66 (2026-07-12) — alertdialog сброса применён (app.js v=57, base.css v=84): window.confirm ушёл
+- Последний не-гейтнутый кандидат Фазы G. promptModal получил mode:'confirm' (alertdialog, aria-describedby, сообщение вместо input, danger-OK «Подтвердить», фокус на «Отмена», resolve(true|false)); confirmModal-обёртка передаётся в initDangerousFormGuard (top-level, вне IIFE); гард = preventDefault → модалка → requestSubmit с data-confirmed. settings.html: + data-confirm-title.
+- QA живьём без подтверждения: alertdialog/фокус/inert/Esc/Отмена — чисто, форма не отправлялась; регрессия prompt-режима (экспорт JSON) бит-в-бит; node --check OK. PE: без JS отправка без подтверждения, как и раньше.
+- Бампы: app.js v=57 (3 шаблона), base.css v=84 (+ .prompt-modal-message). Тест-пинов на reset-форму нет.
+- **Дальше:** window-тик (regenerate-план + контракт-тест — head.html/settings.html/app.js тронуты); EXAM; данные для графиков. Не-гейтнутых кандидатов Фазы G больше нет — дальше режим поддержки/углубление аудита.

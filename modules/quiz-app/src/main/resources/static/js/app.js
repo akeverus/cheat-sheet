@@ -344,28 +344,36 @@
   // модалка (НЕ kbd-help), стилизована теми же токенами (base.css).
   function promptModal(opts) {
     opts = opts || {};
+    // mode:'confirm' — подтверждение деструктивного действия: alertdialog без
+    // input, сообщение вместо label, фокус на «Отмена» (безопасный дефолт),
+    // resolve(true|false) вместо строки. Обычный режим не тронут.
+    const isConfirm = opts.mode === 'confirm';
     return new Promise((resolve) => {
       const lastFocused = document.activeElement;
       const overlay = document.createElement('div');
       overlay.className = 'prompt-overlay';
-      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('role', isConfirm ? 'alertdialog' : 'dialog');
       overlay.setAttribute('aria-modal', 'true');
       overlay.setAttribute('aria-labelledby', 'prompt-modal-title');
+      if (isConfirm) overlay.setAttribute('aria-describedby', 'prompt-modal-message');
       overlay.innerHTML =
         '<form class="prompt-modal" novalidate>' +
         '<h3 id="prompt-modal-title" class="prompt-modal-title"></h3>' +
-        '<label class="prompt-modal-label" for="prompt-modal-input"></label>' +
-        '<input id="prompt-modal-input" class="prompt-modal-input" autocomplete="off" spellcheck="false" type="' +
-          (opts.inputType === 'password' ? 'password' : 'text') + '">' +
+        (isConfirm
+          ? '<p id="prompt-modal-message" class="prompt-modal-message"></p>'
+          : '<label class="prompt-modal-label" for="prompt-modal-input"></label>' +
+            '<input id="prompt-modal-input" class="prompt-modal-input" autocomplete="off" spellcheck="false" type="' +
+              (opts.inputType === 'password' ? 'password' : 'text') + '">') +
         '<div class="prompt-modal-actions">' +
         '<button type="button" class="btn secondary-btn" data-prompt-cancel></button>' +
-        '<button type="submit" class="btn" data-prompt-ok></button>' +
+        '<button type="submit" class="btn' + (isConfirm ? ' danger-btn' : '') + '" data-prompt-ok></button>' +
         '</div>' +
         '</form>';
       // textContent (не innerHTML): opts не доверяем — защита от инъекции.
-      overlay.querySelector('.prompt-modal-title').textContent = opts.title || 'Ввод';
-      overlay.querySelector('.prompt-modal-label').textContent = opts.label || '';
-      overlay.querySelector('[data-prompt-ok]').textContent = opts.okText || 'OK';
+      overlay.querySelector('.prompt-modal-title').textContent = opts.title || (isConfirm ? 'Подтвердите действие' : 'Ввод');
+      if (isConfirm) overlay.querySelector('.prompt-modal-message').textContent = opts.message || '';
+      else overlay.querySelector('.prompt-modal-label').textContent = opts.label || '';
+      overlay.querySelector('[data-prompt-ok]').textContent = opts.okText || (isConfirm ? 'Подтвердить' : 'OK');
       overlay.querySelector('[data-prompt-cancel]').textContent = opts.cancelText || 'Отмена';
       const form = overlay.querySelector('.prompt-modal');
       const input = overlay.querySelector('#prompt-modal-input');
@@ -381,8 +389,10 @@
         el.setAttribute('aria-hidden', 'true');
         inerted.push(el);
       }
-      window.requestAnimationFrame(() => input.focus());
+      const initialFocus = isConfirm ? overlay.querySelector('[data-prompt-cancel]') : input;
+      window.requestAnimationFrame(() => initialFocus.focus());
 
+      const cancelValue = isConfirm ? false : null;
       let done = false;
       function settle(value) {
         if (done) return;
@@ -392,12 +402,13 @@
         if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
         resolve(value);
       }
-      // submit (Enter / кнопка OK) → значение; Отмена / Esc / клик по фону → null.
-      form.addEventListener('submit', (e) => { e.preventDefault(); settle(input.value); });
-      overlay.querySelector('[data-prompt-cancel]').addEventListener('click', () => settle(null));
-      overlay.addEventListener('click', (e) => { if (e.target === overlay) settle(null); });
+      // submit (Enter / кнопка OK) → значение (confirm: true);
+      // Отмена / Esc / клик по фону → null (confirm: false).
+      form.addEventListener('submit', (e) => { e.preventDefault(); settle(isConfirm ? true : input.value); });
+      overlay.querySelector('[data-prompt-cancel]').addEventListener('click', () => settle(cancelValue));
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) settle(cancelValue); });
       overlay.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') { e.preventDefault(); settle(null); return; }
+        if (e.key === 'Escape') { e.preventDefault(); settle(cancelValue); return; }
         if (e.key !== 'Tab') return;
         const f = overlay.querySelectorAll('button, input, [href], [tabindex]:not([tabindex="-1"])');
         if (!f.length) return;
@@ -406,6 +417,12 @@
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       });
     });
+  }
+
+  // Подтверждение деструктивного действия — alertdialog на машинерии promptModal
+  // (inert-фон, focus-trap, Esc, возврат фокуса). Возвращает Promise<boolean>.
+  function confirmModal(opts) {
+    return promptModal(Object.assign({ mode: 'confirm' }, opts));
   }
 
   async function obtainAdminToken() {
@@ -680,7 +697,7 @@
     initExportButtons();
     initPersonalization();
     initSettingsTabs();
-    initDangerousFormGuard();
+    initDangerousFormGuard(confirmModal);
     initSubmitOnceGuard();
     initFlashcardShortcuts();
     initKeyboardHelp();
@@ -1761,15 +1778,30 @@
 
 })();
 
-function initDangerousFormGuard() {
+// Гард деструктивных форм ([data-confirm]). Вместо нативного window.confirm —
+// внутренняя alertdialog-модалка (confirmModal передаётся из IIFE: она замкнута
+// там вместе с promptModal; та же причина, что у obtainAdminToken — нативный
+// диалог «localhost:8080 says…» не стилизуется и выглядит чужеродно). PE: без JS
+// форма отправляется без подтверждения — как и раньше (confirm тоже жил в JS).
+// После «Подтвердить» — requestSubmit, чтобы отработали остальные submit-гарды;
+// повторный вход отсекается флагом data-confirmed.
+function initDangerousFormGuard(confirmModal) {
   document.querySelectorAll('[data-confirm]').forEach((el) => {
     const form = el.closest('form');
     if (!form) return;
     form.addEventListener('submit', (e) => {
+      if (form.dataset.confirmed === '1') { delete form.dataset.confirmed; return; }
       const msg = el.getAttribute('data-confirm');
-      if (msg && !window.confirm(msg)) {
-        e.preventDefault();
-      }
+      if (!msg) return;
+      e.preventDefault();
+      confirmModal({
+        title: el.getAttribute('data-confirm-title') || 'Подтвердите действие',
+        message: msg
+      }).then((ok) => {
+        if (!ok) return;
+        form.dataset.confirmed = '1';
+        form.requestSubmit();
+      });
     });
   });
 }
