@@ -21,7 +21,13 @@
     "GenerationType.SEQUENCE + allocationSize — рекомендация для PostgreSQL (batch insert работает); IDENTITY отключает JDBC-батчинг вставок [Q13]. Актуально в Hibernate 6.",
     "@BatchSize/hibernate.default_batch_fetch_size — opt-in; в Hibernate 6.x batch fetching по умолчанию выключен [Q19].",
     "No-arg конструктор entity — требование JPA-спецификации: public или protected; private работает в Hibernate, но нарушает переносимость [Q11].",
-    "Hibernate 6 использует ByteBuddy для proxy-подклассов; final entity => proxy не создаётся, lazy to-one деградирует [Q12]."
+    "Hibernate 6 использует ByteBuddy для proxy-подклассов; final entity => proxy не создаётся, lazy to-one деградирует [Q12].",
+    "fetchgraph = загружаются ТОЛЬКО перечисленные атрибуты; loadgraph = перечисленные + дефолтные EAGER; hint-ы jakarta.persistence.fetchgraph/loadgraph (бывшие javax.*) [Q23]. Контракт JPA 2.1+, стабилен.",
+    "L2-кэш в Hibernate 6.x требует внешнего провайдера (hibernate-jcache + Ehcache/Infinispan, RegionFactory); встроенной production-реализации нет [Q25].",
+    "Query Cache: hibernate.cache.use_query_cache=true (глобально) + setCacheable(true)/@QueryHint per-query; хранит ID + инвалидация потаблично через UpdateTimestampsCache [Q26].",
+    "Стратегии CacheConcurrencyStrategy: READ_ONLY / NONSTRICT_READ_WRITE / READ_WRITE (soft-lock) / TRANSACTIONAL (только JTA); дефолта нет, задаётся @Cache(usage=...) [Q27].",
+    "org.hibernate.Criteria deprecated с Hibernate 5.2, удалён в 6.0; актуален только jakarta.persistence.criteria (CriteriaBuilder/CriteriaQuery) [Q29].",
+    "@NamedQuery валидируется при старте SessionFactory/EntityManagerFactory; результаты не кэширует (Query Cache — отдельный opt-in) [Q30]. Стабильный контракт."
   ],
   "notes": "Ядро (Session/SessionFactory, состояния entity, dirty checking, get/load) стабильно с Hibernate 5.x; покрывает Q1-Q10; расширяется по мере обработки остальных чанков."
 }
