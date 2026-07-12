@@ -1,0 +1,26 @@
+{
+  "topic_slug": "authentication-authorization-patterns-interview",
+  "version_sensitive": true,
+  "product_version": "OAuth 2.0 (RFC 6749) + Security BCP RFC 9700 / JWT RFC 7519 / Spring Security 6.x (Boot 3.x)",
+  "checked_date": "2026-07-12",
+  "sources": [
+    "https://datatracker.ietf.org/doc/html/rfc6749",
+    "https://datatracker.ietf.org/doc/html/rfc9700",
+    "https://datatracker.ietf.org/doc/html/rfc7519",
+    "https://pages.nist.gov/800-63-3/sp800-63b.html",
+    "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"
+  ],
+  "version_sensitive_claims": [
+    "Implicit grant deprecated (OAuth 2.0 Security BCP RFC 9700, 2025; удалён в OAuth 2.1 draft); для SPA — Authorization Code + PKCE [Q2].",
+    "Resource Owner Password Credentials (ROPC) не рекомендован Security BCP и удалён из OAuth 2.1 draft; основной поток — Authorization Code [Q2].",
+    "JWT (RFC 7519): подпись JWS = целостность, payload Base64url БЕЗ шифрования; шифрование содержимого — отдельный стандарт JWE (RFC 7516), в аутентификационных JWT не используется по умолчанию [Q3].",
+    "HTTP-семантика RFC 9110: 401 Unauthorized = провал аутентификации (WWW-Authenticate), 403 Forbidden = провал авторизации [Q5].",
+    "Zero-trust (NIST SP 800-207): never trust, always verify — повторная валидация токенов на каждом сервисе; доверие внутренним заголовкам без подписи — анти-паттерн (X-User-* тривиально подделывается любым внутренним клиентом) [Q6].",
+    "SAML 2.0 (OASIS, 2005) — XML-стандарт enterprise SSO (AD FS, Okta, Shibboleth); для SPA/mobile используют OIDC, не SAML [Q7].",
+    "TOTP RFC 6238 рекомендует allow-window на clock skew (обычно ±1 шаг 30s); NIST SP 800-63B относит SMS (PSTN) к restricted-факторам; WebAuthn/FIDO2 — phishing-resistant AAL3 [Q8].",
+    "OWASP Session Management Cheat Sheet не запрещает JWT-сессии; описывает trade-off отзыва (blacklist/короткий TTL) [Q9].",
+    "CSRF актуален для cookie-based аутентификации; JWT в заголовке Authorization не отправляется браузером автоматически — CSRF-токен для такого API не нужен (Spring Security: csrf.disable() для stateless) [Q10].",
+    "Spring Session + Redis — актуальный механизм Distributed Sessions; changeSessionId() — дефолт Spring Security против Session Fixation [Q9, Q10]."
+  ],
+  "notes": "Ядро (4 паттерна, роли OAuth, структура JWT, RBAC/ABAC, 401 vs 403) стабильно; версяно-чувствительные точки — статусы grant types (BCP/OAuth 2.1), NIST-классификация факторов MFA, zero-trust канон. Покрывает Q1-Q10; расширяется по мере чанков."
+}
