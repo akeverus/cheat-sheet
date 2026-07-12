@@ -37,6 +37,23 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.101 — Регрессион-рескан фикс-сетов R0.90/R0.93/R0.94 — все три держатся (R1.05)
+
+Свежая проверка трёх последних кодовых фикс-сетов на served base.css v=90 (CSSOM по selectorText —
+урок №1, не через r.cssRules):
+
+- **R0.90 print-гигиена focus-страницы** — все 11 селекторов hide-списка присутствуют в
+  `@media print` (topbar, action-footer, keyboard-hint, flashcard-бейдж/форма/грейды/саммари,
+  question-code-summary, confidence-кнопки, extra-analysis-toggle, empty-actions). 11/11.
+- **R0.93 forced-colors** — все 5 правил в `@media (forced-colors: active)`: checked-опция
+  (рамка + ::before бейдж Highlight/HighlightText), confidence-btn.selected, прогресс
+  (track CanvasText border + fill Highlight). 5/5.
+- **R0.94 thead:focus-within** — функциональный тест на /stats @375px: thead стекированной
+  таблицы в покое 1×1px clip rect(0,0,0,0) → фокус в сортируемую кнопку th → 134×246px,
+  clip:auto, кнопка видима во вьюпорте → blur → клип восстановлен. Полный цикл работает.
+
+Дрейфа нет; v-пин head.html отдаёт 90. Вьюпорт эмуляции возвращён на 1280.
+
 ### cr.100 — WCAG 1.4.12 Text Spacing: live-прогон / + /stats + /settings — ЧИСТО (R1.04)
 
 Новая размерность аудита: стандартный оверрайд 1.4.12 (line-height 1.5, letter-spacing 0.12em,

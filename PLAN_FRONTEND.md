@@ -1744,3 +1744,11 @@ clip-y / clip-x / vp-overflow / hscroll на живых `/`, `/stats`, `/setting
 (`caption.visually-hidden` в /stats, `h2.settings-panel-title` под js-tabs в /settings,
 base.css:1358) — контент невидим, 1.4.12 неприменим. Методика дополнена фильтром
 visually-hidden/sr-only. Кодовых правок нет; леджер cr.100. localStorage возвращён к дефолтам.
+
+### R1.05 — Регрессион-рескан R0.90/R0.93/R0.94 — verified-clean (2026-07-12)
+
+CSSOM-скан served base.css v=90 (по selectorText): print-блок 11/11 селекторов,
+forced-colors 5/5 правил. Функциональный тест R0.94 на /stats @375px: клип 1×1 →
+фокус → 134×246 clip:auto (кнопка видима) → blur → клип восстановлен. Три последних
+фикс-сета без дрейфа. Кодовых правок нет; леджер cr.101. Window-tick (контракт-тесты +
+regenerate-removal-plan) снова отложен — :8080 жив (200).
