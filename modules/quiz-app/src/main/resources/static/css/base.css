@@ -1324,7 +1324,11 @@ html[data-design] .settings-page .settings-tab:focus-visible {
 /* Панели. Без JS все display:block (стопка); под .js-tabs видна только .is-active. */
 html[data-design] .settings-page .settings-panel { margin: 0 0 var(--space-9); }
 html[data-design] .settings-page .settings-panel:last-child { margin-bottom: 0; }
-html[data-design] .settings-page .settings-panel:focus { outline: none; }
+/* Панель (tabpanel, tabindex=0) — БЕЗ локального гашения фокуса (R0.68):
+   старое `.settings-panel:focus { outline: none }` глушило и КЛАВИАТУРНЫЙ фокус
+   (специфичность выше глобального :focus-visible-ринга) → Tab из tablist
+   приземлялся на панель невидимо (WCAG 2.4.7). Мышиный фокус и так тихий —
+   глобальное правило `:focus:not(:focus-visible)` это уже покрывает. */
 html[data-design] .settings-page.js-tabs .settings-panel { display: none; margin: 0; }
 html[data-design] .settings-page.js-tabs .settings-panel.is-active { display: block; }
 /* Заголовок панели дублирует активную вкладку → под js-tabs прячем визуально,
