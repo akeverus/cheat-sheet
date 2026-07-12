@@ -2085,3 +2085,8 @@ fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`
 ### R1.45 — R1.43+R1.44 LIVE-VERIFIED (оба фикса закрыты полностью)
 
 Поднял postgres+bootRun, проверил в живом браузере (обе темы). **R1.44:** autofocus сажает фокус на 1-ю опцию; `3` в форме → опция 3, `1` вне формы → без изменений (2.1.4c). **R1.43:** `--shadow-focus` solid double-ring — Ember 3.85:1 (light) / Clay 4.8:1 (dark), было ~1.4:1. Оба ≥3:1. Полный цикл DONE (код+аудит+тесты+live). Детали — cr.140.
+
+
+### R1.46 — WCAG 2.4.7 Focus Visible (verified-clean, + R1.43 регресс-чек)
+
+Статический разбор `outline:none` в base.css + live-обход реальным Tab (8 сэмплов). Все `outline:none` — либо мышиные (`:not(:focus-visible)`/`:focus-within`), либо контейнер #main-content, либо с box-shadow-заменой. Live: 8 контролов подряд, все с индикатором — стандартные 2px solid outline, settings-tab рендерит solid double-ring (R1.43 подтверждён: непрозрачный Clay-ринг). Правок кода нет. Детали — cr.141.

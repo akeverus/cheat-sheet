@@ -37,6 +37,19 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.141 — WCAG 2.4.7 Focus Visible: каждый интерактив имеет индикатор (+ R1.43 регресс-чек)
+
+**Метод:** статический разбор всех `outline:none` в `base.css` + live-обход реальным Tab по `/settings` (8 сэмплов, dark-тема).
+
+**CSS-анализ (8 `outline:none` без комментов):**
+- 233 `:focus:not(:focus-visible)` и 821 `label:focus-within` — гасят только МЫШИНЫЙ фокус; клавиатурный ринг сохранён (229 глобальный outline; 822 `label:has(input:focus-visible)` → 2px outline).
+- 267 `#main-content:focus-visible` — контейнер-skip-target (tabindex=-1, не интерактив) → ринг на нём не нужен.
+- 1338 `.settings-tab`, 1429/1682 (input/select), 3000 `.seg-btn` — все `outline:none; box-shadow: var(--shadow-focus)` (+ у input/select ещё border-color) → замена есть.
+
+**Live (реальный Tab, 8 подряд, все `hasVisibleIndicator:true`):** skip-link, masthead-brand, nav «Аналитика», nav «Настройки», ed-theme-toggle, theme-toggle, next-btn CTA — все **outline 2px solid**; settings-tab «Сессия» — `outline:none` + **boxShadow `rgb(38,38,36) 2px, rgb(217,119,87) …`** = solid double-ring (R1.43 в рендере, непрозрачный Clay-ринг, не 40%-альфа).
+
+**Правок нет** — каждый клавиатурно-фокусируемый интерактивный контрол показывает видимый индикатор; box-shadow-путь после R1.43 рендерит ≥3:1 double-ring (регресс-чек пройден).
+
 ### cr.140 — R1.43+R1.44 LIVE-VERIFIED на поднятом инстансе (app.js v=61, tokens.css v=63)
 
 Поднял стек (postgres + bootRun) и проверил обе правки в живом браузере, обе темы.
