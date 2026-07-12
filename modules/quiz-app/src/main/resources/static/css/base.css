@@ -1189,7 +1189,7 @@ html[data-design] .result-penalty-note {
 }
 /* Кнопка «Показать доп. анализ» сидела вплотную (margin-top:0) к блоку над ней —
    единственный элемент пост-ответной зоны без отступа сверху (фидбэк 16, кнопки
-   уверенности 20, takeaway/trace 32, похожие вопросы 40). Даём space-5, как у
+   уверенности 20, похожие вопросы 40). Даём space-5, как у
    .confidence-buttons / .flashcard-grade-buttons → единый ритм интерактивных групп.
    Работает в обоих сценариях: после ВЕРНОГО (под .confidence-buttons) и НЕВЕРНОГО
    (прямо под .result-feedback) ответа. #extra-analysis-toggle-result на no-JS
@@ -1383,20 +1383,6 @@ html[data-design] .settings-page .personalization-grid {
 html[data-design] .settings-page .personalization-grid .personalization-row { margin-bottom: 0; min-width: 0; }
 html[data-design] .settings-page .personalization-row--wide { grid-column: 1 / -1; }
 
-html[data-design] .settings-page .control-section {
-  padding: var(--space-6) 0 0; margin: 0;
-  border-top: var(--rule-weight) solid var(--color-border-primary);
-}
-html[data-design] .settings-page #left-sidebar-filters { padding-top: 0; border-top: 0; }
-html[data-design] .settings-page .control-section-tips { border-top: 0; padding-top: var(--space-6); }
-html[data-design] .settings-page .control-title {
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary); margin: 0 0 var(--space-4);
-  /* Длинное одиночное слово («Персонализация») при крупном масштабе шрифта (A+)
-     не влезало в колонку и распирало страницу — разрешаем перенос внутри слова. */
-  overflow-wrap: break-word; word-break: break-word;
-}
 html[data-design] .settings-page .control-inline-hint {
   color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: var(--space-3) 0 0; max-width: var(--measure);
 }
@@ -2576,129 +2562,6 @@ html[data-design] .focus-page .related-question-item {
 html[data-design] .result-page .related-question-item:hover,
 html[data-design] .focus-page .related-question-item:hover { background: var(--color-bg-tertiary); }
 
-/* Доп. анализ (AI-инжект через app.js): takeaway + пошаговый трейс кода.
-   Рендерятся только при включённом AI (по умолчанию выкл — пользователь держит
-   AI «в крайнем случае»), но классы есть в app.js. Без правил блоки были бы без
-   стилей: заголовок неотличим от body-текста, а span-ы шага трейса слипались бы
-   в строку «1solve(0)queens=[]…» — та же болезнь, что была у related-questions.
-   Стилизуем в едином editorial-ключе (eyebrow-заголовки, рамка-линейка). */
-html[data-design] .focus-page .takeaway-block,
-html[data-design] .result-page .takeaway-block {
-  margin-top: var(--space-6); padding: var(--space-4) var(--space-5);
-  background: var(--color-bg-secondary);
-  border: var(--rule-weight) solid var(--color-border-secondary);
-  border-radius: var(--border-radius-md);
-}
-html[data-design] .focus-page .takeaway-title,
-html[data-design] .result-page .takeaway-title {
-  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-accent-strong); margin: 0 0 var(--space-2);
-}
-html[data-design] .focus-page .takeaway-text,
-html[data-design] .result-page .takeaway-text {
-  color: var(--color-text-primary); line-height: var(--line-height-relaxed); margin: 0;
-}
-html[data-design] .focus-page .code-trace-block,
-html[data-design] .result-page .code-trace-block { margin-top: var(--space-6); }
-html[data-design] .focus-page .code-trace-title,
-html[data-design] .result-page .code-trace-title {
-  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-accent-strong); cursor: pointer; padding: var(--space-2) 0; list-style: none;
-}
-/* Чеврон ▸/▾ как у sm2-details(2068)/error-details/question-code-summary/
-   flashcard-reveal — code-trace был ЕДИНСТВЕННЫМ <details>, оставлявшим
-   браузерный треугольник (рядом с Lucide-иконкой = двойная аффорданс). */
-html[data-design] .focus-page .code-trace-title::-webkit-details-marker,
-html[data-design] .result-page .code-trace-title::-webkit-details-marker { display: none; }
-html[data-design] .focus-page .code-trace-title::before,
-html[data-design] .result-page .code-trace-title::before { content: "▸ "; color: var(--color-text-tertiary); }
-html[data-design] .focus-page details[open] > .code-trace-title::before,
-html[data-design] .result-page details[open] > .code-trace-title::before { content: "▾ "; }
-html[data-design] .focus-page .code-trace-steps,
-html[data-design] .result-page .code-trace-steps {
-  list-style: none; margin: var(--space-3) 0 0; padding: 0;
-  display: flex; flex-direction: column; gap: var(--space-3);
-}
-html[data-design] .focus-page .code-trace-step,
-html[data-design] .result-page .code-trace-step {
-  display: flex; flex-direction: column; gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-bg-secondary);
-  border: var(--rule-weight) solid var(--color-border-secondary);
-  border-radius: var(--border-radius-md);
-}
-html[data-design] .focus-page .trace-step-num,
-html[data-design] .result-page .trace-step-num {
-  align-self: flex-start;
-  font-family: var(--font-family-mono); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold);
-  color: var(--color-accent-on); background: var(--color-accent-primary);
-  border-radius: var(--border-radius-full); min-width: 1.6rem; padding: 0.1em var(--space-2); text-align: center;
-}
-html[data-design] .focus-page .trace-step-line,
-html[data-design] .result-page .trace-step-line {
-  display: block; font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-primary);
-}
-html[data-design] .focus-page .trace-step-state,
-html[data-design] .result-page .trace-step-state {
-  display: block; font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-secondary);
-}
-html[data-design] .focus-page .trace-step-explanation,
-html[data-design] .result-page .trace-step-explanation {
-  display: block; color: var(--color-text-primary); line-height: var(--line-height-relaxed);
-}
-
-/* Разбор неверного ответа + сравнение «выбранное vs правильное» (AI-инжект через
-   app.js, классы .wrong-feedback / .comparison-block). Те же AI-gated условия, что
-   у takeaway — по умолчанию AI выкл, но без правил блоки были бы без стилей.
-   Зеркалят takeaway-карточку (рамка-линейка, eyebrow-заголовок). */
-html[data-design] .focus-page .wrong-feedback,
-html[data-design] .result-page .wrong-feedback,
-html[data-design] .focus-page .comparison-block,
-html[data-design] .result-page .comparison-block {
-  margin-top: var(--space-6); padding: var(--space-4) var(--space-5);
-  background: var(--color-bg-secondary);
-  border: var(--rule-weight) solid var(--color-border-secondary);
-  border-radius: var(--border-radius-md);
-}
-html[data-design] .focus-page .wrong-feedback-title,
-html[data-design] .result-page .wrong-feedback-title,
-html[data-design] .focus-page .comparison-title,
-html[data-design] .result-page .comparison-title {
-  display: flex; align-items: center; gap: var(--space-2);
-  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-accent-strong); margin: 0 0 var(--space-2);
-}
-html[data-design] .focus-page .wrong-feedback-text,
-html[data-design] .result-page .wrong-feedback-text {
-  color: var(--color-text-primary); line-height: var(--line-height-relaxed); margin: 0;
-  overflow-wrap: break-word;
-}
-/* comparison-table: блочная обёртка со скроллом, чтобы 3-колоночная таблица не
-   рвала вёрстку на 375/A+. Линейки и паддинги — из токенов, как у markdown-таблиц. */
-html[data-design] .focus-page .comparison-table,
-html[data-design] .result-page .comparison-table {
-  display: block; overflow-x: auto; width: 100%; margin-top: var(--space-3);
-  border-collapse: collapse; font-size: var(--font-size-sm);
-}
-html[data-design] .focus-page .comparison-table th,
-html[data-design] .result-page .comparison-table th,
-html[data-design] .focus-page .comparison-table td,
-html[data-design] .result-page .comparison-table td {
-  padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top;
-  border: var(--rule-weight) solid var(--color-border-secondary);
-  overflow-wrap: break-word;
-}
-html[data-design] .focus-page .comparison-table th,
-html[data-design] .result-page .comparison-table th {
-  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-text-secondary); font-weight: var(--font-weight-semibold);
-  background: var(--color-bg-tertiary);
-}
-
 @media (max-width: 600px) {
   html[data-design] .result-page .result-actions { flex-direction: column; }
   html[data-design] .result-page .result-actions .btn { width: 100%; }
@@ -3303,44 +3166,8 @@ html[data-design] .summary-tools-status {
   html[data-design] .stats-page .main-content > .review-forecast,
   html[data-design] .stats-page .main-content > .coverage-gaps { grid-column: 2; }
 
-  /* --- SETTINGS: асимметричная панель ВМЕСТО 3 равных колонок. Прежде «Сессия»
-     (один селект + кнопка «Начать») была почти пустой третью → между «Фильтрами»
-     (высокие) и «Прогрессом» (средний) ЗИЯЛА дыра по центру: классическое
-     «накидали блоков в колонки, забыли про композицию» — прямая претензия
-     пользователя. Теперь по реальному объёму контента: слева — высокая колонка
-     «Фильтры» (span 2 ряда), справа СТОПКОЙ — главный CTA «Сессия» (сверху,
-     остаётся на виду) и карточки «Прогресс» под ним. Высоты сходятся
-     (фильтры ≈ сессия+прогресс), середина больше не пустует. align-items:start.
-     Без !important (round-01 C10): базовое display:block (та же специфичность)
-     выше по исходнику → grid выигрывает каскадом на >=1200px, узкие — block. */
-  html[data-design] .settings-page #left-sidebar-content {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-    column-gap: var(--space-7);
-    align-items: start;
-  }
-  html[data-design] .settings-page #left-sidebar-content > .control-section {
-    border-top: 0;
-    padding-top: 0;
-  }
-  html[data-design] .settings-page #left-sidebar-filters { grid-column: 1; grid-row: 1 / span 2; }
-  html[data-design] .settings-page #left-sidebar-session { grid-column: 2; grid-row: 1; }
-  html[data-design] .settings-page #left-sidebar-progress { grid-column: 2; grid-row: 2; margin-top: var(--space-7); }
-  html[data-design] .settings-page #left-sidebar-content > .control-section-tips {
-    grid-column: 1 / -1;
-    grid-row: 3;
-    border-top: var(--rule-weight) solid var(--color-border-primary);
-    padding-top: var(--space-5);
-    margin-top: var(--space-6);
-  }
-  /* Вертикальный hairline отделяет правую колонку (Сессия+Прогресс) от Фильтров. */
-  html[data-design] .settings-page #left-sidebar-session,
-  html[data-design] .settings-page #left-sidebar-progress {
-    border-left: var(--rule-weight) solid var(--color-border-primary);
-    padding-left: var(--space-7);
-  }
-  /* Поля группа/тема — одно под другим: держат высоту левой колонки под span
-     и не тесняются (в широкой колонке два селекта в ряд смотрелись бы рыхло). */
+  /* Поля группа/тема — одно под другим (в широкой колонке два селекта в ряд
+     смотрелись бы рыхло). */
   html[data-design] .settings-page .filters-fields { grid-template-columns: 1fr; }
   /* Нижние карточки парой; гейт на видимую Персонализацию (без JS она hidden —
      display:none не порождает grid-item, и «Управление данными» осталась бы
