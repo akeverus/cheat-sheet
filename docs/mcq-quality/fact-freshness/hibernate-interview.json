@@ -16,7 +16,12 @@
     "FlushMode.AUTO — дефолт (flush перед commit и перед JPQL/HQL-запросом); COMMIT/MANUAL — опции [Q8]. Стабильно в Hibernate 5/6.",
     "hbm2ddl.auto=update не рекомендован для production — миграции ведутся Flyway/Liquibase [Q2]. Консенсус актуален.",
     "Hibernate 6 определяет Dialect автоматически по JDBC-метаданным соединения; явное указание нужно только для нестандартных СУБД [Q6].",
-    "Bytecode enhancement (dirty tracking без snapshot) — опциональный режим hibernate-enhance-maven-plugin, НЕ дефолт; дефолтный dirty checking = snapshot-сравнение при flush [Q8]."
+    "Bytecode enhancement (dirty tracking без snapshot) — опциональный режим hibernate-enhance-maven-plugin, НЕ дефолт; дефолтный dirty checking = snapshot-сравнение при flush [Q8].",
+    "Дефолтные fetch-типы JPA: @OneToMany/@ManyToMany — LAZY, @ManyToOne/@OneToOne — EAGER; best practice — явный LAZY на to-one [Q15, Q19]. Стабильный контракт спецификации.",
+    "GenerationType.SEQUENCE + allocationSize — рекомендация для PostgreSQL (batch insert работает); IDENTITY отключает JDBC-батчинг вставок [Q13]. Актуально в Hibernate 6.",
+    "@BatchSize/hibernate.default_batch_fetch_size — opt-in; в Hibernate 6.x batch fetching по умолчанию выключен [Q19].",
+    "No-arg конструктор entity — требование JPA-спецификации: public или protected; private работает в Hibernate, но нарушает переносимость [Q11].",
+    "Hibernate 6 использует ByteBuddy для proxy-подклассов; final entity => proxy не создаётся, lazy to-one деградирует [Q12]."
   ],
   "notes": "Ядро (Session/SessionFactory, состояния entity, dirty checking, get/load) стабильно с Hibernate 5.x; покрывает Q1-Q10; расширяется по мере обработки остальных чанков."
 }
