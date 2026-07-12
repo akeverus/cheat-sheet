@@ -1875,7 +1875,7 @@ function initKeyboardHelp() {
       '<dd>' + s.desc + '</dd>'
     ).join('') +
     '</dl>' +
-    '<button type="button" class="kbd-help-close" aria-label="Закрыть">×</button>' +
+    '<button type="button" class="kbd-help-close" aria-label="Закрыть"><span aria-hidden="true">×</span></button>' +
     '</div>';
   document.body.appendChild(overlay);
   const closeBtn = overlay.querySelector('.kbd-help-close');

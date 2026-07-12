@@ -337,7 +337,7 @@
       shortcuts.map(function (s) {
         return '<dt>' + s.keys.map(function (k) { return '<kbd>' + k + '</kbd>'; }).join(' ') + '</dt><dd>' + s.desc + '</dd>';
       }).join('') +
-      '</dl><button type="button" class="kbd-help-close" aria-label="Закрыть">×</button></div>';
+      '</dl><button type="button" class="kbd-help-close" aria-label="Закрыть"><span aria-hidden="true">×</span></button></div>';
     document.body.appendChild(overlay);
     var closeBtn = overlay.querySelector('.kbd-help-close');
     var lastFocused = null;

@@ -37,6 +37,23 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.146 — WCAG 2.5.3 Label in Name: аудит + ФИКС декоративного «×» close-кнопки
+
+**Вопрос:** у контролов с ВИДИМЫМ текстом доступное имя (aria-label/labelledby) обязано СОДЕРЖАТЬ этот видимый текст (voice-control). Icon-only (без видимого текста) — вне scope.
+
+**Метод:** живой замер accessible-name по всем `button/a/[role=button|tab|radio]` на /settings + /stats (+ структурный разбор /). Для каждого: visibleText (textContent минус `aria-hidden`-поддеревья) vs accName; флаг если accName не содержит visibleText.
+
+**Результат — почти чисто, 1 находка:**
+- /settings (4): `A−`/`A+` (font-step) → «A−/A+: …размер шрифта» ✓; `Экспорт JSON`/`Экспорт CSV` → «Экспорт … — прогресс и статистика» ✓.
+- /stats: `Применить фильтры` → «Применить фильтры статистики» ✓; `Искать` → «Искать по вопросам» ✓.
+- (структурно) flashcard-grade `Не помню/Трудно/Хорошо/Легко` → «Оценка N: …» ✓; nav-ссылки без aria-label (имя=текст) ✓; icon-only favorite/regenerate/toggles — вне scope ✓.
+- **Находка:** close-кнопка модалки клавиатурной справки имела видимый глиф `×` (U+00D7) НЕ помеченный декоративным + `aria-label="Закрыть"`. Строго 2.5.3 символьный глиф-иконка не считается текстовой надписью (voice-user скажет «Закрыть»), формально не провал — НО расходится с конвенцией проекта (все SVG-иконки несут `aria-hidden="true"`), тянет ложный флаг в скане и риск двойного озвучивания «times»+«Закрыть» в части AT.
+
+**Фикс:** `×` обёрнут в `<span aria-hidden="true">×</span>` в обоих генераторах модалки — `app.js:1878` (все страницы с app.js) и `stats.js:340` (/stats). Теперь close-кнопка icon-only (visibleText=""), вне scope 2.5.3, консистентна с прочими иконками.
+
+**Верификация:** `node --check` app.js+stats.js OK; live /stats после reload: `.kbd-help-close` → `spanHidden:true`, `visibleText:""`, `aria-label:"Закрыть"`, весь скан `violations=[]`. app.js-правка идентична stats.js (структурно + node). Версии app.js v=61→62 (×3 шаблона), stats.js v=14→15. gradle пропущен (JS+version-bump при живом bootRun — wedge-риск; применимые гейты node --check + live-скан пройдены).
+
+
 ### cr.145 — WCAG 2.4.3 Focus Order: CSS-reflow vs фокус-порядок (verified-clean)
 
 **Вопрос:** визуальное переупорядочивание через grid (`grid-template-areas`/`grid-column`/`grid-row`/`display:contents`) не должно ломать смысл и операбельность tab-последовательности (фокус идёт по DOM, а не по визуалу).
