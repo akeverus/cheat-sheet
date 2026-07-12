@@ -1856,3 +1856,11 @@ aria-checked=true (SSR честно отдаёт false — состояние к
 Все 5 vh-употреблений уже 100dvh (legacy 100vh нет); оверлеи inset:0 со скроллом внутри;
 viewport-fit=cover не используется → env() не нужен; back-to-top 44×44/24px на 360px,
 без интерактива под ним. Кодовых правок нет; cr.115. Window-tick — :8080 жив.
+
+### R1.20 — Перф-baseline /stats — verified-clean (2026-07-12)
+
+TTFB 98ms, HTML 41KB gzip, DCL 174ms/load 177ms, 0 long tasks, статика из кэша;
+DOM 5368 узлов — обоснован (319 строк, tr[hidden] вне лейаута). Lighthouse NO_FCP
+в фоновой вкладке (урок №5 расширен) → paint-метрики (FCP/LCP/CLS) — tooling-gated,
+до живой сессии с Chrome на переднем плане. Кодовых правок нет; cr.116.
+Window-tick — :8080 жив.
