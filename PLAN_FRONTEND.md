@@ -1456,3 +1456,8 @@ Dirty changes created by loop: 0
 - Mobile-LH: / — a11y/BP/agentic 100 + target-size PASS; /settings — 100/100, фикс R0.58 держится, CLS-кандидат дополнен mobile-замером 0.35; /stats — a11y 100, второй экземпляр label-in-name: статичный aria-label экспандера перекрывал живой textContent → aria-label снят вовсе (имя = живой текст, state в aria-expanded), re-audit чист (51 passed).
 - BP 92 на /stats = CSP режет sourcemap Chart.js с jsdelivr (console-error) — лечится только self-host, а это отложенное решение юзера (§5) → зафиксирована связь, не трогаю.
 - **Дальше:** греп проекта на паттерн «статичный aria-label + живой textContent» (кандидат тика); контракт-тест + regenerate-удаление при окне без bootRun; session-parity — ждёт юзера.
+
+### R0.60 (2026-07-12) — Греп-аудит label-in-name по всему фронту: VERIFIED-CLEAN (0 правок)
+- Collision guard чист; bootRun жив → контракт-тест PENDING.
+- Все шаблоны + app.js/stats.js: новых экземпляров антипаттерна нет — пара R0.58 (степпер) / R0.59 (экспандер) была полным множеством. Разбор по категориям (⊇-проверка, icon-only, лендмарки, транзиентный copy-flash) — в cr.57.
+- **Дальше:** контракт-тест + regenerate-удаление при окне без bootRun; session-parity — ждёт юзера; графики — ждут данных; из свободных read-only юнитов остаётся мало — при исчерпании перейти в режим поддержки (сторожевые проверки якорей, регресс-скрины) по §28.
