@@ -1599,3 +1599,11 @@ Dirty changes created by loop: 0
 - **Сироты:** editorial.css (169KB!), linear.css, swiss.css, broadsheet.css — 0 ссылок в templates/js/java/config; поколение до switchable-редизайна. git rm + вычистка build/resources; fetch → 404, страницы целы. Stale-упоминание в application.yml зафиксировано (файл вне §4 — не тронут).
 - **Урок:** инвентарь ФАЙЛОВ ≠ инвентарь СЕЛЕКТОРОВ — сироты маскировались под живые строки в maintenance-грепах.
 - **Верификация:** grep 0 вхождений, v=87 отдаётся, консоль чиста (кроме собственного probe-404). Контракт-тест PENDING (bootRun жив). Гейты прежние.
+
+### R0.82 (2026-07-12) — Файловый инвентарь + tokens.css + мёртвые JS-функции: линия гигиены замкнута (app.js v=60)
+
+- **Единица:** три под-скана, закрывающие линию R0.79–R0.81 по всем осям мёртвого кода.
+- **Файлы:** static/ = 5 файлов, templates/ = 16 — ВСЕ referenced (фрагменты th:replace, корневые в контроллерах, favicon в head). Сирот нет.
+- **tokens.css:** 9 классов живые, 0 ID — CSS-поверхность закрыта целиком (base классы R0.79 + ID R0.81 + tokens + файлы).
+- **JS:** def/use-скан 103 функций — единственный труп apiPost (осиротел при переходе POST-флоу на apiFetch) удалён; regenerateQuestion не тронут (ждёт window-тика в regenerate-плане). node --check OK, smoke чист.
+- **Итог линии гигиены:** −173 строки CSS, −4 файла (~201KB), −toggle-result, −apiPost. Контракт-тест PENDING (bootRun жив). Гейты прежние.

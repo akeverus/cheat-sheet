@@ -705,13 +705,6 @@
     initCopyCode();
   });
 
-  function apiPost(url, formData) {
-    return apiFetch(url, { method: 'POST', body: formData })
-      .then(r => {
-        if (!r.ok) return parseApiError(r).then(err => { throw err; });
-        return r.json();
-      });
-  }
   function apiGet(url) {
     return apiFetch(url).then(r => {
       if (!r.ok) return parseApiError(r).then(err => { throw err; });
