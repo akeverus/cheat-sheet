@@ -1652,3 +1652,8 @@ Dirty changes created by loop: 0
 
 - Аудит @media print: result/stats/summary покрыты, а у страницы вопроса print-правил не было — на бумагу шли топбар сессии, submit-футер, клавиатурная подсказка, формы флешкарты, confidence/«Похожие вопросы», CTA пустого состояния. Добавлен focus-блок в hide-лист (11 селекторов); вопрос/варианты/вердикт остаются.
 - Верификация: brace-balance 0, live CSSOM (v=88, селекторы распарсены и матчатся). v-бамп 87→88, live-sync. Контракт-тест PENDING. Дальше: aria-live-аудит инъекций app.js.
+
+### R0.91 (2026-07-12) — Aria-live-аудит динамических инъекций: VERIFIED-CLEAN (0 правок)
+
+- Все 60+ точек мутации DOM в app.js + stats.js/stats.html проверены: инфонесущие обновления идут в live-регионы (result-feedback, inline-alert, confidence, copy/export/personalization/sort-status, chart-fallback, filter-mode-hint, font-scale-value), осознанные исключения (таймер aria-hidden, today-чип) обоснованы, транзиентные лейблы кнопок — норма. Паттерн «.hidden-класс + текст до показа» консистентен.
+- Правок нет. Контракт-тест PENDING. Дальше: prefers-reduced-motion покрытие / forced-colors / window-тик.
