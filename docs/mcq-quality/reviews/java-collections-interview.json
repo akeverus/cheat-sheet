@@ -1,0 +1,579 @@
+{
+  "topic_slug": "java-collections-interview",
+  "round": 8,
+  "status": "IN_PROGRESS",
+  "reviewed_commit": null,
+  "chunks_reviewed": [
+    "Q1-Q10"
+  ],
+  "gate_summary": {
+    "verify_mcq_json": "OK",
+    "note": "Baseline (до chunk1) — худший профиль корпуса: CORRECT_LONGEST 0.978 (45/46), CORRECT_WRONG_AVG 2.059 (correct̄ 29сл vs wronḡ 14сл), STYLE 0.978, DETAIL 0.935, OPTION_LENGTH_RATIO 4.44 worst, POSITION_SEQUENCE=46 (строгий A→B→C→D), freshness отсутствовал, mcq-skel-gate hard=42/46. Golden anti-pattern #1 в предельной форме: correct-конспекты на 2-4 клаузы против дистракторов-однострочников. После chunk1: LONGEST 0.826, AVG 1.769, STYLE 0.873 — интерим-FAIL ожидаем, добивается чанками Q11-Q46 + POS-тиком.",
+    "option_length_ratio": "ACCEPTED EXCEPTION (как в reactor/sql/dp/jc/hibernate): гейт ≤1.35 конфликтует со STAMP-guard; гоним смысловые метрики."
+  },
+  "blocks_total": 46,
+  "blocks_reviewed": 10,
+  "notes": "ROUND-8 chunk1 Q1-Q10 (файл java-collections, строка 7 плана §1; иерархия Collection, сложности реализаций, Map vs Collection, выбор коллекции, Iterable, ArrayList/LinkedList, resize 1.5x, CopyOnWriteArrayList, List.of/Arrays.asList, HashSet/TreeSet). Подняты 30 дистракторов (25 text + 5 dict-spec: Q2-A «строгий O(1) у хешей независимо от коллизий» (реальный treeification-факт Java 8 в what_actually), Q4-C «изменяемость — критерий выбора интерфейса», Q5-C «iterator() стал default в Java 8», Q9-C null-своп контрактов List.of/asList, Q10-C «TreeSet проверяет уникальность по equals/hashCode» (классика compareTo==0)). Blind-reviewer 10/10 VERDICT, MULTI нет; фиксы: DUP Q1(B,C) «Map наследуется от Collection» дважды — B уведён в чистый «Collection-корень» без Map-клаузы; DUP Q9(B,C) «asList запрещает null» дважды — B получил верный null-хвост, C стал полным null-свопом; CAR-серия заменена правдоподобными мифами: Q2-A (общий код Collection -> коллизии), Q4-C (строковые ключи -> изменяемость), Q5-C (псевдонимы -> default-изация), Q7-B (дописывание на месте -> рост+1 с копией), Q9-C (молчаливый отброс null -> своп), Q10-C (HashMap внутри TreeSet -> equals-уникальность); BSM Q7 — мета-полемика «а не в 2 раза, как часто говорят» была только у correct: всем дистракторам дана своя полемическая оговорка того же жанра (correct не тронут). Отравленные перечисления-клоны Q2 задели DUPLICATE_NGRAMS (10) — общие клаузы перефразированы при том же скелете (c1b), DUP вернулся к baseline 1. SKEL: Q1-Q10 hard=0 (было в зоне 42 файловых); Q3 выровнен по `;`/`:`-присутствию. Факты verified по теории: Iterable — корень (единственный абстрактный iterator(); forEach/spliterator — default Java 8), Map вне Collection (несовместимые контракты, связь через keySet/values/entrySet views); сложности: ArrayList get O(1)/add O(1) аморт., LinkedList O(n) доступ / O(1) концы, Hash* O(1) средн. (worst O(log n) после treeification Java 8), Tree* O(log n) на красно-чёрном дереве; выбор по семантике (порядок+дубли/уникальность/ключ-значение); ArrayList растёт 1.5x (oldCapacity >> 1, дефолт 10, Arrays.copyOf O(n)); COW — копия на каждую запись, snapshot-итератор без CME, для частого чтения; List.of (Java 9) — immutable + null-враждебен (NPE), Arrays.asList — фикс-размер, backed массивом, set() пишет в массив, null допустим; HashSet=HashMap внутри (O(1), один null, порядок не гарантирован), TreeSet=TreeMap (O(log n), сортировка, навигация first/last/lower/higher/subSet, null запрещён, уникальность по compareTo==0, не по equals).",
+  "records": [
+    {
+      "q_number": 1,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 2,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 3,
+      "block_idx": 0,
+      "correct_label": "C",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 4,
+      "block_idx": 0,
+      "correct_label": "D",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 5,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 6,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 7,
+      "block_idx": 0,
+      "correct_label": "C",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 8,
+      "block_idx": 0,
+      "correct_label": "D",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 9,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 10,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    }
+  ]
+}
