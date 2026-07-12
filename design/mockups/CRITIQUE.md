@@ -37,6 +37,27 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.114 — ARIA-грамматика: роли, контексты, обязательные свойства — ЧИСТО (R1.18)
+
+Новая размерность: валидность ARIA-словаря на 4 страницах (SSR) + живое состояние
+seg-controls.
+
+- **Инвентарь ролей**: / — alert×2, radiogroup, status; /stats — alert, img×2 (канвасы),
+  status×2, region; /settings — tablist, tab×3, tabpanel×3, radiogroup×6, radio×24,
+  status×4, group, alert; 404 — alert. Неизвестных/опечатанных ролей: 0.
+- **Контекстные требования**: все tab внутри tablist с aria-selected и aria-controls;
+  tabpanel поименованы; radio — все с aria-checked и внутри radiogroup; radiogroup/
+  group/region поименованы (через aria-labelledby — потому aria-label пуст, имя
+  резолвится); listitem/row вне контейнеров: 0; aria-hidden на фокусируемых: 0;
+  progressbar без value: 0.
+- **Живое состояние seg-controls** (SSR отдаёт все radio aria-checked=false — состояние
+  знает только клиент из localStorage): после init во всех 6 видимых radiogroup на
+  всех вкладках ровно по одному aria-checked=true. Инвариант single-selection
+  выполняется.
+
+Вывод: ARIA-словарь грамматически корректен, фиксов не требуется. (alertdialog
+promptModal — JS-территория, покрыт R0.83.)
+
 ### cr.113 — 1.4.11 Non-text Contrast: полярные палитры swiss + claude, обе темы — ЧИСТО (R1.17)
 
 Углубление размерности R1.07 (там — только editorial): те же замеры на двух полярных
