@@ -306,7 +306,7 @@ Priority =
 | 10 | `hexagonal-architecture` | architecture | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (18e364f3): 135 raised за 5 чанков + POS; blind 45/45; hard 35→0/45, LONGEST .93→.18, AVG 2.26→1.02, STYLE .96→.19, DETAIL .73→.24, SEQ 45→2, stamp CV .53→.20; RATIO 2.29 accepted exception (анти-штамп компакт) |
 | 11 | `kotlin` | kotlin | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE: c1-c5 135 raised (blind 45/45), POS SEQ 45→2 (moved 34), FINAL: LONGEST 0.911→0.089, STYLE 0.922→0.141, skel hard 36→0, stamp CV 0.306→0.223; 2 documented-exception FAIL (RATIO 3.12 anti-stamp, DUP_NGRAMS 12 каталог-клоны Q21/Q43); +freshness-сайдкар |
 | 12 | `owasp-top10` | security | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE: c1-c5 135 raised (blind 45/45) + POS (SEQ 45→2, 12/11/11/11) + FINAL (freshness-сайдкар, polish 30 length-boost + 19 detail-флипов). Battery: LONGEST 1.0→0.022, AVG 2.271→1.032, DETAIL 0.933→0.267, STYLE 1.0→0.033, skel hard 41→0, stamp CV 0.568→0.226, disMean/corLen 0.34→0.83. Accepted exc: RATIO 2.43 (compact-by-design), DUP 7 (in-block зеркала Q6/Q17/Q24). Known limitation: Q3 «3 survey-категории» vs официально 2 (fact-fix вне мандата R8) |
-| 13 | `test-strategies` | testing | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1-c4 (Q1-Q40, 117 дистракторов, blind 39/39): file-hard 31→4, stamp CV 0.566→0.236; остаток: c5 (Q41-Q45), POS (SEQ=45), FINAL (+freshness) |
+| 13 | `test-strategies` | testing | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1-c5 (все 45 Q, 132 дистрактора, blind 44/44): skel-HARD 31→0, stamp CV 0.566→0.191; остаток: POS (SEQ=45), FINAL (+freshness) |
 | 14 | `tls-ssl` | security | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 15 | `unit-testing` | testing | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 16 | `spring-security` | spring | 46 | 44 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -1218,3 +1218,9 @@ Known factually wrong correct answers: 0
 - Blind-ревью 10/10; вылечено: DUP Q32↔Q33 (Q32 B → ephemeral-окружения со своим «Принципы:»-списком), BSM Q35 D (→ инверсия consumer/provider-driven SCC vs Pact), FORM-TELL Q40 (три дистрактора получили свои «;»-перечни + списки «Антипаттерны:» с англ. ярлыками).
 - Пост-гейт: Q35 A разбит на 2 предложения. Зона HARD=0; file-hard 13→4; stamp CV →0.236, disMean/corLen →0.69.
 - Остаток по файлу: c5 (Q41-Q45), POS, FINAL.
+### R8 test-strategies c5 (Q41-Q45) — 2026-07-12
+
+- 15 дистракторов подняты до скелета correct; blind-ревью 5/5.
+- Вылечено: батчевый FORM-TELL «КАПС только у correct» (Q41/Q42/Q45 — капс-акценты зеркалированы в дистракторы), DUP Q41 B↔C (Spy-ошибка разведена), межвопросный DUP Q45 B↔Q42 C (docker-compose → Kubernetes-стенд), CAR Q43 A («ровно 2000» → нормативные 70/20/10 Google с CI-квотами), паритет скобок Q44.
+- Файл целиком: skel-HARD 31→0, stamp CV 0.566→0.191, disMean/corLen 0.35→0.74.
+- Остаток по файлу: POS (SEQ=45), FINAL (+fact-freshness сайдкар).
