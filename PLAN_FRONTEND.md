@@ -1735,3 +1735,12 @@ Dirty changes created by loop: 0
 
 - 47 запросов на 3 страницах (холодная загрузка): 0 не-200; CDN exact-pin+SRI ×3; условная загрузка бандлов правильная (mermaid только /, chart+stats.js только /stats); v-пины консистентны. Наблюдение: все 8 шрифт-семейств грузятся сразу — осознанная плата за мгновенный дизайн-свитч, не трогаю.
 - Правок нет. Контракт-тест PENDING.
+
+### R1.04 — WCAG 1.4.12 Text Spacing: live-аудит трёх страниц — verified-clean (2026-07-12)
+
+Инъекция стандартного 1.4.12-оверрайда (lh 1.5 / ls 0.12em / ws 0.16em / p-margin 2em) + скан
+clip-y / clip-x / vp-overflow / hscroll на живых `/`, `/stats`, `/settings` (все 3 вкладки).
+Реальных обрезок: **0**. Все срабатывания сканера — намеренные sr-only-клипы
+(`caption.visually-hidden` в /stats, `h2.settings-panel-title` под js-tabs в /settings,
+base.css:1358) — контент невидим, 1.4.12 неприменим. Методика дополнена фильтром
+visually-hidden/sr-only. Кодовых правок нет; леджер cr.100. localStorage возвращён к дефолтам.
