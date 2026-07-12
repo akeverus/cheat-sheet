@@ -37,6 +37,30 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.106 — Устойчивость к недоступному localStorage (private/lockdown) — ЧИСТО (R1.10)
+
+Новая размерность: поведение при SecurityError на любом обращении к storage (приватный
+режим Safari/Firefox, enterprise-политики, заблокированные куки).
+
+**Статический аудит** всех точек касания (grep по static/js + templates): head.html
+pre-paint IIFE — все 7 осей читаются в try/catch с фоллбэками (editorial/auto/flow/
+auto/standard/spacious/1) и все записи+CustomEvent-диспатчи обёрнуты; app.js — счётчик
+сессии (275/283), админ-токен (335–337), settingsTab (660, 679–682), learningPrefs
+(1047–1068) — всё в try/catch с дефолтами. settings.html — только комментарий.
+Незащищённых обращений: **0**.
+
+**Живая симуляция** на /settings: Object.defineProperty подменяет localStorage на
+кидающий SecurityError, затем UI-прогон — переключение вкладок (aria-selected
+обновляется), design-переключатель (editorial→linear→editorial: data-design применяется
+живо), тумблер темы (dark→light→dark: применяется на сессию). **Uncaught-ошибок: 0**;
+деградация ровно желаемая — всё работает в рамках вкладки, персист молча пропускается.
+
+**Tooling-урок №7:** в шапке ТРИ кнопки делят класс ed-theme-toggle (раскладка, дизайн,
+тема) — селектор `.ed-theme-toggle` цепляет тумблер раскладки первым в DOM; целиться
+по `.theme-toggle` (уникален) или aria-label. Первый прогон кликал не ту кнопку.
+
+Реальный localStorage не тронут (записи под lockdown кидались), страница перезагружена.
+
 ### cr.105 — WCAG 1.4.13 hover/focus-контент + 1.1.1 canvas-альтернативы — ЧИСТО (R1.09)
 
 Новая размерность: авторский hover-контент, нативные title-тултипы и текстовые
