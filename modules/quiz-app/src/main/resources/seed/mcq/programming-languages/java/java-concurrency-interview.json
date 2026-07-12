@@ -1044,7 +1044,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Atomic-классы используют synchronized внутри и работают так же как synchronized int.",
+              "text": "Дают атомарные операции через внутренний synchronized, работая точно как обычный synchronized int.",
               "correct": false,
               "sections": {
                 "what_actually": "Atomic используют CAS (Unsafe.compareAndSwap), без блокировки и monitor enter.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Atomic-классы доступны преимущественно через рефлексию из внутреннего sun.misc.Unsafe, публичного API у них нет вовсе.",
+              "text": "Дают атомарные операции только через внутренний sun.misc.Unsafe и рефлексию, без публичного API.",
               "correct": false,
               "sections": {
                 "what_actually": "Atomic — публичный API java.util.concurrent.atomic с Java 5; sun.misc.Unsafe — внутренняя реализация.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "CAS — это software emulation, доступная преимущественно в Java 8+.",
+              "text": "Дают атомарность программной эмуляцией поверх synchronized, появившейся только в Java 8.",
               "correct": false,
               "sections": {
                 "what_actually": "CAS — аппаратная инструкция CPU (CMPXCHG на x86, LDREX/STREX на ARM), доступна с Java 5 через sun.misc.Unsafe.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "AtomicInteger всегда быстрее synchronized независимо от уровня contention.",
+              "text": "AtomicInteger быстрее synchronized int при любом уровне contention и числе потоков.",
               "correct": false,
               "sections": {
                 "what_actually": "При экстремальной contention CAS-loop в AtomicInteger тратит CPU, и synchronized может оказаться сопоставимым/быстрее за счёт парковки потоков.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "LongAdder выгоднее AtomicInteger уже при одном писателе и редких чтениях: ячейки всегда снижают latency get и sum.",
+              "text": "LongAdder выгоднее AtomicInteger уже при одном писателе, его ячейки снижают latency get и sum.",
               "correct": false,
               "sections": {
                 "what_actually": "LongAdder выигрывает при высокой write-contention многих потоков; при одном писателе AtomicInteger проще и обычно быстрее на get/sum, а LongAdder добавляет накладные расходы ячеек.",
@@ -1115,7 +1115,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "LongAdder атомарен относительно sum() и гарантирует консистентный snapshot.",
+              "text": "LongAdder атомарен относительно sum() и возвращает консистентный snapshot всех ячеек.",
               "correct": false,
               "sections": {
                 "what_actually": "sum() не атомарен относительно конкурентных add() — читает ячейки последовательно.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Нереентерабельная блокировка с tryLock, таймаутом, fairness и несколькими Condition; повторный lock() из того же потока даёт deadlock.",
+              "text": "Нереентерабельная блокировка с tryLock, таймаутом, fairness и Condition; повторный lock() из того же потока даёт deadlock.",
               "correct": false,
               "sections": {
                 "what_actually": "ReentrantLock реентерабелен по дизайну (имя «Reentrant»); счётчик удержаний на потоке.",
@@ -1176,7 +1176,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Реентерабельная блокировка с tryLock, таймаутом, fairness и несколькими Condition; unlock() вызывается автоматически при выходе из метода, как у synchronized.",
+              "text": "Реентерабельная блокировка с tryLock, таймаутом, fairness и Condition; unlock() происходит автоматически при выходе из метода.",
               "correct": false,
               "sections": {
                 "what_actually": "ReentrantLock требует явного lock.unlock() в finally — JVM не освобождает автоматически.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Реентерабельная блокировка без tryLock, fairness и Condition — только быстрее synchronized за счёт biased locking; требует явного unlock() в finally.",
+              "text": "Реентерабельная блокировка без tryLock, fairness и Condition; лишь быстрее synchronized за счёт biased locking.",
               "correct": false,
               "sections": {
                 "what_actually": "ReentrantLock даёт функциональные возможности (tryLock/timeout/interruptible/fairness/Condition), а производительность сравнима с Java 6+.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "ReadWriteLock — много читателей и много писателей одновременно; StampedLock добавляет оптимистичное чтение.",
+              "text": "ReadWriteLock — много читателей и писателей сразу; StampedLock добавляет оптимистичное чтение.",
               "correct": false,
               "sections": {
                 "what_actually": "Writer эксклюзивен: пока он держит lock, ни reader, ни другой writer не пройдут.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ReadWriteLock — много читателей или один писатель; StampedLock реентерабелен при повторном writeLock, как ReentrantReadWriteLock.",
+              "text": "ReadWriteLock — много читателей или один писатель; StampedLock реентерабелен при повторном writeLock, как RRWLock.",
               "correct": false,
               "sections": {
                 "what_actually": "StampedLock НЕ реентерабелен: повторный writeLock (или readLock) из того же потока приводит к самоблокировке; реентерабелен только ReentrantReadWriteLock.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "ReadWriteLock — много читателей или один писатель; StampedLock — устаревший API Java 5, заменённый ReentrantReadWriteLock.",
+              "text": "ReadWriteLock — много читателей или один писатель; StampedLock — устаревший API Java 5 вместо RRWLock.",
               "correct": false,
               "sections": {
                 "what_actually": "Обратное: ReentrantReadWriteLock с Java 5, StampedLock новее (Java 8) — добавляет оптимистичное чтение.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Аналог wait/notify без Lock: Condition работает самостоятельно и заменяет synchronized.",
+              "text": "Аналог wait/notify: Condition работает самостоятельно, без Lock, заменяя громоздкий synchronized.",
               "correct": false,
               "sections": {
                 "what_actually": "Condition обязательно требует Lock и создаётся через lock.newCondition(); вне удерживаемого Lock — IllegalMonitorStateException.",
@@ -1283,7 +1283,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Аналог wait/notify для Lock: на одном Lock можно завести только один Condition, как wait-set монитора.",
+              "text": "Аналог wait/notify для Lock: Lock предоставляет один общий Condition как единый wait-set монитора.",
               "correct": false,
               "sections": {
                 "what_actually": "lock.newCondition() можно вызвать несколько раз; на одном Lock возможны несколько Condition.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Аналог wait/notify для Lock: await() не освобождает Lock, поэтому сигналящий поток не сможет его захватить.",
+              "text": "Аналог wait/notify для Lock: await() удерживает Lock во время ожидания для эксклюзивности сигналящему.",
               "correct": false,
               "sections": {
                 "what_actually": "Condition.await() атомарно освобождает Lock и паркует поток; сигналящий поток спокойно берёт тот же Lock, вызывает signal() и отпускает его — как wait() освобождает монитор.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Deadlock — потоки зависли; Livelock — то же зависание другим именем; Starvation — ещё одно имя того же явления без прогресса.",
+              "text": "Deadlock — потоки зависли; Livelock и Starvation — те же зависания под другими именами, без прогресса.",
               "correct": false,
               "sections": {
                 "what_actually": "Это три разных явления: deadlock — потоки BLOCKED/WAITING в цикле; livelock — RUNNABLE, но без прогресса; starvation — поток систематически не получает ресурс из-за scheduling.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Deadlock — потоки заблокированы; Livelock — активны, но без прогресса; Starvation — частный deadlock ровно одного потока.",
+              "text": "Deadlock — потоки заблокированы; Livelock — активны без прогресса; Starvation — это deadlock одного потока.",
               "correct": false,
               "sections": {
                 "what_actually": "Starvation — поток не получает ресурс из-за scheduling/fairness, но другие работают нормально; deadlock — циклическое ожидание.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Deadlock — потоки заблокированы только в Java; Livelock — активны, но без прогресса только в Java; Starvation — поток не получает CPU/lock только в Java.",
+              "text": "Deadlock — потоки заблокированы; Livelock — активны без прогресса; Starvation — нет CPU/lock; и всё это только в Java.",
               "correct": false,
               "sections": {
                 "what_actually": "Это общие concurrency-проблемы любого языка с shared-memory (C++, Go, Rust, уровень ОС), не специфичные для Java.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Баг, где результат зависит от порядка выполнения потоков (типичный симптом — ConcurrentModificationException, легко диагностируется).",
+              "text": "Баг, где результат зависит от порядка выполнения потоков (типичный симптом — `ConcurrentModificationException`, легко диагностируется).",
               "correct": false,
               "sections": {
                 "what_actually": "Race condition обычно молчалив — порча данных без исключения; CME — частный случай fail-fast.",
@@ -1475,7 +1475,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Баг, где результат зависит от порядка выполнения потоков (типичные паттерны — check-then-act, read-modify-write).",
+              "text": "Баг, где результат зависит от порядка выполнения потоков (типичные паттерны — `check-then-act`, `read-modify-write`).",
               "correct": true,
               "sections": {
                 "explanation": "Race condition не всегда даёт исключение — часто это тихая порча данных. if(map.containsKey(k)) return map.get(k); — между двумя вызовами другой поток мог удалить ключ → NPE на get. Лечится атомарными операциями (map.computeIfAbsent, AtomicLong.incrementAndGet), синхронизацией (synchronized/Lock) либо устранением shared mutable state (immutability). Ловят статическим анализом (SpotBugs/IDEA), стресс-тестами с JCStress.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Баг, где результат зависит от порядка выполнения потоков (типичная защита — immutable объекты и final-поля).",
+              "text": "Баг, где результат зависит от порядка выполнения потоков (защита — `immutable`-объекты снимают гонку даже с общей изменяемой ссылкой).",
               "correct": false,
               "sections": {
                 "what_actually": "На immutable объектах действительно нет race (внутри объекта), но shared mutable container с ссылками всё ещё подвержен.",
@@ -1524,7 +1524,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Переменная с изолированной копией для каждого потока; в пуле очищается GC сама, когда поток берёт следующую задачу, без remove().",
+              "text": "Переменная с изолированной копией для каждого потока; в пуле очищается GC сама при следующей задаче, без remove().",
               "correct": false,
               "sections": {
                 "what_actually": "Пул не очищает ThreadLocal; значение сохраняется между задачами на переиспользуемом потоке — типичная утечка и security-баг.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Переменная с изолированной копией для каждого потока; в пуле слишком медленна против ConcurrentHashMap и в production не используется.",
+              "text": "Переменная с изолированной копией для каждого потока; в пуле медленнее ConcurrentHashMap и не используется в prod.",
               "correct": false,
               "sections": {
                 "what_actually": "ThreadLocal быстрее любой Map для per-thread данных: нет блокировок и contention, доступ идёт напрямую в Thread.threadLocals; в production он широко применяется (Spring, Hibernate).",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Переменная без изоляции — обычное static-поле, общее для всех потоков; в пуле требует remove() в finally во избежание утечки.",
+              "text": "Переменная без изоляции — общее static-поле для всех потоков; в пуле требует remove() в finally во избежание утечки.",
               "correct": false,
               "sections": {
                 "what_actually": "ThreadLocal специально создан для НЕ-разделяемого состояния: значение per-thread, хранится в Thread.threadLocals; общей видимости между потоками нет.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "InheritableThreadLocal быстрее ThreadLocal на 30% за счёт inline-кэширования.",
+              "text": "InheritableThreadLocal быстрее обычного ThreadLocal за счёт инлайн-кэширования копии в дочернем потоке.",
               "correct": false,
               "sections": {
                 "what_actually": "InheritableThreadLocal не быстрее; механизм хранения тот же (Thread.inheritableThreadLocals).",
@@ -1595,7 +1595,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "InheritableThreadLocal заново копирует значение между потоками пула перед каждой задачей.",
+              "text": "InheritableThreadLocal заново копирует значение между потоками пула перед каждой новой задачей.",
               "correct": false,
               "sections": {
                 "what_actually": "Копирование происходит только один раз — при создании потока (Thread.init); пул переиспользует потоки, поэтому повторного копирования перед задачей нет.",
