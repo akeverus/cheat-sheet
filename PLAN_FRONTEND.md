@@ -1871,3 +1871,55 @@ Window-tick — :8080 жив.
 при 1 — чистый дефолт); живой тест 16→24px: контент ×1.5, fluid-заголовок шапки ×1.19
 (clamp с rem-полом — осознанно, растёт всегда). Кодовых правок нет; cr.117.
 Window-tick — :8080 жив.
+
+### R1.22 — ROLLUP окна R1.04–R1.21 (2026-07-12)
+
+**Итог окна: 18 тиков, 17 размерностей закрыто verified-clean, 1 кодовый фикс, 2 коррекции методики.**
+
+| # | Размерность | Вердикт |
+|---|---|---|
+| R1.04 | WCAG 1.4.12 Text Spacing (3 страницы) | чисто (sr-only-клипы — не дефекты) |
+| R1.05 | Регрессии R0.90/R0.93/R0.94 | без дрейфа |
+| R1.06 | Структура: заголовки + landmarks | чисто |
+| R1.07 | 1.4.11 non-text contrast (editorial ×2 темы) | чисто, 4.24–17.5 |
+| R1.08 | 4.1.2 accessible names (434 элемента) | чисто |
+| R1.09 | 1.4.13 hover-контент + 1.1.1 canvas | чисто (1 hover-reveal с focus-путём) |
+| R1.10 | lockdown localStorage | чисто (0 незащищённых) |
+| R1.11 | Формы 3.2.2 + валидация | чисто (+коррекция в R1.15) |
+| R1.12 | **Печать /stats — ФИКС** `.stats-filter-card` | **base.css v=91** |
+| R1.13 | Целостность ID/ARIA-ссылок | чисто |
+| R1.14 | Мета-гигиена + bfcache/кэш | чисто |
+| R1.15 | Эргономика ввода + #count | чисто (cr.107 аннотирован) |
+| R1.16 | Якоря/sticky/back-to-top | чисто |
+| R1.17 | 1.4.11 на swiss+claude ×2 темы | чисто, 4.27–19.8 |
+| R1.18 | ARIA-грамматика | чисто |
+| R1.19 | dvh + fixed-геометрия mobile | чисто |
+| R1.20 | Перф-baseline /stats | чисто (TTFB 98ms, 0 long tasks) |
+| R1.21 | rem-цепочка / браузерный шрифт | чисто |
+
+**Tooling-уроки окна** (полный список №1–№5 — в R0.99):
+- **№6**: transition на цветах инвалидирует rAF-замеры состояний — ждать ≥ transition-duration
+  (400ms+) или transitionend; диагностика — дифф computed против соседнего элемента в другом
+  состоянии (R1.07).
+- **№7**: три кнопки шапки делят класс ed-theme-toggle — целиться по уникальному .theme-toggle
+  или aria-label (R1.10).
+- **№5-расширение**: фоновая вкладка не пейнтит → Lighthouse даёт NO_FCP; в фоне — только
+  paint-независимые Performance API (R1.20). Инвентаризацию контролов вести по SSR-DOM,
+  visible-фильтр только для видимых состояний (R1.15); зонды таблиц — из видимых строк,
+  tr[hidden] дают мусорную геометрию (R1.16).
+
+**Открытые гейты (без изменений):**
+1. **Window-tick (приоритет №1 при свободном :8080)**: контракт-тесты
+   (TemplateFragmentContractTest, InterviewMvcControllerTest) — 6 правок head.html +
+   base.css v87→91 не прогонялись; затем regenerate-removal-plan.md (re-grep строк!).
+2. **Session-gated (Phase F, ждёт решения по EXAM)**: summary/result parity, grade-flow,
+   post-answer JS, related-rail, no-JS /answer.
+3. **Data-gated**: instrument-палитра чартов (нужны строки daily_activity).
+4. **Tooling-gated**: эмуляция prefers-reduced-motion/contrast/forced-colors (MCP emulate
+   только colorScheme); Lighthouse paint-метрики (Chrome на переднем плане).
+5. **User-gated (§5/§G — не переоткрывать)**: Chart.js self-host, favorite, analytics CTA,
+   футер, вертикальный tablist, card-grid осей, ?-кнопка.
+
+**Состояние: v=91 (tokens v=62), леджер cr.100–cr.117, коммиты 46d4002d…a5c493d0.**
+Дальше: регрессион-ресканы окна R1.x по мере старения, углубление 1.4.11/1.4.12 на
+редких дизайнах при жалобах, window-tick при первом освобождении порта.
