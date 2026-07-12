@@ -37,6 +37,22 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.145 — WCAG 2.4.3 Focus Order: CSS-reflow vs фокус-порядок (verified-clean)
+
+**Вопрос:** визуальное переупорядочивание через grid (`grid-template-areas`/`grid-column`/`grid-row`/`display:contents`) не должно ломать смысл и операбельность tab-последовательности (фокус идёт по DOM, а не по визуалу).
+
+**Инвентарь reflow-мест (grep + разбор):**
+- **header** (base.css 588–627): `display:contents` на `.ed-masthead-actions` поднимает nav+toggles в грид `.ed-masthead-inner`; области `"brand toggles" / "nav nav"` при ≤1239px. DOM/tab = brand→nav→toggles. Замер на 900px (tabindex в шапке = [] → tab==DOM): brand(top12) → nav ×3(top101) → toggles ×3(top12). Фокус идёт вниз (brand→nav) затем вверх (nav→toggles) — расхождение на группу «toggles».
+- **result** (3142–3147): interview-card col1 → related-questions col2 (правая рейка). DOM card→related = визуал слева→справа → совпадает.
+- **summary** (3224–3230): summary-table col1 → summary-mistakes col2 → recommendations 1/-1. DOM-порядок = порядок чтения.
+- **stats** (3176–3181): topic-table col1 (span2) → coverage-gaps col2 → совпадает.
+- **focus-split** (3287–3337, opt-in `[data-layout=split]`): левая колонка meta(row2)→question(row3)→code(row4), форма — правый пейн (row1/-1). DOM meta→question→code→form = чтение «вопрос слева → ответы справа». Явные grid-row монотонны с DOM. Совпадает.
+
+**Вердикт по header — НЕ провал 2.4.3.** Критерий требует сохранения смысла+операбельности, НЕ попиксельного совпадения (C27 «DOM=visual» — sufficient-техника, не требование; F44 про tabindex здесь неприменим — переупорядочивания через tabindex нет). Операбельность: все 7 контролов достижимы, ловушек нет. Смысл: brand→primary-nav→display-toggles — связная группировка, ВНУТРИ каждой группы порядок совпадает с визуалом. Расходится лишь групповой уровень (toggles визуально в ряду1, но tab-ятся после nav из ряда2).
+
+**Ключевой аргумент против правки:** нет DOM-порядка, совпадающего с визуалом на ОБОИХ брейкпоинтах. При ≥1240px (один ряд brand·nav·toggles) текущий DOM совпадает ТОЧНО; перестановка под ≤1239px (brand→toggles→nav) сломала бы десктопное совпадение. Текущий порядок оптимален для десктопа и семантически связен на планшете/мобиле — лучший компромисс. Правок кода нет.
+
+
 ### cr.144 — WCAG 1.4.13 Content on Hover or Focus (verified-clean)
 
 **Вопрос:** любой контент, показываемый по hover/focus (tooltip/popover/reveal), обязан быть dismissable + hoverable + persistent (нативные UA-`title` из критерия ИСКЛЮЧЕНЫ).
