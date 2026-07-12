@@ -1627,3 +1627,8 @@ Dirty changes created by loop: 0
 
 - Та же механика (localStorage → pre-paint → LH на /): linear, swiss, mintlify × dark+light — a11y 100, BP 100, контраст PASS во всех шести прогонах; SEO-шум единственные провалы.
 - Счёт размерности: 8/11 дизайнов подтверждены живым axe. Остаток: broadsheet+stripe+claude (серия 3/3), затем spot-check /settings. Дефолты возвращены. Контракт-тест PENDING (bootRun жив). Гейты прежние.
+
+### R0.86 (2026-07-12) — Live-a11y серия 3/3: broadsheet+stripe+claude — 6/6 чисто; размерность 11/11 ЗАКРЫТА
+
+- Та же механика (localStorage → pre-paint → LH на /): broadsheet, stripe, claude × dark+light — a11y 100, BP 100, контраст PASS во всех шести прогонах; SEO-шум единственные провалы.
+- Размерность live-a11y по дизайнам закрыта: все 11 дизайнов подтверждены живым axe в обеих темах, 0 контраст-провалов — статический AA-гейт подтверждён живьём. Остаток: spot-check /settings на swiss vs claude (след. тик). Дефолты возвращены. Контракт-тест PENDING (bootRun жив). Гейты прежние.
