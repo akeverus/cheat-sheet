@@ -11,19 +11,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Четыре базовых паттерна: `Basic Auth` (логин:пароль в `HTTP`-заголовке через Base64), `Session-Based` (серверная сессия + `JSESSIONID` в cookie), `Token-Based` (`stateless`-токены `JWT`/`OAuth`) и `Certificate-Based` (взаимная аутентификация по `X.509`-сертификатам, `mTLS`).",
-              "correct": true,
-              "sections": {
-                "explanation": "Паттерны различаются тем, где хранится состояние и как передаётся доказательство личности: от пароля в каждом запросе до криптографического сертификата. Выбор диктуется типом клиента (браузер, `SPA`, сервис) и требованиями к масштабированию.",
-                "example": "Для монолита с серверным рендерингом берут `Session-Based` (`JSESSIONID`), для микросервисов и `SPA` — `Token-Based` (`JWT`), а между бэкенд-сервисами в `Zero Trust` — `Certificate-Based` (`mTLS`).",
-                "when_to_apply": "Эту классификацию используют при выборе схемы входа на старте проекта: какой клиент, нужен ли logout, требуется ли горизонтальное масштабирование без sticky-сессий.",
-                "edge_cases": "`Basic Auth` без `HTTPS` шлёт пароль почти открытым текстом и не имеет logout, поэтому годится лишь для внутренних утилит или server-to-server поверх `TLS`.",
-                "related": "[[authentication-authorization-patterns-interview#Q3]] детали `JWT`-аутентификации; [[authentication-authorization-patterns-interview#Q9]] паттерны сессий; [[authentication-authorization-patterns-interview#Q18]] `mTLS` как certificate-based."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Два актуальных паттерна: `OAuth 2.0` (делегированный доступ через `Authorization Server`) и `SAML`/`OIDC` (`XML`-assertions для enterprise `SSO`) — а `Basic Auth` (пароль в `Base64`), `Session-Based` (`JSESSIONID` в cookie) и `mTLS` по `X.509`-сертификатам признаны устаревшими и в новых системах не применяются.",
               "correct": false,
               "sections": {
@@ -34,8 +21,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Общее у всех паттернов — серверное состояние: `Basic Auth` держит пользователей в `UserDetailsService`, `Session-Based` — таблицу сессий, `Token-Based` — реестр выданных токенов, поэтому и `stateless`-вариант опирается на серверную запись о входе.",
               "correct": false,
               "sections": {
@@ -43,6 +30,19 @@
                 "source_of_confusion": "Привычка к серверным сессиям создаёт впечатление, что без хранилища состояния аутентификация не работает.",
                 "if_it_were_true": "Тогда микросервисы не могли бы масштабироваться без shared session store, но `JWT` как раз решает это без общего хранилища.",
                 "how_it_should_be": "Session-Based — stateful, а Token-Based (`JWT`) — stateless: подпись проверяется локально без обращения к хранилищу."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Четыре базовых паттерна: `Basic Auth` (логин:пароль в `HTTP`-заголовке через Base64), `Session-Based` (серверная сессия + `JSESSIONID` в cookie), `Token-Based` (`stateless`-токены `JWT`/`OAuth`) и `Certificate-Based` (взаимная аутентификация по `X.509`-сертификатам, `mTLS`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Паттерны различаются тем, где хранится состояние и как передаётся доказательство личности: от пароля в каждом запросе до криптографического сертификата. Выбор диктуется типом клиента (браузер, `SPA`, сервис) и требованиями к масштабированию.",
+                "example": "Для монолита с серверным рендерингом берут `Session-Based` (`JSESSIONID`), для микросервисов и `SPA` — `Token-Based` (`JWT`), а между бэкенд-сервисами в `Zero Trust` — `Certificate-Based` (`mTLS`).",
+                "when_to_apply": "Эту классификацию используют при выборе схемы входа на старте проекта: какой клиент, нужен ли logout, требуется ли горизонтальное масштабирование без sticky-сессий.",
+                "edge_cases": "`Basic Auth` без `HTTPS` шлёт пароль почти открытым текстом и не имеет logout, поэтому годится лишь для внутренних утилит или server-to-server поверх `TLS`.",
+                "related": "[[authentication-authorization-patterns-interview#Q3]] детали `JWT`-аутентификации; [[authentication-authorization-patterns-interview#Q9]] паттерны сессий; [[authentication-authorization-patterns-interview#Q18]] `mTLS` как certificate-based."
               }
             },
             {
@@ -71,18 +71,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OAuth 2.0` — протокол аутентификации: `Authorization Server` подтверждает личность пользователя и возвращает клиенту проверенные данные профиля (`sub`, `email`), поэтому свой механизм входа приложению не нужен. Роли (`Client`, `Resource Server`) описывают именно обмен identity-данными.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`OAuth 2.0` — протокол авторизации (доступа к ресурсам); аутентификацию (идентификацию пользователя) добавляет надстройка `OIDC` через `ID Token`.",
-                "source_of_confusion": "Кнопки «Войти через …» выглядят как вход, поэтому `OAuth` принимают за механизм аутентификации.",
-                "if_it_were_true": "Тогда не понадобился бы отдельный `OpenID Connect`, но именно `OIDC` появился, чтобы дать стандартный `ID Token` поверх `OAuth`.",
-                "how_it_should_be": "`OAuth 2.0` отвечает за авторизацию (access token, scopes), а идентификацию пользователя даёт `OIDC` поверх него."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`OAuth 2.0` — протокол делегированной авторизации: приложение получает ограниченный доступ к ресурсам пользователя без передачи его пароля. Есть четыре роли (`Resource Owner`, `Client`, `Authorization Server`, `Resource Server`) и несколько grant types, основной — `Authorization Code`, где клиент меняет короткоживущий code на access token.",
               "correct": true,
               "sections": {
@@ -91,6 +79,18 @@
                 "when_to_apply": "`OAuth 2.0` применяют, когда стороннему приложению нужен ограниченный доступ к данным пользователя (scopes) или для межсервисного доступа через `Client Credentials`.",
                 "edge_cases": "`Implicit Grant` устарел, а `Resource Owner Password` не рекомендуется; для `SPA` и мобильных используют `Authorization Code + PKCE`, иначе перехваченный code обменивается на токен.",
                 "related": "[[authentication-authorization-patterns-interview#Q12]] как `OIDC` добавляет аутентификацию поверх `OAuth`; [[authentication-authorization-patterns-interview#Q26]] делегированная авторизация и scopes; [[authentication-authorization-patterns-interview#Q30]] `PKCE` для публичных клиентов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`OAuth 2.0` — протокол аутентификации: `Authorization Server` подтверждает личность пользователя и возвращает клиенту проверенные данные профиля (`sub`, `email`), поэтому свой механизм входа приложению не нужен. Роли (`Client`, `Resource Server`) описывают именно обмен identity-данными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OAuth 2.0` — протокол авторизации (доступа к ресурсам); аутентификацию (идентификацию пользователя) добавляет надстройка `OIDC` через `ID Token`.",
+                "source_of_confusion": "Кнопки «Войти через …» выглядят как вход, поэтому `OAuth` принимают за механизм аутентификации.",
+                "if_it_were_true": "Тогда не понадобился бы отдельный `OpenID Connect`, но именно `OIDC` появился, чтобы дать стандартный `ID Token` поверх `OAuth`.",
+                "how_it_should_be": "`OAuth 2.0` отвечает за авторизацию (access token, scopes), а идентификацию пользователя даёт `OIDC` поверх него."
               }
             },
             {
@@ -155,6 +155,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`JWT` отзывается мгновенно, как серверная сессия; достаточно удалить его запись на сервере (`DELETE` из таблицы) — следующий запрос с этим токеном получит `401`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подписанный `JWT` действителен до `exp` сам по себе; «удалить» его на сервере нельзя, нужен blacklist или короткий TTL.",
+                "source_of_confusion": "Логаут в session-based действительно мгновенный, и это ожидание переносят на токены.",
+                "if_it_were_true": "Тогда не нужен был бы Redis-blacklist и refresh-token rotation, но их применяют именно из-за неотзываемости.",
+                "how_it_should_be": "Мгновенный отзыв `JWT` достигается через blacklist по `jti` в Redis или коротким `exp` плюс ротацию refresh-токена."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`JWT` (`RFC 7519`) — компактный токен из трёх Base64url-частей: `Header` (`alg`, `typ`), `Payload` (claims: `sub`, `exp`, `roles`) и `Signature`. Сервер выдаёт подписанный токен после логина; на каждом запросе клиент шлёт его в `Authorization: Bearer`, а сервер проверяет подпись и `exp` без обращения к БД.",
               "correct": true,
               "sections": {
@@ -163,18 +175,6 @@
                 "when_to_apply": "`JWT` берут для микросервисов, `SPA` и мобильных, где нужен `stateless`-доступ и горизонтальное масштабирование без общего session store.",
                 "edge_cases": "Payload только Base64-кодируется, а не шифруется — туда нельзя класть секреты; отзыв до истечения `exp` требует blacklist или короткого TTL плюс refresh-токена.",
                 "related": "[[authentication-authorization-patterns-interview#Q15]] refresh и rotation токенов; [[authentication-authorization-patterns-interview#Q37]] типичные ошибки `JWT`; [[authentication-authorization-patterns-interview#Q41]] сравнение `JWT` и сессий."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`JWT` отзывается мгновенно, как серверная сессия; достаточно удалить его запись на сервере (`DELETE` из таблицы) — следующий запрос с этим токеном получит `401`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Подписанный `JWT` действителен до `exp` сам по себе; «удалить» его на сервере нельзя, нужен blacklist или короткий TTL.",
-                "source_of_confusion": "Логаут в session-based действительно мгновенный, и это ожидание переносят на токены.",
-                "if_it_were_true": "Тогда не нужен был бы Redis-blacklist и refresh-token rotation, но их применяют именно из-за неотзываемости.",
-                "how_it_should_be": "Мгновенный отзыв `JWT` достигается через blacklist по `jti` в Redis или коротким `exp` плюс ротацию refresh-токена."
               }
             }
           ]
@@ -203,6 +203,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`RBAC` — контроль доступа на основе ролей: пользователю назначают роли, роли содержат разрешения (`READ_POST`, `CREATE_POST`). `ABAC` — на основе атрибутов субъекта, объекта, действия и окружения (отдел, владелец, время, IP), решение принимает policy engine. `RBAC` проще и быстрее, `ABAC` гибче для контекстных правил.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `RBAC` право определяется статически через роль, в `ABAC` — динамически вычислением политик по атрибутам. Поэтому `RBAC` хорош для фиксированных ролей, а `ABAC` — когда решение зависит от контекста (например, «только владелец в рабочее время»).",
+                "example": "`RBAC`: `@PreAuthorize(\"hasRole('ADMIN')\")` на удаление. `ABAC`: `OwnershipPolicy` разрешает действие, только если `owner.getOwnerId()` совпадает с id субъекта или у него роль `ADMIN`.",
+                "when_to_apply": "`RBAC` берут, когда прав немного и они привязаны к ролям; `ABAC` — когда нужны тонкие правила по владельцу, классификации данных, времени или геолокации.",
+                "edge_cases": "Чистый `RBAC` ведёт к «role explosion», если для каждого нюанса заводят новую роль; `ABAC` мощнее, но сложнее в аудите и медленнее из-за вычисления политик.",
+                "related": "[[authentication-authorization-patterns-interview#Q20]] context-based как развитие `ABAC`; [[authentication-authorization-patterns-interview#Q27]] fine-grained авторизация на объектах; [[authentication-authorization-patterns-interview#Q44]] совместное применение `RBAC` и `ABAC`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`ABAC` быстрее `RBAC` на больших системах: одно выражение по атрибутам дешевле обхода иерархии role-permission. Поэтому высоконагруженные системы начинают с `ABAC`, а `RBAC` оставляют небольшим админкам.",
               "correct": false,
               "sections": {
@@ -213,8 +226,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`RBAC` сам расширяется контекстными условиями: время, `IP`-адрес и владение объектом описывают прямо в определении роли (`ROLE_ADMIN_DAYTIME`, `ROLE_OWNER_ONLY`). `ABAC` же оперирует фиксированным набором атрибутов субъекта (`role`, `dept`) и окружение запроса не учитывает. Поэтому для контекстных правил берут именно `RBAC`.",
               "correct": false,
               "sections": {
@@ -222,19 +235,6 @@
                 "source_of_confusion": "Роли и атрибуты путают местами, приписывая `RBAC` несвойственную ему динамику.",
                 "if_it_were_true": "Тогда `WorkingHoursPolicy` реализовали бы на ролях, но временные ограничения выражают именно через политики `ABAC`.",
                 "how_it_should_be": "Контекстные правила (время, локация, владение) — это `ABAC`; `RBAC` отвечает за статические роли и их разрешения."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`RBAC` — контроль доступа на основе ролей: пользователю назначают роли, роли содержат разрешения (`READ_POST`, `CREATE_POST`). `ABAC` — на основе атрибутов субъекта, объекта, действия и окружения (отдел, владелец, время, IP), решение принимает policy engine. `RBAC` проще и быстрее, `ABAC` гибче для контекстных правил.",
-              "correct": true,
-              "sections": {
-                "explanation": "В `RBAC` право определяется статически через роль, в `ABAC` — динамически вычислением политик по атрибутам. Поэтому `RBAC` хорош для фиксированных ролей, а `ABAC` — когда решение зависит от контекста (например, «только владелец в рабочее время»).",
-                "example": "`RBAC`: `@PreAuthorize(\"hasRole('ADMIN')\")` на удаление. `ABAC`: `OwnershipPolicy` разрешает действие, только если `owner.getOwnerId()` совпадает с id субъекта или у него роль `ADMIN`.",
-                "when_to_apply": "`RBAC` берут, когда прав немного и они привязаны к ролям; `ABAC` — когда нужны тонкие правила по владельцу, классификации данных, времени или геолокации.",
-                "edge_cases": "Чистый `RBAC` ведёт к «role explosion», если для каждого нюанса заводят новую роль; `ABAC` мощнее, но сложнее в аудите и медленнее из-за вычисления политик.",
-                "related": "[[authentication-authorization-patterns-interview#Q20]] context-based как развитие `ABAC`; [[authentication-authorization-patterns-interview#Q27]] fine-grained авторизация на объектах; [[authentication-authorization-patterns-interview#Q44]] совместное применение `RBAC` и `ABAC`."
               }
             }
           ]
@@ -323,6 +323,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Валидацию `JWT` выполняют строго один раз — на `API Gateway`: он снимает подпись `Bearer`-токена и кладёт результат в заголовки (`X-User-Id`, `X-User-Roles`, `X-User-Scopes`); downstream-сервисы доверяют им без повторных проверок (`JwtDecoder`) — именно это предписывает zero-trust своим принципом «verify once, trust inside»; подделать `X-User-*` изнутри сети не позволяет сам `HTTP`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Доверять `X-User-*` без защиты нельзя: downstream-сервис должен быть закрыт от внешнего доступа или сам проверять токен, иначе заголовки подделают.",
+                "source_of_confusion": "Gateway-валидация удобна, и кажется, что повторная проверка — лишняя нагрузка.",
+                "if_it_were_true": "Тогда любой, кто достучится до сервиса напрямую, выдал бы себя за админа через подделанный заголовок.",
+                "how_it_should_be": "Gateway валидирует на edge, но внутренние сервисы либо изолированы сетью, либо повторно проверяют токен (Zero Trust)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Безопасность строят слоями: `API Gateway` валидирует `JWT` на edge и пробрасывает данные пользователя downstream (`X-User-Id`, `X-User-Roles`); между сервисами — `mTLS` плюс service-to-service токены (`Client Credentials`); авторизация децентрализована на каждом сервисе или через централизованный `Authorization Service`; распределённые сессии — через `Redis`.",
               "correct": true,
               "sections": {
@@ -331,18 +343,6 @@
                 "when_to_apply": "Многослойную схему применяют в любой микросервисной системе с внешними клиентами: gateway для edge-аутентификации, mTLS/JWT для внутренних вызовов, централизованная авторизация при сложных политиках.",
                 "edge_cases": "Опасно доверять `X-User-*` заголовкам без проверки, что они пришли именно от gateway: downstream-сервис должен быть недоступен снаружи или сам валидировать токен, иначе заголовки подделают.",
                 "related": "[[authentication-authorization-patterns-interview#Q11]] детали `API Gateway Security`; [[authentication-authorization-patterns-interview#Q16]] принципы `Zero Trust`; [[authentication-authorization-patterns-interview#Q21]] безопасность через `Service Mesh`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Валидацию `JWT` выполняют строго один раз — на `API Gateway`: он снимает подпись `Bearer`-токена и кладёт результат в заголовки (`X-User-Id`, `X-User-Roles`, `X-User-Scopes`); downstream-сервисы доверяют им без повторных проверок (`JwtDecoder`) — именно это предписывает zero-trust своим принципом «verify once, trust inside»; подделать `X-User-*` изнутри сети не позволяет сам `HTTP`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Доверять `X-User-*` без защиты нельзя: downstream-сервис должен быть закрыт от внешнего доступа или сам проверять токен, иначе заголовки подделают.",
-                "source_of_confusion": "Gateway-валидация удобна, и кажется, что повторная проверка — лишняя нагрузка.",
-                "if_it_were_true": "Тогда любой, кто достучится до сервиса напрямую, выдал бы себя за админа через подделанный заголовок.",
-                "how_it_should_be": "Gateway валидирует на edge, но внутренние сервисы либо изолированы сетью, либо повторно проверяют токен (Zero Trust)."
               }
             },
             {
@@ -383,18 +383,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`SAML` устраняет `Identity Provider` из цепочки: `Service Provider` сам хранит пароли пользователей и проверяет их локально. Подписанные assertions нужны только для журналирования. Поэтому `SP`-инициированный поток не требует редиректов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `SAML` логин происходит на `IdP`; `SP` не хранит пароли и доверяет подписанному assertion от `IdP`.",
-                "source_of_confusion": "Кажется, что приложение всегда само проверяет учётку, как при обычной форме входа.",
-                "if_it_were_true": "Тогда пропал бы смысл SSO — централизации входа в `IdP`, ради которой `SAML` и используют.",
-                "how_it_should_be": "Пароль проверяет `IdP`; `SP` получает подписанную assertion и доверяет ей по федеративному соглашению."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`SAML` (`Security Assertion Markup Language`) — `XML`-стандарт обмена аутентификационными данными между `Identity Provider` (`IdP`) и `Service Provider` (`SP`). Пользователь логинится в `IdP`, тот отдаёт `SP` подписанную `SAML Response` с assertion. Применяют в enterprise: интеграция с `Active Directory`/`ADFS`, корпоративный SSO.",
               "correct": true,
               "sections": {
@@ -403,6 +391,18 @@
                 "when_to_apply": "`SAML` берут для корпоративных приложений и enterprise SSO, где уже есть `Active Directory`/`ADFS` и партнёры исторически работают по `XML`-федерации.",
                 "edge_cases": "Для новых приложений, мобильных, `SPA` и `REST API` обычно выбирают `OIDC` вместо `SAML`: он легче (`JSON`/`JWT`), а `XML`-обработка `SAML` тяжела и подвержена XML-атакам.",
                 "related": "[[authentication-authorization-patterns-interview#Q12]] `OIDC` как современная альтернатива; [[authentication-authorization-patterns-interview#Q13]] `SAML` в составе `SSO`; [[authentication-authorization-patterns-interview#Q22]] `SAML` в `Identity Federation`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SAML` устраняет `Identity Provider` из цепочки: `Service Provider` сам хранит пароли пользователей и проверяет их локально. Подписанные assertions нужны только для журналирования. Поэтому `SP`-инициированный поток не требует редиректов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `SAML` логин происходит на `IdP`; `SP` не хранит пароли и доверяет подписанному assertion от `IdP`.",
+                "source_of_confusion": "Кажется, что приложение всегда само проверяет учётку, как при обычной форме входа.",
+                "if_it_were_true": "Тогда пропал бы смысл SSO — централизации входа в `IdP`, ради которой `SAML` и используют.",
+                "how_it_should_be": "Пароль проверяет `IdP`; `SP` получает подписанную assertion и доверяет ей по федеративному соглашению."
               }
             },
             {
@@ -491,19 +491,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Основные паттерны: `Server-Side Sessions` (state на сервере, годится монолитам), `Distributed Sessions` через `Redis` (shared store для кластера), `JWT-based` (`stateless`, отлично масштабируется, но сложный logout) и `Hybrid` (`JWT` плюс Redis-blacklist как компромисс). Различаются хранением состояния, масштабированием и простотой отзыва.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ключевой выбор — где живёт состояние. Серверные сессии дают простой logout, но требуют sticky-сессий или общего store при масштабировании; `JWT` масштабируется без shared state, но logout требует blacklist или короткого TTL.",
-                "example": "Серверная сессия настраивается через `setHttpOnly(true)`, `setSecure(true)`, `SameSite=Strict`; распределённая — через `@EnableRedisHttpSession`; `JWT`-сессия — access 15 минут плюс refresh 30 дней с ротацией.",
-                "when_to_apply": "Серверные/распределённые сессии берут для веб-монолитов и кластеров браузерных клиентов; `JWT`-сессии — для микросервисов и API; hybrid — когда нужен и stateless, и быстрый отзыв.",
-                "edge_cases": "Logout у `JWT` не мгновенный без blacklist; распределённые сессии добавляют сетевой round-trip к `Redis` на каждый запрос, что бьёт по latency при высокой нагрузке.",
-                "related": "[[authentication-authorization-patterns-interview#Q15]] ротация refresh-токенов; [[authentication-authorization-patterns-interview#Q41]] детальное сравнение `JWT` и сессий; [[authentication-authorization-patterns-interview#Q3]] устройство `JWT`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Единственный корректный паттерн — серверная сессия с `JSESSIONID` в `Set-Cookie`: `Distributed Sessions` (`Redis`), `JWT-based` и `Hybrid` перечислены в `OWASP Session Management Cheat Sheet` как небезопасные. Причина — `stateless`-токены нельзя отозвать, поэтому стандарты запрещают их для аутентификации.",
               "correct": false,
               "sections": {
@@ -514,8 +501,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Паттерн `JWT-based` даёт мгновенный logout: удаление токена из `localStorage` на клиенте завершает сессию так же надёжно, как `session.invalidate()` на сервере. Копии токена при этом гаснут во всех вкладках.",
               "correct": false,
               "sections": {
@@ -523,6 +510,19 @@
                 "source_of_confusion": "Удобство серверного logout переносят на токены, не учитывая их stateless-природу.",
                 "if_it_were_true": "Тогда не появился бы hybrid-паттерн (`JWT` плюс Redis-blacklist), созданный именно для решения проблемы отзыва.",
                 "how_it_should_be": "У `JWT` logout сложный (blacklist/короткий TTL), а мгновенный отзыв — преимущество серверных сессий."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Основные паттерны: `Server-Side Sessions` (state на сервере, годится монолитам), `Distributed Sessions` через `Redis` (shared store для кластера), `JWT-based` (`stateless`, отлично масштабируется, но сложный logout) и `Hybrid` (`JWT` плюс Redis-blacklist как компромисс). Различаются хранением состояния, масштабированием и простотой отзыва.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевой выбор — где живёт состояние. Серверные сессии дают простой logout, но требуют sticky-сессий или общего store при масштабировании; `JWT` масштабируется без shared state, но logout требует blacklist или короткого TTL.",
+                "example": "Серверная сессия настраивается через `setHttpOnly(true)`, `setSecure(true)`, `SameSite=Strict`; распределённая — через `@EnableRedisHttpSession`; `JWT`-сессия — access 15 минут плюс refresh 30 дней с ротацией.",
+                "when_to_apply": "Серверные/распределённые сессии берут для веб-монолитов и кластеров браузерных клиентов; `JWT`-сессии — для микросервисов и API; hybrid — когда нужен и stateless, и быстрый отзыв.",
+                "edge_cases": "Logout у `JWT` не мгновенный без blacklist; распределённые сессии добавляют сетевой round-trip к `Redis` на каждый запрос, что бьёт по latency при высокой нагрузке.",
+                "related": "[[authentication-authorization-patterns-interview#Q15]] ротация refresh-токенов; [[authentication-authorization-patterns-interview#Q41]] детальное сравнение `JWT` и сессий; [[authentication-authorization-patterns-interview#Q3]] устройство `JWT`."
               }
             },
             {
@@ -551,18 +551,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Применяют набор мер вокруг `CSRF`: токен обязателен для всех `REST API`, включая stateless с `JWT` в `Authorization` (заголовок подделывается межсайтовым `<form>`-запросом так же, как cookie); `CsrfToken` кладут в каждый ответ (`X-CSRF-TOKEN`); против остальных атак хватает `HTTPS`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для stateless `JWT` в `Authorization` CSRF не применим: браузер не подставляет такой заголовок автоматически, поэтому CSRF-токен не нужен.",
-                "source_of_confusion": "«CSRF важна» — верно для cookie-based, и это правило ошибочно распространяют на токены в заголовке.",
-                "if_it_were_true": "Тогда документация `Spring Security` не советовала бы отключать CSRF для stateless API, но она это рекомендует.",
-                "how_it_should_be": "CSRF опасна при автоматически отправляемых cookie; для `JWT` в заголовке `Authorization` защита не требуется."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Применяют набор мер: против `Brute Force` — лимит попыток с блокировкой (например, 5 неудач → бан на 15 минут); против `CSRF` — `CsrfToken` для stateful-форм (для stateless `JWT` в заголовке CSRF не нужен); против `Session Fixation` — `changeSessionId()` после логина; против `Timing Attacks` — постоянное время ответа.",
               "correct": true,
               "sections": {
@@ -571,6 +559,18 @@
                 "when_to_apply": "Защиту от brute force и session fixation включают на любой форме логина; CSRF-токен — для браузерных stateful-приложений; постоянное время ответа — везде, где есть проверка существования пользователя.",
                 "edge_cases": "Для `REST API` с `JWT` (stateless) CSRF-защита не нужна — токен идёт в `Authorization`, а не в cookie; зато брутфорс по IP обходят через ботнеты, поэтому добавляют CAPTCHA и rate limiting по аккаунту.",
                 "related": "[[authentication-authorization-patterns-interview#Q8]] `MFA` как дополнительный барьер; [[authentication-authorization-patterns-interview#Q17]] rate limiting; [[authentication-authorization-patterns-interview#Q36]] безопасное хранение паролей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Применяют набор мер вокруг `CSRF`: токен обязателен для всех `REST API`, включая stateless с `JWT` в `Authorization` (заголовок подделывается межсайтовым `<form>`-запросом так же, как cookie); `CsrfToken` кладут в каждый ответ (`X-CSRF-TOKEN`); против остальных атак хватает `HTTPS`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для stateless `JWT` в `Authorization` CSRF не применим: браузер не подставляет такой заголовок автоматически, поэтому CSRF-токен не нужен.",
+                "source_of_confusion": "«CSRF важна» — верно для cookie-based, и это правило ошибочно распространяют на токены в заголовке.",
+                "if_it_were_true": "Тогда документация `Spring Security` не советовала бы отключать CSRF для stateless API, но она это рекомендует.",
+                "how_it_should_be": "CSRF опасна при автоматически отправляемых cookie; для `JWT` в заголовке `Authorization` защита не требуется."
               }
             },
             {
@@ -635,6 +635,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`API Gateway`, проверив токен, снимает вопрос доверия: заголовкам `X-User-Roles` downstream-сервисы верят как есть, даже открытые из интернета. Повторная проверка на сервисах дублирует работу edge.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Открытый из интернета сервис нельзя пускать на доверии к `X-User-*`: их подделают; нужна сетевая изоляция или повторная валидация токена.",
+                "source_of_confusion": "Удобство проброса identity создаёт ложную уверенность в защищённости заголовков.",
+                "if_it_were_true": "Тогда любой внешний клиент выдал бы себя за админа, отправив сервису заголовок `X-User-Roles: ADMIN`.",
+                "how_it_should_be": "Заголовкам gateway доверяют только при изоляции downstream; иначе сервис сам валидирует `JWT` (Zero Trust)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`API Gateway` — единая точка входа: глобальный фильтр (`GlobalFilter`) валидирует `JWT`, пропускает публичные маршруты, а для остальных проверяет токен и мутирует запрос, добавляя `X-User-Id`/`X-User-Roles` для downstream. Дополнительно на gateway вешают rate limiting (`Redis`-based) и маршрутизацию.",
               "correct": true,
               "sections": {
@@ -643,18 +655,6 @@
                 "when_to_apply": "Gateway security применяют в микросервисах с внешними клиентами: единая аутентификация, throttling, маскирование внутренней топологии и пробрасывание identity downstream.",
                 "edge_cases": "Gateway — single point of failure и узкое место по latency; downstream-сервисы не должны слепо доверять `X-User-*` без сетевой изоляции, иначе прямой доступ к сервису позволит подделать заголовки.",
                 "related": "[[authentication-authorization-patterns-interview#Q6]] безопасность микросервисов в целом; [[authentication-authorization-patterns-interview#Q17]] алгоритмы rate limiting; [[authentication-authorization-patterns-interview#Q38]] `BFF` как разновидность gateway."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`API Gateway`, проверив токен, снимает вопрос доверия: заголовкам `X-User-Roles` downstream-сервисы верят как есть, даже открытые из интернета. Повторная проверка на сервисах дублирует работу edge.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Открытый из интернета сервис нельзя пускать на доверии к `X-User-*`: их подделают; нужна сетевая изоляция или повторная валидация токена.",
-                "source_of_confusion": "Удобство проброса identity создаёт ложную уверенность в защищённости заголовков.",
-                "if_it_were_true": "Тогда любой внешний клиент выдал бы себя за админа, отправив сервису заголовок `X-User-Roles: ADMIN`.",
-                "how_it_should_be": "Заголовкам gateway доверяют только при изоляции downstream; иначе сервис сам валидирует `JWT` (Zero Trust)."
               }
             }
           ]
@@ -683,6 +683,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`OIDC` — протокол аутентификации поверх `OAuth 2.0`. `OAuth 2.0` решает авторизацию (доступ к ресурсам через access token), а `OIDC` добавляет аутентификацию: `ID Token` (`JWT` с `sub`, `name`, `email`, `aud`), endpoint `/userinfo`, discovery через `/.well-known/openid-configuration` и стандартные scopes `openid`, `profile`, `email`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чистый `OAuth` не стандартизует, кто такой пользователь, — он про доступ. `OIDC` вводит `ID Token`, по которому клиент достоверно узнаёт личность, и стандартный набор claims, поэтому именно `OIDC` используют для входа.",
+                "example": "В `Spring Security` `.oauth2Login()` реализует именно `OIDC`; контроллер получает `@AuthenticationPrincipal OidcUser` с `getFullName()`, `getEmail()`, `getClaims()`. В `application.yml` указывают `scope: openid, profile, email`.",
+                "when_to_apply": "`OIDC` берут, когда нужна аутентификация пользователя (social login, корпоративный вход через `Keycloak`/`Auth0`), а не только делегированный доступ к API.",
+                "edge_cases": "Без scope `openid` запрос остаётся обычным `OAuth` без `ID Token` — частая ошибка; `ID Token` предназначен клиенту для идентификации, а не для доступа к `Resource Server` (туда идёт access token).",
+                "related": "[[authentication-authorization-patterns-interview#Q2]] базовый `OAuth 2.0`; [[authentication-authorization-patterns-interview#Q14]] claims из токена; [[authentication-authorization-patterns-interview#Q13]] `OIDC` в составе SSO."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`ID Token` — это access token с полями профиля: к обычным claims доступа добавляются по `scope=profile` поля `name`, `email`, `picture`, `locale`, и ресурс-сервер принимает его в `Authorization: Bearer` для `API` так же, как `access_token`. Endpoint'ы (`/userinfo`, `/.well-known/openid-configuration`) лишь дублируют содержимое такого расширенного `JWT` (`sub`, `aud`, `exp`, `iss`).",
               "correct": false,
               "sections": {
@@ -693,8 +706,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`ID Token` выдаётся при scope `profile` или `email` — отдельный scope `openid` признан устаревшим. Современные провайдеры (`Keycloak`, `Auth0`) выдают identity-данные и без него.",
               "correct": false,
               "sections": {
@@ -702,19 +715,6 @@
                 "source_of_confusion": "Кажется, что раз провайдер поддерживает `OIDC`, идентификация включена по умолчанию.",
                 "if_it_were_true": "Тогда любой `OAuth`-запрос возвращал бы `ID Token`, но граница между `OAuth` и `OIDC` проходит именно по scope `openid`.",
                 "how_it_should_be": "Для `OIDC` обязателен scope `openid`; именно он включает выдачу `ID Token`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`OIDC` — протокол аутентификации поверх `OAuth 2.0`. `OAuth 2.0` решает авторизацию (доступ к ресурсам через access token), а `OIDC` добавляет аутентификацию: `ID Token` (`JWT` с `sub`, `name`, `email`, `aud`), endpoint `/userinfo`, discovery через `/.well-known/openid-configuration` и стандартные scopes `openid`, `profile`, `email`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Чистый `OAuth` не стандартизует, кто такой пользователь, — он про доступ. `OIDC` вводит `ID Token`, по которому клиент достоверно узнаёт личность, и стандартный набор claims, поэтому именно `OIDC` используют для входа.",
-                "example": "В `Spring Security` `.oauth2Login()` реализует именно `OIDC`; контроллер получает `@AuthenticationPrincipal OidcUser` с `getFullName()`, `getEmail()`, `getClaims()`. В `application.yml` указывают `scope: openid, profile, email`.",
-                "when_to_apply": "`OIDC` берут, когда нужна аутентификация пользователя (social login, корпоративный вход через `Keycloak`/`Auth0`), а не только делегированный доступ к API.",
-                "edge_cases": "Без scope `openid` запрос остаётся обычным `OAuth` без `ID Token` — частая ошибка; `ID Token` предназначен клиенту для идентификации, а не для доступа к `Resource Server` (туда идёт access token).",
-                "related": "[[authentication-authorization-patterns-interview#Q2]] базовый `OAuth 2.0`; [[authentication-authorization-patterns-interview#Q14]] claims из токена; [[authentication-authorization-patterns-interview#Q13]] `OIDC` в составе SSO."
               }
             }
           ]
@@ -803,6 +803,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Claims` обновляются в реальном времени: отзыв роли в `IdP` немедленно виден во всех выданных токенах, ведь `JWT` несёт не копии, а указатели на профиль (`sub`, `roles`, `department`), которые ресурс-сервер разыменовывает через `/userinfo` при каждом чтении. Поэтому смена прав не требует ре-логина и ре-выпуска `access_token`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Claims фиксируются на момент выпуска токена; уже выданный токен сохраняет старые claims до истечения `exp`.",
+                "source_of_confusion": "Кажется, что раз claims описывают права, они «живые» и синхронизируются с БД.",
+                "if_it_were_true": "Тогда не требовался бы короткий TTL и blacklist для быстрого отзыва прав, но их применяют именно из-за «застывания».",
+                "how_it_should_be": "Claims статичны до `exp`; для быстрого учёта изменений используют короткий TTL и refresh."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Claims` — утверждения о пользователе, включённые в токен (`JWT` или `SAML assertion`): `sub`, `email`, `roles`, `department`. При claims-based подходе приложение принимает решения по авторизации прямо на основе claims из подписанного токена, не обращаясь к БД на каждый запрос.",
               "correct": true,
               "sections": {
@@ -811,18 +823,6 @@
                 "when_to_apply": "Claims-based удобен в распределённых системах: токен самодостаточен, downstream-сервисы авторизуют по claims без общего хранилища пользователей и лишних запросов к auth-сервису.",
                 "edge_cases": "Claims «застывают» на момент выпуска токена: если роль отозвали, старый токен с прежними claims действует до `exp`; чувствительные данные в claims видны при decode, так как payload не шифруется.",
                 "related": "[[authentication-authorization-patterns-interview#Q3]] устройство `JWT` и claims; [[authentication-authorization-patterns-interview#Q4]] использование claims в `RBAC`/`ABAC`; [[authentication-authorization-patterns-interview#Q12]] claims в `ID Token` `OIDC`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Claims` обновляются в реальном времени: отзыв роли в `IdP` немедленно виден во всех выданных токенах, ведь `JWT` несёт не копии, а указатели на профиль (`sub`, `roles`, `department`), которые ресурс-сервер разыменовывает через `/userinfo` при каждом чтении. Поэтому смена прав не требует ре-логина и ре-выпуска `access_token`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Claims фиксируются на момент выпуска токена; уже выданный токен сохраняет старые claims до истечения `exp`.",
-                "source_of_confusion": "Кажется, что раз claims описывают права, они «живые» и синхронизируются с БД.",
-                "if_it_were_true": "Тогда не требовался бы короткий TTL и blacklist для быстрого отзыва прав, но их применяют именно из-за «застывания».",
-                "how_it_should_be": "Claims статичны до `exp`; для быстрого учёта изменений используют короткий TTL и refresh."
               }
             },
             {
@@ -863,18 +863,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Хранение refresh-токена выбирают на клиенте: `localStorage` надёжнее всего — до него не дотягивается серверный код и `httpOnly`-куки, а `XSS`-риск закрывает `CSP`, поэтому связку `localStorage` + длинный refresh рекомендуют для `SPA`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`localStorage` доступен JavaScript и уязвим к `XSS`: украденный оттуда refresh даёт долгий доступ; хранят в `httpOnly` cookie.",
-                "source_of_confusion": "`localStorage` удобен для фронтенда, и его удобство путают с безопасностью.",
-                "if_it_were_true": "Тогда рекомендации OWASP не предостерегали бы от хранения токенов в `localStorage`, но они это делают.",
-                "how_it_should_be": "Refresh хранят в `httpOnly` cookie (недоступной JS) или хэшем в БД, но не в `localStorage`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Ключевые практики: короткий TTL access token (5-15 минут), длинный refresh token (7-30 дней), ротация refresh (на каждый обмен выдаётся новый, старый инвалидируется), детекция повторного использования (повторный старый refresh → отзыв всей цепочки), хранение refresh в `httpOnly` cookie или хэшем в БД (никогда в `localStorage`), blacklist access-токенов в `Redis`.",
               "correct": true,
               "sections": {
@@ -883,6 +871,18 @@
                 "when_to_apply": "Refresh с ротацией применяют везде, где `JWT` используется для долгих сессий: нельзя держать access token живым неделями, поэтому короткий access обновляют через защищённый refresh.",
                 "edge_cases": "Гонка при параллельных запросах с одним refresh может ложно сработать как reuse — нужен grace-период или idempotent-обмен; refresh в `localStorage` уязвим к `XSS`, поэтому только `httpOnly` cookie.",
                 "related": "[[authentication-authorization-patterns-interview#Q3]] базовое устройство `JWT`; [[authentication-authorization-patterns-interview#Q9]] паттерны сессий; [[authentication-authorization-patterns-interview#Q37]] ошибки `JWT`, включая хранение токенов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Хранение refresh-токена выбирают на клиенте: `localStorage` надёжнее всего — до него не дотягивается серверный код и `httpOnly`-куки, а `XSS`-риск закрывает `CSP`, поэтому связку `localStorage` + длинный refresh рекомендуют для `SPA`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`localStorage` доступен JavaScript и уязвим к `XSS`: украденный оттуда refresh даёт долгий доступ; хранят в `httpOnly` cookie.",
+                "source_of_confusion": "`localStorage` удобен для фронтенда, и его удобство путают с безопасностью.",
+                "if_it_were_true": "Тогда рекомендации OWASP не предостерегали бы от хранения токенов в `localStorage`, но они это делают.",
+                "how_it_should_be": "Refresh хранят в `httpOnly` cookie (недоступной JS) или хэшем в БД, но не в `localStorage`."
               }
             },
             {
@@ -971,19 +971,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Rate Limiting` ограничивает число запросов по ключу (`IP`, `userId`, `API key`) за период. Основные алгоритмы: `Token Bucket` (токены пополняются с фиксированной скоростью, допускает burst), `Fixed Window` (счётчик с TTL на окно, прост, но даёт граничный всплеск до 2x) и `Sliding Window` (скользящее окно через `Redis ZADD`, точный, но требует больше памяти).",
-              "correct": true,
-              "sections": {
-                "explanation": "Цель — защита от перегрузки и абьюза. Выбор алгоритма — компромисс между точностью, памятью и допустимостью всплесков; в распределённой системе счётчики держат в общем хранилище (`Redis`).",
-                "example": "Простой fixed-window фильтр: `redis.opsForValue().increment(key)`, на первом инкременте `expire(key, 1 минута)`, при `count > 100` возвращается `429 Too Many Requests` с заголовком `X-RateLimit-Remaining`.",
-                "when_to_apply": "Rate limiting ставят на публичные API, эндпоинты логина (против brute force), дорогие операции и для защиты от DoS; ключ выбирают по `userId` для авторизованных и по `IP` для анонимных.",
-                "edge_cases": "`Fixed Window` уязвим к граничному всплеску: на стыке двух окон можно отправить почти двойной лимит; за NAT много пользователей делят один IP, поэтому лимит по IP бьёт по легитимным.",
-                "related": "[[authentication-authorization-patterns-interview#Q11]] rate limiting на `API Gateway`; [[authentication-authorization-patterns-interview#Q10]] защита от brute force; [[authentication-authorization-patterns-interview#Q21]] лимиты на уровне service mesh."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Rate Limiting` сигналит превышение статусом `403 Forbidden`: клиенту запрещён доступ, и это семантика прав. `429 Too Many Requests` зарезервирован для отказов инфраструктуры (`nginx`, балансировщик), приложение его не возвращает.",
               "correct": false,
               "sections": {
@@ -994,8 +981,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Fixed Window` — самый точный алгоритм: целочисленный счётчик с `TTL` на окно (`INCR` + `EXPIRE` в `Redis`) исключает всплески на границе окон, которыми страдают `Token Bucket` (переполнение bucket при burst) и `Sliding Window` (округление весов `ZADD`-меток). Поэтому в production берут именно `Fixed Window`.",
               "correct": false,
               "sections": {
@@ -1003,6 +990,19 @@
                 "source_of_confusion": "Простота `Fixed Window` создаёт впечатление надёжности и точности.",
                 "if_it_were_true": "Тогда не понадобился бы `Sliding Window`, но его вводят именно ради устранения граничного всплеска.",
                 "how_it_should_be": "`Fixed Window` прост, но даёт всплеск 2x на границе; для точности берут `Sliding Window` или `Token Bucket`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Rate Limiting` ограничивает число запросов по ключу (`IP`, `userId`, `API key`) за период. Основные алгоритмы: `Token Bucket` (токены пополняются с фиксированной скоростью, допускает burst), `Fixed Window` (счётчик с TTL на окно, прост, но даёт граничный всплеск до 2x) и `Sliding Window` (скользящее окно через `Redis ZADD`, точный, но требует больше памяти).",
+              "correct": true,
+              "sections": {
+                "explanation": "Цель — защита от перегрузки и абьюза. Выбор алгоритма — компромисс между точностью, памятью и допустимостью всплесков; в распределённой системе счётчики держат в общем хранилище (`Redis`).",
+                "example": "Простой fixed-window фильтр: `redis.opsForValue().increment(key)`, на первом инкременте `expire(key, 1 минута)`, при `count > 100` возвращается `429 Too Many Requests` с заголовком `X-RateLimit-Remaining`.",
+                "when_to_apply": "Rate limiting ставят на публичные API, эндпоинты логина (против brute force), дорогие операции и для защиты от DoS; ключ выбирают по `userId` для авторизованных и по `IP` для анонимных.",
+                "edge_cases": "`Fixed Window` уязвим к граничному всплеску: на стыке двух окон можно отправить почти двойной лимит; за NAT много пользователей делят один IP, поэтому лимит по IP бьёт по легитимным.",
+                "related": "[[authentication-authorization-patterns-interview#Q11]] rate limiting на `API Gateway`; [[authentication-authorization-patterns-interview#Q10]] защита от brute force; [[authentication-authorization-patterns-interview#Q21]] лимиты на уровне service mesh."
               }
             },
             {
@@ -1031,18 +1031,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`mTLS` — это односторонний `TLS` с усиленным рукопожатием: клиент проверяет сертификат сервера, как на любом `HTTPS`-сайте, но дважды (`ClientHello` и повторно после `Finished`). Клиентского сертификата в протоколе нет. «Mutual» относится к согласованию cipher suites обеими сторонами.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `mTLS` сертификаты предъявляют ОБЕ стороны; односторонняя проверка сертификата сервера — это обычный `TLS`, а не mutual.",
-                "source_of_confusion": "И `TLS`, и `mTLS` шифруют канал и используют сертификаты, поэтому их отождествляют.",
-                "if_it_were_true": "Тогда не было бы шага `Certificate Request` от сервера, но именно он отличает `mTLS` от обычного `TLS`.",
-                "how_it_should_be": "`mTLS` добавляет клиентский сертификат и его проверку сервером (`client-auth: need`) поверх обычного `TLS`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`mTLS` (mutual TLS) — двусторонняя аутентификация по сертификатам: в отличие от обычного `TLS`, где клиент проверяет сертификат сервера, при `mTLS` ОБЕ стороны предъявляют `X.509`-сертификаты. Сервер шлёт `Certificate Request`, клиент отвечает своим сертификатом и `CertificateVerify`. Применяют для микросервисов, B2B API, `Zero Trust` и `IoT`.",
               "correct": true,
               "sections": {
@@ -1051,6 +1039,18 @@
                 "when_to_apply": "`mTLS` берут для service-to-service аутентификации без паролей, партнёрских B2B-интеграций, сетевого уровня `Zero Trust` и устройств `IoT` с сертификатами.",
                 "edge_cases": "Основная сложность — управление сертификатами: выпуск, ротация (обычно 90 дней), отзыв через `CRL`/`OCSP`; на мобильных и в браузерах клиентские сертификаты неудобны, поэтому там `mTLS` почти не применяют.",
                 "related": "[[authentication-authorization-patterns-interview#Q1]] certificate-based как паттерн; [[authentication-authorization-patterns-interview#Q21]] автоматический `mTLS` в service mesh; [[authentication-authorization-patterns-interview#Q45]] реализация `mTLS` между сервисами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`mTLS` — это односторонний `TLS` с усиленным рукопожатием: клиент проверяет сертификат сервера, как на любом `HTTPS`-сайте, но дважды (`ClientHello` и повторно после `Finished`). Клиентского сертификата в протоколе нет. «Mutual» относится к согласованию cipher suites обеими сторонами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `mTLS` сертификаты предъявляют ОБЕ стороны; односторонняя проверка сертификата сервера — это обычный `TLS`, а не mutual.",
+                "source_of_confusion": "И `TLS`, и `mTLS` шифруют канал и используют сертификаты, поэтому их отождествляют.",
+                "if_it_were_true": "Тогда не было бы шага `Certificate Request` от сервера, но именно он отличает `mTLS` от обычного `TLS`.",
+                "how_it_should_be": "`mTLS` добавляет клиентский сертификат и его проверку сервером (`client-auth: need`) поверх обычного `TLS`."
               }
             },
             {
@@ -1115,6 +1115,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Аудит-логи держат локально на инстансах: раскладка по узлам уже даёт шардирование, а центральное хранилище (`Elasticsearch`) создаёт единую точку компрометации. Алерты строят по `grep` в ротируемых файлах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Логи централизуют в `Elasticsearch`/`SIEM`: локальные логи теряются при падении узла и не дают корреляции событий по системе.",
+                "source_of_confusion": "Локальный файл лога проще, и кажется достаточным для «просто записи».",
+                "if_it_were_true": "Тогда нельзя было бы строить кросс-сервисные алерты и расследовать распределённые атаки.",
+                "how_it_should_be": "Security-события агрегируют в централизованный `SIEM` для корреляции, поиска и алертов по аномалиям."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Логируют ключевые события: успешный/неуспешный вход, изменение прав, доступ к чувствительным данным, подозрительную активность — с полями userId, IP, timestamp, причина. В `Spring` это делают через события: `@EventListener` на `AuthenticationSuccessEvent` и `AbstractAuthenticationFailureEvent`. Логи централизуют в `Elasticsearch`/`SIEM` и строят алерты по аномалиям.",
               "correct": true,
               "sections": {
@@ -1123,18 +1135,6 @@
                 "when_to_apply": "Security-аудит обязателен для систем с регуляторными требованиями и везде, где нужно расследовать инциденты: финансы, медицина, обработка персональных данных.",
                 "edge_cases": "Нельзя логировать сами пароли, токены и PII в открытом виде — это создаёт новую утечку; алерты по неудачам входа должны учитывать ботнеты (распределённый brute force с разных IP).",
                 "related": "[[authentication-authorization-patterns-interview#Q10]] детект brute force по логам; [[authentication-authorization-patterns-interview#Q16]] continuous monitoring в Zero Trust; [[authentication-authorization-patterns-interview#Q20]] контекст для подозрительной активности."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Аудит-логи держат локально на инстансах: раскладка по узлам уже даёт шардирование, а центральное хранилище (`Elasticsearch`) создаёт единую точку компрометации. Алерты строят по `grep` в ротируемых файлах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Логи централизуют в `Elasticsearch`/`SIEM`: локальные логи теряются при падении узла и не дают корреляции событий по системе.",
-                "source_of_confusion": "Локальный файл лога проще, и кажется достаточным для «просто записи».",
-                "if_it_were_true": "Тогда нельзя было бы строить кросс-сервисные алерты и расследовать распределённые атаки.",
-                "how_it_should_be": "Security-события агрегируют в централизованный `SIEM` для корреляции, поиска и алертов по аномалиям."
               }
             }
           ]
@@ -1163,6 +1163,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Авторизация на основе контекста запроса: время, геолокация, устройство, уровень риска, тип соединения. Расширяет `ABAC`, фокусируясь на динамических условиях среды. Примеры: админка только из корпоративной сети (VPN), step-up при входе с нового устройства, блокировка из banned-стран, ограничение действий в нерабочее время.",
+              "correct": true,
+              "sections": {
+                "explanation": "Решение зависит не только от роли, но и от обстоятельств запроса. Это реализуют policy engine (`OPA`, `AWS Verified Permissions`), проверяя контекст при каждом запросе и кэшируя решения для производительности.",
+                "example": "`ContextBasedAuthService.isAllowed()`: для `ADMIN_*` действий требует `ctx.isVpnConnection()`, отклоняет banned-страны, а на неизвестное устройство (`deviceFingerprint`) бросает `StepUpAuthRequired`.",
+                "when_to_apply": "Context-based берут, когда статической роли недостаточно: банки, админ-доступ, чувствительные операции — нужно учитывать откуда, когда и с какого устройства пришёл запрос.",
+                "edge_cases": "Контекст можно подделать (IP через VPN, device fingerprint), поэтому его сочетают с другими факторами; ложные срабатывания (легитимный пользователь в поездке) требуют fallback вроде step-up, а не жёсткого блока.",
+                "related": "[[authentication-authorization-patterns-interview#Q4]] `ABAC`, который расширяет context-based; [[authentication-authorization-patterns-interview#Q23]] step-up как реакция на контекст; [[authentication-authorization-patterns-interview#Q31]] dynamic authorization и policy engine."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Контекстные атрибуты — замещающий фактор: совпадение `IP`-диапазона, `geo` и привычного времени входа надёжнее пароля, который можно украсть или перехватить. При знакомом контексте остальные проверки поэтому пропускаются целиком. В этом и состоит context-based контроль — контекст вместо ролей и правил.",
               "correct": false,
               "sections": {
@@ -1173,8 +1186,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Context-based контроль реагирует блокировкой: нетипичный контекст (`IP` из новой страны, незнакомое устройство) закрывает доступ до обращения в поддержку. Ступенчатых реакций вроде step-up аутентификации модель не предусматривает — это уже прерогатива `MFA`.",
               "correct": false,
               "sections": {
@@ -1182,19 +1195,6 @@
                 "source_of_confusion": "Кажется, что безопасная реакция — только запрет, без промежуточных вариантов.",
                 "if_it_were_true": "Тогда вход с нового устройства всегда означал бы окончательный отказ, что ломало бы UX.",
                 "how_it_should_be": "Нетипичный контекст обычно требует step-up (доп. подтверждение), а жёсткий блок — лишь для явно опасных случаев."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Авторизация на основе контекста запроса: время, геолокация, устройство, уровень риска, тип соединения. Расширяет `ABAC`, фокусируясь на динамических условиях среды. Примеры: админка только из корпоративной сети (VPN), step-up при входе с нового устройства, блокировка из banned-стран, ограничение действий в нерабочее время.",
-              "correct": true,
-              "sections": {
-                "explanation": "Решение зависит не только от роли, но и от обстоятельств запроса. Это реализуют policy engine (`OPA`, `AWS Verified Permissions`), проверяя контекст при каждом запросе и кэшируя решения для производительности.",
-                "example": "`ContextBasedAuthService.isAllowed()`: для `ADMIN_*` действий требует `ctx.isVpnConnection()`, отклоняет banned-страны, а на неизвестное устройство (`deviceFingerprint`) бросает `StepUpAuthRequired`.",
-                "when_to_apply": "Context-based берут, когда статической роли недостаточно: банки, админ-доступ, чувствительные операции — нужно учитывать откуда, когда и с какого устройства пришёл запрос.",
-                "edge_cases": "Контекст можно подделать (IP через VPN, device fingerprint), поэтому его сочетают с другими факторами; ложные срабатывания (легитимный пользователь в поездке) требуют fallback вроде step-up, а не жёсткого блока.",
-                "related": "[[authentication-authorization-patterns-interview#Q4]] `ABAC`, который расширяет context-based; [[authentication-authorization-patterns-interview#Q23]] step-up как реакция на контекст; [[authentication-authorization-patterns-interview#Q31]] dynamic authorization и policy engine."
               }
             }
           ]
@@ -1283,6 +1283,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Identity Federation` избавляет от маппинга атрибутов: протоколы (`SAML`, `WS-Federation`, `OIDC`) передают claims в стандартизованном виде, и принимающая сторона (`SP`) использует `groups` и `roles` чужого `IdP` напрямую. Таблицы соответствия не нужны. Примеры: группы `Azure AD` читаются `Google Workspace` как свои, B2B-партнёр наследует роли корпоративного каталога.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Схемы атрибутов разных `IdP` обычно НЕ совпадают, поэтому ключевая задача федерации — маппинг claims между ними.",
+                "source_of_confusion": "Кажется, что раз есть доверие, форматы автоматически согласованы.",
+                "if_it_were_true": "Тогда не существовало бы таблиц маппинга claims, но они — центральный элемент любой федерации.",
+                "how_it_should_be": "Роли/groups разных `IdP` различаются, поэтому federation обязательно включает маппинг атрибутов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Identity Federation` — доверительные отношения между несколькими `Identity Provider` (`IdP`): пользователь аутентифицируется в одном `IdP` и получает доступ к ресурсам, связанным с другим. Протоколы: `SAML`, `WS-Federation`, `OIDC`. Сценарии: доступ партнёров к корпоративным ресурсам, мультиоблако (`Azure AD` плюс `Google Workspace`), B2B-интеграции.",
               "correct": true,
               "sections": {
@@ -1291,18 +1303,6 @@
                 "when_to_apply": "Federation внедряют при работе с внешними организациями и мультиоблаком: партнёрам не заводят отдельные учётки, они входят через свой `IdP`, а доверие настраивается между провайдерами.",
                 "edge_cases": "Самая частая боль — несовпадение схем атрибутов между `IdP` (роль `Manager` в одном vs `Lead` в другом), требующее маппинга; разрыв доверия с одним `IdP` мгновенно отрезает всех его пользователей.",
                 "related": "[[authentication-authorization-patterns-interview#Q13]] SSO как основа federation; [[authentication-authorization-patterns-interview#Q7]] `SAML` для федерации; [[authentication-authorization-patterns-interview#Q14]] claims и их маппинг."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Identity Federation` избавляет от маппинга атрибутов: протоколы (`SAML`, `WS-Federation`, `OIDC`) передают claims в стандартизованном виде, и принимающая сторона (`SP`) использует `groups` и `roles` чужого `IdP` напрямую. Таблицы соответствия не нужны. Примеры: группы `Azure AD` читаются `Google Workspace` как свои, B2B-партнёр наследует роли корпоративного каталога.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Схемы атрибутов разных `IdP` обычно НЕ совпадают, поэтому ключевая задача федерации — маппинг claims между ними.",
-                "source_of_confusion": "Кажется, что раз есть доверие, форматы автоматически согласованы.",
-                "if_it_were_true": "Тогда не существовало бы таблиц маппинга claims, но они — центральный элемент любой федерации.",
-                "how_it_should_be": "Роли/groups разных `IdP` различаются, поэтому federation обязательно включает маппинг атрибутов."
               }
             },
             {
@@ -1343,18 +1343,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Step-Up Authentication` реализуют по времени входа: если с момента логина прошло меньше интервала (`auth_time` свежее 15 минут), чувствительную операцию (`POST /api/transfers`) пропускают без повторного подтверждения — обращаться к claim `acr` в `JWT` и `Identity Provider` (`Keycloak`, `Auth0`) не нужно, свежесть сессии и есть уровень аутентификации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Уровень (`acr`) удостоверяет `IdP` и кладёт в подписанный `JWT`; клиент не может сам объявить себя прошедшим `MFA`.",
-                "source_of_confusion": "Кажется удобным доверять флагу от клиента, не задумываясь о подделке.",
-                "if_it_were_true": "Тогда злоумышленник просто слал бы `acr: urn:mfa` и обходил step-up для платежей.",
-                "how_it_should_be": "`acr` проставляет `IdP` при аутентификации и подписывает в токене; сервис доверяет именно ему."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Step-Up Authentication` — повышение уровня аутентификации для чувствительных операций: просмотр профиля — обычный вход, но перевод денег требует повторного `2FA`. Реализуют через claim `acr` (`Authentication Context Class Reference`) в `JWT`: если операция критична, а `acr` не соответствует нужному уровню (например, не `urn:mfa`), возвращают отказ с требованием step-up.",
               "correct": true,
               "sections": {
@@ -1363,6 +1351,18 @@
                 "when_to_apply": "Step-up применяют для редких высокорисковых действий (платежи, смена пароля, доступ к админке): обычный вход остаётся лёгким, а усиленная проверка включается только при необходимости.",
                 "edge_cases": "Step-up должен апгрейдить текущую сессию, а не начинать новую: пользователь подтверждает `2FA` поверх уже активного входа; уровень `acr` нельзя выводить только из клиента — его удостоверяет `IdP`.",
                 "related": "[[authentication-authorization-patterns-interview#Q8]] `MFA` как механизм step-up; [[authentication-authorization-patterns-interview#Q20]] контекст для триггера step-up; [[authentication-authorization-patterns-interview#Q14]] claim `acr` в токене."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Step-Up Authentication` реализуют по времени входа: если с момента логина прошло меньше интервала (`auth_time` свежее 15 минут), чувствительную операцию (`POST /api/transfers`) пропускают без повторного подтверждения — обращаться к claim `acr` в `JWT` и `Identity Provider` (`Keycloak`, `Auth0`) не нужно, свежесть сессии и есть уровень аутентификации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уровень (`acr`) удостоверяет `IdP` и кладёт в подписанный `JWT`; клиент не может сам объявить себя прошедшим `MFA`.",
+                "source_of_confusion": "Кажется удобным доверять флагу от клиента, не задумываясь о подделке.",
+                "if_it_were_true": "Тогда злоумышленник просто слал бы `acr: urn:mfa` и обходил step-up для платежей.",
+                "how_it_should_be": "`acr` проставляет `IdP` при аутентификации и подписывает в токене; сервис доверяет именно ему."
               }
             },
             {
@@ -1451,19 +1451,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`GraphQL` требует специфических мер из-за гибкости запросов: ограничение глубины (`maxDepth`) против слишком вложенных запросов, ограничение complexity score против DoS сложными запросами, field-level авторизация для чувствительных полей, отключение introspection (`__schema`) в production и `DataLoader` против N+1.",
-              "correct": true,
-              "sections": {
-                "explanation": "Один GraphQL-endpoint принимает произвольные запросы, поэтому классической per-endpoint защиты мало. Контроль глубины и сложности предотвращает ресурсное истощение, а field-level авторизация защищает отдельные поля независимо от того, как к ним пришли.",
-                "example": "Кастомная `Instrumentation`: в `instrumentDataFetcher` для поля `salary` проверяется `hasRole(auth, \"HR\")`, иначе бросается `AccessDeniedException`; так доступ к полю контролируется независимо от запроса.",
-                "when_to_apply": "Эти меры применяют на любом публичном или внутреннем `GraphQL API`: глубину/сложность лимитируют всегда, field-level авторизацию — для полей с разной чувствительностью (зарплата, PII).",
-                "edge_cases": "Без лимита глубины рекурсивный запрос (друзья друзей друзей) кладёт сервер; introspection, оставленный в production, раскрывает всю схему атакующему, упрощая разведку.",
-                "related": "[[authentication-authorization-patterns-interview#Q27]] field-level как fine-grained авторизация; [[authentication-authorization-patterns-interview#Q17]] rate limiting/complexity против DoS; [[authentication-authorization-patterns-interview#Q29]] защита нестандартных транспортов."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`GraphQL` защищают стандартным веб-контуром: авторизация на единственном endpoint (`/graphql`) по токену, `WAF` с сигнатурами инъекций и `HTTPS` — этого достаточно, потому что сервер выполняет только резолверы, запрошенные авторизованным клиентом, а глубина запроса ограничена самой схемой (`maxDepth` её дублирует).",
               "correct": false,
               "sections": {
@@ -1474,8 +1461,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`__schema`-introspection в production держат включённым: без него клиенты (`Apollo`, `Relay`) не смогут построить запрос и типизацию, а кодогенерация (`graphql-codegen`) и `GraphiQL` потеряют схему — поэтому introspection отключают только в dev-окружениях с нестабильной схемой, где случайный клиент не успевает закэшировать типы.",
               "correct": false,
               "sections": {
@@ -1483,6 +1470,19 @@
                 "source_of_confusion": "Introspection активно используют инструменты разработки, и его считают обязательным в рантайме.",
                 "if_it_were_true": "Тогда отключение `__schema` ломало бы продакшен-клиентов, но они работают по известным заранее запросам.",
                 "how_it_should_be": "Запросы выполняются и без introspection; в production его выключают, оставляя лишь для dev-инструментов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`GraphQL` требует специфических мер из-за гибкости запросов: ограничение глубины (`maxDepth`) против слишком вложенных запросов, ограничение complexity score против DoS сложными запросами, field-level авторизация для чувствительных полей, отключение introspection (`__schema`) в production и `DataLoader` против N+1.",
+              "correct": true,
+              "sections": {
+                "explanation": "Один GraphQL-endpoint принимает произвольные запросы, поэтому классической per-endpoint защиты мало. Контроль глубины и сложности предотвращает ресурсное истощение, а field-level авторизация защищает отдельные поля независимо от того, как к ним пришли.",
+                "example": "Кастомная `Instrumentation`: в `instrumentDataFetcher` для поля `salary` проверяется `hasRole(auth, \"HR\")`, иначе бросается `AccessDeniedException`; так доступ к полю контролируется независимо от запроса.",
+                "when_to_apply": "Эти меры применяют на любом публичном или внутреннем `GraphQL API`: глубину/сложность лимитируют всегда, field-level авторизацию — для полей с разной чувствительностью (зарплата, PII).",
+                "edge_cases": "Без лимита глубины рекурсивный запрос (друзья друзей друзей) кладёт сервер; introspection, оставленный в production, раскрывает всю схему атакующему, упрощая разведку.",
+                "related": "[[authentication-authorization-patterns-interview#Q27]] field-level как fine-grained авторизация; [[authentication-authorization-patterns-interview#Q17]] rate limiting/complexity против DoS; [[authentication-authorization-patterns-interview#Q29]] защита нестандартных транспортов."
               }
             },
             {
@@ -1511,18 +1511,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Делегированная авторизация — передача учётных данных: пользователь сообщает приложению логин и пароль, оно действует от его имени, как он сам. Именно эту схему закрепляет `OAuth 2.0` потоком `password` (`Resource Owner Password Credentials`) — базовым для делегирования.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Суть делегирования в том, что пароль НЕ передаётся: приложение получает access token с ограниченными scopes через consent.",
-                "source_of_confusion": "Кажется, что действовать «от имени» можно только зная учётку.",
-                "if_it_were_true": "Тогда отзыв доступа требовал бы смены пароля, но в `OAuth` достаточно отозвать токен/согласие.",
-                "how_it_should_be": "Пользователь даёт согласие на scopes; приложение получает токен, а пароль остаётся у `Authorization Server`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Делегированная авторизация — пользователь даёт приложению ограниченные права на свои ресурсы: «приложение X может читать мои фото, но не удалять». Это основная идея `OAuth 2.0`: через consent screen пользователь авторизует приложение, оно получает access token с ограниченными scopes (`read`, `write`, `delete`), и доступ можно отозвать в любой момент.",
               "correct": true,
               "sections": {
@@ -1531,6 +1519,18 @@
                 "when_to_apply": "Делегирование применяют, когда стороннее приложение работает с данными пользователя: интеграции (календарь, фото, контакты), где нельзя и не нужно отдавать ему пароль.",
                 "edge_cases": "Чрезмерные scopes (запросить `delete`, когда нужен только `read`) нарушают least privilege; пользователь должен иметь возможность отозвать доступ, не меняя пароль — иначе теряется смысл делегирования.",
                 "related": "[[authentication-authorization-patterns-interview#Q2]] `OAuth 2.0` как основа делегирования; [[authentication-authorization-patterns-interview#Q32]] проверка scopes на Resource Server; [[authentication-authorization-patterns-interview#Q4]] scopes в связке с `RBAC`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Делегированная авторизация — передача учётных данных: пользователь сообщает приложению логин и пароль, оно действует от его имени, как он сам. Именно эту схему закрепляет `OAuth 2.0` потоком `password` (`Resource Owner Password Credentials`) — базовым для делегирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть делегирования в том, что пароль НЕ передаётся: приложение получает access token с ограниченными scopes через consent.",
+                "source_of_confusion": "Кажется, что действовать «от имени» можно только зная учётку.",
+                "if_it_were_true": "Тогда отзыв доступа требовал бы смены пароля, но в `OAuth` достаточно отозвать токен/согласие.",
+                "how_it_should_be": "Пользователь даёт согласие на scopes; приложение получает токен, а пароль остаётся у `Authorization Server`."
               }
             },
             {
@@ -1595,6 +1595,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Собственную логику `Spring Security` в проверку прав не пускает: выражения ограничены встроенными `hasRole` и `hasAuthority`, бины (`@orderSecurity`) в `SpEL` недоступны. Права на конкретный объект проверяют вручную в сервисе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для object-level прав вызывают свои бины из SpEL (`@orderSecurity.isOwner(...)`) или кастомный `PermissionEvaluator` (`hasPermission`).",
+                "source_of_confusion": "Знакомы только базовые выражения `hasRole`/`hasAuthority`, и кажется, что других нет.",
+                "if_it_were_true": "Тогда `@PreAuthorize(\"@orderSecurity.isOwner(...)\")` не работал бы, но вызов бинов в SpEL поддерживается.",
+                "how_it_should_be": "В `@PreAuthorize` вызывают свои бины и `PermissionEvaluator` для произвольной логики прав на объект."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Авторизация на уровне отдельных объектов: «пользователь может редактировать только свои заказы». Подходы по возрастанию сложности: проверка в коде (owner check), `@PreAuthorize` плюс SpEL, кастомный `PermissionEvaluator` (`hasPermission`) для прав на объект и внешний policy engine (`OPA`) для сложных бизнес-правил. В `Spring` часто используют `@PostAuthorize` для проверки уже загруженного объекта.",
               "correct": true,
               "sections": {
@@ -1603,18 +1615,6 @@
                 "when_to_apply": "Fine-grained нужен, когда права зависят от конкретного экземпляра объекта: документы, заказы, файлы — где роли `USER` недостаточно, важно именно владение.",
                 "edge_cases": "`@PostAuthorize` грузит объект ДО проверки прав — побочные эффекты (списание, логирование) могут произойти до отказа, поэтому для мутаций предпочитают `@PreAuthorize`; проверка владельца в коде легко забывается на новых эндпоинтах.",
                 "related": "[[authentication-authorization-patterns-interview#Q33]] кастомный `PermissionEvaluator`; [[authentication-authorization-patterns-interview#Q4]] `ABAC` для тонких правил; [[authentication-authorization-patterns-interview#Q44]] комбинация `RBAC` и object-level проверок."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Собственную логику `Spring Security` в проверку прав не пускает: выражения ограничены встроенными `hasRole` и `hasAuthority`, бины (`@orderSecurity`) в `SpEL` недоступны. Права на конкретный объект проверяют вручную в сервисе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для object-level прав вызывают свои бины из SpEL (`@orderSecurity.isOwner(...)`) или кастомный `PermissionEvaluator` (`hasPermission`).",
-                "source_of_confusion": "Знакомы только базовые выражения `hasRole`/`hasAuthority`, и кажется, что других нет.",
-                "if_it_were_true": "Тогда `@PreAuthorize(\"@orderSecurity.isOwner(...)\")` не работал бы, но вызов бинов в SpEL поддерживается.",
-                "how_it_should_be": "В `@PreAuthorize` вызывают свои бины и `PermissionEvaluator` для произвольной логики прав на объект."
               }
             }
           ]
@@ -1643,6 +1643,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Token Binding` (`RFC 8471`) — привязка токена к конкретному `TLS`-соединению через криптографический proof, чтобы украденный токен нельзя было использовать на другом соединении. Клиент и сервер обмениваются ключами при handshake, токен включает binding ID. На практике поддержка ограничена (отменено в браузерах), поэтому используют альтернативы: `DPoP` (`RFC 9449`), короткий TTL плюс ротация, sender-constrained `mTLS`-токены.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обычный bearer-токен годен для любого, кто им завладел. Token binding делает токен sender-constrained: он работает только у владельца исходного ключа/соединения, нейтрализуя кражу.",
+                "example": "Современная альтернатива — `DPoP`: клиент подписывает каждый запрос своим ключом, и сервер проверяет, что предъявитель токена владеет приватным ключом; либо `mTLS` certificate-bound токены.",
+                "when_to_apply": "Sender-constrained подходы применяют для высокоценных токенов, где кража критична (финансы, доступ к API с большими правами), и где bearer-семантики недостаточно.",
+                "edge_cases": "Сам `Token Binding` (`RFC 8471`) фактически мёртв — браузеры убрали поддержку, поэтому в новых системах берут `DPoP` или `mTLS`-bound токены, а не оригинальный механизм.",
+                "related": "[[authentication-authorization-patterns-interview#Q18]] `mTLS` для certificate-bound токенов; [[authentication-authorization-patterns-interview#Q15]] короткий TTL и ротация как альтернатива; [[authentication-authorization-patterns-interview#Q37]] риск кражи bearer-токенов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Token Binding` (`RFC 8471`) — основной действующий стандарт привязки: браузеры (`Chrome`, `Edge`) и `TLS`-стеки поддерживают его повсеместно, negotiation входит в `TLS 1.3` по умолчанию. Альтернативы (`DPoP`, `RFC 9449`, sender-constrained `mTLS`-токены) создавались для legacy-окружений и в новых системах не нужны.",
               "correct": false,
               "sections": {
@@ -1653,8 +1666,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Bearer`-токен привязан к клиенту самой выдачей: `JWT` содержит `sub` конкретного пользователя, поэтому на другом устройстве украденный токен не пройдёт валидацию. Отдельный механизм привязки дублирует эту проверку.",
               "correct": false,
               "sections": {
@@ -1662,19 +1675,6 @@
                 "source_of_confusion": "Кажется, что раз токен выдали конкретному клиенту, он «знает» владельца.",
                 "if_it_were_true": "Тогда кража `JWT` не давала бы доступа, но похищенный bearer прекрасно работает у атакующего.",
                 "how_it_should_be": "Bearer не привязан к клиенту; привязку добавляют отдельно (token binding, `DPoP`, `mTLS`-bound)."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Token Binding` (`RFC 8471`) — привязка токена к конкретному `TLS`-соединению через криптографический proof, чтобы украденный токен нельзя было использовать на другом соединении. Клиент и сервер обмениваются ключами при handshake, токен включает binding ID. На практике поддержка ограничена (отменено в браузерах), поэтому используют альтернативы: `DPoP` (`RFC 9449`), короткий TTL плюс ротация, sender-constrained `mTLS`-токены.",
-              "correct": true,
-              "sections": {
-                "explanation": "Обычный bearer-токен годен для любого, кто им завладел. Token binding делает токен sender-constrained: он работает только у владельца исходного ключа/соединения, нейтрализуя кражу.",
-                "example": "Современная альтернатива — `DPoP`: клиент подписывает каждый запрос своим ключом, и сервер проверяет, что предъявитель токена владеет приватным ключом; либо `mTLS` certificate-bound токены.",
-                "when_to_apply": "Sender-constrained подходы применяют для высокоценных токенов, где кража критична (финансы, доступ к API с большими правами), и где bearer-семантики недостаточно.",
-                "edge_cases": "Сам `Token Binding` (`RFC 8471`) фактически мёртв — браузеры убрали поддержку, поэтому в новых системах берут `DPoP` или `mTLS`-bound токены, а не оригинальный механизм.",
-                "related": "[[authentication-authorization-patterns-interview#Q18]] `mTLS` для certificate-bound токенов; [[authentication-authorization-patterns-interview#Q15]] короткий TTL и ротация как альтернатива; [[authentication-authorization-patterns-interview#Q37]] риск кражи bearer-токенов."
               }
             }
           ]
@@ -1763,6 +1763,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`code_verifier` клиент отправляет уже на шаге `/authorize`, а производный `code_challenge = SHA256(verifier)` (`method=S256`, кодировка `Base64url`) придерживает у себя; при обмене `authorization code` на токен (`/token`) предъявляется challenge, и `Authorization Server` сверяет `SHA256(challenge) == verifier`. Секрет (`SecureRandom`-строка) при этом раскрывается лишь на первом шаге, где канал защищён `TLS` и redirect ещё не участвует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: на `/authorize` шлют `code_challenge` (хэш), а `code_verifier` (исходник) предъявляют только при обмене кода на токен.",
+                "source_of_confusion": "Порядок передачи verifier и challenge легко перепутать местами.",
+                "if_it_were_true": "Тогда перехват `/authorize` раскрыл бы verifier, и защита PKCE рухнула бы — но передаётся именно хэш.",
+                "how_it_should_be": "На `/authorize` идёт `code_challenge = SHA256(verifier)`; verifier раскрывают лишь на `/token`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`PKCE` (`RFC 7636`) — расширение `OAuth 2.0` для защиты `Authorization Code Flow` в публичных клиентах (`SPA`, мобильные), которые не могут безопасно хранить `client_secret`. Клиент генерирует случайный `code_verifier`, считает `code_challenge = SHA256(code_verifier)`, шлёт challenge при `/authorize`, а при обмене кода на токен предъявляет verifier; сервер сверяет `SHA256(verifier) == challenge`.",
               "correct": true,
               "sections": {
@@ -1771,18 +1783,6 @@
                 "when_to_apply": "`PKCE` обязателен для публичных клиентов (`SPA`, мобильные) в `Authorization Code Flow`; современная рекомендация — применять его и для confidential clients как defense-in-depth.",
                 "edge_cases": "`code_verifier` должен генерироваться криптостойко (`SecureRandom`) и быть достаточно длинным; method `plain` (verifier без хэширования) допустим стандартом, но небезопасен — используют только `S256`.",
                 "related": "[[authentication-authorization-patterns-interview#Q2]] `Authorization Code Flow`, который защищает `PKCE`; [[authentication-authorization-patterns-interview#Q38]] `BFF` как альтернатива для `SPA`; [[authentication-authorization-patterns-interview#Q37]] риски при работе с токенами."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`code_verifier` клиент отправляет уже на шаге `/authorize`, а производный `code_challenge = SHA256(verifier)` (`method=S256`, кодировка `Base64url`) придерживает у себя; при обмене `authorization code` на токен (`/token`) предъявляется challenge, и `Authorization Server` сверяет `SHA256(challenge) == verifier`. Секрет (`SecureRandom`-строка) при этом раскрывается лишь на первом шаге, где канал защищён `TLS` и redirect ещё не участвует.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: на `/authorize` шлют `code_challenge` (хэш), а `code_verifier` (исходник) предъявляют только при обмене кода на токен.",
-                "source_of_confusion": "Порядок передачи verifier и challenge легко перепутать местами.",
-                "if_it_were_true": "Тогда перехват `/authorize` раскрыл бы verifier, и защита PKCE рухнула бы — но передаётся именно хэш.",
-                "how_it_should_be": "На `/authorize` идёт `code_challenge = SHA256(verifier)`; verifier раскрывают лишь на `/token`."
               }
             },
             {
@@ -1823,18 +1823,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Динамические решения строят на атрибутах, зафиксированных при выдаче токена: отдел (`department`), уровень доступа (`clearance`) и лимиты кладут в claims, и policy-проверка (без внешнего `OPA`) читает их из `JWT` без похода в БД. Меняющееся во время запроса состояние объекта — статус (`status`), сумма (`amount`) — учесть нельзя. Поэтому dynamic authorization сводят к продуманному набору claims. Пересмотр правил происходит при рефреше токена.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Главная особенность — решение по runtime-данным (`amount`, статус, время), а не только по роли.",
-                "source_of_confusion": "Динамику путают со статическим `RBAC`, где всё решает роль.",
-                "if_it_were_true": "Тогда правило «директор для суммы больше 1000» было бы невыразимо, но именно его реализует `OrderApprovalPolicy`.",
-                "how_it_should_be": "Решение зависит от контекста и данных момента (сумма, статус), а не только от роли субъекта."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Авторизация на основе runtime-данных: состояние объекта, бизнес-правила, внешние факторы. Решение вычисляет policy engine по запросу (`userId`, `action`, `resource`, `context`). Пример правила: менеджер одобряет заказы до 1000, выше — только директор. Для сложных правил используют `OPA` (Open Policy Agent с языком `Rego`) или `AWS Verified Permissions`.",
               "correct": true,
               "sections": {
@@ -1843,6 +1831,18 @@
                 "when_to_apply": "Dynamic authorization применяют, когда правила меняются часто или зависят от runtime-данных: лимиты согласования, рабочие процессы, правила по сумме/региону — там, где хардкод привёл бы к постоянным релизам.",
                 "edge_cases": "Внешний policy engine добавляет сетевую задержку и точку отказа — решения кэшируют, а на недоступность engine нужна fail-safe-политика (обычно deny); правила в `Rego` требуют отдельного тестирования.",
                 "related": "[[authentication-authorization-patterns-interview#Q4]] `ABAC` как основа dynamic; [[authentication-authorization-patterns-interview#Q20]] контекст в правилах; [[authentication-authorization-patterns-interview#Q27]] fine-grained проверки на объектах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Динамические решения строят на атрибутах, зафиксированных при выдаче токена: отдел (`department`), уровень доступа (`clearance`) и лимиты кладут в claims, и policy-проверка (без внешнего `OPA`) читает их из `JWT` без похода в БД. Меняющееся во время запроса состояние объекта — статус (`status`), сумма (`amount`) — учесть нельзя. Поэтому dynamic authorization сводят к продуманному набору claims. Пересмотр правил происходит при рефреше токена.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная особенность — решение по runtime-данным (`amount`, статус, время), а не только по роли.",
+                "source_of_confusion": "Динамику путают со статическим `RBAC`, где всё решает роль.",
+                "if_it_were_true": "Тогда правило «директор для суммы больше 1000» было бы невыразимо, но именно его реализует `OrderApprovalPolicy`.",
+                "how_it_should_be": "Решение зависит от контекста и данных момента (сумма, статус), а не только от роли субъекта."
               }
             },
             {
@@ -1931,19 +1931,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`PermissionEvaluator` позволяет использовать `hasPermission()` в `@PreAuthorize` для проверки прав на конкретный объект. Реализуют два метода: `hasPermission(auth, targetDomainObject, permission)` для уже загруженного объекта и `hasPermission(auth, targetId, targetType, permission)` для проверки по id. Регистрируют через `DefaultMethodSecurityExpressionHandler.setPermissionEvaluator(...)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Это штатный механизм Spring для object-level авторизации. Внутри метода решают по типу объекта и виду permission (`READ`/`WRITE`/`DELETE`), учитывая владельца, статус и роль — например, `WRITE` только владельцу и только в статусе `DRAFT`.",
-                "example": "`evaluateOrderPermission`: `READ` — владельцу или `ADMIN`; `WRITE` — владельцу при `DRAFT`; `DELETE` — только `ADMIN`. Используется как `@PreAuthorize(\"hasPermission(#id, 'Order', 'WRITE')\")`.",
-                "when_to_apply": "Кастомный evaluator берут для декларативной object-level проверки нескольких типов сущностей в одном месте, когда нужна единая точка логики прав на объекты.",
-                "edge_cases": "Перегрузка по id грузит объект из репозитория внутри проверки — это лишний запрос к БД на каждую авторизацию, что бьёт по производительности; забытая регистрация bean в `MethodSecurityExpressionHandler` делает `hasPermission` всегда `false`.",
-                "related": "[[authentication-authorization-patterns-interview#Q27]] fine-grained авторизация в целом; [[authentication-authorization-patterns-interview#Q44]] `PermissionEvaluator` для `RBAC` плюс `ABAC`; [[authentication-authorization-patterns-interview#Q35]] конфигурация `MethodSecurity`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`PermissionEvaluator` подключается автоматически: `Spring Security` находит bean этого типа при старте контекста и регистрирует его в `MethodSecurityExpressionHandler` сам, как это происходит с `UserDetailsService`, — и `hasPermission()` начинает работать без конфигурации. Явная регистрация (`DefaultMethodSecurityExpressionHandler.setPermissionEvaluator(...)`) осталась от старых версий. Достаточно `@Component` над реализацией.",
               "correct": false,
               "sections": {
@@ -1954,8 +1941,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`PermissionEvaluator` объявляет единственный метод `hasPermission(auth, targetDomainObject, permission)`: проверка возможна только по уже загруженному объекту. Форму по идентификатору (`targetId`, `targetType`) убрали из интерфейса — объект обязан загрузить вызывающий код.",
               "correct": false,
               "sections": {
@@ -1963,6 +1950,19 @@
                 "source_of_confusion": "Знаком обычно только первый вариант с объектом, про перегрузку по id забывают.",
                 "if_it_were_true": "Тогда `hasPermission(#id, 'Order', 'WRITE')` не компилировался бы, но эта форма поддерживается вторым методом.",
                 "how_it_should_be": "Есть две перегрузки: по объекту и по `targetId`/`targetType`; вторая грузит объект внутри проверки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`PermissionEvaluator` позволяет использовать `hasPermission()` в `@PreAuthorize` для проверки прав на конкретный объект. Реализуют два метода: `hasPermission(auth, targetDomainObject, permission)` для уже загруженного объекта и `hasPermission(auth, targetId, targetType, permission)` для проверки по id. Регистрируют через `DefaultMethodSecurityExpressionHandler.setPermissionEvaluator(...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это штатный механизм Spring для object-level авторизации. Внутри метода решают по типу объекта и виду permission (`READ`/`WRITE`/`DELETE`), учитывая владельца, статус и роль — например, `WRITE` только владельцу и только в статусе `DRAFT`.",
+                "example": "`evaluateOrderPermission`: `READ` — владельцу или `ADMIN`; `WRITE` — владельцу при `DRAFT`; `DELETE` — только `ADMIN`. Используется как `@PreAuthorize(\"hasPermission(#id, 'Order', 'WRITE')\")`.",
+                "when_to_apply": "Кастомный evaluator берут для декларативной object-level проверки нескольких типов сущностей в одном месте, когда нужна единая точка логики прав на объекты.",
+                "edge_cases": "Перегрузка по id грузит объект из репозитория внутри проверки — это лишний запрос к БД на каждую авторизацию, что бьёт по производительности; забытая регистрация bean в `MethodSecurityExpressionHandler` делает `hasPermission` всегда `false`.",
+                "related": "[[authentication-authorization-patterns-interview#Q27]] fine-grained авторизация в целом; [[authentication-authorization-patterns-interview#Q44]] `PermissionEvaluator` для `RBAC` плюс `ABAC`; [[authentication-authorization-patterns-interview#Q35]] конфигурация `MethodSecurity`."
               }
             },
             {
@@ -1991,18 +1991,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring Security 6` конфигурацию по-прежнему строят наследованием: класс расширяет `WebSecurityConfigurerAdapter` и переопределяет `configure(HttpSecurity)` и `configure(WebSecurity)`. Компонентный стиль с bean `SecurityFilterChain` — параллельная опция для реактивного стека (`WebFlux`). Адаптер остаётся рекомендованным для сервлетных приложений.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`WebSecurityConfigurerAdapter` удалён в `Spring Security 6`; конфигурацию объявляют как bean `SecurityFilterChain`.",
-                "source_of_confusion": "Множество старых туториалов до сих пор показывают adapter-подход.",
-                "if_it_were_true": "Тогда компилировались бы примеры с `extends WebSecurityConfigurerAdapter`, но этого класса в `Spring Security 6` нет.",
-                "how_it_should_be": "Объявляют bean `SecurityFilterChain filterChain(HttpSecurity http)`, без наследования от adapter."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "В `Spring Security 6` конфигурация строится через bean `SecurityFilterChain` (вместо удалённого `WebSecurityConfigurerAdapter`). Запрос проходит цепочку фильтров: `DelegatingFilterProxy` → `FilterChainProxy` → security-фильтры (`SecurityContextPersistenceFilter`, `CsrfFilter`, аутентификационные, `AuthorizationFilter`) → контроллер. Можно объявить несколько цепочек с `@Order` и `securityMatcher` для разных групп URL.",
               "correct": true,
               "sections": {
@@ -2011,6 +1999,18 @@
                 "when_to_apply": "Несколько цепочек применяют, когда в одном приложении сосуществуют API (токены) и веб-UI (сессии), либо нужны разные правила для публичной и внутренней частей.",
                 "edge_cases": "Порядок цепочек критичен: первая подходящая по `securityMatcher` выигрывает, поэтому более узкие matcher ставят с меньшим `@Order`; цепочка без `securityMatcher` перехватывает всё и должна идти последней.",
                 "related": "[[authentication-authorization-patterns-interview#Q32]] цепочка для Resource Server; [[authentication-authorization-patterns-interview#Q42]] вставка кастомного фильтра; [[authentication-authorization-patterns-interview#Q35]] method security рядом с filter chain."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Spring Security 6` конфигурацию по-прежнему строят наследованием: класс расширяет `WebSecurityConfigurerAdapter` и переопределяет `configure(HttpSecurity)` и `configure(WebSecurity)`. Компонентный стиль с bean `SecurityFilterChain` — параллельная опция для реактивного стека (`WebFlux`). Адаптер остаётся рекомендованным для сервлетных приложений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WebSecurityConfigurerAdapter` удалён в `Spring Security 6`; конфигурацию объявляют как bean `SecurityFilterChain`.",
+                "source_of_confusion": "Множество старых туториалов до сих пор показывают adapter-подход.",
+                "if_it_were_true": "Тогда компилировались бы примеры с `extends WebSecurityConfigurerAdapter`, но этого класса в `Spring Security 6` нет.",
+                "how_it_should_be": "Объявляют bean `SecurityFilterChain filterChain(HttpSecurity http)`, без наследования от adapter."
               }
             },
             {
@@ -2075,6 +2075,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Иерархию ролей задают группировкой прав в `enum`: каждая константа перечисляет свои `GrantedAuthority`, и наследование получается композицией списков. Специального API (`RoleHierarchy`) `Spring Security` не предоставляет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring предоставляет `RoleHierarchy`/`RoleHierarchyImpl` именно для этого; иерархию не выражают через `enum`.",
+                "source_of_confusion": "Без знания API ищут решение в доменной модели (enum), а не в средствах фреймворка.",
+                "if_it_were_true": "Тогда `RoleHierarchyImpl.fromHierarchy(...)` не существовал бы, но это штатный механизм.",
+                "how_it_should_be": "Иерархию описывают через `RoleHierarchyImpl.fromHierarchy(...)` и подключают к expression handler."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Иерархия ролей позволяет наследовать привилегии: `ADMIN` автоматически получает все права `MODERATOR` и `USER`. Настраивают через bean `RoleHierarchy` (`RoleHierarchyImpl.fromHierarchy(\"ROLE_ADMIN > ROLE_MODERATOR ...\")`) и подключают его к `DefaultMethodSecurityExpressionHandler.setRoleHierarchy(...)`. После этого `hasRole('USER')` пропускает и `ADMIN`, и `MODERATOR`.",
               "correct": true,
               "sections": {
@@ -2083,18 +2095,6 @@
                 "when_to_apply": "Иерархию применяют при чётком ранжировании ролей (гость < пользователь < модератор < админ), чтобы не дублировать списки ролей в каждой проверке доступа.",
                 "edge_cases": "Иерархия должна быть подключена и к web-, и к method-security (отдельные handler) — иначе она сработает в одном месте и нет в другом; используют `ROLE_`-префикс в определении, иначе сопоставление не совпадёт.",
                 "related": "[[authentication-authorization-patterns-interview#Q4]] роли в `RBAC`; [[authentication-authorization-patterns-interview#Q33]] `MethodSecurityExpressionHandler`; [[authentication-authorization-patterns-interview#Q34]] связь с `SecurityFilterChain`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Иерархию ролей задают группировкой прав в `enum`: каждая константа перечисляет свои `GrantedAuthority`, и наследование получается композицией списков. Специального API (`RoleHierarchy`) `Spring Security` не предоставляет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spring предоставляет `RoleHierarchy`/`RoleHierarchyImpl` именно для этого; иерархию не выражают через `enum`.",
-                "source_of_confusion": "Без знания API ищут решение в доменной модели (enum), а не в средствах фреймворка.",
-                "if_it_were_true": "Тогда `RoleHierarchyImpl.fromHierarchy(...)` не существовал бы, но это штатный механизм.",
-                "how_it_should_be": "Иерархию описывают через `RoleHierarchyImpl.fromHierarchy(...)` и подключают к expression handler."
               }
             }
           ]
@@ -2123,6 +2123,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Пароли никогда не хранят в открытом виде — только хэш с солью адаптивным алгоритмом. Рекомендуются `bcrypt` (default в `Spring`, настраиваемая сложность), `Argon2` (победитель Password Hashing Competition); допустимы `scrypt` и `PBKDF2`. `SHA-256`/`MD5` НЕЛЬЗЯ — они слишком быстрые и уязвимы к brute force. В `Spring` используют `BCryptPasswordEncoder` или `DelegatingPasswordEncoder` для миграции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Адаптивные алгоритмы намеренно медленные и настраиваемые по сложности (work factor), что делает массовый перебор дорогим. `DelegatingPasswordEncoder` хранит формат `{bcrypt}$2a$12$...`, позволяя мигрировать между алгоритмами без сброса паролей.",
+                "example": "`new BCryptPasswordEncoder(12)` поднимает сложность до 2^12 итераций; `PasswordEncoderFactories.createDelegatingPasswordEncoder()` поддерживает несколько форматов и плавную миграцию.",
+                "when_to_apply": "Адаптивный хэш применяют для любого хранения паролей пользователей; work factor подбирают так, чтобы один хэш считался десятки-сотни миллисекунд на текущем железе.",
+                "edge_cases": "Для паролей в памяти используют `char[]` вместо `String` (его можно обнулить, а `String` остаётся в пуле строк JVM); общая соль для всех паролей бесполезна — соль должна быть уникальной на пользователя (bcrypt делает это сам).",
+                "related": "[[authentication-authorization-patterns-interview#Q10]] защита логина и timing attacks; [[authentication-authorization-patterns-interview#Q1]] парольные паттерны входа; [[authentication-authorization-patterns-interview#Q24]] passwordless как способ убрать пароли."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Одна общая соль на приложение решает задачу радужных таблиц: предвычисленные таблицы (`rainbow tables`) строились для несолёных хэшей, и любая соль их обесценивает; хранить её удобно константой рядом с `secretKey` (`application.yml`). Рекомендуемая связка — общая соль плюс `SHA-256` в `DelegatingPasswordEncoder` (`{sha256}`-префикс). Пер-пользовательская соль лишь раздувает схему БД (колонка `salt` в `users`); адаптивные `bcrypt`/`Argon2` со встроенной солью (`BCryptPasswordEncoder` генерирует её сам) — избыточность поверх этой схемы.",
               "correct": false,
               "sections": {
@@ -2133,8 +2146,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Пароль в памяти держат в `String`: неизменяемость гарантирует, что значение не перезапишется; пул строк `JVM` дополнительно дедуплицирует секреты. Обнуляемый `char[]` — устаревшая рекомендация времён `Java 6`. Современные `GC` очищают строки сразу после выхода из scope.",
               "correct": false,
               "sections": {
@@ -2142,19 +2155,6 @@
                 "source_of_confusion": "«Immutable = безопасно» — неверное обобщение для секретов в памяти.",
                 "if_it_were_true": "Тогда API вроде `char[] getPassword()` в Java не существовали бы, но они есть именно ради обнуления.",
                 "how_it_should_be": "Пароль держат в `char[]` и обнуляют после использования; `String` оседает в пуле строк JVM."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Пароли никогда не хранят в открытом виде — только хэш с солью адаптивным алгоритмом. Рекомендуются `bcrypt` (default в `Spring`, настраиваемая сложность), `Argon2` (победитель Password Hashing Competition); допустимы `scrypt` и `PBKDF2`. `SHA-256`/`MD5` НЕЛЬЗЯ — они слишком быстрые и уязвимы к brute force. В `Spring` используют `BCryptPasswordEncoder` или `DelegatingPasswordEncoder` для миграции.",
-              "correct": true,
-              "sections": {
-                "explanation": "Адаптивные алгоритмы намеренно медленные и настраиваемые по сложности (work factor), что делает массовый перебор дорогим. `DelegatingPasswordEncoder` хранит формат `{bcrypt}$2a$12$...`, позволяя мигрировать между алгоритмами без сброса паролей.",
-                "example": "`new BCryptPasswordEncoder(12)` поднимает сложность до 2^12 итераций; `PasswordEncoderFactories.createDelegatingPasswordEncoder()` поддерживает несколько форматов и плавную миграцию.",
-                "when_to_apply": "Адаптивный хэш применяют для любого хранения паролей пользователей; work factor подбирают так, чтобы один хэш считался десятки-сотни миллисекунд на текущем железе.",
-                "edge_cases": "Для паролей в памяти используют `char[]` вместо `String` (его можно обнулить, а `String` остаётся в пуле строк JVM); общая соль для всех паролей бесполезна — соль должна быть уникальной на пользователя (bcrypt делает это сам).",
-                "related": "[[authentication-authorization-patterns-interview#Q10]] защита логина и timing attacks; [[authentication-authorization-patterns-interview#Q1]] парольные паттерны входа; [[authentication-authorization-patterns-interview#Q24]] passwordless как способ убрать пароли."
               }
             }
           ]
@@ -2243,6 +2243,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`BFF` с cookie-сессией снимает `CSRF`-класс атак: `httpOnly` cookie невозможно подделать межсайтовым запросом — браузер не отдаёт её чужому origin (`SameSite` тут ни при чём), поэтому `CookieServerCsrfTokenRepository` и `X-XSRF-TOKEN` в `SPA` не настраивают при `oauth2Login()`. Защита нужна только form-login-приложениям без `BFF`. Это и есть выигрыш паттерна по сравнению с `Authorization`-заголовком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С cookie-аутентификацией CSRF снова актуальна (браузер шлёт cookie автоматически), поэтому `BFF` включает CSRF-токен.",
+                "source_of_confusion": "Правило «для токена в заголовке CSRF не нужна» ошибочно переносят на cookie-модель `BFF`.",
+                "if_it_were_true": "Тогда `CookieServerCsrfTokenRepository` в конфиге `BFF` был бы лишним, но его как раз настраивают.",
+                "how_it_should_be": "При cookie-based `BFF` CSRF-защита обязательна, так как cookie отправляется браузером автоматически."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`BFF` решает проблему хранения токенов в `SPA`: frontend НЕ работает с токенами напрямую. Backend (`Spring Cloud Gateway` или сервис) выступает `OAuth2 Client`, а `SPA` общается с ним через `httpOnly` cookies. Gateway сам ведёт `Authorization Code + PKCE` к `Authorization Server` и через `TokenRelay` пробрасывает access token downstream.",
               "correct": true,
               "sections": {
@@ -2251,18 +2263,6 @@
                 "when_to_apply": "`BFF` применяют для `SPA`/браузерных клиентов, где хранить access/refresh токены в браузере небезопасно: вся работа с токенами уходит на доверенный backend.",
                 "edge_cases": "С `httpOnly` cookie возвращается актуальность CSRF-защиты (в отличие от bearer в заголовке); backend становится stateful по сессии пользователя, что нужно учитывать при масштабировании gateway.",
                 "related": "[[authentication-authorization-patterns-interview#Q30]] `PKCE`, используемый BFF; [[authentication-authorization-patterns-interview#Q11]] gateway как точка безопасности; [[authentication-authorization-patterns-interview#Q15]] почему токены не держат в браузере."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`BFF` с cookie-сессией снимает `CSRF`-класс атак: `httpOnly` cookie невозможно подделать межсайтовым запросом — браузер не отдаёт её чужому origin (`SameSite` тут ни при чём), поэтому `CookieServerCsrfTokenRepository` и `X-XSRF-TOKEN` в `SPA` не настраивают при `oauth2Login()`. Защита нужна только form-login-приложениям без `BFF`. Это и есть выигрыш паттерна по сравнению с `Authorization`-заголовком.",
-              "correct": false,
-              "sections": {
-                "what_actually": "С cookie-аутентификацией CSRF снова актуальна (браузер шлёт cookie автоматически), поэтому `BFF` включает CSRF-токен.",
-                "source_of_confusion": "Правило «для токена в заголовке CSRF не нужна» ошибочно переносят на cookie-модель `BFF`.",
-                "if_it_were_true": "Тогда `CookieServerCsrfTokenRepository` в конфиге `BFF` был бы лишним, но его как раз настраивают.",
-                "how_it_should_be": "При cookie-based `BFF` CSRF-защита обязательна, так как cookie отправляется браузером автоматически."
               }
             },
             {
@@ -2303,18 +2303,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Keycloak`-интеграция предполагает локальную проверку: приложение хранит пароли пользователей в своей БД (`users`-таблица с `BCryptPasswordEncoder`) и валидирует их на каждом входе, а `Keycloak` только синхронизирует справочник учёток. Выпуск токенов остаётся на стороне приложения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Keycloak` как `IdP` сам хранит и проверяет credentials; приложение лишь валидирует выданный им `JWT` или ведёт `OIDC`-логин.",
-                "source_of_confusion": "Привычка к локальной проверке пароля противоречит делегированной модели `IdP`.",
-                "if_it_were_true": "Тогда пропал бы смысл `Keycloak` как централизованного `IdP` с SSO и `MFA`.",
-                "how_it_should_be": "Credentials и `MFA` живут в `Keycloak`; приложение доверяет его токенам, паролей не хранит."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Keycloak` — open-source `Identity Provider` с `OIDC`, `SAML`, `RBAC`, `MFA`. В `Spring Boot` указывают `issuer-uri` realm-а (`/realms/my-realm`) для Resource Server и client registration для входа. Главная особенность: `Keycloak` кладёт роли в нестандартный claim `realm_access.roles`, поэтому нужен кастомный `JwtAuthenticationConverter`, читающий роли оттуда.",
               "correct": true,
               "sections": {
@@ -2323,6 +2311,18 @@
                 "when_to_apply": "Интеграцию с `Keycloak` применяют, когда нужен self-hosted `IdP` с полным контролем (on-premise, регуляторные требования) вместо облачных `Auth0`/`Okta`.",
                 "edge_cases": "Роли в `Keycloak` бывают realm-level (`realm_access.roles`) и client-level (`resource_access.<client>.roles`) — частая ошибка читать не тот claim; `null`-проверка `realm_access` обязательна, иначе NPE при токене без ролей.",
                 "related": "[[authentication-authorization-patterns-interview#Q32]] базовый Resource Server и маппинг authorities; [[authentication-authorization-patterns-interview#Q12]] `OIDC`, на котором работает `Keycloak`; [[authentication-authorization-patterns-interview#Q13]] `Keycloak` как `IdP` для SSO."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Keycloak`-интеграция предполагает локальную проверку: приложение хранит пароли пользователей в своей БД (`users`-таблица с `BCryptPasswordEncoder`) и валидирует их на каждом входе, а `Keycloak` только синхронизирует справочник учёток. Выпуск токенов остаётся на стороне приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Keycloak` как `IdP` сам хранит и проверяет credentials; приложение лишь валидирует выданный им `JWT` или ведёт `OIDC`-логин.",
+                "source_of_confusion": "Привычка к локальной проверке пароля противоречит делегированной модели `IdP`.",
+                "if_it_were_true": "Тогда пропал бы смысл `Keycloak` как централизованного `IdP` с SSO и `MFA`.",
+                "how_it_should_be": "Credentials и `MFA` живут в `Keycloak`; приложение доверяет его токенам, паролей не хранит."
               }
             },
             {
@@ -2411,19 +2411,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Session-based хранит состояние на сервере (in-memory/`Redis`) и шлёт небольшой cookie; масштабируется через sticky sessions или shared store, зато даёт мгновенный отзыв. `JWT` — `stateless`: состояние в токене у клиента, горизонтальное масштабирование без shared state, но отзыв сложный (до `exp`, нужен blacklist). Sessions — для монолитов и случаев, где нужен немедленный logout; `JWT` — для микросервисов, mobile/SPA и cross-domain.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ключевое различие — где живёт состояние и как отзывать доступ. Сессии просты в отзыве, но требуют общего хранилища при масштабировании; `JWT` отлично масштабируется, но logout требует blacklist или короткого TTL плюс refresh.",
-                "example": "Session: `maximumSessions(1)` плюс `sessionRegistry`, принудительный logout через `expireNow()`. JWT: `JwtBlacklistService` кладёт `jti` в `Redis` с TTL равным остатку жизни токена, а `BlacklistJwtDecoder` бросает `JwtException` для отозванных.",
-                "when_to_apply": "Sessions выбирают для монолита, где важен немедленный отзыв (банки, медицина) и клиент — браузер; `JWT` — для микросервисов, mobile/SPA, сторонних API и горизонтального масштабирования без sticky sessions.",
-                "edge_cases": "Универсально «лучшего» нет: `JWT` без blacklist не отзывается мгновенно, а сессии без shared store не масштабируются; hybrid (`JWT` плюс Redis-blacklist) — компромисс с минусами обоих.",
-                "related": "[[authentication-authorization-patterns-interview#Q3]] устройство `JWT`; [[authentication-authorization-patterns-interview#Q9]] паттерны сессий; [[authentication-authorization-patterns-interview#Q15]] refresh и отзыв токенов."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Выбор давно сделан индустрией: `JWT` — дефолт современных архитектур, серверные сессии — атрибут legacy-монолитов. Новые проекты берут `stateless`-токены, не рассматривая альтернатив; минусов нет — отзыв решается коротким `exp`, размер несущественен. Банковское требование мгновенного logout также закрывается blacklist-ом в `Redis`.",
               "correct": false,
               "sections": {
@@ -2434,8 +2421,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Logout у `JWT` не уступает сессионному: фронтенд стирает токен из хранилища (`localStorage.removeItem`), и доступ прекращается мгновенно — как при `session.invalidate()`; сервер дополнительно ничего не ведёт (blacklist в `Redis` не нужен), ведь копий токена вне клиента не существует. Короткий `exp` (5-15 минут) страхует остаточные копии; окно риска считается нулевым. Так `stateless` совмещает масштабирование с немедленным отзывом.",
               "correct": false,
               "sections": {
@@ -2443,6 +2430,19 @@
                 "source_of_confusion": "Простоту серверного logout переносят на токены, игнорируя их природу.",
                 "if_it_were_true": "Тогда не нужен был бы `JwtBlacklistService`, но его вводят именно из-за неотзываемости `JWT`.",
                 "how_it_should_be": "Сессию отзывают мгновенно удалением; `JWT` — через blacklist (`jti` в Redis) или короткий TTL плюс refresh."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Session-based хранит состояние на сервере (in-memory/`Redis`) и шлёт небольшой cookie; масштабируется через sticky sessions или shared store, зато даёт мгновенный отзыв. `JWT` — `stateless`: состояние в токене у клиента, горизонтальное масштабирование без shared state, но отзыв сложный (до `exp`, нужен blacklist). Sessions — для монолитов и случаев, где нужен немедленный logout; `JWT` — для микросервисов, mobile/SPA и cross-domain.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевое различие — где живёт состояние и как отзывать доступ. Сессии просты в отзыве, но требуют общего хранилища при масштабировании; `JWT` отлично масштабируется, но logout требует blacklist или короткого TTL плюс refresh.",
+                "example": "Session: `maximumSessions(1)` плюс `sessionRegistry`, принудительный logout через `expireNow()`. JWT: `JwtBlacklistService` кладёт `jti` в `Redis` с TTL равным остатку жизни токена, а `BlacklistJwtDecoder` бросает `JwtException` для отозванных.",
+                "when_to_apply": "Sessions выбирают для монолита, где важен немедленный отзыв (банки, медицина) и клиент — браузер; `JWT` — для микросервисов, mobile/SPA, сторонних API и горизонтального масштабирования без sticky sessions.",
+                "edge_cases": "Универсально «лучшего» нет: `JWT` без blacklist не отзывается мгновенно, а сессии без shared store не масштабируются; hybrid (`JWT` плюс Redis-blacklist) — компромисс с минусами обоих.",
+                "related": "[[authentication-authorization-patterns-interview#Q3]] устройство `JWT`; [[authentication-authorization-patterns-interview#Q9]] паттерны сессий; [[authentication-authorization-patterns-interview#Q15]] refresh и отзыв токенов."
               }
             },
             {
@@ -2471,18 +2471,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`API Key` — machine-to-machine секрет, недоступный из браузера, поэтому его хранят в базе (`api_keys`) открытым: колонка `keyHash` избыточна; открытое хранение позволяет показывать клиенту действующий ключ в личном кабинете и сверять его простым `equals`. Компрометацию БД закрывает шифрование диска.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В БД хранят только `SHA-256` хэш ключа; ключ показывают единственный раз при создании, иначе утечка БД раскроет все ключи.",
-                "source_of_confusion": "Желание «показать ключ снова» подталкивает хранить его открытым, как настройку.",
-                "if_it_were_true": "Тогда поле `keyHash` было бы лишним, но именно хэширование защищает ключи при компрометации БД.",
-                "how_it_should_be": "Хранят хэш (`sha256Hex`), а сырой ключ отдают клиенту один раз и больше не восстанавливают."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`API Key` — простой механизм machine-to-machine: клиент шлёт ключ в заголовке (`X-API-Key`), кастомный фильтр (`OncePerRequestFilter`) валидирует его и ставит `Authentication`. Ключи хранят НЕ в открытом виде, а как `SHA-256` хэш; у записи есть `active`, `expiresAt`, `scopes`. Фильтр добавляют через `addFilterBefore(...)` перед `UsernamePasswordAuthenticationFilter` в stateless-цепочке.",
               "correct": true,
               "sections": {
@@ -2491,6 +2479,18 @@
                 "when_to_apply": "API Key применяют для server-to-server и публичных API, где не нужен полноценный `OAuth`: внутренние сервисы, интеграции партнёров, приём webhooks.",
                 "edge_cases": "Хранить сам ключ в БД нельзя — только хэш, иначе утечка БД раскроет все ключи; ключ возвращают клиенту единственный раз при создании; для отзыва используют флаг `active`, а не удаление, чтобы сохранить аудит.",
                 "related": "[[authentication-authorization-patterns-interview#Q36]] хэширование как у паролей; [[authentication-authorization-patterns-interview#Q34]] вставка фильтра в `SecurityFilterChain`; [[authentication-authorization-patterns-interview#Q26]] scopes для ограничения прав ключа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`API Key` — machine-to-machine секрет, недоступный из браузера, поэтому его хранят в базе (`api_keys`) открытым: колонка `keyHash` избыточна; открытое хранение позволяет показывать клиенту действующий ключ в личном кабинете и сверять его простым `equals`. Компрометацию БД закрывает шифрование диска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В БД хранят только `SHA-256` хэш ключа; ключ показывают единственный раз при создании, иначе утечка БД раскроет все ключи.",
+                "source_of_confusion": "Желание «показать ключ снова» подталкивает хранить его открытым, как настройку.",
+                "if_it_were_true": "Тогда поле `keyHash` было бы лишним, но именно хэширование защищает ключи при компрометации БД.",
+                "how_it_should_be": "Хранят хэш (`sha256Hex`), а сырой ключ отдают клиенту один раз и больше не восстанавливают."
               }
             },
             {
@@ -2555,6 +2555,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`AuthorizationManager` в Zero Trust-контуре проверяет роль — и только её: устройство (`X-Device-ID`), rate limit и время запроса в решение не входят, их выносят на инфраструктуру. Контекстная авторизация в `Spring` этим и ограничена.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ZeroTrustAuthorizationManager` учитывает device trust, rate limit и scope вместе с ролью — это и есть `Verify Explicitly`.",
+                "source_of_confusion": "Привычная ролевая проверка заслоняет идею многофакторной контекстной авторизации.",
+                "if_it_were_true": "Тогда `deviceTrustService` и `rateLimitService` в `check()` были бы не нужны, но они часть проверки.",
+                "how_it_should_be": "Решение учитывает identity, scope, доверие устройства и rate limit, а не только роль."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Zero Trust` — «никогда не доверяй, всегда проверяй», противоположность периметровой (castle-and-moat) модели. Три кита: `Verify Explicitly` (аутентификация каждого запроса, контекст, MFA), `Least Privilege Access` (минимальные права, JIT-доступ) и `Assume Breach` (микросегментация, мониторинг, проектирование как при уже случившемся взломе). В Spring: `JWT` на каждом сервисе, propagation токена, контекстный `AuthorizationManager`, `mTLS`.",
               "correct": true,
               "sections": {
@@ -2563,18 +2575,6 @@
                 "when_to_apply": "Zero Trust внедряют в распределённых и облачных системах без надёжного периметра: микросервисы, удалённая работа, мультиоблако, чувствительные данные.",
                 "edge_cases": "Полная проверка каждого запроса плюс mTLS добавляет latency и сложность эксплуатации; переход делают поэтапно (сначала verify, потом least privilege и сегментация), иначе можно сломать рабочий трафик.",
                 "related": "[[authentication-authorization-patterns-interview#Q16]] модель Zero Trust в целом; [[authentication-authorization-patterns-interview#Q45]] `mTLS` для service identity; [[authentication-authorization-patterns-interview#Q6]] безопасность микросервисов."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`AuthorizationManager` в Zero Trust-контуре проверяет роль — и только её: устройство (`X-Device-ID`), rate limit и время запроса в решение не входят, их выносят на инфраструктуру. Контекстная авторизация в `Spring` этим и ограничена.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ZeroTrustAuthorizationManager` учитывает device trust, rate limit и scope вместе с ролью — это и есть `Verify Explicitly`.",
-                "source_of_confusion": "Привычная ролевая проверка заслоняет идею многофакторной контекстной авторизации.",
-                "if_it_were_true": "Тогда `deviceTrustService` и `rateLimitService` в `check()` были бы не нужны, но они часть проверки.",
-                "how_it_should_be": "Решение учитывает identity, scope, доверие устройства и rate limit, а не только роль."
               }
             }
           ]
@@ -2603,6 +2603,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "На практике `RBAC` и `ABAC` используют вместе: `RBAC` — грубая фильтрация по роли, `ABAC` — тонкая по атрибутам объекта. В `Spring` это `@PreAuthorize(\"hasAnyRole('USER','ADMIN') and hasPermission(#id, 'Document', 'READ')\")`: сначала проверяется роль (`RBAC`), затем `PermissionEvaluator` вычисляет право на конкретный объект по атрибутам (владелец, отдел, классификация — `ABAC`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Комбинация даёт и масштабируемость ролей, и гибкость атрибутов: роль отсекает явно неподходящих, а `ABAC`-политика решает по контексту объекта (например, `INTERNAL`-документ виден только своему отделу). Логику `ABAC` инкапсулируют в bean-политике и `PermissionEvaluator`.",
+                "example": "`DocumentAuthorizationPolicy.canRead()`: владелец, ИЛИ `PUBLIC`, ИЛИ `INTERNAL` плюс тот же отдел; `DocumentPermissionEvaluator` подключает её к `hasPermission`, а контроллер комбинирует `hasAnyRole(...)` и `hasPermission(...)`.",
+                "when_to_apply": "Совместное применение берут, когда роли задают общий уровень доступа, но финальное решение зависит от атрибутов объекта: документооборот, multi-tenant, классификация данных.",
+                "edge_cases": "Порядок в SpEL важен: дешёвую `RBAC`-проверку (`hasRole`) ставят первой, чтобы не вызывать дорогую `ABAC` для заведомо неподходящих; `@PreAuthorize` с `hasPermission` по id может грузить объект из БД — следить за лишними запросами.",
+                "related": "[[authentication-authorization-patterns-interview#Q4]] базовые `RBAC` и `ABAC`; [[authentication-authorization-patterns-interview#Q33]] `PermissionEvaluator` для `ABAC`; [[authentication-authorization-patterns-interview#Q27]] object-level (fine-grained) авторизация."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "При совмещении `ABAC`-проверку ставят первой и единственной: правило по атрибутам объекта (владелец, отдел) строго сильнее ролевого, поэтому роль (`hasAnyRole`) после него не проверяют — атрибуты уже включают членство. Загрузка объекта (`Document` из БД) на каждый запрос — приемлемая цена, ведь `RBAC`-слой становится избыточным.",
               "correct": false,
               "sections": {
@@ -2613,8 +2626,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Инкапсулировать `ABAC` в `PermissionEvaluator` нельзя: атрибутную логику (владелец, классификация) пишут прямо в SpEL-выражении `@PreAuthorize`, где доступны поля объекта. Отдельный компонент работает только со статичными правами из токена.",
               "correct": false,
               "sections": {
@@ -2622,19 +2635,6 @@
                 "source_of_confusion": "Кажется, что вся проверка должна жить в строке аннотации.",
                 "if_it_were_true": "Тогда `DocumentPermissionEvaluator` был бы бесполезен, но именно он держит атрибутную логику вне SpEL.",
                 "how_it_should_be": "Атрибутные правила — в `PermissionEvaluator`/политике; в `@PreAuthorize` лишь вызов `hasPermission(...)`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "На практике `RBAC` и `ABAC` используют вместе: `RBAC` — грубая фильтрация по роли, `ABAC` — тонкая по атрибутам объекта. В `Spring` это `@PreAuthorize(\"hasAnyRole('USER','ADMIN') and hasPermission(#id, 'Document', 'READ')\")`: сначала проверяется роль (`RBAC`), затем `PermissionEvaluator` вычисляет право на конкретный объект по атрибутам (владелец, отдел, классификация — `ABAC`).",
-              "correct": true,
-              "sections": {
-                "explanation": "Комбинация даёт и масштабируемость ролей, и гибкость атрибутов: роль отсекает явно неподходящих, а `ABAC`-политика решает по контексту объекта (например, `INTERNAL`-документ виден только своему отделу). Логику `ABAC` инкапсулируют в bean-политике и `PermissionEvaluator`.",
-                "example": "`DocumentAuthorizationPolicy.canRead()`: владелец, ИЛИ `PUBLIC`, ИЛИ `INTERNAL` плюс тот же отдел; `DocumentPermissionEvaluator` подключает её к `hasPermission`, а контроллер комбинирует `hasAnyRole(...)` и `hasPermission(...)`.",
-                "when_to_apply": "Совместное применение берут, когда роли задают общий уровень доступа, но финальное решение зависит от атрибутов объекта: документооборот, multi-tenant, классификация данных.",
-                "edge_cases": "Порядок в SpEL важен: дешёвую `RBAC`-проверку (`hasRole`) ставят первой, чтобы не вызывать дорогую `ABAC` для заведомо неподходящих; `@PreAuthorize` с `hasPermission` по id может грузить объект из БД — следить за лишними запросами.",
-                "related": "[[authentication-authorization-patterns-interview#Q4]] базовые `RBAC` и `ABAC`; [[authentication-authorization-patterns-interview#Q33]] `PermissionEvaluator` для `ABAC`; [[authentication-authorization-patterns-interview#Q27]] object-level (fine-grained) авторизация."
               }
             }
           ]
