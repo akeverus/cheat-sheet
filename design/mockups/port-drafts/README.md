@@ -62,6 +62,46 @@ summary-tools-status (3236) и НОВЫЕ правила `#interview-options lab
 Точки вставки в working-tree: C6-i — после ~1972 (@media-хвост §C6), C7-i — после
 ~2070 (@media-хвост §C7, за `.error-actions .btn { width: 100% }`).
 
+## Пересверка ВСЕХ маппингов Фазы D против WIP working-tree (R0.33, 2026-07-12)
+
+WIP разросся на всю зону порта (app.js/stats.js/4 шаблона/head.html/контракт-тест).
+Дифф-ревизия по поверхностям:
+
+- **Черновики C6-i/C7-i — ПО-ПРЕЖНЕМУ ВАЛИДНЫ.** Ханки base.css: masthead-title
+  (468→474+), stats collapse (1796), today-hero-hint (2769), summary-tools print
+  (3233), focus mobile-clamp (3592+). §C6 (1857) и §C7 (тейл-якорь
+  `.error-actions .btn { width:100% }` = строка 2070) не тронуты; все хук-селекторы
+  обоих черновиков на месте (проверено grep-ом).
+- **stats: механизм collapse СМЕНИЛСЯ** — было max-height 540px + fade `::after`,
+  стало `tr[hidden]` (`display:none !important`) + MutationObserver-ресинк после
+  сортировки + print `display: table-row !important`. PARITY-QA stats: проверять
+  скрытие СТРОК (Tab не попадает в скрытые topic-link), не клип высоты; фейда
+  больше нет. R0.32 no-JS вывод не устарел (сервер отдаёт развёрнутой).
+- **settings: новый живой регион `#personalization-status`** (role=status,
+  aria-live=polite, PE hidden; app.js `announceSaved` объявляет «Сохранено на этом
+  устройстве…»). `wireSegControl` сменил сигнатуру (+`label` 3-м аргументом) —
+  паттерн «4 касания» новой оси теперь включает label. Экспорт-блок получил
+  `<h3>Экспорт данных</h3>`; копия danger-zone переписана (без AI-формулировок,
+  «восстановятся из JSON-сидеров»). Структура вкладок/панелей/осей не тронута —
+  маппинг R0.25 валиден.
+- **focus/result шаблоны:** только бамп app.js v55→v56 — маппинги R0.22/R0.23
+  валидны бит-в-бит.
+- **base.css focus-зона:** новые правила иерархии заголовка (HDR-1): compact-clamp
+  ≤600 + уплотнение chrome при активной сессии
+  `.ed-masthead:has(.ed-masthead-progress)`. Instrument-порт focus/shell обязан
+  НЕ перебивать эти правила (не задавать font-size тайтла шапки на focus-page).
+- **КРИТИЧНО для порта shell: sticky-шапка ЗАПРЕЩЕНА прод-контрактом.**
+  Новый TemplateFragmentContractTest ассертит
+  `doesNotContain(".ed-masthead { position: sticky")` (обоснование WIP: FNO-риск).
+  В макетах sticky+solid была частью языка (CRITIQUE C3) — при порте shell
+  sticky НЕ портировать; языковое решение C3 остаётся макетным. Тест также
+  пиннит ТОЧНЫЕ строки base.css (включая `\n`-форматирование clamp-правила) —
+  после любой вставки в base.css обязателен прогон контракт-теста.
+- **stats.js v13:** рестайл commonOpts графиков (tick/legend 12px, x-grid off,
+  y drawTicks off) — инструмент-палитра графиков (позже) ребейзится на это.
+- **head.html:** tokens v62 / base v72 в WIP — бамп Фазы E делать от АКТУАЛЬНЫХ
+  значений на момент разблокировки, не от кэшированных в заметках.
+
 ## Процедура применения (когда base.css чист)
 
 1. `git status --short` — убедиться, что base.css больше не dirty.
