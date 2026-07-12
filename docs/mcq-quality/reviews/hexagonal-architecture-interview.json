@@ -2,23 +2,25 @@
  "topic_slug": "hexagonal-architecture-interview",
  "round": 8,
  "status": "IN_PROGRESS",
- "reviewed_commit": "debf26ba",
+ "reviewed_commit": "a6ba720b",
  "chunks_reviewed": [
   "Q1-Q10",
   "Q11-Q20",
   "Q21-Q30",
-  "Q31-Q40"
+  "Q31-Q40",
+  "Q41-Q45"
  ],
  "gate_summary": {
   "verify_mcq_json": "OK",
   "note": "Baseline (до chunk1): CORRECT_LONGEST 0.933 (42/45), OPTION_LENGTH_RATIO 14.0 (Q19), CORRECT_WRONG_AVG 2.261 (23сл vs 10сл), DETAIL 0.733, STYLE 0.956 (длина 0.96, code-spans 0.70), SENTENCE 2, SEQ 45, skel hard=35/45, freshness MISSING, stamp mean CV=0.525. После chunk1: зона Q1-Q10 skel HARD=0 (файл 35→29), в каждом блоке зоны correct не самый длинный, per-block CV 0.16-0.26 (не штамп)."
  },
  "blocks_total": 45,
- "blocks_reviewed": 40,
+ "blocks_reviewed": 45,
  "notes": "ROUND-8 chunk1 Q1-Q10 (файл hexagonal-architecture, строка 10 плана §1; суть паттерна, смысл шестиугольника, история/авторство, Application Core, три зоны, Port vs интерфейс, Driving/Driven, именование портов, гранулярность/ISP, адаптер-на-несколько-портов). Подняты 30 дистракторов (text-only, оси сохранены): стубы 53-139c доведены до скелета correct (sentence/semicolon/opening/code-bucket mirroring, один компакт ~60% + один rich по код-спанам на блок). Blind review (reviewer, O1-O4 без меток): 10/10 верных вердиктов, 3 флага исправлены до применения — Q4 FORM-TELL (компакт-абсолютизация «обязан...иначе не соберёт» → правдоподобное «DI-сборка — часть контракта ядра»), Q7 CAR («синонимы ради красоты диаграмм» → «роли на диаграмме, место реализации не регламентировано»), Q10 DUP (A и D оба «ровно один порт» → разведены по принципам: A=SRP-трактовка «одна ответственность = один интерфейс», D=LSP-миф; обоснование стало видимым дифференциатором). Де-карикатуризация: Q1 «шестиугольник ровно с шестью входами» → микросервисная декомпозиция по граням; Q2 «OSI шесть уровней» → правдоподобная сетевая аналогия с псевдообоснованием; Q9 «ровно 6 портов» → конкретный список из шести ролей как «ориентир». История Q3: дистракторы механически ложны (Мартин=2012 Clean, не автор hexagonal; Spring Boot 2=2018 не источник; Netflix не автор).",
  "notes_chunk2": "ROUND-8 chunk2 Q11-Q20 (primary/secondary адаптеры, примеры, mapper, двойная роль, структура пакетов, реализация driving/driven портов, @Service vs чистое ядро, транзакции). Подняты 30 дистракторов (text-only, оси сохранены). Blind review: 10/10 верных вердиктов, фиксы до применения: Q12 CAR («обязан Spring Data JPA» → «стандарт с транзакциями из коробки, иное — заглушки»); Q15 MULTI (A «combined-адаптер допустим» усилен до механически ложной атрибуции «рекомендация Кокбёрна в оригинальной статье» — Kafka не существовала в 2005) + BSM×2 (D «Spring запретит @Component» → правдоподобный DI-цикл adapter→use-case→port; B gRPC-стаб → двунаправленный StreamObserver); Q19 CAR (A «без вариантов, спор закрыт» → «практика устоялась») + BSM (B AbstractApplicationContext-наследование → реальный ApplicationContextAware-service-locator) + FORM-TELL («единственный взвешенный компромисс» убит псевдо-двусторонним D «обе стороны примиряет @ComponentScan» — механически ложно: скан домена без аннотаций бинов не находит). Зона Q11-Q20: skel HARD=0 (файл 29→23), per-block CV 0.07-0.26, semi-дисциплина Q11/Q18/Q20.",
  "notes_chunk3": "ROUND-8 chunk3 Q21-Q30 (Composition Root/DI, multi-module, DDD-стыковка, размещение агрегатов/VO/Domain Service, Application vs Domain Service, доменные события через Driven Port, пирамида тестирования, тесты use-case, тесты адаптеров, contract testing). Подняты 30 дистракторов (text-only, оси сохранены). Blind review: 10/10 верных вердиктов, фиксы до применения: Q21 DUP (два service-locator'а разведены: C=ApplicationContext-как-корень, D=децентрализация «модуль app не нужен»); Q22 MULTI («один модуль защитим» усилен механически ложным «правила видимости пакетов Java не пропустят импорт Spring»); Q23 FORM-TELL (correct — единственный маппинг-перечисление → A и B получили зеркальную перечислительную структуру с `;`); Q24 CAR («иначе развалится» → конвенция «@Service в application/»); Q26 MULTI (@DomainEvents — рабочий механизм → добавлено механически ложное «доставит внешним консьюмерам в Kafka без кода», @DomainEvents публикует только in-process ApplicationEvent); Q27 FORM-TELL+DUP-паттерн 3-против-1 (E2E-дистрактор получил зеркальную структуру «перевёрнутая пирамида с процентами»); Q28 BSM (PowerMock оставлен — sections привязаны — но обоснован misconception'ом «порты ради тестируемости не обязательны»). ИЗВЕСТНОЕ ОГРАНИЧЕНИЕ Q30: хвост correct «известно как Consumer-Driven Contract Testing» терминологически спорен (CDC каноничнее про Pact) — текст correct не правим по протоколу, ревьюер всё равно выбрал верно (medium). Зона Q21-Q30: skel HARD=0 (файл 23→13), per-block CV 0.13-0.28, semi-дисциплина Q23-Q26/Q28-Q30.",
  "notes_chunk4": "ROUND-8 chunk4 Q31-Q40 (fakes vs mocks, сравнения Clean/Onion/Layered, миграция из слоёв, разделение жирного Service, отделение JPA-сущности, антипаттерны, анемичная модель, утечки). Подняты 30 дистракторов (text-only, оси сохранены). Blind review: 10/10 верных вердиктов, 8 блоков с флагами — все вылечены до применения: Q31 MULTI+DUP (зачин дистрактора-клона разведён с correct: «Fake вытесняет моки полностью» + механически ложное «verify признан антипаттерном»); Q32 FORM-TELL (нюанс «на практике смешивают» отдан и дистрактору-хронологии с инвертированной атрибуцией); Q33 CAR×2 (event-sourcing → «Palermo рекомендует, большинство примеров»; «запрещает порты» → «отказывается от интерфейсов между кольцами»); Q34 CAR×2+FORM-TELL («одно и то же» → взвешенное сравнение по осям визуализации; «Clean легаси» → «переходная ступень»); Q35 CAR («переименовать пакеты» → стрелочная цепочка «навигация → привычка → инверсия подтянется», зеркалит →-цепочку correct); Q36 MULTI+FORM-TELL (апелляция к Хомбергсу дана и дистрактору — механически ложная «сам Хомбергс отвергает дробление»); Q37 MULTI (No-Mapping усилен механически ложным «Spring Data вернёт detached-копии без прокси»); Q38 FORM-TELL+BSM+CAR (все три дистрактора получили каталожную форму перечисления, зеркалящую 10-пунктовый correct); Q39 CAR (record-абсолютизация → «фабрики и компакт-конструкторы, этого достаточно»); Q40 FORM-TELL+MULTI (дистрактор code-review получил связку «пути утечки + анти-защита» с 10 код-спанами). Зона Q31-Q40: skel HARD=0 (файл 13→4), per-block CV 0.10-0.27.",
+ "notes_chunk5": "ROUND-8 chunk5 Q41-Q45 (overkill-критерии, ArchUnit-правила, гексагон в микросервисах, обработка ошибок домен-адаптер, реактивность). Подняты 15 дистракторов (text-only, оси сохранены, кроме Q42 — оси переработаны, см. ниже). Blind review (reviewer, O1-O4 без меток): 5/5 верных вердиктов, флаги всех пяти блоков вылечены до применения. Q41 CAR+FORM-TELL: зеркальные абсолютизации «обязателен всегда»/«не нужен никогда» заменены двусторонними правдоподобными критериями (дефолт-кроме-скриптов; критерий числа входов; численный LOC-порог) — correct перестал быть единственным сбалансированным. Q42 BSM+FORM-TELL (ключевой фикс): стем спрашивает «через ArchUnit», а старые дистракторы описывали Checkstyle/Gradle/enforcer и отбрасывались сопоставлением ключевого слова; все три оси переписаны на ложные утверждения про сам ArchUnit — инверсия направления правил + мнимый отдельный gradle-таск (реально ArchUnit = обычный JUnit-тест), несуществующий рантайм-агент с ArchitectureViolationException (реально анализ байткода в тестах), несуществующие аннотации @Module/@AllowedDependencies (смешение со Spring Modulith). Q43 FORM-TELL: хедж и DDD-термины были только у correct — дистракторы получили свои (Shared Kernel, хедж «вырождается в один гексагон»). Q44 BSM+FORM-TELL: зачин «Обратное распределение ролей» сам объявлял инверсию — заменён нейтральным «Перевод централизуют в secondary-адаптере»; хвост «Альтернатива — sealed Result-type» у correct зазеркален ложной альтернативой @ResponseStatus в domain/ у дистрактора A. Q45 FORM-TELL: двусторонняя форма «ортогонален, но…» была только у correct — дистрактор B получил псевдодвустороннюю («структура та же, но чистой Java не остаётся»); D механически ложен (@Transactional не оборачивает Mono-цепочку — нужен TransactionalOperator/ReactiveTransactionManager).",
  "records": [
   {
    "q_number": 1,
@@ -2242,6 +2244,286 @@
      "sections_consistent": true
     },
     "C": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    }
+   },
+   "parity": {
+    "option_parity": true,
+    "visual_format_parity": true,
+    "russian_readability": true,
+    "no_stamped_clone": true,
+    "blind_style_pass": true,
+    "blind_semantic_pass": true
+   }
+  },
+  {
+   "q_number": 41,
+   "block_idx": 0,
+   "correct_label": "A",
+   "stem": {
+    "clear": true,
+    "single_concept": true,
+    "no_answer_hint": true,
+    "version_scope_explicit": true
+   },
+   "correct": {
+    "factually_true": true,
+    "complete_for_stem": true,
+    "scope_correct": true,
+    "unique_defensible": true,
+    "not_visually_distinct": true,
+    "sections_consistent": true
+   },
+   "distractors": {
+    "B": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "C": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "D": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    }
+   },
+   "parity": {
+    "option_parity": true,
+    "visual_format_parity": true,
+    "russian_readability": true,
+    "no_stamped_clone": true,
+    "blind_style_pass": true,
+    "blind_semantic_pass": true
+   }
+  },
+  {
+   "q_number": 42,
+   "block_idx": 0,
+   "correct_label": "B",
+   "stem": {
+    "clear": true,
+    "single_concept": true,
+    "no_answer_hint": true,
+    "version_scope_explicit": true
+   },
+   "correct": {
+    "factually_true": true,
+    "complete_for_stem": true,
+    "scope_correct": true,
+    "unique_defensible": true,
+    "not_visually_distinct": true,
+    "sections_consistent": true
+   },
+   "distractors": {
+    "A": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "C": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "D": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    }
+   },
+   "parity": {
+    "option_parity": true,
+    "visual_format_parity": true,
+    "russian_readability": true,
+    "no_stamped_clone": true,
+    "blind_style_pass": true,
+    "blind_semantic_pass": true
+   }
+  },
+  {
+   "q_number": 43,
+   "block_idx": 0,
+   "correct_label": "C",
+   "stem": {
+    "clear": true,
+    "single_concept": true,
+    "no_answer_hint": true,
+    "version_scope_explicit": true
+   },
+   "correct": {
+    "factually_true": true,
+    "complete_for_stem": true,
+    "scope_correct": true,
+    "unique_defensible": true,
+    "not_visually_distinct": true,
+    "sections_consistent": true
+   },
+   "distractors": {
+    "A": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "B": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "D": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    }
+   },
+   "parity": {
+    "option_parity": true,
+    "visual_format_parity": true,
+    "russian_readability": true,
+    "no_stamped_clone": true,
+    "blind_style_pass": true,
+    "blind_semantic_pass": true
+   }
+  },
+  {
+   "q_number": 44,
+   "block_idx": 0,
+   "correct_label": "D",
+   "stem": {
+    "clear": true,
+    "single_concept": true,
+    "no_answer_hint": true,
+    "version_scope_explicit": true
+   },
+   "correct": {
+    "factually_true": true,
+    "complete_for_stem": true,
+    "scope_correct": true,
+    "unique_defensible": true,
+    "not_visually_distinct": true,
+    "sections_consistent": true
+   },
+   "distractors": {
+    "A": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "B": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "C": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    }
+   },
+   "parity": {
+    "option_parity": true,
+    "visual_format_parity": true,
+    "russian_readability": true,
+    "no_stamped_clone": true,
+    "blind_style_pass": true,
+    "blind_semantic_pass": true
+   }
+  },
+  {
+   "q_number": 45,
+   "block_idx": 0,
+   "correct_label": "A",
+   "stem": {
+    "clear": true,
+    "single_concept": true,
+    "no_answer_hint": true,
+    "version_scope_explicit": true
+   },
+   "correct": {
+    "factually_true": true,
+    "complete_for_stem": true,
+    "scope_correct": true,
+    "unique_defensible": true,
+    "not_visually_distinct": true,
+    "sections_consistent": true
+   },
+   "distractors": {
+    "B": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "C": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "D": {
      "plausible": true,
      "one_primary_error": true,
      "real_api_or_concept": true,
