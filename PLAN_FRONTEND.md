@@ -1468,3 +1468,9 @@ Dirty changes created by loop: 0
 - localStorage возвращён к дефолтам (браузер юзера не оставлен в instrument-dark).
 - Итог LH-серии R0.58–R0.61: a11y 100 / BP 100 на desktop+mobile × light+dark — гейт «AA обе темы» закрыт живым инструментом.
 - **Дальше:** свободные read-only юниты исчерпаны почти полностью → режим поддержки §28 (сторожевые проверки якорей при изменениях WIP, регресс-скрины по запросу); контракт-тест + regenerate-удаление при окне без bootRun; session-parity — ждёт юзера; графики — ждут данных.
+
+### R0.62 (2026-07-12) — Режим поддержки §28: sentinel PASS + shell no-js RECHECK закрыт (0 правок)
+- Collision guard чист; bootRun жив (параллельная pedago-сессия активна: d4e2aefc).
+- Sentinel: 46 instrument-правил на месте; source == build == served бит-в-бит (полный diff). Урок повторно подтверждён: `curl | md5` через rtk-пайп даёт ложный хэш — интегрити только файлом + diff.
+- Shell no-js RECHECK → PASS(static R0.62): noscript-алерт role=alert, 3 тоггла hidden (PE), nav plain links, sticky 0. Последняя RECHECK-ячейка матрицы закрыта.
+- **Дальше:** режим поддержки — sentinel при следующих тиках только при изменении чужого WIP в зоне порта; разблокировки те же (окно без bootRun / EXAM-решение / данные для графиков).
