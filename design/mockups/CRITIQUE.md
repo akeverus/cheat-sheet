@@ -37,6 +37,25 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.129 — WCAG 4.1.3 Status Messages: комплексный аудит aria-live/role=status
+
+**Область:** все динамические регионы-оповещения на `/`, `/stats`, `/settings` (SSR-инвентарь + живая проверка динамики).
+
+**Инвентарь регионов (роль / aria-live / atomic / фокус / текст-на-старте):**
+- `/`: `.inline-alert.ed-noscript` (role=alert, статичный no-JS фоллбэк); `.inline-alert.hidden` (role=alert, assertive, пусто — сток ошибок); `.result-feedback.hidden` (role=status, polite, atomic, пусто — вердикт ответа); безымянный polite-div (сток объявлений, пусто).
+- `/stats`: no-script alert; 2× `.chart-fallback.hidden` (role=status, polite — «График временно недоступен…»); `.visually-hidden` (polite, atomic — регион объявления сортировки из cr.124).
+- `/settings`: no-script alert; `.control-inline-hint` (role=status, polite — живой хинт порядка); `.font-scale-value` (role=status, polite — «100%»); `.control-inline-hint.hidden` (role=status, atomic, пусто); `.export-status` (role=status, polite, скрыт CSS-классом, пусто).
+
+**Вердикт — verified-clean.** Конфигурация ровно по 4.1.3:
+- срочность разделена корректно: `role=alert`/assertive только у ошибок и no-JS фоллбэка, у всех несрочных обновлений — `role=status`/polite (не перебивают ридер);
+- `aria-atomic=true` стоит там, где регион перезаписывается целиком (вердикт, сортировка, хинты) — ридер читает всё сообщение, а не дельту;
+- ни один регион не фокусируемый — статус-сообщения не крадут фокус (проверено);
+- скрытые регионы пусты на старте → нет ложного объявления при загрузке; заполненные (`.control-inline-hint`, `.font-scale-value`) статичны на старте и объявляются лишь при изменении.
+
+**Живая верификация динамики:** клик `A+` (шаг шрифта) → `.font-scale-value` 100%→110%, `root.style.fontSize`=110%, регион role=status/polite → ридер озвучит «110%». Сортировочный регион подтверждён ранее (cr.124). Дефолты восстановлены (reset + очистка localStorage).
+
+**Правок нет** — инфраструктура status-сообщений полная и настроена верно.
+
 ### cr.128 — WCAG 1.3.1 Info & Relationships: таблицы + списки — ЧИСТО (R1.33)
 
 Новая размерность: программная определяемость структурных связей (caption, scope,
