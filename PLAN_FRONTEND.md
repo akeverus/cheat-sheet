@@ -1521,3 +1521,9 @@ Dirty changes created by loop: 0
 - Пробел: прежние свипы от 375px, стандарт требует 320. Прогнано 320×800 dpr2: editorial — /, /settings (3 вкладки), /stats (+раскрытая таблица), flashcard, empty, 404; instrument — /settings, /. Везде scrollWidth==320; единственный широкий элемент (CODE flashcard) — в собственном overflow-x:auto (законное исключение 1.4.10).
 - Браузер/localStorage возвращены к дефолтам. Правок кода нет.
 - **Дальше:** гейты прежние (window-тик + контракт-тест, EXAM, данные); режим поддержки.
+
+### R0.71 (2026-07-12) — Ось движения data-motion live-QA: VERIFIED-CLEAN (0 правок)
+- Все 3 состояния живьём на /settings: off → attr + transition 1e-06s + scroll auto; on → 0.15s + smooth; auto → атрибута нет. window.__motion жив; seg-контрол «Оформление» связан (attr+localStorage+aria-pressed, возврат чист).
+- Ограничение: @media-путь (OS reduce) не эмулируется этим MCP — корректность конструктивно (тело = off-блок, гейт :not([data-motion="on"])); прогнать живьём при появлении эмуляции.
+- localStorage возвращён. Правок кода нет.
+- **Дальше:** гейты прежние (window-тик + контракт-тест, EXAM, данные); режим поддержки.
