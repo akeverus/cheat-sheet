@@ -1386,3 +1386,8 @@ Dirty changes created by loop: 0
 
 - **Сделано:** C1-i вставлен после stripe-блока опций (выигрыш по порядку), head v74→75, live-синк. QA: дельта = прогноз (topic lowercase/tertiary, вопрос 500, опции paper, буква tertiary); ring-hover подтверждён реальным hover (teal accent-strong, без заливки); editorial = baseline R0.38 бит-в-бит; геометрия не менялась (320 валиден по R0.39). Черновик удалён. Матрица: focus parity PASS(active). Отложено на parity: checked-состояние, flashcard/empty ветки, result-инъекции app.js, .session-progress.
 - **Следующий тик:** порт result (маппинг R0.23) — пересверка хуков result.html/app.js-инъекций по свежему дереву → черновик или прямое применение (v=76); контракт-тест при остановленном bootRun.
+
+### R0.50 (2026-07-12) — Порт result C3-i применён (v=76): четвёртый порт
+
+- **Сделано:** C3-i (5 правил: topic-badge lowercase/tertiary, вердикт medium, stat-value mono/tabular, sm2-details tertiary+line) вставлен перед «Утилитами», head v75→76, live-синк. QA §4: v=76 served, 5 правил распарсены, утечки на /stats нет (stat-value = baseline R0.37). Визуальный паритет — parity-фаза (нужен POST /answer). Не портированы: confidence (прод-решение юзера с эмодзи), мёртвые regenerate/question-side (Фаза G).
+- **Следующий тик:** порт stats (маппинг R0.24) — instrument-голос на stat-карты/таблицу/фильтры (v=77); контракт-тест при остановленном bootRun. Затем settings → shell.
