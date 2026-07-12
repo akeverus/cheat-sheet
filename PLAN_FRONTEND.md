@@ -1298,3 +1298,9 @@ Dirty changes created by loop: 0
 - **Следующий тик:** проверка разблокировки → порт error (C7-i). Baseline покрыл
   focus/settings/error/stats; остаток (summary/result no-JS) требует сессии/ответов —
   снимется в parity-фазе по чеклисту.
+
+### R0.32 (2026-07-12) — Фаза F prep: no-JS контракт-аудит серверного HTML (все PE-инварианты зелёные)
+
+- **Сделано:** curl GET-смоук 4 страниц живого инстанса (focus/settings/stats/error → scratchpad). Проверены PE-инварианты no-JS: (1) все прогрессив-контролы уходят с сервера СКРЫТЫМИ — 3 тоггла шапки, settings-tablist, personalization-card, data-export-block, streak-bar (`hidden` в served HTML) → без JS мёртвых контролов нет; (2) живое без JS на месте — focus #interview-form + noscript, settings filters/session/danger-формы, stats-таблица развёрнута (0 tr[hidden], collapse чисто клиентский) + chart-fallback, error статичен. PIXEL_QA_MATRIX: no-js TODO→PASS(static). CRITIQUE cr.34.
+- **Блокер без изменений (12-й тик):** base.css dirty (чужой WIP). Ответы на вопросы живого квиза запрещены (§4: мутация вымытой базы) → интерактивный no-JS смоук и summary/result-baseline остаются на parity-фазу.
+- **Следующий тик:** проверка разблокировки base.css → Фаза E порт error (C7-i по PARITY_QA_CHECKLIST §3). Предподготовка исчерпана ПОЛНОСТЬЮ: 7/7 маппингов, 2 черновика (пересверены R0.29), runbook Фазы F, live-baseline (R0.30–31), no-js смоук (R0.32). Если base.css всё ещё dirty — read-only аудит следующей глубины (напр. computed-парность editorial-контроля или ревизия app.js хуков focus-порта против WIP-диффа).
