@@ -1828,3 +1828,10 @@ meta refresh нет, 0 unload-хендлеров; HTML no-store — осозна
 сообщениями). Коррекция R1.11 «number-инпутов ноль» (visible-фильтр пропустил скрытый
 при TRAINING счётчик) — cr.107 аннотирован; инвентаризацию контролов вести по SSR-DOM.
 Кодовых правок нет; cr.111. Window-tick — :8080 жив.
+
+### R1.16 — Якоря/sticky-перекрытие/back-to-top — verified-clean (2026-07-12)
+
+Masthead везде relative → перекрытие целей невозможно; skip → #main-content tabindex=-1
+работает; sticky th /stats вертикально инертны (overflow-x-контекст); back-to-top
+направленный + фокус на MAIN после активации. Кодовых правок нет; cr.112.
+Window-tick — :8080 жив.
