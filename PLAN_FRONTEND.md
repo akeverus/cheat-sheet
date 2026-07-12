@@ -1657,3 +1657,8 @@ Dirty changes created by loop: 0
 
 - Все 60+ точек мутации DOM в app.js + stats.js/stats.html проверены: инфонесущие обновления идут в live-регионы (result-feedback, inline-alert, confidence, copy/export/personalization/sort-status, chart-fallback, filter-mode-hint, font-scale-value), осознанные исключения (таймер aria-hidden, today-чип) обоснованы, транзиентные лейблы кнопок — норма. Паттерн «.hidden-класс + текст до показа» консистентен.
 - Правок нет. Контракт-тест PENDING. Дальше: prefers-reduced-motion покрытие / forced-colors / window-тик.
+
+### R0.92 (2026-07-12) — Аудит покрытия prefers-reduced-motion: VERIFIED-CLEAN (0 правок)
+
+- Все источники движения гасятся двухпутевым kill-механизмом (media + data-motion=off, форс on через :not): единственный @keyframes + transitions — wildcard 0.001ms; scroll-behavior перебит; delay/fill-mode escape отсутствуют; три JS-сайта (inline-alert scroll, back-to-top, Chart.js) — идентичный 3-way протокол; дублирование протокола осознанное (разные бандлы).
+- Правок нет. Live-эмуляция Reduce тулингом недоступна (tooling-gated). Дальше: forced-colors / window-тик.
