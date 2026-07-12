@@ -2071,3 +2071,12 @@ fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`
 ### R1.42 — WCAG 2.3.3 prefers-reduced-motion (verified-clean)
 
 Аудит motion-kill по CSS + JS. Три-состоянная ось «Движение» (auto/on/off) консистентна во всех слоях: CSS универсальный kill (media + [data-motion=off]); JS smooth-scroll (app.js 104-108) и Chart.js canvas (stats.js motionAllowed→anim) гейтятся той же моделью — обе JS-анимации (вне досягаемости CSS) обработаны вручную. Правок кода нет. Детали — cr.137.
+
+
+### R1.43 — ФИКС editorial focus-ring → solid double-ring (WCAG 1.4.11/2.4.11) [R1.40 закрыт]
+
+Реализовано решение пользователя. `tokens.css`: editorial `--shadow-focus` (light+dark+mirror) с alpha-ring на solid double-ring (2px bg-gap + 4px --color-border-focus), паттерн linear/др. `--color-border-focus` не менял — Ember 3.85:1 / Clay 4.8:1 уже ≥3:1. design-token-audit CLEAN. box-shadow-only контролы теперь ≥3:1 вместо ~1.4:1. Non-default alpha-дизайны — follow-up. Детали — cr.138.
+
+### R1.44 — ФИКС character-key shortcuts scope + autofocus (WCAG 2.1.4) [R1.37 закрыт]
+
+Реализован вариант C. `app.js`: `1–9` гейтится `form.contains(activeElement)` (2.1.4c active-on-focus); autofocus 1-й опции `{preventScroll}` при загрузке — шорткаты работают сразу. `?` оставлен глобальным (benign help-toggle). node --check OK, MVC+contract тесты GREEN. Live keyboard-проверка — при инстансе. Тест-долг (head/base/stats предыдущих тиков) закрыт этим же прогоном. Детали — cr.139.

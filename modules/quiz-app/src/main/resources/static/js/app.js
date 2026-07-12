@@ -1213,9 +1213,16 @@
       return;
     }
     if (key >= '1' && key <= '9') {
-      const index = parseInt(key, 10) - 1;
-      if (selectOptionByIndex(index)) {
-        event.preventDefault();
+      // WCAG 2.1.4 Character Key Shortcuts (R1.44): печатный одиночный шорткат
+      // активен ТОЛЬКО когда фокус внутри формы вопроса — исключение «active only
+      // on focus». Autofocus (ниже) сажает фокус на 1-ю опцию при загрузке, так что
+      // 1-9 работают сразу; но если пользователь увёл фокус (шапка/ссылка) — не
+      // перехватываем цифру (раньше шорткат был document-wide → нарушение 2.1.4).
+      if (form.contains(document.activeElement)) {
+        const index = parseInt(key, 10) - 1;
+        if (selectOptionByIndex(index)) {
+          event.preventDefault();
+        }
       }
     }
     if (key === 'Enter') {
@@ -1223,6 +1230,16 @@
       form.dispatchEvent(new Event('submit', { cancelable: true }));
     }
   });
+
+  // WCAG 2.1.4 (R1.44): сажаем фокус на 1-ю опцию при загрузке вопроса, чтобы
+  // клавиатурные шорткаты 1-9 (scope: фокус внутри формы, см. keydown выше)
+  // работали сразу, а не только после ручного Tab. preventScroll — не прыгаем
+  // мимо текста вопроса; программный focus() НЕ триггерит :focus-visible, поэтому
+  // визуального кольца на загрузке нет (появится при первом Tab/стрелке). Только
+  // MCQ-режим (есть опции) и до ответа.
+  if (optionInputs.length > 0 && !answered) {
+    optionInputs[0].focus({ preventScroll: true });
+  }
 
   // Теги таблиц включены: сервер (MarkdownRenderService) рендерит GFM-таблицы
   // в <table>, а Jsoup-safelist их уже отсанитайзил. Без них этот клиентский
