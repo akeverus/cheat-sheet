@@ -1813,3 +1813,10 @@ live-sync cp в bootRun, CSSOM-верификация (хром 0, контен�
 errormessage, 0 label[for]-сирот, td[headers] чисты — SSR всех страниц + живые
 состояния /settings по вкладкам. kbd-оверлей покрыт R0.76/R0.83. Кодовых правок нет;
 cr.109. Window-tick — :8080 жив.
+
+### R1.14 — Мета-гигиена + bfcache/кэш — verified-clean (2026-07-12)
+
+Титулы уникальны (2.4.2), zoom не заблокирован, theme-color адаптивный (JS head),
+meta refresh нет, 0 unload-хендлеров; HTML no-store — осознанно (сессионное состояние),
+статика max-age=86400+must-revalidate при v-URL. immutable и description — наблюдения
+без правок (бэкенд/не-цель). Кодовых правок нет; cr.110. Window-tick — :8080 жив.
