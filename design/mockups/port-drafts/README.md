@@ -12,6 +12,32 @@
 **Оба черновика применены — каталог port-drafts дальше живёт как журнал решений
 порта (таблица выше + секции решений + пересверки R0.29/R0.33).**
 
+| `focus-instrument-base.css` | base.css | после блока опций §C1 (за `.option-dimmed`/пост-ответной зоной, ~строка 800) | ГОТОВ К ПРИМЕНЕНИЮ (R0.49) |
+
+## focus-instrument-base.css — решения порта (R0.48, по PORT_MAPPING_focus-training.md)
+
+1. **Пересверка хуков по СВЕЖЕМУ дереву (WIP закоммичен):** app.js ставит опциям
+   `option-correct` / `option-wrong` / `option-dimmed` (app.js:1435-1441) — стилизованы
+   design-agnostic через статус-токены (base.css:785-789), instrument их наследует
+   БЕЗ правок. Радиогруппа/счётчик-буква/checked-механика — base.css:722-783.
+2. **Грейды флешкарт уже покрыты:** `.grade-1`/`.grade-4` hover-акценты error/success
+   существуют design-agnostic (base.css:1060-1061) — п.53 маппинга закрыт прод-кодом,
+   в черновик НЕ входит.
+3. **Submit-«гибрид» из cr.40 НЕ дефект:** приклеенный radius `0 0 8 8` — editorial-
+   решение; у instrument токены дают отдельный r10-чип + margin-top (training-actions
+   @768: space-6). Композиция макета (submit отделён) выполняется токенами — правок нет.
+4. **Черновик минимален (7 правил):** lowercase-тема (tertiary), medium-вопрос,
+   mono/tabular прогресс, paper-карты опций, ring-hover accent-strong без заливки,
+   checked border accent-strong, ::before-буква tertiary. Всё поверх существующих
+   хуков; DOM/app.js не тронуты; буква остаётся CSS-счётчиком (риск №3).
+5. **AA:** text-tertiary instrument = 5.4:1 light — проходит для темы/буквы;
+   hover/checked границы — графические объекты ≥3:1 (accent-strong 205-teal).
+6. **QA при применении:** активное состояние живьём (GET /) по baseline R0.38 —
+   ожидаемая дельта: topic lowercase/tertiary, question weight 600→500, опция bg
+   `oklch(0.985...)` (paper) вместо `0.958` (secondary), hover border teal-strong
+   без заливки; editorial-контроль = R0.38 бит-в-бит; 320-reflow. Flashcard/empty
+   ветки — parity-фаза (§4).
+
 ## error-instrument-base.css — решения порта (по PORT_MAPPING_error.md)
 
 1. **Шаблон error.html НЕ меняется вообще.** Риск №2 контракта (`.error-rail` vs

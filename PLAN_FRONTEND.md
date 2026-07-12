@@ -1376,3 +1376,8 @@ Dirty changes created by loop: 0
 
 - **Сделано:** C6-i вставлен после §C6 (перед §C7), head v73→74, live-синк. QA в пределах §4: served v=74; 9 правил C6-i распарсены; утечки нет — /stats с его .stat-item отдаёт baseline R0.37 бит-в-бит (скоуп .summary-page работает). Черновик удалён; port-drafts теперь журнал решений. Матрица: summary parity=APPLIED▽ (визуальный паритет — parity-фаза с EXAM-сессией), contract PENDING-TEST.
 - **Следующий тик:** bootRun остановлен? → прогон TemplateFragmentContractTest (закрыть оба PENDING-TEST). Дальше по очереди маппингов: порт focus-training (крупнейший; перед ним re-verify app.js классов против свежего дерева — WIP закоммичен, дифф-ревизия R0.33 могла устареть).
+
+### R0.48 (2026-07-12) — Подготовка порта focus: re-verify + черновик C1-i
+
+- **Сделано:** пересверка хуков focus по свежему дереву (WIP закоммичен): app.js option-классы и grade-акценты уже покрыты design-agnostic кодом; submit-«гибрид» cr.40 снят (editorial-решение, instrument-токены дают отдельный чип). Черновик C1-i (port-drafts/focus-instrument-base.css, 7 правил поверх существующих хуков) + решения в README §R0.48. DOM/app.js не трогаются.
+- **Следующий тик:** применить C1-i (после блока опций §C1, bump v=75) + QA live по baseline R0.38 (дельта: topic lowercase/tertiary, вопрос 500, опции paper+ring-hover) + editorial-контроль + 320; контракт-тест при остановленном bootRun.

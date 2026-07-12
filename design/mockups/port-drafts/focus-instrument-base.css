@@ -1,0 +1,58 @@
+/* =============================================================================
+   DRAFT (Фаза E, не подключён) — вставить в base.css ПОСЛЕ фокус-блока опций
+   (после правила html[data-design] .option-dimmed / пост-ответной зоны, до
+   stripe-надстройки НЕЛЬЗЯ — stripe-блок тоже дизайн-скоупный, порядок между
+   [data-design="X"]-блоками не важен; ставим после §C1-опций перед code-blocks).
+   См. port-drafts/README.md: решения порта focus R0.48.
+   ========================================================================== */
+
+/* =============================================================================
+   C1-i — Instrument: фокус-тренировка. CSS-only рестайл СУЩЕСТВУЮЩИХ хуков
+   (DOM focus-training.html и app.js НЕ меняются): paper-карты вариантов с
+   ring-hover вместо заливки, строчный mono-шёпот темы, medium-вопрос,
+   mono-цифры прогресса. Буква варианта остаётся CSS-счётчиком ::before
+   (риск №3 маппинга), пост-ответные классы app.js (.option-correct/-wrong/
+   -dimmed) работают через статус-токены instrument сами. Грейды флешкарт
+   (.grade-1/.grade-4 hover-акценты) уже design-agnostic — не дублируем.
+   Submit-композиция: у instrument токены уже дают отдельный r10-чип
+   (editorial 0 0 8 8 — чужое осознанное решение, не трогаем). ============== */
+
+/* Тема вопроса: строчный mono-шёпот (подпись instrument), не upper-акцент. */
+html[data-design="instrument"] .focus-question-topic {
+  text-transform: lowercase;
+  color: var(--color-text-tertiary);
+}
+
+/* Вопрос: Newsreader medium — instrument не кричит болдом (та же линия,
+   что error-title/summary-score в C7-i/C6-i). */
+html[data-design="instrument"] .focus-question {
+  font-weight: var(--font-weight-medium);
+}
+
+/* Цифры прогресса сессии: mono/tabular — приборная панель. */
+html[data-design="instrument"] .focus-progress-line .session-progress {
+  font-family: var(--font-family-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Карты вариантов: paper-слой (не утопленная secondary); hover — щелчок
+   прибора: акцентная граница БЕЗ заливки (как hover ошибок в C6-i). */
+html[data-design="instrument"] #interview-options label {
+  background: var(--color-bg-primary);
+}
+html[data-design="instrument"] #interview-options label:hover {
+  border-color: var(--color-accent-strong);
+  background: var(--color-bg-primary);
+}
+
+/* Выбранный вариант: та же строгая граница accent-strong (wash из токенов). */
+html[data-design="instrument"] #interview-options label:has(input:checked) {
+  border-color: var(--color-accent-strong);
+}
+
+/* Ring-бейдж буквы: тише (tertiary), при выборе токены зальют accent-ом
+   через общее правило — не дублируем. */
+html[data-design="instrument"] #interview-options label::before {
+  color: var(--color-text-tertiary);
+}
