@@ -27,9 +27,12 @@
 | session-summary | PASS | PASS | PASS* | PASS | PASS | TODO▽ | TODO | TODO | D done; черновик C6-i READY (baseline требует сессии §4) |
 | settings | PASS | PASS | PASS* | PASS✦ | PASS | TODO▲ | TODO | PASS(static R0.32) | D done; E BLOCKED (baseline R0.36) |
 | stats | PASS | PASS♦ | PASS* | PASS | PASS(core)◊ | TODO▲ | TODO | PASS(static R0.32) | D done; E BLOCKED (baseline R0.37) |
-| error | PASS | PASS | PASS* | PASS | PASS | TODO▲ | TODO | PASS(static R0.32) | D done; черновик C7-i READY (baseline R0.34) |
+| error | PASS | PASS | PASS* | PASS | PASS | **PASS(R0.46)** | PENDING-TEST¤ | PASS(static R0.32) | **E DONE (C7-i применён, v=73)** |
 
-`▲` parity TODO, но **численный ДО-портовый baseline СНЯТ** (живой инстанс, @1280 +
+`¤` contract PENDING-TEST: вставка — чистый append (пиннутые тестом строки не
+тронуты), но прогон TemplateFragmentContractTest отложен — живой bootRun
+параллельной сессии (§4: gradle при живом devtools-bootRun = wedge); прогнать
+при первой возможности. `▲` parity TODO, но **численный ДО-портовый baseline СНЯТ** (живой инстанс, @1280 +
 375 для shell/focus, 4 состояния editorial/instrument × light/dark, settle 400ms) —
 координаты в PARITY_QA_CHECKLIST §2; после порта паритет доказывается диффом чисел,
 editorial = контроль бит-в-бит. `▽` baseline невозможен без сессии (§4 запрещает

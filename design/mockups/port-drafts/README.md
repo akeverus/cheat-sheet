@@ -6,8 +6,8 @@
 
 | Черновик | Целевой файл | Куда вставлять | Блокер |
 |---|---|---|---|
-| `error-instrument-base.css` | `modules/quiz-app/src/main/resources/static/css/base.css` | СРАЗУ ПОСЛЕ общего блока §C7 (`html[data-design] .error-page ...`, ~строка 2060) | base.css dirty (чужой WIP) |
-| `session-summary-instrument-base.css` | тот же base.css | СРАЗУ ПОСЛЕ общего блока §C6 (`html[data-design] .summary-page ...`, ~строка 1972) | base.css dirty (чужой WIP) |
+| ~~`error-instrument-base.css`~~ | base.css | **ПРИМЕНЁН R0.46** (после §C7, v=73; QA: дельта = прогноз бит-в-бит, editorial-контроль = baseline R0.34, 320 clamp 70.4px чисто) | — |
+| `session-summary-instrument-base.css` | `modules/quiz-app/src/main/resources/static/css/base.css` | СРАЗУ ПОСЛЕ общего блока §C6 (`html[data-design] .summary-page ...`, хвост ~1972) | разблокирован — применить следующим тиком |
 
 ## error-instrument-base.css — решения порта (по PORT_MAPPING_error.md)
 

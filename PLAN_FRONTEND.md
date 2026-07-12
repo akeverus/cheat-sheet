@@ -1365,3 +1365,9 @@ Dirty changes created by loop: 0
 ### R0.45 (2026-07-12) — Maintenance-тик: блокер жив (25), WIP без изменений
 
 - Fingerprint диффа base.css идентичен (5741ff12). Действий нет. Ожидание разблокировки → error C7-i.
+
+### R0.46 (2026-07-12) — ФАЗА E ОТКРЫТА: порт error C7-i ПРИМЕНЁН (v=73)
+
+- **Разблокировка:** параллельная сессия закоммитила WIP (68444a1b+0f66cadf) — дерево чисто после 25 тиков блокера.
+- **Сделано (по PARITY_QA_CHECKLIST §3):** C7-i вставлен в base.css после §C7; head.html base v72→73; live-синк в build/resources; QA на живом инстансе: дельта = прогноз R0.34 бит-в-бит (ghost 136px/500/border-primary @1280, card flex-start/left, eyebrow lowercase/tertiary, title 500/20ch, actions flex-start; dark корректен), editorial-контроль = baseline бит-в-бит, 320-reflow чист (clamp 70.4px). Черновик удалён, матрица: error parity PASS, contract PENDING-TEST (живой bootRun — gradle нельзя, §4).
+- **Следующий тик:** порт session-summary C6-i (после §C6 ~1972, bump v=74) + тем же тиком прогон TemplateFragmentContractTest, если bootRun остановится.
