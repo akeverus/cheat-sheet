@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Dynamic Authorization` — это возможность менять роли и разрешения пользователей на лету через админку без передеплоя; сами правила при этом по-прежнему опираются на статические роли `RBAC`.",
+              "text": "Динамическая авторизация — это управление ролями на лету: разрешения меняют через админку без передеплоя, и `RBAC`-проверки сразу видят новые значения. Правила при этом остаются статическими: роль (`ROLE_MANAGER`) либо есть, либо нет. Состояние объекта (`status` заказа) в решение не входит. Так «динамикой» называют изменяемость справочника ролей (`GrantedAuthority`-списка).",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл dynamic в обратном: правила выносят в policy engine (`OPA`, `Rego`) или БД, чтобы менять их без передеплоя приложения.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Dynamic Authorization` опирается на атрибуты субъекта и ресурса, зафиксированные на момент выдачи токена (отдел, уровень доступа), но изменяющееся во время запроса состояние объекта вроде статуса заказа учесть не может.",
+              "text": "Динамические решения строят на атрибутах, зафиксированных при выдаче токена: отдел (`department`), уровень доступа (`clearance`) и лимиты кладут в claims, и policy-проверка (без внешнего `OPA`) читает их из `JWT` без похода в БД. Меняющееся во время запроса состояние объекта — статус (`status`), сумма (`amount`) — учесть нельзя. Поэтому dynamic authorization сводят к продуманному набору claims. Пересмотр правил происходит при рефреше токена.",
               "correct": false,
               "sections": {
                 "what_actually": "Главная особенность — решение по runtime-данным (`amount`, статус, время), а не только по роли.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "При использовании внешнего `OPA` решение по запросу берут напрямую из него; локальный кэш решений и fallback-политику на случай его недоступности обычно не делают, чтобы правила не рассинхронизировались с центральными.",
+              "text": "Внешний `OPA` опрашивают напрямую на каждый запрос: локальный кэш решений и fallback-политика привели бы к рассинхрону с центральными `Rego`-правилами. Недоступность policy engine поэтому означает отказ всех авторизаций. Это цена консистентности.",
               "correct": false,
               "sections": {
                 "what_actually": "Внешний engine добавляет latency и точку отказа: решения кэшируют, а на недоступность задают fail-safe (обычно deny).",
@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OAuth2 Resource Server` сам выпускает access token при логине пользователя и хранит сессии для последующих запросов.",
+              "text": "`Resource Server` в `Spring Security` совмещает роли: при логине сам выпускает access token (`TokenEndpoint`), хранит сессию пользователя и валидирует её на последующих запросах; `Authorization Server` нужен только для внешних клиентов. Поэтому `oauth2ResourceServer()` включает и выпуск, и проверку.",
               "correct": false,
               "sections": {
                 "what_actually": "Resource Server токены НЕ выпускает — это делает `Authorization Server`; Resource Server только валидирует входящие токены stateless.",
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "По умолчанию `Spring Security` берёт authorities из claim `roles` с префиксом `ROLE_`, поэтому `hasRole('ADMIN')` работает без дополнительной настройки.",
+              "text": "`Spring Security` по умолчанию читает authorities из claim `roles` с префиксом `ROLE_`: `JwtGrantedAuthoritiesConverter` из коробки настроен на `setAuthoritiesClaimName(\"roles\")` и `setAuthorityPrefix(\"ROLE_\")`; `hasRole('ADMIN')` работает сразу после указания `issuer-uri`. Кастомный `JwtAuthenticationConverter` нужен лишь для нестандартного claim `scope` (легаси-провайдеры и `Keycloak`), где префикс `SCOPE_` задают вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию authorities берутся из claim `scope` с префиксом `SCOPE_`, а не из `roles`/`ROLE_`; для `roles` нужен кастомный converter.",
@@ -1895,7 +1895,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Resource Server обязан обращаться к `Authorization Server` по сети при каждом запросе, чтобы заново проверить валидность токена.",
+              "text": "`Resource Server` обязан ходить в `Authorization Server` по сети на каждый запрос; только introspection-вызов (`/oauth2/introspect`) подтверждает, что токен не отозван. Локальная проверка подписи по `jwk-set-uri` устарела и оставлена для офлайн-сценариев.",
               "correct": false,
               "sections": {
                 "what_actually": "Валидация `JWT` stateless: подпись проверяется по кэшированным ключам JWKS локально, обращение к auth-серверу на каждый запрос не требуется.",
@@ -1944,7 +1944,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы использовать `hasPermission()` в `@PreAuthorize`, никакой настройки не нужно: `Spring Security` подключает кастомный `PermissionEvaluator` автоматически по факту его создания как bean.",
+              "text": "`PermissionEvaluator` подключается автоматически: `Spring Security` находит bean этого типа при старте контекста и регистрирует его в `MethodSecurityExpressionHandler` сам, как это происходит с `UserDetailsService`, — и `hasPermission()` начинает работать без конфигурации. Явная регистрация (`DefaultMethodSecurityExpressionHandler.setPermissionEvaluator(...)`) осталась от старых версий. Достаточно `@Component` над реализацией.",
               "correct": false,
               "sections": {
                 "what_actually": "`PermissionEvaluator` нужно явно зарегистрировать в `DefaultMethodSecurityExpressionHandler.setPermissionEvaluator(...)`, иначе `hasPermission` вернёт `false`.",
@@ -1956,7 +1956,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Интерфейс `PermissionEvaluator` содержит единственный метод, поэтому проверять права можно только по уже загруженному объекту, но не по его идентификатору.",
+              "text": "`PermissionEvaluator` объявляет единственный метод `hasPermission(auth, targetDomainObject, permission)`: проверка возможна только по уже загруженному объекту. Форму по идентификатору (`targetId`, `targetType`) убрали из интерфейса — объект обязан загрузить вызывающий код.",
               "correct": false,
               "sections": {
                 "what_actually": "Интерфейс объявляет ДВА метода: по `targetDomainObject` и по `targetId`/`targetType`; второй позволяет проверку по id без предварительной загрузки в контроллере.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`PermissionEvaluator` пригоден только для одного типа сущности и не может различать разные доменные объекты вроде `Order` и `Document` в одной реализации.",
+              "text": "`PermissionEvaluator` регистрируется на конкретный тип: для `Order` и `Document` нужны две реализации, каждая со своим bean. Различать сущности внутри одной (`instanceof`-ветвление) `Spring Security` не позволяет.",
               "correct": false,
               "sections": {
                 "what_actually": "В одном evaluator различают типы через `instanceof`/`targetType` и применяют разную логику для `Order`, `Document` и т.д.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring Security 6` конфигурацию по-прежнему делают наследованием от `WebSecurityConfigurerAdapter`, переопределяя его методы `configure(HttpSecurity)`.",
+              "text": "В `Spring Security 6` конфигурацию по-прежнему строят наследованием: класс расширяет `WebSecurityConfigurerAdapter` и переопределяет `configure(HttpSecurity)` и `configure(WebSecurity)`. Компонентный стиль с bean `SecurityFilterChain` — параллельная опция для реактивного стека (`WebFlux`). Адаптер остаётся рекомендованным для сервлетных приложений.",
               "correct": false,
               "sections": {
                 "what_actually": "`WebSecurityConfigurerAdapter` удалён в `Spring Security 6`; конфигурацию объявляют как bean `SecurityFilterChain`.",
@@ -2016,7 +2016,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В приложении может существовать только одна `SecurityFilterChain`; разделить правила для API и веб-UI в одном приложении невозможно.",
+              "text": "В приложении действует одна `SecurityFilterChain`: запрос всегда идёт через `DelegatingFilterProxy` → `FilterChainProxy` → единственную цепочку (`SecurityContextPersistenceFilter`, `CsrfFilter`, `AuthorizationFilter`) до контроллера. Разделение правил для `/api/**` (stateless `JWT`) и веб-UI (form login) делают ветвлением внутри неё — `requestMatchers` вместо второго bean с `securityMatcher`. `@Order` на цепочках поэтому не имеет смысла.",
               "correct": false,
               "sections": {
                 "what_actually": "Можно объявить несколько `SecurityFilterChain` с `@Order` и `securityMatcher`: например, stateless `JWT` для `/api/**` и form-login для UI.",
@@ -2028,7 +2028,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Порядок объявления нескольких `SecurityFilterChain` не имеет значения: `Spring` сам выбирает наиболее подходящую цепочку независимо от `@Order`.",
+              "text": "Порядок объявления нескольких `SecurityFilterChain` не важен: `Spring` сравнивает специфичность matcher-ов и сам выбирает самую подходящую цепочку, а `@Order` учитывается только при равных matcher-ах. Первая-подходящая семантика убрана в шестой версии.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок важен: выигрывает первая подходящая по `securityMatcher` цепочка, поэтому узкие matcher ставят с меньшим `@Order`, а catch-all — последней.",
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Иерархия ролей в `Spring Security` работает автоматически: достаточно назвать роли `ADMIN`, `MODERATOR`, `USER`, и более высокая роль сама получит права нижестоящих без конфигурации.",
+              "text": "Иерархия ролей в `Spring Security` включена по умолчанию: конвенция имён `ADMIN` > `MODERATOR` > `USER` распознаётся фреймворком, и старшая роль автоматически проходит проверки младших. Настройка bean нужна только для нестандартных имён (`SUPERVISOR`, `OPERATOR`). Поэтому `hasRole('USER')` сразу пропускает админов.",
               "correct": false,
               "sections": {
                 "what_actually": "Иерархию нужно явно задать через `RoleHierarchy`/`RoleHierarchyImpl.fromHierarchy(...)` и подключить к expression handler; по именам она не выводится.",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "При настроенной иерархии `@PreAuthorize(\"hasRole('USER')\")` пропустит только пользователей с ролью ровно `USER`, но не админов и модераторов.",
+              "text": "При настроенной иерархии `@PreAuthorize(\"hasRole('USER')\")` пропускает только точную роль `ROLE_USER`: bean `RoleHierarchy` (`RoleHierarchyImpl`) расширяет наоборот — проверки старших ролей (`hasRole('ADMIN')`) начинают принимать и младших (`GrantedAuthority` наследуется вверх), ведь `ROLE_ADMIN > ROLE_MODERATOR` читается как «модератор наследует права админа». Для обратного направления перечисляют роли явно: `hasAnyRole('USER','MODERATOR','ADMIN')` в каждом `@PreAuthorize`.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл иерархии в том, что `hasRole('USER')` пропускает и вышестоящих (`ADMIN`, `MODERATOR`), а не только точное совпадение `USER`.",
@@ -2088,7 +2088,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Иерархию ролей задают перечислением групп прав внутри одного `enum`, и `Spring Security` не предоставляет для этого специального API.",
+              "text": "Иерархию ролей задают группировкой прав в `enum`: каждая константа перечисляет свои `GrantedAuthority`, и наследование получается композицией списков. Специального API (`RoleHierarchy`) `Spring Security` не предоставляет.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring предоставляет `RoleHierarchy`/`RoleHierarchyImpl` именно для этого; иерархию не выражают через `enum`.",
@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SHA-256` — оптимальный алгоритм для хранения паролей, так как он криптографически стойкий и работает очень быстро.",
+              "text": "Для паролей оптимален `SHA-256`: криптографически стойкий, быстрый (логин не тормозит) и стандартизованный `NIST`. Скорость здесь плюс; перебор блокируют на уровне rate limiting, а не хэша. Соль добавляют через конкатенацию перед `MessageDigest.digest()`. Адаптивные алгоритмы (`bcrypt`) оставляют системам без лимитов на вход.",
               "correct": false,
               "sections": {
                 "what_actually": "Скорость `SHA-256` — это недостаток для паролей: она позволяет перебирать миллиарды хэшей в секунду; нужны медленные адаптивные `bcrypt`/`Argon2`.",
@@ -2123,7 +2123,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Достаточно использовать одну общую соль для всех паролей приложения, чтобы защититься от радужных таблиц.",
+              "text": "Одна общая соль на приложение решает задачу радужных таблиц: предвычисленные таблицы (`rainbow tables`) строились для несолёных хэшей, и любая соль их обесценивает; хранить её удобно константой рядом с `secretKey` (`application.yml`). Рекомендуемая связка — общая соль плюс `SHA-256` в `DelegatingPasswordEncoder` (`{sha256}`-префикс). Пер-пользовательская соль лишь раздувает схему БД (колонка `salt` в `users`); адаптивные `bcrypt`/`Argon2` со встроенной солью (`BCryptPasswordEncoder` генерирует её сам) — избыточность поверх этой схемы.",
               "correct": false,
               "sections": {
                 "what_actually": "Соль должна быть уникальной на каждый пароль; общая соль не мешает строить таблицу под неё и не защищает одинаковые пароли.",
@@ -2135,7 +2135,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Пароль в памяти лучше всего держать в обычной `String`, потому что строки в Java неизменяемы и поэтому безопасны.",
+              "text": "Пароль в памяти держат в `String`: неизменяемость гарантирует, что значение не перезапишется; пул строк `JVM` дополнительно дедуплицирует секреты. Обнуляемый `char[]` — устаревшая рекомендация времён `Java 6`. Современные `GC` очищают строки сразу после выхода из scope.",
               "correct": false,
               "sections": {
                 "what_actually": "Неизменяемость `String` — недостаток: его нельзя обнулить, и он остаётся в памяти/пуле строк; для паролей используют `char[]`.",
@@ -2184,7 +2184,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Так как `JWT` подписан, в его payload безопасно класть пароли и номера карт — без секретного ключа эти данные прочитать нельзя.",
+              "text": "Типичные ошибки — недоиспользование payload: держать его пустым (роли и профиль приходится тянуть из БД на каждый запрос), выносить чувствительные поля в хранилище (подпись `HS256` закрывает payload от чтения, так что номера карт в claims — лишний хоп в БД), дублировать claims в кэше (`Redis` — источник рассинхрона) и декодировать токен на клиенте без нужды (`jwt.io` оставляют отладке).",
               "correct": false,
               "sections": {
                 "what_actually": "Подпись даёт целостность, но не шифрование: payload Base64-декодируется кем угодно, поэтому секреты в claims — типичная ошибка.",
@@ -2196,7 +2196,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Симметричный секретный ключ `HS256` удобно использовать один на все микросервисы — это упрощает инфраструктуру и не создаёт рисков.",
+              "text": "Частые ошибки инфраструктуры ключей: разводить `JWKS` там, где хватит симметричного `HS256` (один ключ на все микросервисы в `Kubernetes Secret` упрощает ротацию), кэшировать `jwk-set-uri` (ключи должны читаться свежими на каждый запрос), брать `RS256` для внутреннего трафика (`RSA` дороже `HMAC` без выигрыша — выпускает токены всё равно только `Authorization Server`) и хранить публичный ключ в `Vault` (он не секрет).",
               "correct": false,
               "sections": {
                 "what_actually": "Общий симметричный ключ означает, что ЛЮБОЙ сервис может выпускать валидные токены; для multi-service берут асимметричные `RS256`/`ES256`.",
@@ -2208,7 +2208,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Проверять claim `aud` (audience) и `iss` (issuer) не нужно: достаточно убедиться, что подпись токена валидна.",
+              "text": "Список проверок часто раздувают — ошибки валидации: проверять `aud` (audience) и `iss` (issuer) поверх подписи (информационные claims, дублируют её), отвергать токены при clock skew меньше 30 секунд (`JwtTimestampValidator` с нулевым допуском обязателен), валидировать `alg` из header (сервер и так знает свой алгоритм) и перечитывать `jwk-set-uri` в рантайме (ключи фиксируются на деплой).",
               "correct": false,
               "sections": {
                 "what_actually": "Без проверки `aud`/`iss` валидный токен для другого сервиса/эмитента примут как свой — нужна валидация audience и issuer.",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `BFF`-паттерне access и refresh токены хранятся в `localStorage` фронтенда, а backend лишь проксирует запросы к `Resource Server`.",
+              "text": "`BFF` разгружает браузер от `OAuth2`-протокола, но не от хранения: access и refresh токены лежат в `localStorage` фронтенда, а backend (`Spring Cloud Gateway`) лишь проксирует запросы к `Resource Server`, добавляя заголовок из тела. Так `SPA` сохраняет контроль над сессией и logout.",
               "correct": false,
               "sections": {
                 "what_actually": "Суть `BFF` в том, что токены НЕ попадают в браузер: их держит backend, а `SPA` работает через `httpOnly` cookie.",
@@ -2256,7 +2256,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При использовании `BFF` с cookie-сессией CSRF-защита не нужна, потому что cookie сами по себе невозможно подделать межсайтовым запросом.",
+              "text": "`BFF` с cookie-сессией снимает `CSRF`-класс атак: `httpOnly` cookie невозможно подделать межсайтовым запросом — браузер не отдаёт её чужому origin (`SameSite` тут ни при чём), поэтому `CookieServerCsrfTokenRepository` и `X-XSRF-TOKEN` в `SPA` не настраивают при `oauth2Login()`. Защита нужна только form-login-приложениям без `BFF`. Это и есть выигрыш паттерна по сравнению с `Authorization`-заголовком.",
               "correct": false,
               "sections": {
                 "what_actually": "С cookie-аутентификацией CSRF снова актуальна (браузер шлёт cookie автоматически), поэтому `BFF` включает CSRF-токен.",
@@ -2268,7 +2268,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`BFF` требует, чтобы именно фронтенд (`SPA`) выступал `OAuth2 Client` и сам вёл `Authorization Code Flow` с сервером авторизации.",
+              "text": "`BFF` предписывает фронтенду роль `OAuth2 Client`: `SPA` сам ведёт `Authorization Code Flow` с `PKCE` и хранит токены. Backend в паттерне отвечает только за `TokenRelay`-проброс.",
               "correct": false,
               "sections": {
                 "what_actually": "`OAuth2 Client` в `BFF` — это backend/gateway; он ведёт `Authorization Code + PKCE`, а `SPA` лишь общается с backend по cookie.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Keycloak` кладёт роли в стандартный claim `scope`, поэтому `Spring Security` подхватывает их автоматически без кастомного converter.",
+              "text": "`Keycloak` кладёт realm-роли в стандартный claim `scope` (`openid profile roles`), поэтому `Spring Security` подхватывает их дефолтным `JwtGrantedAuthoritiesConverter` с префиксом `SCOPE_`: достаточно `issuer-uri` (`/realms/my-realm`) в `application.yml`, и `hasAuthority('SCOPE_admin')` работает из коробки. Кастомный `JwtAuthenticationConverter` пишут только для client-ролей (`resource_access`), realm-уровень покрыт стандартом `OIDC`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Keycloak` помещает роли в нестандартный `realm_access.roles`, а не в `scope`; для их чтения нужен кастомный `JwtAuthenticationConverter`.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для интеграции с `Keycloak` приложение должно хранить пароли пользователей у себя и проверять их при каждом входе.",
+              "text": "`Keycloak`-интеграция предполагает локальную проверку: приложение хранит пароли пользователей в своей БД (`users`-таблица с `BCryptPasswordEncoder`) и валидирует их на каждом входе, а `Keycloak` только синхронизирует справочник учёток. Выпуск токенов остаётся на стороне приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "`Keycloak` как `IdP` сам хранит и проверяет credentials; приложение лишь валидирует выданный им `JWT` или ведёт `OIDC`-логин.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Keycloak` поддерживает исключительно протокол `SAML` и не умеет работать по `OIDC`, поэтому со `Spring Boot` его подключают только как SAML-IdP.",
+              "text": "`Keycloak` со `Spring Boot` интегрируют по `SAML 2.0`: enterprise-стандарт с подписанными `XML`-assertions — основной протокол его realm-ов, и `spring-security-saml2-service-provider` — рекомендованная зависимость. `OIDC`-поддержка в `Keycloak` считается экспериментальной, для production её не берут.",
               "correct": false,
               "sections": {
                 "what_actually": "`Keycloak` поддерживает и `OIDC`, и `SAML`; со `Spring Boot` его чаще всего подключают именно по `OIDC` (issuer-uri, JWT).",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Чтобы протестировать защищённый endpoint, в тесте нужно выполнить полноценный логин с реальным паролем и получить валидный `JWT` от настоящего `Authorization Server`.",
+              "text": "Защищённые endpoint-ы тестируют только полноценным логином: `spring-security-test` признан устаревшим (`@WithMockUser` удалён в `Spring Security 6`), поэтому тест получает настоящий `JWT` от работающего `Authorization Server` (`Testcontainers` с `Keycloak`) и передаёт его в `Authorization`-заголовке. Мок-хелперы не проверяют цепочку фильтров и потому запрещены.",
               "correct": false,
               "sections": {
                 "what_actually": "`spring-security-test` подставляет `Authentication` напрямую (`@WithMockUser`, `.with(jwt())`), без реального логина и валидного токена.",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Тесты безопасности достаточно писать только на позитивный сценарий: что пользователь с нужной ролью получает доступ; негативные случаи проверять не требуется.",
+              "text": "Тесты безопасности пишут на позитивный сценарий: пользователь с нужной ролью получает доступ (`status().isOk()`), и этого достаточно — отказы (`403`, `401`) генерирует сам фреймворк, его поведение перепроверять не нужно. Негативные кейсы оставляют интеграционным `E2E`-прогонам.",
               "correct": false,
               "sections": {
                 "what_actually": "Обязательно покрывают и негатив: `403` без нужной роли и `401` без аутентификации — иначе дыра в правах останется незамеченной.",
@@ -2375,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Хелпер `.with(jwt())` в тестах выполняет настоящую криптографическую проверку подписи токена по ключам реального `Authorization Server`.",
+              "text": "Хелпер `.with(jwt())` из `spring-security-test` выполняет полную криптографическую проверку: подпись тестового токена сверяется с ключами реального `Authorization Server` по `jwk-set-uri`, поэтому в `CI` нужен доступ к `JWKS`-endpoint (или `WireMock`-заглушка). Клеймы (`subject`, `roles`, authorities через `SimpleGrantedAuthority`) при этом берутся из билдера, а криптография — из настоящего `NimbusJwtDecoder`.",
               "correct": false,
               "sections": {
                 "what_actually": "`.with(jwt())` подставляет готовый `Jwt` с заданными claims, обходя реальную валидацию подписи; декодер тестируют отдельно.",

@@ -6,7 +6,8 @@
   "chunks_reviewed": [
     "Q1-Q10",
     "Q11-Q20",
-    "Q21-Q30"
+    "Q21-Q30",
+    "Q31-Q40"
   ],
   "gate_summary": {
     "verify_mcq_json": "OK",
@@ -14,10 +15,11 @@
     "option_length_ratio": "ACCEPTED EXCEPTION (как в reactor/sql/dp/jc/hibernate/java-collections/appsec): гейт ≤1.35 конфликтует со STAMP-guard; гоним смысловые метрики."
   },
   "blocks_total": 45,
-  "blocks_reviewed": 30,
+  "blocks_reviewed": 40,
   "notes": "ROUND-8 chunk1 Q1-Q10 (файл authentication-authorization-patterns, строка 9 плана §1; паттерны аутентификации, OAuth 2.0, JWT, RBAC/ABAC, authn vs authz, микросервисы, SAML, MFA, сессии, атаки). Подняты 30 дистракторов (text-only, оси сохранены: Q1 только-OAuth-и-SAML-актуальны/все-паттерны-stateful/Certificate-Based=серверный-HTTPS; Q2 OAuth=аутентификация/ROPC-как-основной-поток/Implicit-рекомендован; Q3 JWT-шифрует-payload/сверка-с-БД-на-каждый-запрос/мгновенный-отзыв-DELETE; Q4 одна-модель-теги/ABAC-быстрее/RBAC-контекстный-ABAC-фиксированный-своп; Q5 один-шаг-не-разделяют/авторизация-первая/401-403-своп-с-RFC-9110; Q6 периметр-достаточен/валидация-только-на-gateway-zero-trust-инверсия/пересылка-пароля-по-цепочке; Q7 SAML=надстройка-над-JWT-вытеснил-OIDC/SP-хранит-пароли-без-IdP/SAML-для-мобильных-IoT; Q8 два-know-фактора=MFA/TOTP-без-clock-skew-запрещён-RFC/SMS-надёжнее-WebAuthn; Q9 только-серверная-сессия-OWASP-запрещает-JWT/localStorage-logout-мгновенный/Redis-не-нужен-sticky-достаточно; Q10 CSRF-обязателен-для-JWT-API/Session-Fixation=тот-же-ID/Timing=переменное-время). Blind-review 10/10: Q2/Q4/Q5/Q7/Q10 verdict 4; фиксы по ревью: Q6-C MULTI-риск (gateway-offloading реально применяется) → добавлена механически ложная инверсия zero-trust («verify once, trust inside» — псевдопринцип; «подделать X-User-* не позволяет HTTP» — ложь), Q1-C/Q9-D form-tell «единственный перечислительный» → дистракторам даны собственные перечисления с подменой (C: три паттерна с серверным состоянием каждый; D: «три паттерна + sticky вместо Redis»), Q3-A де-карикатура («класть пароли» → «номера карт и чувствительные поля», ось JWS/JWE-путаницы сохранена), Q8-A смена ребра карикатуры («пароль дважды» → «пароль+секретный вопрос=два фактора», секции совместимы — первичная ошибка та же: факторы одной категории). Превентив: один rich-дистрактор на блок выше correct по code-spans уже в драфте (урок appsec POS). Per-block CV 0.118-0.265. SKEL: Q1-Q10 hard=0 (файл 43→34). Stamp OK. Факты verified по теории: 4 паттерна (Basic/Session/Token/Certificate), Base64 = кодирование, JSESSIONID+CSRF-уязвимость session-подхода, JWT/OAuth stateless для SPA и микросервисов, mTLS по X.509 требует PKI; OAuth 2.0 = делегированная авторизация (не аутентификация — это OIDC), 4 роли, Authorization Code основной, ROPC не рекомендован, Implicit deprecated; JWT RFC 7519 = header.payload.signature, Base64url без шифрования, проверка подписи локально без БД, отзыв до exp невозможен (blacklist/короткий TTL); RBAC роли→permissions, ABAC атрибуты+policy engine, RBAC проще/быстрее, ABAC контекстнее; authn (401) перед authz (403); микросервисы: JWT на edge + повторная валидация/mTLS/Client Credentials внутри, заголовкам X-User-* без подписи доверять нельзя; SAML = XML для enterprise SSO (AD/ADFS), не для mobile/IoT; MFA = разные категории know/have/are, TOTP с clock skew ±30s (RFC 6238 рекомендует окно), SMS слабейший фактор (NIST 800-63B restricted), WebAuthn/FIDO2 phishing-resistant; сессии: Server-Side/Distributed(Redis)/JWT/Hybrid; атаки: brute force лимиты, CSRF для stateful-форм (JWT в заголовке не подвержен), changeSessionId(), constant-time ответы.",
   "notes_chunk2": "ROUND-8 chunk2 Q11-Q20 (API Gateway Security, OIDC, SSO, Claims-based, token security/rotation, Zero Trust, Rate Limiting, mTLS, аудит/логирование, Context-based Access Control). Подняты 30 дистракторов (text-only, оси сохранены: Q11 фильтр-с-низшим-приоритетом-после-маршрутизации/in-memory-rate-limiting-складывается-балансировщиком/доверять-X-User-Roles-из-интернета; Q12 OIDC-альтернатива-OAuth-со-своими-потоками/ID-Token=access-token-с-профилем-для-Bearer/openid-scope-устарел; Q13 SSO=синхронизация-паролей-SCIM-репликация/только-SAML-OIDC-не-подходит/приложения-хранят-пароли-IdP-координирует; Q14 claims=БД-на-каждый-запрос/claims-указатели-разыменовываются-через-userinfo/JWE-обязателен-JWS-недостаточно; Q15 долгоживущий-access-без-refresh/localStorage-надёжнее-httpOnly-CSP-закрывает-XSS/точечный-отзыв-вместо-цепочки; Q16 доверенный-периметр-802.1X/проверка-один-раз-на-VPN-входе/широкие-права-против-каскадных-отказов; Q17 403-вместо-429/Fixed-Window-самый-точный-инверсия-trade-off/sticky-маршрутизация-вместо-Redis; Q18 mTLS=односторонний-TLS-с-двойной-проверкой/для-браузеров-и-мобильных/сертификаты-бессрочны-notAfter-опционален; Q19 логировать-пароли-и-полные-JWT-в-шифрованный-индекс/AuthenticationSuccessEvent-только-при-httpBasic/логи-локально-grep-алерты; Q20 CBAC=статическая-ROLE-проверка/контекст-замещающий-фактор/жёсткая-блокировка-без-step-up). Blind-review 10/10 (Q12/Q13/Q14/Q17/Q18 verdict 4); MULTI нет, выдуманные механики только в дистракторах (Q14-C разыменование claims, Q18-A двойная проверка, Q19-B событие-только-httpBasic) — секции их разоблачают. Фиксы по ревью: Q16-C де-карикатура (широкие-права → resilience-обоснование против каскадных отказов), Q19-A де-карикатура (громкое «логируют пароли» → шифрованный индекс + RBAC-оправдание, ось сохранена), Q20-B смягчение («подделать невозможно» → «замещающий фактор, надёжнее пароля»), Q20-C («навсегда» → «до обращения в поддержку»), Q17-D развод DUP-мотива с Q11-B (локальные счётчики → sticky-маршрутизация). Исправлены хронические semi=1 у Q12-B/C, Q13-C, Q19-B (все corrects semi=0). Rich-дистрактор выше correct по code-spans в каждом блоке (превентив appsec-POS). Per-block CV 0.085-0.256. SKEL: Q11-Q20 hard=0 (файл 34→24). Stamp OK. Факты verified: API Gateway = единая точка входа, фильтр ДО маршрутизации, X-User-* только после валидации и не из интернета; OIDC = слой аутентификации ПОВЕРХ OAuth 2.0 (id_token JWT + /userinfo + discovery + scope openid обязателен); SSO = одна сессия IdP, реализации OIDC/SAML/CAS; claims живут в подписанном токене до exp (не realtime); refresh: ротация + reuse-detection отзывает цепочку, httpOnly cookie не localStorage; Zero Trust NIST 800-207 = verify explicitly + least privilege + assume breach, каждый запрос; rate limiting = 429 + Retry-After, Redis-счётчики в кластере, Token Bucket/Fixed Window (граничный всплеск 2x)/Sliding Window; mTLS = обе стороны X.509, Certificate Request/CertificateVerify, ротация и PKI обязательны (cert-manager/SPIFFE); аудит = события Spring Security (@EventListener на AuthenticationSuccessEvent/AbstractAuthenticationFailureEvent), секреты не логируют, централизация ELK/SIEM; CBAC = динамический контекст поверх ABAC, step-up не блокировка.",
   "notes_chunk3": "ROUND-8 chunk3 Q21-Q30 (Service Mesh, Identity Federation, Step-Up, Passwordless, GraphQL, Delegated/Fine-Grained Authorization, Token Binding, WebSocket, PKCE). Подняты 30 дистракторов (text-only, оси сохранены: Q21 mesh=только-транспорт-mTLS-в-коде/правила-NetworkPolicy-и-код-без-манифестов/уместен-любому-размеру-без-накладных; Q22 консолидация-в-один-IdP-SCIM-миграция/claims-без-маппинга-напрямую/только-внутренний-SSO-гостевые-учётки; Q23 MFA-на-входе-на-всю-сессию/auth_time-свежесть-вместо-acr/полный-перевход-вместо-step-up; Q24 пароль-кэшируется-WebAuthn=автоввод/многоразовый-долгоживущий-Magic-Link/SMS-OTP-оптимальный-дефолт; Q25 REST-контур-достаточен-WAF/introspection-обязателен-в-prod/field-level-невозможна-schema-splitting; Q26 передача-логина-пароля-ROPC-базовый/полный-токен-scopes-украшение/отзыв-невозможен-до-смены-пароля; Q27 роль-закрывает-instance-level/@PostAuthorize-откатывает-побочные-эффекты/SpEL-без-кастомных-бинов; Q28 удлинение-ключа-HS512/основной-поддерживаемый-стандарт-DPoP-не-нужен/bearer-уже-привязан-sub/; Q29 канал-доверен-после-CONNECT/токен-в-query-рекомендован/masking=шифрование-wss-избыточен; Q30 статический-публичный-ключ-вместо-secret/verifier-и-challenge-местами-swapped/только-same-scheme-перехват-для-SPA-избыточен). Blind-review 10/10 (Q22/Q23/Q26/Q27/Q28/Q29/Q30 verdict 4, Q27 «лучший блок серии»); MULTI нет, выдуманных API нет (все RFC 7636/8471/9449 реальные). Фиксы по ревью: Q24-C де-карикатура («SMS надёжнее аппаратных ключей» → «оптимальный дефолт для массовых пользователей», ось сохранена), Q25-C убрана сфабрикованная DataLoader-механика (замена на client-tooling-клейм Apollo/Relay/graphql-codegen), Q26-C смягчён тон («украшение» → «необязательная деталь»); системный form-tell «correct=единственный affirmative-список» вылечен переводом одного дистрактора на блок в affirmative-форму (Q21-C трёхслойная модель с подменой NetworkPolicy, Q25-B веб-контур WAF+HTTPS, Q29-B модель HTTP-сессии). Зеркалирование скелета: opening-class btick у дистракторов Q21/Q25/Q29/Q30, prose+semicolon у Q24 (correct semi=1), semi=1 у всех опций Q30. Rich-дистрактор выше correct по code-spans в каждом блоке. Per-block CV 0.145-0.250. SKEL: Q21-Q30 hard=0 (файл 24→14). Stamp OK. Факты verified по теории: Service Mesh = sidecar-прокси Envoy, mTLS/AuthorizationPolicy/ротация БЕЗ изменения кода; федерация = доверие между IdP, маппинг атрибутов — ключевая задача; step-up = acr claim (password-only/mfa/hardware-key), не re-login и не MFA-на-входе; passwordless: WebAuthn/FIDO2 самый стойкий (привязка к домену), Magic Link одноразовый + короткий TTL, SMS слабейший; GraphQL: maxDepth+complexity+field-level+отключение __schema в prod+DataLoader (N+1, не security); delegated = scopes+consent+отзыв без смены пароля, ROPC противоположность делегированию; fine-grained = instance-level (owner check/@PreAuthorize+SpEL с бинами/@PostAuthorize по returnObject — метод УЖЕ отработал, побочные эффекты не откатываются автоматически/PermissionEvaluator/OPA); Token Binding RFC 8471 отменён в браузерах → DPoP RFC 9449/короткий TTL/mTLS-bound; WebSocket: аутентификация при CONNECT через ChannelInterceptor+setUser, wss:// обязателен (masking не шифрование), права на подписку и rate limiting; PKCE RFC 7636: verifier секрет у клиента, challenge=SHA256(verifier) на /authorize, verifier на /token, обязателен для публичных клиентов (OAuth 2.1), Spring Security 6.3+ и для confidential.",
+  "notes_chunk4": "ROUND-8 chunk4 Q31-Q40 (Dynamic Authorization, OAuth2 Resource Server, PermissionEvaluator, SecurityFilterChain, RoleHierarchy, хранение паролей, JWT-ошибки, BFF, Keycloak, security-тесты). Подняты 30 дистракторов (text-only, оси сохранены: Q31 динамика=редактируемый-справочник-ролей/claims-снапшот-вместо-runtime/OPA-без-кэша-и-fallback; Q32 RS-сам-выпускает-токены-и-сессии/roles-ROLE_-дефолт-вместо-scope-инверсия/introspection-на-каждый-запрос-jwk-устарел; Q33 автоподхват-bean-как-UserDetailsService/единственный-метод-без-id-формы/одна-реализация-на-тип; Q34 WebSecurityConfigurerAdapter-жив-для-сервлетов/одна-цепочка-requestMatchers-ветвление/специфичность-matcher-вместо-Order; Q35 иерархия-по-конвенции-имён/инверсия-направления-наследования/enum-композиция-без-API; Q36 SHA-256-быстрый-плюс-rate-limiting/общая-соль-на-приложение/String-безопасна-пул-дедуплицирует; Q37 недоиспользование-payload-секреты-закрыты-подписью/HS256-один-ключ-на-микросервисы/aud-iss-alg-проверки-избыточны; Q38 токены-в-localStorage-backend-проксирует/httpOnly-отменяет-CSRF/SPA-сам-OAuth2-Client; Q39 роли-в-scope-из-коробки/пароли-локально-Keycloak-справочник/SAML-основной-OIDC-экспериментален; Q40 только-реальный-логин-моки-запрещены/только-позитив/jwt()-реальная-криптопроверка-JWKS). Blind-review 10/10 (7 блоков verdict 4); MULTI-риск Q40-A закрыт механически ложным клеймом («spring-security-test устарел, @WithMockUser удалён в Spring Security 6» — ложь, хелперы актуальны); Q37 FORM-TELL (stem множественный, correct=единственное перечисление) вылечен переводом всех трёх дистракторов в списки «типичных ошибок» с ложными пунктами + де-карикатура B (пароли/карты → «подпись закрывает payload» как ошибка-инверсия); Q39-D де-карикатура («исключительно SAML» → «SAML основной, OIDC экспериментален», ось сохранена). Пост-гейт фиксы: Q32-B 1→2 предложения, Q36-C 2→3 (sentence_count HARD). Semicolon-зеркалирование: semi=1 у дистракторов Q32/Q36 (corrects semi=1), semi=0 в остальных. Rich-дистрактор выше correct по code-spans в каждом блоке. Per-block CV 0.083-0.325. SKEL: Q31-Q40 hard=0 (файл 14→5). Stamp OK. Факты verified по теории: dynamic authorization = runtime-данные + policy engine (OPA/Rego, Casbin, AWS Verified Permissions); Resource Server НЕ выпускает токены, валидирует локально по jwk-set-uri, дефолтный claim = scope (SCOPE_), JwtAuthenticationConverter для кастомных; PermissionEvaluator = 2 метода (по объекту и по id+type), явная регистрация через DefaultMethodSecurityExpressionHandler; Spring Security 6: WebSecurityConfigurerAdapter УДАЛЁН, bean SecurityFilterChain, несколько цепочек @Order+securityMatcher, первая подходящая; RoleHierarchyImpl.fromHierarchy + setRoleHierarchy, ADMIN>MODERATOR>USER наследование вниз; пароли = bcrypt (default Spring)/Argon2 (PHC winner)/scrypt/PBKDF2, SHA-256/MD5 запрещены (быстрые), char[] вместо String (пул строк JVM); JWT-ошибки: секрет в коде, alg:none, длинный TTL, localStorage, секреты в payload (Base64 не шифрование!), нет aud/iss-проверки, HS256 на много сервисов (→RS256/ES256); BFF: токены на сервере, httpOnly cookie + CSRF-защита ОСТАЁТСЯ (CookieServerCsrfTokenRepository), TokenRelay; Keycloak: OIDC из коробки, роли в realm_access.roles (нестандарт), кастомный конвертер; тесты: spring-security-test актуален (@WithMockUser/jwt()/oidcLogin() — моки БЕЗ реальной криптопроверки), позитив И негатив обязательны.",
   "records": [
     {
       "q_number": 1,
@@ -1681,6 +1683,566 @@
           "sections_consistent": true
         },
         "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 31,
+      "block_idx": 0,
+      "correct_label": "C",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 32,
+      "block_idx": 0,
+      "correct_label": "D",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 33,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 34,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 35,
+      "block_idx": 0,
+      "correct_label": "C",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 36,
+      "block_idx": 0,
+      "correct_label": "D",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 37,
+      "block_idx": 0,
+      "correct_label": "A",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 38,
+      "block_idx": 0,
+      "correct_label": "B",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 39,
+      "block_idx": 0,
+      "correct_label": "C",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "D": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        }
+      },
+      "parity": {
+        "option_parity": true,
+        "visual_format_parity": true,
+        "russian_readability": true,
+        "no_stamped_clone": true,
+        "blind_style_pass": true,
+        "blind_semantic_pass": true
+      }
+    },
+    {
+      "q_number": 40,
+      "block_idx": 0,
+      "correct_label": "D",
+      "stem": {
+        "clear": true,
+        "single_concept": true,
+        "no_answer_hint": true,
+        "version_scope_explicit": true
+      },
+      "correct": {
+        "factually_true": true,
+        "complete_for_stem": true,
+        "scope_correct": true,
+        "unique_defensible": true,
+        "not_visually_distinct": true,
+        "sections_consistent": true
+      },
+      "distractors": {
+        "A": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "B": {
+          "plausible": true,
+          "one_primary_error": true,
+          "real_api_or_concept": true,
+          "false_under_stem": true,
+          "distinct_misconception": true,
+          "not_caricature": true,
+          "sections_consistent": true
+        },
+        "C": {
           "plausible": true,
           "one_primary_error": true,
           "real_api_or_concept": true,
