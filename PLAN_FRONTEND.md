@@ -1850,3 +1850,9 @@ Window-tick — :8080 жив.
 и контекстами; имена групп через labelledby; живьём во всех 6 radiogroup ровно один
 aria-checked=true (SSR честно отдаёт false — состояние клиентское). Кодовых правок
 нет; cr.114. Window-tick — :8080 жив; чужой WIP (test-strategies) не тронут.
+
+### R1.19 — dvh + fixed-геометрия mobile — verified-clean (2026-07-12)
+
+Все 5 vh-употреблений уже 100dvh (legacy 100vh нет); оверлеи inset:0 со скроллом внутри;
+viewport-fit=cover не используется → env() не нужен; back-to-top 44×44/24px на 360px,
+без интерактива под ним. Кодовых правок нет; cr.115. Window-tick — :8080 жив.
