@@ -21,13 +21,19 @@
 
 | Surface | detector | AA | full-width | a11y | states | parity | contract | no-js/print | Фаза |
 |---|---|---|---|---|---|---|---|---|---|
-| shell (chrome) | PASS | PASS✧ | PASS* | PASS✧ | PASS | TODO | TODO | RECHECK | B_MOCKUP_RECHECK (recheck+fix R0.11) |
-| focus-training | PASS | PASS‡ | PASS* | PASS | PASS(core)† | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.6) |
-| result | PASS | PASS‡ | PASS* | PASS | PASS(core)§ | TODO | TODO | RECHECK | B_MOCKUP_RECHECK (recheck R0.7) |
-| session-summary | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.3) |
-| settings | PASS | PASS | PASS* | PASS✦ | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck R0.8, +confirm R0.10) |
-| stats | PASS | PASS♦ | PASS* | PASS | PASS(core)◊ | TODO | TODO | TODO | B_MOCKUP_RECHECK (recheck+fix R0.9) |
-| error | PASS | PASS | PASS* | PASS | PASS | TODO | TODO | TODO | B_MOCKUP_RECHECK (макет R0.2) |
+| shell (chrome) | PASS | PASS✧ | PASS* | PASS✧ | PASS | TODO▲ | TODO | RECHECK | D done; E BLOCKED (baseline R0.35+R0.39) |
+| focus-training | PASS | PASS‡ | PASS* | PASS | PASS(core)† | TODO▲ | TODO | PASS(static R0.32) | D done; E BLOCKED (baseline R0.38+R0.39) |
+| result | PASS | PASS‡ | PASS* | PASS | PASS(core)§ | TODO▽ | TODO | RECHECK | D done; E BLOCKED (baseline требует сессии §4) |
+| session-summary | PASS | PASS | PASS* | PASS | PASS | TODO▽ | TODO | TODO | D done; черновик C6-i READY (baseline требует сессии §4) |
+| settings | PASS | PASS | PASS* | PASS✦ | PASS | TODO▲ | TODO | PASS(static R0.32) | D done; E BLOCKED (baseline R0.36) |
+| stats | PASS | PASS♦ | PASS* | PASS | PASS(core)◊ | TODO▲ | TODO | PASS(static R0.32) | D done; E BLOCKED (baseline R0.37) |
+| error | PASS | PASS | PASS* | PASS | PASS | TODO▲ | TODO | PASS(static R0.32) | D done; черновик C7-i READY (baseline R0.34) |
+
+`▲` parity TODO, но **численный ДО-портовый baseline СНЯТ** (живой инстанс, @1280 +
+375 для shell/focus, 4 состояния editorial/instrument × light/dark, settle 400ms) —
+координаты в PARITY_QA_CHECKLIST §2; после порта паритет доказывается диффом чисел,
+editorial = контроль бит-в-бит. `▽` baseline невозможен без сессии (§4 запрещает
+отвечать на живом квизе) — снимается ПЕРВЫМ шагом parity-фазы.
 
 ## Дименсиональные оси (кросс-поверхностные) — статус
 
@@ -124,3 +130,11 @@ sticky top:0 в `overflow-x`-only обёртке на 4-строчной таб�
 `TemplateFragmentContractTest.java`. Пока эти файлы dirty — порт/refactor затрагивающих
 их поверхностей **BLOCKED**; берём независимые задачи (session-summary, error-макет,
 mockup-recheck) или read-only аудит.
+
+**Итог предподготовки (R0.28–R0.40, блокер жив 20 тиков):** runbook Фазы F
+(PARITY_QA_CHECKLIST) + live-baseline instrument token-only (R0.30–31) + no-JS
+static-смоук (R0.32) + дифф-ревизия маппингов против WIP (R0.33, sticky-запрет) +
+численные ДО-портовые baseline всех 5 без-сессионных поверхностей (R0.34–R0.39,
+@1280 + mobile-375). **Read-only повестка ИСЧЕРПАНА** — дальше либо разблокировка
+base.css (→ Фаза E: error C7-i первым), либо maintenance-режим (сторожевые
+проверки якорей черновиков при изменении WIP-диффа).
