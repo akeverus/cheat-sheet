@@ -37,6 +37,24 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+- **cr.32 (ROUND-RESET, R0.30)** — **ЖИВОЙ baseline instrument (token-only) на прод-инстансе —
+  ЗЕЛЁНЫЙ.** base.css dirty (10-й тик) → порты стоят; вместо простоя снят живой baseline
+  Фазы F: обнаружено, что :8080 уже слушает чужой java-инстанс (вероятно devtools-bootRun
+  параллельной сессии; **урок: живость bootRun проверять `lsof -i :8080`, не ps** — R0.27
+  тест прогонялся при живом инстансе, повезло без wedge). Аудит read-only через chrome MCP
+  (localStorage design=instrument): **(1)** токены применяются (body bg = oklch instrument
+  paper), **(2)** все 3 шрифта реально загружены (document.fonts.check: Newsreader /
+  Space Grotesk / JetBrains Mono = true), **(3)** reflow чист на 1280/375/320 (sw==cw,
+  0 wide-элементов), **(4)** обе темы рендерятся цельно (скрины focus 1280 light+dark:
+  Newsreader-вопрос, ring-бейджи A–D, teal-акценты), **(5)** /settings: вкладки живы,
+  seg-btn Instrument aria-checked=true, **NAMES-фикс R0.27 подтверждён живьём**
+  (title «Дизайн: Instrument → Editorial»), **(6)** error 404 в instrument уже пристойна
+  на общей центрированной структуре (C7-i даст левую композицию макета). Итог: instrument
+  как token-only дизайн УЖЕ работоспособен и чист — черновики C6-i/C7-i являются
+  улучшением, не починкой; parity-риск портов низкий. Каверза: живой инстанс может
+  отдавать WIP-статику параллельной сессии — метрики помечены как «снято с WIP-инстанса».
+  Пользовательский localStorage: theme возвращён в light (был light), design оставлен
+  instrument (прежнее значение не зафиксировано — переключается в /settings одним кликом).
 - **cr.31 (ROUND-RESET, R0.29)** — **Пересверка черновиков против дрейфа WIP: валидны.**
   base.css dirty (9-й тик подряд) → порты стоят; по плану R0.28 выполнена read-only
   сверка обоих черновиков с диффом чужого WIP в base.css. Результат: ханки WIP лежат
