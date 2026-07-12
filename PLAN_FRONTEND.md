@@ -1391,3 +1391,8 @@ Dirty changes created by loop: 0
 
 - **Сделано:** C3-i (5 правил: topic-badge lowercase/tertiary, вердикт medium, stat-value mono/tabular, sm2-details tertiary+line) вставлен перед «Утилитами», head v75→76, live-синк. QA §4: v=76 served, 5 правил распарсены, утечки на /stats нет (stat-value = baseline R0.37). Визуальный паритет — parity-фаза (нужен POST /answer). Не портированы: confidence (прод-решение юзера с эмодзи), мёртвые regenerate/question-side (Фаза G).
 - **Следующий тик:** порт stats (маппинг R0.24) — instrument-голос на stat-карты/таблицу/фильтры (v=77); контракт-тест при остановленном bootRun. Затем settings → shell.
+
+### R0.51 (2026-07-12) — Порт stats C5-i применён (v=77): пятый порт, live-паритет
+
+- **Сделано:** C5-i (2 правила: stat-value mono/tabular, thead th tertiary) перед §C6, head v76→77, live-синк. Полный live-QA (stats достижима read-only): дельта применилась, sticky/bg шапки целы, editorial = baseline R0.37 бит-в-бит, reflow чист. Token-only нёс 90% языка stats — блок минимален. Цвета графиков (stats.js) — Фаза G.
+- **Следующий тик:** порт settings (маппинг R0.25, шаг 1 pure CSS — по baseline R0.36 token-only тоже почти всё несёт; проверить нужны ли правки вообще) → shell (v=78 при правках); контракт-тест при остановленном bootRun.
