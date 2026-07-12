@@ -2090,3 +2090,7 @@ fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`
 ### R1.46 — WCAG 2.4.7 Focus Visible (verified-clean, + R1.43 регресс-чек)
 
 Статический разбор `outline:none` в base.css + live-обход реальным Tab (8 сэмплов). Все `outline:none` — либо мышиные (`:not(:focus-visible)`/`:focus-within`), либо контейнер #main-content, либо с box-shadow-заменой. Live: 8 контролов подряд, все с индикатором — стандартные 2px solid outline, settings-tab рендерит solid double-ring (R1.43 подтверждён: непрозрачный Clay-ринг). Правок кода нет. Детали — cr.141.
+
+### R1.47 — WCAG 2.4.11 Focus Not Obscured (Minimum, AA) (verified-clean)
+
+Аудит sticky/fixed-оверлеев на предмет полного перекрытия клавиатурного фокуса. Единственный sticky-top кандидат — thead таблицы тем на `/stats`. Замер в живом браузере: его sticky-контейнер = `div.topic-table-wrap` (overflow-x:auto → overflow-y вычислен в auto), но без фикс-высоты обёртка не скроллит вертикально (scrollHeight===clientHeight) → `top:0` вертикально инертен → thead уезжает со скроллом (thTop линейно 1581→−5690, никогда не приклеивается к верху вьюпорта) → не может стать оверлеем поверх фокуса. Sticky-сайдбары — боковые колонки, не накрывают фокусируемое. site-header осознанно НЕ sticky (base.css:497). Fixed-оверлеев нет. Итог: ни один контрол при фокусе не скрыт целиком; scroll-padding не нужен. Правок кода нет. Детали — cr.142.
