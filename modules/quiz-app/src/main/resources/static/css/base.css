@@ -354,6 +354,27 @@ html[data-design][data-motion="off"] *::after {
   html[data-design] .seg-btn.is-active {
     background: Highlight !important; color: HighlightText !important;
   }
+  /* (3) Выбранный MCQ-вариант: нативный radio спрятан (sr-only, L784), состояние
+     кодируется ТОЛЬКО цветом (border/wash/бейдж accent) → в HC все рамки одинаково
+     CanvasText, фоны — Canvas: выбранное неотличимо. Критично — это ДО-ответный
+     основной интеракшн. Бейдж-буква и рамка — системной парой (как seg-btn). */
+  html[data-design] #interview-options label:has(input:checked) {
+    border-color: Highlight !important;
+  }
+  html[data-design] #interview-options label:has(input:checked)::before {
+    background: Highlight !important; border-color: Highlight !important;
+    color: HighlightText !important;
+  }
+  /* (4) Той же болезнью — выбранная confidence-кнопка (.selected = border+wash). */
+  html[data-design] .confidence-btn.selected {
+    background: Highlight !important; color: HighlightText !important;
+    border-color: Highlight !important;
+  }
+  /* (5) Прогресс сессии: track и fill — чистые background'ы без рамок → в HC оба
+     принудительно Canvas, полоса исчезает целиком (текст «N/M» рядом остаётся,
+     но видимый индикатор терять незачем). Track очерчиваем, fill — системным. */
+  html[data-design] .session-progress-track { border: 1px solid CanvasText; }
+  html[data-design] .session-progress-fill { background: Highlight !important; }
 }
 
 /* prefers-reduced-transparency: reduce (CSS MQ5) — OS-настройка «Уменьшить

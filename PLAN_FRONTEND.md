@@ -1662,3 +1662,8 @@ Dirty changes created by loop: 0
 
 - Все источники движения гасятся двухпутевым kill-механизмом (media + data-motion=off, форс on через :not): единственный @keyframes + transitions — wildcard 0.001ms; scroll-behavior перебит; delay/fill-mode escape отсутствуют; три JS-сайта (inline-alert scroll, back-to-top, Chart.js) — идентичный 3-way протокол; дублирование протокола осознанное (разные бандлы).
 - Правок нет. Live-эмуляция Reduce тулингом недоступна (tooling-gated). Дальше: forced-colors / window-тик.
+
+### R0.93 (2026-07-12) — Forced-colors: 3 дефекта исправлены (base.css v=89)
+
+- Windows High Contrast: (1) выбранный MCQ-вариант был неотличим (radio скрыт, state только цветом) — бейдж+рамка теперь Highlight/HighlightText; (2) confidence-btn.selected — так же; (3) прогресс-бар исчезал (background-only) — track очерчен CanvasText, fill Highlight.
+- Не-дефекты проверены и не тронуты (вкладки-underline, статус-лейблы вариантов, dimmed-opacity). Верификация: CSSOM v=89, все правила распарсены; HC-эмуляция тулингом недоступна. v-бамп 88→89, live-sync. Контракт-тест PENDING.
