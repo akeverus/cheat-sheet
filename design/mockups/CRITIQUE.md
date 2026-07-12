@@ -37,6 +37,17 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.137 — WCAG 2.3.3 prefers-reduced-motion: CSS + JS-анимации (three-state)
+
+**Метод:** аудит покрытия motion-kill по CSS (`base.css` 285-304) и JS (`app.js`, `stats.js`).
+
+**Результат — verified-clean, исчерпывающе.** Три-состоянная ось «Движение» (`data-motion` на `<html>`) реализована консистентно во всех слоях:
+- **CSS:** `@media (prefers-reduced-motion: reduce) html[data-design]:not([data-motion=on]) *,::before,::after` гасит `animation-duration/iteration/transition-duration/scroll-behavior` (`!important`, универсальный селектор); плюс всегда-активный `[data-motion=off]` kill-блок вне media. auto→OS-pref, on→форс движения (`:not([data-motion=on])`), off→форс покоя.
+- **JS smooth-scroll** (`app.js` 104-108): `dm=off→reduced`, `on→motion`, иначе `matchMedia(prefers-reduced-motion)` → `scrollIntoView(behavior: reduced?auto:smooth)`. Та же three-state модель.
+- **Chart.js canvas** (`stats.js` 97-101, 163): `motionAllowed()` = та же модель; `var anim = motionAllowed()` → `options.animation = anim` (false при reduced → анимация off). Комментарий явно отмечает: canvas-анимация вне досягаемости CSS, гейтим вручную.
+
+**Правок нет** — reduced-motion покрывает и CSS-переходы/анимации, и обе JS-анимации (скролл, графики); in-app тумблер и OS-pref обрабатываются единой three-state логикой во всех трёх местах.
+
 ### cr.136 — WCAG 1.3.1 / 2.4.6: иерархия заголовков + landmark-структура
 
 **Метод:** fetch+DOMParser по `/`, `/stats`, `/settings`; извлечён outline `h1-h6` (уровень/текст/скрытость), поиск пропусков уровней, пустых и **фейковых** `[role=heading]`; инвентарь landmarks (main/header/nav/aside/search/region) + счётчики.

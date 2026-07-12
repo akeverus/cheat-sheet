@@ -2066,3 +2066,8 @@ Canvas-замер контраста границ/заливок/focus-инди�
 fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`, `/settings`.
 
 **Итог — чисто.** Ровно 1 h1 на страницу; пропусков уровней нет (корректная h2→h3 вложенность на /settings); пустых/фейковых `role=heading` нет — всё на реальных `<h*>`. Landmarks: единичные main+header, помеченный nav, `<aside aria-label>` на /, `role=search` + `role=region` на /stats. Правок кода нет. Детали — cr.136.
+
+
+### R1.42 — WCAG 2.3.3 prefers-reduced-motion (verified-clean)
+
+Аудит motion-kill по CSS + JS. Три-состоянная ось «Движение» (auto/on/off) консистентна во всех слоях: CSS универсальный kill (media + [data-motion=off]); JS smooth-scroll (app.js 104-108) и Chart.js canvas (stats.js motionAllowed→anim) гейтятся той же моделью — обе JS-анимации (вне досягаемости CSS) обработаны вручную. Правок кода нет. Детали — cr.137.
