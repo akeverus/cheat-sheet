@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Cipher suite задаёт только размер ключа (128 или 256 бит) и ничего не говорит про способ обмена ключами или аутентификацию.",
+              "text": "Cipher suite — именованный набор алгоритмов, согласуемый в handshake. В `TLS 1.2` формат `TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256` читается слева направо как cipher+mode (`ECDHE`), затем key exchange (`RSA`) и authentication (`AES-128-GCM`), а хвост (`SHA-256`) задаёт версию протокола. В `TLS 1.3` формат тот же, просто с более короткими именами, например `TLS_AES_128_GCM_SHA256`.",
               "correct": false,
               "sections": {
                 "what_actually": "Suite кодирует сразу несколько алгоритмов: key exchange, authentication, симметричный шифр с режимом и hash — а не только длину ключа.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `TLS 1.3` формат cipher suite расширили: теперь он явно содержит и key exchange, и signature алгоритм прямо в названии.",
+              "text": "Cipher suite — именованный набор алгоритмов, согласуемый в handshake. В `TLS 1.2` формат `TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256` кодирует key exchange (`ECDHE`), authentication (`RSA`), cipher+mode (`AES-128-GCM`) и hash (`SHA-256`). В `TLS 1.3` формат, наоборот, расширили — key exchange и signature-алгоритм теперь тоже входят в имя, например `TLS_ECDHE_RSA_AES_128_GCM_SHA256`.",
               "correct": false,
               "sections": {
                 "what_actually": "В `TLS 1.3` формат, наоборот, упростили — suite описывает только cipher+hash (`TLS_AES_128_GCM_SHA256`), а key exchange и signature вынесены в отдельные extensions.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Часть `WITH` в названии suite указывает на используемую версию протокола (`TLS WITH 1.2`), а не на разделитель алгоритмов.",
+              "text": "Cipher suite — именованный набор алгоритмов, согласуемый в handshake. В `TLS 1.2` формат `TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256` разбит служебным словом `WITH` на две группы: до него — версия и режим протокола (`ECDHE_RSA`), после — сам симметричный шифр (`AES-128-GCM-SHA256`). В `TLS 1.3` слово `WITH` убрали, поэтому имя короче, например `TLS_AES_128_GCM_SHA256`.",
               "correct": false,
               "sections": {
                 "what_actually": "`WITH` — это просто разделитель между частью key-exchange/auth и частью cipher/hash; версию протокола он не кодирует.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Forward Secrecy достигается регулярной ротацией долгосрочного приватного ключа сервера: чем чаще его меняют, тем меньший объём перехваченного трафика можно расшифровать при утечке одного из ключей.",
+              "text": "Perfect Forward Secrecy — свойство инфраструктуры: чем чаще администратор ротирует долгосрочный приватный ключ сервера, тем меньший объём перехваченного трафика раскроется при его утечке. `ECDHE` обеспечивает это, ускоряя такую ротацию; вместо ежемесячной замены ключ перевыпускается на каждую сессию, а старый немедленно уничтожается, так что к моменту утечки он уже неактуален.",
               "correct": false,
               "sections": {
                 "what_actually": "PFS — это свойство протокола, при котором даже утечка долгосрочного ключа сервера не раскрывает прошлый трафик; ключ при этом активно используется для подписи эфемерной части.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ECDHE` обеспечивает forward secrecy тем, что шифрует premaster secret эфемерным публичным ключом сервера, как делает и RSA key exchange.",
+              "text": "Perfect Forward Secrecy — свойство протокола: при утечке долгосрочного ключа сервера ранее перехваченный трафик остаётся нечитаемым. `ECDHE` обеспечивает это, шифруя premaster secret свежим эфемерным публичным ключом сервера вместо долгосрочного; сервер меняет эту эфемерную пару каждую сессию, поэтому старым ключом расшифровать запись уже нельзя, а RSA key exchange отличается лишь тем, что берёт постоянный ключ из сертификата.",
               "correct": false,
               "sections": {
                 "what_actually": "Шифрование premaster ключом сервера — это как раз RSA key exchange БЕЗ forward secrecy; `ECDHE` не шифрует секрет ключом сервера, а выводит его через обмен эфемерными DH-частями.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Forward Secrecy защищает будущие сессии после смены ключа, но трафик, записанный до утечки, по-прежнему можно расшифровать, восстановив его долгосрочным приватным ключом сервера.",
+              "text": "Perfect Forward Secrecy — свойство протокола, защищающее только будущие сессии: после планового обновления ключа новый трафик безопасен, а всё записанное до утечки по-прежнему вскрывается долгосрочным приватным ключом. `ECDHE` обеспечивает это, генерируя эфемерную пару на каждую новую сессию; но общий секрет всё равно выводится с участием долгосрочного ключа сервера, поэтому его компрометация раскрывает и прошлые записи.",
               "correct": false,
               "sections": {
                 "what_actually": "PFS защищает именно прошлый (ранее записанный) трафик от расшифровки после утечки ключа — слово «forward» означает «вперёд во времени относительно компрометации».",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При RSA key exchange обе стороны генерируют эфемерные пары и обмениваются публичными частями, поэтому он тоже обеспечивает forward secrecy.",
+              "text": "При RSA key exchange обе стороны генерируют эфемерные пары и обмениваются публичными частями, а ключ из сертификата применяется лишь для подписи. При `(EC)DHE` всё устроено так же, только на эллиптических кривых ради скорости. Отсюда главное: forward secrecy одинаково есть у обоих режимов.",
               "correct": false,
               "sections": {
                 "what_actually": "Эфемерный обмен публичными частями — это механизм `(EC)DHE`; RSA key exchange работает иначе (клиент шифрует premaster публичным ключом сервера) и forward secrecy НЕ даёт.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`(EC)DHE` оставлен в `TLS 1.3` как опция, но RSA key exchange там тоже сохранён как основной для совместимости со старыми клиентами.",
+              "text": "При RSA key exchange клиент шифрует premaster secret публичным ключом из сертификата, и в `TLS 1.3` этот режим оставлен основным ради совместимости. При `(EC)DHE` стороны обмениваются эфемерными публичными частями, но он в `TLS 1.3` объявлен опциональным. Отсюда главное: forward secrecy включают вручную, только выбрав `(EC)DHE`.",
               "correct": false,
               "sections": {
                 "what_actually": "RSA key exchange полностью удалён из `TLS 1.3`; единственный вариант согласования ключа — `(EC)DHE`, обеспечивающий обязательную forward secrecy.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "При `(EC)DHE` сертификат сервера вообще не используется, поэтому аутентификации сервера в ECDHE-режиме нет — отсюда его и считают менее безопасным.",
+              "text": "При RSA key exchange клиент шифрует premaster публичным ключом сервера, что попутно и аутентифицирует сервер. При `(EC)DHE` сертификат в обмене вообще не участвует, поэтому аутентификации сервера в этом режиме нет. Отсюда главное: forward secrecy у `(EC)DHE` достаётся ценой потери аутентификации.",
               "correct": false,
               "sections": {
                 "what_actually": "В `(EC)DHE` сертификат активно используется: им подписывают эфемерную публичную часть, что и аутентифицирует сервер — аутентификация никуда не девается.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`AEAD` — это отдельный алгоритм хеширования, который вычисляет контрольную сумму данных уже после их шифрования старым шифром `CBC`.",
+              "text": "`AEAD` (`Authenticated Encryption with Associated Data`) — отдельный алгоритм хеширования, который считает контрольную сумму уже поверх зашифрованного `AES-CBC` текста и добавляет её вторым шагом. Он усиливает старую схему «encrypt-then-MAC», закрывая известные padding oracle (`BEAST`, `Lucky13`, `POODLE`), но сам данные не шифрует.",
               "correct": false,
               "sections": {
                 "what_actually": "`AEAD` — это режим шифрования, дающий конфиденциальность и целостность в одной операции; он заменяет связку `CBC` + HMAC, а не дополняет её хешем.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `TLS 1.3` основным шифром остаётся `CBC` (`AES-CBC`), потому что он совместим со старым оборудованием и проще в реализации.",
+              "text": "`AEAD` (`Authenticated Encryption with Associated Data`) — режим с конфиденциальностью и целостностью, но в `TLS 1.3` он оставлен опциональным поверх основного `AES-CBC` с `HMAC`. Такой режим сохранён ради старого оборудования, а известные padding oracle (`BEAST`, `Lucky13`, `POODLE`) там закрывают отдельной проверкой длины записи.",
               "correct": false,
               "sections": {
                 "what_actually": "`TLS 1.3` запретил `CBC` целиком из-за padding oracle attacks; разрешены только `AEAD`-шифры (`AES-GCM`, `ChaCha20-Poly1305`).",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`AEAD` обеспечивает только конфиденциальность (шифрование), а целостность по-прежнему требует отдельного шага HMAC, как и раньше.",
+              "text": "`AEAD` (`Authenticated Encryption with Associated Data`) — режим шифрования, дающий только конфиденциальность за одну операцию, тогда как целостность добавляют отдельным `HMAC`-шагом поверх шифртекста. Именно из-за этого разрыва в старой схеме и возникали padding oracle (`BEAST`, `Lucky13`, `POODLE`).",
               "correct": false,
               "sections": {
                 "what_actually": "Суть `AEAD` в том, что он даёт и конфиденциальность, и целостность (встроенный тег аутентификации) в одной операции, без отдельного HMAC-шага.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Let's Encrypt` выдаёт `EV`-сертификаты с полной юридической проверкой организации, поэтому подходит банкам как замена `DigiCert`.",
+              "text": "`Let's Encrypt` — некоммерческий CA (ISRG, 2016), выдающий `EV`-сертификаты с полной юридической проверкой организации через API `ACME`. `ACME` (`Automatic Certificate Management Environment`, `RFC 8555`) поэтому включает шаг верификации юрлица: регистрация аккаунта, проверка документов компании, выполнение challenge, finalize с `CSR`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Let's Encrypt` выдаёт только `DV`-сертификаты (проверка владения доменом); `EV`/`OV` с юрпроверкой он не выпускает.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ACME` — это формат хранения приватного ключа на диске, аналог `PKCS12`, который понимает только `certbot`.",
+              "text": "`Let's Encrypt` — некоммерческий CA (ISRG, 2016), бесплатно выдающий `DV`-сертификаты, которые `certbot` сохраняет на диск. `ACME` (`Automatic Certificate Management Environment`, `RFC 8555`) — не протокол, а формат файла с приватным ключом и цепочкой, аналог `PKCS12`, который читает только клиент `certbot` при обновлении.",
               "correct": false,
               "sections": {
                 "what_actually": "`ACME` — это сетевой протокол выпуска/обновления сертификатов между клиентом и CA, а не формат файла ключа; ключи хранят в `PEM`/`PKCS12`.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Сертификаты `Let's Encrypt` бессрочные, поэтому однократного выпуска через `certbot` достаточно навсегда без обновления.",
+              "text": "`Let's Encrypt` — некоммерческий CA (ISRG, 2016), выдающий `DV`-сертификаты со сроком в один год через API `ACME`. `ACME` (`Automatic Certificate Management Environment`, `RFC 8555`) поэтому запускается раз в год: `certbot` выпускает сертификат, а до истечения годичного срока продление не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Сертификаты `Let's Encrypt` живут 90 дней (опционально 6) и требуют регулярного автообновления; бессрочных среди них нет.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для wildcard-сертификата (`*.example.com`) можно использовать `HTTP-01`-challenge, разместив файл по пути `/.well-known/acme-challenge/`.",
+              "text": "`HTTP-01`: CA выдаёт токен, клиент кладёт файл по пути `/.well-known/acme-challenge/<token>`, и этот способ подходит в том числе для wildcard-сертификата `*.example.com`. `DNS-01`: клиент создаёт TXT-запись `_acme-challenge`, CA её проверяет (нужен доступ к DNS). `TLS-ALPN-01`: challenge через TLS на порт 443 с ALPN-протоколом `acme-tls/1`.",
               "correct": false,
               "sections": {
                 "what_actually": "Для wildcard возможен только `DNS-01`: `HTTP-01` доказывает контроль над конкретным хостом, а не над всем доменом, поэтому wildcard им не подтверждается.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`DNS-01` требует, чтобы у домена был открыт публичный HTTP-порт 80, иначе CA не сможет проверить TXT-запись.",
+              "text": "`HTTP-01`: CA выдаёт токен, клиент кладёт файл `http://example.com/.well-known/acme-challenge/<token>`, CA делает HTTP-запрос (нужен публичный порт 80). `DNS-01`: клиент тоже должен держать открытым порт 80, потому что CA проверяет TXT-запись HTTP-запросом к домену. `TLS-ALPN-01`: challenge через TLS на порт 443 с ALPN-протоколом `acme-tls/1`.",
               "correct": false,
               "sections": {
                 "what_actually": "`DNS-01` проверяется через DNS-запрос TXT-записи, а не через HTTP; порт 80 ему не нужен — поэтому он и работает для закрытых сервисов.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`TLS-ALPN-01` выполняется на отдельном порту 8443 и требует остановить основной сервис, чтобы освободить TLS-терминацию.",
+              "text": "`HTTP-01`: CA выдаёт токен, клиент кладёт файл `/.well-known/acme-challenge/<token>`, CA проверяет по порту 80. `DNS-01`: клиент создаёт TXT-запись `_acme-challenge.example.com`, CA её проверяет. `TLS-ALPN-01` выполняется на отдельном порту 8443 с ALPN-протоколом `acme-tls/1`, чтобы не конфликтовать с основным HTTPS на 443.",
               "correct": false,
               "sections": {
                 "what_actually": "`TLS-ALPN-01` работает на том же порту 443, что и сервис, через специальный ALPN-протокол `acme-tls/1` — это его преимущество, не нужен отдельный порт.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`KeyStore` и `TrustStore` — это один и тот же файл, и в Java между ними нет технической разницы; названия взаимозаменяемы.",
+              "text": "Оба — файлы `JKS`/`PKCS12`, и технически это один и тот же контейнер, который Java использует то как `KeyStore`, то как `TrustStore` в зависимости от того, какой параметр `-Djavax.net.ssl` на него указывает. Поэтому `KeyManagerFactory` и `TrustManagerFactory` читают из одного файла `cacerts`, просто беря из него нужные записи по типу.",
               "correct": false,
               "sections": {
                 "what_actually": "Технически оба — файлы `JKS`/`PKCS12`, но логически различны: `KeyStore` хранит свои приватные ключи и сертификаты, `TrustStore` — чужие публичные сертификаты CA, которым доверяем.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`TrustStore` хранит приватные ключи приложения, а `KeyStore` — список доверенных чужих CA; то есть их роли противоположны описанным.",
+              "text": "Оба — файлы `JKS`/`PKCS12`, но `TrustStore` хранит свои приватные ключи и сертификаты сервера (используется `KeyManagerFactory` при рукопожатии), а `KeyStore` — чужие публичные сертификаты и CA, которым доверяем (используется `TrustManagerFactory` при валидации цепочки). Системный `KeyStore` по умолчанию — `$JAVA_HOME/lib/security/cacerts`.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны местами: приватные ключи лежат в `KeyStore` («кто я»), а доверенные чужие CA — в `TrustStore` («кому я верю»).",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`KeyStore` нужен только серверу, а `TrustStore` только клиенту; ни одной ситуации, где приложению нужны оба, не существует.",
+              "text": "Оба — файлы `JKS`/`PKCS12`, где `KeyStore` с приватными ключами нужен исключительно серверу для аутентификации, а `TrustStore` с чужими CA — исключительно клиенту для проверки сервера (`TrustManagerFactory`). Ситуации, где одному приложению нужны сразу оба, не возникает, поэтому `cacerts` подключают только на клиентской стороне.",
               "correct": false,
               "sections": {
                 "what_actually": "Для mTLS-клиента нужны оба сразу: `KeyStore` (свой клиентский сертификат) и `TrustStore` (доверие серверу) — так что оба вполне сочетаются в одном приложении.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JKS` — кросс-платформенный стандарт (`RFC 7292`), совместимый с OpenSSL и Windows, поэтому его и выбирают по умолчанию.",
+              "text": "`JKS` (`.jks`, `RFC 7292`) — кросс-платформенный стандарт, дефолт с Java 9, совместим с OpenSSL, `keytool`, `curl` и Windows. `PKCS12` (`.p12`/`.pfx`) — Java-специфичный legacy-формат с известными слабостями шифрования. Также есть `JCEKS` (почти не используется) и `BKS` (старый Android).",
               "correct": false,
               "sections": {
                 "what_actually": "Кросс-платформенный стандарт по `RFC 7292` — это `PKCS12`, а `JKS` как раз Java-специфичный и плохо совместим с не-Java инструментами.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "С Java 9 дефолтным форматом стал `JKS`, а `PKCS12` объявлен устаревшим и не рекомендуется для новых проектов.",
+              "text": "`JKS` (`.jks`) — формат, который с Java 9 стал дефолтным keystore, вытеснив `PKCS12`. `PKCS12` (`.p12`/`.pfx`, `RFC 7292`) объявлен устаревшим и не рекомендуется для новых проектов из-за слабого шифрования. Также есть `JCEKS` (почти не используется) и `BKS` (старый Android).",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: с Java 9 дефолт — `PKCS12`, а `JKS` считается legacy с известными слабостями в шифровании.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`PKCS12` нельзя сконвертировать из `JKS`, поэтому при переходе на `PKCS12` все ключи приходится генерировать заново.",
+              "text": "`PKCS12` (`.p12`/`.pfx`, `RFC 7292`) — кросс-платформенный стандарт, дефолт с Java 9, но сконвертировать в него существующий `JKS` нельзя. `JKS` (`.jks`) хранит ключи в несовместимой внутренней структуре, поэтому при переходе на `PKCS12` все ключи приходится генерировать заново через `keytool -genkeypair`. Также есть `JCEKS` и `BKS` (старый Android).",
               "correct": false,
               "sections": {
                 "what_actually": "Конвертация делается одной командой `keytool -importkeystore` с указанием `srcstoretype JKS` и `deststoretype PKCS12`; перегенерировать ключи не нужно.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`keytool -genkeypair` без указания `-ext san=...` всё равно создаёт сертификат с корректным `SAN`, поэтому добавлять SAN вручную не нужно.",
+              "text": "`keytool -genkeypair -alias myapp -keyalg RSA -keysize 2048 -keystore server.p12 -storetype PKCS12 -dname \"CN=api.example.com\"` создаёт keystore с self-signed сертификатом; `SAN` при этом подставляется из `CN` автоматически, поэтому `-ext san=...` не нужен. В OpenSSL то же: `openssl genrsa -out server.key 2048`, затем `openssl req -new -key server.key -out server.csr` сам возьмёт `subjectAltName` из `CN` без `-addext`.",
               "correct": false,
               "sections": {
                 "what_actually": "Без явного `-ext \"san=...\"` сертификат выпускается без `SAN`, и современные клиенты (`Chrome`, JDK 9+) его отвергнут — `SAN` надо задавать вручную.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "OpenSSL не умеет генерировать `CSR` — для отправки запроса в CA обязательно использовать только `keytool`.",
+              "text": "`keytool -genkeypair -alias myapp -keyalg RSA -keysize 2048 -keystore server.p12 -storetype PKCS12 -dname \"CN=api.example.com\" -ext \"san=dns:api.example.com\"` создаёт keystore; `keytool -certreq` формирует из него `CSR`. Для OpenSSL приватный ключ сначала экспортируют из keystore командой `openssl pkcs12 -in server.p12 -out server.key`, и только затем `openssl req -new -key server.key -out server.csr` создаёт запрос в CA.",
               "correct": false,
               "sections": {
                 "what_actually": "OpenSSL отлично генерирует `CSR` командой `openssl req -new -key server.key -out server.csr`; это один из самых частых способов.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Команда `openssl req -x509` создаёт `CSR` для подписи в CA, а не self-signed сертификат — флаг `-x509` отвечает за формат запроса.",
+              "text": "`keytool -genkeypair -alias myapp -keystore server.p12 -storetype PKCS12 -ext \"san=dns:api.example.com\"` создаёт self-signed сертификат; для запроса в CA берут `keytool -certreq`. В OpenSSL флаг `-addext` для `SAN` игнорируется, поэтому `subjectAltName` задают только через отдельный конфиг: `openssl req -new -key server.key -out server.csr -config san.cnf`.",
               "correct": false,
               "sections": {
                 "what_actually": "Флаг `-x509` как раз заставляет `openssl req` выпустить готовый self-signed сертификат, а не `CSR`; `CSR` генерируется без `-x509` (`req -new`).",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SSLContext.getDefault()` сам берёт доверенные CA из системного `cacerts`, поэтому явно передавать `KeyManager` и `TrustManager` через `init(...)` нужно только для клиентских сертификатов в mTLS.",
+              "text": "`SSLContext` — фабрика для `SSLEngine`/`SSLSocketFactory`/`SSLServerSocketFactory`, и `SSLContext.getDefault()` уже подгружает доверенные CA из системного `cacerts`. Явный `init(KeyManager[], TrustManager[], SecureRandom)` с `KeyManagerFactory` (`SunX509`) и `TrustManagerFactory` (`PKIX`) добавляют лишь под собственный клиентский сертификат в mTLS.",
               "correct": false,
               "sections": {
                 "what_actually": "`SSLContext` инициализируется явно через `init(KeyManager[], TrustManager[], SecureRandom)`; он не тянет сертификаты из сети сам — `TrustManager` определяет, кому доверять.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`SSLContext` — лишь держатель настроек протокола и списка cipher suites. Сам обмен ключами и шифрование выполняет `SSLSocket`, а `SSLContext` в самом рукопожатии участия не принимает.",
+              "text": "`SSLContext` — фабрика для `SSLEngine`/`SSLSocketFactory`/`SSLServerSocketFactory`, задающая протокол и список cipher suites. Через `init(KeyManager[], TrustManager[], SecureRandom)` в неё записывают `KeyManagerFactory` (`SunX509`) и `TrustManagerFactory` (`PKIX`), а сам обмен ключами и валидацию сертификатов выполняет уже `SSLSocket` при подключении.",
               "correct": false,
               "sections": {
                 "what_actually": "`SSLContext` управляет именно TLS внутри JVM: согласованием ключей, проверкой сертификатов через `TrustManager` и шифрованием через `SSLEngine`; ОС тут ни при чём.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Версия протокола жёстко фиксируется в `SSLContext.getInstance(\"TLSv1.2\")` и позже не меняется, поэтому для поддержки нескольких версий заводят отдельный `SSLContext` на каждую.",
+              "text": "`SSLContext.getInstance(\"TLSv1.2\")` — фабрика для `SSLEngine`/`SSLSocketFactory`/`SSLServerSocketFactory`, жёстко фиксирующая версию протокола на всё время жизни. Через `init(KeyManager[], TrustManager[], SecureRandom)` подключают `KeyManagerFactory` (`SunX509`) и `TrustManagerFactory` (`PKIX`), а под `TLSv1.3` заводят отдельный `SSLContext` на каждую версию.",
               "correct": false,
               "sections": {
                 "what_actually": "Версию задают и при создании (`SSLContext.getInstance(\"TLSv1.3\")`), и на сокете через `setEnabledProtocols(new String[]{\"TLSv1.3\",\"TLSv1.2\"})` — старые версии отключаются.",
