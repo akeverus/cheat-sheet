@@ -37,6 +37,19 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.143 — R1.48 ФИКС: alpha focus-ring → solid double-ring на 5 non-default дизайнах (WCAG 1.4.11) [follow-up R1.43]
+
+**Метод:** canvas-sRGB контраст (надёжен и для oklch) по всем 10 остаточным alpha-`--shadow-focus` из R1.43-follow-up. Для каждого дизайн×тема — два числа: solid `outline` (`--color-border-focus` vs bg, покрывает большинство контролов через глобальный `:focus-visible`) и alpha box-shadow ring (композит над фоном, покрывает box-shadow-only контролы: `.settings-tab`/`.seg-btn`/inputs/selects).
+
+**Замер (подтверждено):**
+- `outline vs bg` — ВСЕ 10 проходят ≥3:1: notion 4.03/7.39 · superhuman 6.16/9.42 · stripe 6.19/5.71 · claude 4.27/7.35 · instrument 4.32/7.78.
+- `alphaRing vs bg` — ВСЕ 10 ПРОВАЛИВАЮТ: 1.48 / 1.99 / 1.70 / 2.61 / 1.78 / 2.24 / 1.58 / 2.18 / 1.73 / 2.50 (диапазон 1.48–2.61, требование ≥3:1). Тот же класс дефекта, что editorial имел до R1.43 (~1.4:1).
+
+**Фикс:** 10 alpha-колец (`0 0 0 3px rgba/oklch(accent, .30–.45)`) → solid double-ring `0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus)` (regex по `0 0 0 3px`, ровно 10 совпадений; solid-паттерн уже был у editorial/linear/swiss/mintlify/broadsheet/theverge). Внешнее 4px-кольцо = `--color-border-focus` → его контраст к фону = тот самый outline-ряд 4.03–9.42 ≥3:1. `--color-border-focus` не трогал.
+
+**Верификация:** design-token-audit VERDICT CLEAN (hard-fails=0). Live (обе темы, /settings): `--shadow-focus` на `.settings-tab` резолвится в `0 0 0 2px <bg>, 0 0 0 4px <border-focus>` для notion/superhuman/stripe/claude ×light/dark — напр. notion/light `#097FE8`, stripe/dark `#8B93FF`, claude/light `#2476C4`. Все box-shadow-only контролы теперь ≥3:1 вместо 1.48–2.61. Теперь все 23 `--shadow-focus` в файле — solid double-ring (0 alpha-колец). head.html tokens.css v=63→64. gradle пропущен (CSS-only токены при живом bootRun — wedge-риск; применимый гейт = design-token-audit).
+
+
 ### cr.142 — WCAG 2.4.11 Focus Not Obscured (Minimum, AA): sticky-элементы не перекрывают фокус (verified-clean)
 
 **Вопрос:** может ли какой-либо клавиатурно-сфокусированный контрол оказаться ПОЛНОСТЬЮ скрыт за author-created sticky/fixed-элементом (критерий 2.4.11, «entirely hidden» = провал на AA).
