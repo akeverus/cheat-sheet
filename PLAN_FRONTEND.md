@@ -1396,3 +1396,13 @@ Dirty changes created by loop: 0
 
 - **Сделано:** C5-i (2 правила: stat-value mono/tabular, thead th tertiary) перед §C6, head v76→77, live-синк. Полный live-QA (stats достижима read-only): дельта применилась, sticky/bg шапки целы, editorial = baseline R0.37 бит-в-бит, reflow чист. Token-only нёс 90% языка stats — блок минимален. Цвета графиков (stats.js) — Фаза G.
 - **Следующий тик:** порт settings (маппинг R0.25, шаг 1 pure CSS — по baseline R0.36 token-only тоже почти всё несёт; проверить нужны ли правки вообще) → shell (v=78 при правках); контракт-тест при остановленном bootRun.
+
+### R0.52 (2026-07-12) — Фаза E: порт settings C4-i ПРИМЕНЁН (v=78), шестой порт
+- Collision guard: чисто (только .cursor hook-state); bootRun жив (PID 29539) → контракт-тест снова PENDING.
+- Пересверка разметки по свежему дереву: панели settings ПЛОСКИЕ (карточная поверхность только у .today-hero, bg-secondary); `.settings-page .card` в base.css нет (комментарий у today-hero это фиксирует). Тихий заголовок колонок = .launcher-subtitle (mono/xs/uppercase/secondary).
+- C4-i = 4 правила (вставка перед секцией ПЕРСОНАЛИЗАЦИЯ, после всех перебиваемых правил 1311/1327/2959/2993 — победа по порядку): hero → bg-tertiary+border-primary; .today-hero-due → mono/semibold (цвет teal несут токены); .launcher-subtitle → lowercase+tertiary; .settings-panel-title → medium (no-JS ветка).
+- head.html base v77→78 (tokens v62 не тронут); live-синк cp обоих файлов в build/resources/main.
+- QA живьём @1280, 4 состояния, settle 400ms: дельты = прогноз бит-в-бит; editorial-контроль = baseline R0.36 (Lora 700 clay / uppercase secondary / hero 240,238,230); instrument dark 0.262/0.36/0.76 корректен. Геометрия не менялась → 320 не перемерялся.
+- Отложено ОСОЗНАННО (не instrument-scoped): карточная сетка осей + switch-тогглы = структурный вид всех дизайнов (шаг 2/Фаза G, отдельное решение); вертикальный tablist = шаг 2 (шаблон+app.js).
+- Леджеры: PIXEL_QA_MATRIX settings → E DONE шаг 1 / parity PASS(R0.52) / contract PENDING-TEST; CRITIQUE cr.49.
+- **Дальше:** ПОСЛЕДНИЙ порт Фазы E — shell (кандидат дельты: masthead-title 700→500, сверить с макетом shell.html; sticky ЗАПРЕЩЁН контракт-тестом; :has(progress)-уплотнение и HDR-1 clamp НЕ перебивать). После shell — прогон TemplateFragmentContractTest при первом окне без bootRun.

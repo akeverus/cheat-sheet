@@ -25,7 +25,7 @@
 | focus-training | PASS | PASS‡ | PASS* | PASS | PASS(core)† | PASS(active, R0.49) | PENDING-TEST¤ | PASS(static R0.32) | **E DONE шаг 1 (C1-i применён, v=75)**; flashcard/empty/result-инъекции — parity-фаза |
 | result | PASS | PASS‡ | PASS* | PASS | PASS(core)§ | APPLIED▽(R0.50) | PENDING-TEST¤ | RECHECK | **E DONE шаг 1 (C3-i применён, v=76)**; визуальный паритет (нужен ответ) — parity-фаза |
 | session-summary | PASS | PASS | PASS* | PASS | PASS | APPLIED▽(R0.47) | PENDING-TEST¤ | TODO | **E DONE шаг 1 (C6-i применён, v=74)**; визуальный паритет + шаг 2 (headline/grid) — parity-фаза |
-| settings | PASS | PASS | PASS* | PASS✦ | PASS | TODO▲ | TODO | PASS(static R0.32) | D done; E BLOCKED (baseline R0.36) |
+| settings | PASS | PASS | PASS* | PASS✦ | PASS | PASS(R0.52) | PENDING-TEST¤ | PASS(static R0.32) | **E DONE шаг 1 (C4-i применён, v=78)**; карт-сетка осей/switch-тогглы = структурный рестайл всех дизайнов → шаг 2/Фаза G |
 | stats | PASS | PASS♦ | PASS* | PASS | PASS(core)◊ | PASS(R0.51) | PENDING-TEST¤ | PASS(static R0.32) | **E DONE шаг 1 (C5-i применён, v=77)**; цвета графиков stats.js — Фаза G |
 | error | PASS | PASS | PASS* | PASS | PASS | **PASS(R0.46)** | PENDING-TEST¤ | PASS(static R0.32) | **E DONE (C7-i применён, v=73)** |
 
