@@ -1443,3 +1443,10 @@ Dirty changes created by loop: 0
 - QA kbd-help модалки (client-side `?`): токены несут оверлей/карточку целиком; kbd голым mono = общий тихий язык (keyboard-hint такой же) — не дефект. Дельта: тайтлы модалок semibold ((0,2,2)/(0,2,1) бьют сигнатуру (0,1,2)) → фикс в SIGNATURES: kbd-help h3 + prompt-modal-title medium. QA: instrument 500 / editorial 600 цел; Esc работает. head v81→82.
 - Урок-артефакт: borderTopColor репортит currentColor при border:none — не принимать за стиль.
 - **Дальше:** контракт-тест + regenerate-удаление одним тиком при окне без bootRun; session-gated parity — ждёт юзера; графики — ждут данных.
+
+### R0.58 (2026-07-12) — Lighthouse live-гейт instrument + фикс label-in-name степпера
+- Collision guard чист; bootRun жив → контракт-тест PENDING.
+- Lighthouse (desktop, navigation) на живом instrument: / — a11y 100/BP 100/agentic 100 (провалы только SEO-шум: meta-description, noindex); /settings — a11y 100/BP 100, но `label-content-name-mismatch`: степпер «A−»/«A+» без видимого текста в accessible name (WCAG 2.5.3, дефект всех дизайнов).
+- Фикс: aria-label «A−: уменьшить размер шрифта»/«A+: увеличить…» (settings.html; ID/app.js/контракт не тронуты). Re-audit: label-in-name закрыт (48 passed). Live-синк settings.html.
+- Кандидат Фазы G с замером: CLS 0.246 на /settings — PE-раскрытие (стопка→вкладки, personalization, export); осознанная архитектура, чинить только решением «резерв места».
+- **Дальше:** контракт-тест + regenerate-удаление при окне без bootRun; session-parity — ждёт юзера; графики — ждут данных; Lighthouse mobile-прогон — опциональный следующий QA-юнит.
