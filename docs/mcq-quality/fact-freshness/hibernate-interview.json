@@ -27,7 +27,13 @@
     "Query Cache: hibernate.cache.use_query_cache=true (глобально) + setCacheable(true)/@QueryHint per-query; хранит ID + инвалидация потаблично через UpdateTimestampsCache [Q26].",
     "Стратегии CacheConcurrencyStrategy: READ_ONLY / NONSTRICT_READ_WRITE / READ_WRITE (soft-lock) / TRANSACTIONAL (только JTA); дефолта нет, задаётся @Cache(usage=...) [Q27].",
     "org.hibernate.Criteria deprecated с Hibernate 5.2, удалён в 6.0; актуален только jakarta.persistence.criteria (CriteriaBuilder/CriteriaQuery) [Q29].",
-    "@NamedQuery валидируется при старте SessionFactory/EntityManagerFactory; результаты не кэширует (Query Cache — отдельный opt-in) [Q30]. Стабильный контракт."
+    "@NamedQuery валидируется при старте SessionFactory/EntityManagerFactory; результаты не кэширует (Query Cache — отдельный opt-in) [Q30]. Стабильный контракт.",
+    "@Version принимает Integer/Long/Short/Timestamp/Instant; числовые предпочтительнее (атомарный инкремент, нет коллизий точности часов) [Q33]. Контракт JPA, стабилен.",
+    "GenerationType.IDENTITY несовместим с JDBC-батчингом вставок; SEQUENCE + allocationSize — рекомендация для batch [Q36]. Актуально в Hibernate 6.",
+    "hibernate.jdbc.batch_size покрывает INSERT/UPDATE/DELETE; order_inserts/order_updates группируют по типу сущности; batch_versioned_data для @Version-сущностей [Q36].",
+    "setFetchSize — JDBC-hint, поведение драйверозависимо (PostgreSQL — cursor при autocommit=false; MySQL — свой механизм) [Q37]. Стабильный контракт JDBC.",
+    "hibernate.generate_statistics=true + sessionFactory.getStatistics(); в production экспорт через Micrometer/Actuator опционален [Q39]. Стабильно в Hibernate 5/6.",
+    "spring.jpa.hibernate.ddl-auto: validate + Flyway/Liquibase — рекомендация для production; open-in-view=false рекомендован (Spring Boot до сих пор дефолтит true с warning-ом) [Q40]."
   ],
   "notes": "Ядро (Session/SessionFactory, состояния entity, dirty checking, get/load) стабильно с Hibernate 5.x; покрывает Q1-Q10; расширяется по мере обработки остальных чанков."
 }

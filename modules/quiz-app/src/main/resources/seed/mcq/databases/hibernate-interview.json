@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Hibernate` не поддерживает нативные SQL-запросы — только `JPQL` и `HQL`.",
+              "text": "Нет, нативные SQL-запросы напрямую не выполняются, а специфичные возможности СУБД доступны через функции, зарегистрированные в `Dialect`-е.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hibernate` всегда позволял нативный SQL; это важный escape hatch, когда `JPQL`/`HQL` недостаточно выразителен.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Результат нативного SQL нельзя замаппить на `Entity`, только на массив `Object[]`.",
+              "text": "Да, но результат нативного SQL маппится только на массивы `Object[]` и на управляемые `Entity` его привязать нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Результат маппится на `Entity` через `createNativeQuery(sql, User.class)` или `@SqlResultSetMapping` для сложных DTO-случаев.",
@@ -1848,13 +1848,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Нативные SQL-запросы обходят L1 cache и никогда не попадают в persistence context.",
+              "text": "Да, нативные SQL-запросы выполняются через `createQuery()` с флагом `nativeQuery=true` и маппятся на сущности автоматически.",
               "correct": false,
               "sections": {
-                "what_actually": "Результаты нативного запроса, возвращающего managed-сущности, попадают в L1 cache и даже могут конфликтовать с уже загруженными объектами.",
-                "source_of_confusion": "Раз SQL «нативный», кажется, что он минует все механизмы ORM, включая кэш.",
-                "if_it_were_true": "Тогда не было бы проблем с устаревшими данными после нативного запроса, но они возможны из-за L1.",
-                "how_it_should_be": "Нативный запрос с сущностями участвует в persistence context, и это требует осторожности."
+                "what_actually": "`createQuery()` в JPA принимает только `JPQL` — флага `nativeQuery` у него нет; нативный SQL выполняется отдельным методом `createNativeQuery()`, а маппинг на сущность задаётся вторым аргументом (`User.class`). Атрибут `nativeQuery = true` существует у аннотации `@Query` в `Spring Data`, а не в API `EntityManager`.",
+                "source_of_confusion": "Смешение слоёв: в Spring Data репозиториях native включается флагом на той же аннотации `@Query`, и привычка переносится на программный API `EntityManager`.",
+                "if_it_were_true": "Разделение createQuery/createNativeQuery было бы избыточным, а строка запроса парсилась бы двумя грамматиками сразу — ранняя валидация JPQL стала бы невозможной.",
+                "how_it_should_be": "Запомнить пары: `EntityManager` — `createQuery` (JPQL) против `createNativeQuery` (SQL); `Spring Data` — `@Query` против `@Query(nativeQuery = true)`."
               }
             }
           ]
@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Hibernate` автоматически защищает от `SQL Injection` независимо от того, как написан запрос.",
+              "text": "`Hibernate` экранирует значения при генерации SQL сам; ручная параметризация через `setParameter()` нужна только нативным запросам, минующим `Dialect`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hibernate` защищает только при параметризации; конкатенация строк в `HQL` так же уязвима, как в чистом `JDBC`.",
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Использование нативного SQL в `Hibernate` всегда приводит к `SQL Injection`.",
+              "text": "`Hibernate` остаётся уязвим в нативном SQL даже при `setParameter()`; надёжны только `JPQL`/`HQL`, которые не транслируются в текстовый SQL напрямую.",
               "correct": false,
               "sections": {
                 "what_actually": "Нативный SQL также безопасен при использовании `setParameter()`; небезопасна только конкатенация пользовательского ввода в строку запроса.",
@@ -1895,7 +1895,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Criteria API` подвержен `SQL Injection`, потому что выполняет динамический SQL.",
+              "text": "`Criteria API` уязвим при динамической сборке условий; строковые значения в `Predicate`-ах попадают в итоговый SQL без экранирования, как при конкатенации.",
               "correct": false,
               "sections": {
                 "what_actually": "`Criteria API` безопасен: значения, переданные через `cb.equal(root.get(\"name\"), userInput)`, автоматически становятся параметрами `PreparedStatement`.",
@@ -1944,7 +1944,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@Version` блокирует строку в БД через `SELECT ... FOR UPDATE` при чтении.",
+              "text": "`@Version` переводит `find()` в `SELECT ... FOR UPDATE`; пока строка заблокирована — конкурентные `UPDATE` ждут снятия блокировки.",
               "correct": false,
               "sections": {
                 "what_actually": "`SELECT ... FOR UPDATE` — это пессимистичная блокировка; `@Version` обеспечивает оптимистичную, без блокировки на уровне БД.",
@@ -1956,19 +1956,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@Version` должен иметь тип `String` для поддержки произвольных форматов версии.",
+              "text": "`@Version` работает только с типом `Timestamp`; числовые типы не попадают в `WHERE` — конфликт по ним не детектируется.",
               "correct": false,
               "sections": {
-                "what_actually": "Поддерживаются только `Integer`, `Long`, `Short`, `Timestamp`, `Instant`; числовые типы предпочтительнее timestamp-ов.",
-                "source_of_confusion": "Кажется, что версия может быть любой строкой-меткой, но `Hibernate` инкрементирует именно число или время.",
-                "if_it_were_true": "Тогда `private String version` работал бы, но `Hibernate` не сможет автоматически его увеличивать.",
-                "how_it_should_be": "Поле version — числовое или временное; `String` не поддерживается."
+                "what_actually": "`@Version` принимает `Integer`, `Long`, `Short`, `Timestamp` или `Instant`; числовые типы предпочтительнее — инкремент атомарен и не зависит от точности часов. Любой из допустимых типов попадает в `WHERE` при `UPDATE`, и конфликт детектируется одинаково.",
+                "source_of_confusion": "Версия ассоциируется со «временем изменения», а timestamp-колонки updated_at в схемах встречаются чаще счётчиков — кажется, что и версия обязана быть временем.",
+                "if_it_were_true": "Два обновления в один тик часов получали бы одинаковую «версию», и конфликт остался бы незамеченным — оптимистичная блокировка переставала бы работать под нагрузкой.",
+                "how_it_should_be": "Выбирать `Integer`/`Long` по умолчанию; `Timestamp`/`Instant` — только когда нужна человекочитаемая отметка, помня о риске коллизий точности времени."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Поле `@Version` нужно вручную увеличивать в коде перед каждым сохранением.",
+              "text": "`@Version` инкрементируется вручную перед `merge()`; если код не увеличил поле — `Hibernate` пропустит проверку и перезапишет чужие изменения.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hibernate` инкрементирует version автоматически при каждом `UPDATE`; ручное изменение сломает механизм обнаружения конфликтов.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Пессимистичная блокировка обеспечивает больший throughput и не вызывает deadlock.",
+              "text": "Пессимистичная блокировка даёт больший throughput под нагрузкой и исключает deadlock по построению, а оптимистичная через `@Version` проигрывает из-за повторов при `OptimisticLockException`.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: пессимистичная блокировка снижает throughput (потоки ждут освобождения) и может привести к deadlock; оптимистичная не блокирует.",
@@ -2016,7 +2016,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Пессимистичная блокировка работает только через аннотацию `@Version`.",
+              "text": "Пессимистичная блокировка тоже включается аннотацией `@Version` с атрибутом `LockModeType.PESSIMISTIC_WRITE`, а отдельного API на уровне запроса у неё нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Version` — это оптимистичная блокировка; пессимистичная задаётся через `LockModeType.PESSIMISTIC_WRITE`/`PESSIMISTIC_READ`.",
@@ -2028,7 +2028,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Оптимистичная блокировка подходит для банковских операций, где конфликты часты.",
+              "text": "Оптимистичная блокировка через `@Version` выбирается для финансовых списаний с частыми конфликтами, а пессимистичная через `SELECT ... FOR UPDATE` годится для редких конкурентных правок.",
               "correct": false,
               "sections": {
                 "what_actually": "При частых конфликтах оптимистичная блокировка неэффективна — будет много retry; для критичных операций с высокой конкуренцией лучше пессимистичная.",
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Transactional` делает rollback для checked-исключений по умолчанию.",
+              "text": "`@Transactional` в `Spring` делает rollback и для checked-исключений: они откатываются наравне с `RuntimeException` без настройки `rollbackFor`.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию `Spring` откатывает транзакцию только для `RuntimeException` и `Error`; для checked нужно явно `rollbackFor = Exception.class`.",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Без `Spring` управлять транзакциями `Hibernate` невозможно — `Transaction` API не работает.",
+              "text": "`Transaction` вне `Spring` не используется напрямую: границы транзакций задаёт контейнер, а `session.beginTransaction()` оставлен для обратной совместимости.",
               "correct": false,
               "sections": {
                 "what_actually": "`Transaction` API работает и без `Spring`: `session.beginTransaction()`, `tx.commit()`, `tx.rollback()`; `Spring` лишь добавляет декларативность.",
@@ -2088,7 +2088,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `Spring` транзакция автоматически применяет уровень изоляции `SERIALIZABLE`, если он не указан.",
+              "text": "`@Transactional` в `Spring` без атрибутов применяет изоляцию `SERIALIZABLE`: строгий уровень выбран дефолтом, чтобы транзакции были корректны без настройки.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию `Spring` использует уровень изоляции БД (`Isolation.DEFAULT`), для `PostgreSQL` это `READ COMMITTED`; `SERIALIZABLE` не навязывается.",
@@ -2111,19 +2111,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`GenerationType.IDENTITY` идеально подходит для batch insert, так как позволяет вставлять строки пакетами.",
+              "text": "`hibernate.jdbc.batch_size` действует только на `INSERT`, так как `UPDATE` и `DELETE` идут через dirty checking построчно.",
               "correct": false,
               "sections": {
-                "what_actually": "`IDENTITY` несовместим с batch insert: `Hibernate` делает `INSERT` каждой строки отдельно, чтобы узнать сгенерированный БД id; для batch нужен `SEQUENCE`.",
-                "source_of_confusion": "`IDENTITY` (auto-increment) выглядит простым и эффективным выбором для вставок.",
-                "if_it_were_true": "Тогда `batch_size` ускорял бы `IDENTITY`-вставки, но `Hibernate` не знает id заранее и отключает батчинг.",
-                "how_it_should_be": "Для batch insert используют `SEQUENCE`, а не `IDENTITY`."
+                "what_actually": "Батчинг покрывает `INSERT`, `UPDATE` и `DELETE`: `Hibernate` группирует однотипные statement-ы при flush, а `order_updates` собирает `UPDATE` в пакеты так же, как `order_inserts` — вставки. Dirty checking лишь определяет, ЧТО изменилось; отправка сгенерированных `UPDATE` идёт тем же JDBC-батчем.",
+                "source_of_confusion": "Dirty checking описывают «по одной сущности» (snapshot-сравнение каждой), и построчность анализа переносится на построчность отправки SQL.",
+                "if_it_were_true": "Массовый flush 10 000 изменённых сущностей всегда делал бы 10 000 round-trip-ов, а свойства order_updates и batch_versioned_data не имели бы смысла.",
+                "how_it_should_be": "Включать `batch_size` вместе с `order_inserts`/`order_updates`; для сущностей с `@Version` добавлять `batch_versioned_data=true`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Для batch processing достаточно установить `hibernate.jdbc.batch_size=50`, а `flush()` и `clear()` не нужны.",
+              "text": "`hibernate.jdbc.batch_size=50` сам по себе закрывает массовые вставки, так как `Hibernate` вызывает `flush()` и очищает persistence context после каждого пакета.",
               "correct": false,
               "sections": {
                 "what_actually": "Без периодического `flush()`+`clear()` persistence context растёт, пока не съест всю память — частая причина `OutOfMemoryError` при bulk insert.",
@@ -2135,7 +2135,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`order_inserts: true` ускоряет единичные `INSERT` даже без включённого `batch_size`.",
+              "text": "`order_inserts=true` ускоряет и единичные `INSERT`, так как `Hibernate` группирует statement-ы на уровне драйвера даже без включённого `batch_size`.",
               "correct": false,
               "sections": {
                 "what_actually": "`order_inserts` имеет смысл только с `batch_size`: он группирует `INSERT` одного типа сущности, чтобы они попали в один batch; без батчинга бесполезен.",
@@ -2184,7 +2184,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`setMaxResults(n)` эквивалентен `setFetchSize(n)`, и оба добавляют `LIMIT` к SQL.",
+              "text": "`setMaxResults(n)` и `setFetchSize(n)` взаимозаменяемы (оба транслируются в `LIMIT n`), а различие — только в уровне API у JPA и Hibernate.",
               "correct": false,
               "sections": {
                 "what_actually": "`setFetchSize` не добавляет `LIMIT` к SQL — он меняет поведение курсора `JDBC`-драйвера; сам запрос остаётся прежним.",
@@ -2196,7 +2196,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`setFetchSize` поддерживается всеми `JDBC`-драйверами одинаково и всегда работает через cursor.",
+              "text": "`setFetchSize(n)` работает через cursor у любого драйвера (единый контракт `JDBC`), а различия между `PostgreSQL` и `MySQL` — только в размере порции по умолчанию.",
               "correct": false,
               "sections": {
                 "what_actually": "Поведение `setFetchSize` зависит от драйвера: `PostgreSQL` использует cursor, `MySQL` требует особых флагов, некоторые драйверы игнорируют hint.",
@@ -2208,13 +2208,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`setMaxResults` — подсказка драйверу, которая может быть проигнорирована.",
+              "text": "`setMaxResults(n)` усекает результат на стороне клиента после полной выборки (в SQL `LIMIT n` не попадает), а `setFetchSize(n)` — единственный способ ограничить само сканирование в БД.",
               "correct": false,
               "sections": {
-                "what_actually": "`setMaxResults` — строгое ограничение, транслируемое в `LIMIT`/`FETCH FIRST` на уровне SQL и всегда выполняемое; «подсказкой» является `fetchSize`.",
-                "source_of_confusion": "Роли двух методов меняют местами: «подсказка» относится к `fetchSize`, а не к `maxResults`.",
-                "if_it_were_true": "Тогда `setMaxResults(10)` иногда возвращал бы больше 10 строк, но он строго ограничивает результат.",
-                "how_it_should_be": "`setMaxResults` — жёсткий `LIMIT`; подсказкой драйверу является `setFetchSize`."
+                "what_actually": "`setMaxResults(n)` транслируется в `LIMIT n` (или аналог диалекта) в самом SQL: СУБД возвращает не больше n строк, полная выборка на клиента не приезжает. `setFetchSize` сканирование не ограничивает вовсе — это размер порции доставки уже отобранных строк.",
+                "source_of_confusion": "JDBC-метод `Statement.setMaxRows()` действительно может резать результат на уровне драйвера, и эта семантика переносится на JPA-метод.",
+                "if_it_were_true": "Пагинация через `setMaxResults` была бы бесполезна на больших таблицах — каждый переход по страницам вытягивал бы всю таблицу по сети.",
+                "how_it_should_be": "Помнить трансляцию: `setMaxResults`/`setFirstResult` → `LIMIT`/`OFFSET` диалекта; `setFetchSize` — про способ доставки результата, а не про его состав."
               }
             }
           ]
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Immutable` запрещает `INSERT` — сущность нельзя даже создать в БД.",
+              "text": "`@Immutable` запрещает и вставку строк — `persist()` такой сущности бросает `PersistenceException`, `Hibernate` не сгенерирует даже `INSERT`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Immutable` запрещает только `UPDATE` (отключает dirty checking и его генерацию); создание через `persist()` и удаление через `remove()` работают.",
@@ -2256,7 +2256,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@Immutable` автоматически добавляет сущность в L2 cache с любой стратегией.",
+              "text": "`@Immutable` сам включает сущность в L2 cache — явный `@Cache` не нужен, `Hibernate` применит стратегию `READ_ONLY` автоматически.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Immutable` не включает L2 cache — это отдельная настройка; в паре с `@Cache(usage = READ_ONLY)` даёт оптимальную комбинацию для справочников.",
@@ -2268,13 +2268,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@Immutable` эквивалентен объявлению класса `final` на уровне `Java`.",
+              "text": "`@Immutable` требует объявить класс `final` в `Java` — без запрета наследования `Hibernate` не гарантирует неизменяемость и игнорирует аннотацию.",
               "correct": false,
               "sections": {
-                "what_actually": "`final` запрещает наследование и ломает lazy loading; `@Immutable` не влияет на создание proxy — это разные механизмы с разной целью.",
-                "source_of_confusion": "Оба связаны с «неизменностью» и кажутся взаимозаменяемыми.",
-                "if_it_were_true": "Тогда `@Immutable`-сущность теряла бы lazy loading, но он для неё работает, в отличие от `final`.",
-                "how_it_should_be": "`@Immutable` отключает `UPDATE`, не трогая proxy; `final` ломает ленивую загрузку."
+                "what_actually": "`@Immutable` не предъявляет требований к объявлению класса и с модификатором `final` не связан: это чисто ORM-семантика — `Hibernate` пропускает dirty checking и не генерирует `UPDATE`. Более того, `final`-класс сам по себе мешает Hibernate строить lazy-прокси.",
+                "source_of_confusion": "«Неизменяемый» ассоциируется с иммутабельными Java-классами (final-класс, final-поля), и требования языка переносятся на аннотацию ORM.",
+                "if_it_were_true": "Все @Immutable-справочники пришлось бы объявлять final и терять ленивые to-one ссылки на них — связка «@Immutable + READ_ONLY кэш» противоречила бы сама себе.",
+                "how_it_should_be": "Разводить уровни: неизменяемость для ORM = `@Immutable` (нет `UPDATE`), неизменяемость для Java = `final`-поля/records; друг друга они не требуют."
               }
             }
           ]
@@ -2291,19 +2291,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Statistics автоматически собирается `Hibernate` без какой-либо настройки.",
+              "text": "Statistics включается программно вызовом `stats.setStatisticsEnabled(true)` на работающей фабрике, а свойство `hibernate.generate_statistics` оставлено для legacy-конфигураций.",
               "correct": false,
               "sections": {
-                "what_actually": "Сбор статистики по умолчанию выключен из-за накладных расходов; нужно явно включить через `generate_statistics=true` или `setStatisticsEnabled(true)`.",
-                "source_of_confusion": "Кажется, что метрики собираются «бесплатно» всегда, как логи, но это даёт overhead.",
-                "if_it_were_true": "Тогда `getStatistics()` сразу давал бы цифры, но без включения счётчики останутся нулевыми.",
-                "how_it_should_be": "Статистику нужно явно активировать; по умолчанию она отключена ради производительности."
+                "what_actually": "Оба пути рабочие и равноправные: `hibernate.generate_statistics=true` включает сбор со старта, а `setStatisticsEnabled(true)` — переключатель в рантайме; ни один не legacy. По умолчанию сбор ВЫКЛЮЧЕН — без явного включения счётчики остаются нулевыми.",
+                "source_of_confusion": "Наличие рантайм-переключателя читается как «новый API, заменивший свойство» — по аналогии с миграциями конфигурации в Spring Boot.",
+                "if_it_were_true": "Метрики первых секунд работы приложения (прогрев кэша, стартовые запросы) были бы недоступны — фабрика стартует раньше, чем код успеет включить сбор.",
+                "how_it_should_be": "Для постоянного мониторинга — свойство в конфигурации плюс экспорт в Micrometer; `setStatisticsEnabled` — для точечной диагностики на живом приложении."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Statistics не позволяет определить slowest query — для этого нужен отдельный профайлер.",
+              "text": "Statistics ограничен счётчиками запросов и попаданий в кэш, а самый медленный запрос ищут через `slow query log` или `pg_stat_statements`.",
               "correct": false,
               "sections": {
                 "what_actually": "Statistics содержит `getQueryExecutionMaxTimeQueryString()` и `getQueryExecutionMaxTime()` — это самый долгий запрос с момента последнего `clear()`.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Включение Statistics обязательно требует `Spring Boot Actuator`.",
+              "text": "Statistics подключается через `Spring Boot Actuator` и доступен в endpoint-е `/actuator/metrics`, отдельного API у Hibernate нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Statistics — встроенная часть `Hibernate ORM` и работает без `Spring Boot`; `Actuator` нужен лишь для экспорта метрик наружу.",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ddl-auto: update` рекомендуется для production, так как автоматически применяет изменения схемы.",
+              "text": "Для production рекомендуется `ddl-auto: update` без внешних миграций (`Hibernate` вычисляет дифф схемы по метаданным маппинга).",
               "correct": false,
               "sections": {
                 "what_actually": "`update` категорически не рекомендуется для production: он меняет схему непредсказуемо и не отслеживает миграции; нужен `validate` + `Flyway`/`Liquibase`.",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`open-in-view: true` — рекомендуемая настройка в production для избежания `LazyInitializationException`.",
+              "text": "Для production рекомендуется `open-in-view: true` вместо правок кода (`LazyInitializationException` уходит, сессия живёт до конца HTTP-запроса).",
               "correct": false,
               "sections": {
                 "what_actually": "OSIV считается антипаттерном в production: он маскирует N+1 и создаёт скрытые SQL в view-слое; рекомендуется выключить и грузить данные явно.",
@@ -2375,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ddl-auto: create-drop` — безопасная стратегия для production, так как не удаляет существующие данные.",
+              "text": "Для production подходит `ddl-auto: create-drop` при рестартах без потери данных (`Hibernate` пересоздаёт схему при старте, а данные переживают остановку).",
               "correct": false,
               "sections": {
                 "what_actually": "`create-drop` удаляет все данные при остановке приложения; это стратегия для тестов, в production она ведёт к полной потере данных.",
