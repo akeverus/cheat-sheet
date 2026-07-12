@@ -1677,3 +1677,8 @@ Dirty changes created by loop: 0
 
 - /, /stats, /settings: 0 positive tabindex; skip-link первый везде; все «прыжки назад» разобраны — двухколоночные формы (логичный колоночный обход), нефокусируемый скрытый back-to-top, артефакты фильтра (скрытые панели реально вне tab-порядка: 24/41/17 против 53 сырых).
 - Уроки тулинга: getClientRects для ancestor-display:none; visibility:hidden ≠ нет rect'ов. Правок нет. Контракт-тест PENDING.
+
+### R0.96 (2026-07-12) — Эргономика полей форм (мобайл): VERIFIED-CLEAN (0 правок)
+
+- 375×812: все поля ≥16px (нет iOS-автозума), 100% с лейблами (placeholder только дополняет), поиск type=search + enterkeyhint, number/text-полей нет по построению (селекты/радио), радио MCQ 4/4 в лейблах. Autocomplete N/A (нет персональных данных).
+- Правок нет. Контракт-тест PENDING. Дальше: window-тик / lang-of-parts / ::selection / 3.2.3.
