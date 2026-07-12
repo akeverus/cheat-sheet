@@ -1682,3 +1682,8 @@ Dirty changes created by loop: 0
 
 - 375×812: все поля ≥16px (нет iOS-автозума), 100% с лейблами (placeholder только дополняет), поиск type=search + enterkeyhint, number/text-полей нет по построению (селекты/радио), радио MCQ 4/4 в лейблах. Autocomplete N/A (нет персональных данных).
 - Правок нет. Контракт-тест PENDING. Дальше: window-тик / lang-of-parts / ::selection / 3.2.3.
+
+### R0.97 (2026-07-12) — ::selection (22 комбо) + навигация (3.2.3): VERIFIED-CLEAN (0 правок)
+
+- ::selection контраст по всем 11×2 палитрам ≥10:1; «провал instrument» — ложный (oklch-токены нельзя парсить regex'ом, только canvas-нормализация; урок тулинга №3). Навигация/тогглы/landmarks идентичны на трёх страницах, титулы уникальны, skip-link контекстный.
+- Правок нет. Контракт-тест PENDING. Дальше: window-тик / lang-of-parts.
