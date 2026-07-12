@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Чтобы доверять кастомному CA, достаточно добавить его в `KeyStore` приложения рядом с приватным ключом сервера.",
+              "text": "Три способа: (1) импорт кастомного CA в `KeyStore` приложения через `keytool -importcert -keystore server.p12` — CA хранится рядом с приватным ключом сервера; (2) свой `KeyStore` в `-Djavax.net.ssl.keyStore=...` — JVM берёт доверенные CA именно оттуда; (3) добавить CA в `KeyManager` — он и решает, каким сертификатам доверять при валидации.",
               "correct": false,
               "sections": {
                 "what_actually": "Доверие чужому CA задаётся через `TrustStore` (и `TrustManagerFactory`), а не `KeyStore`; `KeyStore` — это про собственные ключи, не про «кому верю».",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Единственный способ — заменить системный `cacerts` своим файлом через `-Djavax.net.ssl.trustStore`, что одновременно сохранит доверие публичным CA.",
+              "text": "Три способа: (1) импорт кастомного CA в системный `cacerts` через `keytool -importcert -keystore $JAVA_HOME/lib/security/cacerts`; (2) свой TrustStore в `-Djavax.net.ssl.trustStore=...`, который JVM объединяет с `cacerts`, поэтому публичные сайты продолжают работать; (3) `TrustManagerFactory` поверх своего файла — тоже поверх системного набора.",
               "correct": false,
               "sections": {
                 "what_actually": "Подмена `cacerts` через `-Djavax.net.ssl.trustStore` ПОЛНОСТЬЮ заменяет дефолт, и публичные сайты перестанут работать — это не сохраняет доверие к публичным CA.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Достаточно один раз вызвать `SSLContext.getDefault()` — он автоматически подхватит любой кастомный CA, лежащий в рабочей директории приложения.",
+              "text": "Три способа: (1) положить `ca.crt` в рабочую директорию — `SSLContext.getDefault()` подхватывает локальные сертификаты при инициализации; (2) переменная `SSL_CERT_FILE` — JVM читает её при старте, как это делает `curl`; (3) каталог `$JAVA_HOME/lib/security/certs` — JDK сканирует его в дополнение к `cacerts`.",
               "correct": false,
               "sections": {
                 "what_actually": "Дефолтный `SSLContext` использует только системный `cacerts`; кастомный CA из рабочей директории он не подхватывает — его надо явно добавить в TrustStore или composite TrustManager.",
@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Чтобы включить HTTPS, достаточно поменять схему на `https://` в `server.address`; сертификат и keystore Spring Boot сгенерирует и подставит сам.",
+              "text": "Базово: в `application.yml` меняют `server.address` на `https://` и ставят `server.port: 8443`; keystore и самоподписанный сертификат Spring Boot генерирует и подставляет автоматически при старте. Дополнительно можно задать `server.ssl.ciphers`, но по умолчанию всё работает без файла.",
               "correct": false,
               "sections": {
                 "what_actually": "HTTPS включают через блок `server.ssl` с указанием `key-store`, `key-store-type`, `key-store-password`; Spring Boot сам сертификат не генерирует — его готовят заранее (`keytool`/CA).",
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "HTTPS в Spring Boot включается только программно через кастомный `TomcatServletWebServerFactory`; через `application.yml` это невозможно.",
+              "text": "Базово: HTTPS включают программно — регистрируют `TomcatServletWebServerFactory` с `addConnectorCustomizers`, где задают keystore и порт `8443`; свойства `server.ssl` в `application.yml` Spring для TLS игнорирует. Опционально там же настраивают `enabled-protocols` и `ciphers` через `Http11NioProtocol`.",
               "correct": false,
               "sections": {
                 "what_actually": "Базовый способ — декларативный: блок `server.ssl` в `application.yml` (`enabled: true`, `key-store`, `key-store-password`); кастомная фабрика нужна лишь для HTTP→HTTPS redirect.",
@@ -1895,7 +1895,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "После включения `server.ssl` Spring Boot автоматически добавляет HTTP→HTTPS redirect на порту 80 без какого-либо дополнительного кода.",
+              "text": "Базово: блок `server.ssl` в `application.yml` с `key-store` и `key-alias`; после его включения Spring Boot сам поднимает второй коннектор на порту 80 и добавляет HTTP→HTTPS redirect без кода. Порт HTTPS при этом остаётся дефолтным `8080`.",
               "correct": false,
               "sections": {
                 "what_actually": "HTTP→HTTPS redirect не включается сам: для Tomcat его настраивают вручную через дополнительный `Connector` и `SecurityConstraint` с `CONFIDENTIAL`.",
@@ -1944,7 +1944,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`SSL Bundles` — это преднастроенный в Spring Boot набор доверенных корневых CA, который подключается к truststore приложения, чтобы не описывать каждый CA вручную.",
+              "text": "`SSL Bundles` (Spring Boot 3.1+) — преднастроенный набор доверенных корневых CA, подключаемый к truststore под именем в `spring.ssl.bundle`, чтобы не описывать каждый публичный CA (`DigiCert`, `Let's Encrypt`) вручную. Поддерживаются `jks` и `pem` списки корней, обновляемые вместе с версией Spring Boot.",
               "correct": false,
               "sections": {
                 "what_actually": "`SSL Bundles` — это механизм переиспользования вашей локальной SSL-конфигурации (keystore/truststore), а не загружаемые из сети наборы CA.",
@@ -1956,7 +1956,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`SSL Bundles` поддерживают только keystore-форматы `JKS` и `PKCS12`; для `PEM`-сертификатов их напрямую не применяют — сначала нужно собрать из них keystore.",
+              "text": "`SSL Bundles` (Spring Boot 3.1+) поддерживают только keystore-форматы `JKS` и `PKCS12`, а для `PEM`-сертификатов их напрямую не применяют — сначала из `.crt`/`.key` собирают keystore через `keytool`. Переиспользуют такой bundle в `RestClient`, `WebClient` и Kafka.",
               "correct": false,
               "sections": {
                 "what_actually": "`SSL Bundles` поддерживают и `jks` (`PKCS12`/`JKS`), и `pem` (прямые `certificate` + `private-key`), так что конвертация в `JKS` не требуется.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Чтобы подхватить новый сертификат в `SSL Bundle`, нужно вручную пересоздать `SslBundle`-бины через `@RefreshScope`: встроенного отслеживания изменений файла у bundles нет.",
+              "text": "`SSL Bundles` (Spring Boot 3.1+) не отслеживают изменения файла сертификата — чтобы подхватить новый `server.p12`, вручную пересоздают `SslBundle`-бины через `@RefreshScope`. Только после рестарта контекста `RestClient` и `WebClient` увидят обновлённый keystore (`reload-on-update` отсутствует).",
               "correct": false,
               "sections": {
                 "what_actually": "Одно из преимуществ `SSL Bundles` — именно hot reload: при изменении файла keystore SSL-контекст обновляется без рестарта.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Кастомный `TrustStore` для `RestTemplate` и `WebClient` задаётся только через системные свойства `javax.net.ssl.trustStore`; программно, на уровне отдельного клиента через `SSLContext`, его не переопределить.",
+              "text": "`RestTemplate`: кастомный `TrustStore` задают только глобально через `-Djavax.net.ssl.trustStore`, программно на уровне отдельного клиента `SSLContext` не переопределить. `WebClient` (Reactor Netty): тот же системный `trustStore`, поскольку `HttpClient.secure(...)` читает доверенные CA из `cacerts`, а не из переданного `SslContext`.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба клиента настраиваются на кастомный TrustStore: `RestTemplate` через `SSLContext` в `HttpComponentsClientHttpRequestFactory`, `WebClient` через `SslContext` в `ReactorClientHttpConnector`.",
@@ -2016,7 +2016,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для HTTPS-клиента достаточно указать `https://`-URL: JDK сам проверит сертификат по `cacerts`. Дополнительная настройка `SSLContext` нужна лишь при взаимной аутентификации (mTLS).",
+              "text": "`RestTemplate`: для HTTPS достаточно `https://`-URL — JDK проверит сертификат по `cacerts` через дефолтный `SSLContext`, без ручной настройки фабрики. `WebClient` (Reactor Netty): аналогично, `HttpClient.create().secure()` без аргументов берёт системный траст, а кастомный `SSLContext` нужен лишь для mTLS.",
               "correct": false,
               "sections": {
                 "what_actually": "Для публичного CA это правда работает из коробки, но для частного/self-signed CA или mTLS нужно явно настроить TrustStore (и keystore) через `SSLContext`.",
@@ -2028,7 +2028,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`WebClient` настраивается тем же `javax.net.ssl.SSLContext`, что и `RestTemplate`, без каких-либо отличий в API.",
+              "text": "`RestTemplate`: грузят `TrustStore` в `javax.net.ssl.SSLContext` и передают его в `HttpComponentsClientHttpRequestFactory`. `WebClient` использует тот же `javax.net.ssl.SSLContext` через `.secure(sslContext)` — API идентичен, Reactor Netty принимает стандартный JSSE-контекст без своего `SslContextBuilder`.",
               "correct": false,
               "sections": {
                 "what_actually": "`WebClient` на Reactor Netty использует netty-специфичный `io.netty.handler.ssl.SslContext` (через `SslContextBuilder`), а не `javax.net.ssl.SSLContext` как `RestTemplate`.",
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`mTLS` — это обычный TLS, в котором клиент дважды проверяет сертификат сервера для надёжности; клиентского сертификата при этом нет.",
+              "text": "`mTLS` (`Mutual TLS`) — усиленный TLS, где клиент дважды сверяет сертификат сервера (по цепочке CA и по `SHA-256`-отпечатку через `CertificateVerify`), а собственный сертификат клиент не предъявляет. Применяют, где важна стойкая аутентификация сервера: онлайн-банкинг, публичные `REST`-API, платёжные шлюзы (`PCI-DSS`), доступ к Kafka/БД.",
               "correct": false,
               "sections": {
                 "what_actually": "`mTLS` (`Mutual TLS`) — это взаимная аутентификация: и сервер, и КЛИЕНТ предъявляют сертификаты; именно клиентский сертификат отличает mTLS от обычного TLS.",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`mTLS` идеально подходит для публичных веб-приложений, так как избавляет обычных пользователей от паролей в браузере.",
+              "text": "`mTLS` (`Mutual TLS`) — расширение TLS, где сервер выдаёт клиенту `ClientCert` при регистрации, а браузер хранит его и предъявляет вместо пароля при входе. Поэтому его ставят как основную замену паролю на публичных порталах: интернет-банки, госуслуги, корпоративные `SaaS`, партнёрские кабинеты.",
               "correct": false,
               "sections": {
                 "what_actually": "Для публичных веб-приложений `mTLS` непрактичен: установка и ротация клиентских сертификатов у миллионов пользователей — UX-кошмар; его применяют для service-to-service, партнёрских API, IoT, финтеха.",
@@ -2088,7 +2088,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`mTLS` работает на прикладном уровне поверх HTTP-заголовков: клиент шлёт свой сертификат в специальном HTTP-заголовке `X-Client-Cert`.",
+              "text": "`mTLS` (`Mutual TLS`) — механизм прикладного уровня поверх HTTP, где клиент передаёт свой сертификат в заголовке `X-Client-Cert`, а сервер сверяет его в middleware по `SubjectDN`. Применяют для service-to-service (zero-trust, Istio/Linkerd), партнёрских API, IoT и аутентификации к `Kafka`/БД.",
               "correct": false,
               "sections": {
                 "what_actually": "`mTLS` работает на транспортном TLS-уровне в самом handshake (`CertificateRequest`/`ClientCert`), до HTTP; никаких HTTP-заголовков с сертификатом он не использует.",
@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Чтобы сервер требовал клиентский сертификат, достаточно указать `server.ssl.key-store`; отдельный trust-store для клиентских CA не нужен.",
+              "text": "Сервер: достаточно указать `server.ssl.key-store`; отдельный trust-store для клиентских CA не нужен, так как `client-auth: need` доверяет любому валидному сертификату; проверку CN тогда делают вручную. Клиентский сертификат достают в контроллере через `request.getAttribute(\"jakarta.servlet.request.X509Certificate\")`. Клиент: `SSL Bundle` с одним keystore (`client.crt`/`client.key`), truststore не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Сервер проверяет клиентские сертификаты по `server.ssl.trust-store` (какие клиентские CA доверять) и включает требование через `client-auth: need`; одного keystore недостаточно.",
@@ -2123,7 +2123,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Параметр `client-auth: want` требует клиентский сертификат и при его отсутствии рвёт TLS-рукопожатие, а `need` лишь запрашивает сертификат, но пропускает соединение даже без него.",
+              "text": "Сервер: к `server.ssl.key-store` добавляют `trust-store`; `client-auth: want` требует клиентский сертификат и рвёт рукопожатие при его отсутствии, а `need` лишь запрашивает и пропускает соединение даже без сертификата. Клиентский сертификат достают через `request.getAttribute(\"jakarta.servlet.request.X509Certificate\")`. Клиент: `SSL Bundle` с keystore (`client.crt`/`client.key`) + truststore (`server-ca.crt`).",
               "correct": false,
               "sections": {
                 "what_actually": "Обязательным сертификат делает `client-auth: need` (401/отказ без серта); `want` — опциональный режим, при котором соединение проходит и без клиентского сертификата.",
@@ -2135,7 +2135,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Клиентский сертификат доступен в контроллере только через `SecurityContext` Spring Security; напрямую из `HttpServletRequest` его не достать, так как контейнер не кладёт X.509 в атрибуты запроса.",
+              "text": "Сервер: к `server.ssl.key-store` добавляют `trust-store` и `client-auth: need`. Клиентский сертификат доступен только через `SecurityContext` Spring Security; напрямую из `HttpServletRequest` его не достать, потому что контейнер не кладёт `X509Certificate` в атрибуты запроса; извлечь его умеет только фильтр Spring Security. Клиент: `SSL Bundle` с keystore (`client.crt`/`client.key`) + truststore (`server-ca.crt`).",
               "correct": false,
               "sections": {
                 "what_actually": "Клиентский сертификат доступен в контроллере через `request.getAttribute(\"jakarta.servlet.request.X509Certificate\")`, возвращающий массив `X509Certificate[]`.",
@@ -2184,7 +2184,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`POODLE`, `BEAST` и `Heartbleed` объединяет то, что все три эксплуатируют режим `CBC`: атакующий манипулирует блоками шифртекста и по реакции сервера побайтно восстанавливает открытый текст.",
+              "text": "`BEAST` (2011) — padding oracle на `CBC` в `TLS 1.0` с предсказуемым IV; `POODLE` (2014) — padding oracle на `SSL 3.0` с downgrade; `Heartbleed` (2014) — padding oracle на `CBC` в OpenSSL с побайтным восстановлением блоков; `CRIME`/`BREACH` — утечка секретов через размер сжатого пакета; `FREAK`/`Logjam` (2015) — принуждение к слабым export-параметрам; `DROWN` (2016) — cross-protocol через `SSLv2`; `Sweet32` — birthday attack на 64-битные шифры (`3DES`).",
               "correct": false,
               "sections": {
                 "what_actually": "Векторы разные: `BEAST`/`POODLE` — padding oracle на `CBC`/`SSL 3.0`, но `Heartbleed` — реализационный баг чтения памяти OpenSSL, не связанный с padding вовсе.",
@@ -2196,7 +2196,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Heartbleed` — уязвимость в расширении heartbeat протокола TLS, поэтому она затрагивала все реализации разом; закрыть её можно было, только отключив TLS heartbeat на стороне сервера.",
+              "text": "`BEAST` (2011) — padding oracle на `CBC` в `TLS 1.0` с предсказуемым IV; `POODLE` (2014) — padding oracle на `SSL 3.0` с downgrade; `Heartbleed` (2014) — баг в OpenSSL, чтение до 64KB памяти сервера; `CRIME`/`BREACH` — утечка секретов через размер сжатого пакета; `FREAK`/`Logjam` (2015) — принуждение к слабым export-параметрам; `DROWN` (2016) — downgrade до `TLS 1.0` с откатом на слабый шифр; `Sweet32` — birthday attack на 64-битные шифры (`3DES`).",
               "correct": false,
               "sections": {
                 "what_actually": "`Heartbleed` — баг конкретной реализации OpenSSL (`1.0.1`-`1.0.1f`) в обработке heartbeat-расширения, а не дефект протокола; лечится обновлением OpenSSL, а не сменой версии TLS.",
@@ -2208,7 +2208,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`POODLE` эксплуатирует механизм downgrade в `TLS 1.2`, вынуждая сервер откатиться на потоковый шифр `RC4`; защита — убрать `RC4` из списка cipher suites.",
+              "text": "`BEAST` (2011) — padding oracle на `CBC` в `TLS 1.0` с предсказуемым IV; `POODLE` (2014) — padding oracle на `SSL 3.0` с downgrade; `Heartbleed` (2014) — баг в OpenSSL, чтение до 64KB памяти сервера; `CRIME`/`BREACH` — утечка секретов через размер сжатого пакета; `FREAK`/`Logjam` (2015) — принуждение к слабым export-параметрам; `DROWN` (2016) — cross-protocol через `SSLv2`; `Sweet32` — birthday attack на потоковый `RC4` из-за короткого nonce.",
               "correct": false,
               "sections": {
                 "what_actually": "`POODLE` — это атака на `SSL 3.0` (padding oracle + downgrade), не связанная ни с `TLS 1.3`, ни с `0-RTT`; защита от POODLE — полный запрет `SSL 3.0`.",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Downgrade attack — это когда сервер сам принудительно повышает версию протокола до `TLS 1.3`, ломая старых клиентов, не поддерживающих его.",
+              "text": "Downgrade attack — сервер сам принудительно повышает версию до `TLS 1.3`, из-за чего старые клиенты без его поддержки не могут завершить handshake. `TLS_FALLBACK_SCSV` (`RFC 7507`) — механизм, который заставляет сервер откатиться на `TLS 1.2`, если клиент прислал этот cipher suite в `ClientHello`.",
               "correct": false,
               "sections": {
                 "what_actually": "Downgrade attack — это принуждение сторон к более СЛАБОЙ версии (например, к `SSL 3.0`) ради эксплуатации её уязвимостей, а не повышение версии.",
@@ -2256,7 +2256,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`TLS_FALLBACK_SCSV` — это новый стойкий cipher suite на основе `AES-256`, который надо включить в список разрешённых шифров вместо `CBC`.",
+              "text": "Downgrade attack — MITM подсовывает клиенту слабый шифр вместо слабой версии, вынуждая использовать `RC4` или `3DES` внутри `TLS 1.2`. `TLS_FALLBACK_SCSV` — новый стойкий cipher suite на основе `AES-256-GCM`, который включают в список разрешённых вместо `CBC`, чтобы закрыть эту дыру.",
               "correct": false,
               "sections": {
                 "what_actually": "`TLS_FALLBACK_SCSV` — это не реальный шифр для трафика, а сигнальное (фейковое) значение в `ClientHello`, означающее факт fallback-попытки; данными он не шифрует.",
@@ -2268,7 +2268,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `TLS 1.3` downgrade-атаки невозможны в принципе, поэтому никакого специального механизма защиты от понижения там нет.",
+              "text": "Downgrade attack — попытка навязать слабую версию, но в `TLS 1.3` она невозможна в принципе: протокол запрещает fallback ниже `TLS 1.2`. Поэтому `TLS_FALLBACK_SCSV` в `TLS 1.3` не нужен, а сам механизм остался лишь артефактом эпохи `SSL 3.0`.",
               "correct": false,
               "sections": {
                 "what_actually": "В `TLS 1.3` защита есть и встроена: специальный сигнал в последних 8 байтах `ServerHello.random` позволяет клиенту обнаружить навязанное понижение.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главный механизм защиты от MITM в `TLS` — шифрование: даже если атакующий вклинится в канал, без сессионного ключа он не расшифрует трафик, поэтому сама по себе подмена сертификата атаку не даёт.",
+              "text": "`MITM` (Man-in-the-Middle) — атакующий вклинивается в канал, но главная защита `TLS` — шифрование: без сессионного `session key` он не прочитает трафик. Поэтому сама по себе подмена сертификата атаку не даёт — данные всё равно зашифрованы `AES-GCM`, и перехватчик видит только шифртекст.",
               "correct": false,
               "sections": {
                 "what_actually": "Одного шифрования мало: ключевая защита от MITM — аутентификация сервера через `X.509` (проверка подписи CA и hostname); без неё атакующий установил бы свой TLS с подменным сертификатом.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Даже если атакующий добавит свой корневой CA в trust store жертвы, современные браузеры поймают подмену через Certificate Transparency: сертификата не окажется в публичных CT-логах, и соединение будет отклонено.",
+              "text": "`MITM` (Man-in-the-Middle) — вклинивание в канал, которое `TLS` ловит через `Certificate Transparency`: даже если атакующий добавит свой корневой CA в trust store жертвы, поддельного сертификата не окажется в публичных `CT`-логах. Браузер сверяет `SCT` при каждом соединении и отклоняет отсутствующие в логах сертификаты.",
               "correct": false,
               "sections": {
                 "what_actually": "Установка чужого CA в trust store как раз ломает защиту: клиент будет «доверять» сертификатам атакующего, и `TLS` подмену не обнаружит — это легитимный механизм корпоративных прокси.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`SSL stripping` — разновидность MITM, но `TLS` покрывает и её: после первого подключения по `HTTPS` браузер запоминает сайт и больше не даёт откатиться на `HTTP`, поэтому `HSTS` лишь дублирует уже встроенную защиту.",
+              "text": "`SSL stripping` — разновидность `MITM`, которую `TLS` закрывает сам: после первого захода по `HTTPS` браузер запоминает домен и не даёт откатиться на `HTTP`. `HSTS` при этом лишь дублирует уже встроенную в браузер защиту и на практике необязателен.",
               "correct": false,
               "sections": {
                 "what_actually": "SSL stripping атакует первый HTTP-запрос (когда пользователь ввёл домен без схемы) ДО установки TLS, поэтому сам `TLS` его не ловит — нужна именно защита `HSTS` (+ preload).",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`HSTS` — это HTTP-заголовок, который шифрует cookies на стороне браузера, чтобы их нельзя было прочитать через JavaScript.",
+              "text": "`HSTS` (`HTTP Strict Transport Security`, `RFC 6797`) — HTTP-заголовок `Strict-Transport-Security: secure; httpOnly; encrypt`, который шифрует cookies в браузере, чтобы их не прочитал JavaScript. Директивы задают режим: `secure` — только по HTTPS, `httpOnly` — скрыть от `document.cookie`, `encrypt` — зашифровать значение.",
               "correct": false,
               "sections": {
                 "what_actually": "`HSTS` (`Strict-Transport-Security`) заставляет браузер всегда ходить на хост только по HTTPS; защиту cookies от JS даёт флаг `HttpOnly`, а не `HSTS`.",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`HSTS` легко отключить в любой момент: достаточно убрать заголовок, и браузеры сразу же снова разрешат HTTP на этот домен.",
+              "text": "`HSTS` (`HTTP Strict Transport Security`, `RFC 6797`) — HTTP-заголовок `Strict-Transport-Security: max-age=31536000; includeSubDomains`, но его действие мгновенно отменяется удалением заголовка. Стоит убрать `Strict-Transport-Security` на сервере — браузеры сразу же снова разрешают HTTP на домен, даже если `max-age` ещё не истёк.",
               "correct": false,
               "sections": {
                 "what_actually": "`HSTS` фактически необратим на время `max-age`: браузер помнит политику и продолжит требовать HTTPS, даже если заголовок убрали; с `preload` откат занимает недели/месяцы.",
@@ -2375,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`HSTS` работает на стороне сервера: сервер сам отклоняет все HTTP-запросы и отдаёт 308 redirect — браузер тут роли не играет.",
+              "text": "`HSTS` (`HTTP Strict Transport Security`, `RFC 6797`) работает на стороне сервера: сервер сам отклоняет все HTTP-запросы и отдаёт `308 Permanent Redirect`; браузер лишь следует за ним, своей роли в принуждении не имея. Заголовок `Strict-Transport-Security: max-age=31536000` тут только документирует политику.",
               "correct": false,
               "sections": {
                 "what_actually": "`HSTS` — это инструкция БРАУЗЕРУ: получив заголовок, браузер сам перестаёт слать HTTP на этот хост; серверный redirect 308 — отдельный механизм, не заменяющий `HSTS`.",
