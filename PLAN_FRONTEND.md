@@ -1487,3 +1487,9 @@ Dirty changes created by loop: 0
 - Фикс: head.html pre-paint ставит data-js + валидированный data-settings-tab на html ДО первого кадра; base.css — 4 правила [data-js] (tablist flex !important против .hidden, панели none, panel-title sr-only, одна панель по ID; ID-правила гейтованы :not(.js-tabs)). Без JS атрибутов нет — PE-стопка не тронута.
 - QA: троттлированный CLS 0.285→0.0004; pre-DCL снимок = вкладочное состояние до app.js; интерактив вкладок цел; instrument-контроль чист; localStorage сброшен.
 - **Дальше:** window-тик = regenerate-план + контракт-тест (head.html тронут — обязательно); остальные гейты прежние (EXAM, данные для графиков).
+
+### R0.65 (2026-07-12) — CLS-свип read-only страниц под троттлингом: VERIFIED-CLEAN (0 правок)
+- Collision guard чист; bootRun жив; данных для графиков нет → взята верификационная единица: методология R0.64 на все достижимые поверхности + контроль глобального data-js.
+- Замеры (Slow 4G + CPU 4x, холодный кэш): / desktop 0.0012 (LABEL, шрифт) / mobile 0; /stats 0; flashcard 0; empty 0; error 404 0; /settings mobile 0 (baseline был 0.35 — фикс R0.64 закрыл и mobile).
+- CLS-строка Фазы G закрыта полностью; result/summary — parity-фаза. Эмуляция сброшена.
+- **Дальше:** window-тик (regenerate-план + контракт-тест — head.html тронут в R0.64); EXAM-решение; данные для графиков.
