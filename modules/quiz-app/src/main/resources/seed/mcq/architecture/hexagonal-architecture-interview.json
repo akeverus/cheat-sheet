@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Primary-адаптер содержит бизнес-правила: проверяет лимиты, считает скидки, формирует доменные исключения.",
+              "text": "Primary-адаптер держит бизнес-правила у входа: он проверяет лимиты и считает скидки до вызова ядра; доменные исключения тогда формируются раньше и не гоняются через use-case.",
               "correct": false,
               "sections": {
                 "what_actually": "Это утечка логики из ядра в адаптер: правила должны жить в use-case или агрегате, а не в контроллере.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Primary-адаптер обязан напрямую обращаться к репозиторию ради оптимизации — минус один hop через use-case.",
+              "text": "Primary-адаптер обращается к репозиторию напрямую ради чтения: простые запросы идут в `JpaRepository`, минуя use-case; ядро оставляют только командам с бизнес-логикой.",
               "correct": false,
               "sections": {
                 "what_actually": "Обход use-case ломает архитектуру: транзакции, валидация и доменные события минуют ядро.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Primary-адаптер — это `@Configuration`-класс, который собирает зависимости в Composition Root.",
+              "text": "Primary-адаптер — это `@Configuration`-класс приложения; он собирает зависимости ядра в Composition Root.",
               "correct": false,
               "sections": {
                 "what_actually": "Это другая роль (Composition Root); primary-адаптер преобразует внешний вызов в вызов порта, а не конфигурирует bean'ы.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Secondary-адаптер возвращает наружу JPA-сущность (`AccountJpaEntity`) ради экономии на маппере.",
+              "text": "Secondary-адаптер возвращает наружу JPA-сущность (`AccountJpaEntity`): мапперы в обе стороны дублируют код, а use-case всё равно читает те же поля. Экономия на маппинге ускоряет и разработку, и рантайм.",
               "correct": false,
               "sections": {
                 "what_actually": "Это утечка persistence в use-case: ядро узнаёт про `@Entity`, lazy loading и `EntityManager`.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Secondary-адаптер сам определяет интерфейс, а ядро подстраивается под него.",
+              "text": "Secondary-адаптер сам публикует свой интерфейс, а ядро подстраивается: контракт диктует владелец технологии, ведь только адаптер знает реальные возможности драйвера и схему данных.",
               "correct": false,
               "sections": {
                 "what_actually": "Это перевёрнутая зависимость: контракт задаёт ядро (driven port), адаптер его реализует — иначе теряется инверсия.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Secondary-адаптер обязан использовать `Spring Data JPA`, иначе это не гексагон.",
+              "text": "Secondary-адаптер строят на `Spring Data JPA`: декларативные репозитории дают транзакции и пагинацию из коробки, поэтому иные технологии хранения оформляют как тестовые заглушки.",
               "correct": false,
               "sections": {
                 "what_actually": "Гексагон не диктует технологию: адаптер может быть на JDBC, R2DBC, Cassandra-driver или HTTP-клиенте.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`KafkaListener` — это secondary-адаптер, а `KafkaTemplate.send()` — primary-адаптер.",
+              "text": "Primary: `JpaAdapter`, `RestClient`, `KafkaProducer` (`KafkaTemplate.send()`), `S3Storage` — их дёргает ядро первым. Secondary: `RestController`, `KafkaListener`, `@Scheduled`, `CliCommand`, webhook — они отвечают на вызовы ядра. Классификацию задаёт порядок вызова, а не направление инициативы.",
               "correct": false,
               "sections": {
                 "what_actually": "Перевёрнуто: listener инициирует вызов ядра (driving), а publisher реализует driven-порт (secondary).",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@Scheduled` — это secondary-адаптер, потому что вызывает ядро по расписанию.",
+              "text": "Планировщик относится к driven-стороне: `@Scheduled`-метод обслуживает ядро по расписанию, как это делают `RedisOrderCache` и `NotificationAdapter`. Инициатива здесь техническая, а не пользовательская, поэтому primary-адаптером он не считается.",
               "correct": false,
               "sections": {
                 "what_actually": "Шедулер инициирует вызов ядра — это driving (primary); направление вызова определяет тип, а не источник триггера.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Webhook-обработчик — это secondary-адаптер, ведь он принимает callback от внешней системы.",
+              "text": "Webhook-обработчик — secondary-адаптер: он принимает callback внешней системы. Primary остаются только пользовательские входы (`REST`, CLI).",
               "correct": false,
               "sections": {
                 "what_actually": "Webhook принимает HTTP-запрос и инициирует use-case — это primary (driving), несмотря на «callback»-семантику.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Mapper живёт в `domain/`, потому что он работает с доменными типами.",
+              "text": "Mapper живёт в `domain/`: он оперирует доменными типами (`Order`, `OrderId`), и потому его держат рядом с моделью — так `adapter/in/web/` и `adapter/out/persistence/` переиспользуют один конвертер без дублирования.",
               "correct": false,
               "sections": {
                 "what_actually": "Mapper знает про DTO и JPA-сущности — это инфраструктурный код, и в `domain/` его быть не должно.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Mapper не нужен — Spring Data JPA сам маппит сущности в доменные модели через `@Projection`.",
+              "text": "Mapper не нужен: `Spring Data JPA` сам собирает доменные модели через `@Projection` и `@Query`, а для веба хватает `@JsonView` на сущности. `OrderWebMapper` и `OrderJpaMapper` — лишние классы, дублирующие то, что `MapStruct` и так генерирует.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Projection` создаёт интерфейс над `@Entity`, и ядро всё равно зависит от JPA — это декорирование, а не изоляция.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать одну и ту же модель и для JSON-сериализации, и для JPA — экономия на маппере.",
+              "text": "Использовать одну модель и для JSON-сериализации, и для JPA: класс с `@Entity` и Jackson-аннотациями экономит маппер и убирает два слоя DTO.",
               "correct": false,
               "sections": {
                 "what_actually": "Это «активная сущность»: `@Entity` + `@JsonProperty` на одном классе ломают изоляцию ядра.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Да, лучшая практика — один класс `OrderKafkaAdapter`, который и слушает входящий топик, и публикует исходящий.",
+              "text": "Да, это даже рекомендация Кокбёрна: в оригинальной статье один `OrderKafkaAdapter`, который слушает `orders.created` и публикует `orders.shipped`, приведён как базовый пример — одна технология, один класс, общие настройки сериализации.",
               "correct": false,
               "sections": {
                 "what_actually": "Это нарушение SRP: listener и publisher имеют разный жизненный цикл и разные failure modes.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Только в случае gRPC — там сервер и клиент в одном `*Stub`-классе обязательно совмещены.",
+              "text": "Только в streaming-RPC: двунаправленный `StreamObserver` в gRPC делает один класс и приёмником, и отправителем — роли совмещены по построению. Для остальных технологий разделение обязательно.",
               "correct": false,
               "sections": {
                 "what_actually": "gRPC-stub'ы автогенерируются, но в гексагоне их оборачивают в раздельные адаптеры (server primary, client secondary).",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Невозможно технически — Spring запретит `@Component` с двойной ролью.",
+              "text": "Невозможно в Spring DI: адаптер зависит от use-case, а use-case — от порта того же адаптера, и такой цикл `ApplicationContext` отклоняет при constructor-injection, поэтому двойные адаптеры не собираются.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring разрешает любое число интерфейсов на одном bean'е; ограничения нет, вопрос только архитектурного смысла.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Layer-first: `controller/`, `service/`, `repository/`, `entity/` — это стандарт Spring Boot.",
+              "text": "Layer-first: `controller/`, `service/`, `repository/`, `entity/`, `config/` — стандарт Spring Boot, который знает каждый разработчик. Гексагональные `port/in/`, `port/out/` и `adapter/` раскладывают внутри `service/`, не ломая привычную навигацию.",
               "correct": false,
               "sections": {
                 "what_actually": "Это слоистая архитектура: тип файла важнее доменного контекста, и фичи размазаны по слоям.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Достаточно трёх плоских пакетов `domain/`, `infrastructure/`, `web/`.",
+              "text": "Достаточно трёх плоских пакетов — `domain/`, `infrastructure/`, `web/`: меньше вложенности, быстрее поиск. Порты кладут в `domain/`, адаптеры — в `infrastructure/`, и структура остаётся гексагональной без глубоких путей.",
               "correct": false,
               "sections": {
                 "what_actually": "Это слишком грубо: нет различия port/adapter/use-case и нет инверсии через `port/in` vs `port/out`.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Все классы в одном пакете `com.company.app` без подпакетов — чтобы IDE быстрее искала.",
+              "text": "Все классы держат в одном пакете `com.company.app`: package-private видимость тогда работает на весь код, и инкапсуляция получается строже модульной.",
               "correct": false,
               "sections": {
                 "what_actually": "Отсутствие границ — это отсутствие архитектуры: ничто не мешает доменному классу импортировать `RestController`.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Driving Port` — это `@RestController` с `@PostMapping`, а `Use Case` — `@Service`, который вызывается из контроллера напрямую.",
+              "text": "`Driving Port` — это сам `@RestController` с `@PostMapping`-методами, а `Use Case` — `@Service`, который контроллер вызывает напрямую: `SendMoneyController` и есть входной контракт (`API`) приложения, отдельный `interface` был бы дублированием.",
               "correct": false,
               "sections": {
                 "what_actually": "`@RestController` — это адаптер; driving port — Java-`interface` без аннотаций транспорта.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Use Case` — это `static`-метод в утилитном классе, а зависимости передаются параметрами в каждый вызов.",
+              "text": "`Use Case` — это `static`-метод утилитного класса: зависимости (`LoadAccountPort`) передают параметрами при каждом вызове, состояния нет, и класс тестируется без контейнера.",
               "correct": false,
               "sections": {
                 "what_actually": "`static`-методы делают невозможной DI и подмену в тестах через моки/fakes.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Use Case` — это расширение `JpaRepository<Order, Long>` со специализированными query-методами.",
+              "text": "`Use Case` — это наследник `JpaRepository<Order, Long>`: специализированные query-методы и есть сценарии приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "Use-case оркестрирует домен и порты; `JpaRepository` — инфраструктурный интерфейс, и строить use-case на нём ломает направление зависимости.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JpaRepository<AccountJpaEntity, Long>` — это и есть Driven Port, больше ничего делать не надо.",
+              "text": "`JpaRepository<AccountJpaEntity, Long>` — уже готовый Driven Port: `Spring Data` генерирует реализацию сам; отдельные `LoadAccountPort` и `AccountPersistenceAdapter` дублируют то, что даёт `interface AccountJpaRepository`, и mapper `Entity → Domain` становится лишним.",
               "correct": false,
               "sections": {
                 "what_actually": "`JpaRepository` — технический Spring Data интерфейс; ядро не должно его видеть, иначе потянется зависимость на `org.springframework.data`.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Driven Port помечается аннотацией `@Repository`, чтобы Spring сам нашёл реализацию.",
+              "text": "`Driven Port` помечают `@Repository` прямо на интерфейсе; по этой аннотации Spring находит и подставляет реализацию, так что адаптер регистрировать не нужно — контейнер свяжет порт с БД автоматически.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Repository` — Spring-аннотация, ей не место в ядре; на интерфейсе порта аннотации вообще не нужны.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Реализация driven-порта должна находиться в `domain/`, чтобы ядро было самодостаточным.",
+              "text": "`Driven Port` реализуют прямо в `domain/`; так ядро остаётся самодостаточным, стартует без адаптеров и не требует внешней сборки зависимостей.",
               "correct": false,
               "sections": {
                 "what_actually": "Реализация — это адаптер, по определению живёт снаружи ядра; в `domain/` нет даже интерфейса порта (он в `application/port/out`).",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Service`, `@Autowired`, `@Component` обязательны на use-case — без них Spring не найдёт bean.",
+              "text": "Практика устоялась на `@Service` прямо на use-case: зависимость от `spring-context` минимальна, ручные фабрики не окупаются, и purist-подход с чистым ядром в реальных Spring-проектах не применяют.",
               "correct": false,
               "sections": {
                 "what_actually": "DI можно сделать вручную через `@Configuration` + `@Bean`, и тогда ядро полностью чистое; аннотации — удобство, а не необходимость.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Use Case должен наследоваться от `AbstractApplicationContext` ради прямого доступа к bean'ам.",
+              "text": "Use Case реализуют `ApplicationContextAware`: доступ к `getBean()` избавляет от инъекции портов (`LoadAccountPort`, `AccountLock`) — контейнер сам приходит в класс, и отдельный `@Configuration`-слой с фабриками (`UseCaseConfiguration`) не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Это нарушает инверсию: ядро начинает управлять контекстом вместо того, чтобы получать зависимости извне.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Лучшее решение — `@SpringBootApplication` + `@ComponentScan(basePackages = \".domain\")`.",
+              "text": "Обе стороны примиряет `@ComponentScan(basePackages = \".domain\")`: purist-ядро остаётся без аннотаций, а прагматики получают автосборку — сканирование домена снимает сам вопрос. Отдельные аннотации на use-case тогда не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "`domain/` не должен сканироваться Spring'ом — именно это и исключает доменную модель из IoC, что нам и нужно.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Transactional` ставят на `@RestController`, чтобы вся обработка запроса шла в одной транзакции.",
+              "text": "`@Transactional` ставят на `@RestController`: транзакция открывается с первым байтом запроса и закрывается с ответом; так HTTP-обработка, маппинг DTO и вызов `UseCase` атомарны целиком.",
               "correct": false,
               "sections": {
                 "what_actually": "Транзакция должна охватывать бизнес-операцию, а не HTTP-запрос: после use-case (например, при сериализации JSON) откатывать уже поздно.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@Transactional` ставят на каждый метод репозитория ради granular control.",
+              "text": "`@Transactional` ставят на каждый метод репозитория; granular control позволяет короткие транзакции и меньше блокировок, а use-case собирает их последовательно.",
               "correct": false,
               "sections": {
                 "what_actually": "Гранулярные транзакции на репозитории — это N маленьких транзакций вместо одной бизнес-транзакции, и consistency между сохранением `Account` и `Activity` невозможна.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@Transactional` ставят на доменные сущности (`@Entity Order`).",
+              "text": "`@Transactional` ставят на доменные сущности (`@Entity Order`); изменение состояния тогда атомарно само по себе.",
               "correct": false,
               "sections": {
                 "what_actually": "Домен не знает про транзакции; `@Transactional` на сущности — путаница уровней, к тому же JPA-сущность ≠ доменный объект.",
