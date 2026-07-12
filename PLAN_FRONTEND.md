@@ -1769,3 +1769,10 @@ Window-tick снова отложен — :8080 жив (200).
 вне требований 1.4.11). Tooling-урок №6: transition-цвета инвалидируют rAF-замеры после
 click — ждать ≥ transition-duration; диагностика диффом против соседнего unchecked-элемента.
 Кодовых правок нет; леджер cr.103. Window-tick снова отложен — :8080 жив.
+
+### R1.08 — WCAG 4.1.2 accessible names (4 страницы, 434 элемента) — verified-clean (2026-07-12)
+
+Скан пустых accname / title-only / placeholder-only / focusable-in-aria-hidden /
+positive-tabindex: / (18), /stats (347), /settings (58, все 3 вкладки), 404 (11) —
+0 проблем везде. Иконочные кнопки последовательно с aria-label. Кодовых правок нет;
+леджер cr.104. Window-tick снова отложен — :8080 жив (200).
