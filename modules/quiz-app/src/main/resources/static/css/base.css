@@ -1339,6 +1339,25 @@ html[data-design] .settings-page.js-tabs .settings-panel-title {
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 
+/* CLS-резерв (R0.64): data-js и data-settings-tab ставит pre-paint скрипт head
+   ДО первого кадра → вкладочное состояние (tablist виден, открыта одна панель —
+   сохранённая или Сессия) рисуется сразу, и initSettingsTabs после
+   DOMContentLoaded ничего не сдвигает: под троттлингом стопка→вкладки давала
+   CLS ~0.28 (сдвигал restore сохранённой вкладки). Без JS атрибутов нет —
+   стопка, PE-контракт не тронут. !important — единственный способ перебить
+   утилиту .hidden (она сама !important). ID-правила гейтованы :not(.js-tabs):
+   после DOMContentLoaded панелями правит обычная is-active-механика. */
+html[data-design][data-js] .settings-page .settings-tablist { display: flex !important; }
+html[data-design][data-js] .settings-page .settings-panel { display: none; margin: 0; }
+html[data-design][data-js] .settings-page .settings-panel-title {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+html[data-design][data-js]:not([data-settings-tab]) .settings-page:not(.js-tabs) #panel-session,
+html[data-design][data-js][data-settings-tab="tab-session"] .settings-page:not(.js-tabs) #panel-session,
+html[data-design][data-js][data-settings-tab="tab-appearance"] .settings-page:not(.js-tabs) #panel-appearance,
+html[data-design][data-js][data-settings-tab="tab-data"] .settings-page:not(.js-tabs) #panel-data { display: block; }
+
 /* Лаунчер сессии: Фильтры | Режим в две адаптивные колонки (стопка на узких). */
 html[data-design] .settings-page .session-launcher {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));

@@ -47,6 +47,17 @@
         }
         var design = readDesign();
         root.setAttribute('data-design', design);
+        // CLS-резерв (R0.64): метка «JS работает» + сохранённая вкладка /settings
+        // ДО первого кадра — base.css рисует вкладочное состояние сразу, и
+        // initSettingsTabs после DOMContentLoaded ничего не сдвигает (под
+        // троттлингом стопка панелей давала CLS ~0.28). Без JS атрибутов нет.
+        root.setAttribute('data-js', '');
+        try {
+          var st = localStorage.getItem('settingsTab');
+          if (st === 'tab-session' || st === 'tab-appearance' || st === 'tab-data') {
+            root.setAttribute('data-settings-tab', st);
+          }
+        } catch (e) { /* приватный режим */ }
         function metaColor(resolved) {
           var d = THEME_COLORS[design] || THEME_COLORS.editorial;
           return d[resolved] || d.dark;
@@ -297,7 +308,7 @@
          которая и так грузится с наивысшим приоритетом) и был удалён — не
          возвращать. См. docs/design/DESIGN.md + docs/design/systems/*.md. -->
     <link rel="stylesheet" th:href="@{/css/tokens.css(v=62)}">
-    <link rel="stylesheet" th:href="@{/css/base.css(v=82)}">
+    <link rel="stylesheet" th:href="@{/css/base.css(v=83)}">
     <!-- SRI (integrity) + crossorigin: защита от компрометации CDN — браузер
          выполнит ресурс, только если его sha512 совпадает. Хэши пересчитаны из
          самих файлов (openssl dgst -sha512). ВСЕ CDN-ресурсы пиннятся на ТОЧНУЮ

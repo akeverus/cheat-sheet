@@ -1480,3 +1480,10 @@ Dirty changes created by loop: 0
 - Написан `design/mockups/port-drafts/regenerate-removal-plan.md`: точные ханки result.html (btn-regenerate 48-51 + regen-badge + question-side ~121), app.js (API.REGENERATE / regenerateQuestion / ветка делегата; favorite и obtainAdminToken остаются), base.css (6 зон) + процедура верификации window-тика.
 - Evidence: read-only SELECT — regen_count max=0, rows>0=0 → regen-badge мёртв вместе с кнопкой. Тест-пинов нет (0 совпадений в 3 контракт/MVC-тестах). Бэкенд /api/regenerate не трогаем (§4).
 - **Дальше:** window-тик без bootRun = применить план + таргетный gradle (закроет 7 PENDING-TEST¤); остальные разблокировки прежние (EXAM-решение, данные для графиков).
+
+### R0.64 (2026-07-12) — CLS /settings починен (v=83): pre-paint data-js/data-settings-tab, 0.285→0.0004
+- Разблокировки проверены: bootRun жив (window-тик ждёт), данных для графиков нет (0|0) → взят Фаза-G кандидат «резерв места под PE-блоки» с замером.
+- Диагностика: сдвиг только под троттлингом (LH-условия); худший случай — restore сохранённой вкладки (#panel-appearance, 0.2844). Локально app.js успевает до первого кадра.
+- Фикс: head.html pre-paint ставит data-js + валидированный data-settings-tab на html ДО первого кадра; base.css — 4 правила [data-js] (tablist flex !important против .hidden, панели none, panel-title sr-only, одна панель по ID; ID-правила гейтованы :not(.js-tabs)). Без JS атрибутов нет — PE-стопка не тронута.
+- QA: троттлированный CLS 0.285→0.0004; pre-DCL снимок = вкладочное состояние до app.js; интерактив вкладок цел; instrument-контроль чист; localStorage сброшен.
+- **Дальше:** window-тик = regenerate-план + контракт-тест (head.html тронут — обязательно); остальные гейты прежние (EXAM, данные для графиков).
