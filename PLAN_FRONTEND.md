@@ -1806,3 +1806,10 @@ cr.107. Window-tick — :8080 жив; чужой WIP (owasp-сидер + docs/mc
 live-sync cp в bootRun, CSSOM-верификация (хром 0, контент печатается). /settings —
 осознанно без правок (tablist = печатный контекст при sr-only заголовке панели).
 Леджер cr.108. Window-tick — :8080 жив.
+
+### R1.13 — Целостность ID/ARIA-ссылок (4 страницы + вкладки) — verified-clean (2026-07-12)
+
+0 дублей id, 0 висячих aria-labelledby/describedby/controls/activedescendant/details/
+errormessage, 0 label[for]-сирот, td[headers] чисты — SSR всех страниц + живые
+состояния /settings по вкладкам. kbd-оверлей покрыт R0.76/R0.83. Кодовых правок нет;
+cr.109. Window-tick — :8080 жив.
