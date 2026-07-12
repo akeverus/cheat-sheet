@@ -37,6 +37,27 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.144 — WCAG 1.4.13 Content on Hover or Focus (verified-clean)
+
+**Вопрос:** любой контент, показываемый по hover/focus (tooltip/popover/reveal), обязан быть dismissable + hoverable + persistent (нативные UA-`title` из критерия ИСКЛЮЧЕНЫ).
+
+**Инвентарь триггерного контента (grep по CSS/JS/шаблонам):**
+- **Кастомных тултипов НЕТ:** `role=tooltip` — 0, `data-tooltip` — 0, `content: attr()`-псевдо-тултипов — 0, JS-`mouseenter/mouseover/focusin`-хендлеров — 0.
+- **Нативные `title=`** на `<button>`/`<div>`/`<th>` (favorite/regenerate/regen-badge/th-подсказки) — UA-рендер, **явно exempt** из 1.4.13.
+- **`aria-describedby`** (settings seg-controls, focus options) → указывают на **всегда-видимые** инлайн-подсказки `*-hint`, не на hover/focus-триггерный попап → вне scope.
+- **`content: attr(data-label)`** (base.css 3760) → стек-лейбл адаптивной topic-table (мобильный вид), всегда видим в стеке → не тултип.
+- **`thead:focus-within`** (3709) → раскрывает sortable-заголовок по клавиатурному фокусу (skip-link-паттерн), persistent пока фокус внутри → ок.
+
+**Единственный hover/focus-reveal — `.code-copy-btn`** (2833): `opacity:0` → `1` по `.code-copy-wrap:hover`/`:focus-within` (десктоп), всегда видима на touch (`@media hover:none`).
+- **Hoverable ✓ (структурно гарантировано):** кнопка — *потомок* триггера `.code-copy-wrap`; наведение с обёртки на кнопку сохраняет `:hover` обёртки → не исчезает.
+- **Persistent ✓:** видима пока hover/focus-within на обёртке; таймера-автоскрытия нет.
+- **Dismissable:** кнопка — action-аффорданс в паддинг-гаттере pre (`top/right: space-2` внутри `padding: space-4`), не информационный оверлей; теоретически может накрыть правый край длинной 1-й строки кода на hover — это универсально-принятый reveal-on-hover copy-паттерн (GitHub/MDN), где операционные условия (hoverable+persistent) выполнены.
+
+**Итог — чисто.** Кастомных tooltip/popover нет; нативные `title` exempt; `aria-describedby`-подсказки всегда видимы; единственный reveal (copy-btn) выполняет hoverable+persistent структурно. Правок кода нет.
+
+**Огранич. эмпирики:** живой код-блок достижим только на `/result` через мутирующий POST `/answer` (запрещён проектными границами) — на дом-странице `pre`=0; вердикт по copy-btn опирается на структурный CSS-анализ (для hoverable/persistent он definitive).
+
+
 ### cr.143 — R1.48 ФИКС: alpha focus-ring → solid double-ring на 5 non-default дизайнах (WCAG 1.4.11) [follow-up R1.43]
 
 **Метод:** canvas-sRGB контраст (надёжен и для oklch) по всем 10 остаточным alpha-`--shadow-focus` из R1.43-follow-up. Для каждого дизайн×тема — два числа: solid `outline` (`--color-border-focus` vs bg, покрывает большинство контролов через глобальный `:focus-visible`) и alpha box-shadow ring (композит над фоном, покрывает box-shadow-only контролы: `.settings-tab`/`.seg-btn`/inputs/selects).
