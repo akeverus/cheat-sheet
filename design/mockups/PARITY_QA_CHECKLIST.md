@@ -108,6 +108,24 @@ light/dark × **вьюпорты** 375 / 768 / 1280 / 1440 / 1728 / 1920 / 2560 
   data-default-count при смене режима (EXAM→20, MARATHON→50), TRAINING скрывает
   счётчик.
 - Контракт-тест обязателен после любой правки шаблона.
+- **Численный baseline settings ДО порта (R0.36, GET /settings @1280, вкладка
+  «Оформление» открыта кликом, settle 400ms, reflow чист 1265/1265):**
+  - *Общее (4 состояния):* tablist flex gap4 border-bottom 1px; активная вкладка
+    18px, подчёрк 2px accent; card r16 p32; seg-control inline-flex gap8;
+    seg-кнопка 16px; label 18px; hint 14px.
+  - *editorial (контроль бит-в-бит):* UI-шрифт **Inter**; card
+    `rgb(240,238,230)` / dark `rgb(48,48,46)`; активная seg-кнопка bg
+    `rgb(217,119,87)` + text `rgb(20,20,19)` (ОБЕ темы), radius 0; secondary-btn
+    r0; danger `rgb(179,38,30)` / dark `rgb(236,133,128)`; tab-подчёрк
+    `rgb(217,119,87)`.
+  - *instrument token-only:* UI-шрифт **Space Grotesk** (уже применяется); card
+    `oklch(0.958 0.004 262)` / dark `oklch(0.224 0.014 264)`; активная seg-кнопка
+    bg teal `oklch(0.47 0.115 205)` + text `oklch(0.99 0.01 205)` r6 (dark: bg
+    `oklch(0.8 0.115 205)` + text `oklch(0.17 0.02 258)`); secondary-btn r10;
+    danger `oklch(0.5 0.2 27)` / dark `oklch(0.72 0.175 27)`; tab-подчёрк teal.
+  - *Уточнить при parity:* селекторы `.switch input` и `.set-card` на живой
+    странице НЕ сматчились (switch-тогглы/сет-карты размечены иначе) — перед
+    замером switch-фокус-колец найти фактические классы в served DOM.
 
 ### shell (маппинг R0.26)
 - Паритет на ЛЮБОЙ странице: masthead, нав aria-current, три PE-тоггла (навести
