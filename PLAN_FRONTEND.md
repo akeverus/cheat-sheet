@@ -1791,3 +1791,10 @@ positive-tabindex: / (18), /stats (347), /settings (58, все 3 вкладки)
 /settings: вкладки, design-свитч, тумблер темы работают без uncaught-ошибок, персист
 молча пропускается. Урок №7: три кнопки шапки делят класс ed-theme-toggle — целиться
 по .theme-toggle/aria-label. Кодовых правок нет; cr.106. Window-tick — :8080 жив.
+
+### R1.11 — Формы: 3.2.2 + constraint-валидация — verified-clean (2026-07-12)
+
+Два submit-вызова в JS — оба явные (клик/модалка), 0 на change/input; novalidate нигде;
+/settings без свободного ввода (ошибки предотвращены конструированием); required-radio
+MCQ-формы гейтит пустой сабмит с нативным русским сообщением. Кодовых правок нет;
+cr.107. Window-tick — :8080 жив; чужой WIP (owasp-сидер + docs/mcq-quality) не тронут.
