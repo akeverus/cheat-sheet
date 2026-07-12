@@ -2424,7 +2424,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`HPKP` устарел потому, что оказался слишком слабым: его легко обходил любой MITM, не дав никакой реальной защиты от подмены сертификата.",
+              "text": "Certificate pinning — клиент проверяет совпадение сертификата сервера с заранее известным fingerprint; `HPKP` (`RFC 7469`) реализовывал это заголовком `Public-Key-Pins`. Устарел он потому, что оказался слишком слабым — любой MITM легко обходил pin, подменяя ответ сервера, и реальной защиты от подмены сертификата не давал. В мобильных приложениях (`OkHttp`) pinning по той же причине считают ненадёжным.",
               "correct": false,
               "sections": {
                 "what_actually": "`HPKP` устарел не из-за слабости, а из-за опасности самострела (потеря ключей → сайт недоступен на `max-age`) и сложности корректного использования; защиту он давал.",
@@ -2436,7 +2436,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Certificate pinning полностью заменяет проверку цепочки через CA: при наличии pin клиент вообще не валидирует подпись сертификата доверенным корнем.",
+              "text": "Certificate pinning — клиент сверяет сертификат с известным fingerprint и при наличии pin полностью отключает штатную проверку цепочки через CA; подпись доверенным корнем и срок действия больше не валидируются, доверие держится только на самом pin. `HPKP` (`HTTP Public Key Pinning`, `RFC 7469`) — заголовок `Public-Key-Pins`, задававший такой pin в браузере поверх обычного TLS. Устарел и удалён из Chrome в 2018; в мобильных приложениях (`OkHttp CertificatePinner`) pinning точно так же заменяет валидацию цепочки целиком.",
               "correct": false,
               "sections": {
                 "what_actually": "Pinning — это дополнительная проверка ПОВЕРХ обычной валидации цепочки: сначала сертификат должен пройти стандартную проверку CA, и лишь затем сверяется pin.",
@@ -2448,7 +2448,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Certificate pinning в мобильных приложениях так же устарел и запрещён, как `HPKP`, поэтому современные Android/iOS приложения его не используют.",
+              "text": "Certificate pinning — клиент проверяет совпадение сертификата с известным fingerprint; в мобильных приложениях это так же устарело, как `HPKP` (`RFC 7469`) в браузерах. `HPKP` удалён из Chrome в 2018, и следом Android/iOS объявили pinning антипаттерном. Современные приложения от него отказались; `OkHttp CertificatePinner` оставлен лишь для legacy-совместимости.",
               "correct": false,
               "sections": {
                 "what_actually": "В мобильных приложениях pinning по-прежнему актуален и применяется (OkHttp `CertificatePinner`, Network Security Config); устарел именно браузерный `HPKP`.",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`openssl s_client` умеет только проверять, что порт открыт (как `telnet`), но не показывает цепочку сертификатов или версию протокола.",
+              "text": "`openssl s_client -connect host:443` умеет только проверить, что порт открыт, как `telnet`; ни `-showcerts`, ни `-status` при этом ничего полезного о цепочке и версии не выводят. `testssl.sh host` — комплексный аудит (версии, ciphers, известные атаки, HSTS). `keytool -list -v -keystore server.p12` — содержимое keystore. `curl -v https://host` — быстрая проверка цепочки и cipher.",
               "correct": false,
               "sections": {
                 "what_actually": "`openssl s_client` показывает полную цепочку сертификатов (`-showcerts`), согласованную версию/cipher, OCSP stapling (`-status`) и умеет подключаться с клиентским сертификатом для mTLS.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`testssl.sh` — это онлайн-сервис, требующий загрузить приватный ключ сервера на сторонний сайт, поэтому в проде его использовать нельзя.",
+              "text": "`openssl s_client -connect host:443 -servername host` показывает handshake и цепочку; `-showcerts` — все сертификаты, `-status` — OCSP stapling. `testssl.sh` — облачный сервис аудита, куда для проверки загружают приватный ключ сервера и полную цепочку, поэтому в закрытом контуре и в проде его использовать нельзя. `keytool -list -v -keystore server.p12` — содержимое keystore. `curl -v https://host` — быстрая проверка цепочки и cipher.",
               "correct": false,
               "sections": {
                 "what_actually": "`testssl.sh` — это локальный bash-скрипт, который тестирует TLS снаружи (как клиент) и не требует приватного ключа; загрузка ключей куда-либо не нужна.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`keytool` предназначен для проверки живых TLS-серверов по сети, а с локальными keystore-файлами он работать не умеет.",
+              "text": "`openssl s_client -connect host:443 -servername host` показывает handshake и цепочку, `-showcerts` — все сертификаты, `-status` — OCSP; `testssl.sh host` — комплексный аудит (версии, ciphers, атаки). `keytool` предназначен для проверки живых TLS-серверов по сети и с локальными keystore-файлами `server.p12` работать не умеет. `curl -v https://host` — быстрая проверка цепочки и cipher.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `keytool` работает с локальными keystore/truststore (`-list -v`, импорт/экспорт сертификатов), а живой сервер по сети проверяют `openssl s_client`/`curl`.",
@@ -2531,7 +2531,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Прочитать PEM-сертификат можно только из keystore через `keytool`; командой `openssl` отдельный `.crt`-файл разобрать нельзя.",
+              "text": "PEM: прочитать `.crt` можно только из keystore через `keytool -list -v`; отдельный файл `openssl` не разбирает; DER: тоже лишь после импорта в keystore. Соответствие ключа и серта проверяют сравнением их размеров в байтах (`ls -l server.crt` vs `server.key`). Цепочка: `keytool -printcert -sslserver host:443`, так как `openssl verify` цепочку не строит.",
               "correct": false,
               "sections": {
                 "what_actually": "`openssl x509 -in server.crt -text -noout` напрямую читает PEM-файл сертификата без всякого keystore; `keytool -list` — лишь один из вариантов.",
@@ -2543,7 +2543,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы проверить, что приватный ключ соответствует сертификату, надо сравнить их размеры в байтах: совпадение размеров означает совпадение пары.",
+              "text": "PEM: `openssl x509 -in server.crt -text -noout`; DER: добавить `-inform DER`; из keystore: `keytool -list -v -keystore server.p12`; из URL: `openssl s_client -connect host:443`. Соответствие ключа и серта проверяют сравнением размеров файлов в байтах (`ls -l server.crt` vs `server.key`): одинаковый размер означает, что пара совпадает. Цепочка: `openssl verify -CAfile ca.crt server.crt`.",
               "correct": false,
               "sections": {
                 "what_actually": "Соответствие проверяют сравнением modulus: `openssl x509 -in server.crt -modulus -noout | openssl md5` и `openssl rsa -in server.key -modulus -noout | openssl md5` — хеши должны совпасть; размер файла ни о чём не говорит.",
@@ -2568,7 +2568,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`openssl verify` проверяет только срок действия сертификата и не умеет валидировать цепочку до корневого CA.",
+              "text": "PEM: `openssl x509 -in server.crt -text -noout`; DER: добавить `-inform DER`; из keystore: `keytool -list -v -keystore server.p12`; из URL: `echo | openssl s_client -connect host:443`. Соответствие ключа и серта — сравнением modulus через `openssl x509 -modulus | openssl md5`. Цепочка: `openssl verify` проверяет только срок действия сертификата, а путь до корневого CA не валидирует — для этого нужен отдельный онлайн-запрос к CA.",
               "correct": false,
               "sections": {
                 "what_actually": "`openssl verify -CAfile ca.crt -untrusted intermediate.crt server.crt` именно строит и проверяет цепочку до доверенного корня (и попутно срок), а не только дату.",
@@ -2591,7 +2591,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`PKIX path building failed` означает, что у клиента нет интернета и он не смог скачать сертификат с сервера по сети.",
+              "text": "`PKIX path building failed: ... unable to find valid certification path to requested target` означает, что клиент не смог по сети скачать недостающий промежуточный сертификат с сервера, потому что JVM подтягивает цепочку через `AIA`-extension уже в рантайме. Причина обычно в отсутствии интернета на хосте или закрытом исходящем порте `443`, из-за чего загрузка промежуточных звеньев с CDN удостоверяющего центра обрывается на середине. Лечится открытием сетевого доступа к CDN и прописыванием прокси в `JAVA_OPTS`.",
               "correct": false,
               "sections": {
                 "what_actually": "Ошибка значит, что Java не нашла путь от полученного сертификата к доверенному корню в TrustStore; сертификат сервер уже прислал, проблема в построении цепочки, а не в сетевом доступе.",
@@ -2603,7 +2603,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы диагностировать, надо включить флаг `-Djavax.net.ssl.trustAll=true`, который безопасно покажет, где обрывается цепочка.",
+              "text": "`PKIX path building failed` диагностируют флагом `-Djavax.net.ssl.trustAll=true`, который безопасно печатает, где именно обрывается цепочка. Он временно доверяет всем сертификатам только в режиме отладки, не влияя на прод. После обнаружения обрыва флаг убирают и добавляют недостающий `CA` в `cacerts`.",
               "correct": false,
               "sections": {
                 "what_actually": "Такого флага нет; для диагностики включают `-Djavax.net.debug=ssl:handshake:verbose` (или `ssl,certpath`), а отключать валидацию (`trust-all`) в проде нельзя — это создаёт MITM-дыру.",
@@ -2615,7 +2615,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Самое надёжное решение в проде — добавить серверный сертификат в `cacerts` командой `keytool -importcert ... -noprompt`, как при quick-fix.",
+              "text": "`PKIX path building failed` надёжнее всего чинится в проде добавлением серверного сертификата прямо в `cacerts` командой `keytool -importcert -noprompt`. Это доверенный quick-fix, применяемый при каждом деплое нового окружения. Отдельный TrustStore для приложения при таком подходе не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Импорт серверного серта в `cacerts` — это dev-only quick-fix; в проде правильнее починить причину (сервер должен слать intermediate) или добавить именно корневой CA, а не каждый leaf.",
@@ -2664,7 +2664,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для прода достаточно включить любой `TLS` (включая `TLS 1.0`) — главное, чтобы соединение шифровалось, а версия и набор шифров значения не имеют.",
+              "text": "Протокол: `TLS 1.2`/`1.3` плюс `TLS 1.0` ради legacy-клиентов, включён `TLS_FALLBACK_SCSV`. Ciphers: `AEAD` (`GCM`/`ChaCha20`) с forward secrecy (`ECDHE`/`DHE`), для совместимости оставлен `3DES`, hash ≥ `SHA-256`. Сертификаты: от публичного CA, `SAN` со всеми hostname, ключ ≥ `RSA 2048`/`ECDSA P-256`, срок ≤ 1 года, автообновление, мониторинг истечения, полная цепочка с intermediate.",
               "correct": false,
               "sections": {
                 "what_actually": "Версия и ciphers критичны: `TLS 1.0/1.1` и `CBC`/`RC4`/`3DES` уязвимы (`POODLE`, `BEAST`, `Sweet32`), поэтому прод-чеклист требует только `TLS 1.2/1.3` и `AEAD` с forward secrecy.",
@@ -2676,7 +2676,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Приватные ключи сервера допустимо хранить прямо в git-репозитории рядом с кодом, если репозиторий приватный.",
+              "text": "Протокол: только `TLS 1.2`/`1.3`, отключены `SSLv2/3`, `TLS 1.0/1.1`, включён `TLS_FALLBACK_SCSV`. Ciphers: `AEAD` (`GCM`/`ChaCha20`) с forward secrecy (`ECDHE`/`DHE`), убраны `RC4`/`3DES`/`CBC`/`EXPORT`. Сертификаты и ключи: от публичного CA, `SAN` со всеми hostname, ключ ≥ `RSA 2048`, срок ≤ 1 года, а приватный ключ допустимо держать прямо в git-репозитории рядом с кодом, если он приватный.",
               "correct": false,
               "sections": {
                 "what_actually": "Приватные ключи нельзя класть в git даже в приватный репозиторий — их хранят в HSM/`KMS`/`Vault`; утечка истории git компрометирует ключ навсегда.",
@@ -2688,7 +2688,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Срок действия сертификата и мониторинг истечения не важны для прода: достаточно один раз выпустить сертификат и забыть про него.",
+              "text": "Протокол: только `TLS 1.2`/`1.3`, отключены `SSLv2/3`, `TLS 1.0/1.1`, включён `TLS_FALLBACK_SCSV`. Ciphers: `AEAD` (`GCM`/`ChaCha20`) с forward secrecy (`ECDHE`), убраны `RC4`/`3DES`/`CBC`/`NULL`. Сертификаты: от публичного CA, `SAN` со всеми hostname, ключ ≥ `RSA 2048`/`ECDSA P-256`, полная цепочка с intermediate, срок выставляется один раз без автообновления и мониторинга истечения.",
               "correct": false,
               "sections": {
                 "what_actually": "Чеклист требует срок ≤ 1 года, автообновление (ACME/`cert-manager`) и алерт за 30 дней до истечения — забытый просроченный сертификат кладёт прод.",
