@@ -100,6 +100,25 @@ light/dark × **вьюпорты** 375 / 768 / 1280 / 1440 / 1728 / 1920 / 2560 
   сортировка (aria-sort + анонс), collapse >12 строк, stacked-card на 375,
   формы фильтров/поиска, forecast «Сегодня/Завтра», gaps.
 - Cold-start чек: /stats с пустой фильтрацией → stats-empty карта.
+- **Численный baseline stats ДО порта (R0.37, GET /stats @1280, settle 400ms,
+  reflow чист 1265/1265; collapse tr[hidden] живьём: 319 строк / 307 hidden):**
+  - *Общее (4 состояния):* stat-card p12×16; stat-value 28px/600 serif
+    tabular-nums; stat-label 12px uppercase; section-title 28px/600 serif;
+    таблица 14px, th 12px uppercase mono border-bottom 2px, td p12 border 1px;
+    фильтр-инпут 16px; fallback 14px.
+  - *editorial (контроль):* карты `rgb(250,249,245)` r8 (dark `rgb(38,38,36)`);
+    serif Lora; ls 1.08; th bg `rgb(240,238,230)` / dark `rgb(48,48,46)`;
+    td-границы `rgb(224,221,211)` / dark `rgb(52,50,45)`; инпуты r0; expander r0.
+  - *instrument token-only:* карты `oklch(0.985 0.003 262)` r10 (dark
+    `oklch(0.19 0.012 264)`); serif Newsreader; ls 0.24; th bg
+    `oklch(0.958 0.004 262)` / dark `oklch(0.224 0.014 264)`; td-границы
+    `oklch(0.912 0.006 262)` / dark `oklch(0.31 0.014 264)`; инпуты r6;
+    expander r0 — ОСОЗНАННО (WIP-коммент B5 «плоский радиус во всех дизайнах»),
+    при порте НЕ «чинить».
+  - *Селекторы, не сматчившиеся в живом DOM (уточнить перед parity):*
+    `.topic-link`, `#filters-form`, `.forecast-list li`, `.forecast-count`
+    (разметка отличается от ожиданий маппинга — брать фактические классы
+    из served DOM).
 
 ### settings (маппинг R0.25)
 - Паритет: вкладки (JS: одна панель; no-JS: стопка всех трёх), set-card сетка осей

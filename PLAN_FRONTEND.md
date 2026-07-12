@@ -1325,3 +1325,8 @@ Dirty changes created by loop: 0
 
 - **Сделано:** снят computed-baseline /settings @1280 (вкладка «Оформление», settle 400ms, 4 состояния): tablist/вкладки/card/seg-controls/label/hint/danger/secondary → PARITY_QA_CHECKLIST §2/settings. Выводы: шрифтовой слой instrument уже работает token-only (Space Grotesk на UI, Newsreader на display), радиусы дифференцированы токенами (r0 editorial vs r6/r10 instrument) — порт settings шаг 1 будет тихим рестайлом. Уточнение на parity: фактическая разметка switch-тогглов (`.switch input`/`.set-card` не сматчились). Reflow чист.
 - **Блокер:** base.css dirty 16-й тик. **Следующий тик:** проверка разблокировки → Фаза E error C7-i. Если dirty — последняя крупная read-only цель: baseline stats-хуков (карты обзора/таблица/фильтры, БЕЗ цветов графиков — они требуют данных).
+
+### R0.37 (2026-07-12) — Численный baseline stats (4 состояния) — baseline-серия замкнута
+
+- **Сделано:** computed-baseline /stats @1280 (4 состояния): stat-карты/таблица/фильтры/fallback/expander → PARITY_QA_CHECKLIST §2/stats. Живьём подтверждён новый tr[hidden]-collapse (319/307). Instrument token-only несёт язык и здесь (r10-карты, r6-инпуты, Newsreader, ls 0.24). Каверза: expander r0 в обоих дизайнах — осознанный B5, не «чинить». Серия read-only baseline-ов ЗАМКНУТА: error/shell/settings/stats; summary/result требуют сессии (§4) — снимутся первыми в parity-фазе.
+- **Блокер:** base.css dirty 17-й тик. **Следующий тик:** проверка разблокировки → Фаза E error C7-i. Если dirty — baseline focus-страницы (радиогруппа опций/бейджи/topbar, GET / без ответов — read-only): последняя не снятая поверхность, доступная без сессии.
