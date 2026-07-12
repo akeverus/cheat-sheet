@@ -37,6 +37,21 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.140 — R1.43+R1.44 LIVE-VERIFIED на поднятом инстансе (app.js v=61, tokens.css v=63)
+
+Поднял стек (postgres + bootRun) и проверил обе правки в живом браузере, обе темы.
+
+**R1.44 (шорткаты) — PASS:**
+- autofocus: при загрузке `/` `document.activeElement` = 1-я опция (`activeIsFirstOption:true`, `focusInForm:true`), MCQ-режим (4 опции).
+- scope: фокус в форме + `3` → выбрана опция idx 2 ✓; затем фокус на header-ссылке (`nowFocusInForm:false`) + `1` → опция ОСТАЛАСЬ idx 2 (не сменилась) ✓ — исключение 2.1.4c работает.
+
+**R1.43 (focus-ring) — PASS обе темы:**
+- light: `--shadow-focus` = `0 0 0 2px #FAF9F5, 0 0 0 4px #C6613F` → Ember ринг vs ivory = **3.85:1**.
+- dark: `0 0 0 2px #262624, 0 0 0 4px #D97757` → Clay ринг vs #262624 = **4.8:1**.
+- solid double-ring применён (не alpha), оба ≥3:1 (было ~1.4:1).
+
+Оба фикса закрыты полностью (код + токен-аудит + gradle-тесты + live). Тестовый браузер сброшен reload'ом.
+
 ### cr.139 — R1.44 ФИКС: character-key shortcuts scope + autofocus (WCAG 2.1.4)
 
 **Реализация решения пользователя по R1.37 (вариант C).** `app.js`:
