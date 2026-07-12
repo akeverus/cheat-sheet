@@ -1461,3 +1461,10 @@ Dirty changes created by loop: 0
 - Collision guard чист; bootRun жив → контракт-тест PENDING.
 - Все шаблоны + app.js/stats.js: новых экземпляров антипаттерна нет — пара R0.58 (степпер) / R0.59 (экспандер) была полным множеством. Разбор по категориям (⊇-проверка, icon-only, лендмарки, транзиентный copy-flash) — в cr.57.
 - **Дальше:** контракт-тест + regenerate-удаление при окне без bootRun; session-parity — ждёт юзера; графики — ждут данных; из свободных read-only юнитов остаётся мало — при исчерпании перейти в режим поддержки (сторожевые проверки якорей, регресс-скрины) по §28.
+
+### R0.61 (2026-07-12) — Lighthouse dark-theme instrument: VERIFIED-CLEAN (0 правок)
+- Collision guard чист; bootRun жив → контракт-тест PENDING.
+- Закрыт пробел: axe-контраст тёмной instrument-палитры живьём (localStorage → pre-paint → LH navigation). /, /settings, /stats: color-contrast=1, a11y 100; провалы бит-в-бит = светлым прогонам (SEO-шум, CLS-кандидат, CSP-sourcemap ← deferred self-host). Dark-специфичных дефектов нет.
+- localStorage возвращён к дефолтам (браузер юзера не оставлен в instrument-dark).
+- Итог LH-серии R0.58–R0.61: a11y 100 / BP 100 на desktop+mobile × light+dark — гейт «AA обе темы» закрыт живым инструментом.
+- **Дальше:** свободные read-only юниты исчерпаны почти полностью → режим поддержки §28 (сторожевые проверки якорей при изменениях WIP, регресс-скрины по запросу); контракт-тест + regenerate-удаление при окне без bootRun; session-parity — ждёт юзера; графики — ждут данных.
