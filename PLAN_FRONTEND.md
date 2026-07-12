@@ -1672,3 +1672,8 @@ Dirty changes created by loop: 0
 
 - Живой замер интерактивных целей на /, /stats, /settings: 0 провалов под 24px (AA); шапка 40px — осознанный компромисс. Ложные «провалы» th оказались sr-only-клипом стек-режима таблицы (≤760px).
 - Реальный дефект: сортируемые th (tabindex=0) в клипнутом thead = 5 невидимых фокус-стопов (2.4.7). Фикс: thead:focus-within разклипывается (skip-link паттерн); verified live (1px→246px→1px). v-бамп 89→90, live-sync. Контракт-тест PENDING.
+
+### R0.95 (2026-07-12) — Focus-order аудит (2.4.3): VERIFIED-CLEAN (0 правок)
+
+- /, /stats, /settings: 0 positive tabindex; skip-link первый везде; все «прыжки назад» разобраны — двухколоночные формы (логичный колоночный обход), нефокусируемый скрытый back-to-top, артефакты фильтра (скрытые панели реально вне tab-порядка: 24/41/17 против 53 сырых).
+- Уроки тулинга: getClientRects для ancestor-display:none; visibility:hidden ≠ нет rect'ов. Правок нет. Контракт-тест PENDING.
