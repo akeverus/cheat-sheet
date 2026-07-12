@@ -2,23 +2,25 @@
  "topic_slug": "kotlin-interview",
  "round": 8,
  "status": "IN_PROGRESS",
- "reviewed_commit": "fccde374",
+ "reviewed_commit": "39da21d8",
  "chunks_reviewed": [
   "Q1-Q10",
   "Q11-Q20",
   "Q21-Q30",
-  "Q31-Q40"
+  "Q31-Q40",
+  "Q41-Q45"
  ],
  "gate_summary": {
   "verify_mcq_json": "OK",
   "note": "Baseline (до chunk1): CORRECT_LONGEST 0.911 (41/45), OPTION_LENGTH_RATIO 4.2 (Q12), CORRECT_WRONG_AVG 1.661 (18сл vs 11сл), DETAIL 0.422, SENTENCE 1, SEQ 45, STYLE 0.922 (длина 0.92, code-spans 0.58), skel hard=36/45, stamp mean CV=0.306, disMean/corLen=0.55, SOURCE_COVERAGE n/a (не version-sensitive). После chunk1: зона Q1-Q10 skel HARD=0 (файл 36→29), correct не одинокий длиннейший в 9/10 блоков зоны, per-block CV 0.17-0.34."
  },
  "blocks_total": 45,
- "blocks_reviewed": 40,
+ "blocks_reviewed": 45,
  "notes": "ROUND-8 chunk1 Q1-Q10 (файл kotlin, строка 11 плана §1; что такое Kotlin, отличия от Java, система типов, null-safety, ?. vs !!, Элвис+let, лямбды, HOF, extensions, inline). Подняты 30 дистракторов (text-only, оси сохранены): стубы 75-135c доведены до скелета correct (sentence/semicolon/opening/code-bucket mirroring, один компакт ~55-70% + один rich по код-спанам на блок). Blind review (reviewer, O1-O4 без меток): 10/10 верных вердиктов; флаги 8 блоков вылечены до применения. Q1 BSM: «скриптовый язык, вытесняющий JS» → «вывод типов завершается в runtime» (смешение inference с динамической типизацией); «быстрый runtime» → «компилятор оптимизирует агрессивнее javac». Q2 CAR: «отказался от HOF и лямбд» → «свои HOF писать не идиоматично, (Int)->Int лишь синоним SAM». Q3 CAR: «Unit — синоним null» → «Unit — условность компилятора, значения нет, в generics запрещён» (реально Unit — тип-singleton, в generics подставим). Q5 BSM+FORM-TELL: «?. только для строк» → стилевой анти-паттерн-миф; дистрактору B даны канонические имена операторов в скобках (симметричное покрытие обоих операторов — зеркало формы correct). Q6 FORM-TELL: каждый дистрактор теперь покрывает ОБЕ конструкции (Элвис+let), оси разведены (A: элвис-всегда-правый + let-без-преобразования; C: let-на-null; D: let-возвращает-receiver + элвис-без-вычисления-левого). Q7 FORM-TELL: дистракторы переформулированы утвердительно (были сплошные запреты против единственного позитивного correct). Q8 CAR+BSM: арность смягчена до «метрики сложности сигнатуры»; «экспериментальная фича» → исторический opt-in @ExperimentalTypeInference. Q10 CAR: «разносит по ядрам» → «JVM исполняет на ForkJoinPool, как parallelStream()» (ось параллелизма сохранена — what_actually опровергает именно её, но механика одета в реальные API). Сверка с теорией: member wins over extension, crossinline ЗАПРЕЩАЕТ нелокальный return, reified только в inline, KotlinNullPointerException — легаси до 1.4; все патчи механически ложны.",
  "notes_chunk2": "ROUND-8 chunk2 Q11-Q20 (infix, scope-функции, data/sealed/enum/value class, object/companion, конструкторы, var/val/const, lazy/lateinit). Подняты 30 дистракторов + 4 ретро-фикса зачинов в блоках c1 (Q3 B/D, Q6 C/D — opening_class btick→prose под зачин correct; skel-гейт вскрыл недолеченный mirroring, файл hard 36→19). Blind review (reviewer): 10/10 верных вердиктов; 3 флага вылечены до применения. Q11 DUP: оба дистрактора атаковали «ровно один параметр» → разведены (A=арность через дефолты, B=членство/receiver не требуется). Q17 MULTI: «константы разноструктурны» частично защитимо (тела констант МОГУТ объявлять члены) → заострено до механически ложного «свойство из тела константы доступно снаружи через ссылку». Q19 CAR: «var и val — только стиль» → правдоподобная аналогия с `private set` («val переприсваивается внутри объявляющего файла»). Сверка с теорией: data class не бывает open/abstract и требует ≥1 параметра; equals/hashCode только по primary constructor; sealed — тот же модуль и пакет (1.5+); companion компилируется во вложенный класс Companion; порядок init = часть primary; enum-константы одноструктурны, методы разрешены; when по enum исчерпывающий без else; const val — только примитивы/String; lazy — SYNCHRONIZED по умолчанию, lateinit — var non-примитив без синхронизации.",
  "notes_chunk3": "ROUND-8 chunk3 Q21-Q30 (видимость, open/final, get/set, generics/вариантность, reified, type inference, делегирование, when, перегрузка операторов, ==/===). Подняты 30 дистракторов. Blind review: 10/10 верных вердиктов; 3 FORM-TELL вылечены до применения. Q21: correct был единственным каталогом четырёх модификаторов → дистрактор B стал каталог-клоном с одной подменой («private — top-level объявления его не принимают»; реально top-level private = файл), оси разведены (B=private-top-level, C=internal-файл, D=protected-top-level). Q26: correct был единственной дефиницией «термин — это…» → все три дистрактора получили дефиниционный зачин «Type inference — …» (runtime-уточнение / подстановка Any / стиль API). Q28: correct был единственным «полным» перечислением → дистрактор A стал насыщенным multi-claim каталогом (fall-through + tableswitch + запрет условий; ядро ложности — fall-through, которого в when нет). Прочие оси: Q23 выдуманная `value$backing` и backing-field-всегда (KProperty.getDelegate); Q24 use-site-как-в-Java / out=контравариантность / star-projection-запись; Q25 три разных ложных механизма reified (K2 Class-аргумент / JVM-метаданные / отключение стирания как в C#); Q29 operator-как-рекомендация (сравнение с tailrec) / свои символы как в Scala / [] зарезервирован; Q30 зеркальная инверсия и identityEquals(). Сверка с теорией: protected недоступен top-level, internal=модуль, == null-safe, vetoable отклоняет значения, star projection запрещает запись, operator обязателен.",
  "notes_chunk4": "ROUND-8 chunk4 Q31-Q40 (деструктуризация, List/MutableList, Sequence, map/flatMap, корутины, Scope/Job/Dispatcher, launch/async, @Jvm*-аннотации, allOpen/noArg, Reflection). Подняты 30 дистракторов. Blind review: 10/10 верных вердиктов; 6 флагов вылечены до применения. Q33 CAR («быстрее в любом сценарии») → правдоподобное обоснование через JIT-инлайнинг жадных циклов и «asSequence только для бесконечных источников». Q34 BSM (бессмысленный «Comparator терминальной toList()») → осмысленный ложный хвост «map бросает ClassCastException на лямбдах с коллекцией». Q35 CAR («выигрыш только в синтаксисе») → «экономию даёт лишь пул, как в ExecutorService». Q36 FORM-TELL (correct единственный покрывал все три сущности) → дистрактор B стал каталогом Scope+Job+Dispatcher с одной корневой ложью («отмена scope не каскадирует» — реально structured concurrency отменяет дочерние). Q38 FORM-TELL (correct единственный про все три аннотации) → дистрактор A покрывает все три с инвертированной корневой ложью («работают только для Kotlin-стороны, Java видит байткод без изменений»). Q39 CAR (категоричное «не предусмотрен») → ложный механизм «фильтр задаёт @Target самих аннотаций». Q40 CAR (мягкое «отсутствует намеренно») → «private читает лишь Java-рефлексия, KProperty только публичный API». Сверка с теорией: пропуск `_` поддерживается, Dispatchers.IO=до 64 потоков/IO а Default=nCpu/CPU (в дистракторе A инвертировано), launch→Job / async→Deferred, @JvmField несовместим с кастомными аксессорами, плагины конфигурируются списком аннотаций, kotlin-reflect — отдельный артефакт.",
+ "notes_chunk5": "ROUND-8 chunk5 Q41-Q45 (string templates, contracts, идиоматичный код, typealias, object expression/declaration). Подняты 15 дистракторов. Blind review: 5/5 верных вердиктов; 4 FORM-TELL вылечены до применения. Q41: correct был единственным «полным» определением → дистрактор B получил оба синтаксиса ($name и ${...}) с ложной компиляцией в конкатенацию `+`. Q42: correct был единственным с хеджем «(экспериментальная фича)» → все три дистрактора получили хеджирующие скобки (DSL поверх require; вышли из беты; это отдельная экспериментальная фича). Q43: correct выделялся длиной каталога (8 пунктов против 6) → дистрактор A расширен до зеркальных 8 пунктов с инверсиями стайлгайда (var-default, позиционные вместо именованных). Q45: двухчастный стем, но обе части покрывал только correct → все три дистрактора теперь упоминают обе конструкции (кеширует-как-declaration / ленив-как-declaration / declaration-без-супертипов). Сверка с теорией: литеральный $ требует экранирования ${'$'}; require/check/let/run РЕАЛЬНО используют contracts; typealias только top-level; object expression создаётся при каждом вызове, супертип не обязателен.",
  "records": [
   {
    "q_number": 1,
@@ -2242,6 +2244,286 @@
      "sections_consistent": true
     },
     "C": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    }
+   },
+   "parity": {
+    "option_parity": true,
+    "visual_format_parity": true,
+    "russian_readability": true,
+    "no_stamped_clone": true,
+    "blind_style_pass": true,
+    "blind_semantic_pass": true
+   }
+  },
+  {
+   "q_number": 41,
+   "block_idx": 0,
+   "correct_label": "A",
+   "stem": {
+    "clear": true,
+    "single_concept": true,
+    "no_answer_hint": true,
+    "version_scope_explicit": true
+   },
+   "correct": {
+    "factually_true": true,
+    "complete_for_stem": true,
+    "scope_correct": true,
+    "unique_defensible": true,
+    "not_visually_distinct": true,
+    "sections_consistent": true
+   },
+   "distractors": {
+    "B": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "C": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "D": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    }
+   },
+   "parity": {
+    "option_parity": true,
+    "visual_format_parity": true,
+    "russian_readability": true,
+    "no_stamped_clone": true,
+    "blind_style_pass": true,
+    "blind_semantic_pass": true
+   }
+  },
+  {
+   "q_number": 42,
+   "block_idx": 0,
+   "correct_label": "B",
+   "stem": {
+    "clear": true,
+    "single_concept": true,
+    "no_answer_hint": true,
+    "version_scope_explicit": true
+   },
+   "correct": {
+    "factually_true": true,
+    "complete_for_stem": true,
+    "scope_correct": true,
+    "unique_defensible": true,
+    "not_visually_distinct": true,
+    "sections_consistent": true
+   },
+   "distractors": {
+    "A": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "C": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "D": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    }
+   },
+   "parity": {
+    "option_parity": true,
+    "visual_format_parity": true,
+    "russian_readability": true,
+    "no_stamped_clone": true,
+    "blind_style_pass": true,
+    "blind_semantic_pass": true
+   }
+  },
+  {
+   "q_number": 43,
+   "block_idx": 0,
+   "correct_label": "C",
+   "stem": {
+    "clear": true,
+    "single_concept": true,
+    "no_answer_hint": true,
+    "version_scope_explicit": true
+   },
+   "correct": {
+    "factually_true": true,
+    "complete_for_stem": true,
+    "scope_correct": true,
+    "unique_defensible": true,
+    "not_visually_distinct": true,
+    "sections_consistent": true
+   },
+   "distractors": {
+    "A": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "B": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "D": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    }
+   },
+   "parity": {
+    "option_parity": true,
+    "visual_format_parity": true,
+    "russian_readability": true,
+    "no_stamped_clone": true,
+    "blind_style_pass": true,
+    "blind_semantic_pass": true
+   }
+  },
+  {
+   "q_number": 44,
+   "block_idx": 0,
+   "correct_label": "D",
+   "stem": {
+    "clear": true,
+    "single_concept": true,
+    "no_answer_hint": true,
+    "version_scope_explicit": true
+   },
+   "correct": {
+    "factually_true": true,
+    "complete_for_stem": true,
+    "scope_correct": true,
+    "unique_defensible": true,
+    "not_visually_distinct": true,
+    "sections_consistent": true
+   },
+   "distractors": {
+    "A": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "B": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "C": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    }
+   },
+   "parity": {
+    "option_parity": true,
+    "visual_format_parity": true,
+    "russian_readability": true,
+    "no_stamped_clone": true,
+    "blind_style_pass": true,
+    "blind_semantic_pass": true
+   }
+  },
+  {
+   "q_number": 45,
+   "block_idx": 0,
+   "correct_label": "A",
+   "stem": {
+    "clear": true,
+    "single_concept": true,
+    "no_answer_hint": true,
+    "version_scope_explicit": true
+   },
+   "correct": {
+    "factually_true": true,
+    "complete_for_stem": true,
+    "scope_correct": true,
+    "unique_defensible": true,
+    "not_visually_distinct": true,
+    "sections_consistent": true
+   },
+   "distractors": {
+    "B": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "C": {
+     "plausible": true,
+     "one_primary_error": true,
+     "real_api_or_concept": true,
+     "false_under_stem": true,
+     "distinct_misconception": true,
+     "not_caricature": true,
+     "sections_consistent": true
+    },
+    "D": {
      "plausible": true,
      "one_primary_error": true,
      "real_api_or_concept": true,
