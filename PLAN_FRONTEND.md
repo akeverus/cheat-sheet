@@ -1330,3 +1330,8 @@ Dirty changes created by loop: 0
 
 - **Сделано:** computed-baseline /stats @1280 (4 состояния): stat-карты/таблица/фильтры/fallback/expander → PARITY_QA_CHECKLIST §2/stats. Живьём подтверждён новый tr[hidden]-collapse (319/307). Instrument token-only несёт язык и здесь (r10-карты, r6-инпуты, Newsreader, ls 0.24). Каверза: expander r0 в обоих дизайнах — осознанный B5, не «чинить». Серия read-only baseline-ов ЗАМКНУТА: error/shell/settings/stats; summary/result требуют сессии (§4) — снимутся первыми в parity-фазе.
 - **Блокер:** base.css dirty 17-й тик. **Следующий тик:** проверка разблокировки → Фаза E error C7-i. Если dirty — baseline focus-страницы (радиогруппа опций/бейджи/topbar, GET / без ответов — read-only): последняя не снятая поверхность, доступная без сессии.
+
+### R0.38 (2026-07-12) — Численный baseline focus (active-MCQ) — все read-only поверхности сняты
+
+- **Сделано:** computed-baseline GET / @1280 (active-MCQ, 4 опции, 4 состояния): вопрос 48px serif, опция-карты (r8 editorial / r10 instrument), submit, progress → PARITY_QA_CHECKLIST §2/focus. Находка: editorial submit «приклеен» к карте (radius 0 0 8 8), instrument token-only скругляет полностью → композиционный гибрид, при порте focus решить по макету (submit отделён). Не сматчились: topic-badge/session-counter/details (не в этом состоянии). Reflow чист. Снятые baseline: error/shell/settings/stats/focus — ВСЁ доступное без сессии.
+- **Блокер:** base.css dirty 18-й тик. **Следующий тик:** проверка разблокировки → Фаза E error C7-i. Если dirty — mobile-380 baseline (focus+shell @375, где живут compact-clamp HDR-1 и переносы нав) ЛИБО чистка PIXEL_QA_MATRIX (сведение baseline-статусов в матрицу).

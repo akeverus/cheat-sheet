@@ -79,6 +79,26 @@ light/dark × **вьюпорты** 375 / 768 / 1280 / 1440 / 1728 / 1920 / 2560 
 - Паритет: topbar (НЕ рельс!), CSS-счётчик буквы опции (нет дубля букв), прогресс
   data-progress, mermaid в ответах жив.
 - Контракт: TemplateFragmentContractTest + ручной no-JS смоук (формы работают).
+- **Численный baseline focus ДО порта (R0.38, GET / @1280, active-MCQ 4 опции,
+  settle 400ms, reflow чист 1265/1265):**
+  - *Общее:* вопрос 48px/600 serif lh 55.2; опция-карта p16 18px display:grid;
+    submit 16px p12×32; progress-полоса h2 accent.
+  - *editorial (контроль):* вопрос Lora `rgb(20,20,19)`; опция bg
+    `rgb(240,238,230)` r8 border `rgb(209,207,197)` (dark `rgb(48,48,46)`/
+    `rgb(62,60,54)`); submit (disabled-старт) bg `rgb(227,218,204)` text
+    `rgb(94,93,89)`, radius `0 0 8px 8px` — ПРИКЛЕЕН к низу карты; UI Inter;
+    progress `rgb(217,119,87)`.
+  - *instrument token-only:* вопрос Newsreader; опция bg `oklch(0.958 0.004 262)`
+    r10 (dark `oklch(0.224 0.014 264)`); submit bg `oklch(0.998 0.002 262)` r10
+    (dark `oklch(0.262 0.016 264)`) — ВНИМАНИЕ: полный r10 вместо editorial
+    «приклеенного» `0 0 8 8` — при порте focus решить композицию кнопки
+    (в макете submit отделён от карты) и НЕ оставлять полускруглый гибрид;
+    UI Space Grotesk; progress teal `oklch(0.47 0.115 205)` / dark
+    `oklch(0.8 0.115 205)`.
+  - *Не сматчились на активном состоянии:* `.topic-badge`, `.session-counter`,
+    `details`-подсказка (вероятно рендерятся не во всех состояниях/иная
+    разметка) — фактические классы из served DOM на parity; буквы опций
+    (CSS-counter `::before`) мерить через getComputedStyle(el,'::before').
 
 ### result (no-JS фоллбэк, маппинг R0.23)
 - Доезд: отключить JS (chrome MCP: page settings / CDP Emulation.setScriptExecutionDisabled)
