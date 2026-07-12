@@ -1,11 +1,27 @@
 {
   "topic_slug": "test-strategies-interview",
   "round": "ROUND-8",
-  "status": "IN_PROGRESS",
+  "status": "COMPLETE",
   "reviewed_commit": "383b5bd4",
   "chunks_reviewed": 5,
   "gate_summary": {
-    "note": "baseline (до R8): LONGEST 0.956 (43/45), RATIO 7.0 (Q19), AVG 2.404, SENTENCE 2 (12 блоков>1), DETAIL 0.844, ABS_GAP 0.222 ok, DIST 12/11/11/11 ok, SEQ 45 (ABCD-цикл), DUP 0, TEMPORAL 3, SOURCE_COVERAGE missing, STYLE 0.967 (len 0.97 / code 0.81), skel hard=31/45, stamp mean CV=0.566, corLen=359, disMean/corLen=0.35"
+    "note": "baseline (до R8): LONGEST 0.956 (43/45), RATIO 7.0 (Q19), AVG 2.404, SENTENCE 2 (12 блоков>1), DETAIL 0.844, ABS_GAP 0.222 ok, DIST 12/11/11/11 ok, SEQ 45 (ABCD-цикл), DUP 0, TEMPORAL 3, SOURCE_COVERAGE missing, STYLE 0.967 (len 0.97 / code 0.81), skel hard=31/45, stamp mean CV=0.566, corLen=359, disMean/corLen=0.35",
+    "final": {
+      "correct_longest_rate": "0.956 -> 0.089 PASS",
+      "option_length_ratio": "7.0 -> 2.5 FAIL-ACCEPTED (compact-by-design опция в каждом блоке; прецеденты kotlin 3.12, owasp 2.43; худший блок Q5)",
+      "correct_wrong_avg_ratio": "2.404 -> 1.058 PASS",
+      "sentence_parity": "2 -> 1 PASS",
+      "detail_parity": "0.844 -> 0.311 PASS",
+      "absolute_marker_gap": "0.096 PASS",
+      "position_distribution": "A12/B11/C11/D11 (1.09) PASS",
+      "position_sequence": "45 -> 2 PASS",
+      "duplicate_ngrams": "0 PASS",
+      "temporal_claims": "5 ok",
+      "source_coverage": "freshness sidecar создан PASS",
+      "style_guessability": "0.967 -> 0.133 PASS",
+      "skel_hard": "31 -> 0",
+      "stamp_cv": "0.566 -> 0.191 (после boost-пассов ниже)"
+    }
   },
   "blocks_total": 45,
   "blocks_reviewed": 45,
@@ -14,6 +30,7 @@
   "notes_chunk3": "c3 (Q21-Q30): 30 дистракторов подняты; blind 10/10. Cures: Q21 FORM-TELL (все дистракторы были абсолютистскими 'только/не нуждается' на фоне нейтрального correct) -> нейтральные механизмы (SyncTaskExecutor-контур, Schema Registry BACKWARD как замена контрактов, shadow-консьюмеры); Q24 FORM-TELL (пренебрежительные клейма у дистракторов) -> нейтральные таксономии с ложными связями (Quality/Process 'вычисляются из coverage-трендов', leakage инвертирован, Mutation Score = пересчёт LC); Q26 FORM-TELL (correct вдвое длиннее) -> дистракторы 292-341 vs 460; Q27D BSM (tiered описан как 'все ярусы разом' — самоопровержение) -> ось 'ярусы = модули по критичности'; Q29B кросс-DUP с Q24 (coverage-гейт заменяет ревью) -> мутационный гейт PITest 'принято без чтения'. SEMI_YES={22,24}.",
   "notes_chunk4": "c4 (Q31-Q40, 30 дистракторов подняты): blind-ревьюер 10/10 semantic-verdict. Флаги и лечение: DUP Q32<->Q33 (prod-данные без анонимизации + GDPR-через-RBAC дублировались) — Q32 B переаксирован на ephemeral-окружения (preview-стенд на ветку вместо постоянной лестницы) со своим списком 'Принципы:' (заодно закрыт слабый FORM-TELL 'уровни+Принципы только у correct'); BSM Q35 D (SCC 'проверяет производительность стабов' — выдуманное назначение) — заменён на когерентную инверсию consumer/provider-driven; FORM-TELL Q40 (correct — единственный с двумя перечнями и англ. ярлыками антипаттернов) — всем трём дистракторам даны свои ';'-перечни практик + свой список 'Антипаттерны:' с правдоподобными англ. ярлыками (Unmeasured Code / Manual Regression / Living Document и т.д.). SEMI_YES={35,40}; Q31 A/D и Q38 D избавлены от лишних ';'. Пост-гейт фикс: Q35 A разбит на 2 предложения (sentence_count max-min был 2). Зона Q31-Q40 skel-HARD=0; file-hard 13->4 (остаток — зона c5 Q41-Q45); stamp mean CV 0.566->0.236, disMean/corLen 0.35->0.69.",
   "notes_chunk5": "c5 (Q41-Q45, 15 дистракторов подняты): blind-ревьюер 5/5 semantic-verdict. Батчевый FORM-TELL 'КАПС-акценты только у correct' (Q41 РЕЗУЛЬТАТ/ПОВЕДЕНИЕ, Q42 CONSUMER/PROVIDER, Q45 ДРУГИХ/РЕАЛЬНЫМИ) — вылечен зеркалированием капс-акцентов в дистракторы (ЛЮБЫМ/БЕЗ/ВСЕГДА, НЕЗАВИСИМО/PROVIDER'у/CONSUMER'а, ВСЕ/ВСЕХ/СОБСТВЕННУЮ/ОТДЕЛЬНОГО). DUP Q41 B<->C (Spy='искусственный без логики' в двух вариантах) — из B убран Spy, заменён на Dummy-вырожденный-случай. DUP Q45 B <-> Q42 C (docker-compose-всё-живьём межвопросно) — Q45 B переведён на Kubernetes-стенд. CAR Q43 A ('ровно 2000/150/15') — одет в правдоподобный механизм: нормативные 70/20/10 из гайдлайна Google с CI-квотами на доли слоёв. Q44 паритет скобочных перечислений добавлен во все дистракторы. SEMI_YES={41,44}; Q44 A/C переведены с btick- на prose-зачин (correct - prose). Файл целиком: skel-HARD 31->0, stamp mean CV 0.566->0.191, disMean/corLen 0.35->0.74. Остаток: POS (SEQ=45), FINAL.",
+  "notes_pos_final": "POS: BASE-паттерн разорвал ABCD-цикл (SEQ 45->2, moved 34, dist A12/B11/C11/D11, max run 2), только label/order, correct-тексты байт-в-байт. FINAL: 36 length-boost комма-клауз на богатейший дистрактор correct-longest блоков (LONGEST 0.578->0.089, AVG 1.195->1.058, STYLE 0.6->0.133) + 8 paren-глосс внутри клауз (DETAIL 0.467->0.311) + 10 хвостовых расширений кратчайших опций в худших ratio-блоках (worst 3.0->2.5). RATIO 2.5 — принятое исключение (compact-опция ~55-65% в каждом блоке by design). Известные ограничения (correct неприкосновенен): Q3 «Брайан Маринг» (правильно Марик) — см. freshness-сайдкар. Все прочие метрики батареи PASS; skel-HARD 0 по всему файлу.",
   "records": [
     {
       "q_number": 1,
