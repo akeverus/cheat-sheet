@@ -305,7 +305,7 @@ Priority =
 | 9 | `authentication-authorization-patterns` | security | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (3db01537): 150 raised за 5 чанков + POS; blind 45/45; hard 43→0/45, LONGEST .96→.31, AVG 1.89→1.1, STYLE .97→.35, DETAIL .98→.13, SEQ 45→2, stamp OK; RATIO 3.1 accepted exception |
 | 10 | `hexagonal-architecture` | architecture | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (18e364f3): 135 raised за 5 чанков + POS; blind 45/45; hard 35→0/45, LONGEST .93→.18, AVG 2.26→1.02, STYLE .96→.19, DETAIL .73→.24, SEQ 45→2, stamp CV .53→.20; RATIO 2.29 accepted exception (анти-штамп компакт) |
 | 11 | `kotlin` | kotlin | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE: c1-c5 135 raised (blind 45/45), POS SEQ 45→2 (moved 34), FINAL: LONGEST 0.911→0.089, STYLE 0.922→0.141, skel hard 36→0, stamp CV 0.306→0.223; 2 documented-exception FAIL (RATIO 3.12 anti-stamp, DUP_NGRAMS 12 каталог-клоны Q21/Q43); +freshness-сайдкар |
-| 12 | `owasp-top10` | security | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1-c4 Q1-Q40 (120 raised, blind 40/40; c4: CAR×5/DUP×2/MULTI×3, кросс-вопросный TLS-дубль Q33/Q34 снят, «НЕ …»-оговорка и цитатные зачины зеркалированы); зона Q1-Q40 hard=0 (файл 41→8); осталось c5 Q41-Q45 + POS + FINAL(+freshness) |
+| 12 | `owasp-top10` | security | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1-c5 Q1-Q45 (135 raised, blind 45/45; c5: BSM×2/DUP×1/CAR×1 + FORM-TELL danger-фрейм Q43 зеркалирован; добивка 3 унаследованных skel-HARD Q12/Q16/Q23) — файл skel hard 41→0, stamp CV 0.19, disMean/corLen 0.77; осталось POS (SEQ=45) + FINAL (+freshness) |
 | 13 | `test-strategies` | testing | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 14 | `tls-ssl` | security | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 15 | `unit-testing` | testing | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -1179,3 +1179,11 @@ Known factually wrong correct answers: 0
 - FORM-TELL: оговорка «НЕ …» из correct Q31 зеркалирована во все опции; цитатные тезисы-зачины в Q32; коды A10:2021 дистракторам Q33.
 - Гейты: schema OK, зона Q1-Q40 hard=0 (файл 41→8), stamp CV 0.325→0.241, disMean/corLen 0.62→0.72.
 - Остаток: c5 (Q41-Q45) + POS (SEQ=45) + FINAL (+freshness-сайдкар).
+### owasp-top10 — R8 c5 (Q41-Q45) — 2026-07-12
+
+- 15 дистракторов подняты до скелета correct (Q41 A, Q42 B, Q43 C, Q44 D, Q45 A — corrects не тронуты).
+- Blind review: 5/5, флаги вылечены до записи: Q42A BSM (внутренне противоречивая «XXE-в-JSON» заменена на реальное заблуждение «JAXP на Java 9+ безопасен по умолчанию: `FEATURE_SECURE_PROCESSING` отключает внешние сущности»); Q43 FORM-TELL на correct — danger-фрейм «Загрузка файлов опасна … (список угроз)» зеркалирован во все четыре опции; Q44A swap Logback↔Log4j2 оставлен с настоящим CVE-2021-44228 (убран тел по номеру); Q44 B/C DUP разведён на scope-denial vs «formatMsgNoLookups=true — полное решение» (реальный флаг, ложная полнота — CVE-2021-45046 показал обход); Q45D CAR «заморозить ключ» → механизм миграционного риска ротации.
+- Добивка 3 унаследованных skel-HARD вне зоны (телы указывали на дистракторы, не на correct): Q12C и Q23B — btick-зачин, Q16B — `DFD` (code_bucket 0→1).
+- Гейты: schema OK; skel hard **41→0** (весь файл чист); stamp mean CV 0.568→0.19; disMean/corLen 0.34→0.77.
+- Остаток: POS (SEQ=45, ABCD-цикл) + FINAL (battery vs baseline + freshness-сайдкар, TEMPORAL=21).
+
