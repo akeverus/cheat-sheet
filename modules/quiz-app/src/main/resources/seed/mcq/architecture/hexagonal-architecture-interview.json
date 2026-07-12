@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Composition Root размещают в каждом use-case-классе через `new SendMoneyService(...)` ради прозрачности.",
+              "text": "`Composition Root` размещают в каждом use-case: конструктор сам делает `new AccountPersistenceAdapter(...)` — прозрачно видно, из чего собран сценарий, и `@Configuration`-класс не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда DI-сборка размазана по ядру, и поменять реализацию порта нельзя без правки use-case — теряется смысл инверсии.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "DI делают через `ApplicationContext.getBean()` внутри use-case'а — это «Service Locator pattern».",
+              "text": "`Composition Root` — это сам `ApplicationContext`: `SendMoneyService` запрашивает `LoadAccountPort`, `AccountLock` и `MoneyTransferProperties` через `getBean()`, отдельный `@Configuration` с `@Bean`-фабриками не нужен — контейнер уже играет роль корня сборки графа.",
               "correct": false,
               "sections": {
                 "what_actually": "Service Locator скрывает зависимости (их нет в конструкторе), и статически проверить полноту графа невозможно.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Каждый адаптер сам резолвит свои зависимости через `@Autowired ApplicationContext`.",
+              "text": "`Composition Root` дробят по адаптерам: каждый модуль сам регистрирует свои бины и порты, и отдельный модуль `app` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Это та же ошибка Service Locator, плюс адаптеры берут на себя ответственность DI, которой у них быть не должно.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Один модуль на весь проект, а гексагон строится только через пакеты — multi-module это overkill.",
+              "text": "Один модуль на весь проект: гексагон держится на пакетах и `ArchUnit`-правилах, а multi-module — overkill. Импорт Spring из `domain/`-пакета не пройдёт и так: правила видимости пакетов Java его не пропустят.",
               "correct": false,
               "sections": {
                 "what_actually": "Пакеты не enforce'ят зависимости: `domain`-пакет может импортировать `org.springframework.web` без ошибки компиляции.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`domain/` должен зависеть от `adapter-web`/`-persistence`, потому что они «снаружи».",
+              "text": "Зависимости направляют наружу: `domain` подключает `adapter-web` и `adapter-persistence` как `implementation project(...)`, ведь доменные методы вызывают репозитории. Тогда `application` видит `domain`, а `app` собирает только `spring-boot-starter` и `Composition Root`.",
               "correct": false,
               "sections": {
                 "what_actually": "Это перевёрнутые зависимости: гексагон требует обратного — адаптеры зависят от `application`, который зависит от `domain`.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Один модуль на адаптер и отдельный модуль на JPA-сущности, вынесенные из mapper'а.",
+              "text": "Один модуль на адаптер плюс отдельный модуль JPA-сущностей: их выносят из адаптера, чтобы `domain` мог читать `Entity`-классы напрямую.",
               "correct": false,
               "sections": {
                 "what_actually": "Это произвольная декомпозиция: mapper и адаптер должны быть в одном модуле, иначе появятся циклы или утечка JPA-Entity в чужой модуль.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Hexagonal и DDD взаимоисключающи: либо гексагон, либо DDD.",
+              "text": "Подходы конкурируют: агрегаты гексагон заменяет `Use Case`-классами; `Repository` DDD противоречит портам; `Domain Event` дублирует адаптерные сообщения — поэтому на проект выбирают что-то одно.",
               "correct": false,
               "sections": {
                 "what_actually": "Это естественные партнёры: гексагон — структурный скелет, DDD — тактика и стратегия моделирования домена.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Все DDD-классы (Aggregate, Repository, Service) идут в `infrastructure/`.",
+              "text": "Тактические паттерны DDD — инфраструктурные: `Aggregate` — в `infrastructure/model/`; `Repository` — в `infrastructure/dao/`; `Domain Service` — в `infrastructure/logic/`; в `domain/` остаются только интерфейсы и Value Objects, как того требует инверсия зависимостей и чистота ядра.",
               "correct": false,
               "sections": {
                 "what_actually": "Это анти-DDD: агрегат — ядро домена, а не инфраструктура; такая структура воспроизводит анемичную модель под видом «гексагона».",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Bounded Context обязательно реализуется как отдельный микросервис; внутри монолита границы не нужны.",
+              "text": "Bounded Context реализуют отдельным микросервисом; внутри монолита контексты не выделяют — там границы даёт сам гексагон (`port`/`adapter`), и второй уровень изоляции избыточен.",
               "correct": false,
               "sections": {
                 "what_actually": "BC — логическая граница: это может быть пакет/модуль в монолите или отдельный сервис; гексагон применим к обоим.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Aggregates в `application/`, Value Objects в `domain/`, а Domain Services — в `infrastructure/`.",
+              "text": "Aggregates кладут в `application/` (их вызывают use-case'ы); Value Objects — в `domain/`; Domain Services — в `infrastructure/` рядом с `@Service`-бинами, потому что они, как и адаптеры, обслуживают несколько агрегатов сразу.",
               "correct": false,
               "sections": {
                 "what_actually": "Все три — части доменного ядра и должны жить в `domain/` без аннотаций фреймворков.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Value Objects в `domain/`, а агрегаты — это JPA-сущности в `adapter/out/persistence/`.",
+              "text": "Value Objects живут в `domain/`; агрегаты же — это JPA-сущности в `adapter/out/persistence/`: состояние всё равно хранится в БД, и дублировать его доменным классом незачем.",
               "correct": false,
               "sections": {
                 "what_actually": "Агрегат — ядро домена, а JPA-Entity — представление в БД; объединение в одном классе ломает изоляцию.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Domain Service обязательно `@Service`, потому что иначе Spring не сможет внедрить зависимости.",
+              "text": "Domain Service помечают `@Service` и держат в `application/`; так Spring внедряет его в use-case наравне с портами, а чистым остаётся только пакет `domain/model/`.",
               "correct": false,
               "sections": {
                 "what_actually": "Domain Service — чистая Java-логика без зависимостей на инфраструктуру; если ему нужны порты, это уже Application Service.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Application Service` и `Domain Service` — синонимы, разница только в naming convention.",
+              "text": "`Application Service` и `Domain Service` — синонимы разных школ: первый термин из `Spring`-мира, второй — из DDD-книг; оба означают `@Service`-класс со сценарием (`SendMoneyService`, `PricingService`), и различать их на практике не требуется — оба слоя оркеструют домен.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные роли: Application оркеструет use-case с портами и транзакциями, Domain содержит чистую логику без инфраструктуры.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Domain Service` всегда `@Transactional`, а `Application Service` — нет.",
+              "text": "`Domain Service` всегда несёт `@Transactional` — он меняет агрегаты; `Application Service` транзакций не открывает, потому что лишь маршрутизирует вызовы к домену и портам.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: транзакции — application concern, и `@Transactional` ставят на Application Service, а не на доменный.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Любая логика с участием Aggregate автоматически становится `Domain Service`.",
+              "text": "`Domain Service` — это любая логика с участием агрегата; выделять её из use-case в отдельный класс не нужно, достаточно факта работы с `Aggregate`.",
               "correct": false,
               "sections": {
                 "what_actually": "Логика, работающая с агрегатом, чаще всего принадлежит самому агрегату; Domain Service нужен лишь тогда, когда логика не влезает в один агрегат.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Публиковать события напрямую из агрегата через static factory или Singleton publisher.",
+              "text": "События публикуют прямо из агрегата: статический `DomainEvents.raise(new OrderPlaced(...))` внутри `place()` шлёт событие сразу; use-case и порт-посредник не нужны, а доставка гарантируется синхронностью вызова.",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда агрегат знает про инфраструктуру (DIP нарушен), и его тестируемость гибнет.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Использовать `@DomainEvents` Spring Data в репозитории — это удобная автомагия.",
+              "text": "Использовать `@DomainEvents` из `Spring Data`: репозиторий сам публикует события при `save()`, а `@TransactionalEventListener` доставит их и внешним консьюмерам в `Kafka` без отдельного кода; явные `pullDomainEvents()` и порт `DomainEventPublisher` — boilerplate поверх готового механизма.",
               "correct": false,
               "sections": {
                 "what_actually": "Это скрывает важную часть бизнес-логики: события публикуются за пределами транзакции use-case и гоняются с retry.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать `ApplicationEventPublisher` Spring напрямую внутри агрегата.",
+              "text": "Внедрять `ApplicationEventPublisher` прямо в агрегат; событие уходит в момент изменения состояния, слушатели Spring его ловят, и промежуточный порт не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда домен зависит от Spring, и тестировать агрегат без контекста невозможно.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Только `@SpringBootTest` с Testcontainers — единственный надёжный способ.",
+              "text": "Единый уровень: все сценарии гоняют через `@SpringBootTest` + `Testcontainers` (`PostgreSQL`, `Kafka`) — так тесты проверяют реальную сборку, а не моки `Mockito`. Пирамида из `JUnit`-юнитов даёт ложную уверенность: зелёный домен не значит зелёный прод.",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда 100% тестов медленные, запуск занимает минуты, а изоляция домена не проверяется вовсе.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Покрывать всё E2E-тестами — пирамида не нужна.",
+              "text": "Перевёрнутая пирамида: E2E ~50% (`RestAssured` + реальная БД), интеграционные ~30%, юниты ~20% — верхние тесты проверяют все слои сразу, а мелкие юниты лишь дублируют их assert'ы.",
               "correct": false,
               "sections": {
                 "what_actually": "Это ice-cream cone antipattern: хрупкий, медленный suite, который маскирует баги.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Тестировать только адаптеры — use-case это «просто оркестрация».",
+              "text": "Тестировать только адаптеры: use-case — тонкая оркестрация, его покрывает `@WebMvcTest` транзитивно, а отдельные юнит-тесты дублируют проверки.",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда бизнес-логика оркестрации (порядок вызовов, ветки happy/failure) остаётся непокрытой.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Использовать `@SpringBootTest` + `@MockBean` для каждого зависимого порта.",
+              "text": "Поднимать `@SpringBootTest` с `@MockBean` на каждый порт (`LoadAccountPort`, `AccountLock`, `UpdateAccountStatePort`); контекст гарантирует, что `SendMoneyService` собран как в проде, а моки Spring интегрированы в DI — надёжнее ручного `new`.",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда поднимается Spring-контекст ради unit-теста use-case, и тесты идут секунды вместо миллисекунд.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Использовать реальные адаптеры с in-memory БД ради скорости.",
+              "text": "Брать реальные адаптеры с in-memory БД (`H2`); скорость сопоставима с моками, зато поведение персистентности настоящее, и регрессии маппинга ловятся в тех же тестах.",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда тест проверяет адаптер и БД, а не логику use-case — смешение уровней пирамиды.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Применять `PowerMock` для static-моков инфраструктуры.",
+              "text": "Применять `PowerMock` для static-моков инфраструктуры; выделять порты ради тестируемости не обязательно — статические вызовы (`LocalDateTime.now()`, фабрики клиентов) подменяются точечно, и use-case тестируется без правки его дизайна.",
               "correct": false,
               "sections": {
                 "what_actually": "Это тяжёлый хак с byte code manipulation, а сама потребность в static-моках — признак ошибки дизайна.",
@@ -1704,7 +1704,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Использовать `@SpringBootTest` для всех адаптеров ради consistency.",
+              "text": "Единообразие важнее скорости: все адаптеры гоняют через `@SpringBootTest`; полный контекст ловит ошибки конфигурации, которые `@WebMvcTest`-срезы не видят, а время старта амортизируется кешем контекста Spring.",
               "correct": false,
               "sections": {
                 "what_actually": "Полный контекст ради одного контроллера — это медленно и хрупко; адаптер нужно тестировать срезом.",
@@ -1716,7 +1716,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Полностью мокать БД через `@MockBean JpaRepository`.",
+              "text": "БД мокают целиком: `@MockBean AccountJpaRepository` и `when(...).thenReturn(...)` заменяют `Testcontainers`; `SQL`, маппинг `Entity → Domain` и схему проверять отдельно незачем — это зона ответственности `Spring Data`, а не адаптера.",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда маппинг JPA и реальные SQL-запросы не проверяются, и баги маппинга уходят в прод.",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать H2 in-memory для всех integration-тестов.",
+              "text": "Все integration-тесты ведут на `H2` in-memory; старт мгновенный, а диалектные различия с продовым `PostgreSQL` нивелирует `JPA`.",
               "correct": false,
               "sections": {
                 "what_actually": "H2 отличается диалектом от PostgreSQL, и баги jsonb/array всплывают только в проде.",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Contract test проверяет HTTP API между микросервисами через Pact.",
+              "text": "Contract testing — это про границы микросервисов: `Pact` фиксирует HTTP-контракт между consumer и provider и ломает сборку при несовместимости; внутри одного приложения контрактов нет — порт и его реализация компилируются вместе, расхождение сигнатур поймает компилятор, а поведение проверяют обычные юнит-тесты.",
               "correct": false,
               "sections": {
                 "what_actually": "Это external contract testing между сервисами; port-level — внутренний контракт между портом и его реализациями.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Достаточно дублировать тесты в каждом адаптере вручную.",
+              "text": "Каждой реализации порта пишут собственный набор тестов; дублирование осознанное — у JPA-версии и in-memory-версии разные сценарии отказа, и общий abstract-класс их бы усреднил.",
               "correct": false,
               "sections": {
                 "what_actually": "Тогда тесты расходятся (drift), и баг fake не воспроизводится в real, потому что наборы кейсов разные.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Достаточно мокать порт через `Mockito` — fake и контракт не нужны.",
+              "text": "Порт достаточно мокать через `Mockito`; fake-реализация и контрактный abstract-класс добавляют слой, который проверяет сам себя, а не продовый код адаптера.",
               "correct": false,
               "sections": {
                 "what_actually": "Interaction-тесты на моках хрупки и не проверяют реального состояния; они не гарантируют, что fake совпадает с адаптером.",
