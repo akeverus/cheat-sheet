@@ -171,6 +171,16 @@ light/dark × **вьюпорты** 375 / 768 / 1280 / 1440 / 1728 / 1920 / 2560 
   на design-toggle: title называет «Instrument» — фикс R0.27), back-to-top после
   1.5 экрана (уважает data-motion), kbd-help по `?`, noscript-алерт (при выкл. JS).
 - 375: нав-строка без переполнения (drawer нет — переносы).
+- **Mobile-375 baseline (R0.39, GET / active-MCQ с progress-полосой, оба дизайна
+  light; layout БИТ-ИДЕНТИЧЕН между дизайнами, reflow чист 375/375):**
+  - HDR-1 compact-clamp ЖИВ: masthead-title **18.75px** (=5vw@375, в клампе
+    1.15–1.35rem) при вопросе **27px** → ratio 1.44 ≥ 1.25;
+  - :has(.ed-masthead-progress)-уплотнение ЖИВО: inner padding `8px 16px`,
+    row-gap 4px; kicker 10.88px;
+  - нав одной строкой (3 ссылки, y=93), тогглы в верхнем ряду (136×40@223,8);
+  - опция p12 16px; submit full-width 327×48 (≥44px touch);
+  - instrument-порт focus/shell обязан СОХРАНИТЬ эти мобильные числа
+    (кламп/уплотнение — прод-контракт, тест пиннит строки).
 - **МЕТОДОЛОГИЯ (каверза R0.35):** у `.ed-nav-link`/тогглов `transition: color .15s` —
   после флипа data-theme/data-design ждать ≥400ms до чтения computed-цветов,
   иначе ложные диффы (значения замораживаются на прежней теме). Стабильные

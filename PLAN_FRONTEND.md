@@ -1335,3 +1335,8 @@ Dirty changes created by loop: 0
 
 - **Сделано:** computed-baseline GET / @1280 (active-MCQ, 4 опции, 4 состояния): вопрос 48px serif, опция-карты (r8 editorial / r10 instrument), submit, progress → PARITY_QA_CHECKLIST §2/focus. Находка: editorial submit «приклеен» к карте (radius 0 0 8 8), instrument token-only скругляет полностью → композиционный гибрид, при порте focus решить по макету (submit отделён). Не сматчились: topic-badge/session-counter/details (не в этом состоянии). Reflow чист. Снятые baseline: error/shell/settings/stats/focus — ВСЁ доступное без сессии.
 - **Блокер:** base.css dirty 18-й тик. **Следующий тик:** проверка разблокировки → Фаза E error C7-i. Если dirty — mobile-380 baseline (focus+shell @375, где живут compact-clamp HDR-1 и переносы нав) ЛИБО чистка PIXEL_QA_MATRIX (сведение baseline-статусов в матрицу).
+
+### R0.39 (2026-07-12) — Mobile-375 baseline: HDR-1 и :has(progress)-уплотнение подтверждены живьём
+
+- **Сделано:** GET / @375 (active-MCQ, оба дизайна light): masthead-title 18.75px vs вопрос 27px (ratio 1.44 — HDR-1 работает), уплотнение шапки при активной сессии (p8×16/row-gap 4), нав одной строкой, submit 327×48, reflow чист. Layout бит-идентичен между дизайнами → мобильная вёрстка при порте не трогается; числа вписаны в PARITY_QA_CHECKLIST §2/shell как обязательные к сохранению (контракт-тест пиннит строки).
+- **Блокер:** base.css dirty 19-й тик. **Следующий тик:** проверка разблокировки → Фаза E error C7-i. Если dirty — сведение baseline-статусов в PIXEL_QA_MATRIX (кол-во снятых поверхностей/состояний, что осталось на parity) — завершающая бухгалтерия предподготовки.
