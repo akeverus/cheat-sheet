@@ -28,7 +28,7 @@
 
 | Mockup (Instrument) | Прод-хук (сохранить) | Действие / риск |
 |---|---|---|
-| `.site-head` sticky, `.brand` + point-mark | `.ed-masthead` + `.ed-masthead-brand` (kicker «Cheat·Sheet» + h1) | Restyle токенами; sticky-решение канона макета (cr.2) сверить с прод-CSS (base.css dirty — на порте). h1-в-шапке сохранить (заголовок страницы = бренд-блок, контракт вызовов). |
+| `.site-head` sticky, `.brand` + point-mark | `.ed-masthead` + `.ed-masthead-brand` (kicker «Cheat·Sheet» + h1) | Restyle токенами. **Sticky НЕ портировать — РЕШЕНО R0.34:** прод-контракт-тест (WIP TemplateFragmentContractTest) ассертит `doesNotContain(".ed-masthead { position: sticky")`, обоснование FNO-риск; макетное решение C3 (sticky+solid) остаётся макетным. h1-в-шапке сохранить (заголовок страницы = бренд-блок, контракт вызовов). |
 | `.site-nav` (3 ссылки, `aria-current`) | `.ed-nav` (те же 3, `is-active` + aria-current) | Совпадает — только токены. |
 | `.nav-menu-btn` + мобильный drawer (`data-open`) | **нет** — прод-нав всегда видима (3 ссылки переносятся) | **НЕ портировать drawer**: 3 пункта не требуют бургера; прод-паттерн проще и без JS. Мобильную вёрстку нав-строки проверить на parity (375px). |
 | `.icon-btn#kbd-help-open` (?-справка в шапке) | app.js-модалка `.kbd-help-overlay` (хоткей `?`), кнопки в шапке нет | Кнопку-триггер в шапку НЕ добавлять в шаг 1 (открытие по `?` — существующий гейт-паттерн юзера); видимый триггер = кандидат шага 2 (правка header.html + app.js). |
@@ -52,7 +52,15 @@
 4. **4 inline-скрипта header.html** (theme/design/layout/back-to-top) — контракт
    событий `*change` и PE-паттерн hidden→reveal сохранить дословно.
 5. **Футер** — открытый вопрос пользователю (Фаза G), в порт не входит.
-6. **Sticky-шапка** — сверить прод-состояние на порте (base.css dirty).
+6. **Sticky-шапка — ЗАПРЕЩЕНА, вопрос закрыт (R0.34):** контракт-тест прода
+   явно банит `position: sticky` у `.ed-masthead` (FNO-риск) и пиннит точные
+   строки base.css → инструмент-порт shell не меняет позиционирование шапки;
+   после вставки CSS — обязательный прогон TemplateFragmentContractTest
+   (НЕ при живом bootRun — wedge).
+7. **Уплотнение chrome при активной сессии** (WIP: `.focus-page
+   .ed-masthead:has(.ed-masthead-progress)` + compact-clamp тайтла ≤600, HDR-1) —
+   instrument-порт shell/focus НЕ перебивает эти правила (не задавать font-size
+   тайтла шапки на focus-page и не трогать padding-block masthead-inner).
 
 ## Готовность к порту
 

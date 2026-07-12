@@ -44,6 +44,22 @@ light/dark × **вьюпорты** 375 / 768 / 1280 / 1440 / 1728 / 1920 / 2560 
 - Доезд: прямой GET несуществующего пути (404); 403 — протухший _csrf POST.
 - Паритет: левая композиция (instrument) vs центр (editorial-контроль); ghost-номер
   clamp; details открыт/закрыт; actions flex-start; 320 без переполнения clamp-номера.
+- **Численный baseline ДО порта (R0.34, 404 @1280, живой инстанс):**
+  - *editorial light (контроль — обязан остаться бит-в-бит):* card center/center,
+    eyebrow uppercase `rgb(201,100,66)` 12px JetBrains Mono, code 64px/700/lh64
+    `rgb(104,103,96)` Lora, title 36px/600/max-width none Lora `rgb(20,20,19)`,
+    actions center gap 12, masthead relative `rgb(250,249,245)` border
+    `rgb(209,207,197)`, bodyBg `rgb(250,249,245)`, reflow 1280/1280.
+  - *editorial dark:* bodyBg `rgb(38,38,36)`, code `rgb(162,159,148)`, title
+    `rgb(240,238,230)`, eyebrow `rgb(217,119,87)`, masthead border `rgb(62,60,54)`.
+  - *instrument token-only ДО порта (light):* bodyBg `oklch(0.985 0.003 262)`,
+    eyebrow uppercase teal `oklch(0.435 0.105 205)`, code 64px/700 Newsreader
+    `oklch(0.5 0.012 264)`, title 36px/600/none, card center/center, actions center.
+  - *Ожидаемая дельта ПОСЛЕ C7-i (только instrument):* card → flex-start/left;
+    eyebrow → lowercase + text-tertiary; code → weight 500, size clamp(4rem,
+    2rem+12vw, 8.5rem) = 136px @1280, lh 0.95, цвет --color-border-primary;
+    title → weight 500, max-width 20ch; actions → flex-start. Editorial-числа
+    выше — НЕ меняются ни на бит.
 
 ### session-summary (черновик C6-i)
 - Доезд: настроить сессию EXAM (малое N) → отвечать → **POST /finish с _csrf в теле**
