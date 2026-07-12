@@ -307,7 +307,7 @@ Priority =
 | 11 | `kotlin` | kotlin | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE: c1-c5 135 raised (blind 45/45), POS SEQ 45→2 (moved 34), FINAL: LONGEST 0.911→0.089, STYLE 0.922→0.141, skel hard 36→0, stamp CV 0.306→0.223; 2 documented-exception FAIL (RATIO 3.12 anti-stamp, DUP_NGRAMS 12 каталог-клоны Q21/Q43); +freshness-сайдкар |
 | 12 | `owasp-top10` | security | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE: c1-c5 135 raised (blind 45/45) + POS (SEQ 45→2, 12/11/11/11) + FINAL (freshness-сайдкар, polish 30 length-boost + 19 detail-флипов). Battery: LONGEST 1.0→0.022, AVG 2.271→1.032, DETAIL 0.933→0.267, STYLE 1.0→0.033, skel hard 41→0, stamp CV 0.568→0.226, disMean/corLen 0.34→0.83. Accepted exc: RATIO 2.43 (compact-by-design), DUP 7 (in-block зеркала Q6/Q17/Q24). Known limitation: Q3 «3 survey-категории» vs официально 2 (fact-fix вне мандата R8) |
 | 13 | `test-strategies` | testing | 45 | 45 | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ✅* | ✅ | R8 COMPLETE (c1-c5 132 дистрактора + POS SEQ 45→2 + FINAL 46 boost-клауз): blind 44/44, skel-HARD 31→0, LONGEST 0.956→0.089, STYLE 0.967→0.133, CV 0.566→0.191; RATIO 2.5 accepted-exc; freshness-сайдкар создан |
-| 14 | `tls-ssl` | security | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
+| 14 | `tls-ssl` | security | 45 | 45 | ◐ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | R8 c1 (Q1-Q10, 30 дистракторов, blind 10/10): file-hard 42→34, зона Q1-Q10 HARD=0; вылечены CAR Q2/BSM Q6×2/Q8/Q9; известные ограничения correct: Q3 CIA-ярлык, Q8 риски не покрыты; остаток c2-c5, POS (SEQ=45), FINAL |
 | 15 | `unit-testing` | testing | 45 | 45 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 16 | `spring-security` | spring | 46 | 44 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
 | 17 | `cassandra` | databases | 44 | 44 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |  |
@@ -1230,3 +1230,10 @@ Known factually wrong correct answers: 0
 - FINAL: 36 length-boost клауз (LONGEST 0.578→0.089, STYLE →0.133) + 8 paren-глосс (DETAIL →0.311) + 10 хвостовых расширений минимумов (worst RATIO 3.0→2.5, принятое исключение — compact-by-design).
 - Freshness-сайдкар создан (9 version-claims, вкл. Q3 «Маринг»→Марик known limitation и @MockBean→@MockitoBean с Boot 3.4).
 - Батарея: все метрики PASS кроме RATIO (accepted); сайдкар ревью COMPLETE (44 записи). Row 13 закрыт ✅.
+### R8 tls-ssl c1 (Q1-Q10) — 2026-07-12
+
+- Baseline файла: skel-HARD 42, stamp CV 0.474, battery LONGEST 0.844 / DETAIL 0.956 / SEQ 45 / STYLE 0.922, TEMPORAL 39 (версионно-тяжёлая тема — понадобится подробный freshness-сайдкар).
+- 30 дистракторов Q1-Q10 подняты до скелета correct (SEMI_YES={2,4}); blind-ревью 10/10.
+- Вылечено: CAR Q2 («TLS платный») → маркетинговый миф сертификатов; BSM Q6 C/D → False Start-misapply и RSA-key-exchange-путаница; BSM Q8 A → TCP Fast Open-путаница; BSM Q9 B → «пропускается только проверка сертификата»; near-CAR Q9 D смягчён.
+- Известные ограничения correct (неприкосновенны): Q3 «триада CIA» с Authentication вместо Availability; Q8 не отвечает на «риски» из стема — оба в сайдкаре как кандидаты на отдельный fact-fix.
+- Зона Q1-Q10 HARD=0; file-hard 42→34. Остаток: c2 (Q11-Q20), c3, c4, c5, POS, FINAL.
