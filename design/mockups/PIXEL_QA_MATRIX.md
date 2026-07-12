@@ -21,7 +21,7 @@
 
 | Surface | detector | AA | full-width | a11y | states | parity | contract | no-js/print | Фаза |
 |---|---|---|---|---|---|---|---|---|---|
-| shell (chrome) | PASS | PASS✧ | PASS* | PASS✧ | PASS | TODO▲ | TODO | RECHECK | D done; E BLOCKED (baseline R0.35+R0.39) |
+| shell (chrome) | PASS | PASS✧ | PASS* | PASS✧ | PASS | PASS(R0.53) | PENDING-TEST¤ | RECHECK | **E DONE шаг 1 (C2-i применён, v=79)**; NAMES-микрофикс header.html — след. тик; drawer/футер/?-кнопка = решения R0.26 |
 | focus-training | PASS | PASS‡ | PASS* | PASS | PASS(core)† | PASS(active, R0.49) | PENDING-TEST¤ | PASS(static R0.32) | **E DONE шаг 1 (C1-i применён, v=75)**; flashcard/empty/result-инъекции — parity-фаза |
 | result | PASS | PASS‡ | PASS* | PASS | PASS(core)§ | APPLIED▽(R0.50) | PENDING-TEST¤ | RECHECK | **E DONE шаг 1 (C3-i применён, v=76)**; визуальный паритет (нужен ответ) — parity-фаза |
 | session-summary | PASS | PASS | PASS* | PASS | PASS | APPLIED▽(R0.47) | PENDING-TEST¤ | TODO | **E DONE шаг 1 (C6-i применён, v=74)**; визуальный паритет + шаг 2 (headline/grid) — parity-фаза |

@@ -1406,3 +1406,12 @@ Dirty changes created by loop: 0
 - Отложено ОСОЗНАННО (не instrument-scoped): карточная сетка осей + switch-тогглы = структурный вид всех дизайнов (шаг 2/Фаза G, отдельное решение); вертикальный tablist = шаг 2 (шаблон+app.js).
 - Леджеры: PIXEL_QA_MATRIX settings → E DONE шаг 1 / parity PASS(R0.52) / contract PENDING-TEST; CRITIQUE cr.49.
 - **Дальше:** ПОСЛЕДНИЙ порт Фазы E — shell (кандидат дельты: masthead-title 700→500, сверить с макетом shell.html; sticky ЗАПРЕЩЁН контракт-тестом; :has(progress)-уплотнение и HDR-1 clamp НЕ перебивать). После shell — прогон TemplateFragmentContractTest при первом окне без bootRun.
+
+### R0.53 (2026-07-12) — Фаза E: порт shell C2-i ПРИМЕНЁН (v=79) — ФАЗА E (шаг 1 CSS) ЗАКРЫТА 7/7
+- Collision guard чист; bootRun жив → контракт-тест PENDING (как у всех портов серии).
+- C2-i = 3 правила (вставка после shell-секции, перед FOCUS ~610): .ed-masthead-title medium (дельта 700→500 — instrument до порта брал `html[data-design] h1 {bold}`; editorial уже 500 через editorial-SIGNATURE h1..h6 medium — контроль НЕ тронут); .ed-nav-link lowercase (шёпот; mono-глифы равной ширины → геометрия nav неизменна, числа R0.39 валидны); .ed-theme-toggle:hover accent-strong border + transparent bg (ring «щелчок прибора», кроет все 3 тоггла).
+- НЕ перебиты (проверено): sticky-бан контракта (position relative), compact-clamp focus-page (0,3,1 задаёт только font-size), :has(progress)-уплотнение, HDR-1 mobile-clamp.
+- head.html base v78→79; live-синк; QA @1280 4 состояния settle 400ms + реальный hover тоггла (0.435 teal / bg transparent) + a11y-снапшот (nav lowercase живьём).
+- Урок инструментария: CSSStyleRule.cssRules существует в новом Chrome (nesting) → сканер стилей обязан проверять selectorText ПЕРЕД спуском в cssRules (иначе пустой результат).
+- Отложено по решениям R0.26: drawer, футер (вопрос юзеру, Фаза G), ?-кнопка в шапке, sticky (закрыт навсегда).
+- **Дальше:** (1) NAMES-микрофикс instrument в header.html (п.36 маппинга R0.26 — label дизайн-тоггла показывает сырой id «instrument»; header.html чист, 2 строки); (2) TemplateFragmentContractTest при первом окне без bootRun (закроет все 7 PENDING-TEST¤); (3) Фаза F parity: EXAM-сессия малым N → summary/result визуальный паритет.
