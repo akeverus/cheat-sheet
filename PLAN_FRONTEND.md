@@ -1667,3 +1667,8 @@ Dirty changes created by loop: 0
 
 - Windows High Contrast: (1) выбранный MCQ-вариант был неотличим (radio скрыт, state только цветом) — бейдж+рамка теперь Highlight/HighlightText; (2) confidence-btn.selected — так же; (3) прогресс-бар исчезал (background-only) — track очерчен CanvasText, fill Highlight.
 - Не-дефекты проверены и не тронуты (вкладки-underline, статус-лейблы вариантов, dimmed-opacity). Верификация: CSSOM v=89, все правила распарсены; HC-эмуляция тулингом недоступна. v-бамп 88→89, live-sync. Контракт-тест PENDING.
+
+### R0.94 (2026-07-12) — Target-size (2.5.8) на 375px: чисто; фикс невидимого фокуса в стек-таблице /stats (v=90)
+
+- Живой замер интерактивных целей на /, /stats, /settings: 0 провалов под 24px (AA); шапка 40px — осознанный компромисс. Ложные «провалы» th оказались sr-only-клипом стек-режима таблицы (≤760px).
+- Реальный дефект: сортируемые th (tabindex=0) в клипнутом thead = 5 невидимых фокус-стопов (2.4.7). Фикс: thead:focus-within разклипывается (skip-link паттерн); verified live (1px→246px→1px). v-бамп 89→90, live-sync. Контракт-тест PENDING.
