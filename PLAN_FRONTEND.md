@@ -1511,3 +1511,8 @@ Dirty changes created by loop: 0
 - Дефект: .settings-panel:focus{outline:none} (tabs-редизайн 0eb762a5) глушил клавиатурный фокус панели tabindex=0 — Tab из tablist приземлялся невидимо; правило избыточно для мыши. Удалено с комментарием; ринг вернулся через глобальный :focus-visible. QA реальным Tab: ринг 2px border-focus на панели.
 - Методика: script-focus после реального Tab наследует клавиатурную модальность; box-shadow с transition мерить после settle ~350ms (ложный минус select); элементы в скрытых панелях легитимно не фокусируемы.
 - **Дальше:** гейты прежние (window-тик + контракт-тест, EXAM, данные); режим поддержки.
+
+### R0.69 (2026-07-12) — Focus-visible свип / + /stats + flashcard: VERIFIED-CLEAN (0 правок)
+- Методика R0.68 на остальные read-only поверхности (instrument): MCQ-label :has-ринг живьём; submit disabled→enable по выбору радио (клиентски, без POST) → ринг; /stats: search/select shadow-focus, apply/экспандер/ссылки глобальный ринг, sortable th inset −2px; flashcard: reveal/summary ринг, code-copy в свёрнутом details легитимно не фокусируем (content-visibility-квирк задокументирован), после открытия — ринг.
+- error 404 покрыт архитектурно (нет outline:none-правил на его элементах). Итог размерности: единственный дефект был R0.68 (tabpanel), всё остальное чисто.
+- **Дальше:** гейты прежние (window-тик + контракт-тест, EXAM, данные); режим поддержки.
