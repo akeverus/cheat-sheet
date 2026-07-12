@@ -7,7 +7,10 @@
 | Черновик | Целевой файл | Куда вставлять | Блокер |
 |---|---|---|---|
 | ~~`error-instrument-base.css`~~ | base.css | **ПРИМЕНЁН R0.46** (после §C7, v=73; QA: дельта = прогноз бит-в-бит, editorial-контроль = baseline R0.34, 320 clamp 70.4px чисто) | — |
-| `session-summary-instrument-base.css` | `modules/quiz-app/src/main/resources/static/css/base.css` | СРАЗУ ПОСЛЕ общего блока §C6 (`html[data-design] .summary-page ...`, хвост ~1972) | разблокирован — применить следующим тиком |
+| ~~`session-summary-instrument-base.css`~~ | base.css | **ПРИМЕНЁН R0.47** (после §C6, v=74; QA: 9 правил распарсены, утечки на /stats нет — stat-item там = baseline R0.37; ВИЗУАЛЬНЫЙ паритет summary = parity-фаза, нужна сессия) | — |
+
+**Оба черновика применены — каталог port-drafts дальше живёт как журнал решений
+порта (таблица выше + секции решений + пересверки R0.29/R0.33).**
 
 ## error-instrument-base.css — решения порта (по PORT_MAPPING_error.md)
 

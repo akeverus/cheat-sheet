@@ -24,7 +24,7 @@
 | shell (chrome) | PASS | PASS✧ | PASS* | PASS✧ | PASS | TODO▲ | TODO | RECHECK | D done; E BLOCKED (baseline R0.35+R0.39) |
 | focus-training | PASS | PASS‡ | PASS* | PASS | PASS(core)† | TODO▲ | TODO | PASS(static R0.32) | D done; E BLOCKED (baseline R0.38+R0.39) |
 | result | PASS | PASS‡ | PASS* | PASS | PASS(core)§ | TODO▽ | TODO | RECHECK | D done; E BLOCKED (baseline требует сессии §4) |
-| session-summary | PASS | PASS | PASS* | PASS | PASS | TODO▽ | TODO | TODO | D done; черновик C6-i READY (baseline требует сессии §4) |
+| session-summary | PASS | PASS | PASS* | PASS | PASS | APPLIED▽(R0.47) | PENDING-TEST¤ | TODO | **E DONE шаг 1 (C6-i применён, v=74)**; визуальный паритет + шаг 2 (headline/grid) — parity-фаза |
 | settings | PASS | PASS | PASS* | PASS✦ | PASS | TODO▲ | TODO | PASS(static R0.32) | D done; E BLOCKED (baseline R0.36) |
 | stats | PASS | PASS♦ | PASS* | PASS | PASS(core)◊ | TODO▲ | TODO | PASS(static R0.32) | D done; E BLOCKED (baseline R0.37) |
 | error | PASS | PASS | PASS* | PASS | PASS | **PASS(R0.46)** | PENDING-TEST¤ | PASS(static R0.32) | **E DONE (C7-i применён, v=73)** |

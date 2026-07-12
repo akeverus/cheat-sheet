@@ -1371,3 +1371,8 @@ Dirty changes created by loop: 0
 - **Разблокировка:** параллельная сессия закоммитила WIP (68444a1b+0f66cadf) — дерево чисто после 25 тиков блокера.
 - **Сделано (по PARITY_QA_CHECKLIST §3):** C7-i вставлен в base.css после §C7; head.html base v72→73; live-синк в build/resources; QA на живом инстансе: дельта = прогноз R0.34 бит-в-бит (ghost 136px/500/border-primary @1280, card flex-start/left, eyebrow lowercase/tertiary, title 500/20ch, actions flex-start; dark корректен), editorial-контроль = baseline бит-в-бит, 320-reflow чист (clamp 70.4px). Черновик удалён, матрица: error parity PASS, contract PENDING-TEST (живой bootRun — gradle нельзя, §4).
 - **Следующий тик:** порт session-summary C6-i (после §C6 ~1972, bump v=74) + тем же тиком прогон TemplateFragmentContractTest, если bootRun остановится.
+
+### R0.47 (2026-07-12) — Порт session-summary C6-i применён (v=74): оба черновика в проде
+
+- **Сделано:** C6-i вставлен после §C6 (перед §C7), head v73→74, live-синк. QA в пределах §4: served v=74; 9 правил C6-i распарсены; утечки нет — /stats с его .stat-item отдаёт baseline R0.37 бит-в-бит (скоуп .summary-page работает). Черновик удалён; port-drafts теперь журнал решений. Матрица: summary parity=APPLIED▽ (визуальный паритет — parity-фаза с EXAM-сессией), contract PENDING-TEST.
+- **Следующий тик:** bootRun остановлен? → прогон TemplateFragmentContractTest (закрыть оба PENDING-TEST). Дальше по очереди маппингов: порт focus-training (крупнейший; перед ним re-verify app.js классов против свежего дерева — WIP закоммичен, дифф-ревизия R0.33 могла устареть).
