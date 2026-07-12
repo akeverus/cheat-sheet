@@ -864,10 +864,10 @@ html[data-design="instrument"] #interview-options label:hover {
   background: var(--color-bg-primary);
 }
 
-/* Выбранный вариант: та же строгая граница accent-strong (wash из токенов). */
-html[data-design="instrument"] #interview-options label:has(input:checked) {
-  border-color: var(--color-accent-strong);
-}
+/* Выбранный вариант: правило живёт НЕ здесь — секция «UX REVIEW PASS 2026-07-01»
+   ниже по файлу переопределяет checked-язык для всех дизайнов (равная
+   специфичность, позже по порядку), поэтому instrument-checked вставлен ТАМ,
+   после generic-правила (как это делает swiss). Найдено live-QA R0.54. */
 
 /* Ring-бейдж буквы: тише (tertiary); при выборе общий checked::before зальёт
    его accent-ом — не дублируем. */
@@ -3723,6 +3723,15 @@ html[data-design] #interview-options label:has(input:checked)::before {
 
 html[data-design="swiss"] #interview-options label:has(input:checked) {
   box-shadow: inset 3px 0 0 0 var(--color-text-primary);
+}
+
+/* Instrument (C1-i, перенос из зоны опций — R0.54): generic-правило выше глушило
+   checked-teal C1-i (равная специфичность, позже по порядку). Механику прода
+   сохраняем (raised bg-tertiary + double-ring + ink-чип буквы), но кольцо —
+   accent-strong: «прибор защёлкнут», selected ≠ hover (у hover фон paper). */
+html[data-design="instrument"] #interview-options label:has(input:checked) {
+  border-color: var(--color-accent-strong);
+  box-shadow: inset 0 0 0 1px var(--color-accent-strong);
 }
 
 html[data-design] #interview-options label.option-correct:has(input:checked),

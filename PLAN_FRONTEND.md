@@ -1415,3 +1415,10 @@ Dirty changes created by loop: 0
 - Урок инструментария: CSSStyleRule.cssRules существует в новом Chrome (nesting) → сканер стилей обязан проверять selectorText ПЕРЕД спуском в cssRules (иначе пустой результат).
 - Отложено по решениям R0.26: drawer, футер (вопрос юзеру, Фаза G), ?-кнопка в шапке, sticky (закрыт навсегда).
 - **Дальше:** (1) NAMES-микрофикс instrument в header.html (п.36 маппинга R0.26 — label дизайн-тоггла показывает сырой id «instrument»; header.html чист, 2 строки); (2) TemplateFragmentContractTest при первом окне без bootRun (закроет все 7 PENDING-TEST¤); (3) Фаза F parity: EXAM-сессия малым N → summary/result визуальный паритет.
+
+### R0.54 (2026-07-12) — NAMES закрыт без кода + checked-fix C1-i (v=80)
+- Collision guard чист; bootRun жив → контракт-тест PENDING.
+- (1) П.36 маппинга shell (NAMES без instrument) устарел: WIP уже добавил запись и в NAMES, и в фолбэк order(). Живьём: aria «Сменить дизайн (сейчас: Instrument)». Закрыт правкой маппинга, кода не потребовалось.
+- (2) Отложенный live-QA checked-состояния (R0.49 → parity) вскрыл дефект: «UX REVIEW PASS 2026-07-01» (низ base.css) переопределяет checked для всех дизайнов равной специфичностью ПОЗЖЕ C1-i → teal-checked был мёртв. Фикс: instrument-checked перенесён за generic (паттерн swiss) — raised bg-tertiary + double-ring + ink-чип сохранены, кольцо/рамка accent-strong; мёртвое правило удалено с указателем. QA: teal 0.435/0.76, editorial-контроль цел. head v79→80.
+- Урок: при равной специфичности грепать ВЕСЬ файл на селектор (checked — 9 вхождений), а не только зону вставки.
+- **Дальше:** TemplateFragmentContractTest при первом окне без bootRun (7 PENDING-TEST¤); flashcard/empty ветки focus — проверить достижимость read-only; session-gated parity (summary/result) — ждёт решения юзера про EXAM-сессию.
