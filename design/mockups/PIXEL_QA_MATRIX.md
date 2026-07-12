@@ -26,7 +26,7 @@
 | result | PASS | PASS‡ | PASS* | PASS | PASS(core)§ | APPLIED▽(R0.50) | PENDING-TEST¤ | RECHECK | **E DONE шаг 1 (C3-i применён, v=76)**; визуальный паритет (нужен ответ) — parity-фаза |
 | session-summary | PASS | PASS | PASS* | PASS | PASS | APPLIED▽(R0.47) | PENDING-TEST¤ | TODO | **E DONE шаг 1 (C6-i применён, v=74)**; визуальный паритет + шаг 2 (headline/grid) — parity-фаза |
 | settings | PASS | PASS | PASS* | PASS✦+LH100(R0.58) | PASS | PASS(R0.52) | PENDING-TEST¤ | PASS(static R0.32) | **E DONE шаг 1 (C4-i применён, v=78)**; Lighthouse instrument: a11y/BP 100, label-in-name степпера ПОЧИНЕН (R0.58); CLS 0.246 = PE-раскрытие вкладок → кандидат Фазы G (резерв места); карт-сетка осей/switch-тогглы → шаг 2/Фаза G |
-| stats | PASS | PASS♦ | PASS* | PASS | PASS(core)◊ | PASS(R0.51) | PENDING-TEST¤ | PASS(static R0.32) | **E DONE шаг 1 (C5-i применён, v=77)**; цвета графиков stats.js — Фаза G |
+| stats | PASS | PASS♦ | PASS* | PASS+LH100(R0.59) | PASS(core)◊ | PASS(R0.51) | PENDING-TEST¤ | PASS(static R0.32) | **E DONE шаг 1 (C5-i применён, v=77)**; LH mobile: a11y 100, label-in-name экспандера ПОЧИНЕН (R0.59 — статичный aria-label снят, имя = живой textContent); BP 92 = CSP-шум sourcemap Chart.js@jsdelivr → упирается в отложенное self-host решение юзера; цвета графиков stats.js — Фаза G (ждут данных) |
 | error | PASS | PASS | PASS* | PASS | PASS | **PASS(R0.46)** | PENDING-TEST¤ | PASS(static R0.32) | **E DONE (C7-i применён, v=73)** |
 
 `¤` contract PENDING-TEST: вставка — чистый append (пиннутые тестом строки не
