@@ -1474,3 +1474,9 @@ Dirty changes created by loop: 0
 - Sentinel: 46 instrument-правил на месте; source == build == served бит-в-бит (полный diff). Урок повторно подтверждён: `curl | md5` через rtk-пайп даёт ложный хэш — интегрити только файлом + diff.
 - Shell no-js RECHECK → PASS(static R0.62): noscript-алерт role=alert, 3 тоггла hidden (PE), nav plain links, sticky 0. Последняя RECHECK-ячейка матрицы закрыта.
 - **Дальше:** режим поддержки — sentinel при следующих тиках только при изменении чужого WIP в зоне порта; разблокировки те же (окно без bootRun / EXAM-решение / данные для графиков).
+
+### R0.63 (2026-07-12) — План-патч удаления мёртвого regenerate-UI готов (read-only prep, паттерн R0.28)
+- Collision guard чист (чужой WIP только .cursor state); bootRun жив — правки кода/тесты не запускались.
+- Написан `design/mockups/port-drafts/regenerate-removal-plan.md`: точные ханки result.html (btn-regenerate 48-51 + regen-badge + question-side ~121), app.js (API.REGENERATE / regenerateQuestion / ветка делегата; favorite и obtainAdminToken остаются), base.css (6 зон) + процедура верификации window-тика.
+- Evidence: read-only SELECT — regen_count max=0, rows>0=0 → regen-badge мёртв вместе с кнопкой. Тест-пинов нет (0 совпадений в 3 контракт/MVC-тестах). Бэкенд /api/regenerate не трогаем (§4).
+- **Дальше:** window-тик без bootRun = применить план + таргетный gradle (закроет 7 PENDING-TEST¤); остальные разблокировки прежние (EXAM-решение, данные для графиков).
