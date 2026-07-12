@@ -1209,7 +1209,7 @@
           "question_text": "В чём разница между zipWith() и withLatestFrom()?",
           "options": [
             {
-              "text": "`zipWith` объединяет текущий `Flux` с другим попарно, ожидая по элементу от обоих, `withLatestFrom other, combinator` комбинирует каждый элемент текущего потока с последним значением `other`, а если `other` ещё не эмитировал, элемент пропускается.",
+              "text": "`zipWith(other)` объединяет текущий `Flux` с другим попарно, ожидая по элементу от обоих; `withLatestFrom(other, combinator)` комбинирует каждый элемент текущего потока с последним значением `other`, а если `other` ещё не эмитировал — элемент пропускается.",
               "correct": true,
               "sections": {
                 "explanation": "`zipWith` синхронизирует темп обоих источников (pairwise), `withLatestFrom` подчиняется темпу основного потока и лишь подмешивает свежее значение второго.",
@@ -1222,7 +1222,7 @@
               "order": 0
             },
             {
-              "text": "`zipWith` и `withLatestFrom` идентичны, оба берут последнее значение второго источника.",
+              "text": "`zipWith(other)` и `withLatestFrom(other, combinator)` различаются только сигнатурой комбинатора; семантика одна — каждый элемент основного потока комбинируется с последним известным значением `other`, различие сводится к удобству перегрузок, а при молчащем `other` оба ждут его первого элемента.",
               "correct": false,
               "sections": {
                 "what_actually": "`zipWith` синхронизирует попарно (ждёт новый элемент от обоих), а `withLatestFrom` берёт именно последнее значение второго, не дожидаясь нового.",
@@ -1234,7 +1234,7 @@
               "order": 1
             },
             {
-              "text": "`withLatestFrom` буферизует элементы `other` и выдаёт их попарно с основным потоком.",
+              "text": "`withLatestFrom(other, combinator)` буферизует элементы `other` и выдаёт их строго попарно с основным потоком; `zipWith(other)` же берёт только последнее известное значение `other`, а если тот ещё не эмитировал — элемент проходит без пары.",
               "correct": false,
               "sections": {
                 "what_actually": "`withLatestFrom` не буферизует историю `other`, а хранит только последнее значение; попарную буферизацию делает `zipWith`.",
@@ -1246,13 +1246,13 @@
               "order": 2
             },
             {
-              "text": "`zipWith` пропускает элементы, если второй источник ещё не эмитировал.",
+              "text": "`zipWith(other)` требует совпадения длины потоков — при завершении короткого бросает `IllegalStateException` на непарных элементах; `withLatestFrom(other, combinator)` свободен от этого, потому что хранит только последнее значение `other`, а не очередь пар.",
               "correct": false,
               "sections": {
-                "what_actually": "Пропуск при неэмитировавшем источнике — поведение `withLatestFrom`; `zipWith` дожидается элемента от обоих и буферизует.",
-                "source_of_confusion": "Оба зависят от готовности второго источника, поэтому условие пропуска путают.",
-                "if_it_were_true": "Если бы это было так, `zipWith` терял бы элементы при медленном `other`, но он наоборот их накапливает для пар.",
-                "how_it_should_be": "Элементы пропускает `withLatestFrom` (если `other` пуст), а `zipWith` ждёт пару и ничего не теряет."
+                "what_actually": "`zipWith` не требует равной длины: результирующий поток штатно завершается (`onComplete`) по исчерпании короткого источника, без исключений; непарные элементы длинного просто не эмитируются.",
+                "source_of_confusion": "`zip` над коллекциями в некоторых библиотеках валидирует длину аргументов — привычка переносится на реактивный `zip`, где потоки часто бесконечны и длина заранее неизвестна.",
+                "if_it_were_true": "Любая пара «бесконечный тикер + конечный конфиг-поток» падала бы в рантайме, и `zip` был бы неприменим к потокам с неизвестной длиной — то есть почти ко всем реальным.",
+                "how_it_should_be": "Помнить: `zip` живёт по самому короткому источнику и завершается штатно; если хвост длинного потока важен — `defaultIfEmpty`/padding-обёртки или `combineLatest`."
               },
               "label": "D",
               "order": 3
@@ -1269,7 +1269,7 @@
           "question_text": "Какие операторы используются для обработки ошибок в Project Reactor?",
           "options": [
             {
-              "text": "`Для` обработки ошибок в реактивной цепочке достаточно `try/catch` внутри `map`.",
+              "text": "`Reactor` допускает `try/catch` прямо в лямбде: `map(t -> { try { … } catch (Exception e) { return fallback } })` перехватывает в том числе `onError`-сигналы соседних операторов — семейство `onError*` существует лишь для читаемости.",
               "correct": false,
               "sections": {
                 "what_actually": "`try/catch` в лямбде ловит исключение, но нужно вернуть `Publisher` или поглотить ошибку — для этого служат декларативные операторы `onError*`.",
@@ -1281,7 +1281,7 @@
               "order": 0
             },
             {
-              "text": "`Reactor` даёт `onErrorReturn` статическое значение, `onErrorResume` переключение на другой источник, `onErrorMap` смена типа ошибки, `onErrorContinue` пропуск элемента и `retry`/`retryWhen` повтор upstream, каждый под свой кейс.",
+              "text": "`Reactor` даёт `onErrorReturn(default)` (статическое значение), `onErrorResume(fallbackPublisher)` (переключение на другой источник), `onErrorMap(transformer)` (смена типа ошибки), `onErrorContinue` (пропуск элемента) и `retry`/`retryWhen` (повтор upstream) — каждый под свой кейс.",
               "correct": true,
               "sections": {
                 "explanation": "`Return` подставляет дефолт, `Resume` даёт динамический fallback, `Map` оборачивает исключение в доменное, `retry` переподписывается; `onErrorContinue` опасен, так как пропускает сбойные элементы.",
@@ -1294,7 +1294,7 @@
               "order": 1
             },
             {
-              "text": "`Достаточно` одного `onErrorMap` для всех сценариев обработки ошибок.",
+              "text": "`Reactor` закрывает все сценарии одним `onErrorMap(transformer)`: `onErrorReturn` (маппинг в константу), `onErrorResume` (маппинг в `Publisher`), `retry` (рекурсивный маппинг) — это фасады, собранные поверх него.",
               "correct": false,
               "sections": {
                 "what_actually": "`onErrorMap` только трансформирует тип ошибки; для fallback нужны `onErrorReturn`/`onErrorResume`, а для повтора — `retry`/`retryWhen`.",
@@ -1306,7 +1306,7 @@
               "order": 2
             },
             {
-              "text": "`Достаточно` `subscribe onNext, onError` без операторов обработки ошибок.",
+              "text": "`Reactor` рассчитан на обработку в `subscribe(onNext, onError)`: колбэк получает любой `Throwable`, подставляет значение по умолчанию (замену элемента) и продолжает поток — `onErrorReturn`, `onErrorResume` и `retry` лишь дублируют эти возможности внутри цепочки.",
               "correct": false,
               "sections": {
                 "what_actually": "Это терминальный handler в самом конце; он не позволяет продолжить цепочку или подставить fallback в середине.",
@@ -1329,7 +1329,7 @@
           "question_text": "В чём разница между onErrorReturn() и onErrorResume()?",
           "options": [
             {
-              "text": "`onErrorReturn` всегда параметризуется `Publisher`'ом, как `onErrorResume`.",
+              "text": "`onErrorReturn(fallbackPublisher)` параметризуется публишером, как и `onErrorResume(fn)`; разница в моменте подписки — первый подписывается на fallback сразу при сборке цепочки, второй — лениво, из лямбды `Throwable → Publisher<T>`, в момент ошибки.",
               "correct": false,
               "sections": {
                 "what_actually": "`onErrorReturn` принимает значение `T`, а не `Publisher`; для подстановки источника служит `onErrorResume`.",
@@ -1341,7 +1341,7 @@
               "order": 0
             },
             {
-              "text": "`Оба` оператора возвращают только статическое значение при ошибке.",
+              "text": "`onErrorReturn(value)` и `onErrorResume(fn)` оба подставляют статическое значение `T`; первый принимает его напрямую, второй — из лямбды `Throwable → T`, и динамических источников не подключает ни один.",
               "correct": false,
               "sections": {
                 "what_actually": "`onErrorResume` принимает функцию `Throwable → Publisher<T>`, что позволяет динамически выбирать fallback (кэш, резервный API) по типу ошибки.",
@@ -1353,7 +1353,7 @@
               "order": 1
             },
             {
-              "text": "`onErrorReturn` подменяет ошибку на статическое значение `T` и успешно завершает поток, `onErrorResume` подписывается на новый `Publisher` из лямбды `Throwable → Publisher<T>`, позволяя динамический fallback.",
+              "text": "`onErrorReturn(value)` подменяет ошибку на статическое значение `T` и успешно завершает поток; `onErrorResume(fn)` подписывается на новый `Publisher` из лямбды `Throwable → Publisher<T>`, позволяя динамический fallback.",
               "correct": true,
               "sections": {
                 "explanation": "`Resume` мощнее: можно условно выбрать резервный источник по типу ошибки или перебросить через `Mono.error(...)`; `Return` лишь подставляет константу.",
@@ -1366,7 +1366,7 @@
               "order": 2
             },
             {
-              "text": "`onErrorResume` ловит только `RuntimeException`, а `onErrorReturn`, все `Throwable`.",
+              "text": "`onErrorResume(fn)` перехватывает только `RuntimeException`, а `onErrorReturn(value)` — любой `Throwable`; выбор между ними диктуется типом ожидаемой ошибки, а не гибкостью fallback'а.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба ловят `Throwable` (с overload'ами по типу); отличие лишь в форме fallback — значение или publisher, не в классе исключения.",
@@ -1389,7 +1389,7 @@
           "question_text": "Что делает оператор onErrorMap()?",
           "options": [
             {
-              "text": "`onErrorMap` подставляет значение по умолчанию при ошибке; как `onErrorReturn`.",
+              "text": "`onErrorMap(mapper)` подставляет значение по умолчанию вместо ошибки — реактивный аналог `catch (LowLevelEx e) { return defaultValue; }`, после которого поток завершается успешно.",
               "correct": false,
               "sections": {
                 "what_actually": "`onErrorMap` не подставляет значение, а преобразует один `Throwable` в другой, не меняя поток данных; значение даёт `onErrorReturn`.",
@@ -1401,7 +1401,7 @@
               "order": 0
             },
             {
-              "text": "`onErrorMap` подавляет ошибку и продолжает поток; как `onErrorResume`.",
+              "text": "`onErrorMap(mapper)` гасит ошибку и продолжает поток со следующего элемента — реактивный аналог `catch (LowLevelEx e) { log(e); }` без перевыброса, распространённый на всю цепочку.",
               "correct": false,
               "sections": {
                 "what_actually": "`onErrorMap` не подавляет ошибку, а перебрасывает её с другим типом; продолжить поток позволяет `onErrorResume`.",
@@ -1413,7 +1413,7 @@
               "order": 1
             },
             {
-              "text": "`onErrorMap` применяется к каждому элементу потока; как `map`.",
+              "text": "`onErrorMap(mapper)` оборачивает неудачные трансформации каждого элемента — реактивный аналог `map` с `try { … } catch (LowLevelEx e) { throw new HighLevelEx(e); }` внутри лямбды.",
               "correct": false,
               "sections": {
                 "what_actually": "`onErrorMap` срабатывает только на error-сигнале и трансформирует `Throwable`, а не элементы данных.",
@@ -1425,7 +1425,7 @@
               "order": 2
             },
             {
-              "text": "`onErrorMap` преобразует тип `Throwable` в другой без изменения потока данных, реактивный аналог `catch LowLevelEx e { throw new HighLevelEx; }`.",
+              "text": "`onErrorMap(mapper)` преобразует тип `Throwable` в другой без изменения потока данных — реактивный аналог `catch (LowLevelEx e) { throw new HighLevelEx(e); }`.",
               "correct": true,
               "sections": {
                 "explanation": "Срабатывает на error-сигнале, оборачивая инфраструктурное исключение в доменное (с сохранением cause), и пробрасывает новый тип дальше по цепочке.",
@@ -1449,7 +1449,7 @@
           "question_text": "Как работают операторы retry() и retryWhen()?",
           "options": [
             {
-              "text": "`retry`, простой повтор, при ошибке переподписывается на upstream до N раз без задержки, `retryWhen Retry.backoff N, base`, exponential backoff с jitter и фильтрацией по типу исключения.",
+              "text": "`retry(N)` — простой повтор: при ошибке переподписывается на upstream до N раз без задержки; `retryWhen(Retry.backoff(N, base))` — exponential backoff с jitter и фильтрацией по типу исключения.",
               "correct": true,
               "sections": {
                 "explanation": "`retryWhen` принимает `Retry`-spec из `Reactor`: настраиваются backoff, maxBackoff, jitter и filter — это обязательный вариант для production, чтобы не устроить retry storm.",
@@ -1462,7 +1462,7 @@
               "order": 0
             },
             {
-              "text": "`retry` повторяет N раз с фиксированной задержкой 1 секунда между попытками.",
+              "text": "`retry(N)` — повтор с паузой: между попытками выдерживается фиксированная задержка в одну секунду; `retryWhen(Retry.fixedDelay(N, d))` нужен только чтобы заменить дефолтный интервал — задержка, лимит попыток и тип ошибки настраиваются там же.",
               "correct": false,
               "sections": {
                 "what_actually": "`retry(N)` повторяет немедленно без backoff; задержку даёт `retryWhen(Retry.fixedDelay(N, dur))`.",
@@ -1474,7 +1474,7 @@
               "order": 1
             },
             {
-              "text": "`retryWhen` срабатывает на сигнал `onComplete` и повторяет цепочку при успехе.",
+              "text": "`retryWhen(spec)` — реакция на завершение: спецификация срабатывает на сигнал `onComplete` и переподписывает цепочку при успехе; `retry(N)` — тот же механизм, ограниченный пустыми потоками.",
               "correct": false,
               "sections": {
                 "what_actually": "`retryWhen` реагирует на error-сигнал; успешное завершение `onComplete` не вызывает повтор.",
@@ -1486,7 +1486,7 @@
               "order": 2
             },
             {
-              "text": "`retry` без аргументов повторяет ровно 3 раза.",
+              "text": "`retry()` — ограниченный повтор: без аргументов делает ровно три попытки и отдаёт исходную ошибку; `retry(Long.MAX_VALUE)` — единственный способ бесконечного ретрая, без задержек, backoff и фильтрации.",
               "correct": false,
               "sections": {
                 "what_actually": "`retry()` без аргументов делает `Long.MAX_VALUE` повторов (фактически бесконечно), пока поток не завершится успешно.",
@@ -1509,7 +1509,7 @@
           "question_text": "Что такое Exceptions.propagate() и когда его применять?",
           "options": [
             {
-              "text": "`Exceptions.propagate(e)` подавляет исключение и продолжает поток без ошибки.",
+              "text": "`Exceptions.propagate(e)` подавляет исключение и исключает элемент из потока (сигналы `onNext` продолжаются), потому что валить весь поток из-за одного элемента в реактивной модели считается антипаттерном.",
               "correct": false,
               "sections": {
                 "what_actually": "`Exceptions.propagate` не подавляет, а оборачивает checked-исключение в `RuntimeException`, чтобы пробросить его из лямбды как unchecked.",
@@ -1521,7 +1521,7 @@
               "order": 0
             },
             {
-              "text": "`Exceptions.propagate` оборачивает checked-исключение в `RuntimeException` а `Error`/`RuntimeException` перебрасывает как есть, потому что из лямбд реактивных операторов нельзя бросать checked-исключения.",
+              "text": "`Exceptions.propagate(Throwable)` оборачивает checked-исключение в `RuntimeException` (а `Error`/`RuntimeException` перебрасывает как есть), потому что из лямбд реактивных операторов нельзя бросать checked-исключения.",
               "correct": true,
               "sections": {
                 "explanation": "Это позволяет вызвать, например, `Files.readString` внутри `map` и пробросить `IOException`; распаковать его потом можно через `Exceptions.unwrap(e)`.",
@@ -1534,7 +1534,7 @@
               "order": 1
             },
             {
-              "text": "`Exceptions.propagate` нужен для проброса unchecked `RuntimeException` из лямбды.",
+              "text": "`Exceptions.propagate(Throwable)` предназначен для unchecked-исключений (`RuntimeException` и его наследников), потому что checked из лямбды оператора бросается напрямую — сигнатуры `map`/`filter` объявляют `throws`.",
               "correct": false,
               "sections": {
                 "what_actually": "`RuntimeException` и так пробрасывается из лямбды без обёртки; `propagate` нужен именно для checked-исключений.",
@@ -1546,7 +1546,7 @@
               "order": 2
             },
             {
-              "text": "`Exceptions.propagate` распаковывает обёрнутое исключение обратно в исходный тип.",
+              "text": "`Exceptions.propagate(Throwable)` распаковывает обёрнутое исключение обратно в исходный checked-тип (обратная к оборачиванию операция), потому что подписчик в `onError` должен получить оригинал, а не обёртку.",
               "correct": false,
               "sections": {
                 "what_actually": "Распаковку делает `Exceptions.unwrap(e)`; `propagate` наоборот оборачивает исключение для проброса.",
@@ -1569,7 +1569,7 @@
           "question_text": "Как Project Reactor реализует backpressure?",
           "options": [
             {
-              "text": "`Reactor` реализует backpressure через автоматическое сэмплирование событий.",
+              "text": "Reactor прореживает поток при перегрузе: конвейер сам применяет сэмплирование (`sample`/`throttleLast`-семейство); частота подбирается адаптивно по скорости потребителя. Явного протокола запросов между подписчиком и источником в ядре нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Sampling/throttle (`sample`, `throttleFirst`) — отдельные операторы прореживания, а не основной механизм backpressure, который строится на `request(n)`.",
@@ -1581,7 +1581,7 @@
               "order": 0
             },
             {
-              "text": "`Reactor` использует чистую pull-модель, subscriber синхронно тянет элементы из publisher.",
+              "text": "Reactor работает по pull-модели: подписчик синхронно вытягивает элементы (`poll()`, как у `Iterator.next()`); асинхронность добавляет планировщик. Поэтому переполнение буферов в ядре конвейера просто не возникает.",
               "correct": false,
               "sections": {
                 "what_actually": "Это push-модель с обратной связью (`request`), а не блокирующий pull: producer сам шлёт элементы, но не больше запрошенного.",
@@ -1593,7 +1593,7 @@
               "order": 1
             },
             {
-              "text": "`Subscriber` через `Subscription.request` указывает producer'у, сколько может принять, для unbounded-источников применяются overflow-стратегии. Между операторами `Reactor` ставит буфер и прозрачно проксирует request от downstream к upstream.",
+              "text": "Subscriber через `Subscription.request(n)` указывает producer'у, сколько может принять; для unbounded-источников применяются overflow-стратегии (`onBackpressureBuffer`/`Drop`/`Latest`/`Error`). Между операторами `Reactor` ставит буфер и прозрачно проксирует request от downstream к upstream.",
               "correct": true,
               "sections": {
                 "explanation": "Запрос пропагируется снизу вверх по цепочке, а при переходе между потоками (`publishOn`) ставится внутренняя очередь; стратегии нужны там, где источник не уважает backpressure.",
@@ -1606,7 +1606,7 @@
               "order": 2
             },
             {
-              "text": "`Backpressure` в `Reactor` активируется только если subscriber вручную реализует `BaseSubscriber`.",
+              "text": "Backpressure включается только вручную через `BaseSubscriber` (переопределить `hookOnSubscribe` и вызывать `request(n)`); стандартный `subscribe(consumer)` запрашивает без ограничений, поэтому `onBackpressureBuffer`/`Drop`/`Latest` в такой цепочке не активируются. Буферов между операторами `Reactor` сам не ставит.",
               "correct": false,
               "sections": {
                 "what_actually": "Стандартный `subscribe(consumer)` запрашивает `Long.MAX_VALUE`, но операторы (`flatMap`, `buffer`, `limitRate`) применяют backpressure прозрачно без ручного `BaseSubscriber`.",
@@ -1629,7 +1629,7 @@
           "question_text": "Какие стратегии backpressure существуют?",
           "options": [
             {
-              "text": "Существует единственная стратегия, блокировать producer до следующего request.",
+              "text": "Стратегия в ядре одна: `Block` (производитель приостанавливается до следующего `request`) — её реализует сам протокол `Reactive Streams`, а операторы `onBackpressureBuffer`/`Drop`/`Latest`/`Error` лишь меняют таймаут этого ожидания.",
               "correct": false,
               "sections": {
                 "what_actually": "Блокировка producer'а — антипаттерн в async; стратегии работают через буфер, отбрасывание или ошибку, не через блокировку.",
@@ -1641,19 +1641,19 @@
               "order": 0
             },
             {
-              "text": "Все стратегии backpressure равнозначны, выбирать можно произвольно.",
+              "text": "Стратегии: `Buffer`, `Drop`, `Latest`, `Error` — порядок надёжности фиксирован (каждая следующая жёстче предыдущей), а выбирается стратегия глобально на конвейер через `Hooks`, точечно оператором её не задать.",
               "correct": false,
               "sections": {
-                "what_actually": "Семантика разная: `Drop` теряет события, безлимитный `Buffer` ведёт к OOM, `Error` обрывает stream — выбор зависит от допустимости потерь.",
-                "source_of_confusion": "Раз все они «обрабатывают переполнение», кажется, что они взаимозаменяемы.",
-                "if_it_were_true": "Если бы это было так, дефолтный `Buffer` для unbounded Kafka-consumer был бы безопасен, но он даёт OOM через пару часов.",
-                "how_it_should_be": "Стратегии не равнозначны: выбирают по семантике потерь — `Latest` для котировок, `Buffer`/`Error` для audit-логов."
+                "what_actually": "Стратегия выбирается точечно — конкретным оператором `onBackpressure*` в конкретном месте цепочки; глобального переключателя стратегий в `Hooks` нет, а «порядка надёжности» между ними не существует — это разные компромиссы память/полнота/свежесть.",
+                "source_of_confusion": "`Hooks` действительно даёт глобальные крючки (`onOperatorDebug`, `onErrorDropped`), поэтому кажется, что и backpressure настраивается там же — один раз на всё приложение.",
+                "if_it_were_true": "Один конвейер не мог бы совмещать `Latest` для телеметрии и `Buffer` для платежей — глобальная стратегия усредняла бы требования совсем разных потоков данных.",
+                "how_it_should_be": "Выбирать стратегию по месту: перед медленным потребителем ставить свой `onBackpressureBuffer(N)`/`Drop`/`Latest`, исходя из того, что дороже — память, полнота или свежесть данных."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "onBackpressureBuffer без аргументов имеет встроенный лимит 256 элементов.",
+              "text": "Стратегии: `Buffer` (по умолчанию ограничен 256 элементами, дальше `OverflowException`), `Drop` (отбрасывает новые), `Latest` (хранит последний непрочитанный) — задаются через `onBackpressureBuffer/Drop/Latest`, а встроенный лимит буфера защищает от OOM из коробки.",
               "correct": false,
               "sections": {
                 "what_actually": "Дефолтный `onBackpressureBuffer()` без аргументов — unbounded; лимит надо задавать явно через `onBackpressureBuffer(maxSize)`.",
@@ -1665,7 +1665,7 @@
               "order": 2
             },
             {
-              "text": "Стратегии, Buffer по умолчанию, буферизует лишнее, Drop отбрасывает новые элементы, Latest хранит только последний непрочитанный, Error бросает OverflowException, задаются через onBackpressureBuffer/Drop/Latest/Error.",
+              "text": "Стратегии: `Buffer` (по умолчанию, буферизует лишнее), `Drop` (отбрасывает новые элементы), `Latest` (хранит только последний непрочитанный), `Error` (бросает `OverflowException`) — задаются через `onBackpressureBuffer/Drop/Latest/Error`.",
               "correct": true,
               "sections": {
                 "explanation": "Выбор зависит от семантики потерь: можно ли терять старые/новые элементы или потери недопустимы. Стратегии нужны для hot-источников и callback-API без естественного backpressure.",
@@ -1689,7 +1689,7 @@
           "question_text": "Что делает оператор limitRate()?",
           "options": [
             {
-              "text": "`limitRate(n)` управляет backpressure, запрашивая у источника элементы порциями по `n`, при потреблении ~75% буфера автоматически запрашивает следующую партию (prefetch с replenish).",
+              "text": "`limitRate(n)` управляет backpressure, запрашивая у источника элементы порциями по `n`; при потреблении ~75% буфера автоматически запрашивает следующую партию (prefetch с replenish).",
               "correct": true,
               "sections": {
                 "explanation": "Это превращает downstream-запрос `Long.MAX_VALUE` в управляемые порции, не заставляя источник слать всё сразу. Есть форма `limitRate(highTide, lowTide)` с явным порогом пополнения.",
@@ -1702,7 +1702,7 @@
               "order": 0
             },
             {
-              "text": "`limitRate(n)` ограничивает частоту эмиссии по времени, не более n элементов в секунду.",
+              "text": "`limitRate(n)` ограничивает темп по времени, пропуская не более `n` элементов в секунду; лишние придерживаются во внутреннем буфере до следующего окна (скользящее окно ~1s, как в `throttle`-операторах).",
               "correct": false,
               "sections": {
                 "what_actually": "`limitRate` ограничивает размер запроса (`request(n)`), а не частоту во времени; временное прореживание делают `sample`/`throttle`.",
@@ -1714,7 +1714,7 @@
               "order": 1
             },
             {
-              "text": "`limitRate(n)` отбрасывает элементы сверх n, как `onBackpressureDrop`.",
+              "text": "`limitRate(n)` отбрасывает элементы сверх `n` в партии, как `onBackpressureDrop(consumer)` (по умолчанию молча); отличие лишь в колбэке, куда о дропнутых элементах сообщается для логирования.",
               "correct": false,
               "sections": {
                 "what_actually": "`limitRate` ничего не отбрасывает — он лишь запрашивает порциями; отбрасывание делает `onBackpressureDrop`.",
@@ -1726,7 +1726,7 @@
               "order": 2
             },
             {
-              "text": "`limitRate()` запрашивает всю партию заново только после полного опустошения буфера.",
+              "text": "`limitRate(n)` запрашивает следующую партию только после полного исчерпания предыдущей (потребление 100%, а не части); чтобы убрать паузы «стоп-старт», его сочетают с отдельным `prefetch`-оператором, делающим упреждающий запрос.",
               "correct": false,
               "sections": {
                 "what_actually": "`limitRate` пополняет запрос заранее, при потреблении ~75% буфера (replenish), не дожидаясь полного опустошения.",
@@ -1749,19 +1749,19 @@
           "question_text": "Какие Schedulers существуют в Project Reactor?",
           "options": [
             {
-              "text": "`Все` `Schedulers` одинаковые, разница только в имени.",
+              "text": "`single()`, `parallel()` и `boundedElastic()` — обёртки над общим `ForkJoinPool.commonPool()` (как у `CompletableFuture` без экзекьютора), отдельные имена дают только метки потоков в логах, а свой пул подключается через `fromExecutor`.",
               "correct": false,
               "sections": {
-                "what_actually": "Семантика принципиально различна: `parallel` фиксированный (CPU-bound), `boundedElastic` для I/O с лимитом, `single` — один поток, `immediate` — без переключения.",
-                "source_of_confusion": "Все они реализуют один интерфейс `Scheduler`, поэтому кажутся взаимозаменяемыми.",
-                "if_it_were_true": "Если бы это было так, `parallel()` для blocking JDBC был бы безопасен, но он блокирует parallel-потоки и гонит p99 в 30s.",
-                "how_it_should_be": "Каждый `Scheduler` рассчитан на свой класс задач; выбор влияет на пропускную способность и блокировки."
+                "what_actually": "У каждого планировщика свой пул: `single` держит один поток, `parallel` — фиксированный набор по числу ядер, `boundedElastic` — растущий до 10×CPU с очередью; `ForkJoinPool.commonPool()` Reactor не использует.",
+                "source_of_confusion": "`CompletableFuture` без экзекьютора действительно уходит в `commonPool`, и опыт с ним переносится на Reactor — «раз асинхронщина, значит общий пул JVM».",
+                "if_it_were_true": "Блокирующий вызов на любом планировщике душил бы общий пул всего приложения — изоляция `boundedElastic`, ради которой он и создан, была бы невозможна.",
+                "how_it_should_be": "Выбирать пул по типу нагрузки: CPU-bound → `parallel()`, блокирующий I/O → `boundedElastic()`, интеграция со своим пулом → `fromExecutor(executor)`."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "`immediate` без переключения, текущий поток, `single` один переиспользуемый поток, `parallel` CPU-bound, размер = число CPU, `boundedElastic` I/O, до 10×CPU потоков + очередь, плюс `fromExecutor`, `newSingle`, `newParallel`.",
+              "text": "`immediate()` (без переключения, текущий поток), `single()` (один переиспользуемый поток), `parallel()` (CPU-bound, размер = число CPU), `boundedElastic()` (I/O, до 10×CPU потоков + очередь), плюс `fromExecutor`, `newSingle`, `newParallel`.",
               "correct": true,
               "sections": {
                 "explanation": "Каждый под свой класс задач: `parallel` — для CPU-нагрузки, `boundedElastic` — для блокирующего I/O, `single` — для упорядоченных лёгких задач, `immediate` — для синхронного выполнения у caller'а.",
@@ -1774,19 +1774,19 @@
               "order": 1
             },
             {
-              "text": "`boundedElastic` создаёт неограниченное число потоков под нагрузкой.",
+              "text": "`elastic()` (актуальный планировщик для I/O: поток на задачу с переиспользованием), `boundedElastic()` (его устаревший предшественник с жёстким лимитом 10×CPU), `parallel()` (по числу ядер) — начиная с Reactor 3.4 рекомендован первый.",
               "correct": false,
               "sections": {
-                "what_actually": "`boundedElastic` ограничен (по умолчанию 10×CPU потоков + очередь ~100K), это замена устаревшего unbounded `elastic()`.",
-                "source_of_confusion": "Слово «elastic» наводит на мысль о безлимитном масштабировании.",
-                "if_it_were_true": "Если бы это было так, 100K параллельных задач спокойно стартовали бы, но очередь переполняется и летит `RejectedExecutionException`.",
-                "how_it_should_be": "`boundedElastic` имеет верхний предел потоков и очередь; безлимитным был старый `elastic()`, ныне deprecated."
+                "what_actually": "Всё наоборот: `elastic()` — старый планировщик без верхней границы числа потоков, deprecated с Reactor 3.3 и удалённый в новых версиях; `boundedElastic()` — его актуальная замена с лимитом 10×CPU и очередью задач.",
+                "source_of_confusion": "Приставка bounded читается как «урезанная версия», а короткое имя `elastic` — как «основное»; вдобавок старые статьи и ответы на Stack Overflow написаны до deprecation.",
+                "if_it_were_true": "Рекомендованный планировщик плодил бы потоки без лимита — всплеск блокирующих задач исчерпал бы память процесса; именно за это `elastic()` и вывели из API.",
+                "how_it_should_be": "Для блокирующего I/O использовать `boundedElastic()`; встретив `elastic()` в legacy-коде — мигрировать: это прямой признак устаревшего Reactor."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Schedulers.parallel()` предназначен для блокирующего I/O.",
+              "text": "`parallel()` (пул для блокирующего I/O: `JDBC`, файловые API), `boundedElastic()` (CPU-bound вычисления, размер = число CPU), `single()` (тесты и синхронный код) — блокирующие вызовы принято уводить в `parallel()`, чей пул шире.",
               "correct": false,
               "sections": {
                 "what_actually": "`parallel` — для non-blocking CPU-задач с фиксированным числом потоков; блокирующий I/O идёт на `boundedElastic`.",
