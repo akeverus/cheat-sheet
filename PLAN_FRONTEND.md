@@ -1499,3 +1499,9 @@ Dirty changes created by loop: 0
 - QA живьём без подтверждения: alertdialog/фокус/inert/Esc/Отмена — чисто, форма не отправлялась; регрессия prompt-режима (экспорт JSON) бит-в-бит; node --check OK. PE: без JS отправка без подтверждения, как и раньше.
 - Бампы: app.js v=57 (3 шаблона), base.css v=84 (+ .prompt-modal-message). Тест-пинов на reset-форму нет.
 - **Дальше:** window-тик (regenerate-план + контракт-тест — head.html/settings.html/app.js тронуты); EXAM; данные для графиков. Не-гейтнутых кандидатов Фазы G больше нет — дальше режим поддержки/углубление аудита.
+
+### R0.67 (2026-07-12) — Confirm-модалка в instrument (обе темы) + focus-trap: VERIFIED-CLEAN (0 правок)
+- Пробел cr.63 (QA был только editorial light): instrument dark/light проверены живьём — тайтл 500 (SIGNATURE R0.57 достаёт динамическую модалку), сообщение text-secondary, danger-OK в error-языке страницы (скоуп .settings-page .danger-btn достаёт модалку в body), контрасты с запасом; скриншот чист.
+- Focus-trap проверен в обе стороны (Tab/Shift+Tab оборачивают); cr.63 проверял только дефолт-фокус и Esc.
+- localStorage сброшен; правок кода нет.
+- **Дальше:** гейты прежние (window-тик с контракт-тестом, EXAM, данные для графиков); режим поддержки §28.
