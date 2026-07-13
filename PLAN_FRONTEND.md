@@ -2268,3 +2268,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: инъекция тест-CSS 1.4.12 (chrome-devtools) на /, /settings, /stats при 1280 и 375px; замер горизонтального оверфлоу + обрезанных/широких боксов.
 
 Итог — чисто. /,/settings,/stats: оверфлоу 0, широких боксов 0. Единственные «клипы» на /settings — visually-hidden SR-only заголовки (height:1px;overflow:hidden;absolute — паттерн скрытия, не потеря видимого текста, вне scope). Таблица /stats уходит в overflow-x:auto (допустимо). Макет флюидный, переживает override. Правок не требуется. Леджер: cr.176.
+
+## R1.82 — WCAG 2.5.3 Label in Name (AA) — verified-clean
+
+Проверка: доступное имя контрола содержит видимый текст метки.
+
+Метод: grep button/a с aria-label + видимым текстом; эмпирическое вычисление visible vs accName (chrome-devtools), сверка code-points «A−».
+
+Итог — чисто. Во всех случаях видимый текст ⊂ accessible name: stats «Применить фильтры»/«Искать» (подтв.), font-stepper «A−»(U+2212)/«A+» (глиф совпал точь-в-точь), grade «Не помню/…» ⊂ «Оценка N: …», CTA-ссылки (стрелка aria-hidden, R1.59). aside aria-label=Сессия — лендмарк, вне scope. Benign: grade-текст в суффиксе (вхождение выполнено, префикс не обязателен). Правок не требуется. Леджер: cr.177.
