@@ -37,6 +37,32 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.147 — WCAG 4.1.3 Status Messages (verified-clean)
+
+**Вопрос:** статус-сообщения, не получающие фокус (результаты AJAX-операций, ошибки, изменения контекста), должны быть программно определяемы через `role=status/alert/log` или `aria-live`, чтобы AT анонсировал их без перемещения фокуса.
+
+**Метод:** grep всех live-регионов (шаблоны+JS) + сверка каждого JS-статус-writer'а с целевым регионом + живой DOM-скан /stats и /settings (регионы существуют, атрибуты корректны, нет статус-контейнеров без live-региона).
+
+**Покрытие (все сценарии имеют live-регион):**
+- **Export** (JSON/CSV) → `#export-status` role=status polite ✓ (live-скан подтвердил).
+- **Copy code** успех/ошибка → copyStatus role=status polite (app.js 1966) ✓.
+- **Table sort** /stats → `#table-sort-status` aria-live polite atomic (stats.js 270) ✓.
+- **Settings saved** (7 персонализация-контролов) → `#personalization-status` role=status polite atomic; `announceSaved` (app.js 548, wireSegControl) ✓.
+- **Font scale** → `#font-scale-value` role=status polite; announceFontScale ✓.
+- **AJAX-ошибка** → `#interview-alert` (inline-alert role=alert assertive), app.js 83–90 ДИНАМИЧЕСКИ переключает role=status/polite ↔ role=alert/assertive по severity ✓ (изощрённо-корректно).
+- **Answer result feedback** → `#result-feedback` role=status polite atomic ✓; confidence/extra-analysis → aria-live polite (app.js 1532, post-answer 22) ✓.
+- **Chart fallback** (no-JS/no-data) → role=status polite (stats 154/165) ✓.
+- **Filter mode hint** (смена select) → `#filter-mode-hint` role=status polite ✓.
+
+**Не-gap'ы:**
+- Формы /stats (фильтр+поиск) — `method=get action=/stats` → полный reload; результаты на перезагруженной странице (навигация, НЕ status-message) → вне scope 4.1.3.
+- Streak-виджет (`/api/streak`) намеренно БЕЗ aria-live (документировано C29 — иначе счётчик озвучивался бы постоянно) → осознанное решение, не пробел.
+
+**Живая верификация:** /settings — 4 региона (filter-mode-hint/font-scale-value/personalization-status atomic/export-status), все `isLive:true`, `statusLikeWithoutLiveRegion:[]`. /stats — chart-fallbacks + table-sort-status, обе формы = GET-reload. Правок кода нет.
+
+**Огранич. эмпирики:** post-answer регионы (#result-feedback/confidence/extra-analysis) рендерятся после ответа (POST /answer запрещён границами) — подтверждены статически по фрагментам (атрибуты в разметке) + JS-attr'ы.
+
+
 ### cr.146 — WCAG 2.5.3 Label in Name: аудит + ФИКС декоративного «×» close-кнопки
 
 **Вопрос:** у контролов с ВИДИМЫМ текстом доступное имя (aria-label/labelledby) обязано СОДЕРЖАТЬ этот видимый текст (voice-control). Icon-only (без видимого текста) — вне scope.
