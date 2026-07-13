@@ -2328,3 +2328,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: разметка + stats.js sort-логика + эмпирика aria-sort в браузере (клик = клиентская DOM-сортировка, без серверной мутации).
 
 Итог — чисто. Таблица тем: caption (visually-hidden), обёртка role=region+aria-label+tabindex, th scope=col/row, сортируемые заголовки tabindex+aria-keyshortcuts+aria-sort (PE: без JS неинтерактивны), click+keydown(Enter/Space). Эмпирика: клик «Всего» → aria-sort=ascending, остальные none, live-регион анонсирует. Несортируемая «Прогресс» без интерактивных атрибутов. Покрывает 4.1.2/2.1.1. Прочие 1.3.1 (заголовки/списки/label) — в R1.69/R1.70. Правок не требуется. Леджер: cr.183.
+
+## R1.89 — WCAG 4.1.2 Name, Role, Value (A) — verified-clean (seg-control /settings)
+
+Проверка: у кастомных виджетов программно определяемы name/role/value + уведомление об изменении.
+
+Метод: эмпирическая инспекция 6 seg-control радиогрупп + тест смены значения (aria-checked/roving-tabindex/применение) в браузере (клиентская pref, не БД).
+
+Итог — чисто. Name: role=radiogroup+aria-labelledby (Дизайн/Тема/Раскладка/Ширина/Плотность/Движение). Role: все опции role=radio. Value: aria-checked, ровно один checked, roving-tabindex=выбранная. Тест «Плотность»: клик Компактно → aria-checked+tabindex переехали, html data-density=compact применился; восстановлено к дефолту. Прочие виджеты (tab/font-stepper/тогглы) — в R1.64/settings-tabs. Правок не требуется. Леджер: cr.184.

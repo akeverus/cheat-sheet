@@ -37,6 +37,21 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.184 — WCAG 4.1.2 Name, Role, Value (A): verified-clean (seg-control радиогруппы /settings)
+
+**Проверка:** у кастомных виджетов программно определяемы имя, роль и значение (+ уведомление об изменении).
+
+**Метод:** эмпирическая инспекция всех 6 seg-control радиогрупп персонализации + тест смены значения с проверкой транзиции `aria-checked`/roving-tabindex/применения (chrome-devtools; клиентская pref-правка, не БД).
+
+**Результат — чисто (образцовая реализация custom radiogroup).**
+- **Name:** каждая группа `role=radiogroup` + `aria-labelledby` → доступное имя (Дизайн, Тема оформления, Раскладка, Ширина чтения, Плотность, Движение) ✓.
+- **Role:** каждая опция `role=radio` (все 6 групп: allHaveRole=true) ✓.
+- **Value:** каждая опция несёт `aria-checked`; ровно ОДИН checked на группу; roving-tabindex — единственный `tabindex=0` = выбранная опция ✓.
+- **Изменение value (тест на «Плотность»):** клик по «Компактно» → его `aria-checked=true tabindex=0`, у «Просторно» → `false tabindex=-1` (roving переехал), `<html data-density>` стал `compact` (значение применилось). Восстановление → «Просторно» checked, `data-density=null` (дефолт). Тест-состояние возвращено.
+
+Покрывает Name/Role/Value для всех 6 групп. Прочие кастом-виджеты (вкладки `role=tab`, font-stepper `role=group`, тогглы с `aria-pressed`/`aria-label`) затронуты ранее (R1.64, settings-tabs). Правок не требуется.
+
+
 ### cr.183 — WCAG 1.3.1 Info and Relationships (A): verified-clean (глубокий проход по таблице /stats)
 
 **Проверка:** структура/отношения переданы программно (заголовки, scope, caption, состояние сортировки), не только визуально.
