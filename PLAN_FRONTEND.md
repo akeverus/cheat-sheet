@@ -2130,3 +2130,7 @@ fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`
 ### R1.56 — WCAG 3.2.2 On Input (verified-clean)
 
 Инвентарь всех change-хендлеров + разбор. Единственный кандидат на смену контекста — авто-сабмит при выборе варианта в instantMode (app.js 1158) — но instantMode вечно false: контролы режимов удалены из шаблонов, onLearningPrefChange недостижим (app.js 5–11, «ловушка round-01 B7») → ветка мёртвая, реальный сабмит только явной кнопкой. Прочие: mode-select → показ/скрытие count (within-form, без фокуса/навигации, не «контекст»); toggleTopic → enable/disable поля; seg-контролы тема/дизайн → презентация (флип data-*, app.js:596, не контекст) + анонс aria-live; count → persist. Ни одной смены контекста на input. Правок кода нет. Мёртвая instant-ветка — код-гигиена (документирована), вне scope. Детали — cr.151.
+
+### R1.57 — WCAG 1.4.10 Reflow @320px (verified-clean)
+
+Эмуляция 320px + замер page-level overflow и вылезающих элементов на /, /stats, /settings (обе вкладки). Везде pageHorizontalOverflow=0, offenders=[]. /stats дата-таблица на мобиле переходит в стек-раскладку (td[data-label] grid), не горизонтальный скролл. /settings вкладка «Оформление»: design-seg-control (11 опций) через flex-wrap переносит опции на ряды, не вылезает (width 257 < vw 305). Все компоненты рефлоуятся корректно (таблица→стек, seg→flex-wrap), горизонтального скролла нет. Правок кода нет. /result+/session-summary POST-gated, при 320px не замерены (прежние аудиты чисты на 375/768/1280). Детали — cr.152.
