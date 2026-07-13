@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "QLoRA добавила обучение всех параметров модели в 4-bit, отказавшись от low-rank адаптеров LoRA ради большей выразительности.",
+              "text": "`QLoRA` (Dettmers et al. 2023) принесла три техники, позволившие тренировать 65B на одной 48GB GPU: (1) `NF4` — 4-битное представление, в котором ОБУЧАЮТСЯ сами веса base, а low-rank адаптеры LoRA больше не нужны; (2) `Double Quantization` — повторная квантизация констант квантизации, экономящая ~0.5 бита на вес; (3) `Paged Optimizers` — перенос состояния оптимизатора в оперативную память CPU при всплесках OOM. По качеству — практически как full fine-tuning.",
               "correct": false,
               "sections": {
                 "what_actually": "QLoRA сохраняет LoRA-адаптеры: обучаются именно low-rank `A`/`B` (в bf16), а 4-bit применяется к замороженному base, а не к обучаемым параметрам.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "QLoRA добавила к LoRA только распределённое обучение на нескольких GPU, никак не меняя представление весов или работу оптимизатора.",
+              "text": "`QLoRA` (Dettmers et al. 2023) добавила три трюка для дообучения 65B на одной 48GB GPU: (1) `NF4` — 4-битный NormalFloat, где уровни расставлены по квантилям нормального распределения весов; (2) `Double Quantization` — вторичная квантизация самих quantization constants, снимающая ещё ~0.5 бита на параметр; (3) `Paged Optimizers` — распределение optimizer state по нескольким GPU (data-parallel шардинг) вместо CPU-offload. Итоговое качество почти догоняет full FT.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключевые вклады QLoRA — именно NF4-квантизация, Double Quantization и Paged Optimizers; multi-GPU — это accelerate/FSDP, а не суть QLoRA.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "QLoRA добавила ускорение обучения в 5 раз по сравнению с LoRA за счёт 4-битных вычислений на тензорных ядрах.",
+              "text": "`QLoRA` (Dettmers et al. 2023) добавила три приёма, уместивших дообучение 65B в одну 48GB GPU: (1) `NF4` — информационно-оптимальный 4-битный формат под нормально распределённые веса LLM; (2) `Double Quantization` — квантизация констант квантизации ради экономии около 0.5 бит/param; (3) `Paged Optimizers` — сгрузка optimizer state в CPU-память через unified memory при OOM-пиках. Вычисления идут прямо в 4-bit на тензорных ядрах, поэтому QLoRA ещё и в ~5× быстрее LoRA.",
               "correct": false,
               "sections": {
                 "what_actually": "QLoRA обычно ~2-3× МЕДЛЕННЕЕ LoRA (dequant на лету), а вычисления идут в bf16, не в 4-bit; его выигрыш — память, а не скорость.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "DoRA лучше LoRA, потому что вообще не требует merge на inference и работает с нулевым overhead за счёт хранения адаптера прямо в KV-cache.",
+              "text": "`DoRA` (Weight-Decomposed LoRA, 2024) явно раскладывает вес на magnitude и direction: `W = m·(V/||V||)`, обучая magnitude `m` отдельным (полным, но маленьким) вектором и низкоранговую ΔV — направление (как в LoRA). Преимущества: качество ближе к full FT, чем у LoRA, и стабильнее обучение, при этом inference overhead выше обычного LoRA: адаптер не мержится в base и применяется отдельно на каждом forward. Включается одной опцией `LoraConfig(use_dora=True)`.",
               "correct": false,
               "sections": {
                 "what_actually": "DoRA имеет тот же inference-профиль, что LoRA (можно merge в base); хранение в KV-cache — это про Prefix Tuning, а не DoRA.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "DoRA лучше LoRA только на очень больших rank (r=128+), а при r=4-8 он заметно уступает обычной LoRA по качеству.",
+              "text": "`DoRA` (Weight-Decomposed LoRA, 2024) явно раскладывает вес на magnitude и direction: `W = m·(V/||V||)`, обучая magnitude `m` отдельным (полным, но маленьким) вектором и низкоранговую ΔV — направление (как в LoRA). Преимущества проявляются на высоких rank (r=128+): качество ближе к full FT и стабильнее обучение, а на r=4, r=8 DoRA слабее обычной LoRA. Включается одной опцией `LoraConfig(use_dora=True)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: DoRA сильнее всего именно при НИЗКИХ rank (r=4, r=8), а на больших rank разница с LoRA минимальна.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "DoRA лучше LoRA, потому что обучает строго меньше параметров и при этом быстрее по времени на шаг.",
+              "text": "`DoRA` (Weight-Decomposed LoRA, 2024) явно раскладывает вес на magnitude и direction: `W = m·(V/||V||)`, обучая magnitude `m` отдельным (полным, но маленьким) вектором и низкоранговую ΔV — направление (как в LoRA). Преимущества: качество ближе к full FT, чем у LoRA, и при этом DoRA почти не добавляет новых обучаемых параметров и даже ускоряет шаг обучения. Включается одной опцией `LoraConfig(use_dora=True)`.",
               "correct": false,
               "sections": {
                 "what_actually": "DoRA добавляет обучаемый вектор magnitude и считает нормы, поэтому он чуть МЕДЛЕННЕЕ LoRA, а не быстрее; параметров примерно столько же.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В SFT-pipeline на TRL на выходе сохраняют полные веса модели, предварительно слив LoRA-адаптер в base: отдельно адаптер держать смысла мало, для инференса его всё равно мержат.",
+              "text": "Каноничный QLoRA+SFT-пайплайн на `transformers`+`trl`+`peft`+`bitsandbytes`: задать `BitsAndBytesConfig` (NF4 + double quant, `bnb_4bit_compute_dtype=bfloat16`), загрузить модель в 4-bit, подготовить её через `prepare_model_for_kbit_training`, обернуть в `LoraConfig` (r=16, α=32, all-linear), создать `SFTConfig`/`SFTTrainer` и `trainer.train()`. На выходе сохраняются ПОЛНЫЕ веса (16 GB): LoRA-адаптер обязательно сливают в base, отдельно ~100 MB держать нельзя. `packing=True` объединяет короткие семплы, повышая загрузку GPU.",
               "correct": false,
               "sections": {
                 "what_actually": "На выходе сохраняют именно адаптер (~100 MB) и грузят его поверх base; FP32-веса не нужны, base держат в NF4/bf16.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для QLoRA-SFT в TRL не нужен `prepare_model_for_kbit_training` — градиенты у 4-bit модели считаются корректно сразу после загрузки.",
+              "text": "Минимальный SFT-пайплайн QLoRA на `transformers`+`trl`+`peft`+`bitsandbytes`: задать `BitsAndBytesConfig` (NF4 + double quant, `bnb_4bit_compute_dtype=bfloat16`), загрузить модель в 4-bit БЕЗ `prepare_model_for_kbit_training` (градиенты у 4-bit модели корректны сразу после загрузки), обернуть в `LoraConfig` (r=16, α=32, all-linear), создать `SFTConfig`/`SFTTrainer` и `trainer.train()`. На диск идут одни LoRA-веса, ~100 MB против 16 GB полной модели. `packing=True` упаковывает короткие примеры в одно окно ради GPU-утилизации.",
               "correct": false,
               "sections": {
                 "what_actually": "`prepare_model_for_kbit_training` нужен: он чинит вычисление градиентов и cast слоёв для quantized base, иначе обучение LoRA поверх 4-bit ломается.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`packing=True` в SFTConfig увеличивает потребление памяти, склеивая примеры в длинные окна, поэтому для коротких примеров его обычно отключают ради экономии VRAM.",
+              "text": "Базовый QLoRA+SFT-pipeline на `transformers`+`trl`+`peft`+`bitsandbytes`: задать `BitsAndBytesConfig` (NF4 + double quant, `bnb_4bit_compute_dtype=bfloat16`), загрузить модель в 4-bit, прогнать через `prepare_model_for_kbit_training`, обернуть в `LoraConfig` (r=16, α=32, all-linear), создать `SFTConfig`/`SFTTrainer` и `trainer.train()`. На выходе выгружается лишь адаптер LoRA (~100 MB, не все 16 GB). `packing=True` УВЕЛИЧИВАЕТ расход VRAM, склеивая примеры в длинные окна, поэтому для коротких примеров его отключают.",
               "correct": false,
               "sections": {
                 "what_actually": "`packing=True` как раз УЛУЧШАЕТ GPU-утилизацию, склеивая короткие примеры в одно окно; это рекомендуемая оптимизация, а не замедление.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "ORPO требует обязательной reference-модели в памяти, как DPO, и не может объединить SFT с preference-оптимизацией.",
+              "text": "`ORPO` (Odds Ratio Preference Optimization, 2024) объединяет SFT и preference-оптимизацию в ОДИН loss, без отдельной SFT-стадии: `L_ORPO = L_SFT(chosen) + λ·L_OR`, где `L_OR = -log σ(log odds(y_w|x) - log odds(y_l|x))`, `odds(y|x) = P(y|x)/(1-P(y|x))`. Даёт: reference model в памяти для нормировки odds (как в DPO), один шаг обучения вместо `SFT → DPO`, конкурентное качество.",
               "correct": false,
               "sections": {
                 "what_actually": "ORPO как раз НЕ использует reference model и объединяет SFT с preference-loss в один шаг — это его ключевые отличия от DPO.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ORPO требует трёх раздельных стадий: сначала SFT, потом обучение reward model, затем отдельный preference-проход.",
+              "text": "`ORPO` (Odds Ratio Preference Optimization, 2024) объединяет SFT и preference-оптимизацию в ОДИН loss, без reference model: `L_ORPO = L_SFT(chosen) + λ·L_OR`, где `L_OR = -log σ(log odds(y_w|x) - log odds(y_l|x))`, `odds(y|x) = P(y|x)/(1-P(y|x))`. Даёт: нет reference model, но опирается на отдельно обученную reward model (как в RLHF), экономию памяти против `SFT → DPO`, конкурентное качество.",
               "correct": false,
               "sections": {
                 "what_actually": "ORPO — это ОДИН шаг: SFT и preference-оптимизация в одном loss, без reward model и без отдельной DPO-стадии.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Главное преимущество ORPO — максимальный раздельный контроль над силой SFT и preference alignment через отдельные оптимизаторы.",
+              "text": "`ORPO` (Odds Ratio Preference Optimization, 2024) объединяет SFT и preference-оптимизацию в ОДИН loss, без reference model: `L_ORPO = L_SFT(chosen) + λ·L_OR`, где `L_OR = -log σ(log odds(y_w|x) - log odds(y_l|x))`, `odds(y|x) = P(y|x)/(1-P(y|x))`. Даёт: раздельную настройку силы SFT и preference по отдельности, один шаг вместо `SFT → DPO`, конкурентное качество.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: у ORPO МЕНЬШЕ контроля — нельзя отдельно настроить SFT и preference, всё связано одним `λ`; это его минус, а не плюс.",
