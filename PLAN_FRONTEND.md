@@ -2320,3 +2320,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: эмпирический замер bbox всех интерактивных контролов на /, /settings (3 вкладки), /stats; для radio/checkbox эффективная цель = label; замер center-to-center интервалов.
 
 Итог — чисто. / — 0 <24px (радио 1×1 → label-опция ≥44px). /settings все вкладки — 0 <24px (seg-control/font-stepper 32px/чекбоксы-label/кнопки ≥24). /stats — 12 ссылок-тем (17px) проходят spacing-исключением: вертикальный интервал 56-57px ≥24, горизонтально единственная цель в строке. Правок не требуется. Леджер: cr.182.
+
+## R1.88 — WCAG 1.3.1 Info and Relationships (A) — verified-clean (таблица /stats)
+
+Проверка: структура/отношения переданы программно (scope/caption/aria-sort).
+
+Метод: разметка + stats.js sort-логика + эмпирика aria-sort в браузере (клик = клиентская DOM-сортировка, без серверной мутации).
+
+Итог — чисто. Таблица тем: caption (visually-hidden), обёртка role=region+aria-label+tabindex, th scope=col/row, сортируемые заголовки tabindex+aria-keyshortcuts+aria-sort (PE: без JS неинтерактивны), click+keydown(Enter/Space). Эмпирика: клик «Всего» → aria-sort=ascending, остальные none, live-регион анонсирует. Несортируемая «Прогресс» без интерактивных атрибутов. Покрывает 4.1.2/2.1.1. Прочие 1.3.1 (заголовки/списки/label) — в R1.69/R1.70. Правок не требуется. Леджер: cr.183.
