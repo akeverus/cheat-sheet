@@ -3,7 +3,7 @@
   "round": "8-SFPL/ANSC",
   "status": "IN_PROGRESS",
   "blocks_total": 35,
-  "blocks_reaudited": 20,
+  "blocks_reaudited": 24,
   "correct_texts_immutable": true,
   "file_defect": "Учебниковый Golden AP#1 на ВЕСЬ файл: correct — развёрнутый каталог/лекция (~400-530ч), дистракторы — плоские заглушки (~100-160ч). Baseline gate: CORRECT_LONGEST_RATE=1.0 (35/35), CORRECT_WRONG_AVG_RATIO=2.689, STYLE_GUESSABILITY=1.0, DETAIL_PARITY=0.971, SENTENCE_PARITY worst=5, CORRECT_POSITION_SEQUENCE=35 (строгий A→B→C→D цикл), SOURCE_COVERAGE=missing (нужен freshness sidecar). Многотиковый файл.",
   "method": "Как design-patterns Q35/Q36: correct БАЙТ-В-БАЙТ HEAD (drift=0), дистракторы подняты до параллельных каталогов/лекций с ОТРАВЛЕННЫМИ фактами (реальные сущности из теории, одна неверная предпосылка на дистрактор), ось-заблуждение сохранена. Плотность аннотаций выровнена у всех 4 (снят «detail-outlier» tell), отрава = 1 инлайн-факт (НЕ хвостовое принижение), концовки нейтрально-параллельны.",
@@ -12,7 +12,8 @@
     "c2: Q19,Q21,Q27,Q31 (worst-first по structure-tell 33-40)",
     "c3: Q6,Q14,Q20,Q29 (LoRA-математика, RLHF-pipeline, SFT-датасеты, топ-5 ошибок)",
     "c4: Q22,Q33,Q30,Q28 (chat-template, FT-API вендоров 2026, model merging, catastrophic forgetting; structure-tell 24-25)",
-    "c5: Q7,Q8,Q12,Q18 (QLoRA-трюки, DoRA-декомпозиция, TRL/SFT-pipeline, ORPO-loss; structure-tell 20-24)"
+    "c5: Q7,Q8,Q12,Q18 (QLoRA-трюки, DoRA-декомпозиция, TRL/SFT-pipeline, ORPO-loss; structure-tell 20-24)",
+    "c6: Q5,Q9,Q13,Q15 (PEFT-методы, LoRA target-layers, distillation, DPO-vs-PPO; structure-tell 21-22) — подход INDEPENDENT mental models вместо single-delta"
   ],
   "reworked": {
     "Q23": "correct C (LIMA-эффект) lone-лекция; дистракторы → тот же скелет «`LIMA` (…) показал … Тезисы: … Выводы: …» с отравл. тезисом (A: только объём 50K; B: alignment добавляет знания; D: diversity не важна). blind BST guessable_by_form=false, BSM один защитимый.",
@@ -53,10 +54,34 @@
       "axis": "ORPO = один loss (SFT+preference) без reference model, odds-ratio, меньше памяти чем DPO",
       "distractors": "A=держит reference model как DPO; C=опирается на отдельно обученную reward model (RLHF); D=раздельная настройка силы SFT и preference",
       "note": "113-127ч → ~364-395ч; поизон вплетён в «Даёт:»-список (без вставного «Но»); убраны само­противоречия с видимой формулой (один λ)"
+    },
+    "Q5": {
+      "correct": "A",
+      "axis": "PEFT = обучение малой доли параметров при заморозке; LoRA/QLoRA/DoRA/Adapters/…",
+      "distractors": "B=PEFT это full FT в FP8/INT8 без заморозки; C=только Adapters+Prefix, LoRA/QLoRA=квантизация; D=PEFT работает только за счёт HW sparse-матриц",
+      "note": "заглушки 125-140ч → независимые цельные ошибочные мировоззрения ~380-415ч; D де-карикатурен (убран Ampere/2:4-sparsity нагром)"
+    },
+    "Q9": {
+      "correct": "A",
+      "axis": "q_proj/v_proj минимум, all-linear стандарт, tradeoff качество/память",
+      "distractors": "B=вешать на embed_tokens/lm_head; C=строго один слой за раз; D=выбор слоёв не влияет ни на что",
+      "note": "106-132ч → ~384-467ч независимые модели; добавлены →/;/() для feature-parity"
+    },
+    "Q13": {
+      "correct": "A",
+      "axis": "response vs logit distillation, R1-Distill=response-SFT, KL-loss",
+      "distractors": "B=большая учится у маленькой (инверсия); C=logit дешевле response (инверсия); D=speculative decoding=distillation",
+      "note": "127-142ч → ~432-482ч; добавлены (1)(2)/;/() для feature-parity"
+    },
+    "Q15": {
+      "correct": "C",
+      "axis": "DPO closed-form без RM/RL, β-KL, 2 модели, tiny lr",
+      "distractors": "A=DPO всё ещё RM+укороченный PPO; B=большой lr 2e-4 как SFT; D=держит те же 4 модели что PPO",
+      "note": "161-216ч → ~427-473ч независимые модели; digit-парен для num-feature; Q15-B дроблён до 4 предложений"
     }
   },
-  "blind": "c5 (2 прохода reviewer): round1 — consensus-leak на Q7/Q12 (идентичные строки непоизоненных зон → мажоритарное голосование по клаузам без знания темы), caveat-запах Q8/Q18. round2 — string-majority снят (зоны разведены в разные истинные парафразы + варьированы зачины), но strict-reviewer отметил остаточный topical-consensus (верный = единственный, согласованный со скелетом по всем клаузам) + форм-tell'ы: контраст-маркеры (Q7-B «а не», Q8-A «а...выше»), double-error Q8-C, само­противоречия Q18-C/D с формулой. Все перечисленные ДЕТЕРМИНИРОВАННЫЕ форм-tell'ы устранены прицельно. BSM: one_defensible + completeness_ok ×4 (после фикса double-error/само­противоречий). Остаточный single-delta topical-consensus ПРИНЯТ как R6 intrinsic-semantic (прецедент c4 Q30): бинарный surface-гейт его не ловит, метод single-delta предписан самим скиллом, атака требует чтения+топикального рассуждения по каждой клаузе (несопоставимо сложнее length-tell'а на HEAD).",
-  "gates": "c1-c5: SCHEMA_OK; surface NO_TELLS (tells=[], corr_longest=False, ratio ≤1.20 c5); skel HARD=0 touched; structure-tell c5 1.0-4.67; stamp verdict OK (not padded-clone); correct drift=0 весь файл.",
+  "blind": "c6 (INDEPENDENT mental models): 1 проход reviewer. **consensus/majority-leak УСТРАНЁН** («чистого скелета клауз для голосования нет, majority-vote НЕ работает» — прямой контраст с c5 single-delta). BSM: one_defensible + completeness_ok ×4. Остаточно strict-reviewer отметил SOFT length/completeness-leak (верный чаще самый длинный + с хеджами, дистракторы с абсолютами) — НО в пределах binding-гейта (surface tells=[], ratio ≤1.22 <1.25); + Q13-O3 term-outlier (`Speculative decoding` — но это верная целевая misconception, сохранена намеренно); + Q15 формула loss только у correct (intrinsic — closed-form loss опознаётся знанием DPO = domain knowledge). Дешёвые фиксы применены: де-карикатура Q5-D, снят капс ВСЕХ/НЕ, смягчён «антипаттерн»→«рискованный».",
+  "gates": "c1-c6: SCHEMA_OK; surface NO_TELLS (tells=[], ratio ≤1.25); skel HARD=0 touched; structure-tell c6 5.3-12.3 (богатые независимые опции, около/выше gold); stamp verdict OK; correct drift=0 весь файл.",
   "accepted_artifacts": "DUPLICATE_NGRAMS spike + низкий length-CV (c1 0.022-0.072; c2 0.024-0.059) на тронутых — inherent для poisoned-catalog/lecture parity (прецедент design-patterns Q35/Q36): опции делят истинный scaffold, различаясь 1 отравл. фактом. НЕ stamped-clone (stamp-audit OK, разные mental models, blind form-non-guessable). Skill: «низкий length-CV сам по себе НЕ дефект». structure-tell→низкий здесь = богатые РАВНЫЕ каталоги (не флэт-штамп), т.к. лены 465-626ч.",
-  "residual": "20/35 re-audited (c1: Q23/24/32/34; c2: Q19/21/27/31; c3: Q6/14/20/29; c4: Q22/33/30/28; c5: Q7/8/12/18). Остаток 15 блоков (тот же Golden AP#1, FLAT-маркеры stamp-audit: Q5/9/13/16/25/26/35 и др., structure-tell 16-24) → c6+. ВАЖНО (c5): 4 блока surface-clean + BSM-clean, но несут остаточный single-delta topical-consensus (R6 intrinsic-semantic, принят по прецеденту c4 Q30) — НЕ помечать как fully SFPL-green; идеальный fix = independent equal-richness mental models (крупнее single-tick, отложено). Файловые задачи: freshness sidecar (LoRA/DoRA/QLoRA/ORPO/TRL-версии 2026) + POS de-cycle. Файл ◐ PARTIAL, SFPL/ANSC ⬜ до 35/35."
+  "residual": "24/35 re-audited (c1-c4 + c5: Q7/8/12/18 + c6: Q5/9/13/15). Остаток 11 блоков (тот же Golden AP#1, FLAT-маркеры stamp Q16/25/26/35/10/11/17/2 и др., structure-tell 16-22) → c7+. c6 подход СМЕНЁН на INDEPENDENT equal-richness mental models (каждый дистрактор — своё цельное ошибочное мировоззрение, НЕ single-delta клон) — это устраняет consensus-leak c5. Остаточный soft length/completeness-leak в пределах binding-tolerance (ratio<1.25); идеальное устранение (полная де-абсолютизация дистракторов + формулы во всех опциях) отложено. Файловые задачи: freshness sidecar + POS de-cycle. Файл ◐ PARTIAL, SFPL/ANSC ⬜ до 35/35."
 }
