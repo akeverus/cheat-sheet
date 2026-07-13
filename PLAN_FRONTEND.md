@@ -2276,3 +2276,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: grep button/a с aria-label + видимым текстом; эмпирическое вычисление visible vs accName (chrome-devtools), сверка code-points «A−».
 
 Итог — чисто. Во всех случаях видимый текст ⊂ accessible name: stats «Применить фильтры»/«Искать» (подтв.), font-stepper «A−»(U+2212)/«A+» (глиф совпал точь-в-точь), grade «Не помню/…» ⊂ «Оценка N: …», CTA-ссылки (стрелка aria-hidden, R1.59). aside aria-label=Сессия — лендмарк, вне scope. Benign: grade-текст в суффиксе (вхождение выполнено, префикс не обязателен). Правок не требуется. Леджер: cr.177.
+
+## R1.83 — WCAG 4.1.3 Status Messages (AA) — verified-clean
+
+Проверка: статус-сообщения без фокуса программно определяемы (role=status/alert/aria-live).
+
+Метод: инвентаризация aria-live/role=status|alert в шаблонах + трассировка динамических textContent-инъекций app.js к контейнерам.
+
+Итог — чисто. Все динамические статусы в live-регионах: inline-alert (status↔alert по типу), #result-feedback (вердикт+штраф-нота, atomic), #personalization-status, #export-status, #font-scale-value, #filter-mode-hint (role=status), #table-sort-status (visually-hidden aria-live), chart-fallback. Намеренные исключения C29: стрик/счётчик без aria-live (иначе посекундный спам). Политенес по важности (assertive ошибки / polite инфо). Правок не требуется. Леджер: cr.178.

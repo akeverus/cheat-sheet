@@ -37,6 +37,23 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.178 — WCAG 4.1.3 Status Messages (AA): verified-clean
+
+**Проверка:** статус-сообщения, не получающие фокус, программно определяемы (`role=status`/`alert`/`aria-live`) и анонсируются AT.
+
+**Метод:** инвентаризация всех `aria-live`/`role=status|alert` в шаблонах + трассировка динамических `textContent`-инъекций в app.js к их контейнерам.
+
+**Результат — чисто (все динамические статусы в корректных live-регионах).**
+- Ошибки/инфо → `inline-alert` (`#interview-alert` и др.): app.js переключает `role` status/polite ↔ alert/assertive по типу (86-92).
+- Пост-ответный вердикт + штраф-нота → `#result-feedback` `role=status aria-live=polite aria-atomic=true` (penalty-note аппендится в тот же атомарный регион, читается вместе с вердиктом — app.js:784-789).
+- «Сохранено на этом устройстве…» → `#personalization-status` `role=status aria-atomic` (app.js:550).
+- Экспорт → `#export-status` `role=status`; масштаб шрифта → `#font-scale-value` `role=status`; подсказка режима → `#filter-mode-hint` `role=status`.
+- Сортировка таблицы → `#table-sort-status` (`visually-hidden aria-live=polite aria-atomic`); фолбэки графиков → `role=status`.
+- **Намеренные исключения (C29):** стрик и счётчик прогресса БЕЗ `aria-live` — иначе AT озвучивал бы обновление каждую секунду (задокументировано в шаблонах).
+
+Каждое сообщение, меняющееся без передачи фокуса, объявляемо; политенес соответствует важности (assertive для ошибок, polite для инфо). Правок не требуется.
+
+
 ### cr.177 — WCAG 2.5.3 Label in Name (AA): verified-clean
 
 **Проверка:** у контролов с видимой текстовой меткой доступное имя СОДЕРЖИТ видимый текст (иначе голосовое управление «нажми X» ломается).
