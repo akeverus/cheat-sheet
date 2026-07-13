@@ -2252,3 +2252,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: трассировка проброса фильтра/сессии по флоу settings→start→вопрос→answer→result→next + предзаполнение /settings.
 
 Итог — чисто. Фильтр (topic/group/important/onlyWrong/shuffle/weakTopics/ordered) переносится hidden-инпутами settings→start (103-109) и вопрос→answer (focus-training 135-142), и query-параметрами result→next (result.html:106). Форма /settings предзаполнена (th:selected/th:checked/th:value отражают прежний выбор). Повторного ввода нет; персональных полей-дублей нет. Правок не требуется. Леджер: cr.174.
+
+## R1.80 — WCAG 2.5.4 Motion Actuation (A) — verified-clean по отсутствию
+
+Проверка: функции на движении устройства имеют UI-альтернативу и отключаемы.
+
+Метод: grep JS/шаблонов на devicemotion/deviceorientation/DeviceMotionEvent/accelerometer/gyroscope/shake/requestPermission.
+
+Итог — чисто (motion-функций нет). Ноль sensor-обработчиков, нет requestPermission-гейта. Все действия — явные UI-контролы + клавиатура. Критерий выполнен по отсутствию. Правок не требуется. Леджер: cr.175.
