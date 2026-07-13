@@ -2162,3 +2162,7 @@ fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`
 ### R1.64 — WCAG 4.1.2 Name/Role/Value (A): контролы /settings — verified-clean
 
 Обход всех контролов трёх панелей + шапки с вычислением accessible-name/role/value. Чисто: 6 seg-radiogroup (role=radiogroup+имя, role=radio+имя, ровно один aria-checked, roving tabindex checked=0/прочие=-1); степпер шрифта (role=group+имя, кнопки с описательными aria-label, значение в role=status live-регионе, Сбросить aria-disabled при 100%); 9 нативных session-контролов (все именованы через label); 3 header-тоггла (icon-only, но aria-label с текущим значением). Наблюдение (не провал, не правил): theme-toggle несёт aria-pressed на 3-состояночном cycle-контроле (layout/design его опускают) — мелкая нестыковка, значение читается из имени, атрибут связан с app.js-логикой. Код не менялся. Детали — cr.159.
+
+### R1.65 — WCAG 2.1.2 No Keyboard Trap (A): kbd-help оверлей — verified-clean
+
+Эмпирический цикл (CDP press_key) на живой /: «?» с опенера «Фокус» → оверлей role=dialog aria-modal=true, фокус на «×», фон полностью inert+aria-hidden; Tab не утёк в фон (ловушка держит); Esc → закрытие + возврат фокуса на опенер (focusReturnedToOpener:true) + снятие inert. Соответствие 2.1.2: стандартный выход Esc (документирован в справке) + альт. выходы (клик/Enter по ×, повторное ?). Prompt-modal регенерации вне зоны (th:if=aiEnabled, AI выключен → нет в DOM). Roving tabindex вкладок (R1.64) исключает ловушку в tablist. Код не менялся. Детали — cr.160.
