@@ -2122,3 +2122,7 @@ fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`
 ### R1.54 — WCAG 1.3.1 Info & Relationships: формы/группы/таблица (verified-clean)
 
 Живой DOM-аудит программных связей на /settings, /stats, /. /settings: 9 form-контролов все с меткой (wrap-label), 7 групп все с групповой меткой (aria-labelledby). /stats: 5 контролов с меткой + образцовая дата-таблица (caption «Статистика по темам», 325 th ВСЕ со scope col+row → 319 row-header, 5 сортируемых колонок все с aria-sort). /: radiogroup #interview-options (role+aria-label+aria-describedby), 4 радио одной name-группы, все с меткой. controlsUnlabelled/groupsUnlabelled=[] везде. /result (POST-gated) — опции role=list/listitem (display-only, корректно). Правок кода нет. Детали — cr.149.
+
+### R1.55 — WCAG 3.3.1 Error Identification / 3.3.3 Error Suggestion (verified-clean)
+
+Аудит обработки ошибок форм. Единственное поле с ограничениями — count (type=number min=1 max=200, без required/кастом-валидации; JS-валидации в проекте нет). Путь — нативная HTML5 Constraint Validation (форма без novalidate). Эмпирика через Constraint Validation API (read-only, значение сброшено): 500→«меньше или равно 200», 0→«больше или равно 1», 15.5→«Ближайшие допустимые значения: 15 и 16», 20→valid. Сообщения локализованы, идентифицируют ошибку (3.3.1) + предлагают исправление/границу/ближайшие валидные (3.3.3); браузер блокирует submit и озвучивает через AT. Прочие формы (селекты/поиск/чекбоксы) невалидных состояний не имеют. Правок кода нет. Детали — cr.150.
