@@ -37,6 +37,21 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.148 — WCAG 2.5.8 Target Size (Minimum, AA/2.2) (verified-clean)
+
+**Вопрос:** интерактивные цели ≥24×24 CSS px, ЛИБО подпадают под исключение (spacing: 24px-круги по центрам не пересекаются ⇔ center-to-center ≥24px; inline: ссылка в потоке текста; essential; UA-контролируемая native-форма).
+
+**Метод:** живой замер всех интерактивных целей (`button/a/input/select/[role=button|tab|radio|checkbox]/summary/[tabindex]`) на 3 достижимых страницах + для <24px проверка spacing-исключения (min center-to-center ко всем соседям) и inline-исключения. /result icon-кнопки — через CSS (POST-gated).
+
+**Результат — чисто на всех страницах, `violations: []`:**
+- **/settings** (23 цели): 4 «маленьких» = нативные чекбоксы/радио 18×18 → spacing pass (center-dist 52px) + UA-исключение.
+- **/stats** (37): 14 «маленьких» = чекбоксы 18×18 (center-dist 91/137) + topic-ссылки высотой 17px (inline-in-table + center-dist 56–61px). Все exempt.
+- **/** (13): 4 «маленьких» = визуально-скрытые радио-инпуты 1×1, но РЕАЛЬНАЯ цель — оборачивающий `<label>` 960×126/156px (огромный); MCQ-опции 960×126/156.
+- **/result** (CSS): `.btn-favorite`/`.btn-regenerate` — `min-width/height: 44px` (2427) → ≥24 (даже ≥44/2.5.5). regen-badge — неинтерактивный span.
+
+**Вывод:** ни один author-стилизованный интерактив (button/seg-btn/tab/nav-link/toggle/close/next) не оказался <24px — большинство ≥44px. Все «маленькие» элементы — либо нативные form-инпуты с большой ассоциированной label + spacing-исключение, либо inline-ссылки с inline+spacing исключениями. Правок кода нет.
+
+
 ### cr.147 — WCAG 4.1.3 Status Messages (verified-clean)
 
 **Вопрос:** статус-сообщения, не получающие фокус (результаты AJAX-операций, ошибки, изменения контекста), должны быть программно определяемы через `role=status/alert/log` или `aria-live`, чтобы AT анонсировал их без перемещения фокуса.
