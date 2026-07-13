@@ -2190,3 +2190,7 @@ CSS-анализ (появление на hover/focus 100% определяет�
 ### R1.71 — WCAG 3.3.1 Error Identification (A): ошибки ввода текстом — verified-clean
 
 Constraint Validation API без сабмита на session-form. count (number min=1 max=200, форма без novalidate): over max 500 → «Значение должно быть меньше или равно 200.» (rangeOverflow), under min 0 → «…больше или равно 1.» (rangeUnderflow), empty → valid (required=false, сервер дефолтит), 20 → ok. Нативная валидация блокирует сабмит + фокус/подсветка + текст → 3.3.1 A выполнен (G84/G85). Прочие формы без ошибочного ввода (селекты фикс. опции, search любой текст). Наблюдение (не правил): count без aria-invalid/describedby — нативный UI достаточен для A; кастомный inline-error был бы enhancement (+3.3.3), JS-blast-radius. Код не менялся; count восстановлен, сабмита не было. Детали — cr.166.
+
+### R1.72 — WCAG 2.4.5 Multiple Ways (AA): ≥2 способа найти контент — verified-clean
+
+Инвентаризация wayfinding на / и /stats. Пять независимых путей (требуется ≥2): поиск (/stats input[type=search] «Поиск по вопросам», G161); обзор полного списка тем (319 topic-ссылок = индекс/ToC всех тем, G126/G64); primary-nav (Фокус/Аналитика/Настройки, G125); topic-select (320 опций); контекстные рекомендации (321 ссылка weakTopics/onlyWrong/related/today). Три самодостаточны и независимы → ≥2 с запасом. Страница вопроса = шаг процесса, но темы напрямую локализуемы поиском+списком → исключение не нужно. Код не менялся. Детали — cr.167.
