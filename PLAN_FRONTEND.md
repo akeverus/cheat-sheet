@@ -2138,3 +2138,7 @@ fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`
 ### R1.58 — WCAG 1.4.12 Text Spacing (verified-clean)
 
 Инъекция стандартного 1.4.12 override (line-height 1.5 / letter 0.12em / word 0.16em / para 2em, !important) на /, /stats, /settings + детекция clipping и проверка fixed-height компонентов. pageHorizontalOverflow=0 везде; все компоненты (sticky-th 43px, кнопки 44px, ячейки 53px, settings-tab 51px, seg-btn 42px, font-value 24px) overflowsBox=false; видимый текст не обрезан/перекрыт. Два «clipped» — намеренные visually-hidden SR-only заголовки (caption /stats + settings-panel-title под js-tabs, base.css 1358/1373), exempt (AT читает полный текст независимо от 1px-clip; без JS panel-title видимый и не клипается). Правок кода нет. /result+/session-summary POST-gated, не замерены. Детали — cr.153.
+
+### R1.59 — WCAG 2.4.4 Link Purpose (In Context): аудит + polish декоративных «→»
+
+Живой аудит a[href] на /, /settings, /stats. 2.4.4 чисто: 0 пустых/неоднозначных/коллизий/дубль-имён (/stats 327 ссылок, 319 topic с уникальными именами). a11y-polish: «→» в 9 CTA-лейблах был литеральным → попадал в доступное имя; обёрнут в <span aria-hidden="true"> →</span> в 6 шаблонах (today-widget/session-summary/stats ×2, error/focus-training/result). Причина: чистые доступные имена + консистентность + меньше AT-шума. Динамические title header (дизайн X→Y) не тронуты. Live: CTA accName="Начать повторение" (стрелка ушла), rawText сохранил «→». Шаблоны без version-bump; gradle пропущен (template-only + live-verified). Детали — cr.154.
