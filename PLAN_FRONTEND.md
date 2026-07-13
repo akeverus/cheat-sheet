@@ -2284,3 +2284,15 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: инвентаризация aria-live/role=status|alert в шаблонах + трассировка динамических textContent-инъекций app.js к контейнерам.
 
 Итог — чисто. Все динамические статусы в live-регионах: inline-alert (status↔alert по типу), #result-feedback (вердикт+штраф-нота, atomic), #personalization-status, #export-status, #font-scale-value, #filter-mode-hint (role=status), #table-sort-status (visually-hidden aria-live), chart-fallback. Намеренные исключения C29: стрик/счётчик без aria-live (иначе посекундный спам). Политенес по важности (assertive ошибки / polite инфо). Правок не требуется. Леджер: cr.178.
+
+## R1.84 — WCAG 1.4.11 Non-text Contrast (AA) — частично чисто + design-tension (РЕШЕНИЕ ПОЛЬЗОВАТЕЛЯ)
+
+Проверка: границы/индикаторы/фокус-кольца ≥3:1. Метод: эмпирический замер на /settings в обеих темах (chrome-devtools).
+
+Проходит: фокус-кольцо 3.85 (light)/4.86 (dark), primary-кнопка 4.86, select 10.47 (но это UA-дефолт нативного select).
+
+Ниже 3:1, НО осознанный design-choice: текст-инпут бордюр 1.48/1.37, ghost/secondary-кнопки 1.48/1.37 — из-за намеренного hairline `--color-border-primary` (спека «Cloud Light hairline») через все 11 дизайнов.
+
+Вердикт — НЕ правлю (эскалация). Поднятие hairline до 3:1 сломало бы editorial-язык во всех темах (протокол запрещает менять осознанные решения молча). Смягчает: фокус-кольцо ОК, у инпутов label+заливка, 1.4.11 для помеченных полей мягок.
+
+РЕШЕНИЕ ПОЛЬЗОВАТЕЛЯ (A/B): (A) сохранить hairline как есть; (B) поднять контраст границ ТОЛЬКО текст-инпутов/ghost-кнопок до ≥3:1 (отдельный --color-border-control), сохранив hairline для разделителей. Замеры = исходные данные. Кода не менял. Леджер: cr.179.
