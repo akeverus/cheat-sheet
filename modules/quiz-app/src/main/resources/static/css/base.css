@@ -1681,6 +1681,17 @@ html[data-design] .stats-page select:focus,
 html[data-design] .stats-page input:focus {
   outline: none; border-color: var(--color-border-focus); box-shadow: var(--shadow-focus);
 }
+/* Нативные checkbox/radio: box-shadow (var(--shadow-focus)) не рендерится на
+   appearance:auto-контролах, а .stats-page input:focus + :focus:not(:focus-visible)
+   снимают outline — итог был БЕЗ индикатора фокуса у видимых фильтр-чекбоксов
+   (WCAG 2.4.7). Возвращаем видимый outline: на нативных контролах он рисуется
+   надёжно, где box-shadow игнорируется. Токен --color-border-focus (уже ≥3:1,
+   design/theme-aware). R1.62. */
+html[data-design] input[type="checkbox"]:focus-visible,
+html[data-design] input[type="radio"]:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
 html[data-design] .stats-page .search-input { flex: 1 1 160px; min-width: 0; }
 
 /* Кнопки фильтра/поиска */

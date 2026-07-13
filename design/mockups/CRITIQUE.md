@@ -37,6 +37,23 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.157 — WCAG 2.4.7 Focus Visible (AA): нативные фильтр-чекбоксы /stats без индикатора фокуса — FIX
+
+**Вопрос:** каждый клавиатурно-фокусируемый элемент показывает видимый индикатор фокуса.
+
+**Метод (эмпирический, chrome-devtools):** перебор всех видимых фокусируемых, `.focus({focusVisible:true})`, замер рендер-индикатора (outline width>0/style≠none ИЛИ смена box-shadow/border/bg). Плюс разбор каскада `:focus`-правил base.css.
+
+**Найдено (реальный провал):** /settings 40/40 — чисто. /stats — **2 из 37 без индикатора**: нативные фильтр-чекбоксы `important` и `onlyWrong` (`.filter-row`, 18×18, видимы). Первопричина на CSS-уровне:
+- `base.css:1649-1650` явно ставит `box-shadow: none` на `.stats-page` чекбоксы (специфичность (0,3,1) — бьёт focus-правило).
+- `.stats-page input:focus` (1681) даёт `box-shadow: var(--shadow-focus)`, но **box-shadow не рендерится на нативных `appearance:auto` checkbox/radio** (computed = none даже когда `--shadow-focus` резолвится: у search-input на той же странице кольцо есть, у чекбокса — нет).
+- outline снят: `.stats-page input:focus {outline:none}` + `:focus:not(:focus-visible){outline:none}` перебивают универсальный `:focus-visible{outline:2px}`.
+Итог: у видимых чекбоксов ноль индикатора для клавиатуры. MCQ-радио НЕ затронуты — они visually-hidden, кольцо рисует `#interview-options label:has(input:focus-visible)`.
+
+**Фикс (base.css, после `.stats-page …:focus`):** `html[data-design] input[type=checkbox]:focus-visible, input[type=radio]:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }`. Специфичность (0,3,2) бьёт `.stats-page input:focus` (0,2,1); задаёт **outline** (надёжно рисуется на нативных контролах, где box-shadow игнорируется). Токен `--color-border-focus` уже ≥3:1 (R1.48), design/theme-aware. base.css v=91→92.
+
+**Верификация (live):** /stats оба чекбокса → `outline: solid 2px #D97757` offset 2px, `hasVisibleIndicator:true`; полный проход страницы `noIndicator=0`. Страница вопроса: MCQ-радио clipped (clip:rect(0 0 0 0) обрезает и outline), видимое кольцо — единственное, на label; скриншот подтвердил чистое одиночное кольцо без артефактов, ответ не раскрыт. Регрессий нет.
+
+
 ### cr.156 — WCAG 3.2.1 On Focus (A): фокус не вызывает смену контекста — verified-clean
 
 **Вопрос:** получение фокуса любым компонентом не инициирует смену контекста (навигация, сабмит, всплывающий диалог, авто-переключение панели, кража фокуса, major DOM-мутация, преждевременное раскрытие ответа).
