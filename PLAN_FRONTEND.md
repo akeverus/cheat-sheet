@@ -2260,3 +2260,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: grep JS/шаблонов на devicemotion/deviceorientation/DeviceMotionEvent/accelerometer/gyroscope/shake/requestPermission.
 
 Итог — чисто (motion-функций нет). Ноль sensor-обработчиков, нет requestPermission-гейта. Все действия — явные UI-контролы + клавиатура. Критерий выполнен по отсутствию. Правок не требуется. Леджер: cr.175.
+
+## R1.81 — WCAG 1.4.12 Text Spacing (AA) — verified-clean
+
+Проверка: переопределение интервалов (LH 1.5 / para 2em / letter 0.12em / word 0.16em) не теряет контент.
+
+Метод: инъекция тест-CSS 1.4.12 (chrome-devtools) на /, /settings, /stats при 1280 и 375px; замер горизонтального оверфлоу + обрезанных/широких боксов.
+
+Итог — чисто. /,/settings,/stats: оверфлоу 0, широких боксов 0. Единственные «клипы» на /settings — visually-hidden SR-only заголовки (height:1px;overflow:hidden;absolute — паттерн скрытия, не потеря видимого текста, вне scope). Таблица /stats уходит в overflow-x:auto (допустимо). Макет флюидный, переживает override. Правок не требуется. Леджер: cr.176.
