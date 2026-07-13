@@ -404,7 +404,7 @@ docs/ui-ux-improvement-log.md
 | `SET-12` | `app.js(v=51)` | Версионный контракт | — | 🔁 ONGOING | 🔁 CONTRACT_MONITOR |
 | `SET-15` | `/start` форма: `count` hardcode `value="20"` шэдоуит серверный per-mode дефолт (marathon=50) | **Forms-UX аудит р102 (loop §3).** `settings.html:125` `<input name=count value="20">` — жёсткая 20. Форма ВСЕГДА шлёт count (20 или localStorage-restore), а сервер применяет per-mode дефолт ТОЛЬКО при `requestedCount==… | Выровнять FE к BE per-mode дефолтам | 🌱 BACKLOG (blocked-file) | ⬜ RECHECK |
 | `STA-3` | Поиск отделён от фильтров линией | ~~Объединить поиск+фильтры~~ — НЕ дефект: вертикальный hairline + верт.центрирование поиска = осознанное решение с rationale `base.css:1476-1480` (одно поле vs высокий фильтр → пустота под полем как намеренный воздух).… | — | 🚫 WONTFIX (deliberate) | 🚫 DECISION_LOCK |
-| `STA-10` | CTA из аналитики (тренировать слабые/ошибки) | Кнопки-переходы — может требовать роутов/параметров | M | ⛔ DEFERRED (проверить контракт) | ⬜ RECHECK |
+| `STA-10` | CTA из аналитики (тренировать слабые/ошибки) | ~~Кнопки-переходы — может требовать роутов/параметров~~ — **ОПРОВЕРГНУТО статически (R0.110, app не нужен):** CTA `stats.html:32/40` → GET `/(onlyWrong=true,ordered=true)` и `/(weakTopics=true,ordered=true)` проведены end-to-end: `InterviewMvcController.index` (GET `/`, стр.37-45) биндит `@RequestParam onlyWrong/weakTopics/ordered` → `MvcRequestMapper:116` `weakTopicsPriority` → `FocusTrainingPageService:57` `facade.nextQuestion(filter, weakTopicsPriority)` → `InterviewService:130` Strategy `weakTopicsPriority ? weakTopicsSelectionStrategy : defaultSelectionStrategy`; `onlyWrong` → repo-запросы (`InterviewService:151/155/158`). GET-навигация, без мутации БД. Работает, не dead. | — | 🚫 WONTFIX (functional) | 🚫 DECISION_LOCK |
 | `STA-12` | `stats.js(v)` в stats.html | Версионный контракт stats.js | — | 🔁 ONGOING | 🔁 CONTRACT_MONITOR |
 | `HEAD-1` | 2 CSS-линка `?v=N` (=53) | Контракт кэш-инвалидации при правке CSS | бампать ОБЕ строки | 🔁 ONGOING | 🔁 CONTRACT_MONITOR |
 | `HEAD-4` | font-loading `media=print`/onload + noscript | Намеренный нерендер-блокирующий flip | НЕ «чинить» | 🚫 WONTFIX | 🚫 DECISION_LOCK |
@@ -2287,6 +2287,18 @@ Constraint Validation API без сабмита на session-form. count (number
   - Token-bypass: 0 во всех, **кроме** `session-summary.html` — 10 совпадений. **Адверсариальная проверка:** все 10 внутри `@media print { … }` (стр. 241→258), единицы `pt` (`11pt`, `4pt 6pt`), чистые `#000`/`#fff`. Это **корректная** print-практика (типографские чернила/бумага; OKLCH-токены калиброваны под экран, у печати нет тёмной темы) — **НЕ дрейф, править нельзя** (замена на `var(--ink)` дала бы серый в печати = хуже).
 - **Итог:** mockup-слой консистентен, **правок не требуется** (это верный исход аудита). Recheck-ось goal-шага 1 продвинута фактом-верификацией, а не косметикой. Файлы не менялись — только лог.
 - **Дальше:** не-гейтнутая mockup-очередь исчерпана И проверена на консистентность. Оставшийся forward-прогресс пайплайна (port-parity/RES-15-apply/window-тик/EXAM-решение) честно app-гейтнут — ждёт подъёма postgres+app пользователем. Нумерация R0.110+.
+
+### R0.110 (2026-07-13) — §10 RECHECK-резолюция: STA-10 CTA аналитики → DECISION_LOCK (контракт проведён, app не нужен)
+
+- **Единица:** довести до вывода одну ⬜ RECHECK-строку §10 чисто-статически (снижает открытый бэклог = forward-прогресс к конечной цели, пока app лежит). Взята `STA-10` — «CTA из аналитики (тренировать слабые/ошибки), может требовать роутов/параметров».
+- **Метод:** grep-трассировка контракта CTA→маршрут→выборка (без app).
+- **Результат — CTA ПРОВЕДЕНЫ end-to-end, не мёртвые:**
+  - `stats.html:32` «Разобрать ошибки» → `@{/(onlyWrong=true, ordered=true)}`; `stats.html:40` «Тренировать слабые темы» → `@{/(weakTopics=true, ordered=true)}` — оба на GET `/` (навигация, без мутации БД).
+  - Биндинг: `InterviewMvcController.index` (`@GetMapping("/")`, стр.37) объявляет `@RequestParam onlyWrong`(42)/`weakTopics`(44)/`ordered`(45), прокидывает (57).
+  - Маппинг: `MvcRequestMapper:116` `weakTopicsPriority = Boolean.TRUE.equals(weakTopics)` → `SettingsRequestContext`; `onlyWrong`/`ordered` → `resolveFilter` → `InterviewFilter`.
+  - Влияние на выборку: `FocusTrainingPageService:57` `facade.nextQuestion(filter, weakTopicsPriority, …)` → `InterviewService:130` **Strategy pattern** `weakTopicsPriority ? weakTopicsSelectionStrategy : defaultSelectionStrategy`; `filter.onlyWrong()` в repo-запросах (`InterviewService:151/155/158`, `TrainingSessionService:52/55/60`).
+- **Итог:** гипотеза «может требовать роутов/параметров» **опровергнута** — маршрут и все 3 параметра существуют и честятся. STA-10 `⬜ RECHECK` → `🚫 DECISION_LOCK (functional)`. Правок кода не требуется. §9 STATS не разблокирован (Final по-прежнему parity-gated), но контракт STATS→FOCUS CTA подтверждён (Port-mapping ось).
+- **Дальше:** остаются ⬜ RECHECK-строки §10, разрешимые статически (`FT-2` per-mode микрокопия, `AIR-6` dead-ветка, `STA-3`-класс). При подъёме app — port-parity/RES-15/window-тик. Нумерация R0.111+.
 
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
