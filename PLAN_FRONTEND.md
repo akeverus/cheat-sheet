@@ -2376,3 +2376,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: аудит change-обработчиков app.js/stats.js + эмпирика (смена mode-select на /settings, замер URL/навигации).
 
 Итог — чисто. toggleTopic (shuffle/ordered change) — только disabled смежных полей + live-подсказка (не контекст). modeSelect change — метка кнопки+дефолт count (эмпирика: TRAINING→STUDY, URL не изменился, метка обновилась). countInput — валидация. Персонализация — презентация (не контекст). Навигация/сабмит только в onclick/onkeydown явной активации. Правок не требуется. Леджер: cr.189.
+
+## R1.95 — WCAG 1.3.2 Meaningful Sequence (A) — verified-clean
+
+Проверка: DOM-порядок = осмысленная последовательность чтения на wide/split-раскладках при линеаризации (SR / CSS-off).
+
+Метод: grep base.css на `order:`/`flex-*-reverse` (0 совпадений) + разбор 4 wide-раскладок + эмпирика на /stats (DOM-порядок детей vs bounding-rects, masthead).
+
+Итог — чисто. Единый механизм: `grid-column`/`grid-row` без CSS `order` и без reverse → DOM-поздний элемент всегда визуально правее/ниже. result: card(col1,DOM-1)→related(col2,DOM-позже). focus split: мета→вопрос→код(col1)→форма-ответы(col2)→вердикт/контролы(full-width row6/7) = вопрос перед ответами. stats: таблица col1 / forecast+gaps col2 (при отсутствии данных грид неактивен, поток одноколоночный top 158→1500). summary: score-areas + таблица(col1)/ошибки(col2)/рекомендации(футер). masthead: brand→actions L→R. Правок не требуется. Леджер: cr.190.
