@@ -10,10 +10,10 @@
 Три cleanup'а + один semantic-fix трогают **пересекающиеся файлы** — бампать версии и
 гонять контракт-тесты нужно СОВМЕСТНО, иначе двойной бамп / рассинхрон:
 
-| Файл | regenerate-removal | STA-20 (stats-колонка) | AIR-6 (рудимент) | RES-15 (list-семантика) | Итоговый v-бамп |
-|---|---|---|---|---|---|
-| `app.js` | удаление regenerate | — | — | wrapper в `renderRelatedQuestions` | **v=62→63 ОДИН раз** (3 шаблона) |
-| `base.css` | .result-page .btn-regenerate/question-side | строка-селектор 1892 | — | — (обёртка стилей не несёт) | **v=92→93 ОДИН раз** (head.html:311) |
+| Файл | regenerate-removal | STA-20 (stats-колонка) | AIR-6 (рудимент) | RES-15 (list-семантика) | SET-21 (dead .app-layout) | Итоговый v-бамп |
+|---|---|---|---|---|---|---|
+| `app.js` | удаление regenerate | — | — | wrapper в `renderRelatedQuestions` | — | **v=62→63 ОДИН раз** (3 шаблона) |
+| `base.css` | .result-page .btn-regenerate/question-side | строка-селектор 1892 | — | — (обёртка стилей не несёт) | правила 3200-3206 + коммент 3197-3199 | **v=92→93 ОДИН раз** (head.html:311) |
 | `result.html` | btn 48-50 + regen-badge 51-53 + question-side 121 | — | — | related-блок 132-138 | — (версии в script-тегах) |
 | `stats.html` | — | колонка «Сброшено» 224-227 (+ th-заголовок) | — | — | — |
 | `focus-training.html` | — | — | флаг generationUnavailable + guards | — | (только app.js-версия :222) |
@@ -44,6 +44,10 @@
   `!generationUnavailable and` из 4 guard'ов (ветки остаются гейтнуты reviewMode/сессией).
 - **RES-15** — по `res15-related-list-semantics-plan.md` (result.html:132-138 обёртка `<div role=list>` +
   `role=listitem`; app.js `renderRelatedQuestions` тот же wrapper). Layout-риск NULL (base.css:2562-2588).
+- **SET-21** — удалить мёртвые правила `.settings-page .app-layout:has(...)` (base.css:3200-3206) +
+  комментарий 3197-3199. 0 render-эффекта (правила не матчатся — `.app-layout` только под `.stats-page`,
+  settings — вкладки). Сверить перед удалением: `grep app-layout templates static/js` = ровно 1 (stats.html:8).
+  Едет на том же base.css v=92→93 бампе + контракт-тест.
 
 ### 2. Единые v-бампы
 - `app.js`: **v=62→63** в `result.html` / `settings.html` / `focus-training.html` (3 script-тега).
