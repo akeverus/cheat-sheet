@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "LoRA обновляет полную матрицу `W` целиком, но делает это вдвое быстрее за счёт хранения весов в формате bfloat16 вместо float32.",
+              "text": "`LoRA` не разлагает `W` на узкие матрицы, а обучает полную поправку `ΔW ∈ R^(d×d)` той же формы, что `W ∈ R^(d×d)`, храня её в bfloat16. Эффективная матрица: `W_eff = W + ΔW`. Инициализация: `ΔW` — нулями, так что в начале `ΔW = 0` и модель эквивалентна base. Это даёт `d²` параметров, зато вдвое дешевле по памяти за счёт 16-бит представления (для d=4096 — 16.7M в bf16 вместо fp32).",
               "correct": false,
               "sections": {
                 "what_actually": "LoRA НЕ обновляет полную `W`: base заморожен, обучаются только маленькие `A` и `B` ранга `r`; формат хранения тут ни при чём.",
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В LoRA обе матрицы `A` и `B` инициализируются случайным гауссовым шумом, чтобы адаптер сразу начал заметно менять выход модели.",
+              "text": "`LoRA` вместо обновления полной матрицы `W ∈ R^(d×d)` обучает low-rank delta `ΔW = B·A`, где `A ∈ R^(r×d)`, `B ∈ R^(d×r)`, `r << d`. Эффективная матрица: `W_eff = W + (α/r)·B·A`. Инициализация: обе матрицы `A` и `B` — gaussian, так что `ΔW ≠ 0` уже на первом шаге и адаптер сразу влияет на выход. Это даёт `2·d·r` параметров вместо `d²` (для d=4096, r=16 — 131K вместо 16.7M, в 128 раз меньше).",
               "correct": false,
               "sections": {
                 "what_actually": "`B` инициализируется нулями (а `A` — гауссом), поэтому в начале `ΔW = B·A = 0` и обучение стартует ровно с поведения base.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Параметр `alpha` в LoRA задаёт ранг разложения, а матрицы `A` и `B` имеют квадратную форму `d×d`.",
+              "text": "`LoRA` вместо обновления полной матрицы `W ∈ R^(d×d)` обучает delta `ΔW = B·A`, где `α` задаёт ранг разложения, а `A` и `B` квадратные `R^(d×d)`. Эффективная матрица: `W_eff = W + B·A`. Инициализация: `A` — gaussian, `B` — нулями, так что в начале `ΔW = 0` и модель эквивалентна base. Это даёт `2·d²` параметров, а силу адаптера повышает рост `α` (для d=4096 — порядка 33M).",
               "correct": false,
               "sections": {
                 "what_actually": "Ранг задаёт `r` (внутренняя размерность), `alpha` — лишь scaling через `α/r`; `A` и `B` прямоугольные (`r×d` и `d×r`), не квадратные.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "RLHF обходится двумя стадиями — SFT и reward model: RM своим scalar-reward'ом напрямую дообучает policy, поэтому отдельная PPO-стадия не требуется.",
+              "text": "`RLHF` (Reinforcement Learning from Human Feedback) из InstructGPT — two-stage pipeline: (1) `SFT` на demonstration-парах; (2) `Reward Model` — заменяем lm_head на scalar head, обучаем на preference pairs `{prompt, chosen, rejected}` с loss `-log σ(r_chosen - r_rejected)`, после чего scalar-reward RM напрямую дообучает policy. Отдельная `PPO`-стадия не требуется. Минусы: 2 модели в памяти, чувствительность к качеству RM.",
               "correct": false,
               "sections": {
                 "what_actually": "RLHF — три стадии: SFT, затем Reward Model, затем PPO; одной reward model недостаточно — она лишь источник сигнала для RL-оптимизации policy.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "На PPO-стадии KL-penalty от reference-модели (SFT) можно убрать: reward model сама удерживает policy от деградации, и reward hacking при этом не возникает.",
+              "text": "`RLHF` (Reinforcement Learning from Human Feedback) из InstructGPT — three-stage pipeline: (1) `SFT` на demonstration-парах; (2) `Reward Model` — scalar head, обучаем на preference pairs `{prompt, chosen, rejected}` с loss `-log σ(r_chosen - r_rejected)`; (3) `PPO` — policy из SFT, sample response → RM даёт reward → backprop без KL-penalty: reward model сама удерживает policy от деградации, reward hacking не возникает. Минусы: 3-4 модели в памяти, дороговизна rollouts.",
               "correct": false,
               "sections": {
                 "what_actually": "KL-penalty обязателен: без него policy reward-hack'ает RM и скатывается в degeneration; reference удерживает её близко к SFT.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "RLHF держит в памяти ровно одну модель, поэтому дешевле и стабильнее, чем DPO, которому нужны policy и reference одновременно.",
+              "text": "`RLHF` (Reinforcement Learning from Human Feedback) из InstructGPT — three-stage pipeline: (1) `SFT` на demonstration-парах; (2) `Reward Model` — scalar head на preference pairs `{prompt, chosen, rejected}` с loss `-log σ(r_chosen - r_rejected)`; (3) `PPO` — policy из SFT, reward от RM. Держит в памяти ровно одну модель на шаге, поэтому дешевле и стабильнее `DPO`, которому нужны policy и reference одновременно. Минусы: медленные rollouts.",
               "correct": false,
               "sections": {
                 "what_actually": "RLHF/PPO держит 3-4 модели (policy, reference, RM, иногда value), это тяжелее DPO с двумя (policy + reference).",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Лицензию можно не проверять: ключевые SFT-датасеты — `Alpaca`, `ShareGPT`, `OpenOrca` — распространяются под commercial-friendly лицензиями и годятся для коммерческого дообучения без ограничений.",
+              "text": "Топ open SFT-датасетов: `Alpaca` (52K, commercial-ok), `Dolly-15k` (human-written, CC BY-SA, commercial), `OpenAssistant OASST1/2` (161K, Apache 2.0, multilingual), `ShareGPT` (90K, реальные ChatGPT-диалоги), `UltraChat` (1.5M synthetic), `LIMA` (1K курированный), `OpenOrca`/`WizardLM`/`Tulu-3-SFT-Mixture`. Best practices: mix разнородных источников, decontaminate против eval-benchmarks (MMLU, GSM8K), deduplicate (minhash), filter качества, format-cast в один chat template.",
               "correct": false,
               "sections": {
                 "what_actually": "Лицензии разные: `Alpaca` — research-only (OpenAI ToS), `ShareGPT` — CC BY-NC, тогда как `Dolly-15k` и `OASST` коммерческие; проверять обязательно.",
@@ -1163,25 +1163,25 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Decontamination против eval-бенчмарков можно пропустить: даже если часть train-примеров совпадает с `MMLU` или `GSM8K`, финальные метрики остаются честными, ведь модель учит общий навык, а не конкретные ответы.",
+              "text": "Топ open SFT-датасетов: `Alpaca` (52K, research-only), `Dolly-15k` (human-written, CC BY-SA, commercial), `OpenAssistant OASST1/2` (161K, Apache 2.0, multilingual), `ShareGPT` (90K, реальные ChatGPT-диалоги), `UltraChat` (1.5M synthetic), `LIMA` (1K курированный), `OpenOrca`/`WizardLM`/`Tulu-3-SFT-Mixture`. Best practices: mix разнородных источников, decontaminate против eval-benchmarks (MMLU, GSM8K), deduplicate (exact-match), filter качества, format-cast в один chat template.",
               "correct": false,
               "sections": {
-                "what_actually": "Decontamination обязательна: примеры, пересекающиеся с MMLU/GSM8K, завышают метрики (data leakage), и оценка перестаёт быть честной.",
-                "source_of_confusion": "Кажется, что «больше данных лучше», и пересечение с бенчмарком воспринимают как безобидное.",
-                "if_it_were_true": "Тогда high-scores на MMLU отражали бы реальное качество, но при утечке они отражают запоминание теста.",
-                "how_it_should_be": "Из train выкидывают примеры, пересекающиеся с eval-бенчмарками, иначе метрики врут."
+                "what_actually": "Дедупликацию делают по near-duplicate (minhash/LSH): exact-match ловит только точные копии строк и пропускает перефразировки, которые раздувают датасет и смещают распределение.",
+                "source_of_confusion": "Кажется, что достаточно убрать полностью совпадающие строки, но большинство повторов в SFT-корпусах — near-duplicates.",
+                "if_it_were_true": "Тогда хватило бы `set()` по строкам, но перефразированные примеры остаются и переоценивают частые паттерны.",
+                "how_it_should_be": "Дедуплицируют по minhash/LSH, отлавливая near-duplicates, а не только точные совпадения."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`LIMA` показал, что решает не отбор, а масштаб: для рабочего SFT нужно как минимум ~1M примеров, иначе instruction-following не закрепляется, а курированные наборы на 1K бесполезны.",
+              "text": "Топ open SFT-датасетов: `Alpaca` (52K, research-only), `Dolly-15k` (human-written, CC BY-SA, commercial), `OpenAssistant OASST1/2` (161K, Apache 2.0, multilingual), `ShareGPT` (90K, реальные ChatGPT-диалоги), `UltraChat` (1.5M synthetic), `LIMA` (1K синтетический), `OpenOrca`/`WizardLM`/`Tulu-3-SFT-Mixture`. Best practices: mix разнородных источников, decontaminate против eval-benchmarks (MMLU, GSM8K), deduplicate (minhash), filter качества, format-cast в один chat template.",
               "correct": false,
               "sections": {
-                "what_actually": "LIMA — это всего 1K высоко-курированных примеров, и его тезис обратный: качество важнее количества, 1000 примеров может хватить.",
-                "source_of_confusion": "Название «Less Is More» забывают, а большой UltraChat (1.5M) задаёт ложный ориентир по объёму.",
-                "if_it_were_true": "Тогда LIMA не назывался бы «Less Is More» и не состоял бы из 1000 примеров.",
-                "how_it_should_be": "LIMA показывает, что небольшой, но качественный и разнообразный набор даёт сильный alignment."
+                "what_actually": "LIMA — это 1K высоко-курированных вручную примеров (Less Is More for Alignment), а не синтетика; её суть именно в качестве ручного отбора.",
+                "source_of_confusion": "Малый размер LIMA принимают за автоген, хотя это тщательная ручная выборка.",
+                "if_it_were_true": "Тогда LIMA не доказывала бы ценность ручной курации, но именно в этом её вклад.",
+                "how_it_should_be": "LIMA — эталон ручной курации: 1K тщательно отобранных примеров дают сильный alignment без масштабных данных."
               }
             },
             {
@@ -1704,37 +1704,37 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Топ-ошибки при fine-tuning — тонкие баги в реализации оптимизатора AdamW и в архитектуре LoRA-адаптера, а chat template и качество данных второстепенны.",
+              "text": "Топ-5: (1) неправильный chat template — модель пишет мусор или не останавливается, лечится понижением `temperature` до 0; (2) mismatched tokenizer (Llama-2 tokenizer для Llama-3) — vocab shift, всё ломается, лечится `AutoTokenizer.from_pretrained(model_id)`; (3) маленький датасет → overfitting (<500 → 1 эпоха max, eval set, early stopping); (4) catastrophic forgetting без проверки (mix general data, MMLU regression test); (5) забыли EOS / неправильный labels mask → бесконечный output (проверь EOS в данных, `pad_token = eos_token`).",
               "correct": false,
               "sections": {
-                "what_actually": "Большинство провалов — про данные/формат: chat template, mismatched tokenizer, малый датасет, EOS; алгоритм LoRA/оптимизатора обычно ни при чём.",
-                "source_of_confusion": "Кажется, что раз результат плохой, виноват «глубокий» алгоритм, а не банальная гигиена данных.",
-                "if_it_were_true": "Тогда чек-лист ошибок касался бы математики оптимизатора, но топ-5 — про template, tokenizer, данные и EOS.",
-                "how_it_should_be": "Сначала проверяют template, tokenizer, объём данных и EOS — там и кроется большинство ошибок FT."
+                "what_actually": "Chat template — структурная разметка ролей; поломка лечится `apply_chat_template()` с шаблоном модели, а не сэмплингом. `temperature=0` лишь делает вывод детерминированным — мусор и незавершённость остаются.",
+                "source_of_confusion": "Мусорный вывод путают с проблемой сэмплинга, хотя причина — неверная разметка промпта, а не разнообразие токенов.",
+                "if_it_were_true": "Тогда любой broken template лечился бы `temperature=0`, но формат ролей и стоп-токены от температуры не зависят.",
+                "how_it_should_be": "Chat template чинят `apply_chat_template()` c родным шаблоном; температура управляет разнообразием вывода, а не структурой."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Взять tokenizer от Llama-2 для дообучения Llama-3 безопасно: внутри одного семейства словарь идентичен, и vocab shift не возникает.",
+              "text": "Топ-5: (1) неправильный chat template — модель пишет мусор или не останавливается, лечится `apply_chat_template()`; (2) mismatched tokenizer (Llama-2 tokenizer для Llama-3) — vocab shift, всё ломается, лечится `tokenizer.add_tokens(missing)`; (3) маленький датасет → overfitting (<500 → 1 эпоха max, eval set, early stopping); (4) catastrophic forgetting без проверки (mix general data, MMLU regression test); (5) забыли EOS / неправильный labels mask → бесконечный output (проверь EOS в данных, `pad_token = eos_token`).",
               "correct": false,
               "sections": {
-                "what_actually": "Mismatched tokenizer — классическая ошибка: у Llama-3 другой vocab, чем у Llama-2; чужой tokenizer даёт vocab shift и ломает обучение.",
-                "source_of_confusion": "Общий бренд «Llama» создаёт ложное ощущение совместимости токенизаторов между версиями.",
-                "if_it_were_true": "Тогда не было бы правила всегда брать `AutoTokenizer.from_pretrained(model_id)` ровно для своей модели.",
-                "how_it_should_be": "Всегда грузят tokenizer с тем же id, что и модель; у Llama-2 и Llama-3 словари различаются."
+                "what_actually": "Vocab shift лечится загрузкой родного tokenizer модели (`AutoTokenizer.from_pretrained(model_id)`), а не `add_tokens` к старому: у Llama-2 (32K) и Llama-3 (128K) расходятся сами id токенов.",
+                "source_of_confusion": "Кажется, что достаточно «дописать» недостающие токены через `add_tokens`, но расходится нумерация id, а не только состав словаря.",
+                "if_it_were_true": "Тогда хватило бы дополнить старый словарь, но id у версий разные, и модель читает чужие эмбеддинги.",
+                "how_it_should_be": "Всегда берут tokenizer с тем же id, что и модель; `add_tokens` к старому словарю не выравнивает существующие id."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "50 примеров при 10 эпохах — хорошая практика: многократный проход по маленькому датасету улучшает генерализацию и не даёт overfitting.",
+              "text": "Топ-5: (1) неправильный chat template — модель пишет мусор или не останавливается, лечится `apply_chat_template()`; (2) mismatched tokenizer (Llama-2 tokenizer для Llama-3) — vocab shift, всё ломается, лечится `AutoTokenizer.from_pretrained(model_id)`; (3) маленький датасет → overfitting (<500 → 5-10 эпох, high LR); (4) catastrophic forgetting без проверки (mix general data, MMLU regression test); (5) забыли EOS / неправильный labels mask → бесконечный output (проверь EOS в данных, `pad_token = eos_token`).",
               "correct": false,
               "sections": {
-                "what_actually": "50 примеров × 10 эпох → overfitting: модель повторяет их дословно; для <500 примеров рекомендуют 1 эпоху, eval set и early stopping.",
-                "source_of_confusion": "Кажется, что мало данных надо «компенсировать» большим числом эпох, но это лишь усиливает запоминание.",
-                "if_it_were_true": "Тогда не было бы правила «<500 примеров → 1 эпоха max», но оно стандартно против overfitting.",
-                "how_it_should_be": "На маленьком датасете ограничивают эпохи, держат eval и early stopping, иначе модель просто заучивает примеры."
+                "what_actually": "На <500 примерах много эпох и высокий LR усиливают запоминание; правило обратное — 1 эпоха max, eval set, early stopping.",
+                "source_of_confusion": "Кажется, что мало данных надо компенсировать числом проходов и агрессивным LR, но это лишь заучивание.",
+                "if_it_were_true": "Тогда не было бы правила «<500 → 1 эпоха max», но оно стандартно против overfitting.",
+                "how_it_should_be": "Маленький датасет → ограничивают эпохи, снижают LR, держат eval и early stopping, иначе модель заучивает примеры."
               }
             }
           ]
