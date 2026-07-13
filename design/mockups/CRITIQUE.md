@@ -37,6 +37,21 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.171 — WCAG 2.5.1 Pointer Gestures (A): verified-clean
+
+**Проверка:** функции, работающие через path-based или multipoint жест, имеют одноточечную альтернативу без траектории.
+
+**Метод:** grep по JS на жестовые обработчики + по шаблонам/CSS на slider/draggable + проверка Chart.js на pan/zoom-плагин.
+
+**Результат — чисто (жестов нет вовсе).**
+- В `app.js`/`stats.js` НЕТ `touchstart/move/end`, `pointermove/down`, `swipe`, `pinch`, `drag`, `mousedown/mousemove`. Все взаимодействия — одиночный клик/тап (кнопки, radio, чекбоксы, ссылки, тогглы, seg-control, font-stepper).
+- Нет `<input type=range>`/`draggable` элементов.
+- Chart.js 4.5.0 базовый, без `chartjs-plugin-zoom` — только hover-тултипы (одноточечный hover, не обязательный жест; данные графиков продублированы текст-таблицей, см. R1.68).
+- `touch-action: manipulation` на интерактиве — снятие double-tap-zoom-задержки, УЛУЧШАЕТ одноточечный отклик, не вводит жест.
+
+Ни одной функции, требующей траектории или нескольких точек касания → критерий выполнен. Правок не требуется.
+
+
 ### cr.170 — WCAG 1.3.5 Identify Input Purpose (AA): verified-clean по отсутствию
 
 **Проверка:** поля, собирающие данные *о пользователе*, несут подходящий `autocomplete` (фиксированный список из 53 персональных Input Purposes: name/email/tel/address/cc-*/bday/…).

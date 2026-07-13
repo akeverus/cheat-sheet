@@ -2220,3 +2220,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: перечислены все input/textarea/select по шаблонам, каждое сверено со списком.
 
 Итог — чисто (нет применимых полей). Видимые поля: count (число вопросов), q (type=search), чекбоксы-фильтры, radio (ответ), select'ы — ни одно не персональные данные. Hidden-поля = состояние, вне scope. Приложение анонимное (нет логина/профиля/адреса/оплаты) → критерий выполнен по отсутствию; добавлять autocomplete нельзя (нет валидного токена). Попутно корректно: type=search, type=number min/max. Правок не требуется. Леджер: cr.170.
+
+## R1.76 — WCAG 2.5.1 Pointer Gestures (A) — verified-clean
+
+Проверка: path-based/multipoint жесты имеют одноточечную альтернативу.
+
+Метод: grep JS на жестовые обработчики + шаблоны/CSS на slider/draggable + Chart.js на pan/zoom-плагин.
+
+Итог — чисто (жестов нет). app.js/stats.js без touch*/pointer*/swipe/pinch/drag/mousedown-move — всё на одиночном клике/тапе. Нет type=range/draggable. Chart.js 4.5.0 без chartjs-plugin-zoom (только hover-тултипы; данные дублируются таблицей по R1.68). touch-action:manipulation лишь снимает double-tap-zoom, не жест. Правок не требуется. Леджер: cr.171.
