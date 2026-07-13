@@ -2236,6 +2236,14 @@ Constraint Validation API без сабмита на session-form. count (number
 - **Queued Фаза B work (не гейтнуто app):** собрать 3 консолидированных атлас-mockup'а (overlay/feedback/component-state-atlas) как статические демо-листы всех state-family в обеих темах — годится как отдельные атомарные тики Фазы B, пока стек лежит.
 - **Дальше:** гейты app/EXAM/window неизменны; не-гейтнутая очередь теперь явная — построить недостающие атласы. Нумерация R0.104+.
 
+### R0.104 (2026-07-13) — Расстыковка `screen-registry.json` (заморожен на R0.27) с фактическим пайплайном (R0.103) — reconciliation-блок
+
+- **Единица:** сверка §2-авторитетного артефакта `design/mockups/screen-registry.json` с текущим состоянием (app не нужен — статическая сверка JSON ↔ §7/§9/§21 + диск). Продолжение нити «правдивость таблиц».
+- **Находка:** регистр инвентаризует **7 реальных поверхностей** (shell/focus/result/summary/settings/stats/error), а overlay/feedback/component держит как *состояния* внутри них (shell.`kbd-help-modal`/`mobile-drawer`, settings.`reset-options-confirm`, focus.`inline-alert`) — **точнее**, чем 3 синтетич. атлас-строки §7. НО все per-surface `phase`/`port_status`/`notes` заморожены на ≤R0.27 («D_PORT_MAPPING», «ПОРТ BLOCKED — в параллельном WIP»), хотя порты выполнены R0.46-53 и surfaces прошли parity/refactor/regression R0.54-98. Регистр читается каждый тик (§2) → активно вводил в заблуждение.
+- **Подтверждение портов (не из памяти):** все 7 `PORT_MAPPING_*.md` на диске + base.css содержит портированные классы (`ed-page`/`set-card`/`error-heading`, 17 совпадений) → §7/§9 Port=✅ корректны.
+- **Правка:** добавлен top-level `reconciliation_2026_07_13` (R0.104): актуальная фаза по каждой из 7 поверхностей (shell/settings/stats/error → H_REGRESSION_QA gated; focus → G/H; result/summary → F_PRODUCTION_PARITY session/EXAM-gated), список открытых гейтов, surface-model note (§7 атлас-строки vs registry state-модель). Per-surface исторические `notes` НЕ тронуты (evidence). JSON провалидирован. Живой трекер = §7/§9 + §21, не замороженные поля.
+- **Дальше:** гейты неизменны; инвентарные артефакты (§7, registry) теперь оба правдивы и согласованы. Не-гейтнутая очередь: 3 атлас-mockup'а (Фаза B). Нумерация R0.105+.
+
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
 ## R1.73 — WCAG 3.2.3 Consistent Navigation (AA) — verified-clean
