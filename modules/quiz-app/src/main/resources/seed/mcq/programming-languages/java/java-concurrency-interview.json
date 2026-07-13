@@ -2831,7 +2831,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Pinning — это когда сборщик мусора закрепляет объекты в old gen для дефрагментации кучи во время GC.",
+              "text": "Когда сборщик мусора закрепляет объекты в куче и не может их переместить: это происходит в old gen при дефрагментации во время полного GC.",
               "correct": false,
               "sections": {
                 "what_actually": "GC pinning — отдельное понятие из GC; thread pinning — про VT и carrier.",
@@ -2843,7 +2843,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Pinning происходит исключительно при работе с volatile-переменными и устраняется удалением модификатора volatile.",
+              "text": "Когда volatile-поле мешает потоку сняться с carrier: возникает при работе с volatile и устраняется удалением модификатора volatile.",
               "correct": false,
               "sections": {
                 "what_actually": "volatile никак не связан с pinning; в Java 21 pinning — про synchronized + блокирующий I/O или JNI.",
@@ -2855,7 +2855,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Pinning невозможно обнаружить штатными средствами JVM: для него не существует ни системного флага диагностики, ни JFR-события, ни какого-либо иного встроенного способа.",
+              "text": "Когда pinning происходит, обнаружить его штатной JVM нельзя: для него нет ни флага диагностики, ни JFR-события, ни иного встроенного способа.",
               "correct": false,
               "sections": {
                 "what_actually": "Диагностируется через -Djdk.tracePinnedThreads=full или JFR-событие jdk.VirtualThreadPinned.",
@@ -3071,7 +3071,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно только thenApply без exceptionally и handle: при ошибке цепочка просто вернёт null вместо результата, а само исключение нигде не всплывёт и потеряется без следа.",
+              "text": "Строить всё на supplyAsync и thenApply без exceptionally и handle, полагаясь, что исключение промежуточной стадии само всплывёт в вызывающий код.",
               "correct": false,
               "sections": {
                 "what_actually": "Исключение в стадии CompletableFuture не теряется: оно запоминается в completed-exceptionally future и всплывает как CompletionException при join()/get(), а зависимые thenApply пропускаются, не выполняя тело.",
@@ -3096,7 +3096,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Делать всё через блокирующий .get() с try-catch на каждом шаге — это самый чистый и читаемый способ построить цепочку.",
+              "text": "Собирать результаты блокирующим get() в try-catch после каждого supplyAsync, ловя исключения синхронно и агрегируя список вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "Блокирующий get() убивает async-преимущество; try-catch теряет компонуемость.",
@@ -3108,7 +3108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Достаточно везде использовать общий commonPool — он одинаково хорошо подходит и для CPU-bound, и для блокирующего I/O.",
+              "text": "Гонять supplyAsync, thenCombine и handle через общий commonPool, не заводя отдельного executor ни под CPU-bound, ни под блокирующий I/O.",
               "correct": false,
               "sections": {
                 "what_actually": "commonPool для CPU-bound и небольших задач; блокирующий I/O засоряет worker'ов FJP, деградирует parallelStream.",
