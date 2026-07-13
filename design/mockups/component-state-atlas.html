@@ -146,6 +146,16 @@
     kbd { display: inline-grid; place-items: center; min-width: 1.6rem; height: 1.6rem; padding: 0 var(--s-2); font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: var(--r-sm); }
     .opt-tag { display: inline-block; font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--ink-3); border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 0 0.4em; }
 
+    /* ===== Disclosure (expanded / collapsed) ============================ */
+    .disc { width: 100%; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--paper); text-align: left; }
+    .disc-sum { display: flex; align-items: center; gap: var(--s-2); font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); padding: var(--s-3) var(--s-4); cursor: pointer; }
+    .disc .caret { flex: none; transition: transform var(--dur-1) var(--ease-out); }
+    .disc .caret svg { width: 0.9rem; height: 0.9rem; display: block; }
+    .disc .caret.is-open { transform: rotate(90deg); }
+    .disc.is-open .disc-sum { border-bottom: 1px solid var(--line); color: var(--ink); }
+    .disc .disc-body { padding: var(--s-4); font-size: var(--fs-sm); color: var(--ink-2); }
+    .disc .disc-body code { font-size: 0.85em; background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 0.06em 0.3em; }
+
     /* ===== Поверхности =================================================== */
     .surfaces { display: flex; gap: var(--s-3); flex-wrap: wrap; }
     .surf { border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-4) var(--s-5); font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-2); }
@@ -286,6 +296,33 @@
           <kbd>Enter</kbd><kbd>Esc</kbd><kbd>?</kbd>
           <span class="opt-tag">верно</span>
         </div></div></div>
+      </section>
+
+      <!-- Expanded / collapsed -->
+      <section class="atlas-section" aria-labelledby="c-exp">
+        <h2 id="c-exp">Раскрытие (expanded / collapsed)</h2>
+        <p class="section-note">Disclosure-примитив (<span class="prod-tag">«Показать код» focus</span>, <span class="prod-tag">error «Подробности»</span>): caret + <code>aria-expanded</code>, работает без JS.</p>
+        <hr class="rule">
+        <div class="matrix" style="grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr))">
+          <div class="cell"><span class="cell__state">collapsed · aria-expanded="false"</span><div class="cell__stage" style="padding:var(--s-2)">
+            <div class="disc"><div class="disc-sum"><span class="caret"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></span>Показать код вопроса</div></div>
+          </div></div>
+          <div class="cell"><span class="cell__state">expanded · aria-expanded="true"</span><div class="cell__stage" style="padding:var(--s-2)">
+            <div class="disc is-open"><div class="disc-sum"><span class="caret is-open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></span>Показать код вопроса</div><div class="disc-body"><code>List&lt;Integer&gt; xs = new ArrayList&lt;&gt;();</code> — доступ по индексу за O(1).</div></div>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- Long content -->
+      <section class="atlas-section" aria-labelledby="c-long">
+        <h2 id="c-long">Длинный контент (перенос)</h2>
+        <p class="section-note">Как примитивы держат переполнение: длинный текст переносится многострочно, группа чипов оборачивается — раскладка не ломается, нет горизонтального скролла.</p>
+        <hr class="rule">
+        <div class="matrix" style="grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr))">
+          <div class="cell"><span class="cell__state">option · длинный многострочный</span><div class="cell__stage" style="padding:var(--s-2)"><div class="opt" style="width:100%"><span class="opt-badge">A</span><span class="opt-text">Амортизированная сложность вставки в динамический массив остаётся O(1) на операцию, потому что удвоение ёмкости распределяет стоимость копирования по всем предыдущим вставкам</span><span class="opt-mark"></span></div></div></div>
+          <div class="cell"><span class="cell__state">chip · перенос группы</span><div class="cell__stage"><div class="flow" style="max-width:16rem"><span class="chip">Java</span><span class="chip">Многопоточность</span><span class="chip">Структуры данных</span><span class="chip">Алгоритмы</span><span class="chip">Сети</span></div></div></div>
+          <div class="cell"><span class="cell__state">button · длинный лейбл</span><div class="cell__stage" style="padding:var(--s-3)"><button class="btn btn-secondary" type="button" style="max-width:14rem">Продолжить с того же места в предыдущей теме</button></div></div>
+        </div>
       </section>
 
       <!-- Surfaces -->
