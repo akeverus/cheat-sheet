@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Fine-tuning даёт более свежие знания, чем RAG: факты зашиты прямо в веса и не зависят от внешнего индекса, а короткий до-тюнинг обновляет их быстрее, чем пересборка retrieval-базы.",
+              "text": "`Prompting` — гибкая обёртка без новых знаний (секунды на запрос), `RAG` — лишь прототип на внешнем индексе (поиск по базе), `fine-tuning` — способ занести самые свежие факты прямо в веса: короткий до-тюнинг (≈$10) обновляет их быстрее, чем пересборка retrieval-базы. Правило: за актуальность знаний отвечает `fine-tuning`, а RAG берут, только когда дообучать не на чем; факты держат в весах, стиль — в retrieval.",
               "correct": false,
               "sections": {
                 "what_actually": "Знания fine-tuned модели заморожены на момент обучения; свежесть обеспечивает именно `RAG` через быстрый re-index, а переобучение медленнее на порядки.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Prompting и fine-tuning — взаимоисключающие подходы: после дообучения модели prompt engineering теряет смысл, а добавлять сверху RAG в такой связке уже избыточно.",
+              "text": "`Prompting` — стартовый режим до дообучения, `RAG` — временный костыль на время сбора данных, `fine-tuning` — финальный режим (этап 3), после которого промпт и retrieval уже лишние. Правило: пройдя лестницу `Prompting → RAG → Fine-tuning` до конца, оставляют только FT; поверх дообученной модели RAG уже не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "На практике подходы комбинируют: fine-tune для стиля + RAG для фактов + аккуратный промпт — стандартная продакшен-связка.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "RAG лучше всего подходит для смены стиля и формата вывода, а fine-tuning — для подтягивания свежих фактов в реальном времени.",
+              "text": "`Prompting` — базовая гибкость без памяти, `RAG` — для устойчивой смены стиля и формата (тон из top-3 документов), `fine-tuning` — для подтягивания свежих фактов. Правило: стиль берут из RAG, а факты — из `fine-tuning`; так и комбинируют — RAG задаёт тон, FT тянет факты.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `RAG` слаб для смены стиля (он лишь добавляет контекст), а свежие факты — его сильная сторона; стиль/формат — задача fine-tuning.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Continued pretraining (DAPT) учит модель следовать инструкциям на парах `{instruction, response}` с chat template, а SFT — это обучение на сыром неразмеченном тексте.",
+              "text": "`Continued pretraining (DAPT)` учит следовать инструкциям на парах `{instruction, response}` с chat template, loss ТОЛЬКО на ответе (`completion_only_loss=True`), объёмы тысячи-миллионы примеров. `SFT` в этой схеме — обучение на СЫРОМ неразмеченном тексте (статьи, код, книги), loss на всей последовательности, объёмы миллиарды-триллионы токенов. В этой логике BloombergGPT выглядит instruction-tuned на парах, а базовая Llama — итогом сырого DAPT. Порядок такой: base, дальше опциональный SFT, затем DAPT и preference optimization.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: на парах с chat template работает SFT, а DAPT идёт на сыром тексте без template для расширения знаний/домена.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В SFT loss считают по всей последовательности, включая токены инструкции, а `completion_only_loss` меняет лишь детали подсчёта и на итоговое качество почти не влияет.",
+              "text": "`Continued pretraining (DAPT)` расширяет домен на сыром тексте (статьи, код), loss на всём, миллиарды-триллионы токенов. `SFT` учит инструкциям на парах `{instruction, response}` с chat template, но loss тут берут по ВСЕЙ последовательности вместе с токенами инструкции, поэтому модель заодно заучивает и текст вопроса, а `completion_only_loss` влияет лишь на детали подсчёта. Схема стадий: base, затем опциональный DAPT, следом SFT и выравнивание предпочтений.",
               "correct": false,
               "sections": {
                 "what_actually": "В SFT loss часто считают ТОЛЬКО на response (`completion_only_loss=True`); счёт по инструкции учит модель «переписывать» вопросы вместо ответа.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`DAPT` — это тот же SFT, только на большем корпусе: оба идут на парах `{instruction, response}` с chat template и различаются лишь количеством примеров.",
+              "text": "`Continued pretraining (DAPT)` — по сути тот же `SFT`, только на корпусе побольше: оба идут на парах `{instruction, response}` с chat template, loss на ответе (`completion_only_loss`), а разница лишь в числе примеров, у DAPT их на порядки больше. Отдельной стадии по смыслу нет — это ОДИН режим. Цепочка: base → общий SFT/DAPT → preference optimization.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные режимы: DAPT — миллиарды-триллионы токенов сырого текста, SFT — тысячи-миллионы размеченных пар; цели и данные различаются.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "GRPO отличается от PPO тем, что использует более крупную и точную value model для оценки каждого токена, что и делает его дороже PPO.",
+              "text": "`GRPO` (Group Relative Policy Optimization) от DeepSeek (R1) — RL-алгоритм с усиленной value model: критик здесь крупнее и точнее, чем в PPO, и оценивает каждый токен аккуратнее. Ход обучения: на каждый prompt сэмплируем ответ, обученный критик `V(s_t)` задаёт baseline на токен, advantage `A_t = r_t - V(s_t)` сглаживают через GAE, а критик обучают MSE-регрессией к возвратам. Дальше идёт policy-gradient шаг и `KL` от reference. Дороже PPO из-за более тяжёлого критика, зато точнее и стабильнее, а verifiable rewards снимают reward hacking и дают более длинный CoT.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключевое отличие GRPO — ОТСУТСТВИЕ value model: advantage берётся из сравнения внутри группы, поэтому GRPO дешевле PPO примерно на 50%.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "GRPO работает на любых задачах, включая открытые субъективные диалоги, потому что не нуждается в проверяемом reward и устойчив к шуму.",
+              "text": "`GRPO` (Group Relative Policy Optimization) от DeepSeek (R1) — RL без value model: advantage берётся из сравнения внутри группы `{y_1..y_G}`. Работает на любых задачах, включая открытые субъективные диалоги, потому что групповая нормализация `A_i = (R_i - mean)/std` по баллам judge-модели устойчива к шуму и не требует проверяемого reward. Механика: сэмплируем группу, судим judge-моделью, нормализуем и делаем policy-gradient шаг с `KL` от reference.",
               "correct": false,
               "sections": {
                 "what_actually": "GRPO рассчитан на verifiable tasks (math, code, logic) с rule-based reward; на noisy/subjective reward (judge LLM) он может быть нестабилен.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "GRPO не требует сэмплировать несколько ответов на промпт — он, как DPO, обучается на статических готовых preference-парах без rollouts.",
+              "text": "`GRPO` (Group Relative Policy Optimization) от DeepSeek (R1) — RL без value model, но, как `DPO`, учится на статических готовых preference-парах `{chosen, rejected}` без rollouts. Схема: берём офлайн-пары, считаем advantage прямо по паре `A_i = r_chosen - r_rejected`, делаем policy-gradient шаг и KL от reference. Поэтому GRPO дёшев по compute и ничего не генерирует на лету.",
               "correct": false,
               "sections": {
                 "what_actually": "GRPO требует rollouts: на каждый prompt сэмплируется ГРУППА из G ответов, по которой и считается относительный advantage; это не статические пары DPO.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Learning rate для LoRA должен быть меньше, чем для full fine-tuning, потому что адаптер маленький и легко переобучается на большом lr.",
+              "text": "Ставят так: полному FT дают шаг около 2e-5, адаптерным методам меньше — LoRA/QLoRA примерно 1e-6..1e-5, DPO 5e-7..5e-6, GRPO 1e-6..5e-6; эпох берут 1-3 (иначе overfitting). Правила: LoRA lr << full FT (адаптер крошечный, на большом шаге разболтается); DPO lr << SFT; epochs SFT >> DPO; eval каждую эпоху + early stop; bf16 > fp16 на A100/H100. Батч — per_device × grad_accum × число карт, 32-128 (SFT), 16-64 (DPO). Sanity: loss на старте ≈ натуральный логарифм словаря ≈ 10-12.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: LoRA lr (1e-4-5e-4) БОЛЬШЕ, чем у full FT (1e-5-5e-5), потому что обучается мало параметров и нужны большие шаги.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "DPO нужно учить много эпох (10+) с большим learning rate, иначе предпочтения не закрепятся в модели.",
+              "text": "Ориентиры: full FT 1e-5..5e-5, LoRA 1e-4..5e-4, QLoRA 1e-4..3e-4, DPO 1e-4..5e-4, GRPO 1e-6..5e-6; но DPO гоняют 10+ эпох (иначе предпочтения не закрепляются). Правила: DPO lr >> SFT (нужен крупный шаг, чтобы развести chosen и rejected); LoRA lr >> full FT; GRPO lr << DPO; eval с early stop; bf16 > fp16 на A100/H100. Батч = per_device·grad_accum·GPU, 32-128 (SFT), 16-64 (DPO). Sanity: стартовый loss ≈ логарифм словаря ≈ 10-12.",
               "correct": false,
               "sections": {
                 "what_actually": "DPO обычно учат 1 эпоху с очень маленьким lr (~5e-7); большой lr и много эпох быстро деградируют модель относительно reference.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Чем больше эпох, тем лучше: 10-20 эпох SFT дают более качественную модель, а риск переобучения на инструкциях остаётся небольшим.",
+              "text": "На старте: full FT около 1e-5–5e-5, LoRA/QLoRA в районе 1e-4, DPO 5e-7..5e-6, GRPO 1e-6..5e-6; эпох ставят 10-20. Правила: epochs 10-20 >> 3 (дольше учишь — качественнее, overfitting на инструкциях мал); LoRA lr >> full FT; DPO lr << SFT; ранняя остановка почти не нужна; bf16 > fp16 на A100/H100. effective batch = per_device × grad_accum × num_gpus, 32-128 (SFT) / 16-64 (DPO). Sanity: loss на старте ≈ ln(vocab) ≈ 10-12.",
               "correct": false,
               "sections": {
                 "what_actually": "epochs >3 почти всегда дают overfitting (модель запоминает примеры дословно); рекомендуется 1-3 эпохи с eval и early stop.",
