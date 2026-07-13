@@ -2243,7 +2243,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "CountDownLatch — одноразовый асимметричный счётчик с методом reset() для повторного использования; CyclicBarrier — переиспользуемый симметричный барьер, где N потоков ждут друг друга.",
+              "text": "CountDownLatch — одноразовый асимметричный счётчик с reset() для повторного пуска; CyclicBarrier — переиспользуемый симметричный барьер.",
               "correct": false,
               "sections": {
                 "what_actually": "Latch одноразовый, метода reset() нет; reset есть у CyclicBarrier.",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Phaser — устаревший одноразовый счётчик из Java 1.4; Exchanger<V> — deprecated-замена CountDownLatch для обмена между двумя потоками.",
+              "text": "Phaser — многофазный синхронизатор из Java 5 с динамическим числом участников; Exchanger<V> — точка обмена значениями между ДВУМЯ потоками.",
               "correct": false,
               "sections": {
                 "what_actually": "Phaser добавлен в Java 7, Exchanger в Java 5; оба актуальны, не deprecated.",
@@ -2484,7 +2484,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "ConcurrentHashMap берёт один глобальный synchronized на всю мапу при каждой операции чтения и записи.",
+              "text": "ConcurrentHashMap синхронизирует запись на общем мониторе таблицы: bucket-level CAS и treeification ≥ 8 не задействованы, параллельны лишь чтения.",
               "correct": false,
               "sections": {
                 "what_actually": "Это поведение Collections.synchronizedMap, а не ConcurrentHashMap; CHM использует fine-grained.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ConcurrentHashMap полностью lock-free: он использует в первую очередь CAS-операции и никогда не берёт synchronized — даже при коллизии в одном и том же bucket'е несколько потоков пишут туда одновременно без единой блокировки.",
+              "text": "ConcurrentHashMap в основном lock-free: CAS на вставке, а synchronized на голове bucket'а берётся лишь при treeification цепочки ≥ 8 и ёмкости таблицы ≥ 64, не при обычной коллизии.",
               "correct": false,
               "sections": {
                 "what_actually": "При коллизии bucket'а используется synchronized на голове — не fully lock-free.",
@@ -2531,7 +2531,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Очередь без блокирующих put()/take() на пустоте и заполненности; есть bounded и unbounded реализации под разные задачи.",
+              "text": "Очередь без блокирующих put()/take() (на пустоте и заполненности не ждут); есть bounded и unbounded реализации под разные задачи.",
               "correct": false,
               "sections": {
                 "what_actually": "Суть BlockingQueue именно в блокирующих put/take при заполненности/пустоте.",
@@ -2543,7 +2543,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Очередь с блокирующими методами put() и take(); все стандартные реализации только bounded, unbounded в java.util.concurrent нет.",
+              "text": "Очередь с блокирующими put() (ждёт при заполненности) и take() (ждёт при пустоте); но все реализации только bounded, unbounded в java.util.concurrent нет.",
               "correct": false,
               "sections": {
                 "what_actually": "LinkedBlockingQueue (по умолчанию unbounded = Integer.MAX_VALUE), PriorityBlockingQueue, DelayQueue — unbounded.",
@@ -2555,7 +2555,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Очередь с блокирующими методами put() и take(); SynchronousQueue держит во внутреннем буфере до одного элемента между put и take.",
+              "text": "Очередь с блокирующими put() (ждёт при заполненности) и take() (ждёт при пустоте); SynchronousQueue буферизует до одного элемента между put и take.",
               "correct": false,
               "sections": {
                 "what_actually": "SynchronousQueue не имеет буфера: put блокируется пока take не примет — direct handoff.",
@@ -2616,7 +2616,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Идиоматично — только через сторонний LMAX Disruptor: на стандартной Java надёжного Producer-Consumer нет; для graceful shutdown — poison pill или shutdown с флагом.",
+              "text": "Идиоматично — через LMAX Disruptor с lock-free ring buffer: он всегда быстрее и предпочтительнее BlockingQueue; для graceful shutdown — poison pill или shutdown с флагом.",
               "correct": false,
               "sections": {
                 "what_actually": "BlockingQueue полностью решает большинство case'ов; Disruptor — оптимизация под extreme throughput (LMAX).",
@@ -2664,19 +2664,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Снимок состояния всех потоков JVM — стеки, состояния, мониторы; снимается автоматически при каждом исключении и пишется в лог приложения.",
+              "text": "Снимок состояния всех потоков JVM — стеки, состояния, мониторы; снимается через jstack, jcmd GC.run, kill -3 или ThreadMXBean.dumpAllThreads.",
               "correct": false,
               "sections": {
-                "what_actually": "JVM генерирует stack trace для исключения, но не thread dump всех потоков.",
-                "source_of_confusion": "Смешение stack trace и thread dump: считают, что исключение печатает дамп всех потоков.",
-                "if_it_were_true": "Лог приложения был бы заспамлен дампами — реально нет.",
-                "how_it_should_be": "Stack trace ≠ thread dump; dump — по запросу."
+                "what_actually": "Thread dump снимает `jcmd <pid> Thread.print`; `GC.run` — это принудительный вызов GC, к дампу потоков отношения не имеющий.",
+                "source_of_confusion": "`jcmd` — общий диспетчер команд; из его подкоманд легко перепутать `Thread.print` с другими вроде `GC.run`.",
+                "if_it_were_true": "`GC.run` печатал бы стеки всех потоков — реально он лишь инициирует сборку мусора.",
+                "how_it_should_be": "Для дампа — `jcmd <pid> Thread.print` (или `jstack <pid>`); `GC.run` не про потоки."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Снимок состояния всех потоков JVM — стеки, состояния, мониторы; снимается только через VisualVM/Mission Control, CLI в JDK нет.",
+              "text": "Снимок состояния всех потоков JVM — стеки, состояния, мониторы; снимается через VisualVM или Mission Control, а консольные jstack и jcmd из JDK убраны.",
               "correct": false,
               "sections": {
                 "what_actually": "Базовые способы — командные: jstack, jcmd, kill -3 (SIGQUIT).",
@@ -2688,7 +2688,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Снимок состояния всех потоков JVM — стеки, состояния, мониторы; снятие останавливает JVM до ручного перезапуска, на проде опасно.",
+              "text": "Снимок состояния всех потоков JVM — стеки, состояния, мониторы; снятие через jstack, jcmd Thread.print или kill -3 останавливает JVM до ручного перезапуска.",
               "correct": false,
               "sections": {
                 "what_actually": "`jstack`/`jcmd Thread.print`/`kill -3` снимают дамп без остановки приложения — это безопасная live-диагностика.",
@@ -2771,7 +2771,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Использовать для любых задач вместо platform threads; НЕ использовать только если JVM ниже Java 21.",
+              "text": "Использовать и для I/O-bound, и для CPU-bound-вычислений ради параллелизма сверх числа ядер; НЕ использовать на JVM ниже Java 21 или при -Xint.",
               "correct": false,
               "sections": {
                 "what_actually": "Для CPU-bound VT не дают выгоды; тяжёлый synchronized→pinning; heavy ThreadLocal→память.",
@@ -2796,7 +2796,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Использовать для I/O-bound без пулов и backpressure; НЕ использовать лишь для редких CPU-bound, а внешние ресурсы можно не ограничивать.",
+              "text": "Использовать для I/O-bound без пулов потоков; НЕ использовать для CPU-bound, а connection pool к БД выдержит тысячи VT без отдельного семафора.",
               "correct": false,
               "sections": {
                 "what_actually": "Дешёвые VT снимают ограничение на ЧИСЛО потоков, но не на внешние ресурсы: пул соединений к БД, rate limit API, память по-прежнему конечны и требуют ограничения (семафор, bounded-пул), иначе тысячи VT разом исчерпают connection pool.",
@@ -2808,7 +2808,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать только после --enable-preview; НЕ использовать в production, пока virtual threads остаются preview в Java 21.",
+              "text": "Использовать после включения preview-флага; НЕ использовать в production, пока virtual threads не стали stable после Java 21.",
               "correct": false,
               "sections": {
                 "what_actually": "Virtual threads в Java 21 — GA (stable, JEP 444), не preview.",
