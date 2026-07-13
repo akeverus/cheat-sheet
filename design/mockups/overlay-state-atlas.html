@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Атлас оверлеев · макет Instrument</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    /* ===== Reset / основа (общий язык Instrument) ========================== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; min-height: 100dvh; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); font-family: var(--font-ui); font-size: var(--fs-base); line-height: var(--lh-normal); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    a { color: var(--signal-ink); }
+    code, kbd { font-family: var(--font-mono); }
+    [hidden] { display: none !important; }
+    .wrap { width: 100%; padding-inline: var(--gutter); }
+    .skip-link { position: absolute; left: var(--s-4); top: -4rem; background: var(--signal-strong); color: var(--signal-on); padding: var(--s-2) var(--s-4); border-radius: var(--r-sm); z-index: 60; transition: top var(--dur-1) var(--ease-out); }
+    .skip-link:focus { top: var(--s-4); }
+    :where(a, button, input, select, summary):focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; border-radius: var(--r-sm); }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+    /* ===== Макет-лейбл ==================================================== */
+    .mock-bar { border-bottom: 1px dashed var(--line-strong); background: var(--surface); }
+    .mock-bar__inner { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; padding-block: var(--s-2); }
+    .mock-tag { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); color: var(--ink-3); }
+
+    /* ===== Шапка ========================================================= */
+    .site-head { position: sticky; top: 0; z-index: 40; border-bottom: 1px solid var(--line); background: var(--paper); }
+    .site-head__inner { display: flex; align-items: center; gap: var(--s-4); padding-block: var(--s-4); }
+    .brand { display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--font-mono); font-weight: var(--fw-semi); font-size: var(--fs-sm); letter-spacing: var(--track-mono); color: var(--ink); text-decoration: none; margin-right: auto; }
+    .brand-mark { width: 0.9rem; height: 0.9rem; border-radius: 3px; background: var(--signal); box-shadow: inset 0 0 0 3px var(--paper), 0 0 0 1px var(--signal); }
+    .brand > span:last-child { color: var(--ink-3); }
+    .head-tools { display: flex; align-items: center; gap: var(--s-2); }
+    .theme-toggle { display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pill); padding: var(--s-2) var(--s-3); cursor: pointer; transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+    .theme-toggle:hover { border-color: var(--line-strong); color: var(--ink); }
+    .icon-btn { display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); cursor: pointer; transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+    .icon-btn:hover { border-color: var(--line-strong); color: var(--ink); }
+    .icon-btn svg { width: 1.15rem; height: 1.15rem; }
+
+    /* ===== Каркас атласа ================================================= */
+    main { flex: 1 0 auto; }
+    .atlas-wrap { padding-block: var(--s-7) var(--s-9); }
+    .atlas-lede { max-width: var(--measure); }
+    .atlas-eyebrow { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); text-transform: lowercase; color: var(--ink-3); margin: 0 0 var(--s-3); }
+    .atlas-title { font-family: var(--font-hero); font-weight: var(--fw-medium); font-size: var(--fs-xl); line-height: var(--lh-hero); letter-spacing: var(--track-hero); color: var(--ink); margin: 0 0 var(--s-3); }
+    .atlas-sub { color: var(--ink-2); font-size: var(--fs-md); margin: 0 0 var(--s-7); max-width: var(--measure); }
+
+    .atlas-section { margin-block: var(--s-8); }
+    .atlas-section > h2 { font-family: var(--font-ui); font-size: var(--fs-lg); font-weight: var(--fw-semi); letter-spacing: var(--track-tight); color: var(--ink); margin: 0 0 var(--s-2); }
+    .atlas-section > .section-note { color: var(--ink-2); font-size: var(--fs-sm); margin: 0 0 var(--s-5); max-width: var(--measure); }
+    .rule { height: 1px; background: var(--line); border: 0; margin: 0 0 var(--s-6); }
+    .prod-tag { display: inline-block; font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 1px var(--s-2); }
+    .specimen__desc { font-size: var(--fs-sm); color: var(--ink-2); margin: var(--s-3) 0 0; line-height: var(--lh-snug); }
+
+    /* Сцена оверлея: тонированный «scrim-контекст», панель НЕ fixed (для галереи) */
+    .stage { border: 1px dashed var(--line-strong); border-radius: var(--r-lg); padding: var(--s-6); display: grid; place-items: center; background:
+        repeating-linear-gradient(45deg, transparent 0 10px, color-mix(in oklab, var(--ink) 4%, transparent) 10px 11px), var(--surface); }
+    .stage--tight { padding: var(--s-5); }
+    .badge-open { display:inline-flex; align-items:center; gap:var(--s-2); font-family:var(--font-mono); font-size:var(--fs-xs); letter-spacing:var(--track-mono); color:var(--ink-3); margin-bottom: var(--s-4); }
+
+    /* Панель диалога (зеркало .kbd-help-modal) */
+    .panel { width: min(34rem, 100%); background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--r-lg); box-shadow: var(--shadow-lift); padding: var(--s-6); text-align: left; }
+    .panel--sm { width: min(30rem, 100%); }
+    .kh-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-4); margin-bottom: var(--s-5); }
+    .kh-head h2 { font-family: var(--font-hero); font-size: var(--fs-lg); font-weight: var(--fw-medium); color: var(--ink); margin: 0 0 var(--s-1); }
+    .kh-sub { font-size: var(--fs-sm); color: var(--ink-2); margin: 0; }
+    .kh-list { display: grid; gap: var(--s-1); }
+    .kh-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); padding: var(--s-2) 0; border-bottom: 1px solid var(--line); }
+    .kh-row:last-child { border-bottom: 0; }
+    .kh-desc { font-size: var(--fs-sm); color: var(--ink-2); }
+    .kh-keys { display: inline-flex; align-items: center; gap: 2px; color: var(--ink-3); flex: none; }
+    kbd { display: inline-grid; place-items: center; min-width: 1.6rem; height: 1.6rem; padding: 0 var(--s-2); font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: var(--r-sm); }
+
+    /* Alertdialog (зеркало .confirm-modal) */
+    .panel h3.confirm-title { font-family: var(--font-hero); font-size: var(--fs-lg); font-weight: var(--fw-medium); color: var(--ink); margin: 0 0 var(--s-2); }
+    .panel p.confirm-desc { color: var(--ink-2); font-size: var(--fs-sm); line-height: var(--lh-snug); margin: 0 0 var(--s-5); }
+    .confirm-actions { display: flex; gap: var(--s-3); justify-content: flex-end; flex-wrap: wrap; }
+
+    /* Кнопки */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2); font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-semi); border-radius: var(--r-md); padding: var(--s-2) var(--s-5); cursor: pointer; text-decoration: none; border: 1px solid transparent; transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out); }
+    .btn-primary { background: var(--signal-strong); color: var(--signal-on); }
+    .btn-primary:hover { background: var(--signal-ink); }
+    .btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--line-strong); }
+    .btn-secondary:hover { border-color: var(--ink-3); }
+    .btn-danger { background: var(--error); color: var(--error-on); }
+    .btn-danger:hover { background: var(--error-ink); }
+
+    /* Drawer (зеркало .mobile-menu) */
+    .drawer { width: min(20rem, 100%); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-lg); box-shadow: var(--shadow-lift); overflow: hidden; text-align: left; }
+    .drawer nav { display: flex; flex-direction: column; }
+    .drawer a { font-size: var(--fs-base); font-weight: var(--fw-medium); color: var(--ink); text-decoration: none; padding: var(--s-3) var(--s-5); border-bottom: 1px solid var(--line); }
+    .drawer a:last-child { border-bottom: 0; }
+    .drawer a[aria-current="page"] { color: var(--signal-ink); }
+
+    /* Disclosure (зеркало error-details / flashcard reveal) */
+    .disclosure { width: min(34rem, 100%); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--paper); text-align: left; }
+    .disclosure summary { font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); padding: var(--s-3) var(--s-4); cursor: pointer; }
+    .disclosure[open] summary { border-bottom: 1px solid var(--line); color: var(--ink); }
+    .disclosure .disc-body { padding: var(--s-4); font-size: var(--fs-sm); color: var(--ink-2); }
+
+    /* Tooltip */
+    .tt-demo { position: relative; display: inline-flex; }
+    .tt-bubble { position: absolute; bottom: calc(100% + var(--s-2)); left: 50%; transform: translateX(-50%); white-space: nowrap; background: var(--ink); color: var(--paper); font-size: var(--fs-xs); padding: var(--s-1) var(--s-3); border-radius: var(--r-sm); box-shadow: var(--shadow-sm); }
+    .tt-bubble::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: var(--ink); }
+
+    /* Dropdown menu (расширение языка, не в проде) */
+    .menu { width: min(16rem, 100%); background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--r-md); box-shadow: var(--shadow-lift); padding: var(--s-2); text-align: left; }
+    .menu [role="menuitem"] { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); font-size: var(--fs-sm); color: var(--ink); cursor: pointer; }
+    .menu [role="menuitem"]:hover, .menu [role="menuitem"][data-active] { background: var(--surface); color: var(--signal-ink); }
+    .menu [role="menuitem"] svg { width: 1rem; height: 1rem; color: var(--ink-3); flex: none; }
+    .menu-sep { height: 1px; background: var(--line); margin: var(--s-2) 0; }
+
+    /* Popover (расширение) */
+    .popover { width: min(22rem, 100%); background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--r-md); box-shadow: var(--shadow-lift); padding: var(--s-5); text-align: left; }
+    .popover h4 { font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-semi); color: var(--ink); margin: 0 0 var(--s-2); }
+    .popover p { font-size: var(--fs-sm); color: var(--ink-2); margin: 0; line-height: var(--lh-snug); }
+
+    .ext-tag { color: var(--spark-ink); }
+
+    /* ===== ЖИВОЙ демо-оверлей (fixed scrim + focus-trap + Esc) ============ */
+    .overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: var(--gutter); background: color-mix(in oklab, var(--ink) 42%, transparent); }
+    .overlay[hidden] { display: none; }
+    .overlay .panel { position: relative; }
+    .overlay-close { position: absolute; top: var(--s-4); right: var(--s-4); }
+    @media (prefers-reduced-motion: no-preference) {
+      .overlay:not([hidden]) .panel { animation: ov-pop var(--dur-2) var(--ease-out) both; }
+      @keyframes ov-pop { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+    }
+
+    /* Легенда scaffold */
+    .scaffold { display: grid; gap: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-5); }
+    @media (min-width: 720px) { .scaffold { grid-template-columns: repeat(2, 1fr); } }
+    .scaffold-item { font-size: var(--fs-sm); }
+    .scaffold-item b { color: var(--ink); } .scaffold-item code { font-size: var(--fs-xs); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 1px var(--s-2); }
+    .scaffold-item p { margin: var(--s-1) 0 0; color: var(--ink-2); }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">К содержимому атласа</a>
+
+  <div class="mock-bar">
+    <div class="wrap mock-bar__inner">
+      <span class="mock-tag">атлас · оверлеи (dialog · alertdialog · drawer · disclosure · tooltip · menu · popover)</span>
+    </div>
+  </div>
+
+  <header class="site-head">
+    <div class="wrap site-head__inner">
+      <a class="brand" href="#" aria-label="собес/трек, на главную">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span><b>собес</b>/трек</span>
+      </a>
+      <div class="head-tools">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Тема оформления: авто">
+          <span class="tt-glyph" id="theme-glyph" aria-hidden="true">◐</span>
+          <span class="tt-word" id="theme-word">Авто</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <div class="wrap atlas-wrap">
+      <div class="atlas-lede">
+        <p class="atlas-eyebrow">атлас состояний</p>
+        <h1 class="atlas-title">Оверлеи</h1>
+        <p class="atlas-sub">Диалоги, панели и всплывающие поверхности в языке Instrument. Панели показаны раскрытыми на затемнённой сцене; общий scaffold (scrim, focus-trap, Esc, возврат фокуса) — в легенде внизу. Живой демо диалога — кнопкой ниже.</p>
+      </div>
+
+      <!-- 1. Modal dialog -->
+      <section class="atlas-section" aria-labelledby="s-dialog">
+        <h2 id="s-dialog">Модальный диалог</h2>
+        <p class="section-note">Немодальная по смыслу справка, поданная модально. Прод: <span class="prod-tag">shell · #kbd-help-overlay</span> = <code>role="dialog"</code> + <code>aria-modal="true"</code> + <code>aria-labelledby/describedby</code>, открытие по <kbd>?</kbd>, focus-trap, <kbd>Esc</kbd>, возврат фокуса на триггер.</p>
+        <hr class="rule">
+        <div class="stage">
+          <span class="badge-open">▸ открыт</span>
+          <div class="panel" role="dialog" aria-modal="true" aria-labelledby="d-title" aria-describedby="d-sub">
+            <div class="kh-head">
+              <div>
+                <h2 id="d-title">Горячие клавиши</h2>
+                <p class="kh-sub" id="d-sub">Работают на экране вопроса и в сессии.</p>
+              </div>
+              <button class="icon-btn" type="button" aria-label="Закрыть">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div class="kh-list">
+              <div class="kh-row"><span class="kh-desc">Выбрать вариант ответа</span><span class="kh-keys"><kbd>1</kbd><kbd>…</kbd><kbd>9</kbd></span></div>
+              <div class="kh-row"><span class="kh-desc">Проверить ответ</span><span class="kh-keys"><kbd>Enter</kbd></span></div>
+              <div class="kh-row"><span class="kh-desc">Следующий вопрос</span><span class="kh-keys"><kbd>→</kbd></span></div>
+              <div class="kh-row"><span class="kh-desc">Показать / скрыть код</span><span class="kh-keys"><kbd>C</kbd></span></div>
+              <div class="kh-row"><span class="kh-desc">Эта справка</span><span class="kh-keys"><kbd>?</kbd></span></div>
+              <div class="kh-row"><span class="kh-desc">Закрыть окно</span><span class="kh-keys"><kbd>Esc</kbd></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="specimen__desc">Живой демо scaffold (реальный scrim + trap + Esc): <button class="btn btn-primary" id="demo-open" type="button" aria-haspopup="dialog">Открыть диалог</button></p>
+      </section>
+
+      <!-- 2. Alert dialog -->
+      <section class="atlas-section" aria-labelledby="s-alert">
+        <h2 id="s-alert">Диалог подтверждения (деструктив)</h2>
+        <p class="section-note">Необратимое действие требует явного ответа. Прод: <span class="prod-tag">settings · #reset-confirm</span> = <code>role="alertdialog"</code>, фокус по умолчанию на безопасной «Отмена», деструктивная кнопка <code>--error</code>.</p>
+        <hr class="rule">
+        <div class="stage stage--tight">
+          <span class="badge-open">▸ открыт</span>
+          <div class="panel panel--sm" role="alertdialog" aria-modal="true" aria-labelledby="a-title" aria-describedby="a-desc">
+            <h3 class="confirm-title" id="a-title">Сбросить банк вариантов?</h3>
+            <p class="confirm-desc" id="a-desc">Варианты ответов удалятся у всех вопросов. До перезапуска они откроются как флешкарты. Это действие необратимо.</p>
+            <div class="confirm-actions">
+              <button type="button" class="btn btn-secondary" autofocus>Отмена</button>
+              <button type="button" class="btn btn-danger">Сбросить банк</button>
+            </div>
+          </div>
+        </div>
+        <p class="specimen__desc">Порядок кнопок: безопасная слева (дефолт-фокус), деструктивная справа. Возврат фокуса на триггер после закрытия.</p>
+      </section>
+
+      <!-- 3. Drawer -->
+      <section class="atlas-section" aria-labelledby="s-drawer">
+        <h2 id="s-drawer">Мобильная панель навигации</h2>
+        <p class="section-note">Disclosure-панель, не модаль. Прод: <span class="prod-tag">shell · #mobile-menu</span>, триггер <code>aria-expanded</code> + <code>aria-controls</code>, раскрытие под шапкой на &lt;720px.</p>
+        <hr class="rule">
+        <div class="stage stage--tight">
+          <span class="badge-open">▸ раскрыт (aria-expanded="true")</span>
+          <div class="drawer">
+            <nav aria-label="Мобильная навигация">
+              <a href="#" aria-current="page">Фокус</a>
+              <a href="#">Аналитика</a>
+              <a href="#">Настройки</a>
+            </nav>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Disclosure + Tooltip -->
+      <section class="atlas-section" aria-labelledby="s-disc">
+        <h2 id="s-disc">Disclosure и tooltip</h2>
+        <p class="section-note">Нативные лёгкие раскрытия. Disclosure: <span class="prod-tag">error «Подробности для разработчика»</span>, <span class="prod-tag">flashcard «Показать ответ»</span>. Tooltip: нативный <code>title</code> на icon-кнопках + keyboard-hint.</p>
+        <hr class="rule">
+        <div class="stage stage--tight" style="grid-auto-flow: row; gap: var(--s-6)">
+          <details class="disclosure">
+            <summary>Подробности для разработчика</summary>
+            <div class="disc-body">Путь <code>/training/17</code> · HTTP 404 · Not Found. Раскрывается по клику/Enter, работает без JS.</div>
+          </details>
+          <div class="tt-demo">
+            <span class="tt-bubble" role="tooltip">Клавиши 1–9 выбирают вариант</span>
+            <button class="icon-btn" type="button" aria-label="Горячие клавиши">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12c.5.5 1 1.2 1 2h6c0-.8.5-1.5 1-2a7 7 0 0 0-4-12z"/></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Language candidates -->
+      <section class="atlas-section" aria-labelledby="s-ext">
+        <h2 id="s-ext">Кандидаты языка <span class="ext-tag">(не в проде)</span></h2>
+        <p class="section-note">Паттерны из state-family §7 (menus, popovers), которых в текущем проде <b>нет</b>. Даны как заготовки языка на случай появления сценария — чтобы стиль был готов заранее, а не изобретался на месте.</p>
+        <hr class="rule">
+        <div class="stage stage--tight" style="grid-auto-flow: row; gap: var(--s-6)">
+          <div class="menu" role="menu" aria-label="Действия с вопросом">
+            <div role="menuitem" data-active><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6L5.7 21 8 14 2 9.4h7.6z"/></svg> В избранное</div>
+            <div role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8h16v-8M12 2v14M6 8l6-6 6 6"/></svg> Поделиться</div>
+            <div class="menu-sep" role="separator"></div>
+            <div role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg> Пропустить тему</div>
+          </div>
+          <div class="popover" role="dialog" aria-label="О метрике">
+            <h4>Точность по теме</h4>
+            <p>Доля верных ответов за всё время. Немодальный поповер: закрывается по клику вне и <kbd>Esc</kbd>, фокус не запирается.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Scaffold legend -->
+      <section class="atlas-section" aria-labelledby="s-scaffold">
+        <h2 id="s-scaffold">Общий scaffold оверлея</h2>
+        <p class="section-note">Что разделяют dialog и alertdialog (модальные). Drawer/disclosure/popover — облегчённые (не запирают фокус).</p>
+        <hr class="rule">
+        <div class="scaffold">
+          <div class="scaffold-item"><b>Scrim</b> — <code>color-mix(in oklab, var(--ink) 42%, transparent)</code>
+            <p>Затемнение фона, клик по нему закрывает немодальные; модальные — только явной кнопкой/Esc.</p></div>
+          <div class="scaffold-item"><b>Focus-trap</b> — модальные
+            <p>Tab циклится внутри панели; фон получает <code>inert</code>/<code>aria-hidden</code>.</p></div>
+          <div class="scaffold-item"><b>Esc</b> — закрытие
+            <p>Диалоги и поповеры закрываются по <kbd>Esc</kbd>; alertdialog — тоже (эквивалент «Отмена»).</p></div>
+          <div class="scaffold-item"><b>Возврат фокуса</b>
+            <p>После закрытия фокус возвращается на элемент-триггер (<code>aria-haspopup</code>).</p></div>
+          <div class="scaffold-item"><b>Роли</b>
+            <p><code>dialog</code> — обычный; <code>alertdialog</code> — требует ответа; menu — <code>menu/menuitem</code>.</p></div>
+          <div class="scaffold-item"><b>Motion</b>
+            <p>Pop-появление <code>--dur-2</code> <code>--ease-out</code>; отключается под <code>prefers-reduced-motion</code>.</p></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Живой демо-оверлей -->
+  <div class="overlay" id="demo-overlay" hidden>
+    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="demo-title" aria-describedby="demo-sub">
+      <div class="kh-head">
+        <div>
+          <h2 id="demo-title">Живой диалог</h2>
+          <p class="kh-sub" id="demo-sub">Scrim + focus-trap + Esc. Tab не выходит за пределы.</p>
+        </div>
+        <button class="icon-btn overlay-close" id="demo-close" type="button" aria-label="Закрыть">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="confirm-actions" style="justify-content:flex-start">
+        <button class="btn btn-secondary" type="button">Первая</button>
+        <button class="btn btn-primary" type="button">Вторая</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Тема (макет): циклический тогл авто → светлая → тёмная.
+    (function () {
+      var root = document.documentElement, order = ['auto', 'light', 'dark'], i = 0;
+      var glyph = document.getElementById('theme-glyph'), word = document.getElementById('theme-word');
+      var G = { auto: '◐', light: '☀', dark: '☾' }, W = { auto: 'Авто', light: 'Светлая', dark: 'Тёмная' };
+      document.getElementById('theme-toggle').addEventListener('click', function () {
+        i = (i + 1) % order.length; var t = order[i];
+        if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t);
+        glyph.textContent = G[t]; word.textContent = W[t];
+        this.setAttribute('aria-label', 'Тема оформления: ' + W[t].toLowerCase());
+      });
+    })();
+
+    // Живой демо-оверлей: focus-trap, Esc, возврат фокуса.
+    (function () {
+      var overlay = document.getElementById('demo-overlay'),
+          openBtn = document.getElementById('demo-open'),
+          closeBtn = document.getElementById('demo-close'),
+          panel = overlay.querySelector('.panel'),
+          last = null;
+      function focusables() {
+        return [].slice.call(panel.querySelectorAll('a[href],button,[tabindex]:not([tabindex="-1"])'))
+          .filter(function (el) { return !el.hasAttribute('disabled'); });
+      }
+      function open() {
+        last = document.activeElement;
+        overlay.hidden = false;
+        var f = focusables(); if (f[0]) f[0].focus();
+        document.addEventListener('keydown', onKey);
+      }
+      function close() {
+        overlay.hidden = true;
+        document.removeEventListener('keydown', onKey);
+        if (last) last.focus();
+      }
+      function onKey(e) {
+        if (e.key === 'Escape') { close(); return; }
+        if (e.key === 'Tab') {
+          var f = focusables(); if (!f.length) return;
+          var first = f[0], lastEl = f[f.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); lastEl.focus(); }
+          else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); first.focus(); }
+        }
+      }
+      openBtn.addEventListener('click', open);
+      closeBtn.addEventListener('click', close);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+    })();
+  </script>
+</body>
+</html>
