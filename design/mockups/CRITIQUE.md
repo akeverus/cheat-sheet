@@ -37,6 +37,22 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.149 — WCAG 1.3.1 Info & Relationships: формы, группы, дата-таблица (verified-clean)
+
+**Вопрос:** программные связи (метки контролов, групповые метки, header-ассоциации таблиц) должны быть определяемы кодом, не только визуально.
+
+**Метод:** живой DOM-аудит на 3 достижимых страницах — каждый `input/select/textarea` на наличие программной метки (`label[for]`/wrap-label/`aria-label`/`aria-labelledby`); каждый `[role=radiogroup|group]`/`fieldset` на групповую метку; дата-таблица на `th[scope]`/caption/aria-sort.
+
+**Результат — чисто везде, образцово:**
+- **/settings**: 9 form-контролов — ВСЕ с меткой (`controlsUnlabelled:[]`), via native wrap-`<label>`; 7 групп (6 radiogroup + font-stepper group) — ВСЕ с групповой меткой via `aria-labelledby`.
+- **/stats**: 5 контролов — все с меткой; **дата-таблица образцовая**: `<caption>`«Статистика по темам» (= имя таблицы), **325 th ВСЕ со `scope`** (значения col+row → у каждой из 319 строк первая ячейка = `th scope=row`), 5 сортируемых колонок ВСЕ с `aria-sort`.
+- **/**: radiogroup `#interview-options` role=radiogroup + `aria-label`«Варианты ответа» + `aria-describedby`«options-flow-hint»; 4 радио одной name-группы «optionId», ВСЕ с меткой (wrap-label/aria-label).
+
+**Не-проверено (POST-gated):** /result опции используют `role=list`/`role=listitem` (display-only результат — семантически корректно, подтверждено в шаблоне ранее cr-историей). Header/nav-семантика уже верифицирована (R1.41).
+
+**Итог:** ни одного контрола/группы без программной метки; таблица — с caption+scope+aria-sort. Правок кода нет.
+
+
 ### cr.148 — WCAG 2.5.8 Target Size (Minimum, AA/2.2) (verified-clean)
 
 **Вопрос:** интерактивные цели ≥24×24 CSS px, ЛИБО подпадают под исключение (spacing: 24px-круги по центрам не пересекаются ⇔ center-to-center ≥24px; inline: ссылка в потоке текста; essential; UA-контролируемая native-форма).

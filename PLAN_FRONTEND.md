@@ -2118,3 +2118,7 @@ fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`
 ### R1.53 — WCAG 2.5.8 Target Size (Minimum, AA/2.2) (verified-clean)
 
 Живой замер всех интерактивных целей на /settings (23), /stats (37), / (13) + CSS-проверка /result (POST-gated). violations=[] везде. «Маленькие» (<24px) элементы все под исключениями: нативные чекбоксы/радио 18×18 (spacing center-dist 52–137px + UA-исключение); визуально-скрытые радио-инпуты 1×1 на / с реальной целью — label 960×126/156px; topic-ссылки высотой 17px (inline-in-table + spacing 56–61px). Ни один author-стилизованный контрол (button/seg/tab/nav/toggle/close/next) не <24px — большинство ≥44px; /result favorite/regenerate = min 44×44 (base.css 2427). Правок кода нет. Детали — cr.148.
+
+### R1.54 — WCAG 1.3.1 Info & Relationships: формы/группы/таблица (verified-clean)
+
+Живой DOM-аудит программных связей на /settings, /stats, /. /settings: 9 form-контролов все с меткой (wrap-label), 7 групп все с групповой меткой (aria-labelledby). /stats: 5 контролов с меткой + образцовая дата-таблица (caption «Статистика по темам», 325 th ВСЕ со scope col+row → 319 row-header, 5 сортируемых колонок все с aria-sort). /: radiogroup #interview-options (role+aria-label+aria-describedby), 4 радио одной name-группы, все с меткой. controlsUnlabelled/groupsUnlabelled=[] везде. /result (POST-gated) — опции role=list/listitem (display-only, корректно). Правок кода нет. Детали — cr.149.
