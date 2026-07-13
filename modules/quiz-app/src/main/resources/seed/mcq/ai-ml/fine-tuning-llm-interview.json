@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "LIMA доказал, что только огромные датасеты (от 50K синтетических примеров) дают качественный alignment, а 1000 примеров бесполезны.",
+              "text": "`LIMA` (Less Is More for Alignment, Meta 2023) показал, что надёжный alignment даёт только объём — от 50K синтетических примеров, а 1000 ручных статистически недостаточны. Тезисы: pretrained model знает формат слабо и требует массового дообучения; количество примеров важнее их чистоты; редкие ручные примеры не покрывают разнообразие задач. Выводы: собирай 50-100K синтетики генератором; ручной review не масштабируется и не окупается; малые наборы держи для smoke-тестов, а не финального alignment.",
               "correct": false,
               "sections": {
                 "what_actually": "Вывод LIMA обратный: 1000 КАЧЕСТВЕННЫХ примеров сравнимы с 50K синтетических; «Less Is More» — про достаточность малого качественного набора.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "По LIMA alignment добавляет модели новые знания, которых не было в pretraining, поэтому объём данных решает.",
+              "text": "`LIMA` (Less Is More for Alignment, Meta 2023) показал, что alignment докладывает в модель новые знания, которых не было в pretraining, поэтому объём датасета прямо определяет её эрудицию. Тезисы: SFT расширяет фактическую базу модели; чем больше примеров, тем больше новых фактов запоминается; diversity важна ради покрытия тем, а не формата. Выводы: наращивай датасет ради знаний; бери примеры из свежих источников, чтобы обновить факты; RAG не нужен, если alignment-набор достаточно велик.",
               "correct": false,
               "sections": {
                 "what_actually": "LIMA утверждает, что модель уже «знает» после pretraining, а alignment лишь показывает ФОРМАТ ответа — знания он почти не добавляет.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Согласно LIMA, разнообразие примеров не важно: 1000 почти идентичных примеров одного типа дают тот же эффект, что и разнообразные.",
+              "text": "`LIMA` (Less Is More for Alignment, Meta 2023) показал, что при 1000 примеров решает их количество, а не состав: 1000 почти одинаковых примеров одного типа дают тот же alignment, что и разнообразные. Тезисы: главное — набрать ровно 1000 штук; тип задачи, длина и стиль вторичны; повтор одного удачного шаблона надёжнее пёстрого набора. Выводы: клонируй лучший пример до 1000; не трать время на балансировку task types; single-domain набор проще собрать и проверить.",
               "correct": false,
               "sections": {
                 "what_actually": "LIMA подчёркивает, что diversity КРИТИЧНА (разные task types, длины, стили); 1000 однотипных примеров не дадут нужного alignment.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`TRL` — это библиотека 4-bit квантизации (NF4), тогда как `bitsandbytes` предоставляет высокоуровневых тренеров `SFTTrainer`, `DPOTrainer`, `GRPOTrainer`.",
+              "text": "Стек 2024-2026: низкоуровневые `transformers` (модели/tokenizer), `peft` (LoRA/QLoRA/DoRA), `trl` (4/8-bit NF4-квантизация), `accelerate` (FSDP/DeepSpeed); средний `bitsandbytes` (`SFTTrainer`, `DPOTrainer`, `GRPOTrainer`, `KTOTrainer`, `ORPOTrainer`); высокоуровневые `Unsloth` (2-5× скорость, ~70% меньше VRAM через Triton-kernels), `Axolotl` (YAML-config над trl+peft), `LLaMA-Factory` (UI+CLI). Выбор: прототип → transformers+bitsandbytes+peft; скорость/VRAM → Unsloth; production pipeline → Axolotl; огромные модели/multi-node → DeepSpeed/FSDP.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны: `bitsandbytes` делает 4/8-bit квантизацию (NF4), а `trl` предоставляет тренеров `SFTTrainer`/`DPOTrainer`/`GRPOTrainer`.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Unsloth` работает медленнее и требует больше VRAM, чем чистый `transformers`+`trl`, и берут его только ради удобного API.",
+              "text": "Стек 2024-2026: низкоуровневые `transformers` (модели/tokenizer), `peft` (LoRA/QLoRA/DoRA), `bitsandbytes` (4/8-bit NF4), `accelerate` (FSDP/DeepSpeed); средний `trl` (`SFTTrainer`, `DPOTrainer`, `GRPOTrainer`, `KTOTrainer`, `ORPOTrainer`); высокоуровневые `Unsloth` (обёртка над trl без прироста скорости и памяти, ради API), `Axolotl` (YAML-config над trl+peft), `LLaMA-Factory` (UI+CLI). Выбор: прототип → transformers+trl+peft; скорость/VRAM → чистый trl+accelerate; production pipeline → Axolotl; огромные модели/multi-node → DeepSpeed/FSDP.",
               "correct": false,
               "sections": {
                 "what_actually": "Unsloth наоборот даёт 2-5× скорость и ~70% меньше VRAM за счёт custom Triton-kernels; его берут именно ради скорости и экономии памяти.",
@@ -1415,7 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Axolotl` требует описывать весь pipeline на чистом Python без конфигов, из-за чего он менее воспроизводим, чем ручной `transformers`+`trl`.",
+              "text": "Стек 2024-2026: низкоуровневые `transformers` (модели/tokenizer), `peft` (LoRA/QLoRA/DoRA), `bitsandbytes` (4/8-bit NF4), `accelerate` (FSDP/DeepSpeed); средний `trl` (`SFTTrainer`, `DPOTrainer`, `GRPOTrainer`, `KTOTrainer`, `ORPOTrainer`); высокоуровневые `Unsloth` (2-5× скорость, ~70% меньше VRAM через Triton-kernels), `Axolotl` (весь pipeline на чистом Python без YAML-конфигов), `LLaMA-Factory` (UI+CLI). Выбор: прототип → transformers+trl+peft; скорость/VRAM → Unsloth; production pipeline → ручной trl-скрипт; огромные модели/multi-node → DeepSpeed/FSDP.",
               "correct": false,
               "sections": {
                 "what_actually": "Axolotl — это декларативный YAML-config над trl+peft; именно конфиг делает pipeline воспроизводимым и удобным для production.",
@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Multi-LoRA serving требует держать в VRAM отдельную полную копию base-модели для каждого адаптера, поэтому памяти нужно столько же, сколько при раздельных деплоях.",
+              "text": "`Multi-LoRA serving` — главный production-паттерн для FT-моделей: под каждый адаптер держат ОТДЕЛЬНУЮ копию base в VRAM (~вес полной модели), роутинг по `adapter_id`. Зачем: изоляция (свой base на клиента), предсказуемая latency (runtime swap), простое versioning. Технологии: vLLM (`enable_lora=True`, batch разных adapter requests вместе), LoRAX (самый зрелый), Punica (research kernels), TGI. Overhead ~5-15% latency, память масштабируется как N деплоев (base × число адаптеров).",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл multi-LoRA в обратном: ОДИН base в VRAM на все адаптеры; копии base на каждый адаптер не нужны — экономия именно здесь.",
@@ -1883,19 +1883,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Multi-LoRA serving удваивает или утраивает latency на каждый запрос, поэтому в production он практически неприменим.",
+              "text": "`Multi-LoRA serving` — главный production-паттерн для FT-моделей: ОДИН base в VRAM обслуживает МНОГО адаптеров (~100 MB каждый), причём на каждый запрос сервер складывает несколько адаптеров сразу, роутинг по `adapter_id`. Зачем: cost (вместо 4 деплоев 70B — один deploy + 4 адаптера), SaaS multi-tenancy (свой адаптер на клиента), A/B testing (runtime swap). Технологии: vLLM (`enable_lora=True`, batch разных adapter requests вместе), LoRAX (самый зрелый), Punica (research kernels), TGI. Overhead ~5-15% latency, throughput почти такой же (compute доминирует над adapter math).",
               "correct": false,
               "sections": {
-                "what_actually": "Overhead multi-LoRA ~5-15% latency, throughput почти не меняется (compute доминирует над adapter math); это приемлемо для production.",
-                "source_of_confusion": "Подмешивание адаптеров кажется дорогой операцией, отсюда преувеличение накладных расходов.",
-                "if_it_were_true": "Тогда vLLM/LoRAX не продвигали бы multi-LoRA для прода, но он именно там и применяется.",
-                "how_it_should_be": "Накладные расходы multi-LoRA малы (~5-15%), потому что основной compute идёт на base, а не на LoRA-математику."
+                "what_actually": "На запрос сервер выбирает ОДИН адаптер по `adapter_id`; складывание нескольких LoRA в одном ответе — отдельная техника (LoRA composition/merge), а не стандартный multi-LoRA serving.",
+                "source_of_confusion": "«Много адаптеров на одном base» читают как «много адаптеров на один запрос», путая роутинг с композицией.",
+                "if_it_were_true": "Тогда ответ смешивал бы стили нескольких адаптеров сразу, но сервер применяет ровно один выбранный адаптер на запрос.",
+                "how_it_should_be": "Multi-LoRA serving маршрутизирует каждый запрос к одному адаптеру; в общий батч попадают РАЗНЫЕ запросы с РАЗНЫМИ адаптерами, но не несколько адаптеров на один запрос."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "В multi-LoRA serving можно смешивать адаптеры от разных base-моделей (например, Llama и Mistral) на одном сервере.",
+              "text": "`Multi-LoRA serving` — главный production-паттерн для FT-моделей: ОДИН сервер держит адаптеры от РАЗНЫХ base-семейств (~100 MB каждый, например Llama и Mistral сразу), роутинг по `adapter_id`. Зачем: cost (один сервер на весь парк), SaaS multi-tenancy (свой адаптер на клиента), A/B testing (runtime swap). Технологии: vLLM (`enable_lora=True`, batch разных adapter requests вместе), LoRAX (самый зрелый), Punica (research kernels), TGI. Overhead ~5-15% latency, семейство base адаптера роли не играет (сервер подгружает нужный base).",
               "correct": false,
               "sections": {
                 "what_actually": "Все адаптеры должны быть от ОДНОГО base: LoRA — это delta к конкретным весам; адаптер Llama не приложить к Mistral.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все ключевые open-weight семейства — `Llama 3.x`, `Mistral`, `Qwen`, `DeepSeek` — выпущены под лицензией MIT, поэтому при коммерческом дообучении лицензионные ограничения можно не проверять.",
+              "text": "Топ-семейства: `Llama 3.x` (Meta, 1B-405B, Llama Community license, доминирует open-source), `Mistral/Mixtral` (7B-8x22B, Apache 2.0 для Mistral 7B, Mixtral MoE для скорости), `Qwen 2.5/3` (0.5B-72B+MoE, Apache 2.0, сильны в коде/multilingual), `DeepSeek V3/R1` (671B MoE, 37B active, MIT, frontier open-source), `Gemma 2/3` (Google, Gemma Terms), `Phi-3/4` (Microsoft, MIT). Все эти лицензии permissive и разрешают коммерческий FT без проверки условий и MAU-порогов. Выбор: general → Llama-3.1-8B/Mistral-7B/Qwen-2.5-7B; reasoning → DeepSeek-R1-Distill; edge → Phi-3-mini/Gemma-2-2B; чаще берут Instruct-вариант и дотюнивают.",
               "correct": false,
               "sections": {
                 "what_actually": "Лицензии разные: MIT у DeepSeek/Phi, Apache 2.0 у Mistral 7B/Qwen, но Llama идёт под особой Llama Community license (с порогом >700M MAU) — проверять обязательно.",
@@ -2016,7 +2016,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для reasoning-дообучения берут не готовые Distill-варианты вроде `DeepSeek-R1-Distill`, а чистую base-модель без reasoning и учат цепочки рассуждений с нуля, чтобы не наследовать чужой стиль вывода.",
+              "text": "Топ-семейства: `Llama 3.x` (Meta, 1B-405B, Llama Community license, доминирует open-source), `Mistral/Mixtral` (7B-8x22B, Apache 2.0 для Mistral 7B, Mixtral MoE для скорости), `Qwen 2.5/3` (0.5B-72B+MoE, Apache 2.0, сильны в коде/multilingual), `DeepSeek V3/R1` (671B MoE, 37B active, MIT, frontier open-source), `Gemma 2/3` (Google), `Phi-3/4` (Microsoft, MIT). Выбор: general → Llama-3.1-8B/Mistral-7B/Qwen-2.5-7B; reasoning → чистая base без reasoning, цепочки учат с нуля вместо готовых Distill; edge → Phi-3-mini/Gemma-2-2B; чаще берут Instruct-вариант и дотюнивают.",
               "correct": false,
               "sections": {
                 "what_actually": "Для reasoning-FT берут уже reasoning-модель (например, `DeepSeek-R1-Distill-Qwen-32B`) и дотюнивают; обучать reasoning с нуля коротким FT неэффективно.",
@@ -2028,7 +2028,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`DeepSeek V3/R1` — компактные edge-модели на 1-3B параметров, рассчитанные на запуск прямо на телефоне без GPU.",
+              "text": "Топ-семейства: `Llama 3.x` (Meta, 1B-405B, Llama Community license, доминирует open-source), `Mistral/Mixtral` (7B-8x22B, Apache 2.0 для Mistral 7B, Mixtral MoE для скорости), `Qwen 2.5/3` (0.5B-72B+MoE, Apache 2.0, сильны в коде/multilingual), `DeepSeek V3/R1` (компактные edge-модели 1-3B, запуск на телефоне без GPU), `Gemma 2/3` (Google), `Phi-3/4` (Microsoft, MIT). Выбор: general → Llama-3.1-8B/Mistral-7B/Qwen-2.5-7B; reasoning → DeepSeek-R1-Distill; edge → DeepSeek V3/R1 на устройстве; чаще берут Instruct-вариант и дотюнивают.",
               "correct": false,
               "sections": {
                 "what_actually": "DeepSeek V3/R1 — это frontier-уровень 671B MoE (37B active); для edge берут Phi-3-mini, Gemma-2-2B, Llama-3.2-1B, а не DeepSeek.",

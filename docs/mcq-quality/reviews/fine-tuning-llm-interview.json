@@ -1,0 +1,23 @@
+{
+ "topic_slug": "fine-tuning-llm-interview",
+ "round": "8-SFPL/ANSC",
+ "status": "IN_PROGRESS",
+ "blocks_total": 35,
+ "blocks_reaudited": 4,
+ "correct_texts_immutable": true,
+ "file_defect": "Учебниковый Golden AP#1 на ВЕСЬ файл: correct — развёрнутый каталог/лекция (~400-530ч), дистракторы — плоские заглушки (~100-160ч). Baseline gate: CORRECT_LONGEST_RATE=1.0 (35/35), CORRECT_WRONG_AVG_RATIO=2.689, STYLE_GUESSABILITY=1.0, DETAIL_PARITY=0.971, SENTENCE_PARITY worst=5, CORRECT_POSITION_SEQUENCE=35 (строгий A→B→C→D цикл), SOURCE_COVERAGE=missing (нужен freshness sidecar). Многотиковый файл.",
+ "method": "Как design-patterns Q35/Q36: correct БАЙТ-В-БАЙТ HEAD (drift=0), дистракторы подняты до параллельных каталогов/лекций с ОТРАВЛЕННЫМИ фактами (реальные сущности из теории, одна неверная предпосылка на дистрактор), ось-заблуждение сохранена. Плотность аннотаций выровнена у всех 4 (снят «detail-outlier» tell), отрава = 1 инлайн-факт (НЕ хвостовое принижение), концовки нейтрально-параллельны.",
+ "chunks_reviewed": [
+  "c1: Q23,Q24,Q32,Q34 (worst-first по ratio 4.33-4.69)"
+ ],
+ "reworked": {
+  "Q23": "correct C (LIMA-эффект) lone-лекция; дистракторы → тот же скелет «`LIMA` (…) показал … Тезисы: … Выводы: …» с отравл. тезисом (A: только объём 50K; B: alignment добавляет знания; D: diversity не важна). blind BST guessable_by_form=false, BSM один защитимый.",
+  "Q24": "correct D (стек библиотек) lone-каталог; дистракторы → тот же полный стек-каталог с 1 отравл. маппингом (A: trl↔bitsandbytes роли swapped; B: Unsloth без прироста скорости/памяти; C: Axolotl чистый Python без YAML). Выровнены 5 тренеров/~70% VRAM/multi-node у всех. correct стал самым КОРОТКИМ. BST false (round2), BSM один защитимый.",
+  "Q32": "correct D (multi-LoRA serving) lone-каталог; дистракторы → тот же скелет ОДИН base/Зачем/Технологии/Overhead с 1 отравл. фактом (A: отдельная копия base на адаптер; B: сервер складывает неск. адаптеров на запрос [SECPATCH — ось сдвинута с latency]; C: адаптеры разных base-семейств). Round3: latency-дистрактор переведён из хвостового принижения в аффирмативно-ложную способность-претензию для tone-паритета. BST false (round3), BSM один защитимый.",
+  "Q34": "correct B (open-weight модели 2025-2026) lone-каталог; дистракторы → тот же каталог семейств с богатыми per-family аннотациями и 1 отравл. фактом (A: все под MIT/лицензию не проверять; C: reasoning с нуля вместо Distill; D: DeepSeek V3/R1 = edge 1-3B). Выровнены аннотации Mixtral-MoE/Instruct-хвост у всех. BST false (round2), BSM один защитимый."
+ },
+ "blind": "BST guessable_by_form=false ×4 (Q23 r1; Q24/Q34 r2 после выравнивания плотности аннотаций+нейтральных концовок; Q32 r3 после tone-паритета latency-дистрактора). BSM: ровно один защитимый ответ ×4, ни один дистрактор не истинен под stem, completeness_ok=true (все опции полностью отвечают на stem).",
+ "gates": "c1: SCHEMA_OK; surface NO_TELLS touched(23/24/32/34); skel HARD=0 touched; structure-tell 0-5 (near-gold 9.09); stamp-audit verdict OK (not padded-clone); correct drift=0; section changes⊆SECPATCH{(32,B)}; changed==[23,24,32,34].",
+ "accepted_artifacts": "DUPLICATE_NGRAMS 0→152 и низкий length-CV (0.022-0.072) на 4 тронутых — inherent для poisoned-catalog parity (прецедент design-patterns Q35/Q36): 4 опции делят истинный catalog-scaffold, различаясь отравл. фактом. НЕ stamped-clone (stamp-audit OK, разные mental models, structure-tell near-gold, blind non-guessable). Skill: «низкий length-CV сам по себе НЕ дефект (terse-parallel — норма)».",
+ "residual": "4/35 re-audited. Остаток 31 блок (тот же Golden AP#1) → c2+. Файловые gate останутся FAIL до полного прохода (CORRECT_LONGEST 1.0→0.886, STYLE 1.0→0.886 после c1). ТАКЖЕ нужны: freshness sidecar docs/mcq-quality/fact-freshness/fine-tuning-llm-interview.json (version-sensitive: LoRA/DoRA/DPO/GRPO/лицензии моделей) и POS de-cycle (CORRECT_POSITION_SEQUENCE=35). SFPL/ANSC ⬜ до 35/35."
+}
