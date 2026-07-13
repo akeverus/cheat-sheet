@@ -2166,3 +2166,7 @@ fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`
 ### R1.65 — WCAG 2.1.2 No Keyboard Trap (A): kbd-help оверлей — verified-clean
 
 Эмпирический цикл (CDP press_key) на живой /: «?» с опенера «Фокус» → оверлей role=dialog aria-modal=true, фокус на «×», фон полностью inert+aria-hidden; Tab не утёк в фон (ловушка держит); Esc → закрытие + возврат фокуса на опенер (focusReturnedToOpener:true) + снятие inert. Соответствие 2.1.2: стандартный выход Esc (документирован в справке) + альт. выходы (клик/Enter по ×, повторное ?). Prompt-modal регенерации вне зоны (th:if=aiEnabled, AI выключен → нет в DOM). Roving tabindex вкладок (R1.64) исключает ловушку в tablist. Код не менялся. Детали — cr.160.
+
+### R1.66 — WCAG 2.5.2 Pointer Cancellation (A): активация на up-event — verified-clean
+
+Статический анализ обработчиков + read-only DOM. Ноль down-event активации (mousedown/pointerdown/touchstart/inline on*) во всём static JS и шаблонах; активация только через click-слушатели (15 app.js + 3 stats.js) + нативный submit. Живой DOM: 0 inline down-атрибутов, 0 draggable, все контролы нативные (A/BUTTON). Нативный click = up-event + отменяем уводом указателя = 2.5.2 конструктивно. Бонус 2.5.7 Dragging: нет draggable/pointermove-драга/range → drag-only функционала нет. Код не менялся. Детали — cr.161.
