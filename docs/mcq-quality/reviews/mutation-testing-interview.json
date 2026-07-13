@@ -1,0 +1,33 @@
+{
+  "topic_slug": "mutation-testing-interview",
+  "round": "ROUND-8",
+  "total_blocks": 20,
+  "blocks_reaudited": 2,
+  "status": "WIP (chunk 1/N: Q4+Q5 skel-`;` + de-caricature + sidecar bootstrap)",
+  "chunks_reviewed": [
+    "c1 (2026-07-14): Q4/Q5 — skel-HARD `;`-паритет + де-карикатура O3-дистракторов + bootstrap freshness/review sidecars"
+  ],
+  "reworked": {
+    "Q4": {
+      "correct": "D",
+      "byte_locked_correct": true,
+      "changes": [
+        "A: `line1;`↔`line2;` → `stmtA`↔`stmtB` (снят лишний `;` внутри код-спана; skel-HARD semicolon_presence устранён; backtick-count 42 сохранён)",
+        "C: карикатура «ровно один mutation-оператор — инверсия булевых, 7 псевдонимов, никакие boundary/math не применяются» → правдоподобное заблуждение «mutation = подмена ВХОДНЫХ данных (фаззинг)»; текст + все 4 wrong-секции переписаны"
+      ],
+      "distractor_models": "A=перестановка блоков, B=переименование, C=смешение с фаззингом входов (самое живучее); все три — разные ошибочные модели, не карикатуры"
+    },
+    "Q5": {
+      "correct": "A",
+      "byte_locked_correct": true,
+      "changes": [
+        "B: карикатура «Conditional Boundary удаляет void-вызовы log()/save()/notify()/flush() из тела» → плотная cross-operator путаница «Boundary = Remove Conditional (условие → `if (true)`)»; снят лишний `;`; текст + все 4 wrong-секции переписаны"
+      ],
+      "distractor_models": "B=Remove Conditional (снос условия), C=Constant (подмена литерала), D=Negate (полный разворот); три соседних мутатора, корректно спутанных"
+    }
+  },
+  "blind_c1": "SEED=9500, shuffle Q4/Q5. Ре-ревью (независимый reviewer) ПОСЛЕ переписи: Q4 form_guess=«не могу», guessable_by_form=false, semantic_correct=O4(=D) ✓, flags=[]. Q5 form_guess=«не могу», guessable_by_form=false, semantic_correct=O4(=A) ✓, flags=[]. ИТОГ PASS. (Первый blind SEED=9400 дал FAIL по каррикатуре O3 в обоих блоках — устранено этой переписью.)",
+  "gates": "skel-gate PASS (hard_fails 2→0, warn_blocks 9→8); surface-parity Q4/Q5 tells=[] (всего реальных tells по файлу = 3: Q1/Q16/Q20 — backtick-bucket, следующий контент-тик); SOURCE_COVERAGE ok (freshness-sidecar создан); stamp-audit Q4/Q5 чисто.",
+  "residual": "POS: CORRECT_POSITION_SEQUENCE=20 (строгий A→B→C→D цикл) — отдельный POS-de-cycle тик (как в fine-tuning-llm). Surface backtick-bucket tells Q1/Q16/Q20 — следующий контент-тик. Accepted-exceptions (§30/§18.1): OPTION_LENGTH_RATIO=1.64 (6 блоков >1.35 — плотный byte-locked catalog correct + code-span word-collapse; binding surface-gate length-tells отсутствуют) и DUPLICATE_NGRAMS=98 (структурный skeleton-паритет: все 4 опции делят каркас «модифицированная версия кода по mutation-оператору» и т.п., чтобы correct не угадывался). skel warn_blocks=8 — non-binding (dash-presence и пр.).",
+  "notes": "Первый ROUND-8 тик по mutation-testing. Файл исходно высокого качества (богатые параллельные дистракторы). Правился ТОЛЬКО JSON-seed, correct (Q4-D, Q5-A) byte-locked к HEAD, label/order/1-correct инвариантны. Дальше по этому файлу: (1) POS de-cycle, (2) surface backtick-bucket Q1/Q16/Q20, (3) добить оставшиеся блоки под 20 правил + blind."
+}

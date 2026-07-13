@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Типичные mutation-операторы тасуют блоки: `Block Swap` (`methodA()`↔`methodB()`), `Statement Reorder` (`line1;`↔`line2;`), `Loop Swap` (`for`→`while`), `Branch Swap` (`if`→`else`), `Method Move` (`m1`↔`m2`), `Class Reorder` (`fieldA`↔`fieldB`), `Import Shuffle` (`importA`→`importB`). Каждая перестановка целых блоков порождает несколько мутантов.",
+              "text": "Типичные mutation-операторы тасуют блоки: `Block Swap` (`methodA()`↔`methodB()`), `Statement Reorder` (`stmtA`↔`stmtB`), `Loop Swap` (`for`→`while`), `Branch Swap` (`if`→`else`), `Method Move` (`m1`↔`m2`), `Class Reorder` (`fieldA`↔`fieldB`), `Import Shuffle` (`importA`→`importB`). Каждая перестановка целых блоков порождает несколько мутантов.",
               "correct": false,
               "sections": {
                 "what_actually": "Мутации — это маленькие точечные изменения (один оператор, одна константа), а не перестановка блоков; смысл в имитации мелких багов «на одну дельту».",
@@ -215,13 +215,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Существует ровно один mutation-оператор — инверсия булевых: `Boolean Invert` (`true`→`false`), а прочие лишь его псевдонимы: `Flag Flip` (`true`→`false`), `Cond Bool` (`true`→`false`), `Return Bool` (`true`→`false`), `Field Bool` (`true`→`false`), `Param Bool` (`true`→`false`), `Const Bool` (`true`→`false`). Никакие boundary/math/increment-операторы не применяются, всё сводится к инверсии булева.",
+              "text": "Типичные mutation-операторы подменяют входные данные тестов, а не сам код: `Input Fuzz` (`5`→`-1`), `Arg Shuffle` (`(a, b)`→`(b, a)`), `Null Inject` (`x`→`null`), `Boundary Input` (`0`→`MAX`), `Type Warp` (`int`→`String`), `Empty Collection` (`[1, 2]`→`[]`), `Big Value` (`1`→`1e9`). Каждая подмена входа на строке порождает несколько мутантов.",
               "correct": false,
               "sections": {
-                "what_actually": "Операторов много и они разнородны: boundary, negate, math, increment, boolean return, void call, constant — инверсия булевых лишь один из них.",
-                "source_of_confusion": "Boolean-инверсия — самый наглядный пример, поэтому его иногда принимают за единственный.",
-                "if_it_were_true": "Если бы оператор был один, тулзы не имели бы настраиваемых наборов мутаторов и отчётов по типам мутаций.",
-                "how_it_should_be": "Корректно: PIT/Stryker применяют целый набор операторов; каждая строка под несколько из них порождает множество мутантов."
+                "what_actually": "Mutation-операторы меняют исходный КОД (оператор, константу, возврат), а не входные данные тестов; подмена входов — это fuzzing или property-based тестирование, другой подход.",
+                "source_of_confusion": "И там, и там что-то «мутируют», поэтому mutation testing путают с фаззингом входных значений.",
+                "if_it_were_true": "Если бы мутировали входы, мутанты не жили бы в самом коде, а статусы killed/survived относились бы к данным, а не к силе тестов.",
+                "how_it_should_be": "Корректно: мутируется код под фиксированными тестами (`>`→`>=`, `+`→`-`), а генерация входов — это отдельный fuzzing."
               }
             },
             {
@@ -264,13 +264,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Conditional Boundary Mutator` меняет тело условия внутри `if` ровно в одном месте: удаляет вызовы `log()`→∅, `save()`→∅, `notify()`→∅, `flush()`→∅ (сам оператор сравнения `>=`/`>` он НЕ трогает — это уже Void Method Call). Для `if (age >= 18) { log(); }` получается мутант с пустым телом. Убивает его именно тест на побочный эффект тела: без проверки `log()` мутант выживает.",
+              "text": "`Conditional Boundary Mutator` выкидывает саму проверку границы целиком: `if (age >= 18)`→`if (true)`, `if (x > 0)`→`if (true)`, `while (i < n)`→`while (true)`, `if (a <= b)`→`if (true)` (оператор сравнения он не сдвигает, а убирает условие — это уже Remove Conditional). Для `if (age >= 18)` ветка выполняется всегда, а убивает его тест, где при малом `age` она срабатывать не должна.",
               "correct": false,
               "sections": {
-                "what_actually": "Он мутирует сам граничный оператор сравнения (`>=`→`>`), а не содержимое блока; удаление вызовов из тела — это уже Void Method Call оператор.",
-                "source_of_confusion": "Слово «conditional» наводит на мысль обо всём блоке `if`, а не только об операторе сравнения.",
-                "if_it_were_true": "Если бы он чистил тело, граничные тесты (17/18/19) не были бы средством его убийства, а именно они и нужны.",
-                "how_it_should_be": "Корректно: Conditional Boundary трогает оператор на границе (`>`↔`>=`), а тело `if` остаётся нетронутым."
+                "what_actually": "Он сдвигает граничный оператор сравнения (`>=`→`>`), а не выкидывает условие; удаление проверки целиком — это Remove Conditional, отдельный оператор.",
+                "source_of_confusion": "Слово «conditional» наводит на мысль, что мутатор действует на всё условие `if`, вплоть до его удаления.",
+                "if_it_were_true": "Если бы он заменял условие на `true`, его ловил бы почти любой тест на «отрицательной» ветке, а не именно граничный на `18`.",
+                "how_it_should_be": "Корректно: Conditional Boundary двигает границу на одну позицию (`>=`↔`>`), а условие `if` остаётся на месте."
               }
             },
             {
