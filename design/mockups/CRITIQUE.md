@@ -37,6 +37,25 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.153 — WCAG 1.4.12 Text Spacing (verified-clean)
+
+**Вопрос:** при пользовательском переопределении интервалов (line-height ≥1.5, para-spacing ≥2em, letter-spacing ≥0.12em, word-spacing ≥0.16em) — без потери контента/функций (без обрезки видимого текста, без перекрытия).
+
+**Метод:** инъекция стандартного 1.4.12 override-CSS (`* {line-height:1.5; letter-spacing:0.12em; word-spacing:0.16em} p,li,h*{margin-bottom:2em}`) с `!important` + детекция clipping (overflow:hidden/clip контейнеры со scrollH>clientH, содержащие текст) + проверка конкретных fixed-height компонентов на overflow бокса + page-level overflow. После замера override снимается.
+
+**Результат — чисто на /, /stats, /settings (`pageHorizontalOverflow: 0`):**
+- Fixed-height компоненты вмещают увеличенные интервалы, `overflowsBox: false`: sticky-th (43px), stats-btn (44px), table-cell (53px), chart-fallback, settings-tab (51px), seg-btn (42px), font-value (24px), .btn (42px).
+- Видимый текст нигде не обрезан и не перекрыт.
+
+**Ложные срабатывания (exempt — намеренные visually-hidden SR-only, НЕ видимый контент):**
+- /stats: `caption.visually-hidden` (clientH:1) — SR-only имя таблицы (clip-паттерн).
+- /settings: `h2.settings-panel-title` (clientH:1) — под `.js-tabs`/`[data-js]` (base.css 1358/1373) visually-hidden (`width/height:1px; clip:rect(0 0 0 0)`); визуальное имя панели даёт вкладка, AT-имя — этот h2. Без JS (fallback) заголовок видимый (1353) и не клипается. AT читает полный текст независимо от 1px-clip → вне scope 1.4.12.
+
+**Вывод — чисто.** Правок кода нет.
+
+**Огранич.:** /result, /session-summary POST-gated — при text-spacing override не замерены этим проходом.
+
+
 ### cr.152 — WCAG 1.4.10 Reflow @320px (verified-clean)
 
 **Вопрос:** при ширине 320px CSS (эквивалент 400% зума) контент без потери информации/функций и БЕЗ горизонтального скролла — кроме исключений (дата-таблицы, код, карты).
