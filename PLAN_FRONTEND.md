@@ -2174,3 +2174,7 @@ fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`
 ### R1.67 — WCAG 1.4.13 Content on Hover or Focus (AA): code-copy + title — verified-clean
 
 CSS-анализ (появление на hover/focus 100% определяется CSS) + инвентаризация author hover/focus-контента (только code-copy кнопка + skip-link). Code-copy: Hoverable ✓ (кнопка внутри обёртки, :hover держится), Persistent ✓ (без таймера, на touch всегда видна 44×44), Dismissable ✓ по духу (угловой аффорданс в паддинге pre, перекрывает лишь правый край 1-й строки пока видима, восстановимо overflow-x скроллом/mouse-out). skip-link — сам фокусируемый элемент, вне зоны. Native title — UA-controlled, исключение 1.4.13. Ограничение: живой pre-код-блок не достижим через GET (первые ordered-вопросы 3 тем без codeSnippet, markdown-ответ POST-gated) → обскурация посчитана детерминированно из токенов. Код не менялся. Детали — cr.162.
+
+### R1.68 — WCAG 1.4.5 Images of Text (AA): текст не картинкой — verified-clean
+
+Греп шаблонов/CSS + скан живого DOM (/, /settings, /stats). Нет растровых источников: 0 <img> (шаблоны и DOM), 0 url()-фонов (только CSS-градиенты). SVG-иконки — path-only спрайт через <use>, 0 с <text> (декоративны, aria-hidden). Бренд «Cheat · Sheet», заголовки, подписи, кнопки «A−»/«A+» — реальный текст (масштабируется, R1.60). Chart.js canvas (2 шт.) — визуализация данных, оба role=img + описательный aria-label, полные данные реальным текстом в таблице тем (319 строк) → text-эквивалент есть, 1.4.5 удовлетворён. Код не менялся. Детали — cr.163.
