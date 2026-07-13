@@ -37,6 +37,24 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.181 — WCAG 1.4.13 Content on Hover or Focus (AA): verified-clean
+
+**Проверка:** контент, появляющийся по hover/focus, dismissable (Esc), hoverable (курсор можно навести), persistent (не исчезает сам).
+
+**Метод:** grep кастомных тултипов/поповеров (`data-tooltip`/`role=tooltip`/`.tooltip`/popover) + анализ всех `:hover`/`:focus-within`-раскрытий в CSS + учёт native `title`.
+
+**Результат — чисто.**
+- **Кастомных тултипов/поповеров НЕТ.** Все `aria-describedby` указывают на ПОСТОЯННО видимые статичные подсказки (`filter-mode-hint`, `*-pref-hint`, `options-flow-hint`) — не hover-триггерятся, вне scope 1.4.13.
+- **Единственный hover/focus-revealed контент — `.code-copy-btn`** (opacity 0→1 на `.code-copy-wrap:hover`/`:focus-within`):
+  - Hoverable ✓ (кнопка — потомок обёртки, наведение сохраняет hover);
+  - Persistent ✓ (нет таймаута);
+  - Dismissable ✓/N-A (сидит в паддинг-жёлобе pre — `top/right:space-2` при `padding:space-4` — тело кода не перекрывает; курсор в сторону скрывает);
+  - на touch (`hover:none`) всегда видима (44×44) → 1.4.13 не применяется.
+- **Native `title` (31 шт.)** — UA-рендеримые тултипы, exempt из 1.4.13 (автор не контролирует, ср. R1.67).
+
+Ограничение: живой код-блок по GET труднодостижим (код POST-гейтед, ранние вопросы без snippet — как в R1.67); вердикт по dismissable выведен детерминированно из CSS (кнопка в правом-верхнем паддинге, код left-aligned). Правок не требуется.
+
+
 ### cr.180 — WCAG 1.4.10 Reflow (AA): verified-clean
 
 **Проверка:** при 320 CSS-px (≈400% zoom) контент реформатируется в одну колонку без двумерного (горизонтального) скролла, кроме контента, которому 2D существенно нужен.

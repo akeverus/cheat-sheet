@@ -2304,3 +2304,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: CDP-эмуляция 320×640; замер scrollWidth−clientWidth + поиск боксов шире вьюпорта вне допустимых исключений (overflow-x:auto/pre/table).
 
 Итог — чисто. /,/settings,/stats: горизонтальный оверфлоу 0, нарушителей 0. Таблица тем /stats реформатируется в стек (data-label-карточки, overflow-x:visible) — 2D-скролл не понадобился. Ограничение: result/session-summary POST-гейтед (не мерил, наследуют те же base.css-правила). Правок не требуется. Леджер: cr.180.
+
+## R1.86 — WCAG 1.4.13 Content on Hover or Focus (AA) — verified-clean
+
+Проверка: hover/focus-контент dismissable/hoverable/persistent.
+
+Метод: grep кастомных тултипов/поповеров + анализ :hover/:focus-within раскрытий CSS + учёт native title.
+
+Итог — чисто. Кастомных тултипов НЕТ (все aria-describedby → постоянно видимые статичные подсказки, вне scope). Единственный revealed-контент — .code-copy-btn: hoverable ✓ (потомок обёртки), persistent ✓ (без таймаута), dismissable ✓/N-A (в паддинг-жёлобе pre, код не перекрывает), на touch всегда видима. Native title (31) — UA exempt (R1.67). Ограничение: код POST-гейтед, вердикт по dismissable детерминирован из CSS. Правок не требуется. Леджер: cr.181.
