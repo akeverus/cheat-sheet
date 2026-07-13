@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все пять методов (RLHF, DPO, GRPO, KTO, ORPO) требуют отдельно обученной reward model и различаются лишь алгоритмом оптимизации policy.",
+              "text": "Кратко: `RLHF/PPO` (2022) — learned RM, reference нужен, 3-4 модели, для frontier-alignment (GPT-4, Claude). `DPO` (2023) — implicit reward через pairs, 2 модели, для reasoning/math/code (verifiable answers). `GRPO` (2024) — rule-based reward, 2 модели + sampled group, для субъективных диалогов и оценки стиля. `KTO` (2024) — binary labels, для production-логов с per-response rating. `ORPO` (2024) — implicit, БЕЗ reference (1 модель), минимум compute. Выбор зависит от данных: pairs+reasoning → GRPO, pairs → DPO/ORPO, binary → KTO.",
               "correct": false,
               "sections": {
                 "what_actually": "Только RLHF использует learned RM; DPO/KTO/ORPO работают через implicit/binary reward без RM, а число моделей разное (RLHF 3-4, DPO 2, ORPO 1).",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "GRPO ориентирован на субъективные диалоги и оценку стиля, где нет проверяемого ответа, а reasoning, математику и код закрывает исключительно DPO.",
+              "text": "Кратко: `RLHF/PPO` (2022) — learned RM, reference нужен, 3-4 модели, для frontier-alignment (GPT-4, Claude). `DPO` (2023) — reward от обученной RM на парах, 2 модели, дефолт open-source alignment. `GRPO` (2024) — обучаемая RM + sampled group, 2 модели, для reasoning/math/code (R1-style). `KTO` (2024) — своя RM на binary-логах, 2 модели, для production. `ORPO` (2024) — отдельная RM, БЕЗ reference (1 модель), минимум compute. Выбор зависит от данных: pairs+reasoning → GRPO, pairs → DPO/ORPO, binary → KTO.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `GRPO` создан для verifiable reasoning (math, code, R1-style), а DPO — общий метод alignment по preference pairs, не «единственный для математики».",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "ORPO держит в памяти больше всего моделей (4-5), так как одновременно с policy использует reference-модель и reward model.",
+              "text": "Кратко: `RLHF/PPO` (2022) — learned RM, reference нужен, 3-4 модели, для frontier-alignment (GPT-4, Claude). `DPO` (2023) — implicit reward через pairs, 2 модели, дефолт open-source alignment. `GRPO` (2024) — rule-based/verifier reward, 2 модели + sampled group, для reasoning/math/code (R1-style). `KTO` (2024) — binary labels, для production-логов с per-response rating. `ORPO` (2024) — implicit, 4-5 моделей: наряду с policy грузит reference и reward model. Выбор зависит от данных: pairs+reasoning → GRPO, pairs → DPO/ORPO, binary → KTO.",
               "correct": false,
               "sections": {
                 "what_actually": "ORPO держит МЕНЬШЕ всех — 1 модель (нет reference, нет RM); объединение SFT+preference в один loss как раз снижает требования.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Preference-датасеты для DPO собирают так же, как SFT-датасеты: достаточно одиночных `{prompt, response}` пар без указания, какой ответ лучше.",
+              "text": "Топ preference-датасетов: `Anthropic HH-RLHF` (170K, helpfulness+harmlessness), `UltraFeedback` (64K, GPT-4 judge на 17 моделей), `Nectar` (183K, GPT-4 rankings), `OpenAssistant rankings`, `PKU-SafeRLHF` (safety), `Argilla DPO-mix-7k`. Как собрать свой: (1) берёшь одиночные `{prompt, response}` примеры как для SFT; (2) different temperatures — sample 2-4 ответа; (3) production logs → примеры; (4) фильтрация по качеству. Разметка `{chosen, rejected}` не нужна: `DPO` выведет предпочтение из самого текста.",
               "correct": false,
               "sections": {
                 "what_actually": "Для DPO нужны именно preference-данные `{prompt, chosen, rejected}` с указанием предпочтения; одиночные SFT-пары не содержат сигнала «лучше/хуже».",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чем больше preference-пар, тем лучше: 100K аннотаций, пусть и с некоторым шумом, дают более сильную модель, чем всего 5K чистых пар.",
+              "text": "Топ preference-датасетов: `Anthropic HH-RLHF` (170K, helpfulness+harmlessness), `UltraFeedback` (64K, GPT-4 judge на 17 моделей), `Nectar` (183K, GPT-4 rankings), `OpenAssistant rankings`, `PKU-SafeRLHF` (safety), `Argilla DPO-mix-7k`. Как собрать свой: (1) LLM-as-judge — GPT-4/Claude судит → пара `{better, worse}`; (2) different temperatures — sample 2-4 ответа; (3) production logs (thumbs) → pairs или KTO; (4) best-vs-worst-of-N. По объёму: 100K пар с умеренным шумом обычно дают модель сильнее, чем 5K тщательно вычищенных.",
               "correct": false,
               "sections": {
                 "what_actually": "Качество критичнее объёма: 5K чистых пар обычно лучше 100K шумных, потому что грязная аннотация даёт шумную, рассогласованную модель.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Production-логи с thumbs up/down не подходят для alignment: без явных пар `{chosen, rejected}` отдельные оценки не образуют обучающего сигнала для preference-оптимизации.",
+              "text": "Топ preference-датасетов: `Anthropic HH-RLHF` (170K, helpfulness+harmlessness), `UltraFeedback` (64K, GPT-4 judge на 17 моделей), `Nectar` (183K, GPT-4 rankings), `OpenAssistant rankings`, `PKU-SafeRLHF` (safety), `Argilla DPO-mix-7k`. Как собрать свой: (1) LLM-as-judge — GPT-4/Claude судит → пара `{better, worse}`; (2) different temperatures — sample 2-4 ответа; (3) best-vs-worst-of-N; (4) фильтрация по качеству. Production-логи с thumbs up/down остаются в стороне: одиночные оценки без пары `{chosen, rejected}` не дают обучающего сигнала.",
               "correct": false,
               "sections": {
                 "what_actually": "Thumbs up/down — это и есть сигнал качества per-response: их конвертируют в pairs (если есть пара) или используют напрямую в KTO (binary).",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно held-out perplexity: если она ниже, чем у базовой модели, downstream-качество гарантированно выше, и task-specific бенчмарки вроде MMLU или GSM8K уже не нужны.",
+              "text": "Многоуровневая оценка: (1) loss/perplexity на held-out (быстро, ниже базовой обычно значит и выше downstream, task-бенчмарки вторичны); (2) task-specific benchmarks (MMLU, GSM8K, MATH, HumanEval, BBH, TruthfulQA, MT-Bench, AlpacaEval 2); (3) domain-specific eval (golden set 100-1000 с ground truth); (4) LLM-as-judge (pairwise tuned vs baseline → win rate, удобно но subjective); (5) human eval (gold standard, дорого); (6) catastrophic forgetting check (general benchmarks до/после, регрессия >5% — проблема); (7) safety/red-teaming. Tools: lm-evaluation-harness, lighteval, evalplus.",
               "correct": false,
               "sections": {
                 "what_actually": "Низкий loss ≠ полезная модель: он может означать overfitting; нужны benchmark'и, domain-eval и human/judge для реальной оценки полезности.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "LLM-as-judge (MT-Bench, AlpacaEval 2) полностью воспроизводим и свободен от position bias, поэтому его win rate можно принять как gold standard вместо human eval.",
+              "text": "Многоуровневая оценка: (1) loss/perplexity на held-out (быстро, но низкий loss ≠ полезная модель); (2) task-specific benchmarks (MMLU, GSM8K, MATH, HumanEval, BBH, TruthfulQA, MT-Bench, AlpacaEval 2); (3) domain-specific eval (golden set 100-1000 с ground truth); (4) LLM-as-judge (MT-Bench, AlpacaEval 2 — воспроизводим, мало подвержен position bias, берётся вместо human eval); (5) human eval (gold standard, дорого); (6) catastrophic forgetting check (general benchmarks до/после, регрессия >5% — проблема); (7) safety/red-teaming. Tools: lm-evaluation-harness, lighteval, evalplus.",
               "correct": false,
               "sections": {
                 "what_actually": "LLM-as-judge удобен, но subjective и подвержен bias; gold standard — именно human eval, хоть он дорог и медленен.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Прогон general-бенчмарков (MMLU, HellaSwag) до и после fine-tuning бесполезен: модель уже специализирована, поэтому регрессию общих способностей эти тесты показать не могут.",
+              "text": "Многоуровневая оценка: (1) loss/perplexity на held-out (быстро, но низкий loss ≠ полезная модель); (2) task-specific benchmarks (MMLU, GSM8K, MATH, HumanEval, BBH, TruthfulQA, MT-Bench, AlpacaEval 2); (3) domain-specific eval (golden set 100-1000 с ground truth); (4) LLM-as-judge (pairwise tuned vs baseline → win rate, удобно но subjective); (5) human eval (gold standard, дорого); (6) catastrophic forgetting check (general benchmarks до/после, но у специализированной модели просадку они не отражают); (7) safety/red-teaming. Tools: lm-evaluation-harness, lighteval, evalplus.",
               "correct": false,
               "sections": {
                 "what_actually": "Forgetting как раз ловят прогоном general benchmarks (MMLU, HellaSwag) ДО и ПОСЛЕ FT: регрессия >5% — сигнал проблемы.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для деплоя LoRA-модели обязательно нужно сохранять полные веса (десятки GB) на каждый адаптер — отдельно адаптер не разворачивается.",
+              "text": "Сценарии: (1) full FT — сохраняешь полные веса, грузишь в vLLM/TGI/TensorRT-LLM (70B = 140 GB диск, ~80 GB VRAM FP16); (2) LoRA adapter — вместе с адаптером сохраняешь полные веса base (десятки GB) под каждый адаптер, отдельно он не разворачивается; (3) quantized после FT (AWQ/GPTQ/EXL2: 70B 4-bit ≈ 40 GB → одна H100). Серверы: vLLM (Multi-LoRA, PagedAttention), TGI, TensorRT-LLM, LoRAX (multi-LoRA native, hot-swap), SGLang, Ollama/llama.cpp (merge only, GGUF).",
               "correct": false,
               "sections": {
                 "what_actually": "Достаточно сохранить адаптер (~100 MB) и развернуть его поверх одного base; полные веса на каждый адаптер не нужны (в этом и смысл multi-LoRA).",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Любой inference-сервер, включая Ollama и llama.cpp, нативно поддерживает hot-swap множества LoRA-адаптеров на одном base.",
+              "text": "Сценарии: (1) full FT — сохраняешь полные веса, грузишь в vLLM/TGI/TensorRT-LLM (70B = 140 GB диск, ~80 GB VRAM FP16); (2) LoRA adapter — сохраняешь только адаптер (~100 MB), на base можно merge (один файл, без overhead, но фикс под один адаптер) или runtime composition (swap); (3) quantized после FT (AWQ/GPTQ/EXL2: 70B 4-bit ≈ 40 GB → одна H100). Серверы: vLLM (Multi-LoRA, PagedAttention), TGI, TensorRT-LLM, SGLang, а также Ollama и llama.cpp с нативным hot-swap множества LoRA-адаптеров на одном base.",
               "correct": false,
               "sections": {
                 "what_actually": "Ollama/llama.cpp поддерживают только merge-режим; native multi-LoRA/hot-swap дают vLLM, LoRAX, TGI, но не все серверы.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Квантизация модели после fine-tuning (AWQ/GPTQ) увеличивает требуемую VRAM, поэтому для экономии памяти её не применяют.",
+              "text": "Сценарии: (1) full FT — сохраняешь полные веса, грузишь в vLLM/TGI/TensorRT-LLM (70B = 140 GB диск, ~80 GB VRAM FP16); (2) LoRA adapter — сохраняешь только адаптер (~100 MB), на base можно merge (один файл, без overhead, но фикс под один адаптер) или runtime composition (swap); (3) квантизация после FT (AWQ/GPTQ/EXL2) поднимает требования к VRAM, поэтому ради экономии памяти её обычно не применяют. Серверы: vLLM (Multi-LoRA, PagedAttention), TGI, TensorRT-LLM, LoRAX (multi-LoRA native, hot-swap), SGLang, Ollama/llama.cpp (merge only, GGUF).",
               "correct": false,
               "sections": {
                 "what_actually": "Квантизация после FT СНИЖАЕТ VRAM: 70B в 4-bit AWQ ≈ 40 GB вместо ~140 GB FP16, то есть помещается на одну H100.",
