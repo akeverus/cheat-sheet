@@ -1266,12 +1266,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему ошибка в chat template ломает модель?",
+          "question_text": "Что верно про chat template и последствия ошибки в нём при fine-tuning?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Chat template — это оформление для читаемого отображения диалога в UI; на качество и поведение обученной модели он существенно не влияет.",
+              "text": "`Chat template` — формат, в котором модель ожидает видеть беседу (system/user/assistant) со спецтокенами. У каждого семейства он свой: ChatML (`<|im_start|>...<|im_end|>` — OpenAI/Qwen), Llama-3 (`<|start_header_id|>...<|eot_id|>`), Mistral (`[INST]...[/INST]`). Обучение при этом идёт на сыром тексте: спецтокены модель видит как обычные символы; роли восстанавливаются из отступов и переносов строк → шаблон задаёт вид логов, но не веса и не генерацию. Применяют `tokenizer.apply_chat_template(messages)`, `SFTTrainer` — опционально.",
               "correct": false,
               "sections": {
                 "what_actually": "Template — критическая часть SFT/инференса: неверный формат ломает распознавание ролей и EOS, и модель льёт мусор, а не просто «выглядит иначе».",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Все модели используют один универсальный chat template, поэтому формат от Llama-3 можно без изменений подавать в Mistral или Qwen.",
+              "text": "`Chat template` — формат, в котором модель ожидает видеть беседу (system/user/assistant) со спецтокенами. ChatML (`<|im_start|>...<|im_end|>` — OpenAI/Qwen), Llama-3 (`<|start_header_id|>...<|eot_id|>`) и Mistral (`[INST]...[/INST]`) — синтаксические алиасы одного набора ролевых токенов; они взаимозаменяемы → шаблон Llama-3 модель Mistral парсит как свой. Разметку ставит `tokenizer.apply_chat_template(messages)`, а `SFTTrainer` применяет её автоматически.",
               "correct": false,
               "sections": {
                 "what_actually": "Форматы разные: ChatML (Qwen), Llama-3 (`<|eot_id|>`), Mistral (`[INST]`); подача чужого формата ломает распознавание ролей и EOS.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Ошибка в chat template относительно безопасна: в худшем случае модель иногда меняет тон ответа, но корректную остановку по EOS при этом сохраняет.",
+              "text": "`Chat template` — формат, в котором модель ожидает видеть беседу (system/user/assistant) со спецтокенами. У каждого семейства он свой: ChatML (`<|im_start|>...<|im_end|>` — OpenAI/Qwen), Llama-3 (`<|start_header_id|>...<|eot_id|>`), Mistral (`[INST]...[/INST]`). Спецтокены дублируют естественную пунктуацию диалога: модель реконструирует границы реплик из текста → точку остановки берёт из знаков препинания; при неверном шаблоне меняется лишь тон ответа. Ставится через `tokenizer.apply_chat_template(messages)`, `SFTTrainer` применяет автоматически.",
               "correct": false,
               "sections": {
                 "what_actually": "Один из главных симптомов ошибки template — модель НЕ генерирует EOS и пишет до `max_tokens`; остановка как раз и ломается.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Catastrophic forgetting` нельзя измерить заранее: специальных метрик нет, а general benchmarks вроде `MMLU` реагируют только на профильные задачи — поэтому регрессию общих способностей замечают лишь пользователи в проде.",
+              "text": "`Catastrophic forgetting` — потеря общих способностей после FT на узком домене (болезнь full FT, но и LoRA не застрахован). Обнаружение заранее невозможно: специальных метрик нет; general benchmarks (MMLU, HellaSwag, ARC) реагируют только на профильные задачи — регрессию общих способностей замечают лишь пользователи в проде. Митигация: mix 10-30% generic instruction data, lower learning rate (1e-5 вместо 5e-5), меньше epochs, LoRA вместо full FT, replay buffer, EWC, adapter switching. Особый случай — language drift (англ. модель на русском теряет английский) лечат bilingual mix.",
               "correct": false,
               "sections": {
                 "what_actually": "Forgetting детектируют прогоном general benchmarks (MMLU, HellaSwag, ARC) до и после FT: регрессия >2-5% — явный сигнал ещё до деплоя.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Лучшая митигация — поднять число эпох и learning rate (5e-5 вместо 1e-5): чем прочнее модель закрепит новый домен, тем меньше она сползает к исходному распределению и забывает.",
+              "text": "`Catastrophic forgetting` — потеря общих способностей после FT на узком домене (болезнь full FT, но и LoRA не застрахован). Обнаружение: прогон general benchmarks (MMLU, HellaSwag, ARC) до и после, drop >2-3% — warning, >5% — фиксить; проверка out-of-domain prompts. Митигация: главное — поднять epochs и learning rate (5e-5 вместо 1e-5), чтобы модель прочнее закрепила домен и меньше сползала к исходному распределению; дополнительно mix generic data, LoRA. Особый случай — language drift (англ. модель на русском теряет английский) лечат bilingual mix.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: overtraining (много epochs) и высокий lr — главные ИСТОЧНИКИ forgetting; митигируют меньшим числом эпох и lr 1e-5.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Full fine-tuning надёжнее LoRA защищает от forgetting: обновление всех весов равномерно распределяет новый домен по сети, тогда как узкий адаптер перегружает малую часть параметров и стирает общие знания.",
+              "text": "`Catastrophic forgetting` — потеря общих способностей после FT на узком домене (болезнь full FT, но и LoRA не застрахован). Обнаружение: прогон general benchmarks (MMLU, HellaSwag, ARC) до и после, drop >2-3% — warning, >5% — фиксить; проверка out-of-domain prompts. Митигация: mix 10-30% generic data, lower learning rate, меньше epochs, replay buffer, EWC; при этом full fine-tuning надёжнее LoRA — обновление всех весов равномерно распределяет домен по сети, тогда как узкий адаптер перегружает малую часть параметров. Особый случай — language drift (англ. модель на русском теряет английский) лечат bilingual mix.",
               "correct": false,
               "sections": {
                 "what_actually": "Forgetting — классическая болезнь именно full FT; LoRA безопаснее, так как base заморожен и адаптер можно отключить (adapter switching).",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Model merging` требует, чтобы все модели прошли совместное дообучение на общем датасете и синхронизировали градиенты — только тогда их веса оказываются в одном базисе и их можно усреднить.",
+              "text": "`Model merging` — комбинирование весов нескольких fine-tuned моделей после совместного дообучения на общем датасете с синхронизацией градиентов (популярно с 2023-2024, инструмент `mergekit`). Методы: Linear average (`W=(W_A+W_B)/2`, близкие модели), `SLERP` (spherical interpolation двух моделей), `TIES` (Trim + Elect sign + Disjoint merge, для multiple models), `DARE` (Drop and Rescale: зануляет 50-90% delta), Model Soups (усреднение FT-runs одного base), Task Arithmetic. Зачем: собрать в одну модель code- и math-эксперта, стабилизировать вывод усреднением прогонов.",
               "correct": false,
               "sections": {
                 "what_actually": "Merging работает БЕЗ переобучения — это комбинирование уже готовых весов; совместное обучение с нуля не нужно и противоречит сути метода.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Merging` объединяет любые модели независимо от происхождения: `SLERP` и `TIES` выравнивают веса даже у разных базовых архитектур и токенизаторов, лишь бы совпадала размерность скрытого слоя.",
+              "text": "`Model merging` — комбинирование весов любых fine-tuned моделей независимо от base-архитектуры БЕЗ переобучения (популярно с 2023-2024, инструмент `mergekit`). Методы: Linear average (`W=(W_A+W_B)/2`, близкие модели), `SLERP` (spherical interpolation двух моделей), `TIES` (Trim + Elect sign + Disjoint merge, для multiple models), `DARE` (Drop and Rescale: зануляет 50-90% delta), Model Soups (усреднение FT-runs одного base), Task Arithmetic. Зачем: объединить сильные стороны разных специалистов и сгладить дисперсию отдельных прогонов.",
               "correct": false,
               "sections": {
                 "what_actually": "Модели для merge должны быть от ОДНОГО base; разные base/архитектуры/templates делают веса несовместимыми и ломают результат.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Финальный eval после merging необязателен: `Model Soups` и `TIES` по построению сохраняют сильные стороны каждой модели, поэтому результат гарантированно не хуже лучшего из исходных чекпойнтов.",
+              "text": "`Model merging` — комбинирование весов нескольких дообученных чекпойнтов без нового обучения (популярно с 2023-2024, инструмент `mergekit`). Методы: Linear average (`W=(W_A+W_B)/2`, близкие модели), `SLERP` (spherical interpolation двух моделей), `TIES` (Trim + Elect sign + Disjoint merge, для multiple models), `DARE` (Drop and Rescale: зануляет 50-90% delta), Model Soups (усреднение FT-runs одного base), Task Arithmetic. Зачем: скомбинировать специалистов и усреднить runs, результат гарантированно не хуже лучшего чекпойнта, так что финальный eval не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Качество merge НЕ гарантировано — обязателен eval; объединённая модель может оказаться хуже исходных при неудачном слиянии.",
@@ -1944,7 +1944,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Anthropic в 2026 предоставляет такой же публичный self-serve fine-tuning API для Claude, как OpenAI для GPT, доступный любому разработчику.",
+              "text": "На 2026: `OpenAI` — SFT для gpt-3.5-turbo/gpt-4o-mini/gpt-4o + RFT (Reinforcement Fine-Tuning) для o-series (partner program), под капотом multi-LoRA по клиентам, SFT-training (gpt-4o-mini ~$3/M, gpt-4o ~$25/M токенов), API `client.fine_tuning.jobs.create(...)`. `Anthropic` — предоставляет публичный self-serve fine-tuning API для Claude, доступный любому разработчику наравне с OpenAI. `Google (Gemini)` — Vertex AI Tuning (LoRA-based) для Gemini 1.5/2.0/2.5, + distillation/RLHF варианты. Также Mistral и Cohere имеют свои FT API.",
               "correct": false,
               "sections": {
                 "what_actually": "У Anthropic публичного fine-tuning API НЕТ (на 2026); кастомные модели Claude — только через enterprise contract, например, AWS Bedrock.",
@@ -1956,7 +1956,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "OpenAI поддерживает только полное fine-tuning всех весов модели для каждого клиента, а multi-LoRA в их инфраструктуре не используется.",
+              "text": "На 2026: `OpenAI` — поддерживает только полное fine-tuning всех весов модели для каждого клиента (multi-LoRA в их инфраструктуре не используется), SFT-training (gpt-4o-mini ~$3/M, gpt-4o ~$25/M токенов), API `client.fine_tuning.jobs.create(...)`. `Anthropic` — публичного fine-tuning API НЕТ, кастомные модели только через enterprise contract (например, AWS Bedrock). `Google (Gemini)` — Vertex AI Tuning (LoRA-based) для Gemini 1.5/2.0/2.5, + distillation/RLHF варианты. Также Mistral и Cohere имеют свои FT API.",
               "correct": false,
               "sections": {
                 "what_actually": "OpenAI под капотом использует распределённый по клиентам multi-LoRA (один base на всех), а не полные веса под каждого клиента.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Google Vertex AI вообще не поддерживает tuning Gemini-моделей, поэтому дообучить Gemini в 2026 невозможно ни одним способом.",
+              "text": "На 2026: `OpenAI` — SFT для gpt-3.5-turbo/gpt-4o-mini/gpt-4o + RFT (Reinforcement Fine-Tuning) для o-series (partner program), под капотом multi-LoRA по клиентам, SFT-training (gpt-4o-mini ~$3/M, gpt-4o ~$25/M токенов), API `client.fine_tuning.jobs.create(...)`. `Anthropic` — публичного fine-tuning API НЕТ, кастомные модели только через enterprise contract (AWS Bedrock). `Google (Gemini)` — Vertex AI вообще не поддерживает tuning Gemini-моделей, поэтому дообучить Gemini в 2026 невозможно ни одним способом. Также Mistral и Cohere имеют свои FT API.",
               "correct": false,
               "sections": {
                 "what_actually": "Vertex AI Tuning поддерживает LoRA-based supervised tuning для Gemini 1.5/2.0/2.5, плюс distillation и RLHF-варианты.",
