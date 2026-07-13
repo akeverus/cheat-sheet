@@ -2236,3 +2236,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: grep CSS на @media(orientation)-ограничения, JS на screen.orientation.lock(), шаблоны на «поверните устройство», viewport-мета.
 
 Итог — чисто (локов нет). Нет orientation-ограничений в CSS, нет lock() в JS, viewport = width=device-width,initial-scale=1.0 (без maximum-scale/user-scalable=no → обе ориентации + zoom). @media(max-width:859px) стекает разбор на портрете = reflow в поддержку, не лок. Правок не требуется. Леджер: cr.172.
+
+## R1.78 — WCAG 2.4.11 Focus Not Obscured (Minimum) (AA, 2.2) — verified-clean
+
+Проверка: фокус не скрыт целиком sticky/fixed-контентом.
+
+Метод: инвентаризация всех position:sticky|fixed + эмпирический замер на /stats (rect фокуса vs sticky-thead, скролл страницы, развёртка таблицы).
+
+Итог — чисто. masthead=relative (не sticky). Sticky thead таблицы инертен: контейнер .topic-table-wrap (overflow-y:auto, max-height:none) не скроллится внутренне ни свёрнутым, ни развёрнутым (319 строк) → страница скроллится, thead уезжает с ней (после scrollTo(0,1200) thead top=−43, к вьюпорту не липнет). Модалки fixed inset:0 = focus-trap (не перекрывают фон). back-to-top 44×44 в углу — full-width целиком не прячет. Sticky-рейки align-self:start в своей колонке. Латентно: если таблицу сделают внутренне-скроллящей — понадобится scroll-padding-top на обёртке (сейчас инертно, не добавляю). Правок не требуется. Леджер: cr.173.
