@@ -390,7 +390,7 @@ docs/ui-ux-improvement-log.md
 
 | ID | Точка | Историческая гипотеза | Старое направление | Прежний статус | Новый статус |
 |---|---|---|---|---|---|
-| `FT-2` | `.question-zone-head` chip+hint (`focusModeChipText/HintText`) | Серверная микрокопия режима | Уточнять per-mode формулировки точечно | 🌱 BACKLOG | ⬜ RECHECK |
+| `FT-2` | `.question-zone-head` chip+hint (`focusModeChipText/HintText`) | ~~Серверная микрокопия режима~~ — **ПОДТВЕРЖДЕНО реализованной, per-mode (R0.111, app не нужен):** `MvcModelAttributeMapper.resolveFocusModeChipText` (82-93) = 4 ветки review/flashcard/null/`displayName(mode)`; `resolveFocusModeHintText` (95-106) = 4 ветки review/flashcard/STUDY/default, без пустых строк. EXAM/MARATHON/TRAINING делят default-hint — защитимо (интеракция одного вопроса идентична; режимы различаются длиной/скорингом сессии, не способом ответа). | Опц.: отдельный hint для EXAM/MARATHON — контент-полиш, decision-gated | 🚫 WONTFIX (per-mode готов) / 🌱 opt-content-decision | 🚫 DECISION_LOCK |
 | `FT-7` | `.focus-question` h2 48px | Намеренный размер «окна вопроса» | НЕ трогать | 🚫 WONTFIX | 🚫 DECISION_LOCK |
 | `FT-12` | option fairness: длина/наполненность выдаёт correct | Контент-перекос; UI обязан не усиливать | seed/mcq pedago-loop | 🏛 CONTENT | 🏛 EXTERNAL_OWNER |
 | `FT-15` | `training-actions` include (Проверить ответ) | CTA далеко при длинных вариантах | sticky/видимый submit | 🌱 BACKLOG | ⬜ RECHECK |
@@ -2299,6 +2299,17 @@ Constraint Validation API без сабмита на session-form. count (number
   - Влияние на выборку: `FocusTrainingPageService:57` `facade.nextQuestion(filter, weakTopicsPriority, …)` → `InterviewService:130` **Strategy pattern** `weakTopicsPriority ? weakTopicsSelectionStrategy : defaultSelectionStrategy`; `filter.onlyWrong()` в repo-запросах (`InterviewService:151/155/158`, `TrainingSessionService:52/55/60`).
 - **Итог:** гипотеза «может требовать роутов/параметров» **опровергнута** — маршрут и все 3 параметра существуют и честятся. STA-10 `⬜ RECHECK` → `🚫 DECISION_LOCK (functional)`. Правок кода не требуется. §9 STATS не разблокирован (Final по-прежнему parity-gated), но контракт STATS→FOCUS CTA подтверждён (Port-mapping ось).
 - **Дальше:** остаются ⬜ RECHECK-строки §10, разрешимые статически (`FT-2` per-mode микрокопия, `AIR-6` dead-ветка, `STA-3`-класс). При подъёме app — port-parity/RES-15/window-тик. Нумерация R0.111+.
+
+### R0.111 (2026-07-13) — §10 RECHECK-резолюция: FT-2 per-mode микрокопия → DECISION_LOCK (реализовано, app не нужен)
+
+- **Единица:** статически разрешить ещё одну ⬜ RECHECK §10 — `FT-2` «`.question-zone-head` chip+hint, серверная микрокопия режима».
+- **Метод:** прочитать разметку (`focus-training.html:17-19`) + вычислитель (`MvcModelAttributeMapper`).
+- **Результат — микрокопия УЖЕ per-mode, не дженерик:**
+  - Chip `resolveFocusModeChipText` (82-93): `reviewMode`→«Повтор ошибок»; `flashcard/FLASHCARD`→«Флешкарты»; `mode==null`→«Тренировка»; иначе `modeUtils.displayName(mode)` (Экзамен/Марафон/…). 4 ветки.
+  - Hint `resolveFocusModeHintText` (95-106): `reviewMode`→«Режим review…»; `flashcard/FLASHCARD`→«Флешкарты: вспомни…оцени себя»; `STUDY`→«Изучение: разберись…»; default→«Выбери один вариант. Проверка и разбор идут по шагам.». 4 ветки, ни одна не даёт пустую строку.
+  - EXAM/MARATHON/TRAINING → общий default-hint. **Защитимо:** способ ответа на один вопрос у MCQ-режимов идентичен; режимы различаются длиной/скорингом *сессии*, не интеракцией *вопроса* → общий hint корректен.
+- **Итог:** гипотеза «серверная микрокопия режима» подтверждена как **уже реализованная и корректная**. Остаток «уточнять per-mode формулировки точечно» = опциональный контент-полиш (distinct EXAM/MARATHON-hint), decision-gated, не frontend-дефект (и граничит с контент-доменом — не переписываю в одностороннем порядке). FT-2 `⬜ RECHECK` → `🚫 DECISION_LOCK`. Правок кода не требуется.
+- **Дальше:** ⬜ RECHECK §10, разрешимые статически: `AIR-6` (dead-ветка empty-state), `FT-15` (submit CTA), `SET-3`/`SET-9` (settings-полиш, blocked-file), класс-`STA-3`. При подъёме app — port-parity/RES-15/window-тик. Нумерация R0.112+.
 
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
