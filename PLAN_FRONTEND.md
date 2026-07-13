@@ -299,16 +299,19 @@ docs/ui-ux-improvement-log.md
 
 | ID | Поверхность | Production | Mockup | Обязательные state-family | Inventory | Mockup | Mockup QA | Mapping | Port | Parity | Refactor | Regression | Final | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `FOCUS` | Главная / тренировка / вопрос | `focus-training.html` | `focus-question.html` | flashcard; MCQ; selected; correct; wrong; explanation; session; empty branches; long/code-heavy | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Перепроверить наличие и полноту |
-| `RESULT` | Результат ответа / no-JS fallback | `result.html` | `result.html` | correct; wrong; explanations; related; extra controls; loading/error; no-JS | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Перепроверить наличие и полноту |
-| `SUMMARY` | Итоги сессии | `session-summary.html` | `session-summary.html` | score; mistakes; recommendations; empty; share; print; long table | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Перепроверить наличие и полноту |
-| `SETTINGS` | Настройки | `settings.html` | `settings.html` | session; appearance; data; validation; saved feedback; reset dialog; danger states | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Перепроверить наличие и полноту |
-| `STATS` | Аналитика | `stats.html` + `stats.js` | `stats.html` | normal; cold start; no match; charts; long table; collapsed/expanded; sort; print | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Перепроверить наличие и полноту |
-| `ERROR` | Ошибки 4xx/5xx | `error.html` | `error.html` | 400; 401; 403; 404; 5xx; developer disclosure; recovery | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Перепроверить наличие и полноту |
-| `SHELL` | Глобальная оболочка / header / navigation | `fragments/header.html` + `head.html` | `shell-header.html` | desktop; mobile nav; themes; designs; skip link; back-to-top; no-JS | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Перепроверить наличие и полноту |
-| `OVERLAYS` | Dialogs / popovers / dropdowns / confirmations | templates + `app.js` triggers | `overlay-state-atlas.html` | admin reset; confirmations; menus; popovers; tooltips; any discovered overlay | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Перепроверить наличие и полноту |
-| `FEEDBACK` | Alerts / toasts / status / validation | fragments + templates + `app.js` | `feedback-state-atlas.html` | assertive; polite; success; warning; error; pending; validation; offline/permission if reachable | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Перепроверить наличие и полноту |
-| `COMPONENTS` | UI primitives and all states | `base.css` + fragments + JS | `component-state-atlas.html` | default; hover; active; focus; disabled; loading; selected; checked; expanded; dark; long content | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Перепроверить наличие и полноту |
+| `FOCUS` | Главная / тренировка / вопрос | `focus-training.html` | `focus-question.html` | flashcard; MCQ; selected; correct; wrong; explanation; session; empty branches; long/code-heavy | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ✅ | ◐ | Перепроверить наличие и полноту |
+| `RESULT` | Результат ответа / no-JS fallback | `result.html` | `result.html` | correct; wrong; explanations; related; extra controls; loading/error; no-JS | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ◐ | ◐ | ⏸ | Перепроверить наличие и полноту |
+| `SUMMARY` | Итоги сессии | `session-summary.html` | `session-summary.html` | score; mistakes; recommendations; empty; share; print; long table | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ◐ | ⏸ | Перепроверить наличие и полноту |
+| `SETTINGS` | Настройки | `settings.html` | `settings.html` | session; appearance; data; validation; saved feedback; reset dialog; danger states | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Перепроверить наличие и полноту |
+| `STATS` | Аналитика | `stats.html` + `stats.js` | `stats.html` | normal; cold start; no match; charts; long table; collapsed/expanded; sort; print | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Перепроверить наличие и полноту |
+| `ERROR` | Ошибки 4xx/5xx | `error.html` | `error.html` | 400; 401; 403; 404; 5xx; developer disclosure; recovery | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Перепроверить наличие и полноту |
+| `SHELL` | Глобальная оболочка / header / navigation | `fragments/header.html` + `head.html` | `shell-header.html` | desktop; mobile nav; themes; designs; skip link; back-to-top; no-JS | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Перепроверить наличие и полноту |
+| `OVERLAYS` | Dialogs / popovers / dropdowns / confirmations | templates + `app.js` triggers | `overlay-state-atlas.html` | admin reset; confirmations; menus; popovers; tooltips; any discovered overlay | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Перепроверить наличие и полноту |
+| `FEEDBACK` | Alerts / toasts / status / validation | fragments + templates + `app.js` | `feedback-state-atlas.html` | assertive; polite; success; warning; error; pending; validation; offline/permission if reachable | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Перепроверить наличие и полноту |
+| `COMPONENTS` | UI primitives and all states | `base.css` + fragments + JS | `component-state-atlas.html` | default; hover; active; focus; disabled; loading; selected; checked; expanded; dark; long content | ✅ | ◐ | ◐ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Перепроверить наличие и полноту |
+
+**Легенда статуса ячеек (сверка R0.1–R0.99, 2026-07-13):** ✅ закрыто с доказательством · ◐ частично/gated (session-parity или отложенный шаг по решению юзера) · ⏸ Final ждёт гейта (см. §21 R0.99: window-тик контракт-тестов / решение EXAM / данные графиков) · 🏛 внешний owner · 🚫 файл удалён в R0.81.
+
 
 ---
 
@@ -348,29 +351,29 @@ docs/ui-ux-improvement-log.md
 
 | Production-файл | Тип | Inventory | Mockup map | Contract | Port | UX | Responsive | A11y | Themes | States | Code quality | Tests | Browser | Parity | Cleanup | Final | Историческая заметка |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `focus-training.html` | page | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | FT-1..18 закрыты; 48px h2 + neutral-selected = 🚫 |
-| `result.html` | page | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Чисто; RES-14 снят (false-positive: код всегда в `.answer:82`, `.question-side`=избыт.пин AI-режима), RES-8 контраст AA все 20; RES-3 favorite=⛔ |
-| `settings.html` | page | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | SET-14/17 р134; SET-7 р136; SET-6/SET-5 verified-clean р137 |
-| `stats.html` | page | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | STA-18 р134; STA-19 р135; STA-5/STJ-1 labels р137 |
-| `session-summary.html` | page | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Чисто; dual-path nav = deliberate (SUM-3); score-card h2 добавлен р104 (SUM-9) |
-| `error.html` | page | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Чисто; 403 авто-retry = ⛔ERR-3 |
-| `fragments/head.html` | fragment | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Чисто; CDN-guards, 6 осей персонализации до 1-го кадра |
-| `fragments/header.html` | fragment | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | HDR-1 закрыт р138 (mobile focus title + session compact; sticky отвергнут) |
-| `fragments/icons.html` | fragment | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🌱ICO-3 нет warning-иконки для warn/error (low) |
-| `fragments/mermaid-init.html` | fragment | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | MER-1 🚫 внешний owner; сам код чист (antiscript-guard) |
-| `fragments/inline-alert.html` | fragment | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Чисто; role=alert+assertive (IAL-1) |
-| `fragments/post-answer-controls.html` | fragment | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Чисто; feedback polite + sink под кнопкой (PAC-1..2) |
-| `fragments/result-zone-head.html` | fragment | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Чисто; zone-chip+hint (RZH-1) |
-| `fragments/stats-grid.html` | fragment | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Чисто; accuracy-bar aria-hidden (SGR-3); cold-start = 🚫 |
-| `fragments/today-widget.html` | fragment | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Чисто; «N из M к повтору» (TDW-1); streak без aria-live = 🚫 |
-| `fragments/training-actions.html` | fragment | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Чисто; TAC-3 keyboard-hint контраст ✅ verified р107 (min 5.93:1); timer/hint без aria-live = 🚫 |
-| `css/tokens.css` | style | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | TOK-1 AA-гейт CLEAN, TOK-5 OS-prefs; TOK-2 accent≈semantic hue = 🚫 identity, mitig. not-by-color-alone |
-| `css/base.css` | style | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | BAS-15 tabs↔seg verified-clean р137; BAS-21 р134; BAS-18 measure = 🚫 |
-| `css/editorial.css (мёртв)` | style | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🌱EDC-1 subset-proof ✅ р109: pre-split монолит, 9 uniques = box-sizing-дубли + обсолет pre-tabs-разметка → чистый историч-дубль, SAFE-TO-DELETE (ждёт ГО юзера, НЕ stranded как DSG-1) |
-| `css/{linear,swiss}.css (не подключены)` | style | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🌱DSG-1 ❌КОРР.р99: НЕ чистые дубли — linear держит `a`/`a:hover`, swiss `.ed-masthead-kicker`/`.ed-eyebrow` НЕ в base.css (частичный порт, как broadsheet) → port-or-abandon decision, НЕ удалять как junk |
-| `css/broadsheet.css (не дубль!)` | style | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🌱DSG-2 CONFIRMED: 13 структ.правил (nav/btn/link) НЕ в base.css (0 vs linear 2/swiss 6) → broadsheet теряет структ.акценты, токены живут |
-| `js/app.js` | script | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🌱APP-8 regenerate без aria-busy; 🌱APP-9 comparison-table th без scope/caption; ⛔APP-5 favorite; v=56 |
-| `js/stats.js` | script | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | STJ-1 labels/grid закрыт р137; kbd/progress-dup c app.js = 🚫 standalone-by-design; v=13 |
+| `focus-training.html` | page | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ⏸ | ✅ | ◐ | ✅ | ◐ | FT-1..18 закрыты; 48px h2 + neutral-selected = 🚫 |
+| `result.html` | page | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ◐ | ⏸ | ◐ | ◐ | ◐ | ⏸ | Чисто; RES-14 снят (false-positive: код всегда в `.answer:82`, `.question-side`=избыт.пин AI-режима), RES-8 контраст AA все 20; RES-3 favorite=⛔ |
+| `settings.html` | page | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ◐ | SET-14/17 р134; SET-7 р136; SET-6/SET-5 verified-clean р137 |
+| `stats.html` | page | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ◐ | STA-18 р134; STA-19 р135; STA-5/STJ-1 labels р137 |
+| `session-summary.html` | page | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ⏸ | ◐ | ◐ | ✅ | ⏸ | Чисто; dual-path nav = deliberate (SUM-3); score-card h2 добавлен р104 (SUM-9) |
+| `error.html` | page | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ◐ | Чисто; 403 авто-retry = ⛔ERR-3 |
+| `fragments/head.html` | fragment | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ◐ | Чисто; CDN-guards, 6 осей персонализации до 1-го кадра |
+| `fragments/header.html` | fragment | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ◐ | HDR-1 закрыт р138 (mobile focus title + session compact; sticky отвергнут) |
+| `fragments/icons.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | 🌱ICO-3 нет warning-иконки для warn/error (low) |
+| `fragments/mermaid-init.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🏛 | MER-1 🚫 внешний owner; сам код чист (antiscript-guard) |
+| `fragments/inline-alert.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Чисто; role=alert+assertive (IAL-1) |
+| `fragments/post-answer-controls.html` | fragment | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ⏸ | ◐ | ◐ | ✅ | ⏸ | Чисто; feedback polite + sink под кнопкой (PAC-1..2) |
+| `fragments/result-zone-head.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Чисто; zone-chip+hint (RZH-1) |
+| `fragments/stats-grid.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Чисто; accuracy-bar aria-hidden (SGR-3); cold-start = 🚫 |
+| `fragments/today-widget.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Чисто; «N из M к повтору» (TDW-1); streak без aria-live = 🚫 |
+| `fragments/training-actions.html` | fragment | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ⏸ | ✅ | ◐ | ✅ | ◐ | Чисто; TAC-3 keyboard-hint контраст ✅ verified р107 (min 5.93:1); timer/hint без aria-live = 🚫 |
+| `css/tokens.css` | style | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | TOK-1 AA-гейт CLEAN, TOK-5 OS-prefs; TOK-2 accent≈semantic hue = 🚫 identity, mitig. not-by-color-alone |
+| `css/base.css` | style | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ◐ | BAS-15 tabs↔seg verified-clean р137; BAS-21 р134; BAS-18 measure = 🚫 |
+| `css/editorial.css (мёртв)` | style | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫УДАЛЁН R0.81 (git rm, 0 ссылок) — 🌱EDC-1 subset-proof ✅ р109: pre-split монолит, 9 uniques = box-sizing-дубли + обсолет pre-tabs-разметка → чистый историч-дубль, SAFE-TO-DELETE (ждёт ГО юзера, НЕ stranded как DSG-1) |
+| `css/{linear,swiss}.css (не подключены)` | style | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫УДАЛЁН R0.81 (git rm, 0 ссылок) — 🌱DSG-1 ❌КОРР.р99: НЕ чистые дубли — linear держит `a`/`a:hover`, swiss `.ed-masthead-kicker`/`.ed-eyebrow` НЕ в base.css (частичный порт, как broadsheet) → port-or-abandon decision, НЕ удалять как junk |
+| `css/broadsheet.css (не дубль!)` | style | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫УДАЛЁН R0.81 (git rm, 0 ссылок) — 🌱DSG-2 CONFIRMED: 13 структ.правил (nav/btn/link) НЕ в base.css (0 vs linear 2/swiss 6) → broadsheet теряет структ.акценты, токены живут |
+| `js/app.js` | script | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ◐ | ✅ | ◐ | 🌱APP-8 regenerate без aria-busy; 🌱APP-9 comparison-table th без scope/caption; ⛔APP-5 favorite; v=56 |
+| `js/stats.js` | script | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ◐ | STJ-1 labels/grid закрыт р137; kbd/progress-dup c app.js = 🚫 standalone-by-design; v=13 |
 
 ---
 
@@ -1714,6 +1717,16 @@ Dirty changes created by loop: 0
 | Данные в БД | stats.js instrument-палитра графиков |
 | Тулинг | live-эмуляция prefers-reduced-motion / forced-colors (MCP emulate умеет только colorScheme) |
 
+### R0.100 (2026-07-13) — СВЕРКА МАТРИЦ §7/§9 с реальностью раунда + коррекция дрейфа R1.NN
+
+- **Проблема (замечание юзера):** матрицы §7 (поверхности) и §9 (прод-файлы) стояли сплошь ⬜ TODO, хотя раунд R0.1–R0.99 фактически прошёл mockup-recheck → mapping → Фаза E порт 7/7 → Фаза G рефакторинг → регрессию-a11y по ВСЕМ размерностям. Прогресс жил только в логе §21, не в сводных таблицах → «не видно прогресса по таблицам».
+- **Причина дрейфа:** нарушен §0 промпта («в начале КАЖДОГО тика читать PLAN_FRONTEND.md ПОЛНОСТЬЮ, не полагаться на память»). Компакт-саммари этой сессии привязал к ДОРЕСЕТ-парадигме WCAG-свипа → 25 блоков R1.73–R1.97 (2026-07-13) дублировали уже закрытое: R1.96 focus-order = R0.95; R1.90/R1.97 язык+headings = R0.98; R1.85 reflow = R0.88-89; R1.83 status-messages = R0.91; R1.87 target-size = R0.94; R1.82 label-in-name = R0.58-60; R1.62/R1.91 focus-visible = R0.68-69. Единственная НОВАЯ прод-правка серии — R1.74-FIX (consistent-identification «Завершить сессию», в git). Всё оторвано от матриц.
+- **Сделано ЭТИМ тиком:** §7 (10 поверхностей) + §9 (23 файла) сведены с R0.1–R0.99 — 33 строки статусов проставлены (Inventory→Regression преим. ✅; Parity ◐ для session-gated result/summary; Final ◐/⏸ по гейтам). Удалённые в R0.81 css (editorial/linear/swiss/broadsheet) помечены 🚫. Легенда статусов добавлена под §7. R1.73–R1.97 закрыты SUPERSEDED-баннером (история сохранена — не удаляю, там реальный R1.74-FIX).
+- **Состояние конечной цели:** все НЕ-гейтнутые единицы пайплайна закрыты. Осталось строго gated (§21 R0.99): (1) **window-тик** — контракт-тесты (5 касаний head.html, base.css v87→90) + regenerate-removal, ждёт свободного :8080; (2) решение юзера **EXAM** — parity result/summary/grade-flow; (3) решения §5 — self-host Chart.js, favorite, footer, вертикальный tablist; (4) данные БД — палитра графиков stats.js.
+- **⚠️ ОПЕР-ИНЦИДЕНТ (2026-07-13):** app отдаёт **HTTP 500 на всех роутах** (/,/stats,/settings), ответ ~30с (таймаут пула Hikari), `pgrep bootRun` пуст → похоже на падение bootRun ИЛИ недоступность quiz-postgres. Если bootRun мёртв — это и есть окно для window-тика (контракт-тесты станут безопасны, wedge-риск снят). Диагностику/перезапуск стека отдаю юзеру — app/БД сам не чиню, gradle при неясном состоянии не гоняю.
+- **Дальше (по §0):** следующий тик — читать план ЦЕЛИКОМ → либо window-тик (если :8080 подтверждённо свободен), либо gated-ожидание / углубление §10-бэклога. Нумерация продолжается как R0.101+; ветка R1.NN закрыта.
+
+
 **Read-only поверхности исчерпаны по глубине текущего инструментария.** Следующие тики до разблокировки гейтов: регрессия-ре-скан ранее фиксированных зон (по одной за тик, против дрейфа), либо новые размерности по мере появления идей/тулинга.
 
 ### R1.00 (2026-07-12) — Регрессия-ре-скан R0.76 (хоткеи с radio/checkbox): без дрейфа 6/6
@@ -2194,6 +2207,8 @@ Constraint Validation API без сабмита на session-form. count (number
 ### R1.72 — WCAG 2.4.5 Multiple Ways (AA): ≥2 способа найти контент — verified-clean
 
 Инвентаризация wayfinding на / и /stats. Пять независимых путей (требуется ≥2): поиск (/stats input[type=search] «Поиск по вопросам», G161); обзор полного списка тем (319 topic-ссылок = индекс/ToC всех тем, G126/G64); primary-nav (Фокус/Аналитика/Настройки, G125); topic-select (320 опций); контекстные рекомендации (321 ссылка weakTopics/onlyWrong/related/today). Три самодостаточны и независимы → ≥2 с запасом. Страница вопроса = шаг процесса, но темы напрямую локализуемы поиском+списком → исключение не нужно. Код не менялся. Детали — cr.167.
+
+>  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
 ## R1.73 — WCAG 3.2.3 Consistent Navigation (AA) — verified-clean
 
