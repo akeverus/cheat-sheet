@@ -2346,6 +2346,19 @@ Constraint Validation API без сабмита на session-form. count (number
 - **Итог:** RES-15-prep снова **turnkey** (ханки точны, layout-риск NULL держится, версия-бамп актуализирован). Apply остаётся session-gated (result рендерится только на POST /answer → QA вместе с EXAM-parity, одним окном).
 - **Дальше:** без app — прочие app-gated preps на turnkey-сверку (regenerate-removal-план R0.63 vs код) либо честная фиксация упора в подъём app. При подъёме — RES-15 apply+QA/port-parity/window-тик. Нумерация R0.115+.
 
+### R0.115 (2026-07-13) — Re-validation regenerate-removal-препа (window-тик) vs код: устранён крупный дрейф (app не нужен)
+
+- **Единица:** сверить второй app-gated prep `port-drafts/regenerate-removal-plan.md` (R0.63 window-тик; §10 APP-4/AIR-4) с фактическим кодом — turnkey-готовность. Как RES-15 в R0.114.
+- **Находка — существенный дрейф (план собран 2026-07-12, база активно правится):**
+  - result.html: btn-regenerate 48-50 + `regen-badge` (`regenCount()>0`) **51-53** (план: 48-52); question-side 121 ✅; коммент 30 ✅.
+  - app.js: `API.REGENERATE` 18 ✅; но `regenerateQuestion` факт. **~898-965** (план ~884-950); делегат `.btn-regenerate` факт. **~977-981** (план ~968-973).
+  - base.css — **все 6 ссылок устарели** (дрейф +20…−121 строк): `.btn-regenerate:active` группа **1067** (было 1047); `:has(.question-side)` грид **2329-2337** (2292); `.btn-regenerate` база/hover/regenerating/regen-badge **2435-2457** (2398-2419); `@media 1fr` **2603** (2689); related×question-side **3171-3173** (3256); print/touch группа **3372** (3493).
+  - **Новая находка:** `.regen-badge` есть на **stats-page (base.css:1892)**, не только result-page — план не флагал; помечено «проверить stats-разметку перед удалением» (возможно живое использование).
+  - **⚠️ Ошибка локации `?v=`:** план велел «бампнуть app.js в head.html», но app.js-версия в 3 шаблонах (v=62, R0.114), а head.html держит только `base.css(v=92)`+`tokens.css(v=64)`. Слепой apply не бампнул бы app.js → кэш не сброшен.
+- **Правки (только план-док, не прод-код):** актуализированы все номера строк (result/app.js/base.css); исправлена локация+таргет `?v=` (app.js v=62→63 в 3 шаблонах; base.css v=92→93 в head.html:311); добавлен флаг stats-page regen-badge.
+- **Итог:** regenerate-removal-prep снова **turnkey** для window-тика. Apply остаётся gated (нужен gradle-прогон TemplateFragmentContractTest+InterviewMvcControllerTest → окно без живого bootRun).
+- **Дальше:** оба крупных app-gated препа (RES-15 R0.114 + regenerate-removal R0.115) сверены turnkey. Без app остаётся: мелкие статические сверки/мониторинг подъёма app. При подъёме postgres+app — window-тик (regenerate-removal, закроет 7 PENDING-TEST §9) + RES-15 apply + port-parity. Нумерация R0.116+.
+
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
 ## R1.73 — WCAG 3.2.3 Consistent Navigation (AA) — verified-clean
