@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Атлас обратной связи · макет Instrument</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    /* ===== Reset / основа (общий язык Instrument) ========================== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; min-height: 100dvh; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); font-family: var(--font-ui); font-size: var(--fs-base); line-height: var(--lh-normal); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    a { color: var(--signal-ink); }
+    code, kbd { font-family: var(--font-mono); }
+    [hidden] { display: none !important; }
+    .wrap { width: 100%; padding-inline: var(--gutter); }
+    .skip-link { position: absolute; left: var(--s-4); top: -4rem; background: var(--signal-strong); color: var(--signal-on); padding: var(--s-2) var(--s-4); border-radius: var(--r-sm); z-index: 60; transition: top var(--dur-1) var(--ease-out); }
+    .skip-link:focus { top: var(--s-4); }
+    :where(a, button, input, select, summary):focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; border-radius: var(--r-sm); }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+    /* ===== Макет-лейбл ==================================================== */
+    .mock-bar { border-bottom: 1px dashed var(--line-strong); background: var(--surface); }
+    .mock-bar__inner { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; padding-block: var(--s-2); }
+    .mock-tag { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); color: var(--ink-3); }
+
+    /* ===== Шапка (канонический хром) ===================================== */
+    .site-head { position: sticky; top: 0; z-index: 40; border-bottom: 1px solid var(--line); background: var(--paper); }
+    .site-head__inner { display: flex; align-items: center; gap: var(--s-4); padding-block: var(--s-4); }
+    .brand { display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--font-mono); font-weight: var(--fw-semi); font-size: var(--fs-sm); letter-spacing: var(--track-mono); color: var(--ink); text-decoration: none; margin-right: auto; }
+    .brand-mark { width: 0.9rem; height: 0.9rem; border-radius: 3px; background: var(--signal); box-shadow: inset 0 0 0 3px var(--paper), 0 0 0 1px var(--signal); }
+    .brand > span:last-child { color: var(--ink-3); }
+    .head-tools { display: flex; align-items: center; gap: var(--s-2); }
+    .theme-toggle { display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pill); padding: var(--s-2) var(--s-3); cursor: pointer; transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+    .theme-toggle:hover { border-color: var(--line-strong); color: var(--ink); }
+
+    /* ===== Каркас атласа ================================================= */
+    main { flex: 1 0 auto; }
+    .atlas-wrap { padding-block: var(--s-7) var(--s-9); }
+    .atlas-lede { max-width: var(--measure); }
+    .atlas-eyebrow { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); text-transform: lowercase; color: var(--ink-3); margin: 0 0 var(--s-3); }
+    .atlas-title { font-family: var(--font-hero); font-weight: var(--fw-medium); font-size: var(--fs-xl); line-height: var(--lh-hero); letter-spacing: var(--track-hero); color: var(--ink); margin: 0 0 var(--s-3); }
+    .atlas-sub { color: var(--ink-2); font-size: var(--fs-md); margin: 0 0 var(--s-7); max-width: var(--measure); }
+
+    .atlas-section { margin-block: var(--s-8); }
+    .atlas-section > h2 { font-family: var(--font-ui); font-size: var(--fs-lg); font-weight: var(--fw-semi); letter-spacing: var(--track-tight); color: var(--ink); margin: 0 0 var(--s-2); }
+    .atlas-section > .section-note { color: var(--ink-2); font-size: var(--fs-sm); margin: 0 0 var(--s-5); max-width: var(--measure); }
+    .rule { height: 1px; background: var(--line); border: 0; margin: 0 0 var(--s-6); }
+
+    /* сетка образцов */
+    .specimens { display: grid; gap: var(--s-5); }
+    @media (min-width: 900px) { .specimens { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .specimen { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-5); display: flex; flex-direction: column; gap: var(--s-4); }
+    .specimen__label { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2) var(--s-3); }
+    .specimen__name { font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: var(--fw-semi); color: var(--ink); }
+    .specimen__meta { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); color: var(--ink-3); }
+    .specimen__stage { background: var(--paper); border: 1px dashed var(--line); border-radius: var(--r-md); padding: var(--s-4); }
+    .specimen__desc { font-size: var(--fs-sm); color: var(--ink-2); margin: 0; line-height: var(--lh-snug); }
+    .prod-tag { display: inline-block; font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 1px var(--s-2); }
+
+    /* ===== inline-alert (зеркало прод .inline-alert base.css:1275) ======== */
+    .inline-alert { padding: var(--s-3) var(--s-4); border: 1px solid var(--error); border-radius: var(--r-md); background: var(--error-wash); color: var(--ink); display: flex; align-items: flex-start; gap: var(--s-3); }
+    .inline-alert.success { border-color: var(--success); background: var(--success-wash); }
+    .inline-alert.info { border-color: var(--signal-edge); background: var(--signal-wash); }
+    .inline-alert.warn { border-color: var(--spark); background: var(--spark-wash); }
+    .inline-alert svg { width: 1.15rem; height: 1.15rem; flex: none; margin-top: 0.1rem; }
+    .inline-alert.success svg { color: var(--success-ink); }
+    .inline-alert:not(.success):not(.info):not(.warn) svg { color: var(--error-ink); }
+    .inline-alert.info svg { color: var(--signal-ink); }
+    .inline-alert.warn svg { color: var(--spark-ink); }
+    .inline-alert__body { font-size: var(--fs-sm); }
+    .inline-alert__title { font-weight: var(--fw-semi); }
+    .inline-alert__text { color: var(--ink-2); }
+
+    /* ===== toast / статус-строка ========================================= */
+    .toast { display: inline-flex; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-4); border-radius: var(--r-pill); background: var(--ink); color: var(--paper); font-size: var(--fs-sm); font-weight: var(--fw-medium); box-shadow: var(--shadow-lift); }
+    .toast svg { width: 1.05rem; height: 1.05rem; flex: none; }
+    .toast.success svg { color: var(--success); }
+
+    /* ===== validation (нативная — settings count min/max) ================ */
+    .field { display: flex; flex-direction: column; gap: var(--s-2); }
+    .field label { font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--ink); }
+    .field input { font: inherit; font-size: var(--fs-base); color: var(--ink); background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: var(--s-2) var(--s-3); width: 8rem; }
+    .field input:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+    .field input[aria-invalid="true"] { border-color: var(--error); }
+    .field-hint { font-size: var(--fs-xs); color: var(--ink-3); }
+    .field-error { font-size: var(--fs-xs); color: var(--error-ink); font-weight: var(--fw-medium); display: flex; align-items: center; gap: var(--s-2); }
+    .field-error svg { width: 0.9rem; height: 0.9rem; flex: none; }
+
+    /* ===== pending / loading (role=status, aria-busy) ==================== */
+    .pending { display: flex; align-items: center; gap: var(--s-3); color: var(--ink-2); font-size: var(--fs-sm); }
+    .spinner { width: 1.1rem; height: 1.1rem; border-radius: 50%; border: 2px solid var(--line-strong); border-top-color: var(--signal); flex: none; }
+    .skeleton { height: 0.9rem; border-radius: var(--r-sm); background: linear-gradient(90deg, var(--surface-2), var(--surface), var(--surface-2)); background-size: 200% 100%; }
+    .skeleton + .skeleton { margin-top: var(--s-3); }
+    .skeleton.w-70 { width: 70%; } .skeleton.w-90 { width: 90%; } .skeleton.w-50 { width: 50%; }
+    @media (prefers-reduced-motion: no-preference) {
+      .spinner { animation: spin 0.8s linear infinite; }
+      .skeleton { animation: shimmer 1.4s var(--ease-in-out) infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+    }
+
+    /* ===== verdict-полосы (post-answer, зеркало result correct/wrong) ==== */
+    .verdict { border: 1px solid var(--line); border-left-width: 3px; border-radius: var(--r-md); padding: var(--s-3) var(--s-4); font-size: var(--fs-sm); }
+    .verdict.correct { border-left-color: var(--success); background: var(--success-wash); }
+    .verdict.wrong { border-left-color: var(--error); background: var(--error-wash); }
+    .verdict__eyebrow { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: var(--track-mono); text-transform: uppercase; }
+    .verdict.correct .verdict__eyebrow { color: var(--success-ink); }
+    .verdict.wrong .verdict__eyebrow { color: var(--error-ink); }
+
+    /* ===== легенда aria-live ============================================= */
+    .live-legend { display: grid; gap: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-5); }
+    @media (min-width: 720px) { .live-legend { grid-template-columns: repeat(2, 1fr); } }
+    .live-item { font-size: var(--fs-sm); }
+    .live-item b { color: var(--ink); } .live-item code { font-size: var(--fs-xs); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 1px var(--s-2); }
+    .live-item p { margin: var(--s-1) 0 0; color: var(--ink-2); }
+
+    .gap-note { border: 1px solid var(--spark); background: var(--spark-wash); border-radius: var(--r-md); padding: var(--s-4); font-size: var(--fs-sm); color: var(--ink); margin-top: var(--s-5); }
+    .gap-note b { color: var(--spark-ink); }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">К содержимому атласа</a>
+
+  <div class="mock-bar">
+    <div class="wrap mock-bar__inner">
+      <span class="mock-tag">атлас · обратная связь (alerts · toasts · status · validation · pending · verdict)</span>
+    </div>
+  </div>
+
+  <header class="site-head">
+    <div class="wrap site-head__inner">
+      <a class="brand" href="#" aria-label="собес/трек, на главную">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span><b>собес</b>/трек</span>
+      </a>
+      <div class="head-tools">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Тема оформления: авто">
+          <span class="tt-glyph" id="theme-glyph" aria-hidden="true">◐</span>
+          <span class="tt-word" id="theme-word">Авто</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <div class="wrap atlas-wrap">
+      <div class="atlas-lede">
+        <p class="atlas-eyebrow">атлас состояний</p>
+        <h1 class="atlas-title">Обратная связь</h1>
+        <p class="atlas-sub">Единый лист всех feedback-поверхностей в языке Instrument. Каждый образец помечен продовым аналогом и ARIA-контрактом (<code>role</code> / <code>aria-live</code>). Цель — Фаза B: собрать распределённые по экранам состояния в один регрессионный референс.</p>
+      </div>
+
+      <!-- 1. Inline alerts -->
+      <section class="atlas-section" aria-labelledby="s-alerts">
+        <h2 id="s-alerts">Inline-алерты</h2>
+        <p class="section-note">Ассертивные сообщения в потоке страницы. Прод-фрагмент <span class="prod-tag">fragments/inline-alert.html</span> = <code>role="alert"</code> + <code>aria-live="assertive"</code>; наполняется из <code>app.js</code>. База <span class="prod-tag">base.css:1275</span> — error-стиль; вариант <code>.success</code> — единственный явный. Info/warn ниже — расширение языка (в проде пока не инстанцируются).</p>
+        <hr class="rule">
+        <div class="specimens">
+          <div class="specimen">
+            <div class="specimen__label"><span class="specimen__name">Ошибка (база)</span><span class="specimen__meta">.inline-alert · role=alert</span></div>
+            <div class="specimen__stage">
+              <div class="inline-alert" role="alert">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                <div class="inline-alert__body"><span class="inline-alert__title">Не удалось загрузить вопрос.</span> <span class="inline-alert__text">Проверь соединение и попробуй ещё раз.</span></div>
+              </div>
+            </div>
+            <p class="specimen__desc">Дефолтный вид алерта в проде: рамка и заливка <code>--error</code>/<code>--error-wash</code>.</p>
+          </div>
+
+          <div class="specimen">
+            <div class="specimen__label"><span class="specimen__name">Успех</span><span class="specimen__meta">.inline-alert.success</span></div>
+            <div class="specimen__stage">
+              <div class="inline-alert success" role="alert">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                <div class="inline-alert__body"><span class="inline-alert__title">Ответ засчитан.</span> <span class="inline-alert__text">Прогресс по теме обновлён.</span></div>
+              </div>
+            </div>
+            <p class="specimen__desc">Единственный явный вариант в <code>base.css</code>: <code>--success</code>/<code>--success-wash</code>.</p>
+          </div>
+
+          <div class="specimen">
+            <div class="specimen__label"><span class="specimen__name">Информация</span><span class="specimen__meta">.inline-alert.info · расширение</span></div>
+            <div class="specimen__stage">
+              <div class="inline-alert info" role="status">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                <div class="inline-alert__body"><span class="inline-alert__title">Режим экзамена.</span> <span class="inline-alert__text">Разбор появится только в итогах сессии.</span></div>
+              </div>
+            </div>
+            <p class="specimen__desc">Нейтральная подсказка на <code>--signal</code>. Для не-срочного лучше <code>role="status"</code> (polite).</p>
+          </div>
+
+          <div class="specimen">
+            <div class="specimen__label"><span class="specimen__name">Предупреждение</span><span class="specimen__meta">.inline-alert.warn · design-gap</span></div>
+            <div class="specimen__stage">
+              <div class="inline-alert warn" role="status">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+                <div class="inline-alert__body"><span class="inline-alert__title">Сессия скоро истечёт.</span> <span class="inline-alert__text">Заверши тренировку, чтобы сохранить результат.</span></div>
+              </div>
+            </div>
+            <p class="specimen__desc">Использует амбер <code>--spark</code> (акцент графиков) за неимением семантического warning-токена — см. пробел ниже.</p>
+          </div>
+        </div>
+        <div class="gap-note"><b>Design-gap:</b> система токенов имеет 3 семантических цвета (<code>--signal</code>/<code>--success</code>/<code>--error</code>), но <b>нет</b> отдельного warning/caution. Амбер <code>--spark</code> — акцент графиков/стриков, не feedback-семантика. Кандидат Фазы G: ввести <code>--warn/--warn-wash/--warn-ink</code> либо осознанно закрепить, что warning не используется.</div>
+      </section>
+
+      <!-- 2. Toast -->
+      <section class="atlas-section" aria-labelledby="s-toast">
+        <h2 id="s-toast">Toast / всплывающий статус</h2>
+        <p class="section-note">Кратковременное подтверждение (копирование, сохранение). В текущем проде toast не инстанцируется — это кандидат языка на будущее; ARIA-контракт: <code>role="status"</code> + <code>aria-live="polite"</code>, авто-дисмисс не крадёт фокус.</p>
+        <hr class="rule">
+        <div class="specimen" style="max-width:26rem">
+          <div class="specimen__stage" style="display:flex;justify-content:center;background:var(--surface-2)">
+            <div class="toast success" role="status" aria-live="polite">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+              Скопировано в буфер
+            </div>
+          </div>
+          <p class="specimen__desc">Инверсная пилюля на <code>--ink</code> с <code>--shadow-lift</code>. Не срочно → polite.</p>
+        </div>
+      </section>
+
+      <!-- 3. Validation -->
+      <section class="atlas-section" aria-labelledby="s-valid">
+        <h2 id="s-valid">Валидация формы</h2>
+        <p class="section-note">Прод использует <b>нативную</b> Constraint Validation (<span class="prod-tag">settings count min=1 max=200</span>): браузерный пузырёк + блок сабмита. Кастомная inline-ошибка ниже — необязательное усиление (кандидат Фазы G, JS-blast-radius).</p>
+        <hr class="rule">
+        <div class="specimens">
+          <div class="specimen">
+            <div class="specimen__label"><span class="specimen__name">Норма</span><span class="specimen__meta">нативная, без ошибки</span></div>
+            <div class="specimen__stage">
+              <div class="field">
+                <label for="cnt-ok">Количество вопросов</label>
+                <input id="cnt-ok" type="number" value="20" min="1" max="200">
+                <span class="field-hint">от 1 до 200</span>
+              </div>
+            </div>
+            <p class="specimen__desc">Подсказка-хинт <code>--ink-3</code>, граница <code>--line-strong</code>.</p>
+          </div>
+          <div class="specimen">
+            <div class="specimen__label"><span class="specimen__name">Ошибка (усиление)</span><span class="specimen__meta">aria-invalid + describedby</span></div>
+            <div class="specimen__stage">
+              <div class="field">
+                <label for="cnt-err">Количество вопросов</label>
+                <input id="cnt-err" type="number" value="500" min="1" max="200" aria-invalid="true" aria-describedby="cnt-err-msg">
+                <span class="field-error" id="cnt-err-msg">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                  Значение должно быть от 1 до 200.
+                </span>
+              </div>
+            </div>
+            <p class="specimen__desc">Граница <code>--error</code>, текст <code>--error-ink</code>, связь через <code>aria-describedby</code>.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Pending / loading -->
+      <section class="atlas-section" aria-labelledby="s-pending">
+        <h2 id="s-pending">Ожидание и загрузка</h2>
+        <p class="section-note">Регион-занятость: <code>role="status"</code> + <code>aria-busy="true"</code> + visually-hidden текст для скринридера. Скелет декоративен (<code>aria-hidden</code>). Пульс/спиннер отключаются под <code>prefers-reduced-motion</code>.</p>
+        <hr class="rule">
+        <div class="specimens">
+          <div class="specimen">
+            <div class="specimen__label"><span class="specimen__name">Спиннер-строка</span><span class="specimen__meta">role=status aria-busy</span></div>
+            <div class="specimen__stage">
+              <div class="pending" role="status" aria-busy="true">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>Проверяю ответ…</span>
+              </div>
+            </div>
+            <p class="specimen__desc">Кольцо <code>--signal</code> на <code>--line-strong</code>; текст объявляется polite.</p>
+          </div>
+          <div class="specimen">
+            <div class="specimen__label"><span class="specimen__name">Скелет</span><span class="specimen__meta">aria-hidden, декор</span></div>
+            <div class="specimen__stage">
+              <div role="status" aria-busy="true">
+                <span class="visually-hidden">Загрузка вопроса…</span>
+                <div aria-hidden="true">
+                  <div class="skeleton w-50"></div>
+                  <div class="skeleton w-90"></div>
+                  <div class="skeleton w-70"></div>
+                </div>
+              </div>
+            </div>
+            <p class="specimen__desc">Плейсхолдер контента; мерцание — только при разрешённой анимации.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Verdict -->
+      <section class="atlas-section" aria-labelledby="s-verdict">
+        <h2 id="s-verdict">Вердикт ответа</h2>
+        <p class="section-note">Пост-ответная полоса на экране результата (<span class="prod-tag">result.html · #result-feedback</span>). Семантический цвет появляется <b>только после проверки</b> (сохранённое решение §4). Статус несётся не только цветом — есть eyebrow-текст «верно/неверно» + иконка.</p>
+        <hr class="rule">
+        <div class="specimens">
+          <div class="specimen">
+            <div class="specimen__stage">
+              <div class="verdict correct" role="status" aria-live="polite">
+                <div class="verdict__eyebrow">верно</div>
+                <div>Засчитано. Интервал повторения увеличен.</div>
+              </div>
+            </div>
+            <p class="specimen__desc">Левая кромка 3px <code>--success</code>, заливка <code>--success-wash</code>.</p>
+          </div>
+          <div class="specimen">
+            <div class="specimen__stage">
+              <div class="verdict wrong" role="status" aria-live="polite">
+                <div class="verdict__eyebrow">неверно</div>
+                <div>Вопрос вернётся раньше. Верный вариант подсвечен.</div>
+              </div>
+            </div>
+            <p class="specimen__desc">Левая кромка 3px <code>--error</code>, заливка <code>--error-wash</code>.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. aria-live legend -->
+      <section class="atlas-section" aria-labelledby="s-live">
+        <h2 id="s-live">Контракт объявлений (aria-live)</h2>
+        <p class="section-note">Как каждый образец выше объявляется вспомогательными технологиями.</p>
+        <hr class="rule">
+        <div class="live-legend">
+          <div class="live-item"><b>Assertive</b> — <code>role="alert"</code> / <code>aria-live="assertive"</code>
+            <p>Прерывает чтеца немедленно. Только для ошибок и срочного: inline-alert (ошибка загрузки, истёкший CSRF).</p></div>
+          <div class="live-item"><b>Polite</b> — <code>role="status"</code> / <code>aria-live="polite"</code>
+            <p>Ждёт паузы. Вердикт ответа, toast, спиннер, счётчик результатов поиска, «Настройки сохранены».</p></div>
+          <div class="live-item"><b>Busy</b> — <code>aria-busy="true"</code>
+            <p>Регион в процессе обновления; скелет/спиннер помечены, декоративная часть <code>aria-hidden</code>.</p></div>
+          <div class="live-item"><b>Native</b> — Constraint Validation
+            <p>Валидация формы: браузер сам объявляет и фокусирует невалидное поле, кастомный live-регион не нужен.</p></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // Тема (макет): циклический тогл авто → светлая → тёмная на data-theme.
+    (function () {
+      var root = document.documentElement, order = ['auto', 'light', 'dark'], i = 0;
+      var glyph = document.getElementById('theme-glyph'), word = document.getElementById('theme-word');
+      var G = { auto: '◐', light: '☀', dark: '☾' }, W = { auto: 'Авто', light: 'Светлая', dark: 'Тёмная' };
+      document.getElementById('theme-toggle').addEventListener('click', function () {
+        i = (i + 1) % order.length; var t = order[i];
+        if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t);
+        glyph.textContent = G[t]; word.textContent = W[t];
+        this.setAttribute('aria-label', 'Тема оформления: ' + W[t].toLowerCase());
+      });
+    })();
+  </script>
+</body>
+</html>
