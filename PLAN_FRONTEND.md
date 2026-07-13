@@ -2312,3 +2312,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: grep кастомных тултипов/поповеров + анализ :hover/:focus-within раскрытий CSS + учёт native title.
 
 Итог — чисто. Кастомных тултипов НЕТ (все aria-describedby → постоянно видимые статичные подсказки, вне scope). Единственный revealed-контент — .code-copy-btn: hoverable ✓ (потомок обёртки), persistent ✓ (без таймаута), dismissable ✓/N-A (в паддинг-жёлобе pre, код не перекрывает), на touch всегда видима. Native title (31) — UA exempt (R1.67). Ограничение: код POST-гейтед, вердикт по dismissable детерминирован из CSS. Правок не требуется. Леджер: cr.181.
+
+## R1.87 — WCAG 2.5.8 Target Size (Minimum) (AA, 2.2) — verified-clean
+
+Проверка: цели ≥24×24px ЛИБО достаточный интервал (24px-круг не пересекает соседей).
+
+Метод: эмпирический замер bbox всех интерактивных контролов на /, /settings (3 вкладки), /stats; для radio/checkbox эффективная цель = label; замер center-to-center интервалов.
+
+Итог — чисто. / — 0 <24px (радио 1×1 → label-опция ≥44px). /settings все вкладки — 0 <24px (seg-control/font-stepper 32px/чекбоксы-label/кнопки ≥24). /stats — 12 ссылок-тем (17px) проходят spacing-исключением: вертикальный интервал 56-57px ≥24, горизонтально единственная цель в строке. Правок не требуется. Леджер: cr.182.
