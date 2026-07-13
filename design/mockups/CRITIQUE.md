@@ -37,6 +37,27 @@ a11y/клавиатура/reduced-motion. Слоп ищем не «на глаз
 
 ## Журнал критики
 
+### cr.162 — WCAG 1.4.13 Content on Hover or Focus (AA): code-copy кнопка + title-тултипы — verified-clean
+
+**Вопрос:** контент, появляющийся на hover/focus, — dismissable, hoverable, persistent.
+
+**Метод:** авторитетный CSS-анализ (появление контента на hover/focus на 100% определяется CSS) + греп всех hover/focus-раскрываемых author-элементов + детерминированный расчёт обскурации по токенам.
+
+**Инвентаризация author hover/focus-контента:** только два — code-copy кнопка (hover/focus-within обёртки) и skip-link (focus самого элемента). Прочее «на hover» — native `title`.
+
+**Результат — 1.4.13 чисто:**
+- **code-copy кнопка** (base.css:2843-2870): `opacity:0` → `opacity:1` на `.code-copy-wrap:hover`/`:focus-within`.
+  - **Hoverable ✓** — кнопка ВНУТРИ обёртки; наведение на неё держит `:hover` обёртки, не исчезает.
+  - **Persistent ✓** — видима пока обёртка hover/focus-within, без таймера; на touch (`@media hover:none`) всегда видима (44×44).
+  - **Dismissable ✓ (по духу)** — сидит в верхнем-правом углу в паддинге `<pre>` (`pre` padding=`--space-4`; кнопка `top:--space-2`+32px, `right:--space-2`); перекрывает лишь правый край 1-й строки и лишь пока видима; контент под ней доступен `overflow-x:auto`-скроллом, уходит на mouse-out. Угловой аффорданс, минимальная восстановимая обскурация — Esc-dismiss не требуется (over-engineering принятого паттерна).
+- **skip-link (focus):** это сам фокусируемый элемент становится видимым, а не «дополнительный контент рядом» → вне зоны 1.4.13; тривиально persistent/dismissable.
+- **Native `title`-тултипы** (header-тогглы, regen-badge, topic-link): UA-controlled, автором не стилизуются → исключение 1.4.13 «controlled by the user agent, not modified by author». Инфа дублирована в aria-label/видимом тексте.
+
+**Эмпирическое ограничение (честно):** живой `<pre>`-код-блок не достижим через GET — первые ordered-вопросы 3 проверенных тем (agentic-patterns, dynamic-programming, + прошлые) не имеют `codeSnippet`, а код в markdown-ответе POST-gated. Обскурация посчитана детерминированно из CSS-токенов, живой overlap на реальном коде в этом прогоне не замерен.
+
+**Итог:** код не менялся — строгая верификация. 1.4.13 AA выполнен.
+
+
 ### cr.161 — WCAG 2.5.2 Pointer Cancellation (A): действия на up-event, не down — verified-clean
 
 **Вопрос:** для single-pointer активации нет срабатывания по down-event (либо есть отмена/abort, up-event завершает, либо up отменяет действие).

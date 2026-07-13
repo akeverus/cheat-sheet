@@ -2170,3 +2170,7 @@ fetch+DOMParser outline `h1-h6` + landmark-инвентарь по `/`, `/stats`
 ### R1.66 — WCAG 2.5.2 Pointer Cancellation (A): активация на up-event — verified-clean
 
 Статический анализ обработчиков + read-only DOM. Ноль down-event активации (mousedown/pointerdown/touchstart/inline on*) во всём static JS и шаблонах; активация только через click-слушатели (15 app.js + 3 stats.js) + нативный submit. Живой DOM: 0 inline down-атрибутов, 0 draggable, все контролы нативные (A/BUTTON). Нативный click = up-event + отменяем уводом указателя = 2.5.2 конструктивно. Бонус 2.5.7 Dragging: нет draggable/pointermove-драга/range → drag-only функционала нет. Код не менялся. Детали — cr.161.
+
+### R1.67 — WCAG 1.4.13 Content on Hover or Focus (AA): code-copy + title — verified-clean
+
+CSS-анализ (появление на hover/focus 100% определяется CSS) + инвентаризация author hover/focus-контента (только code-copy кнопка + skip-link). Code-copy: Hoverable ✓ (кнопка внутри обёртки, :hover держится), Persistent ✓ (без таймера, на touch всегда видна 44×44), Dismissable ✓ по духу (угловой аффорданс в паддинге pre, перекрывает лишь правый край 1-й строки пока видима, восстановимо overflow-x скроллом/mouse-out). skip-link — сам фокусируемый элемент, вне зоны. Native title — UA-controlled, исключение 1.4.13. Ограничение: живой pre-код-блок не достижим через GET (первые ordered-вопросы 3 тем без codeSnippet, markdown-ответ POST-gated) → обскурация посчитана детерминированно из токенов. Код не менялся. Детали — cr.162.
