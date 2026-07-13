@@ -372,7 +372,7 @@ docs/ui-ux-improvement-log.md
 | `css/editorial.css (мёртв)` | style | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫УДАЛЁН R0.81 (git rm, 0 ссылок) — 🌱EDC-1 subset-proof ✅ р109: pre-split монолит, 9 uniques = box-sizing-дубли + обсолет pre-tabs-разметка → чистый историч-дубль, SAFE-TO-DELETE (ждёт ГО юзера, НЕ stranded как DSG-1) |
 | `css/{linear,swiss}.css (не подключены)` | style | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫УДАЛЁН R0.81 (git rm, 0 ссылок) — 🌱DSG-1 ❌КОРР.р99: НЕ чистые дубли — linear держит `a`/`a:hover`, swiss `.ed-masthead-kicker`/`.ed-eyebrow` НЕ в base.css (частичный порт, как broadsheet) → port-or-abandon decision, НЕ удалять как junk |
 | `css/broadsheet.css (не дубль!)` | style | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫 | 🚫УДАЛЁН R0.81 (git rm, 0 ссылок) — 🌱DSG-2 CONFIRMED: 13 структ.правил (nav/btn/link) НЕ в base.css (0 vs linear 2/swiss 6) → broadsheet теряет структ.акценты, токены живут |
-| `js/app.js` | script | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ◐ | ✅ | ◐ | 🌱APP-8 regenerate без aria-busy; 🌱APP-9 comparison-table th без scope/caption; ⛔APP-5 favorite; v=56 |
+| `js/app.js` | script | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ◐ | ✅ | ◐ | 🌱APP-8 regenerate без aria-busy; 🌱APP-9 comparison-table th без scope/caption; ⛔APP-5 favorite; **v=62** (свер. R0.114; заметка «v=56» была устаревшей) |
 | `js/stats.js` | script | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ◐ | STJ-1 labels/grid закрыт р137; kbd/progress-dup c app.js = 🚫 standalone-by-design; v=13 |
 
 ---
@@ -2333,6 +2333,18 @@ Constraint Validation API без сабмита на session-form. count (number
 - **Остаток (минор, осознанный):** сервер-пред-выбор не-EXAM режима + нет localStorage → стартовое `value="20"` до явной смены. Видно в поле до submit; выбор в пользу restore документирован. Не открытый дефект.
 - **Итог:** SET-15 `⬜ RECHECK` → `✅ DONE` (фикс закоммичен, app.js не в незакоммич. наборе). Ledger был устаревшим (не отражал реализацию — как AIR-6 в R0.112). Правок кода не требуется.
 - **Дальше:** пул чисто-статических RECHECK §10 фактически исчерпан — оставшиеся app/visual-gated (`FT-15`), settings-blocked-file live-QA (`SET-3`/`SET-9`), decision-gated (favorite/icon). Следующие тики без app: либо re-validate app-gated prep (RES-15-план vs текущий код — turnkey-готовность), либо честно зафиксировать упор в подъём app. Нумерация R0.114+.
+
+### R0.114 (2026-07-13) — Re-validation RES-15-препа vs текущий код: поймана устаревшая версия app.js (app не нужен)
+
+- **Единица:** сверить app-gated prep `port-drafts/res15-related-list-semantics-plan.md` (WCAG 1.3.1, единственный PREP-READY прод-фикс, первый на apply при подъёме app) с ФАКТИЧЕСКИМ кодом — turnkey-готовность (номера строк/версии дрейфуют).
+- **Результат сверки:**
+  - `result.html:132-138` — ханк плана **точен** (section 132 / h3 133 / `<a th:each class=related-question-item>` 134; `role=listitem`/wrapper ещё нет → фикс не применён). ✅
+  - `app.js renderRelatedQuestions:1624-1648` — ханк **точен** (h3 1635, forEach 1636, `<a>` 1637). ✅
+  - Layout-риск **= NULL подтверждён** (base.css:2562-2588): `.related-question-item{display:block}` (2581); родитель `#result-related-questions`/`.related-questions` (2562-2568) — только border/margin/padding, **без flex/grid** → `<div role=list>`-обёртка течёт идентично, 0 визуального сдвига. ✅
+  - **⚠️ ПОЙМАНА УСТАРЕВШЕСТЬ:** план указывал бамп app.js `v=60→61`, §9-заметка — `v=56`; **фактически все 3 шаблона на `v=62`** (result:142/settings:291/focus-training:222). Слепой apply по «60→61» **понизил бы** версию ниже текущей → сломал бы cache-busting (APP-7/HEAD-1 контракт). Ровно то, что re-validation обязан ловить.
+- **Правки (только доки/план, не прод-код):** план-док — бамп исправлен на **v=62→63** (3 места: §layout-риск / §ханк-2 / §apply-шаг-2, + инструкция «сверить факт. версию перед бампом»); §9 app.js — заметка `v=56`→`v=62`.
+- **Итог:** RES-15-prep снова **turnkey** (ханки точны, layout-риск NULL держится, версия-бамп актуализирован). Apply остаётся session-gated (result рендерится только на POST /answer → QA вместе с EXAM-parity, одним окном).
+- **Дальше:** без app — прочие app-gated preps на turnkey-сверку (regenerate-removal-план R0.63 vs код) либо честная фиксация упора в подъём app. При подъёме — RES-15 apply+QA/port-parity/window-тик. Нумерация R0.115+.
 
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
