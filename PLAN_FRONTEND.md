@@ -2244,3 +2244,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: инвентаризация всех position:sticky|fixed + эмпирический замер на /stats (rect фокуса vs sticky-thead, скролл страницы, развёртка таблицы).
 
 Итог — чисто. masthead=relative (не sticky). Sticky thead таблицы инертен: контейнер .topic-table-wrap (overflow-y:auto, max-height:none) не скроллится внутренне ни свёрнутым, ни развёрнутым (319 строк) → страница скроллится, thead уезжает с ней (после scrollTo(0,1200) thead top=−43, к вьюпорту не липнет). Модалки fixed inset:0 = focus-trap (не перекрывают фон). back-to-top 44×44 в углу — full-width целиком не прячет. Sticky-рейки align-self:start в своей колонке. Латентно: если таблицу сделают внутренне-скроллящей — понадобится scroll-padding-top на обёртке (сейчас инертно, не добавляю). Правок не требуется. Леджер: cr.173.
+
+## R1.79 — WCAG 3.3.7 Redundant Entry (A, 2.2) — verified-clean
+
+Проверка: ранее введённые в процессе данные авто-подставляются, не запрашиваются повторно.
+
+Метод: трассировка проброса фильтра/сессии по флоу settings→start→вопрос→answer→result→next + предзаполнение /settings.
+
+Итог — чисто. Фильтр (topic/group/important/onlyWrong/shuffle/weakTopics/ordered) переносится hidden-инпутами settings→start (103-109) и вопрос→answer (focus-training 135-142), и query-параметрами result→next (result.html:106). Форма /settings предзаполнена (th:selected/th:checked/th:value отражают прежний выбор). Повторного ввода нет; персональных полей-дублей нет. Правок не требуется. Леджер: cr.174.
