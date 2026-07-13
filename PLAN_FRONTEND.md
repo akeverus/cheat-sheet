@@ -2228,3 +2228,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: grep JS на жестовые обработчики + шаблоны/CSS на slider/draggable + Chart.js на pan/zoom-плагин.
 
 Итог — чисто (жестов нет). app.js/stats.js без touch*/pointer*/swipe/pinch/drag/mousedown-move — всё на одиночном клике/тапе. Нет type=range/draggable. Chart.js 4.5.0 без chartjs-plugin-zoom (только hover-тултипы; данные дублируются таблицей по R1.68). touch-action:manipulation лишь снимает double-tap-zoom, не жест. Правок не требуется. Леджер: cr.171.
+
+## R1.77 — WCAG 1.3.4 Orientation (AA) — verified-clean
+
+Проверка: контент не блокирует одну ориентацию (портрет/ландшафт).
+
+Метод: grep CSS на @media(orientation)-ограничения, JS на screen.orientation.lock(), шаблоны на «поверните устройство», viewport-мета.
+
+Итог — чисто (локов нет). Нет orientation-ограничений в CSS, нет lock() в JS, viewport = width=device-width,initial-scale=1.0 (без maximum-scale/user-scalable=no → обе ориентации + zoom). @media(max-width:859px) стекает разбор на портрете = reflow в поддержку, не лок. Правок не требуется. Леджер: cr.172.
