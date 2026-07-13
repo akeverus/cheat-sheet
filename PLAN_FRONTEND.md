@@ -2372,6 +2372,19 @@ Constraint Validation API без сабмита на session-form. count (number
 - **Итог:** loose-end R0.115 закрыт; граница двух cleanup'ов чёткая; новый dead-остаток задокументирован (не потерян). Правок кода не требуется сейчас.
 - **Дальше:** без app — мониторинг подъёма + мелкие статические сверки. При подъёме — window-тик (regenerate-removal + STA-20 stats-колонка + RES-15) одним окном (общий v-бамп/контракт-тесты) + port-parity. Нумерация R0.117+.
 
+### R0.117 (2026-07-13) — Аудит полноты AI-removal fallout: покрытие 100%, 0 недокументированных остатков (app не нужен)
+
+- **Единица:** систематический свип всех AI-остатков в шаблонах/JS (продолжение STA-20) — есть ли ещё осиротевший dead-UI, гейтнутый на всегда-falsy AI-условии. Ограниченное конечное множество токенов.
+- **Метод:** grep `aiEnabled`/`regen*`/`generationUnavailable`/`aiProvider`/`aiFallback`/`extra-analysis` по templates+static/js + источники model-attr.
+- **Полный инвентарь AI-остатков (все задокументированы):**
+  - `aiEnabled` — 2 реф в шаблонах (`result.html:49` btn-regenerate, `:121` question-side) + источник `MvcModelAttributeMapper:152` `addAttribute("aiEnabled", false)` (жёстко false навсегда) → **regenerate-removal-план** + AIR-4.
+  - `regen*` — `stats.html:225-226` regenSum-колонка → **STA-20**; `app.js:896/902` JSDoc+коммент + `regenerateQuestion` → **regenerate-removal-план**.
+  - `generationUnavailable` — 5 реф (`focus-training.html:185-195`) + источник `MvcModelAttributeMapper:47` → **AIR-6** (user-facing удалён, рудимент-plumbing window-тик).
+  - `extra-analysis-toggle` (`post-answer-controls.html:9`) → **AIR-2** (focus-toggle reveal related, не dead-end).
+  - Прочих AI-атрибутов (aiProvider/aiFallback/aiMode) в шаблонах/JS **нет**.
+- **Итог — покрытие 100%:** каждый dead-AI-UI-элемент учтён тремя cleanup-записями (regenerate-removal + STA-20 + AIR-6) + AIR-1/2/3. **Недокументированных остатков нет.** AI-cleanup-бэклог = **закрытое конечное множество** — при window-тике удаление regenerate + STA-20 + AIR-6-plumbing вычистит весь dead-AI-surface без «хвостов». Сертифицирует goal-шаг 1 (recheck) + 6 (fix all) для AI-removal домена. Правок кода не требуется (верный исход аудита).
+- **Дальше:** без app — статический пул сверок фактически исчерпан (RECHECK §10 закрыты R0.110-113; оба препа turnkey R0.114-115; AI-fallout сертифицирован R0.116-117). Остаётся мониторинг подъёма app. При подъёме — window-тик (3 cleanup'а одним окном) + RES-15 + port-parity. Нумерация R0.118+.
+
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
 ## R1.73 — WCAG 3.2.3 Consistent Navigation (AA) — verified-clean
