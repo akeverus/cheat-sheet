@@ -2384,3 +2384,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: grep base.css на `order:`/`flex-*-reverse` (0 совпадений) + разбор 4 wide-раскладок + эмпирика на /stats (DOM-порядок детей vs bounding-rects, masthead).
 
 Итог — чисто. Единый механизм: `grid-column`/`grid-row` без CSS `order` и без reverse → DOM-поздний элемент всегда визуально правее/ниже. result: card(col1,DOM-1)→related(col2,DOM-позже). focus split: мета→вопрос→код(col1)→форма-ответы(col2)→вердикт/контролы(full-width row6/7) = вопрос перед ответами. stats: таблица col1 / forecast+gaps col2 (при отсутствии данных грид неактивен, поток одноколоночный top 158→1500). summary: score-areas + таблица(col1)/ошибки(col2)/рекомендации(футер). masthead: brand→actions L→R. Правок не требуется. Леджер: cr.190.
+
+## R1.96 — WCAG 2.4.3 Focus Order (A) — verified-clean
+
+Проверка: фокус приходит в порядке, сохраняющем смысл/операбельность.
+
+Метод: grep всех tabindex (положительных 0) + roving-паттерны + пост-ответный фокус + эмпирика tab-порядка на / (flow).
+
+Итог — чисто. Положительного tabindex нет → tab = DOM-порядок (осмысленность из R1.95). Эмпирика flow: skip-link→бренд→nav(L→R)→тогглы(L→R)→варианты(сверху вниз), монотонно. Roving tabindex (seg×7, tablist, sortable th) — один tab-stop на виджет, корректно. Пост-ответ: фокус вперёд на вердикт (feedbackDiv focus()), CTA «дальше» перенесён ниже разбора. Focus-trap оверлеев корректен. Правок не требуется. Леджер: cr.191.
