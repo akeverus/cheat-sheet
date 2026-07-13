@@ -2352,3 +2352,11 @@ Constraint Validation API без сабмита на session-form. count (number
 Метод: grep outline-правил + эмпирический фокус в браузере (:focus-visible + computed outline).
 
 Итог — чисто. base.css:1870 th.sortable:focus-visible → outline 2px solid accent, offset −2px (инсет, чтобы не обрезалось ячейкой). Эмпирика: matches(:focus-visible)=true, outline 2px solid rgb(217,119,87) рендерится. Контраст кольца ≥3:1 (R1.84). Бонус ⇅-афорданс через ::after. Прочие фокусируемые — в R1.62. Правок не требуется. Леджер: cr.186.
+
+## R1.92 — WCAG 1.4.1 Use of Color (A) — verified-clean
+
+Проверка: цвет не единственный носитель информации.
+
+Метод: аудит информативных цвето-состояний в шаблонах+CSS на нецветовой дубль.
+
+Итог — чисто. Вердикт: иконка+текст «Верно!»/«Неверно». Опции: текст «Правильный ответ»/«Твой выбор»+aria. Точность/зрелость: цвет+ЧИСЛО+title. Навигация: border-bottom+aria-current. Seg-btn active: фон-заливка (fill, не hue)+aria-checked. MCQ-выбор: рамка+wash+буква-бейдж+aria-checked. Бонус: @media(forced-colors) → Highlight/HighlightText для Windows HC. Правок не требуется. Леджер: cr.187.
