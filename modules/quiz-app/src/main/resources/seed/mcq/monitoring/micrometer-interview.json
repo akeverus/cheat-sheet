@@ -983,7 +983,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "SLO в `Micrometer` — это заданные пороги (`serviceLevelObjectives(...)` только в наносекундах) для гистограммы: `Duration.ofMillis(50)` или `ofSeconds(1)` не принимаются, пороги задают лишь числом нс. В `Prometheus` это превращается в строки `http_request_duration_seconds_bucket{le=\"0.05\"}`, по которым PromQL считает процент быстрых запросов: `rate(..._bucket{le=\"0.10\"}[5m]) / rate(..._count[5m])`.",
+              "text": "SLO в `Micrometer` — это заданные пороги (`serviceLevelObjectives(...)` только в наносекундах) для гистограммы: `Duration.ofMillis(50)` или `ofSeconds(1)` не принимаются, пороги задают лишь числом нс. На стороне `Prometheus` каждый порог даёт серию `http_request_duration_seconds_bucket{le=\"0.05\"}`, а долю быстрых запросов затем берут формулой `rate(..._bucket{le=\"0.10\"}[5m]) / rate(..._count[5m])`.",
               "correct": false,
               "sections": {
                 "what_actually": "SLO-границы для `Timer` задаются через `Duration` любой точности (`Duration.ofMillis(50)`), а для `DistributionSummary` — числами в его единицах.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "SLO в `Micrometer` — это заданные пороги (`serviceLevelObjectives(Duration.ofMillis(50), ...)`) исключительно в коде: вынести их в `application.yml` через `management.metrics.distribution.slo` нельзя, только программным билдером. В `Prometheus` это превращается в строки `http_request_duration_seconds_bucket{le=\"0.05\"}`, по которым PromQL считает процент быстрых запросов: `rate(..._bucket{le=\"0.10\"}[5m]) / rate(..._count[5m])`.",
+              "text": "SLO в `Micrometer` — это заданные пороги (`serviceLevelObjectives(Duration.ofMillis(50), ...)`) исключительно в коде: вынести их в `application.yml` через `management.metrics.distribution.slo` нельзя, только программным билдером. В экспортируемом `Prometheus`-формате пороги становятся сериями `http_request_duration_seconds_bucket{le=\"0.05\"}`, а процент уложившихся считают как `rate(..._bucket{le=\"0.10\"}[5m]) / rate(..._count[5m])`.",
               "correct": false,
               "sections": {
                 "what_actually": "SLO настраивается и в коде (`serviceLevelObjectives(...)`), и в YAML через `management.metrics.distribution.slo`.",
