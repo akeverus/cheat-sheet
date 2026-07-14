@@ -2631,6 +2631,17 @@ Constraint Validation API без сабмита на session-form. count (number
 - **Итог:** responsive-целостность таблиц сертифицирована CLEAN, STA-20-класс рассинхрона закрыт guard'ом. Третий подряд статический Фаза-E/F derive-and-check инвариант (fragment R0.136 → icon R0.137 → data-label R0.138).
 - **Дальше:** app-gated parity-QA (turnkey Часть B) + decision-gated §10 (RES-3/APP-5/ICO-3) — без изменений. Возможные кандидаты: «каждый `aria-labelledby`/`aria-controls`/`aria-describedby` указывает на существующий id», «каждый `for=` label ↔ input id». Нумерация R0.139+.
 
+### R0.139 (2026-07-14) — ARIA-idref integrity CLEAN + guard (WCAG 1.3.1/4.1.2)
+
+- **Единица:** аудит целостности ARIA-idref (Фаза F: a11y-регресс, app-независим) — из «Дальше» R0.138. Каждый `aria-labelledby`/`aria-controls`/`aria-describedby`/`aria-activedescendant`/`for="X"` обязан указывать на существующий `id="X"` в отрендеренном документе; битый idref = SR не находит цель (пустое объявление/разорванная связь).
+- **Глобальный скан:** 101 статический `id`, **0 динамических `th:id`** (важно — нет вычисляемых id, статика полна), 29 уникальных idref-токенов — **все резолвятся** в статический id (0 unresolved глобально; ни один idref не зависит от JS-инъекции).
+- **Пер-страничная проверка** (id-универсум = страница + её `th:replace`-фрагменты, чтобы поймать кросс-страничное маскирование): все 6 страниц ✅ — error(1)/focus-training(4)/result(1)/session-summary(0)/settings(22)/stats(2), ~30 idref-токенов, каждый резолвится в id В ПРЕДЕЛАХ своего документа. 0 битых.
+- **Grep-грабли (поймано):** shell = **zsh**, где `$var` без кавычек НЕ делает word-splitting (в отличие от bash) → per-page `grep ... $files` получал всю строку одним именем файла (id=0/idref=0 ложно). Плюс `grep`=`ugrep` (rtk-алиас). Исправлено через `${=files}` (zsh-сплиттинг).
+- **Закрепление:** `TemplateFragmentContractTest.ariaIdRefsResolveWithinEachRenderedPage` (18-й тест) — для каждой из 6 страниц собирает документ (страница + includes через `~{fragments/X`), извлекает id-универсум и все idref (5 атрибутов), требует каждый статический токен ∈ id-универсум; Thymeleaf `${...}` исключены классом `[^"$]+`; санити ≥25 проверенных idref (защита от сломанного regex). Чистый JUnit, app не нужен.
+- **Verify:** `./gradlew :quiz-app:test --tests "*TemplateFragmentContractTest"` → BUILD SUCCESSFUL 2s; `tests="18" failures="0" errors="0"`; aria-idref-guard зелёный. Правка только тестовая → без `?v=`-бампа.
+- **Итог:** самая a11y-критичная реляционная связь (idref→id) сертифицирована CLEAN на всех страницах + guard. Четвёртый подряд статический derive-and-check (fragment R0.136 → icon R0.137 → data-label R0.138 → aria-idref R0.139).
+- **Дальше:** app-gated parity-QA (turnkey Часть B) + decision-gated §10 (RES-3/APP-5/ICO-3) — без изменений. Возможные кандидаты: «каждый `?v=`-версионированный ассет в head.html имеет консистентную версию во всех шаблонах» (HEAD-1/APP-7/HhED-контракты), «каждый `th:field`/form input имеет server-биндинг». Нумерация R0.140+.
+
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
 ## R1.73 — WCAG 3.2.3 Consistent Navigation (AA) — verified-clean

@@ -502,4 +502,57 @@ class TemplateFragmentContractTest {
         // Каждый сортируемый заголовок имеет парную мобильную подпись (card-view).
         assertThat(dataLabels).containsAll(sortLabels);
     }
+
+    @Test
+    void ariaIdRefsResolveWithinEachRenderedPage() throws IOException {
+        // A11y-инвариант (WCAG 1.3.1/4.1.2): каждый aria-labelledby/aria-controls/
+        // aria-describedby/aria-activedescendant/for="X" обязан указывать на
+        // существующий id="X" в ОТРЕНДЕРЕННОМ документе = страница + все её
+        // th:replace-фрагменты. Битый idref = SR не находит цель (пустое объявление /
+        // разорванная связь). Аудит R0.139: 0 динамич. th:id, ни один idref не
+        // указывает на JS-инъекцию → всё резолвится статически. App не нужен.
+        String[] pages = { "error", "focus-training", "result", "session-summary", "settings", "stats" };
+        Pattern includePattern = Pattern.compile("~\\{fragments/([a-z-]+)");
+        Pattern idPattern = Pattern.compile("\\bid=\"([a-zA-Z][a-zA-Z0-9_-]*)\"");
+        // Значение без " и без $ → чисто статические idref (Thymeleaf ${...} исключены
+        // самим классом: значение, начинающееся с $, не даёт совпадения).
+        Pattern refPattern = Pattern.compile(
+            "\\b(?:aria-labelledby|aria-controls|aria-describedby|aria-activedescendant|for)=\"([^\"$]+)\"");
+
+        int checkedRefs = 0;
+        for (String page : pages) {
+            String pageHtml = readTemplate("templates/" + page + ".html");
+            StringBuilder doc = new StringBuilder(pageHtml);
+            Matcher inc = includePattern.matcher(pageHtml);
+            Set<String> frags = new LinkedHashSet<>();
+            while (inc.find()) {
+                frags.add(inc.group(1));
+            }
+            for (String frag : frags) {
+                doc.append('\n').append(readTemplate("templates/fragments/" + frag + ".html"));
+            }
+            String rendered = doc.toString();
+
+            Set<String> ids = new LinkedHashSet<>();
+            Matcher idm = idPattern.matcher(rendered);
+            while (idm.find()) {
+                ids.add(idm.group(1));
+            }
+
+            Matcher refm = refPattern.matcher(rendered);
+            while (refm.find()) {
+                for (String token : refm.group(1).trim().split("\\s+")) {
+                    if (token.isEmpty()) {
+                        continue;
+                    }
+                    checkedRefs++;
+                    assertThat(ids)
+                        .as("страница %s: ARIA-idref '%s' не резолвится в id в пределах документа (страница+фрагменты) — битая связь", page, token)
+                        .contains(token);
+                }
+            }
+        }
+        // Санити: аудит реально нашёл idref (иначе regex сломан → false-negative).
+        assertThat(checkedRefs).as("проверенных ARIA-idref").isGreaterThanOrEqualTo(25);
+    }
 }
