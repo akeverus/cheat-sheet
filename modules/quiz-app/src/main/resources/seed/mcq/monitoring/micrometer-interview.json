@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Timer` измеряет длительность только незавершённых операций и число одновременно активных вызовов, не фиксируя завершённые. Создаётся через `Timer.builder(\"http.request.active\").register(registry)`. Замер держится открытым тремя способами: вручную `timer.record(Duration.ofMillis(150))`, обёрткой `timer.record(() -> processRequest())` или через `Timer.Sample sample = Timer.start(registry); ... ; sample.stop(timer)` — и во всех итоговая длительность завершённого вызова теряется.",
+              "text": "`Timer` измеряет длительность только незавершённых операций, не фиксируя завершённые. Создаётся через `Timer.builder(\"http.request.active\").register(registry)`. Замер держат открытым тремя способами: вручную `timer.record(Duration.ofMillis(150))`, обёрткой `timer.record(() -> processRequest())` или через `Timer.Sample sample = Timer.start(registry); ... ; sample.stop(timer)` — итоговая длительность при этом теряется.",
               "correct": false,
               "sections": {
                 "what_actually": "`Timer` автоматически фиксирует и время, и количество: `count`, `totalTime`, `max` и при настройке перцентили.",
@@ -396,7 +396,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Timer` записывает замер в реестр только явной парой start/stop, а прочие формы дают лишь разовую оценку. Создаётся через `Timer.builder(\"http.request.duration\").register(registry)`. Из трёх способов реально пишет один: `Timer.Sample sample = Timer.start(registry); ... ; sample.stop(timer)`, тогда как `timer.record(Duration.ofMillis(150))` и `timer.record(() -> processRequest())` замер в реестр не сохраняют.",
+              "text": "`Timer` записывает замер в реестр только явной парой start/stop, прочие формы дают лишь разовую оценку. Создаётся через `Timer.builder(\"http.request.duration\").register(registry)`. Из трёх способов реально пишет один — `Timer.Sample sample = Timer.start(registry); ... ; sample.stop(timer)`, а `timer.record(Duration.ofMillis(150))` и `timer.record(() -> processRequest())` замер не сохраняют.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть удобные формы без ручного stop: `timer.record(Duration.ofMillis(150))` и `timer.record(() -> processRequest())` пишут замер сами.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Timer` измеряет и время, и частоту, но хранит всё исключительно в наносекундах и не отдаёт агрегаты в других единицах. Создаётся через `Timer.builder(\"http.request.duration\").publishPercentiles(0.5,0.95,0.99).register(registry)`. Замер пишут тремя способами: вручную `timer.record(Duration.ofMillis(150))`, обёрткой `timer.record(() -> processRequest())` или через `Timer.Sample sample = Timer.start(registry); ... ; sample.stop(timer)`, но прочитать `timer.totalTime(TimeUnit.SECONDS)` в секундах уже нельзя.",
+              "text": "`Timer` хранит замеры только в наносекундах и не отдаёт их в других единицах. Создаётся через `Timer.builder(\"http.request.duration\").publishPercentiles(0.5,0.95,0.99).register(registry)`. Замер пишут тремя способами: вручную `timer.record(Duration.ofMillis(150))`, обёрткой `timer.record(() -> processRequest())` или через `Timer.Sample sample = Timer.start(registry); ... ; sample.stop(timer)`, но `timer.totalTime(TimeUnit.SECONDS)` уже не прочитать.",
               "correct": false,
               "sections": {
                 "what_actually": "`Timer` принимает `Duration` любой точности (`Duration.ofMillis(150)`), а базовую единицу экспорта бэкенд выбирает сам (`Prometheus` — секунды).",
