@@ -1,21 +1,61 @@
-/loop 15m
+/loop 10m
 
-ROUND — MOCKUPS → PRODUCTION PORT → FULL FRONTEND REFACTOR
+# FINALIZATION OVERRIDE
 
-Каждый тик выполняй ровно одну атомарную единицу полного frontend pipeline.
+Ты работаешь не в бесконечном redesign/maintenance-loop, а в конечном FINALIZATION ROUND.
+Цель — довести проект до FINALIZED и остановить loop.
 
-Цель этого loop:
+Не спрашивай пользователя, какое направление выбрать. Следующая задача всегда выбирается
+из FRONTEND_STATE.json по P0→P1→P2→P3, dependency impact и core-flow priority.
 
-1. Перепроверить всё уже сделанное.
-2. Доделать mockups для абсолютно всех окон, экранов, overlays, states и viewport-вариантов.
-3. Перенести утверждённые mockups в реальный Thymeleaf/vanilla CSS/JS frontend.
-4. Доказать production parity по screenshot + DOM/computed metrics.
-5. После переноса выполнить отдельный полный frontend refactor.
-6. Исправить все найденные UX, UI, accessibility, responsive, state, architecture и
-   performance недочёты.
-7. Перейти в maintenance, не начиная бесконечный произвольный редизайн.
+Один тик = один связный work package, который включает подтверждение проблемы,
+implementation, targeted tests, live QA, evidence и atomic commit. Можно менять frontend,
+целевые backend/API/DB contracts и tests, если это необходимо для UX-flow, изменение
+минимально, безопасно, мигрируемо и покрыто тестами. seed/mcq content не менять без
+отдельной задачи content pipeline.
 
-Это НЕ loop только для mockups.
+Не проводи audit-only тики подряд. Если найден исправимый дефект — исправь его в том же
+work package. Не ставь VERIFIED/FINALIZED до deep-pass и устранения всех blocking/user-visible
+дефектов.
+
+Решения по обратимым UI/UX вопросам принимай самостоятельно на основе PRODUCT.md,
+DESIGN.md, accessibility и минимального риска. Пользователя спрашивай только при реальной
+необратимости, потере данных, внешних credentials или изменении бизнес-модели. Blocked-задача
+не останавливает цикл: зафиксируй blocker и возьми следующую независимую.
+
+После feature-freeze не расширяй scope. Новые идеи записывай в FUTURE (FRONTEND_BACKLOG.md) и не держи
+ими текущий loop открытым.
+
+Когда очередь задач пуста, выполни один final gate: clean build, full available tests,
+production-like smoke, core UX flows, accessibility, performance, themes/designs,
+responsive, console/network, dead-code/dirty-files. При полном pass:
+
+1. поставь FINALIZED (FRONTEND_STATE.json.roundStatus);
+2. создай FINAL_FRONTEND_REPORT.md;
+3. сделай итоговый atomic commit;
+4. останови текущий loop (CronDelete 22b94f95);
+5. не переходи в maintenance и не начинай новый review без новой команды пользователя.
+
+---
+
+# ИСТОЧНИКИ ПРАВДЫ (читать эти МАЛЕНЬКИЕ файлы каждый тик, НЕ giant PLAN)
+
+```text
+FRONTEND_STATE.json      # единственный статус + очередь задач + nextTaskId + gates
+FRONTEND_BACKLOG.md      # раскрытие задач (P0→P3), MUST/SHOULD/FUTURE
+FRONTEND_DECISIONS.md    # зафиксированные решения (+ NEEDS-USER блокеры)
+FRONTEND_EVIDENCE.md     # ground-truth inventory, live-QA, замеры
+PLAN_FRONTEND.md         # ТОЛЬКО правила/фазы/release-gates (§21/§7 заморожены → FRONTEND_HISTORY.md)
+FINAL_UI_UX_REVIEW_AND_AUTONOMOUS_PLAN.md  # авторитетный источник round-scope (Разделы 4/6/7/9)
+```
+
+Порядок тика: восстановить статус из FRONTEND_STATE.json → взять nextTaskId (или пересчитать
+по §7.2 selection algo) → work package → обновить FRONTEND_STATE.json (status/gates/nextTaskId) +
+evidence → atomic commit (explicit pathspec, trailer). Крон один: 22b94f95 (10m); ScheduleWakeup
+не звать (фикс-крон), дубль-крон не создавать.
+
+Разделы ниже (0..) — LEGACY-справка режима порта; действуют лишь там, где НЕ противоречат
+FINALIZATION OVERRIDE и источникам правды выше.
 
 ---
 

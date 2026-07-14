@@ -1,5 +1,13 @@
 # PLAN_FRONTEND.md — ROUND RESET: mockups → production port → full frontend refactor
 
+> ⚠️ **FINALIZATION ROUND (2026-07-15).** Проект переведён в конечный finalization-round.
+> **Единственный источник статуса — `FRONTEND_STATE.json`**, а не этот файл.
+> §7 (матрица), §9 и §21 (лог R0.x) ниже **ЗАМОРОЖЕНЫ** (историчны) и будут перенесены в
+> `FRONTEND_HISTORY.md` задачей PROC-11; **не обновлять их как статус**.
+> Читать каждый тик: `FRONTEND_STATE.json` · `FRONTEND_BACKLOG.md` · `FRONTEND_DECISIONS.md` ·
+> `FRONTEND_EVIDENCE.md` + governing-директива в `PROMPT_PLAN_FRONTEND.md` (# FINALIZATION OVERRIDE).
+> Из этого файла в силе только правила/фазы/release-gates. Полный контракт — `FINAL_UI_UX_REVIEW_AND_AUTONOMOUS_PLAN.md`.
+
 ## 0. Reset directive
 
 **Дата нового раунда:** 2026-07-11  

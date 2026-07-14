@@ -1,0 +1,209 @@
+{
+  "$comment": "ЕДИНСТВЕННЫЙ машиночитаемый источник статуса frontend FINALIZATION ROUND. Правила/фазы/гейты — в PLAN_FRONTEND.md. Развёрнутые задачи — в FRONTEND_BACKLOG.md. Решения — в FRONTEND_DECISIONS.md. Evidence — в FRONTEND_EVIDENCE.md. НЕ дублировать статус в PLAN_FRONTEND.md (§21 заморожен). Обновлять этот файл в конце КАЖДОГО тика (см. FINALIZATION OVERRIDE в PROMPT_PLAN_FRONTEND.md §7.6).",
+  "round": "FINALIZATION",
+  "roundStatus": "IN_PROGRESS",
+  "updated": "2026-07-15",
+  "canonicalDesign": "instrument",
+  "designVariantCount": 1,
+  "featureFreeze": true,
+  "roundStatusModel": ["AUDITED", "IMPLEMENTED", "REGRESSION_PASS", "DEEP_PASS", "RELEASE_CANDIDATE", "FINALIZED"],
+  "taskStatusValues": ["OPEN", "IN_PROGRESS", "BLOCKED", "DONE", "CLOSED"],
+  "nextTaskId": "PROC-11",
+  "activeBlockers": [
+    {
+      "id": "BLK-BOOTRUN",
+      "summary": "Живой devtools-bootRun на :8080 (curl→200). Любой ./gradlew test/build/check при нём = wedge (project memory). Блокирует все задачи с needsGradle=true: FE-CMP-1, FLOW-01..04, FLOW-SUMMARY, FLOW-REPORT, QA-01, PERF-01.",
+      "resolution": "Пользователь останавливает bootRun на время gradle-волны (одна собранная просьба, см. FINALIZATION OVERRIDE §7.3). До этого — брать bootRun-safe задачи (docs, live-QA read-only).",
+      "external": true,
+      "blocksCoreFlow": true
+    }
+  ],
+  "gates": {
+    "$comment": "Release-gates финального прохода (Раздел 9 FINAL-плана). FINALIZED только при полном pass.",
+    "cleanBuild": false,
+    "fullTests": false,
+    "productionSmoke": false,
+    "coreUxFlows": false,
+    "accessibility": false,
+    "performanceProdLike": false,
+    "themesDesigns": false,
+    "responsive": false,
+    "consoleNetworkClean": false,
+    "deadCodeClean": false,
+    "cleanCheckoutReproducible": false,
+    "designDocsMatchProduction": false
+  },
+  "tasks": [
+    {
+      "id": "PROC-01", "priority": "P0", "category": "process", "status": "DONE", "needsGradle": false,
+      "title": "Сделать loop конечным + добавить FINALIZED",
+      "surface": ["PROMPT_PLAN_FRONTEND.md"],
+      "acceptance": "Prompt содержит FINALIZATION OVERRIDE; loop имеет конец (final gate → FINALIZED → stop).",
+      "evidence": "R0.165 bootstrap; PROMPT_PLAN_FRONTEND.md §FINALIZATION OVERRIDE"
+    },
+    {
+      "id": "PROC-02", "priority": "P0", "category": "process", "status": "DONE", "needsGradle": false,
+      "title": "Устранить 10m/15m и one-vs-multiple contradictions",
+      "surface": ["cron", "PROMPT_PLAN_FRONTEND.md"],
+      "acceptance": "Единый крон 10m (22b94f95, дубль 3e697399 удалён); work-package = один связный пакет (не 'ровно одна микроправка').",
+      "evidence": "CronList: только 22b94f95; OVERRIDE §work package"
+    },
+    {
+      "id": "PROC-12", "priority": "P0", "category": "process", "status": "DONE", "needsGradle": false,
+      "title": "Единственный machine-readable state",
+      "surface": ["FRONTEND_STATE.json"],
+      "acceptance": "FRONTEND_STATE.json = единственный источник статуса; PLAN_FRONTEND §21 заморожен и указывает сюда.",
+      "evidence": "этот файл; freeze-banner в PLAN_FRONTEND.md"
+    },
+    {
+      "id": "PROC-11", "priority": "P0", "category": "process", "status": "IN_PROGRESS", "needsGradle": false,
+      "title": "Разделить giant PLAN на state/backlog/decisions/history",
+      "surface": ["PLAN_FRONTEND.md", "FRONTEND_HISTORY.md", "FRONTEND_BACKLOG.md", "FRONTEND_DECISIONS.md", "FRONTEND_EVIDENCE.md"],
+      "acceptance": "PLAN_FRONTEND.md ≤300 строк (правила/фазы/гейты); историю (§21 лог R0.x, §7 матрица) перенести в FRONTEND_HISTORY.md; 4 новых файла созданы.",
+      "progress": "bootstrap: 4 новых файла созданы + freeze-banner добавлен. ОСТАЛОСЬ: перенести §7/§9/§21 из PLAN_FRONTEND.md в FRONTEND_HISTORY.md и ужать PLAN до правил/фаз/гейтов.",
+      "evidence": "R0.165"
+    },
+    {
+      "id": "PROC-07", "priority": "P0", "category": "design", "status": "BLOCKED", "needsGradle": true,
+      "title": "Сверить и привести в соответствие wide-layout (контракт vs реальность)",
+      "surface": ["tokens.css", "base.css", "design/mockups/DESIGN.md", "DESIGN.md"],
+      "acceptance": "Одна каноническая wide-модель, документация = production, пространство осмысленно (нет симметричных пустот).",
+      "blocker": "4-стороннее расхождение (см. DEC-003): current CSS = центрированные узкие колонки с пустотами (banned анти-паттерн) vs mockups DESIGN.md = full-width+правый рельс vs root DESIGN.md = max-width:none vs deliberate user-choice 'full-width prose 259ch'. Выбор модели меняет визуальную идентичность и КОНФЛИКТУЕТ с осознанным решением пользователя → нужен один собранный вопрос. Impl также needsGradle.",
+      "decision": "DEC-003"
+    },
+    {
+      "id": "FE-CMP-1", "priority": "P0", "category": "cleanup", "status": "BLOCKED", "needsGradle": true,
+      "title": "Завершить 'полную замену': удалить мёртвую ось дизайна",
+      "surface": ["settings.html", "fragments/header.html", "base.css", "fragments/head.html", "TemplateFragmentContractTest"],
+      "acceptance": "settings НЕ показывает 11 кнопок дизайна (ось убрана); #design-toggle+его inline-скрипт удалены из header; dead SIGNATURE-блоки (editorial/swiss/linear/stripe/claude) вырезаны из base.css; THEME_COLORS 11→1 в head.html; ?v tokens+base бампнуты (закрывает CACHE-1); TemplateFragmentContractTest обновлён и зелёный.",
+      "blocker": "BLK-BOOTRUN — правит файлы, пиннящиеся TemplateFragmentContractTest → нужен ./gradlew test при остановленном bootRun.",
+      "notes": "designs-срез: settings перечисляет 11, DESIGNS=['instrument'] → 10 мёртвых кнопок (CMP-1 blocking UX-defect). Мержит старые CMP-1+CACHE-1+CLEAN-01(design-часть)."
+    },
+    {
+      "id": "FLOW-01", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
+      "title": "Pause/resume активной сессии",
+      "surface": ["quiz-persistence/db/migration", "HttpSessionStateService", "InterviewMvcController", "focus-training.html", "app.js"],
+      "acceptance": "Явный pause (сохранить+очистить) и resume приостановленной сессии; UX 'есть незавершённая сессия — продолжить?'; кнопка Пауза рядом с Завершить; только сессионные режимы.",
+      "backendState": "PARTIAL (есть неявное resume из HttpSession; нет endpoint/флага/персистентности; grep pause|resume → 0).",
+      "blocker": "BLK-BOOTRUN (миграция V16 + endpoints + тесты)."
+    },
+    {
+      "id": "FLOW-02", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
+      "title": "Idempotent submit + защита от двойного POST",
+      "surface": ["InterviewService", "InterviewSessionSupport", "app.js"],
+      "acceptance": "Повторный POST того же ответа не двигает SM-2 дважды и не инкрементит index/счёт дважды; server-side dedup/answered-guard; PRG; клиентский submit-once сохранён.",
+      "backendState": "PARTIAL (только клиентский aria-disabled; серверной идемпотентности нет; registerAnswer не сверяет questionId с index).",
+      "blocker": "BLK-BOOTRUN."
+    },
+    {
+      "id": "FLOW-03", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
+      "title": "'Не знаю' как отдельный outcome (UNKNOWN/SKIPPED)",
+      "surface": ["SpacedRepetitionService", "ReviewResult", "SubmitAnswerRequest", "AnswerRecord", "focus-training.html", "session-summary.html"],
+      "acceptance": "Domain-исход UNKNOWN (ReviewResult + AnswerRecord); submit без optionId (sentinel); маппинг UNKNOWN→SM-2 (lapse/reset, отличный от wrong педагогически); отражение в summary (unknownCount).",
+      "backendState": "ABSENT (нет enum/endpoint/DTO-поля/контрола; /answer требует optionId @Positive).",
+      "blocker": "BLK-BOOTRUN."
+    },
+    {
+      "id": "FLOW-04", "priority": "P1", "category": "flow", "status": "OPEN", "needsGradle": true,
+      "title": "Recoverable expired/offline/error состояния",
+      "surface": ["app.js", "error.html", "focus-training.html", "GlobalExceptionHandler"],
+      "acceptance": "Истёкшая сессия/offline/ошибка сабмита → понятный recoverable-стейт ('сохранено?/повторить'), не тупик; см. UX-11/UX-09.",
+      "backendState": "PARTIAL (GlobalExceptionHandler есть; нет явного expired-session UX + autosave-подтверждения).",
+      "blocker": "BLK-BOOTRUN для серверной части; клиентские состояния — частично bootRun-safe (live-QA)."
+    },
+    {
+      "id": "FLOW-SUMMARY", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
+      "title": "Actionable session summary (UX-04/UX-15)",
+      "surface": ["SessionSummaryService", "SessionSummary", "MvcModelAttributeMapper", "session-summary.html"],
+      "acceptance": "Единый понятный вывод ('80% · хороший результат / N вопросов требуют разбора'); поля unknownCount/dueCount/typed nextActions в SessionSummary; следующий короткий план.",
+      "backendState": "PARTIAL (логика в Java, не в шаблоне ✓; есть score/mistakes/weak; нет unknown/due/typed-next).",
+      "blocker": "BLK-BOOTRUN."
+    },
+    {
+      "id": "FLOW-REPORT", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
+      "title": "Question issue reporting (UX-21)",
+      "surface": ["quiz-persistence/db/migration", "InterviewMvcController/новый контроллер", "focus-training.html", "result.html", "app.js"],
+      "acceptance": "Миграция V16/V17 таблица question_issue (question_id FK, reason/category, comment, created_at, status); POST-endpoint; DTO+репозиторий; UI-триггер 'Сообщить о проблеме' на вопросе/результате.",
+      "backendState": "ABSENT (нет таблицы/endpoint/service; grep report по V1..V15 → 0).",
+      "blocker": "BLK-BOOTRUN."
+    },
+    {
+      "id": "QA-01", "priority": "P1", "category": "qa", "status": "BLOCKED", "needsGradle": true,
+      "title": "Детерминированный QA profile/fixtures",
+      "surface": ["application.yml", "application-qa.yml (новый)", "Clock-bean", "McqJsonLoader/фикстуры"],
+      "acceptance": "Профиль 'qa' с фиксированным Clock, известной сессией/юзером, предсказуемым набором due/learned/new для воспроизводимого browser-QA.",
+      "backendState": "ABSENT (grep @Profile→0; только prod/test; Clock уже инъектируемый — облегчает).",
+      "blocker": "BLK-BOOTRUN."
+    },
+    {
+      "id": "PERF-01", "priority": "P1", "category": "perf", "status": "BLOCKED", "needsGradle": true,
+      "title": "Автоматический/проверяемый cache-busting (PROC-16)",
+      "surface": ["fragments/head.html", "fragments/scripts (новый)", "app.js consumers", "TemplateFragmentContractTest"],
+      "acceptance": "app.js версия single-sourced (вынести подключение в общий фрагмент как CSS в head.html) — сейчас v=65 в 3 шаблонах (focus-training/result/settings), латентный drift-риск; либо автоматический fingerprint.",
+      "backendState": "js-срез: css single-sourced ✓, app.js НЕ single-sourced (3 места).",
+      "blocker": "BLK-BOOTRUN (contract-test)."
+    },
+    {
+      "id": "UX-01", "priority": "P2", "category": "ui", "status": "OPEN", "needsGradle": false,
+      "title": "Иерархия CTA на terminal-состояниях (empty/done)",
+      "surface": ["focus-training.html states", "base.css"],
+      "acceptance": "Основная кнопка визуально сильнее вторичной на empty/done; live-QA обе темы.",
+      "notes": "bootRun-safe: CSS/шаблон-правка + live-QA без gradle (если не триггерит contract-test)."
+    },
+    {
+      "id": "UX-02", "priority": "P2", "category": "ui", "status": "OPEN", "needsGradle": false,
+      "title": "Унифицировать terminal-состояния с активным shell",
+      "surface": ["focus-training.html", "base.css"],
+      "acceptance": "Done/empty читаются как продолжение тренировочного flow, не отдельный мини-сайт."
+    },
+    {
+      "id": "UX-03", "priority": "P2", "category": "ui", "status": "OPEN", "needsGradle": false,
+      "title": "Убрать градиент/блик с primary CTA (solid fill)",
+      "surface": ["base.css"],
+      "acceptance": "Primary CTA = сплошная заливка --signal, без градиента/блика (Instrument-мандат); AA-контраст сохранён; обе темы."
+    },
+    {
+      "id": "UX-05", "priority": "P2", "category": "content", "status": "OPEN", "needsGradle": true,
+      "title": "Русская плюрализация серии — backend-side",
+      "surface": ["StreakResponse/summary DTO", "app.js/stats.js"],
+      "acceptance": "день/дня/дней считается server-side (или единым util), не дублируется в 2 JS."
+    },
+    {
+      "id": "UX-13", "priority": "P2", "category": "ui", "status": "OPEN", "needsGradle": false,
+      "title": "Прогрессивный разбор: 'минимум' vs 'глубже'",
+      "surface": ["result.html", "focus-training.html", "post-answer JS"],
+      "acceptance": "Вердикт → краткое 'почему' → разбор по клику; согласовано с result.html no-JS."
+    },
+    {
+      "id": "UX-15", "priority": "P2", "category": "flow", "status": "OPEN", "needsGradle": true,
+      "title": "Adaptive next action после сессии",
+      "surface": ["SessionSummaryService", "session-summary.html"],
+      "acceptance": "Итог формирует следующий короткий план (типизированный next-action). Пересечение с FLOW-SUMMARY."
+    },
+    {
+      "id": "UX-16", "priority": "P2", "category": "flow", "status": "OPEN", "needsGradle": true,
+      "title": "Analytics next-action блок",
+      "surface": ["stats.js", "stats.html", "StatsApiService"],
+      "acceptance": "Аналитика отвечает 'что делать' (слабейшая тема → CTA), не только 'что произошло'. Частично есть (initNextActions)."
+    },
+    {
+      "id": "CLEAN-01B", "priority": "P2", "category": "cleanup", "status": "OPEN", "needsGradle": false,
+      "title": "Мёртвый селектор base.css:754 (.question-code-details > pre)",
+      "surface": ["base.css"],
+      "acceptance": "Верхний отступ код-блока применяется: .code-copy-wrap разорвал direct-child match (app.js оборачивает pre) → перецелить на .question-code-details > .code-copy-wrap / pre.question-code; live-QA gap>0.",
+      "notes": "Подтверждён inventory (open-defects + прошлая сессия). bootRun-safe (только base.css, live-QA)."
+    },
+    {
+      "id": "A11Y-01", "priority": "P2", "category": "a11y", "status": "OPEN", "needsGradle": false,
+      "title": "Консолидированный ручной screen-reader flow",
+      "surface": ["все страницы"],
+      "acceptance": "Единый комплексный SR/keyboard-проход core-flow (не серия микротиков); evidence в FRONTEND_EVIDENCE.md."
+    },
+    {
+      "id": "PERF-02", "priority": "P2", "category": "perf", "status": "OPEN", "needsGradle": false,
+      "title": "Production-like performance budgets",
+      "surface": ["Lighthouse", "head.html (fonts/CDN)"],
+      "acceptance": "Замер в prod-like среде (не devtools-bootRun); бюджеты; prune Google Fonts до Newsreader/Space Grotesk/JetBrains."
+    }
+  ]
+}
