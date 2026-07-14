@@ -1658,3 +1658,19 @@ Known factually wrong correct answers: 0
 - Гейт: skel hard=0, colon [1,1,1,1]/semi [0,0,0,0], OPTION_LENGTH_RATIO=1.32 PASS (worst Q10). Content-реаудировано 16/18. Sidecar: +c13/+blind_c13, blocks_reaudited=16.
 - **УРОК c13:** shared-EXAMPLE (как c12 shared-TAIL) даёт intro-vs-example противоречие у дистрактора, чей подход отрицает то, что общий пример демонстрирует. Фикс = переписать пример под интро дистрактора (не трогая интро/sections, если они уже несут misconception).
 - **Остаток до FINAL: Q6/Q12** (мягкие intro-vs-tail натяжения, опровергаемые доменным рассуждением; Q6 метрически чист).
+
+### ROUND-8 · edge-computing · c14 Q12 разводка B/C/D в 4 модели консистентности — 2026-07-14
+- **c14 = устранение shared-scaffold само-противоречий Q12** («Что такое Durable Objects»). Три дистрактора несли intro-vs-tail/intro-в-клаузе противоречия И были near-twins correct A (тот же middle+tail, флип одной клаузы):
+  - **B**: «записи расходятся асинхронно» + «в транзакционном key-value» (async ⊥ транзакционность).
+  - **C**: «без latency trade-off / одинаково близок отовсюду» + «один инстанс глобально» (одна точка не равноудалена).
+  - **D**: «stateless, персистентного хранилища нет» + хвост «used for чат-комнат / атомарных счётчиков / координации» (нужно состояние).
+- **Фикс:** разведены в 4 РАЗНЫЕ когерентные модели консистентности (не подбор клаузы, а полная разводка):
+  - **A** (correct, байт-lock == HEAD): single-instance strongly-consistent, пиннингован к одному POP.
+  - **B**: eventually consistent реплицированный кэш (много реплик, async-схождение, нетранзакционный KV, eventual-uses: гео-кэш/приблизительные счётчики).
+  - **C**: синхронно реплицированный strongly-consistent в каждый регион (копия в каждом POP, атомарные записи — когерентно, НЕ near-twin single-pinned; misconception «равная близость отовсюду» сохранён, `source_of_confusion` переписан).
+  - **D**: single-instance stateless-функция (без хранилища/WebSocket, stateless-uses: трансформация/валидация/роутинг).
+- Изменены только Q12-B/C/D (C: text + `source_of_confusion`; B/D: text). Correct A и его sections не тронуты.
+- **2 независимых blind (SEED 71412, 82517):** blind#1 → **REVISE** (первый рерайт C с backbone-механизмом оставался near-twin correct с остаточным «один инстанс ↔ близко отовсюду»; ревьюер: развести в отдельный концептуальный тезис). После разводки C в sync-strong-replicated — blind#2 → **ACCEPT**: «единственно-верный A защитим, дистракторы различимы только доменным знанием, form_guess=НЕТ (паритет ровный, верный не самый длинный), near_twin A/C теперь плюс дизайна». **READY**.
+- Гейт: skel hard=0, colon [1,1,1,1]/semi [0,0,0,0], OPTION_LENGTH_RATIO Q12 1.37→1.23 (подрезан C), весь файл PASS (worst Q10=1.32). DUPLICATE 498→487. Content-реаудировано **17/18**. Sidecar: +c14/+blind_c14, blocks_reaudited=17.
+- **УРОК c14:** когда дистрактор = correct + флип-одной-клаузы И держит противоречащий shared middle/tail (near-twin + intro-vs-tail разом), чинить НЕ подбором клаузы (остаётся near-twin → form_guess до 50/50), а **РАЗВОДКОЙ в отдельную когерентную модель** по той же оси знания (для Q12 = 4 модели консистентности: single-pinned / eventual-async / sync-strong-replicated / stateless). Убирает и near-twin, и противоречие. C-модель sync-strong-replicated = легитимный PACELC conclusion-flip («строгая консистентность + близко отовсюду» опровергаемо рассуждением, как Q16-A).
+- **Остаток до FINAL: Q6** (метрически чист ratio 1.13; A флип изоляции, C своп start-times, D флип языков — defect-скан + блайнд). После Q6 — **edge-computing FINAL**.
