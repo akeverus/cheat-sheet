@@ -1,0 +1,13 @@
+{
+  "topic_slug": "edge-computing-interview",
+  "round": "ROUND-8",
+  "total_blocks": 18,
+  "blocks_reaudited": 0,
+  "status": "WIP (c1 = POS de-cycle + fact-freshness bootstrap done; контент-реаудит НЕ начат. Файл сырой/низкого качества: 2 структурных дефекта — DUPLICATE_NGRAMS=687 [Q2-тип: опции делят огромные префиксы, отличаясь одной клаузой] и OPTION_LENGTH_RATIO=4.22 [Q1-тип: короткие каррикатурные дистракторы vs богатый correct]).",
+  "chunks_reviewed": [
+    "c1 (2026-07-14): POS de-cycle — correct-позиции были строгим циклом ABCDABCDABCDABCDAB (CORRECT_POSITION_SEQUENCE=18). Перестановка label/order (target CADBDBACBDCAACBDDA, counts A5/B4/C4/D5, arith-run≤4) → SEQUENCE 18→4, DISTRIBUTION 1.25. Контент КАЖДОЙ опции (text/sections/correct) БАЙТ-ИДЕНТИЧЕН HEAD (set-equal per block; сменились лишь label/order) → blind не требуется. + fact-freshness sidecar (SOURCE_COVERAGE missing→ok): edge-платформы rolling, версий-пинов нет, checked_date 2026-07-14."
+  ],
+  "gates": "c1: POS SEQUENCE 18→4 PASS, DISTRIBUTION 1.25 PASS, SOURCE_COVERAGE ok. ОСТАЁТСЯ FAIL: OPTION_LENGTH_RATIO=4.22 (worst Q1; 4 блока >1.35), DUPLICATE_NGRAMS=687, skel hard_fails=4, surface 10 TELL.",
+  "residual": "КОНТЕНТ-РЕАУДИТ (c2+): (1) DUPLICATE_NGRAMS=687 — ДОМИНИРУЮЩИЙ дефект. ~10 блоков (Q2/Q3/Q4/Q5/Q8/Q13/Q15/Q16/Q17/Q18) построены как clause-flip: все 4 опции почти дословно повторяют correct, отличаясь ОДНОЙ клаузой (напр. Q2: A меняет зачин «CDN и edge — синонимы», C — середину «рантайм во всех POP», D — концовку «edge заменяет origin»). Это даёт огромный verbatim-overlap И потенциальный tell «варьируемая клауза». Фикс: переписать дистракторы так, чтобы ложь несла СВОЙ механизм/формулировку, не копируя correct дословно — с blind, сохраняя single-correct. (2) OPTION_LENGTH_RATIO=4.22 — Q1 (correct 266 vs дистракторы 96-111) и Q11 (r=1.83): короткие каррикатурные дистракторы («просто кэш статики», «вся логика в браузер», «VM в каждом городе вручную») → удлинить/де-каррикатурить до сопоставимого объёма, сохранив ошибочность. (3) skel hard=4 + surface 10 TELL — формат, после контент-стадии.",
+  "notes": "Сырой файл ROUND-8 (в отличие от hibernate — низкого исходного качества: templated clause-flip опции + каррикатурные короткие дистракторы). Правится ТОЛЬКО JSON-seed; correct byte-locked к HEAD; label/order/1-correct инвариантны. c1 (POS+sidecar) — content-preserving, без blind. Дальше: c2+ поблочный контент-рерайт (dedup clause-flip + де-каррикатура) с обязательным blind. Матрица: edge-computing был ΣCAR=16.3 top-tractable."
+}
