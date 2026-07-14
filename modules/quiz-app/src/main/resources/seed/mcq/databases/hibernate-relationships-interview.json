@@ -95,7 +95,7 @@
             },
             {
               "label": "C",
-              "text": "В bidirectional `mappedBy` вешают на owning side `Order`, где стоит `@JoinColumn`, а не на inverse. Сторона `@OneToMany` остаётся без аннотации и `mappedBy` вовсе не касается FK.",
+              "text": "В bidirectional `mappedBy` вешают на owning side `Order`, где стоит `@JoinColumn`, а не на inverse. Сторона `@OneToMany` остаётся без аннотации, а `mappedBy` отвечает за навигацию и FK не затрагивает.",
               "correct": false,
               "sections": {
                 "what_actually": "`mappedBy` ставится именно на inverse side; owning side держит `@JoinColumn` и владеет FK, без `mappedBy`.",
@@ -107,7 +107,7 @@
             },
             {
               "label": "D",
-              "text": "Односторонней связи не бывает: любая ассоциация `@OneToMany` двунаправленная. Провайдер сам заводит обратное поле `mappedBy` на второй `entity` `Order`, даже если вы `@JoinColumn` не объявляли.",
+              "text": "Односторонняя связь сводится к двунаправленной: любая `@OneToMany` по сути двусторонняя. Провайдер сам заводит обратное поле `mappedBy` на второй `entity` `Order`, даже если вы `@JoinColumn` не объявляли.",
               "correct": false,
               "sections": {
                 "what_actually": "Unidirectional абсолютно валидна: `@ManyToOne` без обратного `@OneToMany` или `@OneToMany` с `@JoinColumn` — частые однонаправленные случаи.",
@@ -310,7 +310,7 @@
           "options": [
             {
               "label": "A",
-              "text": "`orphanRemoval` и `CascadeType.REMOVE` — одно и то же: оба шлют `DELETE` по детям `@OneToMany` при `em.remove(parent)`. Триггеры совпадают, поэтому они полностью взаимозаменяемы.",
+              "text": "`orphanRemoval` и `CascadeType.REMOVE` работают одинаково: оба шлют `DELETE` по детям `@OneToMany` при `em.remove(parent)`. Триггеры совпадают, поэтому на практике их ставят как эквивалент.",
               "correct": false,
               "sections": {
                 "what_actually": "`REMOVE` срабатывает при удалении самого parent, а `orphanRemoval` — при удалении ребёнка из коллекции parent; триггеры разные.",
@@ -443,7 +443,7 @@
             },
             {
               "label": "B",
-              "text": "`@OneToMany` рассчитан на `List<T>`: порядок `Hibernate` связывает с детьми через `@OrderColumn`. Коллекции `Set<T>`, `Bag` и `Map<K,V>` для ассоциаций он вовсе не поддерживает.",
+              "text": "`@OneToMany` рассчитан на `List<T>`: порядок `Hibernate` связывает с детьми через `@OrderColumn`. Коллекции `Set<T>`, `Bag` и `Map<K,V>` для ассоциаций он не применяет, ожидая именно `List<T>`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hibernate` поддерживает `List`, `Set`, `Bag`, `SortedSet`/`TreeSet` и `Map` для `@OneToMany` — выбор зависит от семантики.",
@@ -467,7 +467,7 @@
             },
             {
               "label": "D",
-              "text": "`Map<K,V>` в `@OneToMany` применять нельзя: `Hibernate` поддерживает лишь линейные `List`, `Set` и `Bag` без ключей. Аннотация `@MapKey` для таких ассоциаций попросту не работает.",
+              "text": "`Map<K,V>` в `@OneToMany` не поддерживается: `Hibernate` работает здесь с линейными `List`, `Set` и `Bag` без ключей. Аннотация `@MapKey` для таких ассоциаций остаётся без эффекта.",
               "correct": false,
               "sections": {
                 "what_actually": "`Map` поддерживается через `@MapKey(name = \"...\")`, где ключом служит поле дочерней entity (например `phone.type`).",
@@ -550,7 +550,7 @@
           "options": [
             {
               "label": "A",
-              "text": "`@JoinColumn` и `@JoinTable` взаимозаменяемы: оба выносят связь в отдельную таблицу с парой FK. Разница между `@JoinColumn` на `@ManyToOne` и `@JoinTable` лишь синтаксическая.",
+              "text": "`@JoinColumn` и `@JoinTable` дают один результат: оба выносят связь в отдельную таблицу с парой FK. Разница между `@JoinColumn` на `@ManyToOne` и `@JoinTable` сводится к синтаксису.",
               "correct": false,
               "sections": {
                 "what_actually": "`@JoinColumn` кладёт FK прямо в таблицу самой entity, а `@JoinTable` создаёт отдельную таблицу связей — это разные схемы.",
@@ -575,7 +575,7 @@
             },
             {
               "label": "C",
-              "text": "`@JoinTable` допустим лишь в `@ManyToMany`; в `@OneToMany` или `@ManyToOne` он даёт ошибку маппинга при старте. Вынести FK `customer_id` в отдельную таблицу через `@JoinTable` так нельзя.",
+              "text": "`@JoinTable` рассчитан на `@ManyToMany`. В `@OneToMany` или `@ManyToOne` он приводит к ошибке маппинга при старте. Вынести FK `customer_id` в отдельную таблицу через `@JoinTable` так не выйдет.",
               "correct": false,
               "sections": {
                 "what_actually": "`@JoinTable` чаще всего применяют в `@ManyToMany`, но он валиден и для `@OneToMany`/`@ManyToOne`, когда FK выносят в отдельную таблицу.",
@@ -587,7 +587,7 @@
             },
             {
               "label": "D",
-              "text": "`@JoinColumn` задаёт имя самой таблицы `entity`, а имя FK-колонки `customer_id` провайдер берёт сам. Переопределить его через `@JoinColumn(name)` вместо `@Table` нельзя.",
+              "text": "`@JoinColumn` задаёт имя самой таблицы `entity`, а имя FK-колонки `customer_id` провайдер берёт сам. Переопределить его через `@JoinColumn(name)` вместо `@Table` не получится.",
               "correct": false,
               "sections": {
                 "what_actually": "`@JoinColumn(name = ...)` задаёт именно имя FK-колонки, а не таблицы; таблица именуется через `@Table`.",
@@ -610,7 +610,7 @@
           "options": [
             {
               "label": "A",
-              "text": "`@EntityGraph` глобально меняет стратегию загрузки всей `entity`: перечисленные связи становятся `EAGER` во всех запросах. Держать их `LAZY` и тянуть точечно `@EntityGraph` он уже не даст.",
+              "text": "`@EntityGraph` меняет стратегию загрузки всей `entity` разом: перечисленные связи становятся `EAGER` во всех запросах. Точечно держать их `LAZY` при этом не выйдет.",
               "correct": false,
               "sections": {
                 "what_actually": "`@EntityGraph` действует на конкретный запрос/`find`, а не глобально: вне его связи остаются ленивыми, как объявлено.",
@@ -634,7 +634,7 @@
             },
             {
               "label": "C",
-              "text": "`@EntityGraph` физически меняет схему БД, создавая materialized view с предзагруженными связями из `@EntityGraph(attributePaths)`. После объявления `@NamedEntityGraph` в базе появляется новый объект ради ускорения `SELECT`.",
+              "text": "`@EntityGraph` меняет схему БД, создавая materialized view с предзагруженными связями из `@EntityGraph(attributePaths)`. После объявления `@NamedEntityGraph` в базе появляется новый объект ради ускорения `SELECT`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@EntityGraph` — это инструкция провайдеру, как строить fetch-план запроса; он не трогает схему БД и не создаёт view.",
@@ -670,7 +670,7 @@
           "options": [
             {
               "label": "A",
-              "text": "`@ElementCollection` — синоним `@OneToMany`: оба маппят коллекцию полноценных `entity` с собственным `id` и ключом. Сослаться на элемент `@CollectionTable` из другой `entity` можно так же.",
+              "text": "`@ElementCollection` работает как `@OneToMany`: оба маппят коллекцию полноценных `entity` с собственным `id` и ключом. Сослаться на элемент `@CollectionTable` из другой `entity` можно так же.",
               "correct": false,
               "sections": {
                 "what_actually": "`@ElementCollection` хранит value-типы или `@Embeddable` без собственной identity, тогда как `@OneToMany` связывает именно entity с PK.",
@@ -707,7 +707,7 @@
             },
             {
               "label": "D",
-              "text": "В `@ElementCollection` кладут лишь примитивы вроде `String` или `Integer`. Объекты `@Embeddable` (например тип `Address`) с полями `street`/`city` в `@CollectionTable` совсем не поддерживаются.",
+              "text": "В `@ElementCollection` кладут примитивы вроде `String` или `Integer`, а сложнее — нет. Объекты `@Embeddable` (например тип `Address`) с полями `street`/`city` в `@CollectionTable` не поддерживаются.",
               "correct": false,
               "sections": {
                 "what_actually": "`@ElementCollection` поддерживает и простые значения, и `@Embeddable` (например `List<Address>`), маппя каждое поле в колонки таблицы.",
