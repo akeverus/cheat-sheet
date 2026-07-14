@@ -489,7 +489,7 @@
           "question_text": "Как делать оптимизацию и ресайз картинок на edge?",
           "options": [
             {
-              "text": "Воркёр на краю принимает запрос вида `/image.jpg?w=500&format=webp`, тянет оригинал из origin, ресайзит до 500px, конвертирует в WebP, кэширует только один размер в `POP`, потому что все варианты делят общий cache key и возвращает. Так каждому устройству отдаётся подходящий размер и формат без скачивания тяжёлого оригинала клиентом. Инструменты: Cloudflare Image Resizing, Lambda@Edge + Sharp, Fastly Image Optimizer, Vercel Image Optimization.",
+              "text": "Воркёр на краю принимает запрос вида `/image.jpg?w=500&format=webp`, тянет оригинал из origin, ресайзит до 500px, конвертирует в WebP и хранит всё под одним общим cache key на путь. Так любой запрошенный размер и формат обслуживаются из одной записи кэша. Инструменты: Cloudflare Image Resizing, Lambda@Edge + Sharp, Fastly Image Optimizer, Vercel Image Optimization.",
               "correct": false,
               "sections": {
                 "what_actually": "Кэш ведётся по варианту: параметры (`w`, `format`) входят в URL и cache key, поэтому каждый размер/формат кэшируется отдельно.",
@@ -514,7 +514,7 @@
               "order": 1
             },
             {
-              "text": "Воркёр на краю игнорирует параметр формата и заголовок `Accept` клиента, тянет оригинал из origin, ресайзит до 500px, выбирает один собственный формат для всех браузеров, кэширует результат в `POP` и возвращает. Так каждому устройству отдаётся подходящий размер и формат без скачивания тяжёлого оригинала клиентом. Инструменты: Cloudflare Image Resizing, Lambda@Edge + Sharp, Fastly Image Optimizer, Vercel Image Optimization.",
+              "text": "Воркёр на краю принимает запрос вида `/image.jpg?w=500&format=webp`, тянет оригинал из origin, ресайзит до 500px и всегда отдаёт один жёстко зашитый формат для всех клиентов. Так каждому уходит заранее выбранный формат независимо от заголовка `Accept`. Инструменты: Cloudflare Image Resizing, Lambda@Edge + Sharp, Fastly Image Optimizer, Vercel Image Optimization.",
               "correct": false,
               "sections": {
                 "what_actually": "Формат выбирается по `Accept`: WebP при `image/webp`, AVIF при `image/avif`, JPEG как fallback для старых браузеров.",
@@ -526,7 +526,7 @@
               "order": 2
             },
             {
-              "text": "Воркёр на краю принимает запрос вида `/image.jpg?w=500&format=webp`, тянет оригинал из origin, не умеет ресайзить и конвертировать: эти операции выполняет только origin-сервер и возвращает. Так каждому устройству отдаётся подходящий размер и формат без скачивания тяжёлого оригинала клиентом. Инструменты: Cloudflare Image Resizing, Lambda@Edge + Sharp, Fastly Image Optimizer, Vercel Image Optimization.",
+              "text": "Воркёр на краю принимает запрос `/image.jpg?w=500&format=webp` и сразу проксирует его к origin, где и идут ресайз до 500px и конвертация в WebP. Так вся трансформация остаётся на origin, а край раздаёт уже готовый результат. Инструменты: Cloudflare Image Resizing, Lambda@Edge + Sharp, Fastly Image Optimizer, Vercel Image Optimization.",
               "correct": false,
               "sections": {
                 "what_actually": "Ресайз и конвертацию делают именно на краю (Cloudflare Image Resizing, Lambda@Edge + Sharp), снимая работу с origin.",
