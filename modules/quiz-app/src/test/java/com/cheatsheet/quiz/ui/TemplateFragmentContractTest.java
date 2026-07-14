@@ -285,4 +285,86 @@ class TemplateFragmentContractTest {
                 .contains("html[data-design=\"" + design + "\"][data-theme=\"dark\"]");
         }
     }
+
+    @Test
+    void errorPageExposesAccessibleHeadingAndActions() throws IOException {
+        String error = readTemplate("templates/error.html");
+
+        assertThat(error).contains("<body class=\"error-page\">");
+        // skip-link клавиатурно обходит шапку к сообщению об ошибке.
+        assertThat(error).contains("href=\"#main-content\"");
+        assertThat(error).contains("id=\"main-content\"");
+        // Секция ошибки подписана своим заголовком: aria-labelledby ↔ h2 id
+        // (реальный заголовок — h2, а не декоративный код-номер).
+        assertThat(error).contains("aria-labelledby=\"error-heading\"");
+        assertThat(error).contains("id=\"error-heading\"");
+        // Декоративные эйбрау и статус-номер скрыты от SR.
+        assertThat(error).contains("class=\"error-eyebrow\" aria-hidden=\"true\"");
+        assertThat(error).contains("class=\"error-code\"");
+        // Явные пути дальше — nav с меткой (тупик IA исправлен).
+        assertThat(error).contains("<nav class=\"error-actions\" aria-label=\"Что дальше\">");
+    }
+
+    @Test
+    void sessionSummaryExposesScoreAnchorAndTableSemantics() throws IOException {
+        String summary = readTemplate("templates/session-summary.html");
+
+        assertThat(summary).contains("<body class=\"summary-page\">");
+        assertThat(summary).contains("href=\"#main-content\"");
+        assertThat(summary).contains("id=\"main-content\"");
+        // SUM-9: визуально скрытый h2 счёта — якорь H-навигации на главный
+        // результат (паритет с h2 секций-сестёр «по темам»/«ошибки»/«рекомендации»).
+        assertThat(summary).contains("<h2 class=\"summary-section-title visually-hidden\">Результат сессии</h2>");
+        assertThat(summary).contains("class=\"summary-score-value\"");
+        // SUM-3: dual-path действия (повтор ошибок / продолжить) в nav с меткой.
+        assertThat(summary).contains("<nav class=\"summary-actions\" aria-label=\"Что дальше\">");
+        // Таблица по темам: CSS display:block сбрасывает нативную семантику в
+        // Safari/VoiceOver → явные ARIA-роли её восстанавливают; tabindex=0 делает
+        // скролл-контейнер доступным с клавиатуры (WCAG 2.1.11). Аддитивно.
+        assertThat(summary).contains("<table class=\"summary-table\" role=\"table\" tabindex=\"0\">");
+        assertThat(summary).contains("<caption class=\"visually-hidden\">");
+        assertThat(summary).contains("scope=\"col\" role=\"columnheader\"");
+        assertThat(summary).contains("role=\"rowheader\"");
+        // Share/print-тулбар инжектится PE-скриптом; статус-регион вежливый.
+        assertThat(summary).contains("'role', 'status'");
+        assertThat(summary).contains("'aria-live', 'polite'");
+    }
+
+    @Test
+    void headFragmentAppliesPersonalizationAxesBeforeFirstPaint() throws IOException {
+        String head = readTemplate("templates/fragments/head.html");
+
+        assertThat(head).contains("th:fragment=\"head(title, includeMermaid, includeChart)\"");
+        assertThat(head).contains("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">");
+        assertThat(head).contains("<title th:text=\"${title}\">");
+        // Оси персонализации применяются на <html> ДО первого кадра (анти-FOUC):
+        // design/theme/layout выставляются, motion/reading-width/density —
+        // set-или-remove (дефолт = отсутствие атрибута).
+        assertThat(head).contains("setAttribute('data-design'");
+        assertThat(head).contains("setAttribute('data-theme'");
+        assertThat(head).contains("setAttribute('data-layout'");
+        assertThat(head).contains("setAttribute('data-motion'");
+        assertThat(head).contains("setAttribute('data-reading-width'");
+        assertThat(head).contains("setAttribute('data-density'");
+        // CDN-ресурсы пиннятся SRI (integrity, sha512) + crossorigin — защита от
+        // компрометации CDN. Префикс sha512- устойчив к бампу версии библиотеки.
+        assertThat(head).contains("integrity=\"sha512-");
+        assertThat(head).contains("crossorigin=\"anonymous\"");
+    }
+
+    @Test
+    void headerFragmentExposesSingleNavLandmarkAndActivePageContract() throws IOException {
+        String header = readTemplate("templates/fragments/header.html");
+
+        assertThat(header).contains("th:fragment=\"header(pageTitle, statsPage, activePage, showPrimaryNav)\"");
+        assertThat(header).contains("class=\"ed-masthead\"");
+        // Единственный h1 страницы — заголовок в шапке.
+        assertThat(header).contains("<h1 class=\"ed-masthead-title\" th:text=\"${pageTitle}\">");
+        // Единая nav-landmark с меткой (дубль focus-surface-tabs удалён).
+        assertThat(header).contains("<nav class=\"ed-nav\" aria-label=\"Основная навигация\">");
+        // aria-current=page на активной ссылке (не только is-active классом).
+        assertThat(header).contains("aria-current=${activePage == 'focus'} ? 'page' : null");
+        // Тумблер темы несёт aria-pressed.
+        assertThat(header).contains("aria-pressed=\"false\"");
+    }
 }

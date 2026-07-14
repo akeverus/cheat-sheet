@@ -355,10 +355,10 @@ docs/ui-ux-improvement-log.md
 | `result.html` | page | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ◐ | ✅ | ◐ | ◐ | ◐ | ⏸ | Чисто; **R0.126: regenerate-UI + `.question-side` удалены** (app.js/base.css v=94); **R0.127: RES-15 related-list-семантика** (`div role=list` + `role=listitem`, app.js v=64, контракт 10/10); RES-14 снят (код в `.answer`), RES-8 контраст AA все 20; RES-3 favorite=⛔ |
 | `settings.html` | page | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | SET-14/17 р134; SET-7 р136; SET-6/SET-5 verified-clean р137 |
 | `stats.html` | page | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | STA-18 р134; STA-19 р135; STA-5/STJ-1 labels р137; **STA-20 dead-колонка «Сброшено» удалена R0.128** (Зрелость data-col 5→4, base.css v=95, sort цел) |
-| `session-summary.html` | page | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ⏸ | ◐ | ◐ | ✅ | ⏸ | Чисто; dual-path nav = deliberate (SUM-3); score-card h2 добавлен р104 (SUM-9) |
-| `error.html` | page | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ◐ | Чисто; 403 авто-retry = ⛔ERR-3 |
-| `fragments/head.html` | fragment | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ◐ | Чисто; CDN-guards, 6 осей персонализации до 1-го кадра |
-| `fragments/header.html` | fragment | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏸ | ✅ | ✅ | ✅ | ◐ | HDR-1 закрыт р138 (mobile focus title + session compact; sticky отвергнут) |
+| `session-summary.html` | page | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ✅ | ◐ | ◐ | ✅ | ⏸ | Чисто; dual-path nav = deliberate (SUM-3); score-card h2 добавлен р104 (SUM-9) |
+| `error.html` | page | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Чисто; 403 авто-retry = ⛔ERR-3 |
+| `fragments/head.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Чисто; CDN-guards, 6 осей персонализации до 1-го кадра |
+| `fragments/header.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | HDR-1 закрыт р138 (mobile focus title + session compact; sticky отвергнут) |
 | `fragments/icons.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | 🌱ICO-3 нет warning-иконки для warn/error (low) |
 | `fragments/mermaid-init.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🏛 | MER-1 🚫 внешний owner; сам код чист (antiscript-guard) |
 | `fragments/inline-alert.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Чисто; role=alert+assertive (IAL-1) |
@@ -2572,6 +2572,19 @@ Constraint Validation API без сабмита на session-form. count (number
 - **Verify:** §9 целостность — все 23 матричные строки = 19 пайпов (структура цела); остаток ⏸ = ровно 6 строк (result Final, post-answer Final, + 4 непокрытых файла Contract/Tests). Контракт-тест green статически подтверждён (app не нужен — pure JUnit ClassPathResource).
 - **Итог:** §9 Contract/Tests-гейт снят для всего покрытого контрактом фронта — 8 файлов доведены по этим двум измерениям. Оставшиеся ⏸ разбиты на «непокрытые контрактом» (нужен иной статический гейт или расширение теста) и «Final app-gated» (parity-QA). Это уточняет §9 до состояния «что закрыто vs чем именно заблокировано».
 - **Дальше:** следующий тик — либо расширить `TemplateFragmentContractTest` на непокрытые session-summary/error/head/header (даст статический Contract-гейт и им), либо turnkey decision-brief+parity-QA пакет (R0.132-план). Нумерация R0.134+.
+
+### R0.134 (2026-07-14) — Расширен контракт-тест на 4 непокрытых шаблона → ВСЕ §9 Contract/Tests-ячейки закрыты (код-правка, DB-free)
+
+- **Единица (продвижение §9 + test-coverage, цель 6):** дописать `TemplateFragmentContractTest` контрактами для session-summary/error/head/header (единственные без Contract-гейта после R0.133) → закрыть их §9 Contract/Tests статически, БЕЗ app.
+- **Добавлено 4 тест-метода** (10→14 тестов), пиннят СТАБИЛЬНЫЕ a11y/DOM-контракты (не волатильные `?v=N`, verified прочтением каждого шаблона):
+  - **error.html** → `errorPageExposesAccessibleHeadingAndActions`: `body.error-page`, skip-link→`#main-content`, `aria-labelledby=error-heading` ↔ `h2#error-heading` (реальный заголовок, не код-номер), декор `aria-hidden`, `nav.error-actions[aria-label]`.
+  - **session-summary.html** → `sessionSummaryExposesScoreAnchorAndTableSemantics`: `body.summary-page`, SUM-9 скрытый `h2.summary-section-title.visually-hidden` (H-якорь счёта), SUM-3 `nav.summary-actions[aria-label]` (dual-path), таблица `role=table tabindex=0` + `caption.visually-hidden` + `scope=col role=columnheader` + `role=rowheader` (WCAG 2.1.11 Safari/VO), share-скрипт `role=status`/`aria-live=polite`.
+  - **head.html** → `headFragmentAppliesPersonalizationAxesBeforeFirstPaint`: fragment-сигнатура, viewport-meta, `title th:text`, 6 pre-paint `setAttribute('data-design/theme/layout/motion/reading-width/density'` (анти-FOUC), SRI `integrity="sha512-` + `crossorigin="anonymous"` (префикс устойчив к бампу версии).
+  - **header.html** → `headerFragmentExposesSingleNavLandmarkAndActivePageContract`: fragment-сигнатура, `ed-masthead`, единственный `h1.ed-masthead-title`, `nav.ed-nav[aria-label]`, `aria-current=…?'page':null`-контракт, theme-toggle `aria-pressed`.
+- **Verify:** `./gradlew :quiz-app:test --tests "*TemplateFragmentContractTest"` → **BUILD SUCCESSFUL, tests=14 failures=0 errors=0** (все 4 новых зелёные → контракты матчат шаблоны; pure JUnit, app не нужен).
+- **Записано §9:** `session-summary/error/head/header` Contract/Tests ⏸→✅ (4 файла). Целостность — все 23 строки = 19 пайпов.
+- **МИЛСТОУН:** **все §9 Contract- и Tests-ячейки = ✅** по всему фронту (23 файла). Единственный остаток ⏸ = **Final** на 3 app-gated поверхностях (result/session-summary/post-answer-controls) — parity-QA требует живого app. Статически проверяемое покрытие фронта контракт-тестами ПОЛНОЕ (12 из 12 покрываемых артефактов; чистые no-JS/декор фрагменты icons/mermaid уже были ✅).
+- **Дальше:** статических Contract/Tests-единиц не осталось — весь остаток фронта либо ✅, либо Final-app-gated (parity-QA) / decision-gated (§10 4 решения). Следующий тик — **turnkey-пакет для пользователя** (decision-brief 4 решений + parity-QA-чеклист session-окна), т.к. автономная статика исчерпана по всем трём осям (§10 backlog R0.132 + §9 Contract/Tests R0.134). Нумерация R0.135+.
 
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
