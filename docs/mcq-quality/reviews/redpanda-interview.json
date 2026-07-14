@@ -1,0 +1,13 @@
+{
+  "topic_slug": "redpanda-interview",
+  "round": "ROUND-8",
+  "total_blocks": 20,
+  "blocks_reaudited": 0,
+  "status": "WIP (c1 bootstrap: POS de-cycle + fact-freshness. Файл СЫРОЙ, не реаудирован. Крупные проблемы к разбору: OPTION_LENGTH_RATIO=3.17 (correct длиннее, 17 блоков >1.35 — length-tell), ABSOLUTE_MARKER_GAP=0.383 (абсолюты у wrong), skel hard_fails=4 (Q10/Q17/Q18/Q20), ΣCAR=1 (1 каррикатурный блок по матрице). План: worst-first по блокам — де-length-tell + де-каррикатура + когерентность + skel-паритет, каждый блок с блайндом. correct byte-locked, правим только дистракторы.)",
+  "chunks_reviewed": [
+    "c1 (2026-07-14): POS de-cycle — correct-позиции были строгим циклом ABCDABCDABCDABCDABCD (CORRECT_POSITION_SEQUENCE=20). Перестановка label/order на target CADBDBCAACBDBDACCDAB (counts A5/B4/C4/D5=по 5, arith-run≤4) → SEQUENCE 20→4, DISTRIBUTION 1.0. Контент КАЖДОЙ опции БАЙТ-ИДЕНТИЧЕН HEAD (set-equal per block: text+correct+sections) → blind не требуется. + fact-freshness sidecar (SOURCE_COVERAGE missing→ok)."
+  ],
+  "gates": "c1: CORRECT_POSITION_SEQUENCE 20→4 PASS, DISTRIBUTION=1.0. verify-mcq-json OK. ОСТАЮТСЯ (сырой файл, к разбору): OPTION_LENGTH_RATIO=3.17 (worst Q14, 17 блоков), ABSOLUTE_MARKER_GAP=0.383, skel hard_fails=4 (Q10/Q17/Q18/Q20), DUPLICATE=0.",
+  "residual": "Файл в начале ROUND-8 реаудита. Worst-first по блокам: сначала length-tell (correct 3.17× длиннее — сжать correct/поднять дистракторы до паритета) + де-каррикатура (ΣCAR=1) + skel hard (Q10/Q17/Q18/Q20). §1: факты/когерентность/single-correct > form-parity > числовые метрики.",
+  "notes": "Сырой ROUND-8 файл (messaging/redpanda). Правится ТОЛЬКО JSON-seed; correct byte-locked; label/order/1-correct инвариантны (кроме c1 POS-перестановки, где контент set-equal). Матрица: redpanda Sev=HIGH, ΣCAR=1, Lspd=15."
+}
