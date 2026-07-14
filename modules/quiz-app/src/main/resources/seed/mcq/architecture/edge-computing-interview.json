@@ -82,7 +82,7 @@
               "order": 0
             },
             {
-              "text": "CDN и edge compute — синонимы: оба кэшируют статику и исполняют произвольный код в `POP` (правка request/response, персонализация, auth); классический serverless (`Lambda`, Cloud Functions) — полноценный рантайм в централизованных регионах с заметным cold start; edge serverless (Workers, Lambda@Edge) объединяет serverless и расположение на краю.",
+              "text": "Между `CDN` и edge compute разницы по сути нет: оба и раздают статику, и запускают произвольный код прямо в `POP`; обычный serverless (`Lambda`, Cloud Functions) — рантайм в центральных дата-центрах, где ощутим холодный старт; а edge serverless (Workers, Lambda@Edge) тот же рантайм лишь приближает к пользователю.",
               "correct": false,
               "sections": {
                 "what_actually": "CDN только кэширует статические объекты без логики; исполнение кода добавляет именно edge compute поверх CDN.",
@@ -94,7 +94,7 @@
               "order": 1
             },
             {
-              "text": "CDN кэширует статику без логики; edge compute — это CDN плюс исполнение кода в `POP` (правка request/response, персонализация, auth); классический serverless (`Lambda`, Cloud Functions) — полноценный рантайм сразу во всех `POP` на краю без региональной привязки; edge serverless (Workers, Lambda@Edge) объединяет serverless и расположение на краю.",
+              "text": "Обычный `CDN` отвечает за кэш статики, а edge compute докладывает к нему код в `POP`; классический serverless (`Lambda`, Cloud Functions) тоже раскидан по краю — платформа сама поднимает копии во всех точках присутствия без региона, оттого холодный старт неощутим; edge serverless (Workers) следует той же схеме.",
               "correct": false,
               "sections": {
                 "what_actually": "Классический serverless работает в централизованных регионах (`us-east-1` и т.п.); на краю исполняются именно edge-варианты (Workers, Lambda@Edge).",
@@ -106,7 +106,7 @@
               "order": 2
             },
             {
-              "text": "CDN кэширует статику без логики; edge compute — это CDN плюс исполнение кода в `POP` (правка request/response, персонализация, auth); классический serverless (`Lambda`, Cloud Functions) — полноценный рантайм в централизованных регионах с заметным cold start; edge serverless (Workers, Lambda@Edge) полностью заменяет origin, включая его данные и тяжёлую обработку.",
+              "text": "На деле `CDN` держит кэш статики, а edge compute добавляет к нему логику в `POP`; классический serverless (`Lambda`, Cloud Functions) исполняется в центральных регионах и не мгновенно; edge serverless (Workers, Lambda@Edge) же целиком вытесняет origin, забирая на край и данные, и тяжёлые вычисления.",
               "correct": false,
               "sections": {
                 "what_actually": "Edge снимает часть нагрузки и логики, но за данными, тяжёлой обработкой и состоянием функция всё равно ходит к origin или внешней БД.",
@@ -189,7 +189,7 @@
           "question_text": "Как устроен Cloudflare Workers и за счёт чего он быстрый?",
           "options": [
             {
-              "text": "`Worker` — это код (JS/TS/Wasm), раскатанный во все 300+ `POP` Cloudflare и исполняемый в отдельной полноценной VM, создаваемой под каждый запрос. Первый запрос в `POP` загружает воркер (~1 мс), последующие снова поднимают отдельную VM (сотни миллисекунд). Доступны Fetch API, KV, Durable Objects, cron-триггеры, D1, R2, очереди; лимиты — CPU 10 мс free / 30 с paid, память 128 МБ.",
+              "text": "`Worker` — это код (JS/TS/Wasm), разложенный по 300+ `POP` Cloudflare, но исполняемый в отдельной полноценной VM под каждый запрос. Первый вызов в `POP` поднимает воркер (~1 мс), а каждый следующий заново стартует свою машину (сотни миллисекунд). Из возможностей те же Fetch API, KV, Durable Objects, cron, D1, R2 и очереди; потолки — CPU 10 мс free / 30 с paid и 128 МБ.",
               "correct": false,
               "sections": {
                 "what_actually": "Workers исполняются в лёгких `V8`-изолятах внутри общего процесса, а не в отдельной VM на запрос — отсюда микросекундный старт.",
@@ -214,7 +214,7 @@
               "order": 1
             },
             {
-              "text": "`Worker` — это код на любом языке с произвольными нативными бинарниками, раскатанный во все 300+ `POP` Cloudflare и исполняемый в полноценном контейнере с OS-рантаймом. Первый запрос в `POP` загружает воркер (~1 мс), последующие переиспользуют уже прогретый изолят (микросекунды). Доступны Fetch API, KV, Durable Objects, cron-триггеры, D1, R2, очереди; лимиты — CPU 10 мс free / 30 с paid, память 128 МБ.",
+              "text": "`Worker` здесь пишут на любом языке с произвольными нативными бинарниками и запускают в полноценном контейнере с OS-рантаймом на 300+ `POP`. Первый вызов грузит воркер (~1 мс), дальнейшие переиспользуют прогретый изолят (микросекунды). Набор тот же — Fetch API, KV, Durable Objects, cron, D1, R2, очереди; лимиты стандартные: 10 мс CPU free / 30 с paid и 128 МБ памяти.",
               "correct": false,
               "sections": {
                 "what_actually": "Workers ограничены JS/TS и WASM (Rust/C/Go → wasm); произвольные нативные бинарники и полноценный OS-рантайм недоступны.",
@@ -226,7 +226,7 @@
               "order": 2
             },
             {
-              "text": "`Worker` — это код (JS/TS/Wasm), раскатанный во все 300+ `POP` Cloudflare и исполняемый в `V8`-изоляте. Первый запрос в `POP` загружает воркер (~1 мс), последующие переиспользуют уже прогретый изолят (микросекунды). Доступны Fetch API, KV, Durable Objects, cron-триггеры, D1, R2, очереди; лимитов на CPU и память нет: это полноценный сервер без ограничений рантайма.",
+              "text": "`Worker` — код (JS/TS/Wasm) в `V8`-изоляте, разложенный по 300+ `POP`, где первый вызов грузит его (~1 мс), а дальше идёт уже прогретый изолят (микросекунды). Из API — Fetch, KV, Durable Objects, cron, D1, R2, очереди. Ограничений же на CPU и память нет вовсе; это полноценный сервер без потолков рантайма.",
               "correct": false,
               "sections": {
                 "what_actually": "Лимиты есть: CPU 10 мс на free / до 30 с на платном, память 128 МБ, размер запроса 100 МБ.",
@@ -249,7 +249,7 @@
           "question_text": "Чем Lambda@Edge отличается от CloudFront Functions?",
           "options": [
             {
-              "text": "`CloudFront Functions` (2021) — Python/JS, до 30 с исполнения, вызовы внешних сервисов и полный набор тяжёлых кейсов, дёшево ($0.10/млн). `Lambda@Edge` старше и слабее: Node.js/Python, до 5 с (viewer) и 30 с (origin), полный набор возможностей `Lambda`, 4 точки триггера (viewer/origin request/response), но дороже ($0.60/млн) и с cold start 50-200 мс.",
+              "text": "`CloudFront Functions` (2021) тут выступают мощнее: Python и JS, вплоть до 30 с на вызов, вызовы внешних сервисов и любые тяжёлые сценарии, притом дёшево ($0.10/млн). `Lambda@Edge` — что постарше и слабее: Node.js/Python, до 5 с на viewer и 30 с на origin, четыре точки триггера (viewer/origin request/response), но дороже ($0.60/млн) и с cold start 50-200 мс.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `CloudFront Functions` — только JS, <1 мс, viewer-фазы и простые кейсы; долгие вызовы и сервисы — это `Lambda@Edge`.",
@@ -261,7 +261,7 @@
               "order": 0
             },
             {
-              "text": "`CloudFront Functions` (2021) — только JS, <1 мс исполнения, доступны лишь на viewer request/response, для простых кейсов (заголовки, редиректы), дёшево ($0.10/млн). `Lambda@Edge` старше и мощнее: Node.js/Python, до 5 с (viewer) и 30 с (origin), полный набор возможностей `Lambda`, одна точка триггера (только viewer request, как у CloudFront Functions), но дороже ($0.60/млн) и с cold start 50-200 мс.",
+              "text": "`CloudFront Functions` (2021) — исключительно JS, менее 1 мс, доступ лишь на viewer request/response, под простые кейсы вроде заголовков и редиректов, дёшево ($0.10/млн). `Lambda@Edge` старше и мощнее: Node.js/Python, до 5 с на viewer и 30 с на origin, вот только триггер у него один — тот же viewer request, что и у CloudFront Functions, дороже ($0.60/млн), cold start 50-200 мс.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Lambda@Edge` четыре точки: viewer request, origin request, origin response, viewer response; одна фаза — это про `CloudFront Functions`.",
@@ -273,7 +273,7 @@
               "order": 1
             },
             {
-              "text": "`CloudFront Functions` (2021) — только JS, <1 мс исполнения, доступны лишь на viewer request/response, для простых кейсов (заголовки, редиректы), по той же цене ($0.60/млн). `Lambda@Edge` старше и мощнее: Node.js/Python, до 5 с (viewer) и 30 с (origin), полный набор возможностей `Lambda`, 4 точки триггера (viewer/origin request/response), по той же цене ($0.60/млн) и без cold start.",
+              "text": "`CloudFront Functions` (2021) — исключительно JS, менее 1 мс, лишь на viewer request/response, под простые кейсы (заголовки, редиректы), по цене $0.60/млн. `Lambda@Edge` старше и мощнее: Node.js/Python, до 5 с на viewer и 30 с на origin, четыре точки триггера (viewer/origin request/response), стоит ровно столько же — $0.60/млн, и оба при этом обходятся без cold start.",
               "correct": false,
               "sections": {
                 "what_actually": "Цены и старт разные: `CloudFront Functions` дешевле ($0.10/млн) и без cold start, `Lambda@Edge` дороже ($0.60/млн) и с холодным стартом 50-200 мс.",
