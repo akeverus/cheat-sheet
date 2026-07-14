@@ -1753,3 +1753,9 @@ Known factually wrong correct answers: 0
 - **УРОК c7:** skel `;`-tell (correct — единственный с `;`) чинится попутно с длиной: дистракторам добавить второй клауз с `;` в их false-модели — усиливает и длину, и пунктуационный паритет разом (correct байт-лок = эталон пунктуации).
 - **Прим.:** тик прерывался plan mode посреди (правка уже в дереве, блайнд отложен) → после выхода блайнд проведён, тик закрыт штатно.
 - Content-реаудировано 6/20. Sidecar: +c7/+blind_c7, blocks_reaudited=6. Worst-first остаток: Q1(1.89)/Q18(1.88)/Q13/Q9… + skel hard Q10/Q18/Q20 + каррикатуры Q12-A/Q20-A/C.
+
+### ROUND-8 · redpanda · c8 Q1 length-tell — 2026-07-14
+- **c8 = Q1** («что такое Redpanda»), worst length (ratio 1.89). Correct=C байт-лок (13w). Q1-A = 9w заглушка «надстройка над Kafka через DPDK-плагин» при B17/C13/D14.
+- **Фикс:** A поднят 9→17w «надстройка над существующим кластером Kafka, ускоряет через DPDK-плагин и kernel-bypass, не заменяя сами брокеры» (misconception плагин-поверх-Kafka сохранён, совпадает с source_of_confusion; sections не тронуты; зачин «Это» — паритет). ratio Q1 **1.89→1.31** (A17/B17/C13/D14).
+- **blind (SEED 72902): ACCEPT.** single_correct=B, factual_error=нет, само-противоречий нет. Поднятый A «наиболее умный дистрактор, лучший из трёх». form_guess остаточный слабый (correct нейтрален vs «твист» дистракторов — inherent). Correct C байт-лок (== HEAD), изменён только Q1-A.
+- Content-реаудировано 7/20. Sidecar: +c8/+blind_c8, blocks_reaudited=7. Worst-first остаток: Q18(1.88)/Q13/Q9/Q4… + skel hard Q10/Q18/Q20 + каррикатуры Q12-A/Q20-A/C. Прим. Q18: worst length И skel hard И каррикатура A, но A=легитимный silver-bullet-маркер → только length+skel, де-каррикатуру не форсить.
