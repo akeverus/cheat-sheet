@@ -2654,6 +2654,15 @@ Constraint Validation API без сабмита на session-form. count (number
 - **Веха — статический derive-well иссякает:** пять подряд derive-and-check инвариантов (fragment R0.136 → icon R0.137 → data-label R0.138 → aria-idref R0.139 → asset-version R0.140), все CLEAN. Крупные структурные a11y/dead-code/cache-контракты **исчерпаны** — каждый закрыт guard'ом. Оставшиеся микро-кандидаты (th:field-биндинг, role-валидность) либо требуют server-контекста (не чисто-статичны), либо marginal. **Честно: дальнейший осмысленный прогресс к конечной цели теперь app-gated (parity-QA turnkey Часть B) или decision-gated (§10 RES-3/APP-5/ICO-3).** Не манифактурить marginal-проверки ради R0.NN — при отсутствии app/решения следующие тики: либо микро-полиш реально найденного, либо холд.
 - **Дальше:** держать до подъёма app (→ turnkey Часть B) или решения пользователя (§10). Нумерация R0.141+.
 
+### R0.141 (2026-07-14) — Removed-feature dead-CSS completeness CLEAN (закрытие AI-fallout на CSS-уровне)
+
+- **Единица:** ограниченный dead-CSS completeness-аудит удалённых фич (Фаза E, app-независим) — проверить, что чистки AI/regenerate (R0.126)/STA-20 (R0.128)/icon (R0.137) не оставили orphan-CSS-хвостов в base.css. Реальный loose-end темы AI-fallout, не покрытый явно на CSS-селектор-уровне.
+- **Аудит (CLEAN):** 7 классов удалённых фич (`regenerate`, `regen-badge`, `question-side`, `btn-regenerate`, `ai-unavailable`, `generation-unavailable`, `extra-analysis-toggle-result`) — **все 0 в base.css**, 0 orphan-markup. Единственный template-хит `question-side` (result.html:31) — **внутри removal-комментария** («`.question-side` удалён»), не живой класс. → AI/regenerate/STA-20-чистки полны, CSS-хвостов нет.
+- **Действие:** нет (CLEAN). Guard не заведён намеренно — «эти 7 классов не появляются» = marginal (удалённые фичи не возвращаются); полноценный систематический dead-CSS-sweep всех селекторов base.css = многотиковое исследование с высоким false-positive-риском (JS-классы `.is-active`/`.hidden`/`.js-tabs`, псевдосостояния, design-scoped), не чисто-статичный single-tick unit — сознательно НЕ берём (не манифактурить noise).
+- **Verify:** grep-only, без правок. Без коммита кода/теста.
+- **Веха подтверждена (R0.140):** статический derive-well исчерпан; это closure — последний ограниченный AI-fallout loose-end на CSS-уровне. **Дальнейший прогресс к конечной цели строго app-gated (parity-QA turnkey Часть B) или decision-gated (§10 RES-3/APP-5/ICO-3).** Следующие тики без подъёма app / решения пользователя = ЯВНЫЙ ХОЛД (без манифактурных R0.NN).
+- **Дальше:** ХОЛД до app/решения. Нумерация R0.142+ только при реальном триггере (app up → Часть B; решение §10; либо реально найденный микро-дефект).
+
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
 ## R1.73 — WCAG 3.2.3 Consistent Navigation (AA) — verified-clean
