@@ -160,12 +160,19 @@
                     <span th:utext="${opt.optionText != null ? @markdownRenderService.toInlineHtml(opt.optionText.replaceFirst('^[A-Z][.] ', '')) : ''}">Вариант</span>
                 </label>
             </div>
+            <!-- Диапазон «1–N» считаем server-side из реального числа вариантов
+                 (капом 9 — столько цифровых горячих клавиш). Раньше был статический
+                 «1–9», который при 4 вариантах вводил в заблуждение (клавиши 5–9
+                 ничего не делают), тогда как title кнопки app.js уже правил динамически
+                 — рассинхрон (UX-ревью #14). Теперь оба источника согласованы, и no-JS
+                 SSR-фоллбэк тоже корректен. Выражение инлайнится (не th:with): на одном
+                 элементе th:replace имеет приоритет над th:with → keyCount был бы пуст. -->
             <div th:replace="~{fragments/training-actions :: training-actions(
                 submitId='interview-submit',
                 submitText='Проверить ответ',
                 submitDisabled=false,
-                submitTitle='Клавиши 1–9 — выбор, Enter — ответить',
-                hintText='1–9 — выбор, ↑/↓ — навигация, Esc — снять, Enter — отправка'
+                submitTitle=${'Клавиши 1–' + (current.options.size() > 9 ? 9 : current.options.size()) + ' — выбор, Enter — ответить'},
+                hintText=${'1–' + (current.options.size() > 9 ? 9 : current.options.size()) + ' — выбор, ↑/↓ — навигация, Esc — снять, Enter — отправка'}
             )}"></div>
         </form>
 
