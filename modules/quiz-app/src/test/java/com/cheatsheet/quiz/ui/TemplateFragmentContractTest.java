@@ -91,9 +91,9 @@ class TemplateFragmentContractTest {
         assertThat(focusTraining).doesNotContain("data-progress=\"0\"");
         assertThat(focusTraining).contains("th:href=\"${focusEmptyRetryHref}\"");
         assertThat(focusTraining).contains("th:text=\"${focusEmptyRetryText}\"");
-        assertThat(focusTraining).contains("th:if=\"${!generationUnavailable and !reviewMode and interviewSession == null}\"");
-        assertThat(focusTraining).contains("th:if=\"${!generationUnavailable and !reviewMode and interviewSession != null and !interviewSession.finished}\"");
-        assertThat(focusTraining).contains("th:if=\"${!generationUnavailable and !reviewMode and interviewSession != null and interviewSession.finished}\"");
+        assertThat(focusTraining).contains("th:if=\"${!reviewMode and interviewSession == null}\"");
+        assertThat(focusTraining).contains("th:if=\"${!reviewMode and interviewSession != null and !interviewSession.finished}\"");
+        assertThat(focusTraining).contains("th:if=\"${!reviewMode and interviewSession != null and interviewSession.finished}\"");
         assertThat(focusTraining).contains("Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.");
         // Эмодзи 🏁 заменён монохромной Lucide-иконкой #i-flag (система иконок).
         assertThat(focusTraining).contains("#i-flag");

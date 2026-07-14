@@ -182,17 +182,17 @@
 
     <section class="empty empty-card-inner" th:if="${current == null}">
         <h2 class="empty-title">Сейчас нет вопросов</h2>
-        <!-- AIR-fallout: AI вырезан → generationUnavailable зашит в false
-             (FocusTrainingPageService:54). Строка «AI временно недоступен» никогда не
-             рендерилась и вводила в заблуждение — удалена. Оставшиеся ветки
-             взаимоисключающие по reviewMode / наличию сессии. -->
+        <!-- AIR-6 (R0.129): AI вырезан → generationUnavailable был зашит в false
+             (всегда). Плечо `!generationUnavailable and` снято из guard'ов как
+             всегда-истинное вместе с model-атрибутом и plumbing (FocusPageState +
+             MvcModelAttributeMapper). Ветки взаимоисключающие по reviewMode / сессии. -->
 
-        <p class="empty-description" th:if="${!generationUnavailable and reviewMode}">Нет вопросов с ошибками для review.</p>
-        <p class="empty-description" th:if="${!generationUnavailable and !reviewMode and interviewSession == null}">Нет доступных вопросов по выбранным фильтрам. Открой настройки и расширь выборку.</p>
-        <p class="empty-description" th:if="${!generationUnavailable and !reviewMode and interviewSession != null and !interviewSession.finished}">Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.</p>
-        <p class="empty-description" th:if="${!generationUnavailable and !reviewMode and interviewSession != null and interviewSession.finished}"><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сессия завершена.</p>
+        <p class="empty-description" th:if="${reviewMode}">Нет вопросов с ошибками для review.</p>
+        <p class="empty-description" th:if="${!reviewMode and interviewSession == null}">Нет доступных вопросов по выбранным фильтрам. Открой настройки и расширь выборку.</p>
+        <p class="empty-description" th:if="${!reviewMode and interviewSession != null and !interviewSession.finished}">Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.</p>
+        <p class="empty-description" th:if="${!reviewMode and interviewSession != null and interviewSession.finished}"><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сессия завершена.</p>
         <div class="empty-actions" th:with="finished=${interviewSession != null and interviewSession.finished},
-                                            settingsPrimary=${!generationUnavailable and !reviewMode and interviewSession == null}">
+                                            settingsPrimary=${!reviewMode and interviewSession == null}">
             <!-- Завершённая сессия: главный CTA — итоги, а не «обновить тренировку».
                  POST /finish сохраняет summary из ещё живой finished-сессии и
                  редиректит на /session-summary (InterviewFlowMvcService.finish);

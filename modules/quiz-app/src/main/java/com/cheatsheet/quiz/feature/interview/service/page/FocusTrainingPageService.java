@@ -51,7 +51,6 @@ public class FocusTrainingPageService {
             boolean weakTopicsPriority,
             Long excludeQuestionId
     ) {
-        boolean generationUnavailable = false;
         Optional<InterviewQuestion> current = interviewSession != null
                 ? facade.questionForSession(interviewSession)
                 : facade.nextQuestion(filter, weakTopicsPriority, excludeQuestionId);
@@ -91,7 +90,6 @@ public class FocusTrainingPageService {
 
         return new FocusPageState(
                 current,
-                generationUnavailable,
                 studyLearnPhase,
                 flashcardMode,
                 flashcardRevealed,
@@ -144,7 +142,6 @@ public class FocusTrainingPageService {
     @Builder(toBuilder = true)
     public record FocusPageState(
             Optional<InterviewQuestion> current,
-            boolean generationUnavailable,
             boolean studyLearnPhase,
             boolean flashcardMode,
             boolean flashcardRevealed,

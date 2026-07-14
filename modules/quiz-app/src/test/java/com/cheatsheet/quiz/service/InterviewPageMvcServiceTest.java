@@ -72,7 +72,7 @@ class InterviewPageMvcServiceTest {
         InterviewSession interviewSession = org.mockito.Mockito.mock(InterviewSession.class);
         InterviewFilter filter = new InterviewFilter("java", "backend", true, false, true, true);
         FocusTrainingPageService.FocusPageState pageState = new FocusTrainingPageService.FocusPageState(
-                null, false, false, false, false, null, null, null, 0.0, null
+                null, false, false, false, null, null, null, 0.0, null
         );
 
         when(sessionSupport.getSession(session)).thenReturn(interviewSession);
@@ -97,7 +97,7 @@ class InterviewPageMvcServiceTest {
         InterviewFilter baseFilter = new InterviewFilter("java", "backend", true, false, true, true);
         InterviewFilter reviewFilter = new InterviewFilter("java", "backend", true, true, true, true);
         FocusTrainingPageService.FocusPageState pageState = new FocusTrainingPageService.FocusPageState(
-                null, false, false, false, false, null, null, null, 0.0, null
+                null, false, false, false, null, null, null, 0.0, null
         );
 
         when(sessionSupport.getSession(session)).thenReturn(interviewSession);

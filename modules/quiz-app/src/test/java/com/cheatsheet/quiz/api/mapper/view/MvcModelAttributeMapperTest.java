@@ -44,7 +44,6 @@ class MvcModelAttributeMapperTest {
                 false,
                 false,
                 false,
-                false,
                 null,
                 null,
                 null,
@@ -67,7 +66,6 @@ class MvcModelAttributeMapperTest {
     void appliesFocusModeDerivedAttributesForFlashcardAndStudy() {
         FocusTrainingPageService.FocusPageState flashcardState = new FocusTrainingPageService.FocusPageState(
                 Optional.empty(),
-                false,
                 false,
                 true,
                 false,
@@ -115,7 +113,6 @@ class MvcModelAttributeMapperTest {
         // Чип/подсказка обязаны отражать флешкарту, а не «Выбери один вариант».
         FocusTrainingPageService.FocusPageState trainingFlashcard = new FocusTrainingPageService.FocusPageState(
                 Optional.empty(),
-                false,
                 false,
                 true,
                 false,

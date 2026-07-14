@@ -75,7 +75,6 @@ class FocusTrainingPageServiceTest {
         );
 
         assertThat(state.current()).isEmpty();
-        assertThat(state.generationUnavailable()).isFalse();
     }
 
     @Test
@@ -118,7 +117,6 @@ class FocusTrainingPageServiceTest {
                 1L
         );
 
-        assertThat(state.generationUnavailable()).isFalse();
         assertThat(state.current()).contains(interviewQuestion);
     }
 }

@@ -44,7 +44,6 @@ public class MvcModelAttributeMapper {
     public void applyFocusPageState(Model model, FocusTrainingPageService.FocusPageState pageState, boolean reviewMode) {
         applySurfaceState(model, pageState.surface());
         model.addAttribute("current", pageState.current().orElse(null));
-        model.addAttribute("generationUnavailable", pageState.generationUnavailable());
         model.addAttribute("studyLearnPhase", pageState.studyLearnPhase());
         model.addAttribute("flashcardMode", pageState.flashcardMode());
         model.addAttribute("flashcardRevealed", pageState.flashcardRevealed());

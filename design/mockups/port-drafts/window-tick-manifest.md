@@ -94,11 +94,15 @@
 - **regenerate-removal — ✅ ИСПОЛНЕНО R0.126** (result.html+app.js v=63+base.css v=94, 6 CSS-хунков + JS + кнопка/бейдж/сайд; контракт 10/10; под-план удалён).
 - **RES-15 — ✅ ИСПОЛНЕНО R0.127** (result.html+app.js v=64 обёртка role=list/listitem; контракт 10/10; под-план удалён; a11y-снапшот — app-gated подтверждение).
 - **STA-20 — ✅ ИСПОЛНЕНО R0.128** (th+td удалены, Зрелость data-col 5→4 для sort-выравнивания, base.css v=95; контракт 10/10; DTO regenSum оставлен — API-test-gated).
-- **AIR-6** — отдельно: `.java` plumbing → нужен render-тест; сперва проверить, нужна ли ему БД.
+- **AIR-6 — ✅ ИСПОЛНЕНО R0.129** (флаг `generationUnavailable` снят из FocusTrainingPageService:54/94/147 + FocusPageState-record + MvcModelAttributeMapper:47 + 4 guard'а focus-training.html; 7 файлов). **Пред-условие «нужна ли БД render-тесту» СНЯТО:** `InterviewMvcControllerTest` и `FocusTrainingPageServiceTest` — оба на `@ExtendWith(MockitoExtension.class)` (без `@SpringBootTest`/БД), как и контракт-тест → app НЕ нужен. Compile поймал 5 конструкций FocusPageState со старой арностью (позиц. `false` без имени поля) — исправлено; 23 теста green.
 
-«Единое окно» больше НЕ требуется для статики — v-бампы делаются по мере применения (несколько
-бампов безвредны, это лишь кэш-инвалидация). Parity-QA (визуальные скрины) по-прежнему нужен app —
-но чисто-статические 0-render единицы (SET-21, regenerate-removal) его не требуют.
+## ✅ WINDOW-ТИК ЗАКРЫТ 5/5 (R0.129, 2026-07-14)
 
-**Остаточное пред-условие (только для parity-QA и AIR-6-render):** postgres+app. Статические
-cleanup'ы — исполнять инкрементально сейчас.
+Все пять единиц исполнены **статически, без app**: SET-21 (R0.125) · regenerate-removal (R0.126) ·
+RES-15 (R0.127) · STA-20 (R0.128) · AIR-6 (R0.129). Ключ — две находки о гейтах: контракт-тест
+DB-free (R0.125) + render/mapper/service-тесты на Mockito (R0.129). «Единое окно app-up» оказалось
+не нужно для статики вовсе.
+
+**Остаток по этим единицам — только app-gated parity-QA** (скрин+DOM-метрики; НЕ гейт корректности):
+RES-15 a11y-снапшот, STA-20 визуал/responsive/share-print, port-parity прочих поверхностей §7.
+Структурная/контрактная корректность всех 5 уже верифицирована статически.
