@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -554,5 +556,37 @@ class TemplateFragmentContractTest {
         }
         // Санити: аудит реально нашёл idref (иначе regex сломан → false-negative).
         assertThat(checkedRefs).as("проверенных ARIA-idref").isGreaterThanOrEqualTo(25);
+    }
+
+    @Test
+    void versionedAssetsAreConsistentAcrossTemplates() throws IOException {
+        // Cache-busting контракт (HEAD-1/APP-7/FT-17/SET-12): ассет, подключённый
+        // из НЕСКОЛЬКИХ шаблонов через @{/js|css/NAME(v=N)}, обязан нести ОДНУ версию
+        // во всех точках. Дрейф (result.html app.js=v=64, focus=v=63) = устаревший JS
+        // на части страниц после правки. app.js грузится 3 страницами (focus/result/
+        // settings) — самый дрейфо-опасный. CSS — единый head.html (per-file версии
+        // независимы: tokens и base не обязаны быть равны). App не нужен.
+        Path templatesDir = new ClassPathResource("templates").getFile().toPath();
+        Pattern assetPattern = Pattern.compile("/(?:js|css)/([a-zA-Z._-]+\\.(?:js|css))\\(v=(\\d+)\\)");
+
+        Map<String, Set<String>> versionsByAsset = new LinkedHashMap<>();
+        try (Stream<Path> walk = Files.walk(templatesDir)) {
+            for (Path p : (Iterable<Path>) walk.filter(p -> p.toString().endsWith(".html")).sorted()::iterator) {
+                String html = new String(Files.readAllBytes(p), StandardCharsets.UTF_8);
+                Matcher m = assetPattern.matcher(html);
+                while (m.find()) {
+                    versionsByAsset.computeIfAbsent(m.group(1), k -> new LinkedHashSet<>()).add(m.group(2));
+                }
+            }
+        }
+
+        // Санити: контракт реально нашёл версионированные ассеты (app.js в 3 шаблонах).
+        assertThat(versionsByAsset).containsKey("app.js");
+
+        for (Map.Entry<String, Set<String>> e : versionsByAsset.entrySet()) {
+            assertThat(e.getValue())
+                .as("ассет '%s' должен нести одну версию во всех шаблонах, найдено: %s", e.getKey(), e.getValue())
+                .hasSize(1);
+        }
     }
 }
