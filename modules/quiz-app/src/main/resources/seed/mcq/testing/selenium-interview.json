@@ -82,7 +82,7 @@
               "order": 0
             },
             {
-              "text": "Порядок выбора: `By.id` — самый быстрый и уникальный, если есть; `By.name` — для полей форм; `By.cssSelector` — предпочтительнее XPath (быстрее, читаемее); `By.xpath` — только когда CSS не справляется (поиск по тексту, навигация по дереву вверх). `By.linkText` ищет подстроку в любом атрибуте элемента; также есть `className`, `tagName`, `partialLinkText`.",
+              "text": "На практике `By.id` даёт самый быстрый и уникальный поиск; `By.name` берут под поля форм; `By.cssSelector` ставят выше XPath (быстрее, читаемее), а `By.xpath` держат, когда CSS не тянет (текст, обход дерева вверх). При этом `By.linkText` ищет подстроку в любом атрибуте элемента; ещё есть `className`, `tagName`, `partialLinkText`.",
               "correct": false,
               "sections": {
                 "what_actually": "`By.linkText` ищет ссылку строго по полному видимому тексту; для частичного совпадения есть `By.partialLinkText`, и оба работают только с `<a>`.",
@@ -94,7 +94,7 @@
               "order": 1
             },
             {
-              "text": "Порядок выбора: `By.id` — самый быстрый и уникальный, если есть; `By.name` — для полей форм; `By.cssSelector` — предпочтительнее XPath (быстрее, читаемее); `By.xpath` — только когда CSS не справляется (поиск по тексту, навигация по дереву вверх). Для локализованного UI лучшая практика — искать по видимому тексту; также есть `className`, `tagName`, `linkText`, `partialLinkText`.",
+              "text": "Начинают с `By.id` — он быстрый и уникальный; `By.name` подходит полям форм; `By.cssSelector` предпочитают XPath'у (быстрее и читаемее), оставляя `By.xpath` для того, что вне CSS (текст, движение по дереву вверх). Для локализованного интерфейса лучшей практикой считают поиск по видимому тексту; вдобавок доступны `className`, `tagName`, `linkText`, `partialLinkText`.",
               "correct": false,
               "sections": {
                 "what_actually": "Это как раз плохая практика: такие локаторы ломаются при локализации, когда текст меняется на другой язык.",
@@ -106,7 +106,7 @@
               "order": 2
             },
             {
-              "text": "Порядок выбора: `By.id` — самый быстрый и уникальный, если есть; `By.name` — для полей форм; `By.xpath` — предпочтительнее CSS (всегда быстрее, выразительнее); `By.cssSelector` — только когда XPath не справляется (простые атрибуты, плоская навигация по дереву). Также есть `className`, `tagName`, `linkText`, `partialLinkText`.",
+              "text": "Первым пробуют `By.id` — быстрый и уникальный; `By.name` идёт под поля форм; `By.xpath` тут считают предпочтительнее CSS (всегда быстрее и выразительнее), а `By.cssSelector` держат лишь там, где XPath избыточен (простые атрибуты, плоский обход дерева). Кроме того есть `className`, `tagName`, `linkText`, `partialLinkText`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `cssSelector` обычно быстрее и читаемее, а XPath берут только когда CSS не хватает (поиск по тексту, навигация по иерархии).",
@@ -309,7 +309,7 @@
           "question_text": "Что такое `PageFactory` и как работают аннотации `@FindBy`?",
           "options": [
             {
-              "text": "`PageFactory.initElements(driver, this)` вызывать не нужно: поля `@FindBy` автоматически превращаются в lazy proxy-элементы. Реальный поиск (`findElement`) происходит при каждом обращении к полю, а не один раз — это снижает риск `StaleElementReferenceException` после переходов. Есть также `@FindBys` (цепочка AND) и `@FindAll` (любой из, OR).",
+              "text": "`PageFactory.initElements(driver, this)` вызывать не требуется — поля с `@FindBy` сами оборачиваются в lazy proxy-элементы. Свежий `findElement` бьёт при каждом обращении к полю, а не единожды, что уменьшает `StaleElementReferenceException` после навигации. Рядом есть `@FindBys` (цепочка AND) и `@FindAll` (OR — любой из).",
               "correct": false,
               "sections": {
                 "what_actually": "Без `PageFactory.initElements(driver, this)` поля с `@FindBy` останутся `null`: именно этот вызов создаёт прокси-элементы.",
@@ -321,7 +321,7 @@
               "order": 0
             },
             {
-              "text": "`PageFactory.initElements(driver, this)` инициализирует поля, помеченные `@FindBy`, превращая их в lazy proxy-элементы. Реальный поиск (`findElement`) происходит один раз в конструкторе, а найденный `WebElement` кэшируется — это сохраняет одну ссылку после переходов. Есть также `@FindBys` (цепочка AND) и `@FindAll` (любой из, OR).",
+              "text": "`PageFactory.initElements(driver, this)` поднимает поля с `@FindBy`, заворачивая их в lazy proxy, однако `findElement` срабатывает единожды в конструкторе, а полученный `WebElement` кэшируется — ссылка держится прежней и после переходов. Рядом лежат `@FindBys` (цепочка AND) и `@FindAll` (OR — любой из).",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию `@FindBy`-поля — это lazy proxy: реальный `findElement` выполняется при каждом обращении, а не кэшируется навсегда.",
@@ -346,7 +346,7 @@
               "order": 2
             },
             {
-              "text": "`PageFactory.initElements(driver, this)` инициализирует поля, помеченные `@FindBy`, превращая их в lazy proxy-элементы. Реальный поиск (`findElement`) происходит при каждом обращении к полю, а не один раз — это снижает риск `StaleElementReferenceException` после переходов. Есть также `@FindBys` (любой из, OR) и `@FindAll` (любой из, OR) — это взаимозаменяемые варианты.",
+              "text": "`PageFactory.initElements(driver, this)` заводит поля `@FindBy` как lazy proxy — настоящий `findElement` идёт на каждое обращение, а не разово, снижая `StaleElementReferenceException` после переходов. Только вот `@FindBys` (любой из, OR) и `@FindAll` (любой из, OR) здесь — взаимозаменяемые варианты.",
               "correct": false,
               "sections": {
                 "what_actually": "Различие принципиально: `@FindBys` — это AND (цепочка вложенных локаторов), а `@FindAll` — OR (первый совпавший из списка).",
@@ -609,7 +609,7 @@
           "question_text": "Какие альтернативы Selenium существуют и чем они отличаются?",
           "options": [
             {
-              "text": "Selenium — зрелый, широкая поддержка языков/браузеров, но медленный и склонный к флейкам. `Playwright` (~2020) — быстрее, auto-wait, multi-browser, но моложе. `Cypress` — простой, живой debug, но только Chromium-based. `Puppeteer` — полноценный multi-browser для Chrome, Firefox, Safari и Edge. `WebDriverIO` — Node.js, mocha-стиль. `TestCafe` — без WebDriver, auto-wait, но моложе и меньше плагинов.",
+              "text": "Selenium зрелый, с охватом языков и браузеров, но медленный и флейкает. `Playwright` (~2020) — быстрее, auto-wait, multi-browser, но моложе. `Cypress` — живой дебаг, только Chromium. `Puppeteer` — полноценный multi-browser: Chrome, Firefox, Safari, Edge. `WebDriverIO` — Node.js, стиль mocha. `TestCafe` — без WebDriver, auto-wait, но свежее и с меньшим числом плагинов.",
               "correct": false,
               "sections": {
                 "what_actually": "`Puppeteer` исторически Chrome-only (DevTools Protocol); полноценной multi-browser матрицы у него нет, в отличие от Selenium и Playwright.",
@@ -621,7 +621,7 @@
               "order": 0
             },
             {
-              "text": "Selenium — зрелый, широкая поддержка языков/браузеров, но медленный и склонный к флейкам. `Playwright` (~2020) — быстрее, auto-wait, multi-browser, но моложе. `Cypress` — простой, живой debug и одинаковая полная поддержка Chrome, Firefox, Safari и Edge. `Puppeteer` — Chrome-only. `WebDriverIO` — Node.js, mocha-стиль. `TestCafe` — без WebDriver, auto-wait, но моложе и меньше плагинов.",
+              "text": "Selenium зрел, широко тянет языки и браузеры, но ценой скорости и стабильности. `Playwright` (~2020) — шустрее, auto-wait, multi-browser, моложе. `Cypress` — живой дебаг и полная поддержка Chrome, Firefox, Safari, Edge. `Puppeteer` — под Chrome. `WebDriverIO` — на Node.js в mocha-стиле. `TestCafe` — без WebDriver, auto-wait, однако моложе и плагинов меньше.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cypress` работает только в Chromium-based браузерах (и частично Firefox); полноценной Safari-поддержки у него нет, в отличие от Selenium.",
@@ -633,7 +633,7 @@
               "order": 1
             },
             {
-              "text": "Selenium — зрелый, широкая поддержка языков/браузеров, но медленный и склонный к флейкам. `Playwright` — старше Selenium, поэтому быстрее, обладает auto-wait, multi-browser и самой зрелой экосистемой. `Cypress` — простой, живой debug, но только Chromium-based. `Puppeteer` — Chrome-only. `WebDriverIO` — Node.js, mocha-стиль. `TestCafe` — без WebDriver, auto-wait, но моложе и меньше плагинов.",
+              "text": "Selenium давно на рынке, много языков и браузеров, но медлителен и флейкает. `Playwright` старше Selenium и оттого быстрее — auto-wait, multi-browser, зрелейшая экосистема. `Cypress` — живой дебаг, только Chromium. `Puppeteer` — под Chrome. `WebDriverIO` живёт на Node.js (mocha-стиль). `TestCafe` без WebDriver, но с auto-wait, младше и беднее плагинами.",
               "correct": false,
               "sections": {
                 "what_actually": "`Playwright` моложе (примерно 2020 год); его плюсы — скорость, auto-wait и multi-browser, а зрелость и широкая экосистема — как раз у Selenium.",
@@ -742,7 +742,7 @@
               "order": 0
             },
             {
-              "text": "`Cucumber` + Selenium — это BDD UI-тесты: сценарии пишут на естественном языке в `.feature`-файлах (Gherkin: `Given`/`When`/`Then`), а `Cucumber` сам связывает каждый шаг с действиями браузера (Selenium и Page Object не нужны). Это удобно, когда QA/BA формулируют сценарии человекочитаемым языком, а разработчики реализуют шаги.",
+              "text": "`Cucumber` + Selenium — это BDD на уровне UI: поведение излагают человеческим языком в `.feature` (Gherkin `Given`/`When`/`Then`), после чего `Cucumber` сам сводит каждый шаг к действиям браузера — Selenium и Page Object тут не нужны. Формат ценят там, где бизнес описывает поведение простым языком, а инженеры кодируют шаги.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cucumber` лишь парсит Gherkin и связывает шаги со step-методами; реальные действия в браузере выполняет Selenium внутри этих шагов.",
@@ -754,7 +754,7 @@
               "order": 1
             },
             {
-              "text": "`Cucumber` + Selenium — это BDD UI-тесты: сценарии пишут прямо на Java аннотированными методами (`Given`/`When`/`Then`), а отдельных `.feature`-файлов не существует и step definitions связывают каждый шаг с действиями Selenium (через Page Object). Это удобно, когда QA/BA формулируют сценарии человекочитаемым языком, а разработчики реализуют шаги.",
+              "text": "`Cucumber` + Selenium — это BDD на уровне UI, но сценарии здесь набирают прямо на Java методами с `Given`/`When`/`Then`: отдельных `.feature`-файлов не существует, а step definitions цепляют каждый шаг к Selenium через Page Object. Такое удобно, если аналитики задают сценарии естественным языком, а программисты пишут реализацию шагов.",
               "correct": false,
               "sections": {
                 "what_actually": "Сценарии описывают в `.feature`-файлах на Gherkin, а Java-методы (step definitions) лишь реализуют отдельные шаги.",
@@ -766,7 +766,7 @@
               "order": 2
             },
             {
-              "text": "`Cucumber` + Selenium — это BDD UI-тесты: сценарии пишут на естественном языке в `.feature`-файлах (Gherkin: `Given`/`When`/`Then`), а ключевые слова `Given`/`When`/`Then` остаются комментариями и не связываются со step definitions на Java (через Page Object). Это удобно, когда QA/BA формулируют сценарии человекочитаемым языком, а разработчики реализуют шаги.",
+              "text": "`Cucumber` + Selenium — это BDD на уровне UI: поведение излагают человеческим языком в `.feature` (Gherkin `Given`/`When`/`Then`), однако ключевые слова `Given`/`When`/`Then` остаются комментариями и со step definitions на Java (через Page Object) не связаны. Приём полезен, когда QA/BA излагают сценарии обычным языком, а команда разработки реализует шаги.",
               "correct": false,
               "sections": {
                 "what_actually": "Эти ключевые слова сопоставляются с методами через аннотации `@Given`/`@When`/`@Then`; они напрямую связывают шаг сценария с кодом.",
@@ -789,7 +789,7 @@
           "question_text": "Какие анти-паттерны Selenium стоит избегать?",
           "options": [
             {
-              "text": "Главные анти-паттерны: `Thread.sleep()` вместо `WebDriverWait`; хрупкие локаторы (позиционный XPath `/html/body/div[2]/...` вместо `data-testid`); тесты с shared state (один тест влияет на другой); подмена unit-тестов UI-тестами (медленно, дорого); проверка бизнес-логики через UI вместо API; и лишний cleanup (`driver.quit()` не нужен, потому что процессы закрываются после завершения JVM).",
+              "text": "В список анти-паттернов входят: `Thread.sleep()` заместо `WebDriverWait`; ломкие локаторы (позиционный XPath `/html/body/div[2]/...` вместо `data-testid`); связанные общим состоянием тесты; подмена unit-тестов дорогими UI-прогонами; проверка бизнес-логики сквозь UI, а не через API; и избыточный cleanup — `driver.quit()` не нужен, ведь процессы и так гибнут по завершении JVM.",
               "correct": false,
               "sections": {
                 "what_actually": "Без явного `quit()` процессы браузера и драйвера утекают; полагаться на «само закроется» — анти-паттерн, ведущий к утечке ресурсов.",
@@ -801,7 +801,7 @@
               "order": 0
             },
             {
-              "text": "Главные анти-паттерны: `Thread.sleep()` вместо `WebDriverWait`; хрупкие локаторы (позиционный XPath `/html/body/div[2]/...` вместо `data-testid`); тесты с shared state (один тест влияет на другой); подмена unit-тестов UI-тестами (медленно, дорого); проверка бизнес-логики напрямую через API вместо полного UI-сценария; и отсутствие cleanup (`driver` без `quit()` → утечка процессов).",
+              "text": "Среди анти-паттернов встречаются: `Thread.sleep()` на месте `WebDriverWait`; ломкие локаторы (позиционный XPath `/html/body/div[2]/...` заместо `data-testid`); завязанные на общее состояние тесты; подмена unit-тестов дорогими UI-прогонами; проверка бизнес-логики напрямую через API вместо полного UI-сценария; и отсутствующий cleanup (`driver` без `quit()` → утечка процессов).",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот, логику быстрее и стабильнее проверять прямым API-запросом; гонять её через медленный UI — анти-паттерн.",
@@ -826,7 +826,7 @@
               "order": 2
             },
             {
-              "text": "Главные анти-паттерны: `Thread.sleep()` вместо `WebDriverWait`; хрупкие локаторы (позиционный XPath `/html/body/div[2]/...` вместо `data-testid`); независимые тесты без shared state (переиспользование данных предыдущего теста считается полезным); подмена unit-тестов UI-тестами (медленно, дорого); проверка бизнес-логики через UI вместо API; и отсутствие cleanup (`driver` без `quit()` → утечка процессов).",
+              "text": "К анти-паттернам относят: `Thread.sleep()` вместо `WebDriverWait`; ломкие локаторы (позиционный XPath `/html/body/div[2]/...` вместо `data-testid`); независимые тесты без общего состояния (переиспользование данных прошлого теста тут считают полезным); замену unit-тестов дорогими UI-прогонами; проверку бизнес-логики сквозь UI вместо API; и отсутствующий cleanup (`driver` без `quit()` → утечка процессов).",
               "correct": false,
               "sections": {
                 "what_actually": "Shared state — анти-паттерн: изменения одного теста влияют на следующий, делая результаты нестабильными и зависящими от порядка.",
@@ -849,7 +849,7 @@
           "question_text": "Когда стоит использовать UI-тесты, а когда — нет?",
           "options": [
             {
-              "text": "UI-тесты применяют для: critical user journeys (login, checkout, signup), проверки интеграции UI↔backend (данные от API корректно отображаются), визуальных проверок и smoke-тестов. НЕ применяют для: бизнес-логики (это unit/integration на backend), edge cases (раздувают время прогона) и тестирования API (прямые API-тесты быстрее и надёжнее). В пирамиде UI — основные 60–70%, а unit/integration остаются верхушкой.",
+              "text": "UI-тестами покрывают critical user journeys (login, checkout, signup), стык UI↔backend (данные из API видны верно), визуальные проверки и smoke. Мимо них оставляют бизнес-логику (её берут unit/integration на backend), edge cases (растят время прогона) и API (прямые вызовы быстрее и надёжнее). В пирамиде такие тесты образуют основание — 60–70%, а unit/integration уходят наверх.",
               "correct": false,
               "sections": {
                 "what_actually": "В пирамиде UI-тесты — самая верхушка (~10–15%); 60–70% приходится на быстрые unit-тесты в основании.",
@@ -874,7 +874,7 @@
               "order": 1
             },
             {
-              "text": "UI-тесты применяют для: critical user journeys (login, checkout, signup), проверки интеграции UI↔backend (данные от API корректно отображаются), визуальных проверок и smoke-тестов. НЕ применяют для: бизнес-логики (это unit/integration на backend), edge cases (раздувают время прогона) и тестирования API (прямые API-тесты быстрее и надёжнее). В пирамиде UI — основа, потому что эти тесты дешевле и быстрее unit-тестов.",
+              "text": "UI-тесты закрывают critical user journeys (login, checkout, signup), проверку связки UI↔backend (данные из API отображаются верно), визуальные и smoke-сценарии. Вне их зоны — бизнес-логика (это unit/integration на backend), edge cases (раздувают прогон) и API (прямые тесты быстрее и надёжнее). В пирамиде их кладут в фундамент как более дешёвые и быстрые, чем unit-тесты.",
               "correct": false,
               "sections": {
                 "what_actually": "UI-тесты как раз самые дорогие: они медленные и flaky, поэтому их держат минимально достаточным набором, а основа — unit-тесты.",
@@ -886,7 +886,7 @@
               "order": 2
             },
             {
-              "text": "UI-тесты применяют для: critical user journeys (login, checkout, signup), проверки интеграции UI↔backend (данные от API корректно отображаются), визуальных проверок и smoke-тестов. Применяют также для: бизнес-логики (UI надёжнее unit/integration на backend), всех edge cases (реалистичнее нижних уровней) и тестирования API через браузер. В пирамиде UI — 10–15%, дорогие и flaky.",
+              "text": "UI-тестами закрывают critical user journeys (login, checkout, signup), стык UI↔backend (данные из API видны верно), визуальные проверки и smoke. Их же пускают на бизнес-логику (UI надёжнее unit/integration на backend), на все edge cases (реалистичнее нижних уровней) и на API — прямо через браузер. В пирамиде это 10–15%, дорогие и flaky.",
               "correct": false,
               "sections": {
                 "what_actually": "Edge cases дешевле и быстрее покрывать unit/integration тестами; гонять их через медленный UI — перегрузка времени прогона.",
