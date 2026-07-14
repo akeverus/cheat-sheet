@@ -129,7 +129,7 @@
           "question_text": "В чём разница между implicit, explicit и fluent wait?",
           "options": [
             {
-              "text": "`Implicit wait` — глобальный таймаут, применяемый ко всем `findElement`; задаётся один раз через `manage().timeouts().implicitlyWait(...)`. `Explicit wait` (`WebDriverWait` + `ExpectedConditions`) ждёт конкретное условие для конкретного элемента — самый гибкий. `Implicit wait` и `Explicit wait` безопасно смешиваются: итоговый таймаут равен максимуму из двух (`max(implicit, explicit)`) без побочных эффектов.",
+              "text": "`Implicit wait` держит единый таймаут для каждого `findElement`; выставляется однократно в `manage().timeouts().implicitlyWait(...)`. `Explicit wait` через `WebDriverWait` и `ExpectedConditions` дожидается нужного состояния конкретного узла — максимально гибок. Смешивать их безопасно — суммарное ожидание равно `max(implicit, explicit)` без побочных эффектов.",
               "correct": false,
               "sections": {
                 "what_actually": "Смешивать их не рекомендуется: реальное поведение непредсказуемо, таймауты могут складываться, а не браться по максимуму.",
@@ -141,7 +141,7 @@
               "order": 0
             },
             {
-              "text": "`Implicit wait` (`WebDriverWait` + `ExpectedConditions`) ждёт конкретное условие для конкретного элемента; задаётся точечно через `until(...)`. `Explicit wait` — глобальный таймаут, применяемый ко всем `findElement` через `manage().timeouts().implicitlyWait(...)`. `FluentWait` добавляет тонкую настройку polling (`pollingEvery`) и игнорирование исключений.",
+              "text": "`Implicit wait` через `WebDriverWait` и `ExpectedConditions` поджидает нужное состояние конкретного узла; настраивается точечно в `until(...)`. `Explicit wait` — единый таймаут на любой `findElement` из `manage().timeouts().implicitlyWait(...)`. `FluentWait` привносит гибкий polling (`pollingEvery`) и пропуск заданных исключений.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `implicit` — глобальный таймаут для всех `findElement`, а `explicit` (`WebDriverWait`) ждёт конкретное условие для конкретного элемента.",
@@ -153,7 +153,7 @@
               "order": 1
             },
             {
-              "text": "`Implicit wait` — глобальный таймаут, применяемый ко всем `findElement`; задаётся один раз через `manage().timeouts().implicitlyWait(...)`. `Explicit wait` (`WebDriverWait` + `ExpectedConditions`) ждёт конкретное условие для конкретного элемента — самый гибкий. `FluentWait` — новое название `implicit wait`, которое использует тот же глобальный таймаут (`implicitlyWait`) без отдельной настройки исключений.",
+              "text": "`Implicit wait` — общий таймаут для любого `findElement`; ставится разово в `manage().timeouts().implicitlyWait(...)`. `Explicit wait` (`WebDriverWait` с `ExpectedConditions`) караулит условие отдельного узла — самый гибкий. `FluentWait` — лишь иное имя `implicit wait` с тем же глобальным таймаутом, без отдельной настройки исключений.",
               "correct": false,
               "sections": {
                 "what_actually": "`FluentWait` — отдельный механизм с настройкой интервала опроса (`pollingEvery`) и игнорированием исключений, а не переименованный implicit.",
@@ -369,7 +369,7 @@
           "question_text": "Как в Selenium работать с alerts, frames и windows?",
           "options": [
             {
-              "text": "Для alert: `driver.switchTo().alert()`, затем `getText()`, `sendKeys(...)` (только prompt) и `accept()`/`dismiss()`. Для frame: `switchTo().frame(name|index|element)` для входа, а следующий `findElement` автоматически возвращает контекст в top-level. Для окон/вкладок: запоминают `getWindowHandle()`, перебирают `getWindowHandles()`, переключаются `switchTo().window(handle)`.",
+              "text": "Для alert: берут `driver.switchTo().alert()`, читают `getText()`, вводят `sendKeys(...)` (лишь prompt), закрывают `accept()`/`dismiss()`. Для frame: заходят через `switchTo().frame(name|index|element)`, а очередной `findElement` сам возвращает контекст на верхний уровень. Для окон: сохраняют `getWindowHandle()`, обходят `getWindowHandles()`, активируют `switchTo().window(handle)`.",
               "correct": false,
               "sections": {
                 "what_actually": "После `switchTo().frame(...)` контекст остаётся внутри фрейма, пока явно не вызвать `switchTo().defaultContent()` — автоматического возврата нет.",
@@ -394,7 +394,7 @@
               "order": 1
             },
             {
-              "text": "Для alert: `driver.switchTo().alert()`, затем `getText()`, `sendKeys(...)` (только prompt) и `accept()`/`dismiss()`. Для frame: `switchTo().frame(name|index|element)` для входа и `switchTo().defaultContent()` для возврата в top-level. Для окон/вкладок: запоминают `getWindowHandle()`, перебирают `getWindowHandles()`, переключаются `switchTo().window(driver.getTitle())`, передавая заголовок вместо handle.",
+              "text": "Для alert: вызывают `driver.switchTo().alert()`, берут `getText()`, шлют `sendKeys(...)` (для prompt), подтверждают `accept()`/`dismiss()`. Для frame: входят `switchTo().frame(name|index|element)` и выходят `switchTo().defaultContent()` к top-level. Для окон: держат `getWindowHandle()`, листают `getWindowHandles()`, переходят `switchTo().window(driver.getTitle())`, подавая заголовок вместо handle.",
               "correct": false,
               "sections": {
                 "what_actually": "`switchTo().window(...)` принимает именно window handle (строку-идентификатор из `getWindowHandles()`), а не заголовок страницы.",
@@ -406,7 +406,7 @@
               "order": 2
             },
             {
-              "text": "Для alert: обычный `findElement(By.text(...))`, затем `getText()`, `sendKeys(...)` (для любого диалога) и `click()` без `switchTo().alert()`. Для frame: `switchTo().frame(name|index|element)` для входа и `switchTo().defaultContent()` для возврата в top-level. Для окон/вкладок: запоминают `getWindowHandle()`, перебирают `getWindowHandles()`, переключаются `switchTo().window(handle)`.",
+              "text": "Для alert: применяют обычный `findElement(By.text(...))`, снимают `getText()`, пишут `sendKeys(...)` (в любой диалог), жмут `click()` без `switchTo().alert()`. Для frame: ныряют `switchTo().frame(name|index|element)` и всплывают `switchTo().defaultContent()` в top-level. Для окон: фиксируют `getWindowHandle()`, перебирают `getWindowHandles()`, включают `switchTo().window(handle)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Нативный alert не часть DOM, поэтому `findElement` его не видит; нужно `driver.switchTo().alert()`, а затем `accept()`/`dismiss()`.",
@@ -489,7 +489,7 @@
           "question_text": "Как запускать Selenium-тесты параллельно?",
           "options": [
             {
-              "text": "В JUnit 5 параллелизм включают одной аннотацией `@Parallel` над классом (`junit-platform.properties`, `mode.default` и `config.fixed.parallelism` не нужны). Но `WebDriver` обычно НЕ thread-safe, поэтому каждому тесту/потоку нужен свой `driver`: либо новый `ChromeDriver` в `@BeforeEach`, либо `ThreadLocal<WebDriver>`. TestNG проще для параллельных UI-тестов (`parallel=\"methods\" thread-count=\"4\"`).",
+              "text": "В JUnit 5 параллельный прогон включают одной аннотацией `@Parallel` над классом, а строки `mode.default` и `config.fixed.parallelism` не нужны. `WebDriver` обычно НЕ thread-safe, так что каждой нити нужен свой `driver`: свежий `ChromeDriver` в `@BeforeEach` или `ThreadLocal<WebDriver>`. TestNG удобнее для многопоточных UI-сценариев (`parallel=\"methods\" thread-count=\"4\"`).",
               "correct": false,
               "sections": {
                 "what_actually": "Никакой `@Parallel`-аннотации нет: параллелизм JUnit 5 включают через `junit-platform.properties`, а не аннотацией над классом.",
@@ -501,7 +501,7 @@
               "order": 0
             },
             {
-              "text": "В JUnit 5 параллелизм включают через `junit-platform.properties` (`junit.jupiter.execution.parallel.enabled=true`, `mode.default=concurrent`, `config.fixed.parallelism=4`). Но `WebDriver` обычно НЕ thread-safe, поэтому каждому тесту/потоку нужен свой `driver`: либо новый `ChromeDriver` в `@BeforeEach`, либо `ThreadLocal<WebDriver>`. TestNG не поддерживает параллельные UI-тесты (`parallel=\"methods\" thread-count=\"4\"` игнорируется), поэтому обязателен JUnit 5.",
+              "text": "В JUnit 5 конкурентность поднимают в `junit-platform.properties` (`junit.jupiter.execution.parallel.enabled=true`, `mode.default=concurrent`, `config.fixed.parallelism=4`). `WebDriver` в общем НЕ thread-safe, потому всякому потоку нужен свой `driver`: новый `ChromeDriver` в `@BeforeEach` или `ThreadLocal<WebDriver>`. TestNG же многопоточные UI-тесты не тянет, ведь `parallel=\"methods\" thread-count=\"4\"` игнорируется.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот, TestNG исторически удобнее для параллельных UI-тестов: атрибуты `parallel=\"methods\"` и `thread-count` в suite-XML включают это из коробки.",
@@ -526,7 +526,7 @@
               "order": 2
             },
             {
-              "text": "В JUnit 5 параллелизм включают через `junit-platform.properties` (`junit.jupiter.execution.parallel.enabled=true`, `mode.default=concurrent`, `config.fixed.parallelism=4`). При этом `WebDriver` thread-safe, поэтому все тесты/потоки используют общий `driver`: один `ChromeDriver` в `@BeforeAll` без `ThreadLocal<WebDriver>`. TestNG проще для параллельных UI-тестов (`parallel=\"methods\" thread-count=\"4\"`).",
+              "text": "В JUnit 5 многопоточность активируют в `junit-platform.properties` (`junit.jupiter.execution.parallel.enabled=true`, `mode.default=concurrent`, `config.fixed.parallelism=4`). При этом `WebDriver` считают thread-safe, оттого потоки делят единый `driver`: одиночный `ChromeDriver` в `@BeforeAll` и никакого `ThreadLocal<WebDriver>`. TestNG к тому же комфортнее для параллельных UI-тестов (`parallel=\"methods\" thread-count=\"4\"`).",
               "correct": false,
               "sections": {
                 "what_actually": "`WebDriver` обычно НЕ thread-safe: общий driver между потоками приводит к гонкам, поэтому каждому потоку дают свой экземпляр.",
@@ -562,7 +562,7 @@
               "order": 0
             },
             {
-              "text": "Набор приёмов: retry-аннотации (`@RetryingTest(3)` из JUnit Pioneer) для перезапуска нестабильных тестов; явные ожидания (`wait.until(ExpectedConditions.elementToBeClickable(...))`) вместо `sleep`; позиционные XPath (`/html/body/div[2]/div[3]` вместо `data-testid`) как самые стабильные локаторы; скриншоты при падении для диагностики; и карантин/фильтрация флейков из CI через `@Tag(\"flaky\")` + `@Disabled` с тикетом.",
+              "text": "Комплект мер: retry-обёртки (`@RetryingTest(3)` из JUnit Pioneer) перезапускают нестабильный тест; выжидания (`wait.until(ExpectedConditions.elementToBeClickable(...))`) взамен `sleep`; позиционные XPath (`/html/body/div[2]/div[3]` в обход `data-testid`) как наиболее устойчивые локаторы; кадры экрана на падении для разбора; плюс отвод флейков из CI меткой `@Tag(\"flaky\")` и `@Disabled` с тикетом.",
               "correct": false,
               "sections": {
                 "what_actually": "Позиционный XPath, наоборот, делает тесты хрупкими: любая перестановка вёрстки ломает локатор; для стабильности берут `data-testid`.",
@@ -574,7 +574,7 @@
               "order": 1
             },
             {
-              "text": "Набор приёмов: retry-аннотации (`@RetryingTest(3)` из JUnit Pioneer) для перезапуска нестабильных тестов; общий `implicit wait` на 60 секунд вместо адресных ожиданий; любые локаторы с таким таймаутом становятся стабильными; скриншоты при падении для диагностики; и карантин/фильтрация флейков из CI через `@Tag(\"flaky\")` + `@Disabled` с тикетом.",
+              "text": "Перечень мер: повторный прогон через `@RetryingTest(3)` (из JUnit Pioneer) капризного теста; единый `implicit wait` на 60 секунд вместо адресных ожиданий, отчего любые локаторы при таком таймауте надёжны; снимок экрана при падении ради диагноза; и изоляция флейка вне CI парой `@Tag(\"flaky\")` и `@Disabled` под тикет.",
               "correct": false,
               "sections": {
                 "what_actually": "Большой implicit-таймаут не убирает гонки, лишь сильно замедляет падения и плохо контролируется; флейки требуют точечных explicit-ожиданий.",
@@ -586,7 +586,7 @@
               "order": 2
             },
             {
-              "text": "Набор приёмов: retry-аннотации (`@RetryingTest(3)` из JUnit Pioneer) для перезапуска нестабильных тестов; увеличенный `Thread.sleep()` перед каждой проверкой вместо явных ожиданий (`wait.until(...)`); стабильные локаторы (`data-testid` вместо CSS-классов); скриншоты при падении для диагностики; и карантин/фильтрация флейков из CI через `@Tag(\"flaky\")` + `@Disabled` с тикетом.",
+              "text": "Свод мер: автоповтор (`@RetryingTest(3)` из JUnit Pioneer) поверх дёрганого теста; раздутый `Thread.sleep()` перед каждой проверкой на месте явных `wait.until(...)`; устойчивые локаторы (`data-testid` на месте CSS-классов); фотоснимок страницы на сбое для анализа; и вынос нестабильных из CI связкой `@Tag(\"flaky\")` и `@Disabled` по тикету.",
               "correct": false,
               "sections": {
                 "what_actually": "Увеличение `Thread.sleep()` лишь маскирует флейки и замедляет тесты; правильное решение — явные ожидания `WebDriverWait`.",
@@ -669,7 +669,7 @@
           "question_text": "Как организовать запуск Selenium-тестов в CI/CD?",
           "options": [
             {
-              "text": "Тесты вешают на события (`on: [push, pull_request]`), джоб ставит JDK и гоняет `./mvnw test`. Браузер запускают headless: `ChromeOptions` с `--headless=new`, `--no-sandbox`, `--disable-dev-shm-usage`, `--window-size=1920,1080`. Скриншоты падений публикуют артефактами при `if: failure()`. Драйверы (`chromedriver` и другие) скачивают вручную и прописывают путь в каждой job: автоматизированной замены этому нет.",
+              "text": "Прогон привязывают к событиям (`on: [push, pull_request]`), job поднимает JDK и запускает `./mvnw test`. Браузер поднимают без окна: `ChromeOptions` получает `--headless=new`, `--no-sandbox`, `--disable-dev-shm-usage`, `--window-size=1920,1080`. Снимки при сбое отдают артефактами по `if: failure()`. Драйверы (`chromedriver` и прочие) качают руками, путь прописывают в каждом job, автозамены нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`WebDriverManager` как раз автоматизирует это: `WebDriverManager.chromedriver().setup()` скачивает нужную версию драйвера сам.",
@@ -694,7 +694,7 @@
               "order": 1
             },
             {
-              "text": "Тесты вешают на события (`on: [push, pull_request]`), джоб ставит JDK и гоняет `./mvnw test`. Браузер запускают только с GUI: headless `ChromeOptions` с `--headless=new` в CI не поддерживается, поэтому нужен реальный дисплей. Скриншоты падений публикуют артефактами при `if: failure()`. Драйверы берёт на себя `WebDriverManager.chromedriver().setup()` вместо ручного скачивания.",
+              "text": "Запуск цепляют к событиям (`on: [push, pull_request]`), задача ставит JDK, вызывает `./mvnw test`. Браузер идёт только с интерфейсом: headless `--headless=new` в CI не работает, нужен настоящий дисплей. Кадры упавших прогонов сохраняют артефактами через `if: failure()`. О драйверах заботится `WebDriverManager.chromedriver().setup()` без ручной загрузки.",
               "correct": false,
               "sections": {
                 "what_actually": "В CI как раз используют headless-браузер (`--headless=new`), потому что на агентах обычно нет дисплея; графическое окно не требуется.",
@@ -706,7 +706,7 @@
               "order": 2
             },
             {
-              "text": "Тесты вешают на события (`on: [push, pull_request]`), джоб ставит JDK и гоняет `./mvnw test`. Браузер запускают headless: `ChromeOptions` с `--headless=new`, `--no-sandbox`, `--disable-dev-shm-usage`, `--window-size=1920,1080`. Скриншоты публикуют артефактами при каждом прогоне без `if: failure()`, включая полностью зелёный билд. Драйверы берёт на себя `WebDriverManager.chromedriver().setup()` вместо ручного скачивания.",
+              "text": "Сборку триггерят события (`on: [push, pull_request]`), шаг разворачивает JDK и стартует `./mvnw test`. Браузер стартуют скрыто: `ChromeOptions` берёт `--headless=new`, `--no-sandbox`, `--disable-dev-shm-usage`, `--window-size=1920,1080`. Скриншоты выкладывают артефактами на любом прогоне без `if: failure()`, даже когда билд полностью зелёный. Драйверы подтягивает `WebDriverManager.chromedriver().setup()`, не требуя ручной установки.",
               "correct": false,
               "sections": {
                 "what_actually": "Скриншоты обычно публикуют только при падении (`if: failure()`), чтобы не раздувать артефакты успешных прогонов.",
@@ -766,7 +766,7 @@
               "order": 2
             },
             {
-              "text": "`Cucumber` + Selenium — это BDD на уровне UI: поведение излагают человеческим языком в `.feature` (Gherkin `Given`/`When`/`Then`), однако ключевые слова `Given`/`When`/`Then` остаются комментариями и со step definitions на Java (через Page Object) не связаны. Приём полезен, когда QA/BA излагают сценарии обычным языком, а команда разработки реализует шаги.",
+              "text": "`Cucumber` со Selenium дают BDD на уровне UI: сценарии описывают естественным языком в `.feature` (Gherkin `Given`/`When`/`Then`), однако ключевые слова `Given`/`When`/`Then` остаются комментариями — со step definitions на Java (через Page Object) они не связаны. Приём полезен, когда QA/BA излагают сценарии обычным языком, а команда разработки реализует шаги.",
               "correct": false,
               "sections": {
                 "what_actually": "Эти ключевые слова сопоставляются с методами через аннотации `@Given`/`@When`/`@Then`; они напрямую связывают шаг сценария с кодом.",
@@ -789,7 +789,7 @@
           "question_text": "Какие анти-паттерны Selenium стоит избегать?",
           "options": [
             {
-              "text": "В список анти-паттернов входят: `Thread.sleep()` заместо `WebDriverWait`; ломкие локаторы (позиционный XPath `/html/body/div[2]/...` вместо `data-testid`); связанные общим состоянием тесты; подмена unit-тестов дорогими UI-прогонами; проверка бизнес-логики сквозь UI, а не через API; и избыточный cleanup — `driver.quit()` не нужен, ведь процессы и так гибнут по завершении JVM.",
+              "text": "В список анти-паттернов входят: `Thread.sleep()` заместо `WebDriverWait`; ломкие локаторы (позиционный XPath `/html/body/div[2]/...` вместо `data-testid`); связанные общим состоянием тесты; замена unit-проверок медленными UI-прогонами; контроль бизнес-логики сквозь UI, а не через API; и избыточный cleanup, ведь `driver.quit()` не нужен, процессы и так гибнут по завершении JVM.",
               "correct": false,
               "sections": {
                 "what_actually": "Без явного `quit()` процессы браузера и драйвера утекают; полагаться на «само закроется» — анти-паттерн, ведущий к утечке ресурсов.",
@@ -849,7 +849,7 @@
           "question_text": "Когда стоит использовать UI-тесты, а когда — нет?",
           "options": [
             {
-              "text": "UI-тестами покрывают critical user journeys (login, checkout, signup), стык UI↔backend (данные из API видны верно), визуальные проверки и smoke. Мимо них оставляют бизнес-логику (её берут unit/integration на backend), edge cases (растят время прогона) и API (прямые вызовы быстрее и надёжнее). В пирамиде такие тесты образуют основание — 60–70%, а unit/integration уходят наверх.",
+              "text": "UI-тесты применяют для: critical user journeys (login, checkout, signup), стыка UI↔backend (данные из API видны верно), визуальных проверок и smoke. НЕ применяют для: бизнес-логики (её берут unit/integration на backend), edge cases (растят время прогона) и API (прямые вызовы быстрее). В пирамиде они — основание, 60–70%, а unit/integration уходят наверх.",
               "correct": false,
               "sections": {
                 "what_actually": "В пирамиде UI-тесты — самая верхушка (~10–15%); 60–70% приходится на быстрые unit-тесты в основании.",
@@ -874,7 +874,7 @@
               "order": 1
             },
             {
-              "text": "UI-тесты закрывают critical user journeys (login, checkout, signup), проверку связки UI↔backend (данные из API отображаются верно), визуальные и smoke-сценарии. Вне их зоны — бизнес-логика (это unit/integration на backend), edge cases (раздувают прогон) и API (прямые тесты быстрее и надёжнее). В пирамиде их кладут в фундамент как более дешёвые и быстрые, чем unit-тесты.",
+              "text": "UI-тесты применяют для: critical user journeys (login, checkout, signup), проверки связки UI↔backend (данные из API отображаются верно), визуальных и smoke-сценариев. НЕ применяют для: бизнес-логики (ей место в unit/integration на backend), edge cases (удлиняют прогон) и API (прямые тесты быстрее). В пирамиде их кладут в фундамент — дешевле и быстрее, чем unit-тесты.",
               "correct": false,
               "sections": {
                 "what_actually": "UI-тесты как раз самые дорогие: они медленные и flaky, поэтому их держат минимально достаточным набором, а основа — unit-тесты.",
@@ -886,7 +886,7 @@
               "order": 2
             },
             {
-              "text": "UI-тестами закрывают critical user journeys (login, checkout, signup), стык UI↔backend (данные из API видны верно), визуальные проверки и smoke. Их же пускают на бизнес-логику (UI надёжнее unit/integration на backend), на все edge cases (реалистичнее нижних уровней) и на API — прямо через браузер. В пирамиде это 10–15%, дорогие и flaky.",
+              "text": "UI-тесты применяют для: critical user journeys (login, checkout, signup), связки UI↔backend (данные от API видны верно), визуальных и smoke-проверок. Годятся и для: бизнес-логики (UI надёжнее unit/integration на backend), всех edge cases (реалистичнее нижних уровней) и API — прямо через браузер. В пирамиде это 10–15%, дорогие и flaky.",
               "correct": false,
               "sections": {
                 "what_actually": "Edge cases дешевле и быстрее покрывать unit/integration тестами; гонять их через медленный UI — перегрузка времени прогона.",
