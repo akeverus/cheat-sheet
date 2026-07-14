@@ -5,6 +5,13 @@ import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -366,5 +373,49 @@ class TemplateFragmentContractTest {
         assertThat(header).contains("aria-current=${activePage == 'focus'} ? 'page' : null");
         // Тумблер темы несёт aria-pressed.
         assertThat(header).contains("aria-pressed=\"false\"");
+    }
+
+    @Test
+    void everyDefinedTemplateFragmentIsReferencedNoOrphans() throws IOException {
+        // Регресс-гвард против «сироты-фрагмента»: каждый th:fragment, объявленный
+        // где-либо под templates/, ДОЛЖЕН подключаться хотя бы одним
+        // th:replace/th:insert (~{... :: name}) в корпусе шаблонов. Иначе фрагмент —
+        // мёртвый код (определён, но не рендерится). Тест сам перечисляет фрагменты
+        // (не хардкод-роестр) → авто-покрывает будущие фрагменты. App не нужен:
+        // чистое чтение ресурсов с classpath. Ручной orphan-аудит R0.136 → инвариант.
+        Path templatesDir = new ClassPathResource("templates").getFile().toPath();
+
+        StringBuilder corpusBuilder = new StringBuilder();
+        try (Stream<Path> walk = Files.walk(templatesDir)) {
+            for (Path p : (Iterable<Path>) walk.filter(p -> p.toString().endsWith(".html")).sorted()::iterator) {
+                corpusBuilder.append(new String(Files.readAllBytes(p), StandardCharsets.UTF_8)).append('\n');
+            }
+        }
+        String corpus = corpusBuilder.toString();
+
+        Matcher matcher = Pattern.compile("th:fragment=\"([A-Za-z0-9_-]+)").matcher(corpus);
+        Set<String> fragmentNames = new LinkedHashSet<>();
+        while (matcher.find()) {
+            fragmentNames.add(matcher.group(1));
+        }
+
+        // Санити: известный минимум действительно найден (иначе разметка/путь
+        // изменились и тест молча пустой — false-negative на orphan).
+        assertThat(fragmentNames)
+            .as("объявленные th:fragment под templates/")
+            .contains("head", "header", "sprite", "inline-alert", "post-answer-controls",
+                      "result-zone-head", "stats-grid", "stats-grid-content",
+                      "today-hero", "today-chip", "training-actions", "mermaid-init");
+
+        for (String name : fragmentNames) {
+            // Ссылка — либо параметризованная `:: name(`, либо bare `:: name}`.
+            // Граница (`(`/`}`) не даёт `stats-grid` ложно засчитаться через
+            // `stats-grid-content`, а `head` — через `header`.
+            boolean referenced = corpus.contains(":: " + name + "(")
+                              || corpus.contains(":: " + name + "}");
+            assertThat(referenced)
+                .as("фрагмент '%s' обязан подключаться th:replace/th:insert (иначе orphan/dead-code)", name)
+                .isTrue();
+        }
     }
 }
