@@ -18,7 +18,7 @@ Exit 0 = чисто; любой hard-fail/completeness-issue => ненулево
 История: инструмент нашёл 3 реальных AA/a11y-бага (notion/mintlify success-green
 2.93/3.61:1; mintlify-light focus-ring mint 1.7:1) — держи как гейт перед правкой
 tokens.css. Дополняет ui/TemplateFragmentContractTest (тот сторожит структуру)."""
-import re, sys
+import re, sys, math
 from pathlib import Path
 
 TOKENS = Path("modules/quiz-app/src/main/resources/static/css/tokens.css").read_text()
@@ -50,8 +50,10 @@ def parse_tokens(body):
 root = parse_tokens(block_body(r":root"))
 ed_dark = parse_tokens(block_body(r"\[data-theme=\"dark\"\]"))
 
-DESIGNS = ["editorial", "linear", "swiss", "notion", "mintlify", "broadsheet",
-           "superhuman", "stripe", "claude", "theverge"]
+# Полная замена 2026-07-14: единственный рендерящийся дизайн — instrument.
+# editorial-:root сохранён как инертная база каскада (ed_dark), но НЕ рендерится
+# и не аудируется как дизайн.
+DESIGNS = ["instrument"]
 design_light, design_dark = {}, {}
 for d in DESIGNS:
     if d == "editorial":
@@ -96,6 +98,32 @@ def parse_color(v, tokens, bg_for_alpha=None, _depth=0):
         if a < 1.0 and bg_for_alpha is not None:
             br,bg_,bb = bg_for_alpha
             r = r*a + br*(1-a); g = g*a + bg_*(1-a); b = b*a + bb*(1-a)
+        return (r,g,b)
+    # oklch(L C H [/ alpha]) — instrument-палитра. L,alpha в 0..1 (или %),
+    # C абсолютный, H в градусах. OKLCH -> OKLab -> linear sRGB -> gamma sRGB(0-255).
+    m = re.match(r"oklch\(\s*([^)]+)\)", v)
+    if m:
+        def num(p):
+            return float(p[:-1])/100.0 if p.endswith('%') else float(p)
+        parts = m.group(1).replace("/", " ").split()
+        L, C, H = num(parts[0]), num(parts[1]), num(parts[2])
+        a_al = num(parts[3]) if len(parts) > 3 else 1.0
+        hr = math.radians(H)
+        oa, ob = C*math.cos(hr), C*math.sin(hr)
+        l_ = L + 0.3963377774*oa + 0.2158037573*ob
+        m_ = L - 0.1055613458*oa - 0.0638541728*ob
+        s_ = L - 0.0894841775*oa - 1.2914855480*ob
+        l3, m3, s3 = l_**3, m_**3, s_**3
+        rl =  4.0767416621*l3 - 3.3077115913*m3 + 0.2309699292*s3
+        gl = -1.2684380046*l3 + 2.6097574011*m3 - 0.3413193965*s3
+        bl = -0.0041960863*l3 - 0.7034186147*m3 + 1.7076147010*s3
+        def gam(c):
+            c = max(0.0, min(1.0, c))
+            return (12.92*c if c <= 0.0031308 else 1.055*(c**(1/2.4)) - 0.055) * 255.0
+        r, g, b = gam(rl), gam(gl), gam(bl)
+        if a_al < 1.0 and bg_for_alpha is not None:
+            br,bgc,bb = bg_for_alpha
+            r = r*a_al + br*(1-a_al); g = g*a_al + bgc*(1-a_al); b = b*a_al + bb*(1-a_al)
         return (r,g,b)
     return None
 
