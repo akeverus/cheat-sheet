@@ -2429,6 +2429,17 @@ Constraint Validation API без сабмита на session-form. count (number
 - **Итог:** SET-21 де-рискнута — window-тик-cleanup чистит ровно 2 правила + комментарий, скрытых сиблингов нет. §10 SET-21 аннотирована. Правок кода не требуется. Подтверждает, что settings-редизайн (0eb762a5) был вычищен почти полностью — остался единственный CSS-хвост.
 - **Дальше:** без app — регресс-надзор + мониторинг подъёма. Прочие поверхности с крупным недавним редизайном (напр. focus-релейаут) — кандидаты на аналогичный neighborhood-sweep будущими тиками. При подъёме — `window-tick-manifest.md`. Нумерация R0.122+.
 
+### R0.122 (2026-07-14) — Обобщение neighborhood-sweep на ВСЕ page-скоупы: dead-CSS каталог полон, ноль новых сирот (app не нужен)
+
+- **Единица (§16 «один refactor-area» — расширение техники R0.121 с `.settings-page` на все скоупы):** после того как SET-21 нашлась через wrong-ancestor sweep одного скоупа, применить ту же линзу ко ВСЕМ page-скоупам (`.focus-page/.result-page/.summary-page/.stats-page/.error-page`) — либо найдутся ещё скрытые чужой-предок сироты, либо каталог dead-CSS доказанно полон. Дёшево, inline (без workflow).
+- **Метод:** (1) zero-consumer sweep — каждый page-scoped хук по templates+js на потребителя; (2) wrong-ancestor — хуки, отсутствующие в «своём» шаблоне, сверить через включаемые фрагменты + JS-динамику (`classList.add/toggle`) + Thymeleaf `th:classappend`.
+- **Результат — ЧИСТО, ноль новых сирот:**
+  - **0 хуков** с нулём потребителей в любом скоупе.
+  - **Все «отсутствующие в своём шаблоне» хуки разрешились как живые:** `.result-page .stat-item/-label/-value` ← фрагмент `stats-grid` (включён в result.html); `.focus-page .action-footer/.keyboard-hint` ← фрагмент `training-actions` (focus-training:163); `.focus-page .is-answered` ← app.js:1704 (прячет опустевший training-actions, base.css:1018); `.option-other` ← result.html:69 (`th:classappend`) + app.js:1494 (focus JS); `.related-question(s)/-item/-title` ← result.html:132-134 (сервер) + app.js:1634-1637 (focus JS-reveal); `.is-disabled/.option-explanation/.option-status-muted` ← app.js JS-динамика.
+  - **Единственная встреченная мертвечина = уже известная:** `.result-page .regenerating` (часть regenerate-кластера, regenerate-removal-план) и SET-21 (`.settings-page .app-layout`). Новых нет.
+- **Итог:** wrong-ancestor техника, давшая SET-21, при обобщении на все скоупы даёт **пустое множество** → каталог dead-CSS §10 доказанно полон (SET-21 + regenerate-кластер — исчерпывающий список чужой-предок/th:if-мёртвых правил). goal-шаг 6 (fix all) продвинут верификацией полноты, а не новым фиксом. Правок кода не требуется.
+- **Дальше:** без app — статический dead-CSS-фронт исчерпан на уровне page-скоупов; режим = регресс-надзор + мониторинг подъёма. При подъёме — `window-tick-manifest.md` (5 единиц). Нумерация R0.123+.
+
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
 ## R1.73 — WCAG 3.2.3 Consistent Navigation (AA) — verified-clean
