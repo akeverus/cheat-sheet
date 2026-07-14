@@ -1064,7 +1064,6 @@ html[data-design] .settings-page .btn-finish-small:active,
 html[data-design] .result-page .btn-finish:active,
 html[data-design] .confidence-btn:active,
 html[data-design] .result-page .btn-favorite:active,
-html[data-design] .result-page .btn-regenerate:active,
 html[data-design] .table-expander:active { transform: translateY(1px); }
 
 /* Иконки — монохромный Lucide-спрайт (см. fragments/icons.html). Цвет, толщина
@@ -2325,17 +2324,6 @@ html[data-design="instrument"] .error-page .error-actions {
    (.option-correct/.option-wrong/.explanation-*) уже глобальные — не дублируем. */
 html[data-design] .result-page .ed-page { max-width: var(--max-width-result); }
 
-/* Двухколоночная раскладка вопроса: основной столбец + узкий сайдбар (диаграмма/код).
-   Грид включаем через :has(.question-side) — а НЕ .has-side — потому что .has-side
-   вешается уже при наличии diagram/code, тогда как .question-side рендерится только в
-   AI-режиме; :has гарантирует, что второй столбец появляется лишь когда есть контент.
-   minmax(0,…) на обеих дорожках страхует от overflow широкой диаграммы/кода. */
-html[data-design] .result-page .question-layout:has(.question-side) {
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px);
-  gap: var(--space-6); align-items: start;
-}
-html[data-design] .result-page .question-side { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
-
 /* Карточки — тёплые плоские панели (гасим navy-border + cold shadow). */
 html[data-design] .result-page .card {
   background: var(--color-bg-secondary);
@@ -2431,30 +2419,22 @@ html[data-design] .result-page .topic-badge {
      родителя уводят весь бейдж на свою строку; ellipsis — страховка на самом узком. */
   white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
 }
-html[data-design] .result-page .btn-favorite,
-html[data-design] .result-page .btn-regenerate {
+html[data-design] .result-page .btn-favorite {
   background: transparent; border: 0; color: var(--color-text-tertiary); cursor: pointer;
   font-size: var(--font-size-md); line-height: 1; padding: var(--space-1);
   min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
-  /* Тот же fade, что у всех hover-меняющих-цвет контролов (a:145, back-to-top:2377,
-     code-copy:2401) — иначе эти две были единственными, кто РЕЗКО переключал цвет
+  /* Тот же fade, что у всех hover-меняющих-цвет контролов (a:145, back-to-top,
+     code-copy) — иначе она была единственной, кто РЕЗКО переключал цвет
      на hover/.active среди визуально идентичных соседей. --duration-fast→0ms под
      reduced-motion/data-motion=off, так что fade гаснет автоматически. */
   transition: color var(--duration-fast) var(--easing-default);
 }
 html[data-design] .result-page .btn-favorite.active { color: var(--color-accent-primary); }
-/* Hover-аффорданс: иконки-кнопки избранного/перегенерации сидели статичным
-   tertiary-серым без :hover — единственные интерактивные контролы без pre-click
+/* Hover-аффорданс: иконка-кнопка избранного сидела статичным
+   tertiary-серым без :hover — единственный интерактивный контрол без pre-click
    сигнала (tap-highlight убран глобально, :active добавлен выше). Темним до
    primary-чернил на hover; :not(.active) не трогает акцент активной звезды. */
-html[data-design] .result-page .btn-favorite:hover:not(.active),
-html[data-design] .result-page .btn-regenerate:hover { color: var(--color-text-primary); }
-/* Busy-состояние: app.js вешает .regenerating на время POST /api/regenerate
-   (admin+AI-путь). Без CSS кнопка выглядела статичной — только нативный title-
-   tooltip (невидим на тач). Тускнеем + cursor:progress + pointer-events:none
-   (блокирует повторный клик). Тот же аффорданс, что у export/extra-analysis busy. */
-html[data-design] .result-page .btn-regenerate.regenerating { opacity: 0.55; cursor: progress; pointer-events: none; }
-html[data-design] .result-page .regen-badge { font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+html[data-design] .result-page .btn-favorite:hover:not(.active) { color: var(--color-text-primary); }
 
 /* Вердикт. SVG-иконка (circle-check/x) в статус-цвете + слово несут смысл
    (не только цвет — слово «Верно»/«Неверно» дублирует для дальтоников). */
@@ -2591,16 +2571,6 @@ html[data-design] .focus-page .related-question-item:hover { background: var(--c
   html[data-design] .result-page .result-actions { flex-direction: column; }
   html[data-design] .result-page .result-actions .btn { width: 100%; }
   html[data-design] .result-page .question-header h2 { flex-basis: 100%; }
-}
-
-/* Двухколоночный разбор (вопрос + code-сайдбар, AI-режим) держим side-by-side
-   только когда основной колонке хватает места: сайдбар 340 + gap 32 + ~440
-   комфортной меры + ~48 жёлоб ≈ 860px. Ниже — стек (код под вопросом), иначе на
-   планшете-портрете (601-859px) основная колонка с вопросом и MCQ ужималась до
-   ~180-350px рядом с фикс-340px сайдбаром. Селектор :has(.question-side) →
-   правило живёт только в AI-режиме (seed-first дефолт сайдбар не рендерит). */
-@media (max-width: 859px) {
-  html[data-design] .result-page .question-layout:has(.question-side) { grid-template-columns: 1fr; }
 }
 
 /* Слим-полоса с вертикальными разделителями держит 6 ячеек в ряд только при
@@ -3168,12 +3138,6 @@ html[data-design] .summary-tools-status {
     max-height: calc(100dvh - var(--space-7));
     overflow-y: auto;
   }
-  /* При одновременных related-рейке и .question-side (диаграмма/код, AI-режим)
-     на 1200-1439 текстовой колонке тесно — ужимаем сайдбар карточки. */
-  html[data-design] .result-page .ed-page:has(> #result-related-questions) .question-layout:has(.question-side) {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 280px);
-  }
-
   /* --- STATS: дашборд-сетка. Фильтры/KPI/графики — полноширинные ряды;
      ниже таблица тем (2/3, спанит два ряда) + правая колонка: прогноз 7 дней
      и пробелы банка (1/3). Грид включается только когда есть и таблица,
@@ -3359,7 +3323,6 @@ html[data-design] .summary-tools-status {
   html[data-design] .result-page .result-actions,
   html[data-design] .result-page .session-bar form,
   html[data-design] .result-page .btn-favorite,
-  html[data-design] .result-page .btn-regenerate,
   html[data-design] .kbd-help-overlay,
   html[data-design] .prompt-overlay,
   html[data-design] noscript { display: none !important; }

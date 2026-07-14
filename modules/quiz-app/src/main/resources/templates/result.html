@@ -27,9 +27,10 @@
 
 <!-- Result card — fills remaining space -->
 <section class="card" id="interview-card">
-    <!-- Грид двухколонки включает CSS через :has(.question-side) (см. base.css,
-         WIDE LAYOUT) — отдельный класс-флаг не нужен. Раньше тут висел th:classappend
-         с мёртвым has-side и ссылкой на удалённый diagram (mermaid). Критика C24. -->
+    <!-- Одноколоночный layout. Раньше грид становился двухколонным через
+         :has(.question-side) (правый code-сайд AI-режима); .question-side удалён
+         вместе с мёртвым AI-путём (R0.126, aiEnabled=false), :has()-правила сняты.
+         Код CODE-вопросов рендерится в .answer (не в удалённом сайде). Критика C24. -->
     <div class="question-layout">
         <div class="question-main flow-stack-md">
             <div class="question-header">
@@ -45,12 +46,6 @@
                             th:aria-label="${result.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'"><svg class="ed-icon" aria-hidden="true"><use href="#i-star"></use></svg></button>
                     <span class="topic-badge" th:if="${result.question.topic != null}"
                           th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(result.question.topic), '-', ' '), '_', ' '))}">topic</span>
-                    <button type="button" class="btn-regenerate" title="Удалить варианты и перегенерировать через AI"
-                            th:if="${aiEnabled}"
-                            th:data-question-id="${result.question.id}" id="btn-regenerate" aria-label="Перегенерировать варианты ответа"><svg class="ed-icon" aria-hidden="true"><use href="#i-refresh"></use></svg></button>
-                    <span th:if="${result.question.regenCount() > 0}" class="regen-badge"
-                          th:text="${result.question.regenCount()}"
-                          th:title="${'Перегенерировано ' + result.question.regenCount() + ' ' + @plural.pick(result.question.regenCount(), 'раз', 'раза', 'раз')}">0</span>
                 </div>
             </div>
 
@@ -117,10 +112,6 @@
                 <strong><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сессия завершена!</strong>
             </div>
         </div>
-
-        <div class="question-side" th:if="${aiEnabled and result.question.questionType != null and result.question.questionType.name() == 'CODE' and result.question.codeSnippet() != null}">
-            <pre class="question-code"><code th:text="${result.question.codeSnippet()}">код</code></pre>
-        </div>
     </div>
 </section>
 
@@ -139,6 +130,6 @@
 </main>
 <!-- app.js перенесён в конец body (был внутри main между секциями — структурная
      аномалия, см. остальные страницы: focus-training/settings). Критика C31. -->
-<script th:src="@{/js/app.js(v=62)}"></script>
+<script th:src="@{/js/app.js(v=63)}"></script>
 </body>
 </html>

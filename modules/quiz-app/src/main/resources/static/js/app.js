@@ -15,7 +15,6 @@
     NEXT: '/api/next',
     STATS: '/api/stats',
     TOPIC_STATS: '/api/topic-stats',
-    REGENERATE: '/api/regenerate',
     CONFIDENCE: '/api/confidence',
     FAVORITE: '/api/favorite',
     STREAK: '/api/streak'
@@ -892,93 +891,13 @@
     }
   }
 
-  /**
-   * Regenerate options for a question. Reloads page on index, only updates button on result.
-   */
-  async function regenerateQuestion(questionId, button) {
-    if (!questionId || !button) return;
-    // /api/regenerate admin-gated (SecurityConfig), как и /export — без заголовка
-    // X-Admin-Token всегда 403. Тот же токен, что и для экспорта (один кэш).
-    // В seed-first dev кнопка скрыта (th:if=aiEnabled=false), но при включённом
-    // AI это рабочий путь только для админа — фикс того же класса, что экспорт.
-    const token = await obtainAdminToken();
-    if (!token) return; // пользователь отменил ввод
-    button.classList.add('regenerating');
-    button.title = 'Удаляю варианты…';
-    try {
-      const resp = await apiFetch(API.REGENERATE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-Admin-Token': token
-        },
-        body: 'questionId=' + encodeURIComponent(questionId)
-      });
-      if (resp.ok) {
-        clearInlineAlert();
-        button.classList.remove('regenerating');
-        button.classList.add('done');
-        button.innerHTML = icon('circle-check', 'ed-icon-success');
-        const isIndexPage = !!document.getElementById('interview-form');
-        if (isIndexPage) {
-          button.title = 'Варианты удалены. Выбери следующий вопрос без перезагрузки страницы.';
-          const nextQuestionLink = document.getElementById('next-question');
-          const nextHref = typeof buildNextQuestionHref === 'function' ? buildNextQuestionHref(questionId) : '/';
-          if (nextQuestionLink) {
-            nextQuestionLink.href = nextHref;
-            nextQuestionLink.textContent = 'Загрузить новый вопрос';
-            nextQuestionLink.classList.remove('hidden');
-          }
-          const interviewOptions = document.getElementById('interview-options');
-          if (interviewOptions) {
-            interviewOptions.setAttribute('aria-disabled', 'true');
-            interviewOptions.querySelectorAll('input[name="optionId"]').forEach(input => { input.disabled = true; });
-          }
-          const submit = document.getElementById('interview-submit');
-          if (submit) {
-            submit.disabled = true;
-            submit.textContent = 'Варианты удалены';
-          }
-          setInlineAlert('Варианты удалены. Нажми «Загрузить новый вопрос», чтобы продолжить.', 'success');
-        } else {
-          button.title = 'Варианты удалены! При следующем показе будут перегенерированы.';
-        }
-      } else {
-        const err = await parseApiError(resp);
-        button.classList.remove('regenerating');
-        button.innerHTML = icon('circle-x', 'ed-icon-error');
-        button.title = 'Ошибка при удалении';
-        // Неверный admin-токен — сбрасываем кэш, чтобы следующий клик переспросил.
-        // «не настроен» (server-misconfig) НЕ сбрасываем: токен пользователя ни при чём.
-        if (resp.status === 401 || resp.status === 403) {
-          const notConfigured = (err.message || '').toLowerCase().includes(SERVER_TOKEN_UNSET_MARKER);
-          if (!notConfigured) clearStoredToken();
-        }
-        setInlineAlert(err.message || 'Не удалось перегенерировать варианты.');
-      }
-    } catch (err) {
-      button.classList.remove('regenerating');
-      button.innerHTML = icon('circle-x', 'ed-icon-error');
-      button.title = 'Ошибка сети';
-      console.error('Regenerate failed:', err);
-      setInlineAlert('Не удалось перегенерировать варианты. Проверь сеть и повтори.');
-    }
-  }
-
-  // Favorite and regenerate: delegate from document so they work on index and result pages
+  // Favorite: delegate from document so it works on index and result pages
   document.addEventListener('click', (e) => {
     const fav = e.target.closest('.btn-favorite');
     if (fav) {
       e.preventDefault();
       const questionId = fav.getAttribute('data-question-id');
       if (questionId) toggleFavorite(questionId, fav);
-      return;
-    }
-    const reg = e.target.closest('.btn-regenerate');
-    if (reg) {
-      e.preventDefault();
-      const questionId = reg.getAttribute('data-question-id');
-      if (questionId) regenerateQuestion(questionId, reg);
     }
   });
 
