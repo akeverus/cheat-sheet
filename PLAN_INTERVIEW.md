@@ -1507,3 +1507,10 @@ Known factually wrong correct answers: 0
 - **Содержимое опций (text/correct/sections) БАЙТ-ИДЕНТИЧНО HEAD** — immutable-guard: per-block + глобальный content-мультимножество (text,correct,sections-json) == HEAD (drift=0). git diff строго симметричен (205 ins / 205 del — чистое переупорядочивание). 15/20 блоков сменили позицию correct.
 - Гейт: **CORRECT_POSITION_SEQUENCE 20→3** (порог ≤5, PASS); DISTRIBUTION=1.0 (5/5/5/5); schema OK; surface tells неизменны (=3: Q1/Q16/Q20, position-agnostic); skel hard_fails=0. Остаток gate-FAIL = §30 documented: OPTION_LENGTH_RATIO=1.64, DUPLICATE_NGRAMS=98. Blind review не требуется (контент не менялся).
 - Sidecar reviews: +c2, +pos_decycle, residual POS→✅. **Осталось по файлу:** surface Q1/Q16/Q20 + добор блоков Q1-3/Q6-20.
+
+### ROUND-8 · mutation-testing · c3 surface backtick-bucket tells Q1/Q16/Q20 → 0 — 2026-07-14
+- **Surface-only, formatting-only.** 3 реальных tells (backtick-bucket): Q1 (бакеты 1-2), Q16 (correct C уникально bt=0 → `-bt` tell), Q20 (дистрактор bt=0). Механика: `bucket(bt)` = 0/(1-2)/(≥3); tell фаерится при разбросе бакетов и «correct уникально без backticks».
+- Фикс — обёртка УЖЕ-присутствующих терминов в `backticks` (слова/порядок/смысл неизменны, `strip_bt` == HEAD): Q1-A `autogen` + Q1-D `covered` (bt 2→3, все bucket 2); Q16-C `incremental`+`in-process` (correct, formatting-only, bt 0→2) + Q16-A `selection` (дистрактор, raw-паритет bt→2, все bucket 1); Q20-D `dashboard` (bt 0→1, все bucket 1).
+- **correct-тач только Q16-C и только formatting** (harness whitelist + strip-backtick-equality guard); Q1-B/Q20-B correct нетронуты. diff 5 строк (5×5 backtick-adds).
+- Гейт: **surface real tells 3→0** (вся файла NO_TELLS); skel hard_fails=0; schema OK; POS/DISTRIBUTION неизменны. **Blind SEED=9600 PASS 3/3:** Q1/Q16/Q20 guessable_by_form=false, semantic_correct ✓ (B/C/B), без карикатур/дублей; ревьюер-нит по Q16 (1-vs-2 bt у дистрактора) устранён добором Q16-A.
+- Sidecar reviews: +c3/+blind_c3, residual surface→✅. **Осталось по файлу:** добор блоков Q1-3/Q6-20 под 20 правил + blind (per-block факт/uniqueness/plausibility).
