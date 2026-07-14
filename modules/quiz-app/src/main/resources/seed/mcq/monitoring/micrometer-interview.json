@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring Boot` метрики удобнее объявлять декларативно, через `@Timed`. Вариант 1: `@Timed(\"payments\")` над методом меряет время без инжекции `MeterRegistry`. Вариант 2 (тоже без инжекции): у полученного таймера есть готовый `count`, поэтому отдельные `Counter.builder(...)` и `Gauge.builder(...)` заводить не нужно — аннотации над методами хватает.",
+              "text": "В `Spring Boot` метрики удобнее объявлять декларативно, через `@Timed`. Вариант 1: `@Timed(\"payments\")` над методом меряет время без инжекции `MeterRegistry`. Вариант 2 (без инжекции): его `count` уже считает вызовы, поэтому `Counter.builder(...)` и `Gauge.builder(...)` заводить не нужно — аннотаций над методами хватает.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Timed` — лишь один из способов и только для таймеров; есть инжекция `MeterRegistry` и `MeterBinder` для любых типов.",
@@ -803,7 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Два способа, оба через пересоздание. Вариант 1: вызывать `registry.counter(\"payments\",\"status\",\"success\")` + `.increment()` в каждом методе, ведь между вызовами `MeterRegistry` счётчик не хранит и значение обнуляется. Вариант 2: так же пересоздавать `registry.timer(\"payments.latency\")` с `timer.record(() -> doProcess())` и `Gauge.builder(\"queue.size\", queue, Queue::size)` на каждый вызов, потому что реестр ссылку на метрику не удерживает.",
+              "text": "Два способа, оба через пересоздание. Вариант 1: вызывать `registry.counter(\"payments\",\"status\",\"success\")` + `.increment()` в каждом методе, ведь `MeterRegistry` счётчик между вызовами не хранит. Вариант 2: пересоздавать `registry.timer(\"payments.latency\")` с `timer.record(() -> doProcess())`, ведь реестр ссылку на метрику не удерживает.",
               "correct": false,
               "sections": {
                 "what_actually": "Достаточно создать метрику один раз (в конструкторе) и переиспользовать ссылку; `register()` идемпотентен по id.",

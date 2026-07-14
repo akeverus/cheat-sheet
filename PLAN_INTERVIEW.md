@@ -1907,3 +1907,12 @@ Known factually wrong correct answers: 0
 - **Результат Q7:** A24/B22/C27/D26 → ratio **1.55→1.23 PASS**; DUPLICATE остался 0; CORRECT_WRONG_AVG 0.889→0.9 (тримминг поднял).
 - **Слепой ревью** (независимый reviewer, SEED 10627, correct=B-позиция) → **ACCEPT**: ровно один защитим, факт-ошибок нет, все три сохранили осмысленные ложные тезисы (A=только start/stop пишет, C=`LongTaskTimer`-путаница усилена именем `.active`, D=только-нс полу-правда, структурно уравновешивает B). NIT: B визуально длинный из-за `publishPercentiles`-кода (по словам SHORTEST) — form-guess скомпенсирован D. **blocks_reaudited=6/20.**
 - **ДАЛЬШЕ:** OPTION_LENGTH worst теперь Q14(1.52, driven B=38сл) + Q15/Q20/Q9/Q19 → CORRECT_WRONG_AVG=0.9 → ABSOLUTE_MARKER_GAP=0.367 → skel HARD Q15. Цель — micrometer FINAL.
+
+### ROUND-8 · micrometer · c8 OPTION_LENGTH Q14 1.52→1.32 + CORRECT_WRONG_AVG GREEN — 2026-07-15
+- **Q14 «Как создать кастомную метрику в `Spring Boot`?» — worst OPTION_LENGTH (1.52, driven B=38сл).** correct=C байт-лок (25сл, SHORTEST).
+- **Правка (правились ТОЛЬКО дистракторы B и A; correct C и дистрактор D=33 не тронуты; sections не тронуты — мисконцепции целы; opening_class prose×4 инвариант):**
+  - B: «оба через пересоздание… счётчик не хранит и значение обнуляется… `Gauge.builder` на каждый вызов, потому что реестр ссылку не удерживает» → «…счётчик между вызовами не хранит… пересоздавать `registry.timer` с `record`, ведь реестр ссылку на метрику не удерживает» (38→28; выброшен избыточный gauge-пример + дубль-обоснование). Мисконцепция «пересоздавать метрику каждый вызов» цела.
+  - A (c2-текст): «у полученного таймера есть готовый `count`, поэтому отдельные `Counter.builder` и `Gauge.builder` заводить не нужно» → «его `count` уже считает вызовы, поэтому `Counter.builder(...)` и `Gauge.builder(...)` заводить не нужно» + paren «(тоже без инжекции)»→«(без инжекции)» (34→31; paren-parity с C сохранён). Мисконцепция «@Timed-only» цела.
+- **Результат Q14:** A31/B28/C25/D33 → ratio **1.52→1.32 PASS**; DUPLICATE остался 0; **CORRECT_WRONG_AVG 0.9→0.907 GREEN** (тримминг закрыл).
+- **Слепой ревью** (независимый reviewer, SEED 24815, correct=C-позиция) → **ACCEPT**: ровно один защитим, факт-ошибок нет, B (@Timed-only «декларативно всё покроем») и D (пересоздание из-за мнимого отсутствия кэширования метров) сохранили осмысленность после сжатия; form_guess не выдаёт ответ. **blocks_reaudited=7/20.**
+- **ДАЛЬШЕ:** OPTION_LENGTH worst теперь Q15(1.43) + Q20/Q9/Q19 → ABSOLUTE_MARKER_GAP=0.367 → skel HARD Q15. Цель — micrometer FINAL.
