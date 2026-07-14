@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Единственный способ — аннотация `@Timed`. Вариант 1 (якобы полный): `@Timed(\"payments\")` над методом сервиса, при этом инжектить `MeterRegistry` не нужно, а `Counter.builder(\"orders\").tag(\"status\",\"ok\").register(registry)` и `Gauge.builder(\"queue.size\", queue, Queue::size)` в коде не применяют. Вариант 2 отсутствует: `@Timed` сам покрывает и `counter.increment()`, и `timer.record(() -> doProcess())`, поэтому иных путей создать метрику нет.",
+              "text": "В `Spring Boot` метрики удобнее объявлять декларативно, через `@Timed`. Вариант 1: `@Timed(\"payments\")` над методом меряет время без инжекции `MeterRegistry`. Вариант 2 (тоже без инжекции): у полученного таймера есть готовый `count`, поэтому отдельные `Counter.builder(...)` и `Gauge.builder(...)` заводить не нужно — аннотации над методами хватает.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Timed` — лишь один из способов и только для таймеров; есть инжекция `MeterRegistry` и `MeterBinder` для любых типов.",
