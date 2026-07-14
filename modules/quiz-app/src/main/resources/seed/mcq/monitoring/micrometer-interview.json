@@ -216,7 +216,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Micrometer` покрывает любые измерения одним типом: `Counter` (и возрастающий, и убывающий счётчик — запросы, размер очереди, память, латентность), потому что он умеет и `increment()` (рост — новые события), и `decrement()` (спад — освобождение), заменяя собой и `Gauge`, и `Timer`, и `DistributionSummary`.",
+              "text": "`Micrometer` покрывает все измерения одним типом: `Counter` (и возрастающий, и убывающий счётчик — запросы, размер очереди, память, латентность), потому что он умеет и `increment()` (рост — новые события), и `decrement()` (спад — освобождение), заменяя собой и `Gauge`, и `Timer`, и `DistributionSummary`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Counter` монотонно возрастает и НЕ поддерживает decrement; для значений, которые могут падать, есть `Gauge`.",
@@ -228,7 +228,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Micrometer` по сути опирается на один тип: `Timer` (время выполнения + счётчик — латентность, а через него и запросы, и ошибки), потому что любое измерение (`Counter` — счёт событий, `Gauge` — мгновенное значение, `DistributionSummary` — размер payload) можно выразить через длительность.",
+              "text": "`Micrometer` по сути опирается на один тип: `Timer` (время выполнения + счётчик — латентность, а через него и запросы, и ошибки), потому что каждое измерение (`Counter` — счёт событий, `Gauge` — мгновенное значение, `DistributionSummary` — размер payload) можно выразить через длительность.",
               "correct": false,
               "sections": {
                 "what_actually": "`Timer` — лишь один из типов (время + count); количество событий моделирует `Counter`, мгновенное значение — `Gauge`.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`LongTaskTimer` нужен для тех же задач, что и `Timer`, но отличается лишь тем, что меряет время в часах, а не в миллисекундах. Создаётся через `LongTaskTimer.builder(\"batch.job\").register(registry)`, замер оборачивает работу (`Sample sample = taskTimer.start(); ... ; sample.stop()`), и после завершения `taskTimer.activeTasks()` и `taskTimer.duration(HOURS)` просто выдают результат в других единицах.",
+              "text": "`LongTaskTimer` нужен для тех же задач, что и `Timer`, но меряет время в часах, а не в миллисекундах. Создаётся через `LongTaskTimer.builder(\"batch.job\").register(registry)`, замер оборачивает работу (`Sample sample = taskTimer.start(); ... ; sample.stop()`), и после завершения `taskTimer.activeTasks()` и `taskTimer.duration(HOURS)` выдают результат в других единицах.",
               "correct": false,
               "sections": {
                 "what_actually": "Отличие не в единицах, а в моменте отдачи метрик: `LongTaskTimer` показывает активные задачи В ПРОЦЕССЕ, а `Timer` — только после завершения.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Tags` — это пары ключ-значение, куда обязательно кладут уникальный request ID; они позволяют точно трассировать каждый запрос по идентификатору (requestId, userId, sessionId). Задаются при создании метрики (`Counter.builder(\"http.requests\").tag(\"requestId\", id)`), а общие теги (`commonTags`) с per-request идентификаторами добавляются ко всем метрикам реестра — в `Spring Boot` через `management.metrics.tags` в `application.yml`.",
+              "text": "`Tags` — это пары ключ-значение, куда кладут уникальный request ID; они позволяют точно трассировать каждый запрос по идентификатору (requestId, userId, sessionId). Задаются при создании метрики (`Counter.builder(\"http.requests\").tag(\"requestId\", id)`), а общие теги (`commonTags`) с per-request идентификаторами добавляются ко всем метрикам реестра — в `Spring Boot` через `management.metrics.tags` в `application.yml`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: класть request ID или user ID в теги категорически нельзя — это вызывает cardinality explosion.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Tags` — это пары ключ-значение, которые задаются только глобально для всего реестра; отдельной метрике их указать нельзя (метод, статус, эндпоинт — общие). Задаются лишь через общие теги (`commonTags`), а вызов `Counter.builder(\"http.requests\").tag(\"status\",\"500\")` на конкретной метрике недоступен — в `Spring Boot` теги живут только на уровне `management.metrics.tags` в `application.yml`.",
+              "text": "`Tags` — это пары ключ-значение, которые задаются лишь глобально для всего реестра; отдельной метрике их указать нельзя (метод, статус, эндпоинт — общие). Задаются лишь через общие теги (`commonTags`), а вызов `Counter.builder(\"http.requests\").tag(\"status\",\"500\")` на конкретной метрике недоступен — в `Spring Boot` теги живут лишь на уровне `management.metrics.tags` в `application.yml`.",
               "correct": false,
               "sections": {
                 "what_actually": "Теги задаются и точечно при создании метрики (`.tag(...)`), и глобально через `commonTags`; оба способа доступны.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Timer` и `DistributionSummary` считают перцентили на стороне клиента. Client-side: `.publishPercentiles(0.5,0.95,0.99)` — вычисляются в приложении. Histogram: `.publishPercentileHistogram(true)` — тоже полностью считает готовый `p99` в приложении и экспортирует его, а `Prometheus` лишь хранит присланное и `histogram_quantile()` не вызывает. Всё задаётся в `application.yml` через `management.metrics.distribution.percentiles` / `percentiles-histogram` / `slo`.",
+              "text": "`Timer` и `DistributionSummary` считают перцентили на стороне клиента. Client-side: `.publishPercentiles(0.5,0.95,0.99)` — вычисляются в приложении. Histogram: `.publishPercentileHistogram(true)` — тоже считает готовый `p99` в приложении и экспортирует его, а `Prometheus` лишь хранит присланное и `histogram_quantile()` не вызывает. Всё задаётся в `application.yml` через `management.metrics.distribution.percentiles` / `percentiles-histogram` / `slo`.",
               "correct": false,
               "sections": {
                 "what_actually": "Histogram-режим отдаёт buckets, а сам перцентиль (`histogram_quantile()`) считает уже `Prometheus` на стороне сервера.",
@@ -1044,7 +1044,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`MeterFilter` — это фильтр только для запрета регистрации метрик в момент регистрации: переименование, работа с тегами и ограничение кардинальности ему недоступны. Регистрируется через `MeterRegistryCustomizer`, который вызывает `registry.config().meterFilter(...)`. Единственный фильтр: `MeterFilter.deny()` (запрет по имени), тогда как `accept()`, `ignoreTags(...)` и `maximumAllowableTags(...)` он не поддерживает.",
+              "text": "`MeterFilter` — это фильтр лишь для запрета регистрации метрик в момент регистрации: переименование, работа с тегами и ограничение кардинальности ему недоступны. Регистрируется через `MeterRegistryCustomizer`, который вызывает `registry.config().meterFilter(...)`. Поддержан лишь фильтр `MeterFilter.deny()` (запрет по имени), тогда как `accept()`, `ignoreTags(...)` и `maximumAllowableTags(...)` он не поддерживает.",
               "correct": false,
               "sections": {
                 "what_actually": "`MeterFilter` гораздо шире `deny`: он переименовывает метрики, добавляет/удаляет теги (`ignoreTags`), ограничивает кардинальность (`maximumAllowableTags`) и явно разрешает (`accept`).",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Нужны четыре шага, но хватает первого. (1) Зависимость `io.micrometer:micrometer-registry-prometheus` — и эндпоинт `/actuator/prometheus` сразу доступен. (2) Настройка `exposure.include` не требуется. (3) Эндпоинт `GET /actuator/prometheus` отвечает `200` без YAML. (4) В `prometheus.yml` осталось лишь прописать `targets: ['localhost:8080']`, `scrape_interval: 15s`.",
+              "text": "Нужны четыре шага, но хватает первого. (1) Зависимость `io.micrometer:micrometer-registry-prometheus` — и эндпоинт `/actuator/prometheus` доступен. (2) Настройка `exposure.include` не требуется. (3) Эндпоинт `GET /actuator/prometheus` отвечает `200` без YAML. (4) В `prometheus.yml` осталось прописать `targets: ['localhost:8080']`, `scrape_interval: 15s`.",
               "correct": false,
               "sections": {
                 "what_actually": "Эндпоинт нужно явно открыть через `management.endpoints.web.exposure.include: prometheus`, иначе он не экспонируется.",
