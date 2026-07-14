@@ -11,19 +11,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Micrometer` — это фасад (facade) поверх клиентских библиотек метрик, аналог `SLF4J` для метрик: инструментируешь код один раз, а конкретный бэкенд (`Prometheus`, `Datadog`, `New Relic`, `CloudWatch`, `OTLP` и ещё 20+) подключается зависимостью и конфигурацией.",
-              "correct": true,
-              "sections": {
-                "explanation": "Без фасада переход с `Prometheus` на `Datadog` означал бы переписывание всего кода инструментирования; с `Micrometer` меняется только зависимость и пара property — vendor lock-in снимается на уровне API.",
-                "example": "`Counter.builder(\"orders.created\").tag(\"region\", \"eu-west\").register(registry)` — этот код работает одинаково независимо от того, какой `MeterRegistry` стоит за фасадом.",
-                "when_to_apply": "Применяй на старте любого JVM-сервиса, где нужна observability и неизвестно заранее, в какую систему мониторинга метрики пойдут или их может быть несколько одновременно.",
-                "edge_cases": "Фасад не магически нормализует семантику бэкендов: имена и единицы конвертируются по правилам каждой системы, поэтому `http.requests.total` в `Prometheus` станет `http_requests_total`.",
-                "related": "[[micrometer-interview#Q2]] что такое MeterRegistry; [[micrometer-interview#Q4]] типы метрик; [[micrometer-interview#Q12]] интеграция в Spring Boot."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Micrometer` — это хранилище и визуализация (TSDB+dashboards) поверх собранных метрик, аналог `Prometheus` для рядов: складываешь метрики один раз, а внешние потребители (`Grafana`, `Datadog`, `New Relic`, `CloudWatch`, `OTLP` и ещё 20+) лишь читают из него готовые графики.",
               "correct": false,
               "sections": {
@@ -34,8 +21,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Micrometer` — это трассировщик (distributed tracing) поверх запросов между сервисами, аналог `Jaeger` для метрик: размечаешь спаны один раз, а конкретный бэкенд трейсов (`Zipkin`, `Jaeger`, `Tempo`, `New Relic`, `OTLP` и ещё 20+) подключается зависимостью и конфигурацией.",
               "correct": false,
               "sections": {
@@ -43,6 +30,19 @@
                 "source_of_confusion": "Под зонтиком `Micrometer` есть отдельный модуль tracing, поэтому весь проект ошибочно считают трассировочным.",
                 "if_it_were_true": "Тогда `Counter`, `Gauge`, `Timer` были бы про спаны, но это типы агрегированных метрик, а не элементы трейса.",
                 "how_it_should_be": "Core `Micrometer` — это фасад метрик; трассировка вынесена в отдельный модуль и интегрируется с `Jaeger`/`Zipkin`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Micrometer` — это фасад (facade) поверх клиентских библиотек метрик, аналог `SLF4J` для метрик: инструментируешь код один раз, а конкретный бэкенд (`Prometheus`, `Datadog`, `New Relic`, `CloudWatch`, `OTLP` и ещё 20+) подключается зависимостью и конфигурацией.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без фасада переход с `Prometheus` на `Datadog` означал бы переписывание всего кода инструментирования; с `Micrometer` меняется только зависимость и пара property — vendor lock-in снимается на уровне API.",
+                "example": "`Counter.builder(\"orders.created\").tag(\"region\", \"eu-west\").register(registry)` — этот код работает одинаково независимо от того, какой `MeterRegistry` стоит за фасадом.",
+                "when_to_apply": "Применяй на старте любого JVM-сервиса, где нужна observability и неизвестно заранее, в какую систему мониторинга метрики пойдут или их может быть несколько одновременно.",
+                "edge_cases": "Фасад не магически нормализует семантику бэкендов: имена и единицы конвертируются по правилам каждой системы, поэтому `http.requests.total` в `Prometheus` станет `http_requests_total`.",
+                "related": "[[micrometer-interview#Q2]] что такое MeterRegistry; [[micrometer-interview#Q4]] типы метрик; [[micrometer-interview#Q12]] интеграция в Spring Boot."
               }
             },
             {
@@ -71,18 +71,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`MeterRegistry` — это HTTP-эндпоинт `Micrometer`: он отдаёт все зарегистрированные метрики (meters) и обслуживает scrape мониторинговой системы. Пути: `/actuator/prometheus` (text, для Prometheus), `/actuator/metrics`, `/prometheus`, `/metrics` и статический `Metrics.endpoint`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Эндпоинт `/actuator/prometheus` — это деталь экспорта `PrometheusMeterRegistry`; сам `MeterRegistry` — это объект-реестр в памяти приложения.",
-                "source_of_confusion": "Реестр и его эндпоинт экспорта тесно связаны, поэтому их роли смешивают.",
-                "if_it_were_true": "Тогда реестр существовал бы только при наличии web-слоя, но `SimpleMeterRegistry` работает и в обычном тесте без HTTP.",
-                "how_it_should_be": "`MeterRegistry` — это компонент, хранящий и публикующий метрики; HTTP-эндпоинт — лишь один из способов их отдать."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`MeterRegistry` — центральный компонент `Micrometer`: он хранит все зарегистрированные метрики (meters) и отвечает за их публикацию в мониторинговую систему. Реализации: `SimpleMeterRegistry` (in-memory, для тестов), `PrometheusMeterRegistry`, `DatadogMeterRegistry`, `CompositeMeterRegistry` и статический `Metrics.globalRegistry`.",
               "correct": true,
               "sections": {
@@ -91,6 +79,18 @@
                 "when_to_apply": "Инжектируй `MeterRegistry` в конструкторы сервисов, когда создаёшь кастомные метрики; статический `globalRegistry` оставляй для кода вне Spring-контекста.",
                 "edge_cases": "Одна и та же метрика, зарегистрированная в двух разных реестрах, — это два независимых объекта; общего глобального состояния между реестрами нет, кроме `globalRegistry`.",
                 "related": "[[micrometer-interview#Q1]] что такое Micrometer; [[micrometer-interview#Q3]] CompositeMeterRegistry; [[micrometer-interview#Q5]] как работает Counter."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`MeterRegistry` — это HTTP-эндпоинт `Micrometer`: он отдаёт все зарегистрированные метрики (meters) и обслуживает scrape мониторинговой системы. Пути: `/actuator/prometheus` (text, для Prometheus), `/actuator/metrics`, `/prometheus`, `/metrics` и статический `Metrics.endpoint`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эндпоинт `/actuator/prometheus` — это деталь экспорта `PrometheusMeterRegistry`; сам `MeterRegistry` — это объект-реестр в памяти приложения.",
+                "source_of_confusion": "Реестр и его эндпоинт экспорта тесно связаны, поэтому их роли смешивают.",
+                "if_it_were_true": "Тогда реестр существовал бы только при наличии web-слоя, но `SimpleMeterRegistry` работает и в обычном тесте без HTTP.",
+                "how_it_should_be": "`MeterRegistry` — это компонент, хранящий и публикующий метрики; HTTP-эндпоинт — лишь один из способов их отдать."
               }
             },
             {
@@ -155,6 +155,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`CompositeMeterRegistry` нужно собирать вручную в `Spring Boot`, иначе метрики никуда не уйдут. Создаёшь composite бином, добавляешь в него реестры (`composite.add(new SimpleMeterRegistry())`, `composite.add(prometheusRegistry)`), и без этого кода ни один `counter.increment()` во вложенные реестры не запишется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Spring Boot` composite создаётся автоматически при наличии нескольких реализаций реестра; ручная настройка не требуется.",
+                "source_of_confusion": "Привычка всё конфигурировать руками заставляет думать, что и composite нужно собирать вручную.",
+                "if_it_were_true": "Тогда добавление зависимости `micrometer-registry-datadog` рядом с `prometheus` не заработало бы без кода, но Spring сам соберёт composite.",
+                "how_it_should_be": "Spring Boot авто-конфигурирует `CompositeMeterRegistry`; разработчику достаточно добавить нужные `*-registry-*` зависимости."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`CompositeMeterRegistry` агрегирует несколько `MeterRegistry` и публикует каждую метрику во все сразу. Создаёшь composite, добавляешь в него реестры (`composite.add(new SimpleMeterRegistry())`, `composite.add(prometheusRegistry)`), и один `counter.increment()` записывается во все вложенные реестры.",
               "correct": true,
               "sections": {
@@ -163,18 +175,6 @@
                 "when_to_apply": "Используй, когда метрики должны уходить более чем в один бэкенд, или при поэтапной миграции с одной системы мониторинга на другую без потери данных.",
                 "edge_cases": "Реестры, добавленные в composite после регистрации метрики, всё равно начнут её получать — composite ретроактивно связывает meters с новыми бэкендами.",
                 "related": "[[micrometer-interview#Q2]] базовый MeterRegistry; [[micrometer-interview#Q1]] зачем нужен фасад; [[micrometer-interview#Q12]] авто-настройка в Spring Boot."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`CompositeMeterRegistry` нужно собирать вручную в `Spring Boot`, иначе метрики никуда не уйдут. Создаёшь composite бином, добавляешь в него реестры (`composite.add(new SimpleMeterRegistry())`, `composite.add(prometheusRegistry)`), и без этого кода ни один `counter.increment()` во вложенные реестры не запишется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `Spring Boot` composite создаётся автоматически при наличии нескольких реализаций реестра; ручная настройка не требуется.",
-                "source_of_confusion": "Привычка всё конфигурировать руками заставляет думать, что и composite нужно собирать вручную.",
-                "if_it_were_true": "Тогда добавление зависимости `micrometer-registry-datadog` рядом с `prometheus` не заработало бы без кода, но Spring сам соберёт composite.",
-                "how_it_should_be": "Spring Boot авто-конфигурирует `CompositeMeterRegistry`; разработчику достаточно добавить нужные `*-registry-*` зависимости."
               }
             }
           ]
@@ -203,6 +203,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Micrometer` поддерживает шесть основных типов: `Counter` (монотонно возрастающий счётчик — запросы, ошибки), `Gauge` (мгновенное значение — размер очереди, память), `Timer` (время выполнения + счётчик — латентность), `DistributionSummary` (распределение произвольных значений — размер payload), `LongTaskTimer` (активные долгие задачи) и `FunctionCounter` (обёртка над монотонной функцией внешнего объекта).",
+              "correct": true,
+              "sections": {
+                "explanation": "Тип выбирается по семантике измерения: считаешь события — `Counter`, снимаешь текущее значение — `Gauge`, меряешь длительность — `Timer`, распределение не-временных значений — `DistributionSummary`.",
+                "example": "Для активной batch-задачи берут `LongTaskTimer`, чтобы видеть прогресс в процессе; для размера загружаемого файла — `DistributionSummary` с `baseUnit(\"bytes\")`.",
+                "when_to_apply": "Определяйся с типом на этапе проектирования метрики: неверный тип (например, `Counter` вместо `Gauge`) даст бессмысленные графики и неправильные алерты.",
+                "edge_cases": "Граница между `Timer` и `DistributionSummary` тонкая: оба считают распределение, но `Timer` жёстко привязан к единицам времени, а `DistributionSummary` — к произвольным.",
+                "related": "[[micrometer-interview#Q5]] детали Counter; [[micrometer-interview#Q6]] детали Gauge; [[micrometer-interview#Q7]] детали Timer."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Micrometer` покрывает любые измерения одним типом: `Counter` (и возрастающий, и убывающий счётчик — запросы, размер очереди, память, латентность), потому что он умеет и `increment()` (рост — новые события), и `decrement()` (спад — освобождение), заменяя собой и `Gauge`, и `Timer`, и `DistributionSummary`.",
               "correct": false,
               "sections": {
@@ -213,8 +226,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Micrometer` по сути опирается на один тип: `Timer` (время выполнения + счётчик — латентность, а через него и запросы, и ошибки), потому что любое измерение (`Counter` — счёт событий, `Gauge` — мгновенное значение, `DistributionSummary` — размер payload) можно выразить через длительность.",
               "correct": false,
               "sections": {
@@ -222,19 +235,6 @@
                 "source_of_confusion": "`Timer` действительно частый тип в web-сервисах, отсюда переоценка его универсальности.",
                 "if_it_were_true": "Тогда счётчик ошибок пришлось бы выражать через время, что бессмысленно — для этого есть `Counter`.",
                 "how_it_should_be": "Каждый тип решает свою задачу; `Timer` не заменяет `Counter`, `Gauge` или `DistributionSummary`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Micrometer` поддерживает шесть основных типов: `Counter` (монотонно возрастающий счётчик — запросы, ошибки), `Gauge` (мгновенное значение — размер очереди, память), `Timer` (время выполнения + счётчик — латентность), `DistributionSummary` (распределение произвольных значений — размер payload), `LongTaskTimer` (активные долгие задачи) и `FunctionCounter` (обёртка над монотонной функцией внешнего объекта).",
-              "correct": true,
-              "sections": {
-                "explanation": "Тип выбирается по семантике измерения: считаешь события — `Counter`, снимаешь текущее значение — `Gauge`, меряешь длительность — `Timer`, распределение не-временных значений — `DistributionSummary`.",
-                "example": "Для активной batch-задачи берут `LongTaskTimer`, чтобы видеть прогресс в процессе; для размера загружаемого файла — `DistributionSummary` с `baseUnit(\"bytes\")`.",
-                "when_to_apply": "Определяйся с типом на этапе проектирования метрики: неверный тип (например, `Counter` вместо `Gauge`) даст бессмысленные графики и неправильные алерты.",
-                "edge_cases": "Граница между `Timer` и `DistributionSummary` тонкая: оба считают распределение, но `Timer` жёстко привязан к единицам времени, а `DistributionSummary` — к произвольным.",
-                "related": "[[micrometer-interview#Q5]] детали Counter; [[micrometer-interview#Q6]] детали Gauge; [[micrometer-interview#Q7]] детали Timer."
               }
             }
           ]
@@ -323,6 +323,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Gauge` — это мгновенное значение, которое, как и `Counter`, только возрастает и не может падать; `Micrometer` опрашивает привязанный объект при каждом сборе метрик. Привязывают к коллекции (`registry.gaugeCollectionSize(\"queue.size\", tags, queue)`), к `AtomicInteger` (`Gauge.builder(\"connections.active\", counter, AtomicInteger::get)`) или к лямбде (`Gauge.builder(\"cache.size\", cache, c -> c.size())`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главное отличие `Gauge` от `Counter` — он отражает значение, которое свободно растёт и падает.",
+                "source_of_confusion": "Оба типа измеряют 'числа', поэтому ограничение монотонности ошибочно приписывают и `Gauge`.",
+                "if_it_were_true": "Тогда `Gauge` не годился бы для размера очереди (она то растёт, то уменьшается), но это его основной кейс.",
+                "how_it_should_be": "`Gauge` — двунаправленное мгновенное значение; монотонность — свойство `Counter`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Gauge` — это мгновенный снимок значения, которое может расти и падать; `Micrometer` сам опрашивает привязанный объект при каждом сборе метрик. Привязывают к коллекции (`registry.gaugeCollectionSize(\"queue.size\", tags, queue)`), к `AtomicInteger` (`Gauge.builder(\"connections.active\", counter, AtomicInteger::get)`) или к лямбде (`Gauge.builder(\"cache.size\", cache, c -> c.size())`).",
               "correct": true,
               "sections": {
@@ -331,18 +343,6 @@
                 "when_to_apply": "Бери `Gauge` для значений, которые осмысленны как мгновенный снимок: длина очереди, число активных соединений, занятая память, размер кэша.",
                 "edge_cases": "`Micrometer` держит на объект слабую ссылку: если объект соберётся GC, `Gauge` начнёт отдавать `NaN`, поэтому источник нужно удерживать живым.",
                 "related": "[[micrometer-interview#Q5]] отличие от Counter; [[micrometer-interview#Q4]] все типы метрик; [[micrometer-interview#Q20]] MeterBinder для переиспользуемых Gauge."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Gauge` — это мгновенное значение, которое, как и `Counter`, только возрастает и не может падать; `Micrometer` опрашивает привязанный объект при каждом сборе метрик. Привязывают к коллекции (`registry.gaugeCollectionSize(\"queue.size\", tags, queue)`), к `AtomicInteger` (`Gauge.builder(\"connections.active\", counter, AtomicInteger::get)`) или к лямбде (`Gauge.builder(\"cache.size\", cache, c -> c.size())`).",
-              "correct": false,
-              "sections": {
-                "what_actually": "Главное отличие `Gauge` от `Counter` — он отражает значение, которое свободно растёт и падает.",
-                "source_of_confusion": "Оба типа измеряют 'числа', поэтому ограничение монотонности ошибочно приписывают и `Gauge`.",
-                "if_it_were_true": "Тогда `Gauge` не годился бы для размера очереди (она то растёт, то уменьшается), но это его основной кейс.",
-                "how_it_should_be": "`Gauge` — двунаправленное мгновенное значение; монотонность — свойство `Counter`."
               }
             },
             {
@@ -383,18 +383,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Timer` записывает замер в реестр только явной парой start/stop, а прочие формы дают лишь разовую оценку. Создаётся через `Timer.builder(\"http.request.duration\").register(registry)`. Из трёх способов реально пишет один: `Timer.Sample sample = Timer.start(registry); ... ; sample.stop(timer)`, тогда как `timer.record(Duration.ofMillis(150))` и `timer.record(() -> processRequest())` замер в реестр не сохраняют.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Есть удобные формы без ручного stop: `timer.record(Duration.ofMillis(150))` и `timer.record(() -> processRequest())` пишут замер сами.",
-                "source_of_confusion": "Паттерн `Timer.Sample` с `start`/`stop` запоминается как единственный способ.",
-                "if_it_were_true": "Тогда нельзя было бы одной строкой обернуть лямбду, но `record(Runnable)` делает именно это.",
-                "how_it_should_be": "Ручной `Timer.Sample.start(registry)` + `sample.stop(timer)` — лишь один из трёх вариантов записи."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Timer` измеряет задержку и частоту событий, автоматически записывая и время, и количество. Создаётся через `Timer.builder(\"http.request.duration\").publishPercentiles(0.5,0.95,0.99).register(registry)`. Записать замер можно тремя способами: вручную `timer.record(Duration.ofMillis(150))`, обёрткой `timer.record(() -> processRequest())` или через `Timer.Sample sample = Timer.start(registry); ... ; sample.stop(timer)`.",
               "correct": true,
               "sections": {
@@ -403,6 +391,18 @@
                 "when_to_apply": "Используй `Timer` для измерения длительности операций: HTTP-запросы, обращения к БД, вызовы внешних сервисов — везде, где важна латентность.",
                 "edge_cases": "Вариант `Timer.Sample` нужен, когда начало и конец замера находятся в разных местах кода (например, start в фильтре, stop в колбэке), где обёртка-лямбда невозможна.",
                 "related": "[[micrometer-interview#Q4]] все типы метрик; [[micrometer-interview#Q8]] DistributionSummary для не-временных значений; [[micrometer-interview#Q16]] настройка перцентилей и гистограмм."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Timer` записывает замер в реестр только явной парой start/stop, а прочие формы дают лишь разовую оценку. Создаётся через `Timer.builder(\"http.request.duration\").register(registry)`. Из трёх способов реально пишет один: `Timer.Sample sample = Timer.start(registry); ... ; sample.stop(timer)`, тогда как `timer.record(Duration.ofMillis(150))` и `timer.record(() -> processRequest())` замер в реестр не сохраняют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть удобные формы без ручного stop: `timer.record(Duration.ofMillis(150))` и `timer.record(() -> processRequest())` пишут замер сами.",
+                "source_of_confusion": "Паттерн `Timer.Sample` с `start`/`stop` запоминается как единственный способ.",
+                "if_it_were_true": "Тогда нельзя было бы одной строкой обернуть лямбду, но `record(Runnable)` делает именно это.",
+                "how_it_should_be": "Ручной `Timer.Sample.start(registry)` + `sample.stop(timer)` — лишь один из трёх вариантов записи."
               }
             },
             {
@@ -491,19 +491,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`LongTaskTimer` нужен для долго выполняющихся задач, где важен текущий статус ПРЯМО В ПРОЦЕССЕ выполнения, а не только после завершения. Создаётся через `LongTaskTimer.builder(\"batch.job\").register(registry)`, замер оборачивает работу (`Sample sample = taskTimer.start(); ... ; sample.stop()`), и пока задача идёт, доступны `taskTimer.activeTasks()` и `taskTimer.duration(SECONDS)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ключевое отличие от обычного `Timer`: тот записывает метрику только после завершения операции, а `LongTaskTimer` отдаёт количество активных задач и их суммарную длительность ещё во время выполнения.",
-                "example": "Ночной batch-импорт на несколько часов: с `LongTaskTimer` дашборд в реальном времени показывает, что задача активна уже 2 часа, и алерт сработает на зависании, не дожидаясь конца.",
-                "when_to_apply": "Бери `LongTaskTimer` для batch-задач, фоновых процессов, ETL и любых операций минутного/часового масштаба, по которым нужно видеть прогресс, пока они идут.",
-                "edge_cases": "Если задача упадёт без вызова `stop()`, она останется в `activeTasks()`; поэтому `stop()` всегда оборачивают в `finally`, иначе метрика 'зависшей' задачи будет ложно расти.",
-                "related": "[[micrometer-interview#Q7]] обычный Timer; [[micrometer-interview#Q4]] все типы метрик; [[micrometer-interview#Q8]] DistributionSummary."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`LongTaskTimer` нужен для тех же задач, что и `Timer`, но отличается лишь тем, что меряет время в часах, а не в миллисекундах. Создаётся через `LongTaskTimer.builder(\"batch.job\").register(registry)`, замер оборачивает работу (`Sample sample = taskTimer.start(); ... ; sample.stop()`), и после завершения `taskTimer.activeTasks()` и `taskTimer.duration(HOURS)` просто выдают результат в других единицах.",
               "correct": false,
               "sections": {
@@ -514,8 +501,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`LongTaskTimer` нужен для долгих задач, но записывает метрику только после завершения, ровно как обычный `Timer`. Создаётся через `LongTaskTimer.builder(\"batch.job\").register(registry)`, замер оборачивает работу (`Sample sample = taskTimer.start(); ... ; sample.stop()`), и лишь по её окончании становятся доступны `taskTimer.activeTasks()` и `taskTimer.duration(SECONDS)`.",
               "correct": false,
               "sections": {
@@ -523,6 +510,19 @@
                 "source_of_confusion": "Привычная модель 'таймер пишет результат в конце' переносится и на `LongTaskTimer`.",
                 "if_it_were_true": "Тогда он ничем не отличался бы от `Timer` и был бы не нужен.",
                 "how_it_should_be": "Смысл `LongTaskTimer` — видеть метрики незавершённой задачи; финальная запись — это про обычный `Timer`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`LongTaskTimer` нужен для долго выполняющихся задач, где важен текущий статус ПРЯМО В ПРОЦЕССЕ выполнения, а не только после завершения. Создаётся через `LongTaskTimer.builder(\"batch.job\").register(registry)`, замер оборачивает работу (`Sample sample = taskTimer.start(); ... ; sample.stop()`), и пока задача идёт, доступны `taskTimer.activeTasks()` и `taskTimer.duration(SECONDS)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевое отличие от обычного `Timer`: тот записывает метрику только после завершения операции, а `LongTaskTimer` отдаёт количество активных задач и их суммарную длительность ещё во время выполнения.",
+                "example": "Ночной batch-импорт на несколько часов: с `LongTaskTimer` дашборд в реальном времени показывает, что задача активна уже 2 часа, и алерт сработает на зависании, не дожидаясь конца.",
+                "when_to_apply": "Бери `LongTaskTimer` для batch-задач, фоновых процессов, ETL и любых операций минутного/часового масштаба, по которым нужно видеть прогресс, пока они идут.",
+                "edge_cases": "Если задача упадёт без вызова `stop()`, она останется в `activeTasks()`; поэтому `stop()` всегда оборачивают в `finally`, иначе метрика 'зависшей' задачи будет ложно расти.",
+                "related": "[[micrometer-interview#Q7]] обычный Timer; [[micrometer-interview#Q4]] все типы метрик; [[micrometer-interview#Q8]] DistributionSummary."
               }
             },
             {
@@ -551,18 +551,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Tags` — это произвольные строковые описания для документации метрики; они не формируют временные ряды и служат лишь пометками (комментарий, автор, назначение). Задаются при создании метрики (`Counter.builder(\"http.requests\").tag(\"note\",\"comment\")`), а общие пометки (`commonTags`) добавляются ко всем метрикам реестра — в `Spring Boot` через `management.metrics.tags` в `application.yml` как справочный текст.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Tags` — это пары ключ-значение (измерения), которые формируют отдельные временные ряды и позволяют срезать метрику по dimension'ам.",
-                "source_of_confusion": "Слово 'tag' ассоциируется с пометками/комментариями, а не со структурой данных.",
-                "if_it_were_true": "Тогда нельзя было бы построить график 'запросы по статусам', но именно теги дают такую разбивку.",
-                "how_it_should_be": "Каждая уникальная комбинация тегов — отдельный временной ряд; теги — это полноценные измерения метрики."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Tags` — это пары ключ-значение для многомерных метрик; они позволяют срезать данные по разным измерениям (метод, статус, эндпоинт). Задаются при создании метрики (`Counter.builder(\"http.requests\").tag(\"method\",\"POST\").tag(\"status\",\"500\")`), а общие теги (`commonTags`) добавляются ко всем метрикам реестра — в `Spring Boot` через `management.metrics.tags` в `application.yml`.",
               "correct": true,
               "sections": {
@@ -571,6 +559,18 @@
                 "when_to_apply": "Добавляй теги для измерений с НИЗКОЙ кардинальностью (метод, код ответа, регион), по которым реально хочется фильтровать и группировать в дашбордах.",
                 "edge_cases": "НЕ клади в теги значения высокой кардинальности (user ID, request ID, email) — это взорвёт количество временных рядов и положит мониторинг (cardinality explosion).",
                 "related": "[[micrometer-interview#Q11]] соглашения по именованию; [[micrometer-interview#Q18]] MeterFilter для ограничения кардинальности; [[micrometer-interview#Q1]] зачем нужен фасад."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Tags` — это произвольные строковые описания для документации метрики; они не формируют временные ряды и служат лишь пометками (комментарий, автор, назначение). Задаются при создании метрики (`Counter.builder(\"http.requests\").tag(\"note\",\"comment\")`), а общие пометки (`commonTags`) добавляются ко всем метрикам реестра — в `Spring Boot` через `management.metrics.tags` в `application.yml` как справочный текст.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Tags` — это пары ключ-значение (измерения), которые формируют отдельные временные ряды и позволяют срезать метрику по dimension'ам.",
+                "source_of_confusion": "Слово 'tag' ассоциируется с пометками/комментариями, а не со структурой данных.",
+                "if_it_were_true": "Тогда нельзя было бы построить график 'запросы по статусам', но именно теги дают такую разбивку.",
+                "how_it_should_be": "Каждая уникальная комбинация тегов — отдельный временной ряд; теги — это полноценные измерения метрики."
               }
             },
             {
@@ -635,6 +635,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`Micrometer` жёстко фиксирует имя при регистрации (`http.requests.total`, `jvm.memory.used`) и на экспорте изменить его не может: `Prometheus` → `http.requests.total` (как есть), `Datadog` и `Graphite` → `http.requests.total` (тоже без правок). Даже `MeterFilter` с суффиксами по конвенции: `_total`, `_seconds`, `_bytes` переименовать зарегистрированную метрику уже не в силах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имена как раз можно трансформировать на стороне экспорта через `MeterFilter` (rename) и автоматическую конвертацию бэкенда.",
+                "source_of_confusion": "Иммутабельность объекта meter путают с невозможностью переименования при экспорте.",
+                "if_it_were_true": "Тогда `Prometheus` не мог бы превратить `http.requests.total` в `http_requests_total`, но он делает это всегда.",
+                "how_it_should_be": "Зарегистрированное имя фиксировано в реестре, но `MeterFilter` и экспортер свободно его переименовывают на выходе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Micrometer` использует dot-separated имена (`http.requests.total`, `jvm.memory.used`) как канонический формат, а при экспорте каждый бэкенд конвертирует их сам: `Prometheus` → `http_requests_total` (snake_case), `Datadog` и `Graphite` → `http.requests.total` (dot-notation). Рекомендуемые суффиксы по `Prometheus`-конвенции: `_total` для счётчиков, `_seconds` для времени, `_bytes` для размеров.",
               "correct": true,
               "sections": {
@@ -643,18 +655,6 @@
                 "when_to_apply": "Применяй dot-notation для всех имён метрик и держи их предсказуемыми (домен.сущность.действие), чтобы дашборды и алерты переносились между системами мониторинга.",
                 "edge_cases": "Если вручную записать имя в snake_case, `Prometheus` отдаст его как есть, но `Datadog` получит неестественное `http_requests_total` с подчёркиваниями — единый стиль ломается.",
                 "related": "[[micrometer-interview#Q10]] теги и кардинальность; [[micrometer-interview#Q1]] идея фасада; [[micrometer-interview#Q19]] экспорт в Prometheus."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Micrometer` жёстко фиксирует имя при регистрации (`http.requests.total`, `jvm.memory.used`) и на экспорте изменить его не может: `Prometheus` → `http.requests.total` (как есть), `Datadog` и `Graphite` → `http.requests.total` (тоже без правок). Даже `MeterFilter` с суффиксами по конвенции: `_total`, `_seconds`, `_bytes` переименовать зарегистрированную метрику уже не в силах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Имена как раз можно трансформировать на стороне экспорта через `MeterFilter` (rename) и автоматическую конвертацию бэкенда.",
-                "source_of_confusion": "Иммутабельность объекта meter путают с невозможностью переименования при экспорте.",
-                "if_it_were_true": "Тогда `Prometheus` не мог бы превратить `http.requests.total` в `http_requests_total`, но он делает это всегда.",
-                "how_it_should_be": "Зарегистрированное имя фиксировано в реестре, но `MeterFilter` и экспортер свободно его переименовывают на выходе."
               }
             }
           ]
@@ -683,6 +683,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Spring Boot` 2.0+ включает `Micrometer` через `spring-boot-starter-actuator`. При добавлении реализации (например, `micrometer-registry-prometheus`) Spring Boot автоматически создаёт `MeterRegistry` (или `CompositeMeterRegistry` при нескольких), регистрирует JVM-метрики, инструментирует HTTP-запросы и добавляет метрики пулов соединений (`HikariCP`, `Tomcat`). `MeterRegistry` доступен через `@Autowired`/конструктор.",
+              "correct": true,
+              "sections": {
+                "explanation": "Auto-configuration снимает почти весь boilerplate: достаточно подключить starter и нужный `*-registry-*`, и базовая observability (JVM, HTTP, пулы) появляется без единой строки кода.",
+                "example": "Добавил `spring-boot-starter-actuator` + `micrometer-registry-prometheus`, выставил `management.endpoints.web.exposure.include: prometheus` — и `/actuator/prometheus` уже отдаёт метрики для scrape.",
+                "when_to_apply": "Подключай так на любом `Spring Boot`-сервисе, где нужен мониторинг: starter + реестр-зависимость + exposure в `application.yml` — минимальный набор для production-observability.",
+                "edge_cases": "Если в classpath несколько реестров, Spring соберёт `CompositeMeterRegistry`, и метрики уйдут во все сразу — это нужно учитывать, чтобы не задвоить экспорт случайно.",
+                "related": "[[micrometer-interview#Q2]] MeterRegistry; [[micrometer-interview#Q3]] CompositeMeterRegistry; [[micrometer-interview#Q13]] какие метрики регистрируются автоматически."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Spring Boot` включает `Micrometer` через `spring-boot-starter-actuator`, но только в `Spring MVC`. При добавлении реализации (например, `micrometer-registry-prometheus`) Spring создаёт `MeterRegistry`, регистрирует JVM-метрики и инструментирует HTTP-запросы лишь в MVC, а в `WebFlux` метрика `http.server.requests` и пулы (`HikariCP`, `Tomcat`) недоступны. `MeterRegistry` доступен через `@Autowired`/конструктор только в MVC-стеке.",
               "correct": false,
               "sections": {
@@ -693,8 +706,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Spring Boot` включает `Micrometer` через `spring-boot-starter-actuator`, но собирает метрики только при наличии внешнего `Prometheus`. При добавлении реализации (например, `micrometer-registry-prometheus`) Spring создаёт `MeterRegistry`, но JVM-метрики, HTTP-запросы и пулы соединений (`HikariCP`, `Tomcat`) наполняются лишь после того, как `Prometheus` начнёт scrape. `MeterRegistry` доступен через `@Autowired`/конструктор, но без `Prometheus` пуст.",
               "correct": false,
               "sections": {
@@ -702,19 +715,6 @@
                 "source_of_confusion": "Связку `Spring Boot` + `Prometheus` показывают вместе, поэтому `Prometheus` считают обязательным.",
                 "if_it_were_true": "Тогда нельзя было бы посмотреть метрики через `/actuator/metrics` без `Prometheus`, но этот эндпоинт работает всегда.",
                 "how_it_should_be": "Сбор метрик идёт внутри приложения; `Prometheus` — лишь один из возможных внешних потребителей."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Spring Boot` 2.0+ включает `Micrometer` через `spring-boot-starter-actuator`. При добавлении реализации (например, `micrometer-registry-prometheus`) Spring Boot автоматически создаёт `MeterRegistry` (или `CompositeMeterRegistry` при нескольких), регистрирует JVM-метрики, инструментирует HTTP-запросы и добавляет метрики пулов соединений (`HikariCP`, `Tomcat`). `MeterRegistry` доступен через `@Autowired`/конструктор.",
-              "correct": true,
-              "sections": {
-                "explanation": "Auto-configuration снимает почти весь boilerplate: достаточно подключить starter и нужный `*-registry-*`, и базовая observability (JVM, HTTP, пулы) появляется без единой строки кода.",
-                "example": "Добавил `spring-boot-starter-actuator` + `micrometer-registry-prometheus`, выставил `management.endpoints.web.exposure.include: prometheus` — и `/actuator/prometheus` уже отдаёт метрики для scrape.",
-                "when_to_apply": "Подключай так на любом `Spring Boot`-сервисе, где нужен мониторинг: starter + реестр-зависимость + exposure в `application.yml` — минимальный набор для production-observability.",
-                "edge_cases": "Если в classpath несколько реестров, Spring соберёт `CompositeMeterRegistry`, и метрики уйдут во все сразу — это нужно учитывать, чтобы не задвоить экспорт случайно.",
-                "related": "[[micrometer-interview#Q2]] MeterRegistry; [[micrometer-interview#Q3]] CompositeMeterRegistry; [[micrometer-interview#Q13]] какие метрики регистрируются автоматически."
               }
             }
           ]
@@ -803,6 +803,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Два способа, оба через пересоздание. Вариант 1: вызывать `registry.counter(\"payments\",\"status\",\"success\")` + `.increment()` в каждом методе, ведь между вызовами `MeterRegistry` счётчик не хранит и значение обнуляется. Вариант 2: так же пересоздавать `registry.timer(\"payments.latency\")` с `timer.record(() -> doProcess())` и `Gauge.builder(\"queue.size\", queue, Queue::size)` на каждый вызов, потому что реестр ссылку на метрику не удерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достаточно создать метрику один раз (в конструкторе) и переиспользовать ссылку; `register()` идемпотентен по id.",
+                "source_of_confusion": "Fluent-вызов `registry.counter(...).increment()` в одну строку наводит на мысль о пересоздании каждый раз.",
+                "if_it_were_true": "Тогда на каждый запрос тратились бы ресурсы на повторную регистрацию, чего избегают, держа поле.",
+                "how_it_should_be": "Метрику регистрируют единожды и хранят в поле; повторный `register` того же id вернёт существующий meter."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Два основных способа. Вариант 1 (рекомендуемый) — инжекция `MeterRegistry` в конструктор сервиса и создание метрик там: `this.successCounter = Counter.builder(\"payments\").tag(\"status\",\"success\").register(registry)`, затем `processingTimer.record(() -> doProcess())` с `increment()` счётчиков внутри. Вариант 2 — реализовать `MeterBinder` (`@Component implements MeterBinder`) и в `bindTo(registry)` зарегистрировать, например, `Gauge.builder(\"orders.queue.size\", queue, Queue::size)`.",
               "correct": true,
               "sections": {
@@ -811,18 +823,6 @@
                 "when_to_apply": "Вариант 1 бери для метрик конкретного сервиса; вариант 2 (`MeterBinder`) — когда одну и ту же инструментацию (например, метрики очереди) нужно переиспользовать в нескольких местах.",
                 "edge_cases": "Создание метрики в теле метода (а не в конструкторе) — частая ошибка: `register()` идемпотентен по id, но лишний вызов на каждый запрос бьёт по производительности.",
                 "related": "[[micrometer-interview#Q12]] интеграция со Spring Boot; [[micrometer-interview#Q20]] MeterBinder; [[micrometer-interview#Q15]] аннотация @Timed как альтернатива."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Два способа, оба через пересоздание. Вариант 1: вызывать `registry.counter(\"payments\",\"status\",\"success\")` + `.increment()` в каждом методе, ведь между вызовами `MeterRegistry` счётчик не хранит и значение обнуляется. Вариант 2: так же пересоздавать `registry.timer(\"payments.latency\")` с `timer.record(() -> doProcess())` и `Gauge.builder(\"queue.size\", queue, Queue::size)` на каждый вызов, потому что реестр ссылку на метрику не удерживает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Достаточно создать метрику один раз (в конструкторе) и переиспользовать ссылку; `register()` идемпотентен по id.",
-                "source_of_confusion": "Fluent-вызов `registry.counter(...).increment()` в одну строку наводит на мысль о пересоздании каждый раз.",
-                "if_it_were_true": "Тогда на каждый запрос тратились бы ресурсы на повторную регистрацию, чего избегают, держа поле.",
-                "how_it_should_be": "Метрику регистрируют единожды и хранят в поле; повторный `register` того же id вернёт существующий meter."
               }
             },
             {
@@ -863,18 +863,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@Timed` — аннотация для подсчёта вызовов метода через AOP: помечаешь метод (`@Timed(value=\"orders.get\", percentiles={0.5,0.95,0.99}, histogram=true)`), и `Micrometer` создаёт `Counter`, считающий число вызовов, но не измеряющий время. Для работы нужен бин `TimedAspect`: `@Bean TimedAspect timedAspect(MeterRegistry registry){ return new TimedAspect(registry); }`, а параметры `percentiles` игнорируются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Timed` создаёт `Timer`: измеряет длительность метода и количество вызовов, с поддержкой перцентилей и гистограмм.",
-                "source_of_confusion": "Имя 'Timed' путают с простым подсчётом вызовов.",
-                "if_it_were_true": "Тогда параметры `percentiles` и `histogram` не имели бы смысла, но они настраивают именно перцентили времени.",
-                "how_it_should_be": "`@Timed` — это декларативный `Timer` поверх метода, а не счётчик вызовов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`@Timed` — аннотация для автоматической инструментации методов через AOP: помечаешь метод (`@Timed(value=\"orders.get\", percentiles={0.5,0.95,0.99}, histogram=true)`), и `Micrometer` создаёт `Timer`, измеряющий его длительность и количество вызовов. Для работы нужен бин `TimedAspect`: `@Bean TimedAspect timedAspect(MeterRegistry registry){ return new TimedAspect(registry); }`.",
               "correct": true,
               "sections": {
@@ -883,6 +871,18 @@
                 "when_to_apply": "Применяй для аккуратной инструментации публичных методов контроллеров и сервисов, когда не хочется засорять бизнес-логику ручными вызовами `Timer`.",
                 "edge_cases": "Как любой AOP-proxy, `@Timed` не срабатывает при self-invocation (вызов метода изнутри того же бина минует прокси) — это типичная ловушка Spring AOP.",
                 "related": "[[micrometer-interview#Q7]] как работает Timer; [[micrometer-interview#Q14]] ручное создание метрик; [[micrometer-interview#Q16]] перцентили и гистограммы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Timed` — аннотация для подсчёта вызовов метода через AOP: помечаешь метод (`@Timed(value=\"orders.get\", percentiles={0.5,0.95,0.99}, histogram=true)`), и `Micrometer` создаёт `Counter`, считающий число вызовов, но не измеряющий время. Для работы нужен бин `TimedAspect`: `@Bean TimedAspect timedAspect(MeterRegistry registry){ return new TimedAspect(registry); }`, а параметры `percentiles` игнорируются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Timed` создаёт `Timer`: измеряет длительность метода и количество вызовов, с поддержкой перцентилей и гистограмм.",
+                "source_of_confusion": "Имя 'Timed' путают с простым подсчётом вызовов.",
+                "if_it_were_true": "Тогда параметры `percentiles` и `histogram` не имели бы смысла, но они настраивают именно перцентили времени.",
+                "how_it_should_be": "`@Timed` — это декларативный `Timer` поверх метода, а не счётчик вызовов."
               }
             },
             {
@@ -971,19 +971,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "SLO в `Micrometer` — это заданные пороги (`serviceLevelObjectives(Duration.ofMillis(50), ...)`) для гистограммы: на каждый порог создаётся отдельный bucket, что позволяет отслеживать долю запросов, укладывающихся в целевое время. В `Prometheus` это превращается в строки `http_request_duration_seconds_bucket{le=\"0.05\"}`, по которым PromQL считает процент быстрых запросов: `rate(..._bucket{le=\"0.10\"}[5m]) / rate(..._count[5m])`.",
-              "correct": true,
-              "sections": {
-                "explanation": "SLO-границы — это явные buckets под бизнес-цель: вместо абстрактного p95 ты прямо меряешь 'какой процент запросов уложился в 100ms', что и есть формулировка SLO.",
-                "example": "Ставишь границы 50/100/200ms на `http.request.duration` — и алерт срабатывает, когда доля запросов быстрее 100ms падает ниже 99%, то есть SLO нарушается.",
-                "when_to_apply": "Применяй SLO-bucket'ы, когда у сервиса есть договорные/целевые пороги латентности и нужно следить именно за долей соблюдения, а не за самим перцентилем.",
-                "edge_cases": "SLO-границы добавляют buckets к гистограмме, увеличивая число временных рядов; слишком много порогов раздувает кардинальность, поэтому выбирают несколько ключевых значений.",
-                "related": "[[micrometer-interview#Q16]] перцентили и гистограммы; [[micrometer-interview#Q7]] Timer; [[micrometer-interview#Q19]] экспорт в Prometheus."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "SLO в `Micrometer` — это автоматический алерт (`serviceLevelObjectives(Duration.ofMillis(50), ...)`) для гистограммы: при нарушении порога он сам шлёт уведомление, не требуя `Alertmanager`. В `Prometheus` это превращается в строки `http_request_duration_seconds_bucket{le=\"0.05\"}`, по которым сам `Micrometer` рассылает алерты: `rate(..._bucket{le=\"0.10\"}[5m]) / rate(..._count[5m])`.",
               "correct": false,
               "sections": {
@@ -994,8 +981,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "SLO в `Micrometer` — это заданные пороги (`serviceLevelObjectives(...)` только в наносекундах) для гистограммы: `Duration.ofMillis(50)` или `ofSeconds(1)` не принимаются, пороги задают лишь числом нс. В `Prometheus` это превращается в строки `http_request_duration_seconds_bucket{le=\"0.05\"}`, по которым PromQL считает процент быстрых запросов: `rate(..._bucket{le=\"0.10\"}[5m]) / rate(..._count[5m])`.",
               "correct": false,
               "sections": {
@@ -1003,6 +990,19 @@
                 "source_of_confusion": "Внутреннее наносекундное представление путают с ограничением входного API.",
                 "if_it_were_true": "Тогда нельзя было бы написать `Duration.ofMillis(100)`, но это штатный вызов.",
                 "how_it_should_be": "Границы принимают человекочитаемые `Duration`; перевод в базовые единицы делает `Micrometer`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SLO в `Micrometer` — это заданные пороги (`serviceLevelObjectives(Duration.ofMillis(50), ...)`) для гистограммы: на каждый порог создаётся отдельный bucket, что позволяет отслеживать долю запросов, укладывающихся в целевое время. В `Prometheus` это превращается в строки `http_request_duration_seconds_bucket{le=\"0.05\"}`, по которым PromQL считает процент быстрых запросов: `rate(..._bucket{le=\"0.10\"}[5m]) / rate(..._count[5m])`.",
+              "correct": true,
+              "sections": {
+                "explanation": "SLO-границы — это явные buckets под бизнес-цель: вместо абстрактного p95 ты прямо меряешь 'какой процент запросов уложился в 100ms', что и есть формулировка SLO.",
+                "example": "Ставишь границы 50/100/200ms на `http.request.duration` — и алерт срабатывает, когда доля запросов быстрее 100ms падает ниже 99%, то есть SLO нарушается.",
+                "when_to_apply": "Применяй SLO-bucket'ы, когда у сервиса есть договорные/целевые пороги латентности и нужно следить именно за долей соблюдения, а не за самим перцентилем.",
+                "edge_cases": "SLO-границы добавляют buckets к гистограмме, увеличивая число временных рядов; слишком много порогов раздувает кардинальность, поэтому выбирают несколько ключевых значений.",
+                "related": "[[micrometer-interview#Q16]] перцентили и гистограммы; [[micrometer-interview#Q7]] Timer; [[micrometer-interview#Q19]] экспорт в Prometheus."
               }
             },
             {
@@ -1031,18 +1031,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`MeterFilter` — это фильтр только для запрета регистрации метрик в момент регистрации: переименование, работа с тегами и ограничение кардинальности ему недоступны. Регистрируется через `MeterRegistryCustomizer`, который вызывает `registry.config().meterFilter(...)`. Единственный фильтр: `MeterFilter.deny()` (запрет по имени), тогда как `accept()`, `ignoreTags(...)` и `maximumAllowableTags(...)` он не поддерживает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`MeterFilter` гораздо шире `deny`: он переименовывает метрики, добавляет/удаляет теги (`ignoreTags`), ограничивает кардинальность (`maximumAllowableTags`) и явно разрешает (`accept`).",
-                "source_of_confusion": "Самый частый пример — `MeterFilter.deny(...)`, поэтому весь интерфейс сужают до запрета.",
-                "if_it_were_true": "Тогда нельзя было бы ограничить кардинальность тега `uri`, но `maximumAllowableTags` делает именно это.",
-                "how_it_should_be": "`MeterFilter` — универсальный interceptor регистрации: фильтрация, переименование, теги, кардинальность."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`MeterFilter` — это interceptor для кастомизации метрик в момент регистрации: переименование, фильтрация, добавление/удаление тегов и ограничение кардинальности. Регистрируется через `MeterRegistryCustomizer`, который вызывает `registry.config().meterFilter(...)`. Встроенные фильтры: `MeterFilter.deny()` (запрет регистрации), `accept()` (явное разрешение), `ignoreTags(...)` (удаление тегов), `maximumAllowableTags(...)` (ограничение кардинальности).",
               "correct": true,
               "sections": {
@@ -1051,6 +1039,18 @@
                 "when_to_apply": "Используй `MeterFilter`, когда нужно глобально подрезать набор метрик, навесить общие теги (`commonTags`) или поставить предохранитель против неконтролируемой кардинальности.",
                 "edge_cases": "Фильтры применяются в порядке регистрации и могут конфликтовать (один `deny`, другой `accept`); важно следить за их последовательностью, иначе результат окажется неочевидным.",
                 "related": "[[micrometer-interview#Q10]] теги и кардинальность; [[micrometer-interview#Q11]] именование метрик; [[micrometer-interview#Q2]] MeterRegistry."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`MeterFilter` — это фильтр только для запрета регистрации метрик в момент регистрации: переименование, работа с тегами и ограничение кардинальности ему недоступны. Регистрируется через `MeterRegistryCustomizer`, который вызывает `registry.config().meterFilter(...)`. Единственный фильтр: `MeterFilter.deny()` (запрет по имени), тогда как `accept()`, `ignoreTags(...)` и `maximumAllowableTags(...)` он не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MeterFilter` гораздо шире `deny`: он переименовывает метрики, добавляет/удаляет теги (`ignoreTags`), ограничивает кардинальность (`maximumAllowableTags`) и явно разрешает (`accept`).",
+                "source_of_confusion": "Самый частый пример — `MeterFilter.deny(...)`, поэтому весь интерфейс сужают до запрета.",
+                "if_it_were_true": "Тогда нельзя было бы ограничить кардинальность тега `uri`, но `maximumAllowableTags` делает именно это.",
+                "how_it_should_be": "`MeterFilter` — универсальный interceptor регистрации: фильтрация, переименование, теги, кардинальность."
               }
             },
             {
@@ -1115,6 +1115,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Нужны четыре шага. (1) Зависимость `io.micrometer:micrometer-registry-prometheus`. (2) В `application.yml` открыть эндпоинт: `management.endpoints.web.exposure.include: metrics`. (3) Эндпоинт `GET /actuator/metrics` отдаёт метрики в формате JSON. (4) В `prometheus.yml` настроить scraping: `job_name: spring-app`, `metrics_path: /actuator/metrics`, `targets: ['localhost:8080']`, `scrape_interval: 15s`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Prometheus` scrape'ит `/actuator/prometheus` в формате `text/plain` (exposition format), а не JSON с `/actuator/metrics`.",
+                "source_of_confusion": "Эндпоинт `/actuator/metrics` (JSON) путают с `/actuator/prometheus` (text).",
+                "if_it_were_true": "Тогда `Prometheus` не смог бы распарсить ответ, ведь он ожидает свой текстовый формат, а не JSON.",
+                "how_it_should_be": "Для `Prometheus` используется именно `/actuator/prometheus` с text-форматом; JSON-эндпоинт — для ручного просмотра."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Нужны четыре шага. (1) Зависимость `io.micrometer:micrometer-registry-prometheus`. (2) В `application.yml` открыть эндпоинт: `management.endpoints.web.exposure.include: prometheus` и `management.metrics.export.prometheus.enabled: true`. (3) Эндпоинт `GET /actuator/prometheus` отдаёт метрики в `text/plain`. (4) В `prometheus.yml` настроить scraping: `job_name: spring-app`, `metrics_path: /actuator/prometheus`, `targets: ['localhost:8080']`, `scrape_interval: 15s`.",
               "correct": true,
               "sections": {
@@ -1123,18 +1135,6 @@
                 "when_to_apply": "Применяй эту схему на любом `Spring Boot`-сервисе в `Prometheus`-стеке: starter + реестр + exposure + scrape_config — стандартный production-путь.",
                 "edge_cases": "Если забыть добавить `prometheus` в `exposure.include`, эндпоинт вернёт 404 даже при подключённой зависимости — частая причина 'метрики не появляются' в `Prometheus`.",
                 "related": "[[micrometer-interview#Q12]] интеграция со Spring Boot; [[micrometer-interview#Q1]] идея фасада; [[micrometer-interview#Q11]] именование и конвертация имён."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Нужны четыре шага. (1) Зависимость `io.micrometer:micrometer-registry-prometheus`. (2) В `application.yml` открыть эндпоинт: `management.endpoints.web.exposure.include: metrics`. (3) Эндпоинт `GET /actuator/metrics` отдаёт метрики в формате JSON. (4) В `prometheus.yml` настроить scraping: `job_name: spring-app`, `metrics_path: /actuator/metrics`, `targets: ['localhost:8080']`, `scrape_interval: 15s`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Prometheus` scrape'ит `/actuator/prometheus` в формате `text/plain` (exposition format), а не JSON с `/actuator/metrics`.",
-                "source_of_confusion": "Эндпоинт `/actuator/metrics` (JSON) путают с `/actuator/prometheus` (text).",
-                "if_it_were_true": "Тогда `Prometheus` не смог бы распарсить ответ, ведь он ожидает свой текстовый формат, а не JSON.",
-                "how_it_should_be": "Для `Prometheus` используется именно `/actuator/prometheus` с text-форматом; JSON-эндпоинт — для ручного просмотра."
               }
             }
           ]
@@ -1163,6 +1163,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`MeterBinder` — это SPI (интерфейс с методом `bindTo(MeterRegistry registry)`) для переиспользуемых инструментирований. `Spring Boot` использует его для авто-регистрации метрик JVM, `HikariCP`, `Caffeine` и других. Реализуешь `@Component implements MeterBinder` и в `bindTo()` регистрируешь метрики, например `Gauge.builder(\"db.pool.active\", dataSource, ds -> ((HikariDataSource)ds).getHikariPoolMXBean().getActiveConnections()).register(registry)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевое преимущество: бины `MeterBinder` `Spring Boot` подхватывает автоматически и сам вызывает `bindTo()` для каждого реестра — не нужно вручную привязывать метрики.",
+                "example": "Выносишь метрики пула соединений (`db.pool.active`/`idle`) в отдельный `MeterBinder`-компонент, и они автоматически появятся в `/actuator/prometheus` без правок в бизнес-сервисах.",
+                "when_to_apply": "Применяй `MeterBinder`, когда одну и ту же инструментацию нужно переиспользовать или держать отдельно от бизнес-логики (метрики ресурсов, пулов, внешних клиентов).",
+                "edge_cases": "Поскольку `bindTo()` вызывается для КАЖДОГО реестра (включая вложенные в composite), регистрация должна быть идемпотентной и не хранить состояние между вызовами.",
+                "related": "[[micrometer-interview#Q6]] Gauge внутри bindTo; [[micrometer-interview#Q13]] авто-регистрируемые метрики; [[micrometer-interview#Q14]] кастомные метрики через MeterBinder."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`MeterBinder` — это SPI (интерфейс с методом `bindTo(MeterRegistry registry)`) для переиспользуемых инструментирований, но `Spring Boot` его сам не вызывает. `bindTo()` приходится вручную дёргать в каждом сервисе, передавая туда свой `MeterRegistry` для метрик JVM, `HikariCP`, `Caffeine`. Реализуешь `@Component implements MeterBinder` и сам зовёшь `bindTo()`, например `Gauge.builder(\"db.pool.active\", dataSource, ds -> ((HikariDataSource)ds).getHikariPoolMXBean().getActiveConnections()).register(registry)`.",
               "correct": false,
               "sections": {
@@ -1173,8 +1186,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`MeterBinder` — это SPI (интерфейс с методом `bindTo(MeterRegistry registry)`) только для инструментирования пулов соединений к БД. `Spring Boot` применяет его исключительно к `HikariCP`, а JVM, `Caffeine` и очереди инструментирует другими механизмами. Реализуешь `@Component implements MeterBinder` лишь для пула и в `bindTo()` регистрируешь, например `Gauge.builder(\"db.pool.active\", dataSource, ds -> ((HikariDataSource)ds).getHikariPoolMXBean().getActiveConnections()).register(registry)`.",
               "correct": false,
               "sections": {
@@ -1182,19 +1195,6 @@
                 "source_of_confusion": "Частый пример с пулом соединений сужает восприятие до одной только БД.",
                 "if_it_were_true": "Тогда не было бы JVM-биндеров (`JvmMemoryMetrics` и др.), но они реализуют именно `MeterBinder`.",
                 "how_it_should_be": "`MeterBinder` — общий SPI для переиспользуемой инструментации любого ресурса."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`MeterBinder` — это SPI (интерфейс с методом `bindTo(MeterRegistry registry)`) для переиспользуемых инструментирований. `Spring Boot` использует его для авто-регистрации метрик JVM, `HikariCP`, `Caffeine` и других. Реализуешь `@Component implements MeterBinder` и в `bindTo()` регистрируешь метрики, например `Gauge.builder(\"db.pool.active\", dataSource, ds -> ((HikariDataSource)ds).getHikariPoolMXBean().getActiveConnections()).register(registry)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ключевое преимущество: бины `MeterBinder` `Spring Boot` подхватывает автоматически и сам вызывает `bindTo()` для каждого реестра — не нужно вручную привязывать метрики.",
-                "example": "Выносишь метрики пула соединений (`db.pool.active`/`idle`) в отдельный `MeterBinder`-компонент, и они автоматически появятся в `/actuator/prometheus` без правок в бизнес-сервисах.",
-                "when_to_apply": "Применяй `MeterBinder`, когда одну и ту же инструментацию нужно переиспользовать или держать отдельно от бизнес-логики (метрики ресурсов, пулов, внешних клиентов).",
-                "edge_cases": "Поскольку `bindTo()` вызывается для КАЖДОГО реестра (включая вложенные в composite), регистрация должна быть идемпотентной и не хранить состояние между вызовами.",
-                "related": "[[micrometer-interview#Q6]] Gauge внутри bindTo; [[micrometer-interview#Q13]] авто-регистрируемые метрики; [[micrometer-interview#Q14]] кастомные метрики через MeterBinder."
               }
             }
           ]
