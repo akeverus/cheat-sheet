@@ -24,9 +24,8 @@
         // Каждый дизайн = полный набор токенов под html[data-design="X"] в
         // tokens.css (см. DESIGN.md / docs/design/systems/*.md). Применяем
         // выбранный data-design ДО первого кадра (как тему) — без вспышки
-        // чужого дизайна. SSR ставит "editorial".
-        var DESIGNS = ['editorial', 'linear', 'swiss', 'notion', 'mintlify', 'broadsheet',
-                       'superhuman', 'stripe', 'claude', 'theverge', 'instrument'];
+        // чужого дизайна. SSR ставит "instrument" (единственный дизайн — полная замена).
+        var DESIGNS = ['instrument'];
         // theme-color (хром мобильного браузера) — у каждого дизайна×темы свой bg.
         var THEME_COLORS = {
           editorial:  { light: '#FAF9F5', dark: '#262624' },
@@ -42,8 +41,8 @@
           instrument: { light: '#FAFAFB', dark: '#1B1B21' }
         };
         function readDesign() {
-          try { var d = localStorage.getItem('design'); return DESIGNS.indexOf(d) >= 0 ? d : 'editorial'; }
-          catch (e) { return 'editorial'; }
+          try { var d = localStorage.getItem('design'); return DESIGNS.indexOf(d) >= 0 ? d : 'instrument'; }
+          catch (e) { return 'instrument'; }
         }
         var design = readDesign();
         root.setAttribute('data-design', design);
@@ -96,8 +95,8 @@
         };
 
         function setDesign(next) {
-          design = (DESIGNS.indexOf(next) >= 0) ? next : 'editorial';
-          try { if (design === 'editorial') localStorage.removeItem('design'); else localStorage.setItem('design', design); } catch (e) {}
+          design = (DESIGNS.indexOf(next) >= 0) ? next : 'instrument';
+          try { if (design === 'instrument') localStorage.removeItem('design'); else localStorage.setItem('design', design); } catch (e) {}
           root.setAttribute('data-design', design);
           var m = metaEl(); if (m) m.setAttribute('content', metaColor(root.getAttribute('data-theme') || 'dark'));
           try { document.dispatchEvent(new CustomEvent('designchange', { detail: { design: design } })); } catch (e) {}
