@@ -2,13 +2,15 @@
   "topic_slug": "mutation-testing-interview",
   "round": "ROUND-8",
   "total_blocks": 20,
-  "blocks_reaudited": 2,
-  "status": "WIP (c1 Q4/Q5 content + c2 POS + c3 surface backtick-parity done; остаётся: добор блоков Q1-3/Q6-20 под 20 правил + blind; surface NO_TELLS ✅)",
+  "blocks_reaudited": 8,
+  "status": "WIP (c1 Q4/Q5 + c2 POS + c3 surface + c4 Q1-3/Q6-8 контент-реаудит done; остаётся: Q9-Q20 контент-добор + blind, затем FINAL)",
   "chunks_reviewed": [
     "c1 (2026-07-14): Q4/Q5 — skel-HARD `;`-паритет + де-карикатура O3-дистракторов + bootstrap freshness/review sidecars",
     "c2 (2026-07-14): POS de-cycle всех 20 блоков — CORRECT_POSITION_SEQUENCE 20→3",
-    "c3 (2026-07-14): surface backtick-bucket tells Q1/Q16/Q20 → 0 (formatting-only обёртка терминов в backticks)"
+    "c3 (2026-07-14): surface backtick-bucket tells Q1/Q16/Q20 → 0 (formatting-only обёртка терминов в backticks)",
+    "c4 (2026-07-14): Q1/Q2/Q3/Q6/Q7/Q8 контент-реаудит по 20 правилам; Q8 переработаны дистракторы B+D (де-карикатура + устранён second_correct)"
   ],
+  "blind_c4": "Чанк Q1/Q2/Q3/Q6/Q7/Q8. Reviewer A (SEED=9700, Q1-3): все PASS — semantic_correct O1/O1/O1 ✓, guessable_by_form=false, блокеров нет (нит: absolutes в двух дистракторах Q2 — non-blocking). Reviewer B (SEED=9700, Q6-8): Q6 PASS (correct=O4 ✓); Q7 PASS (correct=O4 ✓, near-miss O1 add-vs-remove Void Method Call — легитимный FALSE-дистрактор, не hidden_truth); Q8 FAIL №1 (SEED=9800): каррикатура-D `killed/(total−equivalent) только 100%` + absolutes_tell; переписал D. FAIL №2 (SEED=9800): новый D `killed/total` = second_correct (это PIT Mutation Coverage, фактически верен). Переписал D снова → `covered_mutants/total` (covered≠killed) + подрезал self-announcing хвост B. Re-blind Q8 (SEED=9900): PASS — semantic_correct=O3(=C) ✓, guessable_by_form=false, hidden_truth-проверка O1 снята (`covered/total` не именованная метрика PIT), блокеров нет.",
   "blind_c3": "SEED=9600, shuffle Q1/Q16/Q20. Независимый reviewer ПОСЛЕ backtick-выравнивания: Q1 guessable_by_form=false, semantic_correct=O3(=B) ✓; Q16 guessable_by_form=false, semantic_correct=O1(=C) ✓ (нит minor_backtick_imbalance у дистрактора устранён добором Q16-A bt 1→2); Q20 guessable_by_form=false, semantic_correct=O2(=B) ✓, flags=[]. ИТОГ PASS. Изменения formatting-only (strip-backtick equality к HEAD; correct-тач только Q16-C — обёрнуты `incremental`/`in-process`, слова/смысл неизменны).",
   "pos_decycle": "c2 (2026-07-14): строгий A→B→C→D цикл (CORRECT_POSITION_SEQUENCE=20) → чистая перестановка label/order внутри каждого блока (seed=3, target_seq=BABBDDACAACCDBCCADDB, maxrun=3). Содержимое опций (text/correct/sections) БАЙТ-ИДЕНТИЧНО HEAD — immutable-guard: per-block + глобальный content-мультимножество == HEAD (drift=0); git diff симметричен (205 ins / 205 del). 15/20 блоков сменили позицию correct. Гейт: CORRECT_POSITION_SEQUENCE 20→3 (PASS), DISTRIBUTION=1.0 (5/5/5/5); surface tells неизменны (=3, position-agnostic); skel hard_fails=0. Blind review не требуется — контент не менялся.",
   "reworked": {
@@ -28,10 +30,19 @@
         "B: карикатура «Conditional Boundary удаляет void-вызовы log()/save()/notify()/flush() из тела» → плотная cross-operator путаница «Boundary = Remove Conditional (условие → `if (true)`)»; снят лишний `;`; текст + все 4 wrong-секции переписаны"
       ],
       "distractor_models": "B=Remove Conditional (снос условия), C=Constant (подмена литерала), D=Negate (полный разворот); три соседних мутатора, корректно спутанных"
+    },
+    "Q8": {
+      "correct": "C",
+      "byte_locked_correct": true,
+      "changes": [
+        "D: карикатура «killed/(total−equivalent), но годным считается ТОЛЬКО 100%, 99% провал, обязателен даже при equivalent» (absolutes_tell) → формульный дистрактор `covered_mutants/total` (модель «covered≠killed»: мутант засчитан, если тест до него добрался, а не уронил); текст + все 4 wrong-секции переписаны. Промежуточный вариант `killed/total` ОТВЕРГНУТ blind-ревью как second_correct (= PIT Mutation Coverage).",
+        "B: подрезан self-announcing/карикатурный хвост «100% легко достижимо, если ПЛОДИТЬ equivalent-мутантов» → «100% кажется лёгким, ведь equivalent прибавляют к killed как якобы убитых»; if_it_were_true смягчён (без «плодить»)"
+      ],
+      "distractor_models": "A=инвертированная формула `total/killed` (odd_one_out, non-blocking), B=equivalent в числитель, D=covered-vs-killed (mutation testing спутан с coverage); три разные ошибочные модели"
     }
   },
   "blind_c1": "SEED=9500, shuffle Q4/Q5. Ре-ревью (независимый reviewer) ПОСЛЕ переписи: Q4 form_guess=«не могу», guessable_by_form=false, semantic_correct=O4(=D) ✓, flags=[]. Q5 form_guess=«не могу», guessable_by_form=false, semantic_correct=O4(=A) ✓, flags=[]. ИТОГ PASS. (Первый blind SEED=9400 дал FAIL по каррикатуре O3 в обоих блоках — устранено этой переписью.)",
-  "gates": "skel-gate PASS (hard_fails 2→0, warn_blocks 9→8); surface-parity Q4/Q5 tells=[] (всего реальных tells по файлу = 3: Q1/Q16/Q20 — backtick-bucket, следующий контент-тик); SOURCE_COVERAGE ok (freshness-sidecar создан); stamp-audit Q4/Q5 чисто.",
-  "residual": "POS 20→3 ✅ (c2). Surface backtick-bucket tells Q1/Q16/Q20 → 0 ✅ (c3, вся файла surface NO_TELLS). Осталось: добор блоков Q1-3/Q6-20 под 20 правил (per-block факт/uniqueness/plausibility/каррикатура) + blind. Accepted-exceptions (§30/§18.1): OPTION_LENGTH_RATIO=1.64 (6 блоков >1.35 — плотный byte-locked catalog correct + code-span word-collapse; binding surface-gate length-tells отсутствуют) и DUPLICATE_NGRAMS=98 (структурный skeleton-паритет: все 4 опции делят каркас, чтобы correct не угадывался). skel warn_blocks=8 — non-binding (dash-presence и пр.).",
-  "notes": "Первый ROUND-8 тик по mutation-testing. Файл исходно высокого качества (богатые параллельные дистракторы). Правился ТОЛЬКО JSON-seed, correct (Q4-D, Q5-A) byte-locked к HEAD, label/order/1-correct инвариантны. Дальше по этому файлу: (1) POS de-cycle, (2) surface backtick-bucket Q1/Q16/Q20, (3) добить оставшиеся блоки под 20 правил + blind."
+  "gates": "c4: git diff симметричен (7/7, только Q8-B/Q8-D); surface Q8 tells=[] (ratio=1.21, correct не самый длинный); skel hard_fails=0; answer-parity профиль ИДЕНТИЧЕН HEAD (OPTION_LENGTH_RATIO=1.64 Q4 / 6 блоков >1.35 — не введено правкой; DUPLICATE_NGRAMS=98) — оба §30/§18.1 accepted; ABSOLUTE_MARKER_GAP 0.017, POSITION_SEQ=3, POSITION_DIST=1.0, STYLE_GUESSABILITY=0.346 — ok.",
+  "residual": "POS 20→3 ✅ (c2). Surface NO_TELLS ✅ (c3). Q1-3/Q6-8 контент PASS ✅ (c4). Осталось: Q9-Q20 per-block контент-реаудит (факт/uniqueness/plausibility/каррикатура) + blind, затем FINAL. Non-blocking замечания к Q8 (на будущее, не блокируют): O2(=A) `total/killed` — odd_one_out (инвертированная шкала, отсекается формой, но указывает на wrong, correct не выдаёт); совет ревьюера «взять killed/covered как ловушку» ОТВЕРГНУТ — это реальная Test Strength → second_correct. Accepted-exceptions (§30/§18.1): OPTION_LENGTH_RATIO=1.64 (плотный byte-locked catalog correct + code-span word-collapse) и DUPLICATE_NGRAMS=98 (структурный skeleton-паритет). skel warn_blocks=8 — non-binding.",
+  "notes": "Первый ROUND-8 тик по mutation-testing. Файл исходно высокого качества (богатые параллельные дистракторы). Правился ТОЛЬКО JSON-seed, correct (Q4-D, Q5-A, Q8-C) byte-locked к HEAD, label/order/1-correct инвариантны. Ключевой урок c4: формульные дистракторы для mutation score опасны hidden_truth — killed/total (Mutation Coverage) и killed/(killed+survived) (Test Strength) — РЕАЛЬНЫЕ метрики PIT, нельзя использовать как «неверные»; только covered/total и инверсии однозначно ложны."
 }
