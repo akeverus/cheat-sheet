@@ -472,4 +472,34 @@ class TemplateFragmentContractTest {
                 .contains(id);
         }
     }
+
+    @Test
+    void statsTopicTableSortableColumnsHaveMatchingMobileLabels() throws IOException {
+        // .topic-table — ЕДИНСТВЕННАЯ таблица с card-view на мобиле (base.css
+        // td[data-label]::before { content: attr(data-label) } — заголовки схлопнуты,
+        // подпись столбца берётся из data-label на td). Инвариант: каждый сортируемый
+        // столбец (th data-sort-label="X") обязан иметь парный td data-label="X",
+        // иначе на узком экране ячейка теряет подпись столбца. Гвард против
+        // STA-20-класса рассинхрона (R0.128 снял колонку «Сброшено», сдвинул data-col
+        // 5→4 — правка структуры таблицы легко рвёт пары label↔header). App не нужен.
+        // summary-table и .data-table (coverage-gaps) НЕ card-view (scroll/обычная
+        // узкая) → data-label им не нужны, из инварианта исключены атрибутами.
+        String stats = readTemplate("templates/stats.html");
+
+        Matcher sortLabelMatcher = Pattern.compile("data-sort-label=\"([^\"]+)\"").matcher(stats);
+        Set<String> sortLabels = new LinkedHashSet<>();
+        while (sortLabelMatcher.find()) {
+            sortLabels.add(sortLabelMatcher.group(1));
+        }
+        Matcher dataLabelMatcher = Pattern.compile("data-label=\"([^\"]+)\"").matcher(stats);
+        Set<String> dataLabels = new LinkedHashSet<>();
+        while (dataLabelMatcher.find()) {
+            dataLabels.add(dataLabelMatcher.group(1));
+        }
+
+        // Санити: сортируемые столбцы topic-table реально извлеклись.
+        assertThat(sortLabels).contains("Тема", "Всего", "Точность", "Зрелость");
+        // Каждый сортируемый заголовок имеет парную мобильную подпись (card-view).
+        assertThat(dataLabels).containsAll(sortLabels);
+    }
 }

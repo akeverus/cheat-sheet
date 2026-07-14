@@ -2619,6 +2619,18 @@ Constraint Validation API без сабмита на session-form. count (number
 - **Итог:** every-page payload уменьшен (5 dead SVG-символов), icon-слой сертифицирован zero-orphan + guard. Ещё один статический Фаза-E проход + чистка AI/regenerate-fallout-хвоста.
 - **Дальше:** app-gated parity-QA (turnkey Часть B) + decision-gated §10 (RES-3/APP-5/ICO-3) — без изменений. Возможные статические кандидаты: «каждый `data-label` имеет th-пару в stats/summary-таблицах», «каждый `role=` в шаблоне валиден». Нумерация R0.138+.
 
+### R0.138 (2026-07-14) — data-label ↔ header integrity таблиц CLEAN + guard (STA-20-регресс-класс)
+
+- **Единица:** аудит целостности `data-label` ↔ `<th>` в таблицах stats/summary (Фаза F: responsive/a11y-регресс, app-независим) — из «Дальше» R0.137. Мотив: STA-20 (R0.128) снял колонку «Сброшено» и сдвинул data-col 5→4 — правки структуры таблицы легко рвут мобильные card-view подписи.
+- **Разбор трёх таблиц по CSS-стратегии** (`attr(data-label)` card-view есть в base.css **только** для `.stats-page .topic-table td[data-label]`, 3714-3744):
+  - **stats `.topic-table`** (card-stack на мобиле → data-label ОБЯЗАТЕЛЕН): 5 колонок Тема/Всего/Прогресс/Точность/Зрелость — 5 `td data-label` **точно совпадают** с заголовками. STA-20 НЕ рассинхронил. ✅
+  - **`session-summary` `.summary-table`** (scroll-стратегия: `role=table tabindex=0`, нет `attr(data-label)`-правила): data-label корректно ОТСУТСТВУЮТ — не дефект. ✅
+  - **stats `.data-table`** (coverage-gaps «Пробелы в банке», 2 колонки Тема/Вопросов): обычная узкая таблица (base.css 1928-1932 — только width/padding/border, нет `display:block`/`content:attr`), `<caption class=visually-hidden>` есть → data-label не нужны. ✅
+- **Закрепление:** `TemplateFragmentContractTest.statsTopicTableSortableColumnsHaveMatchingMobileLabels` (17-й тест) — инвариант «каждый сортируемый столбец (`th data-sort-label="X"`) имеет парный `td data-label="X"»`: извлекает оба множества, `dataLabels.containsAll(sortLabels)` + санити (Тема/Всего/Точность/Зрелость). summary/`.data-table` исключены самими атрибутами (у них нет data-sort-label/data-label). Прямо ловит STA-20-класс рассинхрона. Чистый JUnit, app не нужен.
+- **Verify:** `./gradlew :quiz-app:test --tests "*TemplateFragmentContractTest"` → BUILD SUCCESSFUL 2s; `tests="17" failures="0" errors="0"`; data-label-guard зелёный. Правка только тестовая (аудит-сертификация) → без `?v=`-бампа.
+- **Итог:** responsive-целостность таблиц сертифицирована CLEAN, STA-20-класс рассинхрона закрыт guard'ом. Третий подряд статический Фаза-E/F derive-and-check инвариант (fragment R0.136 → icon R0.137 → data-label R0.138).
+- **Дальше:** app-gated parity-QA (turnkey Часть B) + decision-gated §10 (RES-3/APP-5/ICO-3) — без изменений. Возможные кандидаты: «каждый `aria-labelledby`/`aria-controls`/`aria-describedby` указывает на существующий id», «каждый `for=` label ↔ input id». Нумерация R0.139+.
+
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
 ## R1.73 — WCAG 3.2.3 Consistent Navigation (AA) — verified-clean
