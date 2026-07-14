@@ -1176,7 +1176,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`MeterBinder` — это SPI (интерфейс с методом `bindTo(MeterRegistry registry)`) для переиспользуемых инструментирований, но `Spring Boot` его сам не вызывает. `bindTo()` приходится вручную дёргать в каждом сервисе, передавая туда свой `MeterRegistry` для метрик JVM, `HikariCP`, `Caffeine`. Реализуешь `@Component implements MeterBinder` и сам зовёшь `bindTo()`, например `Gauge.builder(\"db.pool.active\", dataSource, ds -> ((HikariDataSource)ds).getHikariPoolMXBean().getActiveConnections()).register(registry)`.",
+              "text": "`MeterBinder` — это SPI (интерфейс с методом `bindTo(MeterRegistry registry)`) для переиспользуемых инструментирований, но `Spring Boot` его сам не вызывает. `bindTo()` приходится вручную дёргать в каждом сервисе, передавая туда свой `MeterRegistry`. Реализуешь `@Component implements MeterBinder` и сам зовёшь `bindTo()`, например `Gauge.builder(\"db.pool.active\", dataSource, ds -> ((HikariDataSource)ds).getHikariPoolMXBean().getActiveConnections()).register(registry)`.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Spring Boot` бины `MeterBinder` подхватываются автоматически — `bindTo()` вызывается фреймворком, руками его дёргать не нужно.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`MeterBinder` — это SPI (интерфейс с методом `bindTo(MeterRegistry registry)`) только для инструментирования пулов соединений к БД. `Spring Boot` применяет его исключительно к `HikariCP`, а JVM, `Caffeine` и очереди инструментирует другими механизмами. Реализуешь `@Component implements MeterBinder` лишь для пула и в `bindTo()` регистрируешь, например `Gauge.builder(\"db.pool.active\", dataSource, ds -> ((HikariDataSource)ds).getHikariPoolMXBean().getActiveConnections()).register(registry)`.",
+              "text": "`MeterBinder` — это SPI (интерфейс с методом `bindTo(MeterRegistry registry)`) только для инструментирования пулов БД. `Spring Boot` применяет его исключительно к `HikariCP`, а JVM, `Caffeine` и очереди инструментирует другими механизмами. Реализуешь `@Component implements MeterBinder` лишь для пула и в `bindTo()` регистрируешь, например `Gauge.builder(\"db.pool.active\", dataSource, ds -> ((HikariDataSource)ds).getHikariPoolMXBean().getActiveConnections()).register(registry)`.",
               "correct": false,
               "sections": {
                 "what_actually": "`MeterBinder` универсален: Spring Boot через него регистрирует JVM, `HikariCP`, `Caffeine`, `Tomcat` и любые кастомные метрики, не только БД.",

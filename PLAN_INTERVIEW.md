@@ -1924,3 +1924,12 @@ Known factually wrong correct answers: 0
 - **Результат Q15:** A26/B21/C25/D28 → ratio **1.43→1.33 PASS**; **skel hard_fails 1→0 GREEN** (semicolon `{1,1,1,1}`); **ABSOLUTE_MARKER_GAP 0.35→0.333** бонусом; DUPLICATE остался 0.
 - **Слепой ревью** (независимый reviewer, SEED 61924, correct=A-позиция) → **ACCEPT**: single-correct держится, факт-ошибок в correct нет, C (Counter вместо Timer) и D (мой edit: «нет бина/включается сам») — правдоподобные типовые заблуждения. **NIT (rotation, не тронутые в тик):** (a) orig-D «Timer хранит лишь `max`» = двойная-ошибка + лёгкое само-противоречие с percentiles-примером → кандидат де-карикатуры; (b) correct B — единственный без ограничит-«хвоста» (form-сигнал, но байт-лок). **blocks_reaudited=8/20.**
 - **ДАЛЬШЕ:** OPTION_LENGTH worst теперь Q20(1.41) + Q9(1.40)/Q19(1.37) → ABSOLUTE_MARKER_GAP=0.333. Цель — micrometer FINAL.
+
+### ROUND-8 · micrometer · c10 OPTION_LENGTH Q20 1.41→1.32 — 2026-07-15
+- **Q20 «Что такое `MeterBinder`?» — worst OPTION_LENGTH (1.41).** correct=B байт-лок (22сл, SHORTEST).
+- **Правка (правились ТОЛЬКО дистракторы C и D — единственные >29сл; A=27 в норме; correct B + A не тронуты; sections не тронуты; opening_class btick×4 инвариант):**
+  - C: выброшен filler-список «для метрик JVM, `HikariCP`, `Caffeine`» (дублировал перечень B, у C мисконцепции не нёс) → 30→27сл. Мисконцепция «`Spring Boot` сам не вызывает `bindTo()`, дёргаешь вручную в каждом сервисе» цела.
+  - D: «инструментирования пулов соединений к БД» → «инструментирования пулов БД» (−2) → 31→29сл. Мисконцепция «SPI только для пулов БД / исключительно `HikariCP`, а JVM+`Caffeine` другими механизмами» цела.
+- **Результат Q20:** A27/B22/C27/D29 → ratio **1.41→1.32 PASS**; DUPLICATE остался 0; CORRECT_WRONG_AVG 0.909→0.912.
+- **Слепой ревью** (независимый reviewer, SEED 48302, correct=B-позиция) → **ACCEPT**: single-correct однозначен, форма неотличима (равная длина/структура + общий код-пример), карикатуры нет — A (ручной vs авто-вызов), C (выдуманная аннотация `@MeterBinder` = перенос стиля `@Timed`), D (переобобщение пул-юзкейса) бьют по реальным заблуждениям. NIT (косметика, correct байт-лок): `HikariCP` в B подан как «пример авто-регистрации Boot», хотя Hikari-метрики Boot привязывает через `MicrometerMetricsTrackerFactory` — ревьюер счёл защитимым. **blocks_reaudited=9/20.**
+- **ДАЛЬШЕ:** OPTION_LENGTH worst теперь Q9(1.40) + Q19(1.37) → ABSOLUTE_MARKER_GAP=0.333. Цель — micrometer FINAL.
