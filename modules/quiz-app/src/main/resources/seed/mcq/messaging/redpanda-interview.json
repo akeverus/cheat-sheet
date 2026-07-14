@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все запросы обрабатывает один dispatcher-поток, который раздаёт задачи фиксированному пулу worker-потоков через общую shared queue.",
+              "text": "Все запросы обрабатывает один dispatcher-поток, который раздаёт задачи фиксированному пулу worker-потоков через общую shared queue с блокировками на общий mutex.",
               "correct": false,
               "sections": {
                 "what_actually": "Это описание классической thread-pool модели (как в Kafka на JVM), а не shard-per-core. В Seastar нет глобального dispatcher и shared queue: каждый reactor владеет своим состоянием и общается с другими через message-passing.",
@@ -216,7 +216,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "На каждое CPU-ядро ставится отдельный JVM-процесс со своим heap и координацией через RMI.",
+              "text": "На каждое CPU-ядро ставится отдельный JVM-процесс со своим heap, а координация между ядрами идёт через RMI-вызовы поверх localhost.",
               "correct": false,
               "sections": {
                 "what_actually": "Никакого JVM в Redpanda нет, тем более RMI. Shard-per-core реализован внутри одного нативного процесса средствами Seastar; ядра обмениваются сообщениями через lock-free очереди в памяти, а не через сетевой RPC.",
