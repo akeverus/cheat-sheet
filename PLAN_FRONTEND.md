@@ -299,7 +299,7 @@ docs/ui-ux-improvement-log.md
 
 | ID | Поверхность | Production | Mockup | Обязательные state-family | Inventory | Mockup | Mockup QA | Mapping | Port | Parity | Refactor | Regression | Final | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `FOCUS` | Главная / тренировка / вопрос | `focus-training.html` | `focus-question.html` | flashcard; MCQ; selected; correct; wrong; explanation; session; empty branches; long/code-heavy | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ✅ | ◐ | R0.143: MCQ default/selected = ✅ parity (375→2560, light+dark, a11y, console-clean, 0 overflow). Остаток state-family (post-answer/flashcard/STUDY) → R0.144+ |
+| `FOCUS` | Главная / тренировка / вопрос | `focus-training.html` | `focus-question.html` | flashcard; MCQ; selected; correct; wrong; explanation; session; empty branches; long/code-heavy | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ✅ | ◐ | MCQ default/selected (R0.143) + post-answer correct/wrong (R0.144) + flashcard-reveal (R0.147) + STUDY learn/check+session-progress+FT-15 long-options (R0.148) = ✅ parity (375→2560, light+dark, a11y, console-clean, 0 overflow). Остаток: **только empty-ветки** → R0.149, затем Parity ◐→✅ |
 | `RESULT` | Результат ответа / no-JS fallback | `result.html` | `result.html` | correct; wrong; explanations; related; extra controls; loading/error; no-JS | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ◐ | ◐ | ⏸ | Перепроверить наличие и полноту |
 | `SUMMARY` | Итоги сессии | `session-summary.html` | `session-summary.html` | score; mistakes; recommendations; empty; share; print; long table | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ◐ | ⏸ | Перепроверить наличие и полноту |
 | `SETTINGS` | Настройки | `settings.html` | `settings.html` | session; appearance; data; validation; saved feedback; reset dialog; danger states | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Перепроверить наличие и полноту |
@@ -2744,6 +2744,22 @@ Constraint Validation API без сабмита на session-form. count (number
 - **Мутация БД:** нет (browse flashcard reveal не мутирует; grade требует активной сессии).
 - **Статус §7 FOCUS Parity:** покрыто MCQ-default (R0.143) + post-answer correct/wrong (R0.144) + flashcard-reveal browse (R0.147). Остаток: STUDY learn-фаза, empty-ветки, session-progress (активная сессия). Parity остаётся **◐**.
 - **Дальше:** R0.148 — STUDY learn-фаза (`studyLearnPhase`, кнопка «Проверить себя», `focus-training.html:124-130`) + empty-ветки. Опц.: подтвердить FT-18 natural-flow reachability.
+
+### R0.148 (2026-07-14) — parity-QA B1: FOCUS STUDY learn+check фазы + session-progress + FT-15 long-options
+
+- **Единица тика (§16):** FOCUS оставшийся state-family — STUDY-режим (learn-фаза + проверка) и session-progress активной сессии. Требует **активной STUDY-сессии** (`FocusTrainingPageService:60-61`: `interviewSession != null && mode == STUDY`), не browse+param.
+- **Как стартовал сессию:** `/settings` → вкладка «Сессия» → mode=«Изучение», count=5 → POST `/start`. Первая попытка (страница с прошлого тика) → **CSRF-токен устарел → error-страница «Доступ запрещён»** (дружелюбная копия «защитный токен формы устарел… обнови страницу», ▸developer-details, 3 nav-ссылки — валидный error-surface, подтверждён попутно). Перезагрузка `/settings` + программный submit `session-form` со свежим `_csrf` (`hasCsrf=true`) → редирект на `/` в STUDY-режиме.
+- **STUDY learn-фаза (`studyLearnPhase`) — ✅ CLEAN (1280 dark):**
+  - Чип «ИЗУЧЕНИЕ» + подсказка «Изучение: разберись с материалом, затем переходи к проверке» + метка «ИЗУЧЕНИЕ — ПРОЧИТАЙ ОТВЕТ, ЗАТЕМ ПРОВЕРЬ СЕБЯ».
+  - **Полный ответ виден ДО проверки** (по замыслу STUDY): markdown-проза с инлайн code-chips (`HashMap.get()`, `n=1000`, `O(n)`, `O(n²)`, `O(2ⁿ)`), SSR-таблица СЛОЖНОСТЬ/НАЗВАНИЕ/ПРИМЕР/N=1000, «эмпирическое правило ~10⁸», кросс-ссылка «Анализ сложности» как proper `link`.
+  - Кнопка `Проверить себя` (`<form>` POST `/study-confirm`) под ответом. Serif-h2 доминирует (editorial 3xl).
+- **session-progress rail — ✅:** `complementary "Сессия"` = «1/5» + `progressbar valuemin=0 valuemax=5 value=1` + streak «1 день» + «9815 из 9818 к повтору» + `Завершить сессию`. Progressbar имеет доступное имя «Прогресс сессии».
+- **STUDY check-фаза (после «Проверить себя») — ✅:** тот же вопрос (1/5 не инкрементнулся — по замыслу до ответа), UI сменился на MCQ-форму A/B/C/D. `Проверить ответ` disabled до выбора (`keyshortcuts=Enter`), keyboard-hint «1–9 — выбор, ↑/↓ — навигация, Esc — снять, Enter — отправка». `invalid=true` на radio — **уже разобрано R0.143** (нативная required-валидация, не баг).
+- **FT-15 (long-options) — ✅ РЕШЕНО наблюдением:** варианты здесь длинные (многострочные перечисления классов сложности). На **375 mobile + light**: `scrollWidth==clientWidth==375`, **0 горизонтального overflow**, ни одного вылезающего элемента (evaluate_script). Варианты переносятся внутри ring-карты, code-chips инлайн, «собранный футер» кнопки не уезжает некомфортно. **Sticky-футер не нужен** (дизайнерское решение — наблюдение подтверждает текущий не-sticky корректен).
+- **Покрытие тем/вьюпортов:** 1280 dark (learn+check) + 375 light mobile (check, long-options). Обе темы, оба края вьюпорта — чисто.
+- **Мутация БД:** +1 старт STUDY-сессии (session-state в HttpSession; `/study-confirm` не мутирует БД-статистику — только фазу). Активная STUDY 1/5 остаётся (следующий тик перечитает состояние §0).
+- **Статус §7 FOCUS Parity:** покрыто MCQ-default (R0.143) + post-answer correct/wrong (R0.144) + flashcard-reveal (R0.147) + **STUDY learn/check + session-progress + FT-15 (R0.148)**. Остаток — **только empty-ветки** (вне сессии без вопроса / сессия завершена), связаны с FT-18/`resolveFocusEmptyRetryHref`. Parity остаётся **◐** до закрытия empty-веток.
+- **Дальше:** R0.149 — FOCUS empty-ветки (`focus-training.html:190-193`, `resolveFocusEmptyRetryHref` пути `/training?mode=FLASHCARD|STUDY|` + сессия-завершена) + опц. FT-18 natural-flow reachability. После empty-веток → **флип §7 FOCUS Parity ◐→✅**.
 
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
