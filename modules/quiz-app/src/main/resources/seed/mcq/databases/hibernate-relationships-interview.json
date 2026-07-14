@@ -107,7 +107,7 @@
             },
             {
               "label": "D",
-              "text": "Односторонняя связь сводится к двунаправленной: любая `@OneToMany` по сути двусторонняя. Провайдер сам заводит обратное поле `mappedBy` на второй `entity` `Order`, даже если вы `@JoinColumn` не объявляли.",
+              "text": "Одностороннюю связь `Hibernate` достраивает до двунаправленной. Для `@OneToMany` он сам заводит обратное поле `mappedBy` на второй `entity` `Order`, даже если вы `@JoinColumn` не объявляли.",
               "correct": false,
               "sections": {
                 "what_actually": "Unidirectional абсолютно валидна: `@ManyToOne` без обратного `@OneToMany` или `@OneToMany` с `@JoinColumn` — частые однонаправленные случаи.",
@@ -382,7 +382,7 @@
             },
             {
               "label": "B",
-              "text": "Чтобы добавить в junction поле `grade`, достаточно перечислить его прямо в `@JoinTable` через атрибут `columns`. Отдельный `entity` вроде `Enrollment` с полем `enrolled_at` заводить не нужно.",
+              "text": "Поле `grade` можно объявить прямо в `@JoinTable` через атрибут `columns`, не заводя отдельный `entity` вроде `Enrollment` с полем `enrolled_at` для той же связи.",
               "correct": false,
               "sections": {
                 "what_actually": "`@JoinTable` описывает только join-колонки (FK); произвольные атрибуты в нём задать нельзя, для этого нужен отдельный entity.",
@@ -443,7 +443,7 @@
             },
             {
               "label": "B",
-              "text": "Сам `@OneToMany` рассчитан на `List<T>`; порядок `Hibernate` связывает с детьми через `@OrderColumn`. Коллекции `Set<T>`, `Bag` и `Map<K,V>` для ассоциаций он не применяет, ожидая именно `List<T>`.",
+              "text": "Сам `@OneToMany` спроектирован под `List<T>`; её порядок держит `@OrderColumn`. `Set<T>`, `Bag` и `Map<K,V>` он оставляет другим механизмам вроде `@ElementCollection`, а не `@OneToMany`-ассоциациям.",
               "correct": false,
               "sections": {
                 "what_actually": "`Hibernate` поддерживает `List`, `Set`, `Bag`, `SortedSet`/`TreeSet` и `Map` для `@OneToMany` — выбор зависит от семантики.",
@@ -455,7 +455,7 @@
             },
             {
               "label": "C",
-              "text": "Тип `List` почти всегда лучше `Set`; он держит порядок вставки, а `Set` тратит время на `hashCode`. На больших коллекциях `Set<Comment>` заметно медленнее по `contains`, чем `List`, `Bag` или `SortedSet`.",
+              "text": "Тип `List` нередко ставят выше `Set`; он держит порядок вставки, а `Set` тратит время на `hashCode`. На больших коллекциях `Set<Comment>` по `contains` проигрывает `List`, `Bag` и `SortedSet`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Set` быстрее для `contains`, гарантирует уникальность и помогает избежать `MultipleBagFetchException` при `JOIN FETCH` двух коллекций.",
@@ -467,7 +467,7 @@
             },
             {
               "label": "D",
-              "text": "Словарь `Map<K,V>` в `@OneToMany` не поддерживается; `Hibernate` работает здесь с линейными `List`, `Set` и `Bag` без ключей. Аннотация `@MapKey` для таких ассоциаций остаётся без эффекта.",
+              "text": "Словарь `Map<K,V>` в `@OneToMany` `Hibernate` не отображает; ключ ему брать неоткуда, поэтому ассоциации ведут через `List`, `Set` и `Bag`. Аннотацию `@MapKey` он учитывает лишь в `@ElementCollection`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Map` поддерживается через `@MapKey(name = \"...\")`, где ключом служит поле дочерней entity (например `phone.type`).",
@@ -790,7 +790,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Достаточно вызвать `repository.save(order)` и сразу читать `getItems()` без `flush` или `clear`. Данные всё равно перечитаются из БД, а не из L1-кэша `Session`.",
+              "text": "Проверить связь можно и без `flush` или `clear`: вызвать `repository.save(order)` и сразу читать `getItems()`. Данные придут из БД, а не из L1-кэша `Session`.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `em.flush()` + `em.clear()` объект остаётся в L1-кэше, и тест читает то же состояние из памяти, не проверяя реальную персистентность.",
@@ -827,7 +827,7 @@
             },
             {
               "label": "D",
-              "text": "Для теста связей нужен полный `@SpringBootTest` со всем контекстом, а среза `@DataJpaTest` мало. `TestEntityManager` и проверка `getItems()` без полного контекста не работают.",
+              "text": "Для теста связей обычно берут полный `@SpringBootTest` со всем контекстом: среза `@DataJpaTest` не хватает, а `TestEntityManager` и `getItems()` вне полного контекста ведут себя неверно.",
               "correct": false,
               "sections": {
                 "what_actually": "`@DataJpaTest` специально поднимает только JPA-слой (репозитории, `TestEntityManager`) и идеально подходит для тестов связей.",
@@ -887,7 +887,7 @@
             },
             {
               "label": "D",
-              "text": "Главный совет — везде применять `@ManyToMany`, даже когда в связи есть поля `grade` и `enrolled_at`. Промежуточный `entity` `Enrollment` с двумя `@ManyToOne` только плодит лишние классы.",
+              "text": "Как правило советуют `@ManyToMany` даже там, где в связи есть поля `grade` и `enrolled_at`: промежуточный `entity` `Enrollment` с двумя `@ManyToOne` лишь добавляет классов и выглядит ненужным усложнением.",
               "correct": false,
               "sections": {
                 "what_actually": "Best practice прямо советует избегать `@ManyToMany` с доп. полями и заменять её промежуточным entity (`Enrollment`).",
