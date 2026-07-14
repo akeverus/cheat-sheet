@@ -1554,14 +1554,16 @@
     let relatedHtml = '<h3 class="related-questions-title">' + icon('link', 'ed-icon-lead') + 'Похожие вопросы для закрепления:</h3>';
     relatedHtml += '<div class="related-questions-list" role="list">';
     data.relatedQuestions.forEach(rq => {
-      relatedHtml += '<a class="related-question-item" role="listitem" href="/?topic=' + encodeURIComponent(rq.topic)
+      // RES-16 (R0.145): role=listitem на обёртке-div, не на <a> — иначе ARIA-роль
+      // перекрывает нативную link-роль (SR не видит ссылку в rotor'е; WCAG 4.1.2).
+      relatedHtml += '<div role="listitem"><a class="related-question-item" href="/?topic=' + encodeURIComponent(rq.topic)
         + '&group=' + encodeURIComponent(currentGroup)
         + '&ordered=' + encodeURIComponent(currentOrdered)
         + (currentImportant ? '&important=true' : '')
         + (currentOnlyWrong ? '&onlyWrong=true' : '')
         + (currentShuffle ? '&shuffle=true' : '')
         + (currentWeakTopics ? '&weakTopics=true' : '')
-        + '">' + escapeHtml(rq.text) + '</a>';
+        + '">' + escapeHtml(rq.text) + '</a></div>';
     });
     relatedHtml += '</div>';
     relatedDiv.innerHTML = relatedHtml;

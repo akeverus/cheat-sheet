@@ -129,6 +129,20 @@ class TemplateFragmentContractTest {
         // next-btn ↔ вторичная кнопка больше неприменима.
         assertThat(result).doesNotContain("id=\"extra-analysis-toggle-result\"");
         assertThat(result).contains("id=\"result-related-questions\"");
+        // RES-16 (R0.145): список «Похожих вопросов» = role=list › role=listitem-обёртка › <a>.
+        // role=listitem НЕ на самом <a> — иначе ARIA-роль перекрывает нативную link-роль, и SR
+        // анонсирует «элемент списка» вместо «ссылка» + не находит в rotor'е ссылок (WCAG 4.1.2
+        // role≠function). Гард против регресса к паттерну a[role=listitem] (был до R0.145).
+        Matcher relatedNesting = Pattern.compile(
+                "related-questions-list\"\\s+role=\"list\">\\s*<div[^>]*role=\"listitem\"[^>]*>\\s*<a",
+                Pattern.DOTALL).matcher(result);
+        assertThat(relatedNesting.find())
+                .as("related-list: role=list › listitem-обёртка › <a>").isTrue();
+        Matcher relatedAnchor = Pattern.compile("<a[^>]*class=\"related-question-item\"[^>]*>", Pattern.DOTALL)
+                .matcher(result);
+        assertThat(relatedAnchor.find()).as("related-question-item <a> присутствует").isTrue();
+        assertThat(relatedAnchor.group())
+                .as("link-роль сохранена — нет ARIA role= на <a>").doesNotContain("role=");
         assertThat(stats).contains("showPrimaryNav=true");
         assertThat(settings).contains("showPrimaryNav=true");
         assertThat(result).contains("fragments/inline-alert :: inline-alert");
