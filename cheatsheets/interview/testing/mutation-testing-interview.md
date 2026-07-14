@@ -368,7 +368,7 @@ mutmut html  # report
 
 Помимо PIT, Stryker и mutmut, у большинства экосистем есть свои инструменты — полезно знать пару имён под каждый язык:
 
-- **Mutil** (Go) — mutation testing для Go.
+- **Gremlins** (Go) — mutation testing для Go (также go-mutesting).
 - **Cosmic Ray** (Python) — альтернатива mutmut с другим подходом к запуску.
 - **Infection** (PHP) — фактический стандарт в PHP-проектах.
 - **Pitest** (Scala через плагин) — переиспользует движок PIT для Scala.

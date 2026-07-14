@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`PIT (Pitest)` — инструмент mutation testing для Java. Подключается Maven-плагином (`org.pitest:pitest-maven`), запускается `mvn org.pitest:pitest-maven:mutationCoverage`. Для каждого мутанта он правит исходный `.java`-файл и заново компилирует модуль: один прогон разворачивается в серию полных пересборок. С ростом числа тестов такой цикл перекомпиляций быстро замедляется и делает PIT непригодным для больших проектов.",
+              "text": "`PIT (Pitest)` — самый популярный инструмент mutation testing для Java. Подключается Maven-плагином (`org.pitest:pitest-maven`), запускается `mvn org.pitest:pitest-maven:mutationCoverage`. Механика одна: под каждый мутант PIT правит исходный `.java`-файл и заново компилирует модуль, а затем выдаёт HTML-отчёт по файлам и методам с JUnit 5, incremental-режимом и coverage-based выбором выживших мутантов.",
               "correct": false,
               "sections": {
                 "what_actually": "PIT мутирует байткод на лету, без перекомпиляции исходника на каждый мутант, и поддерживает incremental-режим — это и делает его относительно быстрым.",
@@ -648,13 +648,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`PIT (Pitest)` — инструмент mutation testing для Java. Подключается Maven-плагином (`org.pitest:pitest-maven`), запускается `mvn org.pitest:pitest-maven:mutationCoverage`. По итогам выдаёт только агрегированный процент в консоли: общий mutation score без разбивки. Ни per-file score, ни поимённого списка выживших мутантов, ни типа мутации он не формирует, поэтому понять, какой мутант уцелел, по выводу нельзя.",
+              "text": "`PIT (Pitest)` — инструмент mutation testing для Java. Подключается Maven-плагином (`org.pitest:pitest-maven`), запускается `mvn org.pitest:pitest-maven:mutationCoverage`. Результат PIT отдаёт в одном формате: машинном XML/CSV для CI-гейта. Человекочитаемого HTML-отчёта он не формирует, а визуализацию по файлам и мутантам подключают сторонними плагинами.",
               "correct": false,
               "sections": {
-                "what_actually": "PIT генерирует подробный HTML-отчёт: score по файлам, список выживших и убитых мутантов с типом мутации и строкой.",
-                "source_of_confusion": "Многие CLI-инструменты выводят только итоговую цифру, поэтому такое поведение приписывают и PIT.",
-                "if_it_were_true": "Если бы детализации не было, разобрать выживших мутантов (главная польза) было бы невозможно.",
-                "how_it_should_be": "Корректно: PIT даёт HTML-отчёт с per-file score и поимённым списком мутантов, а не только консольный процент."
+                "what_actually": "PIT из коробки генерирует подробный HTML-отчёт: score по файлам, список выживших и убитых мутантов с типом мутации и строкой.",
+                "source_of_confusion": "PIT действительно умеет XML/CSV-вывод для CI, из-за чего кажется, будто человекочитаемого отчёта у него нет.",
+                "if_it_were_true": "Если бы HTML-отчёта не было, разбирать выживших мутантов (главная польза PIT) пришлось бы вручную по сырому XML.",
+                "how_it_should_be": "Корректно: PIT даёт HTML-отчёт с per-file score и поимённым списком мутантов, а XML/CSV — дополнительный формат, не замена."
               }
             }
           ]
@@ -786,28 +786,28 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие ещё бывают инструменты mutation testing (Mutil, Cosmic Ray и др.)?",
+          "question_text": "Какие ещё бывают инструменты mutation testing (Gremlins, Cosmic Ray и др.)?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Помимо PIT и Stryker других mutation-тулз нет: `Mutil` (не существует), `Cosmic Ray` (миф), `Infection` (не выпущен), а Scala и прочие языки mutation testing вообще не покрывают. Причина одна: серьёзных инструментов только два — `PIT` (Java) и `Stryker` (JS), и для остальных стеков подхода не сделали.",
+              "text": "Помимо PIT и Stryker других mutation-тулз нет: `Gremlins` (не существует), `Cosmic Ray` (миф), `Infection` (не выпущен), а Scala и прочие языки mutation testing вообще не покрывают. Причина одна: серьёзных инструментов только два — `PIT` (Java) и `Stryker` (JS), и для остальных стеков подхода не сделали.",
               "correct": false,
               "sections": {
-                "what_actually": "Тулзы есть под многие языки: Cosmic Ray и mutmut (Python), Infection (PHP), Mutil (Go), плагины для Scala — экосистема шире двух инструментов.",
+                "what_actually": "Тулзы есть под многие языки: Cosmic Ray и mutmut (Python), Infection (PHP), Gremlins (Go), плагины для Scala — экосистема шире двух инструментов.",
                 "source_of_confusion": "PIT и Stryker — самые известные, поэтому остальные легко не заметить.",
                 "if_it_were_true": "Если бы их не было, PHP- и Go-команды не могли бы делать mutation testing вовсе, что не так.",
-                "how_it_should_be": "Корректно: существует целый ряд языковых тулз (Infection, Cosmic Ray, Mutil), просто менее зрелых, чем PIT/Stryker."
+                "how_it_should_be": "Корректно: существует целый ряд языковых тулз (Infection, Cosmic Ray, Gremlins), просто менее зрелых, чем PIT/Stryker."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Помимо PIT и Stryker есть нишевые тулзы под разные языки: `Mutil` (Go), `Cosmic Ray` (Python, альтернатива mutmut), `Infection` (PHP), а Scala покрывается через плагины (в том числе Stryker). Зрелость и adoption у них разные: самые мощные и проверенные — `PIT` (Java) и `Stryker` (JS).",
+              "text": "Помимо PIT и Stryker есть нишевые тулзы под разные языки: `Gremlins` (Go), `Cosmic Ray` (Python, альтернатива mutmut), `Infection` (PHP), а Scala покрывается через плагины (в том числе Stryker). Зрелость и adoption у них разные: самые мощные и проверенные — `PIT` (Java) и `Stryker` (JS).",
               "correct": true,
               "sections": {
                 "explanation": "Экосистема mutation testing фрагментирована по языкам: у каждого свой инструмент со своими операторами и интеграциями. Выбор зависит от стека, а не от единого «лучшего» тула.",
-                "example": "Для Python кроме mutmut есть `Cosmic Ray`; для PHP — `Infection`; для Go — `Mutil`; в Scala — плагины. Все они делают то же: мутируют код и гоняют тест-раннер языка.",
+                "example": "Для Python кроме mutmut есть `Cosmic Ray`; для PHP — `Infection`; для Go — `Gremlins`; в Scala — плагины. Все они делают то же: мутируют код и гоняют тест-раннер языка.",
                 "when_to_apply": "Эти тулзы выбирают, когда основной стек не Java/JS: например `Infection` в PHP-проекте или `Cosmic Ray` для Python с большим набором операторов.",
                 "edge_cases": "Зрелость инструментов сильно разнится: PIT и Stryker отшлифованы, а нишевые тулзы могут хуже поддерживаться, давать больше equivalent-мутантов и иметь слабую CI-интеграцию.",
                 "related": "[[mutation-testing-interview#Q11]] PIT (Java); [[mutation-testing-interview#Q12]] Stryker (JS/TS); [[mutation-testing-interview#Q13]] mutmut (Python)."
@@ -816,19 +816,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Помимо PIT и Stryker есть нишевые тулзы под разные языки: `Infection` (Go), `Mutil` (PHP), `Cosmic Ray` (Python, альтернатива mutmut), а Scala покрывается через плагины (в том числе Stryker). Зрелость и adoption у них разные: самые мощные и проверенные — `PIT` (Java) и `Stryker` (JS).",
+              "text": "Помимо PIT и Stryker есть нишевые тулзы под разные языки: `Infection` (Go), `Gremlins` (PHP), `Cosmic Ray` (Python, альтернатива mutmut), а Scala покрывается через плагины (в том числе Stryker). Зрелость и adoption у них разные: самые мощные и проверенные — `PIT` (Java) и `Stryker` (JS).",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: `Infection` — для PHP, а `Mutil` — для Go; языки в утверждении перепутаны местами.",
+                "what_actually": "Наоборот: `Infection` — для PHP, а `Gremlins` — для Go; языки в утверждении перепутаны местами.",
                 "source_of_confusion": "Названия не намекают на язык напрямую, поэтому привязку легко перепутать.",
                 "if_it_were_true": "Если бы Infection был под Go, он не интегрировался бы с PHP-тестами (PHPUnit), что является его базовым сценарием.",
-                "how_it_should_be": "Корректно: Infection → PHP, Mutil → Go, Cosmic Ray/mutmut → Python — каждая тулза под свой стек."
+                "how_it_should_be": "Корректно: Infection → PHP, Gremlins → Go, Cosmic Ray/mutmut → Python — каждая тулза под свой стек."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Помимо PIT и Stryker есть нишевые тулзы под разные языки: `Mutil` (Go), `Cosmic Ray` (Python, переименованный mutmut), `Infection` (PHP), а Scala покрывается через плагины (в том числе Stryker). Зрелость и adoption у них разные: самые мощные — `PIT` (Java) и `Stryker` (JS), а Cosmic Ray и mutmut — один движок под двумя именами.",
+              "text": "Помимо PIT и Stryker есть нишевые тулзы под разные языки: `Gremlins` (Go), `Cosmic Ray` (Python, переименованный mutmut), `Infection` (PHP), а Scala покрывается через плагины (в том числе Stryker). Зрелость и adoption у них разные: самые мощные — `PIT` (Java) и `Stryker` (JS), а Cosmic Ray и mutmut — один движок под двумя именами.",
               "correct": false,
               "sections": {
                 "what_actually": "Cosmic Ray и mutmut — два разных независимых Python-инструмента mutation testing, а не один под двумя именами.",

@@ -2,14 +2,16 @@
   "topic_slug": "mutation-testing-interview",
   "round": "ROUND-8",
   "total_blocks": 20,
-  "blocks_reaudited": 8,
-  "status": "WIP (c1 Q4/Q5 + c2 POS + c3 surface + c4 Q1-3/Q6-8 контент-реаудит done; остаётся: Q9-Q20 контент-добор + blind, затем FINAL)",
+  "blocks_reaudited": 14,
+  "status": "WIP (c1 Q4/Q5 + c2 POS + c3 surface + c4 Q1-3/Q6-8 + c5 Q9-14 контент-реаудит done; остаётся: Q15-Q20 контент-добор + blind, затем FINAL)",
   "chunks_reviewed": [
     "c1 (2026-07-14): Q4/Q5 — skel-HARD `;`-паритет + де-карикатура O3-дистракторов + bootstrap freshness/review sidecars",
     "c2 (2026-07-14): POS de-cycle всех 20 блоков — CORRECT_POSITION_SEQUENCE 20→3",
     "c3 (2026-07-14): surface backtick-bucket tells Q1/Q16/Q20 → 0 (formatting-only обёртка терминов в backticks)",
-    "c4 (2026-07-14): Q1/Q2/Q3/Q6/Q7/Q8 контент-реаудит по 20 правилам; Q8 переработаны дистракторы B+D (де-карикатура + устранён second_correct)"
+    "c4 (2026-07-14): Q1/Q2/Q3/Q6/Q7/Q8 контент-реаудит по 20 правилам; Q8 переработаны дистракторы B+D (де-карикатура + устранён second_correct)",
+    "c5 (2026-07-14): Q9/Q10/Q12/Q13 PASS сразу; Q11 форма (дистракторы B/D → позитивные Java-twin'ы correct, убран form-tell «единственный фича-лист»); Q14 фактический фикс `Mutil`→`Gremlins` (несуществующий Go-инструмент, verified WebSearch) в JSON + .md"
   ],
+  "blind_c5": "Чанк Q9-Q14, 2 независимых blind (SEED=9950). PASS сразу: Q9 (correct O3 — triage выживших: пробел→тест / equivalent→skip / приемлемая граница), Q10 (O1 — семантически идентичный, неубиваем; O2 «автодетект» ложен но не hidden_truth), Q12 (O4 Stryker JS/TS/.NET/Scala; O2 «break не роняет сборку» — сильный дистрактор, но correct чист), Q13 (O4 mutmut/pytest/медленно; nit «динамический язык» неточен — не блокер). Q11 FAIL (form-tell: correct — единственный богатый позитивный фича-лист, дистракторы = ограничение/чужая платформа); 3 итерации → B переработан в позитивный Java-twin correct (суперлатив «самый популярный» + фича-лист, единственная ошибка = «правит исходный .java и перекомпилирует» вместо байткода), D → XML/CSV-only; re-blind (SEED=10010) PASS: guessable_by_form=false, semantic_correct=O3(=C), второго верного нет. Q14 FAIL (фактический: `Mutil (Go)` — несуществующий инструмент, verified WebSearch: реальные Go-тулзы Gremlins/go-mutesting); замена Mutil→Gremlins во всех 4 опциях + question_text + секциях + .md; re-blind (SEED=9970) PASS: correct O4(=B), форма честная (twin rich-lists), Cosmic Ray≠mutmut — ключевой различитель.",
   "blind_c4": "Чанк Q1/Q2/Q3/Q6/Q7/Q8. Reviewer A (SEED=9700, Q1-3): все PASS — semantic_correct O1/O1/O1 ✓, guessable_by_form=false, блокеров нет (нит: absolutes в двух дистракторах Q2 — non-blocking). Reviewer B (SEED=9700, Q6-8): Q6 PASS (correct=O4 ✓); Q7 PASS (correct=O4 ✓, near-miss O1 add-vs-remove Void Method Call — легитимный FALSE-дистрактор, не hidden_truth); Q8 FAIL №1 (SEED=9800): каррикатура-D `killed/(total−equivalent) только 100%` + absolutes_tell; переписал D. FAIL №2 (SEED=9800): новый D `killed/total` = second_correct (это PIT Mutation Coverage, фактически верен). Переписал D снова → `covered_mutants/total` (covered≠killed) + подрезал self-announcing хвост B. Re-blind Q8 (SEED=9900): PASS — semantic_correct=O3(=C) ✓, guessable_by_form=false, hidden_truth-проверка O1 снята (`covered/total` не именованная метрика PIT), блокеров нет.",
   "blind_c3": "SEED=9600, shuffle Q1/Q16/Q20. Независимый reviewer ПОСЛЕ backtick-выравнивания: Q1 guessable_by_form=false, semantic_correct=O3(=B) ✓; Q16 guessable_by_form=false, semantic_correct=O1(=C) ✓ (нит minor_backtick_imbalance у дистрактора устранён добором Q16-A bt 1→2); Q20 guessable_by_form=false, semantic_correct=O2(=B) ✓, flags=[]. ИТОГ PASS. Изменения formatting-only (strip-backtick equality к HEAD; correct-тач только Q16-C — обёрнуты `incremental`/`in-process`, слова/смысл неизменны).",
   "pos_decycle": "c2 (2026-07-14): строгий A→B→C→D цикл (CORRECT_POSITION_SEQUENCE=20) → чистая перестановка label/order внутри каждого блока (seed=3, target_seq=BABBDDACAACCDBCCADDB, maxrun=3). Содержимое опций (text/correct/sections) БАЙТ-ИДЕНТИЧНО HEAD — immutable-guard: per-block + глобальный content-мультимножество == HEAD (drift=0); git diff симметричен (205 ins / 205 del). 15/20 блоков сменили позицию correct. Гейт: CORRECT_POSITION_SEQUENCE 20→3 (PASS), DISTRIBUTION=1.0 (5/5/5/5); surface tells неизменны (=3, position-agnostic); skel hard_fails=0. Blind review не требуется — контент не менялся.",
@@ -39,10 +41,32 @@
         "B: подрезан self-announcing/карикатурный хвост «100% легко достижимо, если ПЛОДИТЬ equivalent-мутантов» → «100% кажется лёгким, ведь equivalent прибавляют к killed как якобы убитых»; if_it_were_true смягчён (без «плодить»)"
       ],
       "distractor_models": "A=инвертированная формула `total/killed` (odd_one_out, non-blocking), B=equivalent в числитель, D=covered-vs-killed (mutation testing спутан с coverage); три разные ошибочные модели"
+    },
+    "Q11": {
+      "correct": "C",
+      "byte_locked_correct": true,
+      "issue": "form-tell: correct C — единственный «богатый позитивный фича-лист» (Java+HTML+JUnit5+incremental+coverage-based+суперлатив «самый популярный»), а дистракторы = ограничение/оговорка/чужая платформа → guessable_by_form=true (blind ×3).",
+      "changes": [
+        "B: reframe «правит .java, непригоден для больших проектов» (минус-тон) → позитивный Java-twin correct: тот же суперлатив «самый популярный» + HTML/JUnit5/incremental/coverage-based, единственная ошибка «правит исходный `.java` и перекомпилирует» (реально PIT мутирует БАЙТКОД) вшита в середину, конец — позитив. Теперь форма решается только знанием байткод-vs-исходник.",
+        "D: reframe «только агрегированный процент в консоли, без разбивки» → «только машинный XML/CSV, HTML-отчёта не формирует» (нейтральный тон, снят self-flagging минус); секции обновлены."
+      ],
+      "distractor_models": "A=чужая платформа (PIT для JS/TS — это Stryker), B=неверный механизм (source-recompile вместо байткода), D=неверный вывод (нет HTML, только XML/CSV); три разные правдоподобные модели",
+      "resolution": "re-blind SEED=10010 PASS: guessable_by_form=false (B зеркалит суперлатив+фича-лист), semantic_correct=C, second_correct=нет. Non-blocking nit: correct-текст не говорит «байткод» явно (есть в его sections)."
+    },
+    "Q14": {
+      "correct": "B",
+      "byte_locked_correct": false,
+      "fact_fix": true,
+      "issue": "фактическая ошибка: `Mutil (Go)` — несуществующий инструмент (verified WebSearch: реальные Go-тулзы — Gremlins/go-gremlins и go-mutesting). Присутствовал в correct B + всех дистракторах + question_text + .md-шпаргалке.",
+      "changes": [
+        "Замена `Mutil`→`Gremlins` во ВСЕХ 4 опциях (text+секции) + question_text seed-JSON + строке 371 cheatsheets/interview/testing/mutation-testing-interview.md. Языковые привязки сохранены: correct B=Gremlins(Go); swap-дистрактор C=Gremlins(PHP) ошибка; caricature A=Gremlins(«не существует») ошибка; D=Gremlins(Go)+Cosmic Ray-mutmut ложь."
+      ],
+      "distractor_models": "A=нигилизм «тулз нет» (caricature, odd_one_out), C=перепутаны языки (Infection↔Gremlins), D=«Cosmic Ray=переименованный mutmut» (ложь: независимые проекты); correct правит фактический дефект",
+      "resolution": "re-blind SEED=9970 PASS: correct=B единственный, форма честная (twin rich-lists O1/O4 снимают form-tell), различитель Cosmic Ray≠mutmut. Факты подтверждены: Gremlins=Go, Infection=PHP, Cosmic Ray=Python-отдельный."
     }
   },
   "blind_c1": "SEED=9500, shuffle Q4/Q5. Ре-ревью (независимый reviewer) ПОСЛЕ переписи: Q4 form_guess=«не могу», guessable_by_form=false, semantic_correct=O4(=D) ✓, flags=[]. Q5 form_guess=«не могу», guessable_by_form=false, semantic_correct=O4(=A) ✓, flags=[]. ИТОГ PASS. (Первый blind SEED=9400 дал FAIL по каррикатуре O3 в обоих блоках — устранено этой переписью.)",
-  "gates": "c4: git diff симметричен (7/7, только Q8-B/Q8-D); surface Q8 tells=[] (ratio=1.21, correct не самый длинный); skel hard_fails=0; answer-parity профиль ИДЕНТИЧЕН HEAD (OPTION_LENGTH_RATIO=1.64 Q4 / 6 блоков >1.35 — не введено правкой; DUPLICATE_NGRAMS=98) — оба §30/§18.1 accepted; ABSOLUTE_MARKER_GAP 0.017, POSITION_SEQ=3, POSITION_DIST=1.0, STYLE_GUESSABILITY=0.346 — ok.",
-  "residual": "POS 20→3 ✅ (c2). Surface NO_TELLS ✅ (c3). Q1-3/Q6-8 контент PASS ✅ (c4). Осталось: Q9-Q20 per-block контент-реаудит (факт/uniqueness/plausibility/каррикатура) + blind, затем FINAL. Non-blocking замечания к Q8 (на будущее, не блокируют): O2(=A) `total/killed` — odd_one_out (инвертированная шкала, отсекается формой, но указывает на wrong, correct не выдаёт); совет ревьюера «взять killed/covered как ловушку» ОТВЕРГНУТ — это реальная Test Strength → second_correct. Accepted-exceptions (§30/§18.1): OPTION_LENGTH_RATIO=1.64 (плотный byte-locked catalog correct + code-span word-collapse) и DUPLICATE_NGRAMS=98 (структурный skeleton-паритет). skel warn_blocks=8 — non-binding.",
+  "gates": "c5: все 20 блоков surface tells=[] (Q11/Q14 corr_longest=False; единственный display-`<== TELL` = Q2 ratio=1.25 non-binding, дистрактор длиннее, не тронут); skel hard_fails=0; answer-parity accepted-профиль (OPTION_LENGTH_RATIO=1.64 Q4 / 6 блоков >1.35; DUPLICATE_NGRAMS 98→100 — рост от намеренного сближения Q11-B с correct ради анти-угадываемости, в рамках §18.1); ABSOLUTE_MARKER_GAP=0.0, POSITION_SEQ=3, POSITION_DIST=1.0, STYLE_GUESSABILITY=0.346 — ok. 0 «Mutil» в JSON и .md.",
+  "residual": "POS 20→3 ✅ (c2). Surface NO_TELLS ✅ (c3). Q1-8 контент PASS ✅ (c4). Q9-14 контент PASS ✅ (c5). Осталось: Q15-Q20 per-block контент-реаудит + blind, затем FINAL. Non-blocking (на будущее): Q8 A(`total/killed`) odd_one_out; Q11 correct-текст не говорит «байткод» явно (есть в sections); Q14 O3 (нигилизм) карикатурен но служит odd_one_out. Урок c5: формульные/инструментальные факты проверять — `Mutil`(Go) был фантомом; PIT hidden_truth-ловушки (см. c4). Accepted-exceptions (§30/§18.1): OPTION_LENGTH_RATIO=1.64 (плотный byte-locked catalog correct + code-span word-collapse) и DUPLICATE_NGRAMS=100 (структурный skeleton-паритет). skel warn_blocks=8 — non-binding.",
   "notes": "Первый ROUND-8 тик по mutation-testing. Файл исходно высокого качества (богатые параллельные дистракторы). Правился ТОЛЬКО JSON-seed, correct (Q4-D, Q5-A, Q8-C) byte-locked к HEAD, label/order/1-correct инвариантны. Ключевой урок c4: формульные дистракторы для mutation score опасны hidden_truth — killed/total (Mutation Coverage) и killed/(killed+survived) (Test Strength) — РЕАЛЬНЫЕ метрики PIT, нельзя использовать как «неверные»; только covered/total и инверсии однозначно ложны."
 }
