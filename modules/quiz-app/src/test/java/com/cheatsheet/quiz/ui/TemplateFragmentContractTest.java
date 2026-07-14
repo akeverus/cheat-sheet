@@ -418,4 +418,58 @@ class TemplateFragmentContractTest {
                 .isTrue();
         }
     }
+
+    @Test
+    void iconSpriteHasNoOrphanSymbols() throws IOException {
+        // Регресс-гвард против «сироты-иконки»: каждый <symbol id="i-X"> в спрайте
+        // (fragments/icons.html) обязан использоваться хотя бы одной ссылкой — либо
+        // <use href="#i-X"> в шаблоне, либо JS-хелпером icon('X')/svgIcon('X')
+        // (аргумент БЕЗ префикса i-, хелпер сам добавляет #i-, см. app.js:38/1876).
+        // Неиспользуемый символ грузится на КАЖДОЙ странице (спрайт инлайнится через
+        // header-фрагмент) = мёртвый payload. App не нужен: чтение ресурсов.
+        // Ручной orphan-аудит R0.137 (снял i-bot/chart/lightbulb/refresh/search,
+        // осиротевшие после AI/regenerate-removal) → инвариант.
+        String sprite = readTemplate("templates/fragments/icons.html");
+
+        Matcher symbolMatcher = Pattern.compile("<symbol id=\"(i-[a-z0-9-]+)\"").matcher(sprite);
+        Set<String> declared = new LinkedHashSet<>();
+        while (symbolMatcher.find()) {
+            declared.add(symbolMatcher.group(1));
+        }
+
+        // Корпус ссылок = все шаблоны + весь JS.
+        StringBuilder corpusBuilder = new StringBuilder();
+        for (String dir : new String[] { "templates", "static/js" }) {
+            Path root = new ClassPathResource(dir).getFile().toPath();
+            try (Stream<Path> walk = Files.walk(root)) {
+                for (Path p : (Iterable<Path>) walk
+                        .filter(p -> p.toString().endsWith(".html") || p.toString().endsWith(".js"))
+                        .sorted()::iterator) {
+                    corpusBuilder.append(new String(Files.readAllBytes(p), StandardCharsets.UTF_8)).append('\n');
+                }
+            }
+        }
+        String refs = corpusBuilder.toString();
+
+        // Использованные = прямые #i-X (шаблонный <use>) + аргументы хелперов
+        // icon('X')/svgIcon('X') (в них имя без i-, добавляем префикс).
+        Set<String> referenced = new LinkedHashSet<>();
+        Matcher hrefMatcher = Pattern.compile("#(i-[a-z0-9-]+)").matcher(refs);
+        while (hrefMatcher.find()) {
+            referenced.add(hrefMatcher.group(1));
+        }
+        Matcher helperMatcher = Pattern.compile("(?:svgIcon|icon)\\([\"']([a-z0-9-]+)").matcher(refs);
+        while (helperMatcher.find()) {
+            referenced.add("i-" + helperMatcher.group(1));
+        }
+
+        // Санити: спрайт непустой и известные живые иконки на месте.
+        assertThat(declared).contains("i-star", "i-check", "i-copy", "i-flag", "i-download");
+
+        for (String id : declared) {
+            assertThat(referenced)
+                .as("иконка '%s' объявлена в спрайте, но не используется (<use href=#%s> или icon('%s')) — orphan/dead payload", id, id, id.substring(2))
+                .contains(id);
+        }
+    }
 }

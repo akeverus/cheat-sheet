@@ -359,7 +359,7 @@ docs/ui-ux-improvement-log.md
 | `error.html` | page | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Чисто; 403 авто-retry = ⛔ERR-3 |
 | `fragments/head.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | Чисто; CDN-guards, 6 осей персонализации до 1-го кадра |
 | `fragments/header.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | HDR-1 закрыт р138 (mobile focus title + session compact; sticky отвергнут) |
-| `fragments/icons.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | 🌱ICO-3 нет warning-иконки для warn/error (low) |
+| `fragments/icons.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | 🌱ICO-3 нет warning-иконки для warn/error (low); **R0.137: 5 сирот-символов (bot/chart/lightbulb/refresh/search, AI/regenerate-fallout) удалены 21→16 + icon-orphan guard (тест 16)** |
 | `fragments/mermaid-init.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🏛 | MER-1 🚫 внешний owner; сам код чист (antiscript-guard) |
 | `fragments/inline-alert.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Чисто; role=alert+assertive (IAL-1) |
 | `fragments/post-answer-controls.html` | fragment | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ✅ | ◐ | ◐ | ✅ | ⏸ | Чисто; feedback polite + sink под кнопкой (PAC-1..2) |
@@ -2607,6 +2607,17 @@ Constraint Validation API без сабмита на session-form. count (number
 - **Verify:** `./gradlew :quiz-app:test --tests "*TemplateFragmentContractTest"` → BUILD SUCCESSFUL 2s; JUnit XML `tests="15" failures="0" errors="0"`; orphan-тест среди 15 зелёных. Без `?v=`-бампа (правка только тестовая, shipped CSS/JS/шаблоны не тронуты).
 - **Итог:** слой шаблонов сертифицирован свободным от dead-surface, регресс-гвард закрывает будущие сироты. Ещё один статический не-decision, не-app-gated проход к конечной цели (Фаза E/F).
 - **Дальше:** app-gated parity-QA (turnkey Часть B) + decision-gated §10-остаток (RES-3/APP-5/ICO-3) — без изменений. Следующие статические кандидаты, если появятся: аналогичные derive-and-check инварианты (напр. «каждый `#i-*` из icons.html спрайта используется»/«каждый `data-label` th-парой»). Нумерация R0.137+.
+
+### R0.137 (2026-07-14) — Icon-sprite orphan cleanup: 5 dead-символов сняты + guard (AI/regenerate-fallout)
+
+- **Единица:** icon-sprite orphan-аудит (Фаза E: dead code, app-независим; зеркалит R0.136 fragment-guard) — из «Дальше» R0.136. Спрайт инлайнится через header на КАЖДОЙ странице → dead-символы = payload на каждый рендер.
+- **Аудит:** 21 объявленный `<symbol id="i-*">` vs ссылки (обе формы: `<use href="#i-X">` в шаблонах + JS `icon('X')`/`svgIcon('X')` — аргумент **без** префикса `i-`, хелпер добавляет сам, app.js:38/1876). **Grep-ловушка:** первый проход упустил bare-arg-форму (ERE `\2` backreference не поддерживается grep -E → `svgIcon('check')`/`svgIcon('x')` не извлеклись, ложно попали в orphan). После фикса — **истинных сирот 5:** `i-bot`, `i-chart`, `i-lightbulb`, `i-refresh`, `i-search`. Проверено: 0 broken-refs (ссылка без символа); 0 динамических `icon(var)` (все вызовы — строковые литералы → статика безопасна); `search`-совпадения = `type="search"`/`role="search"`/CSS, не icon; 0 тестов ассертят 5 ID.
+- **Происхождение:** все 5 добавлены одним коммитом 331d0f19 (первичный Lucide-набор); часть так и не подключена (`i-lightbulb` — 💡-подсказка оставлена эмодзи намеренно, [[project_icon_system]]), часть осиротела при removal (`i-refresh`→regenerate-removal R0.126, `i-bot`→AI-removal 2026-07-07). Консистентно с AI-fallout-чисткой (AIR-серия).
+- **Действие:** 5 символов удалены из `icons.html` (21→16). Ноль render-риска (неиспользуемый `<symbol>` ничего не рисует), тривиально обратимо (стандартные Lucide-пути). Все 16 оставшихся имеют ≥1 ссылку.
+- **Закрепление:** `TemplateFragmentContractTest.iconSpriteHasNoOrphanSymbols` (16-й тест) — извлекает все `<symbol id="i-X">`, строит корпус ссылок (templates+static/js, обе формы) и требует каждый символ использованным. Санити-минимум (star/check/copy/flag/download). Чистый JUnit, app не нужен.
+- **Verify:** `./gradlew :quiz-app:test --tests "*TemplateFragmentContractTest"` → BUILD SUCCESSFUL 2s; `tests="16" failures="0" errors="0"`; icon-guard среди зелёных. Спрайт — фрагмент (инлайнится), НЕ `?v=`-версионируется → бампа нет.
+- **Итог:** every-page payload уменьшен (5 dead SVG-символов), icon-слой сертифицирован zero-orphan + guard. Ещё один статический Фаза-E проход + чистка AI/regenerate-fallout-хвоста.
+- **Дальше:** app-gated parity-QA (turnkey Часть B) + decision-gated §10 (RES-3/APP-5/ICO-3) — без изменений. Возможные статические кандидаты: «каждый `data-label` имеет th-пару в stats/summary-таблицах», «каждый `role=` в шаблоне валиден». Нумерация R0.138+.
 
 >  **⚠️ SUPERSEDED (см. §21 R0.100, 2026-07-13).** Блоки R1.73–R1.97 ниже — дублирующая переработка размерностей, уже закрытых в авторитетном раунде R0.75–R0.98, в устаревшей дорасет-нумерации. Оставлены как история (внутри — реальная прод-правка R1.74-FIX «Завершить сессию», закоммичена). Актуальный трекер конечной цели — матрицы §7/§9 и лог §21 R0.NN. Новых R1.NN не добавлять.
 
