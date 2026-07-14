@@ -8,7 +8,7 @@
   "featureFreeze": true,
   "roundStatusModel": ["AUDITED", "IMPLEMENTED", "REGRESSION_PASS", "DEEP_PASS", "RELEASE_CANDIDATE", "FINALIZED"],
   "taskStatusValues": ["OPEN", "IN_PROGRESS", "BLOCKED", "DONE", "CLOSED"],
-  "nextTaskId": "UX-03",
+  "nextTaskId": "UX-02",
   "activeBlockers": [
     {
       "id": "BLK-BOOTRUN",
@@ -144,11 +144,12 @@
       "blocker": "BLK-BOOTRUN (contract-test)."
     },
     {
-      "id": "UX-01", "priority": "P2", "category": "ui", "status": "OPEN", "needsGradle": false,
+      "id": "UX-01", "priority": "P2", "category": "ui", "status": "CLOSED", "needsGradle": false,
       "title": "Иерархия CTA на terminal-состояниях (empty/done)",
       "surface": ["focus-training.html states", "base.css"],
       "acceptance": "Основная кнопка визуально сильнее вторичной на empty/done; live-QA обе темы.",
-      "notes": "bootRun-safe: CSS/шаблон-правка + live-QA без gradle (если не триггерит contract-test)."
+      "resolution": "VERIFIED-CLEAN R0.167 (live, обе темы): empty-state вычисляет ровно один .next-btn primary по состоянию (settingsPrimary/finished/retry). Live: primary «Открыть настройки» = сплошной teal-fill (accent-on текст) доминирует; secondary «Обновить тренировку» = прозрачный outline. Иерархия корректна, primary совпадает с текстом-инструкцией. Дефект «secondary сильнее primary» не воспроизводится (был против мокапа/старого дизайна).",
+      "evidence": "EV-QA-001"
     },
     {
       "id": "UX-02", "priority": "P2", "category": "ui", "status": "OPEN", "needsGradle": false,
@@ -157,10 +158,12 @@
       "acceptance": "Done/empty читаются как продолжение тренировочного flow, не отдельный мини-сайт."
     },
     {
-      "id": "UX-03", "priority": "P2", "category": "ui", "status": "OPEN", "needsGradle": false,
+      "id": "UX-03", "priority": "P2", "category": "ui", "status": "CLOSED", "needsGradle": false,
       "title": "Убрать градиент/блик с primary CTA (solid fill)",
       "surface": ["base.css"],
-      "acceptance": "Primary CTA = сплошная заливка --signal, без градиента/блика (Instrument-мандат); AA-контраст сохранён; обе темы."
+      "acceptance": "Primary CTA = сплошная заливка --signal, без градиента/блика (Instrument-мандат); AA-контраст сохранён; обе темы.",
+      "resolution": "VERIFIED-CLEAN R0.167: ВСЕ primary CTA уже сплошная заливка var(--color-accent-primary), 0 linear/radial-gradient, 0 ::before-блика, 0 shine-shadow (#interview-submit, .flashcard-reveal-btn, .next-btn, session-form submit). Live-computed bgImage:none в обеих темах. Instrument-порт уже соответствует мандату.",
+      "evidence": "EV-QA-001"
     },
     {
       "id": "UX-05", "priority": "P2", "category": "content", "status": "OPEN", "needsGradle": true,
@@ -187,11 +190,12 @@
       "acceptance": "Аналитика отвечает 'что делать' (слабейшая тема → CTA), не только 'что произошло'. Частично есть (initNextActions)."
     },
     {
-      "id": "CLEAN-01B", "priority": "P2", "category": "cleanup", "status": "OPEN", "needsGradle": false,
+      "id": "CLEAN-01B", "priority": "P2", "category": "cleanup", "status": "DONE", "needsGradle": false,
       "title": "Мёртвый селектор base.css:754 (.question-code-details > pre)",
       "surface": ["base.css"],
       "acceptance": "Верхний отступ код-блока применяется: .code-copy-wrap разорвал direct-child match (app.js оборачивает pre) → перецелить на .question-code-details > .code-copy-wrap / pre.question-code; live-QA gap>0.",
-      "notes": "Подтверждён inventory (open-defects + прошлая сессия). bootRun-safe (только base.css, live-QA)."
+      "resolution": "DONE R0.167: селектор base.css:754 расширен на `.question-code-details > pre, .question-code-details > .code-copy-wrap` (оба случая — no-JS прямой pre + JS-обёртка). ?v base.css 96→97. Live-verify: gap summary→pre 0→12px (=--space-3), console чист.",
+      "evidence": "EV-QA-001"
     },
     {
       "id": "A11Y-01", "priority": "P2", "category": "a11y", "status": "OPEN", "needsGradle": false,

@@ -59,4 +59,14 @@
 
 ## Live-QA / Lighthouse / скриншоты
 
-*(append по мере прохождения задач — вьюпорты 375/768/1280/1440/1728/1920/2560, обе темы)*
+### EV-QA-001 — terminal-state CTA + код-блок (2026-07-15, R0.167, chrome-devtools :8080, 375px)
+
+**UX-01 (иерархия CTA empty/done) — VERIFIED-CLEAN, обе темы.** Empty-state форсирован `/?topic=zzz-nonexistent`. Ветка settingsPrimary: primary «Открыть настройки» computed `bg oklch(0.47 0.115 205)` (light) / `oklab(0.47…)` teal (dark), `bgImage:none`, текст accent-on — доминирует; secondary «Обновить тренировку» `bg rgba(0,0,0,0)` + нейтральный бордер (outline). Markup вычисляет ровно один `.next-btn` primary по состоянию (finished→«итоги» / settingsPrimary→«настройки» / else→«обновить»); primary совпадает с текстом-инструкцией. Дефект «secondary сильнее» не воспроизводится.
+
+**UX-03 (градиент/блик на primary CTA) — VERIFIED-CLEAN.** Все primary CTA — сплошная `var(--color-accent-primary)`; live `bgImage:none` обе темы; в base.css 0 `linear/radial-gradient`, 0 `::before`-блика, 0 shine-shadow на кнопках.
+
+**CLEAN-01B (мёртвый base.css:754) — FIXED + verified.** Live-структура: `.question-code-details` → `.code-copy-wrap` → `<pre>` (app.js оборачивает); `directChildPre:false` → старый `> pre` не матчил → `gap summary→pre = 0`. Фикс: селектор расширен на `> pre, > .code-copy-wrap`; `?v` base.css 96→97; после reload(ignoreCache) `gap = 12px` (=--space-3), console чист.
+
+*Тема переключается штатным `window.__theme.set()` (persisted-pref перебивает `emulate colorScheme`, нужен либо set, либо reload). Виджет-минимум для theme-QA: emulate dark + reload ИЛИ __theme.set('dark').*
+
+*(append далее — вьюпорты 375/768/1280/1440/1728/1920/2560, обе темы)*
