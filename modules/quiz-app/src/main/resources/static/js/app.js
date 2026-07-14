@@ -1552,8 +1552,9 @@
     const relatedDiv = document.createElement('div');
     relatedDiv.className = 'related-questions';
     let relatedHtml = '<h3 class="related-questions-title">' + icon('link', 'ed-icon-lead') + 'Похожие вопросы для закрепления:</h3>';
+    relatedHtml += '<div class="related-questions-list" role="list">';
     data.relatedQuestions.forEach(rq => {
-      relatedHtml += '<a class="related-question-item" href="/?topic=' + encodeURIComponent(rq.topic)
+      relatedHtml += '<a class="related-question-item" role="listitem" href="/?topic=' + encodeURIComponent(rq.topic)
         + '&group=' + encodeURIComponent(currentGroup)
         + '&ordered=' + encodeURIComponent(currentOrdered)
         + (currentImportant ? '&important=true' : '')
@@ -1562,6 +1563,7 @@
         + (currentWeakTopics ? '&weakTopics=true' : '')
         + '">' + escapeHtml(rq.text) + '</a>';
     });
+    relatedHtml += '</div>';
     relatedDiv.innerHTML = relatedHtml;
     appendAnalysisBlock(relatedDiv);
   }
