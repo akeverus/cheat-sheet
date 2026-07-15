@@ -39,6 +39,7 @@ class DailyStreakServiceTest {
         assertThat(result.streak()).isEqualTo(0);
         assertThat(result.goalReached()).isFalse();
         assertThat(result.correct()).isEqualTo(0);
+        assertThat(result.streakLabel()).isEqualTo("0 дней");
     }
 
     @Test
@@ -54,6 +55,7 @@ class DailyStreakServiceTest {
         assertThat(result.streak()).isEqualTo(7);
         assertThat(result.goalReached()).isFalse();
         assertThat(result.correct()).isEqualTo(3);
+        assertThat(result.streakLabel()).isEqualTo("7 дней");
     }
 
     @Test

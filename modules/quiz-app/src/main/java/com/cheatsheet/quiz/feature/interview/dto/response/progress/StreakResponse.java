@@ -4,6 +4,10 @@ import lombok.Builder;
 
 /**
  * Ответ API с данными о дневной цели и стрике (GET /api/streak).
+ *
+ * <p>{@code streakLabel} — готовый русский лейбл серии («5 дней», «21 день»),
+ * просклонённый на сервере ({@link com.cheatsheet.quiz.domain.RussianPlural}),
+ * чтобы клиент не дублировал плюрализацию в JS.</p>
  */
 @Builder(toBuilder = true)
 public record StreakResponse(
@@ -11,5 +15,6 @@ public record StreakResponse(
         int goal,
         int streak,
         boolean goalReached,
-        int correct
+        int correct,
+        String streakLabel
 ) {}

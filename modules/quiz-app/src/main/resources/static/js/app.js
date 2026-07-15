@@ -135,7 +135,12 @@
   function initStreakBar() {
     const bars = document.querySelectorAll('[data-streak-bar]');
     if (!bars.length) return;
-    const daysText = (n) => n + (n === 1 ? ' день' : (n >= 2 && n <= 4 ? ' дня' : ' дней'));
+    // Лейбл серии приходит просклонённым с сервера (StreakResponse.streakLabel,
+    // RussianPlural). Фолбэк на корректный pluralRu — только если поле отсутствует
+    // (старый кэш ответа); наивную клиентскую плюрализацию больше не держим.
+    const daysText = (d) => (typeof d.streakLabel === 'string' && d.streakLabel)
+        ? d.streakLabel
+        : d.streak + ' ' + pluralRu(d.streak, 'день', 'дня', 'дней');
     apiFetch(API.STREAK)
       .then(r => r.json())
       .then(d => {
@@ -155,7 +160,7 @@
           // не скрыл бы). Бар показываем только если в нём есть дневной goal-прогресс
           // (детальный #streak-bar = «0/10» осмыслен и при нулевом стрике).
           if (d.streak > 0) {
-            if (daysEl) { daysEl.textContent = daysText(d.streak); daysEl.classList.remove('hidden'); }
+            if (daysEl) { daysEl.textContent = daysText(d); daysEl.classList.remove('hidden'); }
             if (fireEl) fireEl.classList.remove('hidden');
           } else {
             if (daysEl) daysEl.classList.add('hidden');

@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.feature.interview.service.progress;
 
 import com.cheatsheet.quiz.feature.interview.dto.response.progress.StreakResponse;
 import com.cheatsheet.quiz.domain.DailyProgress;
+import com.cheatsheet.quiz.domain.RussianPlural;
 import com.cheatsheet.quiz.persistence.DailyActivityRepository;
 import com.cheatsheet.quiz.service.event.AnswerEvent;
 import lombok.AccessLevel;
@@ -54,7 +55,7 @@ public class DailyStreakService {
         DailyProgress today = dailyActivityRepository.findToday();
 
         if (today == null) {
-            return new StreakResponse(0, defaultDailyGoal, 0, false, 0);
+            return new StreakResponse(0, defaultDailyGoal, 0, false, 0, RussianPlural.days(0));
         }
         int streak = dailyActivityRepository.findStreak().currentStreak();
         return new StreakResponse(
@@ -62,7 +63,8 @@ public class DailyStreakService {
                 today.goal(),
                 streak,
                 today.goalReached(),
-                today.correctCount()
+                today.correctCount(),
+                RussianPlural.days(streak)
         );
     }
 

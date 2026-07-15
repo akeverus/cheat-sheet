@@ -2,14 +2,14 @@
   "$comment": "ЕДИНСТВЕННЫЙ машиночитаемый источник статуса frontend FINALIZATION ROUND. Правила/фазы/гейты — в PLAN_FRONTEND.md. Развёрнутые задачи — в FRONTEND_BACKLOG.md. Решения — в FRONTEND_DECISIONS.md. Evidence — в FRONTEND_EVIDENCE.md. НЕ дублировать статус в PLAN_FRONTEND.md (§21 заморожен). Обновлять этот файл в конце КАЖДОГО тика (см. FINALIZATION OVERRIDE в PROMPT_PLAN_FRONTEND.md §7.6).",
   "round": "FINALIZATION",
   "roundStatus": "IN_PROGRESS",
-  "updated": "2026-07-15 R0.180",
+  "updated": "2026-07-15 R0.181",
   "canonicalDesign": "instrument",
   "designVariantCount": 1,
   "featureFreeze": true,
   "roundStatusModel": ["AUDITED", "IMPLEMENTED", "REGRESSION_PASS", "DEEP_PASS", "RELEASE_CANDIDATE", "FINALIZED"],
   "taskStatusValues": ["OPEN", "IN_PROGRESS", "BLOCKED", "DONE", "CLOSED"],
-  "nextTaskId": "UX-05",
-  "$nextTaskNote": "SEQUENCING (R0.180): волна при ОСТАНОВЛЕННОМ bootRun; сначала Testcontainers/gradle-верифицируемые бэкенд-слайсы, ПОТОМ визуальная фаза. FLOW-02 DONE (R0.174). Разбиты на backend(DONE)+UI(deferred): FLOW-01 (01a R0.175), FLOW-03 (03a R0.176), FLOW-SUMMARY (SUMMARY-a R0.177), FLOW-REPORT (REPORT-a R0.178). PERF-01 DONE (R0.179, app.js single-sourced). QA-01 DONE (R0.180, профиль qa: фикс. Clock + фикстуры due/learned/new — РАЗБЛОКИРУЕТ воспроизводимую browser-QA визуальной фазы). FLOW-04-server ОТКЛОНЁН как backend-слайс (UX/session-lifecycle-coupled, спекулятивный hot-path autosave = мёртвый код) → UI-слайс визуальной фазы. Следующий backend-тик — UX-05 (P2 серверная плюрализация день/дня/дней в единый util вместо дубля в 2 JS): последний чистый gradle-верифицируемый бэкенд-слайс. После UX-05 бэкенд-фаза ЗАКРЫТА → ПЕРЕХОД в визуальную фазу (bootRun ON, активировать профиль qa). Визуальная фаза: PROC-07 (P0 wide-layout B) → UX-13 (DEC-006 A) → FLOW-01b + FLOW-03b + FLOW-SUMMARY-b + FLOW-REPORT-b + FLOW-04-UI баннеры/кнопки/модалки → PERF-02(b) → консолидированная live-QA всей волны (профиль qa даёт детерминированные due/learned/new) → final gate → FINALIZED. Визуальные задачи (DoD = live-QA 6 брейкпойнтов × 2 темы) намеренно отложены на визуальную фазу (blind-авторинг = высокий rework-риск). ScheduleWakeup не звать (fixed-cron).",
+  "nextTaskId": "PROC-07",
+  "$nextTaskNote": "SEQUENCING (R0.181): ⚑ БЭКЕНД-ФАЗА (bootRun-OFF волна) ЗАКРЫТА — все чистые gradle-верифицируемые слайсы сделаны. Хронология: FLOW-02 (R0.174), FLOW-01a (R0.175), FLOW-03a (R0.176), FLOW-SUMMARY-a (R0.177), FLOW-REPORT-a (R0.178), PERF-01 (R0.179), QA-01 (R0.180), UX-05 (R0.181). FLOW-04-server ОТКЛОНЁН (UX-coupled) → UI-слайс. UX-15 бэкенд УЖЕ покрыт FLOW-SUMMARY-a (типизированные NextAction) → остаётся только UI (=FLOW-SUMMARY-b). UX-16 = stats-UI. Больше чистых бэкенд-слайсов НЕТ. ⚑ ПЕРЕХОД В ВИЗУАЛЬНУЮ ФАЗУ — требует bootRun ON + профиль qa (SPRING_PROFILES_ACTIVE=qa, даёт детерминированные due=2/learned=1/new). Следующий тик (PROC-07): если :8080 OFF — поднять bootRun в фоне под профилем qa (cp static→build/resources/main для live-правок, НЕ запускать отдельный gradle при живом bootRun = wedge), снять baseline-скрины Instrument на 1440/1728/1920/2560 обе темы, затем PROC-07 (wide-layout B, DEC-003: убрать max-width, full-width edge-to-edge + .focus-aside правый рельс ≥1080px, проза 66ch). Порядок визуальной фазы: PROC-07 → UX-13 (DEC-006 A, инверсия пост-ответного раскрытия) → FLOW-01b (баннер паузы+кнопка) + FLOW-03b (кнопка «Не знаю»+unknownCount) + FLOW-SUMMARY-b (типизированные nextActions рендер) + FLOW-REPORT-b (кнопка+модалка репорта) + FLOW-04-UI (recoverable-баннеры) → PERF-02 (perf budgets, Lighthouse) → консолидированная live-QA всей волны (6 брейкпойнтов × 2 темы) → final gate (Раздел 9) → roundStatus FINALIZED → CronDelete + стоп. ScheduleWakeup не звать (fixed-cron).",
   "activeBlockers": [],
   "$resolvedBlockers": "BLK-BOOTRUN снят 2026-07-15 (пользователь остановил :8080, DEC-007). Gradle-волна разрешена; bootRun держим ОСТАНОВЛЕННЫМ на всю волну (иначе следующий gradle-тик снова wedge). Консолидированная live-QA — в конце волны, когда bootRun вернётся.",
   "gates": {
@@ -170,10 +170,12 @@
       "evidence": "EV-QA-001"
     },
     {
-      "id": "UX-05", "priority": "P2", "category": "content", "status": "OPEN", "needsGradle": true,
+      "id": "UX-05", "priority": "P2", "category": "content", "status": "DONE", "needsGradle": true, "needsGraphRebuild": true,
       "title": "Русская плюрализация серии — backend-side",
-      "surface": ["StreakResponse/summary DTO", "app.js/stats.js"],
-      "acceptance": "день/дня/дней считается server-side (или единым util), не дублируется в 2 JS."
+      "surface": ["RussianPlural.java (новый, domain)", "StreakResponse.streakLabel", "DailyStreakService", "app.js (daysText→streakLabel)"],
+      "acceptance": "день/дня/дней считается server-side (или единым util), не дублируется в 2 JS.",
+      "resolution": "DONE R0.181 (EV-UX-005): создан domain-util RussianPlural (единая каноничная mod10/mod100-плюрализация: pluralize(n,one,few,many) + days(n)). StreakResponse получил поле streakLabel (просклонённое сервером, напр. «21 день»/«22 дня»/«25 дней»); DailyStreakService заполняет через RussianPlural.days(streak). app.js: наивный некорректный daysText (путал 21→«дней», 22→«дней») заменён на серверный d.streakLabel с defensive-фолбэком на корректный pluralRu; app.js v=66→67 (bump в единой точке fragments/scripts.html). Исправлен реальный баг плюрализации + устранён дубль. Verify: RussianPluralTest (24 edge-case: 1/21/101 one, 2-4/22-24/102 few, 11-14/111-114 many, negatives, pluralize); DailyStreakServiceTest (+streakLabel «0 дней»/«7 дней»); StreakApiServiceTest + InterviewApiControllerUnitTest ctor-обновлены; TemplateFragmentContractTest (bump всё ещё single-sourced) + PublicEndpointsSmokeTest зелёные. bootRun OFF.",
+      "evidence": "EV-UX-005"
     },
     {
       "id": "UX-13", "priority": "P2", "category": "ui", "status": "OPEN", "needsGradle": false,

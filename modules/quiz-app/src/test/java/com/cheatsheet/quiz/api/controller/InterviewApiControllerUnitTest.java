@@ -247,7 +247,7 @@ class InterviewApiControllerUnitTest {
     @Test
     void streakReturnsDailyProgressFromService() {
         com.cheatsheet.quiz.feature.interview.dto.response.progress.StreakResponse progress =
-                new com.cheatsheet.quiz.feature.interview.dto.response.progress.StreakResponse(7, 10, 3, false, 5);
+                new com.cheatsheet.quiz.feature.interview.dto.response.progress.StreakResponse(7, 10, 3, false, 5, "3 дня");
         when(streakApiService.toHttpResponse()).thenReturn(ResponseEntity.ok(progress));
 
         ResponseEntity<?> response = controller.getStreak();

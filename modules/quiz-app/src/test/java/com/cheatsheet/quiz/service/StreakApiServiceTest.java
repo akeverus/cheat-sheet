@@ -29,7 +29,7 @@ class StreakApiServiceTest {
 
     @Test
     void buildStreakResponseDelegatesToDailyService() {
-        StreakResponse response = new StreakResponse(7, 10, 3, false, 5);
+        StreakResponse response = new StreakResponse(7, 10, 3, false, 5, "3 дня");
         when(dailyStreakService.getTodayProgress()).thenReturn(response);
 
         StreakResponse result = service.buildStreakResponse();
@@ -40,7 +40,7 @@ class StreakApiServiceTest {
 
     @Test
     void toHttpResponseWrapsStreakPayloadWithOkStatus() {
-        StreakResponse payload = new StreakResponse(4, 10, 2, false, 3);
+        StreakResponse payload = new StreakResponse(4, 10, 2, false, 3, "2 дня");
         when(dailyStreakService.getTodayProgress()).thenReturn(payload);
 
         ResponseEntity<StreakResponse> response = service.toHttpResponse();

@@ -340,3 +340,26 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 - Регрессии: `NoAiModeStartupIntegrationTest` (StartupRunner `@Order` не сломал старт), `PublicEndpointsSmokeTest` (non-qa — дефолтный Clock без ambiguity), `LayeredArchitectureTest` (QaConfig в config-слое, QaFixtureRunner в infrastructure) — все зелёные.
 
 **Residual (осознанно):** «известная сессия/юзер» из acceptance — приложение single-user без user-колонок и без серверного стора сессий (HTTP-session in-memory), поэтому «юзер» уже единичен; детерминизм сессии обеспечивается фиксированным Clock + чистыми прогресс-таблицами (сессия стартует с предсказуемого нуля). Реальный корпус вопросов под `qa` = полный импорт (первые N по id детерминированы; при желании абсолютных id 1..N — включить `app.interview-reset-on-startup=true`, но это тяжёлый реимпорт каждого старта, вне scope). Фикстуры — минимальный репрезентативный набор; счётчики настраиваются через `app.qa.*` без изменения кода.
+
+---
+
+### EV-UX-005 — серверная плюрализация серии (единый util, устранён баг + дубль) (2026-07-15, R0.181, `:quiz-domain:test` + `:quiz-app:test`)
+
+**UX-05 — DONE.** Девятый и **последний** бэкенд-слайс bootRun-OFF волны. Русское склонение «день/дня/дней» вынесено на сервер в одну каноничную реализацию; исправлен реальный баг клиентской плюрализации.
+
+**Проблема:** в `app.js` было ДВА расходящихся склонятеля — наивный `daysText` (`n===1?день:(n>=2&&n<=4?дня:дней)`) для стрика и корректный `pluralRu` (mod10/mod100) для штрафных вопросов. Наивный **врал** на числах 11–14 и оканчивающихся на 1/2–4 в этом диапазоне сотен: streak=21 → «21 дней» (надо «день»), 22 → «22 дней» (надо «дня»). Дубль логики + баг.
+
+**Решение (server-side, как требует заголовок задачи):**
+- **`RussianPlural`** (новый, `quiz-domain`, чистый util как `ReviewDefaults`): `pluralize(long n, one, few, many)` — каноничное правило (11–14 по mod100 → many; oканчивается на 1 → one; 2–4 → few; иначе many; знак игнорируется) + `days(long n)` → «N день/дня/дней». Reusable для любых числительных.
+- **`StreakResponse.streakLabel`** (новое поле record): просклонённый лейбл, считает `DailyStreakService` через `RussianPlural.days(streak)` в обеих ветках (`today==null` → «0 дней»).
+- **`app.js`**: `daysText(d)` теперь возвращает `d.streakLabel` (defensive-фолбэк на корректный `pluralRu`, если поле отсутствует — старый кэш ответа); наивная клиентская плюрализация удалена. `app.js` v=66→67 (bump в ЕДИНОЙ точке `fragments/scripts.html` — плод PERF-01).
+
+**Verify (bootRun OFF, Docker UP):**
+- `RussianPluralTest` (24 параметризованных кейса): one (1/21/31/101), few (2–4/22–24/102), many (0/5/10/20/25/100), спец-диапазон 11–14/111–114 → many несмотря на mod10; `pluralize` на произвольных словах; отрицательные → по модулю ✅.
+- `DailyStreakServiceTest`: `streakLabel` == «0 дней» (нет активности) и «7 дней» (streak=7) — серверное вычисление end-to-end ✅.
+- `StreakApiServiceTest` + `InterviewApiControllerUnitTest` — конструкторы `StreakResponse` обновлены (6-й арг) ✅.
+- `TemplateFragmentContractTest` (app.js v=67 всё ещё в 1 файле = single-sourced) + `PublicEndpointsSmokeTest` (стрик-бар разметка не тронута, `/` + `/settings` → 200) зелёные.
+
+**Residual (осознанно):** `stats.js` собственной плюрализации дней не имел (греп 0) — «2 JS» из формулировки на деле = два склонятеля ВНУТРИ `app.js`; оба класса теперь сходятся (стрик → сервер, штрафные вопросы → `pluralRu`, который можно позже тоже вынести на сервер при желании — вне scope UX-05). Рендер серверной строки в DOM — тривиальный (`textContent = d.streakLabel`), визуально идентичен для частых значений и КОРРЕКТНЕЕ на краях; консолидированная live-QA визуальной фазы подтвердит текст на экране.
+
+**⚑ Бэкенд-фаза (bootRun-OFF волна) ЗАКРЫТА** — все 9 чистых gradle-верифицируемых слайсов сделаны (FLOW-02/01a/03a/SUMMARY-a/REPORT-a, PERF-01, QA-01, UX-05). Следующий этап — визуальная фаза (bootRun ON + профиль qa): PROC-07 → UX-13 → UI-слайсы FLOW-* → PERF-02 → консолидированная live-QA → final gate → FINALIZED.
