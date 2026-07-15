@@ -93,6 +93,15 @@ public class InterviewFlowMvcService {
         return navigationService.focusRedirect();
     }
 
+    /**
+     * Отмечает текущий вопрос как «не знаю» (UNKNOWN, FLOW-03) и продвигает сессию.
+     * Персистенцию и идемпотентность обеспечивает {@link InterviewSessionSupport#processSkip}.
+     */
+    public String skip(long questionId, HttpSession session) {
+        sessionSupport.processSkip(questionId, session);
+        return navigationService.focusRedirect();
+    }
+
     public String sessionSummary(HttpSession session, Model model) {
         SessionSummary summary = httpSessionStateService.getLastSessionSummary(session).orElse(null);
         if (summary == null) {

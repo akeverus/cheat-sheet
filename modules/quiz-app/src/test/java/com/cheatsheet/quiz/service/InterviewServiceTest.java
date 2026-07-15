@@ -12,6 +12,8 @@ import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.domain.ReviewResult;
 import com.cheatsheet.quiz.domain.ReviewState;
 import com.cheatsheet.quiz.domain.exception.OptionNotFoundException;
+import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
+import com.cheatsheet.quiz.service.event.AnswerEvent;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
 import com.cheatsheet.quiz.feature.interview.service.core.OptionLookupService;
 import com.cheatsheet.quiz.feature.interview.service.core.TrainingSessionService;
@@ -293,6 +295,29 @@ class InterviewServiceTest {
 
         assertThat(result).isPresent();
         assertThat(result.get().options()).hasSize(3);
+    }
+
+    @Test
+    void submitUnknownAppliesLapseAndPublishesEventAndReturnsQuestion() {
+        Question question = sampleQuestion(5L);
+        when(questionRepository.findById(5L)).thenReturn(Optional.of(question));
+        when(reviewService.applyUnknown(question))
+                .thenReturn(new ReviewState(5L, 0, 1, 2.2, 1_700_086_400L, ReviewResult.UNKNOWN, 0, 1));
+
+        Question result = interviewService.submitUnknown(5L);
+
+        assertThat(result).isSameAs(question);
+        verify(reviewService).applyUnknown(question);
+        verify(eventPublisher).publishEvent(org.mockito.ArgumentMatchers.any(AnswerEvent.class));
+    }
+
+    @Test
+    void submitUnknownThrowsWhenQuestionMissing() {
+        when(questionRepository.findById(404L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> interviewService.submitUnknown(404L))
+                .isInstanceOf(QuestionNotFoundException.class);
+        verify(reviewService, never()).applyUnknown(org.mockito.ArgumentMatchers.any());
     }
 
     private Question sampleQuestion(long id) {

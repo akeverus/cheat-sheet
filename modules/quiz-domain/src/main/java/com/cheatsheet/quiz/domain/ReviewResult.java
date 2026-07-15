@@ -19,6 +19,9 @@ public enum ReviewResult {
     /** Последний ответ был неправильным. */
     WRONG,
 
+    /** Пользователь отметил «не знаю» — полный провал припоминания (лапс, отличный от WRONG). */
+    UNKNOWN,
+
     /** Прогресс по вопросу был сброшен (например, при обновлении контента). */
     RESET;
 
@@ -41,7 +44,7 @@ public enum ReviewResult {
             return valueOf(value.strip().toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(
-                    "Неизвестный ReviewResult: '" + value + "'. Допустимые: NEW, CORRECT, WRONG, RESET", e);
+                    "Неизвестный ReviewResult: '" + value + "'. Допустимые: NEW, CORRECT, WRONG, UNKNOWN, RESET", e);
         }
     }
 }

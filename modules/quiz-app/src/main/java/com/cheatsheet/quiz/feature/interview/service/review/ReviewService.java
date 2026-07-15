@@ -56,6 +56,25 @@ public class ReviewService {
     }
 
     /**
+     * Применяет исход «не знаю» (UNKNOWN, FLOW-03): SM-2-лапс с грейдом 0 и
+     * пометкой {@code last_result = UNKNOWN}. Для мастерства темы засчитывается
+     * как незнание (incorrect).
+     *
+     * @param question вопрос
+     * @return обновлённое состояние повторений
+     */
+    @Transactional
+    public ReviewState applyUnknown(Question question) {
+        long questionId = question.id();
+        ReviewState current = reviewStateRepository.findByQuestionId(questionId)
+                .orElse(ReviewDefaults.initialState(questionId, clock.instant().getEpochSecond()));
+        ReviewState updated = spacedRepetitionService.applyUnknown(current);
+        reviewStateRepository.update(updated);
+        userTopicStatsRepository.recordAnswer(question.topic(), false);
+        return updated;
+    }
+
+    /**
      * Текущее (персистентное) состояние повторений вопроса — БЕЗ изменений.
      * Используется для идемпотентного повтора ответа (FLOW-02): при устаревшем
      * дублирующем POST нужно вернуть уже сохранённое состояние, не применяя SM-2

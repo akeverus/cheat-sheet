@@ -238,3 +238,28 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Deferred → 01b (визуальная фаза, live-QA):** UI-баннер «есть незавершённая сессия — продолжить?» на `/` (читает PauseService.pausedInfo через model-attr) + кнопка «Пауза» рядом с «Завершить» в focus-training.html (form POST /pause с _csrf) + resume-триггер. Endpoints уже протестированы — 01b лишь тонкая обвязка + live browser QA.
 
 **Residual (задокументировано):** pause перезаписывает singleton; resume потребляет; finish/start НЕ авто-дискардят паузу (лингер приемлем для single-user, UX уточнить в 01b). Blob-персистентность зависит от serialVersionUID — при эволюции InterviewSession старый блоб не десериализуется, но guarded (discard, не падение); для короткоживущей паузы локального инструмента приемлемо.
+
+---
+
+### EV-FLOW-003A — UNKNOWN («не знаю») backend-ядро (2026-07-15, R0.176, `:quiz-domain:test` + `:quiz-app:test`)
+
+**FLOW-03a — DONE** (FLOW-03 разбит: 03a backend-исход UNKNOWN — этот тик; 03b UI-кнопка + summary-рендер — визуальная фаза). Четвёртый бэкенд-слайс bootRun-OFF волны, чистая доменная/сервисная логика (никаких миграций/шаблонов) → полностью Testcontainers/Mockito-верифицируемо без браузера.
+
+**Педагогическая модель:** «не знаю» — провал припоминания *сильнее* неверного выбора (полный blackout vs угадал-и-промахнулся). SM-2 грейд **0** (WRONG=2) → штраф ease больше; лапс (repetitions=0, interval=1) как у wrong, но `last_result=UNKNOWN` разведён для сессии/аналитики. На уровне карточки засчитывается `wrongCount++` (мастерство темы падает), но на уровне сессии — отдельный счётчик, не смешивается с wrong.
+
+**Слои (только JSON… нет — только Java, миграций нет):**
+- **quiz-domain** `ReviewResult.UNKNOWN` — новый enum-констант между WRONG и RESET; `fromString` допустимые-значения обновлены. `SpacedRepetitionService.applyUnknown(ReviewState)` — `GRADE_UNKNOWN=0`, лапс + ease += computeEaseDelta(0) с полом MIN_EASE_FACTOR, `nextReviewAt` через Clock, wrongCount++. `InterviewSession` — аддитивный `int unknown`-счётчик + `getUnknown()` + `registerUnknown(topic)` (unknown++, index++; **НЕ пишет в answerHistory** — форма `AnswerRecord(questionId,correct,topic)` неизменна → serialization-safe для paused_session-блоба FLOW-01a, и unknown-вопросы не всплывают в разбор ошибок как ложные mistakes). `SessionSummary` — поле/геттер/builder `unknownCount` + валидация ≥0.
+- **quiz-app** `ReviewService.applyUnknown(Question)` (@Transactional: findOrInitial → applyUnknown → update + userTopicStats.recordAnswer(topic,**false**)). `InterviewService.submitUnknown(questionId)→Question` (resolve или QuestionNotFoundException → reviewService.applyUnknown → publish `AnswerEvent` как незнание: correct=false, selected/correct-тексты пусты, answerMarkdown/topic из вопроса; guarded warn). `InterviewSessionSupport.processSkip(questionId, session)` — идемпотентный choke-point: null/finished/`currentQuestionId≠questionId` → **no-op** (без побочных эффектов, как FLOW-02 stale-guard); иначе submitUnknown + registerUnknown; EXAM добавляет штрафные (незнание = wrong для прогрессии, нельзя «проскипать» штраф); STUDY → LEARN-фаза; persist. `InterviewFlowMvcService.skip` → focusRedirect. `SessionSummaryService.buildSummary` — total += unknown, `.unknownCount(session.getUnknown())` → accuracy = correct/total естественно учитывает unknown как не-correct.
+- **endpoint** `POST /skip` (`@RequestParam @Positive long questionId`) в `InterviewMvcController`. Выбран **отдельный** endpoint вместо sentinel-optionId в `/answer` → `/answer` сохраняет `@Positive`-контракт optionId, разметка чище.
+
+**Verify (bootRun OFF, Docker UP → gradle безопасен):**
+- `SpacedRepetitionServiceTest`: applyUnknown лапсит+метит UNKNOWN (wrongCount++, correctCount сохранён); ease-штраф **строго больше** чем applyAnswer(false); ease не проваливается ниже пола 1.3 ✅.
+- `ReviewServiceTest`: applyUnknown update + `recordAnswer(topic,false)` ✅.
+- `InterviewServiceTest`: submitUnknown happy (returns question, applyUnknown, publishEvent) + not-found → QuestionNotFoundException, applyUnknown `never()` ✅.
+- `InterviewSessionTest` (domain): registerUnknown → unknown=1, correct/wrong=0, index=1, `answerHistory` пуст ✅.
+- `InterviewSessionSupportTest`: processSkip EXAM → submitUnknown+registerUnknown+addExamPenalty+persist; STUDY → switchToLearnPhase, penalty `never()`; stale (currentQuestionId≠questionId) → всё `never()`; finished → всё `never()` ✅.
+- `SessionSummaryServiceTest`: 1 correct + 1 unknown → correct=1/wrong=0/unknown=1/total=2/accuracy=50.0/mistakes пуст ✅.
+- `InterviewFlowMvcServiceTest`: skip делегирует processSkip + focusRedirect ✅.
+- **Полный `:quiz-domain:test` + `:quiz-app:test` → BUILD SUCCESSFUL** (ArchUnit зелёный).
+
+**NOT в 03a (осознанно):** пер-топик атрибуция unknowns (unknown не в answerHistory → нет ветки в collectTopicResults; headline-счётчик достаточен для 03a); клиентская обвязка. **Deferred → 03b (визуальная фаза):** кнопка «Не знаю» в focus-training.html (form POST /skip questionId+_csrf) + рендер unknownCount в session-summary.html + live-QA.

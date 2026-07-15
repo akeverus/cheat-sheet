@@ -44,6 +44,9 @@ public class SpacedRepetitionService {
     /** Порог SM-2: при оценке ниже этого значения прогресс сбрасывается. */
     private static final int GRADE_THRESHOLD = 3;
 
+    /** Оценка SM-2 для «не знаю» (полный blackout — штраф ease больше, чем у WRONG=2). */
+    private static final int GRADE_UNKNOWN = 0;
+
     /** Начальный интервал при первом правильном ответе (дни). */
     private static final int INITIAL_INTERVAL_DAYS = 1;
 
@@ -80,6 +83,40 @@ public class SpacedRepetitionService {
     public ReviewState applyAnswer(ReviewState current, boolean correct) {
         int grade = correct ? GRADE_CORRECT : GRADE_WRONG;
         return applyAnswer(current, correct, grade);
+    }
+
+    /**
+     * Применяет исход «не знаю» (UNKNOWN): пользователь не смог даже попытаться.
+     *
+     * <p>Педагогически это провал припоминания сильнее, чем неверный выбор: грейд 0
+     * даёт больший штраф ease, чем WRONG (грейд 2). Прогресс сбрасывается (лапс:
+     * {@code repetitions=0}, интервал — начальный), {@code last_result = UNKNOWN}.
+     * Засчитывается как незнание ({@code wrongCount++}) на уровне карточки, но исход
+     * помечен отдельно (UNKNOWN) для сессии/аналитики.</p>
+     *
+     * @param current текущее состояние (из БД)
+     * @return новое состояние (для сохранения в БД)
+     */
+    public ReviewState applyUnknown(ReviewState current) {
+        int repetitions = 0;
+        int interval = INITIAL_INTERVAL_DAYS;
+        double ease = current.easeFactor() + computeEaseDelta(GRADE_UNKNOWN);
+        if (ease < ReviewDefaults.MIN_EASE_FACTOR) {
+            ease = ReviewDefaults.MIN_EASE_FACTOR;
+        }
+        long nextEpoch = Instant.now(clock).plus(interval, ChronoUnit.DAYS).getEpochSecond();
+        log.debug("SM-2 unknown: questionId={} ease {} -> {}, interval reset -> {} days",
+                current.questionId(), current.easeFactor(), ease, interval);
+        return new ReviewState(
+                current.questionId(),
+                repetitions,
+                interval,
+                ease,
+                nextEpoch,
+                ReviewResult.UNKNOWN,
+                current.correctCount(),
+                current.wrongCount() + 1
+        );
     }
 
     /**

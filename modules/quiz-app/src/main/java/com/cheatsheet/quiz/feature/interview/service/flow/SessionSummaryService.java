@@ -46,9 +46,10 @@ public class SessionSummaryService {
                 : null;
 
         SessionSummary.Builder builder = SessionSummary.builder()
-                .totalQuestions(session.getCorrect() + session.getWrong())
+                .totalQuestions(session.getCorrect() + session.getWrong() + session.getUnknown())
                 .correctCount(session.getCorrect())
                 .wrongCount(session.getWrong())
+                .unknownCount(session.getUnknown())
                 .duration(duration)
                 .mode(session.getMode());
 

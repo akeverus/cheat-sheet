@@ -52,6 +52,22 @@ class InterviewSessionTest {
     }
 
     @Test
+    void registerUnknownIncrementsUnknownAndIndexButNotCorrectWrong() {
+        InterviewSession session = new InterviewSession(
+                InterviewMode.EXAM, List.of(1L, 2L),
+                null, null, null, null, Instant.now());
+
+        session.registerUnknown("java");
+
+        assertThat(session.getUnknown()).isEqualTo(1);
+        assertThat(session.getCorrect()).isZero();
+        assertThat(session.getWrong()).isZero();
+        assertThat(session.getIndex()).isEqualTo(1);
+        // «Не знаю» НЕ добавляется в историю ответов (форма AnswerRecord неизменна).
+        assertThat(session.getAnswerHistory()).isEmpty();
+    }
+
+    @Test
     void sessionFinishesWhenAllQuestionsAnswered() {
         InterviewSession session = new InterviewSession(
                 InterviewMode.TRAINING, List.of(1L),

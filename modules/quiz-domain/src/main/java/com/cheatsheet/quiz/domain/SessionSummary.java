@@ -22,6 +22,7 @@ public class SessionSummary implements Serializable {
     int totalQuestions;
     int correctCount;
     int wrongCount;
+    int unknownCount;
     double accuracy;
     Duration duration;
     InterviewMode mode;
@@ -33,6 +34,7 @@ public class SessionSummary implements Serializable {
         this.totalQuestions = builder.totalQuestions;
         this.correctCount = builder.correctCount;
         this.wrongCount = builder.wrongCount;
+        this.unknownCount = builder.unknownCount;
         this.accuracy = builder.totalQuestions > 0
                 ? (builder.correctCount * 100.0) / builder.totalQuestions : 0.0;
         this.duration = builder.duration;
@@ -45,6 +47,7 @@ public class SessionSummary implements Serializable {
     public int getTotalQuestions() { return totalQuestions; }
     public int getCorrectCount() { return correctCount; }
     public int getWrongCount() { return wrongCount; }
+    public int getUnknownCount() { return unknownCount; }
     public double getAccuracy() { return accuracy; }
     public Duration getDuration() { return duration; }
     public InterviewMode getMode() { return mode; }
@@ -88,6 +91,7 @@ public class SessionSummary implements Serializable {
         private int totalQuestions;
         private int correctCount;
         private int wrongCount;
+        private int unknownCount;
         private Duration duration;
         private InterviewMode mode;
         private final List<TopicResult> topicResults = new ArrayList<>();
@@ -97,6 +101,7 @@ public class SessionSummary implements Serializable {
         public Builder totalQuestions(int val) { this.totalQuestions = val; return this; }
         public Builder correctCount(int val) { this.correctCount = val; return this; }
         public Builder wrongCount(int val) { this.wrongCount = val; return this; }
+        public Builder unknownCount(int val) { this.unknownCount = val; return this; }
         public Builder duration(Duration val) { this.duration = val; return this; }
         public Builder mode(InterviewMode val) { this.mode = val; return this; }
 
@@ -118,8 +123,9 @@ public class SessionSummary implements Serializable {
         public SessionSummary build() {
             Objects.requireNonNull(mode, "mode");
             Objects.requireNonNull(duration, "duration");
-            if (totalQuestions < 0 || correctCount < 0 || wrongCount < 0) {
-                throw new IllegalArgumentException("totalQuestions, correctCount and wrongCount must be >= 0");
+            if (totalQuestions < 0 || correctCount < 0 || wrongCount < 0 || unknownCount < 0) {
+                throw new IllegalArgumentException(
+                        "totalQuestions, correctCount, wrongCount and unknownCount must be >= 0");
             }
             return new SessionSummary(this);
         }

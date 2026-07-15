@@ -46,4 +46,43 @@ class SpacedRepetitionServiceTest {
         assertThat(updated.lastResult()).isEqualTo(ReviewResult.WRONG);
         assertThat(updated.wrongCount()).isEqualTo(1);
     }
+
+    @Test
+    void applyUnknownLapsesAndMarksUnknown() {
+        Clock fixed = Clock.fixed(Instant.parse("2024-01-01T00:00:00Z"), ZoneOffset.UTC);
+        SpacedRepetitionService service = new SpacedRepetitionService(fixed);
+        ReviewState state = new ReviewState(1L, 4, 20, 2.5, 0L, ReviewResult.CORRECT, 4, 1);
+
+        ReviewState updated = service.applyUnknown(state);
+
+        assertThat(updated.repetitions()).isZero();
+        assertThat(updated.intervalDays()).isEqualTo(1);
+        assertThat(updated.lastResult()).isEqualTo(ReviewResult.UNKNOWN);
+        assertThat(updated.wrongCount()).isEqualTo(2);
+        assertThat(updated.correctCount()).isEqualTo(4);
+        assertThat(updated.nextReviewAt()).isPositive();
+    }
+
+    @Test
+    void applyUnknownPenalisesEaseHarderThanWrong() {
+        Clock fixed = Clock.fixed(Instant.parse("2024-01-01T00:00:00Z"), ZoneOffset.UTC);
+        SpacedRepetitionService service = new SpacedRepetitionService(fixed);
+        ReviewState state = new ReviewState(1L, 3, 10, 2.5, 0L, ReviewResult.CORRECT, 3, 0);
+
+        ReviewState afterWrong = service.applyAnswer(state, false);
+        ReviewState afterUnknown = service.applyUnknown(state);
+
+        assertThat(afterUnknown.easeFactor()).isLessThan(afterWrong.easeFactor());
+    }
+
+    @Test
+    void applyUnknownNeverDropsEaseBelowFloor() {
+        Clock fixed = Clock.fixed(Instant.parse("2024-01-01T00:00:00Z"), ZoneOffset.UTC);
+        SpacedRepetitionService service = new SpacedRepetitionService(fixed);
+        ReviewState state = new ReviewState(1L, 0, 1, 1.3, 0L, ReviewResult.WRONG, 0, 5);
+
+        ReviewState updated = service.applyUnknown(state);
+
+        assertThat(updated.easeFactor()).isGreaterThanOrEqualTo(1.3);
+    }
 }

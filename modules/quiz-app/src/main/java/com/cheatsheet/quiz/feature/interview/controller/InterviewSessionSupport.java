@@ -6,6 +6,7 @@ import com.cheatsheet.quiz.domain.AnswerResult;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
+import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
 import com.cheatsheet.quiz.common.util.FilterUtils;
 import jakarta.servlet.http.HttpSession;
@@ -82,6 +83,38 @@ public class InterviewSessionSupport {
         }
         Long current = interviewSession.currentQuestionId();
         return current != null && current != submission.questionId();
+    }
+
+    /**
+     * Обрабатывает исход «не знаю» (UNKNOWN, FLOW-03) для активной сессии: применяет
+     * SM-2-лапс (грейд 0) и продвигает сессию как незнание. Идемпотентен и безопасен:
+     * при отсутствующей/завершённой сессии или несовпадении текущего вопроса
+     * (устаревший/дублирующий skip) — БЕЗ побочных эффектов. Для EXAM незнание, как и
+     * неверный ответ, добавляет штрафные вопросы; для STUDY возвращает фазу LEARN.
+     *
+     * @param questionId id пропускаемого вопроса
+     * @param session HTTP-сессия
+     * @return текущая {@link InterviewSession} (может быть {@code null} для TRAINING)
+     */
+    public InterviewSession processSkip(long questionId, HttpSession session) {
+        InterviewSession interviewSession = getSession(session);
+        if (interviewSession == null || interviewSession.isFinished()) {
+            return interviewSession;
+        }
+        Long current = interviewSession.currentQuestionId();
+        if (current == null || current != questionId) {
+            return interviewSession;
+        }
+        Question question = interviewService.submitUnknown(questionId);
+        interviewSession.registerUnknown(question.topic());
+        if (interviewSession.getMode() == InterviewMode.EXAM) {
+            interviewService.addExamPenaltyQuestions(interviewSession);
+        }
+        if (interviewSession.getMode() == InterviewMode.STUDY) {
+            interviewSession.switchToLearnPhase();
+        }
+        httpSessionStateService.setInterviewSession(session, interviewSession);
+        return interviewSession;
     }
 
     private InterviewFilter resolveFilter(

@@ -65,6 +65,10 @@ public class InterviewSession implements Serializable {
     @Getter(AccessLevel.NONE)
     int wrong;
 
+    /** Количество вопросов, отмеченных «не знаю» (UNKNOWN, FLOW-03). */
+    @Getter(AccessLevel.NONE)
+    int unknown;
+
     /** Текущая фаза в режиме STUDY (LEARN или QUIZ). */
     StudyPhase studyPhase;
 
@@ -104,6 +108,7 @@ public class InterviewSession implements Serializable {
         this.index = 0;
         this.correct = 0;
         this.wrong = 0;
+        this.unknown = 0;
         this.studyPhase = (mode == InterviewMode.STUDY) ? StudyPhase.LEARN : null;
         this.flashcardPhase = (mode == InterviewMode.FLASHCARD) ? FlashcardPhase.QUESTION : null;
     }
@@ -148,6 +153,22 @@ public class InterviewSession implements Serializable {
             answerHistory.add(new AnswerRecord(qId, isCorrect, questionTopic));
         }
         index++;
+    }
+
+    /**
+     * Регистрирует исход «не знаю» (UNKNOWN, FLOW-03): продвигает сессию как ответ,
+     * но НЕ в correct/wrong — отдельный счётчик {@code unknown}. В {@code answerHistory}
+     * не добавляется (форма {@link AnswerRecord} неизменна ради совместимости сериализации),
+     * поэтому в разбор ошибок такой вопрос не попадает — только в headline-счётчик итогов.
+     */
+    public synchronized void registerUnknown(String questionTopic) {
+        unknown++;
+        index++;
+    }
+
+    /** Количество вопросов, отмеченных «не знаю» (UNKNOWN). */
+    public synchronized int getUnknown() {
+        return unknown;
     }
 
     /** Возвращает историю ответов. */

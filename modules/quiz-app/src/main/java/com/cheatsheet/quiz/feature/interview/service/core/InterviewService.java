@@ -263,6 +263,42 @@ public class InterviewService {
     }
 
     /**
+     * Отмечает вопрос как «не знаю» (UNKNOWN, FLOW-03): применяет SM-2-лапс
+     * (грейд 0) и публикует событие ответа как незнание. Выбранного варианта нет.
+     *
+     * @param questionId ID вопроса
+     * @return вопрос (для продвижения сессии вызывающим — темы и т.п.)
+     * @throws QuestionNotFoundException если вопрос не найден
+     */
+    @Transactional
+    public Question submitUnknown(long questionId) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new QuestionNotFoundException("Вопрос не найден: id=" + questionId));
+        reviewService.applyUnknown(question);
+        publishUnknownEvent(questionId, question);
+        return question;
+    }
+
+    private void publishUnknownEvent(long questionId, Question question) {
+        try {
+            eventPublisher.publishEvent(new AnswerEvent(
+                    this,
+                    questionId,
+                    0,
+                    0,
+                    false,
+                    question.questionText(),
+                    "",
+                    "",
+                    question.answerMarkdown(),
+                    question.topic()
+            ));
+        } catch (Exception e) {
+            log.warn("Не удалось опубликовать AnswerEvent (unknown) для вопроса id={}: {}", questionId, e.getMessage());
+        }
+    }
+
+    /**
      * Загружает вопрос и находит выбранный и правильный варианты ответа.
      */
     private ResolvedQuestion resolveQuestionAndOptions(long questionId, long optionId) {

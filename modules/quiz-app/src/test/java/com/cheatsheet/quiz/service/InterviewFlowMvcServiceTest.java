@@ -299,4 +299,15 @@ class InterviewFlowMvcServiceTest {
 
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
     }
+
+    @Test
+    void skipDelegatesToSupportAndRedirectsToFocus() {
+        when(sessionSupport.processSkip(42L, session)).thenReturn(null);
+        when(navigationService.focusRedirect()).thenReturn("redirect:/");
+
+        String view = service.skip(42L, session);
+
+        assertThat(view).isEqualTo("redirect:/");
+        verify(sessionSupport).processSkip(42L, session);
+    }
 }

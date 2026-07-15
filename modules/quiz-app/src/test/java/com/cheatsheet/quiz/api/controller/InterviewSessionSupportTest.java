@@ -179,13 +179,77 @@ class InterviewSessionSupportTest {
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
     }
 
-    private AnswerResult sampleAnswerResult(boolean correct) {
-        Question question = new Question(
+    @Test
+    void processSkipAppliesUnknownAndExamPenaltyAndPersists() {
+        // FLOW-03: «не знаю» на текущем вопросе EXAM → SM-2-лапс + штрафные вопросы + persist.
+        Question question = sampleQuestion("java");
+        when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
+        when(interviewSession.isFinished()).thenReturn(false);
+        when(interviewSession.currentQuestionId()).thenReturn(10L);
+        when(interviewSession.getMode()).thenReturn(InterviewMode.EXAM);
+        when(interviewService.submitUnknown(10L)).thenReturn(question);
+
+        InterviewSession result = support.processSkip(10L, session);
+
+        assertThat(result).isSameAs(interviewSession);
+        verify(interviewService).submitUnknown(10L);
+        verify(interviewSession).registerUnknown("java");
+        verify(interviewService).addExamPenaltyQuestions(interviewSession);
+        verify(httpSessionStateService).setInterviewSession(session, interviewSession);
+    }
+
+    @Test
+    void processSkipSwitchesStudySessionBackToLearnPhase() {
+        Question question = sampleQuestion("java");
+        when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
+        when(interviewSession.isFinished()).thenReturn(false);
+        when(interviewSession.currentQuestionId()).thenReturn(31L);
+        when(interviewSession.getMode()).thenReturn(InterviewMode.STUDY);
+        when(interviewService.submitUnknown(31L)).thenReturn(question);
+
+        support.processSkip(31L, session);
+
+        verify(interviewSession).registerUnknown("java");
+        verify(interviewSession).switchToLearnPhase();
+        verify(interviewService, never()).addExamPenaltyQuestions(any());
+        verify(httpSessionStateService).setInterviewSession(session, interviewSession);
+    }
+
+    @Test
+    void processSkipIsNoOpOnStaleDuplicate() {
+        // Текущий вопрос сессии уже не тот, что пришёл в skip → без побочных эффектов.
+        when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
+        when(interviewSession.isFinished()).thenReturn(false);
+        when(interviewSession.currentQuestionId()).thenReturn(99L);
+
+        InterviewSession result = support.processSkip(10L, session);
+
+        assertThat(result).isSameAs(interviewSession);
+        verify(interviewService, never()).submitUnknown(anyLong());
+        verify(interviewSession, never()).registerUnknown(anyString());
+        verify(interviewService, never()).addExamPenaltyQuestions(any());
+        verify(httpSessionStateService, never()).setInterviewSession(any(), any());
+    }
+
+    @Test
+    void processSkipIsNoOpWhenSessionFinishedOrMissing() {
+        when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
+        when(interviewSession.isFinished()).thenReturn(true);
+
+        support.processSkip(10L, session);
+
+        verify(interviewService, never()).submitUnknown(anyLong());
+        verify(interviewSession, never()).registerUnknown(anyString());
+        verify(httpSessionStateService, never()).setInterviewSession(any(), any());
+    }
+
+    private Question sampleQuestion(String topic) {
+        return new Question(
                 1L,
                 "slug",
                 "slug",
                 "file.md",
-                "java",
+                topic,
                 "Q?",
                 "A",
                 false,
@@ -196,6 +260,10 @@ class InterviewSessionSupportTest {
                 0,
                 null
         );
+    }
+
+    private AnswerResult sampleAnswerResult(boolean correct) {
+        Question question = sampleQuestion("java");
         AnswerOption selected = new AnswerOption(10L, 1L, "selected", correct, 0, "OPENAI", null);
         AnswerOption correctOption = new AnswerOption(11L, 1L, "correct", true, 1, "OPENAI", null);
         ReviewState state = new ReviewState(1L, 1, 1, 2.5, 1_700_000_000L, ReviewResult.CORRECT, 1, 0);

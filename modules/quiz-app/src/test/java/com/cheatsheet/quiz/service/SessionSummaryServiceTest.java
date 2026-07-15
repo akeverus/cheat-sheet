@@ -102,6 +102,29 @@ class SessionSummaryServiceTest {
     }
 
     @Test
+    void buildSummaryCountsUnknownInTotalAndHeadline() {
+        // FLOW-03: «не знаю» продвигает сессию, но не в correct/wrong — отдельный
+        // счётчик unknown. Он входит в total (снижая accuracy), но НЕ попадает в
+        // разбор ошибок (registerUnknown не пишет в answerHistory).
+        Question q1 = aQuestion().withId(1).withTopic("java").build();
+        when(questionRepository.findByIds(anyList())).thenReturn(List.of(q1));
+
+        InterviewSession session = new InterviewSession(
+                InterviewMode.EXAM, List.of(1L, 2L), "java", false, false, false);
+        session.registerAnswer(true, "java");
+        session.registerUnknown("java");
+
+        SessionSummary summary = service.buildSummary(session);
+
+        assertThat(summary.getCorrectCount()).isEqualTo(1);
+        assertThat(summary.getWrongCount()).isEqualTo(0);
+        assertThat(summary.getUnknownCount()).isEqualTo(1);
+        assertThat(summary.getTotalQuestions()).isEqualTo(2);
+        assertThat(summary.getAccuracy()).isEqualTo(50.0);
+        assertThat(summary.getMistakes()).isEmpty();
+    }
+
+    @Test
     void buildSummaryUsesQuestionTopicWhenAnswerTopicIsNull() {
         Question q1 = aQuestion().withId(1).withTopic("kotlin").withQuestionText("Q about Kotlin").build();
         when(questionRepository.findByIds(anyList())).thenReturn(List.of(q1));

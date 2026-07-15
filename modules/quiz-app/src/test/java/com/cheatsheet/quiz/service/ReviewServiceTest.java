@@ -76,6 +76,21 @@ class ReviewServiceTest {
     }
 
     @Test
+    void applyUnknownUpdatesReviewStateAndRecordsIncorrectTopicStat() {
+        Question question = sampleQuestion(15L);
+        ReviewState updated = new ReviewState(15L, 0, 1, 2.1, 1_900_000L, ReviewResult.UNKNOWN, 0, 1);
+
+        when(reviewStateRepository.findByQuestionId(15L)).thenReturn(Optional.empty());
+        when(spacedRepetitionService.applyUnknown(any(ReviewState.class))).thenReturn(updated);
+
+        ReviewState result = reviewService.applyUnknown(question);
+
+        assertThat(result).isEqualTo(updated);
+        verify(reviewStateRepository).update(updated);
+        verify(userTopicStatsRepository).recordAnswer("topic", false);
+    }
+
+    @Test
     void updateConfidenceThrowsWhenNoPreviousAnswer() {
         when(questionRepository.findById(10L)).thenReturn(Optional.of(sampleQuestion(10L)));
         when(reviewStateRepository.findByQuestionId(10L)).thenReturn(Optional.empty());
