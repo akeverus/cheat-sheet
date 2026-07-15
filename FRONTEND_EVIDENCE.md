@@ -78,6 +78,18 @@
 - **Интегрированная типографика + CTA:** заголовок «Сейчас нет вопросов» (Newsreader serif), один primary `.next-btn` «Открыть настройки» (см. UX-01). 
 - **Вывод:** terminal-состояние рендерится ВНУТРИ активного shell, full-width, border-based — дефект «читается как отдельный мини-сайт» не воспроизводится (был против мокапа/старого дизайна). Instrument-порт уже унифицировал terminal-состояния с shell.
 
+### EV-QA-003 — Инвентарь пост-ответной раскрытия + no-JS hint (2026-07-15, R0.169, статический разбор result.html/focus-training.html/app.js)
+
+**UX-13 (прогрессивный разбор) — ядро decision-gated (DEC-006), no-JS-consistency часть FIXED.**
+
+Текущая раскрытие пост-ответа (по коду, не выдумано):
+- **JS-путь:** `renderFeedbackHtml` (app.js:1420) кладёт в `#result-feedback` вердикт (`<strong>Верно/Неверно</strong>`) **И полный `answerHtml` сразу вместе** (aria-live=polite status). `applyOptionStyles` (app.js:1365) навешивает correct/wrong/other + status-label + per-option `.option-explanation`. Раскрытие-`<details>` per-option добавляет `optionExplanationSummaryText` (app.js:1222, summary «Почему выбранный ответ неверен»/«Пояснение к варианту»). Похожие вопросы — за кнопкой `#extra-analysis-toggle` → `appendAnalysisBlock` в `#extra-analysis-content` (app.js:1537). Уверенность (только correct) — `attachConfidenceButtons` под фидбэком.
+- **no-JS (result.html):** вердикт (стр. 52), варианты+пояснения (58–73, inline), «Пояснение» `answerHtml` (75–78, inline), SM-2 в `<details>` (80–90), похожие вопросы server-rendered inline (123–138). Клик-раскрытий нет.
+
+**Дефект (FIXED):** result.html zone-head hint (стр. 95) обещал «доп. анализ — **по кнопке**» — но AI-разбор и его кнопка/контейнер удалены (R0.126, стр. 105–108); в no-JS доп-кнопок нет вовсе. Hint вводил no-JS-пользователя в заблуждение. → переписан на «Полный ответ, пояснения и похожие вопросы — сразу на странице» (честно описывает no-JS-модель). `?v`-бамп не нужен (строка-параметр th:replace, SSR). Live-verify no-JS result **честно заблокирован**: путь достижим только POST /answer, который пишет SM-2 (запрет destructive live submit) → положился на статическую корректность (изменение = строковый литерал в существующем вызове фрагмента, без структурных/логических правок).
+
+**Ядро UX-13 (краткое почему → полный под клик) — BLOCKED (DEC-006):** любой вариант спорен — инверсия (полный `answerHtml` под клик) противоречит deliberate «полный ответ доступен сразу»; настоящий отдельный tier требует backend-поля summary (needsGradle). → собранный вопрос.
+
 ---
 
 ## Performance / delivery
