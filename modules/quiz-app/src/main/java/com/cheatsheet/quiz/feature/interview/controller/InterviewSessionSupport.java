@@ -43,6 +43,21 @@ public class InterviewSessionSupport {
                 submission.shuffle(),
                 submission.ordered()
         );
+        // FLOW-02 — серверная идемпотентность. Если у активной сессии текущий вопрос
+        // уже сменился (двойной/устаревший POST того же questionId: retry, двойной
+        // клик в обход клиентского guard, resubmit из истории), НЕ пишем SM-2 повторно
+        // и НЕ двигаем сессию: возвращаем read-only оценку (тот же вердикт) без
+        // побочных эффектов. Покрывает сессионные режимы (EXAM/MARATHON/STUDY/FLASHCARD);
+        // TRAINING без сессии (interviewSession == null) и finished-сессия — прежнее
+        // поведение (submitAnswer вызывается: последнее сохраняется контрактом теста
+        // processAnswerDoesNotMutateOrPersistWhenSessionAlreadyFinished).
+        if (isStaleDuplicate(interviewSession, submission)) {
+            AnswerResult replay = interviewService.evaluateAnswer(
+                    submission.questionId(),
+                    submission.optionId()
+            );
+            return new AnswerContext(replay, filter, interviewSession);
+        }
         AnswerResult result = interviewService.submitAnswer(
                 submission.questionId(),
                 submission.optionId(),
@@ -52,6 +67,21 @@ public class InterviewSessionSupport {
         applySessionProgress(interviewSession, result, session);
 
         return new AnswerContext(result, filter, interviewSession);
+    }
+
+    /**
+     * Устаревший дубль: у активной незавершённой сессии текущий вопрос уже не тот,
+     * что пришёл в submission (сессия ушла вперёд) → повторная запись SM-2 и второй
+     * index++ недопустимы. Сверяем именно с вопросом на текущем индексе
+     * ({@link InterviewSession#currentQuestionId()}), а не «был ли когда-либо
+     * отвечен» — иначе legit-повтор questionId в EXAM (penalty-requeue) заблокировался бы.
+     */
+    private boolean isStaleDuplicate(InterviewSession interviewSession, AnswerSubmission submission) {
+        if (interviewSession == null || interviewSession.isFinished()) {
+            return false;
+        }
+        Long current = interviewSession.currentQuestionId();
+        return current != null && current != submission.questionId();
     }
 
     private InterviewFilter resolveFilter(

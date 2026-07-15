@@ -56,6 +56,21 @@ public class ReviewService {
     }
 
     /**
+     * Текущее (персистентное) состояние повторений вопроса — БЕЗ изменений.
+     * Используется для идемпотентного повтора ответа (FLOW-02): при устаревшем
+     * дублирующем POST нужно вернуть уже сохранённое состояние, не применяя SM-2
+     * повторно. Если состояния ещё нет — дефолтное начальное (как в applyAnswer).
+     *
+     * @param questionId id вопроса
+     * @return сохранённое или начальное состояние повторений (не записывается)
+     */
+    @Transactional(readOnly = true)
+    public ReviewState currentState(long questionId) {
+        return reviewStateRepository.findByQuestionId(questionId)
+                .orElse(ReviewDefaults.initialState(questionId, clock.instant().getEpochSecond()));
+    }
+
+    /**
      * Корректирует уверенность после первичного ответа.
      *
      * @param questionId id вопроса

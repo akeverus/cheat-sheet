@@ -236,6 +236,33 @@ public class InterviewService {
     }
 
     /**
+     * Read-only оценка ответа для идемпотентного повтора (FLOW-02): устаревший
+     * дублирующий POST того же вопроса возвращает тот же вердикт (правильность +
+     * варианты), но НЕ пишет SM-2 повторно, НЕ двигает сессию и НЕ публикует
+     * событие (без побочных эффектов). Состояние повторений — текущее
+     * персистентное (что уже записал первый ответ), не применяется заново.
+     *
+     * @param questionId       ID вопроса
+     * @param selectedOptionId ID выбранного варианта
+     * @return результат с вопросом/вариантами/вердиктом и ТЕКУЩИМ состоянием повторений
+     * @throws QuestionNotFoundException если вопрос не найден
+     * @throws OptionNotFoundException   если выбранный вариант не найден
+     */
+    @Transactional(readOnly = true)
+    public AnswerResult evaluateAnswer(long questionId, long selectedOptionId) {
+        ResolvedQuestion resolved = resolveQuestionAndOptions(questionId, selectedOptionId);
+        return new AnswerResult(
+                resolved.question(),
+                resolved.options(),
+                resolved.selected(),
+                resolved.correct(),
+                resolved.isCorrect(),
+                reviewService.currentState(questionId),
+                AnswerDisplayMode.FULL
+        );
+    }
+
+    /**
      * Загружает вопрос и находит выбранный и правильный варианты ответа.
      */
     private ResolvedQuestion resolveQuestionAndOptions(long questionId, long optionId) {

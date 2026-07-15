@@ -187,3 +187,31 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Прогон безопасен:** bootRun остановлен пользователем (:8080 curl→000) → `./gradlew test` не wedge. `processResources` пересинхронил `build/resources/main`.
 
 **Deferred:** live-QA рендера `/settings` (вкладка «Оформление» без design-строки) + header (без design-toggle) — консолидированно в конце gradle-волны, когда bootRun вернётся (держим off на всю волну, иначе следующий gradle-тик wedge).
+
+---
+
+## Flow (backend-верифицируемые слайсы, bootRun-OFF волна)
+
+### EV-FLOW-002 — серверная идемпотентность сабмита ответа (2026-07-15, R0.174, `:quiz-app:test` Testcontainers PG 16-alpine)
+
+**FLOW-02 — DONE.** Второй тик разблокированной волны; чисто бэкенд, без визуальных изменений (live-QA неприменима). Защита от двойного/устаревшего POST ответа реализована на СЕРВЕРЕ в едином choke-point.
+
+**Проблема:** до сих пор защита от двойного сабмита была только клиентской (`aria-disabled` + submit-once в app.js). Прямой повторный POST (двойной клик мимо клиентского guard, refresh-resubmit страницы `/answer`, network-retry) писал SM-2 дважды и двигал `index`/счёт дважды. `registerAnswer` слепо делает `index++` без сверки questionId.
+
+**Решение (единый choke-point):** оба контроллера (MVC `InterviewFlowMvcService` + API `AnswerApiService`) сходятся в `InterviewSessionSupport.processAnswer`. Добавлен `isStaleDuplicate`-guard ПЕРЕД `submitAnswer`:
+- **stale-условие:** `interviewSession != null && !isFinished() && currentQuestionId() != submission.questionId()` — активная сессия уже ушла ВПЕРЁД от отправленного вопроса.
+- при stale → read-only повтор через новый `InterviewService.evaluateAnswer(questionId, optionId)` (+ `ReviewService.currentState` — отдаёт УЖЕ сохранённое состояние повторений, не применяя SM-2 заново). Возвращается тот же вердикт/варианты в идентичном `AnswerContext` → downstream рендер (MVC-шаблон / API-JSON) не меняется. **БЕЗ** второй записи SM-2, **БЕЗ** `registerAnswer`/index++/счёта, **БЕЗ** `AnswerEvent`.
+- сверка идёт с ТЕКУЩИМ вопросом (`currentQuestionId()`), а НЕ «был ли когда-либо отвечен» → легитимный повтор того же questionId в EXAM (penalty-requeue возвращает вопрос в конец) НЕ блокируется.
+- `TRAINING` (session=null) и finished-сессия → прежний путь `submitAnswer` (finished-контракт `processAnswerDoesNotMutateOrPersistWhenSessionAlreadyFinished` сохранён: submitAnswer вызывается, applySessionProgress раньше выходил по isFinished).
+
+**Новые read-only методы (без побочных эффектов):** `ReviewService.currentState(questionId)` (`@Transactional(readOnly=true)`, findByQuestionId ∥ initialState), `InterviewService.evaluateAnswer(questionId, optionId)` (`@Transactional(readOnly=true)`, тот же `resolveQuestionAndOptions` + currentState, DisplayMode FULL).
+
+**Тест-нюанс (задокументирован):** MockitoExtension отдаёт `0L` (а НЕ `null`) для незастабанного метода с типом-обёрткой `Long currentQuestionId()` (`Primitives.isPrimitiveOrWrapper` → defaultValue). Поэтому в существующих EXAM/STUDY-тестах `0L != submitted` ложно триггерил guard → добавлен стаб `currentQuestionId()=submitted` (репрезентует легитимный не-stale ответ: в момент сабмита текущий вопрос == отправленному). В проде метод возвращает реальный ID/null — расхождение чисто тестовое.
+
+**Verify (bootRun OFF → gradle безопасен, Docker UP):**
+- Новый `processAnswerReplaysWithoutSideEffectsOnStaleDuplicate`: stale-дубль → `evaluateAnswer` вызван, `submitAnswer`/`registerAnswer`/`addExamPenaltyQuestions`/`setInterviewSession` — `never()`, результат = replay ✅.
+- `InterviewSessionSupportTest` + `ReviewServiceTest` + `InterviewServiceTest` зелёные; затем **полный `./gradlew :quiz-app:test` → BUILD SUCCESSFUL** (choke-point общий MVC+API → прогнал весь модуль на регрессии, 0 упавших).
+
+**Residual (вне scope, честно):**
+- Полный **PRG** (Post-Redirect-Get) — belt-and-suspenders поверх идемпотентности; текущий MVC рендерит результат напрямую (живой no-JS фолбэк `/answer`), редирект затронул бы этот контракт + требует live-QA → отложено, substantive harm (двойной SM-2/index) уже устранён guard'ом.
+- Строгая **concurrent-thread** гонка на ОДНОЙ HTTP-сессии (TOCTOU между guard-чтением и registerAnswer) — реальные вектора двойного сабмита последовательны (одна вкладка сериализует свои запросы; session-cookie per-tab), `registerAnswer`/`currentQuestionId` уже `synchronized` → вне scope.

@@ -26,6 +26,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -62,6 +63,7 @@ class InterviewSessionSupportTest {
         when(interviewSession.getShuffle()).thenReturn(true);
         when(interviewSession.getOrdered()).thenReturn(false);
         when(interviewSession.isFinished()).thenReturn(false);
+        when(interviewSession.currentQuestionId()).thenReturn(10L);
         when(interviewSession.getMode()).thenReturn(InterviewMode.EXAM);
         when(interviewService.submitAnswer(eq(10L), eq(3L), any(InterviewFilter.class), eq(4))).thenReturn(answerResult);
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
@@ -138,6 +140,7 @@ class InterviewSessionSupportTest {
         when(interviewSession.getShuffle()).thenReturn(true);
         when(interviewSession.getOrdered()).thenReturn(false);
         when(interviewSession.isFinished()).thenReturn(false);
+        when(interviewSession.currentQuestionId()).thenReturn(31L);
         when(interviewSession.getMode()).thenReturn(InterviewMode.STUDY);
         when(interviewService.submitAnswer(eq(31L), eq(9L), any(InterviewFilter.class), eq(5))).thenReturn(answerResult);
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
@@ -150,6 +153,30 @@ class InterviewSessionSupportTest {
         verify(interviewSession).switchToLearnPhase();
         verify(interviewService, never()).addExamPenaltyQuestions(any());
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
+    }
+
+    @Test
+    void processAnswerReplaysWithoutSideEffectsOnStaleDuplicate() {
+        // FLOW-02: устаревший дубль — сессия ушла вперёд (currentQuestionId != submission.questionId).
+        // Ожидаем read-only повтор через evaluateAnswer, БЕЗ записи SM-2 и БЕЗ продвижения сессии.
+        AnswerResult replay = sampleAnswerResult(true);
+        when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
+        when(interviewSession.isFinished()).thenReturn(false);
+        when(interviewSession.currentQuestionId()).thenReturn(99L);
+        when(interviewService.evaluateAnswer(10L, 3L)).thenReturn(replay);
+        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
+                10L, 3L, null, null, null, null, null, null, 4
+        );
+
+        InterviewSessionSupport.AnswerContext context = support.processAnswer(submission, session);
+
+        assertThat(context.result()).isSameAs(replay);
+        assertThat(context.interviewSession()).isSameAs(interviewSession);
+        verify(interviewService).evaluateAnswer(10L, 3L);
+        verify(interviewService, never()).submitAnswer(anyLong(), anyLong(), any(InterviewFilter.class), any());
+        verify(interviewSession, never()).registerAnswer(anyBoolean(), anyString());
+        verify(interviewService, never()).addExamPenaltyQuestions(any());
+        verify(httpSessionStateService, never()).setInterviewSession(any(), any());
     }
 
     private AnswerResult sampleAnswerResult(boolean correct) {

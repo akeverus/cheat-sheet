@@ -8,8 +8,8 @@
   "featureFreeze": true,
   "roundStatusModel": ["AUDITED", "IMPLEMENTED", "REGRESSION_PASS", "DEEP_PASS", "RELEASE_CANDIDATE", "FINALIZED"],
   "taskStatusValues": ["OPEN", "IN_PROGRESS", "BLOCKED", "DONE", "CLOSED"],
-  "nextTaskId": "PROC-07",
-  "$nextTaskNote": "BLK-BOOTRUN СНЯТ (DEC-007, пользователь остановил :8080). FE-CMP-1 DONE этим тиком (R0.173: мёртвый мульти-дизайн-движок вырезан — settings design-ось, header #design-toggle+скрипт, window.__design, dead SIGNATURES base.css editorial/linear/swiss/stripe/claude, i-shapes orphan, #design-pref-control CSS, :root Lora/Inter→Newsreader/Space Grotesk, ?v tokens 64→65 base 97→98 app.js 65→66; TemplateFragmentContractTest переписан+зелёный; design-token-audit CLEAN). Собранный вопрос отвечен: DEC-003=B (wide + правый рельс), DEC-006=A (инверсия клиентом), DEC-007 BLK снят. Разблокированная gradle-волна по приоритету P0→P1: PROC-07 (P0, wide-layout B) → FLOW-01/02/03 (P1 бэкенд, Flyway V16+) → FLOW-04-server → FLOW-SUMMARY/REPORT → QA-01 → PERF-01 → PERF-02(b) → UX-13 (DEC-006 A). bootRun ДЕРЖИМ ОСТАНОВЛЕННЫМ на всю волну (каждый тик = gradle, иначе wedge); live-QA консолидированно в конце. ScheduleWakeup не звать (fixed-cron).",
+  "nextTaskId": "FLOW-01",
+  "$nextTaskNote": "SEQUENCING (R0.174): волна идёт при ОСТАНОВЛЕННОМ bootRun (иначе gradle-тик = wedge). Стратегия — сначала полностью Testcontainers-верифицируемые P1-бэкенд-слайсы (нулевой blind-visual-риск, каждый тик зелёный без браузера), ПОТОМ визуальная фаза при возврате bootRun. PROC-07 (P0 wide-layout B) и UX-13 (P2 DEC-006 A) — крупные layout/visual изменения, DoD которых центрально требует live-QA на 6 брейкпойнтах × 2 темы; авторинг вслепую даёт большой un-QA'd diff на всю волну (высокий rework-риск) → по clause 'dependency impact' loop-контракта их зависимость (живой браузер) недоступна по дизайну волны → перенесены в НАЧАЛО консолидированной визуальной фазы, когда bootRun вернётся. Backend-очередь: FLOW-02 DONE (R0.174) → FLOW-01 (pause/resume, Flyway V16) → FLOW-03 (UNKNOWN outcome) → FLOW-04-server → FLOW-SUMMARY/REPORT → QA-01 → PERF-01. Затем визуальная фаза: PROC-07 → UX-13 → PERF-02(b) prod-budget → консолидированная live-QA всей волны → final gate → FINALIZED. ScheduleWakeup не звать (fixed-cron).",
   "activeBlockers": [],
   "$resolvedBlockers": "BLK-BOOTRUN снят 2026-07-15 (пользователь остановил :8080, DEC-007). Gradle-волна разрешена; bootRun держим ОСТАНОВЛЕННЫМ на всю волну (иначе следующий gradle-тик снова wedge). Консолидированная live-QA — в конце волны, когда bootRun вернётся.",
   "gates": {
@@ -79,15 +79,16 @@
       "surface": ["quiz-persistence/db/migration", "HttpSessionStateService", "InterviewMvcController", "focus-training.html", "app.js"],
       "acceptance": "Явный pause (сохранить+очистить) и resume приостановленной сессии; UX 'есть незавершённая сессия — продолжить?'; кнопка Пауза рядом с Завершить; только сессионные режимы.",
       "backendState": "PARTIAL (есть неявное resume из HttpSession; нет endpoint/флага/персистентности; grep pause|resume → 0).",
-      "blocker": "BLK-BOOTRUN (миграция V16 + endpoints + тесты)."
+      "unblocked": "BLK-BOOTRUN снят (DEC-007). Doable: миграция V16 + endpoints + Testcontainers-тесты при остановленном bootRun. Следующий P1-бэкенд после FLOW-02."
     },
     {
-      "id": "FLOW-02", "priority": "P1", "category": "flow", "status": "OPEN", "needsGradle": true,
+      "id": "FLOW-02", "priority": "P1", "category": "flow", "status": "DONE", "needsGradle": true,
       "title": "Idempotent submit + защита от двойного POST",
-      "surface": ["InterviewService", "InterviewSessionSupport", "app.js"],
+      "surface": ["InterviewService", "InterviewSessionSupport", "InterviewSessionSupportTest"],
       "acceptance": "Повторный POST того же ответа не двигает SM-2 дважды и не инкрементит index/счёт дважды; server-side dedup/answered-guard; PRG; клиентский submit-once сохранён.",
-      "backendState": "PARTIAL (только клиентский aria-disabled; серверной идемпотентности нет; registerAnswer не сверяет questionId с index).",
-      "blocker": "BLK-BOOTRUN."
+      "backendState": "DONE (серверная идемпотентность добавлена; клиентский aria-disabled уже был, сохранён).",
+      "resolution": "DONE R0.174 (EV-FLOW-002): серверный answered-guard в ЕДИНОМ choke-point InterviewSessionSupport.processAnswer (обе ветки MVC+API сходятся). Устаревший/дублирующий POST (активная сессия ушла вперёд: currentQuestionId != submission.questionId — двойной клик мимо клиентского guard, refresh-resubmit, network-retry) → read-only повтор через новый InterviewService.evaluateAnswer (+ ReviewService.currentState), БЕЗ второй записи SM-2, БЕЗ index++/счёта, БЕЗ AnswerEvent; downstream AnswerContext идентичен (рендер не меняется). isStaleDuplicate сверяет ИМЕННО текущий вопрос (не 'был ли когда-либо отвечен') → legit-повтор questionId в EXAM penalty-requeue не блокируется. TRAINING (session=null) и finished-сессия → прежний путь (submitAnswer). Клиентский submit-once (aria-disabled) уже был — сохранён, app.js не тронут (визуальных изменений нет → live-QA N/A). Тест-нюанс зафиксирован: Mockito отдаёт 0L (не null) для незастабанного Long currentQuestionId → в EXAM/STUDY-тестах добавлен стаб currentQuestionId=submitted (легитимный не-stale путь). Verify: новый processAnswerReplaysWithoutSideEffectsOnStaleDuplicate + полный :quiz-app:test BUILD SUCCESSFUL (choke-point общий, регрессий нет). Residual: полный PRG-redirect (belt-and-suspenders поверх идемпотентности) и строгая concurrent-thread гонка на одной HTTP-сессии — вне scope (реальные вектора двойного сабмита последовательны из одной вкладки; registerAnswer synchronized; substantive harm устранён).",
+      "evidence": "EV-FLOW-002"
     },
     {
       "id": "FLOW-03", "priority": "P1", "category": "flow", "status": "OPEN", "needsGradle": true,
@@ -95,7 +96,7 @@
       "surface": ["SpacedRepetitionService", "ReviewResult", "SubmitAnswerRequest", "AnswerRecord", "focus-training.html", "session-summary.html"],
       "acceptance": "Domain-исход UNKNOWN (ReviewResult + AnswerRecord); submit без optionId (sentinel); маппинг UNKNOWN→SM-2 (lapse/reset, отличный от wrong педагогически); отражение в summary (unknownCount).",
       "backendState": "ABSENT (нет enum/endpoint/DTO-поля/контрола; /answer требует optionId @Positive).",
-      "blocker": "BLK-BOOTRUN."
+      "unblocked": "BLK-BOOTRUN снят (DEC-007). Doable при остановленном bootRun. P1-бэкенд после FLOW-01."
     },
     {
       "id": "FLOW-04", "priority": "P1", "category": "flow", "status": "OPEN", "needsGradle": true,
