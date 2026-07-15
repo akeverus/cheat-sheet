@@ -11,7 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Boot 3.0` заодно переименовал и часть Spring-пакетов: наряду с переходом на `jakarta.*` ряд классов из `org.springframework.boot.*` переехал в новые пространства имён, поэтому многие импорты Spring API в проекте `2.x` тоже приходится править.",
+              "text": "`Spring Boot 3.0` заодно переименовал часть Spring-пакетов: наряду с переходом на `jakarta.*` классы `SpringApplication` и `@SpringBootApplication` (вместе с `@EnableAutoConfiguration`) переехали из `org.springframework.boot.*` в новые пространства `org.springframework.boot.autoconfigure.*`, поэтому импорты Spring API в `2.x` тоже приходится править.",
               "correct": false,
               "sections": {
                 "what_actually": "Пакеты самого Spring (`org.springframework.*`) не переименовывались; менялись пакеты Jakarta EE (`javax.*` → `jakarta.*`).",
@@ -23,7 +23,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Boot 3.0` сделал реактивный `WebFlux` рекомендуемым стеком по умолчанию, а классический `spring-webmvc` перевёл в режим поддержки — новые фичи вроде `Observability` и `RestClient` выходят прежде всего для реактивного стека, из-за чего MVC-проекты постепенно устаревают.",
+              "text": "`Spring Boot 3.0` сделал реактивный `WebFlux` (на `reactor-core` с типом `Mono`) стеком по умолчанию, а `spring-webmvc` перевёл в режим поддержки — фичи вроде `Observability` и `RestClient` выходят прежде всего для `spring-boot-starter-webflux`, из-за чего MVC-проекты устаревают.",
               "correct": false,
               "sections": {
                 "what_actually": "MVC никуда не делся: `spring-webmvc` остаётся основным стеком, а `WebFlux` — это альтернатива, а не замена.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Spring Boot 3.0` сохранил минимальный baseline на уровне `Java 8` (как и в ветке `2.x`), а `Java 17` остаётся лишь рекомендованной для нативной компиляции версией без принудительного требования при запуске.",
+              "text": "`Spring Boot 3.0` сохранил минимальный baseline на уровне `Java 8` (как в ветке `2.x`), а `Java 17` через `sourceCompatibility` остаётся лишь рекомендацией для `GraalVM` `Native Image` без принудительной проверки `JAVA_HOME` при запуске.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Spring Boot 3.0` минимальная версия — именно `Java 17`, на `Java 8` или `11` приложение просто не запустится.",
@@ -84,7 +84,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Причина смены префикса была коммерческой: Oracle перевела `Java EE` в платную лицензию и закрыла публичные исходники пакетов `javax.*`. Чтобы сохранить бесплатный доступ, сообщество форкнуло API под новым именем `jakarta.*` вроде `jakarta.servlet`.",
+              "text": "Причина смены префикса была коммерческой: Oracle закрыла исходники `GlassFish` и перевела пакеты `javax.ejb`, `javax.jms`, `javax.servlet`, `javax.persistence` в платную лицензию `Java EE`. Чтобы сохранить доступ, сообщество форкнуло API под именем `jakarta.*` — `jakarta.servlet`, `jakarta.enterprise`, `jakarta.ws.rs`.",
               "correct": false,
               "sections": {
                 "what_actually": "Java EE передали в Eclipse Foundation как открытый проект; проблема была в правах на имя, а не в платности.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "На практике переписывать исходники не требуется: достаточно подключить зависимость `javax-to-jakarta-bridge`, которая в рантайме проксирует старые обращения `javax.*` в классы `jakarta.*`. Существующие импорты вроде `javax.persistence` продолжают компилироваться без единой правки.",
+              "text": "На практике переписывать исходники не требуется: достаточно подключить `org.eclipse.transformer`, который в рантайме проксирует `javax.persistence.EntityManager` в `jakarta.persistence.EntityManager`, а `javax.servlet.http.HttpServletRequest` — в `jakarta.servlet.http.HttpServletRequest`. Существующие импорты вроде `javax.persistence.Entity`, `@Entity`, `javax.validation.Valid` и `jakarta.validation.Valid` продолжают компилироваться без правок под `spring-boot-starter-data-jpa`.",
               "correct": false,
               "sections": {
                 "what_actually": "Универсального runtime-моста нет: импорты `javax.*` надо реально заменять на `jakarta.*` в исходниках.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Главный мотив перехода был техническим: инженеры `Eclipse Foundation` переписали внутренности пакетов `jakarta.*` и добились большей пропускной способности по сравнению со старыми `javax`-аналогами. Поэтому обновление префикса ускоряет работу приложения на `Spring Boot 3`.",
+              "text": "Главный мотив перехода был техническим: инженеры `Eclipse Foundation` переписали внутренности `jakarta.servlet` и `jakarta.persistence.EntityManager`, добившись большей пропускной способности `Tomcat 10` по сравнению со старыми `javax.servlet` и `javax.persistence`-аналогами. Поэтому обновление префикса `jakarta.*` ускоряет `HikariCP` и `spring-boot-starter-web` на `Spring Boot 3`.",
               "correct": false,
               "sections": {
                 "what_actually": "Переименование чисто юридическое из-за trademark; на скорость работы API смена префикса никак не влияет.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно механически заменить каждый импорт `javax.*` на `jakarta.*` по всему проекту (включая пакеты `javax.sql.DataSource` и `javax.crypto`), тогда приложение чисто соберётся под `Spring Framework 6`.",
+              "text": "Достаточно механически заменить каждый импорт `javax.*` на `jakarta.*` по всему исходному коду проекта (включая пакеты `javax.sql.DataSource`, `javax.crypto`, `javax.naming` и `javax.management`), и тогда `jakarta.persistence` вместе с `jakarta.servlet` соберутся под `Spring Framework 6`.",
               "correct": false,
               "sections": {
                 "what_actually": "Пакеты из JDK (`javax.sql`, `javax.crypto`, `javax.net`) НЕ мигрировали и должны остаться `javax.*`.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Правильнее сразу поднять `spring-boot-starter-parent` до `3.x`, а версию `Java` и замену импортов на `jakarta.*` подтягивать позже (по мере появления ошибок компиляции в IDE).",
+              "text": "Правильнее сразу поднять `spring-boot-starter-parent`, `spring-boot-dependencies` и `spring-boot-maven-plugin` до `3.x` в `pom.xml`, а `<java.version>` под `Java 17` и замену `javax.*` на `jakarta.*` подтягивать позже (по мере появления ошибок компиляции в IDE).",
               "correct": false,
               "sections": {
                 "what_actually": "JDK обновляют первым: на `Java 8/11` проект под `Spring Framework 6` даже не скомпилируется, так что начинать с parent бессмысленно.",
@@ -155,7 +155,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Достаточно прогнать OpenRewrite-рецепт `UpgradeSpringBoot_3_0`: он сам переключает `java.version`, правит импорты на `jakarta.*` и поднимает версии, поэтому сторонние библиотеки и конфигурацию `Security 6` проверять вручную уже не требуется.",
+              "text": "Достаточно прогнать OpenRewrite-рецепт `UpgradeSpringBoot_3_0` (из `rewrite-spring`): он сам переключает `java.version`, правит `javax.*` на `jakarta.*` и мигрирует `WebSecurityConfigurerAdapter` на `SecurityFilterChain` с `authorizeHttpRequests`, поэтому сторонние библиотеки и конфигурацию `Security 6` проверять вручную не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Такой команды у `spring-boot-maven-plugin` нет; автоматизацию импортов даёт OpenRewrite, а JDK и parent правят вручную.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Сохранение префикса определяется датой релиза: пакет остаётся `javax.*`, если зафиксировать версию до 2022 года. Правило действует и для `javax.persistence`, а не для фиксированного набора.",
+              "text": "Префикс определяется датой релиза, а не фиксированным набором: пакеты остаются `javax.*` на сборке `spring-boot-starter-parent` `2.7.18` (`javax.persistence.Entity`, `javax.persistence.Id`, `javax.servlet.http.HttpServletRequest`). При апгрейде до `3.0.0` те же `javax.validation.Valid`, `javax.annotation.PostConstruct`, `javax.jms.Message` меняют префикс по дате.",
               "correct": false,
               "sections": {
                 "what_actually": "Дело не в датах: пакет остаётся `javax`, если он часть JDK; зафиксировать старую библиотеку Boot 3 не позволит из-за несовместимости.",
@@ -216,7 +216,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Под `javax.*` остались лишь аннотации жизненного цикла `@PostConstruct` и `@PreDestroy`: остальное переименовано, включая `javax.sql` и `javax.crypto`. Компилятор увидит старый префикс только у этих двух аннотаций (всё прочее уже `jakarta.*`).",
+              "text": "Под `javax.*` по историческим причинам остались лишь аннотации `javax.annotation.PostConstruct` и `javax.annotation.PreDestroy`: всё остальное уже переименовано, включая `javax.sql.DataSource`, `javax.crypto.Cipher`, `javax.net.ssl.SSLContext`. Пакеты `javax.persistence.Entity`, `javax.servlet.Filter`, `javax.validation.constraints.NotNull` теперь импортируются как `jakarta.*` (прочее давно переехало).",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `@PostConstruct`/`@PreDestroy` переехали в `jakarta.annotation`, а `javax.sql`/`javax.crypto` остались `javax.*`.",
@@ -228,7 +228,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Ни один пакет не переименован принудительно: ради обратной совместимости `javax.persistence` и `javax.servlet` доступны под прежним префиксом. Переход на `jakarta.*` (скажем `jakarta.servlet`) остаётся необязательным выбором самого разработчика.",
+              "text": "Ни один пакет не переименован принудительно: старые `javax.persistence.EntityManager`, `javax.servlet.http.HttpServletRequest`, `javax.annotation.Resource` остаются доступны через `spring-boot-properties-migrator`. Переход на `jakarta.*` (`jakarta.persistence.EntityManager`, `jakarta.servlet.Filter`) остаётся сугубо добровольным: `javax.jms.Message`, `javax.mail.Session` спокойно компилируются и в `3.2.0`.",
               "correct": false,
               "sections": {
                 "what_actually": "Java EE пакеты мигрировали обязательно: `javax.persistence` и `javax.servlet` в Boot 3 существуют только как `jakarta.*`.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Это по сути официальный ребрендинг `spring-cloud-openfeign`: начиная со `Spring 6`, этот стартер подключается автоматически (через `spring-boot-starter-web`) и полностью заменяет любой собственный клиентский механизм самого фреймворка.",
+              "text": "Это по сути официальный ребрендинг `spring-cloud-openfeign`: начиная со `Spring 6`, аннотация `@FeignClient` (вместе с `@EnableFeignClients`) подключается автоматически через `spring-boot-starter-web` и вытесняет собственный клиент `RestClient` самого фреймворка.",
               "correct": false,
               "sections": {
                 "what_actually": "Это собственный механизм Spring Framework 6 на `HttpServiceProxyFactory`; Spring Cloud OpenFeign — отдельный сторонний проект.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Работают эти клиенты исключительно поверх реактивного `WebClient`: синхронного адаптера для них нет (например, `RestClientAdapter` предназначен совсем для другого) и блокирующий вызов невозможен.",
+              "text": "Работают эти клиенты исключительно поверх реактивного `WebClient` (через `WebClientAdapter`): синхронного адаптера у `HttpServiceProxyFactory` нет, а `RestClientAdapter` поверх `RestClient` из `Spring 6.1` создан совсем для другого, и блокирующий вызов невозможен.",
               "correct": false,
               "sections": {
                 "what_actually": "С Spring 6.1 есть `RestClientAdapter` для блокирующего стека, так что интерфейсные клиенты работают и синхронно.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Аннотации `@GetExchange` и `@PostExchange` объявляют серверные эндпоинты: ими помечают методы контроллера (наравне с `@GetMapping`), которые приложение публикует и обслуживает для внешних потребителей.",
+              "text": "Аннотации `@GetExchange` и `@PostExchange` объявляют серверные эндпоинты: ими (наравне с `@GetMapping` и `@PostMapping`) помечают методы `@RestController`, которые `RequestMappingHandlerMapping` публикует и обслуживает для внешних потребителей.",
               "correct": false,
               "sections": {
                 "what_actually": "Это клиентские аннотации: они описывают исходящие вызовы к чужому API, а не серверные эндпоинты.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Поле `status` всегда повторяет значение поля `type`, потому что оба обязаны нести один и тот же идентификатор категории ошибки. По этой же причине `instance` должно быть абсолютным URL с доменом вроде `https://api.example.com/orders/12345`, а не относительным путём.",
+              "text": "Поле `status` повторяет значение поля `type`, потому что `ProblemDetail.forStatus` копирует `HttpStatus` (скажем, 500) в оба поля через `setType` и `getStatus`. По этой же причине `instance` задаётся как абсолютный `URI` вроде `https://api.example.com/orders/12345`, а не относительным путём.",
               "correct": false,
               "sections": {
                 "what_actually": "`status` — это HTTP-код (число), а `type` — URI категории ошибки; `instance` может быть относительным путём вроде `/orders/12345`.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Стандарт `Problem Details` описывает формат структуры входящих запросов и валидирует их тело, задавая схему полей для клиента перед отправкой. Он определяет требования к `request body`, а не к формату ответов об ошибках сервера.",
+              "text": "Стандарт `Problem Details` описывает формат входящих запросов и валидирует их тело: `@RequestBody` с `@Valid` и `@Validated` проверяют схему через `jakarta.validation` и `BindingResult`. Он задаёт требования к `request body` поверх `HttpMessageConverter`, а не к формату ответов об ошибках сервера, порождая `MethodArgumentNotValidException`.",
               "correct": false,
               "sections": {
                 "what_actually": "RFC 7807 описывает именно формат ответов об ошибках; к схеме входящих запросов он отношения не имеет.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Чтобы работать с `Problem Details`, необходимо добавить в зависимости отдельный стартер `spring-boot-starter-problem`, иначе класс `ProblemDetail` не будет виден на classpath. Без этого стартера автоконфигурация `application/problem+json` не активируется и обработчики ошибок вернут обычный JSON.",
+              "text": "Чтобы работать с `Problem Details`, нужно добавить в `build.gradle` отдельный стартер `spring-boot-starter-problem`, иначе класс `ProblemDetail` не окажется на `classpath` рядом с `spring-boot-starter-web`. Без него автоконфигурация `application/problem+json` не активируется, свойство `spring.mvc.problemdetails.enabled` игнорируется, и `ResponseEntityExceptionHandler` вернёт обычный JSON.",
               "correct": false,
               "sections": {
                 "what_actually": "Отдельного стартера нет: `ProblemDetail` входит в `spring-web` и доступен в Boot 3 из коробки.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Boot 3` не вводит единого API наблюдаемости: span и метрику приходится создавать раздельно. Для каждого бизнес-метода разработчик вручную открывает span через `Tracer.nextSpan()` и заводит отдельный таймер (`Timer.builder()`).",
+              "text": "`Spring Boot 3` не вводит единого API наблюдаемости: `Span` и метрику приходится создавать раздельно. Для каждого бизнес-метода разработчик вручную открывает span через `Tracer.nextSpan()` из `io.micrometer.tracing.Tracer`, отдельно заводит таймер (`Timer.builder()`) и сам регистрирует его в `MeterRegistry`, дублируя инструментирование в двух местах.",
               "correct": false,
               "sections": {
                 "what_actually": "Единый `Observation API` как раз и убирает дублирование: один `Observation` сразу даёт и span, и метрику.",
@@ -503,7 +503,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Boot 3` не поддерживает конфигурацию сэмплинга в `application.yml`: долю трассируемых запросов задают только в коде. Нужную часть вызовов помечают аннотацией `@Sampled` на методе (без внешних настроек), span иначе не создаётся.",
+              "text": "`Spring Boot 3` не поддерживает конфигурацию сэмплинга в `application.yml`: долю трассируемых запросов задают только в коде. Нужную часть помечают `@Sampled` и настраивают бин `Sampler` (`ProbabilityBasedSampler`) в обход свойства `management.tracing.sampling.probability`, span иначе не создаётся.",
               "correct": false,
               "sections": {
                 "what_actually": "Sampling задаётся в конфигурации: `management.tracing.sampling.probability` управляет долей трассируемых запросов.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Spring Boot 3` по-прежнему опирается на `Spring Cloud Sleuth` для контекста трассировки: сам он span-ы не создаёт. Новый `Observation API` служит лишь обёрткой над Sleuth (делегируя ему сбор и экспорт трейсов в Zipkin).",
+              "text": "`Spring Boot 3` по-прежнему опирается на `Spring Cloud Sleuth` для контекста трассировки: сам он span-ы не создаёт. Новый `Observation API` служит лишь обёрткой над `brave.Tracing` из `spring-cloud-starter-sleuth` (делегируя `ObservationRegistry` сбор и экспорт трейсов в Zipkin).",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring Cloud Sleuth` в Boot 3 удалён; трассировку даёт `micrometer-tracing`, а `Observation API` работает поверх Micrometer, а не Sleuth.",
@@ -564,7 +564,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Boot 3.2` не вводит единого флага для виртуальных потоков: их приходится включать вручную. Каждую задачу нужно оборачивать в `Thread.startVirtualThread(...)` внутри контроллеров, `@Async`-методов и `@Scheduled`-задач.",
+              "text": "`Spring Boot 3.2` не вводит единого флага для виртуальных потоков: их включают вручную через `Executors.newVirtualThreadPerTaskExecutor()`. Каждую задачу оборачивают в `Thread.startVirtualThread(...)` внутри `@RestController`, `@Async`-методов и `@Scheduled`-задач.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть один флаг `spring.threads.virtual.enabled: true`, который включает VT для Tomcat, `@Async` и `@Scheduled` сразу.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Boot 3.0` уже включает виртуальные потоки: они работают на `Java 17` без обновления JDK. Достаточно задать `spring.threads.virtual.enabled: true`, и Tomcat с `@Async` переключится на виртуальные потоки без смены рантайма.",
+              "text": "`Spring Boot 3.0` уже включает виртуальные потоки: они работают на `Java 17` без обновления JDK через `spring-boot-starter-web`. Достаточно задать `spring.threads.virtual.enabled: true`, и `Thread.ofVirtual().start()` переключит Tomcat с `@Async` на виртуальные потоки без смены рантайма.",
               "correct": false,
               "sections": {
                 "what_actually": "Первоклассная поддержка VT добавлена в `Spring Boot 3.2`, а сами виртуальные потоки требуют `Java 21`.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Spring Boot 3.2` с виртуальными потоками ускоряет любую нагрузку: выигрыш получают все задачи. И `I/O-bound` запросы, и тяжёлые `CPU-bound` вычисления одинаково растут в пропускной способности.",
+              "text": "`Spring Boot 3.2` с виртуальными потоками ускоряет любую нагрузку: выигрыш дают `spring.threads.virtual.enabled: true` и `Executors.newVirtualThreadPerTaskExecutor()`. И `I/O-bound` запросы в `@RestController`, и тяжёлые `CPU-bound` вычисления одинаково растут в пропускной способности.",
               "correct": false,
               "sections": {
                 "what_actually": "Виртуальные потоки помогают I/O-bound нагрузкам; для CPU-bound выигрыша нет, так как там ограничивает число ядер.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Настройку задают переопределением метода `configure(HttpSecurity http)` — лямбды `Customizer` в SS6 запрещены. Билдер `HttpSecurity` конфигурируют внутри метода (как в SS5): без вызова `http.build()`.",
+              "text": "Настройку задают переопределением `protected void configure(HttpSecurity http)` — лямбды `Customizer` в SS6 запрещены, метод помечают `@Override`. Билдер `HttpSecurity` с `@EnableWebSecurity` конфигурируют внутри метода (как в SS5): без `http.build()`, `authorizeHttpRequests` и `AbstractHttpConfigurer`.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод `configure` убран вместе с адаптером; настройка идёт именно через лямбды `Customizer` и возврат `http.build()`.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Класс `WebSecurityConfigurerAdapter` в SS6 сохранён: бин `SecurityFilterChain` — лишь необязательная альтернатива. Наследование адаптера (с методом `configure`) остаётся рекомендуемым для новых проектов.",
+              "text": "Класс `WebSecurityConfigurerAdapter` с `@EnableWebSecurity` в SS6 сохранён: бин `SecurityFilterChain` из `spring-boot-starter-security` — лишь необязательная альтернатива. Наследование через `extends` (с методами `configure(HttpSecurity)` и `configure(WebSecurity)`) под `@Configuration` остаётся рекомендуемым.",
               "correct": false,
               "sections": {
                 "what_actually": "`WebSecurityConfigurerAdapter` полностью удалён; единственный поддерживаемый путь — бин `SecurityFilterChain`.",
@@ -635,7 +635,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Метод `antMatchers` в SS6 остался основным — `requestMatchers` добавлен только под реактивный стек (WebFlux). Разница проста: для сервлетного `SecurityFilterChain` по-прежнему пишут `antMatchers`.",
+              "text": "Метод `antMatchers` в SS6 остался основным — `requestMatchers` добавлен под реактивный `ServerHttpSecurity` (WebFlux). Разница проста: в сервлетном `SecurityFilterChain` на `HttpSecurity` по-прежнему пишут `antMatchers`, `mvcMatchers` и `regexMatchers`.",
               "correct": false,
               "sections": {
                 "what_actually": "`antMatchers` удалён в SS6; `requestMatchers` — единый замена для обоих стеков, а не только реактивного.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `3.0` авто-конфигурации по умолчанию отключены. Включить их можно лишь флагом `spring.autoconfigure.enabled=true` в `application.yml`. Без него стартеры подтягивают зависимости, но бины уже не настраивают автоматически.",
+              "text": "В `3.0` авто-конфигурации по умолчанию отключены на старте контекста приложения и активируются флагом `spring.autoconfigure.enabled=true` в `application.yml`. Без него `@EnableAutoConfiguration` и `AutoConfigurationImportSelector` молча пропускают импорт (стартеры вроде `spring-boot-starter-web` лишь тянут зависимости). Бины из `@SpringBootApplication` тогда не настраиваются автоматически.",
               "correct": false,
               "sections": {
                 "what_actually": "Авто-конфигурация осталась ключевым механизмом Boot 3; изменился лишь способ её декларирования (новый файл imports).",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Файл `spring.factories` вырезан мгновенно, без обратной совместимости. Библиотека, ещё полагающаяся на него, перестаёт загружать конфигурации. Такие зависимости придётся править руками (сами не поднимутся).",
+              "text": "Файл `spring.factories` вырезан мгновенно, без переходного периода `2.7`→`3.0`. Библиотека, ещё регистрирующая `EnableAutoConfiguration` через `META-INF/spring.factories`, перестаёт грузиться, ведь `SpringFactoriesLoader.loadFactoryNames` его игнорирует. Такие зависимости из `spring-boot-autoconfigure` придётся править руками (сами не поднимутся).",
               "correct": false,
               "sections": {
                 "what_actually": "`spring.factories` всё ещё поддерживается для обратной совместимости; новый файл imports — рекомендуемый, но не единственный способ.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `3.0` авто-конфигурации переведены на явную регистрацию. Каждый стартер помечает свои конфигурации аннотацией `@Import` в главном классе (а не в файле метаданных). Автоматическое подхватывание по classpath убрано ради предсказуемого порядка.",
+              "text": "В `3.0` авто-конфигурации переведены на явную регистрацию аннотацией `@Import`. Каждый стартер помечает свои `@Configuration`-классы прямо в `@SpringBootApplication` (а не в файле `AutoConfiguration.imports`), вытесняя `@AutoConfiguration`. Подхватывание по classpath из `spring-boot-autoconfigure` убрано ради предсказуемого порядка.",
               "correct": false,
               "sections": {
                 "what_actually": "Декларация идёт в файле `META-INF/spring/...AutoConfiguration.imports`, а не в `application.yml` приложения.",
