@@ -263,3 +263,21 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 - **Полный `:quiz-domain:test` + `:quiz-app:test` → BUILD SUCCESSFUL** (ArchUnit зелёный).
 
 **NOT в 03a (осознанно):** пер-топик атрибуция unknowns (unknown не в answerHistory → нет ветки в collectTopicResults; headline-счётчик достаточен для 03a); клиентская обвязка. **Deferred → 03b (визуальная фаза):** кнопка «Не знаю» в focus-training.html (form POST /skip questionId+_csrf) + рендер unknownCount в session-summary.html + live-QA.
+
+---
+
+### EV-FLOW-SUMMARY-A — actionable summary backend (dueCount + typed nextActions) (2026-07-15, R0.177, `:quiz-domain:test` + `:quiz-app:test`)
+
+**FLOW-SUMMARY-a — DONE** (FLOW-SUMMARY разбит: SUMMARY-a backend-поля — этот тик; SUMMARY-b UI-рендер — визуальная фаза). Пятый бэкенд-слайс bootRun-OFF волны. Итоги сессии получают машиночитаемый «короткий план» вместо только свободных строк.
+
+**Ключевое наблюдение:** `MvcModelAttributeMapper.applySessionSummary` кладёт **весь** объект `summary` в модель (`model.addAttribute("summary", summary)`) → любые новые поля `SessionSummary` доступны шаблону автоматически. Значит бэкенд-слайс = поля + сервисная логика + тесты; сам рендер (кнопки/headline) = SUMMARY-b (визуальная фаза). Mapper не тронут.
+
+**Слои:**
+- **quiz-domain** `NextActionType` (enum: REVIEW_MISTAKES / PRACTICE_WEAK_TOPIC / REVIEW_DUE / KEEP_GOING). `SessionSummary`: новые поля `int dueCount` + `List<NextAction> nextActions`; nested `NextAction(NextActionType type, String label, String target, int count)` (Serializable, requireNonNull type/label); геттеры + builder (`dueCount`, `addNextAction`) + валидация `dueCount ≥ 0`.
+- **quiz-app** `SessionSummaryService` (+ inject `QuestionStatsRepository` + `Clock`): `countDue(session)` = `QuestionStatsRepository.countDue(topic/important/onlyWrong-скоуп сессии, now)` с guard (`RuntimeException` → warn + 0, итоги не должны падать из-за счётчика). `addNextActions` строит типизированный план в приоритетном порядке: есть ошибки → REVIEW_MISTAKES(count=mistakes); каждая слабая тема (accuracy < WEAK_TOPIC_THRESHOLD & total>0) → PRACTICE_WEAK_TOPIC(target=topic, count=wrong); dueCount>0 → REVIEW_DUE(count=dueCount); если нет ошибок + anyAnswered + allGood → KEEP_GOING. Строки-`recommendations` **сохранены** (текущий шаблон читает их) — `nextActions` идут параллельно из тех же источников; `shortTopic`-хелпер вынесен и переиспользован (дедуп с рекомендациями).
+
+**Verify (bootRun OFF, Docker UP):**
+- `SessionSummaryServiceTest` (ручная сборка сервиса с fixed Clock + mock repos вместо @InjectMocks): mixed → dueCount=7 из countDue + nextActions `[REVIEW_MISTAKES(count=1), PRACTICE_WEAK_TOPIC(target=spring), REVIEW_DUE(count=7)]` в точном порядке; all-correct → `[KEEP_GOING]` + dueCount=0 (countDue не застабан→0); countDue бросает RuntimeException → dueCount=0, без REVIEW_DUE (guard); существующие тесты (unknownCount, mistakes, empty-session vacuous-truth guard) зелёные без изменений.
+- **Полный `:quiz-domain:test` + `:quiz-app:test` → BUILD SUCCESSFUL** (Spring-контекст-тесты ок: Clock + QuestionStatsRepository — существующие бины InfrastructureConfig; ArchUnit зелёный).
+
+**NOT в SUMMARY-a (осознанно):** двойная поддержка recommendations(строки)+nextActions(типы) — намеренно, т.к. шаблонный своп на nextActions = SUMMARY-b; drift-риск снят единым источником (mistakes/topicResults). dueCount по topic-скоупу сессии (для group-сессий topic=null → глобальный due в important/onlyWrong-скоупе — приемлемо). **Deferred → SUMMARY-b (визуальная фаза):** рендер nextActions как actionable-кнопок (ссылки на /training?onlyWrong / ?topic=X / ?mode=review) + headline «{accuracy}% · {N} требуют разбора» + live-QA.

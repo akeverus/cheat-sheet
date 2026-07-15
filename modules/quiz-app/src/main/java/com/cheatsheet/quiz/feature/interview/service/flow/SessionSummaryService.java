@@ -1,16 +1,19 @@
 package com.cheatsheet.quiz.feature.interview.service.flow;
 
 import com.cheatsheet.quiz.domain.InterviewSession;
+import com.cheatsheet.quiz.domain.NextActionType;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.SessionSummary;
 import com.cheatsheet.quiz.common.constants.QuizConstants;
 import lombok.AccessLevel;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
+import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -30,6 +33,8 @@ import java.util.Map;
 public class SessionSummaryService {
 
     private final QuestionRepository questionRepository;
+    private final QuestionStatsRepository questionStatsRepository;
+    private final Clock clock;
 
     /**
      * Строит сводку завершённой сессии.
@@ -45,19 +50,97 @@ public class SessionSummaryService {
                 ? Duration.between(session.getStartedAt(), Instant.now())
                 : null;
 
+        int dueCount = countDue(session);
+
         SessionSummary.Builder builder = SessionSummary.builder()
                 .totalQuestions(session.getCorrect() + session.getWrong() + session.getUnknown())
                 .correctCount(session.getCorrect())
                 .wrongCount(session.getWrong())
                 .unknownCount(session.getUnknown())
+                .dueCount(dueCount)
                 .duration(duration)
                 .mode(session.getMode());
 
         addTopicResultsAndWeakRecommendations(builder, topicResults);
         addMistakes(builder, mistakes);
         addFinalRecommendationIfAllGood(builder, topicResults);
+        addNextActions(builder, topicResults, mistakes, dueCount);
 
         return builder.build();
+    }
+
+    /**
+     * Считает, сколько вопросов в скоупе сессии подошло к повторению по SM-2 (due).
+     * Служит headline-числом «N ждут повторения» в итогах. Ошибка запроса → 0
+     * (итоги не должны падать из-за счётчика).
+     */
+    private int countDue(InterviewSession session) {
+        try {
+            long now = clock.instant().getEpochSecond();
+            long due = questionStatsRepository.countDue(
+                    session.getTopic(), session.getImportantOnly(), session.getOnlyWrong(), now);
+            return (int) Math.min(due, Integer.MAX_VALUE);
+        } catch (RuntimeException e) {
+            log.warn("Не удалось посчитать due для итогов сессии: {}", e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Формирует типизированный «короткий план» (FLOW-SUMMARY): разобрать ошибки →
+     * повторить слабые темы → пройти due → (если всё хорошо) поддержать темп.
+     * Дублирует источники строк-рекомендаций, но в машиночитаемом виде — шаблон
+     * рендерит кнопки по {@link NextActionType}, не парся текст.
+     */
+    private void addNextActions(SessionSummary.Builder builder,
+                                List<SessionSummary.TopicResult> topicResults,
+                                List<SessionSummary.MistakeDetail> mistakes,
+                                int dueCount) {
+        boolean anyAnswered = topicResults.stream().anyMatch(tr -> tr.total() > 0);
+
+        if (!mistakes.isEmpty()) {
+            builder.addNextAction(new SessionSummary.NextAction(
+                    NextActionType.REVIEW_MISTAKES,
+                    "Разобрать ошибки: " + mistakes.size(),
+                    null,
+                    mistakes.size()));
+        }
+
+        for (SessionSummary.TopicResult tr : topicResults) {
+            if (tr.accuracy() < QuizConstants.WEAK_TOPIC_THRESHOLD && tr.total() > 0) {
+                builder.addNextAction(new SessionSummary.NextAction(
+                        NextActionType.PRACTICE_WEAK_TOPIC,
+                        "Повторить тему: " + shortTopic(tr.topic()),
+                        tr.topic(),
+                        tr.wrong()));
+            }
+        }
+
+        if (dueCount > 0) {
+            builder.addNextAction(new SessionSummary.NextAction(
+                    NextActionType.REVIEW_DUE,
+                    "Ждут повторения: " + dueCount,
+                    null,
+                    dueCount));
+        }
+
+        boolean allGood = topicResults.stream().allMatch(tr ->
+                tr.total() == 0 || tr.accuracy() >= QuizConstants.WEAK_TOPIC_THRESHOLD);
+        if (mistakes.isEmpty() && anyAnswered && allGood) {
+            builder.addNextAction(new SessionSummary.NextAction(
+                    NextActionType.KEEP_GOING,
+                    "Отличный темп — продолжайте",
+                    null,
+                    0));
+        }
+    }
+
+    /** Короткое имя темы: последний сегмент пути без суффикса {@code -interview}. */
+    private String shortTopic(String topic) {
+        String shortTopic = topic.contains("/")
+                ? topic.substring(topic.lastIndexOf('/') + 1)
+                : topic;
+        return shortTopic.replace("-interview", "");
     }
 
     private Map<Long, Question> loadQuestionMap(List<InterviewSession.AnswerRecord> history) {
@@ -124,11 +207,8 @@ public class SessionSummaryService {
         for (SessionSummary.TopicResult tr : topicResults) {
             builder.addTopicResult(tr);
             if (tr.accuracy() < QuizConstants.WEAK_TOPIC_THRESHOLD && tr.total() > 0) {
-                String shortTopic = tr.topic().contains("/")
-                        ? tr.topic().substring(tr.topic().lastIndexOf('/') + 1)
-                        : tr.topic();
                 builder.addRecommendation(
-                        "Тема \"" + shortTopic.replace("-interview", "") + "\" — точность "
+                        "Тема \"" + shortTopic(tr.topic()) + "\" — точность "
                                 + String.format("%.0f", tr.accuracy()) + "%, рекомендуется повторить"
                 );
             }

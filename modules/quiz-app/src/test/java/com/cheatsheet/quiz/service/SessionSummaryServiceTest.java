@@ -5,19 +5,26 @@ import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.SessionSummary;
+import com.cheatsheet.quiz.domain.NextActionType;
 import com.cheatsheet.quiz.feature.interview.service.flow.SessionSummaryService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
+import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static com.cheatsheet.quiz.TestQuestionBuilder.aQuestion;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,8 +33,16 @@ class SessionSummaryServiceTest {
     @Mock
     QuestionRepository questionRepository;
 
-    @InjectMocks
+    @Mock
+    QuestionStatsRepository questionStatsRepository;
+
+    private final Clock clock = Clock.fixed(Instant.ofEpochSecond(1_700_000_000L), ZoneOffset.UTC);
     SessionSummaryService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new SessionSummaryService(questionRepository, questionStatsRepository, clock);
+    }
 
     @Test
     void buildSummaryWithAllCorrectAnswers() {
@@ -122,6 +137,68 @@ class SessionSummaryServiceTest {
         assertThat(summary.getTotalQuestions()).isEqualTo(2);
         assertThat(summary.getAccuracy()).isEqualTo(50.0);
         assertThat(summary.getMistakes()).isEmpty();
+    }
+
+    @Test
+    void buildSummaryPopulatesDueCountAndTypedNextActions() {
+        // FLOW-SUMMARY: dueCount из countDue + типизированный «короткий план»
+        // (разобрать ошибки → повторить слабую тему → пройти due).
+        Question q1 = aQuestion().withId(1).withTopic("java").withQuestionText("Q1").build();
+        Question q2 = aQuestion().withId(2).withTopic("spring").withQuestionText("Q2").build();
+        when(questionRepository.findByIds(anyList())).thenReturn(List.of(q1, q2));
+        when(questionStatsRepository.countDue(any(), any(), any(), anyLong())).thenReturn(7L);
+
+        InterviewSession session = new InterviewSession(
+                InterviewMode.EXAM, List.of(1L, 2L), null, false, false, false);
+        session.registerAnswer(true, "java");
+        session.registerAnswer(false, "spring");
+
+        SessionSummary summary = service.buildSummary(session);
+
+        assertThat(summary.getDueCount()).isEqualTo(7);
+        assertThat(summary.getNextActions()).extracting(SessionSummary.NextAction::type)
+                .containsExactly(
+                        NextActionType.REVIEW_MISTAKES,
+                        NextActionType.PRACTICE_WEAK_TOPIC,
+                        NextActionType.REVIEW_DUE);
+        assertThat(summary.getNextActions().get(0).count()).isEqualTo(1);
+        assertThat(summary.getNextActions().get(1).target()).isEqualTo("spring");
+        assertThat(summary.getNextActions().get(2).count()).isEqualTo(7);
+    }
+
+    @Test
+    void buildSummaryAllCorrectProducesKeepGoingNextAction() {
+        Question q1 = aQuestion().withId(1).withTopic("java").build();
+        when(questionRepository.findByIds(anyList())).thenReturn(List.of(q1));
+        // countDue не застабан → 0 → нет REVIEW_DUE
+
+        InterviewSession session = new InterviewSession(
+                InterviewMode.TRAINING, List.of(1L), "java", false, false, false);
+        session.registerAnswer(true, "java");
+
+        SessionSummary summary = service.buildSummary(session);
+
+        assertThat(summary.getDueCount()).isZero();
+        assertThat(summary.getNextActions()).extracting(SessionSummary.NextAction::type)
+                .containsExactly(NextActionType.KEEP_GOING);
+    }
+
+    @Test
+    void buildSummaryDueCountFailureIsSwallowed() {
+        Question q1 = aQuestion().withId(1).withTopic("java").build();
+        when(questionRepository.findByIds(anyList())).thenReturn(List.of(q1));
+        when(questionStatsRepository.countDue(any(), any(), any(), anyLong()))
+                .thenThrow(new RuntimeException("db down"));
+
+        InterviewSession session = new InterviewSession(
+                InterviewMode.TRAINING, List.of(1L), "java", false, false, false);
+        session.registerAnswer(true, "java");
+
+        SessionSummary summary = service.buildSummary(session);
+
+        assertThat(summary.getDueCount()).isZero();
+        assertThat(summary.getNextActions()).extracting(SessionSummary.NextAction::type)
+                .doesNotContain(NextActionType.REVIEW_DUE);
     }
 
     @Test
