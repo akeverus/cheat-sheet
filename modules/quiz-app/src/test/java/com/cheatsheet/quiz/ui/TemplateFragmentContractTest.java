@@ -286,26 +286,33 @@ class TemplateFragmentContractTest {
     }
 
     @Test
-    void tokensCssDefinesDefaultDesignAndSwitchableRoster() throws IOException {
-        // tokens.css — токен-слой switchable-дизайнов. Контракт:
-        // (1) дефолт-дизайн editorial живёт в :root (без [data-design] обёртки),
-        // (2) каждый не-дефолтный дизайн роестра имеет свой scoped-блок,
-        // (3) у каждого есть dark-вариант (полный набор цветов под [data-theme=dark]).
+    void tokensCssDefinesSingleInstrumentDesign() throws IOException {
+        // tokens.css — токен-слой. «Полная замена» (DEC-002 / FE-CMP-1): Instrument —
+        // ЕДИНСТВЕННЫЙ дизайн, мульти-дизайн-роестр упразднён. Контракт:
+        // (1) :root — структурная база с ключевыми семантическими токенами,
+        // (2) html[data-design="instrument"] переопределяет полный набор (light + dark),
+        // (3) НИ ОДНОГО scoped-блока удалённых дизайнов (guard против реинтродукции).
         String css = readTemplate("static/css/tokens.css");
 
-        // Дефолт: editorial = :root, ключевые семантические токены определены.
+        // База: :root, ключевые семантические токены определены.
         assertThat(css).contains(":root");
         assertThat(css).contains("--color-bg-primary");
         assertThat(css).contains("--color-accent-primary");
 
-        // Роестр switchable-дизайнов: light + dark на каждый.
-        for (String design : new String[] { "linear", "swiss", "notion", "mintlify", "broadsheet" }) {
+        // Единственный дизайн: instrument light + dark.
+        assertThat(css)
+            .as("light-блок instrument")
+            .contains("html[data-design=\"instrument\"] {");
+        assertThat(css)
+            .as("dark-блок instrument")
+            .contains("html[data-design=\"instrument\"][data-theme=\"dark\"]");
+
+        // Роестр удалённых дизайнов не возвращается (feature-freeze, DEC-002).
+        for (String dead : new String[] { "editorial", "linear", "swiss", "notion", "mintlify",
+                                          "broadsheet", "superhuman", "stripe", "claude", "theverge" }) {
             assertThat(css)
-                .as("light-блок дизайна " + design)
-                .contains("html[data-design=\"" + design + "\"] {");
-            assertThat(css)
-                .as("dark-блок дизайна " + design)
-                .contains("html[data-design=\"" + design + "\"][data-theme=\"dark\"]");
+                .as("удалённый дизайн " + dead + " не должен иметь scoped-блок в tokens.css")
+                .doesNotContain("html[data-design=\"" + dead + "\"]");
         }
     }
 

@@ -159,3 +159,31 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 - После восстановления сети + reload — чистое состояние ✅.
 
 **Остаток FLOW-04 (BLOCKED, BLK-BOOTRUN):** серверная часть — детект истёкшей HTTP-сессии + автосейв/персистентность для resume (сейчас expired-session → доменная ошибка → тот же recoverable-алерт «вопрос устарел, обнови» — не тупик, но без dedicated resume-UX). Это backend (needsGradle, Flyway V16+ пересекается с FLOW-01 pause/resume).
+
+---
+
+## Cleanup / полная замена (FE-CMP-1)
+
+### EV-CMP-001 — удаление мёртвого мульти-дизайн-движка (2026-07-15, R0.173)
+
+**FE-CMP-1 — DONE.** Собранный вопрос отвечен пользователем (DEC-003=B, DEC-006=A, DEC-007 BLK-BOOTRUN снят «Отключил его»). Первый P0-тик разблокированной gradle-волны «полной замены»: Instrument остаётся ЕДИНСТВЕННЫМ дизайном (DEC-002), но остатки мульти-дизайн-инфраструктуры вырезаны.
+
+**Удалено (по файлам):**
+- **settings.html** — ось «Дизайн» (`#design-pref-control`, 11 кнопок `data-design-pref` editorial…instrument): вводящий в заблуждение UX, где 10 значений коерсились обратно в instrument.
+- **fragments/header.html** — `#design-toggle` (кнопка `ed-design-toggle` + `<use href="#i-shapes">`) + весь его inline-скрипт (циклер `window.__design.list`). Остались theme + layout тогглы.
+- **fragments/icons.html** — orphan-символ `<symbol id="i-shapes">` (единственная ссылка была в удалённом toggle → иначе красный `iconSpriteHasNoOrphanSymbols`).
+- **fragments/head.html** — `DESIGNS`, `readDesign`, `setDesign`, `window.__design`; `THEME_COLORS` 11 дизайнов → 1 (`{light,dark}` instrument); `metaColor` фолбэк editorial→instrument.
+- **static/js/app.js** — `wireSegControl('design-pref-control', …, window.__design.*)` (обвязка удалённого seg-control).
+- **static/css/base.css** — SIGNATURES-блоки `html[data-design="editorial|linear|swiss|stripe|claude"]` + `#design-pref-control` CSS. **Визуально-инертно:** блоки скоуплены под `data-design="X"`, а SSR всегда рендерит `data-design="instrument"` → они не матчились ни на одном пути. Instrument-SIGNATURES + нейтральный `html[data-design]` слой сохранены.
+- **static/css/tokens.css** — `:root` шрифты `'Lora'`/`'Inter'` → `'Newsreader'`/`'Space Grotesk'` (закрывает хвост PERF-02(a2): недостижимый editorial-фолбэк; `:root` теперь консистентен загружаемым 3 семействам).
+
+**Cache-busting (закрывает CACHE-1):** `?v` бампнуты — tokens.css 64→65, base.css 97→98, app.js 65→66 (во ВСЕХ 3 шаблонах focus/result/settings). Устраняет дрейф «served ≠ cached» после cleanup-1 (tokens.css 1537→467 строк без бампа).
+
+**Тесты / гейты:**
+- `TemplateFragmentContractTest` — метод `tokensCssDefinesDefaultDesignAndSwitchableRoster` (ассертил роестр linear/swiss/notion/mintlify/broadsheet — **был красный** после cleanup-1, не мог прогнаться при живом bootRun) переписан → `tokensCssDefinesSingleInstrumentDesign`: ассертит `:root` + instrument light/dark + `doesNotContain` 10 удалённых дизайнов (guard против реинтродукции). **`./gradlew :quiz-app:test --tests TemplateFragmentContractTest` → BUILD SUCCESSFUL**, все 20 методов зелёные (orphan-icon без i-shapes, versioned-assets app.js=v66, head `setAttribute('data-design')` сохранён).
+- `scripts/design-token-audit.py` → **VERDICT: CLEAN** (Designs=['instrument'], 46 пар, hard-fails=0, completeness=0, large-warn=0).
+- Orphan-grep: 0 функциональных ссылок на `i-shapes`/`design-pref-control`/`window.__design`/`designchange` (только объясняющие комментарии).
+
+**Прогон безопасен:** bootRun остановлен пользователем (:8080 curl→000) → `./gradlew test` не wedge. `processResources` пересинхронил `build/resources/main`.
+
+**Deferred:** live-QA рендера `/settings` (вкладка «Оформление» без design-строки) + header (без design-toggle) — консолидированно в конце gradle-волны, когда bootRun вернётся (держим off на всю волну, иначе следующий gradle-тик wedge).

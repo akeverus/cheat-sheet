@@ -49,17 +49,8 @@
                         aria-label="Сменить раскладку" title="Раскладка страниц">
                     <svg class="ed-icon" aria-hidden="true" focusable="false"><use href="#i-layout"></use></svg>
                 </button>
-                <!-- Переключатель дизайна: иконка-близнец тоггла темы (та же 44px-оболочка
-                     .ed-theme-toggle). Клик циклит по ПОЛНОМУ списку дизайнов
-                     window.__design.list (head.html) — не по фиксированной четвёрке;
-                     сейчас реестр из 11 (Editorial, Linear, Swiss, Notion, Mintlify,
-                     Broadsheet, Superhuman, Stripe, Claude, The Verge, Instrument).
-                     Полный выбор —
-                     на /settings; обе точки синхронятся событием designchange. -->
-                <button type="button" class="ed-theme-toggle ed-design-toggle hidden" id="design-toggle"
-                        aria-label="Сменить дизайн" title="Дизайн оформления">
-                    <svg class="ed-icon" aria-hidden="true" focusable="false"><use href="#i-shapes"></use></svg>
-                </button>
+                <!-- Переключатель дизайна удалён (DEC-002 / FE-CMP-1): Instrument —
+                     единственный дизайн, циклить нечего. Остаются раскладка + тема. -->
                 <button type="button" class="theme-toggle ed-theme-toggle hidden" id="theme-toggle"
                         aria-label="Переключить тему" aria-pressed="false" title="Светлая / тёмная тема">
                     <span class="theme-toggle-icon" aria-hidden="true"></span>
@@ -95,48 +86,9 @@
         document.addEventListener('themechange', sync);
       })();
     </script>
-    <!-- Переключатель дизайна: тот же паттерн, что и тоггл темы. Циклит по
-         window.__design.list; tooltip/aria называют текущий → следующий дизайн,
-         чтобы клик был предсказуем. Пере-синхрон по designchange держит шапку и
-         seg-control на /settings в одном состоянии. -->
-    <script>
-      (function () {
-        var btn = document.getElementById('design-toggle');
-        if (!btn || !window.__design) return;
-        // При единственном дизайне (feature-freeze на Instrument, DEC-002)
-        // переключать нечего: раскрытая кнопка осталась бы МЁРТВЫМ фокусируемым
-        // контролом в tab-order/a11y-дереве на КАЖДОЙ странице (клик коерсит
-        // instrument→instrument, no-op) — keyboard/SR-дефект (A11Y-01, R0.170).
-        // Держим её скрытой (class="hidden" = display:none, вне a11y-дерева),
-        // если в реестре ≤1 дизайн. Полное удаление узла+скрипта — FE-CMP-1.
-        var designList = (window.__design.list && window.__design.list.length) ? window.__design.list : [];
-        if (designList.length <= 1) return;
-        // PE: см. тоггл темы — раскрываем только при работающем JS.
-        btn.classList.remove('hidden');
-        var NAMES = { editorial: 'Editorial', linear: 'Linear', swiss: 'Swiss', notion: 'Notion', mintlify: 'Mintlify', broadsheet: 'Broadsheet',
-                      superhuman: 'Superhuman', stripe: 'Stripe', claude: 'Claude', theverge: 'The Verge', instrument: 'Instrument' };
-        function label(id) { return NAMES[id] || id; }
-        function order() {
-          var list = window.__design.list;
-          return (list && list.length) ? list : ['editorial', 'linear', 'swiss', 'notion', 'mintlify', 'broadsheet',
-                                                  'superhuman', 'stripe', 'claude', 'theverge', 'instrument'];
-        }
-        function nextOf(cur) {
-          var list = order();
-          var i = list.indexOf(cur);
-          return list[(i + 1) % list.length];
-        }
-        function sync() {
-          var cur = window.__design.current();
-          btn.setAttribute('aria-label', 'Сменить дизайн (сейчас: ' + label(cur) + ')');
-          btn.setAttribute('title', 'Дизайн: ' + label(cur) + ' → ' + label(nextOf(cur)));
-        }
-        sync();
-        btn.addEventListener('click', function () { window.__design.set(nextOf(window.__design.current())); });
-        document.addEventListener('designchange', sync);
-      })();
-    </script>
-    <!-- Переключатель раскладки: тот же паттерн, что тогглы темы/дизайна. Циклит
+    <!-- Скрипт переключателя дизайна удалён (FE-CMP-1): единственный дизайн
+         Instrument, window.__design больше не существует. -->
+    <!-- Переключатель раскладки: тот же паттерн, что тоггл темы. Циклит
          по window.__layout.list (flow→split→grid); tooltip/aria называют текущую →
          следующую раскладку. Пере-синхрон по layoutchange держит шапку и
          seg-control на /settings в одном состоянии. -->

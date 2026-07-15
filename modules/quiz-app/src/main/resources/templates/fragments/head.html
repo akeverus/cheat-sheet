@@ -20,32 +20,14 @@
         var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
         function systemTheme() { return (mq && mq.matches) ? 'light' : 'dark'; }
 
-        // Дизайн-движок: editorial (default) | linear | swiss | notion | mintlify | broadsheet.
-        // Каждый дизайн = полный набор токенов под html[data-design="X"] в
-        // tokens.css (см. DESIGN.md / docs/design/systems/*.md). Применяем
-        // выбранный data-design ДО первого кадра (как тему) — без вспышки
-        // чужого дизайна. SSR ставит "instrument" (единственный дизайн — полная замена).
-        var DESIGNS = ['instrument'];
-        // theme-color (хром мобильного браузера) — у каждого дизайна×темы свой bg.
-        var THEME_COLORS = {
-          editorial:  { light: '#FAF9F5', dark: '#262624' },
-          linear:     { light: '#FFFFFF', dark: '#08090A' },
-          swiss:      { light: '#FFFFFF', dark: '#0A0A0A' },
-          notion:     { light: '#FFFFFF', dark: '#191919' },
-          mintlify:   { light: '#FFFFFF', dark: '#0D0D0D' },
-          broadsheet: { light: '#FEFFFC', dark: '#15151D' },
-          superhuman: { light: '#FFFFFF', dark: '#1B1938' },
-          stripe:     { light: '#FFFFFF', dark: '#0A2540' },
-          claude:     { light: '#F5F4ED', dark: '#141413' },
-          theverge:   { light: '#FFFFFF', dark: '#131313' },
-          instrument: { light: '#FAFAFB', dark: '#1B1B21' }
-        };
-        function readDesign() {
-          try { var d = localStorage.getItem('design'); return DESIGNS.indexOf(d) >= 0 ? d : 'instrument'; }
-          catch (e) { return 'instrument'; }
-        }
-        var design = readDesign();
-        root.setAttribute('data-design', design);
+        // Дизайн: Instrument — ЕДИНСТВЕННЫЙ дизайн (DEC-002 «полная замена»).
+        // SSR уже рендерит <html data-design="instrument">; дублируем до первого
+        // кадра как страховку (анти-FOUC) и фиксируем theme-color хрома браузера.
+        // Мульти-дизайн-движок (11 вариантов, переключатель, window.__design,
+        // ось в /settings) удалён в FE-CMP-1 — токены только instrument (tokens.css
+        // light+dark). theme-color instrument×тема:
+        var THEME_COLORS = { light: '#FAFAFB', dark: '#1B1B21' };
+        root.setAttribute('data-design', 'instrument');
         // CLS-резерв (R0.64): метка «JS работает» + сохранённая вкладка /settings
         // ДО первого кадра — base.css рисует вкладочное состояние сразу, и
         // initSettingsTabs после DOMContentLoaded ничего не сдвигает (под
@@ -58,8 +40,7 @@
           }
         } catch (e) { /* приватный режим */ }
         function metaColor(resolved) {
-          var d = THEME_COLORS[design] || THEME_COLORS.editorial;
-          return d[resolved] || d.dark;
+          return THEME_COLORS[resolved] || THEME_COLORS.dark;
         }
 
         function readPref() {
@@ -94,20 +75,7 @@
           toggle: function () { setPref(resolve(pref) === 'light' ? 'dark' : 'light'); }
         };
 
-        function setDesign(next) {
-          design = (DESIGNS.indexOf(next) >= 0) ? next : 'instrument';
-          try { if (design === 'instrument') localStorage.removeItem('design'); else localStorage.setItem('design', design); } catch (e) {}
-          root.setAttribute('data-design', design);
-          var m = metaEl(); if (m) m.setAttribute('content', metaColor(root.getAttribute('data-theme') || 'dark'));
-          try { document.dispatchEvent(new CustomEvent('designchange', { detail: { design: design } })); } catch (e) {}
-        }
-        window.__design = {
-          current: function () { return design; },
-          list: DESIGNS.slice(),
-          set: setDesign
-        };
-
-        // Раскладка страниц (ортогональна дизайну/теме): flow | split | grid.
+        // Раскладка страниц (ортогональна теме): flow | split | grid.
         // Применяем выбранный data-layout на <html> ДО первого кадра (как тему и
         // дизайн) — без вспышки чужой композиции. Каждая страница (focus/settings)
         // интерпретирует режим по-своему (см. base.css, секция [data-layout]):
@@ -274,17 +242,13 @@
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <!-- Загружаемые семейства (единственный дизайн — Instrument, DEC-002) —
          ровно 3: Newsreader (serif-display), Space Grotesk (UI/body),
-         JetBrains Mono (код/эйбрау + mono). Удалены из загрузки как не-рендерящиеся
-         ни на одном пути (Instrument-токены tokens.css перебивают :root):
-         Geist/Geist Mono/Source Serif 4 (R0.168) + Inter/Lora (R0.172, PERF-02(a2)).
-         :root ещё СЛОВЕСНО ссылается на Lora/Inter (inert editorial-фолбэк; теперь
-         не загружается → падает в system-ui/Georgia, но :root недостижим на
-         Instrument-пути). Финальная чистка :root-editorial-базы — FE-CMP-1. -->
-    <!-- ВАРИАТИВНЫЕ оси wght (а не дискретные ступени): дизайны используют
-         промежуточные «фирменные» веса — Linear 510/590, Notion 530/680,
-         Swiss 520/650. На дискретных ступенях (…;500;600;700) они снапались к
-         ближайшей; вариативный диапазон (wght@400..700/..800) рендерит их точно.
-         Бонус: один variable-файл на семейство обычно легче набора инстансов. -->
+         JetBrains Mono (код/эйбрау + mono). :root в tokens.css теперь тоже
+         объявляет эти 3 (FE-CMP-1 убрал editorial-фолбэк Lora/Inter) — нет
+         недостижимых семейств. Ранее убраны из загрузки: Geist/Geist Mono/
+         Source Serif 4 (R0.168), Inter/Lora (R0.172, PERF-02(a2)). -->
+    <!-- ВАРИАТИВНЫЕ оси wght (а не дискретные ступени) — Newsreader/Space Grotesk
+         вариативны по wght; диапазон wght@400..700 рендерит промежуточные веса
+         точно. Бонус: один variable-файл на семейство легче набора инстансов. -->
     <!-- НЕ render-blocking: media="print" → стиль не применяется к screen на этапе
          загрузки, поэтому браузер НЕ блокирует первый кадр в ожидании этого CSS;
          onload флипает media на 'all', когда файл пришёл. Критично для устойчивости:
@@ -295,11 +259,10 @@
          'unsafe-inline' → инлайновый onload разрешён. <noscript> — фоллбэк для no-JS. -->
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400..600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400..600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet"></noscript>
-    <!-- Двухслойная архитектура switchable-дизайнов:
-         tokens.css — ВСЕ токены: дефолт :root = editorial + блоки
-           html[data-design="X"] для linear/swiss/notion/mintlify/broadsheet
-           (обе темы; dark-блок каждого дизайна переопределяет полный набор
-           цветов, чтобы выигрывать по специфичности у глобального dark);
+    <!-- Двухслойная архитектура (единственный дизайн — Instrument, DEC-002):
+         tokens.css — ВСЕ токены: :root (структурная база) + блок
+           html[data-design="instrument"] light + dark (переопределяет полный
+           набор цветов/шрифтов; выигрывает по специфичности у глобального dark);
          base.css   — design-agnostic структура (reset, типошкала, утилиты,
            вёрстка всех страниц), потребляет ТОЛЬКО var(--token).
          Порядок строгий: tokens ПЕРЕД base (переменные определены до
@@ -308,8 +271,8 @@
          того же URL строкой выше ничего не ускорял (no-op для same-origin CSS,
          которая и так грузится с наивысшим приоритетом) и был удалён — не
          возвращать. См. docs/design/DESIGN.md + docs/design/systems/*.md. -->
-    <link rel="stylesheet" th:href="@{/css/tokens.css(v=64)}">
-    <link rel="stylesheet" th:href="@{/css/base.css(v=97)}">
+    <link rel="stylesheet" th:href="@{/css/tokens.css(v=65)}">
+    <link rel="stylesheet" th:href="@{/css/base.css(v=98)}">
     <!-- SRI (integrity) + crossorigin: защита от компрометации CDN — браузер
          выполнит ресурс, только если его sha512 совпадает. Хэши пересчитаны из
          самих файлов (openssl dgst -sha512). ВСЕ CDN-ресурсы пиннятся на ТОЧНУЮ

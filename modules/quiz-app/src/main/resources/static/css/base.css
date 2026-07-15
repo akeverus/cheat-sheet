@@ -1,15 +1,15 @@
 /* =============================================================================
-   editorial.css — ОБЩАЯ БАЗА мульти-дизайн-системы + дизайн «Editorial» (default).
+   base.css — DESIGN-AGNOSTIC СТРУКТУРА + сигнатуры единственного дизайна Instrument.
    --------------------------------------------------------------------------
-   Архитектура переключателя дизайнов (см. head.html → window.__design):
+   «Полная замена» (DEC-002 / FE-CMP-1): мульти-дизайн-движок (11 вариантов,
+   переключатель window.__design, оверлей-файлы) УДАЛЁН. Instrument — единственный.
    • Этот файл = СТРУКТУРА (layout, spacing, responsive, a11y, reduced-motion,
      все компоненты) под нейтральным скоупом html[data-design] — действует при
-     ЛЮБОМ значении data-design. Плюс ДЕФОЛТНЫЕ токены (global :root / [data-theme])
-     = идентичность «Editorial».
-   • Каждый ДРУГОЙ дизайн = тонкий оверлей-файл (swiss.css, linear.css, …): свои
-     токены под html[data-design="<name>"] (специфичность 0,1,1 > :root 0,1,0 →
-     перебивают дефолт) + точечные signature-оверрайды. Структуру НЕ дублируют.
-   • Добавить дизайн = новый оверлей + регистрация в head.html. Editorial трогать
+     ЛЮБОМ значении data-design (SSR всегда ставит "instrument"). Потребляет
+     только var(--token); ВСЕ токены — в tokens.css (:root + instrument light/dark).
+   • Сигнатуры Instrument — под html[data-design="instrument"] (внизу файла).
+   • Историческая архитектура switchable-дизайнов (оверлеи, регистрация) — в git.
+   • ---- (наследие) Editorial трогать
      не нужно (он одновременно база и legacy-дизайн).
    --------------------------------------------------------------------------
    Дизайн «Editorial» — refero-якорь (100%): «Anthropic»
@@ -41,8 +41,8 @@
    БАЗА — нейтральный скоуп html[data-design] (любое значение). Эти правила —
    ОБЩИЙ структурный слой всех дизайнов: html-база, типографика тела, утилиты.
    Идентичность (шрифты/цвета) приходит из токенов, которые каждый дизайн-оверлей
-   перебивает под своим html[data-design="<name>"]. Каждая страница ставит
-   data-design на <html> (SSR-дефолт = "editorial"; JS-выбор — в head.html).
+   перебивает под своим html[data-design="instrument"]. Каждая страница ставит
+   data-design на <html> (SSR всегда = "instrument"; единственный дизайн, DEC-002).
    ========================================================================== */
 html[data-design] {
   font-size: 100%;
@@ -839,18 +839,6 @@ html[data-design] .option-dimmed { opacity: 0.55; }
 html[data-design] #interview-options label .option-status-label,
 html[data-design] #interview-options label .option-explanation { grid-column: 1 / -1; min-width: 0; }
 
-/* Stripe: карточки ответов получают фирменную сине-тинтовую тень — единственное
-   структурное исключение для token-only-дизайна. Stripe строит сепарацию на
-   тенях, НЕ на рамках: его --color-border-primary (#E5EDF5) на белом — ~1.08:1,
-   а bg карточки (#F6F9FC) — 1.05:1, поэтому без тени варианты читались как
-   обычные абзацы, а не выбираемые карточки (адверсари-ревью p1 focus-split-stripe:
-   «нет аффорданса кликабельности»). Тень даёт явный «приподнятый» вид; hover/checked
-   усиливают её. Источник по порядку — после base :has(checked){box-shadow:none}
-   (L628), одинаковая специфичность → побеждает. */
-html[data-design="stripe"] #interview-options label { box-shadow: var(--shadow-sm); }
-html[data-design="stripe"] #interview-options label:hover { box-shadow: var(--shadow-md); }
-html[data-design="stripe"] #interview-options label:has(input:checked) { box-shadow: var(--shadow-md); }
-
 /* =============================================================================
    C1-i — Instrument: фокус-тренировка. CSS-only рестайл СУЩЕСТВУЮЩИХ хуков
    (DOM focus-training.html и app.js НЕ меняются): paper-карты вариантов с
@@ -1490,10 +1478,8 @@ html[data-design] .settings-page #session-form button[type="submit"] {
   min-height: 48px; padding: var(--space-3) var(--space-6); margin-top: var(--space-2);
   font-family: var(--font-family-body); font-size: var(--font-size-md); font-weight: var(--font-weight-medium);
   background: transparent; color: var(--color-text-primary);
-  /* Симметричный радиус токена в design-agnostic слое (как у всех кнопок).
-     Асимметричная «Try Claude»-форма — editorial-сигнатура, вынесена в
-     html[data-design="editorial"]-блок (иначе под linear/notion/mintlify CTA
-     получал чужую «вкладочную» форму flat-верх+скруглённый-низ). */
+  /* Симметричный радиус токена (как у всех кнопок). Асимметричная editorial-форма
+     удалена вместе с editorial-SIGNATURES (FE-CMP-1) — Instrument держит md. */
   border: var(--rule-weight) solid var(--color-accent-primary); border-radius: var(--border-radius-md);
   cursor: pointer; box-shadow: none; text-transform: none; letter-spacing: 0; touch-action: manipulation;
   transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default), color var(--duration-fast) var(--easing-default);
@@ -2998,24 +2984,9 @@ html[data-design] .seg-btn.is-active {
 }
 html[data-design] .seg-btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); position: relative; z-index: 1; }
 
-/* Дизайн-контрол (10 опций) — единственный seg-control, который переносится
-   (остальные 5 несут 2–3 опции и живут в один ряд). При переносе border-right-
-   разделители .seg-btn «повисают» в конце перенесённых рядов: :last-child гасит
-   ТОЛЬКО глобально-последнюю кнопку, поэтому у концевых кнопок ряда (Notion,
-   Superhuman) на торце болталась вертикальная линия в пустоте. Для 10-опционного
-   пикера набор чипов с зазором чище «склеенных» сегментов: убираем контейнер-рамку
-   и внутренние разделители, даём каждому сегменту собственную рамку + радиус + gap.
-   Орфан-линий больше нет (у каждого чипа полная рамка), перенос читается намеренным.
-   Радиус — токен --border-radius-sm (в editorial 0=квадрат, в rounded-дизайнах 6px)
-   → чип наследует радиус-язык своего дизайна. Скоуп по #id → прочие 5 контролов
-   (склеенные сегменты, верны для 2–3 опций) не тронуты. */
-html[data-design] #design-pref-control {
-  gap: var(--space-2); border: 0; background: transparent; overflow: visible;
-}
-html[data-design] #design-pref-control .seg-btn {
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-sm);
-}
+/* #design-pref-control удалён (FE-CMP-1): ось «Дизайн» упразднена (DEC-002),
+   переносящегося 10-опционного пикера больше нет. Прочие 5 seg-control несут
+   2–3 опции и живут в один ряд — общих правил .seg-control выше достаточно. */
 
 /* Степпер размера шрифта */
 html[data-design] .font-stepper { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
@@ -3439,125 +3410,12 @@ html[data-design] .summary-tools-status {
 }
 
 /* ===========================================================================
-   EDITORIAL (Anthropic) — SIGNATURES. Скоуплены под html[data-design="editorial"]:
-   действуют ТОЛЬКО когда активен дефолтный дизайн (оверлеи их не видят).
-   Идут последними в файле — побеждают базовые правила той же специфичности.
+   SIGNATURES удалённых дизайнов (editorial/linear/swiss/stripe/claude) вырезаны
+   в FE-CMP-1 «полная замена»: они были скоуплены под html[data-design="X"] и
+   НЕ матчились ни на одном пути (SSR всегда рендерит data-design="instrument"),
+   т.е. удаление визуально-инертно. Остаётся только INSTRUMENT — единственный
+   дизайн (DEC-002). История правил — в git.
    ========================================================================== */
-
-/* Ссылки [spec]: «thick underline is the sole decorative device» — чернильный
-   текст + толстое Clay-подчёркивание; на hover цвет НЕ меняется (перебиваем
-   базовый a:hover → accent), утолщается линия. */
-html[data-design="editorial"] a {
-  color: var(--color-text-link);
-  text-decoration-color: var(--color-accent-primary);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.14em;
-}
-html[data-design="editorial"] a:hover {
-  color: var(--color-text-link);
-  text-decoration-thickness: 3px;
-}
-
-/* Кнопки [spec]: flat 0px — «no uniform rounded buttons (0px is deliberate)». */
-html[data-design="editorial"] .btn,
-html[data-design="editorial"] .secondary-btn,
-html[data-design="editorial"] .danger-btn,
-html[data-design="editorial"] .flashcard-grade-btn,
-html[data-design="editorial"] .stats-action-btn,
-html[data-design="editorial"] .table-expander,
-html[data-design="editorial"] #extra-analysis-toggle { border-radius: 0; }
-/* Primary CTA [spec]: асимметричный радиус «Try Claude» — flat-верх,
-   скруглённый низ 8px. */
-html[data-design="editorial"] .next-btn,
-html[data-design="editorial"] .focus-page #interview-submit,
-html[data-design="editorial"] .flashcard-reveal-btn,
-html[data-design="editorial"] .settings-page #session-form button[type="submit"],
-html[data-design="editorial"] .stats-page .stats-search-action { border-radius: 0 0 8px 8px; }
-
-/* Дисплейный вес editorial [spec §5/§8]: Lora — «single-weight serif voice»,
-   «no bold serif headings» → ВСЕ заголовки 500 (иерархия размером, не жирностью).
-   Скоупим строго к editorial: общий слой h1=bold/h2+=semibold оставляет
-   sans-дизайнам (linear 590, notion 680, swiss 650, mintlify 600) и газетному
-   broadsheet (700/600) их намеренно более плотный display — не трогаем.
-   Та же специфичность (0,1,1), но правило ниже по файлу → перебивает общий блок. */
-html[data-design="editorial"] h1,
-html[data-design="editorial"] h2,
-html[data-design="editorial"] h3,
-html[data-design="editorial"] h4,
-html[data-design="editorial"] h5,
-html[data-design="editorial"] h6 { font-weight: var(--font-weight-medium); }
-
-/* Бренд-кикер, зона-чип и флешкарт-бейдж — чернила, не Clay: «pure typographic
-   label» [spec]. Clay-семейство на ivory не AA для 12px caps: сам Clay 3.0:1,
-   а --color-accent-strong 3.7:1 («AA large», но эти метки — мелкий текст 12px).
-   .zone-chip делит «единый язык метаданных» с .ed-eyebrow (см. §зона-голова),
-   а .ed-eyebrow — на text-secondary; чип держим в том же ряду (→ 6.3:1). */
-html[data-design="editorial"] .ed-masthead-kicker,
-html[data-design="editorial"] .zone-chip,
-html[data-design="editorial"] .flashcard-badge { color: var(--color-text-secondary); }
-
-/* claude — та же clay-семья: accent-strong (#C16040) как ТЕКСТ = 3.7:1 «AA large»;
-   на 12px caps в LIGHT = 3.8:1 (провал AA-small) на всех трёх метках (kicker
-   глобальный + zone-chip + flashcard-badge). В DARK accent-strong светлее
-   (#E08B6D, 7.1:1) → там намеренный бренд-coral оставляем (token-only дизайн
-   осознанно наследует base-акцент, а в dark он AA-годен). Правим ТОЛЬКО light. */
-html[data-design="claude"]:not([data-theme="dark"]) .ed-masthead-kicker,
-html[data-design="claude"]:not([data-theme="dark"]) .zone-chip,
-html[data-design="claude"]:not([data-theme="dark"]) .flashcard-badge { color: var(--color-text-secondary); }
-
-/* Primary CTA hover-ring [spec §8]: «on hover … a same-color ring grows
-   (0 0 0 1px var(--color-accent))». База даёт box-shadow:none; добавляем
-   одноцветное кольцо вокруг заливки при наведении (одно из ≤2 accent-моментов).
-   Те же primary-CTA, что и в асимметрично-радиусном блоке выше. */
-html[data-design="editorial"] .next-btn:hover,
-html[data-design="editorial"] .focus-page #interview-submit:hover,
-html[data-design="editorial"] .flashcard-reveal-btn:hover,
-html[data-design="editorial"] .settings-page #session-form button[type="submit"]:hover,
-html[data-design="editorial"] .stats-page .stats-search-action:hover { box-shadow: 0 0 0 1px var(--color-accent-primary); }
-
-/* ===========================================================================
-   LINEAR — SIGNATURES.
-   ========================================================================== */
-/* [spec §2]: font-feature-settings cv01/ss03 на body — identity-critical
-   (геометричные альтернаты a/g «laser-cut» Inter), НЕ декор. */
-html[data-design="linear"] body { font-feature-settings: "cv01", "ss03"; }
-/* [spec §8]: выбранный/правильный MCQ-ряд — indigo «активный индикатор» как 2px
-   indigo border вокруг ряда (намеренная трата акцента, одно из ≤2 появлений), а
-   не generic 1px смена цвета. box-sizing:border-box (L70) → 2px не двигает layout.
-   Только pre-answer selected (checked); post-answer success/error не трогаем. */
-html[data-design="linear"] #interview-options label:has(input:checked) {
-  border-width: var(--rule-weight-strong);
-}
-
-/* ===========================================================================
-   SWISS — SIGNATURES. «red never becomes chrome» — красный только под CTA +
-   focus-ring (≤2 появления на экран).
-   ========================================================================== */
-/* [spec §3]: ссылки чернильные с подчёркиванием; база красит a:hover в accent —
-   перебиваем, держим ink (как у editorial). Та же специфичность (0,2,2),
-   правило ниже по файлу → побеждает. */
-html[data-design="swiss"] a:hover { color: var(--color-text-link); }
-/* [spec §8.5]: категориальные чипы — ink, не красный (база красит текст в
-   --color-accent-strong = signal red), чтобы красный остался под CTA + focus.
-   Текст → accent-secondary (ink); рамку держим на структурном border-primary
-   (в light оба = #0A0A0A; в dark border-primary — деликатный hairline, тогда
-   как accent-secondary #EDEDED дал бы слишком тяжёлый белый контур). */
-html[data-design="swiss"] .zone-chip { color: var(--color-accent-secondary); }
-/* [spec §8.4]: MCQ-состояния — marker-only, НИКОГДА не tinted full-row wash.
-   База (L560/579/581) заливает всю строку accent/success/error-wash — для swiss
-   глушим фон. Selected = красный left-edge RULE (inset, без сдвига layout) + ink
-   ring; красный маркер наследуется из базового ::before. Post-answer correct/wrong
-   красят ТОЛЬКО маркер (::before из базы) — рамку держим структурным ink. */
-html[data-design="swiss"] #interview-options label:has(input:checked) {
-  background: transparent;
-  border-color: var(--color-border-primary);
-  box-shadow: inset 3px 0 0 0 var(--color-accent-primary);
-}
-html[data-design="swiss"] .option-correct,
-html[data-design="swiss"] .option-wrong {
-  background: transparent !important;
-  border-color: var(--color-border-primary) !important;
-}
 
 /* ===========================================================================
    INSTRUMENT — SIGNATURES (R0.55, Фаза E).
@@ -3616,10 +3474,6 @@ html[data-design] #interview-options label:has(input:checked)::before {
   border-color: var(--color-text-primary);
   color: var(--color-bg-primary);
   box-shadow: none;
-}
-
-html[data-design="swiss"] #interview-options label:has(input:checked) {
-  box-shadow: inset 3px 0 0 0 var(--color-text-primary);
 }
 
 /* Instrument (C1-i, перенос из зоны опций — R0.54): generic-правило выше глушило

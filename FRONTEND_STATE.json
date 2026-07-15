@@ -8,17 +8,10 @@
   "featureFreeze": true,
   "roundStatusModel": ["AUDITED", "IMPLEMENTED", "REGRESSION_PASS", "DEEP_PASS", "RELEASE_CANDIDATE", "FINALIZED"],
   "taskStatusValues": ["OPEN", "IN_PROGRESS", "BLOCKED", "DONE", "CLOSED"],
-  "nextTaskId": "FE-CMP-1",
-  "$nextTaskNote": "bootRun-safe независимая очередь ИСЧЕРПАНА (R0.172: PERF-02 font-prune завершён a+a2). ВСЯ оставшаяся работа гейтится собранным вопросом — ждём ответа пользователя: (1) BLK-BOOTRUN — остановить :8080 → разблокирует FE-CMP-1 + FLOW-01/02/03 + FLOW-SUMMARY/REPORT + QA-01 + PERF-01 + FLOW-04-server + PERF-02(b) budget-замер; (2) DEC-003 — wide-layout A/B; (3) DEC-006 — UX-13 разбор C/A/B. FE-CMP-1 = первое разблокируемое (P0). До ответа продуктивной bootRun-safe работы НЕТ; ScheduleWakeup не звать (fixed-cron).",
-  "activeBlockers": [
-    {
-      "id": "BLK-BOOTRUN",
-      "summary": "Живой devtools-bootRun на :8080 (curl→200). Любой ./gradlew test/build/check при нём = wedge (project memory). Блокирует все задачи с needsGradle=true: FE-CMP-1, FLOW-01..04, FLOW-SUMMARY, FLOW-REPORT, QA-01, PERF-01.",
-      "resolution": "Пользователь останавливает bootRun на время gradle-волны (одна собранная просьба, см. FINALIZATION OVERRIDE §7.3). До этого — брать bootRun-safe задачи (docs, live-QA read-only).",
-      "external": true,
-      "blocksCoreFlow": true
-    }
-  ],
+  "nextTaskId": "PROC-07",
+  "$nextTaskNote": "BLK-BOOTRUN СНЯТ (DEC-007, пользователь остановил :8080). FE-CMP-1 DONE этим тиком (R0.173: мёртвый мульти-дизайн-движок вырезан — settings design-ось, header #design-toggle+скрипт, window.__design, dead SIGNATURES base.css editorial/linear/swiss/stripe/claude, i-shapes orphan, #design-pref-control CSS, :root Lora/Inter→Newsreader/Space Grotesk, ?v tokens 64→65 base 97→98 app.js 65→66; TemplateFragmentContractTest переписан+зелёный; design-token-audit CLEAN). Собранный вопрос отвечен: DEC-003=B (wide + правый рельс), DEC-006=A (инверсия клиентом), DEC-007 BLK снят. Разблокированная gradle-волна по приоритету P0→P1: PROC-07 (P0, wide-layout B) → FLOW-01/02/03 (P1 бэкенд, Flyway V16+) → FLOW-04-server → FLOW-SUMMARY/REPORT → QA-01 → PERF-01 → PERF-02(b) → UX-13 (DEC-006 A). bootRun ДЕРЖИМ ОСТАНОВЛЕННЫМ на всю волну (каждый тик = gradle, иначе wedge); live-QA консолидированно в конце. ScheduleWakeup не звать (fixed-cron).",
+  "activeBlockers": [],
+  "$resolvedBlockers": "BLK-BOOTRUN снят 2026-07-15 (пользователь остановил :8080, DEC-007). Gradle-волна разрешена; bootRun держим ОСТАНОВЛЕННЫМ на всю волну (иначе следующий gradle-тик снова wedge). Консолидированная live-QA — в конце волны, когда bootRun вернётся.",
   "gates": {
     "$comment": "Release-gates финального прохода (Раздел 9 FINAL-плана). FINALIZED только при полном pass.",
     "cleanBuild": false,
@@ -65,23 +58,23 @@
       "evidence": "R0.166"
     },
     {
-      "id": "PROC-07", "priority": "P0", "category": "design", "status": "BLOCKED", "needsGradle": true,
-      "title": "Сверить и привести в соответствие wide-layout (контракт vs реальность)",
-      "surface": ["tokens.css", "base.css", "design/mockups/DESIGN.md", "DESIGN.md"],
-      "acceptance": "Одна каноническая wide-модель, документация = production, пространство осмысленно (нет симметричных пустот).",
-      "blocker": "4-стороннее расхождение (см. DEC-003): current CSS = центрированные узкие колонки с пустотами (banned анти-паттерн) vs mockups DESIGN.md = full-width+правый рельс vs root DESIGN.md = max-width:none vs deliberate user-choice 'full-width prose 259ch'. Выбор модели меняет визуальную идентичность и КОНФЛИКТУЕТ с осознанным решением пользователя → нужен один собранный вопрос. Impl также needsGradle.",
+      "id": "PROC-07", "priority": "P0", "category": "design", "status": "OPEN", "needsGradle": true,
+      "title": "Wide-layout модель B: full-width + содержательный правый рельс",
+      "surface": ["tokens.css", "base.css", "focus-training.html", "result.html", "TemplateFragmentContractTest"],
+      "acceptance": "Модель B (DEC-003): убрать центрированные-узкие-колонки (.ed-page max-width 1280 / .focus-training 960 → full-width edge-to-edge); добавить .focus-aside правый рельс ≥1080px (сессия/хоткеи/мета; на result — 'разбор глубже'); проза 66ch ВНУТРИ зоны; документация = production. Live-QA на 1440/1728/1920/2560 обе темы.",
+      "unblocked": "DEC-003 решён = B (2026-07-15); BLK-BOOTRUN снят (DEC-007). Следующий P0 после FE-CMP-1.",
       "decision": "DEC-003"
     },
     {
-      "id": "FE-CMP-1", "priority": "P0", "category": "cleanup", "status": "BLOCKED", "needsGradle": true,
+      "id": "FE-CMP-1", "priority": "P0", "category": "cleanup", "status": "DONE", "needsGradle": true,
       "title": "Завершить 'полную замену': удалить мёртвую ось дизайна",
       "surface": ["settings.html", "fragments/header.html", "base.css", "fragments/head.html", "TemplateFragmentContractTest"],
       "acceptance": "settings НЕ показывает 11 кнопок дизайна (ось убрана); #design-toggle+его inline-скрипт удалены из header; dead SIGNATURE-блоки (editorial/swiss/linear/stripe/claude) вырезаны из base.css; THEME_COLORS 11→1 в head.html; ?v tokens+base бампнуты (закрывает CACHE-1); TemplateFragmentContractTest обновлён и зелёный.",
-      "blocker": "BLK-BOOTRUN — правит файлы, пиннящиеся TemplateFragmentContractTest → нужен ./gradlew test при остановленном bootRun.",
-      "notes": "designs-срез: settings перечисляет 11, DESIGNS=['instrument'] → 10 мёртвых кнопок (CMP-1 blocking UX-defect). Мержит старые CMP-1+CACHE-1+CLEAN-01(design-часть). A11Y-01 (R0.170) выявил: мёртвый #design-toggle в шапке был фокусируемым/озвученным контролом на каждой странице → УЖЕ смягчено (inline-скрипт header.html держит его hidden при 1 дизайне, EV-A11Y-001). Остаётся: полное удаление узла+скрипта #design-toggle + settings design-ось (data-design-pref, ещё живая a11y-surface) + THEME_COLORS + SIGNATURE base.css + ?v bump — под BLK-BOOTRUN. Прим.: TemplateFragmentContractTest 0 ссылок на design/toggle → сам тест удаление не пиннит, но settings-ось+?v требуют прогона теста при остановленном bootRun."
+      "resolution": "DONE R0.173 (EV-CMP-001): удалены (a) settings design-ось (11 кнопок data-design-pref); (b) header #design-toggle + его inline-скрипт + i-shapes orphan-символ; (c) head.html window.__design/DESIGNS/readDesign/setDesign, THEME_COLORS 11→1; (d) app.js design seg-control wiring; (e) base.css SIGNATURES editorial/linear/swiss/stripe/claude + #design-pref-control CSS; (f) tokens.css :root шрифты Lora/Inter→Newsreader/Space Grotesk (закрывает PERF-02(a2)-хвост). ?v: tokens 64→65, base 97→98, app.js 65→66 (все 3 шаблона) — закрывает CACHE-1. TemplateFragmentContractTest: tokensCssDefinesDefaultDesignAndSwitchableRoster переписан→tokensCssDefinesSingleInstrumentDesign (ассертит instrument + doesNotContain 10 удалённых); BUILD SUCCESSFUL все 20 методов зелёные. design-token-audit.py CLEAN (46 пар instrument, hard-fails=0). 0 orphan-ссылок (grep). Удаление dead-CSS визуально-инертно (scoped под data-design=X, не матчились на instrument-SSR). Закрывает старые CMP-1+CACHE-1+CLEAN-01(design). Live-QA /settings appearance + header — консолидированно в конце волны (bootRun off).",
+      "evidence": "EV-CMP-001"
     },
     {
-      "id": "FLOW-01", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
+      "id": "FLOW-01", "priority": "P1", "category": "flow", "status": "OPEN", "needsGradle": true,
       "title": "Pause/resume активной сессии",
       "surface": ["quiz-persistence/db/migration", "HttpSessionStateService", "InterviewMvcController", "focus-training.html", "app.js"],
       "acceptance": "Явный pause (сохранить+очистить) и resume приостановленной сессии; UX 'есть незавершённая сессия — продолжить?'; кнопка Пауза рядом с Завершить; только сессионные режимы.",
@@ -89,7 +82,7 @@
       "blocker": "BLK-BOOTRUN (миграция V16 + endpoints + тесты)."
     },
     {
-      "id": "FLOW-02", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
+      "id": "FLOW-02", "priority": "P1", "category": "flow", "status": "OPEN", "needsGradle": true,
       "title": "Idempotent submit + защита от двойного POST",
       "surface": ["InterviewService", "InterviewSessionSupport", "app.js"],
       "acceptance": "Повторный POST того же ответа не двигает SM-2 дважды и не инкрементит index/счёт дважды; server-side dedup/answered-guard; PRG; клиентский submit-once сохранён.",
@@ -97,7 +90,7 @@
       "blocker": "BLK-BOOTRUN."
     },
     {
-      "id": "FLOW-03", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
+      "id": "FLOW-03", "priority": "P1", "category": "flow", "status": "OPEN", "needsGradle": true,
       "title": "'Не знаю' как отдельный outcome (UNKNOWN/SKIPPED)",
       "surface": ["SpacedRepetitionService", "ReviewResult", "SubmitAnswerRequest", "AnswerRecord", "focus-training.html", "session-summary.html"],
       "acceptance": "Domain-исход UNKNOWN (ReviewResult + AnswerRecord); submit без optionId (sentinel); маппинг UNKNOWN→SM-2 (lapse/reset, отличный от wrong педагогически); отражение в summary (unknownCount).",
@@ -105,7 +98,7 @@
       "blocker": "BLK-BOOTRUN."
     },
     {
-      "id": "FLOW-04", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
+      "id": "FLOW-04", "priority": "P1", "category": "flow", "status": "OPEN", "needsGradle": true,
       "title": "Recoverable expired/offline/error состояния",
       "surface": ["app.js", "error.html", "focus-training.html", "GlobalExceptionHandler"],
       "acceptance": "Истёкшая сессия/offline/ошибка сабмита → понятный recoverable-стейт ('сохранено?/повторить'), не тупик; см. UX-11/UX-09.",
@@ -114,7 +107,7 @@
       "progress": "Клиентский слайс (offline/error submit recovery) VERIFIED-CLEAN R0.171 (EV-FLOW-004): live-QA под network-emulation Offline — обе error-ветки handleSubmit recoverable (кнопка re-enabled, actionable role=alert, focus-return WCAG 2.4.3, resultShown:false, SM-2 не пишется offline). Не тупик. Серверная часть (dedicated expired-session resume + autosave) — BLK-BOOTRUN, пересекается с FLOW-01."
     },
     {
-      "id": "FLOW-SUMMARY", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
+      "id": "FLOW-SUMMARY", "priority": "P1", "category": "flow", "status": "OPEN", "needsGradle": true,
       "title": "Actionable session summary (UX-04/UX-15)",
       "surface": ["SessionSummaryService", "SessionSummary", "MvcModelAttributeMapper", "session-summary.html"],
       "acceptance": "Единый понятный вывод ('80% · хороший результат / N вопросов требуют разбора'); поля unknownCount/dueCount/typed nextActions в SessionSummary; следующий короткий план.",
@@ -122,7 +115,7 @@
       "blocker": "BLK-BOOTRUN."
     },
     {
-      "id": "FLOW-REPORT", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
+      "id": "FLOW-REPORT", "priority": "P1", "category": "flow", "status": "OPEN", "needsGradle": true,
       "title": "Question issue reporting (UX-21)",
       "surface": ["quiz-persistence/db/migration", "InterviewMvcController/новый контроллер", "focus-training.html", "result.html", "app.js"],
       "acceptance": "Миграция V16/V17 таблица question_issue (question_id FK, reason/category, comment, created_at, status); POST-endpoint; DTO+репозиторий; UI-триггер 'Сообщить о проблеме' на вопросе/результате.",
@@ -130,7 +123,7 @@
       "blocker": "BLK-BOOTRUN."
     },
     {
-      "id": "QA-01", "priority": "P1", "category": "qa", "status": "BLOCKED", "needsGradle": true,
+      "id": "QA-01", "priority": "P1", "category": "qa", "status": "OPEN", "needsGradle": true,
       "title": "Детерминированный QA profile/fixtures",
       "surface": ["application.yml", "application-qa.yml (новый)", "Clock-bean", "McqJsonLoader/фикстуры"],
       "acceptance": "Профиль 'qa' с фиксированным Clock, известной сессией/юзером, предсказуемым набором due/learned/new для воспроизводимого browser-QA.",
@@ -138,7 +131,7 @@
       "blocker": "BLK-BOOTRUN."
     },
     {
-      "id": "PERF-01", "priority": "P1", "category": "perf", "status": "BLOCKED", "needsGradle": true,
+      "id": "PERF-01", "priority": "P1", "category": "perf", "status": "OPEN", "needsGradle": true,
       "title": "Автоматический/проверяемый cache-busting (PROC-16)",
       "surface": ["fragments/head.html", "fragments/scripts (новый)", "app.js consumers", "TemplateFragmentContractTest"],
       "acceptance": "app.js версия single-sourced (вынести подключение в общий фрагмент как CSS в head.html) — сейчас v=65 в 3 шаблонах (focus-training/result/settings), латентный drift-риск; либо автоматический fingerprint.",
@@ -176,7 +169,7 @@
       "acceptance": "день/дня/дней считается server-side (или единым util), не дублируется в 2 JS."
     },
     {
-      "id": "UX-13", "priority": "P2", "category": "ui", "status": "BLOCKED", "needsGradle": false,
+      "id": "UX-13", "priority": "P2", "category": "ui", "status": "OPEN", "needsGradle": false,
       "title": "Прогрессивный разбор: 'минимум' vs 'глубже'",
       "surface": ["result.html", "focus-training.html", "post-answer JS"],
       "acceptance": "Вердикт → краткое 'почему' → разбор по клику; согласовано с result.html no-JS.",
@@ -217,7 +210,7 @@
       "title": "Production-like performance budgets",
       "surface": ["Lighthouse", "head.html (fonts/CDN)"],
       "acceptance": "Замер в prod-like среде (не devtools-bootRun); бюджеты; prune Google Fonts до Newsreader/Space Grotesk/JetBrains.",
-      "progress": "Font-prune ЗАВЕРШЁН a+a2 (EV-PERF-001+EV-PERF-002): R0.168 удалены Geist/Geist Mono/Source Serif 4; R0.172 удалены Inter/Lora → ровно 3 семейства (Newsreader/Space Grotesk/JetBrains Mono = acceptance). Подход уточнён: :root переписывать не пришлось (instrument перебивает body → bodyUsesInter:false, live-verified), достаточно снять из URL; словесная :root-ссылка на Lora/Inter (inert, не грузится) → чистка в FE-CMP-1. 0 регресса, console чист, ?v не нужен. ОСТАТОК (единственный): (b) prod-like budget-замер требует не-devtools среды → BLK-BOOTRUN-adjacent."
+      "progress": "Font-prune ЗАВЕРШЁН a+a2 (EV-PERF-001+EV-PERF-002): R0.168 удалены Geist/Geist Mono/Source Serif 4; R0.172 удалены Inter/Lora → ровно 3 семейства (Newsreader/Space Grotesk/JetBrains Mono = acceptance). Подход уточнён: :root переписывать не пришлось (instrument перебивает body → bodyUsesInter:false, live-verified), достаточно снять из URL. :root-ссылка на Lora/Inter ЗАКРЫТА в FE-CMP-1 (R0.173: :root шрифты → Newsreader/Space Grotesk, ?v tokens 64→65). ОСТАТОК (единственный): (b) prod-like budget-замер требует не-devtools среды → делать в конце волны, когда bootRun вернётся."
     }
   ]
 }

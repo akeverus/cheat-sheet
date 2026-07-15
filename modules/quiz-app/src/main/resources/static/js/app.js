@@ -595,8 +595,7 @@
     // переключение мгновенное (флип data-* на <html>, без перезагрузки).
     wireSegControl('theme-pref-control', 'data-theme-pref', 'Тема оформления',
       () => window.__theme.pref(), (v) => window.__theme.set(v), 'themechange');
-    if (window.__design) wireSegControl('design-pref-control', 'data-design-pref', 'Дизайн',
-      () => window.__design.current(), (v) => window.__design.set(v), 'designchange');
+    // Ось «Дизайн» удалена (FE-CMP-1): единственный дизайн Instrument, window.__design нет.
     if (window.__layout) wireSegControl('layout-pref-control', 'data-layout-pref', 'Раскладка',
       () => window.__layout.current(), (v) => window.__layout.set(v), 'layoutchange');
     if (window.__motion) wireSegControl('motion-pref-control', 'data-motion-pref', 'Движение',
