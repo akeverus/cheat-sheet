@@ -281,3 +281,24 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 - **Полный `:quiz-domain:test` + `:quiz-app:test` → BUILD SUCCESSFUL** (Spring-контекст-тесты ок: Clock + QuestionStatsRepository — существующие бины InfrastructureConfig; ArchUnit зелёный).
 
 **NOT в SUMMARY-a (осознанно):** двойная поддержка recommendations(строки)+nextActions(типы) — намеренно, т.к. шаблонный своп на nextActions = SUMMARY-b; drift-риск снят единым источником (mistakes/topicResults). dueCount по topic-скоупу сессии (для group-сессий topic=null → глобальный due в important/onlyWrong-скоупе — приемлемо). **Deferred → SUMMARY-b (визуальная фаза):** рендер nextActions как actionable-кнопок (ссылки на /training?onlyWrong / ?topic=X / ?mode=review) + headline «{accuracy}% · {N} требуют разбора» + live-QA.
+
+---
+
+### EV-FLOW-REPORT-A — «Сообщить о проблеме» backend (2026-07-15, R0.178, `:quiz-domain` + `:quiz-persistence` + `:quiz-app` test)
+
+**FLOW-REPORT-a — DONE** (FLOW-REPORT разбит: REPORT-a backend — этот тик; REPORT-b UI-триггер/модалка — визуальная фаза). Шестой бэкенд-слайс bootRun-OFF волны. Полный вертикальный срез приёма жалоб на вопросы, чистый Testcontainers/Mockito (UI-триггер = REPORT-b).
+
+**Слои:**
+- **V17__question_issue.sql** — таблица жалоб: `id BIGSERIAL PK`, `question_id BIGINT NOT NULL REFERENCES questions(id) ON DELETE CASCADE` (репорт бессмыслен без вопроса), `category`/`status TEXT`, `comment` nullable, `created_at TIMESTAMP`; индексы `idx_question_issue_question` (репорты вопроса) + `idx_question_issue_status` (сколько OPEN на разбор).
+- **quiz-domain** `QuestionIssue` record (id/questionId/category/comment/status/createdAt); `QuestionIssueCategory` enum (INCORRECT_ANSWER/TYPO/UNCLEAR/OUTDATED/OTHER, `fromString` ленивый: null/пусто/неизвестное → OTHER, чтобы репорт не терялся при рассинхроне фронт/бэкенд); `QuestionIssueStatus` enum (OPEN/RESOLVED/DISMISSED, при создании всегда OPEN — смена вручную, single-user).
+- **quiz-persistence** `QuestionIssueRepository` (JdbcTemplate): `save` через `INSERT … RETURNING id` (проверено — работает в Testcontainers PG16, в отличие от ON CONFLICT); `findByQuestionId` newest-first; `countByStatus`. + `question_issue` добавлена в TRUNCATE `AbstractPostgresRepositoryTest`.
+- **quiz-app** `QuestionIssueService` (feature/interview/service/report; inject repo + QuestionRepository + Clock): валидирует существование вопроса (иначе `QuestionNotFoundException`), нормализует blank-comment → null, `created_at` через Clock, статус OPEN. `IssueReportApiService` (usecase): парсит category через `fromString`, оборачивает `ReportIssueResponse`. `POST /api/report` (`@Valid @ModelAttribute ReportIssueRequest`: `@Positive questionId` + category-строка + `@Size(max=2000) comment`) в `InterviewApiController` — тот же security-паттерн, что у существующих POST /api/* (favorite/confidence), доп. конфиг не нужен.
+- **DTO** `ReportIssueRequest` (класс с валидацией, category как строка — парсится лениво на бэкенде) + `ReportIssueResponse` (record: success/issueId/questionId/category/status).
+
+**Verify (bootRun OFF, Docker UP):**
+- `QuestionIssueRepositoryTest` (Testcontainers, FK на seeded question id=1): save возвращает положительный id + round-trip (category/comment/status=OPEN/createdAt точно); null-comment; **newest-first** порядок findByQuestionId; countByStatus считает только совпадающий статус (OPEN=2, RESOLVED=0); empty для неизвестного вопроса ✅.
+- `QuestionIssueServiceTest` (Mockito, fixed Clock): report сохраняет + возвращает OPEN-запись с trimmed-comment + `save(…, clock.instant())`; blank-comment → null; вопрос отсутствует → `QuestionNotFoundException`, `save` never() ✅.
+- `IssueReportApiServiceTest` (Mockito): "outdated" → OUTDATED + 200/success/поля; "gibberish" → OTHER (ленивый fromString) ✅.
+- `InterviewApiControllerUnitTest` ctor обновлён (+IssueReportApiService). **Полный `:quiz-domain:test` + `:quiz-persistence:test` + `:quiz-app:test` → BUILD SUCCESSFUL** (Spring-контекст ок: новые бины QuestionIssueRepository/Service + usecase; V17 применяется Flyway в интеграционных тестах; ArchUnit зелёный — service/usecase не зависят от контроллеров).
+
+**NOT в REPORT-a (осознанно):** админ-просмотр/смена статуса жалоб (countByStatus/findByQuestionId уже есть как фундамент; UI-разбор вне scope тренажёра); rate-limiting репортов (single-user). **Deferred → REPORT-b (визуальная фаза):** кнопка «Сообщить о проблеме» на focus-training.html + result.html → модалка выбора категории + опц. комментарий → `fetch POST /api/report` с `_csrf`; toast-подтверждение; live-QA.

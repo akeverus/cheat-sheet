@@ -17,6 +17,7 @@ import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.feature.interview.usecase.AnswerApiService;
+import com.cheatsheet.quiz.feature.interview.usecase.IssueReportApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.NextQuestionApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.stats.StatsApiService;
 import java.util.List;
@@ -38,6 +39,7 @@ class InterviewApiControllerUnitTest {
     @Mock private FavoriteApiService favoriteApiService;
     @Mock private StreakApiService streakApiService;
     @Mock private StatsApiService statsApiService;
+    @Mock private IssueReportApiService issueReportApiService;
 
     private InterviewApiController controller;
 
@@ -50,6 +52,7 @@ class InterviewApiControllerUnitTest {
                 favoriteApiService,
                 streakApiService,
                 statsApiService,
+                issueReportApiService,
                 new ApiRequestMapper()
         );
     }

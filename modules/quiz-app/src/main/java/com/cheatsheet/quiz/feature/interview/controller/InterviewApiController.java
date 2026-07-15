@@ -1,10 +1,12 @@
 package com.cheatsheet.quiz.feature.interview.controller;
 
 import com.cheatsheet.quiz.api.dto.request.interview.QuestionIdRequest;
+import com.cheatsheet.quiz.api.dto.request.interview.ReportIssueRequest;
 import com.cheatsheet.quiz.api.dto.request.interview.SubmitAnswerRequest;
 import com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse;
 import com.cheatsheet.quiz.feature.interview.dto.response.progress.ConfidenceResponse;
 import com.cheatsheet.quiz.feature.interview.dto.response.progress.FavoriteResponse;
+import com.cheatsheet.quiz.feature.interview.dto.response.progress.ReportIssueResponse;
 import com.cheatsheet.quiz.feature.interview.dto.response.progress.InterviewStatsResponse;
 import com.cheatsheet.quiz.feature.interview.dto.response.progress.StreakResponse;
 import com.cheatsheet.quiz.feature.interview.dto.response.progress.TopicStatsResponse;
@@ -13,6 +15,7 @@ import com.cheatsheet.quiz.api.mapper.request.ApiRequestMapper;
 import com.cheatsheet.quiz.feature.interview.usecase.AnswerApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.ConfidenceApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.FavoriteApiService;
+import com.cheatsheet.quiz.feature.interview.usecase.IssueReportApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.NextQuestionApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.stats.StatsApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.stats.StreakApiService;
@@ -48,6 +51,7 @@ public class InterviewApiController {
     FavoriteApiService favoriteApiService;
     StreakApiService streakApiService;
     StatsApiService statsApiService;
+    IssueReportApiService issueReportApiService;
     ApiRequestMapper apiRequestMapper;
 
     @PostMapping("/api/answer")
@@ -126,6 +130,17 @@ public class InterviewApiController {
             @Valid @ModelAttribute QuestionIdRequest request
     ) {
         return favoriteApiService.toHttpResponse(request.getQuestionId());
+    }
+
+    @PostMapping("/api/report")
+    /**
+     * Регистрирует жалобу пользователя на вопрос (FLOW-REPORT / UX-21).
+     */
+    public ResponseEntity<ReportIssueResponse> reportIssue(
+            @Valid @ModelAttribute ReportIssueRequest request
+    ) {
+        return issueReportApiService.toHttpResponse(
+                request.getQuestionId(), request.getCategory(), request.getComment());
     }
 
 }
