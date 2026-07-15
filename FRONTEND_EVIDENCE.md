@@ -320,3 +320,23 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 - Оба класса → **BUILD SUCCESSFUL**.
 
 **Residual (осознанно):** истинный content-fingerprint (авто-хэш вместо ручного v=N) — вне scope PERF-01; ручной v=N в одном месте закрывает drift-риск при минимальном изменении. Отдельные v=N у `tokens.css`/`base.css` в `head.html` остаются независимыми (разные файлы, равенство не требуется). REPORT-b/остальные UI-слайсы, которым понадобится бамп app.js, правят его теперь в `fragments/scripts.html`.
+
+---
+
+### EV-QA-004 — детерминированный профиль `qa` (фикс. Clock + фикстуры due/learned/new) (2026-07-15, R0.180, `:quiz-app:test`)
+
+**QA-01 — DONE.** Восьмой бэкенд-слайс bootRun-OFF волны и **разблокировщик визуальной фазы**: даёт воспроизводимое окружение, чтобы live-QA (6 брейкпойнтов × 2 темы) сверялась с одинаковым состоянием от прогона к прогону. Полностью gradle-верифицируемо (профиль поднимается в `@SpringBootTest`), нулевой blind-visual риск.
+
+**Проблема:** browser-QA визуальной фазы бессмысленно сверять пиксели/счётчики, если «сегодня», набор «к повторению» и статистика плавают между запусками. До этого профилей было только `prod`/`test`; Clock = `systemUTC()` (недетерминирован).
+
+**Решение (3 файла + 1 строка):**
+- **`QaConfig`** (`@Profile("qa")`): бин `qaClock` `@Primary` = `Clock.fixed(app.qa.fixed-instant, UTC)` (дефолт `2026-07-15T12:00:00Z`). Перекрывает `InfrastructureConfig.clock()` по типу через `@Primary` (имя бина иное — `qaClock` vs `clock` — чтобы не поймать `BeanDefinitionOverrideException`: overriding отключён). В prod/dev не грузится.
+- **`QaFixtureRunner`** (`@Profile("qa")` `@Order(LOWEST_PRECEDENCE)`): `ApplicationRunner`, идёт ПОСЛЕ `StartupRunner` (которому добавлен `@Order(HIGHEST_PRECEDENCE)` — единственный раннер до сих пор, порядок сохранён). Владеет состоянием прогресса: `TRUNCATE review_state, daily_activity, user_topic_stats RESTART IDENTITY`, затем сеет первые `app.qa.due-fixtures` (=2) вопросов по id как **due** (`next_review_at = now-1d`, `last_result=WRONG`, rep=1) + следующие `app.qa.learned-fixtures` (=1) как **learned** (`now+10d`, `CORRECT`, rep=3), остальные остаются **new** (без строки). Все метки — из фиксированного Clock → набор идентичен между прогонами.
+- **`application-qa.yml`**: `app.qa.{fixed-instant,due-fixtures,learned-fixtures}` + `preload.startupPreload/fullWarmup=false` (быстрый предсказуемый старт). Datasource наследуется из базового `application.yml` (PostgreSQL :5432).
+- Активация: `SPRING_PROFILES_ACTIVE=qa ./gradlew bootRun`.
+
+**Verify (bootRun OFF, Docker UP → gradle безопасен):**
+- `QaProfileFixtureIntegrationTest` (`@ActiveProfiles({"test","qa"})` — TC datasource + qa Clock/фикстуры): `clock.instant()` == `2026-07-15T12:00Z` (@Primary qaClock реально перекрыл systemUTC); `COUNT(review_state WHERE next_review_at<=now)` == 2, `>now` == 1, new = total-3; `daily_activity`/`user_topic_stats` пусты ✅.
+- Регрессии: `NoAiModeStartupIntegrationTest` (StartupRunner `@Order` не сломал старт), `PublicEndpointsSmokeTest` (non-qa — дефолтный Clock без ambiguity), `LayeredArchitectureTest` (QaConfig в config-слое, QaFixtureRunner в infrastructure) — все зелёные.
+
+**Residual (осознанно):** «известная сессия/юзер» из acceptance — приложение single-user без user-колонок и без серверного стора сессий (HTTP-session in-memory), поэтому «юзер» уже единичен; детерминизм сессии обеспечивается фиксированным Clock + чистыми прогресс-таблицами (сессия стартует с предсказуемого нуля). Реальный корпус вопросов под `qa` = полный импорт (первые N по id детерминированы; при желании абсолютных id 1..N — включить `app.interview-reset-on-startup=true`, но это тяжёлый реимпорт каждого старта, вне scope). Фикстуры — минимальный репрезентативный набор; счётчики настраиваются через `app.qa.*` без изменения кода.

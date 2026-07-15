@@ -1,0 +1,19 @@
+# Профиль qa — детерминированное окружение для воспроизводимого browser-QA
+# (визуальная фаза finalization-раунда). Активировать явно:
+#   SPRING_PROFILES_ACTIVE=qa ./gradlew bootRun
+#
+# Наследует datasource из базового application.yml (PostgreSQL :5432). Отличия от
+# dev — фиксированный Clock (QaConfig) и детерминированные фикстуры due/learned/new
+# (QaFixtureRunner). Прогрев отключён, чтобы старт был быстрым и предсказуемым.
+app:
+  preload:
+    startupPreload: false
+    fullWarmup: false
+  qa:
+    # Фиксированный «сейчас» QA-окружения (UTC). Влияет на next_review_at,
+    # «сегодня» в статистике и все метки времени.
+    fixed-instant: "2026-07-15T12:00:00Z"
+    # Сколько вопросов пометить как «к повторению» (due) и «выучено» (learned).
+    # Остальные остаются новыми. Берутся первые (due+learned) вопросов по id.
+    due-fixtures: 2
+    learned-fixtures: 1

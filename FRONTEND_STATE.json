@@ -2,14 +2,14 @@
   "$comment": "ЕДИНСТВЕННЫЙ машиночитаемый источник статуса frontend FINALIZATION ROUND. Правила/фазы/гейты — в PLAN_FRONTEND.md. Развёрнутые задачи — в FRONTEND_BACKLOG.md. Решения — в FRONTEND_DECISIONS.md. Evidence — в FRONTEND_EVIDENCE.md. НЕ дублировать статус в PLAN_FRONTEND.md (§21 заморожен). Обновлять этот файл в конце КАЖДОГО тика (см. FINALIZATION OVERRIDE в PROMPT_PLAN_FRONTEND.md §7.6).",
   "round": "FINALIZATION",
   "roundStatus": "IN_PROGRESS",
-  "updated": "2026-07-15 R0.179",
+  "updated": "2026-07-15 R0.180",
   "canonicalDesign": "instrument",
   "designVariantCount": 1,
   "featureFreeze": true,
   "roundStatusModel": ["AUDITED", "IMPLEMENTED", "REGRESSION_PASS", "DEEP_PASS", "RELEASE_CANDIDATE", "FINALIZED"],
   "taskStatusValues": ["OPEN", "IN_PROGRESS", "BLOCKED", "DONE", "CLOSED"],
-  "nextTaskId": "QA-01",
-  "$nextTaskNote": "SEQUENCING (R0.179): волна при ОСТАНОВЛЕННОМ bootRun; сначала Testcontainers/gradle-верифицируемые P1-бэкенд-слайсы, ПОТОМ визуальная фаза. FLOW-02 DONE (R0.174). Разбиты на backend(DONE)+UI(deferred): FLOW-01 (01a R0.175), FLOW-03 (03a R0.176), FLOW-SUMMARY (SUMMARY-a R0.177), FLOW-REPORT (REPORT-a R0.178). PERF-01 DONE (R0.179, app.js single-sourced). FLOW-04-server ОТКЛОНЁН как backend-слайс: expired-session resume + autosave — UX/session-lifecycle-coupled, чистого чисто-бэкенд-среза нет, спекулятивный hot-path autosave = мёртвый код + риск на горячем пути → делать как UI-слайс в визуальной фазе. Следующий backend-тик — QA-01 (профиль 'qa' + фикс. Clock + предсказуемые фикстуры due/learned/new): полностью gradle-верифицируем (@SpringBootTest @ActiveProfiles(qa) boot+fixtures), нулевой blind-visual риск, И РАЗБЛОКИРУЕТ воспроизводимую browser-QA визуальной фазы. После QA-01 остаётся UX-05 (P2 серверная плюрализация) — последний чистый бэкенд-слайс; затем бэкенд-фаза закрыта → ПЕРЕХОД в визуальную фазу (bootRun ON). Визуальная фаза: PROC-07 (P0 wide-layout B) → UX-13 (DEC-006 A) → FLOW-01b + FLOW-03b + FLOW-SUMMARY-b + FLOW-REPORT-b + FLOW-04-UI баннеры/кнопки/модалки → PERF-02(b) → консолидированная live-QA всей волны → final gate → FINALIZED. Визуальные задачи (DoD = live-QA 6 брейкпойнтов × 2 темы) намеренно отложены на визуальную фазу (blind-авторинг = высокий rework-риск). ScheduleWakeup не звать (fixed-cron).",
+  "nextTaskId": "UX-05",
+  "$nextTaskNote": "SEQUENCING (R0.180): волна при ОСТАНОВЛЕННОМ bootRun; сначала Testcontainers/gradle-верифицируемые бэкенд-слайсы, ПОТОМ визуальная фаза. FLOW-02 DONE (R0.174). Разбиты на backend(DONE)+UI(deferred): FLOW-01 (01a R0.175), FLOW-03 (03a R0.176), FLOW-SUMMARY (SUMMARY-a R0.177), FLOW-REPORT (REPORT-a R0.178). PERF-01 DONE (R0.179, app.js single-sourced). QA-01 DONE (R0.180, профиль qa: фикс. Clock + фикстуры due/learned/new — РАЗБЛОКИРУЕТ воспроизводимую browser-QA визуальной фазы). FLOW-04-server ОТКЛОНЁН как backend-слайс (UX/session-lifecycle-coupled, спекулятивный hot-path autosave = мёртвый код) → UI-слайс визуальной фазы. Следующий backend-тик — UX-05 (P2 серверная плюрализация день/дня/дней в единый util вместо дубля в 2 JS): последний чистый gradle-верифицируемый бэкенд-слайс. После UX-05 бэкенд-фаза ЗАКРЫТА → ПЕРЕХОД в визуальную фазу (bootRun ON, активировать профиль qa). Визуальная фаза: PROC-07 (P0 wide-layout B) → UX-13 (DEC-006 A) → FLOW-01b + FLOW-03b + FLOW-SUMMARY-b + FLOW-REPORT-b + FLOW-04-UI баннеры/кнопки/модалки → PERF-02(b) → консолидированная live-QA всей волны (профиль qa даёт детерминированные due/learned/new) → final gate → FINALIZED. Визуальные задачи (DoD = live-QA 6 брейкпойнтов × 2 темы) намеренно отложены на визуальную фазу (blind-авторинг = высокий rework-риск). ScheduleWakeup не звать (fixed-cron).",
   "activeBlockers": [],
   "$resolvedBlockers": "BLK-BOOTRUN снят 2026-07-15 (пользователь остановил :8080, DEC-007). Gradle-волна разрешена; bootRun держим ОСТАНОВЛЕННЫМ на всю волну (иначе следующий gradle-тик снова wedge). Консолидированная live-QA — в конце волны, когда bootRun вернётся.",
   "gates": {
@@ -128,12 +128,13 @@
       "evidence": "EV-FLOW-REPORT-A"
     },
     {
-      "id": "QA-01", "priority": "P1", "category": "qa", "status": "OPEN", "needsGradle": true,
+      "id": "QA-01", "priority": "P1", "category": "qa", "status": "DONE", "needsGradle": true, "needsGraphRebuild": true,
       "title": "Детерминированный QA profile/fixtures",
-      "surface": ["application.yml", "application-qa.yml (новый)", "Clock-bean", "McqJsonLoader/фикстуры"],
+      "surface": ["application-qa.yml (новый)", "QaConfig.java (новый)", "QaFixtureRunner.java (новый)", "StartupRunner (@Order)"],
       "acceptance": "Профиль 'qa' с фиксированным Clock, известной сессией/юзером, предсказуемым набором due/learned/new для воспроизводимого browser-QA.",
-      "backendState": "ABSENT (grep @Profile→0; только prod/test; Clock уже инъектируемый — облегчает).",
-      "blocker": "BLK-BOOTRUN."
+      "backendState": "PRESENT: профиль 'qa' даёт фикс. Clock (@Primary) + детерминированные фикстуры due=2/learned=1/rest-new.",
+      "resolution": "DONE R0.180 (EV-QA-004): (1) QaConfig @Profile(qa) → фиксированный Clock qaClock @Primary (перекрывает InfrastructureConfig.clock=systemUTC), момент из app.qa.fixed-instant (дефолт 2026-07-15T12:00Z). (2) QaFixtureRunner @Profile(qa) @Order(LOWEST) — после StartupRunner (@Order(HIGHEST) добавлен): TRUNCATE review_state/daily_activity/user_topic_stats, затем сеет первые app.qa.due-fixtures вопросов как due (next_review_at=now-1d, WRONG) + следующие learned-fixtures как learned (now+10d, CORRECT×3), остальные new. (3) application-qa.yml — knobs + preload off. Активация: SPRING_PROFILES_ACTIVE=qa. Verify: QaProfileFixtureIntegrationTest (@ActiveProfiles test+qa) — Clock зафиксирован, due=2/learned=1/new=total-3, progress-таблицы пусты; NoAiModeStartupIntegrationTest + PublicEndpointsSmokeTest (non-qa, дефолтный Clock) + LayeredArchitectureTest зелёные. bootRun держался OFF.",
+      "evidence": "EV-QA-004"
     },
     {
       "id": "PERF-01", "priority": "P1", "category": "perf", "status": "DONE", "needsGradle": true, "needsGraphRebuild": true,
