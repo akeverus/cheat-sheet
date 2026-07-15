@@ -8,8 +8,8 @@
   "featureFreeze": true,
   "roundStatusModel": ["AUDITED", "IMPLEMENTED", "REGRESSION_PASS", "DEEP_PASS", "RELEASE_CANDIDATE", "FINALIZED"],
   "taskStatusValues": ["OPEN", "IN_PROGRESS", "BLOCKED", "DONE", "CLOSED"],
-  "nextTaskId": "PERF-02",
-  "$nextTaskNote": "bootRun-safe очередь почти исчерпана (R0.171). Последний независимый bootRun-safe пункт — PERF-02(a2): полный prune Google Fonts до 3 (убрать Inter/Lora) + унификация :root font-stacks tokens.css под instrument (предпочтительно было спарить с FE-CMP-1, но берётся независимо, раз большая работа заблокирована). После него ВСЁ гейтится собранным вопросом: BLK-BOOTRUN (остановить :8080 → FE-CMP-1 + FLOW-01/02/03 + FLOW-SUMMARY/REPORT + QA-01 + PERF-01 + FLOW-04-server) ЛИБО DEC-003 (wide-layout) ЛИБО DEC-006 (UX-13). ScheduleWakeup не звать (fixed-cron).",
+  "nextTaskId": "FE-CMP-1",
+  "$nextTaskNote": "bootRun-safe независимая очередь ИСЧЕРПАНА (R0.172: PERF-02 font-prune завершён a+a2). ВСЯ оставшаяся работа гейтится собранным вопросом — ждём ответа пользователя: (1) BLK-BOOTRUN — остановить :8080 → разблокирует FE-CMP-1 + FLOW-01/02/03 + FLOW-SUMMARY/REPORT + QA-01 + PERF-01 + FLOW-04-server + PERF-02(b) budget-замер; (2) DEC-003 — wide-layout A/B; (3) DEC-006 — UX-13 разбор C/A/B. FE-CMP-1 = первое разблокируемое (P0). До ответа продуктивной bootRun-safe работы НЕТ; ScheduleWakeup не звать (fixed-cron).",
   "activeBlockers": [
     {
       "id": "BLK-BOOTRUN",
@@ -217,7 +217,7 @@
       "title": "Production-like performance budgets",
       "surface": ["Lighthouse", "head.html (fonts/CDN)"],
       "acceptance": "Замер в prod-like среде (не devtools-bootRun); бюджеты; prune Google Fonts до Newsreader/Space Grotesk/JetBrains.",
-      "progress": "Font-prune часть-a DONE R0.168 (EV-PERF-001): удалены Geist/Geist Mono/Source Serif 4 из head.html (0 ссылок, впустую грузились); live-verified Network+document.fonts+computed, 0 регресса, console чист, ?v-бамп не нужен (text-only template). ОСТАТОК: (a2) полный prune до 3 (убрать Inter/Lora) требует переписать :root font-stacks tokens.css — deliberate editorial-фолбэк, пара к FE-CMP-1; (b) prod-like budget-замер требует не-devtools среды → BLK-BOOTRUN-adjacent."
+      "progress": "Font-prune ЗАВЕРШЁН a+a2 (EV-PERF-001+EV-PERF-002): R0.168 удалены Geist/Geist Mono/Source Serif 4; R0.172 удалены Inter/Lora → ровно 3 семейства (Newsreader/Space Grotesk/JetBrains Mono = acceptance). Подход уточнён: :root переписывать не пришлось (instrument перебивает body → bodyUsesInter:false, live-verified), достаточно снять из URL; словесная :root-ссылка на Lora/Inter (inert, не грузится) → чистка в FE-CMP-1. 0 регресса, console чист, ?v не нужен. ОСТАТОК (единственный): (b) prod-like budget-замер требует не-devtools среды → BLK-BOOTRUN-adjacent."
     }
   ]
 }

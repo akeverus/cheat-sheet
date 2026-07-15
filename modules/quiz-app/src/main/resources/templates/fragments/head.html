@@ -272,12 +272,14 @@
          пришёл быстрее (TCP-handshake идёт параллельно с парсингом HTML). -->
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    <!-- Загружаемые семейства (единственный дизайн — Instrument, DEC-002):
-         Newsreader — serif-display; Space Grotesk — UI/body; JetBrains Mono —
-         код/эйбрау + mono. Lora/Inter остаются inert-фолбэком :root (перебиваются
-         Instrument-токенами tokens.css, но подстраховывают non-instrument-путь).
-         Geist/Geist Mono/Source Serif 4 удалены (PERF-02: 0 ссылок после полной
-         замены на Instrument — грузились впустую). -->
+    <!-- Загружаемые семейства (единственный дизайн — Instrument, DEC-002) —
+         ровно 3: Newsreader (serif-display), Space Grotesk (UI/body),
+         JetBrains Mono (код/эйбрау + mono). Удалены из загрузки как не-рендерящиеся
+         ни на одном пути (Instrument-токены tokens.css перебивают :root):
+         Geist/Geist Mono/Source Serif 4 (R0.168) + Inter/Lora (R0.172, PERF-02(a2)).
+         :root ещё СЛОВЕСНО ссылается на Lora/Inter (inert editorial-фолбэк; теперь
+         не загружается → падает в system-ui/Georgia, но :root недостижим на
+         Instrument-пути). Финальная чистка :root-editorial-базы — FE-CMP-1. -->
     <!-- ВАРИАТИВНЫЕ оси wght (а не дискретные ступени): дизайны используют
          промежуточные «фирменные» веса — Linear 510/590, Notion 530/680,
          Swiss 520/650. На дискретных ступенях (…;500;600;700) они снапались к
@@ -291,8 +293,8 @@
          экрана (render-blocking <link> ждёт таймаута недоступного хоста). display=swap
          и так допускает FOUT — поведение консистентно. CSP script-src содержит
          'unsafe-inline' → инлайновый onload разрешён. <noscript> — фоллбэк для no-JS. -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&family=JetBrains+Mono:wght@400..600&family=Lora:ital,wght@0,400..700;1,400..700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&family=JetBrains+Mono:wght@400..600&family=Lora:ital,wght@0,400..700;1,400..700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet"></noscript>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400..600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400..600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet"></noscript>
     <!-- Двухслойная архитектура switchable-дизайнов:
          tokens.css — ВСЕ токены: дефолт :root = editorial + блоки
            html[data-design="X"] для linear/swiss/notion/mintlify/broadsheet

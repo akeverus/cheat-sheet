@@ -107,6 +107,16 @@
 - **(a2) полный prune до 3** (убрать Inter/Lora) требует переписать `:root` font-stacks tokens.css (81–82) — сейчас это inert editorial-фолбэк, перебиваемый instrument-блоком, но достижимый на non-instrument-пути. Трогает deliberate «editorial-базу :root» → пара к **FE-CMP-1** (editorial-remnant cleanup).
 - **(b) prod-like budget-замер** явно требует НЕ devtools-bootRun среды (unminified/devtools-overhead) → эффективно **BLK-BOOTRUN-adjacent** (нужна prod-профиль сборка).
 
+### EV-PERF-002 — font-prune (a2): до 3 семейств (2026-07-15, R0.172, chrome-devtools :8080)
+
+**PERF-02 font-prune ЗАВЕРШЁН (a+a2).** Из Google Fonts URL (link+noscript) убраны **Inter, Lora** → осталось ровно **3**: JetBrains Mono, Newsreader, Space Grotesk (= acceptance «prune до Newsreader/Space Grotesk/JetBrains»).
+- **Подход уточнён vs прогноз R0.168:** переписывать `:root` font-stacks НЕ пришлось. Instrument-токен `--font-family-body` (Space Grotesk) перебивает `:root`-фолбэк (Inter) на ВСЕХ элементах (root `data-design="instrument"`) → Inter/Lora не рендерятся ни на одном пути. Достаточно снять из URL. `:root` ещё словесно ссылается на Lora/Inter (inert, теперь не загружается → system-ui/Georgia; недостижим) — финальная чистка отнесена к FE-CMP-1 (:root editorial-база).
+- **Критичная safety-проверка (live):** `getComputedStyle(body).fontFamily = "Space Grotesk"…`, **`bodyUsesInter:false`**; hero=Newsreader, option=Space Grotesk, nav=JetBrains Mono — все рендерятся инструментными; 0 missing-glyph.
+- **Network (reload ignoreCache):** fonts-CSS = 3 семейства; woff2 качаются только используемые (JetBrains Mono ×2 / Newsreader / Space Grotesk). `document.fonts` = ровно [JetBrains Mono, Newsreader, Space Grotesk] — Inter/Lora отсутствуют.
+- **0 регресса, console чист. `?v`-бамп не нужен** (URL в SSR-шаблоне — text-only). Тема-инвариантно.
+
+**Остаток PERF-02 (единственный):** (b) prod-like budget-замер — требует не-devtools среды (BLK-BOOTRUN-adjacent). Font-prune часть закрыта полностью.
+
 *(append далее — вьюпорты 375/768/1280/1440/1728/1920/2560, обе темы; Lighthouse prod-like)*
 
 ---
