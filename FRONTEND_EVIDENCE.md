@@ -69,4 +69,30 @@
 
 *Тема переключается штатным `window.__theme.set()` (persisted-pref перебивает `emulate colorScheme`, нужен либо set, либо reload). Виджет-минимум для theme-QA: emulate dark + reload ИЛИ __theme.set('dark').*
 
-*(append далее — вьюпорты 375/768/1280/1440/1728/1920/2560, обе темы)*
+### EV-QA-002 — UX-02 terminal-state ↔ активный shell (2026-07-15, R0.168, chrome-devtools :8080, 1280×900)
+
+**UX-02 (terminal-состояния читаются как продолжение flow, не отдельный мини-сайт) — VERIFIED-CLEAN.** Empty-state форсирован `/?topic=zzz-nonexistent-topic-xyz` (GET, сессия не создаётся, без записей). Live-инспекция:
+- **Тот же shell:** `shellPresent:true`, `navPresent:true`, nav = «Фокус Аналитика Настройки», активная вкладка `aria-current` = «Фокус» (teal-underline) — идентичный masthead+nav тренировочного flow, не изолированная страница.
+- **Full-width, не плавающий мини-сайт:** карта `.empty.empty-card-inner` `max-width:none`, ширина 1164px (край-в-край панель), `margin-top:64px`.
+- **Панель = border, не elevated card (Instrument-этос):** `box-shadow:none`; `border:1px solid`; `radius:16px`; `bg oklch(0.958 0.004 262)` (bg-secondary) чуть отличается от pageBg `oklch(0.985 0.003 262)` — subtle-демаркация региона без «приподнятости». Согласуется с мандатом Instrument «full-border ряды, не карточки-с-тенью».
+- **Интегрированная типографика + CTA:** заголовок «Сейчас нет вопросов» (Newsreader serif), один primary `.next-btn` «Открыть настройки» (см. UX-01). 
+- **Вывод:** terminal-состояние рендерится ВНУТРИ активного shell, full-width, border-based — дефект «читается как отдельный мини-сайт» не воспроизводится (был против мокапа/старого дизайна). Instrument-порт уже унифицировал terminal-состояния с shell.
+
+---
+
+## Performance / delivery
+
+### EV-PERF-001 — prune Google Fonts (2026-07-15, R0.168, chrome-devtools :8080)
+
+**PERF-02 (font-prune, часть a) — инкремент DONE + verified.** Из Google Fonts `<link>` + `<noscript>` в `head.html` удалены **Geist, Geist Mono, Source Serif 4** — грузились впустую (0 ссылок: ни `--font-family-*` в tokens.css, ни fallback-стеки, ни class-хуки; Source Serif 4 — тяжёлый variable-шрифт с ital+opsz осями). Осталось 5 семейств: Inter, JetBrains Mono, Lora, Newsreader, Space Grotesk.
+- **?v-бамп НЕ нужен** — правка URL в шаблоне = text-only template change (head.html рендерится SSR каждый запрос; сам URL — cache-key Google Fonts). Подтверждено: `tokens.css?v=64`/`base.css?v=97` без изменений в Network.
+- **Live-Network (reload ignoreCache):** fonts-CSS запрос содержит ровно 5 семейств (0 Geist/Geist Mono/Source Serif). Реально скачанные woff2 — только Newsreader + Space Grotesk + JetBrains Mono ×2 (используемые); Inter/Lora не качаются (перебиты instrument-токенами).
+- **`document.fonts` = [Inter, JetBrains Mono, Lora, Newsreader, Space Grotesk]** — 3 удалённых семейства отсутствуют в @font-face полностью.
+- **0 регресса:** computed hero=`Newsreader…`, mono=`JetBrains Mono…` (как до prune); console чист (0 error/warn).
+- **Тема-инвариантно:** tokens.css не переопределяет `--font-family-*` в `:root[data-theme=dark]` (только цвета) → font-delivery одинаков в обеих темах, light-проверки достаточно.
+
+**Остаток PERF-02 (не закрыт):**
+- **(a2) полный prune до 3** (убрать Inter/Lora) требует переписать `:root` font-stacks tokens.css (81–82) — сейчас это inert editorial-фолбэк, перебиваемый instrument-блоком, но достижимый на non-instrument-пути. Трогает deliberate «editorial-базу :root» → пара к **FE-CMP-1** (editorial-remnant cleanup).
+- **(b) prod-like budget-замер** явно требует НЕ devtools-bootRun среды (unminified/devtools-overhead) → эффективно **BLK-BOOTRUN-adjacent** (нужна prod-профиль сборка).
+
+*(append далее — вьюпорты 375/768/1280/1440/1728/1920/2560, обе темы; Lighthouse prod-like)*
