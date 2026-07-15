@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -584,8 +586,9 @@ class TemplateFragmentContractTest {
         // Cache-busting контракт (HEAD-1/APP-7/FT-17/SET-12): ассет, подключённый
         // из НЕСКОЛЬКИХ шаблонов через @{/js|css/NAME(v=N)}, обязан нести ОДНУ версию
         // во всех точках. Дрейф (result.html app.js=v=64, focus=v=63) = устаревший JS
-        // на части страниц после правки. app.js грузится 3 страницами (focus/result/
-        // settings) — самый дрейфо-опасный. CSS — единый head.html (per-file версии
+        // на части страниц после правки. PERF-01: app.js вынесен в единый фрагмент
+        // fragments/scripts.html (focus/result/settings подключают через th:replace),
+        // поэтому версия структурно одна. CSS — единый head.html (per-file версии
         // независимы: tokens и base не обязаны быть равны). App не нужен.
         Path templatesDir = new ClassPathResource("templates").getFile().toPath();
         Pattern assetPattern = Pattern.compile("/(?:js|css)/([a-zA-Z._-]+\\.(?:js|css))\\(v=(\\d+)\\)");
@@ -609,5 +612,32 @@ class TemplateFragmentContractTest {
                 .as("ассет '%s' должен нести одну версию во всех шаблонах, найдено: %s", e.getKey(), e.getValue())
                 .hasSize(1);
         }
+    }
+
+    @Test
+    void appJsIsSingleSourcedInFragment() throws IOException {
+        // PERF-01: тег <script src="/js/app.js(v=N)"> должен встречаться в дереве шаблонов
+        // РОВНО один раз — в fragments/scripts.html; страницы подключают его через
+        // th:replace="~{fragments/scripts :: app-script}". Это делает дрейф версии
+        // структурно невозможным (нет второй точки правки). Инлайн-возврат тега в любую
+        // страницу «отвяжет» версию — ассерт ловит регресс.
+        Path templatesDir = new ClassPathResource("templates").getFile().toPath();
+        Pattern includePattern = Pattern.compile("/js/app\\.js\\(v=\\d+\\)");
+
+        List<Path> filesWithInclude = new ArrayList<>();
+        try (Stream<Path> walk = Files.walk(templatesDir)) {
+            for (Path p : (Iterable<Path>) walk.filter(p -> p.toString().endsWith(".html")).sorted()::iterator) {
+                String html = new String(Files.readAllBytes(p), StandardCharsets.UTF_8);
+                if (includePattern.matcher(html).find()) {
+                    filesWithInclude.add(templatesDir.relativize(p));
+                }
+            }
+        }
+
+        assertThat(filesWithInclude)
+            .as("app.js должен подключаться из единственного файла (fragments/scripts.html), найдено: %s", filesWithInclude)
+            .hasSize(1);
+        assertThat(filesWithInclude.get(0).toString().replace('\\', '/'))
+            .isEqualTo("fragments/scripts.html");
     }
 }

@@ -2,14 +2,14 @@
   "$comment": "ЕДИНСТВЕННЫЙ машиночитаемый источник статуса frontend FINALIZATION ROUND. Правила/фазы/гейты — в PLAN_FRONTEND.md. Развёрнутые задачи — в FRONTEND_BACKLOG.md. Решения — в FRONTEND_DECISIONS.md. Evidence — в FRONTEND_EVIDENCE.md. НЕ дублировать статус в PLAN_FRONTEND.md (§21 заморожен). Обновлять этот файл в конце КАЖДОГО тика (см. FINALIZATION OVERRIDE в PROMPT_PLAN_FRONTEND.md §7.6).",
   "round": "FINALIZATION",
   "roundStatus": "IN_PROGRESS",
-  "updated": "2026-07-15",
+  "updated": "2026-07-15 R0.179",
   "canonicalDesign": "instrument",
   "designVariantCount": 1,
   "featureFreeze": true,
   "roundStatusModel": ["AUDITED", "IMPLEMENTED", "REGRESSION_PASS", "DEEP_PASS", "RELEASE_CANDIDATE", "FINALIZED"],
   "taskStatusValues": ["OPEN", "IN_PROGRESS", "BLOCKED", "DONE", "CLOSED"],
-  "nextTaskId": "FLOW-04",
-  "$nextTaskNote": "SEQUENCING (R0.178): волна при ОСТАНОВЛЕННОМ bootRun; сначала Testcontainers-верифицируемые P1-бэкенд-слайсы, ПОТОМ визуальная фаза. FLOW-02 DONE (R0.174). Разбиты на backend(DONE)+UI(deferred): FLOW-01 (01a R0.175), FLOW-03 (03a R0.176), FLOW-SUMMARY (SUMMARY-a R0.177), FLOW-REPORT (REPORT-a R0.178). Backend-очередь почти исчерпана. Следующий тик — оценить FLOW-04-server (expired-session resume + autosave; клиентская recovery уже VERIFIED R0.171): если есть чистый backend-слайс (autosave активной сессии в БД, переиспользуя paused_session-инфру) — сделать его; ИНАЧЕ бэкенд-фаза закрыта → ПЕРЕХОД в визуальную фазу (bootRun ON). Визуальная фаза: PROC-07 (P0 wide-layout B) → UX-13 (DEC-006 A) → FLOW-01b + FLOW-03b + FLOW-SUMMARY-b + FLOW-REPORT-b баннеры/кнопки/модалки → PERF-02(b) → консолидированная live-QA всей волны → final gate → FINALIZED. PROC-07/UX-13 визуальные (DoD = live-QA 6 брейкпойнтов × 2 темы) намеренно отложены на визуальную фазу (blind-авторинг = высокий rework-риск). ScheduleWakeup не звать (fixed-cron).",
+  "nextTaskId": "QA-01",
+  "$nextTaskNote": "SEQUENCING (R0.179): волна при ОСТАНОВЛЕННОМ bootRun; сначала Testcontainers/gradle-верифицируемые P1-бэкенд-слайсы, ПОТОМ визуальная фаза. FLOW-02 DONE (R0.174). Разбиты на backend(DONE)+UI(deferred): FLOW-01 (01a R0.175), FLOW-03 (03a R0.176), FLOW-SUMMARY (SUMMARY-a R0.177), FLOW-REPORT (REPORT-a R0.178). PERF-01 DONE (R0.179, app.js single-sourced). FLOW-04-server ОТКЛОНЁН как backend-слайс: expired-session resume + autosave — UX/session-lifecycle-coupled, чистого чисто-бэкенд-среза нет, спекулятивный hot-path autosave = мёртвый код + риск на горячем пути → делать как UI-слайс в визуальной фазе. Следующий backend-тик — QA-01 (профиль 'qa' + фикс. Clock + предсказуемые фикстуры due/learned/new): полностью gradle-верифицируем (@SpringBootTest @ActiveProfiles(qa) boot+fixtures), нулевой blind-visual риск, И РАЗБЛОКИРУЕТ воспроизводимую browser-QA визуальной фазы. После QA-01 остаётся UX-05 (P2 серверная плюрализация) — последний чистый бэкенд-слайс; затем бэкенд-фаза закрыта → ПЕРЕХОД в визуальную фазу (bootRun ON). Визуальная фаза: PROC-07 (P0 wide-layout B) → UX-13 (DEC-006 A) → FLOW-01b + FLOW-03b + FLOW-SUMMARY-b + FLOW-REPORT-b + FLOW-04-UI баннеры/кнопки/модалки → PERF-02(b) → консолидированная live-QA всей волны → final gate → FINALIZED. Визуальные задачи (DoD = live-QA 6 брейкпойнтов × 2 темы) намеренно отложены на визуальную фазу (blind-авторинг = высокий rework-риск). ScheduleWakeup не звать (fixed-cron).",
   "activeBlockers": [],
   "$resolvedBlockers": "BLK-BOOTRUN снят 2026-07-15 (пользователь остановил :8080, DEC-007). Gradle-волна разрешена; bootRun держим ОСТАНОВЛЕННЫМ на всю волну (иначе следующий gradle-тик снова wedge). Консолидированная live-QA — в конце волны, когда bootRun вернётся.",
   "gates": {
@@ -136,12 +136,13 @@
       "blocker": "BLK-BOOTRUN."
     },
     {
-      "id": "PERF-01", "priority": "P1", "category": "perf", "status": "OPEN", "needsGradle": true,
+      "id": "PERF-01", "priority": "P1", "category": "perf", "status": "DONE", "needsGradle": true, "needsGraphRebuild": true,
       "title": "Автоматический/проверяемый cache-busting (PROC-16)",
-      "surface": ["fragments/head.html", "fragments/scripts (новый)", "app.js consumers", "TemplateFragmentContractTest"],
-      "acceptance": "app.js версия single-sourced (вынести подключение в общий фрагмент как CSS в head.html) — сейчас v=65 в 3 шаблонах (focus-training/result/settings), латентный drift-риск; либо автоматический fingerprint.",
-      "backendState": "js-срез: css single-sourced ✓, app.js НЕ single-sourced (3 места).",
-      "blocker": "BLK-BOOTRUN (contract-test)."
+      "surface": ["fragments/scripts.html (новый)", "focus-training.html", "result.html", "settings.html", "TemplateFragmentContractTest"],
+      "acceptance": "app.js версия single-sourced (вынести подключение в общий фрагмент как CSS в head.html) — сейчас v=66 в 3 шаблонах (focus-training/result/settings), латентный drift-риск; либо автоматический fingerprint.",
+      "backendState": "js-срез: css single-sourced ✓, app.js single-sourced ✓ (fragments/scripts.html).",
+      "resolution": "DONE R0.179 (EV-PERF-003): создан fragments/scripts.html с th:fragment=\"app-script\" (единственная точка v=66); 3 инлайн-тега <script src=/js/app.js(v=66)> в focus-training/result/settings заменены на th:replace=~{fragments/scripts :: app-script}. Дрейф версии структурно невозможен. Новый ассерт appJsIsSingleSourcedInFragment (app.js встречается ровно в 1 файле = fragments/scripts.html); versionedAssetsAreConsistentAcrossTemplates по-прежнему зелёный. Рендер end-to-end подтверждён PublicEndpointsSmokeTest (/ + /settings → 200, th:replace резолвится). bootRun держался OFF.",
+      "evidence": "EV-PERF-003"
     },
     {
       "id": "UX-01", "priority": "P2", "category": "ui", "status": "CLOSED", "needsGradle": false,

@@ -302,3 +302,21 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 - `InterviewApiControllerUnitTest` ctor обновлён (+IssueReportApiService). **Полный `:quiz-domain:test` + `:quiz-persistence:test` + `:quiz-app:test` → BUILD SUCCESSFUL** (Spring-контекст ок: новые бины QuestionIssueRepository/Service + usecase; V17 применяется Flyway в интеграционных тестах; ArchUnit зелёный — service/usecase не зависят от контроллеров).
 
 **NOT в REPORT-a (осознанно):** админ-просмотр/смена статуса жалоб (countByStatus/findByQuestionId уже есть как фундамент; UI-разбор вне scope тренажёра); rate-limiting репортов (single-user). **Deferred → REPORT-b (визуальная фаза):** кнопка «Сообщить о проблеме» на focus-training.html + result.html → модалка выбора категории + опц. комментарий → `fetch POST /api/report` с `_csrf`; toast-подтверждение; live-QA.
+
+---
+
+### EV-PERF-003 — app.js single-sourced (cache-busting без дрейфа) (2026-07-15, R0.179, `:quiz-app:test`)
+
+**PERF-01 — DONE.** Седьмой бэкенд/статик-слайс bootRun-OFF волны. Cache-busting-версия `app.js` сведена в единственную точку правки — устранён латентный drift-риск (v=N вручную синхронизировался в 3 шаблонах).
+
+**Проблема:** `<script th:src="@{/js/app.js(v=66)}">` дублировался инлайном в `focus-training.html`, `result.html`, `settings.html`. При правке app.js версию нужно было бампать в 3 местах; забыть одно → часть страниц отдаёт устаревший кэшированный JS (тот же класс дефекта, что ловит `versionedAssetsAreConsistentAcrossTemplates`, но там ассерт срабатывал бы уже ПОСЛЕ рассинхрона). CSS уже был single-sourced в `head.html`; app.js — нет.
+
+**Решение:** создан фрагмент `fragments/scripts.html` с `<script th:fragment="app-script" th:src="@{/js/app.js(v=66)}">` — единственное место, где живёт версия. Три инлайн-тега заменены на `<script th:replace="~{fragments/scripts :: app-script}">` (та же конвенция, что у `fragments/mermaid-init :: mermaid-init`). Дрейф версии теперь **структурно невозможен** — второй точки правки нет.
+
+**Verify (bootRun OFF, Docker UP → gradle безопасен):**
+- Новый ассерт `TemplateFragmentContractTest.appJsIsSingleSourcedInFragment`: тег `/js/app.js(v=N)` встречается в дереве шаблонов ровно в 1 файле, и это `fragments/scripts.html`. Инлайн-возврат тега в любую страницу → ассерт красный (ловит регресс).
+- `versionedAssetsAreConsistentAcrossTemplates` по-прежнему зелёный (app.js в 1 файле = 1 версия; санити `containsKey("app.js")` держится — фрагмент под `templates/`).
+- **Рендер end-to-end:** `PublicEndpointsSmokeTest` рендерит `/` (focus-training) и `/settings` → 200 text/html → `th:replace` резолвится в реальном Thymeleaf-контексте (contract-test читает сырой HTML и битую ссылку не поймал бы — smoke закрывает этот зазор; `result.html` транзитивно покрыт идентичной ссылкой).
+- Оба класса → **BUILD SUCCESSFUL**.
+
+**Residual (осознанно):** истинный content-fingerprint (авто-хэш вместо ручного v=N) — вне scope PERF-01; ручной v=N в одном месте закрывает drift-риск при минимальном изменении. Отдельные v=N у `tokens.css`/`base.css` в `head.html` остаются независимыми (разные файлы, равенство не требуется). REPORT-b/остальные UI-слайсы, которым понадобится бамп app.js, правят его теперь в `fragments/scripts.html`.
