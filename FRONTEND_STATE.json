@@ -8,7 +8,8 @@
   "featureFreeze": true,
   "roundStatusModel": ["AUDITED", "IMPLEMENTED", "REGRESSION_PASS", "DEEP_PASS", "RELEASE_CANDIDATE", "FINALIZED"],
   "taskStatusValues": ["OPEN", "IN_PROGRESS", "BLOCKED", "DONE", "CLOSED"],
-  "nextTaskId": "FLOW-04",
+  "nextTaskId": "FE-CMP-1",
+  "$nextTaskNote": "bootRun-safe независимая очередь ИСЧЕРПАНА (R0.171). Все оставшиеся задачи гейтятся собранным вопросом: BLK-BOOTRUN (остановить :8080 → FE-CMP-1 + FLOW-01/02/03 + FLOW-SUMMARY/REPORT + QA-01 + PERF-01 + FLOW-04-server) ЛИБО DEC-003 (wide-layout) ЛИБО DEC-006 (UX-13 разбор). FE-CMP-1 = первое разблокируемое остановкой bootRun (P0). Ждём ответа пользователя; ScheduleWakeup не звать (fixed-cron).",
   "activeBlockers": [
     {
       "id": "BLK-BOOTRUN",
@@ -104,12 +105,13 @@
       "blocker": "BLK-BOOTRUN."
     },
     {
-      "id": "FLOW-04", "priority": "P1", "category": "flow", "status": "OPEN", "needsGradle": true,
+      "id": "FLOW-04", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
       "title": "Recoverable expired/offline/error состояния",
       "surface": ["app.js", "error.html", "focus-training.html", "GlobalExceptionHandler"],
       "acceptance": "Истёкшая сессия/offline/ошибка сабмита → понятный recoverable-стейт ('сохранено?/повторить'), не тупик; см. UX-11/UX-09.",
       "backendState": "PARTIAL (GlobalExceptionHandler есть; нет явного expired-session UX + autosave-подтверждения).",
-      "blocker": "BLK-BOOTRUN для серверной части; клиентские состояния — частично bootRun-safe (live-QA)."
+      "blocker": "BLK-BOOTRUN для серверной части (expired-session resume + autosave).",
+      "progress": "Клиентский слайс (offline/error submit recovery) VERIFIED-CLEAN R0.171 (EV-FLOW-004): live-QA под network-emulation Offline — обе error-ветки handleSubmit recoverable (кнопка re-enabled, actionable role=alert, focus-return WCAG 2.4.3, resultShown:false, SM-2 не пишется offline). Не тупик. Серверная часть (dedicated expired-session resume + autosave) — BLK-BOOTRUN, пересекается с FLOW-01."
     },
     {
       "id": "FLOW-SUMMARY", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,

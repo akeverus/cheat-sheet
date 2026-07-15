@@ -132,3 +132,20 @@
 **Stats (`/stats`):** landmarks ✅; heading-order H1 «Аналитика» → 7×H2 → H3 «Горячие клавиши» ✅; **canvas-графики образцово доступны** — оба `role=img` + описательный `aria-label` («Гистограмма … Полные данные — в таблице ниже») ✅; live-region фолбэки `topicProgressChartFallback`/`topicAccuracyChartFallback` (polite) + `table-sort-status` (polite) ✅; shell `#design-toggle` скрыт ✅.
 
 **Вывод A11Y-01:** core-flow a11y — clean (автоматизируемое 100 + ручной проход landmarks/headings/ARIA/live-regions/forms/charts/keyboard). Один cross-page defect (мёртвый design-toggle) устранён. Единственный residual — settings design-ось, отнесён к FE-CMP-1.
+
+---
+
+## Flow / recovery (FLOW-04)
+
+### EV-FLOW-004 — клиентские recoverable-состояния offline/ошибка сабмита (2026-07-15, R0.171, chrome-devtools :8080, network-emulation Offline)
+
+**FLOW-04 клиентский слайс (offline/error submit recovery) — VERIFIED-CLEAN.** Статический разбор `handleSubmit` (app.js:1292–1361): две error-ветки — `!response.ok` (доменная ошибка сервера) и `catch` (сеть/offline) — обе делают recovery: `answered=false`, кнопка re-enabled (оригинальный текст восстановлен, `aria-busy` снят), `startQuestionTimer()`, actionable-алерт, возврат фокуса на кнопку `if activeElement===body` (WCAG 2.4.3).
+
+Live-QA (emulate Offline → выбрать вариант → submit; POST не доходит до сервера → SM-2 НЕ пишется, SRS-safe):
+- Кнопка: `disabled:false`, текст «Проверяю…»→«Проверить ответ» (восстановлен), `aria-busy:null` — **не тупик, повтор доступен** ✅.
+- Алерт: виден, **`role="alert"`** (assertive live-region → SR озвучивает немедленно): «Сервер недоступен. Проверь соединение и повтори отправку.» — actionable ✅.
+- `resultShown:false` (ложный результат не отрисован), радио активно, фокус не осиротел (на INPUT, не body) ✅.
+- Console: ровно 2 ожидаемых offline-артефакта (`ERR_INTERNET_DISCONNECTED` браузерный + намеренный `console.error 'AJAX answer failed: Failed to fetch'` из catch) — не баги ✅.
+- После восстановления сети + reload — чистое состояние ✅.
+
+**Остаток FLOW-04 (BLOCKED, BLK-BOOTRUN):** серверная часть — детект истёкшей HTTP-сессии + автосейв/персистентность для resume (сейчас expired-session → доменная ошибка → тот же recoverable-алерт «вопрос устарел, обнови» — не тупик, но без dedicated resume-UX). Это backend (needsGradle, Flyway V16+ пересекается с FLOW-01 pause/resume).
