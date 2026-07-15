@@ -103,6 +103,14 @@
       (function () {
         var btn = document.getElementById('design-toggle');
         if (!btn || !window.__design) return;
+        // При единственном дизайне (feature-freeze на Instrument, DEC-002)
+        // переключать нечего: раскрытая кнопка осталась бы МЁРТВЫМ фокусируемым
+        // контролом в tab-order/a11y-дереве на КАЖДОЙ странице (клик коерсит
+        // instrument→instrument, no-op) — keyboard/SR-дефект (A11Y-01, R0.170).
+        // Держим её скрытой (class="hidden" = display:none, вне a11y-дерева),
+        // если в реестре ≤1 дизайн. Полное удаление узла+скрипта — FE-CMP-1.
+        var designList = (window.__design.list && window.__design.list.length) ? window.__design.list : [];
+        if (designList.length <= 1) return;
         // PE: см. тоггл темы — раскрываем только при работающем JS.
         btn.classList.remove('hidden');
         var NAMES = { editorial: 'Editorial', linear: 'Linear', swiss: 'Swiss', notion: 'Notion', mintlify: 'Mintlify', broadsheet: 'Broadsheet',

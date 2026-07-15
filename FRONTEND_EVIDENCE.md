@@ -108,3 +108,27 @@
 - **(b) prod-like budget-замер** явно требует НЕ devtools-bootRun среды (unminified/devtools-overhead) → эффективно **BLK-BOOTRUN-adjacent** (нужна prod-профиль сборка).
 
 *(append далее — вьюпорты 375/768/1280/1440/1728/1920/2560, обе темы; Lighthouse prod-like)*
+
+---
+
+## Accessibility (A11Y-01)
+
+### EV-A11Y-001 — консолидированный SR/keyboard проход core-flow (2026-07-15, R0.170, chrome-devtools :8080, 1280)
+
+**Единый проход по 3 core-страницам (focus → settings → stats), light-тема; a11y-структура тема-инвариантна, dark-контраст покрыт статически `design-token-audit.py` (OKLCH AA CLEAN, memory).**
+
+**Lighthouse (focus, desktop, navigation):** Accessibility **100**, Best Practices **100**, Agentic **100**. 2 фейла — оба SEO (`is-crawlable` noindex — намеренно для внутреннего auth-tool; `meta-description` — SEO-нюанс) → вне scope.
+
+**Focus/training (`/?topic=…`):**
+- Landmarks: `header` · `nav "Основная навигация"` · `main` · `aside "Сессия"` ✅.
+- Heading-order: H1 «Подготовка к собеседованию» → H2 (вопрос) → H3 «Горячие клавиши» — без скипов ✅.
+- Radiogroup: `aria-label="Варианты ответа"`, `aria-describedby=options-flow-hint` (резолвится ✅), 4 опции, per-option `aria-label` «Вариант N: …» ✅.
+- Live-region: `interview-alert` assertive (ошибки), `result-feedback`/`extra-analysis-content`/`code-copy-status` polite ✅.
+- Skip-link «Перейти к вопросу» → `#main-content` ✅.
+- **ДЕФЕКТ НАЙДЕН+ИСПРАВЛЕН (A11Y-defect, R0.170):** кнопка `#design-toggle` («Сменить дизайн (сейчас: Instrument)») была **фокусируема и озвучена как интерактивный переключатель, но мертва** — при единственном дизайне (DEC-002) клик коерсит instrument→instrument (no-op). Мёртвый контрол в tab-order/a11y-дереве на КАЖДОЙ странице (в шапке). Фикс: inline-скрипт header.html не раскрывает кнопку при `window.__design.list.length <= 1` (early-return, `class="hidden"`=display:none остаётся → вне a11y-дерева). Live-verify после reload: `design-toggle inTree:false/hidden:true`, `designInFocusOrder:false`; theme-toggle+layout-toggle остались `inTree:true` (живы); console чист. `?v`-бамп не нужен (inline-скрипт в SSR-шаблоне). Полное удаление узла+скрипта — FE-CMP-1.
+
+**Settings (`/settings`):** landmarks (header/nav/main) ✅; heading-order H1→H2→H3 без скипов ✅; **ARIA-tabs** `role=tablist aria-label="Разделы настроек"`, 3 таба (Сессия selected / Оформление / Данные), все `aria-controls` резолвятся ✅; **0 unlabeled inputs** (все контролы с label/aria) ✅; shell `#design-toggle` скрыт (offsetParent=null) ✅. **Residual (FE-CMP-1, gradle-gated):** design-ось `data-design-pref` в панели «Оформление» ещё присутствует как мёртвая surface — вне scope A11Y-01 (это FE-CMP-1); кросс-ссылка проставлена.
+
+**Stats (`/stats`):** landmarks ✅; heading-order H1 «Аналитика» → 7×H2 → H3 «Горячие клавиши» ✅; **canvas-графики образцово доступны** — оба `role=img` + описательный `aria-label` («Гистограмма … Полные данные — в таблице ниже») ✅; live-region фолбэки `topicProgressChartFallback`/`topicAccuracyChartFallback` (polite) + `table-sort-status` (polite) ✅; shell `#design-toggle` скрыт ✅.
+
+**Вывод A11Y-01:** core-flow a11y — clean (автоматизируемое 100 + ручной проход landmarks/headings/ARIA/live-regions/forms/charts/keyboard). Один cross-page defect (мёртвый design-toggle) устранён. Единственный residual — settings design-ось, отнесён к FE-CMP-1.

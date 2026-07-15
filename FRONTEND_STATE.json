@@ -8,7 +8,7 @@
   "featureFreeze": true,
   "roundStatusModel": ["AUDITED", "IMPLEMENTED", "REGRESSION_PASS", "DEEP_PASS", "RELEASE_CANDIDATE", "FINALIZED"],
   "taskStatusValues": ["OPEN", "IN_PROGRESS", "BLOCKED", "DONE", "CLOSED"],
-  "nextTaskId": "A11Y-01",
+  "nextTaskId": "FLOW-04",
   "activeBlockers": [
     {
       "id": "BLK-BOOTRUN",
@@ -77,7 +77,7 @@
       "surface": ["settings.html", "fragments/header.html", "base.css", "fragments/head.html", "TemplateFragmentContractTest"],
       "acceptance": "settings НЕ показывает 11 кнопок дизайна (ось убрана); #design-toggle+его inline-скрипт удалены из header; dead SIGNATURE-блоки (editorial/swiss/linear/stripe/claude) вырезаны из base.css; THEME_COLORS 11→1 в head.html; ?v tokens+base бампнуты (закрывает CACHE-1); TemplateFragmentContractTest обновлён и зелёный.",
       "blocker": "BLK-BOOTRUN — правит файлы, пиннящиеся TemplateFragmentContractTest → нужен ./gradlew test при остановленном bootRun.",
-      "notes": "designs-срез: settings перечисляет 11, DESIGNS=['instrument'] → 10 мёртвых кнопок (CMP-1 blocking UX-defect). Мержит старые CMP-1+CACHE-1+CLEAN-01(design-часть)."
+      "notes": "designs-срез: settings перечисляет 11, DESIGNS=['instrument'] → 10 мёртвых кнопок (CMP-1 blocking UX-defect). Мержит старые CMP-1+CACHE-1+CLEAN-01(design-часть). A11Y-01 (R0.170) выявил: мёртвый #design-toggle в шапке был фокусируемым/озвученным контролом на каждой странице → УЖЕ смягчено (inline-скрипт header.html держит его hidden при 1 дизайне, EV-A11Y-001). Остаётся: полное удаление узла+скрипта #design-toggle + settings design-ось (data-design-pref, ещё живая a11y-surface) + THEME_COLORS + SIGNATURE base.css + ?v bump — под BLK-BOOTRUN. Прим.: TemplateFragmentContractTest 0 ссылок на design/toggle → сам тест удаление не пиннит, но settings-ось+?v требуют прогона теста при остановленном bootRun."
     },
     {
       "id": "FLOW-01", "priority": "P1", "category": "flow", "status": "BLOCKED", "needsGradle": true,
@@ -203,10 +203,12 @@
       "evidence": "EV-QA-001"
     },
     {
-      "id": "A11Y-01", "priority": "P2", "category": "a11y", "status": "OPEN", "needsGradle": false,
+      "id": "A11Y-01", "priority": "P2", "category": "a11y", "status": "DONE", "needsGradle": false,
       "title": "Консолидированный ручной screen-reader flow",
       "surface": ["все страницы"],
-      "acceptance": "Единый комплексный SR/keyboard-проход core-flow (не серия микротиков); evidence в FRONTEND_EVIDENCE.md."
+      "acceptance": "Единый комплексный SR/keyboard-проход core-flow (не серия микротиков); evidence в FRONTEND_EVIDENCE.md.",
+      "resolution": "DONE R0.170 (EV-A11Y-001): единый проход focus→settings→stats. Lighthouse a11y=100/BP=100 (2 фейла — SEO, вне scope). Ручной: landmarks/heading-order/radiogroup+describedby/live-regions/skip-link (focus), ARIA-tabs+0-unlabeled-inputs (settings), canvas role=img+aria-label+table-fallback (stats) — всё clean. НАЙДЕН+ИСПРАВЛЕН cross-page defect: мёртвый #design-toggle был фокусируем/озвучен в tab-order на каждой странице (клик no-op при 1 дизайне) → inline-скрипт header.html не раскрывает его при list.length<=1 (вне a11y-дерева); theme/layout-тогглы живы; console чист. Residual: settings design-ось → FE-CMP-1.",
+      "evidence": "EV-A11Y-001"
     },
     {
       "id": "PERF-02", "priority": "P2", "category": "perf", "status": "OPEN", "needsGradle": false,
