@@ -215,3 +215,26 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Residual (вне scope, честно):**
 - Полный **PRG** (Post-Redirect-Get) — belt-and-suspenders поверх идемпотентности; текущий MVC рендерит результат напрямую (живой no-JS фолбэк `/answer`), редирект затронул бы этот контракт + требует live-QA → отложено, substantive harm (двойной SM-2/index) уже устранён guard'ом.
 - Строгая **concurrent-thread** гонка на ОДНОЙ HTTP-сессии (TOCTOU между guard-чтением и registerAnswer) — реальные вектора двойного сабмита последовательны (одна вкладка сериализует свои запросы; session-cookie per-tab), `registerAnswer`/`currentQuestionId` уже `synchronized` → вне scope.
+
+### EV-FLOW-001A — pause/resume backend-ядро (2026-07-15, R0.175, `:quiz-persistence:test` + `:quiz-app:test` Testcontainers PG 16-alpine)
+
+**FLOW-01a — DONE** (FLOW-01 разбит: 01a backend-ядро — этот тик; 01b UI-баннер/кнопка — визуальная фаза). Третий бэкенд-слайс bootRun-OFF волны. Приостановка сессии тренировки с персистентностью в БД (переживает перезапуск приложения, в отличие от in-memory HTTP-сессии).
+
+**Формат персистентности (решение):** single-user приложение (нет user-колонок в daily_activity/user_topic_stats) → `paused_session` = singleton-строка `id=1` (CHECK). `session_blob BYTEA` = Java-сериализованный `InterviewSession` — ТОТ ЖЕ механизм, которым объект уже персистится в HTTP-сессию (Serializable, serialVersionUID=1) → **доменная модель не тронута** (наименьший риск vs reconstruct-from-columns, который потребовал бы rehydration-конструктор + JSON questionIds/answerHistory). Денормализованные колонки mode/topic/total/answered/paused_at — для баннера «продолжить?» без десериализации блоба.
+
+**Слои:**
+- **V16__paused_session.sql** — таблица singleton-blob + метаданные.
+- **quiz-domain** `PausedSessionInfo(mode, topic, total, answered, pausedAt)` — метаданные для UI (без блоба).
+- **quiz-persistence** `PausedSessionRepository` (JdbcTemplate; `save` UPDATE-first-then-INSERT — как DailyActivity, т.к. ON CONFLICT ломается в Testcontainers PG16; `findBlob`/`findInfo`/`exists`/`clear`). + `paused_session` добавлена в TRUNCATE `AbstractPostgresRepositoryTest` (иначе течь между тестами).
+- **quiz-app** `PauseService` (service.flow; inject Clock как ReviewService): `pause` (serialize→save; игнорит null/finished — паузить нечего), `resume` (findBlob→deserialize→**clear**, одноразовое потребление; битый/несовместимый блоб → deserialize вернёт null, блоб всё равно discard), `pausedInfo`, `discard`. Сериализация guarded (ObjectOutputStream/ObjectInputStream, catch → warn+null).
+- **endpoints** `POST /pause` (persist активную не-finished + clearHttpSession, redirect focus) + `POST /resume` (restore в HttpSession + redirect focus) в `InterviewMvcController` → `InterviewFlowMvcService` (+ поле PauseService; прямой тест-ctor обновлён).
+
+**Verify (bootRun OFF → gradle безопасен, Docker UP):**
+- `PausedSessionRepositoryTest` (Testcontainers): empty-когда-нет-паузы; round-trip blob byte-точный; findInfo метаданные; null-topic; **singleton-overwrite** (вторая save заменяет — ровно 1 строка, COUNT=1); clear ✅.
+- `PauseServiceTest` (Mockito, fixed Clock): pause сериализует + save(blob, EXAM, "java", total=3, answered=1, NOW); **round-trip** — перехваченный из pause блоб скормлен в resume → восстановленная сессия равна по mode/topic/total/index/correct/answerHistory + `clear()` вызван; corrupt-блоб → empty + `clear()`; guard null/finished → save `never()`; pausedInfo/discard делегируют ✅.
+- 4 теста pause/resume в `InterviewFlowMvcServiceTest`: pause активной → pauseService.pause + clearHttpSession + focusRedirect; pause без сессии → no-op; resume present → setInterviewSession; resume empty → HttpSession не тронут ✅.
+- **Полный `:quiz-persistence:test` + `:quiz-app:test` → BUILD SUCCESSFUL** (общий MVC-сервис + изменённый TRUNCATE → прогнал оба модуля; ArchUnit LayeredArchitectureTest зелёный — PauseService в service-слое не зависит от контроллеров).
+
+**Deferred → 01b (визуальная фаза, live-QA):** UI-баннер «есть незавершённая сессия — продолжить?» на `/` (читает PauseService.pausedInfo через model-attr) + кнопка «Пауза» рядом с «Завершить» в focus-training.html (form POST /pause с _csrf) + resume-триггер. Endpoints уже протестированы — 01b лишь тонкая обвязка + live browser QA.
+
+**Residual (задокументировано):** pause перезаписывает singleton; resume потребляет; finish/start НЕ авто-дискардят паузу (лингер приемлем для single-user, UX уточнить в 01b). Blob-персистентность зависит от serialVersionUID — при эволюции InterviewSession старый блоб не десериализуется, но guarded (discard, не падение); для короткоживущей паузы локального инструмента приемлемо.

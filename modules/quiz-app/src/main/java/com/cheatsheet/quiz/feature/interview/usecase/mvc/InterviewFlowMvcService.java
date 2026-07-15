@@ -11,6 +11,7 @@ import com.cheatsheet.quiz.api.mapper.view.MvcModelAttributeMapper;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.SessionSummary;
 import com.cheatsheet.quiz.feature.interview.service.page.AnswerPageService;
+import com.cheatsheet.quiz.feature.interview.service.flow.PauseService;
 import com.cheatsheet.quiz.feature.interview.service.flow.SessionFlowService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
@@ -36,6 +37,7 @@ public class InterviewFlowMvcService {
     MvcModelAttributeMapper modelAttributeMapper;
     MvcRequestMapper requestMapper;
     AnswerPageService answerPageService;
+    PauseService pauseService;
 
     public String start(StartSessionRequest request, HttpSession session) {
         var selected = requestMapper.resolveStartMode(request);
@@ -66,6 +68,29 @@ public class InterviewFlowMvcService {
         persistSessionSummary(session, interviewSession);
         httpSessionStateService.clearInterviewSession(session);
         return navigationService.sessionSummaryRedirect();
+    }
+
+    /**
+     * Ставит активную сессию на паузу (FLOW-01): персистит её в БД и очищает
+     * HTTP-сессию. Пустую/завершённую сессию {@link PauseService} игнорирует.
+     */
+    public String pause(HttpSession session) {
+        InterviewSession interviewSession = sessionSupport.getSession(session);
+        if (interviewSession != null && !interviewSession.isFinished()) {
+            pauseService.pause(interviewSession);
+            httpSessionStateService.clearInterviewSession(session);
+        }
+        return navigationService.focusRedirect();
+    }
+
+    /**
+     * Возобновляет приостановленную сессию (FLOW-01): восстанавливает её в
+     * HTTP-сессию и удаляет из БД. Если паузы нет — просто редирект на фокус.
+     */
+    public String resume(HttpSession session) {
+        pauseService.resume()
+                .ifPresent(interviewSession -> httpSessionStateService.setInterviewSession(session, interviewSession));
+        return navigationService.focusRedirect();
     }
 
     public String sessionSummary(HttpSession session, Model model) {

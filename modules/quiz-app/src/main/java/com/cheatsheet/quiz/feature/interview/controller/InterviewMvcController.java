@@ -178,6 +178,16 @@ public class InterviewMvcController {
         return interviewFlowMvcService.finish(session);
     }
 
+    @PostMapping("/pause")
+    public String pause(HttpSession session) {
+        return interviewFlowMvcService.pause(session);
+    }
+
+    @PostMapping("/resume")
+    public String resume(HttpSession session) {
+        return interviewFlowMvcService.resume(session);
+    }
+
     @GetMapping("/session-summary")
     public String sessionSummary(HttpSession session, Model model) {
         return interviewFlowMvcService.sessionSummary(session, model);

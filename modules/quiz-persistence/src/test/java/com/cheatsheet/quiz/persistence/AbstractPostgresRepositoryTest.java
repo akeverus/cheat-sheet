@@ -51,6 +51,6 @@ public abstract class AbstractPostgresRepositoryTest {
         // Чистим данные между тестами, схему оставляем. Список таблиц = всё что создаёт V*.sql.
         jdbcTemplate.execute(
                 "TRUNCATE TABLE answer_options, question_hints, daily_activity, " +
-                        "user_topic_stats, review_state, questions RESTART IDENTITY CASCADE");
+                        "user_topic_stats, review_state, paused_session, questions RESTART IDENTITY CASCADE");
     }
 }

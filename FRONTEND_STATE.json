@@ -8,8 +8,8 @@
   "featureFreeze": true,
   "roundStatusModel": ["AUDITED", "IMPLEMENTED", "REGRESSION_PASS", "DEEP_PASS", "RELEASE_CANDIDATE", "FINALIZED"],
   "taskStatusValues": ["OPEN", "IN_PROGRESS", "BLOCKED", "DONE", "CLOSED"],
-  "nextTaskId": "FLOW-01",
-  "$nextTaskNote": "SEQUENCING (R0.174): волна идёт при ОСТАНОВЛЕННОМ bootRun (иначе gradle-тик = wedge). Стратегия — сначала полностью Testcontainers-верифицируемые P1-бэкенд-слайсы (нулевой blind-visual-риск, каждый тик зелёный без браузера), ПОТОМ визуальная фаза при возврате bootRun. PROC-07 (P0 wide-layout B) и UX-13 (P2 DEC-006 A) — крупные layout/visual изменения, DoD которых центрально требует live-QA на 6 брейкпойнтах × 2 темы; авторинг вслепую даёт большой un-QA'd diff на всю волну (высокий rework-риск) → по clause 'dependency impact' loop-контракта их зависимость (живой браузер) недоступна по дизайну волны → перенесены в НАЧАЛО консолидированной визуальной фазы, когда bootRun вернётся. Backend-очередь: FLOW-02 DONE (R0.174) → FLOW-01 (pause/resume, Flyway V16) → FLOW-03 (UNKNOWN outcome) → FLOW-04-server → FLOW-SUMMARY/REPORT → QA-01 → PERF-01. Затем визуальная фаза: PROC-07 → UX-13 → PERF-02(b) prod-budget → консолидированная live-QA всей волны → final gate → FINALIZED. ScheduleWakeup не звать (fixed-cron).",
+  "nextTaskId": "FLOW-03",
+  "$nextTaskNote": "SEQUENCING (R0.175): волна при ОСТАНОВЛЕННОМ bootRun; сначала Testcontainers-верифицируемые P1-бэкенд-слайсы, ПОТОМ визуальная фаза. FLOW-02 DONE (R0.174). FLOW-01 РАЗБИТ: 01a (backend pause/resume — V16 + repo + PauseService + endpoints, полностью протестировано) DONE R0.175; 01b (UI-баннер «продолжить?» + кнопка Пауза + resume-flow) — тонкая обвязка, требует live-QA → в визуальную фазу. Backend-очередь дальше: FLOW-03 (UNKNOWN outcome) → FLOW-04-server → FLOW-SUMMARY/REPORT → FLOW-REPORT (V17) → QA-01 → PERF-01. Визуальная фаза (bootRun ON): PROC-07 (P0 wide-layout B) → UX-13 (DEC-006 A) → FLOW-01b + FLOW-REPORT-UI + FLOW-SUMMARY-UI баннеры/кнопки → PERF-02(b) → консолидированная live-QA всей волны → final gate → FINALIZED. PROC-07/UX-13 визуальные (DoD = live-QA 6 брейкпойнтов × 2 темы) намеренно отложены (blind-авторинг = высокий rework-риск). ScheduleWakeup не звать (fixed-cron).",
   "activeBlockers": [],
   "$resolvedBlockers": "BLK-BOOTRUN снят 2026-07-15 (пользователь остановил :8080, DEC-007). Gradle-волна разрешена; bootRun держим ОСТАНОВЛЕННЫМ на всю волну (иначе следующий gradle-тик снова wedge). Консолидированная live-QA — в конце волны, когда bootRun вернётся.",
   "gates": {
@@ -74,12 +74,13 @@
       "evidence": "EV-CMP-001"
     },
     {
-      "id": "FLOW-01", "priority": "P1", "category": "flow", "status": "OPEN", "needsGradle": true,
+      "id": "FLOW-01", "priority": "P1", "category": "flow", "status": "IN_PROGRESS", "needsGradle": true,
       "title": "Pause/resume активной сессии",
-      "surface": ["quiz-persistence/db/migration", "HttpSessionStateService", "InterviewMvcController", "focus-training.html", "app.js"],
+      "surface": ["V16__paused_session.sql", "PausedSessionRepository", "PauseService", "InterviewMvcController", "InterviewFlowMvcService", "focus-training.html", "app.js"],
       "acceptance": "Явный pause (сохранить+очистить) и resume приостановленной сессии; UX 'есть незавершённая сессия — продолжить?'; кнопка Пауза рядом с Завершить; только сессионные режимы.",
-      "backendState": "PARTIAL (есть неявное resume из HttpSession; нет endpoint/флага/персистентности; grep pause|resume → 0).",
-      "unblocked": "BLK-BOOTRUN снят (DEC-007). Doable: миграция V16 + endpoints + Testcontainers-тесты при остановленном bootRun. Следующий P1-бэкенд после FLOW-02."
+      "backendState": "01a DONE (V16 paused_session singleton-blob + repo + PauseService + POST /pause,/resume). 01b (UI) ABSENT.",
+      "progress": "РАЗБИТ на 01a (backend, DONE R0.175, EV-FLOW-001A) + 01b (UI, deferred). 01a: миграция V16 paused_session (single-user singleton id=1; session_blob=Java-сериализованный InterviewSession — тот же механизм что HttpSession, домен не тронут; денормализованные mode/topic/total/answered/paused_at для баннера без десериализации); PausedSessionRepository (JdbcTemplate, UPDATE-first upsert как DailyActivity, findBlob/findInfo/exists/clear; + paused_session в TRUNCATE базового теста); domain PausedSessionInfo; PauseService (serialize/deserialize guarded — битый блоб→discard; pause игнорит null/finished; resume=одноразовое потребление+clear); endpoints POST /pause (persist+clearHttpSession, только активная не-finished) + POST /resume (restore+redirect focus) в InterviewMvcController→InterviewFlowMvcService (+ поле PauseService, тест-ctor обновлён). Тесты: PausedSessionRepositoryTest (Testcontainers: round-trip blob, findInfo без блоба, null-topic, singleton-overwrite, clear) + PauseServiceTest (serialize+save метадата, round-trip resume state, corrupt→discard, guard null/finished, делегации) + 4 теста pause/resume в InterviewFlowMvcServiceTest. Полный :quiz-persistence:test + :quiz-app:test зелёные (ArchUnit ок). 01b (UI-баннер 'продолжить?' на / + кнопка Пауза рядом с Завершить + resume-триггер) — визуальная фаза, live-QA. Семантика 01a: pause перезаписывает singleton; resume потребляет; finish/start НЕ авто-дискардят паузу (уточнить UX в 01b).",
+      "evidence": "EV-FLOW-001A"
     },
     {
       "id": "FLOW-02", "priority": "P1", "category": "flow", "status": "DONE", "needsGradle": true,

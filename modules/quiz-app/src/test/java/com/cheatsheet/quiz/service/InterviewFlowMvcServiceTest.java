@@ -13,6 +13,7 @@ import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.SessionSummary;
+import com.cheatsheet.quiz.feature.interview.service.flow.PauseService;
 import com.cheatsheet.quiz.feature.interview.service.flow.SessionFlowService;
 import com.cheatsheet.quiz.feature.interview.service.page.AnswerPageService;
 import com.cheatsheet.quiz.feature.interview.usecase.mvc.InterviewFlowMvcService;
@@ -53,6 +54,8 @@ class InterviewFlowMvcServiceTest {
     @Mock
     private AnswerPageService answerPageService;
     @Mock
+    private PauseService pauseService;
+    @Mock
     private HttpSession session;
     @Mock
     private Model model;
@@ -69,7 +72,8 @@ class InterviewFlowMvcServiceTest {
                 answerRequestMapper,
                 modelAttributeMapper,
                 requestMapper,
-                answerPageService
+                answerPageService,
+                pauseService
         );
     }
 
@@ -247,5 +251,52 @@ class InterviewFlowMvcServiceTest {
 
         assertThat(view).isEqualTo("result");
         verify(modelAttributeMapper).applyAnswerPageState(model, state);
+    }
+
+    @Test
+    void pausePersistsActiveSessionAndClearsHttpSession() {
+        InterviewSession interviewSession = org.mockito.Mockito.mock(InterviewSession.class);
+        when(sessionSupport.getSession(session)).thenReturn(interviewSession);
+        when(interviewSession.isFinished()).thenReturn(false);
+        when(navigationService.focusRedirect()).thenReturn("redirect:/");
+
+        String view = service.pause(session);
+
+        assertThat(view).isEqualTo("redirect:/");
+        verify(pauseService).pause(interviewSession);
+        verify(httpSessionStateService).clearInterviewSession(session);
+    }
+
+    @Test
+    void pauseDoesNothingWhenNoActiveSession() {
+        when(sessionSupport.getSession(session)).thenReturn(null);
+        when(navigationService.focusRedirect()).thenReturn("redirect:/");
+
+        service.pause(session);
+
+        verify(pauseService, never()).pause(any());
+        verify(httpSessionStateService, never()).clearInterviewSession(session);
+    }
+
+    @Test
+    void resumeRestoresSessionIntoHttpSession() {
+        InterviewSession interviewSession = org.mockito.Mockito.mock(InterviewSession.class);
+        when(pauseService.resume()).thenReturn(java.util.Optional.of(interviewSession));
+        when(navigationService.focusRedirect()).thenReturn("redirect:/");
+
+        String view = service.resume(session);
+
+        assertThat(view).isEqualTo("redirect:/");
+        verify(httpSessionStateService).setInterviewSession(session, interviewSession);
+    }
+
+    @Test
+    void resumeDoesNotTouchHttpSessionWhenNoPause() {
+        when(pauseService.resume()).thenReturn(java.util.Optional.empty());
+        when(navigationService.focusRedirect()).thenReturn("redirect:/");
+
+        service.resume(session);
+
+        verify(httpSessionStateService, never()).setInterviewSession(any(), any());
     }
 }
