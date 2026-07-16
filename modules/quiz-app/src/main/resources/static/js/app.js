@@ -17,7 +17,8 @@
     TOPIC_STATS: '/api/topic-stats',
     CONFIDENCE: '/api/confidence',
     FAVORITE: '/api/favorite',
-    STREAK: '/api/streak'
+    STREAK: '/api/streak',
+    REPORT: '/api/report'
   };
   const FAVORITE_ADD_LABEL = UI_CONSTANTS.FAVORITE_ADD_LABEL;
   const FAVORITE_REMOVE_LABEL = UI_CONSTANTS.FAVORITE_REMOVE_LABEL;
@@ -428,6 +429,132 @@
   function confirmModal(opts) {
     return promptModal(Object.assign({ mode: 'confirm' }, opts));
   }
+
+  // FLOW-REPORT-b: модалка «Сообщить о проблеме» по вопросу. Та же машинерия
+  // доступности, что и promptModal (role=dialog/aria-modal, inert-фон, focus-trap,
+  // Esc/клик-по-фону/Отмена, возврат фокуса), но с radiogroup категорий + опц.
+  // комментарием. Отправляет POST /api/report (form-urlencoded, CSRF-exempt как
+  // прочие /api/*). Фидбэк держим ВНУТРИ модалки: успех подменяет тело на
+  // «Спасибо…» + «Готово», ошибка — inline role=alert (внешний notify-канал на
+  // фокус-странице отсутствует). Ничего не возвращает — самодостаточна.
+  const REPORT_CATEGORIES = [
+    { value: 'INCORRECT_ANSWER', label: 'Неверный ответ' },
+    { value: 'TYPO', label: 'Опечатка' },
+    { value: 'UNCLEAR', label: 'Непонятная формулировка' },
+    { value: 'OUTDATED', label: 'Устаревшая информация' },
+    { value: 'OTHER', label: 'Другое' }
+  ];
+  function reportModal(questionId) {
+    if (!questionId) return;
+    const lastFocused = document.activeElement;
+    const overlay = document.createElement('div');
+    overlay.className = 'prompt-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'report-modal-title');
+    const radios = REPORT_CATEGORIES.map((c, i) =>
+      '<label class="report-cat"><input type="radio" name="report-category" value="' + c.value + '"' +
+      (i === 0 ? ' checked' : '') + '><span></span></label>').join('');
+    overlay.innerHTML =
+      '<form class="prompt-modal report-modal" novalidate>' +
+      '<h3 id="report-modal-title" class="prompt-modal-title">Сообщить о проблеме</h3>' +
+      '<fieldset class="report-fieldset"><legend class="report-legend">Что не так с вопросом?</legend>' + radios + '</fieldset>' +
+      '<label class="prompt-modal-label" for="report-comment">Комментарий (необязательно)</label>' +
+      '<textarea id="report-comment" class="report-comment" maxlength="2000" rows="3"></textarea>' +
+      '<p class="report-error hidden" role="alert"></p>' +
+      '<div class="prompt-modal-actions">' +
+      '<button type="button" class="btn secondary-btn" data-report-cancel>Отмена</button>' +
+      '<button type="submit" class="btn next-btn" data-report-ok>Отправить</button>' +
+      '</div>' +
+      '</form>';
+    // textContent (не innerHTML): подписи категорий — из константы, но держим тот
+    // же безопасный паттерн, что promptModal (никакого innerHTML для текста).
+    overlay.querySelectorAll('.report-cat span').forEach((s, i) => { s.textContent = REPORT_CATEGORIES[i].label; });
+    document.body.appendChild(overlay);
+    // inert+aria-hidden фон — как в promptModal (aria-modal сам SR-курсор не держит).
+    const inerted = [];
+    for (const el of Array.from(document.body.children)) {
+      if (el === overlay || el.tagName === 'SCRIPT') continue;
+      if (el.hasAttribute('inert') || el.getAttribute('aria-hidden') === 'true') continue;
+      el.setAttribute('inert', ''); el.setAttribute('aria-hidden', 'true'); inerted.push(el);
+    }
+    const form = overlay.querySelector('.report-modal');
+    const okBtn = overlay.querySelector('[data-report-ok]');
+    const errEl = overlay.querySelector('.report-error');
+    const firstRadio = overlay.querySelector('input[name="report-category"]');
+    window.requestAnimationFrame(() => firstRadio.focus());
+    let done = false, inFlight = false;
+    function close() {
+      if (done) return; done = true;
+      inerted.forEach((el) => { el.removeAttribute('inert'); el.removeAttribute('aria-hidden'); });
+      overlay.remove();
+      if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+    }
+    overlay.querySelector('[data-report-cancel]').addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    overlay.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key !== 'Tab') return;
+      const f = overlay.querySelectorAll('button, input, textarea, [href], [tabindex]:not([tabindex="-1"])');
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+    // Успех: подменяем тело модалки на подтверждение + «Готово» (фокус на неё),
+    // чтобы не полагаться на внешний toast-канал, которого на фокус-странице нет.
+    function showSuccess() {
+      form.innerHTML =
+        '<h3 class="prompt-modal-title">Спасибо!</h3>' +
+        '<p class="report-success">Проблема отправлена на проверку. Мы разберёмся.</p>' +
+        '<div class="prompt-modal-actions"><button type="button" class="btn next-btn" data-report-done>Готово</button></div>';
+      const doneBtn = form.querySelector('[data-report-done]');
+      doneBtn.addEventListener('click', close);
+      window.requestAnimationFrame(() => doneBtn.focus());
+    }
+    function showError(msg) {
+      errEl.textContent = msg;
+      errEl.classList.remove('hidden');
+      okBtn.removeAttribute('aria-busy'); okBtn.removeAttribute('aria-disabled');
+      inFlight = false;
+    }
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (inFlight) return;
+      inFlight = true;
+      // aria-disabled/-busy (НЕ native disabled: тот выбрасывает фокус на body).
+      okBtn.setAttribute('aria-busy', 'true'); okBtn.setAttribute('aria-disabled', 'true');
+      errEl.classList.add('hidden');
+      const checked = overlay.querySelector('input[name="report-category"]:checked');
+      const category = checked ? checked.value : 'OTHER';
+      const comment = overlay.querySelector('#report-comment').value.trim();
+      let body = 'questionId=' + encodeURIComponent(questionId) + '&category=' + encodeURIComponent(category);
+      if (comment) body += '&comment=' + encodeURIComponent(comment);
+      try {
+        const resp = await apiFetch(API.REPORT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body
+        });
+        if (resp.ok) { showSuccess(); }
+        else { showError('Не удалось отправить — возможно, вопрос устарел. Обнови страницу и повтори.'); }
+      } catch (err) {
+        console.error('Report submit failed:', err);
+        showError('Не удалось отправить. Проверь сеть и повтори.');
+      }
+    });
+  }
+
+  // Триггер «Сообщить о проблеме»: раскрываем JS-gated кнопку (без JS модалки нет)
+  // и делегируем клик из document (работает на фокус-странице; questionId — в
+  // data-question-id, обновляется серверным рендером на каждый вопрос).
+  document.querySelectorAll('[data-report-trigger]').forEach((b) => b.classList.remove('hidden'));
+  document.addEventListener('click', (e) => {
+    const trg = e.target.closest('[data-report-trigger]');
+    if (!trg) return;
+    e.preventDefault();
+    reportModal(trg.getAttribute('data-question-id'));
+  });
 
   async function obtainAdminToken() {
     let token = readStoredToken();

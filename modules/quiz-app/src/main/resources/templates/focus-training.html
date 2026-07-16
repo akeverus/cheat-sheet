@@ -204,6 +204,19 @@
         <div th:replace="~{fragments/post-answer-controls :: post-answer-controls(
             extraButtonText='Похожие вопросы'
         )}"></div>
+
+        <!-- FLOW-REPORT-b: тихий триггер «Сообщить о проблеме» по текущему вопросу.
+             JS-gated (hidden → app.js раскрывает и вешает reportModal): без JS
+             модалка не работает, поэтому мёртвой кнопки без скриптов не показываем
+             (тот же паттерн, что extra-analysis-toggle). Доступен на любой фазе
+             вопроса, не только пост-ответ. POST /api/report — CSRF-exempt как
+             прочие /api/* (см. app.js toggleFavorite). -->
+        <div class="report-zone">
+            <button type="button" class="report-trigger hidden" data-report-trigger
+                    th:attr="data-question-id=${current.question.id}">
+                <svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сообщить о проблеме
+            </button>
+        </div>
     </section>
 
     <section class="empty empty-card-inner" th:if="${current == null}">
