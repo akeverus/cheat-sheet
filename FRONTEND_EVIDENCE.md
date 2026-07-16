@@ -789,3 +789,41 @@ Overflow-скан (`body *`, right>vw+1 || left<-1, исключая fixed / wid
 
 **Зелёные гейты после R0.206 (8/12):** cleanBuild, fullTests, consoleNetworkClean, accessibility, performanceProdLike, **themesDesigns**, **responsive**, **coreUxFlows**.
 **Осталось (4, все bootRun-DOWN/анализ):** deadCodeClean, productionSmoke, cleanCheckoutReproducible, designDocsMatchProduction.
+
+---
+
+## EV-DEADCODE-207 — deadCodeClean анализ + designDocsMatchProduction gate (R0.207, 2026-07-16, статический анализ)
+
+**GATE `designDocsMatchProduction` — ЗЕЛЁНЫЙ. GATE `deadCodeClean` — 1 находка (→ DEADCODE-1).** Чистый статический анализ, bootRun не нужен.
+
+### deadCodeClean removed-feature скан — ЧИСТ
+- **0** dead-design CSS-селекторов (editorial/linear/swiss/stripe/claude/superhuman/theverge/nyt/monospace/brutalist) — только исторические комментарии.
+- `design-toggle` / `design-pref` / `readDesign` / `setDesign` / `window.__design` / `DESIGNS` — только комментарии-о-удалении (FE-CMP-1).
+- **11/11** фрагментов имеют refs≥1 (нет orphan; `mermaid-init` жив — head.html + app.js).
+- **0** ссылок на удалённые Java-классы (`DiagramService`/`HintService`/`infrastructure.diagram`) в main.
+
+### НАХОДКА DEADCODE-1 (единственная)
+`tokens.css :root` держит **тёплую ivory/clay цветобазу** (`#FAF9F5` Ivory, `#D97757` Clay, HEX, стр. 35-77) + `@media (prefers-color-scheme: dark) :root:not([data-theme=light])` warm-dark (266-304). **Обе инертны:**
+- Все 6 SSR-шаблонов хардкодят `<html data-design="instrument">` (провабельно: grep всех `<html>` в templates/*.html).
+- `html[data-design="instrument"]` блок (325-430, полная OKLCH-палитра) перекрывает `:root` → warm-цвета никогда не выигрывают.
+- head.html ставит `data-theme` pre-paint inline → `@media`-путь тоже мёртв (всегда идёт `[data-theme]`-путь).
+
+FE-CMP-1 (Фаза 1) намеревался промоутнуть instrument→`:root`, но оставил instrument override-блоком + старую warm-базу. Фикс = single-source промоут → **DEADCODE-1** (рискованный рефактор ядра токенов, отдельный пакет).
+
+### designDocsMatchProduction — сверка instrument-блок ↔ DESIGN.md (line-by-line)
+Instrument-блок (325-430) = **авторитетный рендер-источник** (все шаблоны его форсят). Сверено с `design/mockups/DESIGN.md`:
+
+| DESIGN.md | tokens.css instrument | ✓ |
+|---|---|---|
+| Paper light oklch(0.985 .003 262) | `--color-bg-primary: oklch(0.985 0.003 262)` | ✓ |
+| Paper dark oklch(0.190 .012 264) | dark `oklch(0.190 0.012 264)` | ✓ |
+| Ink oklch(0.245 .015 264) | `--color-text-primary` идентичен | ✓ |
+| Signal oklch(0.550 .110 205) | `--color-border-focus: oklch(0.550 0.110 205)` | ✓ |
+| Signal dark oklch(0.720 .115 205) | dark border-focus идентичен | ✓ |
+| Success h150 / Error h27 | `--color-status-success ...150` / `error ...27` | ✓ |
+| Newsreader / Space Grotesk / JetBrains | `--font-family-display/body/mono` идентичны | ✓ |
+
+Структурные claims (full-border опции, teal-ring выбранного, full-width edge-to-edge) верифицированы live R0.151-161; палитра — R0.206. **Production РЕНДЕР = DESIGN.md** (инертная warm `:root` не рендерится → на production-вывод не влияет). → gate `designDocsMatchProduction`=true.
+
+**Зелёные гейты после R0.207 (9/12):** cleanBuild, fullTests, consoleNetworkClean, accessibility, performanceProdLike, themesDesigns, responsive, coreUxFlows, **designDocsMatchProduction**.
+**Осталось (3):** deadCodeClean (blocked DEADCODE-1), productionSmoke, cleanCheckoutReproducible.
