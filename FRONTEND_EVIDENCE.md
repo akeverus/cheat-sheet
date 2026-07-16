@@ -516,3 +516,24 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Тема-нюанс:** CDP `colorScheme:light` меняет только `prefers-color-scheme`-медиа; палитра сайта осталась тёмной (`bg oklch(0.19 …)`) — тема управляется `data-theme`/localStorage-тумблером, а не медиа-запросом. Для overflow неважно (геометрия боксов тождественна свет/тьме → layout theme-independent подтверждён). Палитра-level light-QA поверхностей — в R0.151–161 (обе темы).
 
 **Итог охвата `responsive` (на текущем live-build):** 320✅ 375✅ 485/500✅(R0.189/192) 768✅ 1280✅(мн. тиков) 1440/1728✅(R0.151-161 per-surface) 1920✅(R0.192) 2560✅(R0.151-161). H-overflow-матрица по основным поверхностям практически полна. Gate `responsive` **НЕ флипнут** — финальная консолидированная live-QA (6 брейкпойнтов × 2 темы) должна пройти против ПЕРЕкомпилированного приложения (после bootRun-stop), поэтому текущий проход — провизорный (layout-часть, стабильная между версиями app.js: изменения app.js касаются пост-ответного флоу, не вёрстки). Вьюпорт возвращён 1280×900 non-mobile, colorScheme auto.
+
+---
+
+## EV-A11Y-194 — Lighthouse accessibility/BP аудит основных поверхностей (R0.194, 2026-07-16)
+
+**Цель:** вклад в release-gate `accessibility` (план: a11y=100, BP=100, только Chromium). После промоута Instrument в дефолт + правок шаблонов (UX-13/FLOW-REPORT/REVIEW-03) — свежий аудит текущего live-build. chrome-devtools `lighthouse_audit`, desktop, mode=navigation. Read-only → gradle не нужен.
+
+**Результаты (desktop):**
+| Поверхность | Accessibility | Best Practices | SEO | Agentic |
+|---|---|---|---|---|
+| `/` (focus) | **100** ✅ | **100** ✅ | 50 | 100 |
+| `/stats` | **100** ✅ | **92** ⚠️ | 50 | 100 |
+| `/settings` | **100** ✅ | **100** ✅ | 50 | 100 |
+
+**Accessibility = 100 на всех трёх основных поверхностях.** (Advisory weight-0 `label-content-name-mismatch` на /stats не влияет на score=100.)
+
+**🔴 Находка BP-STATS-1 (BP=92 на /stats, needsGradle):** два провала — `errors-in-console` + `inspector-issues`, оба один корень: **CSP блокирует `connect` к `cdn.jsdelivr.net`, когда chart.js@4.5.0 (CDN) пытается подтянуть sourcemap** (`chart.umd.js.map`). CSP (`SecurityConfig.java:65`, HTTP-заголовок) имеет `default-src 'self'` + `script-src … https://cdn.jsdelivr.net`, но БЕЗ `connect-src` с jsdelivr → fetch sourcemap падает на `default-src 'self'` → CSP-violation в консоли. **Pre-existing** (не регресс моих правок; chart.js только на /stats, на / focus BP=100). Проявляется только с прикреплённым инспектором (sourcemap не грузится без devtools) → для реальных юзеров без devtools ошибки нет, но Lighthouse всегда с инспектором → штрафует. **Рекомендуемый фикс (1 строка, migratable, low-risk):** добавить `connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com` в CSP-директиву `SecurityConfig.java`. Java → **gated на bootRun-stopped тик** (иначе gradle-wedge). Альтернатива (self-host chart.js без sourcemap) отклонена — инвазивно под feature-freeze, непоследовательно с mermaid/hljs-CDN.
+
+**SEO=50 (все поверхности) — by design, НЕ дефект, вне gate:** провалы `is-crawlable` (страница заблокирована от индексации — `noindex` осознан: личный учебный инструмент, не публичный веб-контент) + `meta-description` (публичная SEO-мелочь, нерелевантна). План таргетит только a11y=100+BP=100. SEO не трогаем.
+
+**Gate `accessibility` НЕ флипнут** — a11y=100 подтверждён на 3 core-поверхностях desktop, но финальный gate требует: остальные поверхности (result/session-summary/error — покрыты per-surface R0.151-161), mobile-device аудит, и re-run против ПЕРЕкомпилированного app. Провизорный проход, как responsive.
