@@ -849,3 +849,32 @@ head.html комментарий архитектуры обновлён (single
 
 **Зелёные гейты после R0.208 (10/12):** cleanBuild, fullTests, consoleNetworkClean, accessibility, performanceProdLike, themesDesigns, responsive, coreUxFlows, designDocsMatchProduction, **deadCodeClean**.
 **Осталось (2):** productionSmoke, cleanCheckoutReproducible.
+
+---
+
+## EV-FINAL-209 — 🏁 FINALIZED: productionSmoke + cleanCheckoutReproducible (R0.209, 2026-07-16)
+
+**ПОСЛЕДНИЕ 2 ГЕЙТА ЗЕЛЁНЫЕ → 12/12 → roundStatus=FINALIZED.**
+
+### GATE `cleanCheckoutReproducible` — ЗЕЛЁНЫЙ
+Свежий `git worktree` из HEAD `6ddcbf72` (detached, 0 незакоммиченных файлов — доказывает независимость сборки от рабочего дерева) → `./gradlew clean build` **BUILD SUCCESSFUL 42s** (весь сьют quiz-app + quiz-domain + quiz-persistence + jacoco + ArchUnit + bootJar). Worktree удалён после проверки.
+
+### GATE `productionSmoke` — ЗЕЛЁНЫЙ
+Prod-профиль-jar **из чистого worktree** (smoke на воспроизводимо собранном артефакте):
+
+| Endpoint | Код | Ожидание |
+|---|---|---|
+| `/` | 200 | ✓ |
+| `/stats` | 200 | ✓ |
+| `/settings` | 200 | ✓ |
+| `/actuator/health` | 200 | ✓ |
+| `/nonexistent-404` | 404 | ✓ (error.html) |
+| `/swagger-ui.html` | 404 | ✓ (Swagger off = prod) |
+| `/v3/api-docs` | 404 | ✓ (prod) |
+
+`data-design=instrument`; served `tokens.css?v=66` содержит `oklch(0.985 0.003 262)` (single-source задеплоен в prod-jar). **0 реальных ERROR** (4 grep-совпадения = INFO-строки MCQ-топиков `java/kotlin-*exceptions*-interview`, ложные срабатывания на подстроку).
+
+### Итог FINALIZATION ROUND
+**ВСЕ 12/12 РЕЛИЗ-ГЕЙТОВ (Раздел 9) ЗЕЛЁНЫЕ:** cleanBuild, fullTests, productionSmoke, coreUxFlows, accessibility, performanceProdLike, themesDesigns, responsive, consoleNetworkClean, deadCodeClean, cleanCheckoutReproducible, designDocsMatchProduction.
+
+Instrument = единственный дизайн (single-source токены); все P0/P1/P2 задачи DONE; бэкенд-фичи (пауза/idempotent-submit/skip/summary/report/expiry-autosave) поставлены и live-QA-верифицированы. Fixed-cron контракт соблюдён весь раунд (ScheduleWakeup не звался). **CronDelete 22b94f95 → loop остановлен.**
