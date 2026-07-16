@@ -9,6 +9,18 @@
           "question_text": "Что такое модель `OSI` и зачем она нужна?",
           "options": [
             {
+              "text": "`OSI` — это конкретный сетевой протокол, по которому сегодня передаётся весь трафик в интернете вместо `TCP/IP`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OSI` — это эталонная модель (концепция уровней), а не протокол; реальный трафик идёт по стеку `TCP/IP`.",
+                "source_of_confusion": "Слово «модель» опускают и принимают `OSI` за работающий протокол наравне с `TCP`.",
+                "if_it_were_true": "Тогда у пакетов был бы «OSI-заголовок», но в сети есть `IP`, `TCP`, `Ethernet` — заголовков `OSI` не существует.",
+                "how_it_should_be": "`OSI` — теоретическая модель «как должно быть»; передачей данных занимается практический стек `TCP/IP`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Модель `OSI` (Open Systems Interconnection) — эталонная модель из 7 уровней (Physical, Data Link, Network, Transport, Session, Presentation, Application). Каждый уровень решает свою задачу и даёт интерфейс уровню выше — это абстракция, стандартизация совместимости вендоров и удобная диагностика «на каком уровне проблема».",
               "correct": true,
               "sections": {
@@ -17,18 +29,6 @@
                 "when_to_apply": "Модель используют как общий язык при проектировании, отладке сети и обсуждении, где именно терминируется `TLS` или работает балансировщик.",
                 "edge_cases": "На практике строго 7 уровней редко применяют — `TLS` формально L6, но в реальном стеке `TCP/IP` его относят к Application. Реальные сети используют 4-уровневую `TCP/IP`.",
                 "related": "[[networking-interview#Q2]] чем `TCP/IP` отличается от `OSI`; [[networking-interview#Q3]] протоколы на каждом уровне; [[networking-interview#Q21]] балансировка L4 vs L7."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`OSI` — это конкретный сетевой протокол, по которому сегодня передаётся весь трафик в интернете вместо `TCP/IP`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`OSI` — это эталонная модель (концепция уровней), а не протокол; реальный трафик идёт по стеку `TCP/IP`.",
-                "source_of_confusion": "Слово «модель» опускают и принимают `OSI` за работающий протокол наравне с `TCP`.",
-                "if_it_were_true": "Тогда у пакетов был бы «OSI-заголовок», но в сети есть `IP`, `TCP`, `Ethernet` — заголовков `OSI` не существует.",
-                "how_it_should_be": "`OSI` — теоретическая модель «как должно быть»; передачей данных занимается практический стек `TCP/IP`."
               },
               "order": 1,
               "label": "B"
@@ -81,19 +81,6 @@
               "label": "A"
             },
             {
-              "text": "`OSI` — теоретическая 7-уровневая модель «как должно быть», `TCP/IP` — практическая 4-уровневая модель «как есть», на которой работает реальный интернет. `TCP/IP` объединяет уровни `OSI`: его Application = Application+Presentation+Session, а Network Access = Data Link+Physical.",
-              "correct": true,
-              "sections": {
-                "explanation": "Четыре уровня `TCP/IP`: Application (`HTTP`, `DNS`), Transport (`TCP`, `UDP`), Internet (`IP`, `ICMP`), Network Access (`Ethernet`, `Wi-Fi`). Они отображаются на семь уровней `OSI` с объединением верхних и нижних.",
-                "example": "`HTTP` в `OSI` затрагивал бы L5–L7, но в `TCP/IP` он целиком на одном уровне Application — отдельных Session и Presentation в практической модели нет.",
-                "when_to_apply": "Различие важно, когда нужно объяснить, почему в реальной отладке оперируют четырьмя слоями, а семиуровневую `OSI` используют как справочный словарь.",
-                "edge_cases": "Иногда рисуют пятиуровневый гибрид (разделяя Physical и Data Link), что путает кандидатов: канонических вариантов несколько, важно понимать соответствие, а не зубрить число.",
-                "related": "[[networking-interview#Q1]] что такое модель `OSI`; [[networking-interview#Q3]] протоколы на каждом уровне; [[networking-interview#Q9]] эволюция `HTTP` на Application-уровне."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "`TCP/IP` содержит ровно столько же уровней, что и `OSI` — семь, просто названия уровней другие.",
               "correct": false,
               "sections": {
@@ -102,8 +89,8 @@
                 "if_it_were_true": "Тогда в `TCP/IP` были бы отдельные Session и Presentation, но их там нет — это часть единого Application.",
                 "how_it_should_be": "`TCP/IP` сворачивает семь уровней `OSI` в четыре практических слоя."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`TCP/IP` отличается от `OSI` только тем, что не поддерживает протокол `UDP` на транспортном уровне.",
@@ -113,6 +100,19 @@
                 "source_of_confusion": "Название стека содержит только «TCP», отсюда ложный вывод, что `UDP` к нему не относится.",
                 "if_it_were_true": "Тогда `DNS` и видеостриминг по `UDP` не работали бы в обычном интернете, но они работают.",
                 "how_it_should_be": "Транспортный уровень `TCP/IP` включает и `TCP`, и `UDP`, и `QUIC`; отличие от `OSI` — в структуре уровней."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`OSI` — теоретическая 7-уровневая модель «как должно быть», `TCP/IP` — практическая 4-уровневая модель «как есть», на которой работает реальный интернет. `TCP/IP` объединяет уровни `OSI`: его Application = Application+Presentation+Session, а Network Access = Data Link+Physical.",
+              "correct": true,
+              "sections": {
+                "explanation": "Четыре уровня `TCP/IP`: Application (`HTTP`, `DNS`), Transport (`TCP`, `UDP`), Internet (`IP`, `ICMP`), Network Access (`Ethernet`, `Wi-Fi`). Они отображаются на семь уровней `OSI` с объединением верхних и нижних.",
+                "example": "`HTTP` в `OSI` затрагивал бы L5–L7, но в `TCP/IP` он целиком на одном уровне Application — отдельных Session и Presentation в практической модели нет.",
+                "when_to_apply": "Различие важно, когда нужно объяснить, почему в реальной отладке оперируют четырьмя слоями, а семиуровневую `OSI` используют как справочный словарь.",
+                "edge_cases": "Иногда рисуют пятиуровневый гибрид (разделяя Physical и Data Link), что путает кандидатов: канонических вариантов несколько, важно понимать соответствие, а не зубрить число.",
+                "related": "[[networking-interview#Q1]] что такое модель `OSI`; [[networking-interview#Q3]] протоколы на каждом уровне; [[networking-interview#Q9]] эволюция `HTTP` на Application-уровне."
               },
               "order": 3,
               "label": "D"
@@ -129,6 +129,19 @@
           "question_text": "Какие протоколы работают на каждом уровне стека `TCP/IP`?",
           "options": [
             {
+              "text": "Application — `HTTP`, `DNS`, `FTP`, `SMTP`, `SSH`, `WebSocket`; Transport — `TCP`, `UDP`, `QUIC`; Internet — `IPv4`, `IPv6`, `ICMP`, `IGMP`; Network Access — `Ethernet`, `Wi-Fi (802.11)`, `ARP`. Данные приложения инкапсулируются вниз: `TCP`-сегмент → `IP`-пакет → `Ethernet`-фрейм, на каждом уровне добавляется свой заголовок.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый уровень добавляет/снимает свой заголовок (инкапсуляция/декапсуляция). Application отвечает за логику и представление, Transport — за доставку между процессами, Internet — за маршрутизацию между хостами, Network Access — за фреймы в локальной сети.",
+                "example": "`GET`-запрос (Application) кладётся в `TCP`-сегмент с портом 443 (Transport), тот — в `IP`-пакет с адресом получателя (Internet), тот — в `Ethernet`-фрейм с `MAC` (Network Access).",
+                "when_to_apply": "Знание раскладки протоколов помогает читать дампы `Wireshark` и понимать, где именно теряются или фильтруются пакеты.",
+                "edge_cases": "`ARP` формально между L2 и L3 — он резолвит `IP` в `MAC`, поэтому его относят к Network Access, хотя он оперирует `IP`-адресами.",
+                "related": "[[networking-interview#Q2]] соответствие `TCP/IP` и `OSI`; [[networking-interview#Q4]] `TCP` vs `UDP` на Transport; [[networking-interview#Q27]] `IPv4` vs `IPv6` на Internet."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`HTTP` и `DNS` работают на транспортном уровне (Transport), потому что именно они отвечают за доставку байтов между хостами.",
               "correct": false,
               "sections": {
@@ -137,8 +150,8 @@
                 "if_it_were_true": "Тогда `HTTP` не нуждался бы в `TCP`, но `HTTP/1.1` и `HTTP/2` явно работают поверх `TCP`-соединения.",
                 "how_it_should_be": "`HTTP`/`DNS` — Application; `TCP`/`UDP`/`QUIC` — Transport; они образуют разные уровни стека."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`IP` и `ICMP` относятся к прикладному уровню (Application), так как формируют конечный адрес получателя данных.",
@@ -148,19 +161,6 @@
                 "source_of_confusion": "`IP`-адрес виден разработчику и кажется частью прикладной логики, отсюда смещение на Application.",
                 "if_it_were_true": "Тогда смена `HTTP`-приложения меняла бы и `IP`-стек, но `IP` работает одинаково под любым приложением.",
                 "how_it_should_be": "`IP`/`ICMP` живут на Internet-уровне и отвечают за маршрутизацию, а не за прикладную логику."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Application — `HTTP`, `DNS`, `FTP`, `SMTP`, `SSH`, `WebSocket`; Transport — `TCP`, `UDP`, `QUIC`; Internet — `IPv4`, `IPv6`, `ICMP`, `IGMP`; Network Access — `Ethernet`, `Wi-Fi (802.11)`, `ARP`. Данные приложения инкапсулируются вниз: `TCP`-сегмент → `IP`-пакет → `Ethernet`-фрейм, на каждом уровне добавляется свой заголовок.",
-              "correct": true,
-              "sections": {
-                "explanation": "Каждый уровень добавляет/снимает свой заголовок (инкапсуляция/декапсуляция). Application отвечает за логику и представление, Transport — за доставку между процессами, Internet — за маршрутизацию между хостами, Network Access — за фреймы в локальной сети.",
-                "example": "`GET`-запрос (Application) кладётся в `TCP`-сегмент с портом 443 (Transport), тот — в `IP`-пакет с адресом получателя (Internet), тот — в `Ethernet`-фрейм с `MAC` (Network Access).",
-                "when_to_apply": "Знание раскладки протоколов помогает читать дампы `Wireshark` и понимать, где именно теряются или фильтруются пакеты.",
-                "edge_cases": "`ARP` формально между L2 и L3 — он резолвит `IP` в `MAC`, поэтому его относят к Network Access, хотя он оперирует `IP`-адресами.",
-                "related": "[[networking-interview#Q2]] соответствие `TCP/IP` и `OSI`; [[networking-interview#Q4]] `TCP` vs `UDP` на Transport; [[networking-interview#Q27]] `IPv4` vs `IPv6` на Internet."
               },
               "order": 2,
               "label": "C"
@@ -213,18 +213,6 @@
               "label": "B"
             },
             {
-              "text": "И `TCP`, и `UDP` одинаково реализуют congestion control и flow control, различаясь только номером порта.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Flow control (sliding window) и congestion control есть только у `TCP`; `UDP` ими не управляет вовсе.",
-                "source_of_confusion": "Оба используют порты, поэтому ошибочно кажется, что и остальная механика у них совпадает.",
-                "if_it_were_true": "Тогда поток `UDP` сам бы замедлялся при перегрузке сети, но `UDP` шлёт пакеты с постоянной скоростью независимо от потерь.",
-                "how_it_should_be": "Управление потоком и перегрузкой — особенность `TCP`; `UDP` отдаёт эту ответственность приложению."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "`TCP` — connection-oriented (handshake), гарантирует доставку (retransmit) и порядок, имеет flow control (sliding window) и congestion control, заголовок 20+ байт, медленнее. `UDP` — connectionless, best-effort (потери возможны), без гарантии порядка и без контроля потока/перегрузки, заголовок 8 байт, быстрее.",
               "correct": true,
               "sections": {
@@ -233,6 +221,18 @@
                 "when_to_apply": "Выбирают `TCP`, когда нельзя терять и переставлять данные; `UDP` — когда latency критичнее, а потери приложение обрабатывает само.",
                 "edge_cases": "`DNS` обычно по `UDP` (запрос/ответ в одном пакете), но переключается на `TCP` при ответе > 512 байт, например при zone transfer.",
                 "related": "[[networking-interview#Q5]] `TCP` three-way handshake; [[networking-interview#Q8]] window size и flow control; [[networking-interview#Q42]] практический выбор `TCP` vs `UDP`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "И `TCP`, и `UDP` одинаково реализуют congestion control и flow control, различаясь только номером порта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Flow control (sliding window) и congestion control есть только у `TCP`; `UDP` ими не управляет вовсе.",
+                "source_of_confusion": "Оба используют порты, поэтому ошибочно кажется, что и остальная механика у них совпадает.",
+                "if_it_were_true": "Тогда поток `UDP` сам бы замедлялся при перегрузке сети, но `UDP` шлёт пакеты с постоянной скоростью независимо от потерь.",
+                "how_it_should_be": "Управление потоком и перегрузкой — особенность `TCP`; `UDP` отдаёт эту ответственность приложению."
               },
               "order": 3,
               "label": "D"
@@ -249,6 +249,18 @@
           "question_text": "Как работает `TCP` three-way handshake?",
           "options": [
             {
+              "text": "Three-way handshake — это два шага: клиент шлёт `SYN`, сервер сразу отвечает данными, без обмена `ACK`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Handshake состоит из трёх шагов (`SYN` → `SYN-ACK` → `ACK`); данные идут только после завершающего `ACK` клиента.",
+                "source_of_confusion": "Хочется «сэкономить» шаг, но именно `ACK` подтверждает готовность клиента принять `seq` сервера.",
+                "if_it_were_true": "Тогда соединение считалось бы установленным до подтверждения клиентом, и старые дубликаты `SYN` ломали бы сессии.",
+                "how_it_should_be": "Нужны все три шага: `SYN`, `SYN-ACK` и финальный `ACK`, после чего идут данные."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Это трёхэтапное установление соединения: 1) клиент шлёт `SYN` со случайным `seq=x`; 2) сервер отвечает `SYN-ACK` со своим `seq=y` и `ack=x+1`; 3) клиент шлёт `ACK` с `ack=y+1`. После этого соединение установлено и можно передавать данные. Закрытие — четырёхэтапное (`FIN`→`ACK`→`FIN`→`ACK`).",
               "correct": true,
               "sections": {
@@ -257,18 +269,6 @@
                 "when_to_apply": "Понимание handshake нужно при отладке таймаутов соединения, тюнинге backlog и анализе задержки «лишний 1 RTT» на установление.",
                 "edge_cases": "`SYN flood` — атака потоком `SYN` без завершающего `ACK`, переполняющая очередь полуоткрытых соединений; защита — `SYN cookies` и ограничение backlog.",
                 "related": "[[networking-interview#Q4]] `TCP` vs `UDP`; [[networking-interview#Q10]] переиспользование соединения через keep-alive; [[networking-interview#Q13]] `TLS` handshake поверх `TCP`."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "Three-way handshake — это два шага: клиент шлёт `SYN`, сервер сразу отвечает данными, без обмена `ACK`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Handshake состоит из трёх шагов (`SYN` → `SYN-ACK` → `ACK`); данные идут только после завершающего `ACK` клиента.",
-                "source_of_confusion": "Хочется «сэкономить» шаг, но именно `ACK` подтверждает готовность клиента принять `seq` сервера.",
-                "if_it_were_true": "Тогда соединение считалось бы установленным до подтверждения клиентом, и старые дубликаты `SYN` ломали бы сессии.",
-                "how_it_should_be": "Нужны все три шага: `SYN`, `SYN-ACK` и финальный `ACK`, после чего идут данные."
               },
               "order": 1,
               "label": "B"
@@ -321,19 +321,6 @@
               "label": "A"
             },
             {
-              "text": "Congestion control — механизм `TCP`, предотвращающий перегрузку сети: отправитель адаптирует скорость по обратной связи. Фазы: Slow Start (окно растёт экспоненциально до `ssthresh`), Congestion Avoidance (линейный рост +1 MSS/RTT), Fast Retransmit (ретрансмит при 3 дублирующих `ACK`) и Fast Recovery. Алгоритмы: `Reno`, `Cubic` (дефолт в Linux), `BBR` (Google).",
-              "correct": true,
-              "sections": {
-                "explanation": "Соединение не может мгновенно занять весь канал — оно «разгоняется» от малого окна. Это и объясняет, почему переиспользование «прогретых» соединений выгоднее новых.",
-                "example": "`BBR` от Google оценивает фактический bandwidth и `RTT`, а не реагирует на потери, поэтому даёт выше throughput на дальних каналах с потерями, чем классический `Reno`.",
-                "when_to_apply": "Знание фаз нужно при тюнинге производительности (выбор `cubic`/`bbr`), объяснении «холодного старта» соединений и пользы connection pooling.",
-                "edge_cases": "При тайм-ауте (а не 3 дублирующих `ACK`) окно падает до 1 MSS и снова идёт Slow Start — это куда дороже, чем Fast Recovery после fast retransmit.",
-                "related": "[[networking-interview#Q8]] flow control и эффективное окно; [[networking-interview#Q10]] почему важен прогретый pool; [[networking-interview#Q5]] установление соединения перед разгоном."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "В фазе Slow Start окно увеличивается линейно (+1 MSS за RTT), а в Congestion Avoidance — экспоненциально.",
               "correct": false,
               "sections": {
@@ -342,8 +329,8 @@
                 "if_it_were_true": "Тогда разгон соединения был бы крайне медленным, и `TCP` не достигал бы полной полосы за разумное время.",
                 "how_it_should_be": "Slow Start — экспоненциальный рост до `ssthresh`, затем Congestion Avoidance — линейный."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`Cubic` и `BBR` — это алгоритмы flow control, которые работают только в `UDP`, а `TCP` использует фиксированное окно.",
@@ -353,6 +340,19 @@
                 "source_of_confusion": "`BBR` ассоциируют с `QUIC`/`UDP`, забывая, что исторически это алгоритм `TCP`.",
                 "if_it_were_true": "Тогда дефолтный `cubic` в Linux не применялся бы к `TCP`-соединениям, но он именно их и регулирует.",
                 "how_it_should_be": "`Reno`/`Cubic`/`BBR` — congestion-control алгоритмы `TCP`; окно у `TCP` адаптивное, а не фиксированное."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Congestion control — механизм `TCP`, предотвращающий перегрузку сети: отправитель адаптирует скорость по обратной связи. Фазы: Slow Start (окно растёт экспоненциально до `ssthresh`), Congestion Avoidance (линейный рост +1 MSS/RTT), Fast Retransmit (ретрансмит при 3 дублирующих `ACK`) и Fast Recovery. Алгоритмы: `Reno`, `Cubic` (дефолт в Linux), `BBR` (Google).",
+              "correct": true,
+              "sections": {
+                "explanation": "Соединение не может мгновенно занять весь канал — оно «разгоняется» от малого окна. Это и объясняет, почему переиспользование «прогретых» соединений выгоднее новых.",
+                "example": "`BBR` от Google оценивает фактический bandwidth и `RTT`, а не реагирует на потери, поэтому даёт выше throughput на дальних каналах с потерями, чем классический `Reno`.",
+                "when_to_apply": "Знание фаз нужно при тюнинге производительности (выбор `cubic`/`bbr`), объяснении «холодного старта» соединений и пользы connection pooling.",
+                "edge_cases": "При тайм-ауте (а не 3 дублирующих `ACK`) окно падает до 1 MSS и снова идёт Slow Start — это куда дороже, чем Fast Recovery после fast retransmit.",
+                "related": "[[networking-interview#Q8]] flow control и эффективное окно; [[networking-interview#Q10]] почему важен прогретый pool; [[networking-interview#Q5]] установление соединения перед разгоном."
               },
               "order": 3,
               "label": "D"
@@ -369,6 +369,19 @@
           "question_text": "Что такое `TCP` keep-alive и зачем он нужен?",
           "options": [
             {
+              "text": "`TCP` keep-alive — механизм обнаружения «мёртвых» соединений: если по соединению долго нет данных, сторона шлёт probe-пакет. Параметры в Linux: `tcp_keepalive_time` (2 часа по умолчанию до первого probe), `tcp_keepalive_intvl` (75 сек между probe), `tcp_keepalive_probes` (9 неответов до закрытия). Не путать с `HTTP` keep-alive.",
+              "correct": true,
+              "sections": {
+                "explanation": "Probe-пакеты выявляют упавшую удалённую сторону, поддерживают соединение живым через `NAT`/firewall (они сбрасывают idle) и освобождают сервер от zombie-соединений.",
+                "example": "Долгоживущее соединение к БД простаивает ночью; без keep-alive `NAT` сбрасывает его молча, и первый утренний запрос падает с broken pipe — keep-alive это предотвращает.",
+                "when_to_apply": "Включают на длинных idle-соединениях (БД-пулы, `WebSocket`, межсервисные каналы), особенно когда между сторонами есть `NAT` или firewall с коротким idle-timeout.",
+                "edge_cases": "Дефолтные 2 часа часто слишком велики — `NAT` рвёт соединение за минуты; на практике `tcp_keepalive_time` снижают до десятков секунд.",
+                "related": "[[networking-interview#Q10]] `HTTP` keep-alive (другое понятие); [[networking-interview#Q24]] почему `NAT` рвёт idle-соединения; [[networking-interview#Q8]] окно и flow control."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`TCP` keep-alive — это то же самое, что `HTTP` keep-alive: оба переиспользуют одно соединение для нескольких HTTP-запросов.",
               "correct": false,
               "sections": {
@@ -377,8 +390,8 @@
                 "if_it_were_true": "Тогда `tcp_keepalive_time` влиял бы на число HTTP-запросов в соединении, но он управляет только probe-таймерами.",
                 "how_it_should_be": "`TCP` keep-alive — про живость соединения; `HTTP` keep-alive — про переиспользование соединения под запросы."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Keep-alive отправляет probe немедленно после каждого переданного байта данных, чтобы подтвердить доставку.",
@@ -388,19 +401,6 @@
                 "source_of_confusion": "Probe путают с `ACK`-подтверждением каждого сегмента в активной передаче.",
                 "if_it_were_true": "Тогда на активном соединении keep-alive удваивал бы трафик, но probe не шлётся, пока есть обычный обмен.",
                 "how_it_should_be": "Keep-alive активируется при простое; на активном соединении доставку подтверждают штатные `ACK`."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "`TCP` keep-alive — механизм обнаружения «мёртвых» соединений: если по соединению долго нет данных, сторона шлёт probe-пакет. Параметры в Linux: `tcp_keepalive_time` (2 часа по умолчанию до первого probe), `tcp_keepalive_intvl` (75 сек между probe), `tcp_keepalive_probes` (9 неответов до закрытия). Не путать с `HTTP` keep-alive.",
-              "correct": true,
-              "sections": {
-                "explanation": "Probe-пакеты выявляют упавшую удалённую сторону, поддерживают соединение живым через `NAT`/firewall (они сбрасывают idle) и освобождают сервер от zombie-соединений.",
-                "example": "Долгоживущее соединение к БД простаивает ночью; без keep-alive `NAT` сбрасывает его молча, и первый утренний запрос падает с broken pipe — keep-alive это предотвращает.",
-                "when_to_apply": "Включают на длинных idle-соединениях (БД-пулы, `WebSocket`, межсервисные каналы), особенно когда между сторонами есть `NAT` или firewall с коротким idle-timeout.",
-                "edge_cases": "Дефолтные 2 часа часто слишком велики — `NAT` рвёт соединение за минуты; на практике `tcp_keepalive_time` снижают до десятков секунд.",
-                "related": "[[networking-interview#Q10]] `HTTP` keep-alive (другое понятие); [[networking-interview#Q24]] почему `NAT` рвёт idle-соединения; [[networking-interview#Q8]] окно и flow control."
               },
               "order": 2,
               "label": "C"
@@ -453,18 +453,6 @@
               "label": "B"
             },
             {
-              "text": "Window scaling нужен, чтобы уменьшить размер окна ниже 65535 байт для экономии памяти на маломощных устройствах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Window scaling (`RFC 7323`) наоборот позволяет окну превышать 65535 байт (вплоть до ~1 ГБ) для высокой пропускной способности.",
-                "source_of_confusion": "Слово «scaling» воспринимают как «уменьшение», хотя речь о расширении предела окна.",
-                "if_it_were_true": "Тогда на быстрых каналах throughput был бы ограничен 64 КБ в полёте, что противоречит цели scaling.",
-                "how_it_should_be": "Window scaling расширяет верхний предел окна выше 65535 байт ради высокого throughput на длинных каналах."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "Flow control — механизм, при котором получатель сообщает отправителю, сколько данных готов принять, чтобы не переполнить свой буфер. Receive window (`rwnd`) передаётся в каждом `ACK`; window scaling (`RFC 7323`) позволяет окну превышать 65535 байт. Эффективное окно = `min(rwnd, cwnd)`. Flow control защищает получателя, congestion control — сеть.",
               "correct": true,
               "sections": {
@@ -473,6 +461,18 @@
                 "when_to_apply": "Понимание окна нужно при тюнинге throughput на «длинных толстых» каналах, где без window scaling окно 64 КБ ограничивает скорость.",
                 "edge_cases": "На высоколатентных каналах без window scaling максимальные 65535 байт в полёте искусственно режут throughput — отсюда обязательность scaling в `RFC 7323`.",
                 "related": "[[networking-interview#Q6]] congestion control и `cwnd`; [[networking-interview#Q4]] почему у `UDP` нет flow control; [[networking-interview#Q33]] метрики производительности сети."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Window scaling нужен, чтобы уменьшить размер окна ниже 65535 байт для экономии памяти на маломощных устройствах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Window scaling (`RFC 7323`) наоборот позволяет окну превышать 65535 байт (вплоть до ~1 ГБ) для высокой пропускной способности.",
+                "source_of_confusion": "Слово «scaling» воспринимают как «уменьшение», хотя речь о расширении предела окна.",
+                "if_it_were_true": "Тогда на быстрых каналах throughput был бы ограничен 64 КБ в полёте, что противоречит цели scaling.",
+                "how_it_should_be": "Window scaling расширяет верхний предел окна выше 65535 байт ради высокого throughput на длинных каналах."
               },
               "order": 3,
               "label": "D"
@@ -489,6 +489,18 @@
           "question_text": "Чем отличаются `HTTP/1.1`, `HTTP/2` и `HTTP/3`?",
           "options": [
             {
+              "text": "`HTTP/2` и `HTTP/3` оба работают поверх `TCP`, а `HTTP/3` отличается главным образом новым форматом сжатия заголовков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HTTP/3` работает поверх `QUIC` (на базе `UDP`), а не `TCP`; смена транспорта — главное отличие, а не только `QPACK`.",
+                "source_of_confusion": "`HTTP/2` и `HTTP/3` оба «современные и бинарные», поэтому их транспорт считают одинаковым.",
+                "if_it_were_true": "Тогда `HTTP/3` страдал бы от `TCP`-level HOL blocking так же, как `HTTP/2`, но он от него избавлен через `QUIC`.",
+                "how_it_should_be": "`HTTP/2` — поверх `TCP`, `HTTP/3` — поверх `QUIC`/`UDP`; смена транспорта и убирает `TCP`-level HOL blocking."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`HTTP/1.1` — текстовый, поверх `TCP`, без мультиплексирования (один запрос за раз, браузеры открывают 6-8 соединений). `HTTP/2` — бинарный, поверх `TCP`, мультиплексирование потоков в одном соединении, сжатие заголовков `HPACK`. `HTTP/3` — поверх `QUIC` (на `UDP`), нативное мультиплексирование без HOL blocking, `QPACK`, шифрование обязательно.",
               "correct": true,
               "sections": {
@@ -497,18 +509,6 @@
                 "when_to_apply": "Различия учитывают при выборе версии для API/статики, настройке ALPN и оценке выигрыша от `HTTP/3` на мобильных сетях с потерями.",
                 "edge_cases": "`HTTP/2` на нестабильной сети может оказаться медленнее `HTTP/1.1` с несколькими соединениями: одна потеря пакета `TCP` блокирует все мультиплексированные потоки.",
                 "related": "[[networking-interview#Q11]] head-of-line blocking подробнее; [[networking-interview#Q12]] что такое `QUIC`; [[networking-interview#Q10]] keep-alive и connection pooling."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`HTTP/2` и `HTTP/3` оба работают поверх `TCP`, а `HTTP/3` отличается главным образом новым форматом сжатия заголовков.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`HTTP/3` работает поверх `QUIC` (на базе `UDP`), а не `TCP`; смена транспорта — главное отличие, а не только `QPACK`.",
-                "source_of_confusion": "`HTTP/2` и `HTTP/3` оба «современные и бинарные», поэтому их транспорт считают одинаковым.",
-                "if_it_were_true": "Тогда `HTTP/3` страдал бы от `TCP`-level HOL blocking так же, как `HTTP/2`, но он от него избавлен через `QUIC`.",
-                "how_it_should_be": "`HTTP/2` — поверх `TCP`, `HTTP/3` — поверх `QUIC`/`UDP`; смена транспорта и убирает `TCP`-level HOL blocking."
               },
               "order": 1,
               "label": "B"
@@ -561,19 +561,6 @@
               "label": "A"
             },
             {
-              "text": "`HTTP` keep-alive (`Connection: keep-alive`) — переиспользование одного `TCP`-соединения для нескольких HTTP-запросов: в `HTTP/1.0` каждый запрос открывал новое соединение, в `HTTP/1.1` keep-alive включён по умолчанию, в `HTTP/2` одно соединение обслуживает все запросы к хосту. Connection pooling — пул готовых соединений, который приложение переиспользует.",
-              "correct": true,
-              "sections": {
-                "explanation": "Пул экономит на `TCP` handshake (1 RTT), `TLS` handshake (1-2 RTT) и `TCP` slow start (соединение уже «разогрето»), а также снижает число file descriptor на ОС.",
-                "example": "Java `HttpClient` держит пул автоматически: первый запрос платит за handshake, последующие к тому же хосту идут по уже открытому соединению почти без overhead.",
-                "when_to_apply": "Pooling обязателен при межсервисной коммуникации в микросервисах — без него каждый вызов тратит 100-300 мс на установление соединения.",
-                "edge_cases": "Слишком большой пул держит лишние idle-соединения и упирается в лимит file descriptor; слишком маленький — создаёт contention под нагрузкой. Размер подбирают под RPS и latency бэкенда.",
-                "related": "[[networking-interview#Q7]] `TCP` keep-alive (другой уровень); [[networking-interview#Q31]] connection pooling на HTTP-клиенте; [[networking-interview#Q6]] slow start и польза прогрева."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "В `HTTP/1.1` keep-alive выключен по умолчанию и включается заголовком `Connection: keep-alive`, иначе каждый запрос открывает новое `TCP`-соединение.",
               "correct": false,
               "sections": {
@@ -582,8 +569,8 @@
                 "if_it_were_true": "Тогда connection pooling в `HTTP/1.1` не имел бы эффекта, но именно благодаря keep-alive пул и переиспользует соединения.",
                 "how_it_should_be": "В `HTTP/1.1` keep-alive по умолчанию включён; соединение переиспользуется для серии запросов."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Connection pooling вреден, потому что переиспользование `TCP`-соединения каждый раз заново проходит slow start.",
@@ -593,6 +580,19 @@
                 "source_of_confusion": "Slow start ассоциируют с любым обменом данными, забывая, что он происходит при старте нового соединения.",
                 "if_it_were_true": "Тогда пул не давал бы выигрыша в latency, но на практике он экономит десятки-сотни миллисекунд на запрос.",
                 "how_it_should_be": "Пул сохраняет прогретые соединения с большим congestion window, поэтому ускоряет, а не замедляет."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`HTTP` keep-alive (`Connection: keep-alive`) — переиспользование одного `TCP`-соединения для нескольких HTTP-запросов: в `HTTP/1.0` каждый запрос открывал новое соединение, в `HTTP/1.1` keep-alive включён по умолчанию, в `HTTP/2` одно соединение обслуживает все запросы к хосту. Connection pooling — пул готовых соединений, который приложение переиспользует.",
+              "correct": true,
+              "sections": {
+                "explanation": "Пул экономит на `TCP` handshake (1 RTT), `TLS` handshake (1-2 RTT) и `TCP` slow start (соединение уже «разогрето»), а также снижает число file descriptor на ОС.",
+                "example": "Java `HttpClient` держит пул автоматически: первый запрос платит за handshake, последующие к тому же хосту идут по уже открытому соединению почти без overhead.",
+                "when_to_apply": "Pooling обязателен при межсервисной коммуникации в микросервисах — без него каждый вызов тратит 100-300 мс на установление соединения.",
+                "edge_cases": "Слишком большой пул держит лишние idle-соединения и упирается в лимит file descriptor; слишком маленький — создаёт contention под нагрузкой. Размер подбирают под RPS и latency бэкенда.",
+                "related": "[[networking-interview#Q7]] `TCP` keep-alive (другой уровень); [[networking-interview#Q31]] connection pooling на HTTP-клиенте; [[networking-interview#Q6]] slow start и польза прогрева."
               },
               "order": 3,
               "label": "D"
@@ -609,6 +609,19 @@
           "question_text": "Что такое head-of-line blocking и как `HTTP/2` и `HTTP/3` решают эту проблему?",
           "options": [
             {
+              "text": "Head-of-line (HOL) blocking — ситуация, когда медленный запрос блокирует последующие. В `HTTP/1.1` запросы в соединении последовательны (обход — 6-8 соединений). `HTTP/2` частично решает мультиплексированием, но потеря одного `TCP`-пакета блокирует все потоки (HOL на уровне `TCP`). `HTTP/3` решает полностью: `QUIC` делает потоки независимыми на транспортном уровне.",
+              "correct": true,
+              "sections": {
+                "explanation": "HOL существует на двух уровнях: приложения (запросы в очереди) и транспорта (потеря сегмента `TCP` тормозит всё соединение). `HTTP/2` убрал первый, `HTTP/3`/`QUIC` — оба.",
+                "example": "На `HTTP/2` при потере одного пакета все мультиплексированные потоки ждут ретрансмита `TCP`; на `HTTP/3` потеря в потоке загрузки картинки не тормозит загрузку JS в другом потоке.",
+                "when_to_apply": "Понимание HOL помогает выбрать `HTTP/3` для сетей с потерями (мобильные, дальние) и объяснить, почему `HTTP/2` не всегда быстрее `HTTP/1.1`.",
+                "edge_cases": "`HTTP/2` поверх идеального проводного канала без потерь HOL-проблемы почти не показывает — выигрыш `HTTP/3` заметнее именно при packet loss.",
+                "related": "[[networking-interview#Q9]] отличия версий `HTTP`; [[networking-interview#Q12]] как `QUIC` делает потоки независимыми; [[networking-interview#Q4]] почему `TCP` упорядочивает байты."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Head-of-line blocking — это атака, при которой злоумышленник занимает первое место в очереди запросов сервера.",
               "correct": false,
               "sections": {
@@ -617,8 +630,8 @@
                 "if_it_were_true": "Тогда HOL решался бы аутентификацией и rate limiting, но решают его мультиплексированием и независимыми потоками `QUIC`.",
                 "how_it_should_be": "HOL blocking — архитектурное ограничение последовательной доставки, а не действие злоумышленника."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`HTTP/2` снимает HOL blocking и на прикладном, и на транспортном уровне за счёт мультиплексирования, поэтому `HTTP/3` для этого не нужен.",
@@ -628,19 +641,6 @@
                 "source_of_confusion": "Мультиплексирование `HTTP/2` создаёт впечатление, что проблема решена окончательно.",
                 "if_it_were_true": "Тогда `HTTP/3` не давал бы преимущества на сетях с потерями, но именно там его выигрыш максимален.",
                 "how_it_should_be": "`HTTP/2` снимает HOL на уровне приложения, но не на `TCP`; полное решение — независимые потоки `QUIC` в `HTTP/3`."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Head-of-line (HOL) blocking — ситуация, когда медленный запрос блокирует последующие. В `HTTP/1.1` запросы в соединении последовательны (обход — 6-8 соединений). `HTTP/2` частично решает мультиплексированием, но потеря одного `TCP`-пакета блокирует все потоки (HOL на уровне `TCP`). `HTTP/3` решает полностью: `QUIC` делает потоки независимыми на транспортном уровне.",
-              "correct": true,
-              "sections": {
-                "explanation": "HOL существует на двух уровнях: приложения (запросы в очереди) и транспорта (потеря сегмента `TCP` тормозит всё соединение). `HTTP/2` убрал первый, `HTTP/3`/`QUIC` — оба.",
-                "example": "На `HTTP/2` при потере одного пакета все мультиплексированные потоки ждут ретрансмита `TCP`; на `HTTP/3` потеря в потоке загрузки картинки не тормозит загрузку JS в другом потоке.",
-                "when_to_apply": "Понимание HOL помогает выбрать `HTTP/3` для сетей с потерями (мобильные, дальние) и объяснить, почему `HTTP/2` не всегда быстрее `HTTP/1.1`.",
-                "edge_cases": "`HTTP/2` поверх идеального проводного канала без потерь HOL-проблемы почти не показывает — выигрыш `HTTP/3` заметнее именно при packet loss.",
-                "related": "[[networking-interview#Q9]] отличия версий `HTTP`; [[networking-interview#Q12]] как `QUIC` делает потоки независимыми; [[networking-interview#Q4]] почему `TCP` упорядочивает байты."
               },
               "order": 2,
               "label": "C"
@@ -693,18 +693,6 @@
               "label": "B"
             },
             {
-              "text": "Главное преимущество `QUIC` — он реализован в ядре ОС, поэтому обновляется только вместе с обновлением ядра.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`QUIC` реализован в user space, что позволяет обновлять протокол без обновления ядра ОС — это как раз его плюс над `TCP`.",
-                "source_of_confusion": "`TCP` живёт в ядре, и это свойство по инерции приписывают любому транспорту, включая `QUIC`.",
-                "if_it_were_true": "Тогда быстрые итерации `QUIC` в браузерах были бы невозможны, но именно user-space реализация ускоряет его развитие.",
-                "how_it_should_be": "`QUIC` работает в user space и обновляется с приложением/библиотекой, не дожидаясь обновления ядра."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "`QUIC` (Quick UDP Internet Connections, `RFC 9000`) — транспортный протокол поверх `UDP`, но сам реализующий надёжную доставку, congestion control и шифрование. Преимущества над `TCP`: совмещённый handshake (1 RTT, 0-RTT при повторе), отсутствие HOL blocking (потеря влияет лишь на затронутый поток), встроенное шифрование, миграция соединения по Connection ID и реализация в user space.",
               "correct": true,
               "sections": {
@@ -713,6 +701,18 @@
                 "when_to_apply": "`QUIC`/`HTTP/3` выгоден на мобильных и дальних сетях с потерями и сменой сети, где важны быстрый старт и устойчивость потоков.",
                 "edge_cases": "Некоторые корпоративные firewall блокируют `UDP`/443 — тогда клиент откатывается на `HTTP/2` поверх `TCP`; поэтому `HTTP/3` обычно анонсируется через `Alt-Svc`.",
                 "related": "[[networking-interview#Q9]] место `HTTP/3` среди версий; [[networking-interview#Q11]] устранение HOL blocking; [[networking-interview#Q4]] почему `UDP` сам по себе ненадёжен."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Главное преимущество `QUIC` — он реализован в ядре ОС, поэтому обновляется только вместе с обновлением ядра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`QUIC` реализован в user space, что позволяет обновлять протокол без обновления ядра ОС — это как раз его плюс над `TCP`.",
+                "source_of_confusion": "`TCP` живёт в ядре, и это свойство по инерции приписывают любому транспорту, включая `QUIC`.",
+                "if_it_were_true": "Тогда быстрые итерации `QUIC` в браузерах были бы невозможны, но именно user-space реализация ускоряет его развитие.",
+                "how_it_should_be": "`QUIC` работает в user space и обновляется с приложением/библиотекой, не дожидаясь обновления ядра."
               },
               "order": 3,
               "label": "D"
@@ -729,6 +729,18 @@
           "question_text": "Как работает `TLS` handshake?",
           "options": [
             {
+              "text": "`TLS` handshake использует симметричный session key, который клиент и сервер знают заранее из своих конфигураций: ClientHello и ServerHello лишь согласуют версию и cipher suite, а обмена данными для pre-master secret не происходит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Общий секрет выводится в ходе key exchange (например, (EC)DHE) во время handshake, а не «известен заранее»; именно обмен и порождает session keys.",
+                "source_of_confusion": "Финальное шифрование симметричное, и кажется, что симметричный ключ был у сторон изначально.",
+                "if_it_were_true": "Тогда не нужны были бы ClientHello/ServerHello и key exchange, но без них стороны не получат общий секрет.",
+                "how_it_should_be": "Стороны вырабатывают общий pre-master secret в handshake и из него выводят симметричные session keys."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`TLS` handshake устанавливает зашифрованное соединение: 1) ClientHello (версии, cipher suites, random); 2) ServerHello (выбранный cipher, random); 3) Certificate (`X.509` сервера); 4) Key Exchange (обмен данными для pre-master secret); 5) Verification (клиент проверяет сертификат по цепочке доверия CA); 6) Finished (обе стороны генерируют session keys и переходят на шифрование). В `TLS 1.2` это ~2 RTT, в `TLS 1.3` — 1 RTT (0-RTT при повторе).",
               "correct": true,
               "sections": {
@@ -737,18 +749,6 @@
                 "when_to_apply": "Понимание handshake нужно при отладке `SSLHandshakeException`, выборе cipher suites, оценке задержки на установление `HTTPS` и настройке 0-RTT.",
                 "edge_cases": "0-RTT в `TLS 1.3` ускоряет повторное соединение, но уязвим к replay-атакам, поэтому его не применяют к неидемпотентным запросам (например, POST с побочными эффектами).",
                 "related": "[[networking-interview#Q14]] отличия `TLS 1.2` и `TLS 1.3`; [[networking-interview#Q15]] сертификат `X.509` и цепочка доверия; [[networking-interview#Q5]] `TCP` handshake перед `TLS`."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`TLS` handshake использует симметричный session key, который клиент и сервер знают заранее из своих конфигураций: ClientHello и ServerHello лишь согласуют версию и cipher suite, а обмена данными для pre-master secret не происходит.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Общий секрет выводится в ходе key exchange (например, (EC)DHE) во время handshake, а не «известен заранее»; именно обмен и порождает session keys.",
-                "source_of_confusion": "Финальное шифрование симметричное, и кажется, что симметричный ключ был у сторон изначально.",
-                "if_it_were_true": "Тогда не нужны были бы ClientHello/ServerHello и key exchange, но без них стороны не получат общий секрет.",
-                "how_it_should_be": "Стороны вырабатывают общий pre-master secret в handshake и из него выводят симметричные session keys."
               },
               "order": 1,
               "label": "B"
@@ -801,19 +801,6 @@
               "label": "A"
             },
             {
-              "text": "`TLS 1.3` быстрее и безопаснее: handshake 1 RTT (0-RTT при возобновлении) против 2 RTT у `TLS 1.2`; только 5 безопасных cipher suites (все с AEAD) против множества, включая слабые (RSA, CBC); key exchange только (EC)DHE с обязательной forward secrecy против опциональной у `TLS 1.2`. Цена — требование современных клиентов.",
-              "correct": true,
-              "sections": {
-                "explanation": "`TLS 1.3` выкинул устаревшие алгоритмы и лишний round-trip, поэтому соединение устанавливается быстрее, а forward secrecy стала обязательной — прошлые сессии нельзя расшифровать даже при утечке долгосрочного ключа.",
-                "example": "В `TLS 1.3` уникальные эфемерные ключи на сессию означают: даже если приватный ключ сервера украдут завтра, перехваченный вчера трафик расшифровать не удастся.",
-                "when_to_apply": "`TLS 1.3` выбирают для нового трафика ради скорости и forward secrecy; `TLS 1.2` оставляют для совместимости с legacy-клиентами, не поддерживающими 1.3.",
-                "edge_cases": "0-RTT данные в `TLS 1.3` уязвимы к replay, поэтому их не используют для запросов с побочными эффектами; это плата за ускорение повторного соединения.",
-                "related": "[[networking-interview#Q13]] общий ход `TLS` handshake; [[networking-interview#Q15]] цепочка доверия и сертификаты; [[networking-interview#Q34]] `mTLS` как расширение `TLS`."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "В `TLS 1.3` forward secrecy опциональна, и допускается key exchange через статический RSA, как в `TLS 1.2`.",
               "correct": false,
               "sections": {
@@ -822,8 +809,8 @@
                 "if_it_were_true": "Тогда утечка долгосрочного ключа компрометировала бы прошлые сессии `TLS 1.3`, но обязательная FS это исключает.",
                 "how_it_should_be": "В `TLS 1.3` forward secrecy обязательна, key exchange — только эфемерный (EC)DHE."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`TLS 1.3` оставил тот же широкий набор cipher suites, что и `TLS 1.2`, включая CBC и слабые RSA-варианты.",
@@ -833,6 +820,19 @@
                 "source_of_confusion": "Кажется, что новая версия для совместимости должна сохранить весь старый набор шифров.",
                 "if_it_were_true": "Тогда `TLS 1.3` не давал бы выигрыша в безопасности по cipher suites, но его цель — выкинуть устаревшие алгоритмы.",
                 "how_it_should_be": "`TLS 1.3` радикально сократил список до 5 AEAD-cipher suites, убрав слабые варианты."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`TLS 1.3` быстрее и безопаснее: handshake 1 RTT (0-RTT при возобновлении) против 2 RTT у `TLS 1.2`; только 5 безопасных cipher suites (все с AEAD) против множества, включая слабые (RSA, CBC); key exchange только (EC)DHE с обязательной forward secrecy против опциональной у `TLS 1.2`. Цена — требование современных клиентов.",
+              "correct": true,
+              "sections": {
+                "explanation": "`TLS 1.3` выкинул устаревшие алгоритмы и лишний round-trip, поэтому соединение устанавливается быстрее, а forward secrecy стала обязательной — прошлые сессии нельзя расшифровать даже при утечке долгосрочного ключа.",
+                "example": "В `TLS 1.3` уникальные эфемерные ключи на сессию означают: даже если приватный ключ сервера украдут завтра, перехваченный вчера трафик расшифровать не удастся.",
+                "when_to_apply": "`TLS 1.3` выбирают для нового трафика ради скорости и forward secrecy; `TLS 1.2` оставляют для совместимости с legacy-клиентами, не поддерживающими 1.3.",
+                "edge_cases": "0-RTT данные в `TLS 1.3` уязвимы к replay, поэтому их не используют для запросов с побочными эффектами; это плата за ускорение повторного соединения.",
+                "related": "[[networking-interview#Q13]] общий ход `TLS` handshake; [[networking-interview#Q15]] цепочка доверия и сертификаты; [[networking-interview#Q34]] `mTLS` как расширение `TLS`."
               },
               "order": 3,
               "label": "D"
@@ -849,6 +849,19 @@
           "question_text": "Что такое сертификат `X.509` и цепочка доверия?",
           "options": [
             {
+              "text": "Сертификат `X.509` — стандартный формат цифрового сертификата: публичный ключ владельца, доменное имя (CN/SAN), имя издателя (CA), срок действия и подпись CA. Цепочка доверия: Root CA (самоподписанный, предустановлен в ОС/браузере) → Intermediate CA (подписан корневым) → Leaf (сертификат сервера, подписан промежуточным). Клиент проверяет подписи от leaf до root.",
+              "correct": true,
+              "sections": {
+                "explanation": "Доверие выстраивается транзитивно: если подпись каждого звена валидна и root CA есть в доверенном хранилище, сертификат сервера признаётся валидным.",
+                "example": "В Java truststore (`cacerts`) лежат root CA. Для self-signed или внутреннего CA его нужно добавить в truststore, иначе клиент бросит `SSLHandshakeException`.",
+                "when_to_apply": "Знание цепочки нужно при настройке внутренних CA, диагностике ошибок доверия и понимании, почему пропущенный intermediate ломает валидацию у части клиентов.",
+                "edge_cases": "Сервер обязан отдавать не только leaf, но и intermediate-сертификаты; если он шлёт только leaf, часть клиентов без кэша промежуточного CA не построит цепочку и получит ошибку.",
+                "related": "[[networking-interview#Q13]] где сертификат в `TLS` handshake; [[networking-interview#Q14]] cipher suites и forward secrecy; [[networking-interview#Q41]] certificate pinning как ужесточение доверия."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Сертификат `X.509` содержит приватный ключ сервера, который передаётся клиенту во время handshake для расшифровки.",
               "correct": false,
               "sections": {
@@ -857,8 +870,8 @@
                 "if_it_were_true": "Тогда любой, кто получил сертификат сервера, мог бы выдавать себя за него, что разрушало бы всю модель `TLS`.",
                 "how_it_should_be": "`X.509` несёт только публичный ключ; приватный остаётся в секрете на сервере."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Цепочка доверия проверяется от root к leaf: сначала доверяют корню, а конечный сертификат сервера не проверяют отдельно.",
@@ -868,19 +881,6 @@
                 "source_of_confusion": "Направление «сверху вниз» от корня кажется естественным, но валидация идёт от предъявленного leaf к якорю доверия.",
                 "if_it_were_true": "Тогда подделанный leaf при доверенном корне принимался бы без проверки, что делало бы цепочку бесполезной.",
                 "how_it_should_be": "Проверка идёт от leaf к root: валидируется подпись каждого звена вплоть до доверенного корня."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Сертификат `X.509` — стандартный формат цифрового сертификата: публичный ключ владельца, доменное имя (CN/SAN), имя издателя (CA), срок действия и подпись CA. Цепочка доверия: Root CA (самоподписанный, предустановлен в ОС/браузере) → Intermediate CA (подписан корневым) → Leaf (сертификат сервера, подписан промежуточным). Клиент проверяет подписи от leaf до root.",
-              "correct": true,
-              "sections": {
-                "explanation": "Доверие выстраивается транзитивно: если подпись каждого звена валидна и root CA есть в доверенном хранилище, сертификат сервера признаётся валидным.",
-                "example": "В Java truststore (`cacerts`) лежат root CA. Для self-signed или внутреннего CA его нужно добавить в truststore, иначе клиент бросит `SSLHandshakeException`.",
-                "when_to_apply": "Знание цепочки нужно при настройке внутренних CA, диагностике ошибок доверия и понимании, почему пропущенный intermediate ломает валидацию у части клиентов.",
-                "edge_cases": "Сервер обязан отдавать не только leaf, но и intermediate-сертификаты; если он шлёт только leaf, часть клиентов без кэша промежуточного CA не построит цепочку и получит ошибку.",
-                "related": "[[networking-interview#Q13]] где сертификат в `TLS` handshake; [[networking-interview#Q14]] cipher suites и forward secrecy; [[networking-interview#Q41]] certificate pinning как ужесточение доверия."
               },
               "order": 2,
               "label": "C"
@@ -933,18 +933,6 @@
               "label": "B"
             },
             {
-              "text": "DNS не кэширует промежуточные ответы: путь от root до authoritative resolver проходит заново при каждом запросе, кэшируется лишь финальная запись у клиента.",
-              "correct": false,
-              "sections": {
-                "what_actually": "DNS активно кэширует на каждом уровне (браузер, ОС, resolver) на время TTL, поэтому повторные запросы не идут до root.",
-                "source_of_confusion": "Полная цепочка резолвинга описывается в учебниках, и о кэшировании при этом забывают.",
-                "if_it_were_true": "Тогда root-серверы захлёбывались бы от нагрузки на каждый запрос мира, но кэширование снимает с них основную массу обращений.",
-                "how_it_should_be": "Ответы кэшируются по TTL на всех уровнях; полный путь проходит лишь первый (или истёкший) запрос."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "`DNS` преобразует доменные имена в IP-адреса по иерархии: 1) локальный кэш (браузер, ОС, `/etc/hosts`); 2) recursive resolver (ISP или `8.8.8.8`/`1.1.1.1`); 3) root servers (13 кластеров A–M, знают TLD-серверы); 4) TLD servers (`.com`, `.ru`, знают авторитативные); 5) authoritative server (хранит конечные записи). Результат кэшируется на каждом уровне по TTL.",
               "correct": true,
               "sections": {
@@ -953,6 +941,18 @@
                 "when_to_apply": "Понимание цепочки нужно при диагностике «сайт не открывается», настройке собственных DNS-зон и оценке вклада DNS в latency первого запроса (20-120 мс).",
                 "edge_cases": "JVM по умолчанию кэширует успешный DNS-ответ «навечно» (`networkaddress.cache.ttl`); в облаке, где IP меняются, это держит устаревший адрес — лечится установкой `networkaddress.cache.ttl=30`.",
                 "related": "[[networking-interview#Q17]] типы DNS-записей; [[networking-interview#Q18]] DNS TTL и кэширование; [[networking-interview#Q32]] DNS как шаг при вводе URL."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "DNS не кэширует промежуточные ответы: путь от root до authoritative resolver проходит заново при каждом запросе, кэшируется лишь финальная запись у клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DNS активно кэширует на каждом уровне (браузер, ОС, resolver) на время TTL, поэтому повторные запросы не идут до root.",
+                "source_of_confusion": "Полная цепочка резолвинга описывается в учебниках, и о кэшировании при этом забывают.",
+                "if_it_were_true": "Тогда root-серверы захлёбывались бы от нагрузки на каждый запрос мира, но кэширование снимает с них основную массу обращений.",
+                "how_it_should_be": "Ответы кэшируются по TTL на всех уровнях; полный путь проходит лишь первый (или истёкший) запрос."
               },
               "order": 3,
               "label": "D"
@@ -969,6 +969,18 @@
           "question_text": "Какие типы DNS-записей существуют и для чего они используются?",
           "options": [
             {
+              "text": "`MX`-запись напрямую хранит IPv4-адрес почтового сервера, поэтому отдельная `A`-запись для него не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MX` указывает на имя почтового сервера, а его адрес определяется отдельной `A`/`AAAA`-записью; сам `MX` IP не хранит.",
+                "source_of_confusion": "`MX` «отвечает за почту», и кажется логичным, что он сразу содержит адрес сервера.",
+                "if_it_were_true": "Тогда смена IP почтового сервера требовала бы правки `MX`, но на практике меняют только `A`-запись цели.",
+                "how_it_should_be": "`MX` ссылается на hostname почтового сервера; IP этого hostname задаётся `A`/`AAAA`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Основные типы: `A` (имя → IPv4), `AAAA` (имя → IPv6), `CNAME` (алиас на другое имя), `MX` (почтовый сервер), `NS` (авторитативный DNS-сервер), `TXT` (произвольный текст — SPF, DKIM, верификация), `SRV` (сервис+порт, для service discovery), `PTR` (обратный DNS: IP → имя).",
               "correct": true,
               "sections": {
@@ -977,18 +989,6 @@
                 "when_to_apply": "Записи настраивают при заведении домена, почты, верификации владения (`TXT`) и при service discovery в `Kubernetes`/`Consul` (`SRV`).",
                 "edge_cases": "`CNAME` нельзя ставить на корень зоны (apex) рядом с `SOA`/`NS` по RFC; для apex используют `ALIAS`/`ANAME` или `A`-запись, что часто упускают новички.",
                 "related": "[[networking-interview#Q16]] как работает DNS-резолвинг; [[networking-interview#Q18]] TTL и кэширование записей; [[networking-interview#Q37]] DNS и service discovery в `Kubernetes`."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`MX`-запись напрямую хранит IPv4-адрес почтового сервера, поэтому отдельная `A`-запись для него не нужна.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`MX` указывает на имя почтового сервера, а его адрес определяется отдельной `A`/`AAAA`-записью; сам `MX` IP не хранит.",
-                "source_of_confusion": "`MX` «отвечает за почту», и кажется логичным, что он сразу содержит адрес сервера.",
-                "if_it_were_true": "Тогда смена IP почтового сервера требовала бы правки `MX`, но на практике меняют только `A`-запись цели.",
-                "how_it_should_be": "`MX` ссылается на hostname почтового сервера; IP этого hostname задаётся `A`/`AAAA`."
               },
               "order": 1,
               "label": "B"
@@ -1041,19 +1041,6 @@
               "label": "A"
             },
             {
-              "text": "TTL (Time to Live) — время в секундах, в течение которого DNS-запись может кэшироваться. Типичные значения: `300` (5 мин, для быстрого failover), `3600` (1 час, стандарт), `86400` (24 ч, для стабильных записей). Низкий TTL — быстрый failover, но больше нагрузки на DNS; высокий — меньше запросов, но долгое переключение при сбоях.",
-              "correct": true,
-              "sections": {
-                "explanation": "TTL — компромисс между скоростью распространения изменений и нагрузкой на DNS. Перед миграцией IP TTL заранее снижают, чтобы старый адрес не «застрял» в кэшах надолго.",
-                "example": "За 24 часа до миграции сервиса TTL опускают с 3600 до 300, чтобы после смены IP клиенты переключились за 5 минут, а не за час.",
-                "when_to_apply": "TTL настраивают под требования к failover и частоте изменений: критичные к смене IP записи — низкий TTL, стабильные — высокий.",
-                "edge_cases": "JVM по умолчанию игнорирует DNS TTL и кэширует успешный ответ «навечно» (`networkaddress.cache.ttl`); в облаке это держит устаревший IP — ставят `networkaddress.cache.ttl=30`.",
-                "related": "[[networking-interview#Q16]] кэширование в цепочке резолвинга; [[networking-interview#Q17]] типы записей, к которым применяется TTL; [[networking-interview#Q23]] CDN и GeoDNS на коротком TTL."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "Высокий TTL обеспечивает быстрый failover при аварии, потому что записи обновляются мгновенно.",
               "correct": false,
               "sections": {
@@ -1062,8 +1049,8 @@
                 "if_it_were_true": "Тогда перед миграцией TTL повышали бы, но на практике его как раз снижают до 300 ради быстрого переключения.",
                 "how_it_should_be": "Быстрый failover даёт низкий TTL; высокий TTL уменьшает нагрузку на DNS ценой долгого переключения."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "JVM соблюдает DNS TTL записи, поэтому в облаке Java-сервисы подхватывают смену IP по истечении TTL без перезапуска.",
@@ -1073,6 +1060,19 @@
                 "source_of_confusion": "Ожидается, что рантайм уважает TTL из ответа, как это делают браузеры и ОС.",
                 "if_it_were_true": "Тогда смена IP в облаке не вызывала бы проблем у Java-микросервисов, но именно «вечное» кэширование держит устаревший адрес.",
                 "how_it_should_be": "По умолчанию JVM кэширует DNS навечно; для облака TTL ограничивают через `networkaddress.cache.ttl`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "TTL (Time to Live) — время в секундах, в течение которого DNS-запись может кэшироваться. Типичные значения: `300` (5 мин, для быстрого failover), `3600` (1 час, стандарт), `86400` (24 ч, для стабильных записей). Низкий TTL — быстрый failover, но больше нагрузки на DNS; высокий — меньше запросов, но долгое переключение при сбоях.",
+              "correct": true,
+              "sections": {
+                "explanation": "TTL — компромисс между скоростью распространения изменений и нагрузкой на DNS. Перед миграцией IP TTL заранее снижают, чтобы старый адрес не «застрял» в кэшах надолго.",
+                "example": "За 24 часа до миграции сервиса TTL опускают с 3600 до 300, чтобы после смены IP клиенты переключились за 5 минут, а не за час.",
+                "when_to_apply": "TTL настраивают под требования к failover и частоте изменений: критичные к смене IP записи — низкий TTL, стабильные — высокий.",
+                "edge_cases": "JVM по умолчанию игнорирует DNS TTL и кэширует успешный ответ «навечно» (`networkaddress.cache.ttl`); в облаке это держит устаревший IP — ставят `networkaddress.cache.ttl=30`.",
+                "related": "[[networking-interview#Q16]] кэширование в цепочке резолвинга; [[networking-interview#Q17]] типы записей, к которым применяется TTL; [[networking-interview#Q23]] CDN и GeoDNS на коротком TTL."
               },
               "order": 3,
               "label": "D"
@@ -1089,6 +1089,19 @@
           "question_text": "Что такое `WebSocket` и чем он отличается от `HTTP`?",
           "options": [
             {
+              "text": "`WebSocket` (`RFC 6455`) — протокол полнодуплексной двунаправленной связи поверх одного `TCP`-соединения. В отличие от request-response `HTTP`, обе стороны могут слать данные в любой момент, соединение постоянное и долгоживущее, overhead фрейминга минимален (2-14 байт), схемы `ws://`/`wss://`. Соединение устанавливается через HTTP Upgrade, на который сервер отвечает `101 Switching Protocols`.",
+              "correct": true,
+              "sections": {
+                "explanation": "После апгрейда `HTTP`-соединение превращается в постоянный двунаправленный канал, где не нужно слать заголовки на каждое сообщение — это даёт низкую задержку для real-time обмена.",
+                "example": "В чате браузер делает `GET /chat` с `Upgrade: websocket`, сервер отвечает `101`, и дальше и клиент, и сервер шлют сообщения друг другу без новых HTTP-запросов.",
+                "when_to_apply": "`WebSocket` берут для чатов, real-time уведомлений, онлайн-игр, совместного редактирования и торговых платформ — везде, где клиент тоже инициирует обмен.",
+                "edge_cases": "Долгоживущие `WebSocket`-соединения рвутся при тайм-ауте `NAT`/firewall или idle-таймауте прокси; чтобы их удержать, шлют ping/pong-фреймы или включают `TCP` keep-alive.",
+                "related": "[[networking-interview#Q20]] когда вместо `WebSocket` брать `SSE`; [[networking-interview#Q7]] `TCP` keep-alive для удержания соединения; [[networking-interview#Q24]] почему `NAT` рвёт долгие соединения."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`WebSocket` — это однонаправленный протокол: данные могут идти только от сервера к клиенту, как в `SSE`.",
               "correct": false,
               "sections": {
@@ -1097,8 +1110,8 @@
                 "if_it_were_true": "Тогда чат не работал бы поверх `WebSocket`, ведь клиенту тоже нужно отправлять сообщения, но именно для этого его и берут.",
                 "how_it_should_be": "`WebSocket` двунаправленный (полный дуплекс); однонаправленную доставку сервер→клиент даёт `SSE`."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`WebSocket` открывает соединение по схеме `http://` и шлёт обычные HTTP-заголовки с каждым сообщением.",
@@ -1108,19 +1121,6 @@
                 "source_of_confusion": "Соединение начинается с HTTP Upgrade, из-за чего кажется, что дальше идёт обычный `HTTP`.",
                 "if_it_were_true": "Тогда `WebSocket` не давал бы выигрыша по overhead над `HTTP`, но его ценят как раз за лёгкие фреймы.",
                 "how_it_should_be": "Схемы `ws://`/`wss://`; после `101 Switching Protocols` — лёгкий фрейминг без HTTP-заголовков на сообщение."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "`WebSocket` (`RFC 6455`) — протокол полнодуплексной двунаправленной связи поверх одного `TCP`-соединения. В отличие от request-response `HTTP`, обе стороны могут слать данные в любой момент, соединение постоянное и долгоживущее, overhead фрейминга минимален (2-14 байт), схемы `ws://`/`wss://`. Соединение устанавливается через HTTP Upgrade, на который сервер отвечает `101 Switching Protocols`.",
-              "correct": true,
-              "sections": {
-                "explanation": "После апгрейда `HTTP`-соединение превращается в постоянный двунаправленный канал, где не нужно слать заголовки на каждое сообщение — это даёт низкую задержку для real-time обмена.",
-                "example": "В чате браузер делает `GET /chat` с `Upgrade: websocket`, сервер отвечает `101`, и дальше и клиент, и сервер шлют сообщения друг другу без новых HTTP-запросов.",
-                "when_to_apply": "`WebSocket` берут для чатов, real-time уведомлений, онлайн-игр, совместного редактирования и торговых платформ — везде, где клиент тоже инициирует обмен.",
-                "edge_cases": "Долгоживущие `WebSocket`-соединения рвутся при тайм-ауте `NAT`/firewall или idle-таймауте прокси; чтобы их удержать, шлют ping/pong-фреймы или включают `TCP` keep-alive.",
-                "related": "[[networking-interview#Q20]] когда вместо `WebSocket` брать `SSE`; [[networking-interview#Q7]] `TCP` keep-alive для удержания соединения; [[networking-interview#Q24]] почему `NAT` рвёт долгие соединения."
               },
               "order": 2,
               "label": "C"
@@ -1173,18 +1173,6 @@
               "label": "B"
             },
             {
-              "text": "`SSE` поддерживает передачу бинарных данных, поэтому подходит для стриминга видео и файлов лучше `WebSocket`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`SSE` передаёт только текст (UTF-8); бинарные данные поддерживает `WebSocket`, а не `SSE`.",
-                "source_of_confusion": "Слово «streaming» в названии наводит на мысль о потоковом видео и бинарных данных.",
-                "if_it_were_true": "Тогда `SSE` годился бы для бинарной передачи, но текстовое ограничение заставляет кодировать бинарь (например, в base64).",
-                "how_it_should_be": "`SSE` — текст-only; для бинарных потоков нужен `WebSocket` или специализированный медиа-транспорт."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "`SSE` — механизм однонаправленной потоковой передачи сервер → клиент по стандартному `HTTP`. В отличие от двунаправленного `WebSocket`: только текст (UTF-8), стандартный `HTTP`/`HTTPS`, автоматическое переподключение (встроено в API), проходит через любые HTTP-прокси/CDN. Лимит 6 соединений на домен в `HTTP/1.1` (нет лимита в `HTTP/2`). Правило: если клиенту не нужно слать данные в этот канал — берут `SSE`.",
               "correct": true,
               "sections": {
@@ -1193,6 +1181,18 @@
                 "when_to_apply": "`SSE` выбирают для односторонних обновлений (новости, прогресс, нотификации); `WebSocket` — когда нужен двусторонний обмен в рамках одного канала.",
                 "edge_cases": "В `HTTP/1.1` `SSE` упирается в лимит 6 соединений на домен — несколько вкладок легко его исчерпывают; на `HTTP/2` мультиплексирование снимает это ограничение.",
                 "related": "[[networking-interview#Q19]] `WebSocket` и его двунаправленность; [[networking-interview#Q9]] лимит соединений и `HTTP/2`; [[networking-interview#Q22]] прохождение через reverse proxy."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`SSE` поддерживает передачу бинарных данных, поэтому подходит для стриминга видео и файлов лучше `WebSocket`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SSE` передаёт только текст (UTF-8); бинарные данные поддерживает `WebSocket`, а не `SSE`.",
+                "source_of_confusion": "Слово «streaming» в названии наводит на мысль о потоковом видео и бинарных данных.",
+                "if_it_were_true": "Тогда `SSE` годился бы для бинарной передачи, но текстовое ограничение заставляет кодировать бинарь (например, в base64).",
+                "how_it_should_be": "`SSE` — текст-only; для бинарных потоков нужен `WebSocket` или специализированный медиа-транспорт."
               },
               "order": 3,
               "label": "D"
@@ -1209,6 +1209,18 @@
           "question_text": "В чём разница между балансировкой на L4 и L7?",
           "options": [
             {
+              "text": "L4-балансировщик разбирает URL, HTTP-заголовки и cookies, применяя content-based routing, а L7 ограничен транспортным уровнем — работает только по `IP`, порту и протоколу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: по URL и заголовкам маршрутизирует L7 (прикладной), а L4 видит лишь `IP`, порт и протокол.",
+                "source_of_confusion": "Номера уровней путают, а «больше число — проще функциональность» — ложная интуиция.",
+                "if_it_were_true": "Тогда content-based routing по `/api/v1` работал бы на L4, но он невозможен без чтения HTTP, то есть требует L7.",
+                "how_it_should_be": "L4 — по `IP`/порту/протоколу; L7 — по URL, host, header, cookie и телу запроса."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "L4 (транспортный) балансирует по `IP`, порту и протоколу — высокая производительность (50-100 мкс), без терминации `TLS` (passthrough), sticky по IP, без content-based routing (примеры: `HAProxy` в TCP mode, AWS NLB). L7 (прикладной) видит URL, заголовки, cookies, тело — ниже производительность (инспекция), может терминировать `TLS`, sticky по cookie/header, content-based routing (примеры: `Nginx`, `HAProxy` в HTTP mode, AWS ALB).",
               "correct": true,
               "sections": {
@@ -1217,18 +1229,6 @@
                 "when_to_apply": "L4 берут ради максимальной производительности и для не-HTTP трафика (БД, `gRPC`, игровые серверы); L7 — для маршрутизации по URL, SSL termination, канареечных деплоев.",
                 "edge_cases": "L7 с терминацией `TLS` видит plaintext и нагружается криптографией; для сквозного шифрования до бэкенда применяют L4 passthrough или re-encrypt на L7.",
                 "related": "[[networking-interview#Q22]] reverse proxy и его задачи; [[networking-interview#Q1]] уровни L4/L7 в модели `OSI`; [[networking-interview#Q23]] CDN и распределение трафика."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "L4-балансировщик разбирает URL, HTTP-заголовки и cookies, применяя content-based routing, а L7 ограничен транспортным уровнем — работает только по `IP`, порту и протоколу.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: по URL и заголовкам маршрутизирует L7 (прикладной), а L4 видит лишь `IP`, порт и протокол.",
-                "source_of_confusion": "Номера уровней путают, а «больше число — проще функциональность» — ложная интуиция.",
-                "if_it_were_true": "Тогда content-based routing по `/api/v1` работал бы на L4, но он невозможен без чтения HTTP, то есть требует L7.",
-                "how_it_should_be": "L4 — по `IP`/порту/протоколу; L7 — по URL, host, header, cookie и телу запроса."
               },
               "order": 1,
               "label": "B"
@@ -1281,19 +1281,6 @@
               "label": "A"
             },
             {
-              "text": "Reverse proxy — сервер, принимающий запросы клиентов и перенаправляющий их на backend-серверы; клиент не знает о существовании бэкендов. В отличие от forward proxy (прокси для клиентов), reverse proxy — прокси для серверов. Задачи: load balancing, SSL termination, кэширование, сжатие (gzip/brotli), rate limiting, защита (скрытие топологии, WAF). Популярные: `Nginx`, `HAProxy`, `Envoy`, `Traefik`, `Caddy`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Reverse proxy — единая точка входа перед бэкендами: он скрывает их топологию, снимает с них общие задачи (TLS, кэш, сжатие) и распределяет нагрузку.",
-                "example": "`Nginx` перед пулом app-серверов терминирует `TLS`, кэширует статику, сжимает ответы gzip и распределяет запросы — бэкенды получают чистый plain HTTP.",
-                "when_to_apply": "Reverse proxy ставят почти всегда перед бэкендами в продакшене: для балансировки, SSL termination, кэша, защиты и единой точки входа.",
-                "edge_cases": "Reverse proxy подменяет `IP` клиента своим, поэтому бэкенд должен читать реальный `IP` из `X-Forwarded-For`/`Forwarded`, иначе все запросы выглядят с одного адреса.",
-                "related": "[[networking-interview#Q21]] reverse proxy как L7-балансировщик; [[networking-interview#Q23]] CDN перед reverse proxy; [[networking-interview#Q24]] `X-Forwarded-For` и реальный IP за NAT."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "Reverse proxy не может терминировать `TLS` — он лишь пересылает зашифрованный трафик без расшифровки.",
               "correct": false,
               "sections": {
@@ -1302,8 +1289,8 @@
                 "if_it_were_true": "Тогда каждый бэкенд сам тащил бы сертификаты и крипто-нагрузку, но reverse proxy как раз снимает это с них.",
                 "how_it_should_be": "Reverse proxy умеет терминировать `TLS`, кэшировать, сжимать и балансировать."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Reverse proxy раскрывает клиенту полную топологию backend-серверов, передавая их внутренние IP в ответе.",
@@ -1313,6 +1300,19 @@
                 "source_of_confusion": "Раз proxy «между» клиентом и бэкендом, кажется, что он прозрачно показывает адреса серверов.",
                 "if_it_were_true": "Тогда злоумышленник видел бы все внутренние адреса и бил по ним напрямую, минуя WAF и балансировку.",
                 "how_it_should_be": "Reverse proxy прячет внутренние адреса и структуру бэкенда, выступая единой точкой входа."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Reverse proxy — сервер, принимающий запросы клиентов и перенаправляющий их на backend-серверы; клиент не знает о существовании бэкендов. В отличие от forward proxy (прокси для клиентов), reverse proxy — прокси для серверов. Задачи: load balancing, SSL termination, кэширование, сжатие (gzip/brotli), rate limiting, защита (скрытие топологии, WAF). Популярные: `Nginx`, `HAProxy`, `Envoy`, `Traefik`, `Caddy`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Reverse proxy — единая точка входа перед бэкендами: он скрывает их топологию, снимает с них общие задачи (TLS, кэш, сжатие) и распределяет нагрузку.",
+                "example": "`Nginx` перед пулом app-серверов терминирует `TLS`, кэширует статику, сжимает ответы gzip и распределяет запросы — бэкенды получают чистый plain HTTP.",
+                "when_to_apply": "Reverse proxy ставят почти всегда перед бэкендами в продакшене: для балансировки, SSL termination, кэша, защиты и единой точки входа.",
+                "edge_cases": "Reverse proxy подменяет `IP` клиента своим, поэтому бэкенд должен читать реальный `IP` из `X-Forwarded-For`/`Forwarded`, иначе все запросы выглядят с одного адреса.",
+                "related": "[[networking-interview#Q21]] reverse proxy как L7-балансировщик; [[networking-interview#Q23]] CDN перед reverse proxy; [[networking-interview#Q24]] `X-Forwarded-For` и реальный IP за NAT."
               },
               "order": 3,
               "label": "D"
@@ -1329,6 +1329,19 @@
           "question_text": "Что такое CDN и как она работает?",
           "options": [
             {
+              "text": "CDN (Content Delivery Network) — географически распределённая сеть серверов, кэширующих контент ближе к пользователям. Запрос идёт на ближайший edge-сервер (через anycast/GeoDNS): при cache hit он отдаёт контент с минимальной задержкой, при cache miss запрашивает у origin, кэширует и отдаёт. Кэширует статику (CSS/JS/изображения/видео), API-ответы с `Cache-Control`, HTML статических сайтов. Примеры: Cloudflare, CloudFront, Akamai, Fastly.",
+              "correct": true,
+              "sections": {
+                "explanation": "Близость edge-сервера к пользователю снижает latency и разгружает origin. Поведением кэша управляют HTTP-заголовки `Cache-Control` (`public`/`private`/`max-age`/`no-cache`).",
+                "example": "`Cache-Control: public, max-age=31536000` для версионированной статики позволяет CDN держать файл год; при изменении меняют URL (хеш в имени), а не сбрасывают кэш.",
+                "when_to_apply": "CDN ставят перед статикой и кэшируемыми ответами для глобальной аудитории, чтобы сократить latency и снять нагрузку с origin.",
+                "edge_cases": "`Cache-Control: private` запрещает кэширование на CDN (только в браузере) — для персональных ответов; ошибочный `public` на персональных данных может отдать чужой ответ из общего кэша.",
+                "related": "[[networking-interview#Q22]] reverse proxy/кэш перед origin; [[networking-interview#Q18]] короткий TTL для GeoDNS; [[networking-interview#Q16]] DNS-резолвинг на ближайший edge."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "CDN — это единый центральный сервер, к которому подключаются все пользователи мира для скачивания контента.",
               "correct": false,
               "sections": {
@@ -1337,8 +1350,8 @@
                 "if_it_were_true": "Тогда CDN не снижал бы latency для удалённых регионов, но именно близость edge-узла и даёт ускорение.",
                 "how_it_should_be": "CDN — множество распределённых edge-серверов; запрос направляется на ближайший через anycast/GeoDNS."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "При cache miss edge-сервер возвращает клиенту ошибку, так как не имеет права обращаться к origin-серверу.",
@@ -1348,19 +1361,6 @@
                 "source_of_confusion": "Слово «miss» воспринимают как фатальный промах вместо обычного обращения к источнику.",
                 "if_it_were_true": "Тогда первый запрос любого нового файла всегда падал бы с ошибкой, что сделало бы CDN неработоспособным.",
                 "how_it_should_be": "Cache miss → edge тянет с origin, кэширует и отдаёт; ошибки тут нет, лишь чуть большая задержка."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "CDN (Content Delivery Network) — географически распределённая сеть серверов, кэширующих контент ближе к пользователям. Запрос идёт на ближайший edge-сервер (через anycast/GeoDNS): при cache hit он отдаёт контент с минимальной задержкой, при cache miss запрашивает у origin, кэширует и отдаёт. Кэширует статику (CSS/JS/изображения/видео), API-ответы с `Cache-Control`, HTML статических сайтов. Примеры: Cloudflare, CloudFront, Akamai, Fastly.",
-              "correct": true,
-              "sections": {
-                "explanation": "Близость edge-сервера к пользователю снижает latency и разгружает origin. Поведением кэша управляют HTTP-заголовки `Cache-Control` (`public`/`private`/`max-age`/`no-cache`).",
-                "example": "`Cache-Control: public, max-age=31536000` для версионированной статики позволяет CDN держать файл год; при изменении меняют URL (хеш в имени), а не сбрасывают кэш.",
-                "when_to_apply": "CDN ставят перед статикой и кэшируемыми ответами для глобальной аудитории, чтобы сократить latency и снять нагрузку с origin.",
-                "edge_cases": "`Cache-Control: private` запрещает кэширование на CDN (только в браузере) — для персональных ответов; ошибочный `public` на персональных данных может отдать чужой ответ из общего кэша.",
-                "related": "[[networking-interview#Q22]] reverse proxy/кэш перед origin; [[networking-interview#Q18]] короткий TTL для GeoDNS; [[networking-interview#Q16]] DNS-резолвинг на ближайший edge."
               },
               "order": 2,
               "label": "C"
@@ -1413,18 +1413,6 @@
               "label": "B"
             },
             {
-              "text": "NAT никак не влияет на долгоживущие соединения, поэтому `WebSocket` за NAT может простаивать сколько угодно без разрывов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "NAT-таблица имеет idle-таймаут и удаляет неактивные записи, из-за чего долгие `WebSocket`-соединения рвутся; их удерживают ping/pong или keep-alive.",
-                "source_of_confusion": "Кажется, что раз соединение установлено, NAT не должен на него влиять.",
-                "if_it_were_true": "Тогда не нужны были бы ping/pong-фреймы и `TCP` keep-alive, но именно ими борются с тайм-аутом NAT.",
-                "how_it_should_be": "Idle-соединения вычищаются из NAT-таблицы по тайм-ауту; для удержания шлют периодический трафик."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "NAT (Network Address Translation) — трансляция IP-адресов при прохождении пакетов через маршрутизатор; позволяет многим устройствам LAN использовать один публичный `IP`. Виды: Static NAT (1:1 private→public), Dynamic NAT (пул public IP, назначается динамически), PAT (Port Address Translation — один public IP, разные порты для разных устройств, наиболее распространён). Проблемы: затруднён P2P (нужны STUN/TURN), idle-таймаут рвёт долгие соединения, IP за NAT не уникален.",
               "correct": true,
               "sections": {
@@ -1433,6 +1421,18 @@
                 "when_to_apply": "NAT учитывают при проектировании P2P/`WebSocket`-соединений (нужны NAT traversal или keep-alive) и при получении реального `IP` клиента на бэкенде.",
                 "edge_cases": "Если сервис за NAT, реальный `IP` клиента берут из `X-Forwarded-For`; иначе все запросы выглядят с адреса прокси/шлюза, и rate limiting/гео-логика ломаются.",
                 "related": "[[networking-interview#Q22]] `X-Forwarded-For` за reverse proxy; [[networking-interview#Q7]] keep-alive против idle-таймаута NAT; [[networking-interview#Q39]] SNAT/DNAT в облаке."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "NAT никак не влияет на долгоживущие соединения, поэтому `WebSocket` за NAT может простаивать сколько угодно без разрывов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "NAT-таблица имеет idle-таймаут и удаляет неактивные записи, из-за чего долгие `WebSocket`-соединения рвутся; их удерживают ping/pong или keep-alive.",
+                "source_of_confusion": "Кажется, что раз соединение установлено, NAT не должен на него влиять.",
+                "if_it_were_true": "Тогда не нужны были бы ping/pong-фреймы и `TCP` keep-alive, но именно ими борются с тайм-аутом NAT.",
+                "how_it_should_be": "Idle-соединения вычищаются из NAT-таблицы по тайм-ауту; для удержания шлют периодический трафик."
               },
               "order": 3,
               "label": "D"
@@ -1449,6 +1449,18 @@
           "question_text": "Что такое CORS и зачем он нужен?",
           "options": [
             {
+              "text": "CORS — это серверный механизм, который шифрует cross-origin запросы между фронтендом и API для защиты от перехвата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CORS не шифрует, а через заголовки разрешает/запрещает браузеру cross-origin доступ; конфиденциальность обеспечивает `TLS`/`HTTPS`.",
+                "source_of_confusion": "CORS относят к безопасности, и «безопасность» по инерции отождествляют с шифрованием.",
+                "if_it_were_true": "Тогда CORS заменял бы `HTTPS`, но cross-origin запрос без `TLS` остаётся незашифрованным независимо от CORS-заголовков.",
+                "how_it_should_be": "CORS управляет разрешениями cross-origin доступа в браузере; шифрование — задача `TLS`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "CORS (Cross-Origin Resource Sharing) — механизм, которым сервер указывает, какие origin могут обращаться к его ресурсам из браузера. Решает проблему Same-Origin Policy, запрещающей JS на `https://frontend.com` ходить к `https://api.backend.com`. Ключевые заголовки: `Access-Control-Allow-Origin`, `-Allow-Methods`, `-Allow-Headers`, `-Allow-Credentials`, `-Max-Age`.",
               "correct": true,
               "sections": {
@@ -1457,18 +1469,6 @@
                 "when_to_apply": "CORS настраивают, когда фронтенд и API живут на разных origin (домен/порт/схема) и нужно разрешить браузерные cross-origin запросы.",
                 "edge_cases": "`Access-Control-Allow-Origin: *` вместе с `Access-Control-Allow-Credentials: true` запрещён спецификацией — при credentials origin должен быть конкретным, иначе браузер заблокирует ответ.",
                 "related": "[[networking-interview#Q26]] preflight-запрос в CORS; [[networking-interview#Q22]] reverse proxy и заголовки; [[networking-interview#Q19]] origin-модель и `WebSocket`."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "CORS — это серверный механизм, который шифрует cross-origin запросы между фронтендом и API для защиты от перехвата.",
-              "correct": false,
-              "sections": {
-                "what_actually": "CORS не шифрует, а через заголовки разрешает/запрещает браузеру cross-origin доступ; конфиденциальность обеспечивает `TLS`/`HTTPS`.",
-                "source_of_confusion": "CORS относят к безопасности, и «безопасность» по инерции отождествляют с шифрованием.",
-                "if_it_were_true": "Тогда CORS заменял бы `HTTPS`, но cross-origin запрос без `TLS` остаётся незашифрованным независимо от CORS-заголовков.",
-                "how_it_should_be": "CORS управляет разрешениями cross-origin доступа в браузере; шифрование — задача `TLS`."
               },
               "order": 1,
               "label": "B"
@@ -1521,19 +1521,6 @@
               "label": "A"
             },
             {
-              "text": "Preflight — предварительный `OPTIONS`-запрос, который браузер автоматически шлёт перед «непростым» запросом, проверяя, разрешает ли сервер такой вызов. Запрос «непрост», если метод не `GET`/`HEAD`/`POST`, есть нестандартные заголовки, или `Content-Type` вне `application/x-www-form-urlencoded`/`multipart/form-data`/`text/plain`. Сервер отвечает `204` с `Access-Control-Allow-*`; `Access-Control-Max-Age` кэширует preflight.",
-              "correct": true,
-              "sections": {
-                "explanation": "Preflight защищает сервер: браузер заранее спрашивает разрешение через `OPTIONS` с `Access-Control-Request-Method`/`-Headers`, и только при положительном ответе шлёт реальный запрос.",
-                "example": "Перед `PUT /api/users` с `Authorization` браузер шлёт `OPTIONS` с `Access-Control-Request-Method: PUT`; сервер отвечает `204` и `Access-Control-Allow-Methods: PUT`, после чего идёт сам `PUT`.",
-                "when_to_apply": "Preflight срабатывает автоматически для непростых cross-origin запросов; о нём важно помнить при отладке «лишних» `OPTIONS` и настройке CORS-заголовков на них.",
-                "edge_cases": "Без `Access-Control-Max-Age` каждый непростой запрос предваряется новым `OPTIONS`, удваивая round-trip; кэширование preflight снимает эту накладную нагрузку.",
-                "related": "[[networking-interview#Q25]] что такое CORS в целом; [[networking-interview#Q18]] идея кэширования по времени (Max-Age/TTL); [[networking-interview#Q9]] стоимость лишних round-trip."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "Preflight-запрос использует метод `POST`, передавая в теле список заголовков, которые клиент хочет отправить.",
               "correct": false,
               "sections": {
@@ -1542,8 +1529,8 @@
                 "if_it_were_true": "Тогда preflight сам был бы непростым `POST` и требовал бы своего preflight — возникла бы рекурсия.",
                 "how_it_should_be": "Preflight — это `OPTIONS` с заголовками-запросами; тело у него отсутствует."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`Access-Control-Max-Age` задаёт максимальный размер тела preflight-ответа, а не время его кэширования.",
@@ -1553,6 +1540,19 @@
                 "source_of_confusion": "Слово «Max» наводит на мысль о лимите размера, а не о длительности.",
                 "if_it_were_true": "Тогда заголовок не влиял бы на число `OPTIONS`-запросов, но его главная цель — именно сократить их количество.",
                 "how_it_should_be": "`Access-Control-Max-Age` — длительность кэширования preflight в секундах."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Preflight — предварительный `OPTIONS`-запрос, который браузер автоматически шлёт перед «непростым» запросом, проверяя, разрешает ли сервер такой вызов. Запрос «непрост», если метод не `GET`/`HEAD`/`POST`, есть нестандартные заголовки, или `Content-Type` вне `application/x-www-form-urlencoded`/`multipart/form-data`/`text/plain`. Сервер отвечает `204` с `Access-Control-Allow-*`; `Access-Control-Max-Age` кэширует preflight.",
+              "correct": true,
+              "sections": {
+                "explanation": "Preflight защищает сервер: браузер заранее спрашивает разрешение через `OPTIONS` с `Access-Control-Request-Method`/`-Headers`, и только при положительном ответе шлёт реальный запрос.",
+                "example": "Перед `PUT /api/users` с `Authorization` браузер шлёт `OPTIONS` с `Access-Control-Request-Method: PUT`; сервер отвечает `204` и `Access-Control-Allow-Methods: PUT`, после чего идёт сам `PUT`.",
+                "when_to_apply": "Preflight срабатывает автоматически для непростых cross-origin запросов; о нём важно помнить при отладке «лишних» `OPTIONS` и настройке CORS-заголовков на них.",
+                "edge_cases": "Без `Access-Control-Max-Age` каждый непростой запрос предваряется новым `OPTIONS`, удваивая round-trip; кэширование preflight снимает эту накладную нагрузку.",
+                "related": "[[networking-interview#Q25]] что такое CORS в целом; [[networking-interview#Q18]] идея кэширования по времени (Max-Age/TTL); [[networking-interview#Q9]] стоимость лишних round-trip."
               },
               "order": 3,
               "label": "D"
@@ -1569,6 +1569,19 @@
           "question_text": "Что такое IP-адрес и чем отличаются `IPv4` и `IPv6`?",
           "options": [
             {
+              "text": "`IPv4` — 32 бита (4 октета), формат `192.168.1.1`, ~4.3 млрд адресов, требует NAT из-за дефицита, заголовок переменной длины. `IPv6` — 128 бит (8 групп по 16 бит), формат `2001:0db8:85a3::8a2e:0370:7334`, ~3.4×10^38 адресов, NAT не нужен, заголовок фиксированный, IPsec встроен. Приватные `IPv4`: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`; `127.0.0.0/8` — loopback; `0.0.0.0` — все интерфейсы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное отличие — размер адресного пространства: `IPv6` снимает дефицит адресов и потому делает NAT ненужным, а упрощённый фиксированный заголовок ускоряет маршрутизацию.",
+                "example": "В Docker/Kubernetes важно различать `0.0.0.0` (слушать на всех интерфейсах) и `127.0.0.1` (только localhost): сервис, забинденный на `127.0.0.1`, недоступен извне контейнера.",
+                "when_to_apply": "Различие учитывают при планировании адресации, выборе bind-адреса сервиса и понимании, почему `IPv4` требует NAT, а `IPv6` — нет.",
+                "edge_cases": "`IPv6` поддерживает компактную запись с `::` (сжатие подряд идущих нулевых групп), но `::` можно использовать в адресе лишь один раз — иначе восстановление длины неоднозначно.",
+                "related": "[[networking-interview#Q28]] подсети и маски; [[networking-interview#Q24]] зачем нужен NAT в `IPv4`; [[networking-interview#Q17]] записи `A` (IPv4) и `AAAA` (IPv6)."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`IPv6` использует 32 бита (4 октета), а `IPv4` — 128 бит (8 групп по 16 бит), поэтому адресное пространство у `IPv6` заметно меньше, чем у `IPv4`.",
               "correct": false,
               "sections": {
@@ -1577,8 +1590,8 @@
                 "if_it_were_true": "Тогда `IPv6` не решал бы проблему дефицита адресов, но именно ради неё его и создали.",
                 "how_it_should_be": "`IPv4` — 32 бита (~4.3 млрд), `IPv6` — 128 бит (~3.4×10^38 адресов)."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Адрес `127.0.0.1` из блока `127.0.0.0/8` означает «принимать на всех интерфейсах», тогда как `0.0.0.0` — это loopback только для локальных процессов.",
@@ -1588,19 +1601,6 @@
                 "source_of_confusion": "Оба адреса часто встречаются в конфигах bind, и их значения смешивают.",
                 "if_it_were_true": "Тогда сервис на `127.0.0.1` был бы доступен извне контейнера, но он отвечает только локально.",
                 "how_it_should_be": "`127.0.0.1` — только localhost; `0.0.0.0` — все интерфейсы хоста."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "`IPv4` — 32 бита (4 октета), формат `192.168.1.1`, ~4.3 млрд адресов, требует NAT из-за дефицита, заголовок переменной длины. `IPv6` — 128 бит (8 групп по 16 бит), формат `2001:0db8:85a3::8a2e:0370:7334`, ~3.4×10^38 адресов, NAT не нужен, заголовок фиксированный, IPsec встроен. Приватные `IPv4`: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`; `127.0.0.0/8` — loopback; `0.0.0.0` — все интерфейсы.",
-              "correct": true,
-              "sections": {
-                "explanation": "Главное отличие — размер адресного пространства: `IPv6` снимает дефицит адресов и потому делает NAT ненужным, а упрощённый фиксированный заголовок ускоряет маршрутизацию.",
-                "example": "В Docker/Kubernetes важно различать `0.0.0.0` (слушать на всех интерфейсах) и `127.0.0.1` (только localhost): сервис, забинденный на `127.0.0.1`, недоступен извне контейнера.",
-                "when_to_apply": "Различие учитывают при планировании адресации, выборе bind-адреса сервиса и понимании, почему `IPv4` требует NAT, а `IPv6` — нет.",
-                "edge_cases": "`IPv6` поддерживает компактную запись с `::` (сжатие подряд идущих нулевых групп), но `::` можно использовать в адресе лишь один раз — иначе восстановление длины неоднозначно.",
-                "related": "[[networking-interview#Q28]] подсети и маски; [[networking-interview#Q24]] зачем нужен NAT в `IPv4`; [[networking-interview#Q17]] записи `A` (IPv4) и `AAAA` (IPv6)."
               },
               "order": 2,
               "label": "C"
@@ -1653,18 +1653,6 @@
               "label": "B"
             },
             {
-              "text": "В подсети `/24` все 256 адресов можно назначить хостам, включая сетевой и broadcast.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сетевой адрес и broadcast хостам не назначаются, поэтому в `/24` доступны 254, а не 256 адресов.",
-                "source_of_confusion": "256 = 2^8 кажется полным числом доступных хостов, но два адреса зарезервированы.",
-                "if_it_were_true": "Тогда `192.168.1.0` и `192.168.1.255` были бы обычными хостами, но первый — адрес сети, второй — broadcast.",
-                "how_it_should_be": "В `/24` под хосты доступны 254 адреса; `.0` и `.255` зарезервированы."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "Подсеть — логическое деление IP-сети; маска подсети определяет, какая часть адреса относится к сети, а какая — к хосту. CIDR: `/24` = маска `255.255.255.0` = 254 хоста, `/16` = `255.255.0.0` = 65534 хоста, `/32` — один хост. Для `192.168.1.100/24`: сеть `192.168.1.0`, broadcast `192.168.1.255`, хосты `192.168.1.1`–`192.168.1.254`.",
               "correct": true,
               "sections": {
@@ -1673,6 +1661,18 @@
                 "when_to_apply": "Подсети рассчитывают при проектировании VPC/сетей `Kubernetes`, сегментации и при настройке маршрутов и Network Policy по CIDR.",
                 "edge_cases": "В каждой подсети два адреса не назначают хостам: сетевой (все хостовые биты = 0) и broadcast (все = 1) — поэтому в `/24` доступно 254, а не 256 адресов.",
                 "related": "[[networking-interview#Q27]] `IPv4`/`IPv6` и приватные диапазоны; [[networking-interview#Q38]] Network Policy по CIDR; [[networking-interview#Q39]] адресация подов в облаке."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "В подсети `/24` все 256 адресов можно назначить хостам, включая сетевой и broadcast.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сетевой адрес и broadcast хостам не назначаются, поэтому в `/24` доступны 254, а не 256 адресов.",
+                "source_of_confusion": "256 = 2^8 кажется полным числом доступных хостов, но два адреса зарезервированы.",
+                "if_it_were_true": "Тогда `192.168.1.0` и `192.168.1.255` были бы обычными хостами, но первый — адрес сети, второй — broadcast.",
+                "how_it_should_be": "В `/24` под хосты доступны 254 адреса; `.0` и `.255` зарезервированы."
               },
               "order": 3,
               "label": "D"
@@ -1689,6 +1689,18 @@
           "question_text": "Как работают сокеты в Java?",
           "options": [
             {
+              "text": "`ServerSocket.accept()` — неблокирующий вызов: он сразу возвращает `null`, если клиент ещё не подключился.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `accept()` блокирует поток до подключения клиента; неблокирующее поведение даёт `NIO` (`Selector`/`Channel`), а не обычный `ServerSocket`.",
+                "source_of_confusion": "Неблокирующую модель `NIO` ошибочно приписывают и классическому блокирующему сокету.",
+                "if_it_were_true": "Тогда сервер крутил бы busy-loop, опрашивая `accept()`, но классическая модель именно блокируется до подключения.",
+                "how_it_should_be": "`accept()` блокирует поток; для неблокирующего I/O используют `NIO` или виртуальные потоки."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Сокет — конечная точка двунаправленного канала связи между двумя программами; в Java они в пакете `java.net`. TCP-сервер: `ServerSocket.accept()` блокирует поток до подключения клиента, на каждого клиента обычно создают поток. TCP-клиент: `new Socket(host, port)` + чтение/запись через streams. Для масштаба используют `NIO` (`Selector`/`Channel`) или виртуальные потоки (Java 21+); в проде вместо raw-сокетов берут `Netty`/`Undertow`/WebFlux.",
               "correct": true,
               "sections": {
@@ -1697,18 +1709,6 @@
                 "when_to_apply": "Raw-сокеты применяют для кастомных TCP-протоколов или обучения; в продакшене почти всегда поверх — фреймворки или высокоуровневые клиенты.",
                 "edge_cases": "Каждый сокет — это file descriptor; при тысячах соединений упираются в `ulimit -n`, поэтому лимит FD повышают, а модель «поток на соединение» меняют на `NIO`/виртуальные потоки.",
                 "related": "[[networking-interview#Q30]] Java `HttpClient` поверх сокетов; [[networking-interview#Q31]] connection pooling на HTTP-клиенте; [[networking-interview#Q5]] `TCP` handshake под сокетом."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`ServerSocket.accept()` — неблокирующий вызов: он сразу возвращает `null`, если клиент ещё не подключился.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию `accept()` блокирует поток до подключения клиента; неблокирующее поведение даёт `NIO` (`Selector`/`Channel`), а не обычный `ServerSocket`.",
-                "source_of_confusion": "Неблокирующую модель `NIO` ошибочно приписывают и классическому блокирующему сокету.",
-                "if_it_were_true": "Тогда сервер крутил бы busy-loop, опрашивая `accept()`, но классическая модель именно блокируется до подключения.",
-                "how_it_should_be": "`accept()` блокирует поток; для неблокирующего I/O используют `NIO` или виртуальные потоки."
               },
               "order": 1,
               "label": "B"
@@ -1761,19 +1761,6 @@
               "label": "A"
             },
             {
-              "text": "`HttpClient` (Java 11+) заменяет устаревший `HttpURLConnection`. Клиент строят через `HttpClient.newBuilder()` (версия, connectTimeout, followRedirects) — он потокобезопасен, его создают один раз и переиспользуют. Запросы — через `HttpRequest.newBuilder()` (uri, headers, GET/POST). Отправка: синхронно `client.send(...)` или асинхронно `client.sendAsync(...)` с `CompletableFuture`. Поддерживает `HTTP/1.1`+`HTTP/2`, авто-managed connection pool и `WebSocket`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`HttpClient` потокобезопасен и держит пул соединений автоматически, поэтому правильно создать его один раз на приложение, а не на каждый запрос.",
-                "example": "`HttpClient.newBuilder().version(HTTP_2).connectTimeout(Duration.ofSeconds(5)).build()`, затем `client.send(request, BodyHandlers.ofString())` для синхронного GET с разбором тела в строку.",
-                "when_to_apply": "`HttpClient` берут для HTTP-вызовов из Java без сторонних библиотек: REST-интеграции, межсервисные запросы, асинхронные сценарии через `sendAsync`.",
-                "edge_cases": "Создание нового `HttpClient` на каждый запрос убивает выгоду пула — каждый раз заново handshake и slow start; правильно держать один общий экземпляр.",
-                "related": "[[networking-interview#Q29]] сокеты под `HttpClient`; [[networking-interview#Q31]] connection pooling клиента; [[networking-interview#Q9]] выбор `HTTP/2` в клиенте."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "`HttpClient` поддерживает только `HTTP/1.1`, поэтому для `HTTP/2` нужна сторонняя библиотека вроде OkHttp.",
               "correct": false,
               "sections": {
@@ -1782,8 +1769,8 @@
                 "if_it_were_true": "Тогда `.version(HttpClient.Version.HTTP_2)` не имел бы смысла, но эта опция как раз включает `HTTP/2`.",
                 "how_it_should_be": "`HttpClient` умеет `HTTP/1.1` и `HTTP/2` из коробки с автоматическим выбором."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`HttpClient` умеет только синхронные запросы через `send()`, асинхронных вызовов он не поддерживает.",
@@ -1793,6 +1780,19 @@
                 "source_of_confusion": "Синхронный `send()` чаще встречается в примерах, и о `sendAsync()` забывают.",
                 "if_it_were_true": "Тогда нельзя было бы строить неблокирующие пайплайны на `HttpClient`, но `sendAsync` именно для этого и предназначен.",
                 "how_it_should_be": "Есть оба режима: синхронный `send()` и асинхронный `sendAsync()` с `CompletableFuture`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`HttpClient` (Java 11+) заменяет устаревший `HttpURLConnection`. Клиент строят через `HttpClient.newBuilder()` (версия, connectTimeout, followRedirects) — он потокобезопасен, его создают один раз и переиспользуют. Запросы — через `HttpRequest.newBuilder()` (uri, headers, GET/POST). Отправка: синхронно `client.send(...)` или асинхронно `client.sendAsync(...)` с `CompletableFuture`. Поддерживает `HTTP/1.1`+`HTTP/2`, авто-managed connection pool и `WebSocket`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`HttpClient` потокобезопасен и держит пул соединений автоматически, поэтому правильно создать его один раз на приложение, а не на каждый запрос.",
+                "example": "`HttpClient.newBuilder().version(HTTP_2).connectTimeout(Duration.ofSeconds(5)).build()`, затем `client.send(request, BodyHandlers.ofString())` для синхронного GET с разбором тела в строку.",
+                "when_to_apply": "`HttpClient` берут для HTTP-вызовов из Java без сторонних библиотек: REST-интеграции, межсервисные запросы, асинхронные сценарии через `sendAsync`.",
+                "edge_cases": "Создание нового `HttpClient` на каждый запрос убивает выгоду пула — каждый раз заново handshake и slow start; правильно держать один общий экземпляр.",
+                "related": "[[networking-interview#Q29]] сокеты под `HttpClient`; [[networking-interview#Q31]] connection pooling клиента; [[networking-interview#Q9]] выбор `HTTP/2` в клиенте."
               },
               "order": 3,
               "label": "D"
@@ -1809,6 +1809,19 @@
           "question_text": "Что такое connection pooling на уровне HTTP-клиента и зачем он нужен?",
           "options": [
             {
+              "text": "Connection pooling — паттерн, при котором клиент держит пул открытых `TCP`-соединений и переиспользует их для последующих запросов. Без пула каждый запрос проходит DNS → TCP handshake → TLS handshake (~300 мс overhead); с пулом первый запрос платит за установление, а дальше переиспользует соединение (~0 мс overhead). Настройки: Java `HttpClient` (авто-пул, неограничен), Apache (`maxConnPerRoute`/`maxConnTotal` = 5/25), OkHttp (5 idle / 5 мин).",
+              "correct": true,
+              "sections": {
+                "explanation": "Пул убирает повторяющиеся затраты на handshake и slow start, переиспользуя «прогретые» соединения — это критично для latency при частых вызовах.",
+                "example": "При межсервисной коммуникации в микросервисах пул обязателен: без него каждый HTTP-вызов тратит 100-300 мс на установление, что под нагрузкой убивает latency.",
+                "when_to_apply": "Pooling настраивают для любых частых исходящих HTTP-вызовов — межсервисные запросы, интеграции с внешними API, высокий RPS.",
+                "edge_cases": "Размер пула — компромисс: слишком большой держит лишние idle-соединения и file descriptor; слишком маленький создаёт contention и очереди под нагрузкой.",
+                "related": "[[networking-interview#Q30]] пул в Java `HttpClient`; [[networking-interview#Q10]] `HTTP` keep-alive как основа пула; [[networking-interview#Q6]] экономия на slow start."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Connection pooling переоткрывает `TCP`-соединение перед каждым запросом, обновляя его, чтобы не работать с протухшими соединениями.",
               "correct": false,
               "sections": {
@@ -1817,8 +1830,8 @@
                 "if_it_were_true": "Тогда пул не экономил бы 100-300 мс на запрос, но именно отсутствие повторного handshake даёт эту экономию.",
                 "how_it_should_be": "Пул держит открытые соединения и переиспользует их, избегая повторного handshake."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Без connection pooling overhead на установление соединения составляет около 1 микросекунды на запрос.",
@@ -1828,19 +1841,6 @@
                 "source_of_confusion": "Микросекундные задержки в LAN путают с полной стоимостью установления `HTTPS`-соединения.",
                 "if_it_were_true": "Тогда пул был бы практически бесполезен, но он экономит именно сотни миллисекунд на запрос.",
                 "how_it_should_be": "Установление нового соединения стоит ~сотни миллисекунд; пул убирает этот overhead."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Connection pooling — паттерн, при котором клиент держит пул открытых `TCP`-соединений и переиспользует их для последующих запросов. Без пула каждый запрос проходит DNS → TCP handshake → TLS handshake (~300 мс overhead); с пулом первый запрос платит за установление, а дальше переиспользует соединение (~0 мс overhead). Настройки: Java `HttpClient` (авто-пул, неограничен), Apache (`maxConnPerRoute`/`maxConnTotal` = 5/25), OkHttp (5 idle / 5 мин).",
-              "correct": true,
-              "sections": {
-                "explanation": "Пул убирает повторяющиеся затраты на handshake и slow start, переиспользуя «прогретые» соединения — это критично для latency при частых вызовах.",
-                "example": "При межсервисной коммуникации в микросервисах пул обязателен: без него каждый HTTP-вызов тратит 100-300 мс на установление, что под нагрузкой убивает latency.",
-                "when_to_apply": "Pooling настраивают для любых частых исходящих HTTP-вызовов — межсервисные запросы, интеграции с внешними API, высокий RPS.",
-                "edge_cases": "Размер пула — компромисс: слишком большой держит лишние idle-соединения и file descriptor; слишком маленький создаёт contention и очереди под нагрузкой.",
-                "related": "[[networking-interview#Q30]] пул в Java `HttpClient`; [[networking-interview#Q10]] `HTTP` keep-alive как основа пула; [[networking-interview#Q6]] экономия на slow start."
               },
               "order": 2,
               "label": "C"
@@ -1893,18 +1893,6 @@
               "label": "B"
             },
             {
-              "text": "После получения HTML браузер загружает CSS, JS и изображения строго последовательно — по одному, дожидаясь завершения каждого ресурса перед запросом следующего.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Браузер запрашивает CSS/JS/изображения параллельно по мере парсинга HTML, не дожидаясь его полного завершения.",
-                "source_of_confusion": "Линейное описание шагов создаёт впечатление строго последовательной загрузки ресурсов.",
-                "if_it_were_true": "Тогда страницы с десятками ресурсов грузились бы крайне медленно, но параллельная загрузка это ускоряет.",
-                "how_it_should_be": "Ресурсы догружаются параллельно во время парсинга HTML, а не строго друг за другом."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "Последовательность: 1) парсинг URL (протокол, хост, порт, путь); 2) DNS-резолвинг (кэш → recursive → root → TLD → authoritative → IP); 3) `TCP` handshake (`SYN`/`SYN-ACK`/`ACK`, 1 RTT); 4) `TLS` handshake (1-2 RTT для 1.2, 1 RTT для 1.3); 5) HTTP-запрос (`GET` с заголовками); 6) обработка на сервере (reverse proxy → LB → app → логика); 7) HTTP-ответ (`200 OK` + HTML); 8) рендеринг (парсинг HTML, параллельная загрузка CSS/JS/картинок, построение DOM).",
               "correct": true,
               "sections": {
@@ -1913,6 +1901,18 @@
                 "when_to_apply": "Этот разбор используют на собеседовании как интегрирующий: он связывает DNS, `TCP`, `TLS`, `HTTP` и рендеринг в единую картину.",
                 "edge_cases": "При `TLS 1.3` с 0-RTT и тёплом DNS-кэше шаги DNS и часть handshake почти исчезают, и до первого байта ответа доходят значительно быстрее, чем «по учебнику».",
                 "related": "[[networking-interview#Q16]] этап DNS-резолвинга; [[networking-interview#Q5]] `TCP` handshake; [[networking-interview#Q13]] `TLS` handshake."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "После получения HTML браузер загружает CSS, JS и изображения строго последовательно — по одному, дожидаясь завершения каждого ресурса перед запросом следующего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Браузер запрашивает CSS/JS/изображения параллельно по мере парсинга HTML, не дожидаясь его полного завершения.",
+                "source_of_confusion": "Линейное описание шагов создаёт впечатление строго последовательной загрузки ресурсов.",
+                "if_it_were_true": "Тогда страницы с десятками ресурсов грузились бы крайне медленно, но параллельная загрузка это ускоряет.",
+                "how_it_should_be": "Ресурсы догружаются параллельно во время парсинга HTML, а не строго друг за другом."
               },
               "order": 3,
               "label": "D"
@@ -1929,6 +1929,18 @@
           "question_text": "Какие основные метрики сетевой производительности должен знать backend-разработчик?",
           "options": [
             {
+              "text": "Bandwidth и throughput — это одно и то же: оба означают реально достигнутую скорость передачи в данный момент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bandwidth — теоретический максимум канала, throughput — фактически достигнутый поток; они различаются, особенно при потерях и высоком RTT.",
+                "source_of_confusion": "Обе метрики измеряются в единицах скорости, поэтому их отождествляют.",
+                "if_it_were_true": "Тогда throughput всегда равнялся бы пропускной способности канала, но реально он почти всегда ниже из-за overhead и потерь.",
+                "how_it_should_be": "Bandwidth — потолок канала; throughput — реальная скорость, которая обычно ниже потолка."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Ключевые: Latency (время до первого байта ответа), RTT (Round-Trip Time, туда-обратно), Throughput (объём данных за время), Bandwidth (макс. пропускная способность канала), Packet loss (% потерь; <0.1% норма, >1% проблемы), Jitter (вариация задержки, критична для VoIP/видео), TTFB (Time to First Byte; <200 мс хорошо, >600 мс плохо). Инструменты: `ping`, `traceroute`/`mtr`, `curl -w`, `ss`/`netstat`, `tcpdump`/`Wireshark`.",
               "correct": true,
               "sections": {
@@ -1937,18 +1949,6 @@
                 "when_to_apply": "Эти метрики мониторят постоянно: рост TTFB/p99 или packet loss — ранний сигнал деградации сети или бэкенда.",
                 "edge_cases": "Bandwidth и throughput путают: bandwidth — теоретический максимум канала, throughput — реально достигнутый поток; на канале 1 Гбит/с throughput может быть гораздо ниже из-за потерь и RTT.",
                 "related": "[[networking-interview#Q6]] congestion control и throughput; [[networking-interview#Q8]] окно и пропускная способность; [[networking-interview#Q32]] фазы запроса по `curl -w`."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "Bandwidth и throughput — это одно и то же: оба означают реально достигнутую скорость передачи в данный момент.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Bandwidth — теоретический максимум канала, throughput — фактически достигнутый поток; они различаются, особенно при потерях и высоком RTT.",
-                "source_of_confusion": "Обе метрики измеряются в единицах скорости, поэтому их отождествляют.",
-                "if_it_were_true": "Тогда throughput всегда равнялся бы пропускной способности канала, но реально он почти всегда ниже из-за overhead и потерь.",
-                "how_it_should_be": "Bandwidth — потолок канала; throughput — реальная скорость, которая обычно ниже потолка."
               },
               "order": 1,
               "label": "B"
@@ -2001,19 +2001,6 @@
               "label": "A"
             },
             {
-              "text": "`TLS` — односторонняя аутентификация: клиент проверяет сертификат сервера, сервер клиента не проверяет. `mTLS` (mutual TLS) — двусторонняя: оба участника предъявляют сертификаты и проверяют друг друга (сервер обязательно шлёт `CertificateRequest`, клиент — свой сертификат). Применяется в Service Mesh (Istio/Linkerd — авто-mTLS между подами), партнёрских API (PCI DSS), IoT. В Spring Boot включается `server.ssl.client-auth: need`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ключевое отличие — направление доверия: `mTLS` добавляет проверку клиента сервером, что даёт криптографическую взаимную аутентификацию без паролей/токенов.",
-                "example": "В Istio все поды получают SPIFFE-сертификаты и общаются по `mTLS` без изменения кода: каждый сервис аутентифицирует и шифрует трафик к соседу автоматически.",
-                "when_to_apply": "`mTLS` берут для строгой межсервисной аутентификации (mesh), B2B-API с требованиями регуляторов (банки, PCI DSS) и устройств без паролей (IoT).",
-                "edge_cases": "Ротация клиентских сертификатов в `mTLS` сложнее, чем серверных: нужно обновлять и распространять сертификаты на множество клиентов, иначе соединения начнут падать.",
-                "related": "[[networking-interview#Q13]] базовый `TLS` handshake; [[networking-interview#Q36]] `mTLS` в Service Mesh/Istio; [[networking-interview#Q41]] certificate pinning как альтернатива."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "В `mTLS`, как и в обычном `TLS`, клиент сертификат не предъявляет — взаимность достигается двумя ServerHello.",
               "correct": false,
               "sections": {
@@ -2022,8 +2009,8 @@
                 "if_it_were_true": "Тогда `mTLS` ничем не отличался бы от `TLS`, но различие как раз в предъявлении клиентского сертификата.",
                 "how_it_should_be": "В `mTLS` клиент шлёт свой сертификат, и сервер его проверяет — это суть взаимной аутентификации."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`mTLS` в Spring Boot включается значением `client-auth: none`, которое требует клиентский сертификат.",
@@ -2033,6 +2020,19 @@
                 "source_of_confusion": "Значения `need`/`want`/`none` путают между собой при настройке.",
                 "if_it_were_true": "Тогда `none` означало бы строгий `mTLS`, но `none` отключает клиентскую аутентификацию полностью.",
                 "how_it_should_be": "Для `mTLS` ставят `client-auth: need` (обязательный сертификат) или `want` (опциональный)."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`TLS` — односторонняя аутентификация: клиент проверяет сертификат сервера, сервер клиента не проверяет. `mTLS` (mutual TLS) — двусторонняя: оба участника предъявляют сертификаты и проверяют друг друга (сервер обязательно шлёт `CertificateRequest`, клиент — свой сертификат). Применяется в Service Mesh (Istio/Linkerd — авто-mTLS между подами), партнёрских API (PCI DSS), IoT. В Spring Boot включается `server.ssl.client-auth: need`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевое отличие — направление доверия: `mTLS` добавляет проверку клиента сервером, что даёт криптографическую взаимную аутентификацию без паролей/токенов.",
+                "example": "В Istio все поды получают SPIFFE-сертификаты и общаются по `mTLS` без изменения кода: каждый сервис аутентифицирует и шифрует трафик к соседу автоматически.",
+                "when_to_apply": "`mTLS` берут для строгой межсервисной аутентификации (mesh), B2B-API с требованиями регуляторов (банки, PCI DSS) и устройств без паролей (IoT).",
+                "edge_cases": "Ротация клиентских сертификатов в `mTLS` сложнее, чем серверных: нужно обновлять и распространять сертификаты на множество клиентов, иначе соединения начнут падать.",
+                "related": "[[networking-interview#Q13]] базовый `TLS` handshake; [[networking-interview#Q36]] `mTLS` в Service Mesh/Istio; [[networking-interview#Q41]] certificate pinning как альтернатива."
               },
               "order": 3,
               "label": "D"
@@ -2049,6 +2049,19 @@
           "question_text": "Как работает `HTTP/2` Server Push и почему от него отказываются?",
           "options": [
             {
+              "text": "`HTTP/2` Server Push — сервер шлёт ресурсы клиенту до того, как тот их запросит, предугадывая зависимости (через `PUSH_PROMISE`). От него отказываются: Chrome удалил поддержку в Chrome 106 (2022) — Push часто либо не нужен (ресурс в кэше), либо конкурирует с реальными запросами; `HTTP/3`/`QUIC` его в стандартном режиме не поддерживает. Альтернатива — `Link: rel=preload` + `103 Early Hints`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея Push — сэкономить round-trip, отдав CSS/JS заранее. На практике сервер плохо угадывает кэш клиента и тратит полосу впустую, поэтому индустрия перешла на Early Hints.",
+                "example": "Вместо Push сервер шлёт `103 Early Hints` с `Link: </style.css>; rel=preload`, и браузер начинает грузить ресурс, пока сервер ещё генерирует HTML.",
+                "when_to_apply": "Сегодня для предзагрузки используют не Push, а `103 Early Hints`/`rel=preload`; Server Push разбирают скорее как исторический урок.",
+                "edge_cases": "Push легко отдавал ресурс, уже лежащий в кэше браузера, удваивая трафик и конкурируя с нужными запросами — именно это и стало причиной отказа.",
+                "related": "[[networking-interview#Q9]] Server Push в таблице версий `HTTP`; [[networking-interview#Q12]] почему `QUIC`/`HTTP/3` его не несёт; [[networking-interview#Q23]] preload и кэширование ресурсов."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Server Push — это механизм, которым клиент проталкивает запросы серверу заранее, чтобы прогреть его кэш.",
               "correct": false,
               "sections": {
@@ -2057,8 +2070,8 @@
                 "if_it_were_true": "Тогда `PUSH_PROMISE` слал бы клиент, но это сообщение отправляет именно сервер, анонсируя проталкиваемый ресурс.",
                 "how_it_should_be": "Server Push инициирует сервер, отправляя ресурсы клиенту до их запроса."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "От Server Push отказываются в первую очередь из-за дублирования кэша: сервер повторно шлёт ресурсы, которые у клиента уже закэшированы, тратя трафик впустую.",
@@ -2068,19 +2081,6 @@
                 "source_of_confusion": "Формулировку «дублирует кэш» воспринимают как достоинство, а не как причину проблем.",
                 "if_it_were_true": "Тогда Push был бы безвреден, но именно лишний трафик и конкуренция с нужными запросами и привели к его удалению.",
                 "how_it_should_be": "Push отказались из-за неэффективности: частые промахи по кэшу и борьба за полосу с реальными запросами."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "`HTTP/2` Server Push — сервер шлёт ресурсы клиенту до того, как тот их запросит, предугадывая зависимости (через `PUSH_PROMISE`). От него отказываются: Chrome удалил поддержку в Chrome 106 (2022) — Push часто либо не нужен (ресурс в кэше), либо конкурирует с реальными запросами; `HTTP/3`/`QUIC` его в стандартном режиме не поддерживает. Альтернатива — `Link: rel=preload` + `103 Early Hints`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Идея Push — сэкономить round-trip, отдав CSS/JS заранее. На практике сервер плохо угадывает кэш клиента и тратит полосу впустую, поэтому индустрия перешла на Early Hints.",
-                "example": "Вместо Push сервер шлёт `103 Early Hints` с `Link: </style.css>; rel=preload`, и браузер начинает грузить ресурс, пока сервер ещё генерирует HTML.",
-                "when_to_apply": "Сегодня для предзагрузки используют не Push, а `103 Early Hints`/`rel=preload`; Server Push разбирают скорее как исторический урок.",
-                "edge_cases": "Push легко отдавал ресурс, уже лежащий в кэше браузера, удваивая трафик и конкурируя с нужными запросами — именно это и стало причиной отказа.",
-                "related": "[[networking-interview#Q9]] Server Push в таблице версий `HTTP`; [[networking-interview#Q12]] почему `QUIC`/`HTTP/3` его не несёт; [[networking-interview#Q23]] preload и кэширование ресурсов."
               },
               "order": 2,
               "label": "C"
@@ -2133,18 +2133,6 @@
               "label": "B"
             },
             {
-              "text": "В Istio шифрование `mTLS` выполняет не sidecar, а сам под приложения: Envoy лишь маршрутизирует уже зашифрованный трафик, а SPIFFE-сертификаты держит контейнер приложения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "При малом числе сервисов (<10) операционная сложность Istio не окупается; тогда берут Linkerd или ручной `mTLS`.",
-                "source_of_confusion": "Популярность mesh создаёт впечатление, что он нужен любому проекту.",
-                "if_it_were_true": "Тогда не существовало бы рекомендации «не вводить mesh для маленьких систем», но она широко принята.",
-                "how_it_should_be": "Mesh оправдан при многих сервисах и зрелой команде; для пары сервисов он избыточен."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "Service Mesh — инфраструктурный слой, управляющий коммуникацией между микросервисами через sidecar-прокси (Envoy), без изменения кода приложений. Istio даёт: автоматический `mTLS` (поды получают SPIFFE-сертификаты, трафик шифруется без кода), traffic management (canary, retry, timeout через `VirtualService`/`DestinationRule`), observability (tracing/metrics/logs из коробки), authorization (`AuthorizationPolicy`). `mTLS`-режим задаётся `PeerAuthentication` (STRICT/PERMISSIVE/DISABLE).",
               "correct": true,
               "sections": {
@@ -2153,6 +2141,18 @@
                 "when_to_apply": "Service Mesh берут при большом числе сервисов, когда нужны единый `mTLS`, тонкое traffic management и observability без правок кода каждого сервиса.",
                 "edge_cases": "Mesh не нужен при <10 сервисах или незрелой команде — операционная сложность Istio не окупается; тогда берут более лёгкий Linkerd или ручной `mTLS` в Spring Boot.",
                 "related": "[[networking-interview#Q34]] что такое `mTLS`; [[networking-interview#Q43]] Istio vs Linkerd; [[networking-interview#Q38]] Network Policy vs authorization в mesh."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "В Istio шифрование `mTLS` выполняет не sidecar, а сам под приложения: Envoy лишь маршрутизирует уже зашифрованный трафик, а SPIFFE-сертификаты держит контейнер приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При малом числе сервисов (<10) операционная сложность Istio не окупается; тогда берут Linkerd или ручной `mTLS`.",
+                "source_of_confusion": "Популярность mesh создаёт впечатление, что он нужен любому проекту.",
+                "if_it_were_true": "Тогда не существовало бы рекомендации «не вводить mesh для маленьких систем», но она широко принята.",
+                "how_it_should_be": "Mesh оправдан при многих сервисах и зрелой команде; для пары сервисов он избыточен."
               },
               "order": 3,
               "label": "D"
@@ -2169,6 +2169,18 @@
           "question_text": "Как устроен DNS в `Kubernetes` — CoreDNS, service discovery, headless services?",
           "options": [
             {
+              "text": "Headless-сервис (`clusterIP: None`) возвращает один виртуальный IP с балансировкой, как и обычный ClusterIP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Headless-сервис возвращает IP каждого пода напрямую (без виртуального IP и балансировки); единый виртуальный IP даёт именно ClusterIP.",
+                "source_of_confusion": "Оба — Service-объекты, и их поведение при резолвинге путают.",
+                "if_it_were_true": "Тогда headless не нужен был бы для StatefulSet и прямой адресации подов, но именно ради неё его и вводят.",
+                "how_it_should_be": "ClusterIP → виртуальный IP с балансировкой; headless → список IP всех подов."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "В `Kubernetes` DNS — основной механизм service discovery; поды обращаются к сервисам по имени. CoreDNS — DNS-сервер по умолчанию (заменил kube-dns в 1.13+), работает как Deployment в `kube-system`. Имена: `<service>.<namespace>.svc.<cluster-domain>`. ClusterIP-сервис резолвится в виртуальный IP, headless (`clusterIP: None`) — в IP каждого пода. `ndots: 5` управляет поиском через search domains.",
               "correct": true,
               "sections": {
@@ -2177,18 +2189,6 @@
                 "when_to_apply": "Headless-сервис применяют для StatefulSet и клиентского load balancing (Consul, `gRPC`), где нужна прямая адресация подов, а не один виртуальный IP.",
                 "edge_cases": "`ndots: 5` означает: имя с <5 точек сначала ищется через search domains (`.svc.cluster.local` и т.д.), что добавляет лишние DNS-запросы для внешних доменов и иногда заметно тормозит резолвинг.",
                 "related": "[[networking-interview#Q16]] базовый DNS-резолвинг; [[networking-interview#Q17]] `SRV`-записи для service discovery; [[networking-interview#Q38]] Network Policy и DNS в egress."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "Headless-сервис (`clusterIP: None`) возвращает один виртуальный IP с балансировкой, как и обычный ClusterIP.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Headless-сервис возвращает IP каждого пода напрямую (без виртуального IP и балансировки); единый виртуальный IP даёт именно ClusterIP.",
-                "source_of_confusion": "Оба — Service-объекты, и их поведение при резолвинге путают.",
-                "if_it_were_true": "Тогда headless не нужен был бы для StatefulSet и прямой адресации подов, но именно ради неё его и вводят.",
-                "how_it_should_be": "ClusterIP → виртуальный IP с балансировкой; headless → список IP всех подов."
               },
               "order": 1,
               "label": "B"
@@ -2241,19 +2241,6 @@
               "label": "A"
             },
             {
-              "text": "Network Policy — ресурс `Kubernetes`, задающий правила входящего (Ingress) и исходящего (Egress) трафика для подов. По умолчанию все поды доступны друг другу без ограничений. Работает только с CNI, поддерживающими policy (Calico, Cilium, Weave); Flannel — нет. Базовый паттерн безопасности — default deny all, затем точечные разрешения по `podSelector`/`namespaceSelector`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Policy выбирает поды через `podSelector` и описывает, откуда им можно принимать (Ingress) и куда отправлять (Egress) трафик. Несколько элементов в `from` — это OR, внутри одного элемента — AND.",
-                "example": "Политика «разрешить вход только от order-service» через `podSelector: app: payment-service` и `ingress.from.podSelector: app: order-service` на порту 8080 изолирует payment-service от остальных.",
-                "when_to_apply": "Network Policy применяют для сегментации и принципа least privilege: запретить всё по умолчанию и явно открыть только нужные связи между сервисами.",
-                "edge_cases": "Частая ошибка — забыть разрешить UDP/53 в egress: при default-deny под перестаёт резолвить имена через CoreDNS, и всё «ломается» загадочно, хотя проблема именно в заблокированном DNS.",
-                "related": "[[networking-interview#Q37]] почему DNS (UDP/53) нужен в egress; [[networking-interview#Q36]] authorization в Service Mesh; [[networking-interview#Q28]] CIDR-блоки в правилах."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "Network Policy работает с CNI-плагинами, включая Flannel, потому что enforcement встроен в само ядро `Kubernetes`, а не в плагин.",
               "correct": false,
               "sections": {
@@ -2262,8 +2249,8 @@
                 "if_it_were_true": "Тогда политики применялись бы и на Flannel, но там объект создаётся, а трафик не фильтруется.",
                 "how_it_should_be": "Применение Network Policy зависит от CNI; нужен плагин с её поддержкой (Calico, Cilium, Weave)."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Несколько элементов в блоке `from` объединяются по AND: разрешён только трафик, удовлетворяющий всем селекторам сразу.",
@@ -2273,6 +2260,19 @@
                 "source_of_confusion": "Логику AND/OR в селекторах Network Policy легко перепутать.",
                 "if_it_were_true": "Тогда нельзя было бы разрешить трафик от нескольких независимых источников, но список `from` именно это и делает через OR.",
                 "how_it_should_be": "Элементы списка `from` — OR; селекторы внутри одного элемента — AND."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Network Policy — ресурс `Kubernetes`, задающий правила входящего (Ingress) и исходящего (Egress) трафика для подов. По умолчанию все поды доступны друг другу без ограничений. Работает только с CNI, поддерживающими policy (Calico, Cilium, Weave); Flannel — нет. Базовый паттерн безопасности — default deny all, затем точечные разрешения по `podSelector`/`namespaceSelector`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Policy выбирает поды через `podSelector` и описывает, откуда им можно принимать (Ingress) и куда отправлять (Egress) трафик. Несколько элементов в `from` — это OR, внутри одного элемента — AND.",
+                "example": "Политика «разрешить вход только от order-service» через `podSelector: app: payment-service` и `ingress.from.podSelector: app: order-service` на порту 8080 изолирует payment-service от остальных.",
+                "when_to_apply": "Network Policy применяют для сегментации и принципа least privilege: запретить всё по умолчанию и явно открыть только нужные связи между сервисами.",
+                "edge_cases": "Частая ошибка — забыть разрешить UDP/53 в egress: при default-deny под перестаёт резолвить имена через CoreDNS, и всё «ломается» загадочно, хотя проблема именно в заблокированном DNS.",
+                "related": "[[networking-interview#Q37]] почему DNS (UDP/53) нужен в egress; [[networking-interview#Q36]] authorization в Service Mesh; [[networking-interview#Q28]] CIDR-блоки в правилах."
               },
               "order": 3,
               "label": "D"
@@ -2289,6 +2289,19 @@
           "question_text": "Что такое NAT и SNAT в облачных окружениях?",
           "options": [
             {
+              "text": "В облаке: SNAT (Source NAT) меняет IP источника на исходящем трафике (под → интернет), DNAT (Destination NAT) меняет IP назначения на входящем (Service → под). В `Kubernetes` при выходе пода в интернет выполняется SNAT — приватный IP пода (`10.0.0.x`) подменяется на IP ноды. Решения статического выхода: NAT Gateway (AWS/GCP/Azure), Cilium Egress Gateway. DNAT для Service реализуют kube-proxy (iptables) или eBPF (Cilium).",
+              "correct": true,
+              "sections": {
+                "explanation": "SNAT нужен, потому что IP подов приватны и недостижимы снаружи; внешний сервис видит IP ноды, а не пода. DNAT, наоборот, направляет обращение к виртуальному Service IP на конкретный под.",
+                "example": "`Pod (10.0.0.5) → SNAT (node 192.168.1.10) → интернет`; обратный путь `интернет → DNAT → Pod (10.0.0.5)`. Для стабильного выходного IP ставят NAT Gateway с Elastic IP.",
+                "when_to_apply": "SNAT/DNAT учитывают при настройке egress (whitelist по IP на стороне партнёра требует статического выходного IP) и при диагностике «почему виден IP ноды».",
+                "edge_cases": "Из-за SNAT внешний сервис видит IP ноды, а не пода, что ломает audit trail по реальному источнику; при масштабировании node-pool выходные IP ещё и меняются — отсюда NAT Gateway со статическим IP.",
+                "related": "[[networking-interview#Q24]] базовые виды NAT (Static/Dynamic/PAT); [[networking-interview#Q22]] `X-Forwarded-For` и реальный IP; [[networking-interview#Q40]] eBPF/Cilium для NAT."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "SNAT (Source NAT) меняет IP назначения на входящем трафике: запрос с Service IP переписывается на IP конкретного пода, а kube-proxy выбирает целевой endpoint.",
               "correct": false,
               "sections": {
@@ -2297,8 +2310,8 @@
                 "if_it_were_true": "Тогда не было бы отдельного DNAT для Service → Pod, но именно DNAT направляет обращение к виртуальному IP на под.",
                 "how_it_should_be": "SNAT меняет source IP (исходящий); DNAT меняет destination IP (входящий, Service → Pod)."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "В `Kubernetes` под выходит в интернет напрямую со своим приватным IP `10.0.0.x`: маршрутизатор облака сам анонсирует этот адрес наружу, поэтому SNAT на ноде не выполняется.",
@@ -2308,19 +2321,6 @@
                 "source_of_confusion": "Кажется, что раз у пода есть IP, он маршрутизируется наружу как обычный адрес.",
                 "if_it_were_true": "Тогда ответы из интернета не находили бы дорогу к приватному `10.0.0.x`, но SNAT как раз решает обратную маршрутизацию.",
                 "how_it_should_be": "Под выходит наружу через SNAT: его приватный IP заменяется на публично достижимый IP ноды/шлюза."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "В облаке: SNAT (Source NAT) меняет IP источника на исходящем трафике (под → интернет), DNAT (Destination NAT) меняет IP назначения на входящем (Service → под). В `Kubernetes` при выходе пода в интернет выполняется SNAT — приватный IP пода (`10.0.0.x`) подменяется на IP ноды. Решения статического выхода: NAT Gateway (AWS/GCP/Azure), Cilium Egress Gateway. DNAT для Service реализуют kube-proxy (iptables) или eBPF (Cilium).",
-              "correct": true,
-              "sections": {
-                "explanation": "SNAT нужен, потому что IP подов приватны и недостижимы снаружи; внешний сервис видит IP ноды, а не пода. DNAT, наоборот, направляет обращение к виртуальному Service IP на конкретный под.",
-                "example": "`Pod (10.0.0.5) → SNAT (node 192.168.1.10) → интернет`; обратный путь `интернет → DNAT → Pod (10.0.0.5)`. Для стабильного выходного IP ставят NAT Gateway с Elastic IP.",
-                "when_to_apply": "SNAT/DNAT учитывают при настройке egress (whitelist по IP на стороне партнёра требует статического выходного IP) и при диагностике «почему виден IP ноды».",
-                "edge_cases": "Из-за SNAT внешний сервис видит IP ноды, а не пода, что ломает audit trail по реальному источнику; при масштабировании node-pool выходные IP ещё и меняются — отсюда NAT Gateway со статическим IP.",
-                "related": "[[networking-interview#Q24]] базовые виды NAT (Static/Dynamic/PAT); [[networking-interview#Q22]] `X-Forwarded-For` и реальный IP; [[networking-interview#Q40]] eBPF/Cilium для NAT."
               },
               "order": 2,
               "label": "C"
@@ -2373,18 +2373,6 @@
               "label": "B"
             },
             {
-              "text": "eBPF работает только в user space и не имеет доступа к сетевому стеку ядра, поэтому пакеты он обрабатывать не может.",
-              "correct": false,
-              "sections": {
-                "what_actually": "eBPF выполняется в пространстве ядра (через hooks вроде XDP/TC) и обрабатывает пакеты на раннем пути — это его основное применение в networking.",
-                "source_of_confusion": "Безопасную sandbox-модель eBPF путают с полной изоляцией в user space.",
-                "if_it_were_true": "Тогда XDP не мог бы дропать пакеты на скорости 100 Гбит/с до сетевого стека, но он делает это именно в ядре.",
-                "how_it_should_be": "eBPF исполняется в ядре через hooks и обрабатывает пакеты (XDP, TC, socket filters)."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "eBPF (extended Berkeley Packet Filter) — технология ядра Linux, позволяющая запускать sandbox-программы в пространстве ядра без изменения исходников ядра и без загрузки модулей (verifier + JIT + eBPF VM, hooks: kprobes, XDP, TC, socket filters). В networking: packet filtering (XDP), load balancing (DNAT без iptables), network policies, observability, DDoS protection. Cilium — CNI на eBPF: O(1) lookup по eBPF maps вместо O(n) iptables-правил.",
               "correct": true,
               "sections": {
@@ -2393,6 +2381,18 @@
                 "when_to_apply": "eBPF/Cilium берут, когда iptables деградирует на 10000+ правил, нужна высокая производительность сети и встроенная observability без агентов в приложении.",
                 "edge_cases": "iptables деградирует линейно (O(n)) при росте числа правил — на десятках тысяч сервисов это заметно тормозит сеть; eBPF maps дают O(1) lookup, поэтому масштабируются без такой просадки.",
                 "related": "[[networking-interview#Q39]] DNAT через eBPF/Cilium; [[networking-interview#Q38]] Network Policy на Cilium; [[networking-interview#Q33]] observability и метрики сети."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "eBPF работает только в user space и не имеет доступа к сетевому стеку ядра, поэтому пакеты он обрабатывать не может.",
+              "correct": false,
+              "sections": {
+                "what_actually": "eBPF выполняется в пространстве ядра (через hooks вроде XDP/TC) и обрабатывает пакеты на раннем пути — это его основное применение в networking.",
+                "source_of_confusion": "Безопасную sandbox-модель eBPF путают с полной изоляцией в user space.",
+                "if_it_were_true": "Тогда XDP не мог бы дропать пакеты на скорости 100 Гбит/с до сетевого стека, но он делает это именно в ядре.",
+                "how_it_should_be": "eBPF исполняется в ядре через hooks и обрабатывает пакеты (XDP, TC, socket filters)."
               },
               "order": 3,
               "label": "D"
@@ -2409,6 +2409,18 @@
           "question_text": "Что такое Certificate Pinning и зачем он нужен?",
           "options": [
             {
+              "text": "Certificate Pinning расширяет доверие клиента, позволяя ему принимать сертификаты от большего числа CA, чем системный trust store.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pinning наоборот сужает доверие до конкретного сертификата/ключа, игнорируя широкий системный trust store.",
+                "source_of_confusion": "Слово «pinning» воспринимают как «добавление», а не «ограничение» множества доверенных ключей.",
+                "if_it_were_true": "Тогда pinning увеличивал бы поверхность MITM-атаки, но его цель — наоборот, её радикально сузить.",
+                "how_it_should_be": "Pinning ограничивает доверие до заранее известного ключа/сертификата, отбрасывая остальной trust store."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Certificate Pinning — техника, при которой клиент принимает только конкретный сертификат или публичный ключ сервера, игнорируя системный trust store. Без pinning клиент доверяет любому сертификату от любого доверенного CA — если CA скомпрометирован, возможен MITM. С pinning клиент заранее знает ожидаемый fingerprint и рвёт соединение при любом другом. Типы: certificate pinning, public key pinning, CA pinning.",
               "correct": true,
               "sections": {
@@ -2417,18 +2429,6 @@
                 "when_to_apply": "Pinning применяют в мобильных приложениях и high-security API (банки, платёжные системы), где риск подменённого CA критичен.",
                 "edge_cases": "При ротации сертификата pinning ломает старые клиенты, не получившие обновление; смягчают, пиня публичный ключ (живёт дольше) и закладывая backup-pin на следующий ключ.",
                 "related": "[[networking-interview#Q15]] цепочка доверия и trust store; [[networking-interview#Q34]] `mTLS` как альтернатива; [[networking-interview#Q13]] проверка сертификата в `TLS`."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "Certificate Pinning расширяет доверие клиента, позволяя ему принимать сертификаты от большего числа CA, чем системный trust store.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Pinning наоборот сужает доверие до конкретного сертификата/ключа, игнорируя широкий системный trust store.",
-                "source_of_confusion": "Слово «pinning» воспринимают как «добавление», а не «ограничение» множества доверенных ключей.",
-                "if_it_were_true": "Тогда pinning увеличивал бы поверхность MITM-атаки, но его цель — наоборот, её радикально сузить.",
-                "how_it_should_be": "Pinning ограничивает доверие до заранее известного ключа/сертификата, отбрасывая остальной trust store."
               },
               "order": 1,
               "label": "B"
@@ -2481,19 +2481,6 @@
               "label": "A"
             },
             {
-              "text": "`TCP` — когда нужна гарантия доставки и порядок: HTTP/REST API, БД (PostgreSQL/MySQL), Kafka/RabbitMQ, SSH/SFTP, SMTP, файловая передача. `UDP` — когда latency критичнее, данные быстро устаревают, а потери приложение обрабатывает само: DNS, VoIP/видеозвонки, онлайн-игры, live streaming, `QUIC`/`HTTP/3`, mDNS, мониторинг (StatsD/syslog). Гибрид: `QUIC` = UDP + надёжность + `TLS 1.3`, WebRTC = UDP + SRTP/DTLS.",
-              "correct": true,
-              "sections": {
-                "explanation": "Выбор определяют требования к надёжности, latency и порядку: для критичных к целостности данных — `TCP`, для real-time с устаревающими данными — `UDP`, а `QUIC` берёт лучшее из обоих миров.",
-                "example": "В торговой системе market data feed идёт по `UDP` multicast (потеря старого тика не критична, важна latency), а order placement — по `TCP`/FIX (ордер терять нельзя).",
-                "when_to_apply": "При проектировании канала: спросить «можно ли терять и переставлять данные?» — если нельзя, `TCP`; если важнее скорость и свежесть — `UDP` (или `QUIC` с надёжностью поверх).",
-                "edge_cases": "Чисто `UDP` без надёжности редко берут для прикладных протоколов поверх интернета — обычно строят надёжность сами (`QUIC`, WebRTC), иначе теряются данные и нет congestion control.",
-                "related": "[[networking-interview#Q4]] базовая разница `TCP`/`UDP`; [[networking-interview#Q12]] `QUIC` как UDP с надёжностью; [[networking-interview#Q6]] congestion control только в `TCP`."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "Онлайн-игры и VoIP выбирают `TCP`, потому что гарантия доставки и порядок пакетов важнее задержки от повторных передач.",
               "correct": false,
               "sections": {
@@ -2502,8 +2489,8 @@
                 "if_it_were_true": "Тогда ретрансмит старого аудиокадра улучшал бы звонок, но на деле он приходит поздно и только тормозит поток.",
                 "how_it_should_be": "Real-time медиа и игры выбирают `UDP`: свежесть и latency важнее повторной доставки."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`QUIC` — это чистый `TCP` без шифрования, выбираемый там, где не нужна низкая latency.",
@@ -2513,6 +2500,19 @@
                 "source_of_confusion": "Надёжность `QUIC` ассоциируют с `TCP`, забывая про его `UDP`-основу и встроенное шифрование.",
                 "if_it_were_true": "Тогда `HTTP/3` поверх `QUIC` не давал бы выигрыша в скорости установления, но именно ускорение — его цель.",
                 "how_it_should_be": "`QUIC` = `UDP` + собственная надёжность + `TLS 1.3`, оптимизированный под низкую latency."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`TCP` — когда нужна гарантия доставки и порядок: HTTP/REST API, БД (PostgreSQL/MySQL), Kafka/RabbitMQ, SSH/SFTP, SMTP, файловая передача. `UDP` — когда latency критичнее, данные быстро устаревают, а потери приложение обрабатывает само: DNS, VoIP/видеозвонки, онлайн-игры, live streaming, `QUIC`/`HTTP/3`, mDNS, мониторинг (StatsD/syslog). Гибрид: `QUIC` = UDP + надёжность + `TLS 1.3`, WebRTC = UDP + SRTP/DTLS.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор определяют требования к надёжности, latency и порядку: для критичных к целостности данных — `TCP`, для real-time с устаревающими данными — `UDP`, а `QUIC` берёт лучшее из обоих миров.",
+                "example": "В торговой системе market data feed идёт по `UDP` multicast (потеря старого тика не критична, важна latency), а order placement — по `TCP`/FIX (ордер терять нельзя).",
+                "when_to_apply": "При проектировании канала: спросить «можно ли терять и переставлять данные?» — если нельзя, `TCP`; если важнее скорость и свежесть — `UDP` (или `QUIC` с надёжностью поверх).",
+                "edge_cases": "Чисто `UDP` без надёжности редко берут для прикладных протоколов поверх интернета — обычно строят надёжность сами (`QUIC`, WebRTC), иначе теряются данные и нет congestion control.",
+                "related": "[[networking-interview#Q4]] базовая разница `TCP`/`UDP`; [[networking-interview#Q12]] `QUIC` как UDP с надёжностью; [[networking-interview#Q6]] congestion control только в `TCP`."
               },
               "order": 3,
               "label": "D"
@@ -2529,6 +2529,19 @@
           "question_text": "Istio vs Linkerd — как сравнить эти Service Mesh решения?",
           "options": [
             {
+              "text": "Оба реализуют Service Mesh через sidecar, но с разными приоритетами. Istio: data plane Envoy, control plane Istiod, sidecar ~100MB, средне-высокий CPU overhead, максимальная функциональность (traffic management, fault injection, advanced authorization, WASM, multi-cluster), но высокая сложность. Linkerd: data plane linkerd2-proxy (Rust), sidecar ~10MB, низкий overhead, умеренная функциональность, средняя сложность. Оба — CNCF graduated.",
+              "correct": true,
+              "sections": {
+                "explanation": "Istio мощнее и тяжелее, Linkerd проще и легче. Выбор — баланс между богатством возможностей и операционной простотой/overhead.",
+                "example": "Istio берут при нужде в canary/A-B, fault injection, multi-cluster federation и mesh-level JWT/OIDC; Linkerd — когда достаточно `mTLS` + observability + базовой балансировки и важна простота.",
+                "when_to_apply": "Istio — для крупных систем с DevOps-экспертизой и продвинутым traffic management; Linkerd — как лёгкий старт с низким overhead для небольших команд.",
+                "edge_cases": "Альтернативы обоим: Cilium Service Mesh (eBPF, без sidecar overhead), Consul Connect (интеграция с Vault), AWS App Mesh (managed для EKS) — когда sidecar-модель или сложность не подходят.",
+                "related": "[[networking-interview#Q36]] Service Mesh и `mTLS` в Istio; [[networking-interview#Q40]] Cilium/eBPF mesh без sidecar; [[networking-interview#Q34]] `mTLS` в основе обоих решений."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Linkerd тяжелее и сложнее Istio: его sidecar занимает ~100MB и даёт самый высокий CPU overhead из двух решений.",
               "correct": false,
               "sections": {
@@ -2537,8 +2550,8 @@
                 "if_it_were_true": "Тогда Linkerd не рекомендовали бы как лёгкий простой старт, но именно за лёгкость и простоту его и выбирают.",
                 "how_it_should_be": "Linkerd — лёгкий (~10MB) и простой; Istio — тяжелее (~100MB) и функциональнее."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Только Istio является CNCF graduated проектом, тогда как Linkerd не входит в CNCF и поддерживается одним вендором.",
@@ -2548,19 +2561,6 @@
                 "source_of_confusion": "Большую известность Istio принимают за признак единственного «настоящего» CNCF-проекта.",
                 "if_it_were_true": "Тогда у Linkerd не было бы статуса graduated, но он его имеет наравне с Istio.",
                 "how_it_should_be": "И Istio, и Linkerd — CNCF graduated; различаются они функциональностью и overhead, а не статусом."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Оба реализуют Service Mesh через sidecar, но с разными приоритетами. Istio: data plane Envoy, control plane Istiod, sidecar ~100MB, средне-высокий CPU overhead, максимальная функциональность (traffic management, fault injection, advanced authorization, WASM, multi-cluster), но высокая сложность. Linkerd: data plane linkerd2-proxy (Rust), sidecar ~10MB, низкий overhead, умеренная функциональность, средняя сложность. Оба — CNCF graduated.",
-              "correct": true,
-              "sections": {
-                "explanation": "Istio мощнее и тяжелее, Linkerd проще и легче. Выбор — баланс между богатством возможностей и операционной простотой/overhead.",
-                "example": "Istio берут при нужде в canary/A-B, fault injection, multi-cluster federation и mesh-level JWT/OIDC; Linkerd — когда достаточно `mTLS` + observability + базовой балансировки и важна простота.",
-                "when_to_apply": "Istio — для крупных систем с DevOps-экспертизой и продвинутым traffic management; Linkerd — как лёгкий старт с низким overhead для небольших команд.",
-                "edge_cases": "Альтернативы обоим: Cilium Service Mesh (eBPF, без sidecar overhead), Consul Connect (интеграция с Vault), AWS App Mesh (managed для EKS) — когда sidecar-модель или сложность не подходят.",
-                "related": "[[networking-interview#Q36]] Service Mesh и `mTLS` в Istio; [[networking-interview#Q40]] Cilium/eBPF mesh без sidecar; [[networking-interview#Q34]] `mTLS` в основе обоих решений."
               },
               "order": 2,
               "label": "C"
