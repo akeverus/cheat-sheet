@@ -1,0 +1,14 @@
+{
+  "topic_slug": "spring-cache-interview",
+  "version_sensitive": true,
+  "product_version": "Spring Framework 6.2.x под Spring Boot 3.4.x (актуально на 2026-07-16). Концептуальное ядро Spring Cache Abstraction стабильно: аннотации @Cacheable/@CachePut/@CacheEvict/@Caching/@CacheConfig, @EnableCaching, интерфейсы Cache/CacheManager, SpEL-ключи (key/keyGenerator/condition/unless), self-invocation-ограничение проксей. Version-sensitive точки: дефолтный CacheManager при отсутствии провайдера — ConcurrentMapCacheManager (простой, не для prod); провайдеры через spring.cache.type + стартеры — Caffeine (spring-boot-starter-cache + com.github.ben-manes.caffeine, рекомендуемый локальный), Redis (spring-boot-starter-data-redis → RedisCacheManager + RedisCacheConfiguration.entryTtl(Duration) для TTL), Hazelcast, Couchbase, Infinispan, JCache (JSR-107)/EhCache 3; свойства spring.cache.cache-names, spring.cache.caffeine.spec, spring.cache.redis.time-to-live/key-prefix/cache-null-values; sync=true на @Cacheable даёт single-flight (защита от cache stampede на уровне одного узла); @CacheEvict(allEntries=true, beforeInvocation=...); KeyGenerator-бин под именем keyGenerator или через @CacheConfig(keyGenerator=...). EhCache 2.x (spring-context-support) устарел — актуален EhCache 3 через JCache.",
+  "checked_date": "2026-07-16",
+  "sources": [
+    "Spring Framework Reference — Integration/Cache Abstraction: @EnableCaching, @Cacheable/@CachePut/@CacheEvict/@Caching/@CacheConfig, Cache/CacheManager SPI, SpEL context (key, keyGenerator, condition, unless, sync), self-invocation proxy limitation",
+    "Spring Boot Reference — Caching: автоконфиг CacheManager, spring.cache.type/cache-names, поддерживаемые провайдеры (Generic, JCache, Hazelcast, Infinispan, Couchbase, Redis, Caffeine, Simple/ConcurrentMapCacheManager по умолчанию), приоритет провайдеров",
+    "Spring Data Redis — RedisCacheManager, RedisCacheConfiguration (entryTtl, disableCachingNullValues, computePrefixWith, serializeValuesWith), spring.cache.redis.*",
+    "Caffeine (ben-manes) — spec-строка (maximumSize, expireAfterWrite, expireAfterAccess), интеграция через CaffeineCacheManager и spring.cache.caffeine.spec",
+    "JSR-107 (JCache) — javax.cache/JCacheCacheManager; EhCache 3 как JCache-провайдер (EhCache 2.x на spring-context-support устарел)"
+  ],
+  "notes": "Ядро (аннотации кэширования, CacheManager SPI, SpEL-ключи, self-invocation, sync=true single-flight, порядок @Caching, @CacheEvict beforeInvocation/allEntries) концептуально стабильно и в пределах knowledge-cutoff (янв-2026). Version-sensitive: набор автоконфигурируемых провайдеров и их свойства spring.cache.*, дефолт ConcurrentMapCacheManager, TTL через RedisCacheConfiguration.entryTtl, рекомендация Caffeine вместо устаревшего EhCache 2 / Guava. Проверять при version-bump Spring Boot (изменение списка провайдеров / дефолтов / свойств). Никаких точных benchmark-чисел — только качественные ориентиры."
+}
