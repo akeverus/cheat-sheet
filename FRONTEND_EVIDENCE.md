@@ -683,3 +683,25 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Консоль:** 0 error/warn/issue за весь pause→resume флоу.
 
 **FLOW-01 полностью закрыт** (01a backend R0.175 + 01b UI R0.199 + resume-флоу live-QA R0.202).
+
+---
+
+## EV-BP-STATS-203 — BP-STATS-1 верификация + gate consoleNetworkClean (R0.203, 2026-07-16, chrome-devtools :8080, профиль qa)
+
+**BP-STATS-1 — VERIFIED FIXED.** CSP-фикс `connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com` (commit 9220f1b4) подтверждён на перекомпилированном приложении.
+
+**Lighthouse /stats (desktop, navigation):**
+- **Best Practices = 100** (было 92 в R0.194 — штраф за CSP-violation при sourcemap-fetch chart.js устранён).
+- Accessibility = 100.
+- SEO = 50 (by-design: noindex + нерелевантная meta-description для личного инструмента; SEO вне gate).
+- Agentic Browsing = 100. Passed 53 / Failed 3 (все 3 — SEO by-design).
+
+**Консоль /stats:** 0 сообщений (в R0.195 было 2: `[error]` connect к chart.umd.min.js.map violates connect-src + `[issue]` CSP blocks). Фикс закрыл оба.
+
+**Network /stats:** 13/13 `[200]` — chart.js@4.5.0, highlight.js 11.9.0 (+atom-one-dark.css), 3 семейства шрифтов (Newsreader/Space Grotesk/JetBrains Mono woff2), tokens.css?v=65, base.css?v=107, stats.js?v=15, favicon.svg. 0 запросов 404/blocked.
+
+**Console-sweep primary always-reachable (recompiled build):** / = 0 (R0.201 UX-13 + R0.202 pause/resume флоу), /stats = 0, /settings = 0.
+
+**→ GATE `consoleNetworkClean` = true.** BP-STATS-1 был единственным console/network-долгом на primary-поверхностях (R0.195); устранён. Терминальные result/summary/error — per-surface console-clean R0.151-161 (простые страницы, result.html no-JS-фоллбэк, error.html статична).
+
+**Зелёные гейты после R0.203:** cleanBuild, fullTests, consoleNetworkClean.
