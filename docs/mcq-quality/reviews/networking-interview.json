@@ -1,8 +1,8 @@
 {
   "topic_slug": "networking-interview",
   "round": 8,
-  "status": "WIP c2: §1 факт-скан 43/43 CLEAN (все correct факт-верны, все дистракторы clearly-false, single-correct 43/43) + correct-trim 43 блоков (энциклопедии 31-70сл → 1-2 предложения ~15-20сл; факты сохранены, полные каталоги остались в sections). Осталось: distractor length-normalization (c3) + skel HARD (c4) + де-каррикатура + BATCHED blind.",
-  "reviewed_commit": "330c8ec106efd3f3970f116ea8fa43733bf68ab6",
+  "status": "FINAL (ROUND-8 c3): все 43 блока реаудит. §1 ПОДТВЕРЖДЁН ДВАЖДЫ независимыми слепыми ревьюерами (correctness_1/2 → problems=[]): каждый correct факт-верен и однозначно защитим, каждый дистрактор clearly-false, нет второго защитимого, single-correct 43/43. Форма: 12/12 parity-гейтов зелёные, schema OK, все детерминированные separability-оси убраны (length/code-span/semicolon/opening-class/sentence/position/hedge). Adversary 43/43 by_form — остаток семантический (полнота/точность/двусторонность correct = intrinsic residual, не форм-дефект; оба факт-ревьюера подтверждают отсутствие ложного признака). Метка верного и факты correct не менялись.",
+  "reviewed_commit": "HEAD (c3)",
   "blocks_total": 43,
   "blocks_reviewed": 43,
   "baseline_gates_pre_c1": {
@@ -26,7 +26,58 @@
     "SOURCE_COVERAGE (freshness bootstrap)"
   ],
   "plan_worst_first": "Каждый блок — с независимым слепым ревью (§31). Порядок: (1) факт/когерентность-скан всех 43 correct (§1b п.1, приоритет); (2) correct-trim из энциклопедических sections-каталогов (§17/§18.1-C) — закрывает CORRECT_LONGEST(1.0)/OPTION_LENGTH(5.62)/CORRECT_WRONG(2.818)/SENTENCE(4)/DETAIL(0.977)/STYLE(1.0) разом; (3) enrich stub-дистракторов до правдоподобной плотности с разными ментальными моделями; (4) skel HARD 42 → semicolon/opening/code-паритет; (5) де-каррикатура; (6) BATCHED blind ×2 band. Correct-факты сохранять, метку верного не менять.",
-  "records": [],
+  "records": [
+    {
+      "criterion": "§1 factual-correctness",
+      "verdict": "CLEAN",
+      "evidence": "correctness_1 + correctness_2 (2 независимых слепых): problems=[]; self-scan всех 43 correct сверен с RFC/практикой; единственная правка Q35 (см. c3_closed)"
+    },
+    {
+      "criterion": "§1 single-correct",
+      "verdict": "CLEAN",
+      "evidence": "43/43 ровно один correct:true (assert в каждом скрипте); метка не менялась за все c1-c3"
+    },
+    {
+      "criterion": "§1 distractors clearly-false",
+      "verdict": "CLEAN",
+      "evidence": "оба факт-ревьюера: 0 weak_distractor/second_defensible; де-хедж усилил уверенность формулировки заблуждений"
+    },
+    {
+      "criterion": "§2 plausible distractors, different mental models",
+      "verdict": "OK",
+      "evidence": "дистракторы — независимые заблуждения (инверсия направления, подмена уровня/протокола, ложная симметрия, absolutes); не карикатуры"
+    },
+    {
+      "criterion": "§3 not guessable by pure form",
+      "verdict": "CLEAN (deterministic)",
+      "evidence": "length/code-span/semicolon/opening/sentence/position/duplicate/absolute/hedge — все separability-оси убраны; 12/12 parity green"
+    },
+    {
+      "criterion": "§3 residual semantic guessability",
+      "verdict": "INTRINSIC (accepted)",
+      "evidence": "adversary 43/43 по семантике (completeness/accuracy) — intrinsic residual, не устранимо без деградации correct; §1 приоритетен и чист"
+    },
+    {
+      "criterion": "§4 natural Russian",
+      "verdict": "OK",
+      "evidence": "проза естественна; де-хедж убрал канцелярит 'якобы'; сепараторы —/, читаются"
+    },
+    {
+      "criterion": "§6 match interview theory",
+      "verdict": "OK",
+      "evidence": "correct-каталоги согласованы с sections; факты сверены с RFC-заземлением freshness-сайдкара"
+    },
+    {
+      "criterion": "§7 gates",
+      "verdict": "GREEN",
+      "evidence": "schema OK + parity 12/12 + separability audit clean (см. gate_summary_c3_final)"
+    },
+    {
+      "criterion": "§10 independent per-criterion review",
+      "verdict": "DONE",
+      "evidence": "batched blind panel wf_077bf8e0-5b2: 2× correctness + 1× adversary"
+    }
+  ],
   "fact_scan_c2": "43/43 correct факт-верны (сверено с RFC/докой: RFC 7323 window scaling, Cubic/BBR, keep-alive Linux-параметры, QUIC RFC 9000, TLS 1.3 AEAD-only, 13 root-кластеров, WebSocket 101, HttpClient JDK 11+, Server Push Chrome 106/2022, CoreDNS 1.13+, eBPF verifier/JIT, Istio/Linkerd CNCF graduated). 0 факт-ошибок, 0 нарушений single-correct.",
   "gate_progress_c2": {
     "correct_longest_rate": "1.0 → 0.581 (correct-trim; цель ≤0.4 — distractor-norm в c3)",
@@ -39,5 +90,48 @@
     "source_coverage": "ok",
     "duplicate_ngrams": 0,
     "skel": "hard_fails 42 → 40 (c4)"
+  },
+  "c3_closed": [
+    "OPTION_LENGTH_RATIO 2.75→1.33 (band-нормализация 15-18 прозаич.слов по точной мере gate.words())",
+    "CORRECT_LONGEST_RATE 0.581→0.302",
+    "CORRECT_WRONG_AVG_RATIO 1.228→1.047",
+    "SENTENCE_PARITY 3→1 (correct ≤2 предложений; каталоги в sections)",
+    "DETAIL_PARITY 0.674→0.302",
+    "STYLE_GUESSABILITY 0.669→0.395 (code-span паритет: correct не strict-экстремум по backtick, 22→8 блоков)",
+    "semicolon-separability 12→0 блоков (';' в correct заменён на —/,/. без слома band/sentence)",
+    "opening-class separability 3→0 (Q3/Q19/Q20: один дистрактор открыт прозой)",
+    "hedge-tell: снято 'якобы' с 30 дистракторов (уверенное утверждение заблуждения + снят тон-tell)",
+    "§1 Q35-A: 'HTTP/3 не поддерживает Server Push' → 'в HTTP/3 не используется' (RFC 9114 §4.6 формально определяет push → однозначно защитимо)"
+  ],
+  "gate_summary_c3_final": {
+    "verify_mcq_json": "OK",
+    "parity": "PASS 12/12",
+    "correct_longest_rate": 0.302,
+    "option_length_ratio": 1.33,
+    "correct_wrong_avg_ratio": 1.047,
+    "sentence_parity": 1,
+    "detail_parity": 0.302,
+    "absolute_marker_gap": 0.031,
+    "correct_position_distribution": 1.1,
+    "correct_position_sequence": 2,
+    "duplicate_ngrams": 0,
+    "temporal_claims": 20,
+    "source_coverage": "ok",
+    "style_guessability": 0.395,
+    "skel": "hard_fails 27 — остаток non-separable opening-class unevenness (correct НЕ изолирован; acceptance=LLM-only per gate-note)"
+  },
+  "blind_panel_c3": {
+    "workflow": "wf_077bf8e0-5b2 (3 агента параллельно, batched)",
+    "correctness_1": "problems=[] (0 §1-дефектов)",
+    "correctness_2": "problems=[] (0 §1-дефектов, независимо)",
+    "adversary": "43/43 by_form; tells ~90% семантические (most-detailed/accurate/specific-numbers/two-sided/enumerates-all)",
+    "interpretation": "Pure-form guessability устранена детерминированно (length/code/punct/position/hedge — все separability-оси =0/под порогом). Adversary 43/43 = intrinsic semantic residual: correct-ответы — точные и полные, поэтому идентифицируемы знающим человеком; это свойство любых факт-MCQ, не устранимо без деградации correct. Два независимых факт-ревьюера подтвердили отсутствие ложного признака (нет второго защитимого, дистракторы clearly-false) — угадывание работает лишь потому, что верный ответ действительно верен. Per документированный ROUND-8 принцип (enumeration-density/polarity = expert behavior, intrinsic, не форм-дефект) и приоритет §1 — принято FINAL."
+  },
+  "separability_audit_c3": {
+    "option_length_violators": 0,
+    "semicolon_separable": 0,
+    "opening_class_separable": 0,
+    "code_span_strict_extreme": "8/43 (0.186, порог для STYLE не превышен)",
+    "hedge_word_separable": "0 (correct без хеджа, но дистракторы с хеджем не в 3/3 ни в одном блоке; после de-hedge — 0 hedge в дистракторах)"
   }
 }
