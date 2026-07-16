@@ -597,3 +597,26 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 - **positiveTabindex:0, noName:0** ✅; **5 radiogroup персонализации — все named** ✅; heading-иерархия логична ✅.
 
 **Вывод:** A11Y-01 **держится clean** на текущем билде после всей волны template-изменений; регресса нет. Более глубокое evidence (roving-tabindex, panel display:none, focus-visible-аудит), чем оригинал EV-A11Y-001. Дополняет автоматический Lighthouse a11y=100 (EV-A11Y-194) ручной keyboard-операбельностью. **Observed-мелочи (НЕ дефекты, feature-freeze → не трогаю):** progressbar `valuetext=null` (valuenow/max уже озвучивают «1 из 20»); неактивные tabpanel без атрибута `hidden` (display:none достаточно). Оба — belt-and-suspenders, не блокеры.
+
+---
+
+## EV-BUILD-199 — Полный clean build + FLOW-01b, замыкание cleanBuild+fullTests (R0.199, 2026-07-16)
+
+**Контекст:** пользователь остановил bootRun (:8080) и разрешил `kill -9 $(lsof -t -i:8080)`, дал «продолжай финальную волну». Окно bootRun-OFF использовано для gradle-work, который при живом bootRun даёт wedge (project-lock).
+
+**FLOW-01b (UI паузы/возобновления), commit `68e00d99`:**
+- `InterviewPageMvcService`: инъекция `PauseService` + model-атрибут `pausedInfo` = `interviewSession != null ? null : pauseService.pausedInfo().orElse(null)` (баннер только когда активной HTTP-сессии нет).
+- `focus-training.html`: resume-баннер вверху `#main-content` (`th:if=${pausedInfo != null}`, accent-wash, «N из M отвечено · topic», `POST /resume`); кнопка «Пауза» в rail (`th:if=${interviewSession != null and !interviewSession.finished}` → TRAINING без сессии → пауза скрыта = «только сессионные режимы»).
+- `base.css`: `.resume-banner` (flex space-between, accent-border, wash) + `.rail-pause-btn` (borderless, hover-underline); версия v=107.
+- Тест `InterviewPageMvcServiceTest`: `@Mock PauseService` + 9-арг конструктор.
+- Целевой набор `*TemplateFragmentContractTest *InterviewMvcControllerTest *InterviewPageMvcServiceTest *PauseServiceTest *InterviewFlowMvcServiceTest` — **зелёный**.
+
+**Отложенные дефекты компиляции (маскировались инкрементальной компиляцией + wedge):**
+- `DiagramServiceTest.java:3` — мёртвый `import com.cheatsheet.quiz.infrastructure.diagram.DiagramService` (класс удалён при AI-removal; тест реально проверяет `MermaidSanitizer`). Импорт удалён.
+- `service/package-info.java` — повисшие `@see` на удалённые `DiagramService`/`HintService`, неверный путь `InterviewService`; проза очищена от «AI/диаграммы».
+
+**Полный `./gradlew clean build` — BUILD SUCCESSFUL (43s):** clean + compileJava всех 3 модулей + весь тест-сьют + `jacocoTestCoverageVerification` + `check` (ArchUnit) + `bootJar`/`assemble`. Docker/quiz-postgres :5432 healthy, Testcontainers PG 16-alpine.
+
+**→ Гейты `cleanBuild` + `fullTests` = true.** Честно заслужены: clean build против свежего рабочего дерева *есть* перекомпиляция (не провизорно, в отличие от responsive/accessibility, которые ждут re-run против recompiled/prod-app).
+
+**Остаток bootRun-OFF код-волны:** только FLOW-04 (UI-баннеры recoverable). Далее — один bootRun-up для консолидированной live-QA (UX-13 faithful, FLOW-01b resume-флоу, BP-STATS-1 BP=100, PERF-02 prod-like) + флип оставшихся gate → FINALIZED.
