@@ -289,33 +289,44 @@ class TemplateFragmentContractTest {
 
     @Test
     void tokensCssDefinesSingleInstrumentDesign() throws IOException {
-        // tokens.css — токен-слой. «Полная замена» (DEC-002 / FE-CMP-1): Instrument —
-        // ЕДИНСТВЕННЫЙ дизайн, мульти-дизайн-роестр упразднён. Контракт:
-        // (1) :root — структурная база с ключевыми семантическими токенами,
-        // (2) html[data-design="instrument"] переопределяет полный набор (light + dark),
-        // (3) НИ ОДНОГО scoped-блока удалённых дизайнов (guard против реинтродукции).
+        // tokens.css — токен-слой. SINGLE-SOURCE (DEADCODE-1, 2026-07-16): Instrument-
+        // значения живут ПРЯМО в :root/:root[data-theme="dark"], без html[data-design]
+        // override-слоя. Контракт:
+        // (1) :root несёт Instrument light OKLCH-значения (не warm editorial-базу),
+        // (2) :root[data-theme="dark"] несёт Instrument dark,
+        // (3) НИ ОДНОГО html[data-design="X"] scoped-цветоблока (промоут удалил и
+        //     instrument-override, и роестр удалённых дизайнов),
+        // (4) warm ivory/clay editorial-наследие (#FAF9F5 / #D97757) не рендерится.
         String css = readTemplate("static/css/tokens.css");
 
-        // База: :root, ключевые семантические токены определены.
+        // База: :root с Instrument-значениями (cool paper + teal-signal, OKLCH).
         assertThat(css).contains(":root");
         assertThat(css).contains("--color-bg-primary");
         assertThat(css).contains("--color-accent-primary");
-
-        // Единственный дизайн: instrument light + dark.
         assertThat(css)
-            .as("light-блок instrument")
-            .contains("html[data-design=\"instrument\"] {");
+            .as(":root несёт Instrument cool-paper (light), не warm ivory")
+            .contains("--color-bg-primary:   oklch(0.985 0.003 262)");
         assertThat(css)
-            .as("dark-блок instrument")
-            .contains("html[data-design=\"instrument\"][data-theme=\"dark\"]");
+            .as(":root[data-theme=\"dark\"] несёт Instrument dark")
+            .contains(":root[data-theme=\"dark\"]");
 
-        // Роестр удалённых дизайнов не возвращается (feature-freeze, DEC-002).
-        for (String dead : new String[] { "editorial", "linear", "swiss", "notion", "mintlify",
-                                          "broadsheet", "superhuman", "stripe", "claude", "theverge" }) {
+        // SINGLE-SOURCE: НИ ОДНОГО html[data-design="X"] цвето-override-блока —
+        // включая instrument (промоут DEADCODE-1 перенёс его в :root).
+        for (String dead : new String[] { "instrument", "editorial", "linear", "swiss", "notion",
+                                          "mintlify", "broadsheet", "superhuman", "stripe", "claude", "theverge" }) {
             assertThat(css)
-                .as("удалённый дизайн " + dead + " не должен иметь scoped-блок в tokens.css")
-                .doesNotContain("html[data-design=\"" + dead + "\"]");
+                .as("дизайн " + dead + " не должен иметь scoped-цветоблок в tokens.css (single-source :root)")
+                .doesNotContain("html[data-design=\"" + dead + "\"] {");
         }
+
+        // Guard против реинтродукции warm editorial-цветобазы как ЖИВЫХ значений
+        // (комментарии-упоминания допустимы — проверяем именно объявления токенов).
+        assertThat(css)
+            .as("warm ivory #FAF9F5 не должен быть значением токена (только в комментарии-истории)")
+            .doesNotContain(": #FAF9F5");
+        assertThat(css)
+            .as("warm Clay #D97757 не должен быть значением токена")
+            .doesNotContain(": #D97757");
     }
 
     @Test

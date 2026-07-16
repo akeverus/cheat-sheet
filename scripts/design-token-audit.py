@@ -50,26 +50,22 @@ def parse_tokens(body):
 root = parse_tokens(block_body(r":root"))
 ed_dark = parse_tokens(block_body(r"\[data-theme=\"dark\"\]"))
 
-# Полная замена 2026-07-14: единственный рендерящийся дизайн — instrument.
-# editorial-:root сохранён как инертная база каскада (ed_dark), но НЕ рендерится
-# и не аудируется как дизайн.
+# SINGLE-SOURCE (DEADCODE-1, 2026-07-16): единственный дизайн — instrument, его
+# значения живут ПРЯМО в :root (light) и :root[data-theme="dark"] (dark). Нет
+# отдельного html[data-design="…"] override-слоя (промоут его удалил). Старый
+# design_light/design_dark сохранены пустыми для совместимости каскада.
 DESIGNS = ["instrument"]
-design_light, design_dark = {}, {}
-for d in DESIGNS:
-    if d == "editorial":
-        continue
-    design_light[d] = parse_tokens(block_body(r"html\[data-design=\"%s\"\]" % d))
-    design_dark[d] = parse_tokens(block_body(r"html\[data-design=\"%s\"\]\[data-theme=\"dark\"\]" % d))
+design_light = {d: {} for d in DESIGNS}
+design_dark = {d: {} for d in DESIGNS}
 
 def effective(design, theme):
-    """Cascade (low->high priority): :root -> editorial-dark -> design-light -> design-dark."""
+    """Single-source каскад: :root (light) -> :root[data-theme="dark"] (dark)."""
     m = dict(root)
     if theme == "dark":
         m.update(ed_dark)
-    if design != "editorial":
-        m.update(design_light[design])
-        if theme == "dark":
-            m.update(design_dark[design])
+    m.update(design_light[design])
+    if theme == "dark":
+        m.update(design_dark[design])
     return m
 
 # ---- color math --------------------------------------------------------------
@@ -190,18 +186,13 @@ for d in DESIGNS:
                 sev = fails if minr >= 4.5 else warns
                 sev.append(f"{d}/{theme}: {r:4.2f}:1 (<{minr}) {label}  [{fg_t} on {bg_t}]")
 
-# ---- completeness: every design-dark must redefine editorial-dark color set --
-COLOR_TOKENS = [k for k in ed_dark if k.startswith("--color-")]
+# ---- completeness (single-source): dark должен переопределить каждый light-цвет-
+# токен, иначе светлый цвет протёк бы в тёмную тему. Источник dark = :root[data-theme="dark"].
+COLOR_TOKENS = [k for k in root if k.startswith("--color-")]
 comp_issues = []
-for d in DESIGNS:
-    if d == "editorial": continue
-    missing = [k for k in COLOR_TOKENS if k not in design_dark[d]]
-    for k in missing:
-        # what value does it fall back to? design-light, else editorial-dark(=clay leak)
-        if k in design_light[d]:
-            comp_issues.append(f"{d}/dark: '{k}' not in dark block -> falls to design-LIGHT value {design_light[d][k]} (light color in dark theme?)")
-        else:
-            comp_issues.append(f"{d}/dark: '{k}' not in dark block -> falls to EDITORIAL-DARK {ed_dark[k]}  *** clay/editorial leak ***")
+missing = [k for k in COLOR_TOKENS if k not in ed_dark]
+for k in missing:
+    comp_issues.append(f"dark: '{k}' (light={root[k]}) не переопределён в :root[data-theme=\"dark\"] -> светлый цвет протёк бы в тёмную тему")
 
 # ---- base.css purity: hardcoded colors outside var()/comments ----------------
 # strip comments first
@@ -224,7 +215,7 @@ print()
 print(f"[2] LARGE-TEXT SHORTFALL (< 3.0:1 on a large/label pairing): {len(warns)}")
 for w in warns: print("   WARN  " + w)
 print()
-print(f"[3] DARK-BLOCK COMPLETENESS issues: {len(comp_issues)}")
+print(f"[3] DARK COMPLETENESS (single-source :root) issues: {len(comp_issues)}")
 for c in comp_issues: print("   MISS  " + c)
 print()
 print(f"[4] base.css hardcoded hex colors (outside comments): {len(hard)}")

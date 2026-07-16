@@ -827,3 +827,25 @@ Instrument-блок (325-430) = **авторитетный рендер-исто
 
 **Зелёные гейты после R0.207 (9/12):** cleanBuild, fullTests, consoleNetworkClean, accessibility, performanceProdLike, themesDesigns, responsive, coreUxFlows, **designDocsMatchProduction**.
 **Осталось (3):** deadCodeClean (blocked DEADCODE-1), productionSmoke, cleanCheckoutReproducible.
+
+---
+
+## EV-DEADCODE1-208 — deadCodeClean gate: single-source промоут tokens.css (R0.208, 2026-07-16)
+
+**GATE `deadCodeClean` — ЗЕЛЁНЫЙ.** Behavior-preserving рефактор ядра токенов, верифицирован baseline-diff на перепакованном jar.
+
+### Что сделано
+Инертная warm ivory/clay `:root`-цветобаза (`#FAF9F5`/`#D97757`) + warm-dark `@media` (никогда не рендерились — R0.207) устранены промоутом: Instrument OKLCH-значения перенесены ПРЯМО в `:root` (light) + новый `:root[data-theme="dark"]` (dark) + зеркало `@media prefers-color-scheme` (no-JS OS-dark); оба `html[data-design="instrument"]` override-блока удалены. Структурные токены (font-size/space/max-width/measure/motion/z) сохранены дословно. Промоутнуты ВСЕ instrument-переопределяемые свойства (radius sm 6/md 10, line-height-normal 1.6, letter-spacing-wide 0.02em, тени, шрифты) — иначе удаление override дало бы регресс.
+
+### Многослойная верификация
+1. **Baseline-diff (главная защитная сеть):** сняты computed-значения 39 промоутируемых токенов × 2 темы (78 замеров) с билда ДО правки = ground truth рендера. После правки, на **перепакованном jar** (сервит `tokens.css?v=66`, не cp-sync — fat-jar читает упакованные ресурсы): navigate + toggle тем + повторный захват → **diffCount=0/78**. Идеальное behavior-preservation: каждый токен обеих тем идентичен baseline.
+2. **design-token-audit.py** обновлён под single-source (dark-источник = `:root[data-theme="dark"]`; completeness = каждый light `--color-*` переопределён в dark) → **VERDICT: CLEAN** (hard-fails=0, completeness=0, large-warn=0; 46 AA-пар).
+3. **TemplateFragmentContractTest** переписан (`tokensCssDefinesSingleInstrumentDesign`: `:root` несёт `oklch(0.985 0.003 262)`, `:root[data-theme="dark"]` есть, НИ ОДНОГО `html[data-design="X"] {` включая instrument, warm `#FAF9F5`/`#D97757` не значения токенов) → зелёный.
+4. **Полный clean build** SUCCESSFUL (42s): весь сьют + jacoco + ArchUnit + bootJar (перепаковка jar с v=66).
+5. **Live рендер:** /stats dark bodyBg `oklch(0.19 0.012 264)` + accent `oklch(0.800 0.115 205)` + chart рендерится; консоль **0** на / и /stats.
+
+### Прочее
+head.html комментарий архитектуры обновлён (single-source); `?v` tokens 65→66 (base.css не менялся). Removed-feature dead-code был чист ещё R0.207 → теперь и инертная warm-база устранена.
+
+**Зелёные гейты после R0.208 (10/12):** cleanBuild, fullTests, consoleNetworkClean, accessibility, performanceProdLike, themesDesigns, responsive, coreUxFlows, designDocsMatchProduction, **deadCodeClean**.
+**Осталось (2):** productionSmoke, cleanCheckoutReproducible.
