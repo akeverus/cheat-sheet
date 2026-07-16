@@ -37,6 +37,8 @@ class InterviewPageMvcServiceTest {
     @Mock
     private StatsPageService statsPageService;
     @Mock
+    private com.cheatsheet.quiz.feature.interview.service.flow.PauseService pauseService;
+    @Mock
     private ReviewModeService reviewModeService;
     @Mock
     private MvcNavigationService navigationService;
@@ -59,6 +61,7 @@ class InterviewPageMvcServiceTest {
                 sessionSupport,
                 focusTrainingPageService,
                 statsPageService,
+                pauseService,
                 reviewModeService,
                 navigationService,
                 modelAttributeMapper,

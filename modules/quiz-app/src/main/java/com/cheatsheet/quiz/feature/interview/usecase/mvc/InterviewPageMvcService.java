@@ -12,6 +12,7 @@ import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageService;
+import com.cheatsheet.quiz.feature.interview.service.flow.PauseService;
 import com.cheatsheet.quiz.feature.interview.service.flow.ReviewModeService;
 import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
 import jakarta.servlet.http.HttpSession;
@@ -28,6 +29,7 @@ public class InterviewPageMvcService {
     InterviewSessionSupport sessionSupport;
     FocusTrainingPageService focusTrainingPageService;
     StatsPageService statsPageService;
+    PauseService pauseService;
     ReviewModeService reviewModeService;
     MvcNavigationService navigationService;
     MvcModelAttributeMapper modelAttributeMapper;
@@ -164,6 +166,9 @@ public class InterviewPageMvcService {
         );
         modelAttributeMapper.applyFocusPageState(model, pageState, reviewMode);
         model.addAttribute("aiEnabled", false);
+        // FLOW-01b: приостановленная сессия для resume-баннера. Баннер показываем
+        // только когда активной сессии нет (interviewSession == null) — гейт в шаблоне.
+        model.addAttribute("pausedInfo", interviewSession != null ? null : pauseService.pausedInfo().orElse(null));
         return navigationService.focusView();
     }
 }
