@@ -23,7 +23,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`GitOps` — практика управления инфраструктурой и приложениями, где `Git`-репозиторий является единственным источником истины для декларативной конфигурации. Четыре принципа `OpenGitOps`: декларативность, версионируемость и неизменяемость в `Git`, автоматическое вытягивание (`pull`) состояния агентом в кластере и непрерывная сверка (`reconciliation`) реального состояния с желаемым.",
+              "text": "`GitOps` — практика, где `Git` служит единственным источником истины для декларативной конфигурации. Принципы `OpenGitOps`: декларативность, версионируемость, автоматическое вытягивание и непрерывная сверка.",
               "correct": true,
               "sections": {
                 "explanation": "Каждый коммит — неизменяемый снимок желаемого состояния, а агент внутри кластера сам применяет его и устраняет дрейф. Это даёт аудит через `git log`, откат через `git revert` и уменьшает attack surface, так как `kubectl` снаружи кластера не нужен.",
@@ -107,7 +107,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "В push-based подходе деплой инициирует `CI`-сервер: `Jenkins` или `GitHub Actions` имеют `kubeconfig` и сами вызывают `kubectl apply`/`helm upgrade`. В GitOps (pull-based) агент внутри кластера (`ArgoCD`, `Flux`) сам следит за репозиторием и синхронизирует кластер; источник истины — `Git`, есть встроенный drift detection, а откат делается через `git revert`.",
+              "text": "В push-подходе `CI`-сервер сам вызывает `kubectl apply` в кластере. В pull-подходе агент внутри кластера тянет манифесты из `Git`, обеспечивая drift detection и откат через `git revert`.",
               "correct": true,
               "sections": {
                 "explanation": "Главное различие — кто инициатор и где живут credentials: в push CI-сервер тянется во внешний кластер с правами, в pull агент изнутри ходит за состоянием, поэтому `kubeconfig` не покидает кластер и attack surface меньше.",
@@ -131,7 +131,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Ключевые компоненты: `API Server` (gRPC/REST для UI, CLI, внешних систем, auth/authz), `Application Controller` (control loop: сравнивает desired state из `Git` и live state кластера, вычисляет `OutOfSync`, синхронизирует), `Repo Server` (клонирует репозитории и рендерит манифесты `Helm`/`Kustomize`/`Jsonnet`), `Redis` (кеш состояния и результатов рендеринга), `ApplicationSet Controller`, опциональный `Dex` для SSO и `Notifications Controller`.",
+              "text": "Ключевые компоненты: `API Server` для UI и CLI, `Application Controller` для sync-цикла, `Repo Server` для рендеринга манифестов, `Redis` для кеша, `ApplicationSet Controller`, опциональный `Dex` и `Notifications Controller`.",
               "correct": true,
               "sections": {
                 "explanation": "Разделение по ролям: `Repo Server` отвечает за рендеринг манифестов, `Application Controller` — за reconcile и сравнение состояний, `API Server` — за внешний интерфейс, а `Redis` снижает нагрузку, кешируя git-объекты и результаты рендеринга.",
@@ -215,7 +215,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "`Application` — основной Custom Resource `ArgoCD`, описывающий что и куда деплоить. Ключевые секции: `spec.source` (откуда брать манифесты — `repoURL`, `targetRevision`, `path`, либо `chart` + `helm.valueFiles`), `spec.destination` (целевой `server` и `namespace`), `spec.syncPolicy` (ручная или `automated` с `prune`/`selfHeal`) и `spec.ignoreDifferences` (поля, расхождения в которых игнорируются).",
+              "text": "`Application` — основной CR, описывающий что и куда деплоить. Ключевые секции: `spec.source` (откуда манифесты), `spec.destination` (целевой кластер и namespace), `spec.syncPolicy` и `spec.ignoreDifferences`.",
               "correct": true,
               "sections": {
                 "explanation": "`source` отвечает за desired state, `destination` — за адрес доставки, `syncPolicy` — за поведение синка, а `project` привязывает приложение к `AppProject` для RBAC-ограничений на репозитории, кластеры и namespace.",
@@ -263,7 +263,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Sync Status сравнивает desired (`Git`) и live (кластер): `Synced`, `OutOfSync`, `Unknown`. Health Status — состояние ресурсов: `Healthy`, `Progressing` (rolling update), `Degraded` (например `CrashLoopBackOff`), `Suspended` (приостановленный `CronJob`), `Missing` (ресурса нет в кластере), `Unknown`. Отдельно есть Operation State последней операции: `Running`, `Succeeded`, `Failed`, `Error`.",
+              "text": "Sync Status (`Synced`, `OutOfSync`, `Unknown`) сравнивает `Git` и кластер. Health Status (`Healthy`, `Progressing`, `Degraded`, `Suspended`, `Missing`) отражает состояние ресурсов; отдельно есть Operation State последней операции.",
               "correct": true,
               "sections": {
                 "explanation": "Sync и Health — независимые оси: приложение может быть `Synced` (манифесты совпадают), но `Degraded`, если под падает в `CrashLoopBackOff`; и наоборот, `OutOfSync` при полностью `Healthy` подах.",
@@ -347,7 +347,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Manual sync (по умолчанию): `ArgoCD` обнаруживает расхождения и помечает приложение `OutOfSync`, но НЕ применяет изменения сам — синк инициирует человек через UI, CLI или API. Automated sync: `ArgoCD` автоматически применяет изменения при обнаружении расхождений. У `automated` есть подопции `prune` (удалять исчезнувшие из `Git` ресурсы) и `selfHeal` (откатывать ручной дрейф), обе по умолчанию `false`.",
+              "text": "Manual sync (по умолчанию): `ArgoCD` помечает расхождение `OutOfSync`, но применяет изменения только по команде человека. Automated sync применяет их сам; `prune` и `selfHeal` по умолчанию отключены.",
               "correct": true,
               "sections": {
                 "explanation": "Разница в том, кто нажимает «синхронизировать»: в manual — оператор, что даёт контрольную точку перед prod-деплоем; в automated — сам контроллер, что обеспечивает непрерывную сходимость к `Git` без ручных действий.",
@@ -371,7 +371,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`prune` разрешает `ArgoCD` удалять из кластера ресурсы, удалённые из `Git`; без него такие ресурсы остаются, а приложение висит `OutOfSync`. `selfHeal` разрешает автоматически откатывать ручные изменения, внесённые в обход `Git` (например через `kubectl`). Риски `prune`: случайное удаление при опечатке в `path`/`targetRevision`, удаление созданных вручную объектов, проблемы при переименовании ресурсов. Риск `selfHeal`: откат экстренных hotfix-ов и конфликт с `HPA`, меняющим `spec.replicas`.",
+              "text": "`prune` удаляет из кластера ресурсы, убранные из `Git`; `selfHeal` откатывает ручные изменения. Главный риск `prune` — случайное удаление при опечатке в `path`, а `selfHeal` конфликтует с `HPA`, меняющим число реплик.",
               "correct": true,
               "sections": {
                 "explanation": "`prune` синхронизирует удаления, `selfHeal` — устраняет дрейф; оба усиливают сходимость к `Git`, но именно `prune` опасен необратимостью: неверный `path` делает все ресурсы «лишними» и кандидатами на удаление.",
@@ -455,7 +455,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "`Sync Waves` — механизм управления порядком применения ресурсов при синхронизации. Каждому ресурсу аннотацией `argocd.argoproj.io/sync-wave` назначается числовой вес, и `ArgoCD` применяет ресурсы по возрастанию веса, дожидаясь, пока ресурсы текущей волны не станут `Healthy`, прежде чем перейти к следующей. Типичный порядок: wave -1 для `Namespace`/`CRD`/`PVC`, 0 для `ConfigMap`/`Secret`, 1 для миграционного `Job`, 2 для основных `Deployment`, 3 для `Ingress`/`HPA`.",
+              "text": "`Sync Waves` управляют порядком применения: аннотация `argocd.argoproj.io/sync-wave` задаёт числовой вес, и `ArgoCD` применяет ресурсы по возрастанию веса, дожидаясь `Healthy` перед переходом к следующей волне.",
               "correct": true,
               "sections": {
                 "explanation": "Волны решают проблему зависимостей: миграция БД должна отработать до старта приложения, а `CRD` — до создания использующих их ресурсов; `ArgoCD` гарантирует это, не переходя к следующей волне, пока текущая не здорова.",
@@ -503,7 +503,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`Sync Hooks` — ресурсы (обычно `Job` или `Workflow`), выполняемые в определённые фазы синхронизации, задаются аннотацией `argocd.argoproj.io/hook`. Фазы: `PreSync` (до применения манифестов — миграции БД, проверки), `Sync` (вместе с основными ресурсами), `PostSync` (после успешного синка — smoke-тесты, прогрев), `SyncFail` (при неудачном синке — оповещения, rollback-логика), `Skip` (ресурс пропускается). `hook-delete-policy` управляет удалением хука: `HookSucceeded`, `HookFailed`, `BeforeHookCreation`.",
+              "text": "`Sync Hooks` — ресурсы (обычно `Job`), выполняемые в фазы синхронизации по аннотации `argocd.argoproj.io/hook`. Фазы: `PreSync`, `Sync`, `PostSync`, `SyncFail` и `Skip`; удаление хука регулирует `hook-delete-policy`.",
               "correct": true,
               "sections": {
                 "explanation": "Хуки привязывают побочные действия к моменту синка: `PreSync` гарантирует, что миграция выполнится до деплоя приложения, а `PostSync` — что smoke-тест запустится только после успешного применения манифестов.",
@@ -587,7 +587,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`ArgoCD` поддерживает несколько source-инструментов: `Helm` (чарты из `Git` или registry с values-файлами), `Kustomize` (overlays и `images` override), `Jsonnet`, plain `YAML`/`JSON` без шаблонизации и `Config Management Plugins` (кастомные плагины — Vault agent, cdk8s и т.п.). Тип определяется автоматически по наличию файлов: `Chart.yaml` → `Helm`, `kustomization.yaml` → `Kustomize`, `*.jsonnet` → `Jsonnet`, иначе — plain YAML.",
+              "text": "`ArgoCD` поддерживает `Helm`, `Kustomize`, `Jsonnet`, чистый `YAML` и кастомные `Config Management Plugins`. Тип источника определяется автоматически по файлам: `Chart.yaml` даёт `Helm`, `kustomization.yaml` даёт `Kustomize`, иначе применяется plain YAML.",
               "correct": true,
               "sections": {
                 "explanation": "`Repo Server` смотрит на содержимое каталога `path` и выбирает рендерер по сигнатурным файлам, поэтому явно указывать тип обычно не нужно — достаточно правильной структуры репозитория.",
@@ -611,7 +611,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`ApplicationSet` — контроллер и CRD, генерирующий множество `Application` объектов по единому шаблону. Он решает проблему управления большим количеством похожих приложений: multi-cluster, multi-env, multi-tenant. Через `generators` (list, clusters, git, matrix, merge, SCM, PR) задаётся набор параметров, а `template` описывает форму `Application`; преимущества — единая точка управления, отсутствие дублирования и автосоздание приложений при добавлении нового кластера/среды.",
+              "text": "`ApplicationSet` — контроллер, генерирующий множество `Application` по единому шаблону. Он решает управление множеством похожих приложений (multi-cluster, multi-env): `generators` задают параметры, а `template` описывает форму `Application`.",
               "correct": true,
               "sections": {
                 "explanation": "Вместо ручного копирования десятков почти одинаковых `Application` пишут один `ApplicationSet`, а контроллер разворачивает по `Application` на каждый элемент генератора, подставляя параметры в шаблон.",
@@ -695,7 +695,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Основные генераторы: `List` (статический список элементов с произвольными параметрами), `Cluster` (по `Application` на каждый зарегистрированный кластер с фильтром по labels), `Git` (обход директорий или файлов в репозитории), `Matrix` (декартово произведение двух генераторов), `Merge` (объединение параметров по ключу), `SCM Provider` (обход репозиториев в организации GitHub/GitLab) и `Pull Request` (ephemeral-окружения на каждый PR).",
+              "text": "Основные генераторы: `List` (статический список), `Cluster` (по приложению на кластер), `Git` (обход файлов репозитория), `Matrix` и `Merge` (комбинация генераторов), `SCM Provider` и `Pull Request`.",
               "correct": true,
               "sections": {
                 "explanation": "Каждый генератор поставляет набор параметров, подставляемых в `template`: `Cluster` берёт их из cluster-secrets, `Git` — из структуры репозитория, `Matrix` комбинирует два источника, давая, например, «каждое приложение на каждом кластере».",
@@ -743,7 +743,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`App of Apps` — паттерн, при котором один `Application` («root app») управляет другими `Application` объектами: root указывает на директорию с YAML-манифестами других приложений, и их синк создаёт дочерние `Application` (обычно в namespace `argocd`). Это позволяет единым синком развернуть всю платформу, управлять приложениями декларативно и применять разные sync-стратегии к компонентам. В современных проектах `ApplicationSet` часто предпочтительнее, так как не требует дублирования манифестов.",
+              "text": "`App of Apps` — паттерн: один root-`Application` создаёт другие `Application` из указанной директории одним синком, разворачивая всю платформу декларативно. Сейчас часто предпочитают `ApplicationSet`.",
               "correct": true,
               "sections": {
                 "explanation": "Root app — это `Application`, чьи «ресурсы» сами являются `Application`; синхронизируя его, `ArgoCD` создаёт дочерние приложения, и так из одной точки разворачивается весь стек.",
@@ -827,7 +827,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`ArgoCD` поставляется со встроенными health checks для стандартных ресурсов (`Deployment`, `StatefulSet`, `DaemonSet`, `Service`, `Ingress`). Для кастомных CRD пишут `Lua`-скрипт в `argocd-cm` ConfigMap под ключом `resource.customizations.health.<group>_<kind>`: скрипт анализирует `obj.status` и возвращает таблицу `hs` со `status` и `message`. Возможные статусы из Lua: `Healthy`, `Progressing`, `Degraded`, `Suspended`, `Missing`.",
+              "text": "Для стандартных ресурсов `ArgoCD` использует встроенные health checks. Для кастомных CRD пишут `Lua`-скрипт в `argocd-cm`, который анализирует `obj.status` и возвращает таблицу со статусом (`Healthy`, `Progressing`, `Degraded`).",
               "correct": true,
               "sections": {
                 "explanation": "Health check превращает специфичное `status` ресурса в стандартную ось здоровья `ArgoCD`; для CRD без встроенной логики `ArgoCD` показал бы `Unknown`, пока Lua-скрипт не научит его читать `status.conditions`.",
@@ -851,7 +851,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "RBAC в `ArgoCD` двухуровневый. `AppProject` ограничивает, какие репозитории (`sourceRepos`), кластеры/namespace (`destinations`) и виды ресурсов (whitelist/blacklist) доступны приложениям, и может содержать project-роли. RBAC-политики в `argocd-rbac-cm` задаются строками формата `p, <role/user>, <resource>, <action>, <object>, <effect>` и привязкой групп `g, <group>, <role>`. Встроенные роли: `role:readonly` и `role:admin`.",
+              "text": "RBAC в `ArgoCD` двухуровневый: `AppProject` ограничивает доступные репозитории, кластеры и виды ресурсов, а политики в `argocd-rbac-cm` задают роли строками `p, role, resource, action, object` и привязку групп `g`.",
               "correct": true,
               "sections": {
                 "explanation": "`AppProject` отвечает за изоляцию (что разрешено приложениям проекта), а политики `policy.csv` — за разрешения пользователей и групп на действия (`get`, `sync`) над объектами; вместе они дают multi-tenancy.",
@@ -935,7 +935,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "`ArgoCD` ставится в один управляющий кластер и управляет множеством целевых. Внешний кластер регистрируется командой `argocd cluster add` (с `kubeconfig` и context), под капотом создаётся `Secret` в namespace `argocd` с label `argocd.argoproj.io/secret-type: cluster`, содержащий `server`, `bearerToken` и `caData`. В целевом кластере используется `ServiceAccount` с нужными RBAC-правами. Для Hub-and-Spoke рекомендуют `ApplicationSet` с `Cluster`-генератором для автодеплоя на все зарегистрированные кластеры.",
+              "text": "`ArgoCD` ставится в один управляющий кластер и управляет многими целевыми. Внешний кластер регистрируют `argocd cluster add`; создаётся `Secret` с label `argocd.argoproj.io/secret-type: cluster`, содержащий `server`, `bearerToken` и `caData`.",
               "correct": true,
               "sections": {
                 "explanation": "Один `ArgoCD` хранит credentials всех целевых кластеров в cluster-secrets и обращается к их API напрямую, поэтому `destination.server` в `Application` может указывать на любой зарегистрированный кластер.",
@@ -983,7 +983,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`ArgoCD` принципиально не хранит секреты сам. Подходы: `Sealed Secrets` (Bitnami) — шифрование `kubeseal` прямо в `Git`, расшифровка только контроллером в кластере; `External Secrets Operator` (ESO) — синхронизация из Vault/AWS SSM/GCP Secret Manager в Kubernetes Secrets через `ExternalSecret` CR; `ArgoCD Vault Plugin` (AVP) — CMP, подставляющий значения из Vault по placeholder во время рендеринга; `SOPS` — шифрование YAML/JSON ключами age/PGP/KMS через CMP. Рекомендуются ESO или Sealed Secrets как наиболее зрелые.",
+              "text": "`ArgoCD` сам секреты не хранит. Подходы: `Sealed Secrets` (шифрование прямо в `Git`), `External Secrets Operator` (синхронизация из внешних хранилищ), `ArgoCD Vault Plugin` и `SOPS`; чаще всего рекомендуют ESO или Sealed Secrets.",
               "correct": true,
               "sections": {
                 "explanation": "Все подходы решают конфликт «секреты нельзя класть в `Git` в открытом виде» по-разному: `Sealed Secrets` хранит зашифрованное в `Git`, ESO держит секреты во внешнем хранилище, а в `Git` лежит лишь ссылка-`ExternalSecret`.",
@@ -1067,7 +1067,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`ArgoCD Image Updater` — дополнение, автоматически обновляющее теги образов в `Application` при появлении новых версий в container registry. Работает в двух режимах write-back: `argocd` (обновляет параметры `Application` напрямую через API) и `git` (коммитит новый тег в `Git`-репозиторий — настоящий GitOps). Настраивается аннотациями на `Application` (`image-list`, `update-strategy`, `allow-tags`, `write-back-method`). Стратегии: `semver`, `latest`, `name`, `digest`.",
+              "text": "`ArgoCD Image Updater` — дополнение, автоматически обновляющее теги образов в `Application` при выходе новых версий. Два режима write-back: `argocd` (через API) и `git` (коммит в репозиторий). Стратегии: `semver`, `latest`, `name`, `digest`.",
               "correct": true,
               "sections": {
                 "explanation": "Image Updater закрывает разрыв «новый образ собран — но тег в манифесте старый»: он мониторит registry и сам поднимает тег, причём `git` write-back сохраняет GitOps-инвариант, оставляя `Git` источником истины.",
@@ -1091,7 +1091,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`ArgoCD` хранит историю деплоев (по умолчанию 10 ревизий). Откат делают через UI (История → ревизия → Rollback) или CLI: `argocd app history my-app`, затем `argocd app rollback my-app 5`. После rollback приложение переходит в suspended (auto-sync отключается), вернуть его можно `argocd app set my-app --sync-policy automated`. Важно: rollback в `ArgoCD` ≠ rollback в `Git` — деплоятся манифесты конкретной git-ревизии, но сам `Git` не меняется, и при следующем auto-sync приложение снова обновится до HEAD. Правильный GitOps-откат — `git revert` + push.",
+              "text": "`ArgoCD` хранит историю деплоев (по умолчанию 10 ревизий); откат делают через UI или `argocd app rollback`. Важно: деплоятся манифесты старой git-ревизии, сам `Git` не меняется — правильный откат это `git revert`.",
               "correct": true,
               "sections": {
                 "explanation": "`argocd app rollback` — это оперативная мера: он деплоит старую ревизию и приостанавливает авто-синк, чтобы тот не вернул HEAD; но раз `Git` не изменён, источник истины всё ещё указывает на новую версию.",
@@ -1175,7 +1175,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Классический GitOps pipeline разделяет app-репозиторий (код, `Dockerfile`) и config-репозиторий (`overlays/`, `kustomization.yaml`). Процесс: разработчик пушит в app-repo → CI (GitHub Actions/GitLab CI) собирает образ и пушит в registry с новым тегом → CI обновляет тег в config-repo (`kustomize edit set image` или Image Updater) → `ArgoCD` обнаруживает изменение в config-repo и синхронизирует кластер. Это даёт разные права на код и конфигурацию, независимые ревью и чистую историю деплоев.",
+              "text": "GitOps-пайплайн разделяет app-репозиторий (код) и config-репозиторий (`overlays`). CI обновляет тег образа в config-репозитории, а `ArgoCD` замечает изменение и синхронизирует кластер, что даёт разные права и чистую историю.",
               "correct": true,
               "sections": {
                 "explanation": "Разделение репозиториев проводит границу CI/CD: CI отвечает за сборку артефакта (app-repo), CD — за желаемое состояние кластера (config-repo), а `ArgoCD` лишь подтягивает конфигурацию, не имея доступа к коду.",
@@ -1223,7 +1223,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Есть два режима. Polling (по умолчанию): `Repo Server` опрашивает репозиторий каждые ~3 минуты (настраивается `timeout.reconciliation` в `argocd-cm`). Webhooks (рекомендуется): Git-провайдер (GitHub/GitLab/Bitbucket) шлёт webhook при push на `https://argocd.example.com/api/webhook`, что ускоряет реакцию до секунд. Секрет webhook хранится в `argocd-secret` (например `webhook.github.secret`).",
+              "text": "Два режима. Polling (по умолчанию): `Repo Server` опрашивает репозиторий каждые ~3 минуты. Webhooks (рекомендуется): Git-провайдер шлёт запрос на `/api/webhook` при push, ускоряя реакцию до секунд; секрет лежит в `argocd-secret`.",
               "correct": true,
               "sections": {
                 "explanation": "Polling — это периодический pull, гарантирующий сходимость даже без webhook, но с задержкой до интервала; webhook добавляет push-сигнал «есть изменения», после которого `ArgoCD` немедленно делает refresh и сравнение.",
@@ -1307,7 +1307,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`ArgoCD Notifications` — компонент для отправки уведомлений о событиях приложений. В `argocd-notifications-cm` ConfigMap описывают `trigger.*` (условие, например `app.status.operationState.phase in ['Succeeded']`), `template.*` (текст сообщения с `{{.app.metadata.name}}` и т.п.) и `service.*` (канал, например `service.slack` с токеном). На `Application` вешают аннотации-подписки вида `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel`. Каналы: Slack, Teams, Email, OpsGenie, PagerDuty, GitHub, Telegram, Webhook.",
+              "text": "`ArgoCD Notifications` шлёт уведомления о событиях приложений. В `argocd-notifications-cm` описывают `trigger` (условие), `template` (текст) и `service` (канал), а на `Application` вешают аннотацию-подписку. Каналы: Slack, Teams, Email, PagerDuty.",
               "correct": true,
               "sections": {
                 "explanation": "Связка триггер→шаблон→сервис разделяет «когда слать» (условие на статус), «что слать» (шаблон) и «куда слать» (канал), а аннотация-подписка на `Application` подключает конкретное приложение к конкретному каналу.",
@@ -1331,7 +1331,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`ignoreDifferences` — список полей ресурсов, расхождения в которых `ArgoCD` игнорирует при сравнении desired и live state, чтобы приложение не висело вечно `OutOfSync`. Типичные случаи: `HPA` меняет `spec.replicas`, мутирующий webhook добавляет поля, `cert-manager` заполняет `caBundle`. Поддерживаются два формата указания путей: `jsonPointers` (RFC 6901) и `jqPathExpressions` (jq-синтаксис); также можно игнорировать по `managedFieldsManagers`.",
+              "text": "`ignoreDifferences` — список полей, расхождения в которых `ArgoCD` игнорирует, чтобы приложение не висело `OutOfSync`. Типично для полей, которые меняет `HPA` или мутирующий webhook. Пути задают через `jsonPointers` или `jqPathExpressions`.",
               "correct": true,
               "sections": {
                 "explanation": "Без `ignoreDifferences` поля, изменяемые контроллерами кластера (а не человеком), создавали бы вечный дрейф; механизм говорит `ArgoCD` «эти поля управляются извне, не считай их расхождением».",
@@ -1415,7 +1415,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "`ArgoCD` имеет встроенный богатый веб-UI и модель «push-кнопочный деплой + GitOps», централизованный multi-cluster (один `ArgoCD` управляет всеми), `ApplicationSet`, встроенный `Dex` для SSO и `ArgoCD Notifications`. `Flux CD` — чисто GitOps (pull-only) без своего UI (только сторонние вроде Weave GitOps), federated multi-cluster (`Flux` в каждом кластере), нативный `SOPS`, `HelmRelease` CRD и более простой `flux bootstrap`. `ArgoCD` доминирует в enterprise из-за UI, `Flux` популярен в cloud-native сообществе.",
+              "text": "`ArgoCD` имеет богатый веб-UI, централизованный multi-cluster, `ApplicationSet` и встроенный `Dex` для SSO. `Flux CD` — чисто pull-only без своего UI, federated multi-cluster, нативный `SOPS` и `HelmRelease` CRD; оба CNCF Graduated.",
               "correct": true,
               "sections": {
                 "explanation": "Ключевые различия — наличие UI, модель multi-cluster (централизованная vs federated) и философия (`ArgoCD` допускает ручной деплой через UI, `Flux` строго pull-only), что определяет выбор под нужды команды.",
@@ -1463,7 +1463,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`ArgoCD` поддерживает несколько методов. Встроенный `Dex` — OpenID Connect провайдер, умеющий LDAP, GitHub, GitLab, Google, SAML, OIDC как upstream (настраивается через `dex.config` в `argocd-cm`, например GitHub OAuth с `orgs`/`teams`). Внешний OIDC без `Dex` — прямая интеграция с Keycloak, Okta, Azure AD через `oidc.config` с `issuer`, `clientID`, `requestedScopes` (включая `groups`). После аутентификации группы пользователя маппятся на роли через RBAC-политики.",
+              "text": "`ArgoCD` поддерживает встроенный `Dex` (OIDC поверх LDAP, GitHub, SAML) и прямую интеграцию с внешним OIDC (Keycloak, Okta) без `Dex`. После входа группы пользователя маппятся на роли через RBAC.",
               "correct": true,
               "sections": {
                 "explanation": "`Dex` — это адаптер-посредник, когда провайдер не OIDC-нативный (например GitHub) или нужен LDAP/SAML; при наличии нативного OIDC-провайдера `Dex` пропускают и подключают его напрямую через `oidc.config`.",
@@ -1547,7 +1547,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`syncOptions` — список флагов, управляющих поведением синхронизации в `syncPolicy`. Основные: `CreateNamespace=true` (создать namespace), `PrunePropagationPolicy=foreground|background|orphan`, `PruneLast=true` (удалять ресурсы после создания новых — безопаснее), `Replace=true` (`kubectl replace` вместо `apply`), `ApplyOutOfSyncOnly=true` (применять только `OutOfSync` ресурсы — быстрее), `ServerSideApply=true` (SSA с field ownership, для больших ресурсов и CRD), `FailOnSharedResource=true`, `Validate=false`, `RespectIgnoreDifferences=true`.",
+              "text": "`syncOptions` — флаги поведения синхронизации в `syncPolicy`. Основные: `CreateNamespace` (создать namespace), `PruneLast` (удалять ресурсы последними), `ApplyOutOfSyncOnly`, `ServerSideApply` (SSA для больших ресурсов) и `Replace` вместо `apply`.",
               "correct": true,
               "sections": {
                 "explanation": "Опции тонко настраивают синк под особенности кластера: `ServerSideApply` решает проблему слишком больших аннотаций `last-applied`, `PruneLast` снижает риск простоя при обновлениях, а `ApplyOutOfSyncOnly` ускоряет крупные приложения.",
@@ -1571,7 +1571,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Базовый набор: для `OutOfSync` без видимых причин — `argocd app diff my-app` (показать расхождения), `argocd app manifests my-app` (сгенерированные манифесты), `kubectl get events`; для Sync Failed — `argocd app get my-app`, `argocd app sync --dry-run`, логи `argocd-application-controller`; для вечного `OutOfSync` — `argocd app diff --hard-refresh`; для проблем рендеринга `Helm` — `argocd app manifests --source-position 1` и локальный `helm template`. Логи компонентов смотрят по label `app.kubernetes.io/name=argocd-repo-server` / `argocd-server`.",
+              "text": "Базовый набор для отладки: `argocd app diff` показывает расхождения, `argocd app manifests` даёт сгенерированные манифесты, а `argocd app get` и логи `argocd-application-controller` вскрывают причину сбоя; для вечного `OutOfSync` помогает `--hard-refresh`.",
               "correct": true,
               "sections": {
                 "explanation": "Диагностика идёт по слоям: `diff`/`manifests` показывают, что именно расходится, `--dry-run` проверяет применимость без изменений, а логи `repo-server` ловят ошибки рендеринга и `application-controller` — ошибки reconcile.",
@@ -1655,7 +1655,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "`ArgoCD` 2.6+ поддерживает multi-source `Application` — одно приложение может ссылаться на несколько источников через `spec.sources` (вместо одного `spec.source`). Типичный сценарий: `Helm`-чарт из одного репозитория (или registry) + values-файлы из другого. Один source помечается `ref: values` как алиас, и другой source ссылается на его файлы через `$values/...`. Это позволяет версионировать чарт и конфигурацию независимо.",
+              "text": "`ArgoCD` 2.6+ поддерживает multi-source `Application`: одно приложение ссылается на несколько источников через `spec.sources`. Типично — `Helm`-чарт из одного репозитория и values-файлы из другого, связанные через `ref: values` и `$values`.",
               "correct": true,
               "sections": {
                 "explanation": "Multi-source разрывает жёсткую связку «чарт и его values в одном месте»: чарт можно тянуть из публичного registry, а окружение-специфичные values держать в своём приватном config-repo, обновляя их по отдельности.",
@@ -1703,7 +1703,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`Resource Exclusions` — глобальная настройка в `argocd-cm` (`resource.exclusions`), исключающая определённые виды ресурсов из управления `ArgoCD` по `apiGroups`/`kinds`/`clusters`. Зеркальная настройка `resource.inclusions` — явный whitelist, при котором всё остальное игнорируется. Типичный пример — исключение `Event` ресурсов и `velero.io/Backup`: это снижает нагрузку на `ArgoCD` и `Redis`, так как контроллер перестаёт отслеживать высокочастотные или чужие объекты.",
+              "text": "`resource.exclusions` в `argocd-cm` исключает виды ресурсов из управления `ArgoCD` по `apiGroups` и `kinds`; зеркальная `resource.inclusions` — явный whitelist. Типично исключают `Event` и высокочастотные объекты, снижая нагрузку на `Redis`.",
               "correct": true,
               "sections": {
                 "explanation": "Exclusions/inclusions работают на уровне видов ресурсов глобально, а не отдельных полей: они говорят `ArgoCD`, какие типы вообще не watch-ить, что особенно полезно для шумных `Event` или ресурсов, управляемых другими операторами.",
@@ -1787,7 +1787,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Для большого числа `Application`: шардирование `Application Controller` (флаги `--shard N --shards M`, а `ArgoCD` 2.9+ умеет динамическое шардирование), настройки производительности в `argocd-cm` (`timeout.reconciliation` — частота опроса `Git`, `app.sync.concurrency` — параллельные синки, `resource.comparisons.cached.duration`), и `Redis` кластер для HA (`argocd-redis-ha` или внешний Sentinel/Cluster). `API Server` и `Repo Server` — stateless и легко масштабируются горизонтально репликами.",
+              "text": "Для большого числа `Application`: шардирование `Application Controller` (`--shard`/`--shards`, с 2.9 динамическое), тюнинг `timeout.reconciliation` и `app.sync.concurrency`, `Redis` в HA-режиме. `API Server` и `Repo Server` stateless и масштабируются репликами.",
               "correct": true,
               "sections": {
                 "explanation": "Узкое место под нагрузкой — `Application Controller` (он stateful по reconcile), поэтому его шардируют по приложениям; stateless `API`/`Repo Server` масштабируют репликами, а `Redis` HA убирает единую точку отказа кеша.",
@@ -1811,7 +1811,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`Argo Rollouts` — Kubernetes-контроллер для продвинутых стратегий деплоя (`Canary`, `Blue/Green`) с анализом метрик и автоматическим rollback. Интеграция с `ArgoCD`: `ArgoCD` деплоит `Rollout` CRD вместо стандартного `Deployment`, умеет отображать его health status и управлять операциями `Rollout` через API. Вместе они дают полный GitOps pipeline с progressive delivery: декларативный canary с `setWeight`, `pause` и `analysis` по метрикам.",
+              "text": "`Argo Rollouts` — контроллер для стратегий `Canary` и `Blue/Green` с анализом метрик и авто-rollback. `ArgoCD` деплоит `Rollout` CRD вместо `Deployment`, показывает его health и управляет операциями — вместе дают progressive delivery.",
               "correct": true,
               "sections": {
                 "explanation": "`ArgoCD` отвечает за GitOps-доставку desired state, а `Argo Rollouts` — за то, КАК выкатывается новая версия (постепенно, с проверкой метрик), заменяя одномоментный rolling update `Deployment` на управляемый canary/blue-green.",
@@ -1895,7 +1895,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Критичные данные `ArgoCD` (`Application`, `ApplicationSet`, `AppProject`, репозитории, cluster-credentials) хранятся в Kubernetes secrets/configmaps. Бэкап делают через `argocd admin export > argocd-backup.yaml`, восстановление — `argocd admin import - < argocd-backup.yaml`. Бэкап содержит `Application`/`ApplicationSet`/`AppProject` и конфигурацию репозиториев (без паролей — secrets с credentials бэкапят отдельно). Для HA используют HA-чарт (`redis-ha.enabled=true`, несколько реплик server/repoServer/applicationSet). Автоматический бэкап — CronJob с `argocd admin export` в S3/GCS.",
+              "text": "Критичные данные (`Application`, `AppProject`, репозитории) лежат в Kubernetes secrets/configmaps. Бэкап делают `argocd admin export`, восстановление — `argocd admin import`. Для HA включают redis-ha и несколько реплик; автоматический бэкап — CronJob с выгрузкой в S3.",
               "correct": true,
               "sections": {
                 "explanation": "DR строится на двух уровнях: экспорт декларативных объектов `ArgoCD` (можно восстановить инсталляцию) и отдельный бэкап секретов с кластерными credentials; HA-установка снижает вероятность сбоя, но не заменяет бэкап.",
@@ -1943,7 +1943,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Рекомендуемый подход — bootstrapping: `ArgoCD` управляет сам собой через `Application`. Один `Application` деплоит сам `ArgoCD` из Helm-чарта (`argo-cd` из `argoproj.github.io/argo-helm`) с `valueFiles`, `destination` в namespace `argocd` и `automated.selfHeal: true`. После этого любое изменение конфигурации `ArgoCD` (добавление репозитория, правка RBAC) делается через Git PR → review → merge → auto-sync, как и для обычных приложений.",
+              "text": "Рекомендуется bootstrapping: `ArgoCD` управляет сам собой через `Application`, деплоящий его Helm-чарт с `selfHeal: true`. Далее любое изменение конфигурации делается через Git PR, review и merge, как для обычных приложений.",
               "correct": true,
               "sections": {
                 "explanation": "Self-management замыкает GitOps на сам инструмент: конфигурация `ArgoCD` перестаёт быть «ручной» императивной настройкой и проходит тот же путь через `Git`, что и приложения, обеспечивая аудит и воспроизводимость.",
@@ -2027,7 +2027,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Основные практики: сетевая изоляция (API Server только за VPN/bastion, внутренние компоненты `Redis`/`Repo Server` недоступны снаружи, `NetworkPolicy` между компонентами); минимальные привилегии (`AppProject` для ограничения namespace/кластеров, `role:readonly` для большинства, отдельные `ServiceAccount` в целевых кластерах с минимальным RBAC); защита секретов (ротация admin-пароля через `argocd account update-password`); аудит (логирование операций, интеграция с SIEM). TLS обязателен для API Server — не отключать certificate verification.",
+              "text": "Основные практики: сетевая изоляция (`API Server` за VPN, `NetworkPolicy` между компонентами), минимальные привилегии (`AppProject`, `role:readonly`), защита секретов и ротация admin-пароля, аудит операций. `TLS` для `API Server` обязателен — не отключать проверку сертификата.",
               "correct": true,
               "sections": {
                 "explanation": "Защита многослойна: сеть ограничивает, кто вообще достучится до API; RBAC и `AppProject` — что может делать аутентифицированный; TLS и ротация паролей закрывают перехват и компрометацию учёток; аудит даёт расследование инцидентов.",
@@ -2051,7 +2051,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Типичный production workflow: (1) разработчик делает PR → review → merge в `main`, CI собирает образ и пушит в registry с тегом (git SHA); (2) автоматически или вручную обновляется config-repo (`kustomize edit set image`) → PR в config-repo → review инфра-команды → merge; (3) `ArgoCD` по webhook видит изменение → `OutOfSync`; (4) синк: `PreSync` хуки (миграции БД) → sync wave 0 (`ConfigMap`/`Secret`) → wave 1 (`Deployment`/`Rollouts`) → `PostSync` хуки (smoke-тесты); (5) мониторинг: canary 10% → анализ метрик → 100%, Slack-уведомление; (6) при проблемах — авто-rollback по метрикам или `git revert` + merge.",
+              "text": "Типичный поток: PR → merge → CI собирает образ и обновляет config-репозиторий → `ArgoCD` по webhook синхронизирует кластер по фазам (`PreSync`-миграции, sync waves) → мониторинг canary по метрикам → при сбое `git revert`.",
               "correct": true,
               "sections": {
                 "explanation": "Workflow связывает воедино все механизмы: разделение CI/CD, ревью PR как human gate, хуки и волны для порядка, progressive delivery через Rollouts и откат через `git revert` — всё через `Git` как источник истины.",
@@ -2135,7 +2135,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Секреты нельзя класть в `Git` открыто. `Sealed Secrets` (Bitnami): `kubeseal` шифрует секрет открытым ключом кластера в `SealedSecret` CRD, который безопасно коммитится в `Git`; `ArgoCD` применяет его как обычный ресурс, а контроллер внутри кластера расшифровывает и создаёт обычный `Secret`. Ограничение — при ротации ключей кластера нужно перешифровать все секреты. `External Secrets Operator` (ESO): в `Git` хранится только `ExternalSecret` CR (без значений), ESO читает реальные значения из Vault/AWS/GCP и создаёт Kubernetes `Secret`. Sealed Secrets — низкая сложность и ручная ротация; ESO — средняя сложность и автоматическая ротация.",
+              "text": "`Sealed Secrets`: `kubeseal` шифрует секрет открытым ключом кластера в `SealedSecret`, который безопасно коммитится в `Git`, а контроллер расшифровывает его в обычный `Secret`. `External Secrets Operator` вместо этого тянет значения из Vault/AWS в `Secret` автоматически.",
               "correct": true,
               "sections": {
                 "explanation": "Оба решают «секрет в `Git` небезопасен» по-разному: `Sealed Secrets` хранит зашифрованное значение в `Git` (self-contained), ESO хранит лишь ссылку, делегируя сами значения внешнему хранилищу с авто-ротацией.",
@@ -2183,7 +2183,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`ArgoCD Image Updater` автоматически обновляет теги образов в GitOps-репозитории при появлении новых образов в registry. Ставится как отдельный компонент (`install.yaml`), настраивается аннотациями на `Application`: `image-list`, `<image>.update-strategy`, `<image>.allow-tags` (например `regexp:^v[0-9]+\\.[0-9]+\\.[0-9]+$`), `write-back-method`, `git-branch`. Стратегии: `semver` (последняя semver, рекомендуется), `latest` (самый свежий тег, не для prod), `name` (алфавитно последний), `digest` (по digest, для тега `latest`). Write-back: `git` (коммит в репо, GitOps) или `argocd` (через API, менее GitOps).",
+              "text": "`ArgoCD Image Updater` обновляет теги образов при появлении новых в registry. Настраивается аннотациями на `Application` (`image-list`, `update-strategy`, `allow-tags`, `write-back-method`). Стратегии: `semver` (рекомендуется), `latest`, `name`, `digest`; write-back через `git` или `argocd`.",
               "correct": true,
               "sections": {
                 "explanation": "Updater сводит воедино registry-мониторинг и обновление манифеста: `allow-tags` фильтрует кандидатов, `update-strategy` выбирает из них нужный, а `write-back-method` определяет, попадёт ли изменение в `Git` (true GitOps) или только в `Application`.",
@@ -2267,7 +2267,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Hub-spoke — архитектура, где один `ArgoCD` (hub) управляет несколькими целевыми кластерами (spoke): prod-eu, prod-us, staging, dev. Внешние кластеры регистрируют `argocd cluster add` (с `kubeconfig`), создаётся cluster-`Secret` с label `argocd.argoproj.io/secret-type: cluster`, содержащий `server`, `bearerToken`, `caData`. Для масштабного multi-cluster используют `ApplicationSet` с `Cluster`-генератором и selector по labels (например `environment: production`), а `destination.server: {{server}}` подставляет URL кластера. Один `ArgoCD` может управлять 100+ кластерами; для разграничения доступа применяют `AppProject`.",
+              "text": "Hub-spoke: один `ArgoCD` (hub) управляет несколькими целевыми кластерами (spoke). Внешние регистрируют `argocd cluster add`, создавая cluster-`Secret`. Для масштаба используют `ApplicationSet` с `Cluster`-генератором и selector по labels; один `ArgoCD` тянет 100+ кластеров.",
               "correct": true,
               "sections": {
                 "explanation": "В hub-spoke вся управляющая логика и credentials концентрируются в одном кластере, а `Cluster`-генератор `ApplicationSet` автоматически разворачивает приложения на все spoke-кластеры, подходящие под selector, без ручного дублирования.",
@@ -2291,7 +2291,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`Kustomize` — нативный инструмент кастомизации манифестов без шаблонизации, `ArgoCD` поддерживает его из коробки (автоопределение по `kustomization.yaml`). Типичная структура: `base/` с общими ресурсами и `overlays/<env>/` с патчами для каждой среды. В `Application` указывают `source.path: k8s/overlays/prod`, а в `source.kustomize` можно задать `images` override тегов и `commonLabels`. Через CLI: `argocd app set my-app --kustomize-image myapp=registry/myapp:v1.3.0`. Best practices: image tags переопределять через `kustomize.images` (не hardcode в base), не использовать deprecated `vars` — применять `replacements`.",
+              "text": "`Kustomize` — нативная кастомизация манифестов без шаблонов; `ArgoCD` поддерживает её автоопределением по `kustomization.yaml`. Типична структура `base/` + `overlays/<env>/`; в `Application` указывают `source.path` на overlay и переопределяют теги через `kustomize.images`.",
               "correct": true,
               "sections": {
                 "explanation": "`Kustomize` накладывает overlay-патчи на общий base, а `ArgoCD` рендерит итог через `kustomize build`; override образа делают на уровне `Application`/overlay, чтобы один base обслуживал все среды без шаблонов.",
@@ -2375,7 +2375,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "RBAC `ArgoCD` строится на двух уровнях: `AppProject` (изоляция) и RBAC-политики (разрешения). `AppProject` ограничивает `sourceRepos`, `destinations` (кластеры/namespace), `clusterResourceBlacklist`/`namespaceResourceWhitelist` и содержит project-роли с policy-строками и `groups`. Глобальные политики в `argocd-rbac-cm` (`policy.default: role:readonly`, `policy.csv`) задают роли формата `p, role:X, applications, <action>, */*, allow` и привязку групп `g, <group>, role:X`. Встроенные роли: `role:admin` (полный доступ) и `role:readonly` (только чтение).",
+              "text": "RBAC строится на двух уровнях: `AppProject` изолирует `sourceRepos`, `destinations` и виды ресурсов, а глобальные политики в `argocd-rbac-cm` (`policy.csv`, `policy.default`) задают роли и привязку групп. Встроенные роли: `role:admin` и `role:readonly`.",
               "correct": true,
               "sections": {
                 "explanation": "`AppProject` отвечает на вопрос «что вообще разрешено приложениям проекта» (репозитории, кластеры, виды ресурсов), а `policy.csv` — «кто и какие действия может выполнять над приложениями»; вместе они дают изоляцию и контроль доступа для multi-tenancy.",
@@ -2423,7 +2423,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`ArgoCD Notifications` ставится как компонент (`install.yaml`) и конфигурируется в `argocd-notifications-cm`: `service.<channel>` (канал, например `service.slack` с `token: $slack-token`), `trigger.<name>` (условие, например `app.status.health.status == 'Degraded'` или `phase in ['Succeeded']`) и `template.<name>` (сообщение с `{{.app.metadata.name}}`, `{{.app.status.sync.revision}}`, в т.ч. Slack-attachments). На `Application` вешают аннотации подписки `notifications.argoproj.io/subscribe.<trigger>.<service>: <channel>`. Каналы: Slack, Teams, Email, PagerDuty, OpsGenie, Telegram, GitHub, Webhook.",
+              "text": "`ArgoCD Notifications` ставится отдельным компонентом и конфигурируется в `argocd-notifications-cm`: `service` (канал), `trigger` (условие) и `template` (текст). На `Application` вешают аннотацию-подписку. Каналы: Slack, Teams, Email, PagerDuty, Telegram.",
               "correct": true,
               "sections": {
                 "explanation": "Конфигурация делится на три части: сервис (куда), триггер (когда — условие на статус приложения) и шаблон (что), а подписка-аннотация связывает конкретное приложение, триггер и канал воедино.",
@@ -2507,7 +2507,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`ArgoCD`: богатый веб-UI, монолитная установка (один Deployment), Application-centric модель, multi-tenancy через `AppProject` + RBAC, Image Updater как отдельный компонент, Notifications отдельным контроллером, drift detection виден в UI, CRD `Application`/`ApplicationSet`, bootstrap через Helm/YAML. `Flux CD`: нет встроенного UI (только CLI), модульная установка (отдельные контроллеры), Source-centric модель, multi-tenancy через `Kustomization` + RBAC, image-reflector встроен, notification-controller встроен, drift в логах/Prometheus, CRD `GitRepository`/`Kustomization`/`HelmRelease`, bootstrap через `flux bootstrap`. Оба — CNCF Graduated. На практике `ArgoCD` доминирует в enterprise из-за UI, `Flux` популярен в cloud-native стартапах.",
+              "text": "`ArgoCD`: богатый веб-UI, монолитная установка, Application-centric, multi-tenancy через `AppProject`. `Flux CD`: без UI, модульные контроллеры, Source-centric, CRD `GitRepository`/`Kustomization`/`HelmRelease`, bootstrap через `flux bootstrap`. Оба CNCF Graduated; `ArgoCD` силён в enterprise.",
               "correct": true,
               "sections": {
                 "explanation": "Различия системные: `ArgoCD` Application-centric с монолитной установкой и UI, `Flux` Source-centric и модульный (отдельные контроллеры для source/kustomize/helm/image/notification), что отражает разные философии — единый продукт с dashboard vs набор GitOps-примитивов.",
