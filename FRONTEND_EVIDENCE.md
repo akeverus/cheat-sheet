@@ -494,3 +494,25 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Light-тема не проверялась отдельно:** overflow — layout-driven (ширины боксов), тема меняет только цвета → light-скан near-redundant для h-overflow. Полная responsive-матрица (6 брейкпойнтов 375/768/1280/1440/1728/1920/2560 × 2 темы, device-emulation <485px) остаётся для консолидированной live-QA в конце волны — gate `responsive` НЕ флипается этим тиком.
 
 **Wedge-статус (сверено live):** `:8080` жив (java PID 64174, LISTEN); gradle project-локи `.gradle/8.9/{fileHashes,executionHistory}.lock` держит PID **40113** (gradle-launcher, родитель app-JVM 64174). Прежний PID 64168 ушёл — держатель lock сместился на 40113, но wedge сохраняется: `./gradlew test` по-прежнему заблокирован. Перекомпиляционный путь к FINALIZED остаётся gated на bootRun-stopped тик.
+
+---
+
+## EV-RESP-193 — Device-emulation responsive sweep: истинные 320/375/768 (R0.193, 2026-07-16)
+
+**Цель:** закрыть давно откладываемый (PLAN §статус: «истинный 375/320 — на device-emulation тик при необходимости») пробел в `responsive`-охвате. Окно ОС не ужимается ниже ~485px → R0.189/R0.192 били по ~485–500 как прокси мобильного. Здесь — CDP device-metrics override (chrome-devtools `emulate viewport`), обходящий OS-минимум, для истинных мобильных/планшетных брейкпойнтов. Read-only, без правок кода → gradle не нужен.
+
+**Метод:** `emulate` с `viewport=<W>x<H>x<dpr>,mobile,touch` (CDP device override) + overflow-скан `body *`. Улучшённый классификатор: элемент, торчащий за `clientWidth`, помечается «unscrolled» ТОЛЬКО если ни один из 5 предков не является реальным `overflow-x:auto/scroll`-контейнером (`scrollWidth>clientWidth`) — отсекает ложные срабатывания на широком коде внутри скролл-обёртки.
+
+**Результаты (все — page `hOverflow=false`, `unscrolledOverflow=0`):**
+| BP | / (focus) | /stats | /settings |
+|---|---|---|---|
+| **320** dark | ✅ (nav не переполнен; широкий CODE `scrolled:true`) | — | — |
+| **375** dark | ✅ | ✅ | ✅ |
+| **375** light-media | ✅ (layout theme-independent) | — | — |
+| **768** dark (tablet) | ✅ | ✅ (chart.js не переполняет) | ✅ |
+
+**Код-скролл-контейнмент (важно для мобильной читаемости, ревью-пункт):** на focus @375/320 широкий `CODE` (w≈603) сидит в `PRE.question-code` с `overflow-x:auto` (clientWidth 325, scrollWidth 635) → код НЕ клипается, читается горизонтальным скроллом; страница при этом не переполняется. Цепочка предков подтверждена (`code-copy-wrap`/`question-code-details`/`focus-training` все `overflowX:visible`, w=327 в пределах вьюпорта).
+
+**Тема-нюанс:** CDP `colorScheme:light` меняет только `prefers-color-scheme`-медиа; палитра сайта осталась тёмной (`bg oklch(0.19 …)`) — тема управляется `data-theme`/localStorage-тумблером, а не медиа-запросом. Для overflow неважно (геометрия боксов тождественна свет/тьме → layout theme-independent подтверждён). Палитра-level light-QA поверхностей — в R0.151–161 (обе темы).
+
+**Итог охвата `responsive` (на текущем live-build):** 320✅ 375✅ 485/500✅(R0.189/192) 768✅ 1280✅(мн. тиков) 1440/1728✅(R0.151-161 per-surface) 1920✅(R0.192) 2560✅(R0.151-161). H-overflow-матрица по основным поверхностям практически полна. Gate `responsive` **НЕ флипнут** — финальная консолидированная live-QA (6 брейкпойнтов × 2 темы) должна пройти против ПЕРЕкомпилированного приложения (после bootRun-stop), поэтому текущий проход — провизорный (layout-часть, стабильная между версиями app.js: изменения app.js касаются пост-ответного флоу, не вёрстки). Вьюпорт возвращён 1280×900 non-mobile, colorScheme auto.
