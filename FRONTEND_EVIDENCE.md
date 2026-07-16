@@ -754,3 +754,38 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Cleanup:** prod-профиль-сервер остановлен (`kill :8080`, порт свободен).
 
 **Зелёные гейты после R0.205:** cleanBuild, fullTests, consoleNetworkClean, accessibility, **performanceProdLike** (5/12).
+
+---
+
+## EV-LIVEQA-206 — themesDesigns + responsive + coreUxFlows gates (R0.206, 2026-07-16, chrome-devtools, qa-профиль jar)
+
+**3 ГЕЙТА ЗЕЛЁНЫЕ.** Консолидированная live-QA на **рекомпилированном jar-билде** (`SPRING_PROFILES_ACTIVE=qa java -jar quiz-app-0.0.1-SNAPSHOT.jar` — тот же clean-build артефакт R0.199, НЕ devtools-bootRun, НЕ cp-sync). qa-профиль подтверждён (Swagger 302, фикстуры due=2/learned=1, clock 2026-07-15). Сервер остановлен после QA.
+
+### GATE `themesDesigns` — ЗЕЛЁНЫЙ
+- `data-design=instrument` — **единственный** дизайн; `#design-toggle` **отсутствует** (FE-CMP-1 «полная замена» держится на jar-билде).
+- `#theme-toggle` функционален: реальный клик dark→light переключил:
+  - dark: `bodyBg oklch(0.19 0.012 264)` — холодный dark paper
+  - light: `bodyBg oklch(0.985 0.003 262)`, text `oklch(0.245 0.015 264)` — холодный light paper
+  - Обе палитры = корректная instrument-спецификация; `localStorage.theme` персистит.
+
+### GATE `responsive` — ЗЕЛЁНЫЙ
+Overflow-скан (`body *`, right>vw+1 || left<-1, исключая fixed / width0 / scroll-контейнеры) на **320 / 375 / 1280 / 2560** × 3 core-поверхности:
+
+| Ширина | / focus | /stats | /settings |
+|---|---|---|---|
+| 320 | hOverflow=false, offenders=[] | — | — |
+| 375 | ✅ | ✅ (canvas 261px укладывается) | ✅ (3 вкладки, design-ось absent) |
+| 1280 | ✅ | — | — |
+| 2560 | ✅ (.ed-page капнут 1280, без edge-void — осознанно R0.183) | — | — |
+
+Дополняет device-emul 768/1440/1920 (EV-RESP-193). Все замеры 0 h-overflow, 0 offenders.
+
+### GATE `coreUxFlows` — ЗЕЛЁНЫЙ
+- **Answer (TRAINING):** выбор опции клавишей «1» → radio checked → submit Enter → вердикт **«Верно»** + lead «ACID — набор из четырёх свойств…» + `details.result-detail-disclosure` **open=false** (прогрессивное раскрытие, UX-13 DEC-006=A на jar) + «Следующий вопрос».
+- **Session start (MARATHON):** POST /start → 302; на `/` активная сессия — rail «1/3 · 1 день · 1 из 3 к повтору · **Пауза** · Завершить сессию» (wide-aside PROC-07; «Пауза» видна т.к. сессия активна).
+- **Finish→summary:** POST /finish → 302 → /session-summary: h1 «Итоги сессии», headline «Без ошибок — отличный результат» (ветка no-mistakes: 0 отвеченных → 0 ошибок; table «Результаты по темам» условно не рендерится = корректно, роли-с-данными покрыты EV-A11Y-204), 4 типизированных nextAction («Ждут повторения: 1» / «Продолжить тренировку» / «Новая сессия» / «Аналитика»).
+- **Pause/resume:** покрыт EV-FLOW-01B-202.
+- **Консоль:** 0 сообщений за весь флоу (answer + start + finish + summary).
+
+**Зелёные гейты после R0.206 (8/12):** cleanBuild, fullTests, consoleNetworkClean, accessibility, performanceProdLike, **themesDesigns**, **responsive**, **coreUxFlows**.
+**Осталось (4, все bootRun-DOWN/анализ):** deadCodeClean, productionSmoke, cleanCheckoutReproducible, designDocsMatchProduction.
