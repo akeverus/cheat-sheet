@@ -678,6 +678,18 @@ Priority =
 - Manual review:
 ```
 
+### 2026-07-17 — algorithms-interview — Q1..Q16 (FINAL)
+
+- Commit: (this commit)
+- Blocks reviewed: 16/16 (minimal-pair «spot-the-flawed-clause» дизайн)
+- Correct answers fixed: 0 correct-флагов/label/order не менялись; правки только текста (correct: снят hedge «бесполезно» Q9, снят nuance-квалификатор-маркер Q14, тримы длины)
+- Distractors rewritten: все 48 дистракторов прошли нейтрализацию форм-теллов в 2 паса — (пас-3) убраны hedge/дисмиссив/исключения, мета-дистракторы (Q8/10/11/12/13) → полные списки с одной чистой ошибкой; (пас-4) де-абсолют (всегда/любой/вся/простой → спокойные тонкие ошибки), completeness-паритет Q1/Q14/Q15. §1 near-miss закрыты: Q6 (валидный ручной LRU → HashMap со случайным вытеснением), Q3 (исключение brute-force → тонкий use-case TP/SW)
+- Sections rewritten: sections не трогались (правился только option.text)
+- Theory synchronized: мета-вопросы структуры сверены с реальным cheatsheets/interview/algorithms/; Java/алго-факты verified (treeify Java 8/JEP 180, Dual-Pivot/TimSort, Interpolation worst O(n), LinkedHashMap LRU, Dijkstra≥0, greedy-choice-property)
+- Freshness updated: docs/mcq-quality/fact-freshness/algorithms-interview.json (version-sensitive, checked 2026-07-16, 5 источников)
+- Validators: schema OK; skel HARD 0/16; OPTION_LENGTH 1.31; CORRECT_LONGEST 0.188; STYLE 0.292; POS_SEQ 2; DETAIL 0.0; ABSOLUTE_MARKER_GAP −0.062; DUPLICATE_NGRAMS 291 = ACCEPTED (intrinsic minimal-pair, как caricature-ACCEPT)
+- Manual review: 3 независимых слепых раунда (Workflow-панели). L1 корректность = 16/16 == key во всех раундах, все factual_error/other_defensible=null → §1 железный. L3a/L3b form-guess 16/16, но knowledge-contaminated (фичи = факт-суждения) + L3a-conf ~0.4-0.6; чисто-форменный остаток = intrinsic «pick-the-consistent-option» (тот же residual, что DUP=291) + структурный odd-one-out Q2/Q9 + знание правила/репо Q7/Q8 → ПРИНЯТО, дальнейшие раунды остановлены по правилу оптимизации. Детали — docs/mcq-quality/reviews/algorithms-interview.json (notes_form_residual).
+
 ### 2026-07-11 — java-concurrency-interview — Q1..Q9
 
 - Commit: (this tick)
