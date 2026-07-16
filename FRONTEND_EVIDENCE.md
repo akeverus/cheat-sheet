@@ -407,3 +407,24 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Верификация тестов:** ассерты `TemplateFragmentContractTest` (`contains`/`doesNotContain` по строкам focus-training.html) верифицированы инспекцией — весь контент aside сохранён при переносе, запрещённых строк не добавлено. Live-bootRun успешно рендерит `/` → Thymeleaf валиден, `PublicEndpointsSmokeTest` зелёный. Gradle-прогон контракт-теста ОТЛОЖЕН на bootRun-stopped тик (wedge).
 
 **Отложено (мелкий follow-up, НЕ блокер):** result.html `.focus-aside` «разбор глубже» (п.4 acceptance) — самостоятельный срез; хоткей-легенда пока в главной колонке (рядом с submit — логично, главная колонка доминирует).
+
+## EV-UX-016 — Analytics next-action блок: VERIFIED-CLEAN (R0.188, 2026-07-16)
+
+**Задача:** UX-16 (P2) — «аналитика отвечает *что делать*, не только *что произошло*». Помечено OPEN с заметкой «частично есть (initNextActions)». Аудит показал: реализовано ПОЛНОСТЬЮ Instrument-портом + существующими stats-атрибутами → gradle/бэкенд не потребовались.
+
+**Что уже есть (stats.html:17, `.stats-next-actions` «Что делать дальше»):** grid из 3 actionable-CTA на существующих маршрутах:
+- **«Повторить сегодня»** → `@{/}`, счётчик `stats.due`, детализация через `@plural.pick` (вопрос/вопроса/вопросов к повтору), `is-recommended` при `due > 0`.
+- **«Разобрать ошибки»** → `@{/(onlyWrong=true, ordered=true)}`, счётчик `stats.wrong`, `is-recommended` при `due == 0 and wrong > 0`.
+- **«Тренировать слабые темы»** → `@{/(weakTopics=true, ordered=true)}`, `topicStats.size`, `is-recommended` при `due == 0 and wrong == 0 and topics`. JS (`stats.js` `initNextActions`, строка 44) заполняет `data-weak-topic-summary` → «Слабее всего: {name} · {acc}%» + `aria-label` действия.
+
+Приоритетная `is-recommended`-подсветка = teal ring+wash (Instrument-трактовка выбранного, НЕ залитый бейдж). Семантика: `<section aria-labelledby>` + `<h2>` + подзаголовок.
+
+**Live-QA (chrome-devtools, /stats, dev-БД: due=9800/wrong=26/319 тем, обе темы):**
+- 3 карточки рендерятся; computed-инспекция подтвердила: «Повторить сегодня» `is-recommended=true` (due>0), «Разобрать ошибки»/«Тренировать» — нет (корректный приоритет).
+- JS-обогащение: `data-weak-topic-summary` = «Слабее всего: Arrays strings · 19%»; `aria-label` = «Тренировать слабые темы. Слабее всего: Arrays strings, точность 19%.».
+- href-ы: `/`, `/?onlyWrong=true&ordered=true`, `/?weakTopics=true&ordered=true` — верны.
+- Обе темы полированы (teal-ring на рекомендованной, корректный контраст): `.qa-artifacts/ux16-stats-next-actions-{dark,light}.png`.
+- **0 функциональных console-ошибок.** Единственное сообщение — dev-only CSP-блок sourcemap chart.js (`chart.umd.min.js.map` с cdn.jsdelivr.net, `connect-src 'self'`); сам chart.js загрузился, sourcemap в рантайме не нужен — не связано с UX-16.
+- `stats.js` v=15: build == source (не завязан на app.js/UX-13-entanglement).
+
+**Вывод:** дефект «аналитика только показывает числа» не воспроизводится — Instrument-порт уже добавил actionable next-step-блок, аналогичный `session-summary` nextActions. Как UX-01/02/03 — замечание было против мокапа/старого дизайна. UX-16 → CLOSED. `StatsApiService` доработки не потребовал.
