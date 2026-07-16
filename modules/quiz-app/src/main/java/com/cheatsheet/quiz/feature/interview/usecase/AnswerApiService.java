@@ -5,8 +5,11 @@ import com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse;
 import com.cheatsheet.quiz.feature.interview.dto.response.answer.OptionExplanationDto;
 import com.cheatsheet.quiz.feature.interview.dto.response.answer.RelatedQuestionDto;
 import com.cheatsheet.quiz.feature.interview.dto.response.answer.SessionInfoDto;
+import com.cheatsheet.quiz.domain.AnswerOption;
+import com.cheatsheet.quiz.domain.AnswerResult;
 import com.cheatsheet.quiz.domain.RelatedQuestion;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.infrastructure.render.AnswerHtmlSplitter;
 import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -35,17 +38,38 @@ public class AnswerApiService {
         List<RelatedQuestionDto> relatedQuestions = toRelatedQuestions(command.questionId(), ctx);
         SessionInfoDto sessionInfo = toSessionInfo(ctx);
 
+        String answerHtml = facade.renderMarkdown(ctx.result().question().answerMarkdown());
+        AnswerHtmlSplitter.Split split = AnswerHtmlSplitter.split(answerHtml);
+
         return new AnswerResponse(
                 ctx.result().correctAnswer(),
                 ctx.result().correct().id(),
                 ctx.result().selected().id(),
-                facade.renderMarkdown(ctx.result().question().answerMarkdown()),
+                correctOptionLetter(ctx.result()),
+                answerHtml,
+                split.leadHtml(),
+                split.restHtml(),
                 optionExplanations,
                 ctx.result().answerDisplayMode().name(),
                 ctx.result().updatedState().repetitions(),
                 relatedQuestions,
                 sessionInfo
         );
+    }
+
+    /**
+     * Буква правильного варианта (A/B/C/…) = 1-based позиция в списке вариантов,
+     * т.е. тот же порядок, в котором фронт нумерует опции CSS-счётчиком. Пустая
+     * строка — если правильный не найден в списке (не должно случаться).
+     */
+    private String correctOptionLetter(AnswerResult result) {
+        List<AnswerOption> options = result.options();
+        for (int i = 0; i < options.size(); i++) {
+            if (options.get(i).id() == result.correct().id()) {
+                return String.valueOf((char) ('A' + i));
+            }
+        }
+        return "";
     }
 
     public ResponseEntity<AnswerResponse> toHttpResponse(AnswerCommand command, HttpSession session) {

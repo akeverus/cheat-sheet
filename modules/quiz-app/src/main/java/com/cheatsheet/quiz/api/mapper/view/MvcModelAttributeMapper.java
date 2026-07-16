@@ -2,8 +2,11 @@ package com.cheatsheet.quiz.api.mapper.view;
 
 import com.cheatsheet.quiz.common.util.ModeUtils;
 import com.cheatsheet.quiz.config.app.AppProperties;
+import com.cheatsheet.quiz.domain.AnswerOption;
+import com.cheatsheet.quiz.domain.AnswerResult;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.SessionSummary;
+import com.cheatsheet.quiz.infrastructure.render.AnswerHtmlSplitter;
 import com.cheatsheet.quiz.feature.interview.service.page.AnswerPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
@@ -136,6 +139,24 @@ public class MvcModelAttributeMapper {
     public void applyAnswerPageState(Model model, AnswerPageService.AnswerPageState state) {
         model.addAttribute("result", state.result());
         model.addAttribute("answerHtml", state.answerHtml());
+        // UX-13: краткий лид (первый абзац разбора) видим под вердиктом, остаток —
+        // под «Подробнее». Деривация та же, что в API-пути (AnswerApiService) —
+        // общий AnswerHtmlSplitter, чтобы JS- и no-JS-разбор совпадали. В проде
+        // result на странице ответа всегда есть; null-guard — на случай контрактных
+        // юнит-тестов маппера с «пустым» state.
+        if (state.result() != null) {
+            AnswerHtmlSplitter.Split answerSplit = AnswerHtmlSplitter.split(state.answerHtml());
+            boolean leadPresent = !answerSplit.leadHtml().isBlank();
+            boolean restPresent = leadPresent && !answerSplit.restHtml().isBlank();
+            boolean anyOptionExplanation = state.result().options().stream()
+                    .anyMatch(o -> o.explanation() != null && !o.explanation().isBlank());
+            model.addAttribute("answerLeadHtml", answerSplit.leadHtml());
+            model.addAttribute("answerRestHtml", answerSplit.restHtml());
+            // «Подробнее» показываем, только если под ним реально что-то есть:
+            // остаток разбора (после лид-абзаца) или пояснения вариантов.
+            model.addAttribute("answerHasDetail", restPresent || anyOptionExplanation);
+            model.addAttribute("correctOptionLetter", correctOptionLetter(state.result()));
+        }
         model.addAttribute("answerDisplayMode", state.answerDisplayMode());
         model.addAttribute("stats", state.stats());
         model.addAttribute("topics", state.topics());
@@ -150,6 +171,21 @@ public class MvcModelAttributeMapper {
         model.addAttribute("relatedQuestions", state.relatedQuestions());
         model.addAttribute("aiEnabled", false);
         model.addAttribute("reviewState", state.reviewState());
+    }
+
+    /**
+     * Буква правильного варианта (A/B/C/…) = 1-based позиция в списке вариантов
+     * (тот же порядок, что нумерует опции CSS-счётчиком). Зеркалит
+     * {@code AnswerApiService.correctOptionLetter} для no-JS SSR-пути.
+     */
+    private String correctOptionLetter(AnswerResult result) {
+        java.util.List<AnswerOption> options = result.options();
+        for (int i = 0; i < options.size(); i++) {
+            if (options.get(i).id() == result.correct().id()) {
+                return String.valueOf((char) ('A' + i));
+            }
+        }
+        return "";
     }
 
     /**

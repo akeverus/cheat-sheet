@@ -1370,13 +1370,9 @@
     const labels = optionsContainer.querySelectorAll('label[data-option-id]');
     optionInputs.forEach(input => { input.disabled = true; });
 
-    const explanationMap = {};
-    if (data.optionExplanations) {
-      data.optionExplanations.forEach(oe => {
-        explanationMap[oe.id] = oe;
-      });
-    }
-
+    // UX-13: опции несут только марку состояния + тег (макет Instrument), без
+    // inline-пояснений — пояснения вариантов переехали в «Подробнее»
+    // (renderFeedbackHtml → buildResultDetail), чтобы не дублировать «почему».
     labels.forEach(label => {
       const optionId = parseInt(label.getAttribute('data-option-id'), 10);
       const optionText = label.querySelector('span')?.textContent?.trim() || '';
@@ -1402,33 +1398,78 @@
         statusLabel.textContent = statusLabelText;
         label.appendChild(statusLabel);
       }
-
-      const optExpl = explanationMap[optionId];
-      if (optExpl && optExpl.explanationHtml) {
-        const explDiv = document.createElement('div');
-        // markdown-content — общие стили прозы: таблицы/код/списки
-        // в пояснении варианта выглядят согласованно. Контент пришёл с сервера
-        // уже отрендеренным из markdown и отсанитайзенным (Jsoup), плюс здесь
-        // повторно прогоняется через allowlist-санитайзер (defense-in-depth).
-        explDiv.className = 'option-explanation markdown-content ' + (optExpl.correct ? 'explanation-correct' : 'explanation-wrong');
-        explDiv.appendChild(sanitizeToFragment(optExpl.explanationHtml));
-        label.appendChild(explDiv);
-        label.classList.remove('option-dimmed');
-        label.classList.add(optExpl.correct ? 'option-correct' : (optionId === data.selectedOptionId ? 'option-wrong' : 'option-other'));
-      }
     });
-    // Подсветка кода в только что вставленных пояснениях вариантов.
-    renderDynamicContent(optionsContainer);
+  }
+
+  // UX-13: вердикт по макету Instrument — при ошибке дописываем букву правильного
+  // варианта («Неверно — правильный ответ A»); при верном — просто «Верно».
+  function buildVerdictLine(data) {
+    if (data.correct) {
+      return icon('circle-check', 'ed-icon-lead') + 'Верно';
+    }
+    const letter = data.correctOptionLetter
+      ? ' — правильный ответ ' + escapeHtml(data.correctOptionLetter)
+      : '';
+    return icon('circle-x', 'ed-icon-lead') + 'Неверно' + letter;
+  }
+
+  // UX-13: содержимое «Подробнее» — полный остаток разбора (после лид-абзаца) +
+  // разбор вариантов (буква + тег «верный/ваш ответ» + пояснение из сида).
+  function buildResultDetail(data, restHtml) {
+    let html = '';
+    if (restHtml && restHtml.trim().length) {
+      html += `<div class="answer markdown-content">${restHtml}</div>`;
+    }
+    const opts = data.optionExplanations || [];
+    const hasAnyExpl = opts.some(oe => oe.explanationHtml && oe.explanationHtml.trim().length);
+    if (hasAnyExpl) {
+      let list = '<div class="option-breakdown">';
+      opts.forEach((oe, i) => {
+        if (!oe.explanationHtml || !oe.explanationHtml.trim().length) return;
+        const letter = String.fromCharCode(65 + i);
+        let tag = '';
+        let cls = 'explanation-other';
+        if (oe.id === data.correctOptionId) { tag = 'верный ответ'; cls = 'explanation-correct'; }
+        else if (oe.id === data.selectedOptionId) { tag = 'ваш ответ'; cls = 'explanation-wrong'; }
+        const tagHtml = tag ? `<span class="option-breakdown-tag">${tag}</span>` : '';
+        list += `<div class="option-breakdown-item ${cls}">`
+          + `<div class="option-breakdown-head"><span class="option-breakdown-letter">${letter}</span>${tagHtml}</div>`
+          + `<div class="option-explanation markdown-content ${cls}">${sanitizeHtml(oe.explanationHtml)}</div>`
+          + `</div>`;
+      });
+      list += '</div>';
+      html += list;
+    }
+    return html;
   }
 
   function renderFeedbackHtml(data) {
     const isCorrect = data.correct;
-    const safeHtml = sanitizeHtml(data.answerHtml);
+    // UX-13 иерархия (макет Instrument result): вердикт+буква → краткий лид видим →
+    // «Подробнее» (полный остаток + разбор вариантов). Лид деривит сервер
+    // (AnswerHtmlSplitter, первый <p>); если лид не выделился — показываем полный
+    // ответ как лид, чтобы разбор не потерялся, и «Подробнее» несёт только варианты.
+    const leadHtml = sanitizeHtml(data.answerLeadHtml || '');
+    const restHtml = sanitizeHtml(data.answerRestHtml || '');
+    const hasLead = leadHtml.trim().length > 0;
+    const visibleLead = hasLead ? leadHtml : sanitizeHtml(data.answerHtml || '');
+    const leadBlock = visibleLead.trim().length
+      ? `<div class="result-lead answer markdown-content">${visibleLead}</div>`
+      : '';
+
+    const detailBody = buildResultDetail(data, hasLead ? restHtml : '');
+    const detailBlock = detailBody
+      ? `<details class="result-detail-disclosure">
+           <summary class="result-detail-summary">Подробнее</summary>
+           <div class="result-detail-body">${detailBody}</div>
+         </details>`
+      : '';
 
     feedbackDiv.innerHTML = `
       <div class="${isCorrect ? 'result-correct' : 'result-wrong'}">
-        <strong>${isCorrect ? icon('circle-check', 'ed-icon-lead') + 'Верно' : icon('circle-x', 'ed-icon-lead') + 'Неверно'}</strong>
-        <div class="answer markdown-content">${safeHtml}</div>
+        <strong class="result-verdict">${buildVerdictLine(data)}</strong>
+        ${leadBlock}
+        ${detailBlock}
       </div>
     `;
     feedbackDiv.classList.remove('hidden');

@@ -2525,6 +2525,63 @@ html[data-design] .result-page .sm2-grid {
 html[data-design] .result-page .sm2-grid dt { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-tertiary); margin: 0; }
 html[data-design] .result-page .sm2-grid dd { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-primary); }
 
+/* ===========================================================================
+   UX-13 — иерархия пост-разбора по макету Instrument (focus-question result):
+   вердикт (+буква правильного) → ОДИН краткий абзац-лид видим → всё остальное
+   (полный разбор + пояснения вариантов) под «Подробнее». Общий scope (без
+   .result-page): классы появляются на ОБОИХ путях — JS-фидбэк focus-страницы
+   (#result-feedback, renderFeedbackHtml) и no-JS result.html.
+   =========================================================================== */
+/* Краткий лид — первый абзац разбора, показан сразу под вердиктом (.explain макета) */
+html[data-design] .result-lead { margin-top: var(--space-3); }
+html[data-design] .result-lead > :last-child { margin-bottom: 0; }
+
+/* «Подробнее» — раскрытие глубокого разбора */
+html[data-design] .result-detail-disclosure {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .result-detail-summary {
+  cursor: pointer; list-style: none;
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+html[data-design] .result-detail-summary:hover { color: var(--color-text-primary); }
+html[data-design] .result-detail-summary::-webkit-details-marker { display: none; }
+html[data-design] .result-detail-summary::before { content: "▸"; color: var(--color-text-tertiary); }
+html[data-design] .result-detail-disclosure[open] > .result-detail-summary::before { content: "▾"; }
+html[data-design] .result-detail-disclosure[open] > .result-detail-summary { margin-bottom: var(--space-3); }
+html[data-design] .result-detail-body { display: flow-root; }
+
+/* Разбор вариантов внутри «Подробнее»: по букве + тег «верный/ваш ответ» */
+html[data-design] .option-breakdown {
+  margin-top: var(--space-4);
+  display: flex; flex-direction: column; gap: var(--space-3);
+}
+html[data-design] .option-breakdown-item {
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--color-border-secondary);
+}
+html[data-design] .option-breakdown-item.explanation-correct { border-left-color: var(--color-status-success); }
+html[data-design] .option-breakdown-item.explanation-wrong { border-left-color: var(--color-status-error); }
+html[data-design] .option-breakdown-head {
+  display: flex; align-items: center; gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+html[data-design] .option-breakdown-letter {
+  font-family: var(--font-family-mono); font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm); color: var(--color-text-primary);
+}
+html[data-design] .option-breakdown-tag {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+html[data-design] .option-breakdown-item .option-explanation { margin: 0; }
+
 /* Код вопроса (CODE-тип) */
 html[data-design] .result-page .question-code {
   background: var(--color-bg-tertiary); color: var(--color-text-primary);

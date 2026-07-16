@@ -49,12 +49,18 @@
                 </div>
             </div>
 
+            <!-- UX-13: вердикт по макету Instrument — при ошибке дописываем букву
+                 правильного варианта («Неверно — правильный ответ A»). correctOptionLetter
+                 зеркалит API-путь (MvcModelAttributeMapper.correctOptionLetter). -->
             <p class="status" th:with="ok=${result.correctAnswer}" th:classappend="${ok} ? ' status-correct' : ' status-wrong'">
                 <svg class="ed-icon ed-icon-lead" th:classappend="${ok} ? 'ed-icon-success' : 'ed-icon-error'" aria-hidden="true">
                     <use th:attr="href=${ok} ? '#i-circle-check' : '#i-circle-x'"></use>
-                </svg><span th:text="${ok} ? 'Верно!' : 'Неверно'">Статус</span>
+                </svg><span th:text="${ok ? 'Верно!' : (correctOptionLetter != null and !correctOptionLetter.isEmpty() ? 'Неверно — правильный ответ ' + correctOptionLetter : 'Неверно')}">Статус</span>
             </p>
 
+            <!-- UX-13: опции = только марка состояния + тег (макет Instrument), БЕЗ
+                 inline-пояснений — они переехали в «Подробнее» (.option-breakdown ниже),
+                 чтобы не дублировать «почему» между вариантом, лидом и полным разбором. -->
             <div class="options" role="list" aria-label="Варианты ответа (результат)">
                 <!-- div, не label: это display-only результат (нет <input>), а label
                      без управляемого контрола + вложенный блочный <div> внутри —
@@ -66,16 +72,39 @@
                     <span th:utext="${@markdownRenderService.toInlineHtml(opt.optionText)}">Вариант</span>
                     <span th:if="${opt.id == result.correct.id}" class="option-status-label option-status-correct">Правильный ответ</span>
                     <span th:if="${opt.id == result.selected.id and opt.id != result.correct.id}" class="option-status-label option-status-selected">Твой выбор</span>
-                    <div th:if="${opt.explanation != null}"
-                         th:class="${opt.correct} ? 'option-explanation markdown-content explanation-correct' : 'option-explanation markdown-content explanation-wrong'"
-                         th:utext="${@markdownRenderService.toHtml(opt.explanation)}">Объяснение</div>
                 </div>
             </div>
 
-            <div>
-                <h3><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-book-open"></use></svg>Пояснение</h3>
-                <div class="answer markdown-content" th:utext="${answerHtml}"></div>
-            </div>
+            <!-- UX-13: краткий лид (первый абзац разбора) виден сразу под вердиктом.
+                 Если сервер не выделил лид (ответ не с абзаца) — как лид показываем
+                 весь answerHtml, чтобы разбор не пропал. -->
+            <div th:if="${answerLeadHtml != null and !answerLeadHtml.isBlank()}"
+                 class="result-lead answer markdown-content" th:utext="${answerLeadHtml}"></div>
+            <div th:if="${(answerLeadHtml == null or answerLeadHtml.isBlank()) and answerHtml != null and !answerHtml.isBlank()}"
+                 class="result-lead answer markdown-content" th:utext="${answerHtml}"></div>
+
+            <!-- «Подробнее»: остаток разбора (после лид-абзаца) + разбор вариантов.
+                 answerHasDetail (mapper) гарантирует непустое тело. Консистентно с
+                 JS-путём (renderFeedbackHtml → buildResultDetail). -->
+            <details class="result-detail-disclosure" th:if="${answerHasDetail}">
+                <summary class="result-detail-summary">Подробнее</summary>
+                <div class="result-detail-body">
+                    <div th:if="${answerRestHtml != null and !answerRestHtml.isBlank() and answerLeadHtml != null and !answerLeadHtml.isBlank()}"
+                         class="answer markdown-content" th:utext="${answerRestHtml}"></div>
+                    <div class="option-breakdown">
+                        <div th:each="opt,it : ${result.options}" th:if="${opt.explanation != null and !opt.explanation.isBlank()}"
+                             th:class="${'option-breakdown-item ' + (opt.id == result.correct.id ? 'explanation-correct' : (opt.id == result.selected.id ? 'explanation-wrong' : 'explanation-other'))}">
+                            <div class="option-breakdown-head">
+                                <span class="option-breakdown-letter" th:text="${'ABCDEFGH'.substring(it.index, it.index + 1)}">A</span>
+                                <span th:if="${opt.id == result.correct.id}" class="option-breakdown-tag">верный ответ</span>
+                                <span th:if="${opt.id == result.selected.id and opt.id != result.correct.id}" class="option-breakdown-tag">ваш ответ</span>
+                            </div>
+                            <div th:class="${'option-explanation markdown-content ' + (opt.correct ? 'explanation-correct' : 'explanation-wrong')}"
+                                 th:utext="${@markdownRenderService.toHtml(opt.explanation)}">Объяснение</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
 
             <details th:if="${reviewState != null}" class="sm2-details">
                 <summary>SM-2 состояние</summary>
@@ -97,7 +126,7 @@
             <div th:replace="~{fragments/result-zone-head :: result-zone-head(
                 id='result-zone-head-main',
                 chipText='Разбор ответа',
-                hintText='Полный ответ, пояснения и похожие вопросы — сразу на странице',
+                hintText='Краткий вывод — сразу; полный разбор и пояснения вариантов — по клику «Подробнее»; похожие вопросы — ниже',
                 hidden=false
             )}"></div>
             <div th:replace="~{fragments/inline-alert :: inline-alert(id='interview-alert', hidden=true)}"></div>
