@@ -576,3 +576,24 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Observed-benign (НЕ actionable): ForcedReflow на /stats** — inline-скрипт `/stats:8996`→`:9013` (chart.js-конструктор читает геометрию canvas при рендере), total 63 ms, но **estimated savings: none**, CLS 0.00 не задет. chart.js-intrinsic, вне нашего кода; под feature-freeze гнаться за savings=none внутри third-party не оправдано. Прочие insights (DOMSize/ThirdParties/NetworkDependencyTree) — без флагов проблем.
 
 **Gate `performanceProdLike` НЕ флипнут — dev-build caveat:** трейс снят на dev-профиле (localhost, без network/CPU-throttling, JVM `-XX:TieredStopAtLevel=1`). Истинно «production-like» бюджеты требуют prod-профиль-билд + реалистичный 4G/CPU-4x throttling → gradle (prod build) → bootRun-stopped тик. НО build-НЕЗАВИСИМЫЕ сигналы все зелёные: CLS 0.00 (стабильность лейаута — не зависит от билда/throttle), короткий критический путь, 0 render-blocking. Структура perf здоровая; абсолютные ms (LCP/TBT под throttling) — на prod-like re-measure. Провизорный проход, как responsive/a11y/console.
+
+---
+
+## EV-A11Y-197 — A11Y-01 регресс-переверификация против текущего билда (R0.197, 2026-07-16)
+
+**Контекст:** A11Y-01 закрыт R0.170 (EV-A11Y-001). С тех пор билд претерпел FE-CMP-1 (удаление design-оси), промоут Instrument в дефолт, правки шаблонов (UX-13/FLOW-REPORT/REVIEW-03). Этот проход — регресс-переверификация keyboard/SR-семантики на текущем live-build + более глубокая структурная детализация. Read-only chrome-devtools `evaluate_script`, без правок → gradle не нужен.
+
+**`/` (focus) — структурный keyboard/SR-аудит:**
+- **positiveTabindex: 0** ✅ (нет анти-паттерна; порядок фокуса = DOM-порядок).
+- **skip-link** «Перейти к вопросу» → `#main-content` ✅.
+- **15 tabbable, логичный порядок:** skip→бренд→nav(Фокус/Аналитика/Настройки)→layout-тумблер→theme-тумблер→«Завершить сессию»→«Пример кода»(summary)→«Копировать код»→4 радио→«Отметить как незнакомый». **#design-toggle ОТСУТСТВУЕТ** (подтверждает: удаление FE-CMP-1 держится, дефект R0.170 не воскрес).
+- **interactiveMissingName: 0** ✅; **MCQ 4 радио, все с labels, 1 группа** ✅ (правильная radio-group клавиатура); **4 live-region** (alert/status/polite/vh) ✅; **progressbar** role+valuenow=1/valuemax=20 ✅; **H1→H2→H3** без пропусков ✅; **lang=ru + main + nav landmarks** ✅.
+- **focus-visible (grep base.css):** 20 правил; глобальный `:focus-visible`-ринг (L229) + корректный `:focus:not(:focus-visible){outline:none}` (L233, гасит outline только для мыши). Все `outline:none` — либо mouse-only, либо заменены `box-shadow: var(--shadow-focus)`; комментарии учитывают High Contrast Mode. **Ни одного «голого» outline:none-анти-паттерна.**
+
+**`/settings` — кастомный ARIA-tablist:**
+- **Roving-tabindex КОРРЕКТЕН** (`rovingOk:true`): ровно один tab tabindex=0 (Сессия, aria-selected=true), остальные -1 → Tab входит в tablist один раз, стрелки навигируют. aria-label «Разделы настроек».
+- **panelsLinked:true** (каждый `aria-controls`→реальный role=tabpanel); **panels allLabelled** (aria-labelledby) ✅.
+- **Неактивные панели `display:none`** (appearance/data): 0 keyboard-reachable контролов → нет focus-leak, удалены из a11y-дерева. (Атрибут `hidden` не выставлен, но display:none функционально эквивалентен — не дефект.)
+- **positiveTabindex:0, noName:0** ✅; **5 radiogroup персонализации — все named** ✅; heading-иерархия логична ✅.
+
+**Вывод:** A11Y-01 **держится clean** на текущем билде после всей волны template-изменений; регресса нет. Более глубокое evidence (roving-tabindex, panel display:none, focus-visible-аудит), чем оригинал EV-A11Y-001. Дополняет автоматический Lighthouse a11y=100 (EV-A11Y-194) ручной keyboard-операбельностью. **Observed-мелочи (НЕ дефекты, feature-freeze → не трогаю):** progressbar `valuetext=null` (valuenow/max уже озвучивают «1 из 20»); неактивные tabpanel без атрибута `hidden` (display:none достаточно). Оба — belt-and-suspenders, не блокеры.
