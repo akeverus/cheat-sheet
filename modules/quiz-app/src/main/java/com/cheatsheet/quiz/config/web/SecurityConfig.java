@@ -75,7 +75,10 @@ public class SecurityConfig {
                                         + "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
                                         + "font-src 'self' data: https://fonts.gstatic.com; "
                                         + "img-src 'self' data:; "
-                                        + "connect-src 'self'"))
+                                        // connect-src включает CDN для source-map fetch (chart.js/hljs).
+                                        // Без них DevTools-инициированный запрос .js.map падал на default-src
+                                        // → CSP-violation в консоли → Lighthouse BP=92 на /stats (BP-STATS-1).
+                                        + "connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com"))
                         .referrerPolicy(ref -> ref.policy(
                                 org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                         .frameOptions(frame -> frame.sameOrigin())
