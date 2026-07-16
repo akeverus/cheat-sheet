@@ -473,3 +473,24 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 - Значение восстановлено на 20 после проверки.
 
 **Вывод:** FB-1 закрыт — inline invalid-визуал есть и работает; сообщение-усиление осознанно отложено (Фаза G) по указанию макета. Чисто верификационный тик → коммит только `FRONTEND_STATE.json` + `FRONTEND_EVIDENCE.md`.
+
+---
+
+## EV-RESP-192 — Responsive h-overflow sweep, регресс-проверка REVIEW-03+FB-1 (R0.192, 2026-07-16)
+
+**Цель:** частичный вклад в release-gate `responsive`; поймать возможный горизонтальный overflow-регресс от последних CSS-правок (REVIEW-03 fixed sticky submit-панель R0.189 + FB-1 `:user-invalid` R0.190). Чисто read-only (chrome-devtools, dark), без правок кода → gradle не нужен.
+
+**Метод:** переиспользуемая evaluate-функция сканирует `body *` на элементы с `getBoundingClientRect().right > clientWidth+1 || left < -1` (исключая `position:fixed` и `offsetWidth==0`), возвращает `hOverflow (scrollWidth>clientWidth+1)`, scrollWidth/clientWidth и до 6 переполняющих элементов. Проверены оба экстремума ширины: узкий (OS-минимум окна ~485–500px, ниже которого браузер не ужимается) и широкий (1920).
+
+**Результаты (dark):**
+| Поверхность | vw≈485–500 | vw=1920 |
+|---|---|---|
+| `/` (focus) | `hOverflow=false`, over=[] (один широкий `CODE` right=644 в `overflow-x:auto`-контейнере = не page-overflow) | `{scrollWidth:1905,clientWidth:1905,over:[]}` |
+| `/stats` | `hOverflow=false`, over=[] | `{scrollWidth:1905,clientWidth:1905,over:[]}` |
+| `/settings` | `hOverflow=false`, over=[] | `{scrollWidth:1905,clientWidth:1905,over:[]}` |
+
+Все 3 основные поверхности чисты на обоих экстремумах → REVIEW-03 sticky-панель (fixed, вне overflow-скана) и FB-1 error-визуал не внесли горизонтального overflow. Вьюпорт возвращён на 1280×900.
+
+**Light-тема не проверялась отдельно:** overflow — layout-driven (ширины боксов), тема меняет только цвета → light-скан near-redundant для h-overflow. Полная responsive-матрица (6 брейкпойнтов 375/768/1280/1440/1728/1920/2560 × 2 темы, device-emulation <485px) остаётся для консолидированной live-QA в конце волны — gate `responsive` НЕ флипается этим тиком.
+
+**Wedge-статус (сверено live):** `:8080` жив (java PID 64174, LISTEN); gradle project-локи `.gradle/8.9/{fileHashes,executionHistory}.lock` держит PID **40113** (gradle-launcher, родитель app-JVM 64174). Прежний PID 64168 ушёл — держатель lock сместился на 40113, но wedge сохраняется: `./gradlew test` по-прежнему заблокирован. Перекомпиляционный путь к FINALIZED остаётся gated на bootRun-stopped тик.
