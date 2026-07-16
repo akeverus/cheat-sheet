@@ -726,3 +726,31 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Покрытие:** 5 поверхностей × {desktop, mobile} + 2 терминальных на recompiled build. Дополняет ручной keyboard/SR-аудит EV-A11Y-197.
 
 **Зелёные гейты после R0.204:** cleanBuild, fullTests, consoleNetworkClean, accessibility.
+
+---
+
+## EV-PERF-205 — performanceProdLike gate: истинно prod-like Core Web Vitals (R0.205, 2026-07-16, chrome-devtools, prod-профиль-билд)
+
+**GATE `performanceProdLike` — ЗЕЛЁНЫЙ.** Финальный bootRun-DOWN шаг: замер против prod-профиль-билда под prod-like throttling — закрывает DEV-BUILD CAVEAT провизорного R0.196 (EV-PERF-196).
+
+**Среда замера:**
+- **Билд:** `SPRING_PROFILES_ACTIVE=prod java -jar modules/quiz-app/build/libs/quiz-app-0.0.1-SNAPSHOT.jar` (полный `clean build` bootJar, НЕ devtools-bootRun). Поднялся HTTP 200; Swagger UI 404 = prod-профиль подтверждён (prod отключает Swagger); лог «The following 1 profile is active: prod».
+- **Throttling (chrome-devtools emulate):** mobile 412×915 DPR 2.625, touch; сеть **Slow 4G**; CPU **4× slowdown**. `performance_start_trace` reload+autoStop.
+
+**Core Web Vitals:**
+
+| Поверхность | LCP | LCP breakdown | CLS | Бюджет |
+|---|---|---|---|---|
+| `/` (focus) | **835 ms** | TTFB 58 + render 776 | **0.00** | LCP<2500, CLS<0.1 ✅ |
+| `/stats` (chart.js, тяжелее) | **1253 ms** | TTFB 106 + render 1147 | **0.00** | ✅ |
+
+- Оба LCP **глубоко в «good»** (<2500 ms) даже под mobile Slow-4G + CPU-4× — запас ×3 на focus, ×2 на stats.
+- Оба CLS **идеальны (0.00)** — chart.js НЕ сдвигает лейаут (диаграмма в зарезервированном контейнере).
+- RenderBlocking estimated savings: focus FCP/LCP 84 ms (минор — шрифты/CSS в критпути), stats **0 ms**.
+- ForcedReflow / ThirdParties insights = benign chart.js-intrinsic (вне нашего кода; под feature-freeze не трогаем).
+
+**Вывод:** истинно prod-like бюджеты перекрывают провизорный dev-build замер R0.196 (LCP 265/283 ms без throttling). Абсолютные ms под реалистичным throttling подтверждают: критический путь короткий, layout стабилен. → gate `performanceProdLike`=true честно заслужен.
+
+**Cleanup:** prod-профиль-сервер остановлен (`kill :8080`, порт свободен).
+
+**Зелёные гейты после R0.205:** cleanBuild, fullTests, consoleNetworkClean, accessibility, **performanceProdLike** (5/12).
