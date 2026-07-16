@@ -705,3 +705,24 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **→ GATE `consoleNetworkClean` = true.** BP-STATS-1 был единственным console/network-долгом на primary-поверхностях (R0.195); устранён. Терминальные result/summary/error — per-surface console-clean R0.151-161 (простые страницы, result.html no-JS-фоллбэк, error.html статична).
 
 **Зелёные гейты после R0.203:** cleanBuild, fullTests, consoleNetworkClean.
+
+---
+
+## EV-A11Y-204 — accessibility gate: mobile-аудит + терминальные состояния (R0.204, 2026-07-16, chrome-devtools :8080, профиль qa)
+
+**GATE `accessibility` — ЗЕЛЁНЫЙ.** Комплексное покрытие на перекомпилированном приложении, desktop + mobile + терминальные состояния.
+
+**Lighthouse mobile/navigation (a11y=100 И BP=100 на всех 3 core):**
+- / focus: a11y=100, BP=100.
+- /stats: a11y=100, BP=100.
+- /settings: a11y=100, BP=100.
+Дополняет desktop a11y=100 (EV-A11Y-194 R0.194 + EV-BP-STATS-203 R0.203).
+
+**Терминальные состояния (recompiled build):**
+- **error.html** (404): Lighthouse не аудит non-200 (все категории 0 = артефакт HTTP-статуса, не a11y-дефект). Ручной DOM-аудит: `lang=ru`, `data-design=instrument`, skip-link→`#main-content`, `main#main-content tabindex=-1`, h1 (banner) + h2 `error-heading`=«Такой страницы нет» (корректная 404-копия), 3 recoverable-действия (На главную/Аналитика/Настроить, все с href), header nav.
+- **session-summary** (после POST /finish MARATHON): **все table-a11y роли на месте** — `role=table`(1), `rowgroup`(2), `columnheader`(5), `row`(2), `cell`(4), `rowheader`(1) — критичные роли, которые макет не имеет и план требовал сохранить. `caption`=«Результаты по темам». Иерархия H1 «Итоги сессии» → H2 «Результат сессии»/«Результаты по темам»/«Ошибки» без пропусков. `main tabindex=-1`. Typed nextActions рендерятся. Консоль 0.
+- **result-состояние**: UX-13 структура (verdict/lead/details, роли) верифицирована EV-UX13-201.
+
+**Покрытие:** 5 поверхностей × {desktop, mobile} + 2 терминальных на recompiled build. Дополняет ручной keyboard/SR-аудит EV-A11Y-197.
+
+**Зелёные гейты после R0.204:** cleanBuild, fullTests, consoleNetworkClean, accessibility.
