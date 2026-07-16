@@ -558,3 +558,21 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Консолидация блокеров:** весь остаточный console/network-долг на primary-поверхностях = ОДНА BP-STATS-1. Тот же 1-строчный CSP-фикс (`connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com` в `SecurityConfig.java`) закроет **сразу два** gate: `consoleNetworkClean` И `best-practices=100` на /stats.
 
 **Gate `consoleNetworkClean` НЕ флипнут** — заблокирован единственной BP-STATS-1 (Java/gradle, gated на bootRun-stopped тик); плюс финал требует result/session-summary/error (console-clean per-surface в R0.151-161) + re-run против перекомпилированного app (app.js v=68→70). Провизорный проход.
+
+---
+
+## EV-PERF-196 — Performance trace, Core Web Vitals основных поверхностей (R0.196, PERF-02, 2026-07-16)
+
+**Цель:** release-gate `performanceProdLike` / задача PERF-02. chrome-devtools `performance_start_trace` (reload+autoStop), read-only → gradle не нужен.
+
+**Результаты (lab, dev-build, CPU 1x, network none):**
+| Поверхность | LCP | CLS | TTFB | Render delay | RenderBlocking savings |
+|---|---|---|---|---|---|
+| `/` (focus) | **265 ms** ✅ | **0.00** ✅ | 136 ms | 129 ms | FCP 0 / LCP 0 ms |
+| `/stats` (chart.js) | **283 ms** ✅ | **0.00** ✅ | 104 ms | 179 ms | FCP 0 / LCP 0 ms |
+
+**LCP 265/283 ms** — глубоко в «good» (<2.5s). **CLS 0.00 на обеих**, включая /stats с chart.js canvas → диаграмма НЕ вызывает сдвига лейаута (зарезервированные размеры canvas + font-loading без reflow). **Нет значимого render-blocking** (savings 0 ms). CrUX field-данных нет (localhost).
+
+**Observed-benign (НЕ actionable): ForcedReflow на /stats** — inline-скрипт `/stats:8996`→`:9013` (chart.js-конструктор читает геометрию canvas при рендере), total 63 ms, но **estimated savings: none**, CLS 0.00 не задет. chart.js-intrinsic, вне нашего кода; под feature-freeze гнаться за savings=none внутри third-party не оправдано. Прочие insights (DOMSize/ThirdParties/NetworkDependencyTree) — без флагов проблем.
+
+**Gate `performanceProdLike` НЕ флипнут — dev-build caveat:** трейс снят на dev-профиле (localhost, без network/CPU-throttling, JVM `-XX:TieredStopAtLevel=1`). Истинно «production-like» бюджеты требуют prod-профиль-билд + реалистичный 4G/CPU-4x throttling → gradle (prod build) → bootRun-stopped тик. НО build-НЕЗАВИСИМЫЕ сигналы все зелёные: CLS 0.00 (стабильность лейаута — не зависит от билда/throttle), короткий критический путь, 0 render-blocking. Структура perf здоровая; абсолютные ms (LCP/TBT под throttling) — на prod-like re-measure. Провизорный проход, как responsive/a11y/console.
