@@ -1,6 +1,5 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.infrastructure.diagram.DiagramService;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.cheatsheet.quiz.service.diagram.MermaidSanitizer;
