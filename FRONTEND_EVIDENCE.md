@@ -450,3 +450,26 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 - Скрины: `.qa-artifacts/review3-sticky-submit-mobile-{dark,dark-bottom,light}.png`.
 
 **Верификация тестов:** правка чисто CSS + `head.html` ?v-bump → `TemplateFragmentContractTest`/gradle не затрагиваются (шаблоны/фрагменты не менялись). Закрывает ревью #3.
+
+## EV-FB-001 — Inline invalid-визуал формы: VERIFIED-CLEAN (R0.190, 2026-07-16)
+
+**Задача:** FB-1 (feedback-парити, ревью-2) — невалидное поле должно иметь постоянное inline error-состояние, не только нативный браузерный bubble. Помечено открытой parity-QA-находкой. Аудит: реализовано ещё R0.163 (`base.css` 1470-1484) — план-заметка «нет inline invalid-визуала» устарела.
+
+**Реализация (`base.css`, R0.163):**
+- `html[data-design] .settings-page input[type="number"]:user-invalid` → `border-color: var(--color-status-error)` + `background: var(--color-status-error-wash)`.
+- `:user-invalid:focus` → error-ринг `box-shadow: 0 0 0 var(--rule-weight-strong) var(--color-status-error)` (специфичность (0,5,2) перебивает `:focus` (0,4,2) → error-ринг вместо signal-focus-ring).
+- **Гейт `:user-invalid`, НЕ `:invalid`:** красит ТОЛЬКО после взаимодействия пользователя — нетронутое поле (`value=20`) не «грязним» красным на загрузке.
+- Error-тон `hue27` (красно-оранжевый) разведён с signal `teal hue205`. Нативный Constraint Validation bubble (`count min=1 max=200`) остаётся доп. каналом.
+
+**Осознанные non-port (не дефекты):**
+- Кастомная `.field-error`-сообщение (`aria-invalid` + `aria-describedby`) — макет `feedback-state-atlas.html:230-231` явно: «прод использует нативную Constraint Validation; кастомная inline-ошибка — **необязательное усиление** (кандидат Фазы G, JS-blast-radius)». Текущего inline-визуала достаточно для парити.
+- Атлас-состояния «Спиннер-строка» / «Скелет» — loading-состояния; в seed-first проде (AI/async-загрузка вырезаны) грузить нечего → мёртвые, намеренно не портированы.
+
+**Live-QA (chrome-devtools, /settings, dark, реальный ввод через fill + blur):**
+- Ввод `500` (> max 200) в `input[name=count]` (uid спинбаттон «ВОПРОСОВ»), затем blur.
+- `inp.validity.rangeOverflow = true`; `inp.matches(':user-invalid') = true`.
+- Computed: `borderColor = oklab(0.72 …)` = резолв `--color-status-error` (`oklch 0.720 0.175 27`); `background = oklch(0.30 0.07 27)` = `--color-status-error-wash`.
+- Визуально: отчётливая красная граница + тёмно-красный wash, явно отличны от teal-signal (кнопка «Начать интенсив» outline, «Начать повторение», подчёркивание активной вкладки). Скрин `.qa-artifacts/fb1-user-invalid-count.png`.
+- Значение восстановлено на 20 после проверки.
+
+**Вывод:** FB-1 закрыт — inline invalid-визуал есть и работает; сообщение-усиление осознанно отложено (Фаза G) по указанию макета. Чисто верификационный тик → коммит только `FRONTEND_STATE.json` + `FRONTEND_EVIDENCE.md`.
