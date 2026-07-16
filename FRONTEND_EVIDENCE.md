@@ -638,3 +638,29 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Тесты:** `InterviewSessionExpiryListenerTest` — 5 кейсов (autosave активной с прогрессом → `pause()` вызван; гарды `index==0`/`finished`/`null` → `pause()` НЕ вызван; `swallowsAutosaveFailure` → исключение из `pause()` не пробрасывается). `PublicEndpointsSmokeTest` поднимает полный Spring-контекст с новым бином (регистрация не ломает старт). Полный `./gradlew build` — BUILD SUCCESSFUL (test + jacocoTestCoverageVerification + ArchUnit `check`).
 
 **FLOW-04 → DONE.** Три слайса: (1) offline/error submit recovery R0.171 (EV-FLOW-004); (2) error.html per-status recoverable; (3) expired-session autosave (этот). **Все P1 MUST-фичи закрыты.** Остаётся consolidated live-QA autosave-флоу (истечение → resume-баннер) на волновом уровне (bootRun ON).
+
+---
+
+## EV-UX13-201 — UX-13 faithful live-QA против перекомпилированного приложения (R0.201, 2026-07-16, chrome-devtools :8080, профиль qa)
+
+**UX-13 (прогрессивный разбор «минимум→глубже») — VERIFIED-CLEAN.** Отложенная с R0.184 faithful-QA выполнена после clean build (app.js v=70 вкомпилен, entanglement снят).
+
+**Setup:** bootRun на свежем билде, `SPRING_PROFILES_ACTIVE=qa` (fixed clock 2026-07-15T12:00Z, due=2/learned=1). Отдаётся app.js?v=70 / base.css?v=107 / tokens.css?v=65.
+
+**Флоу:** TRAINING, вопрос «Что такое ACID…», выбран верный вариант A (клавиша «1»), submit (Enter) → вердикт.
+
+**Иерархия пост-ответа (DOM-порядок внутри `.result-correct`):**
+1. `strong.result-verdict` = «Верно».
+2. `div.result-lead.answer.markdown-content` = краткое «почему» («ACID — набор из четырёх свойств, гарантирующих надёжную обработку транзакций в СУБД:»).
+3. `details.result-detail-disclosure` > `summary.result-detail-summary` «Подробнее» — **closed by default** (`open` отсутствует), внутри глубокий разбор (таблица Свойство/Описание, `detailContentLen=7454`).
+
+- `leadFirst=true`, `detailsOpenByDefault=false` → прогрессивное раскрытие opt-in = ровно DEC-006=A.
+- Клик по summary: `before=false → afterOpen=true`, `tableVisible=true` — раскрытие работает.
+
+**Обе темы:** light + dark (`emulate colorScheme=dark`): `data-theme=dark`, `data-design=instrument`, body bg `oklch(0.19 0.012 264)` (Instrument dark paper), вердикт «Верно» `oklch(0.76 0.12 150)` — **зелёный hue150, разведён с teal-signal hue205** (правильность ≠ выбрано, мандат Instrument). Структура details цела в dark.
+
+**Консоль:** 0 error/warn/issue после полного флоу (submit + disclosure) на перекомпилированном app.js.
+
+**Отдельно:** `[aria-controls="extra-analysis-content"]` «Похожие вопросы» — самостоятельный сосуществующий toggle (related questions), не конфликтует с «Подробнее».
+
+**UX-13 → DONE.** Первый пункт консолидированной live-QA фазы закрыт.
