@@ -1088,6 +1088,25 @@ html[data-design] .keyboard-hint { font-family: var(--font-family-mono); font-si
   html[data-design] .keyboard-hint { display: none; }
 }
 
+/* FLOW-03b: «Не знаю ответа» — низкоэмфазная escape-hatch под кнопкой ответа.
+   Намеренно НЕ .btn: текстовая, вторичный цвет, подчёркивание на ховере/фокусе —
+   primary «Проверить ответ» остаётся доминирующим, а честный пропуск доступен
+   без визуальной конкуренции. */
+html[data-design] .focus-training .skip-action { margin-top: var(--space-3); text-align: center; }
+html[data-design] .focus-training .skip-btn {
+  appearance: none; background: none; border: none; cursor: pointer;
+  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  padding: var(--space-2) var(--space-3); border-radius: var(--border-radius-sm);
+  text-decoration: underline; text-underline-offset: 3px;
+  text-decoration-color: var(--color-border-primary);
+}
+html[data-design] .focus-training .skip-btn:hover,
+html[data-design] .focus-training .skip-btn:focus-visible {
+  color: var(--color-text-primary);
+  text-decoration-color: var(--color-accent-primary);
+}
+
 /* Флешкарта. Старый styles.css даёт центрирование, лавандовые пилюли и
    well-панель — приводим к editorial (плоский eyebrow, тёплая панель ответа). */
 html[data-design] .flashcard-phase { text-align: left; padding: 0; width: auto; }
@@ -2026,6 +2045,17 @@ html[data-design] .summary-page .summary-headline {
 html[data-design] .summary-page .summary-score .stats-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3);
   max-width: 460px; margin: var(--space-6) auto 0;
+}
+/* FLOW-03b: с 4-й плиткой «Не знаю» сетка идёт 2×2 на узком экране и 4-в-ряд от
+   560px — repeat(4,1fr) на ~320px распирал бы 4 значения (тот же res, что у
+   базовой repeat(3,1fr) с её min-width:0 на .stat-item). */
+html[data-design] .summary-page .summary-score .stats-grid.has-unknown {
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 560px) {
+  html[data-design] .summary-page .summary-score .stats-grid.has-unknown {
+    grid-template-columns: repeat(4, 1fr); max-width: 620px;
+  }
 }
 html[data-design] .summary-page .stat-item {
   padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-border-primary);
@@ -3253,15 +3283,22 @@ html[data-design] .summary-tools-status {
      смотрелись бы рыхло). */
   html[data-design] .settings-page .filters-fields { grid-template-columns: 1fr; }
 
-  /* --- SUMMARY: геро-итог разворачивается в широкую ленту (слева режим/процент/
-     подпись, в центре плитки, справа время); ниже таблица тем и ошибки бок о бок. */
+  /* --- SUMMARY: геро-итог — слева режим/процент/подпись, справа время; краткий
+     итог и плитки — полноширинными строками ниже. Раньше плитки жили в средней
+     колонке 3-колоночной ленты (auto|1fr|auto), но при капнутой ширине страницы
+     (~896px) «0,0%» (xl-serif ~274px) + время съедали ряд, и средняя колонка
+     схлопывалась до ~99px — плитки крошились (FLOW-03b обнажил это 4-й плиткой
+     «Не знаю», дефект был и на 3). На своей строке плитки получают всю ширину
+     карточки; ниже таблица тем и ошибки бок о бок. */
   html[data-design] .summary-page .summary-score {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
-      "mode  grid duration"
-      "value grid duration"
-      "label grid duration";
+      "mode     duration"
+      "value    duration"
+      "label    duration"
+      "headline headline"
+      "grid     grid";
     align-items: center;
     column-gap: var(--space-8);
     text-align: left;
@@ -3270,8 +3307,11 @@ html[data-design] .summary-tools-status {
   html[data-design] .summary-page .summary-mode-line { grid-area: mode; align-self: end; margin-bottom: var(--space-2); }
   html[data-design] .summary-page .summary-score-value { grid-area: value; }
   html[data-design] .summary-page .summary-score-label { grid-area: label; align-self: start; }
-  html[data-design] .summary-page .summary-score .stats-grid { grid-area: grid; max-width: 640px; margin: 0 0 0 auto; width: 100%; }
-  html[data-design] .summary-page .summary-duration { grid-area: duration; margin-top: 0; }
+  html[data-design] .summary-page .summary-headline { grid-area: headline; }
+  /* Плитки — своя полноширинная строка; ширину/центрирование и число колонок
+     (3 или 4 c .has-unknown) наследуем из базового правила, здесь только место. */
+  html[data-design] .summary-page .summary-score .stats-grid { grid-area: grid; }
+  html[data-design] .summary-page .summary-duration { grid-area: duration; margin-top: 0; align-self: center; }
   /* Таблица тем + ошибки в два столбца — только когда есть блок ошибок.
      .summary-tools (вставляет JS после геро) и actions остаются полноширинными. */
   html[data-design] .summary-page .ed-page:has(> section .summary-mistakes) {

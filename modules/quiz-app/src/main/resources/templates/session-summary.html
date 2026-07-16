@@ -25,7 +25,10 @@
          th:with="needs=${summary.wrongCount + summary.unknownCount},
                   w=${needs % 10 == 1 and needs % 100 != 11 ? 'вопрос требует' : ((needs % 10 >= 2 and needs % 10 <= 4) and (needs % 100 &lt; 12 or needs % 100 &gt; 14) ? 'вопроса требуют' : 'вопросов требуют')}"
          th:text="${needs > 0 ? needs + ' ' + w + ' разбора' : 'Без ошибок — отличный результат'}">Итог</div>
-    <div class="stats-grid">
+    <!-- FLOW-03b: 4-я плитка «Не знаю» (unknownCount) появляется только когда
+         были честные пропуски (>0) — постоянный «0» был бы шумом. Класс
+         has-unknown переключает сетку на 2×2 / 4-в-ряд (см. base.css). -->
+    <div class="stats-grid" th:classappend="${summary.unknownCount > 0} ? ' has-unknown'">
         <div class="stat-item">
             <span class="stat-label">Всего</span>
             <div class="stat-value" th:text="${summary.totalQuestions}">0</div>
@@ -37,6 +40,10 @@
         <div class="stat-item">
             <span class="stat-label">Ошибки</span>
             <div class="stat-value" th:text="${summary.wrongCount}">0</div>
+        </div>
+        <div class="stat-item" th:if="${summary.unknownCount > 0}">
+            <span class="stat-label">Не знаю</span>
+            <div class="stat-value" th:text="${summary.unknownCount}">0</div>
         </div>
     </div>
     <div class="summary-duration" th:text="'Время: ' + ${summary.formattedDuration}"></div>

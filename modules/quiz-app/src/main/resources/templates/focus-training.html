@@ -179,6 +179,20 @@
                 submitTitle=${'Клавиши 1–' + (current.options.size() > 9 ? 9 : current.options.size()) + ' — выбор, Enter — ответить'},
                 hintText=${'1–' + (current.options.size() > 9 ? 9 : current.options.size()) + ' — выбор, ↑/↓ — навигация, Esc — снять, Enter — отправка'}
             )}"></div>
+
+            <!-- FLOW-03b: честный исход «Не знаю» (UNKNOWN) — не угадывание.
+                 formaction переопределяет action формы на POST /skip, а
+                 formnovalidate снимает required с радиогруппы (вариант не
+                 выбирается). Реюзит скрытый questionId + автоинъекцию _csrf этой
+                 же формы — отдельная вложенная форма не нужна (и запрещена HTML).
+                 Гейтим активной незавершённой сессией: вне сессии processSkip —
+                 no-op (session==null), кнопку не показываем, чтобы не обещать
+                 действие, которого не будет. Стиль — низкоэмфазный текст (не .btn),
+                 primary «Проверить ответ» остаётся доминирующим. -->
+            <div class="skip-action" th:if="${interviewSession != null and !interviewSession.finished}">
+                <button type="submit" class="skip-btn" formnovalidate th:formaction="@{/skip}"
+                        title="Отметить вопрос как незнакомый — честный пропуск без угадывания">Не знаю ответа</button>
+            </div>
         </form>
 
         <div th:replace="~{fragments/result-zone-head :: result-zone-head(
