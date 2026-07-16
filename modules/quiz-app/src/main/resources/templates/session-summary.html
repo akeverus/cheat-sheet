@@ -18,6 +18,13 @@
          th:classappend="${summary.accuracy >= 80} ? 'text-success' : (${summary.accuracy >= 50} ? 'text-warning' : 'text-danger')"
          th:text="${summary.accuracyFormatted + '%'}">0%</div>
     <div class="summary-score-label">Точность сессии</div>
+    <!-- FLOW-SUMMARY-b: краткий actionable-итог под числом. «Требуют разбора» =
+         неверные + «не знаю» (unknownCount появится в UI с FLOW-03b, сейчас 0 —
+         rollup корректен). Русская форма склоняется по mod-10/mod-100. -->
+    <div class="summary-headline"
+         th:with="needs=${summary.wrongCount + summary.unknownCount},
+                  w=${needs % 10 == 1 and needs % 100 != 11 ? 'вопрос требует' : ((needs % 10 >= 2 and needs % 10 <= 4) and (needs % 100 &lt; 12 or needs % 100 &gt; 14) ? 'вопроса требуют' : 'вопросов требуют')}"
+         th:text="${needs > 0 ? needs + ' ' + w + ' разбора' : 'Без ошибок — отличный результат'}">Итог</div>
     <div class="stats-grid">
         <div class="stat-item">
             <span class="stat-label">Всего</span>
@@ -38,14 +45,23 @@
 <!-- Тулбар «поделиться/печать»: инжектится скриптом ниже (PE — без JS нет
      мёртвых кнопок). Сюда вставляется .summary-tools сразу после карточки счёта. -->
 
-<!-- Действия: чиним тупик IA — даём явные пути дальше. Если были ошибки,
-     главное действие — повторить их (review), иначе — продолжить. -->
+<!-- Что дальше — типизированный «короткий план» (FLOW-SUMMARY): сервер отдаёт
+     summary.nextActions (NextActionType), шаблон рендерит кнопку по типу
+     (иконка + ссылка), фронт НЕ парсит текст. Заменяет прежний ad-hoc
+     mistakes-условный nav + свободные строки-рекомендации (тот же источник
+     данных). Первое действие — primary, остальные — secondary; ниже общая
+     навигация, чтобы не было тупика IA даже при пустом плане. -->
 <nav class="summary-actions" aria-label="Что дальше">
-    <a class="btn next-btn" th:if="${!summary.mistakes.isEmpty()}" th:href="@{/review}">Повторить ошибки<span aria-hidden="true"> →</span></a>
-    <a class="btn next-btn" th:if="${summary.mistakes.isEmpty()}" th:href="@{/}">Продолжить тренировку<span aria-hidden="true"> →</span></a>
+    <a th:each="na,it : ${summary.nextActions}" th:with="t=${na.type().name()}"
+       class="btn" th:classappend="${it.first} ? ' next-btn' : ' secondary-btn'"
+       th:href="${t == 'PRACTICE_WEAK_TOPIC'} ? @{/(topic=${na.target()})} : (${t == 'KEEP_GOING'} ? @{/} : @{/review})">
+        <svg class="ed-icon ed-icon-lead" aria-hidden="true">
+            <use th:attr="href=${t == 'REVIEW_MISTAKES' ? '#i-target' : (t == 'PRACTICE_WEAK_TOPIC' ? '#i-book-open' : (t == 'REVIEW_DUE' ? '#i-flag' : '#i-flame'))}"></use>
+        </svg><span class="summary-next-label" th:text="${na.label()}">Действие</span>
+    </a>
+    <a class="btn secondary-btn" th:href="@{/}">Продолжить тренировку</a>
     <a class="btn secondary-btn" th:href="@{/settings}">Новая сессия</a>
     <a class="btn secondary-btn" th:href="@{/stats}">Аналитика</a>
-    <a class="btn secondary-btn" th:if="${!summary.mistakes.isEmpty()}" th:href="@{/}">Продолжить тренировку</a>
 </nav>
 
 <!-- Результаты по темам -->
@@ -98,13 +114,6 @@
     </ul>
 </section>
 
-<!-- Рекомендации -->
-<section class="card summary-recommendations" th:if="${!summary.recommendations.isEmpty()}">
-    <h2 class="summary-section-title">Рекомендации</h2>
-    <ul class="summary-recommendations-list">
-        <li th:each="rec : ${summary.recommendations}" class="summary-recommendation-item" th:text="${rec}">Рекомендация</li>
-    </ul>
-</section>
 </main>
 
 <!-- Шеринг и печать итогов. /session-summary НЕ грузит app.js, поэтому скрипт
@@ -134,10 +143,10 @@
           if (c.length >= 5) lines.push('- ' + clean(c[0].textContent) + ': ' + clean(c[2].textContent) + '/' + clean(c[1].textContent) + ' (' + clean(c[4].textContent) + ')');
         });
       }
-      var recs = document.querySelectorAll('.summary-recommendations-list li');
-      if (recs.length) {
-        lines.push('', 'Рекомендации:');
-        recs.forEach(function (li) { lines.push('- ' + clean(li.textContent)); });
+      var plan = document.querySelectorAll('.summary-next-label');
+      if (plan.length) {
+        lines.push('', 'Что дальше:');
+        plan.forEach(function (el) { lines.push('- ' + clean(el.textContent)); });
       }
       return lines.join('\n');
     }
