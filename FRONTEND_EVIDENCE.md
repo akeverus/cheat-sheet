@@ -384,3 +384,26 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 - **Разрешение:** DEC-003 новее, авторитетнее (finalization-round source-of-truth `FRONTEND_DECISIONS.md`, ADOPTED) и прямо resolved этот самый вопрос (A vs B → B) → **PROC-07=B идёт**. Жалоба на «любительский» honored не отказом от рельса, а качеством: `.focus-aside` = вспомогательный рельс ТОЛЬКО ≥1080px (сессия-мета/хоткеи/стрик), главная колонка вопроса+опций доминирует; <1080px — текущее stacked/topbar-поведение (не воссоздаём вертикальный сплит как главный флоу). Повторно спрашивать не нужно — пользователь уже ответил на этот вопрос.
 
 **PROC-07 → IN_PROGRESS.** Реализация (следующий тик, live iterative edit→cp→screenshot): tokens full-width → `.focus-training` grid `[main 66ch][.focus-aside ~280px]` ≥1080px → перенос хоткей-легенды+меты в рельс → result.html рельс «разбор глубже» → live-QA 1440/1728/1920/2560 обе темы. Правки через `cp source→build/resources/main` (НЕ отдельный gradle при живом bootRun = wedge).
+
+## EV-PROC-007 — Wide-layout модель B: focus full-width + правый рельс (R0.183, 2026-07-16)
+
+**Задача:** PROC-07 (DEC-003=B). Реализован правый рельс `.focus-aside` на focus-странице для широких экранов + доводка ширины. `base.css` v=98→v=99.
+
+**Реализация:**
+- `focus-training.html` — `<aside class="focus-aside focus-session-rail">` вынесен из `.focus-topbar` в прямые дети `.focus-training` (topbar теперь несёт только `.question-zone-head` — chip режима + hint потока). Весь контент рельса сохранён (progress-line, `.session-progress-track` с aria, today-chip, `.rail-finish`-форма).
+- `base.css` `@media (min-width: 1080px)` с гейтом `:has(.session-progress-track)`.
+
+**Ключевые решения:**
+- **Гейт `:has(.session-progress-track)`** — правая колонка включается ТОЛЬКО в активной сессии (progressbar рендерится `th:if interviewSession!=null`). Вне сессии (TRAINING browse, где рельс = только today-chip) страница остаётся как была → НЕ воскрешаем «одинокую фишку в мёртвом жёлобе» (прямая прошлая претензия пользователя). Браузер без `:has()` — на прежнем стеке (PE).
+- **Ширина: НЕ edge-to-edge.** Замером на 2560 обнаружено: при full-width `.ed-page` главная зона растягивается до 2017px, но опции капятся на `--max-width-options` (960) → ~1000px мёртвого центра между опциями и рельсом (тот же анти-паттерн жёлоба). Одобренное превью B показывало ОГРАНИЧЕННУЮ главную колонку (~66ch) + рельс, не 2000px-растяжку → правильное прочтение: наполнять уже-капнутый на `--max-width-page` (1280) `.ed-page`; `.focus-training` тянется на всю его ширину, делится на ~800 main + ~288 rail. Шире прежних 960 («шире + рельс»), консистентно с общей app-шириной 1280, без симметричных воидов сверх неё. Проза (hero) держит `--measure` внутри зоны; опции наполняют главную колонку до рельса (их `--max-width-options` > ширины колонки → cap не срабатывает, воида справа нет).
+
+**Live-QA (chrome-devtools, dev-профиль, реальная EXAM-сессия, обе темы):**
+- **900px** → `.focus-training` display:block, maxW 960 центрирован; рельс static в потоке ВЫШЕ вопроса (стек head→рельс→вопрос — как было до правки, регресса нет); 0 h-overflow.
+- **1728px** (light+dark) → grid `[main][rail]`; рельс sticky, border-left, контент «1/20 + teal прогресс-бар + 9818 к повтору + Завершить сессию»; teal-ring на выбранной опции; 0 h-overflow.
+- **2560px** → `.ed-page` 1280 centered (как всё приложение); grid 784 main + 288 rail; опции наполняют 784; deadGap=48px = column-gap (не воид); 0 h-overflow.
+- **0 console-ошибок** на всех вьюпортах.
+- **result.html не задет** (правила scoped к `.focus-page`; maxW 1152 = `--max-width-result`, 0 overflow).
+
+**Верификация тестов:** ассерты `TemplateFragmentContractTest` (`contains`/`doesNotContain` по строкам focus-training.html) верифицированы инспекцией — весь контент aside сохранён при переносе, запрещённых строк не добавлено. Live-bootRun успешно рендерит `/` → Thymeleaf валиден, `PublicEndpointsSmokeTest` зелёный. Gradle-прогон контракт-теста ОТЛОЖЕН на bootRun-stopped тик (wedge).
+
+**Отложено (мелкий follow-up, НЕ блокер):** result.html `.focus-aside` «разбор глубже» (п.4 acceptance) — самостоятельный срез; хоткей-легенда пока в главной колонке (рядом с submit — логично, главная колонка доминирует).

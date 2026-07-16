@@ -3028,42 +3028,82 @@ html[data-design] .summary-tools-status {
    - СТРАЖ: новая секция в шаблоне без явного grid-column-правила упадёт
      в первую свободную ячейку сетки — при добавлении секций прописывать area.
    =========================================================================== */
+
+/* ===========================================================================
+   PROC-07 (DEC-003=B) — FOCUS full-width + правый рельс .focus-aside (брейк 1080px).
+   Мандат mockup DESIGN.md: хром/структура тянутся край-в-край (только --page-gutter,
+   без центрирующих max-width-пустот); ширину крупных экранов наполняет РЕАЛЬНЫЙ
+   контент рельса (сессия/прогресс/стрик/завершить), а НЕ растянутая проза. Проза
+   держит меру по ch внутри главной зоны. Узкий экран (<1080) не трогаем — там рельс
+   обычный блок в потоке (head → рельс → вопрос), стек как раньше.
+   Переподтверждено пользователем 2026-07-16 с полным контекстом истории.
+   =========================================================================== */
+@media (min-width: 1080px) {
+  /* ГЕЙТ :has(.session-progress-track) — правая колонка включается ТОЛЬКО в
+     активной сессии (progressbar рендерится th:if interviewSession!=null). Вне
+     сессии (TRAINING browse) рельс содержит лишь today-chip → правая колонка
+     выродилась бы в «одинокую фишку в мёртвом жёлобе» (ровно прежняя претензия
+     пользователя). Там страница остаётся как была (focus-training центрирован
+     на --max-width-focus, рельс — тонкий блок в потоке сверху). Браузер без
+     :has() тоже остаётся на прежнем стеке (PE).
+
+     Ширина: НЕ уходим в edge-to-edge (иначе опции капятся на --max-width-options,
+     а между ними и рельсом зияет мёртвый центр на >1900px). Вместо этого наполняем
+     уже-капнутый на --max-width-page (1280) .ed-page: focus-training тянется на всю
+     его ширину и делится на главную зону (~800) + рельс (~288). Это шире прежних
+     960 (одобренное превью B: «шире + рельс»), но без симметричных воидов сверх
+     общей app-ширины 1280 и без сплошной растяжки прозы. Проза держит меру внутри
+     зоны; структура (опции-ряды) наполняет главную колонку до рельса. */
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) {
+    max-width: none;
+    margin: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 18rem);
+    column-gap: clamp(1.5rem, 3vw, 3rem);
+    align-items: start;
+  }
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) > :not(.focus-aside) {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  /* Правый рельс: вертикальная карта (прогресс + стрик + завершить), hairline
+     слева, sticky при прокрутке — наполняет правый жёлоб реальным контентом. */
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    position: sticky;
+    top: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin: 0;
+    padding-left: clamp(1.5rem, 2vw, 2.5rem);
+    border-left: var(--rule-weight, 1px) solid var(--color-border-primary);
+  }
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside > * { margin: 0; }
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside .session-progress-track { width: 100%; }
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside .rail-finish-btn { width: 100%; }
+
+  /* Проза (hero-вопрос) держит меру ВНУТРИ главной зоны — крупный сериф не должен
+     тянуться на все ~800px. Опции/структура наполняют главную колонку до рельса
+     (их --max-width-options > ширины колонки → cap не срабатывает, мёртвого поля
+     справа нет). */
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-question { max-width: var(--measure); }
+}
+
 @media (min-width: 1200px) {
   /* Жёлоб страницы растёт с экраном: 48px на 1200 → ~69px на 1728 → 80px cap.
      Един для шапки/прогресса/контента (см. --page-gutter в :root). */
   html[data-design] { --page-gutter: clamp(2rem, 4vw, 5rem); }
 
-  /* --- FOCUS: «широкая колонка + верхний бар» (выбор пользователя).
-     Прежде тут был 2-col grid с правой sticky-рейкой: вне сессии рейка
-     вырождалась в одинокий «сегодня»-чип в мёртвом правом жёлобе — пользователь
-     назвал раскладку любительской. Теперь — одна полноширинная колонка
-     (вопрос/опции/разбор край-в-край) с горизонтальным мета-баром сверху:
-     eyebrow+подсказка слева ↔ статус сессии/«сегодня» справа. */
-  html[data-design] .focus-page .focus-topbar {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--space-5) var(--space-8);
-    flex-wrap: wrap;
-    padding-bottom: var(--space-4);
-    margin-bottom: var(--space-6);
-    border-bottom: var(--rule-weight) solid var(--color-border-primary);
-  }
-  /* Лид (eyebrow + подсказка) слева; маржину низа гасит padding бара. */
-  html[data-design] .focus-page .focus-topbar > .question-zone-head { margin-bottom: 0; }
-  /* Рейка справа — горизонтальный кластер (была вертикальная колонка). */
-  html[data-design] .focus-page .focus-topbar > .focus-session-rail {
-    display: flex; flex-direction: row; align-items: center;
-    flex-wrap: wrap; gap: var(--space-3) var(--space-5);
-    margin-left: auto;
-  }
-  /* В горизонтальном баре блоки рейки без стек-маржинов; трек — фикс. ширина
-     (full-width 2px-полоса в строке смотрелась бы оборванной). */
-  html[data-design] .focus-page .focus-topbar .focus-progress-line,
-  html[data-design] .focus-page .focus-topbar .session-progress-track,
-  html[data-design] .focus-page .focus-topbar .rail-finish,
-  html[data-design] .focus-page .focus-topbar .today-chip { margin: 0; }
-  html[data-design] .focus-page .focus-topbar .session-progress-track { width: 8rem; }
+  /* FOCUS wide-layout — правый рельс .focus-aside (PROC-07, DEC-003=B, переподтверждено
+     пользователем 2026-07-16 с полным контекстом истории) — реализован в отдельном
+     @media (min-width: 1080px) ВЫШЕ (grid на --max-width-page, БЕЗ edge-to-edge). Здесь
+     .focus-topbar остаётся лишь узкой мета-полосой головы вопроса (chip+hint) в главной
+     колонке. */
+  html[data-design] .focus-page .focus-topbar { margin-bottom: var(--space-5); }
 
   /* Опции по умолчанию остаются одноколоночными: для обучающих MCQ это честнее,
      потому что длинный вариант не получает лишнюю визуальную важность в 2×2.
