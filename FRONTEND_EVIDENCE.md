@@ -428,3 +428,25 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 - `stats.js` v=15: build == source (не завязан на app.js/UX-13-entanglement).
 
 **Вывод:** дефект «аналитика только показывает числа» не воспроизводится — Instrument-порт уже добавил actionable next-step-блок, аналогичный `session-summary` nextActions. Как UX-01/02/03 — замечание было против мокапа/старого дизайна. UX-16 → CLOSED. `StatsApiService` доработки не потребовал.
+
+## EV-REVIEW-03 — Mobile sticky submit-панель (R0.189, 2026-07-16)
+
+**Задача:** ревью #3 / макет Instrument `focus-question.html` (`.state--active .submit-row` fixed bottom + safe-area). На мобиле главное действие MCQ-ответа = закреплённая нижняя панель, а не кнопка, тонущая под длинным списком вариантов. Открытый пункт фикс-волны; прод ранее сбросил старый fixed-footer в static (стр.960).
+
+**Реализация (чистый `base.css`-срез, +`head.html` ?v; app.js/шаблоны/фрагменты НЕ тронуты):**
+- `@media (max-width: 600px)`:
+  - `html[data-design] .focus-page #interview-form [data-ui-fragment="training-actions"]:not(.is-answered) .action-footer` → `position: fixed; left/right/bottom: 0; z-index: var(--z-sticky)` (10 — ниже back-to-top `--z-dropdown:20` и модалок `--z-modal:100`); `padding: var(--space-3) var(--page-gutter)`; `padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom))`; `background: var(--color-bg-primary)`; `border-top` + `box-shadow: var(--shadow-md)`.
+  - Submit уже `width:100%` на ≤600px (стр.1306) — full-width в панели без доп. правил.
+  - Клиренс: `.focus-page:has(...:not(.is-answered)) .focus-training { padding-bottom: calc(var(--space-9) + env(safe-area-inset-bottom)) }` (96px) — контент (последний — «Не знаю») не прячется за фикс-панелью.
+  - Back-to-top: `.focus-page:has(...:not(.is-answered)) .back-to-top { bottom: calc(var(--space-5) + 4.5rem) }` — приподнята над панелью, нет наезда.
+
+**Ключевое решение — гейт `:not(.is-answered)`:** ПОСЛЕ ответа app.js метит `[data-ui-fragment=training-actions]` классом `.is-answered` и прячет его (стр.~1005), а `#next-question` уезжает в зону разбора. Значит фикс-панель живёт ТОЛЬКО в pre-answer-состоянии — идентичном во ВСЕХ версиях app.js (v=68 build / v=70 source). → срез НЕ завязан на пост-ответный флоу UX-13, безопасно валидировать против текущей live-сборки. Скоуп — только основной `#interview-form` (флешкарта/study-confirm — свои состояния, не тронуты). Desktop (>600px) не тронут (`.action-footer` static; `@media (min-width: 768/1080)` отдельны).
+
+**Live-QA (chrome-devtools, device-emulation, dev-сессия MARATHON, обе темы):**
+- vw=500 (OS-минимум окна ~485–500px; истинный 375 недостижим, но брейкпойнт `<600` активен — правило работает).
+- Computed: `.action-footer` `position: fixed`, `z-index: 10`, `border-top: 1px`, bg по теме (dark `oklch(0.19 …)` / light paper), `padding-bottom: 12px` (space-3; safe-area=0 в эмуляторе); прижата к низу (`bottom == innerHeight == 720`); submit full-width (437 в панели 485).
+- Клиренс: на низу скролла (scrollY=606) «Не знаю» (vp 470–504) и последняя опция (bottom 446) — полностью НАД панелью (top 647) = не скрыты. `.focus-training padding-bottom: 96px`.
+- **0 console-сообщений**, **0 h-overflow**.
+- Скрины: `.qa-artifacts/review3-sticky-submit-mobile-{dark,dark-bottom,light}.png`.
+
+**Верификация тестов:** правка чисто CSS + `head.html` ?v-bump → `TemplateFragmentContractTest`/gradle не затрагиваются (шаблоны/фрагменты не менялись). Закрывает ревью #3.

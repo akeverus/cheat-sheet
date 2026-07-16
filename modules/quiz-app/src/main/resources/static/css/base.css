@@ -1304,6 +1304,35 @@ html[data-design] .empty-actions { display: flex; gap: var(--space-3); justify-c
   html[data-design] .focus-page #interview-submit,
   html[data-design] .flashcard-reveal-btn,
   html[data-design] .action-footer button[type="submit"] { width: 100%; }
+
+  /* Ревью #3 / макет Instrument (focus-question.html: `.state--active .submit-row`
+     fixed bottom + safe-area): на мобиле главное действие MCQ-ответа — закреплённая
+     нижняя панель, а не кнопка, тонущая под длинным списком вариантов (палец у
+     нижнего края экрана). Гейтим `:not(.is-answered)` — ПОСЛЕ ответа app.js метит
+     training-actions `.is-answered` и прячет его (см. ~стр.1005), а #next-question
+     уезжает в зону разбора → фикс-панель живёт ТОЛЬКО в pre-answer-состоянии
+     (идентично во всех версиях app.js, без завязки на пост-ответный флоу). Скоуп —
+     только основной #interview-form (флешкарта/study-confirm — свои состояния). */
+  html[data-design] .focus-page #interview-form
+      [data-ui-fragment="training-actions"]:not(.is-answered) .action-footer {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-sticky);
+    margin: 0; padding: var(--space-3) var(--page-gutter);
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+    background: var(--color-bg-primary);
+    border-top: var(--rule-weight) solid var(--color-border-primary);
+    box-shadow: var(--shadow-md);
+  }
+  /* Клиренс: контент (последний — «Не знаю») не должен прятаться за фикс-панелью. */
+  html[data-design] .focus-page:has(#interview-form
+      [data-ui-fragment="training-actions"]:not(.is-answered)) .focus-training {
+    padding-bottom: calc(var(--space-9) + env(safe-area-inset-bottom));
+  }
+  /* Кнопка «наверх» (fixed, z-dropdown) не должна наезжать на панель — приподнимаем
+     её над панелью, пока фикс-сабмит активен. */
+  html[data-design] .focus-page:has(#interview-form
+      [data-ui-fragment="training-actions"]:not(.is-answered)) .back-to-top {
+    bottom: calc(var(--space-5) + 4.5rem);
+  }
 }
 
 /* ===========================================================================
