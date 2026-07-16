@@ -664,3 +664,22 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **Отдельно:** `[aria-controls="extra-analysis-content"]` «Похожие вопросы» — самостоятельный сосуществующий toggle (related questions), не конфликтует с «Подробнее».
 
 **UX-13 → DONE.** Первый пункт консолидированной live-QA фазы закрыт.
+
+---
+
+## EV-FLOW-01B-202 — FLOW-01b resume-флоу end-to-end live-QA (R0.202, 2026-07-16, chrome-devtools :8080, профиль qa)
+
+**FLOW-01b (UI паузы/возобновления) — VERIFIED-CLEAN end-to-end.** Live-верификация resume-флоу на перекомпилированном приложении (base.css v=107).
+
+**Флоу:**
+1. **Старт сессии:** POST /start `mode=MARATHON` → focus-страница с активной MARATHON-сессией. Кнопка «Пауза» (`form[action=/pause]`) **видна**; resume-баннер **отсутствует** → гейт `interviewSession != null` (пауза) / `== null` (баннер) работает обоюдно.
+2. **Прогресс:** ответ на вопрос («Неверно — правильный ответ B»), index→1; кнопка «Пауза» доступна и в post-answer состоянии.
+3. **Пауза:** POST /pause → редирект на `/` + resume-баннер **«Есть незавершённая сессия · 1 из 3 отвечено · Продолжить»** (`role=region`, `aria-label=Незавершённая сессия`); кнопка «Пауза» **исчезла** (активной сессии нет).
+4. **Возобновление:** POST /resume → сессия **восстановлена** (MARATHON активен, «Пауза» вернулась, баннер исчез).
+5. **One-time consumption:** `SELECT count(*) FROM paused_session` = **0** после resume → строка потреблена и очищена (`PauseService.resume` clear).
+
+**Обе темы:** dark — баннер bg `oklch(0.285 0.038 205)` (teal-tint accent-wash на dark paper), border `oklch(0.8 0.115 205)` (teal-signal hue205), кнопка «Продолжить» teal-fill `oklch(0.8 0.115 205)`. Instrument-консистентно.
+
+**Консоль:** 0 error/warn/issue за весь pause→resume флоу.
+
+**FLOW-01 полностью закрыт** (01a backend R0.175 + 01b UI R0.199 + resume-флоу live-QA R0.202).
