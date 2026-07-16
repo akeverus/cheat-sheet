@@ -620,3 +620,21 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **→ Гейты `cleanBuild` + `fullTests` = true.** Честно заслужены: clean build против свежего рабочего дерева *есть* перекомпиляция (не провизорно, в отличие от responsive/accessibility, которые ждут re-run против recompiled/prod-app).
 
 **Остаток bootRun-OFF код-волны:** только FLOW-04 (UI-баннеры recoverable). Далее — один bootRun-up для консолидированной live-QA (UX-13 faithful, FLOW-01b resume-флоу, BP-STATS-1 BP=100, PERF-02 prod-like) + флип оставшихся gate → FINALIZED.
+
+---
+
+## EV-FLOW-004B — серверный expired-session autosave, завершение FLOW-04 (R0.200, 2026-07-16)
+
+**FLOW-04 закрыт полностью (3 слайса).** Серверный gap (dedicated expired-session resume), ранее BLK-BOOTRUN и «пересекается с FLOW-01», закрыт переиспользованием persistence паузы — теперь, когда FLOW-01 DONE.
+
+**Проблема:** HTTP-session single-user хранится в памяти. При таймауте/инвалидации активная сессия сессионного режима (EXAM/MARATHON/STUDY) молча терялась — пользователь возвращался на стартовый экран, будто прогресса не было. `/api/*` CSRF-exempt → истёкшая сессия не давала даже 403, POST проходил статлессно (200) с фрозен-прогрессом → мягкий тупик.
+
+**Решение (commit `2b41afdc`):**
+- `InterviewSessionExpiryListener implements HttpSessionListener`: в `sessionDestroyed` читает `InterviewSession` из уничтожаемой сессии (`httpSessionStateService.getInterviewSession`); если non-null, `!finished`, `index > 0` → `pauseService.pause(session)` автосохраняет в `paused_session`. Пользователь на `/` видит тот же resume-баннер, что и после явной паузы (FLOW-01b) → dedicated resume-UX = «сохранено?» из acceptance.
+- **Гард `index > 0`** — не поднимать баннер для сессий без ответов (открыл и ушёл): восстанавливать нечего. Явная пауза такого гарда не имеет намеренно.
+- **Best-effort:** `RuntimeException` из автосейва глотается (log.warn) — сбой не ломает штатное уничтожение сессии. Событие приходит из фонового reaper-потока контейнера (не request-thread); `PauseService` пишет через `PausedSessionRepository` JdbcTemplate (auto-commit) → ambient-транзакция не нужна.
+- `SessionLifecycleConfig` — **ЯВНАЯ** регистрация через `ServletListenerRegistrationBean` (не полагаемся на авто-детект бинов-листенеров; context7 был недоступен для подтверждения авто-регистрации → однозначная явная регистрация).
+
+**Тесты:** `InterviewSessionExpiryListenerTest` — 5 кейсов (autosave активной с прогрессом → `pause()` вызван; гарды `index==0`/`finished`/`null` → `pause()` НЕ вызван; `swallowsAutosaveFailure` → исключение из `pause()` не пробрасывается). `PublicEndpointsSmokeTest` поднимает полный Spring-контекст с новым бином (регистрация не ломает старт). Полный `./gradlew build` — BUILD SUCCESSFUL (test + jacocoTestCoverageVerification + ArchUnit `check`).
+
+**FLOW-04 → DONE.** Три слайса: (1) offline/error submit recovery R0.171 (EV-FLOW-004); (2) error.html per-status recoverable; (3) expired-session autosave (этот). **Все P1 MUST-фичи закрыты.** Остаётся consolidated live-QA autosave-флоу (истечение → resume-баннер) на волновом уровне (bootRun ON).
