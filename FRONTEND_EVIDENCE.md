@@ -537,3 +537,24 @@ Live-QA (emulate Offline → выбрать вариант → submit; POST не
 **SEO=50 (все поверхности) — by design, НЕ дефект, вне gate:** провалы `is-crawlable` (страница заблокирована от индексации — `noindex` осознан: личный учебный инструмент, не публичный веб-контент) + `meta-description` (публичная SEO-мелочь, нерелевантна). План таргетит только a11y=100+BP=100. SEO не трогаем.
 
 **Gate `accessibility` НЕ флипнут** — a11y=100 подтверждён на 3 core-поверхностях desktop, но финальный gate требует: остальные поверхности (result/session-summary/error — покрыты per-surface R0.151-161), mobile-device аудит, и re-run против ПЕРЕкомпилированного app. Провизорный проход, как responsive.
+
+---
+
+## EV-CNCLEAN-195 — Console/network audit основных поверхностей (R0.195, 2026-07-16)
+
+**Цель:** release-gate `consoleNetworkClean` — систематический захват console-сообщений + сетевых сбоев (404/blocked/5xx) по всем always-reachable поверхностям. chrome-devtools `list_console_messages` + `list_network_requests`, read-only → gradle не нужен.
+
+**Результаты (desktop 1280):**
+| Поверхность | Console | Network | Вердикт |
+|---|---|---|---|
+| `/` (focus) | **0 сообщений** | **13/13 [200]** | ✅ CLEAN |
+| `/settings` | **0 сообщений** | **12/12 [200]** | ✅ CLEAN |
+| `/stats` | 2 (оба = BP-STATS-1) | **12/12 [200]** | ⚠️ только BP-STATS-1 |
+
+**Network — все запросы [200] на всех 3 поверхностях**, включая: `tokens.css?v=65`, `base.css?v=106`, `app.js?v=68` (подтверждает: live-build держит app.js **v=68**, source-scripts.html=v=70 → app.js НЕ cp-синхронизирован, консистентно с UX-13-entanglement-правилом), `stats.js?v=15`, `chart.umd.min.js` (200), highlight.js/mermaid/Google-шрифты (все 200), `/api/streak` (200). Ни одного 404/blocked-ресурса.
+
+**Console:** `/` и `/settings` — абсолютно чисты (0 сообщений). `/stats` — ровно 2 сообщения, оба = **BP-STATS-1** (R0.194): `[error] Connecting to 'https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js.map' violates … "connect-src 'self'". Blocked` + `[issue] CSP blocks some resources (count:1)`. Подтверждено: CSP имеет явную `connect-src 'self'` директиву без jsdelivr → sourcemap-fetch блокируется. Сам `chart.umd.min.js` грузится (200) — блокируется только `.map` (pre-flight connect, в network-списке не появляется). Никаких НОВЫХ находок.
+
+**Консолидация блокеров:** весь остаточный console/network-долг на primary-поверхностях = ОДНА BP-STATS-1. Тот же 1-строчный CSP-фикс (`connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com` в `SecurityConfig.java`) закроет **сразу два** gate: `consoleNetworkClean` И `best-practices=100` на /stats.
+
+**Gate `consoleNetworkClean` НЕ флипнут** — заблокирован единственной BP-STATS-1 (Java/gradle, gated на bootRun-stopped тик); плюс финал требует result/session-summary/error (console-clean per-surface в R0.151-161) + re-run против перекомпилированного app (app.js v=68→70). Провизорный проход.
