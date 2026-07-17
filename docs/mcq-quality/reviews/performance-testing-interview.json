@@ -1,7 +1,7 @@
 {
   "topic_slug": "performance-testing-interview",
   "round": 8,
-  "status": "IN-PROGRESS — c1+c2 применены. Далее c3 (length-balance still-long correct + code/paren-паритет дистракторов ~30 блоков), c4 (skel-harmonize), c5/FINAL (BATCHED blind acceptance).",
+  "status": "IN-PROGRESS — c1+c2+c3 применены, ВСЕ 12 parity зелёные. Далее c4 (skel-harmonize: 25 блоков correct-unique separability, доминирует semi), c5/FINAL (BATCHED blind acceptance).",
   "blocks_total": 42,
   "profile": "EXTREME STRONG-raw (близнец cassandra/elasticsearch): correct изначально энциклопедии ~40 слов ср (max 81), code-rich, самый длинный/детальный в 41/42; дистракторы смешанные — ~11 блоков с богатыми дистракторами (Q12/14/24/25/26/27/28/32/36/37/38), ~28 с короткими карикатурами 8-16 слов. Крупный файл (42 блока).",
   "baseline_gates_raw": {
@@ -20,5 +20,8 @@
   "c2_done": "109 distractor enrich (короткие карикатуры 8-16сл → реальные perf-термы в ложной рамке, misconception сохранён, де-карикатура, ~длина correct, +code/паренс) + 3 correct дотрим (Q38/Q40/Q42, самые длинные) + Q24-A dup-n-gram разорван. Gates после c2: CORRECT_LONGEST 0.952→0.667, OPTION_LENGTH 6.0→2.24, CORRECT_WRONG 2.225→1.223, DETAIL 0.952→0.905, STYLE 0.952→0.69 (len 0.69/code 0.60), DUPLICATE→0 PASS, ABSOLUTE 0.151 ok, SENTENCE 1 PASS, POS ok, SOURCE ok.",
   "c2_gates": "PASS: SENTENCE 1, DUPLICATE 0, ABSOLUTE 0.151, POS dist 1.1/seq 4, SOURCE ok. FAIL (остаток c3): CORRECT_LONGEST 0.667, OPTION_LENGTH 2.24 (18 блоков >1.35), CORRECT_WRONG 1.223, DETAIL 0.905 (38/42 доминируют по оси W/C/P), STYLE 0.69.",
   "c3_todo": "Диагностика per-block: W+N SOLE-LONG (correct ещё длиннее, worst Q40 W+18/Q22 W+17/Q12 W+15/Q34 W+12/Q42 W+12/Q5 W+11/Q38 W+10) → трим correct + bump самый короткий дистрактор до correct/1.35. Code-gap C+N (Q18 C+8/Q25 C+8/Q30 C+7/Q32 C+5/Q4 C+4/Q17 C+4/Q20 C+4/Q21 C+4/Q28 C+4/Q31 C+4/Q36 C+4...) → +code-термы дистракторам. Paren-gap P+N (Q25 P+9/Q26 P+9/Q18 P+8/Q15 P+5/Q28 P+5/Q36 P+5/Q37 P+5/Q42 P+5...) → +скобочные пояснения дистракторам. Правило: в каждом доминируемом блоке довести сильнейший дистрактор до detail-twin correct (≈W, ≥C-1, ≥P-1) + все дистракторы ≥ correct/1.35 для OLR.",
-  "commits": "4ff12f73 (c1) → <c2 WIP>"
+  "c3_done": "Балансировка длины/деталей (c3+c3b+c3c+c3d, 4 под-прохода): correct'ы приведены к умеренному профилю (moderate length ~28сл, unbacktick/de-paren кода/скобко-плотных Q17/18/25/26/28/30/31, дотрим в середину диапазона), дистракторы добиты по code/paren-паритету и длине. ВСЕ 12 parity PASS: CORRECT_LONGEST 0.024, OPTION_LENGTH 1.35 (0 блоков >1.35), CORRECT_WRONG 1.042, SENTENCE 1, DETAIL 0.333, ABSOLUTE 0.23 (у края — дистракторы абсолютнее, least-absolute проверить в blind), POS dist 1.1/seq 4, DUPLICATE 0, SOURCE ok, STYLE 0.302 (len 0.19/code 0.30). correct/label/order неизменны.",
+  "c3_gates": "12/12 PASS. STYLE code-guess решён (0.76→0.30), len-guess (0.98→0.19).",
+  "c4_todo": "skel-harmonize: 25/42 блоков correct-unique separability (доминирует semi=True — correct с `;` в перечислениях против простых дистракторов; также dash-unique Q19/25/29, op-prose-unique Q18/28, colon-false-unique, paren-false-unique). Фикс: довести один дистрактор до пунктуационного профиля correct (свап `,`/`.`/`—`→`;` или добавить клаузу) в каждом блоке. Затем c5 BATCHED blind (seed, shuffle key-stripped, ≤3 concurrent, 2 корректност-ревьюера + form-adversary) + deterministic form-heuristics (pick-longest/most-paren/least-absolute/digit/most-code/true-separability).",
+  "commits": "4ff12f73 (c1) → a4387593 (c2 WIP) → <c3 12/12-parity-green>"
 }
