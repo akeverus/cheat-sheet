@@ -17,6 +17,8 @@ import lombok.Builder;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Clock;
+
 /**
  * Общая логика работы с HTTP-сессией интервью, используемая обоими контроллерами
  * (API и MVC) для устранения дублирования.
@@ -29,9 +31,26 @@ public class InterviewSessionSupport {
     InterviewService interviewService;
     HttpSessionStateService httpSessionStateService;
     AttemptRecorder attemptRecorder;
+    Clock clock;
 
     public InterviewSession getSession(HttpSession session) {
         return httpSessionStateService.getInterviewSession(session);
+    }
+
+    /**
+     * Фиксирует момент показа текущего вопроса активной сессии (для измерения
+     * времени ответа, Фаза 4). Вызывается при рендере страницы вопроса. Без
+     * сессии (TRAINING/browse) — no-op: время ответа там не измеряется.
+     *
+     * @param session          HTTP-сессия
+     * @param interviewSession активная сессия интервью (может быть {@code null})
+     */
+    public void markQuestionServed(HttpSession session, InterviewSession interviewSession) {
+        if (interviewSession == null) {
+            return;
+        }
+        interviewSession.markQuestionServed(clock.millis());
+        httpSessionStateService.setInterviewSession(session, interviewSession);
     }
 
     /**
@@ -70,15 +89,20 @@ public class InterviewSessionSupport {
                 filter,
                 submission.confidence()
         );
+        // Время ответа (think-time): дельта от показа вопроса до сабмита. Потребляем
+        // ДО applySessionProgress (которое сдвинет сессию к следующему вопросу).
+        Integer responseTimeMs = interviewSession != null
+                ? interviewSession.takeResponseTimeMs(clock.millis())
+                : null;
         applySessionProgress(interviewSession, result, session);
         // Построчный лог попытки (Фаза 2). Не критичный путь — журнал не должен
-        // ронять ответ, поэтому обёрнут в try/catch. response_time пока не измеряется
-        // (появится вместе с метрикой avg-response-time).
+        // ронять ответ, поэтому обёрнут в try/catch.
         recordAttempt(
                 submission.questionId(),
                 AttemptOutcome.ofCorrect(result.correctAnswer()),
                 submission.confidence(),
                 submission.optionId(),
+                responseTimeMs,
                 session);
 
         return new AnswerContext(result, filter, interviewSession);
@@ -127,9 +151,10 @@ public class InterviewSessionSupport {
         if (interviewSession.getMode() == InterviewMode.STUDY) {
             interviewSession.switchToLearnPhase();
         }
+        Integer responseTimeMs = interviewSession.takeResponseTimeMs(clock.millis());
         httpSessionStateService.setInterviewSession(session, interviewSession);
         // Лог попытки «не знаю» (UNKNOWN, грейд 0, без выбранного варианта).
-        recordAttempt(questionId, AttemptOutcome.UNKNOWN, 0, null, session);
+        recordAttempt(questionId, AttemptOutcome.UNKNOWN, 0, null, responseTimeMs, session);
         return interviewSession;
     }
 
@@ -138,14 +163,14 @@ public class InterviewSessionSupport {
      * ответ уже применён (SM-2 + сессия), поэтому исключение журнала лишь логируем.
      */
     private void recordAttempt(long questionId, AttemptOutcome outcome, Integer memoryGrade,
-                               Long selectedOptionId, HttpSession session) {
+                               Long selectedOptionId, Integer responseTimeMs, HttpSession session) {
         try {
             attemptRecorder.record(
                     questionId,
                     outcome,
                     memoryGrade,
                     selectedOptionId,
-                    null,
+                    responseTimeMs,
                     session.getId());
         } catch (Exception e) {
             log.warn("Не удалось записать attempt для вопроса id={}: {}", questionId, e.getMessage());

@@ -75,6 +75,19 @@ public class InterviewSession implements Serializable {
     /** Текущая фаза в режиме FLASHCARD (QUESTION или REVEALED). */
     FlashcardPhase flashcardPhase;
 
+    /**
+     * Момент показа текущего вопроса (epoch-миллисекунды) — ставится при рендере
+     * страницы вопроса, потребляется при сабмите для измерения времени ответа
+     * (think-time). {@code null}, если вопрос ещё не показывался или метка уже
+     * потреблена. Не входит в конструкторы/builder — управляется только через
+     * {@link #markQuestionServed(long)} / {@link #takeResponseTimeMs(long)}.
+     */
+    @Getter(AccessLevel.NONE)
+    Long questionServedAtMillis;
+
+    /** Верхняя граница разумного времени ответа: 30 минут. Больше — вкладку забыли открытой. */
+    private static final long MAX_RESPONSE_TIME_MS = 30L * 60L * 1000L;
+
     /** История ответов в сессии (для итогов). */
     final List<AnswerRecord> answerHistory = new ArrayList<>();
 
@@ -111,6 +124,35 @@ public class InterviewSession implements Serializable {
         this.unknown = 0;
         this.studyPhase = (mode == InterviewMode.STUDY) ? StudyPhase.LEARN : null;
         this.flashcardPhase = (mode == InterviewMode.FLASHCARD) ? FlashcardPhase.QUESTION : null;
+    }
+
+    /**
+     * Фиксирует момент показа текущего вопроса (для измерения времени ответа).
+     *
+     * @param epochMillis текущее время в epoch-миллисекундах
+     */
+    public synchronized void markQuestionServed(long epochMillis) {
+        this.questionServedAtMillis = epochMillis;
+    }
+
+    /**
+     * Возвращает время ответа (мс) с момента показа вопроса и сбрасывает метку.
+     * {@code null}, если метки нет либо интервал вне разумных границ (отрицательный
+     * из-за рассинхронизации часов, либо &gt; 30 минут — вкладку оставили открытой).
+     *
+     * @param nowMillis текущее время в epoch-миллисекундах
+     * @return время ответа в мс или {@code null}
+     */
+    public synchronized Integer takeResponseTimeMs(long nowMillis) {
+        if (questionServedAtMillis == null) {
+            return null;
+        }
+        long elapsed = nowMillis - questionServedAtMillis;
+        questionServedAtMillis = null;
+        if (elapsed < 0 || elapsed > MAX_RESPONSE_TIME_MS) {
+            return null;
+        }
+        return (int) elapsed;
     }
 
     public synchronized int getTotal() {

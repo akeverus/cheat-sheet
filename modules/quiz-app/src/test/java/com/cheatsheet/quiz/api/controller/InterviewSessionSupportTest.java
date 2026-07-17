@@ -16,6 +16,9 @@ import com.cheatsheet.quiz.feature.interview.controller.InterviewSessionSupport;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
 import com.cheatsheet.quiz.feature.interview.service.review.AttemptRecorder;
 import jakarta.servlet.http.HttpSession;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +35,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -52,9 +56,14 @@ class InterviewSessionSupportTest {
 
     private InterviewSessionSupport support;
 
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-03-02T00:00:00Z"), ZoneOffset.UTC);
+
     @BeforeEach
     void setUp() {
-        support = new InterviewSessionSupport(interviewService, httpSessionStateService, attemptRecorder);
+        support = new InterviewSessionSupport(interviewService, httpSessionStateService, attemptRecorder, CLOCK);
+        // По умолчанию время ответа не измерено (метки показа нет) → null. Mockito
+        // иначе вернул бы 0 для Integer-метода, что исказило бы «неизмеренное».
+        lenient().when(interviewSession.takeResponseTimeMs(anyLong())).thenReturn(null);
     }
 
     @Test
@@ -84,6 +93,47 @@ class InterviewSessionSupportTest {
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
         // Фаза 2: реальный сабмит пишет попытку (WRONG, грейд=уверенность, выбранный вариант).
         verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.WRONG), eq(4), eq(3L), isNull(), any());
+    }
+
+    @Test
+    void processAnswerRecordsMeasuredResponseTime() {
+        AnswerResult answerResult = sampleAnswerResult(true);
+        when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
+        when(interviewSession.getTopic()).thenReturn("java");
+        when(interviewSession.getGroup()).thenReturn("core");
+        when(interviewSession.getImportantOnly()).thenReturn(false);
+        when(interviewSession.getOnlyWrong()).thenReturn(false);
+        when(interviewSession.getShuffle()).thenReturn(false);
+        when(interviewSession.getOrdered()).thenReturn(true);
+        when(interviewSession.isFinished()).thenReturn(false);
+        when(interviewSession.currentQuestionId()).thenReturn(10L);
+        when(interviewSession.getMode()).thenReturn(InterviewMode.MARATHON);
+        // Измеренное время ответа (think-time) прокидывается в лог попытки.
+        when(interviewSession.takeResponseTimeMs(anyLong())).thenReturn(4200);
+        when(interviewService.submitAnswer(eq(10L), eq(3L), any(InterviewFilter.class), eq(null)))
+                .thenReturn(answerResult);
+        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
+                10L, 3L, null, null, null, null, null, null, null
+        );
+
+        support.processAnswer(submission, session);
+
+        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.CORRECT), isNull(), eq(3L), eq(4200), any());
+    }
+
+    @Test
+    void markQuestionServedStampsClockAndPersists() {
+        support.markQuestionServed(session, interviewSession);
+
+        verify(interviewSession).markQuestionServed(CLOCK.millis());
+        verify(httpSessionStateService).setInterviewSession(session, interviewSession);
+    }
+
+    @Test
+    void markQuestionServedIsNoopWithoutSession() {
+        support.markQuestionServed(session, null);
+
+        verify(httpSessionStateService, never()).setInterviewSession(any(), any());
     }
 
     @Test

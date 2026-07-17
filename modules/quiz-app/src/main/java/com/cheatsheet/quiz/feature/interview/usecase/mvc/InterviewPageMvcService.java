@@ -61,6 +61,7 @@ public class InterviewPageMvcService {
                 weakTopics,
                 excludeQuestionId,
                 false,
+                session,
                 model
         );
     }
@@ -90,6 +91,7 @@ public class InterviewPageMvcService {
                 weakTopics,
                 excludeQuestionId,
                 true,
+                session,
                 model
         );
     }
@@ -154,6 +156,7 @@ public class InterviewPageMvcService {
             Boolean weakTopics,
             Long excludeQuestionId,
             boolean reviewMode,
+            HttpSession session,
             Model model
     ) {
         boolean weakTopicsPriority = Boolean.TRUE.equals(weakTopics);
@@ -165,6 +168,12 @@ public class InterviewPageMvcService {
                 excludeQuestionId
         );
         modelAttributeMapper.applyFocusPageState(model, pageState, reviewMode);
+        // Метка показа вопроса для измерения времени ответа (Фаза 4): только когда
+        // есть активная сессия и реальный вопрос на экране. Reload страницы
+        // переставляет метку — think-time считается от последнего показа.
+        if (interviewSession != null && pageState.current() != null && pageState.current().isPresent()) {
+            sessionSupport.markQuestionServed(session, interviewSession);
+        }
         model.addAttribute("aiEnabled", false);
         // FLOW-01b: приостановленная сессия для resume-баннера. Баннер показываем
         // только когда активной сессии нет (interviewSession == null) — гейт в шаблоне.

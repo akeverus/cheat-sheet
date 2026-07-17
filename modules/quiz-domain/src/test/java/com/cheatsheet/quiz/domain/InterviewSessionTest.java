@@ -122,4 +122,37 @@ class InterviewSessionTest {
         assertThat(session.isFinished()).isTrue();
         assertThat(session.getTotal()).isZero();
     }
+
+    @Test
+    void takeResponseTimeMsReturnsElapsedAndClearsMark() {
+        InterviewSession session = trainingSession();
+        session.markQuestionServed(1_000_000L);
+
+        assertThat(session.takeResponseTimeMs(1_004_200L)).isEqualTo(4200);
+        // Метка потреблена — повторный вызов уже null.
+        assertThat(session.takeResponseTimeMs(1_004_300L)).isNull();
+    }
+
+    @Test
+    void takeResponseTimeMsReturnsNullWithoutMark() {
+        assertThat(trainingSession().takeResponseTimeMs(1_000_000L)).isNull();
+    }
+
+    @Test
+    void takeResponseTimeMsRejectsNegativeAndAbsurdIntervals() {
+        InterviewSession negative = trainingSession();
+        negative.markQuestionServed(2_000L);
+        assertThat(negative.takeResponseTimeMs(1_000L)).isNull(); // часы уехали назад
+
+        InterviewSession absurd = trainingSession();
+        absurd.markQuestionServed(0L);
+        // 31 минута > лимита 30 мин — вкладку забыли открытой.
+        assertThat(absurd.takeResponseTimeMs(31L * 60L * 1000L)).isNull();
+    }
+
+    private static InterviewSession trainingSession() {
+        return new InterviewSession(
+                InterviewMode.TRAINING, List.of(1L, 2L),
+                null, null, null, null, Instant.now());
+    }
 }
