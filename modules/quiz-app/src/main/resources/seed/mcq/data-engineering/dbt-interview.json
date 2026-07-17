@@ -9,19 +9,6 @@
           "question_text": "Что такое `dbt (data build tool)`?",
           "options": [
             {
-              "text": "`dbt` — фреймворк для transformations внутри data warehouse: модели описываются на `SQL` с `Jinja`-шаблонами, а `dbt` компилирует их и выполняет в правильном порядке зависимостей. Добавляет тесты, автодокументацию и lineage поверх обычного `SQL`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`dbt` строит DAG из ссылок `ref()`, поэтому модели создаются в нужной очерёдности; первый язык — именно `SQL`, а не Python или Java, что открывает трансформации аналитикам.",
-                "example": "Например, в `Snowflake` пишешь `models/marts/customer_orders.sql` с `SELECT ... FROM {{ ref('stg_orders') }}`, и `dbt run` сам делает `CREATE TABLE` в верном порядке.",
-                "when_to_apply": "Применяют для трансформаций в `Snowflake`, `BigQuery`, `Redshift`, `Databricks`, `PostgreSQL`, `ClickHouse` — везде, где есть мощный warehouse под ELT.",
-                "edge_cases": "Встроенные материализации (`view`, `table`, `incremental`, `ephemeral`) задаются через `config()`, и для каждой модели `dbt` сам решает, делать `CREATE VIEW` или `CREATE TABLE`.",
-                "related": "[[dbt-interview#Q2]] ELT-подход dbt; [[dbt-interview#Q5]] что такое model; [[dbt-interview#Q6]] ref() и source()."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`dbt` — это оркестратор пайплайнов на Python, который запускает задачи по расписанию и перемещает данные между источником и warehouse.",
               "correct": false,
               "sections": {
@@ -30,8 +17,8 @@
                 "if_it_were_true": "Если бы `dbt` был оркестратором, ему был бы не нужен внешний trigger, но в `dbt Core` запуск инициируют извне (`cron`, `Airflow`, CI).",
                 "how_it_should_be": "`dbt` — транспортировки данных не делает и schedule не имеет: он компилирует `SQL` и выполняет трансформации, а оркестрацию отдают `Airflow`."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`dbt` — это BI-инструмент для построения дашбордов и визуализаций поверх данных в warehouse.",
@@ -41,6 +28,19 @@
                 "source_of_confusion": "`dbt` стоит прямо перед BI-слоем в ELT-пайплайне, поэтому его путают с самим BI.",
                 "if_it_were_true": "Если бы `dbt` рисовал графики, у него были бы виджеты и чарты, но его вывод — это `CREATE TABLE`/`VIEW` в warehouse, а не визуализации.",
                 "how_it_should_be": "`dbt` — слой трансформаций (`SQL`+`Jinja`), который отдаёт marts наружу; визуализирует данные уже отдельный BI-инструмент."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`dbt` — фреймворк для transformations внутри data warehouse: модели описываются на `SQL` с `Jinja`-шаблонами, а `dbt` компилирует их и выполняет в правильном порядке зависимостей. Добавляет тесты, автодокументацию и lineage поверх обычного `SQL`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`dbt` строит DAG из ссылок `ref()`, поэтому модели создаются в нужной очерёдности; первый язык — именно `SQL`, а не Python или Java, что открывает трансформации аналитикам.",
+                "example": "Например, в `Snowflake` пишешь `models/marts/customer_orders.sql` с `SELECT ... FROM {{ ref('stg_orders') }}`, и `dbt run` сам делает `CREATE TABLE` в верном порядке.",
+                "when_to_apply": "Применяют для трансформаций в `Snowflake`, `BigQuery`, `Redshift`, `Databricks`, `PostgreSQL`, `ClickHouse` — везде, где есть мощный warehouse под ELT.",
+                "edge_cases": "Встроенные материализации (`view`, `table`, `incremental`, `ephemeral`) задаются через `config()`, и для каждой модели `dbt` сам решает, делать `CREATE VIEW` или `CREATE TABLE`.",
+                "related": "[[dbt-interview#Q2]] ELT-подход dbt; [[dbt-interview#Q5]] что такое model; [[dbt-interview#Q6]] ref() и source()."
               },
               "label": "C",
               "order": 2
@@ -69,16 +69,28 @@
           "question_text": "`ETL` vs `ELT` — какой подход использует `dbt`?",
           "options": [
             {
-              "text": "`dbt` реализует классический `ETL`: трансформации выполняются во внешнем движке (`Spark`, `Informatica`) до загрузки в warehouse.",
+              "text": "В `dbt` трансформации пишут только data engineers на Python, как в классическом `ETL`.",
               "correct": false,
               "sections": {
-                "what_actually": "В `ETL` трансформация идёт во внешнем tool до warehouse, а `dbt` трансформирует уже внутри warehouse — это `ELT`, противоположный порядок.",
-                "source_of_confusion": "И `ETL`, и `ELT` содержат буквы T (transform), поэтому подходы легко перепутать местами.",
-                "if_it_were_true": "Если бы `dbt` был `ETL`, ему нужен был бы внешний compute типа `Spark`, но он выполняет `SQL` прямо в `Snowflake`/`BigQuery`.",
-                "how_it_should_be": "`dbt` — это `ELT`: сначала Load сырых данных в warehouse, затем Transform средствами `SQL` внутри него."
+                "what_actually": "Одно из преимуществ `ELT` с `dbt` — что трансформации на `SQL` пишут analytics engineers и аналитики, а не только инженеры на Python.",
+                "source_of_confusion": "В `ETL` действительно доминируют data engineers, поэтому это переносят и на `dbt`.",
+                "if_it_were_true": "Если бы нужен был Python и только инженеры, `dbt` не снизил бы порог входа для аналитиков, но именно это его и продаёт.",
+                "how_it_should_be": "`dbt` использует `SQL`+`Jinja`, поэтому трансформации доступны аналитикам, а не только инженерам на Python."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "`dbt` вообще не относится ни к `ETL`, ни к `ELT` — это просто планировщик задач без шага трансформации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шаг Transform — это и есть суть `dbt`; он реализует именно Transform в `ELT`, а не является планировщиком без трансформаций.",
+                "source_of_confusion": "В `dbt Core` нет встроенного шедулера, поэтому ошибочно делают вывод, что это «просто планировщик».",
+                "if_it_were_true": "Если бы `dbt` не делал трансформаций, в нём не было бы моделей, материализаций и `SQL`, но это его ядро.",
+                "how_it_should_be": "`dbt` — это буква T в `ELT`: он отвечает именно за трансформации внутри warehouse."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`dbt` — это `ELT`-подход: сначала сырые данные грузятся в warehouse (Extract, Load), а потом трансформируются `SQL`-ом прямо внутри него (Transform). Transform смещается в конец и работает на мощности современного warehouse.",
@@ -90,29 +102,17 @@
                 "edge_cases": "Меньше кастомного кода — меньше багов, но при больших объёмах стоимость compute warehouse растёт, ведь весь Transform теперь крутится в нём.",
                 "related": "[[dbt-interview#Q1]] что такое dbt; [[dbt-interview#Q3]] dbt vs Airflow; [[dbt-interview#Q7]] материализации."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`dbt` вообще не относится ни к `ETL`, ни к `ELT` — это просто планировщик задач без шага трансформации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Шаг Transform — это и есть суть `dbt`; он реализует именно Transform в `ELT`, а не является планировщиком без трансформаций.",
-                "source_of_confusion": "В `dbt Core` нет встроенного шедулера, поэтому ошибочно делают вывод, что это «просто планировщик».",
-                "if_it_were_true": "Если бы `dbt` не делал трансформаций, в нём не было бы моделей, материализаций и `SQL`, но это его ядро.",
-                "how_it_should_be": "`dbt` — это буква T в `ELT`: он отвечает именно за трансформации внутри warehouse."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "В `dbt` трансформации пишут только data engineers на Python, как в классическом `ETL`.",
+              "text": "`dbt` реализует классический `ETL`: трансформации выполняются во внешнем движке (`Spark`, `Informatica`) до загрузки в warehouse.",
               "correct": false,
               "sections": {
-                "what_actually": "Одно из преимуществ `ELT` с `dbt` — что трансформации на `SQL` пишут analytics engineers и аналитики, а не только инженеры на Python.",
-                "source_of_confusion": "В `ETL` действительно доминируют data engineers, поэтому это переносят и на `dbt`.",
-                "if_it_were_true": "Если бы нужен был Python и только инженеры, `dbt` не снизил бы порог входа для аналитиков, но именно это его и продаёт.",
-                "how_it_should_be": "`dbt` использует `SQL`+`Jinja`, поэтому трансформации доступны аналитикам, а не только инженерам на Python."
+                "what_actually": "В `ETL` трансформация идёт во внешнем tool до warehouse, а `dbt` трансформирует уже внутри warehouse — это `ELT`, противоположный порядок.",
+                "source_of_confusion": "И `ETL`, и `ELT` содержат буквы T (transform), поэтому подходы легко перепутать местами.",
+                "if_it_were_true": "Если бы `dbt` был `ETL`, ему нужен был бы внешний compute типа `Spark`, но он выполняет `SQL` прямо в `Snowflake`/`BigQuery`.",
+                "how_it_should_be": "`dbt` — это `ELT`: сначала Load сырых данных в warehouse, затем Transform средствами `SQL` внутри него."
               },
               "label": "D",
               "order": 3
@@ -129,18 +129,6 @@
           "question_text": "Чем `dbt` отличается от `Airflow`?",
           "options": [
             {
-              "text": "`dbt` и `Airflow` — конкуренты, решающие одну и ту же задачу, и в проекте нужен только один из них.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Они комплементарны, а не конкуренты: `Airflow` оркеструет пайплайн, а `dbt` внутри него трансформирует данные `SQL`-ом; в зрелом стеке обычно есть оба.",
-                "source_of_confusion": "Оба часто упоминают вместе в data-стеке, поэтому кажется, что они взаимозаменяемы.",
-                "if_it_were_true": "Если бы они дублировали друг друга, не было бы интеграции `Airflow → dbt build`, но это самый частый паттерн.",
-                "how_it_should_be": "`dbt` — transformation, `Airflow` — orchestration; их ставят рядом, а не вместо."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`dbt` сам шедулит запуски по расписанию, поэтому `Airflow` для триггера не нужен.",
               "correct": false,
               "sections": {
@@ -149,8 +137,8 @@
                 "if_it_were_true": "Если бы `dbt Core` шедулил сам, не было бы типового стека `Airflow + dbt`, но он повсеместен.",
                 "how_it_should_be": "Schedule в `dbt Core` отсутствует: триггер даёт внешний оркестратор вроде `Airflow`."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`dbt` — это transformation-инструмент (`SQL`+`Jinja`, выполняется внутри warehouse, без перемещения данных и без шедулера), а `Airflow` — orchestration (Python, выполняется на своих workers, двигает данные и шедулит по расписанию). Они комплементарны.",
@@ -161,6 +149,18 @@
                 "when_to_apply": "`dbt` берут, когда трансформации можно выразить `SQL` в warehouse; `Airflow` — когда нужно оркестрировать разнородные шаги и двигать данные между системами.",
                 "edge_cases": "`dbt` сам не перемещает данные и не имеет schedule, поэтому в продакшене его почти всегда дополняют внешним оркестратором.",
                 "related": "[[dbt-interview#Q1]] что такое dbt; [[dbt-interview#Q2]] ELT-подход; [[dbt-interview#Q27]] интеграция dbt + Airflow."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`dbt` и `Airflow` — конкуренты, решающие одну и ту же задачу, и в проекте нужен только один из них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они комплементарны, а не конкуренты: `Airflow` оркеструет пайплайн, а `dbt` внутри него трансформирует данные `SQL`-ом; в зрелом стеке обычно есть оба.",
+                "source_of_confusion": "Оба часто упоминают вместе в data-стеке, поэтому кажется, что они взаимозаменяемы.",
+                "if_it_were_true": "Если бы они дублировали друг друга, не было бы интеграции `Airflow → dbt build`, но это самый частый паттерн.",
+                "how_it_should_be": "`dbt` — transformation, `Airflow` — orchestration; их ставят рядом, а не вместо."
               },
               "label": "C",
               "order": 2
@@ -201,18 +201,6 @@
               "order": 0
             },
             {
-              "text": "`dbt Core` — это платная enterprise-версия, а `dbt Cloud` — бесплатный open-source CLI.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё ровно наоборот: `dbt Core` — бесплатный open-source CLI, а `dbt Cloud` — платный SaaS от `dbt Labs`.",
-                "source_of_confusion": "Слово «Core» иногда ассоциируют с «enterprise core», отсюда инверсия.",
-                "if_it_were_true": "Если бы `dbt Core` был платным, его не ставили бы свободно через `pip install dbt-postgres`, но именно так его и устанавливают.",
-                "how_it_should_be": "Бесплатен и open-source — это `dbt Core`; платный SaaS — это `dbt Cloud`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`dbt Cloud` отличается от `dbt Core` только тем, что у него другой логотип; функционально они идентичны.",
               "correct": false,
               "sections": {
@@ -220,6 +208,18 @@
                 "source_of_confusion": "Оба запускают одни и те же модели, поэтому разницу кажется чисто внешней.",
                 "if_it_were_true": "Если бы они были функционально идентичны, не было бы смысла платить за `dbt Cloud`, но платят именно за scheduler, IDE и hosted-инфраструктуру.",
                 "how_it_should_be": "`dbt Cloud` — это `dbt Core` плюс управляемая обвязка (IDE, scheduler, docs, CI/CD), а не просто другой бренд."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`dbt Core` — это платная enterprise-версия, а `dbt Cloud` — бесплатный open-source CLI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё ровно наоборот: `dbt Core` — бесплатный open-source CLI, а `dbt Cloud` — платный SaaS от `dbt Labs`.",
+                "source_of_confusion": "Слово «Core» иногда ассоциируют с «enterprise core», отсюда инверсия.",
+                "if_it_were_true": "Если бы `dbt Core` был платным, его не ставили бы свободно через `pip install dbt-postgres`, но именно так его и устанавливают.",
+                "how_it_should_be": "Бесплатен и open-source — это `dbt Core`; платный SaaS — это `dbt Cloud`."
               },
               "label": "C",
               "order": 2
@@ -262,18 +262,6 @@
               "order": 0
             },
             {
-              "text": "Model в `dbt` — это Python-класс с описанием схемы таблицы, как ORM-сущность в `Django` или `Hibernate`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Model в `dbt` — это `SQL`-файл с `SELECT`, а не ORM-класс; никакого Python-класса и маппинга полей здесь нет.",
-                "source_of_confusion": "Слово «model» совпадает с ORM-терминологией, отсюда ложная аналогия с `Django`/`Hibernate`.",
-                "if_it_were_true": "Если бы модель была ORM-классом, её нельзя было бы выразить чистым `SELECT`, но именно `SELECT` и есть тело модели.",
-                "how_it_should_be": "Model — это `SQL`-файл в `models/`, который `dbt` материализует в table/view, а не классовая сущность ORM."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Model — это YAML-файл, в котором перечислены тесты и описания колонок, но без `SQL`.",
               "correct": false,
               "sections": {
@@ -281,6 +269,18 @@
                 "source_of_confusion": "YAML и `SQL`-файлы лежат в одной папке `models/`, поэтому их роли смешивают.",
                 "if_it_were_true": "Если бы модель была YAML без `SQL`, `dbt run` нечего было бы выполнять, но он выполняет именно `SELECT` из `.sql`.",
                 "how_it_should_be": "Model — это `.sql` с `SELECT`; YAML лишь добавляет к ней описания, тесты и конфиг."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Model в `dbt` — это Python-класс с описанием схемы таблицы, как ORM-сущность в `Django` или `Hibernate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Model в `dbt` — это `SQL`-файл с `SELECT`, а не ORM-класс; никакого Python-класса и маппинга полей здесь нет.",
+                "source_of_confusion": "Слово «model» совпадает с ORM-терминологией, отсюда ложная аналогия с `Django`/`Hibernate`.",
+                "if_it_were_true": "Если бы модель была ORM-классом, её нельзя было бы выразить чистым `SELECT`, но именно `SELECT` и есть тело модели.",
+                "how_it_should_be": "Model — это `SQL`-файл в `models/`, который `dbt` материализует в table/view, а не классовая сущность ORM."
               },
               "label": "C",
               "order": 2
@@ -309,16 +309,28 @@
           "question_text": "`ref()` и `source()` — что это и зачем?",
           "options": [
             {
-              "text": "`ref()` и `source()` — это просто декоративные комментарии, которые `dbt` игнорирует при компиляции.",
+              "text": "`ref()` ссылается на raw-таблицы в источнике, а `source()` — на другие `dbt`-модели.",
               "correct": false,
               "sections": {
-                "what_actually": "`dbt` как раз использует `ref()` и `source()` для построения DAG и подстановки реальных имён таблиц — это не комментарии, а ключевые функции.",
-                "source_of_confusion": "В `SQL` они выглядят необычно (`{{ ... }}`), поэтому их принимают за оформление.",
-                "if_it_were_true": "Если бы `dbt` их игнорировал, не было бы автоматического lineage и порядка запуска, но именно из них он и строится.",
-                "how_it_should_be": "`ref()`/`source()` — функции, формирующие зависимости и подставляющие имена объектов, а не комментарии."
+                "what_actually": "Роли перепутаны: `ref()` ссылается на другие `dbt`-модели, а `source()` — на raw-таблицы, загруженные не через `dbt`.",
+                "source_of_confusion": "Названия похожи по длине и оба возвращают имя таблицы, поэтому их меняют местами.",
+                "if_it_were_true": "Если бы `ref()` указывал на raw, источники описывались бы через `ref()`, но raw-таблицы объявляют именно в `sources.yml` под `source()`.",
+                "how_it_should_be": "`ref()` → модель `dbt`, `source()` → raw-таблица из warehouse; именно так, а не наоборот."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "`ref()` и `source()` нужны только для документации и никак не влияют на порядок выполнения моделей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно из `ref()` и `source()` `dbt` выводит DAG и порядок запуска — они напрямую определяют очерёдность, а не только украшают доки.",
+                "source_of_confusion": "Эти ссылки действительно отображаются в lineage-документации, поэтому их роль сводят к доке.",
+                "if_it_were_true": "Если бы они не влияли на порядок, `dbt` не смог бы автоматически запускать модели в верной последовательности, но он это делает.",
+                "how_it_should_be": "`ref()`/`source()` формируют DAG зависимостей, и порядок выполнения берётся именно из них."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`ref('model_name')` — ссылка на другую `dbt`-модель, а `source('schema', 'table')` — ссылка на raw-таблицу, загруженную в warehouse не средствами `dbt`. Через них `dbt` автоматически строит DAG зависимостей.",
@@ -330,29 +342,17 @@
                 "edge_cases": "Источники описывают в YAML заранее, иначе `source('raw','events')` не разрешится; `ref()` же ссылается на имя модели, а не на физическую таблицу.",
                 "related": "[[dbt-interview#Q5]] что такое model; [[dbt-interview#Q19]] data lineage; [[dbt-interview#Q23]] слои staging/marts."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`ref()` ссылается на raw-таблицы в источнике, а `source()` — на другие `dbt`-модели.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Роли перепутаны: `ref()` ссылается на другие `dbt`-модели, а `source()` — на raw-таблицы, загруженные не через `dbt`.",
-                "source_of_confusion": "Названия похожи по длине и оба возвращают имя таблицы, поэтому их меняют местами.",
-                "if_it_were_true": "Если бы `ref()` указывал на raw, источники описывались бы через `ref()`, но raw-таблицы объявляют именно в `sources.yml` под `source()`.",
-                "how_it_should_be": "`ref()` → модель `dbt`, `source()` → raw-таблица из warehouse; именно так, а не наоборот."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`ref()` и `source()` нужны только для документации и никак не влияют на порядок выполнения моделей.",
+              "text": "`ref()` и `source()` — это просто декоративные комментарии, которые `dbt` игнорирует при компиляции.",
               "correct": false,
               "sections": {
-                "what_actually": "Именно из `ref()` и `source()` `dbt` выводит DAG и порядок запуска — они напрямую определяют очерёдность, а не только украшают доки.",
-                "source_of_confusion": "Эти ссылки действительно отображаются в lineage-документации, поэтому их роль сводят к доке.",
-                "if_it_were_true": "Если бы они не влияли на порядок, `dbt` не смог бы автоматически запускать модели в верной последовательности, но он это делает.",
-                "how_it_should_be": "`ref()`/`source()` формируют DAG зависимостей, и порядок выполнения берётся именно из них."
+                "what_actually": "`dbt` как раз использует `ref()` и `source()` для построения DAG и подстановки реальных имён таблиц — это не комментарии, а ключевые функции.",
+                "source_of_confusion": "В `SQL` они выглядят необычно (`{{ ... }}`), поэтому их принимают за оформление.",
+                "if_it_were_true": "Если бы `dbt` их игнорировал, не было бы автоматического lineage и порядка запуска, но именно из них он и строится.",
+                "how_it_should_be": "`ref()`/`source()` — функции, формирующие зависимости и подставляющие имена объектов, а не комментарии."
               },
               "label": "D",
               "order": 3
@@ -381,18 +381,6 @@
               "order": 0
             },
             {
-              "text": "`view` материализует данные в физическую таблицу, а `table` создаёт виртуальное представление.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: `view` создаёт `CREATE VIEW` (виртуальное представление), а `table` — физический `CREATE TABLE` с данными.",
-                "source_of_confusion": "Оба термина про «таблицеподобный» объект, отсюда инверсия.",
-                "if_it_were_true": "Если бы `view` хранила данные, она не пересчитывалась бы при каждом чтении, но представление считается на лету.",
-                "how_it_should_be": "`view` — виртуальное представление, `table` — материализованная таблица; именно так, а не наоборот."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`view` → `CREATE VIEW` (для маленьких/простых трансформаций); `table` → `CREATE TABLE` (дорогие joins, частые reads); `incremental` → `INSERT/MERGE` только новых строк (большие fact-таблицы); `ephemeral` → не материализуется, вставляется CTE-ом в downstream-модель.",
               "correct": true,
               "sections": {
@@ -401,6 +389,18 @@
                 "when_to_apply": "`view` — для лёгких staging-моделей, `table` — для тяжёлых marts с частым чтением, `incremental` — для растущих fact-таблиц, `ephemeral` — для промежуточных CTE без отдельного объекта.",
                 "edge_cases": "`ephemeral` не создаёт объект в warehouse, поэтому на него нельзя сослаться напрямую вне `dbt` и сложнее дебажить; `incremental` при первом запуске обрабатывает все данные.",
                 "related": "[[dbt-interview#Q5]] что такое model; [[dbt-interview#Q24]] incremental-модели подробно; [[dbt-interview#Q23]] слои staging/marts."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`view` материализует данные в физическую таблицу, а `table` создаёт виртуальное представление.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `view` создаёт `CREATE VIEW` (виртуальное представление), а `table` — физический `CREATE TABLE` с данными.",
+                "source_of_confusion": "Оба термина про «таблицеподобный» объект, отсюда инверсия.",
+                "if_it_were_true": "Если бы `view` хранила данные, она не пересчитывалась бы при каждом чтении, но представление считается на лету.",
+                "how_it_should_be": "`view` — виртуальное представление, `table` — материализованная таблица; именно так, а не наоборот."
               },
               "label": "C",
               "order": 2
@@ -429,28 +429,17 @@
           "question_text": "Snapshot в `dbt` — что это?",
           "options": [
             {
-              "text": "Snapshot — это снимок текущего состояния всего проекта `dbt` (всех моделей) для отката изменений кода.",
-              "correct": false,
+              "text": "Snapshot отслеживает изменения в slowly changing dimensions (SCD) Type 2: при изменении строки в источнике сохраняется её историческая версия. Создаёт таблицу с колонками `dbt_valid_from` и `dbt_valid_to`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Snapshot отслеживает изменения данных в таблице (SCD Type 2), а не делает бэкап кода проекта для отката.",
-                "source_of_confusion": "Слово «snapshot» в IT часто значит «снимок состояния», поэтому его связывают с откатом кода.",
-                "if_it_were_true": "Если бы это был снимок кода, конфиг не требовал бы `unique_key` и `updated_at`, но именно они нужны для трекинга строк.",
-                "how_it_should_be": "Snapshot — это механизм версионирования строк данных (SCD2), а не резервная копия кода."
+                "explanation": "Блок `{% snapshot users_snapshot %}` с `config(strategy='timestamp', updated_at='updated_at', unique_key='user_id')` фиксирует, какая версия записи была валидна в каждый момент времени.",
+                "example": "Например, при смене статуса пользователя старая строка получает `dbt_valid_to`, а новая — `dbt_valid_from`, и обе остаются в таблице snapshots.",
+                "when_to_apply": "Snapshots применяют, когда важна история измерений (адрес, тариф, статус клиента) и нужно отвечать на вопрос «как было на дату X».",
+                "edge_cases": "Стратегия `timestamp` опирается на колонку `updated_at`; если её нет, используют `check` по списку колонок — иначе изменения не будут пойманы корректно.",
+                "related": "[[dbt-interview#Q7]] материализации; [[dbt-interview#Q6]] ref() и source(); [[dbt-interview#Q20]] команда dbt snapshot."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Snapshot просто перезаписывает таблицу свежими данными при каждом запуске, не сохраняя историю.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Snapshot, напротив, сохраняет историю изменений: добавляет колонки `dbt_valid_from`/`dbt_valid_to`, а не затирает прошлые версии.",
-                "source_of_confusion": "Полная перезапись похожа на обычную `table`-материализацию, отсюда путаница со snapshot.",
-                "if_it_were_true": "Если бы история не хранилась, не было бы колонок валидности и смысла SCD Type 2, но они — суть snapshot.",
-                "how_it_should_be": "Snapshot ведёт историю версий строк через `dbt_valid_from/to`, а не перезаписывает таблицу."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Snapshot реализует SCD Type 1: при изменении строки старое значение полностью затирается новым без истории.",
@@ -461,18 +450,29 @@
                 "if_it_were_true": "Если бы это был Type 1, колонки `dbt_valid_from`/`dbt_valid_to` были бы не нужны, но snapshot их и создаёт.",
                 "how_it_should_be": "Snapshot — это SCD Type 2 с историей; затирание без истории — это Type 1, который snapshot не делает."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Snapshot — это снимок текущего состояния всего проекта `dbt` (всех моделей) для отката изменений кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Snapshot отслеживает изменения данных в таблице (SCD Type 2), а не делает бэкап кода проекта для отката.",
+                "source_of_confusion": "Слово «snapshot» в IT часто значит «снимок состояния», поэтому его связывают с откатом кода.",
+                "if_it_were_true": "Если бы это был снимок кода, конфиг не требовал бы `unique_key` и `updated_at`, но именно они нужны для трекинга строк.",
+                "how_it_should_be": "Snapshot — это механизм версионирования строк данных (SCD2), а не резервная копия кода."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Snapshot отслеживает изменения в slowly changing dimensions (SCD) Type 2: при изменении строки в источнике сохраняется её историческая версия. Создаёт таблицу с колонками `dbt_valid_from` и `dbt_valid_to`.",
-              "correct": true,
+              "text": "Snapshot просто перезаписывает таблицу свежими данными при каждом запуске, не сохраняя историю.",
+              "correct": false,
               "sections": {
-                "explanation": "Блок `{% snapshot users_snapshot %}` с `config(strategy='timestamp', updated_at='updated_at', unique_key='user_id')` фиксирует, какая версия записи была валидна в каждый момент времени.",
-                "example": "Например, при смене статуса пользователя старая строка получает `dbt_valid_to`, а новая — `dbt_valid_from`, и обе остаются в таблице snapshots.",
-                "when_to_apply": "Snapshots применяют, когда важна история измерений (адрес, тариф, статус клиента) и нужно отвечать на вопрос «как было на дату X».",
-                "edge_cases": "Стратегия `timestamp` опирается на колонку `updated_at`; если её нет, используют `check` по списку колонок — иначе изменения не будут пойманы корректно.",
-                "related": "[[dbt-interview#Q7]] материализации; [[dbt-interview#Q6]] ref() и source(); [[dbt-interview#Q20]] команда dbt snapshot."
+                "what_actually": "Snapshot, напротив, сохраняет историю изменений: добавляет колонки `dbt_valid_from`/`dbt_valid_to`, а не затирает прошлые версии.",
+                "source_of_confusion": "Полная перезапись похожа на обычную `table`-материализацию, отсюда путаница со snapshot.",
+                "if_it_were_true": "Если бы история не хранилась, не было бы колонок валидности и смысла SCD Type 2, но они — суть snapshot.",
+                "how_it_should_be": "Snapshot ведёт историю версий строк через `dbt_valid_from/to`, а не перезаписывает таблицу."
               },
               "label": "D",
               "order": 3
@@ -489,29 +489,16 @@
           "question_text": "Что такое `dbt_project.yml` и зачем он нужен?",
           "options": [
             {
-              "text": "`dbt_project.yml` — главный конфигурационный файл проекта: задаёт `name`, `version`, `profile`, пути (`model-paths`, `seed-paths`, `snapshot-paths`, `test-paths`), дефолтные материализации и схемы по папкам, а также `vars`. Без него `dbt` не знает, что это за проект.",
-              "correct": true,
+              "text": "`dbt_project.yml` нужен только для `dbt Cloud` и в `dbt Core` не используется.",
+              "correct": false,
               "sections": {
-                "explanation": "Конфиги под папками задаются с префиксом `+` (например `+materialized: view`) и применяются ко всем моделям внутри, что избавляет от повторения `config()` в каждом файле.",
-                "example": "Так блок `models: my_project: staging: +materialized: view; marts: +materialized: table` делает все staging-модели представлениями, а marts — таблицами.",
-                "when_to_apply": "Файл лежит в корне проекта и читается при любом запуске `dbt`; в нём же удобно держать глобальные `vars` вроде `start_date`.",
-                "edge_cases": "Поле `profile` указывает на запись в `profiles.yml`; если имена не совпадут, `dbt` не сможет подключиться к warehouse несмотря на корректный `dbt_project.yml`.",
-                "related": "[[dbt-interview#Q10]] profiles.yml; [[dbt-interview#Q5]] что такое model; [[dbt-interview#Q23]] слои staging/marts."
+                "what_actually": "`dbt_project.yml` обязателен в любом проекте `dbt`, включая `dbt Core` через CLI — это корень всей конфигурации.",
+                "source_of_confusion": "Многие фичи завязаны на `dbt Cloud`, и файл ошибочно относят туда же.",
+                "if_it_were_true": "Если бы он был только для Cloud, `dbt run` в Core не нашёл бы проект, но Core требует этот файл так же.",
+                "how_it_should_be": "`dbt_project.yml` — общий для Core и Cloud обязательный конфиг проекта."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`dbt_project.yml` хранит пароли и хост подключения к warehouse.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Креды и параметры подключения живут в `profiles.yml`, а `dbt_project.yml` описывает сам проект (имя, пути, дефолты материализаций) и секретов не содержит.",
-                "source_of_confusion": "Оба — YAML-файлы конфигурации `dbt`, поэтому их назначение смешивают.",
-                "if_it_were_true": "Если бы пароли были в `dbt_project.yml`, он не коммитился бы в Git, но его как раз версионируют, а `profiles.yml` держат вне репозитория.",
-                "how_it_should_be": "Подключение и пароли — в `profiles.yml`; `dbt_project.yml` — про структуру проекта и дефолты."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`dbt_project.yml` — это автогенерируемый файл результатов прогона с логами выполнения моделей.",
@@ -522,17 +509,30 @@
                 "if_it_were_true": "Если бы он был логом прогона, его не нужно было бы заполнять перед первым `dbt run`, но без него запуск вообще невозможен.",
                 "how_it_should_be": "`dbt_project.yml` — входной конфиг; результаты прогона лежат отдельно в `target/`."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`dbt_project.yml` — главный конфигурационный файл проекта: задаёт `name`, `version`, `profile`, пути (`model-paths`, `seed-paths`, `snapshot-paths`, `test-paths`), дефолтные материализации и схемы по папкам, а также `vars`. Без него `dbt` не знает, что это за проект.",
+              "correct": true,
+              "sections": {
+                "explanation": "Конфиги под папками задаются с префиксом `+` (например `+materialized: view`) и применяются ко всем моделям внутри, что избавляет от повторения `config()` в каждом файле.",
+                "example": "Так блок `models: my_project: staging: +materialized: view; marts: +materialized: table` делает все staging-модели представлениями, а marts — таблицами.",
+                "when_to_apply": "Файл лежит в корне проекта и читается при любом запуске `dbt`; в нём же удобно держать глобальные `vars` вроде `start_date`.",
+                "edge_cases": "Поле `profile` указывает на запись в `profiles.yml`; если имена не совпадут, `dbt` не сможет подключиться к warehouse несмотря на корректный `dbt_project.yml`.",
+                "related": "[[dbt-interview#Q10]] profiles.yml; [[dbt-interview#Q5]] что такое model; [[dbt-interview#Q23]] слои staging/marts."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`dbt_project.yml` нужен только для `dbt Cloud` и в `dbt Core` не используется.",
+              "text": "`dbt_project.yml` хранит пароли и хост подключения к warehouse.",
               "correct": false,
               "sections": {
-                "what_actually": "`dbt_project.yml` обязателен в любом проекте `dbt`, включая `dbt Core` через CLI — это корень всей конфигурации.",
-                "source_of_confusion": "Многие фичи завязаны на `dbt Cloud`, и файл ошибочно относят туда же.",
-                "if_it_were_true": "Если бы он был только для Cloud, `dbt run` в Core не нашёл бы проект, но Core требует этот файл так же.",
-                "how_it_should_be": "`dbt_project.yml` — общий для Core и Cloud обязательный конфиг проекта."
+                "what_actually": "Креды и параметры подключения живут в `profiles.yml`, а `dbt_project.yml` описывает сам проект (имя, пути, дефолты материализаций) и секретов не содержит.",
+                "source_of_confusion": "Оба — YAML-файлы конфигурации `dbt`, поэтому их назначение смешивают.",
+                "if_it_were_true": "Если бы пароли были в `dbt_project.yml`, он не коммитился бы в Git, но его как раз версионируют, а `profiles.yml` держат вне репозитория.",
+                "how_it_should_be": "Подключение и пароли — в `profiles.yml`; `dbt_project.yml` — про структуру проекта и дефолты."
               },
               "label": "D",
               "order": 3
@@ -549,16 +549,28 @@
           "question_text": "`profiles.yml` — что описывает и где лежит?",
           "options": [
             {
-              "text": "`profiles.yml` описывает структуру проекта: пути к моделям, дефолтные материализации и `vars`.",
+              "text": "`profiles.yml` обязан лежать внутри Git-репозитория проекта рядом с моделями.",
               "correct": false,
               "sections": {
-                "what_actually": "Структуру проекта и дефолты задаёт `dbt_project.yml`; `profiles.yml` описывает подключения к warehouse (тип, аккаунт, креды, схема).",
-                "source_of_confusion": "Оба YAML-файла настраивают `dbt`, поэтому их роли путают.",
-                "if_it_were_true": "Если бы `profiles.yml` хранил пути моделей, он коммитился бы в репозиторий, но его держат вне Git из-за секретов.",
-                "how_it_should_be": "Подключения — в `profiles.yml`; пути и материализации — в `dbt_project.yml`."
+                "what_actually": "`profiles.yml` обычно держат в `~/.dbt/` вне репозитория, потому что в нём секреты (пароли, аккаунты) — коммитить его небезопасно.",
+                "source_of_confusion": "Раз он нужен для запуска, кажется логичным хранить его в проекте.",
+                "if_it_were_true": "Если бы его коммитили, пароли warehouse попадали бы в Git-историю, что и есть антипаттерн, ради которого его выносят.",
+                "how_it_should_be": "`profiles.yml` хранят вне репозитория (`~/.dbt/`), а секреты ещё и через `env_var`."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "`target` в `profiles.yml` задаёт версию `dbt`, которую нужно использовать для запуска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`target` выбирает окружение/output (`dev` или `prod`) внутри профиля, а не версию `dbt`.",
+                "source_of_confusion": "Слово «target» многозначно, отсюда ассоциация с версией инструмента.",
+                "if_it_were_true": "Если бы `target` означал версию, `dbt run --target prod` менял бы версию движка, но он лишь переключает набор подключения.",
+                "how_it_should_be": "`target` — это дефолтное окружение подключения, переключаемое через `--target`."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`profiles.yml` описывает подключения к warehouse: тип адаптера (`snowflake`, `postgres`, ...), аккаунт, пользователя, пароль, роль, базу, schema. Лежит обычно в `~/.dbt/profiles.yml` (вне репозитория). Поле `target` задаёт окружение по умолчанию.",
@@ -570,29 +582,17 @@
                 "edge_cases": "Имя профиля в `profiles.yml` должно совпадать с `profile:` в `dbt_project.yml`, иначе подключение не разрешится; файл намеренно держат вне Git.",
                 "related": "[[dbt-interview#Q9]] dbt_project.yml; [[dbt-interview#Q11]] поддерживаемые adapters; [[dbt-interview#Q26]] deploy в production."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`profiles.yml` обязан лежать внутри Git-репозитория проекта рядом с моделями.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`profiles.yml` обычно держат в `~/.dbt/` вне репозитория, потому что в нём секреты (пароли, аккаунты) — коммитить его небезопасно.",
-                "source_of_confusion": "Раз он нужен для запуска, кажется логичным хранить его в проекте.",
-                "if_it_were_true": "Если бы его коммитили, пароли warehouse попадали бы в Git-историю, что и есть антипаттерн, ради которого его выносят.",
-                "how_it_should_be": "`profiles.yml` хранят вне репозитория (`~/.dbt/`), а секреты ещё и через `env_var`."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`target` в `profiles.yml` задаёт версию `dbt`, которую нужно использовать для запуска.",
+              "text": "`profiles.yml` описывает структуру проекта: пути к моделям, дефолтные материализации и `vars`.",
               "correct": false,
               "sections": {
-                "what_actually": "`target` выбирает окружение/output (`dev` или `prod`) внутри профиля, а не версию `dbt`.",
-                "source_of_confusion": "Слово «target» многозначно, отсюда ассоциация с версией инструмента.",
-                "if_it_were_true": "Если бы `target` означал версию, `dbt run --target prod` менял бы версию движка, но он лишь переключает набор подключения.",
-                "how_it_should_be": "`target` — это дефолтное окружение подключения, переключаемое через `--target`."
+                "what_actually": "Структуру проекта и дефолты задаёт `dbt_project.yml`; `profiles.yml` описывает подключения к warehouse (тип, аккаунт, креды, схема).",
+                "source_of_confusion": "Оба YAML-файла настраивают `dbt`, поэтому их роли путают.",
+                "if_it_were_true": "Если бы `profiles.yml` хранил пути моделей, он коммитился бы в репозиторий, но его держат вне Git из-за секретов.",
+                "how_it_should_be": "Подключения — в `profiles.yml`; пути и материализации — в `dbt_project.yml`."
               },
               "label": "D",
               "order": 3
@@ -609,18 +609,6 @@
           "question_text": "Какие базы данных поддерживает `dbt` (adapters)?",
           "options": [
             {
-              "text": "`dbt` работает только с `Snowflake` и больше ни с одним warehouse.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Snowflake` — лишь один из официальных адаптеров; есть также `BigQuery`, `Redshift`, `PostgreSQL` и десятки community/vendor-адаптеров.",
-                "source_of_confusion": "`Snowflake` — самый популярный таргет в маркетинге `dbt`, отсюда впечатление эксклюзивности.",
-                "if_it_were_true": "Если бы поддерживался только `Snowflake`, не было бы пакетов `dbt-bigquery`, `dbt-postgres`, но они существуют.",
-                "how_it_should_be": "`dbt` поддерживает множество warehouse через систему адаптеров, а не один `Snowflake`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`dbt` поддерживает любые БД автоматически без установки отдельного пакета-адаптера.",
               "correct": false,
               "sections": {
@@ -629,8 +617,8 @@
                 "if_it_were_true": "Если бы пакет был не нужен, команда `pip install dbt-postgres` не имела бы смысла, но именно она ставит адаптер.",
                 "how_it_should_be": "Каждый таргет требует свой adapter-пакет; универсального «всё сразу» нет."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`dbt` работает с многими warehouse через адаптеры. Официальные (от `dbt Labs`): `Snowflake` (`dbt-snowflake`), `BigQuery` (`dbt-bigquery`), `Redshift` (`dbt-redshift`), `PostgreSQL` (`dbt-postgres`). Community/vendor: `Databricks`, `Spark`, `ClickHouse`, `DuckDB`, `Trino/Starburst`, `Athena` и другие.",
@@ -641,6 +629,18 @@
                 "when_to_apply": "Выбор адаптера диктуется тем, где лежит warehouse команды; community-адаптеры берут для менее ходовых движков вроде `DuckDB` или `Trino`.",
                 "edge_cases": "Community/vendor-адаптеры могут отставать по поддержке свежих фич `dbt` и иметь нюансы диалекта, в отличие от официальных четырёх.",
                 "related": "[[dbt-interview#Q10]] profiles.yml; [[dbt-interview#Q1]] что такое dbt; [[dbt-interview#Q28]] минусы dbt."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`dbt` работает только с `Snowflake` и больше ни с одним warehouse.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Snowflake` — лишь один из официальных адаптеров; есть также `BigQuery`, `Redshift`, `PostgreSQL` и десятки community/vendor-адаптеров.",
+                "source_of_confusion": "`Snowflake` — самый популярный таргет в маркетинге `dbt`, отсюда впечатление эксклюзивности.",
+                "if_it_were_true": "Если бы поддерживался только `Snowflake`, не было бы пакетов `dbt-bigquery`, `dbt-postgres`, но они существуют.",
+                "how_it_should_be": "`dbt` поддерживает множество warehouse через систему адаптеров, а не один `Snowflake`."
               },
               "label": "C",
               "order": 2
@@ -669,30 +669,6 @@
           "question_text": "Какие встроенные (built-in) тесты есть в `dbt`?",
           "options": [
             {
-              "text": "Встроенные тесты `dbt` — это `assertEquals`, `assertTrue` и `assertNull`, как в `JUnit`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `dbt` другой набор: `unique`, `not_null`, `accepted_values`, `relationships`; это data-тесты на колонки, а не unit-ассерты в стиле `JUnit`.",
-                "source_of_confusion": "Слово «тест» вызывает ассоциацию с привычными unit-фреймворками вроде `JUnit`.",
-                "if_it_were_true": "Если бы это были `JUnit`-ассерты, они проверяли бы код, а не данные в таблицах, но `dbt`-тесты проверяют именно данные.",
-                "how_it_should_be": "Built-in тесты — `unique`, `not_null`, `accepted_values`, `relationships`, объявляемые в YAML."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Единственный встроенный тест в `dbt` — `not_null`; остальное надо писать вручную как custom-тесты.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Встроенных тестов четыре: `unique`, `not_null`, `accepted_values`, `relationships`; `not_null` — лишь один из них.",
-                "source_of_confusion": "`not_null` — самый известный из них, отсюда вывод, что он единственный.",
-                "if_it_were_true": "Если бы был только `not_null`, нельзя было бы декларативно проверить уникальность или ссылочную целостность, но `unique` и `relationships` встроены.",
-                "how_it_should_be": "Встроенных тестов четыре, и все объявляются в YAML без написания `SQL`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`relationships`-тест проверяет, что в колонке нет `NULL`-значений.",
               "correct": false,
               "sections": {
@@ -701,8 +677,8 @@
                 "if_it_were_true": "Если бы `relationships` ловил `NULL`, для него не требовались бы параметры `to:` и `field:`, но именно они задают связанную таблицу.",
                 "how_it_should_be": "`relationships` — это проверка ссылочной целостности через `to`/`field`, а не контроль `NULL`."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Встроенных тестов четыре: `unique` (все значения колонки уникальны), `not_null` (нет `NULL`), `accepted_values` (только перечисленные значения), `relationships` (referential integrity — значения есть в колонке другой модели). Объявляются декларативно в YAML, запускаются `dbt test`.",
@@ -713,6 +689,30 @@
                 "when_to_apply": "Эти тесты ставят на ключи и категориальные/ссылочные поля как дешёвый baseline качества данных в каждом проекте.",
                 "edge_cases": "Тест считается проваленным, если возвращает строки-нарушители; на больших таблицах `unique`/`relationships` могут быть дорогими по compute.",
                 "related": "[[dbt-interview#Q13]] custom data tests; [[dbt-interview#Q14]] dbt-utils тесты; [[dbt-interview#Q21]] dbt build и тесты."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Встроенные тесты `dbt` — это `assertEquals`, `assertTrue` и `assertNull`, как в `JUnit`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `dbt` другой набор: `unique`, `not_null`, `accepted_values`, `relationships`; это data-тесты на колонки, а не unit-ассерты в стиле `JUnit`.",
+                "source_of_confusion": "Слово «тест» вызывает ассоциацию с привычными unit-фреймворками вроде `JUnit`.",
+                "if_it_were_true": "Если бы это были `JUnit`-ассерты, они проверяли бы код, а не данные в таблицах, но `dbt`-тесты проверяют именно данные.",
+                "how_it_should_be": "Built-in тесты — `unique`, `not_null`, `accepted_values`, `relationships`, объявляемые в YAML."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Единственный встроенный тест в `dbt` — `not_null`; остальное надо писать вручную как custom-тесты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенных тестов четыре: `unique`, `not_null`, `accepted_values`, `relationships`; `not_null` — лишь один из них.",
+                "source_of_confusion": "`not_null` — самый известный из них, отсюда вывод, что он единственный.",
+                "if_it_were_true": "Если бы был только `not_null`, нельзя было бы декларативно проверить уникальность или ссылочную целостность, но `unique` и `relationships` встроены.",
+                "how_it_should_be": "Встроенных тестов четыре, и все объявляются в YAML без написания `SQL`."
               },
               "label": "D",
               "order": 3
@@ -729,14 +729,13 @@
           "question_text": "Что такое custom data tests в `dbt` и как они работают?",
           "options": [
             {
-              "text": "Custom data test — это `SQL`-файл в директории `tests/`, содержащий `SELECT`, который выбирает строки-нарушители бизнес-правила. Тест считается пройденным, если запрос возвращает 0 строк.",
-              "correct": true,
+              "text": "Custom data tests объявляются только в YAML и не могут использовать произвольный `SQL`.",
+              "correct": false,
               "sections": {
-                "explanation": "Логика инвертирована: ты пишешь запрос, находящий «плохие» данные, и пустой результат означает, что нарушений нет — это и есть успешный тест.",
-                "example": "Файл `tests/assert_total_orders_positive.sql` с `SELECT order_id FROM {{ ref('orders') }} WHERE total < 0` упадёт, если найдётся хоть один отрицательный заказ.",
-                "when_to_apply": "Custom-тесты пишут под специфичные бизнес-правила, которые не покрыть встроенными `unique`/`not_null`/`relationships`.",
-                "edge_cases": "Запустить отдельно можно через `dbt test --select assert_total_orders_positive`; важно не забыть инверсию — `SELECT` должен возвращать именно нарушителей, а не валидные строки.",
-                "related": "[[dbt-interview#Q12]] встроенные тесты; [[dbt-interview#Q14]] dbt-utils тесты; [[dbt-interview#Q21]] dbt build."
+                "what_actually": "Singular custom-тесты — это как раз произвольный `SQL`-файл в `tests/`; YAML-объявления — это generic/встроенные тесты, другой механизм.",
+                "source_of_confusion": "Часть тестов действительно живёт в YAML, отсюда обобщение на все.",
+                "if_it_were_true": "Если бы произвольный `SQL` был запрещён, нельзя было бы выразить специфичные правила, ради которых custom-тесты и нужны.",
+                "how_it_should_be": "Custom (singular) тесты пишут произвольным `SQL` в файлах `tests/`, а не только в YAML."
               },
               "label": "A",
               "order": 0
@@ -766,13 +765,14 @@
               "order": 2
             },
             {
-              "text": "Custom data tests объявляются только в YAML и не могут использовать произвольный `SQL`.",
-              "correct": false,
+              "text": "Custom data test — это `SQL`-файл в директории `tests/`, содержащий `SELECT`, который выбирает строки-нарушители бизнес-правила. Тест считается пройденным, если запрос возвращает 0 строк.",
+              "correct": true,
               "sections": {
-                "what_actually": "Singular custom-тесты — это как раз произвольный `SQL`-файл в `tests/`; YAML-объявления — это generic/встроенные тесты, другой механизм.",
-                "source_of_confusion": "Часть тестов действительно живёт в YAML, отсюда обобщение на все.",
-                "if_it_were_true": "Если бы произвольный `SQL` был запрещён, нельзя было бы выразить специфичные правила, ради которых custom-тесты и нужны.",
-                "how_it_should_be": "Custom (singular) тесты пишут произвольным `SQL` в файлах `tests/`, а не только в YAML."
+                "explanation": "Логика инвертирована: ты пишешь запрос, находящий «плохие» данные, и пустой результат означает, что нарушений нет — это и есть успешный тест.",
+                "example": "Файл `tests/assert_total_orders_positive.sql` с `SELECT order_id FROM {{ ref('orders') }} WHERE total < 0` упадёт, если найдётся хоть один отрицательный заказ.",
+                "when_to_apply": "Custom-тесты пишут под специфичные бизнес-правила, которые не покрыть встроенными `unique`/`not_null`/`relationships`.",
+                "edge_cases": "Запустить отдельно можно через `dbt test --select assert_total_orders_positive`; важно не забыть инверсию — `SELECT` должен возвращать именно нарушителей, а не валидные строки.",
+                "related": "[[dbt-interview#Q12]] встроенные тесты; [[dbt-interview#Q14]] dbt-utils тесты; [[dbt-interview#Q21]] dbt build."
               },
               "label": "D",
               "order": 3
@@ -789,18 +789,6 @@
           "question_text": "Что даёт пакет `dbt-utils` и его тесты?",
           "options": [
             {
-              "text": "`dbt-utils` заменяет ядро `dbt`: без него нельзя запускать обычные модели и встроенные тесты.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`dbt-utils` — дополнительный package поверх работающего `dbt`; ядро, модели и встроенные тесты работают и без него.",
-                "source_of_confusion": "Пакет очень популярен и часто стоит в проектах, отсюда впечатление обязательности.",
-                "if_it_were_true": "Если бы он заменял ядро, `dbt run` без `dbt deps` вообще не работал бы, но базовый `dbt` самодостаточен.",
-                "how_it_should_be": "`dbt-utils` — необязательное расширение; ядро `dbt` функционирует без него."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`dbt-utils` — самый популярный package для `dbt`: даёт расширенные тесты (например `expression_is_true`, `accepted_range`) и набор macros для частых `SQL`-паттернов (`pivot`, `deduplicate`, генерация дат и т.п.).",
               "correct": true,
               "sections": {
@@ -810,8 +798,8 @@
                 "edge_cases": "Перед использованием его прописывают в `packages.yml` и ставят через `dbt deps`; без этого namespace `dbt_utils.` не разрешится.",
                 "related": "[[dbt-interview#Q12]] встроенные тесты; [[dbt-interview#Q13]] custom data tests; [[dbt-interview#Q15]] macros."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`dbt-utils` — это BI-инструмент для построения дашбордов поверх `dbt`-моделей.",
@@ -822,8 +810,8 @@
                 "if_it_were_true": "Если бы он рисовал дашборды, его не подключали бы через `packages.yml` и `dbt deps`, но именно так его и ставят.",
                 "how_it_should_be": "`dbt-utils` расширяет тесты и macros `dbt`, а визуализацию делает отдельный BI."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Тесты из `dbt-utils` пишутся произвольным `SQL` в папке `tests/`, как singular-тесты.",
@@ -833,6 +821,18 @@
                 "source_of_confusion": "И custom-тесты, и `dbt-utils` расширяют проверки, поэтому их механизмы путают.",
                 "if_it_were_true": "Если бы они были `SQL`-файлами, их не подключали бы декларативно через namespace в `schema.yml`, но именно так они и задаются.",
                 "how_it_should_be": "Тесты `dbt-utils` объявляют в YAML; произвольный `SQL` в `tests/` — это отдельные singular-тесты."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`dbt-utils` заменяет ядро `dbt`: без него нельзя запускать обычные модели и встроенные тесты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`dbt-utils` — дополнительный package поверх работающего `dbt`; ядро, модели и встроенные тесты работают и без него.",
+                "source_of_confusion": "Пакет очень популярен и часто стоит в проектах, отсюда впечатление обязательности.",
+                "if_it_were_true": "Если бы он заменял ядро, `dbt run` без `dbt deps` вообще не работал бы, но базовый `dbt` самодостаточен.",
+                "how_it_should_be": "`dbt-utils` — необязательное расширение; ядро `dbt` функционирует без него."
               },
               "label": "D",
               "order": 3
@@ -909,28 +909,17 @@
           "question_text": "Как используется `Jinja` templating в `dbt`?",
           "options": [
             {
-              "text": "`Jinja` в `dbt` позволяет только подставлять `ref()` и ничего больше.",
-              "correct": false,
+              "text": "`Jinja` делает `SQL` динамическим: условия `{% if target.name == 'prod' %}...{% else %}...{% endif %}`, циклы `{% for region in [...] %}...{% endfor %}`, переменные `{% set min_date = '2025-01-01' %}` и доступ к окружению через `{{ env_var('DEFAULT_COUNTRY') }}`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Jinja` даёт полноценные условия (`if/else`), циклы (`for`), переменные (`set`), доступ к `env_var` и `target` — а не только `ref()`.",
-                "source_of_confusion": "`ref()` — самое заметное применение `Jinja`, отсюда сужение до него.",
-                "if_it_were_true": "Если бы доступен был только `ref()`, нельзя было бы генерировать колонки циклом, но это типовой приём.",
-                "how_it_should_be": "`Jinja` поддерживает условия, циклы и переменные, делая `SQL` динамическим, а не только `ref()`."
+                "explanation": "Всё это раскрывается при компиляции в обычный `SQL`, поэтому warehouse получает уже статический запрос без следов `Jinja`.",
+                "example": "Циклом удобно генерить колонки: `{% for region in ['us','eu','asia'] %} SUM(CASE WHEN region='{{ region }}' THEN amount END) AS {{ region }}_total {% if not loop.last %},{% endif %} {% endfor %}`.",
+                "when_to_apply": "`Jinja` применяют, когда нужна параметризация по таргету, env-переменным или повторяющиеся по шаблону колонки, которые лень писать руками.",
+                "edge_cases": "Динамика мощна, но усложняет debug: чтобы понять реальный запрос, смотрят compiled `SQL` в `target/compiled/` через `dbt compile`.",
+                "related": "[[dbt-interview#Q15]] macros; [[dbt-interview#Q10]] env_var и target; [[dbt-interview#Q24]] is_incremental в Jinja."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`Jinja`-логика выполняется в warehouse во время работы запроса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Jinja` обрабатывается на стороне `dbt` при компиляции; в warehouse уходит уже готовый статический `SQL` без `Jinja`.",
-                "source_of_confusion": "Раз результат исполняется в БД, кажется, что и `Jinja` тоже.",
-                "if_it_were_true": "Если бы warehouse понимал `Jinja`, не было бы шага compile, но `dbt compile` существует именно для раскрытия шаблонов.",
-                "how_it_should_be": "`Jinja` раскрывается до отправки в warehouse; БД видит чистый `SQL`."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Циклы `{% for %}` в `Jinja` повторяют выполнение запроса несколько раз во время рантайма.",
@@ -941,18 +930,29 @@
                 "if_it_were_true": "Если бы цикл повторял запрос, нельзя было бы им собрать одну строку `SELECT` с несколькими `SUM(CASE...)`, но именно для этого он и нужен.",
                 "how_it_should_be": "`for` генерирует `SQL`-текст на компиляции, а не повторяет выполнение запроса."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Jinja`-логика выполняется в warehouse во время работы запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jinja` обрабатывается на стороне `dbt` при компиляции; в warehouse уходит уже готовый статический `SQL` без `Jinja`.",
+                "source_of_confusion": "Раз результат исполняется в БД, кажется, что и `Jinja` тоже.",
+                "if_it_were_true": "Если бы warehouse понимал `Jinja`, не было бы шага compile, но `dbt compile` существует именно для раскрытия шаблонов.",
+                "how_it_should_be": "`Jinja` раскрывается до отправки в warehouse; БД видит чистый `SQL`."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Jinja` делает `SQL` динамическим: условия `{% if target.name == 'prod' %}...{% else %}...{% endif %}`, циклы `{% for region in [...] %}...{% endfor %}`, переменные `{% set min_date = '2025-01-01' %}` и доступ к окружению через `{{ env_var('DEFAULT_COUNTRY') }}`.",
-              "correct": true,
+              "text": "`Jinja` в `dbt` позволяет только подставлять `ref()` и ничего больше.",
+              "correct": false,
               "sections": {
-                "explanation": "Всё это раскрывается при компиляции в обычный `SQL`, поэтому warehouse получает уже статический запрос без следов `Jinja`.",
-                "example": "Циклом удобно генерить колонки: `{% for region in ['us','eu','asia'] %} SUM(CASE WHEN region='{{ region }}' THEN amount END) AS {{ region }}_total {% if not loop.last %},{% endif %} {% endfor %}`.",
-                "when_to_apply": "`Jinja` применяют, когда нужна параметризация по таргету, env-переменным или повторяющиеся по шаблону колонки, которые лень писать руками.",
-                "edge_cases": "Динамика мощна, но усложняет debug: чтобы понять реальный запрос, смотрят compiled `SQL` в `target/compiled/` через `dbt compile`.",
-                "related": "[[dbt-interview#Q15]] macros; [[dbt-interview#Q10]] env_var и target; [[dbt-interview#Q24]] is_incremental в Jinja."
+                "what_actually": "`Jinja` даёт полноценные условия (`if/else`), циклы (`for`), переменные (`set`), доступ к `env_var` и `target` — а не только `ref()`.",
+                "source_of_confusion": "`ref()` — самое заметное применение `Jinja`, отсюда сужение до него.",
+                "if_it_were_true": "Если бы доступен был только `ref()`, нельзя было бы генерировать колонки циклом, но это типовой приём.",
+                "how_it_should_be": "`Jinja` поддерживает условия, циклы и переменные, делая `SQL` динамическим, а не только `ref()`."
               },
               "label": "D",
               "order": 3
@@ -969,14 +969,13 @@
           "question_text": "Что такое hooks в `dbt` (`on-run-start`, `post-hook` и др.)?",
           "options": [
             {
-              "text": "Hooks — это `SQL`-команды, которые `dbt` выполняет вокруг прогона или моделей: `on-run-start` (перед началом `dbt run`), `on-run-end` (после), `pre-hook` (перед моделью), `post-hook` (после модели). Задаются в `dbt_project.yml` или в `config()`.",
-              "correct": true,
+              "text": "`post-hook` выполняется один раз в самом конце всего прогона, после всех моделей.",
+              "correct": false,
               "sections": {
-                "explanation": "Hooks полезны для grants, vacuum, обновления статистики и создания схем — операций вокруг данных, которые не выражаются обычной моделью.",
-                "example": "Например `on-run-start: ['CREATE SCHEMA IF NOT EXISTS analytics']` и `+post-hook: ['VACUUM {{ this }}']` под папкой моделей.",
-                "when_to_apply": "Применяют, когда после материализации нужно выдать права BI-пользователю, вакуумнуть таблицу или собрать статистику планировщика.",
-                "edge_cases": "`{{ this }}` в `post-hook` ссылается на текущую модель; ошибка в hook-`SQL` может прервать прогон, поэтому их пишут аккуратно и идемпотентно.",
-                "related": "[[dbt-interview#Q9]] dbt_project.yml; [[dbt-interview#Q16]] Jinja templating; [[dbt-interview#Q20]] основные команды."
+                "what_actually": "`post-hook` выполняется после каждой своей модели; один раз в конце прогона срабатывает `on-run-end`.",
+                "source_of_confusion": "Оба содержат идею «после», поэтому их момент срабатывания путают.",
+                "if_it_were_true": "Если бы `post-hook` был один на прогон, в нём нельзя было бы использовать `{{ this }}` для конкретной модели, но он именно про модель.",
+                "how_it_should_be": "`post-hook` — после каждой модели; общий финал прогона — это `on-run-end`."
               },
               "label": "A",
               "order": 0
@@ -994,13 +993,14 @@
               "order": 1
             },
             {
-              "text": "`post-hook` выполняется один раз в самом конце всего прогона, после всех моделей.",
-              "correct": false,
+              "text": "Hooks — это `SQL`-команды, которые `dbt` выполняет вокруг прогона или моделей: `on-run-start` (перед началом `dbt run`), `on-run-end` (после), `pre-hook` (перед моделью), `post-hook` (после модели). Задаются в `dbt_project.yml` или в `config()`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`post-hook` выполняется после каждой своей модели; один раз в конце прогона срабатывает `on-run-end`.",
-                "source_of_confusion": "Оба содержат идею «после», поэтому их момент срабатывания путают.",
-                "if_it_were_true": "Если бы `post-hook` был один на прогон, в нём нельзя было бы использовать `{{ this }}` для конкретной модели, но он именно про модель.",
-                "how_it_should_be": "`post-hook` — после каждой модели; общий финал прогона — это `on-run-end`."
+                "explanation": "Hooks полезны для grants, vacuum, обновления статистики и создания схем — операций вокруг данных, которые не выражаются обычной моделью.",
+                "example": "Например `on-run-start: ['CREATE SCHEMA IF NOT EXISTS analytics']` и `+post-hook: ['VACUUM {{ this }}']` под папкой моделей.",
+                "when_to_apply": "Применяют, когда после материализации нужно выдать права BI-пользователю, вакуумнуть таблицу или собрать статистику планировщика.",
+                "edge_cases": "`{{ this }}` в `post-hook` ссылается на текущую модель; ошибка в hook-`SQL` может прервать прогон, поэтому их пишут аккуратно и идемпотентно.",
+                "related": "[[dbt-interview#Q9]] dbt_project.yml; [[dbt-interview#Q16]] Jinja templating; [[dbt-interview#Q20]] основные команды."
               },
               "label": "C",
               "order": 2
@@ -1041,14 +1041,13 @@
               "order": 0
             },
             {
-              "text": "`dbt docs generate` + `dbt docs serve` собирают и поднимают HTML-сайт документации: описания моделей и колонок (из `description:` в YAML), lineage-граф (DAG зависимостей), тесты на каждой модели, compiled `SQL` и source freshness.",
-              "correct": true,
+              "text": "`dbt docs` показывает только список моделей без зависимостей и без lineage-графа.",
+              "correct": false,
               "sections": {
-                "explanation": "Документация автогенерируется из кода и метаданных проекта, поэтому она синхронизирована с реальными моделями и не устаревает, как ручная вики.",
-                "example": "Описание задают рядом с моделью: `description: 'Cleaned customer data, one row per customer'` и `columns: - name: customer_id, description: 'Primary key'`.",
-                "when_to_apply": "Доки полезны аналитикам и стейкхолдерам для понимания, что значит каждая таблица/колонка, и для навигации по зависимостям перед изменениями.",
-                "edge_cases": "Полнота доков зависит от заполненных `description:`; пустые описания дадут сайт с правильным lineage, но без человекочитаемого смысла полей.",
-                "related": "[[dbt-interview#Q19]] data lineage; [[dbt-interview#Q5]] что такое model; [[dbt-interview#Q12]] тесты на модели."
+                "what_actually": "Lineage-граф (DAG из `ref()`/`source()`) — одна из ключевых частей сайта; это не просто плоский список моделей.",
+                "source_of_confusion": "Плоский список таблиц кажется естественным выводом «документации».",
+                "if_it_were_true": "Если бы lineage отсутствовал, `dbt docs serve` не показывал бы интерактивный граф зависимостей, но он это делает.",
+                "how_it_should_be": "`dbt docs` включает интерактивный lineage-граф, а не только перечень моделей."
               },
               "label": "B",
               "order": 1
@@ -1066,13 +1065,14 @@
               "order": 2
             },
             {
-              "text": "`dbt docs` показывает только список моделей без зависимостей и без lineage-графа.",
-              "correct": false,
+              "text": "`dbt docs generate` + `dbt docs serve` собирают и поднимают HTML-сайт документации: описания моделей и колонок (из `description:` в YAML), lineage-граф (DAG зависимостей), тесты на каждой модели, compiled `SQL` и source freshness.",
+              "correct": true,
               "sections": {
-                "what_actually": "Lineage-граф (DAG из `ref()`/`source()`) — одна из ключевых частей сайта; это не просто плоский список моделей.",
-                "source_of_confusion": "Плоский список таблиц кажется естественным выводом «документации».",
-                "if_it_were_true": "Если бы lineage отсутствовал, `dbt docs serve` не показывал бы интерактивный граф зависимостей, но он это делает.",
-                "how_it_should_be": "`dbt docs` включает интерактивный lineage-граф, а не только перечень моделей."
+                "explanation": "Документация автогенерируется из кода и метаданных проекта, поэтому она синхронизирована с реальными моделями и не устаревает, как ручная вики.",
+                "example": "Описание задают рядом с моделью: `description: 'Cleaned customer data, one row per customer'` и `columns: - name: customer_id, description: 'Primary key'`.",
+                "when_to_apply": "Доки полезны аналитикам и стейкхолдерам для понимания, что значит каждая таблица/колонка, и для навигации по зависимостям перед изменениями.",
+                "edge_cases": "Полнота доков зависит от заполненных `description:`; пустые описания дадут сайт с правильным lineage, но без человекочитаемого смысла полей.",
+                "related": "[[dbt-interview#Q19]] data lineage; [[dbt-interview#Q5]] что такое model; [[dbt-interview#Q12]] тесты на модели."
               },
               "label": "D",
               "order": 3
@@ -1089,13 +1089,13 @@
           "question_text": "Что такое data lineage в `dbt` и как он строится?",
           "options": [
             {
-              "text": "Lineage в `dbt` нужно рисовать вручную в отдельном диаграммном инструменте.",
+              "text": "Lineage в `dbt` показывает только forward-зависимости и не умеет в impact analysis.",
               "correct": false,
               "sections": {
-                "what_actually": "`dbt` строит lineage автоматически из ссылок `ref()` и `source()` в моделях — рисовать вручную не нужно.",
-                "source_of_confusion": "Привычка делать архитектурные схемы руками переносится на data lineage.",
-                "if_it_were_true": "Если бы lineage был ручным, он устаревал бы при каждом изменении кода, а автоматический всегда отражает реальные зависимости.",
-                "how_it_should_be": "Lineage в `dbt` генерируется автоматически из `ref()`/`source()`, а не рисуется вручную."
+                "what_actually": "Lineage даёт и forward, и backward направления, что и позволяет делать impact analysis перед изменением модели.",
+                "source_of_confusion": "Forward-направление (что используется) нагляднее, отсюда вывод, что оно единственное.",
+                "if_it_were_true": "Если бы backward не было, нельзя было бы ответить «что зависит от этой таблицы», но это базовый сценарий lineage.",
+                "how_it_should_be": "Lineage двунаправлен (forward и backward) и прямо поддерживает impact analysis."
               },
               "label": "A",
               "order": 0
@@ -1113,6 +1113,18 @@
               "order": 1
             },
             {
+              "text": "Lineage в `dbt` нужно рисовать вручную в отдельном диаграммном инструменте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`dbt` строит lineage автоматически из ссылок `ref()` и `source()` в моделях — рисовать вручную не нужно.",
+                "source_of_confusion": "Привычка делать архитектурные схемы руками переносится на data lineage.",
+                "if_it_were_true": "Если бы lineage был ручным, он устаревал бы при каждом изменении кода, а автоматический всегда отражает реальные зависимости.",
+                "how_it_should_be": "Lineage в `dbt` генерируется автоматически из `ref()`/`source()`, а не рисуется вручную."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "Data lineage — это DAG зависимостей, который `dbt` автоматически строит из `ref()` и `source()`. Видно forward lineage (что использует модель), backward (что от неё зависит) и можно делать impact analysis: «изменю эту таблицу — что сломается».",
               "correct": true,
               "sections": {
@@ -1121,18 +1133,6 @@
                 "when_to_apply": "Lineage применяют при рефакторинге и разборе инцидентов: понять, кого затронет правка модели, и проследить происхождение данных в marts.",
                 "edge_cases": "Корректность графа зависит от использования `ref()`/`source()`: если в модели зашить имя таблицы строкой напрямую, эта зависимость в lineage не попадёт.",
                 "related": "[[dbt-interview#Q6]] ref() и source(); [[dbt-interview#Q18]] dbt docs; [[dbt-interview#Q5]] что такое model."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Lineage в `dbt` показывает только forward-зависимости и не умеет в impact analysis.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Lineage даёт и forward, и backward направления, что и позволяет делать impact analysis перед изменением модели.",
-                "source_of_confusion": "Forward-направление (что используется) нагляднее, отсюда вывод, что оно единственное.",
-                "if_it_were_true": "Если бы backward не было, нельзя было бы ответить «что зависит от этой таблицы», но это базовый сценарий lineage.",
-                "how_it_should_be": "Lineage двунаправлен (forward и backward) и прямо поддерживает impact analysis."
               },
               "label": "D",
               "order": 3
@@ -1161,13 +1161,14 @@
               "order": 0
             },
             {
-              "text": "`dbt compile` выполняет модели в warehouse так же, как `dbt run`.",
-              "correct": false,
+              "text": "Основные команды: `dbt deps` (поставить packages), `dbt seed` (CSV → таблицы), `dbt run` (модели в верном порядке), `dbt test` (тесты), `dbt build` (run+test+seed+snapshot вместе), `dbt snapshot`, `dbt docs generate`/`serve`, `dbt compile` (рендер `SQL` без выполнения), `dbt source freshness`, `dbt run-operation <macro>`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`dbt compile` только компилирует `SQL` (раскрывает `Jinja`) без выполнения в warehouse; реально создаёт объекты `dbt run`.",
-                "source_of_confusion": "Обе команды обрабатывают `SQL` моделей, поэтому их эффект путают.",
-                "if_it_were_true": "Если бы `compile` выполнял модели, незачем было бы иметь отдельный `run`, но `compile` намеренно ничего не исполняет.",
-                "how_it_should_be": "`dbt compile` лишь рендерит `SQL`; выполняет его `dbt run`."
+                "explanation": "Команды покрывают весь жизненный цикл: подтянуть зависимости, загрузить справочники, построить и протестировать модели, собрать документацию и проверить актуальность источников.",
+                "example": "Типичный CI-прогон: `dbt deps` → `dbt build`, а для отладки `Jinja` запускают `dbt compile` и смотрят результат в `target/compiled/`.",
+                "when_to_apply": "Набор команд используют по ситуации: `seed` для справочников, `snapshot` для SCD2, `run-operation` для разовых macros (например бэкфилл).",
+                "edge_cases": "`dbt build` объединяет несколько шагов, поэтому в проде предпочитают его; `dbt run` + `dbt test` по отдельности дают меньше гарантий по порядку проверок.",
+                "related": "[[dbt-interview#Q21]] run vs build; [[dbt-interview#Q22]] selectors; [[dbt-interview#Q8]] snapshot."
               },
               "label": "B",
               "order": 1
@@ -1185,14 +1186,13 @@
               "order": 2
             },
             {
-              "text": "Основные команды: `dbt deps` (поставить packages), `dbt seed` (CSV → таблицы), `dbt run` (модели в верном порядке), `dbt test` (тесты), `dbt build` (run+test+seed+snapshot вместе), `dbt snapshot`, `dbt docs generate`/`serve`, `dbt compile` (рендер `SQL` без выполнения), `dbt source freshness`, `dbt run-operation <macro>`.",
-              "correct": true,
+              "text": "`dbt compile` выполняет модели в warehouse так же, как `dbt run`.",
+              "correct": false,
               "sections": {
-                "explanation": "Команды покрывают весь жизненный цикл: подтянуть зависимости, загрузить справочники, построить и протестировать модели, собрать документацию и проверить актуальность источников.",
-                "example": "Типичный CI-прогон: `dbt deps` → `dbt build`, а для отладки `Jinja` запускают `dbt compile` и смотрят результат в `target/compiled/`.",
-                "when_to_apply": "Набор команд используют по ситуации: `seed` для справочников, `snapshot` для SCD2, `run-operation` для разовых macros (например бэкфилл).",
-                "edge_cases": "`dbt build` объединяет несколько шагов, поэтому в проде предпочитают его; `dbt run` + `dbt test` по отдельности дают меньше гарантий по порядку проверок.",
-                "related": "[[dbt-interview#Q21]] run vs build; [[dbt-interview#Q22]] selectors; [[dbt-interview#Q8]] snapshot."
+                "what_actually": "`dbt compile` только компилирует `SQL` (раскрывает `Jinja`) без выполнения в warehouse; реально создаёт объекты `dbt run`.",
+                "source_of_confusion": "Обе команды обрабатывают `SQL` моделей, поэтому их эффект путают.",
+                "if_it_were_true": "Если бы `compile` выполнял модели, незачем было бы иметь отдельный `run`, но `compile` намеренно ничего не исполняет.",
+                "how_it_should_be": "`dbt compile` лишь рендерит `SQL`; выполняет его `dbt run`."
               },
               "label": "D",
               "order": 3
@@ -1209,19 +1209,6 @@
           "question_text": "`dbt run` vs `dbt build` — в чём разница?",
           "options": [
             {
-              "text": "`dbt run` запускает только модели; `dbt build` делает всё сразу — модели, тесты, seeds и snapshots — в DAG-порядке, причём после каждой модели сразу прогоняет её тесты, и при провале не пускает данные дальше по downstream.",
-              "correct": true,
-              "sections": {
-                "explanation": "`dbt build` рекомендуют для production, потому что тесты выполняются между шагами DAG, а не после всех моделей, и плохие данные не доезжают до зависимых таблиц.",
-                "example": "`dbt build` строит модель → тестирует её → только при успехе идёт в downstream; `dbt run` + отдельный `dbt test` так не страхуют.",
-                "when_to_apply": "`build` берут в проде и CI для безопасного прогона; раздельные `run`/`test` уместны при отладке, когда тесты не должны блокировать.",
-                "edge_cases": "Если тест провалился, `dbt build` останавливает downstream именно этой ветки, тогда как `dbt run` отдельно от `dbt test` может протолкнуть bad data в зависимые модели.",
-                "related": "[[dbt-interview#Q20]] основные команды; [[dbt-interview#Q12]] встроенные тесты; [[dbt-interview#Q26]] deploy в production."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`dbt build` запускает только модели, а `dbt run` дополнительно ещё и тесты со snapshots.",
               "correct": false,
               "sections": {
@@ -1230,8 +1217,8 @@
                 "if_it_were_true": "Если бы `run` включал тесты, не было бы отдельной команды `dbt test`, но она существует именно потому, что `run` тестов не гоняет.",
                 "how_it_should_be": "Полный прогон — это `dbt build`; `dbt run` ограничен моделями."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`dbt build` и `dbt run` полностью идентичны и отличаются только псевдонимом команды.",
@@ -1242,8 +1229,8 @@
                 "if_it_were_true": "Если бы они были одинаковы, не было бы смысла рекомендовать `build` для прода ради безопасности тестов.",
                 "how_it_should_be": "`build` шире `run` и включает проверку тестов между шагами DAG."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "В `dbt build` тесты запускаются один раз в самом конце, после всех моделей.",
@@ -1253,6 +1240,19 @@
                 "source_of_confusion": "Привычная схема «сначала всё построить, потом проверить» переносится на `build`.",
                 "if_it_were_true": "Если бы тесты шли в конце, downstream не блокировался бы вовремя, но именно ранняя проверка — преимущество `build`.",
                 "how_it_should_be": "В `dbt build` тест модели идёт сразу после неё, до запуска зависимых моделей."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`dbt run` запускает только модели; `dbt build` делает всё сразу — модели, тесты, seeds и snapshots — в DAG-порядке, причём после каждой модели сразу прогоняет её тесты, и при провале не пускает данные дальше по downstream.",
+              "correct": true,
+              "sections": {
+                "explanation": "`dbt build` рекомендуют для production, потому что тесты выполняются между шагами DAG, а не после всех моделей, и плохие данные не доезжают до зависимых таблиц.",
+                "example": "`dbt build` строит модель → тестирует её → только при успехе идёт в downstream; `dbt run` + отдельный `dbt test` так не страхуют.",
+                "when_to_apply": "`build` берут в проде и CI для безопасного прогона; раздельные `run`/`test` уместны при отладке, когда тесты не должны блокировать.",
+                "edge_cases": "Если тест провалился, `dbt build` останавливает downstream именно этой ветки, тогда как `dbt run` отдельно от `dbt test` может протолкнуть bad data в зависимые модели.",
+                "related": "[[dbt-interview#Q20]] основные команды; [[dbt-interview#Q12]] встроенные тесты; [[dbt-interview#Q26]] deploy в production."
               },
               "label": "D",
               "order": 3
@@ -1269,18 +1269,6 @@
           "question_text": "Что такое selectors в `dbt` и как выбирать модели?",
           "options": [
             {
-              "text": "Селектор `+my_model` запускает модель вместе со всеми её downstream-зависимостями.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`+` перед именем (`+my_model`) берёт модель и её upstream; downstream добавляет `+` после имени (`my_model+`).",
-                "source_of_confusion": "Знак `+` симметричен по виду, поэтому его направление легко перепутать.",
-                "if_it_were_true": "Если бы `+my_model` означал downstream, нельзя было бы по-разному выразить «вверх» и «вниз», но именно позиция `+` это и различает.",
-                "how_it_should_be": "`+my_model` — это модель и upstream; downstream — это `my_model+`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Selectors задают, какие модели запускать: `--select my_model` (одна), `+my_model` (модель + все upstream), `my_model+` (модель + downstream), `+my_model+` (вся цепочка), `staging.*` (вся папка), `tag:critical` (по тегу), `state:modified` (только изменённые). Можно комбинировать с `--exclude`.",
               "correct": true,
               "sections": {
@@ -1290,20 +1278,20 @@
                 "edge_cases": "`state:modified` требует сравнения с предыдущим `manifest.json` (deferred state); без сохранённого артефакта сравнивать не с чем, и слим-режим не сработает.",
                 "related": "[[dbt-interview#Q20]] основные команды; [[dbt-interview#Q26]] slim CI в production; [[dbt-interview#Q23]] слои staging/marts."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "Селекторы работают только по точному имени модели и не поддерживают теги или папки.",
+              "text": "Селектор `+my_model` запускает модель вместе со всеми её downstream-зависимостями.",
               "correct": false,
               "sections": {
-                "what_actually": "Селекторы поддерживают теги (`tag:critical`), папки (`staging.*`), состояние (`state:modified`) и графовые операторы `+`, а не только точное имя.",
-                "source_of_confusion": "Простейший случай — выбор по имени, его и принимают за единственный.",
-                "if_it_were_true": "Если бы работало только имя, не существовало бы `tag:` и `state:`-синтаксиса, но он широко используется в CI.",
-                "how_it_should_be": "Селекторы понимают теги, папки и состояние, а не лишь точное имя модели."
+                "what_actually": "`+` перед именем (`+my_model`) берёт модель и её upstream; downstream добавляет `+` после имени (`my_model+`).",
+                "source_of_confusion": "Знак `+` симметричен по виду, поэтому его направление легко перепутать.",
+                "if_it_were_true": "Если бы `+my_model` означал downstream, нельзя было бы по-разному выразить «вверх» и «вниз», но именно позиция `+` это и различает.",
+                "how_it_should_be": "`+my_model` — это модель и upstream; downstream — это `my_model+`."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`state:modified` запускает абсолютно все модели проекта при каждом изменении.",
@@ -1313,6 +1301,18 @@
                 "source_of_confusion": "Слово «modified» звучит как «пересобрать всё затронутое целиком», отсюда преувеличение.",
                 "if_it_were_true": "Если бы он гонял весь проект, не было бы экономии CI, ради которой slim-режим и придуман.",
                 "how_it_should_be": "`state:modified` ограничивает прогон изменёнными моделями, экономя время CI."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Селекторы работают только по точному имени модели и не поддерживают теги или папки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Селекторы поддерживают теги (`tag:critical`), папки (`staging.*`), состояние (`state:modified`) и графовые операторы `+`, а не только точное имя.",
+                "source_of_confusion": "Простейший случай — выбор по имени, его и принимают за единственный.",
+                "if_it_were_true": "Если бы работало только имя, не существовало бы `tag:` и `state:`-синтаксиса, но он широко используется в CI.",
+                "how_it_should_be": "Селекторы понимают теги, папки и состояние, а не лишь точное имя модели."
               },
               "label": "D",
               "order": 3
@@ -1329,18 +1329,6 @@
           "question_text": "Что такое layered architecture в `dbt` (staging, intermediate, marts)?",
           "options": [
             {
-              "text": "Рекомендуемая структура `dbt` — это два слоя: raw и final, без промежуточных уровней.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`dbt` рекомендует три слоя — staging, intermediate, marts — а не raw/final; raw — это источник, а не слой моделей.",
-                "source_of_confusion": "Двухслойная модель «сырое → готовое» интуитивна, отсюда упрощение.",
-                "if_it_were_true": "Если бы слоёв было два, не было бы места для intermediate с бизнес-логикой, но именно он разгружает marts.",
-                "how_it_should_be": "Стандарт — три слоя: staging, intermediate, marts."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "В слое staging должны лежать финальные таблицы для BI с готовой бизнес-логикой.",
               "correct": false,
               "sections": {
@@ -1349,8 +1337,32 @@
                 "if_it_were_true": "Если бы BI читал из staging, терялся бы смысл marts, но именно marts — точка выхода для BI.",
                 "how_it_should_be": "Для BI предназначен слой marts; staging — это базовая очистка близко к raw."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Intermediate-слой обязан всегда быть `view`, чтобы не занимать место в warehouse.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Intermediate обычно делают `table` или `ephemeral` (тяжёлая бизнес-логика, joins), а не обязательно `view`.",
+                "source_of_confusion": "У staging дефолт — `view`, и это правило ошибочно распространяют на intermediate.",
+                "if_it_were_true": "Если бы intermediate всегда был `view`, дорогие joins пересчитывались бы при каждом чтении downstream, что неэффективно.",
+                "how_it_should_be": "Intermediate чаще `table`/`ephemeral`; `view` по умолчанию — это про staging."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "Рекомендуемая структура `dbt` — это два слоя: raw и final, без промежуточных уровней.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`dbt` рекомендует три слоя — staging, intermediate, marts — а не raw/final; raw — это источник, а не слой моделей.",
+                "source_of_confusion": "Двухслойная модель «сырое → готовое» интуитивна, отсюда упрощение.",
+                "if_it_were_true": "Если бы слоёв было два, не было бы места для intermediate с бизнес-логикой, но именно он разгружает marts.",
+                "how_it_should_be": "Стандарт — три слоя: staging, intermediate, marts."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Рекомендуемая структура — три слоя: staging (1:1 с raw, базовая очистка: rename, типы; обычно `view`), intermediate (joins и бизнес-логика; `table` или `ephemeral`) и marts (финальные таблицы для BI: `dim_`, `fact_`; обычно `table`).",
@@ -1361,18 +1373,6 @@
                 "when_to_apply": "Слои применяют в любом нетривиальном проекте `dbt`: они дают предсказуемую навигацию и точки переиспользования между marts.",
                 "edge_cases": "Дефолтные материализации слоёв удобно задавать в `dbt_project.yml` (`staging: +materialized: view`, `marts: +materialized: table`), а не повторять в каждом файле.",
                 "related": "[[dbt-interview#Q5]] что такое model; [[dbt-interview#Q7]] материализации; [[dbt-interview#Q9]] dbt_project.yml."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Intermediate-слой обязан всегда быть `view`, чтобы не занимать место в warehouse.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Intermediate обычно делают `table` или `ephemeral` (тяжёлая бизнес-логика, joins), а не обязательно `view`.",
-                "source_of_confusion": "У staging дефолт — `view`, и это правило ошибочно распространяют на intermediate.",
-                "if_it_were_true": "Если бы intermediate всегда был `view`, дорогие joins пересчитывались бы при каждом чтении downstream, что неэффективно.",
-                "how_it_should_be": "Intermediate чаще `table`/`ephemeral`; `view` по умолчанию — это про staging."
               },
               "label": "D",
               "order": 3
@@ -1389,13 +1389,14 @@
           "question_text": "В чём особенности incremental-моделей в `dbt`?",
           "options": [
             {
-              "text": "Incremental-модель при каждом запуске полностью пересоздаёт таблицу с нуля.",
-              "correct": false,
+              "text": "Incremental-модель обрабатывает только новые/изменённые строки между запусками. Тип задаётся `config(materialized='incremental', unique_key=..., incremental_strategy=...)`, а фильтр новых данных оборачивают в `{% if is_incremental() %} WHERE updated_at > (SELECT MAX(updated_at) FROM {{ this }}) {% endif %}`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Incremental как раз дозагружает только новые/изменённые строки; полная пересборка происходит лишь при первом запуске или с флагом `--full-refresh`.",
-                "source_of_confusion": "Любая материализация ассоциируется с пересозданием объекта, отсюда вывод о полном rebuild.",
-                "if_it_were_true": "Если бы она всегда строилась заново, не было бы экономии на больших fact-таблицах, ради которой incremental и существует.",
-                "how_it_should_be": "Incremental добавляет только инкремент; полный rebuild — это первый запуск или `--full-refresh`."
+                "explanation": "Стратегии: `merge` (DELETE+INSERT/MERGE — для updates), `append` (только INSERT — для immutable-событий), `delete+insert` (для warehouse без MERGE), `insert_overwrite` (для partitioned-таблиц в `BigQuery`/`Spark`).",
+                "example": "Подвох: при первом запуске обрабатываются ВСЕ данные (блок `is_incremental()` ложен), а далее — только инкремент; `dbt run --full-refresh` пересоздаёт таблицу с нуля.",
+                "when_to_apply": "Incremental берут для больших растущих fact-таблиц, где полный пересчёт каждый раз слишком дорог по времени и compute.",
+                "edge_cases": "Неверный `unique_key` или пропущенный фильтр `is_incremental()` приводят к дубликатам или потере апдейтов, поэтому стратегию выбирают под характер данных.",
+                "related": "[[dbt-interview#Q7]] материализации; [[dbt-interview#Q16]] Jinja и is_incremental; [[dbt-interview#Q6]] source() для raw."
               },
               "label": "A",
               "order": 0
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "text": "Incremental-модель обрабатывает только новые/изменённые строки между запусками. Тип задаётся `config(materialized='incremental', unique_key=..., incremental_strategy=...)`, а фильтр новых данных оборачивают в `{% if is_incremental() %} WHERE updated_at > (SELECT MAX(updated_at) FROM {{ this }}) {% endif %}`.",
-              "correct": true,
+              "text": "Incremental-модель при каждом запуске полностью пересоздаёт таблицу с нуля.",
+              "correct": false,
               "sections": {
-                "explanation": "Стратегии: `merge` (DELETE+INSERT/MERGE — для updates), `append` (только INSERT — для immutable-событий), `delete+insert` (для warehouse без MERGE), `insert_overwrite` (для partitioned-таблиц в `BigQuery`/`Spark`).",
-                "example": "Подвох: при первом запуске обрабатываются ВСЕ данные (блок `is_incremental()` ложен), а далее — только инкремент; `dbt run --full-refresh` пересоздаёт таблицу с нуля.",
-                "when_to_apply": "Incremental берут для больших растущих fact-таблиц, где полный пересчёт каждый раз слишком дорог по времени и compute.",
-                "edge_cases": "Неверный `unique_key` или пропущенный фильтр `is_incremental()` приводят к дубликатам или потере апдейтов, поэтому стратегию выбирают под характер данных.",
-                "related": "[[dbt-interview#Q7]] материализации; [[dbt-interview#Q16]] Jinja и is_incremental; [[dbt-interview#Q6]] source() для raw."
+                "what_actually": "Incremental как раз дозагружает только новые/изменённые строки; полная пересборка происходит лишь при первом запуске или с флагом `--full-refresh`.",
+                "source_of_confusion": "Любая материализация ассоциируется с пересозданием объекта, отсюда вывод о полном rebuild.",
+                "if_it_were_true": "Если бы она всегда строилась заново, не было бы экономии на больших fact-таблицах, ради которой incremental и существует.",
+                "how_it_should_be": "Incremental добавляет только инкремент; полный rebuild — это первый запуск или `--full-refresh`."
               },
               "label": "D",
               "order": 3
@@ -1449,19 +1449,6 @@
           "question_text": "Что такое семантические модели (Semantic Layer) в `dbt`?",
           "options": [
             {
-              "text": "С `dbt 1.6+` появился `dbt Semantic Layer` (бывший `MetricFlow`): декларативное описание метрик поверх моделей. В YAML задают `semantic_models` с `measures` и `dimensions`, затем `metrics` (например `monthly_revenue`), а запрашивают через `semantic_layer.query(...)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Идея — single source of truth для метрик: вместо того чтобы каждый BI-инструмент считал MRR по-своему, все используют одну централизованную формулу из Semantic Layer.",
-                "example": "Так `measures: - name: total_revenue, agg: sum, expr: amount`, затем `metrics: - name: monthly_revenue, type: simple, type_params: {measure: total_revenue}`, а запрос — `semantic_layer.query(metrics=['monthly_revenue'], group_by=['order_date'])`.",
-                "when_to_apply": "Semantic Layer берут, когда несколько потребителей (дашборды, отчёты) должны одинаково считать ключевые бизнес-метрики и нельзя допускать расхождений в определениях.",
-                "edge_cases": "Полный функционал Semantic Layer тяготеет к `dbt Cloud`, что создаёт частичный vendor lock-in; в `dbt Core` возможности и API уже.",
-                "related": "[[dbt-interview#Q4]] dbt Cloud и Semantic Layer; [[dbt-interview#Q5]] что такое model; [[dbt-interview#Q28]] минусы dbt."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Semantic Layer — это новый тип материализации моделей наряду с `table` и `view`.",
               "correct": false,
               "sections": {
@@ -1469,6 +1456,18 @@
                 "source_of_confusion": "И то, и другое настраивается в `dbt`, отсюда смешение понятий.",
                 "if_it_were_true": "Если бы это была материализация, её указывали бы в `config(materialized=...)`, но метрики описывают в `semantic_models`/`metrics`.",
                 "how_it_should_be": "Semantic Layer описывает метрики, а не способ материализации таблицы."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Semantic Layer существует с самой первой версии `dbt` и не связан с `MetricFlow`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Semantic Layer появился в `dbt 1.6+` и вырос из `MetricFlow`, а не существовал с самого начала.",
+                "source_of_confusion": "Метрики кажутся базовой фичей, отсюда впечатление, что они были всегда.",
+                "if_it_were_true": "Если бы он был с первой версии, не было бы привязки к версии `1.6+` и истории `MetricFlow`, но они есть.",
+                "how_it_should_be": "Semantic Layer — относительно новая фича (`1.6+`), развившаяся из `MetricFlow`."
               },
               "label": "B",
               "order": 1
@@ -1486,13 +1485,14 @@
               "order": 2
             },
             {
-              "text": "Semantic Layer существует с самой первой версии `dbt` и не связан с `MetricFlow`.",
-              "correct": false,
+              "text": "С `dbt 1.6+` появился `dbt Semantic Layer` (бывший `MetricFlow`): декларативное описание метрик поверх моделей. В YAML задают `semantic_models` с `measures` и `dimensions`, затем `metrics` (например `monthly_revenue`), а запрашивают через `semantic_layer.query(...)`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Semantic Layer появился в `dbt 1.6+` и вырос из `MetricFlow`, а не существовал с самого начала.",
-                "source_of_confusion": "Метрики кажутся базовой фичей, отсюда впечатление, что они были всегда.",
-                "if_it_were_true": "Если бы он был с первой версии, не было бы привязки к версии `1.6+` и истории `MetricFlow`, но они есть.",
-                "how_it_should_be": "Semantic Layer — относительно новая фича (`1.6+`), развившаяся из `MetricFlow`."
+                "explanation": "Идея — single source of truth для метрик: вместо того чтобы каждый BI-инструмент считал MRR по-своему, все используют одну централизованную формулу из Semantic Layer.",
+                "example": "Так `measures: - name: total_revenue, agg: sum, expr: amount`, затем `metrics: - name: monthly_revenue, type: simple, type_params: {measure: total_revenue}`, а запрос — `semantic_layer.query(metrics=['monthly_revenue'], group_by=['order_date'])`.",
+                "when_to_apply": "Semantic Layer берут, когда несколько потребителей (дашборды, отчёты) должны одинаково считать ключевые бизнес-метрики и нельзя допускать расхождений в определениях.",
+                "edge_cases": "Полный функционал Semantic Layer тяготеет к `dbt Cloud`, что создаёт частичный vendor lock-in; в `dbt Core` возможности и API уже.",
+                "related": "[[dbt-interview#Q4]] dbt Cloud и Semantic Layer; [[dbt-interview#Q5]] что такое model; [[dbt-interview#Q28]] минусы dbt."
               },
               "label": "D",
               "order": 3
@@ -1509,13 +1509,13 @@
           "question_text": "Как деплоить `dbt` в production?",
           "options": [
             {
-              "text": "Единственный способ деплоя `dbt` в production — это запускать `dbt run` вручную с ноутбука разработчика.",
+              "text": "В production достаточно одного общего профиля без разделения на dev/staging/prod.",
               "correct": false,
               "sections": {
-                "what_actually": "Production-деплой автоматизируют: `dbt Cloud` (scheduler), `Airflow + dbt Core`, GitHub/GitLab CI на PR — ручной запуск с ноутбука не вариант для прода.",
-                "source_of_confusion": "В разработке действительно гоняют команды локально, и это переносят на прод.",
-                "if_it_were_true": "Если бы это был единственный способ, не существовало бы scheduler в `dbt Cloud` и CI-пайплайнов, но они для прода и созданы.",
-                "how_it_should_be": "Прод деплоят через managed/CI-оркестрацию, а не ручным `dbt run` с локальной машины."
+                "what_actually": "Production-чеклист требует раздельные dev/staging/prod-профили, чтобы изолировать окружения и схемы; общий профиль смешивает данные сред.",
+                "source_of_confusion": "Один профиль проще настроить, отсюда соблазн обойтись им.",
+                "if_it_were_true": "Если бы хватало одного профиля, тестовые прогоны писали бы в прод-схему, что и есть антипаттерн, который разделение предотвращает.",
+                "how_it_should_be": "Для прода разделяют профили по окружениям, а не используют один общий."
               },
               "label": "A",
               "order": 0
@@ -1534,18 +1534,6 @@
               "order": 1
             },
             {
-              "text": "В production достаточно одного общего профиля без разделения на dev/staging/prod.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Production-чеклист требует раздельные dev/staging/prod-профили, чтобы изолировать окружения и схемы; общий профиль смешивает данные сред.",
-                "source_of_confusion": "Один профиль проще настроить, отсюда соблазн обойтись им.",
-                "if_it_were_true": "Если бы хватало одного профиля, тестовые прогоны писали бы в прод-схему, что и есть антипаттерн, который разделение предотвращает.",
-                "how_it_should_be": "Для прода разделяют профили по окружениям, а не используют один общий."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Slim CI (`--select state:modified`) в production не нужен — всегда пересобирают весь warehouse.",
               "correct": false,
               "sections": {
@@ -1553,6 +1541,18 @@
                 "source_of_confusion": "«Надёжнее пересобрать всё» звучит безопасно, отсюда отказ от slim CI.",
                 "if_it_were_true": "Если бы всегда строили весь warehouse, CI был бы медленным и дорогим, ради чего slim-режим и применяют.",
                 "how_it_should_be": "Slim CI через `state:modified` — рекомендуемая прод-практика, а не лишняя опция."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Единственный способ деплоя `dbt` в production — это запускать `dbt run` вручную с ноутбука разработчика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Production-деплой автоматизируют: `dbt Cloud` (scheduler), `Airflow + dbt Core`, GitHub/GitLab CI на PR — ручной запуск с ноутбука не вариант для прода.",
+                "source_of_confusion": "В разработке действительно гоняют команды локально, и это переносят на прод.",
+                "if_it_were_true": "Если бы это был единственный способ, не существовало бы scheduler в `dbt Cloud` и CI-пайплайнов, но они для прода и созданы.",
+                "how_it_should_be": "Прод деплоят через managed/CI-оркестрацию, а не ручным `dbt run` с локальной машины."
               },
               "label": "D",
               "order": 3
@@ -1569,13 +1569,14 @@
           "question_text": "Как интегрируют `dbt` с `Airflow`?",
           "options": [
             {
-              "text": "`Airflow` не может запускать `dbt` — их используют только по отдельности, в разных проектах.",
-              "correct": false,
+              "text": "Самый частый stack — `Airflow + dbt`: `Airflow`-DAG оркеструет шаги (Extract/Load → `dbt build` → нотификация), а вызов `dbt` делают через оператор, например `BashOperator(bash_command='cd /opt/dbt && dbt build')`. Зависимости задают как `extract_load >> dbt_run >> notify`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Airflow + dbt` — самый частый stack: `Airflow`-таск вызывает `dbt build`, оркеструя его вместе с Extract/Load и нотификациями.",
-                "source_of_confusion": "Раз у инструментов разные роли, кажется, что они несовместимы.",
-                "if_it_were_true": "Если бы `Airflow` не мог запускать `dbt`, не было бы `BashOperator` с `dbt build` и `Astronomer Cosmos`, но они существуют.",
-                "how_it_should_be": "`Airflow` штатно оркеструет `dbt` — это типовая связка, а не раздельное использование."
+                "explanation": "`Astronomer Cosmos` конвертирует `dbt`-проект в `Airflow`-DAG автоматически: каждая `dbt`-модель становится отдельной задачей, что даёт пер-модельную видимость и ретраи в `Airflow`.",
+                "example": "Например `dbt_run = BashOperator(task_id='dbt_run', bash_command='cd /opt/dbt && dbt build')` встраивает трансформацию между загрузкой raw и отправкой результата в BI.",
+                "when_to_apply": "Связку берут, когда нужно оркестрировать `dbt` вместе с разнородными шагами (загрузка, выгрузка, алерты) и управлять расписанием централизованно.",
+                "edge_cases": "`BashOperator` запускает весь проект как одну задачу (грубая гранулярность), тогда как `Cosmos` даёт задачу на модель ценой большей сложности DAG.",
+                "related": "[[dbt-interview#Q3]] dbt vs Airflow; [[dbt-interview#Q20]] dbt build; [[dbt-interview#Q26]] deploy в production."
               },
               "label": "A",
               "order": 0
@@ -1593,19 +1594,6 @@
               "order": 1
             },
             {
-              "text": "Самый частый stack — `Airflow + dbt`: `Airflow`-DAG оркеструет шаги (Extract/Load → `dbt build` → нотификация), а вызов `dbt` делают через оператор, например `BashOperator(bash_command='cd /opt/dbt && dbt build')`. Зависимости задают как `extract_load >> dbt_run >> notify`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Astronomer Cosmos` конвертирует `dbt`-проект в `Airflow`-DAG автоматически: каждая `dbt`-модель становится отдельной задачей, что даёт пер-модельную видимость и ретраи в `Airflow`.",
-                "example": "Например `dbt_run = BashOperator(task_id='dbt_run', bash_command='cd /opt/dbt && dbt build')` встраивает трансформацию между загрузкой raw и отправкой результата в BI.",
-                "when_to_apply": "Связку берут, когда нужно оркестрировать `dbt` вместе с разнородными шагами (загрузка, выгрузка, алерты) и управлять расписанием централизованно.",
-                "edge_cases": "`BashOperator` запускает весь проект как одну задачу (грубая гранулярность), тогда как `Cosmos` даёт задачу на модель ценой большей сложности DAG.",
-                "related": "[[dbt-interview#Q3]] dbt vs Airflow; [[dbt-interview#Q20]] dbt build; [[dbt-interview#Q26]] deploy в production."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "При интеграции `Airflow` выполняет `SQL`-трансформации сам, а `dbt` только хранит исходники моделей.",
               "correct": false,
               "sections": {
@@ -1613,6 +1601,18 @@
                 "source_of_confusion": "Раз `Airflow` запускает шаг, кажется, что он же и выполняет трансформацию.",
                 "if_it_were_true": "Если бы `Airflow` считал `SQL` сам, незачем было бы вызывать `dbt build` из таска, но именно `dbt` делает работу.",
                 "how_it_should_be": "Считает `dbt` внутри warehouse; `Airflow` только запускает и связывает шаги."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Airflow` не может запускать `dbt` — их используют только по отдельности, в разных проектах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Airflow + dbt` — самый частый stack: `Airflow`-таск вызывает `dbt build`, оркеструя его вместе с Extract/Load и нотификациями.",
+                "source_of_confusion": "Раз у инструментов разные роли, кажется, что они несовместимы.",
+                "if_it_were_true": "Если бы `Airflow` не мог запускать `dbt`, не было бы `BashOperator` с `dbt build` и `Astronomer Cosmos`, но они существуют.",
+                "how_it_should_be": "`Airflow` штатно оркеструет `dbt` — это типовая связка, а не раздельное использование."
               },
               "label": "D",
               "order": 3
@@ -1629,18 +1629,6 @@
           "question_text": "Какие минусы и ограничения есть у `dbt`?",
           "options": [
             {
-              "text": "`dbt` одинаково хорошо подходит и для streaming, и для batch-трансформаций.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`dbt` работает только в warehouse и про batch; для streaming он не предназначен — это одно из его ключевых ограничений.",
-                "source_of_confusion": "Modern data stack ассоциируется и с реальным временем, отсюда ожидание streaming.",
-                "if_it_were_true": "Если бы он умел streaming, его не противопоставляли бы stream-processing-движкам, но это разные парадигмы.",
-                "how_it_should_be": "`dbt` — это batch в warehouse; streaming вне его области."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Главный минус `dbt` в том, что он не поддерживает `SQL` и требует писать всё на Python.",
               "correct": false,
               "sections": {
@@ -1648,6 +1636,19 @@
                 "source_of_confusion": "Минусы часто формулируют как «чего не хватает», и это инвертируют.",
                 "if_it_were_true": "Если бы он требовал Python, не было бы претензии «SQL only», но именно она и звучит.",
                 "how_it_should_be": "Ограничение `dbt` — он `SQL`-only, а не «требует Python»."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Минусы: только в warehouse (не для streaming и денормализованных источников); `SQL`-only (сложные трансформации вроде ML-препроцессинга неудобны); тесты слабее `Great Expectations`/`Soda`; нет orchestration в `dbt Core`; `Jinja` сложно дебажить; медленно на больших проектах (parsing manifest); частичный vendor lock-in к `dbt Cloud`; schema drift слабо контролируем.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти ограничения вытекают из дизайна: `dbt` — узкоспециализированный transformation-слой, поэтому оркестрацию, streaming и тяжёлую валидацию отдают соседним инструментам.",
+                "example": "Например для богатых проверок берут `Great Expectations`/`Soda`, для расписания — `Airflow`, а compiled `SQL` смотрят, чтобы разобрать запутанный `Jinja`.",
+                "when_to_apply": "Эти минусы взвешивают при выборе стека: если нужен streaming, ML-логика или сильная валидация — `dbt` дополняют другими инструментами, а не заменяют ими.",
+                "edge_cases": "Несмотря на ограничения, в 2024 `dbt` — стандарт analytics engineering; конкуренты вроде `SQLMesh` и `Coalesce` атакуют именно эти слабые места (debug, lock-in, производительность).",
+                "related": "[[dbt-interview#Q1]] что такое dbt; [[dbt-interview#Q3]] нет orchestration vs Airflow; [[dbt-interview#Q16]] сложность Jinja-debug."
               },
               "label": "B",
               "order": 1
@@ -1665,14 +1666,13 @@
               "order": 2
             },
             {
-              "text": "Минусы: только в warehouse (не для streaming и денормализованных источников); `SQL`-only (сложные трансформации вроде ML-препроцессинга неудобны); тесты слабее `Great Expectations`/`Soda`; нет orchestration в `dbt Core`; `Jinja` сложно дебажить; медленно на больших проектах (parsing manifest); частичный vendor lock-in к `dbt Cloud`; schema drift слабо контролируем.",
-              "correct": true,
+              "text": "`dbt` одинаково хорошо подходит и для streaming, и для batch-трансформаций.",
+              "correct": false,
               "sections": {
-                "explanation": "Эти ограничения вытекают из дизайна: `dbt` — узкоспециализированный transformation-слой, поэтому оркестрацию, streaming и тяжёлую валидацию отдают соседним инструментам.",
-                "example": "Например для богатых проверок берут `Great Expectations`/`Soda`, для расписания — `Airflow`, а compiled `SQL` смотрят, чтобы разобрать запутанный `Jinja`.",
-                "when_to_apply": "Эти минусы взвешивают при выборе стека: если нужен streaming, ML-логика или сильная валидация — `dbt` дополняют другими инструментами, а не заменяют ими.",
-                "edge_cases": "Несмотря на ограничения, в 2024 `dbt` — стандарт analytics engineering; конкуренты вроде `SQLMesh` и `Coalesce` атакуют именно эти слабые места (debug, lock-in, производительность).",
-                "related": "[[dbt-interview#Q1]] что такое dbt; [[dbt-interview#Q3]] нет orchestration vs Airflow; [[dbt-interview#Q16]] сложность Jinja-debug."
+                "what_actually": "`dbt` работает только в warehouse и про batch; для streaming он не предназначен — это одно из его ключевых ограничений.",
+                "source_of_confusion": "Modern data stack ассоциируется и с реальным временем, отсюда ожидание streaming.",
+                "if_it_were_true": "Если бы он умел streaming, его не противопоставляли бы stream-processing-движкам, но это разные парадигмы.",
+                "how_it_should_be": "`dbt` — это batch в warehouse; streaming вне его области."
               },
               "label": "D",
               "order": 3

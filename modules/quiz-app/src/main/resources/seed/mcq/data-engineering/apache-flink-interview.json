@@ -36,18 +36,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Apache Flink` — это SQL-движок для batch-аналитики над файлами в HDFS, прямой аналог `Apache Hive`, без поддержки потоков.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Flink` — это streaming-first движок; batch-аналитика над файлами в стиле `Hive` — не его профиль, а его SQL — поверх потоков.",
-                "source_of_confusion": "У `Flink` есть `Flink SQL`, и его путают с batch SQL-движками вроде `Hive`.",
-                "if_it_were_true": "Тогда `Flink` не давал бы миллисекундную обработку событий, но именно low-latency streaming — его главная фича.",
-                "how_it_should_be": "`Flink` — потоковый движок с SQL поверх стримов; `Hive` — batch SQL над файлами."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`Apache Flink` — это брокер сообщений с persistent-логом и партициями, замена `Apache Kafka` в роли транспорта между сервисами.",
               "correct": false,
               "sections": {
@@ -55,6 +43,18 @@
                 "source_of_confusion": "`Flink` и `Kafka` почти всегда работают вместе, поэтому роли вычислителя и брокера смешивают.",
                 "if_it_were_true": "Тогда `Flink` не нуждался бы в `Kafka`-коннекторах, но `flink-connector-kafka` — один из самых используемых.",
                 "how_it_should_be": "`Flink` — вычислитель над потоком; хранение и транспорт сообщений — задача брокера вроде `Kafka`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Apache Flink` — это SQL-движок для batch-аналитики над файлами в HDFS, прямой аналог `Apache Hive`, без поддержки потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flink` — это streaming-first движок; batch-аналитика над файлами в стиле `Hive` — не его профиль, а его SQL — поверх потоков.",
+                "source_of_confusion": "У `Flink` есть `Flink SQL`, и его путают с batch SQL-движками вроде `Hive`.",
+                "if_it_were_true": "Тогда `Flink` не давал бы миллисекундную обработку событий, но именно low-latency streaming — его главная фича.",
+                "how_it_should_be": "`Flink` — потоковый движок с SQL поверх стримов; `Hive` — batch SQL над файлами."
               }
             }
           ]
@@ -71,13 +71,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Flink` и `Spark Streaming` идентичны по модели исполнения: оба — micro-batch, и разница только в синтаксисе API.",
+              "text": "`Flink` не умеет batch вообще и работает только с бесконечными потоками, тогда как `Spark` — только batch без streaming.",
               "correct": false,
               "sections": {
-                "what_actually": "Модели разные: `Flink` — true streaming (событие за событием), `Spark Structured Streaming` — micro-batch.",
-                "source_of_confusion": "Оба решают похожие задачи стриминга, поэтому кажется, что под капотом у них одно и то же.",
-                "if_it_were_true": "Тогда `Flink` не давал бы latency < 10 мс, недостижимую для micro-batch, но он её даёт.",
-                "how_it_should_be": "`Flink` — true streaming, `Spark Structured Streaming` — micro-batch; это фундаментальное различие."
+                "what_actually": "Оба поддерживают и batch, и streaming: `Flink` трактует batch как ограниченный поток, а `Spark` исторически силён в batch и добавил streaming.",
+                "source_of_confusion": "`Flink` позиционируют как streaming-first, а `Spark` — как batch-first, и крайности доводят до «только одно».",
+                "if_it_were_true": "Тогда нельзя было бы гонять batch-джобы на `Flink` или Structured Streaming на `Spark`, но оба это умеют.",
+                "how_it_should_be": "Оба движка делают и batch, и streaming; различается приоритет и модель исполнения."
               }
             },
             {
@@ -96,13 +96,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Flink` не умеет batch вообще и работает только с бесконечными потоками, тогда как `Spark` — только batch без streaming.",
+              "text": "`Flink` и `Spark Streaming` идентичны по модели исполнения: оба — micro-batch, и разница только в синтаксисе API.",
               "correct": false,
               "sections": {
-                "what_actually": "Оба поддерживают и batch, и streaming: `Flink` трактует batch как ограниченный поток, а `Spark` исторически силён в batch и добавил streaming.",
-                "source_of_confusion": "`Flink` позиционируют как streaming-first, а `Spark` — как batch-first, и крайности доводят до «только одно».",
-                "if_it_were_true": "Тогда нельзя было бы гонять batch-джобы на `Flink` или Structured Streaming на `Spark`, но оба это умеют.",
-                "how_it_should_be": "Оба движка делают и batch, и streaming; различается приоритет и модель исполнения."
+                "what_actually": "Модели разные: `Flink` — true streaming (событие за событием), `Spark Structured Streaming` — micro-batch.",
+                "source_of_confusion": "Оба решают похожие задачи стриминга, поэтому кажется, что под капотом у них одно и то же.",
+                "if_it_were_true": "Тогда `Flink` не давал бы latency < 10 мс, недостижимую для micro-batch, но он её даёт.",
+                "how_it_should_be": "`Flink` — true streaming, `Spark Structured Streaming` — micro-batch; это фундаментальное различие."
               }
             },
             {
@@ -131,13 +131,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JobManager` — это worker, который выполняет вычисления, а `TaskManager` — координатор, раздающий ему задачи и управляющий checkpoint-ами.",
-              "correct": false,
+              "text": "`JobManager` — координатор: принимает jobs, планирует execution, управляет checkpointing (single-point-of-failure, лечится HA). `TaskManager` — worker-процесс с **task slots** (по умолчанию = числу cores); каждый slot выполняет одну параллельную subtask. Slot — единица параллелизма с фиксированной памятью/CPU.",
+              "correct": true,
               "sections": {
-                "what_actually": "Роли наоборот: `JobManager` координирует и управляет checkpoint-ами, а `TaskManager` — worker, выполняющий subtasks.",
-                "source_of_confusion": "Названия похожи, и легко перепутать, кто из них дирижёр, а кто исполнитель.",
-                "if_it_were_true": "Тогда параллелизм определялся бы слотами `JobManager`, но слоты живут именно в `TaskManager`.",
-                "how_it_should_be": "`JobManager` координирует, `TaskManager` исполняет — слоты и subtasks на стороне `TaskManager`."
+                "explanation": "Клиент отправляет job в `JobManager`, тот распределяет subtasks по слотам `TaskManager`-ов и дирижирует снятием checkpoint-ов. Параллелизм job ограничен суммарным числом слотов в кластере.",
+                "example": "Три `TaskManager` по 4 слота дают 12 слотов; job с parallelism 8 займёт 8 слотов, оставив 4 свободными для других задач или роста.",
+                "when_to_apply": "Архитектуру вспоминают при сайзинге кластера и при разборе, почему job не стартует: не хватает слотов под заданный parallelism.",
+                "edge_cases": "`JobManager` — single-point-of-failure: без настроенного HA (например, на `ZooKeeper`/`Kubernetes`) его падение валит всю job, поэтому в production HA обязателен.",
+                "related": "[[apache-flink-interview#Q4]] deployment-режимы; [[apache-flink-interview#Q27]] настройка parallelism; [[apache-flink-interview#Q19]] checkpointing под управлением `JobManager`."
               }
             },
             {
@@ -155,19 +156,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`JobManager` — координатор: принимает jobs, планирует execution, управляет checkpointing (single-point-of-failure, лечится HA). `TaskManager` — worker-процесс с **task slots** (по умолчанию = числу cores); каждый slot выполняет одну параллельную subtask. Slot — единица параллелизма с фиксированной памятью/CPU.",
-              "correct": true,
-              "sections": {
-                "explanation": "Клиент отправляет job в `JobManager`, тот распределяет subtasks по слотам `TaskManager`-ов и дирижирует снятием checkpoint-ов. Параллелизм job ограничен суммарным числом слотов в кластере.",
-                "example": "Три `TaskManager` по 4 слота дают 12 слотов; job с parallelism 8 займёт 8 слотов, оставив 4 свободными для других задач или роста.",
-                "when_to_apply": "Архитектуру вспоминают при сайзинге кластера и при разборе, почему job не стартует: не хватает слотов под заданный parallelism.",
-                "edge_cases": "`JobManager` — single-point-of-failure: без настроенного HA (например, на `ZooKeeper`/`Kubernetes`) его падение валит всю job, поэтому в production HA обязателен.",
-                "related": "[[apache-flink-interview#Q4]] deployment-режимы; [[apache-flink-interview#Q27]] настройка parallelism; [[apache-flink-interview#Q19]] checkpointing под управлением `JobManager`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "В `Flink` нет отдельного координатора: каждый `TaskManager` сам решает, какие subtasks выполнять, через gossip-протокол между равноправными узлами.",
               "correct": false,
               "sections": {
@@ -175,6 +163,18 @@
                 "source_of_confusion": "Распределённые системы часто ассоциируют с полностью peer-to-peer-моделью без лидера.",
                 "if_it_were_true": "Тогда `JobManager` не был бы single-point-of-failure и не требовал бы HA, но он именно такой.",
                 "how_it_should_be": "Есть централизованный `JobManager`-координатор; `TaskManager`-ы выполняют его план."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JobManager` — это worker, который выполняет вычисления, а `TaskManager` — координатор, раздающий ему задачи и управляющий checkpoint-ами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли наоборот: `JobManager` координирует и управляет checkpoint-ами, а `TaskManager` — worker, выполняющий subtasks.",
+                "source_of_confusion": "Названия похожи, и легко перепутать, кто из них дирижёр, а кто исполнитель.",
+                "if_it_were_true": "Тогда параллелизм определялся бы слотами `JobManager`, но слоты живут именно в `TaskManager`.",
+                "how_it_should_be": "`JobManager` координирует, `TaskManager` исполняет — слоты и subtasks на стороне `TaskManager`."
               }
             }
           ]
@@ -264,6 +264,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`union` и `connect` — синонимы: оба объединяют два потока с разными типами в один типизированный поток без ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`union` объединяет потоки одного типа, а `connect` связывает два потока (возможно разных типов) в `ConnectedStreams` с раздельной обработкой — это не одно и то же.",
+                "source_of_confusion": "Обе операции «соединяют потоки», поэтому их считают взаимозаменяемыми.",
+                "if_it_were_true": "Тогда `connect` не требовал бы `CoMap`/`CoFlatMap`-функций для двух разных типов, но он их требует.",
+                "how_it_should_be": "`union` — для одинаковых типов, `connect` — для двух потоков с раздельной обработкой каждого."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`DataStream API` поддерживает только `map` и `filter`; для `keyBy`, окон и агрегаций нужно обязательно переходить на `SQL API`.",
               "correct": false,
               "sections": {
@@ -274,8 +286,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`keyBy` — это element-wise операция, которая трансформирует каждое событие по отдельности, как `map`, не влияя на партиционирование.",
               "correct": false,
               "sections": {
@@ -283,18 +295,6 @@
                 "source_of_confusion": "`keyBy` в коде стоит в той же цепочке, что и `map`, и выглядит таким же шагом-трансформацией.",
                 "if_it_were_true": "Тогда после `keyBy` нельзя было бы делать stateful-агрегации per key, но именно для этого он и нужен.",
                 "how_it_should_be": "`keyBy` — это партиционирование по ключу; `map` — поэлементная трансформация."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`union` и `connect` — синонимы: оба объединяют два потока с разными типами в один типизированный поток без ограничений.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`union` объединяет потоки одного типа, а `connect` связывает два потока (возможно разных типов) в `ConnectedStreams` с раздельной обработкой — это не одно и то же.",
-                "source_of_confusion": "Обе операции «соединяют потоки», поэтому их считают взаимозаменяемыми.",
-                "if_it_were_true": "Тогда `connect` не требовал бы `CoMap`/`CoFlatMap`-функций для двух разных типов, но он их требует.",
-                "how_it_should_be": "`union` — для одинаковых типов, `connect` — для двух потоков с раздельной обработкой каждого."
               }
             }
           ]
@@ -311,18 +311,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`KeyedStream` гарантирует глобальный порядок всех событий во всём потоке, независимо от ключа.",
+              "text": "`KeyedStream` не нужен для работы со state и timers — их можно регистрировать на обычном неключевом `DataStream`.",
               "correct": false,
               "sections": {
-                "what_actually": "`KeyedStream` гарантирует порядок только в пределах одного key, а не глобально по всему потоку.",
-                "source_of_confusion": "Слово «гарантия порядка» воспринимают как глобальную, хотя она ограничена ключом.",
-                "if_it_were_true": "Тогда параллелизация по ключам была бы невозможна (нужен единый сериализованный порядок), но keys обрабатываются параллельно.",
-                "how_it_should_be": "Порядок сохраняется внутри key; между разными keys глобального порядка нет."
+                "what_actually": "Keyed state и event-time timers привязаны к ключу и доступны именно на `KeyedStream`, а не на обычном `DataStream`.",
+                "source_of_confusion": "Operator state существует и без ключа, и его обобщают на весь state-механизм.",
+                "if_it_were_true": "Тогда `keyBy` был бы необязателен перед `KeyedProcessFunction`, но она работает поверх `KeyedStream`.",
+                "how_it_should_be": "Keyed state и keyed timers требуют `KeyedStream`; без ключа доступен лишь operator state."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "`KeyedStream` распределяет события с одним и тем же key по всем subtask поровну для балансировки нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: все события одного key идут в одну subtask — это и обеспечивает per-key state и порядок.",
+                "source_of_confusion": "Балансировку нагрузки путают с партиционированием по ключу, хотя цели разные.",
+                "if_it_were_true": "Тогда нельзя было бы держать единый state на ключ (он размазался бы по subtask), но keyed state требует одной subtask на ключ.",
+                "how_it_should_be": "Один key → одна subtask; балансировка идёт за счёт распределения разных keys."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`KeyedStream` — `DataStream`, разделённый по **key** (через `keyBy`). Все события с одним key обрабатываются последовательно одним subtask. Даёт stateful-операции per key (счётчик на пользователя, агрегации), гарантию порядка в пределах key и параллелизацию (разные keys на разных subtasks). Это основа для windows, state и timers.",
               "correct": true,
               "sections": {
@@ -334,27 +346,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`KeyedStream` распределяет события с одним и тем же key по всем subtask поровну для балансировки нагрузки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: все события одного key идут в одну subtask — это и обеспечивает per-key state и порядок.",
-                "source_of_confusion": "Балансировку нагрузки путают с партиционированием по ключу, хотя цели разные.",
-                "if_it_were_true": "Тогда нельзя было бы держать единый state на ключ (он размазался бы по subtask), но keyed state требует одной subtask на ключ.",
-                "how_it_should_be": "Один key → одна subtask; балансировка идёт за счёт распределения разных keys."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`KeyedStream` не нужен для работы со state и timers — их можно регистрировать на обычном неключевом `DataStream`.",
+              "text": "`KeyedStream` гарантирует глобальный порядок всех событий во всём потоке, независимо от ключа.",
               "correct": false,
               "sections": {
-                "what_actually": "Keyed state и event-time timers привязаны к ключу и доступны именно на `KeyedStream`, а не на обычном `DataStream`.",
-                "source_of_confusion": "Operator state существует и без ключа, и его обобщают на весь state-механизм.",
-                "if_it_were_true": "Тогда `keyBy` был бы необязателен перед `KeyedProcessFunction`, но она работает поверх `KeyedStream`.",
-                "how_it_should_be": "Keyed state и keyed timers требуют `KeyedStream`; без ключа доступен лишь operator state."
+                "what_actually": "`KeyedStream` гарантирует порядок только в пределах одного key, а не глобально по всему потоку.",
+                "source_of_confusion": "Слово «гарантия порядка» воспринимают как глобальную, хотя она ограничена ключом.",
+                "if_it_were_true": "Тогда параллелизация по ключам была бы невозможна (нужен единый сериализованный порядок), но keys обрабатываются параллельно.",
+                "how_it_should_be": "Порядок сохраняется внутри key; между разными keys глобального порядка нет."
               }
             }
           ]
@@ -371,18 +371,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Source в `Flink` может быть только сокетом для тестов; production-чтение из `Kafka` или файлов не поддерживается.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сокет — лишь тестовый source; production-source — это `Kafka`, файлы (`FileSource`), JDBC и другие коннекторы.",
-                "source_of_confusion": "Сокет часто встречается в обучающих примерах (`socketTextStream`), и его принимают за единственный source.",
-                "if_it_were_true": "Тогда `flink-connector-kafka` был бы не нужен, но это один из самых популярных коннекторов.",
-                "how_it_should_be": "Production-source — `Kafka`, файлы, JDBC; сокет нужен только для тестов."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Sink в `Flink` ограничен записью в `Kafka`; писать в JDBC-базы, `Elasticsearch` или `S3` напрямую нельзя.",
               "correct": false,
               "sections": {
@@ -393,8 +381,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Sources — откуда данные: `Apache Kafka` (`flink-connector-kafka`), файлы (`FileSource`), сокеты (для тестов), custom. Sinks — куда: `Kafka`, JDBC-базы, `Elasticsearch`, файловые системы (`S3`, `HDFS`, `Iceberg`, `Delta Lake`), custom. Source задаётся через `env.fromSource(KafkaSource.builder()...)`, sink — через `stream.sinkTo(KafkaSink.builder()...)`.",
               "correct": true,
               "sections": {
@@ -406,8 +394,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Source и Sink задаются одной и той же функцией `env.execute()`, которая и читает, и пишет данные.",
               "correct": false,
               "sections": {
@@ -415,6 +403,18 @@
                 "source_of_confusion": "`env.execute()` завершает описание job, и его ошибочно считают точкой ввода-вывода.",
                 "if_it_were_true": "Тогда не нужны были бы отдельные builder-ы `KafkaSource`/`KafkaSink`, но именно они описывают source и sink.",
                 "how_it_should_be": "Source — `fromSource(...)`, sink — `sinkTo(...)`; `execute()` только триггерит исполнение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Source в `Flink` может быть только сокетом для тестов; production-чтение из `Kafka` или файлов не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сокет — лишь тестовый source; production-source — это `Kafka`, файлы (`FileSource`), JDBC и другие коннекторы.",
+                "source_of_confusion": "Сокет часто встречается в обучающих примерах (`socketTextStream`), и его принимают за единственный source.",
+                "if_it_were_true": "Тогда `flink-connector-kafka` был бы не нужен, но это один из самых популярных коннекторов.",
+                "how_it_should_be": "Production-source — `Kafka`, файлы, JDBC; сокет нужен только для тестов."
               }
             }
           ]
@@ -431,18 +431,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Event time и processing time — это одно и то же: момент, когда `Flink` начинает обрабатывать событие.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Event time — когда событие произошло (timestamp в данных), а processing time — когда `Flink` его обрабатывает; это разные моменты.",
-                "source_of_confusion": "Оба про «время», и при отсутствии задержек значения близки, что создаёт иллюзию совпадения.",
-                "if_it_were_true": "Тогда не нужны были бы watermarks для late data, но они существуют именно из-за разрыва event/processing time.",
-                "how_it_should_be": "Event time — момент возникновения события; processing time — момент его обработки."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Ingestion time — это timestamp, который кладёт в событие сам источник в момент его возникновения в реальном мире.",
               "correct": false,
               "sections": {
@@ -453,20 +441,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Processing time — самый корректный для аналитики режим, потому что он всегда детерминирован и повторяем.",
+              "order": 1,
+              "label": "B",
+              "text": "Event time и processing time — это одно и то же: момент, когда `Flink` начинает обрабатывать событие.",
               "correct": false,
               "sections": {
-                "what_actually": "Детерминирован и повторяем именно event time; processing time зависит от скорости обработки и при повторе даёт другой результат.",
-                "source_of_confusion": "Processing time проще (не нужны watermarks), и простоту принимают за корректность.",
-                "if_it_were_true": "Тогда повторный прогон тех же данных на processing time давал бы тот же результат, но он плавает.",
-                "how_it_should_be": "Для корректной аналитики используют event time; processing time — для low-latency без точности."
+                "what_actually": "Event time — когда событие произошло (timestamp в данных), а processing time — когда `Flink` его обрабатывает; это разные моменты.",
+                "source_of_confusion": "Оба про «время», и при отсутствии задержек значения близки, что создаёт иллюзию совпадения.",
+                "if_it_were_true": "Тогда не нужны были бы watermarks для late data, но они существуют именно из-за разрыва event/processing time.",
+                "how_it_should_be": "Event time — момент возникновения события; processing time — момент его обработки."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "**Event time** — когда событие произошло в реальности (timestamp в данных). **Processing time** — когда `Flink` его обрабатывает. **Ingestion time** — когда событие поступило в `Flink`. Только event time корректен для аналитики (детерминирован, повторяем); processing time — для low-latency без точности. Задаётся через `WatermarkStrategy.forBoundedOutOfOrderness(...).withTimestampAssigner(...)`.",
               "correct": true,
               "sections": {
@@ -475,6 +463,18 @@
                 "when_to_apply": "Event time выбирают, когда нужны корректные и воспроизводимые агрегаты по реальному времени событий; processing time — когда важнее минимальная задержка, а точность вторична.",
                 "edge_cases": "На processing time повторный прогон тех же данных даёт другой результат (зависит от скорости обработки), поэтому для воспроизводимой аналитики он не годится.",
                 "related": "[[apache-flink-interview#Q9]] watermarks по event time; [[apache-flink-interview#Q10]] late data относительно event time; [[apache-flink-interview#Q11]] окна на event time."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Processing time — самый корректный для аналитики режим, потому что он всегда детерминирован и повторяем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Детерминирован и повторяем именно event time; processing time зависит от скорости обработки и при повторе даёт другой результат.",
+                "source_of_confusion": "Processing time проще (не нужны watermarks), и простоту принимают за корректность.",
+                "if_it_were_true": "Тогда повторный прогон тех же данных на processing time давал бы тот же результат, но он плавает.",
+                "how_it_should_be": "Для корректной аналитики используют event time; processing time — для low-latency без точности."
               }
             }
           ]
@@ -491,14 +491,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Watermark — заявление «до этого event_time все события уже обработаны». Используется для закрытия окон (когда watermark прошёл конец окна — окно закрывается), для определения late data (события с timestamp < watermark считаются поздними) и для State TTL. Задаётся, например, `WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(5))` — допускает до 5 с out-of-order событий.",
-              "correct": true,
+              "text": "Watermarks нужны только при processing time; в режиме event time они не используются вовсе.",
+              "correct": false,
               "sections": {
-                "explanation": "Watermark — это монотонно растущая метка прогресса event time в потоке; она говорит движку, что события старше неё можно считать прибывшими, и пора закрывать окна.",
-                "example": "Поток `e1(t=10), e2(t=12), e3(t=11), e4(t=15), e5(t=13)`: watermark = 13 означает, что событий с `t<=13` больше не ждём и окна до 13 можно закрывать.",
-                "when_to_apply": "Watermarks нужны всегда при работе с event time: без них окна по event time никогда не закроются и не выдадут результат.",
-                "edge_cases": "Слишком агрессивный watermark (маленький bounded out-of-orderness) отбрасывает запоздавшие события как late; слишком консервативный — задерживает закрытие окон и раздувает state.",
-                "related": "[[apache-flink-interview#Q8]] event time, по которому растёт watermark; [[apache-flink-interview#Q10]] late data за watermark; [[apache-flink-interview#Q11]] закрытие окон по watermark."
+                "what_actually": "Всё наоборот: watermarks — механизм именно event time; при processing time прогресс времени берётся из системных часов и watermark не нужен.",
+                "source_of_confusion": "Watermark кажется отдельной «продвинутой» фичей, не привязанной к режиму времени.",
+                "if_it_were_true": "Тогда event-time окна закрывались бы без watermark, но они закрываются именно по watermark.",
+                "how_it_should_be": "Watermarks обслуживают event time; для processing time используются системные часы."
               }
             },
             {
@@ -528,13 +527,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Watermarks нужны только при processing time; в режиме event time они не используются вовсе.",
-              "correct": false,
+              "text": "Watermark — заявление «до этого event_time все события уже обработаны». Используется для закрытия окон (когда watermark прошёл конец окна — окно закрывается), для определения late data (события с timestamp < watermark считаются поздними) и для State TTL. Задаётся, например, `WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(5))` — допускает до 5 с out-of-order событий.",
+              "correct": true,
               "sections": {
-                "what_actually": "Всё наоборот: watermarks — механизм именно event time; при processing time прогресс времени берётся из системных часов и watermark не нужен.",
-                "source_of_confusion": "Watermark кажется отдельной «продвинутой» фичей, не привязанной к режиму времени.",
-                "if_it_were_true": "Тогда event-time окна закрывались бы без watermark, но они закрываются именно по watermark.",
-                "how_it_should_be": "Watermarks обслуживают event time; для processing time используются системные часы."
+                "explanation": "Watermark — это монотонно растущая метка прогресса event time в потоке; она говорит движку, что события старше неё можно считать прибывшими, и пора закрывать окна.",
+                "example": "Поток `e1(t=10), e2(t=12), e3(t=11), e4(t=15), e5(t=13)`: watermark = 13 означает, что событий с `t<=13` больше не ждём и окна до 13 можно закрывать.",
+                "when_to_apply": "Watermarks нужны всегда при работе с event time: без них окна по event time никогда не закроются и не выдадут результат.",
+                "edge_cases": "Слишком агрессивный watermark (маленький bounded out-of-orderness) отбрасывает запоздавшие события как late; слишком консервативный — задерживает закрытие окон и раздувает state.",
+                "related": "[[apache-flink-interview#Q8]] event time, по которому растёт watermark; [[apache-flink-interview#Q10]] late data за watermark; [[apache-flink-interview#Q11]] закрытие окон по watermark."
               }
             }
           ]
@@ -551,13 +551,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "По умолчанию `Flink` всегда сохраняет late data навсегда и пересчитывает все окна с нуля при их приходе.",
+              "text": "Увеличение `allowedLateness` бесплатно по ресурсам, так как окна закрываются мгновенно и state не растёт.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию late data отбрасываются (drop); вечное хранение и пересчёт всех окон — не дефолтное поведение.",
-                "source_of_confusion": "Кажется, что движок «не теряет данные», и это распространяют на любые late-события без настройки.",
-                "if_it_were_true": "Тогда не нужны были бы `allowedLateness` и side output, но их добавляют именно потому, что дефолт — drop.",
-                "how_it_should_be": "Дефолт — drop поздних событий; учёт late требует явных `allowedLateness` или side output."
+                "what_actually": "Больший `allowedLateness` держит state окон дольше, увеличивая потребление памяти/диска — это явный trade-off.",
+                "source_of_confusion": "Точность звучит как «улучшение без издержек», поэтому ресурсную цену упускают.",
+                "if_it_were_true": "Тогда можно было бы выставить бесконечный lateness без последствий, но это раздуло бы state неограниченно.",
+                "how_it_should_be": "Больше lateness — больше удерживаемого state; точность поздних агрегатов стоит ресурсов."
               }
             },
             {
@@ -576,6 +576,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "По умолчанию `Flink` всегда сохраняет late data навсегда и пересчитывает все окна с нуля при их приходе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию late data отбрасываются (drop); вечное хранение и пересчёт всех окон — не дефолтное поведение.",
+                "source_of_confusion": "Кажется, что движок «не теряет данные», и это распространяют на любые late-события без настройки.",
+                "if_it_were_true": "Тогда не нужны были бы `allowedLateness` и side output, но их добавляют именно потому, что дефолт — drop.",
+                "how_it_should_be": "Дефолт — drop поздних событий; учёт late требует явных `allowedLateness` или side output."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`sideOutputLateData` отправляет late-события обратно в основной поток результата, смешивая их с вовремя пришедшими.",
               "correct": false,
               "sections": {
@@ -583,18 +595,6 @@
                 "source_of_confusion": "Слово «output» воспринимают как «в общий выход», хотя речь о побочном потоке.",
                 "if_it_were_true": "Тогда `getSideOutput(tag)` был бы не нужен, но именно он достаёт отдельный поток поздних событий.",
                 "how_it_should_be": "Side output — это отдельный поток для late-событий; основной результат он не загрязняет."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Увеличение `allowedLateness` бесплатно по ресурсам, так как окна закрываются мгновенно и state не растёт.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Больший `allowedLateness` держит state окон дольше, увеличивая потребление памяти/диска — это явный trade-off.",
-                "source_of_confusion": "Точность звучит как «улучшение без издержек», поэтому ресурсную цену упускают.",
-                "if_it_were_true": "Тогда можно было бы выставить бесконечный lateness без последствий, но это раздуло бы state неограниченно.",
-                "how_it_should_be": "Больше lateness — больше удерживаемого state; точность поздних агрегатов стоит ресурсов."
               }
             }
           ]
@@ -611,18 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Tumbling-окна перекрываются с заданным шагом, поэтому одно событие может попасть сразу в несколько окон.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Перекрываются sliding-окна; tumbling не перекрываются, и событие попадает ровно в одно окно.",
-                "source_of_confusion": "Tumbling и sliding — оба окна фиксированной длины, и их свойства перекрытия путают.",
-                "if_it_were_true": "Тогда tumbling и sliding были бы неотличимы, но различие как раз в наличии перекрытия.",
-                "how_it_should_be": "Tumbling — без перекрытия (одно событие → одно окно); перекрытие — у sliding."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Tumbling-окно объединяет события одной пользовательской сессии, разделённые периодом неактивности (gap).",
               "correct": false,
               "sections": {
@@ -633,8 +621,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Tumbling window — окна фиксированной длины, которые **не перекрываются**: `|0-5|5-10|10-15|...`. Каждое событие попадает ровно в одно окно. Задаётся через `.window(TumblingEventTimeWindows.of(Time.minutes(5))).sum(1)`. Применение — статистика за фиксированный интервал: за минуту, час, день.",
               "correct": true,
               "sections": {
@@ -646,8 +634,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "В tumbling-окне все события потока попадают в одно-единственное глобальное окно, и нужен custom trigger для emit.",
               "correct": false,
               "sections": {
@@ -655,6 +643,18 @@
                 "source_of_confusion": "Global и tumbling оба «не перекрываются», и крайний случай одного окна путают с tumbling.",
                 "if_it_were_true": "Тогда tumbling не выдавал бы периодическую статистику за каждый интервал, но он именно для этого.",
                 "how_it_should_be": "Tumbling — много непересекающихся окон по таймеру; одно окно на всё — это global window."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Tumbling-окна перекрываются с заданным шагом, поэтому одно событие может попасть сразу в несколько окон.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перекрываются sliding-окна; tumbling не перекрываются, и событие попадает ровно в одно окно.",
+                "source_of_confusion": "Tumbling и sliding — оба окна фиксированной длины, и их свойства перекрытия путают.",
+                "if_it_were_true": "Тогда tumbling и sliding были бы неотличимы, но различие как раз в наличии перекрытия.",
+                "how_it_should_be": "Tumbling — без перекрытия (одно событие → одно окно); перекрытие — у sliding."
               }
             }
           ]
@@ -683,6 +683,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Sliding window — окна фиксированной длины, которые **перекрываются** с заданным шагом (slide). Например, длина 5 мин, slide 1 мин: окна `|0-5|`, `|2-7|`, `|4-9|`... Каждое событие может попасть в **несколько** окон. Задаётся `SlidingEventTimeWindows.of(Time.minutes(5), Time.minutes(1))`. Полезно для moving averages.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sliding-окна задаются двумя параметрами — длиной и шагом; когда шаг меньше длины, окна перекрываются и одно событие учитывается в нескольких из них.",
+                "example": "Длина 5 мин, slide 1 мин: каждую минуту открывается новое 5-минутное окно, и одно событие попадает примерно в 5 перекрывающихся окон — отсюда скользящее среднее.",
+                "when_to_apply": "Sliding берут для скользящих метрик с частым обновлением: moving average, rate за последние N минут, обновляемый каждую минуту.",
+                "edge_cases": "Маленький slide при большой длине окна (например, 1 ч / 1 с) множит число активных окон и нагрузку: одно событие реплицируется в тысячи окон, раздувая state и CPU.",
+                "related": "[[apache-flink-interview#Q11]] tumbling без перекрытия; [[apache-flink-interview#Q13]] session-окна; [[apache-flink-interview#Q9]] watermark и закрытие окон."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "В sliding-окне параметр slide должен быть всегда больше длины окна, иначе окна не образуются.",
               "correct": false,
               "sections": {
@@ -693,8 +706,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Sliding-окно — это глобальное окно на весь поток, для которого нужен `CountTrigger` для emit результата.",
               "correct": false,
               "sections": {
@@ -702,19 +715,6 @@
                 "source_of_confusion": "Все «нестандартные» окна сваливают в одну кучу, путая sliding с global.",
                 "if_it_were_true": "Тогда sliding не вычислял бы скользящее среднее по времени, но это его основное применение.",
                 "how_it_should_be": "Sliding — перекрывающиеся time-окна; global — одно окно на всё с custom trigger."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Sliding window — окна фиксированной длины, которые **перекрываются** с заданным шагом (slide). Например, длина 5 мин, slide 1 мин: окна `|0-5|`, `|2-7|`, `|4-9|`... Каждое событие может попасть в **несколько** окон. Задаётся `SlidingEventTimeWindows.of(Time.minutes(5), Time.minutes(1))`. Полезно для moving averages.",
-              "correct": true,
-              "sections": {
-                "explanation": "Sliding-окна задаются двумя параметрами — длиной и шагом; когда шаг меньше длины, окна перекрываются и одно событие учитывается в нескольких из них.",
-                "example": "Длина 5 мин, slide 1 мин: каждую минуту открывается новое 5-минутное окно, и одно событие попадает примерно в 5 перекрывающихся окон — отсюда скользящее среднее.",
-                "when_to_apply": "Sliding берут для скользящих метрик с частым обновлением: moving average, rate за последние N минут, обновляемый каждую минуту.",
-                "edge_cases": "Маленький slide при большой длине окна (например, 1 ч / 1 с) множит число активных окон и нагрузку: одно событие реплицируется в тысячи окон, раздувая state и CPU.",
-                "related": "[[apache-flink-interview#Q11]] tumbling без перекрытия; [[apache-flink-interview#Q13]] session-окна; [[apache-flink-interview#Q9]] watermark и закрытие окон."
               }
             }
           ]
@@ -744,13 +744,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Session window имеет фиксированную длину (например, ровно 15 минут) независимо от активности пользователя.",
+              "text": "Session windows перекрываются с фиксированным шагом, как sliding, и одно событие попадает в несколько сессий.",
               "correct": false,
               "sections": {
-                "what_actually": "Длина session-окна не фиксирована: она определяется паузами (gap), а 15 минут — это размер gap, а не длина окна.",
-                "source_of_confusion": "Значение `withGap(15 min)` принимают за длину окна, хотя это порог неактивности.",
-                "if_it_were_true": "Тогда session не отличался бы от tumbling фиксированной длины, но его суть — динамические границы по gap.",
-                "how_it_should_be": "Длина session-окна переменная и зависит от активности; 15 мин — это gap, а не длина."
+                "what_actually": "Session-окна не перекрываются с фиксированным шагом: они разделены gap'ами, и событие принадлежит одной сессии.",
+                "source_of_confusion": "Все «продвинутые» окна путают со sliding из-за идеи перекрытия.",
+                "if_it_were_true": "Тогда был бы параметр slide у session-окон, но у них есть только gap.",
+                "how_it_should_be": "Session разделены паузами и не перекрываются; перекрытие с шагом — у sliding."
               }
             },
             {
@@ -768,13 +768,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Session windows перекрываются с фиксированным шагом, как sliding, и одно событие попадает в несколько сессий.",
+              "text": "Session window имеет фиксированную длину (например, ровно 15 минут) независимо от активности пользователя.",
               "correct": false,
               "sections": {
-                "what_actually": "Session-окна не перекрываются с фиксированным шагом: они разделены gap'ами, и событие принадлежит одной сессии.",
-                "source_of_confusion": "Все «продвинутые» окна путают со sliding из-за идеи перекрытия.",
-                "if_it_were_true": "Тогда был бы параметр slide у session-окон, но у них есть только gap.",
-                "how_it_should_be": "Session разделены паузами и не перекрываются; перекрытие с шагом — у sliding."
+                "what_actually": "Длина session-окна не фиксирована: она определяется паузами (gap), а 15 минут — это размер gap, а не длина окна.",
+                "source_of_confusion": "Значение `withGap(15 min)` принимают за длину окна, хотя это порог неактивности.",
+                "if_it_were_true": "Тогда session не отличался бы от tumbling фиксированной длины, но его суть — динамические границы по gap.",
+                "how_it_should_be": "Длина session-окна переменная и зависит от активности; 15 мин — это gap, а не длина."
               }
             }
           ]
@@ -791,6 +791,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Global window нарезает поток на множество непересекающихся окон фиксированной длины по времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Множество непересекающихся time-окон — это tumbling; global собирает все события в одно окно.",
+                "source_of_confusion": "Слово «global» иногда понимают как «глобально по всему времени, по интервалам».",
+                "if_it_were_true": "Тогда global не нуждался бы в custom trigger, но он нужен именно потому, что окно одно и не закрывается само.",
+                "how_it_should_be": "Global — одно окно на весь поток; нарезка на интервалы — это tumbling."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Global window эмитит результат автоматически каждую секунду, custom trigger для него не нужен.",
               "correct": false,
               "sections": {
@@ -801,8 +813,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Global window — все события попадают в **одно** окно. Нужен **custom trigger** для emit'а результата (иначе окно никогда не сработает). Задаётся `.window(GlobalWindows.create()).trigger(CountTrigger.of(100)).reduce(...)` — emit когда накопилось 100 событий. Используется редко, для count-based и специфичных кейсов.",
               "correct": true,
               "sections": {
@@ -811,18 +823,6 @@
                 "when_to_apply": "Global берут для count-based или иной кастомной триггер-логики, которую не выразить через time-окна (например, emit каждые N событий или по внешнему сигналу).",
                 "edge_cases": "Без custom trigger global window копит state бесконечно и никогда не эмитит — забытый trigger превращает его в постоянно растущий неэмитящий буфер.",
                 "related": "[[apache-flink-interview#Q11]] tumbling time-окна; [[apache-flink-interview#Q13]] session-окна; [[apache-flink-interview#Q24]] `ProcessFunction` с custom-логикой и timers."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Global window нарезает поток на множество непересекающихся окон фиксированной длины по времени.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Множество непересекающихся time-окон — это tumbling; global собирает все события в одно окно.",
-                "source_of_confusion": "Слово «global» иногда понимают как «глобально по всему времени, по интервалам».",
-                "if_it_were_true": "Тогда global не нуждался бы в custom trigger, но он нужен именно потому, что окно одно и не закрывается само.",
-                "how_it_should_be": "Global — одно окно на весь поток; нарезка на интервалы — это tumbling."
               }
             },
             {
@@ -863,6 +863,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "В `Flink` state — это исключительно offset'ы `Kafka`, никаких пользовательских счётчиков или агрегатов он не хранит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Offset'ы `Kafka` — лишь один пример (operator state); state также хранит per-key счётчики, оконные агрегаты, last value и даже ML-модели.",
+                "source_of_confusion": "Kafka-offsets — самый известный пример operator state, и его принимают за весь state.",
+                "if_it_were_true": "Тогда не было бы keyed state с `ValueState`/`MapState`, но они — основной механизм per-key state.",
+                "how_it_should_be": "State включает keyed state (счётчики, агрегаты) и operator state (offsets) — не только offsets."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "State в `Flink` хранится только в оперативной памяти и полностью теряется при любом рестарте приложения.",
               "correct": false,
               "sections": {
@@ -873,8 +885,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "State — данные, которые operator хранит между событиями; `Flink` — **stateful streaming engine**. Примеры: счётчик per user (key), оконные агрегации, last seen value, ML-модель. State **persistent** через checkpoints — переживает рестарты приложения.",
               "correct": true,
               "sections": {
@@ -883,18 +895,6 @@
                 "when_to_apply": "State нужен везде, где результат зависит от истории: агрегации, дедупликация, машина состояний, обогащение из накопленного контекста.",
                 "edge_cases": "Неограниченно растущий state (например, ключи, которые никогда не очищаются) ведёт к исчерпанию памяти/диска; для контроля применяют State TTL и очистку по watermark.",
                 "related": "[[apache-flink-interview#Q16]] keyed vs operator state; [[apache-flink-interview#Q17]] state backends; [[apache-flink-interview#Q19]] checkpoints, делающие state persistent."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "В `Flink` state — это исключительно offset'ы `Kafka`, никаких пользовательских счётчиков или агрегатов он не хранит.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Offset'ы `Kafka` — лишь один пример (operator state); state также хранит per-key счётчики, оконные агрегаты, last value и даже ML-модели.",
-                "source_of_confusion": "Kafka-offsets — самый известный пример operator state, и его принимают за весь state.",
-                "if_it_were_true": "Тогда не было бы keyed state с `ValueState`/`MapState`, но они — основной механизм per-key state.",
-                "how_it_should_be": "State включает keyed state (счётчики, агрегаты) и operator state (offsets) — не только offsets."
               }
             }
           ]
@@ -911,30 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "**Keyed state** привязан к параллельной subtask — для connector state (например, `Kafka` offsets). **Operator state** привязан к key (`KeyedStream`) — для агрегаций per user, сессий. Types: `ValueState[T]`, `ListState[T]`, `MapState[K,V]`, `ReducingState[T]`, `AggregatingState[I,O]`. Регистрируется через `getRuntimeContext.getState(...)` в `open()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Только keyed state привязан к ключу; operator state привязан к subtask и не требует `KeyedStream`.",
-                "source_of_confusion": "Оба называются «state», и различие в области видимости упускают.",
-                "if_it_were_true": "Тогда `Kafka` offsets (operator state) хранились бы per key, но они принадлежат subtask, а не ключу.",
-                "how_it_should_be": "Keyed state — per key; operator state — per subtask; это разные области видимости."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "**Keyed state** доступен на любом `DataStream` без вызова `keyBy` — `Flink` сам выводит ключ по `hashCode()` элемента. **Operator state** привязан к параллельной subtask — для connector state (`Kafka` offsets). Keyed state types: `ValueState[T]`, `ListState[T]`, `MapState[K,V]`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Keyed state требует `KeyedStream` (после `keyBy`); на неключевом потоке доступен лишь operator state.",
-                "source_of_confusion": "Кажется, что `Flink` сам выводит ключ, и `keyBy` не обязателен.",
-                "if_it_were_true": "Тогда `ValueState` работал бы вне `KeyedProcessFunction`, но он привязан именно к keyed-контексту.",
-                "how_it_should_be": "Keyed state требует предварительного `keyBy`; без ключа — только operator state."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "**Keyed state** поддерживает `ValueState[T]`, `ListState[T]`, `MapState[K,V]`, но хранит одно общее значение на всю параллельную subtask, а не отдельное значение per key. **Operator state** тоже привязан к subtask — для connector state (`Kafka` offsets).",
               "correct": false,
               "sections": {
@@ -945,8 +921,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "**Keyed state** привязан к key (`KeyedStream`) — для агрегаций per user, сессий. **Operator state** привязан к параллельной subtask — для connector state (например, `Kafka` offsets). Keyed state types: `ValueState[T]`, `ListState[T]`, `MapState[K,V]`, `ReducingState[T]`, `AggregatingState[I,O]`. Регистрируется через `getRuntimeContext.getState(new ValueStateDescriptor(...))` в `open()`.",
               "correct": true,
               "sections": {
@@ -955,6 +931,30 @@
                 "when_to_apply": "Keyed state применяют, когда логика per ключ (счётчики, окна); operator state — когда состояние принадлежит самой subtask (offsets, буферы коннектора).",
                 "edge_cases": "При изменении параллелизма operator state перераспределяется по subtask (например, `ListState` сплитится/мёржится), и коннектор обязан корректно поддержать этот redistribution.",
                 "related": "[[apache-flink-interview#Q15]] что такое state; [[apache-flink-interview#Q6]] `KeyedStream` для keyed state; [[apache-flink-interview#Q7]] connector state у source/sink."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**Keyed state** доступен на любом `DataStream` без вызова `keyBy` — `Flink` сам выводит ключ по `hashCode()` элемента. **Operator state** привязан к параллельной subtask — для connector state (`Kafka` offsets). Keyed state types: `ValueState[T]`, `ListState[T]`, `MapState[K,V]`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Keyed state требует `KeyedStream` (после `keyBy`); на неключевом потоке доступен лишь operator state.",
+                "source_of_confusion": "Кажется, что `Flink` сам выводит ключ, и `keyBy` не обязателен.",
+                "if_it_were_true": "Тогда `ValueState` работал бы вне `KeyedProcessFunction`, но он привязан именно к keyed-контексту.",
+                "how_it_should_be": "Keyed state требует предварительного `keyBy`; без ключа — только operator state."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**Keyed state** привязан к параллельной subtask — для connector state (например, `Kafka` offsets). **Operator state** привязан к key (`KeyedStream`) — для агрегаций per user, сессий. Types: `ValueState[T]`, `ListState[T]`, `MapState[K,V]`, `ReducingState[T]`, `AggregatingState[I,O]`. Регистрируется через `getRuntimeContext.getState(...)` в `open()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только keyed state привязан к ключу; operator state привязан к subtask и не требует `KeyedStream`.",
+                "source_of_confusion": "Оба называются «state», и различие в области видимости упускают.",
+                "if_it_were_true": "Тогда `Kafka` offsets (operator state) хранились бы per key, но они принадлежат subtask, а не ключу.",
+                "how_it_should_be": "Keyed state — per key; operator state — per subtask; это разные области видимости."
               }
             }
           ]
@@ -971,6 +971,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`HashMapStateBackend` хранит state на диске и поэтому подходит для терабайтного state лучше, чем `RocksDB`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HashMapStateBackend` держит state в JVM heap и ограничен памятью; для терабайтного state используют `RocksDB` на диске.",
+                "source_of_confusion": "«HashMap на диске» звучит правдоподобно, но этот backend живёт именно в куче.",
+                "if_it_were_true": "Тогда `RocksDB`-backend был бы не нужен для большого state, но именно он тянет терабайты.",
+                "how_it_should_be": "`HashMap` — в heap для маленького state; огромный state на диске — это `RocksDB`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`EmbeddedRocksDBStateBackend` быстрее `HashMapStateBackend` на hot path, потому что не использует сериализацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RocksDB` медленнее на hot path: каждое чтение/запись проходит ser/deser, тогда как heap-`HashMap` работает с объектами напрямую.",
+                "source_of_confusion": "`RocksDB` — мощное хранилище, и его мощь принимают за скорость доступа.",
+                "if_it_were_true": "Тогда `HashMap` не имел бы смысла, но его берут именно ради low latency без сериализации.",
+                "how_it_should_be": "`HashMap` быстрее на hot path; `RocksDB` медленнее, зато вмещает огромный state."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "**`HashMapStateBackend`** — state в JVM heap, очень быстро, но ограничен размером heap (для маленького state < 1 GB, low latency). **`EmbeddedRocksDBStateBackend`** — state в `RocksDB` на диске, медленнее (ser/deser), но огромный (терабайты), поддерживает incremental checkpoints. Хранилище checkpoint задаётся отдельно: `setCheckpointStorage(\"s3://bucket/checkpoints\")`.",
               "correct": true,
               "sections": {
@@ -982,20 +1006,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`HashMapStateBackend` хранит state на диске и поэтому подходит для терабайтного state лучше, чем `RocksDB`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`HashMapStateBackend` держит state в JVM heap и ограничен памятью; для терабайтного state используют `RocksDB` на диске.",
-                "source_of_confusion": "«HashMap на диске» звучит правдоподобно, но этот backend живёт именно в куче.",
-                "if_it_were_true": "Тогда `RocksDB`-backend был бы не нужен для большого state, но именно он тянет терабайты.",
-                "how_it_should_be": "`HashMap` — в heap для маленького state; огромный state на диске — это `RocksDB`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "В `Flink` есть только один state backend, и выбирать между heap и диском нельзя.",
               "correct": false,
               "sections": {
@@ -1003,18 +1015,6 @@
                 "source_of_confusion": "Часто видят дефолтную конфигурацию и считают, что альтернатив нет.",
                 "if_it_were_true": "Тогда `env.setStateBackend(...)` был бы бессмысленным API, но он существует именно для выбора.",
                 "how_it_should_be": "Backend выбирается: `HashMap` для скорости, `RocksDB` для объёма."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`EmbeddedRocksDBStateBackend` быстрее `HashMapStateBackend` на hot path, потому что не использует сериализацию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`RocksDB` медленнее на hot path: каждое чтение/запись проходит ser/deser, тогда как heap-`HashMap` работает с объектами напрямую.",
-                "source_of_confusion": "`RocksDB` — мощное хранилище, и его мощь принимают за скорость доступа.",
-                "if_it_were_true": "Тогда `HashMap` не имел бы смысла, но его берут именно ради low latency без сериализации.",
-                "how_it_should_be": "`HashMap` быстрее на hot path; `RocksDB` медленнее, зато вмещает огромный state."
               }
             }
           ]
@@ -1031,18 +1031,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RocksDB` хранит весь state в JVM heap, поэтому ограничен размером кучи так же, как `HashMapStateBackend`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`RocksDB` хранит state на диске (LSM-tree), а не в heap, и именно поэтому не ограничен RAM.",
-                "source_of_confusion": "Оба — state backends, и ограничение heap у одного переносят на другой.",
-                "if_it_were_true": "Тогда `RocksDB` не давал бы терабайтный state, но его главное преимущество — выход за пределы RAM.",
-                "how_it_should_be": "`RocksDB` держит state на диске и масштабируется до TBs; heap-ограничение — у `HashMap`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`RocksDB` — embedded LSM-tree key-value store от `Facebook`. В `Flink` — для огромного state. Преимущества: state не ограничен RAM (на диске, до TBs), **incremental checkpoints** (сохраняет только изменения), compression. Недостатки: каждое чтение/запись — ser/deser (медленнее `HashMap`), сложный tuning (`BlockCache`, compaction levels). В production для большого state — почти всегда `RocksDB`.",
               "correct": true,
               "sections": {
@@ -1051,6 +1039,18 @@
                 "when_to_apply": "`RocksDB` выбирают, когда state не помещается в heap или когда частые большие checkpoints нужно удешевить инкрементальностью.",
                 "edge_cases": "Tuning нетривиален: неправильный `BlockCache` или агрессивная compaction бьют по latency и I/O; `RocksDB` ещё и держит state на локальном диске TaskManager, что важно при планировании дискового пространства.",
                 "related": "[[apache-flink-interview#Q17]] выбор state backend; [[apache-flink-interview#Q19]] incremental checkpoints; [[apache-flink-interview#Q15]] большой state."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RocksDB` хранит весь state в JVM heap, поэтому ограничен размером кучи так же, как `HashMapStateBackend`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RocksDB` хранит state на диске (LSM-tree), а не в heap, и именно поэтому не ограничен RAM.",
+                "source_of_confusion": "Оба — state backends, и ограничение heap у одного переносят на другой.",
+                "if_it_were_true": "Тогда `RocksDB` не давал бы терабайтный state, но его главное преимущество — выход за пределы RAM.",
+                "how_it_should_be": "`RocksDB` держит state на диске и масштабируется до TBs; heap-ограничение — у `HashMap`."
               }
             },
             {
@@ -1103,13 +1103,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для консистентности `Flink` применяет stop-the-world: `JobManager` приостанавливает обработку во всех operators, дожидается drain всех in-flight событий и только затем снимает snapshot state в state backend (`HDFS`, `S3`). Включается `env.enableCheckpointing(60000)`.",
+              "text": "Checkpoint использует barrier'ы (`Chandy-Lamport`): `JobManager` инжектирует barrier в input streams, и operator снимает snapshot своего state сразу при получении barrier из первого же input, не дожидаясь barrier'ов с остальных inputs. Snapshot пишется в state backend (`HDFS`, `S3`).",
               "correct": false,
               "sections": {
-                "what_actually": "`Chandy-Lamport` снимает согласованный snapshot без остановки потока — через barrier-маркеры, проходящие вместе с данными.",
-                "source_of_confusion": "Консистентный snapshot интуитивно ассоциируется с «стоп-кадром» и остановкой обработки.",
-                "if_it_were_true": "Тогда checkpointing убивал бы throughput на каждом снимке, но `Flink` снимает их на лету.",
-                "how_it_should_be": "Snapshot снимается на лету через barriers, без остановки потока."
+                "what_actually": "При aligned checkpoints operator ждёт barriers со всех input streams, и только потом снимает snapshot — это даёт консистентность.",
+                "source_of_confusion": "Кажется логичным реагировать на первый barrier немедленно, ради скорости.",
+                "if_it_were_true": "Тогда snapshot был бы неконсистентным между входами, но именно alignment обеспечивает exactly-once.",
+                "how_it_should_be": "Operator дожидается barriers со всех inputs (alignment), затем снимает snapshot."
               }
             },
             {
@@ -1128,13 +1128,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Checkpoint использует barrier'ы (`Chandy-Lamport`): `JobManager` инжектирует barrier в input streams, и operator снимает snapshot своего state сразу при получении barrier из первого же input, не дожидаясь barrier'ов с остальных inputs. Snapshot пишется в state backend (`HDFS`, `S3`).",
+              "text": "Для консистентности `Flink` применяет stop-the-world: `JobManager` приостанавливает обработку во всех operators, дожидается drain всех in-flight событий и только затем снимает snapshot state в state backend (`HDFS`, `S3`). Включается `env.enableCheckpointing(60000)`.",
               "correct": false,
               "sections": {
-                "what_actually": "При aligned checkpoints operator ждёт barriers со всех input streams, и только потом снимает snapshot — это даёт консистентность.",
-                "source_of_confusion": "Кажется логичным реагировать на первый barrier немедленно, ради скорости.",
-                "if_it_were_true": "Тогда snapshot был бы неконсистентным между входами, но именно alignment обеспечивает exactly-once.",
-                "how_it_should_be": "Operator дожидается barriers со всех inputs (alignment), затем снимает snapshot."
+                "what_actually": "`Chandy-Lamport` снимает согласованный snapshot без остановки потока — через barrier-маркеры, проходящие вместе с данными.",
+                "source_of_confusion": "Консистентный snapshot интуитивно ассоциируется с «стоп-кадром» и остановкой обработки.",
+                "if_it_were_true": "Тогда checkpointing убивал бы throughput на каждом снимке, но `Flink` снимает их на лету.",
+                "how_it_should_be": "Snapshot снимается на лету через barriers, без остановки потока."
               }
             }
           ]
@@ -1151,18 +1151,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Flink гарантирует **exactly-once** на уровне state, и этого достаточно при любом sink: даже обычный non-transactional sink не даёт дублей, потому что `Flink` дедуплицирует записи на выходе по checkpoint-id. К source требование одно — поддержка replay (`Kafka`, `Kinesis`).",
-              "correct": false,
-              "sections": {
-                "what_actually": "End-to-end exactly-once требует source с replay (`Kafka`/`Kinesis`) и sink с транзакционной или идемпотентной записью — это явные условия.",
-                "source_of_confusion": "Внутренний exactly-once `Flink` (через checkpoints) обобщают на весь pipeline без оговорок.",
-                "if_it_were_true": "Тогда не существовало бы 2PC-sink и `Kafka`-транзакций, но их добавляют именно ради end-to-end гарантии.",
-                "how_it_should_be": "Нужны source с replay и transactional/idempotent sink; иначе на выходе возможны дубли."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "**Exactly-once** и **at-least-once** отличаются только производительностью: обе гарантии полностью исключают дубли на выходе, просто at-least-once снимает checkpoint чаще и потому медленнее. Условие для обеих — source с replay (`Kafka`) и transactional sink (2PC).",
               "correct": false,
               "sections": {
@@ -1173,8 +1161,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Flink гарантирует **exactly-once**, при этом source может не поддерживать replay: при сбое `Flink` восстанавливает необработанные события из state backend (`HDFS`, `S3`), куда они попадают вместе с checkpoint'ом. Sink должен быть transactional (2PC) или idempotent.",
               "correct": false,
               "sections": {
@@ -1182,6 +1170,18 @@
                 "source_of_confusion": "Магия checkpoints создаёт впечатление, что движок восстановит данные без переигрывания источника.",
                 "if_it_were_true": "Тогда подошёл бы любой source, включая сокет без replay, но такие источники exactly-once не дают.",
                 "how_it_should_be": "Source обязан поддерживать replay (как `Kafka`), иначе exactly-once недостижим."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Flink гарантирует **exactly-once** на уровне state, и этого достаточно при любом sink: даже обычный non-transactional sink не даёт дублей, потому что `Flink` дедуплицирует записи на выходе по checkpoint-id. К source требование одно — поддержка replay (`Kafka`, `Kinesis`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "End-to-end exactly-once требует source с replay (`Kafka`/`Kinesis`) и sink с транзакционной или идемпотентной записью — это явные условия.",
+                "source_of_confusion": "Внутренний exactly-once `Flink` (через checkpoints) обобщают на весь pipeline без оговорок.",
+                "if_it_were_true": "Тогда не существовало бы 2PC-sink и `Kafka`-транзакций, но их добавляют именно ради end-to-end гарантии.",
+                "how_it_should_be": "Нужны source с replay и transactional/idempotent sink; иначе на выходе возможны дубли."
               }
             },
             {
@@ -1211,6 +1211,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Checkpoints предназначены для версионных upgrade'ов приложения и миграции schema state, а savepoints — для восстановления после сбоя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли обратные: checkpoint — для fault tolerance (восстановление после сбоя), savepoint — для operations (upgrade, migration, A/B).",
+                "source_of_confusion": "Оба позволяют восстановить state, и их назначения путают местами.",
+                "if_it_were_true": "Тогда формат checkpoint был бы portable для рефакторинга, но именно savepoint имеет standard-формат для этого.",
+                "how_it_should_be": "Checkpoint — для сбоев; savepoint — для upgrade/migration/A-B."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Savepoint нельзя использовать для восстановления job после рефакторинга кода — его формат жёстко привязан к версии топологии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно savepoint имеет standard (portable) формат и позволяет восстановиться после рефакторинга; жёстко привязан к топологии optimized-формат checkpoint.",
+                "source_of_confusion": "Свойство переносимости приписывают не тому типу снимка.",
+                "if_it_were_true": "Тогда savepoints были бы бесполезны для upgrade'ов, но их и придумали ради переносимости при изменении кода.",
+                "how_it_should_be": "Savepoint в standard-формате переносим между версиями кода; жёстко привязан checkpoint."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Checkpoint — для fault tolerance, создаётся автоматически, удаляется по retention, формат optimized. Savepoint — для operations (upgrade, A/B), создаётся вручную (`flink savepoint <job-id> s3://...`), удаляется вручную, формат standard (можно восстановить после рефакторинга кода). Savepoints нужны для версионных upgrade'ов приложения, migrations state schema, A/B тестирования.",
               "correct": true,
               "sections": {
@@ -1222,8 +1246,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Savepoints создаются автоматически по таймеру и удаляются по retention, точно как checkpoints.",
               "correct": false,
               "sections": {
@@ -1231,30 +1255,6 @@
                 "source_of_confusion": "Оба — снимки state, поэтому их жизненные циклы смешивают.",
                 "if_it_were_true": "Тогда не было бы команды `flink savepoint` для ручного создания, но она существует именно для этого.",
                 "how_it_should_be": "Savepoint — ручной (создание и удаление); checkpoint — автоматический."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Checkpoints предназначены для версионных upgrade'ов приложения и миграции schema state, а savepoints — для восстановления после сбоя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Роли обратные: checkpoint — для fault tolerance (восстановление после сбоя), savepoint — для operations (upgrade, migration, A/B).",
-                "source_of_confusion": "Оба позволяют восстановить state, и их назначения путают местами.",
-                "if_it_were_true": "Тогда формат checkpoint был бы portable для рефакторинга, но именно savepoint имеет standard-формат для этого.",
-                "how_it_should_be": "Checkpoint — для сбоев; savepoint — для upgrade/migration/A-B."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Savepoint нельзя использовать для восстановления job после рефакторинга кода — его формат жёстко привязан к версии топологии.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Именно savepoint имеет standard (portable) формат и позволяет восстановиться после рефакторинга; жёстко привязан к топологии optimized-формат checkpoint.",
-                "source_of_confusion": "Свойство переносимости приписывают не тому типу снимка.",
-                "if_it_were_true": "Тогда savepoints были бы бесполезны для upgrade'ов, но их и придумали ради переносимости при изменении кода.",
-                "how_it_should_be": "Savepoint в standard-формате переносим между версиями кода; жёстко привязан checkpoint."
               }
             }
           ]
@@ -1283,14 +1283,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "**Barrier** — специальный маркер, инжектируемый в stream для координации checkpoint. Когда operator получил barrier со ВСЕХ input streams → пишет snapshot. Это `Chandy-Lamport` algorithm для distributed snapshots (1985). В `Flink` barriers **выравниваются** (alignment) — operator ждёт barriers со всех inputs; это даёт exactly-once, но может вызвать backpressure. Альтернатива — **unaligned checkpoints** (Flink 1.11+).",
-              "correct": true,
+              "text": "`Chandy-Lamport` — это алгоритм балансировки нагрузки между `TaskManager`-ами, не связанный с checkpoints.",
+              "correct": false,
               "sections": {
-                "explanation": "Barrier течёт по потоку вместе с данными и логически разделяет события «до» и «после» checkpoint; alignment гарантирует, что snapshot консистентен по всем входам оператора.",
-                "example": "Source выдаёт `e1, e2, BARRIER, e3, e4`: operator с двумя входами ждёт barrier из обоих, затем снимает snapshot — события до barrier учтены, после — нет.",
-                "when_to_apply": "Aligned (с выравниванием) checkpoints дают строгий exactly-once; unaligned включают, когда alignment под backpressure слишком тормозит снятие checkpoint.",
-                "edge_cases": "Под сильным backpressure alignment задерживается (operator ждёт «отстающий» вход), и checkpoint может не успеть в timeout; unaligned checkpoints снимают snapshot, не дожидаясь выравнивания, ценой записи in-flight данных.",
-                "related": "[[apache-flink-interview#Q19]] checkpointing, использующий barriers; [[apache-flink-interview#Q20]] exactly-once через alignment; [[apache-flink-interview#Q26]] backpressure, тормозящий alignment."
+                "what_actually": "`Chandy-Lamport` (1985) — алгоритм согласованных distributed snapshots, и `Flink` применяет его именно для checkpoints.",
+                "source_of_confusion": "Название из теории распределённых систем ассоциируют с координацией ресурсов вообще.",
+                "if_it_were_true": "Тогда barriers не имели бы отношения к снятию snapshot, но они — его ядро.",
+                "how_it_should_be": "`Chandy-Lamport` — про consistent snapshots; в `Flink` это механизм checkpointing."
               }
             },
             {
@@ -1308,13 +1307,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Chandy-Lamport` — это алгоритм балансировки нагрузки между `TaskManager`-ами, не связанный с checkpoints.",
-              "correct": false,
+              "text": "**Barrier** — специальный маркер, инжектируемый в stream для координации checkpoint. Когда operator получил barrier со ВСЕХ input streams → пишет snapshot. Это `Chandy-Lamport` algorithm для distributed snapshots (1985). В `Flink` barriers **выравниваются** (alignment) — operator ждёт barriers со всех inputs; это даёт exactly-once, но может вызвать backpressure. Альтернатива — **unaligned checkpoints** (Flink 1.11+).",
+              "correct": true,
               "sections": {
-                "what_actually": "`Chandy-Lamport` (1985) — алгоритм согласованных distributed snapshots, и `Flink` применяет его именно для checkpoints.",
-                "source_of_confusion": "Название из теории распределённых систем ассоциируют с координацией ресурсов вообще.",
-                "if_it_were_true": "Тогда barriers не имели бы отношения к снятию snapshot, но они — его ядро.",
-                "how_it_should_be": "`Chandy-Lamport` — про consistent snapshots; в `Flink` это механизм checkpointing."
+                "explanation": "Barrier течёт по потоку вместе с данными и логически разделяет события «до» и «после» checkpoint; alignment гарантирует, что snapshot консистентен по всем входам оператора.",
+                "example": "Source выдаёт `e1, e2, BARRIER, e3, e4`: operator с двумя входами ждёт barrier из обоих, затем снимает snapshot — события до barrier учтены, после — нет.",
+                "when_to_apply": "Aligned (с выравниванием) checkpoints дают строгий exactly-once; unaligned включают, когда alignment под backpressure слишком тормозит снятие checkpoint.",
+                "edge_cases": "Под сильным backpressure alignment задерживается (operator ждёт «отстающий» вход), и checkpoint может не успеть в timeout; unaligned checkpoints снимают snapshot, не дожидаясь выравнивания, ценой записи in-flight данных.",
+                "related": "[[apache-flink-interview#Q19]] checkpointing, использующий barriers; [[apache-flink-interview#Q20]] exactly-once через alignment; [[apache-flink-interview#Q26]] backpressure, тормозящий alignment."
               }
             }
           ]
@@ -1331,18 +1331,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SQL API` в `Flink` работает значительно медленнее `DataStream API`, потому что транслируется в отдельный интерпретатор запросов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Все три API имеют одинаковую performance: они компилируются в один и тот же `Flink` runtime, а не в отдельный интерпретатор.",
-                "source_of_confusion": "SQL ассоциируют с медленной интерпретацией, как в некоторых БД.",
-                "if_it_were_true": "Тогда `SQL` избегали бы в латентно-критичных задачах, но он даёт ту же скорость, что и `DataStream`.",
-                "how_it_should_be": "`DataStream`, `Table` и `SQL` равны по performance — общий runtime."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Table API` — это полностью императивный API на `Scala`/`Java`, предназначенный для низкоуровневого управления state и timers.",
               "correct": false,
               "sections": {
@@ -1353,8 +1341,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Эти три API несовместимы и компилируются в три разных независимых runtime внутри `Flink`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три транслируются в единый `Flink` runtime, поэтому совместимы и сопоставимы по performance, а не изолированы.",
+                "source_of_confusion": "Разные стили API создают иллюзию разных движков под капотом.",
+                "if_it_were_true": "Тогда нельзя было бы конвертировать `Table` в `DataStream` и обратно, но такая интеграция есть.",
+                "how_it_should_be": "Один общий runtime; API взаимоконвертируемы и одинаково производительны."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "`SQL API` в `Flink` работает значительно медленнее `DataStream API`, потому что транслируется в отдельный интерпретатор запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три API имеют одинаковую performance: они компилируются в один и тот же `Flink` runtime, а не в отдельный интерпретатор.",
+                "source_of_confusion": "SQL ассоциируют с медленной интерпретацией, как в некоторых БД.",
+                "if_it_were_true": "Тогда `SQL` избегали бы в латентно-критичных задачах, но он даёт ту же скорость, что и `DataStream`.",
+                "how_it_should_be": "`DataStream`, `Table` и `SQL` равны по performance — общий runtime."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "**`DataStream`** — imperative, `Scala`/`Java`, для developers. **`Table`** — declarative, type-safe, гибрид. **`SQL`** — стандартный SQL, для analysts/BI. Пример: `stream.keyBy(...).window(...).reduce(...)` vs `table.groupBy($\"userId\").select(...)` vs `tableEnv.sqlQuery(\"SELECT userId, SUM(amount) FROM events GROUP BY userId\")`. Все три имеют **одинаковую performance** — компилируются в один `Flink` runtime.",
               "correct": true,
               "sections": {
@@ -1363,18 +1375,6 @@
                 "when_to_apply": "`DataStream` берут для сложной кастомной логики и timers; `Table`/`SQL` — для аналитики и быстрого описания агрегаций, особенно для не-разработчиков.",
                 "edge_cases": "Несмотря на одинаковую performance, низкоуровневые возможности (custom state, event-time timers, `ProcessFunction`) полнее всего доступны именно в `DataStream`; `SQL` удобнее, но выразительно ограниченнее.",
                 "related": "[[apache-flink-interview#Q5]] операции `DataStream API`; [[apache-flink-interview#Q24]] `ProcessFunction` низкого уровня; [[apache-flink-interview#Q25]] `CEP` для паттернов."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Эти три API несовместимы и компилируются в три разных независимых runtime внутри `Flink`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Все три транслируются в единый `Flink` runtime, поэтому совместимы и сопоставимы по performance, а не изолированы.",
-                "source_of_confusion": "Разные стили API создают иллюзию разных движков под капотом.",
-                "if_it_were_true": "Тогда нельзя было бы конвертировать `Table` в `DataStream` и обратно, но такая интеграция есть.",
-                "how_it_should_be": "Один общий runtime; API взаимоконвертируемы и одинаково производительны."
               }
             }
           ]
@@ -1391,13 +1391,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ProcessFunction` — это высокоуровневый декларативный SQL-подобный API, скрывающий state и timers от разработчика.",
-              "correct": false,
+              "text": "`ProcessFunction` — **низкоуровневое** API для custom event processing с **state и timers**. В `processElement` доступны обработка события, state и регистрация таймера (`ctx.timerService().registerEventTimeTimer(...)`); в `onTimer` — отложенная логика по срабатыванию таймера. Применение — логика, которую не выразить стандартными операторами: `CEP` с custom-правилами, fraud detection.",
+              "correct": true,
               "sections": {
-                "what_actually": "`ProcessFunction` — низкоуровневое API, которое как раз даёт прямой доступ к state и timers, а не скрывает их.",
-                "source_of_confusion": "Слово «Function» звучит как удобная абстракция высокого уровня.",
-                "if_it_were_true": "Тогда нельзя было бы регистрировать таймеры через `timerService()`, но это её ключевая возможность.",
-                "how_it_should_be": "`ProcessFunction` — низкоуровневое API с явным доступом к state и timers."
+                "explanation": "`ProcessFunction` даёт прямой доступ к трём примитивам — событиям, state и таймерам — поэтому через неё реализуют поведение, недоступное декларативным операторам и окнам.",
+                "example": "`registerEventTimeTimer(value.timestamp + 60_000)` ставит таймер на +60 с event time; в `onTimer` срабатывает отложенная проверка (например, истёк ли срок ожидания подтверждения).",
+                "when_to_apply": "`ProcessFunction` берут, когда нужны кастомные таймеры, нестандартная оконная логика, машины состояний или fraud-правила, не покрытые `window`/`reduce`.",
+                "edge_cases": "Таймеры бывают event-time и processing-time: event-time таймер срабатывает по watermark, поэтому при медленно растущем watermark отложенная логика откладывается — это частый источник «почему onTimer не вызвался».",
+                "related": "[[apache-flink-interview#Q5]] высокоуровневые операции `DataStream`; [[apache-flink-interview#Q16]] keyed state в `ProcessFunction`; [[apache-flink-interview#Q25]] `CEP` поверх потоков."
               }
             },
             {
@@ -1427,14 +1428,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ProcessFunction` — **низкоуровневое** API для custom event processing с **state и timers**. В `processElement` доступны обработка события, state и регистрация таймера (`ctx.timerService().registerEventTimeTimer(...)`); в `onTimer` — отложенная логика по срабатыванию таймера. Применение — логика, которую не выразить стандартными операторами: `CEP` с custom-правилами, fraud detection.",
-              "correct": true,
+              "text": "`ProcessFunction` — это высокоуровневый декларативный SQL-подобный API, скрывающий state и timers от разработчика.",
+              "correct": false,
               "sections": {
-                "explanation": "`ProcessFunction` даёт прямой доступ к трём примитивам — событиям, state и таймерам — поэтому через неё реализуют поведение, недоступное декларативным операторам и окнам.",
-                "example": "`registerEventTimeTimer(value.timestamp + 60_000)` ставит таймер на +60 с event time; в `onTimer` срабатывает отложенная проверка (например, истёк ли срок ожидания подтверждения).",
-                "when_to_apply": "`ProcessFunction` берут, когда нужны кастомные таймеры, нестандартная оконная логика, машины состояний или fraud-правила, не покрытые `window`/`reduce`.",
-                "edge_cases": "Таймеры бывают event-time и processing-time: event-time таймер срабатывает по watermark, поэтому при медленно растущем watermark отложенная логика откладывается — это частый источник «почему onTimer не вызвался».",
-                "related": "[[apache-flink-interview#Q5]] высокоуровневые операции `DataStream`; [[apache-flink-interview#Q16]] keyed state в `ProcessFunction`; [[apache-flink-interview#Q25]] `CEP` поверх потоков."
+                "what_actually": "`ProcessFunction` — низкоуровневое API, которое как раз даёт прямой доступ к state и timers, а не скрывает их.",
+                "source_of_confusion": "Слово «Function» звучит как удобная абстракция высокого уровня.",
+                "if_it_were_true": "Тогда нельзя было бы регистрировать таймеры через `timerService()`, но это её ключевая возможность.",
+                "how_it_should_be": "`ProcessFunction` — низкоуровневое API с явным доступом к state и timers."
               }
             }
           ]
@@ -1451,31 +1451,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Flink CEP` — библиотека для поиска **сложных паттернов** в стриме. Паттерн описывается через `Pattern.begin(...).where(...).next(...).followedBy(...).within(...)`, затем `CEP.pattern(stream, pattern).select(...)`. Применения: fraud detection (последовательность подозрительных действий), trading signals, system monitoring, click stream analysis. Мощно, но сложнее простых агрегаций.",
-              "correct": true,
-              "sections": {
-                "explanation": "`CEP` ищет в потоке заранее описанные последовательности событий (паттерны) с условиями и временными ограничениями, выдавая совпадения для дальнейшей реакции (например, алерта).",
-                "example": "`Pattern.begin(\"start\").where(_.amount > 100).next(\"middle\").followedBy(\"end\").where(_.action == \"transfer\").within(Time.minutes(10))` ловит подозрительную последовательность для антифрода.",
-                "when_to_apply": "`CEP` применяют, когда важна именно последовательность и тайминг событий: цепочки фрод-действий, рыночные паттерны, сложные условия мониторинга.",
-                "edge_cases": "`next` и `followedBy` различаются строгостью: `next` требует строго следующее событие, `followedBy` допускает события между ними — путаница приводит к ложным несовпадениям паттерна.",
-                "related": "[[apache-flink-interview#Q24]] `ProcessFunction` для custom-правил; [[apache-flink-interview#Q1]] `CEP` как применение `Flink`; [[apache-flink-interview#Q30]] fraud detection в production."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Flink CEP` — это библиотека для простой поэлементной агрегации (sum, count) без анализа последовательностей событий.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`CEP` ищет именно сложные паттерны-последовательности событий; простые sum/count делаются обычными агрегациями и окнами.",
-                "source_of_confusion": "И `CEP`, и агрегации работают над потоком, поэтому их назначение смешивают.",
-                "if_it_were_true": "Тогда не нужен был бы `Pattern API` с `next`/`followedBy`, но он создан именно для последовательностей.",
-                "how_it_should_be": "`CEP` — про паттерны и последовательности; sum/count — это обычные агрегации."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "В `Flink CEP` паттерн нельзя ограничить по времени: конструкции вроде `within(Time.minutes(10))` не существует.",
               "correct": false,
               "sections": {
@@ -1486,8 +1461,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`Flink CEP` применяется только для batch-обработки исторических данных и не работает на живых потоках.",
               "correct": false,
               "sections": {
@@ -1495,6 +1470,31 @@
                 "source_of_confusion": "Поиск паттернов ассоциируют с анализом накопленной истории постфактум.",
                 "if_it_were_true": "Тогда `CEP` не годился бы для real-time fraud detection, но это его главное применение.",
                 "how_it_should_be": "`CEP` детектит паттерны в реальном времени на потоке, а не только в batch."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Flink CEP` — это библиотека для простой поэлементной агрегации (sum, count) без анализа последовательностей событий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CEP` ищет именно сложные паттерны-последовательности событий; простые sum/count делаются обычными агрегациями и окнами.",
+                "source_of_confusion": "И `CEP`, и агрегации работают над потоком, поэтому их назначение смешивают.",
+                "if_it_were_true": "Тогда не нужен был бы `Pattern API` с `next`/`followedBy`, но он создан именно для последовательностей.",
+                "how_it_should_be": "`CEP` — про паттерны и последовательности; sum/count — это обычные агрегации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Flink CEP` — библиотека для поиска **сложных паттернов** в стриме. Паттерн описывается через `Pattern.begin(...).where(...).next(...).followedBy(...).within(...)`, затем `CEP.pattern(stream, pattern).select(...)`. Применения: fraud detection (последовательность подозрительных действий), trading signals, system monitoring, click stream analysis. Мощно, но сложнее простых агрегаций.",
+              "correct": true,
+              "sections": {
+                "explanation": "`CEP` ищет в потоке заранее описанные последовательности событий (паттерны) с условиями и временными ограничениями, выдавая совпадения для дальнейшей реакции (например, алерта).",
+                "example": "`Pattern.begin(\"start\").where(_.amount > 100).next(\"middle\").followedBy(\"end\").where(_.action == \"transfer\").within(Time.minutes(10))` ловит подозрительную последовательность для антифрода.",
+                "when_to_apply": "`CEP` применяют, когда важна именно последовательность и тайминг событий: цепочки фрод-действий, рыночные паттерны, сложные условия мониторинга.",
+                "edge_cases": "`next` и `followedBy` различаются строгостью: `next` требует строго следующее событие, `followedBy` допускает события между ними — путаница приводит к ложным несовпадениям паттерна.",
+                "related": "[[apache-flink-interview#Q24]] `ProcessFunction` для custom-правил; [[apache-flink-interview#Q1]] `CEP` как применение `Flink`; [[apache-flink-interview#Q30]] fraud detection в production."
               }
             }
           ]
@@ -1511,18 +1511,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При backpressure `Flink` отбрасывает события, которые не успевает обработать, чтобы не переполнить буферы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Flink` не теряет данные при backpressure: он замедляет upstream и источник, а не дропает события.",
-                "source_of_confusion": "Многие системы при перегрузке действительно дропают сообщения, и это переносят на `Flink`.",
-                "if_it_were_true": "Тогда backpressure нарушал бы exactly-once, но `Flink` сохраняет все данные, лишь замедляясь.",
-                "how_it_should_be": "При backpressure `Flink` тормозит, но не теряет события."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "**Backpressure** — медленный downstream operator замедляет upstream (через network buffers). Когда `Op2` не успевает, буферы перед ним заполняются → `Op1` не может писать → замедляется. `Flink` **не теряет данные** при backpressure — просто замедляется в целом. Detection: `Flink` Web UI → Backpressure tab. Решение: увеличить parallelism узкого operator, оптимизировать его логику, добавить ресурсы.",
               "correct": true,
               "sections": {
@@ -1534,8 +1522,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Backpressure означает, что быстрый upstream-оператор ускоряет медленный downstream, проталкивая в него больше данных.",
               "correct": false,
               "sections": {
@@ -1543,6 +1531,18 @@
                 "source_of_confusion": "Слово «pressure» ассоциируют с проталкиванием данных вперёд, а не с торможением назад.",
                 "if_it_were_true": "Тогда медленный оператор не был бы узким местом, но именно он тормозит весь pipeline.",
                 "how_it_should_be": "Медленный downstream создаёт давление вверх и замедляет upstream."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При backpressure `Flink` отбрасывает события, которые не успевает обработать, чтобы не переполнить буферы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flink` не теряет данные при backpressure: он замедляет upstream и источник, а не дропает события.",
+                "source_of_confusion": "Многие системы при перегрузке действительно дропают сообщения, и это переносят на `Flink`.",
+                "if_it_were_true": "Тогда backpressure нарушал бы exactly-once, но `Flink` сохраняет все данные, лишь замедляясь.",
+                "how_it_should_be": "При backpressure `Flink` тормозит, но не теряет события."
               }
             },
             {
@@ -1571,30 +1571,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`env.setParallelism(8)` задаёт parallelism сразу для всей job; переопределить его для отдельного operator через `.setParallelism(4)` нельзя — на уровне оператора `Flink` этот вызов игнорирует. `env.setMaxParallelism(128)` задаёт потолок масштабирования. Best practice: стартовать с `parallelism = #cores в кластере`.",
+              "text": "`env.setParallelism(8)` — global default; `.setParallelism(4)` на operator — override. Best practice: source-оператор всегда должен иметь parallelism кратно больше числа partitions `Kafka`-топика, иначе часть партиций не будет прочитана. `env.setMaxParallelism(128)` — потолок вертикального масштабирования.",
               "correct": false,
               "sections": {
-                "what_actually": "Parallelism настраивается и точечно: `.setParallelism(N)` на конкретном операторе переопределяет глобальный дефолт.",
-                "source_of_confusion": "Глобальный `env.setParallelism(...)` виден чаще, и его принимают за единственный способ.",
-                "if_it_were_true": "Тогда нельзя было бы дать узкому оператору больше параллелизма, но это стандартная практика расшивки bottleneck.",
-                "how_it_should_be": "Parallelism задаётся и глобально, и per-operator через `.setParallelism(...)`."
+                "what_actually": "Parallelism источника обычно ставят равным числу партиций топика; больше партиций subtask простаивают, не давая выигрыша.",
+                "source_of_confusion": "«Больше параллелизма — всегда лучше» ошибочно применяют и к источнику.",
+                "if_it_were_true": "Тогда лишние subtask источника читали бы те же партиции, но партиция `Kafka` обслуживается одним consumer.",
+                "how_it_should_be": "Parallelism source ≈ числу партиций топика; сверх него subtask простаивают."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`env.setParallelism(8)` — global default; `.setParallelism(4)` на operator — override; `env.setMaxParallelism(128)` — потолок, который можно свободно поднимать на лету между рестартами без savepoint migration. Best practice: source обычно = числу partitions `Kafka`-топика.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`maxParallelism` фиксируется при первом запуске (определяет key-groups); изменить его потом можно только через savepoint migration.",
-                "source_of_confusion": "Обычный parallelism действительно меняется гибко, и это переносят на `maxParallelism`.",
-                "if_it_were_true": "Тогда не было бы предупреждений про savepoint migration при смене `maxParallelism`, но они есть.",
-                "how_it_should_be": "`maxParallelism` неизменен после старта без savepoint migration — его закладывают заранее."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`env.setParallelism(8)` — global default; `.setParallelism(4)` на конкретном operator — override; `env.setMaxParallelism(128)` — потолок для вертикального масштабирования. Best practices: стартовать с `parallelism = #cores в кластере`; источник — обычно меньший parallelism (= числу partitions `Kafka`-топика); bottleneck-операторы — больше parallelism. `maxParallelism` нельзя поменять после первого запуска без savepoint migration.",
               "correct": true,
               "sections": {
@@ -1606,15 +1594,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`env.setParallelism(8)` — global default; `.setParallelism(4)` на operator — override. Best practice: source-оператор всегда должен иметь parallelism кратно больше числа partitions `Kafka`-топика, иначе часть партиций не будет прочитана. `env.setMaxParallelism(128)` — потолок вертикального масштабирования.",
+              "order": 2,
+              "label": "C",
+              "text": "`env.setParallelism(8)` задаёт parallelism сразу для всей job; переопределить его для отдельного operator через `.setParallelism(4)` нельзя — на уровне оператора `Flink` этот вызов игнорирует. `env.setMaxParallelism(128)` задаёт потолок масштабирования. Best practice: стартовать с `parallelism = #cores в кластере`.",
               "correct": false,
               "sections": {
-                "what_actually": "Parallelism источника обычно ставят равным числу партиций топика; больше партиций subtask простаивают, не давая выигрыша.",
-                "source_of_confusion": "«Больше параллелизма — всегда лучше» ошибочно применяют и к источнику.",
-                "if_it_were_true": "Тогда лишние subtask источника читали бы те же партиции, но партиция `Kafka` обслуживается одним consumer.",
-                "how_it_should_be": "Parallelism source ≈ числу партиций топика; сверх него subtask простаивают."
+                "what_actually": "Parallelism настраивается и точечно: `.setParallelism(N)` на конкретном операторе переопределяет глобальный дефолт.",
+                "source_of_confusion": "Глобальный `env.setParallelism(...)` виден чаще, и его принимают за единственный способ.",
+                "if_it_were_true": "Тогда нельзя было бы дать узкому оператору больше параллелизма, но это стандартная практика расшивки bottleneck.",
+                "how_it_should_be": "Parallelism задаётся и глобально, и per-operator через `.setParallelism(...)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`env.setParallelism(8)` — global default; `.setParallelism(4)` на operator — override; `env.setMaxParallelism(128)` — потолок, который можно свободно поднимать на лету между рестартами без savepoint migration. Best practice: source обычно = числу partitions `Kafka`-топика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`maxParallelism` фиксируется при первом запуске (определяет key-groups); изменить его потом можно только через savepoint migration.",
+                "source_of_confusion": "Обычный parallelism действительно меняется гибко, и это переносят на `maxParallelism`.",
+                "if_it_were_true": "Тогда не было бы предупреждений про savepoint migration при смене `maxParallelism`, но они есть.",
+                "how_it_should_be": "`maxParallelism` неизменен после старта без savepoint migration — его закладывают заранее."
               }
             }
           ]
@@ -1631,13 +1631,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Operator chaining сериализует данные между каждой парой операторов в цепочке, поэтому он замедляет обработку.",
-              "correct": false,
+              "text": "**Operator chain** — `Flink` объединяет несколько operators в один task, если между ними нет shuffle: `source → map → filter` в одной цепочке, после `keyBy` (shuffle) — новая. В chain операции идут в одном thread без сериализации — огромный прирост perf. Отключить: `.disableChaining()`. **Network buffers** — буферы для передачи между operators, настраиваются через `taskmanager.network.memory.*`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Наоборот: chaining убирает сериализацию между склеенными операторами (один thread), давая прирост, а не замедление.",
-                "source_of_confusion": "Передачу данных между шагами интуитивно связывают с сериализацией всегда.",
-                "if_it_were_true": "Тогда chaining не включали бы по умолчанию ради perf, но он включён именно для ускорения.",
-                "how_it_should_be": "В chain нет сериализации между операторами — это ускорение, а не замедление."
+                "explanation": "Chaining склеивает соседние операторы без перетасовки в один поток исполнения, убирая сериализацию и сетевую передачу между ними; network buffers нужны там, где данные всё же идут между задачами.",
+                "example": "`source → map → filter → keyBy → sum → sink`: до `keyBy` всё в одной chain (без сериализации), `keyBy` вызывает shuffle, после него — новая chain до sink.",
+                "when_to_apply": "Chaining оставляют включённым ради perf по умолчанию; `disableChaining()` применяют точечно — например, чтобы изолировать тяжёлый оператор для профилирования или разнести нагрузку.",
+                "edge_cases": "Принудительное отключение chaining (`disableChaining`) добавляет сериализацию и сетевой обмен между ранее склеенными операторами — иногда полезно для изоляции, но в общем случае это потеря производительности.",
+                "related": "[[apache-flink-interview#Q5]] операторы, которые объединяются в chain; [[apache-flink-interview#Q6]] `keyBy` как точка shuffle; [[apache-flink-interview#Q26]] буферы и backpressure."
               }
             },
             {
@@ -1667,14 +1668,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "**Operator chain** — `Flink` объединяет несколько operators в один task, если между ними нет shuffle: `source → map → filter` в одной цепочке, после `keyBy` (shuffle) — новая. В chain операции идут в одном thread без сериализации — огромный прирост perf. Отключить: `.disableChaining()`. **Network buffers** — буферы для передачи между operators, настраиваются через `taskmanager.network.memory.*`.",
-              "correct": true,
+              "text": "Operator chaining сериализует данные между каждой парой операторов в цепочке, поэтому он замедляет обработку.",
+              "correct": false,
               "sections": {
-                "explanation": "Chaining склеивает соседние операторы без перетасовки в один поток исполнения, убирая сериализацию и сетевую передачу между ними; network buffers нужны там, где данные всё же идут между задачами.",
-                "example": "`source → map → filter → keyBy → sum → sink`: до `keyBy` всё в одной chain (без сериализации), `keyBy` вызывает shuffle, после него — новая chain до sink.",
-                "when_to_apply": "Chaining оставляют включённым ради perf по умолчанию; `disableChaining()` применяют точечно — например, чтобы изолировать тяжёлый оператор для профилирования или разнести нагрузку.",
-                "edge_cases": "Принудительное отключение chaining (`disableChaining`) добавляет сериализацию и сетевой обмен между ранее склеенными операторами — иногда полезно для изоляции, но в общем случае это потеря производительности.",
-                "related": "[[apache-flink-interview#Q5]] операторы, которые объединяются в chain; [[apache-flink-interview#Q6]] `keyBy` как точка shuffle; [[apache-flink-interview#Q26]] буферы и backpressure."
+                "what_actually": "Наоборот: chaining убирает сериализацию между склеенными операторами (один thread), давая прирост, а не замедление.",
+                "source_of_confusion": "Передачу данных между шагами интуитивно связывают с сериализацией всегда.",
+                "if_it_were_true": "Тогда chaining не включали бы по умолчанию ради perf, но он включён именно для ускорения.",
+                "how_it_should_be": "В chain нет сериализации между операторами — это ускорение, а не замедление."
               }
             }
           ]
@@ -1691,6 +1691,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "**Выбирай `Flink`**, когда нужен единый стек для batch + streaming в одном движке с переиспользованием кода; **выбирай `Spark Streaming`**, когда latency > 1 с приемлема и `Spark` уже используется в компании.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аргументы перевёрнуты: единый batch+streaming-стек — довод за `Spark`, а pure low-latency streaming — за `Flink`.",
+                "source_of_confusion": "Оба умеют и batch, и streaming, и их сильные стороны путают местами.",
+                "if_it_were_true": "Тогда `Flink` не позиционировали бы как streaming-first, но именно low-latency streaming — его конёк.",
+                "how_it_should_be": "`Flink` — для low-latency streaming; единый batch+streaming-стек — довод за `Spark`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**Выбирай `Flink`**, когда latency больше секунды полностью приемлема и low-latency не важна; **выбирай `Spark Streaming`**, когда нужен один стек для batch + streaming, `Spark` уже используется и команда с ним знакома.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если latency в секунды приемлема, это как раз аргумент в пользу `Spark`; `Flink` берут ради задержек < 100 мс.",
+                "source_of_confusion": "Критерий latency применяют к `Flink` наоборот — будто ему высокая задержка в плюс.",
+                "if_it_were_true": "Тогда главное преимущество `Flink` (миллисекундная latency) было бы нерелевантно, но именно оно его и продаёт.",
+                "how_it_should_be": "`Flink` выбирают при критичной low-latency (< 100 мс); терпимость к секундам — довод за `Spark`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "**Выбирай `Flink`**, когда: критична latency < 100 мс; нужен stateful processing с big state; нужен exactly-once end-to-end (`Kafka` → `Flink` → `Kafka`); нужен `CEP` (сложные event patterns); нужен true streaming (не micro-batch); уже есть команда с `Java`/`Scala` expertise. **Выбирай `Spark Streaming`**, когда: один стек для batch + streaming; latency > 1 с приемлема; `Spark` уже используется в компании; команда знакома со `Spark`.",
               "correct": true,
               "sections": {
@@ -1702,8 +1726,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "**Выбирай `Flink`**, когда критична latency < 100 мс, нужен stateful processing с big state, exactly-once end-to-end и true streaming вместо micro-batch; **выбирай `Spark Streaming`**, когда нужен `CEP` для сложных event-паттернов.",
               "correct": false,
               "sections": {
@@ -1711,30 +1735,6 @@
                 "source_of_confusion": "Сильные стороны `Flink` в streaming раздувают до тотального превосходства.",
                 "if_it_were_true": "Тогда `Spark` не доминировал бы в data engineering, но он по-прежнему лидер для batch+streaming.",
                 "how_it_should_be": "Выбор зависит от требований; `Spark` лучше для унифицированного стека и привычной команды."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "**Выбирай `Flink`**, когда нужен единый стек для batch + streaming в одном движке с переиспользованием кода; **выбирай `Spark Streaming`**, когда latency > 1 с приемлема и `Spark` уже используется в компании.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Аргументы перевёрнуты: единый batch+streaming-стек — довод за `Spark`, а pure low-latency streaming — за `Flink`.",
-                "source_of_confusion": "Оба умеют и batch, и streaming, и их сильные стороны путают местами.",
-                "if_it_were_true": "Тогда `Flink` не позиционировали бы как streaming-first, но именно low-latency streaming — его конёк.",
-                "how_it_should_be": "`Flink` — для low-latency streaming; единый batch+streaming-стек — довод за `Spark`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "**Выбирай `Flink`**, когда latency больше секунды полностью приемлема и low-latency не важна; **выбирай `Spark Streaming`**, когда нужен один стек для batch + streaming, `Spark` уже используется и команда с ним знакома.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Если latency в секунды приемлема, это как раз аргумент в пользу `Spark`; `Flink` берут ради задержек < 100 мс.",
-                "source_of_confusion": "Критерий latency применяют к `Flink` наоборот — будто ему высокая задержка в плюс.",
-                "if_it_were_true": "Тогда главное преимущество `Flink` (миллисекундная latency) было бы нерелевантно, но именно оно его и продаёт.",
-                "how_it_should_be": "`Flink` выбирают при критичной low-latency (< 100 мс); терпимость к секундам — довод за `Spark`."
               }
             }
           ]
@@ -1763,6 +1763,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Flink` применяется исключительно для batch-обработки отчётности и не используется для real-time задач вроде fraud detection.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главные production-кейсы `Flink` — именно real-time: fraud detection (`Stripe`, `ING`), рекомендации (`Netflix`), pricing (`Uber`).",
+                "source_of_confusion": "Любой движок обработки данных по умолчанию ассоциируют с batch-отчётностью.",
+                "if_it_were_true": "Тогда `Flink` не ценили бы за low-latency streaming, но именно это его профиль в production.",
+                "how_it_should_be": "Production-применение `Flink` — real-time: антифрод, рекомендации, ценообразование."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Известные пользователи: **`Alibaba`** (Singles' Day, real-time analytics, биллион events/сек), **`Netflix`** (recommendation engine, fraud detection), **`Uber`** (pricing, ETA estimation), **`Stripe`** (fraud detection), а также `Lyft`, `Pinterest`, `Twitter`, `Yelp`, `ING Bank`, `Comcast`. Особенно сильна позиция `Flink` в финтехе и крупных internet-компаниях.",
               "correct": true,
               "sections": {
@@ -1771,18 +1783,6 @@
                 "when_to_apply": "На эти кейсы ссылаются, обосновывая выбор `Flink` для high-scale low-latency задач: финтех-антифрод, рекомендации, ценообразование, потоковая аналитика.",
                 "edge_cases": "`Alibaba` — не просто пользователь, а крупный контрибьютор: её внутренний форк `Blink` влил множество улучшений в upstream `Flink`, что объясняет силу `Flink` в `Table`/`SQL` и масштабируемости.",
                 "related": "[[apache-flink-interview#Q1]] применения `Flink`; [[apache-flink-interview#Q25]] `CEP` для fraud detection; [[apache-flink-interview#Q29]] когда выбирать `Flink`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Flink` применяется исключительно для batch-обработки отчётности и не используется для real-time задач вроде fraud detection.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Главные production-кейсы `Flink` — именно real-time: fraud detection (`Stripe`, `ING`), рекомендации (`Netflix`), pricing (`Uber`).",
-                "source_of_confusion": "Любой движок обработки данных по умолчанию ассоциируют с batch-отчётностью.",
-                "if_it_were_true": "Тогда `Flink` не ценили бы за low-latency streaming, но именно это его профиль в production.",
-                "how_it_should_be": "Production-применение `Flink` — real-time: антифрод, рекомендации, ценообразование."
               }
             },
             {
@@ -1811,18 +1811,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "1) Высокая latency из-за micro-batch-модели обработки. 2) Меньше community по сравнению со `Spark`. 3) Меньше готовых connectors (хотя основные есть). 4) `SQL API` менее зрелый, чем `Spark SQL`. 5) Сложнее в `Python` (`PyFlink` не так mature, как `PySpark`). `Spark` доминирует в data engineering overall.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У `Flink` есть реальные минусы: круче кривая обучения, меньше community, менее зрелый `SQL API` и `PyFlink` по сравнению со `Spark`.",
-                "source_of_confusion": "Энтузиазм по поводу streaming-возможностей маскирует объективные слабые места.",
-                "if_it_were_true": "Тогда `Spark` не доминировал бы в data engineering, но он лидирует во многом из-за зрелости экосистемы.",
-                "how_it_should_be": "`Flink` имеет минусы: learning curve, меньшее community, менее зрелый SQL/`PyFlink`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "1) Steeper learning curve — больше концепций (state, watermarks, checkpoints). 2) Слабая fault tolerance: `Flink` гарантирует только at-least-once, поэтому при сбоях возможны дубли. 3) Меньше community, чем у `Spark`. 4) Меньше готовых connectors. 5) Меньше ML/AI-возможностей. `Spark` доминирует в data engineering overall.",
               "correct": false,
               "sections": {
@@ -1833,8 +1821,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "1) Steeper learning curve — больше концепций (state, watermarks, checkpoints). 2) Меньше community по сравнению со `Spark`. 3) Меньше готовых connectors (хотя основные есть). 4) Операционная сложность — checkpointing, savepoints, state migration. 5) `SQL API` менее зрелый, чем `Spark SQL`. 6) Меньше ML/AI возможностей. 7) Сложнее в `Python` (`PyFlink` не так mature, как `PySpark`). В 2024 `Flink` — лидер для pure streaming, но `Spark` доминирует в data engineering overall.",
               "correct": true,
               "sections": {
@@ -1846,8 +1834,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "1) Steeper learning curve — больше концепций (state, watermarks, checkpoints). 2) Меньше community по сравнению со `Spark`. 3) Операционная сложность — checkpointing, savepoints, state migration. 4) `SQL API` менее зрелый, чем `Spark SQL`. 5) Нет `Python API` — `Flink`-джобы пишутся только на `Java`/`Scala`. `Spark` доминирует в data engineering overall.",
               "correct": false,
               "sections": {
@@ -1855,6 +1843,18 @@
                 "source_of_confusion": "Наличие `PyFlink` создаёт впечатление паритета с `PySpark`.",
                 "if_it_were_true": "Тогда дата-сайентисты массово переходили бы на `PyFlink`, но `PySpark` остаётся зрелее и популярнее.",
                 "how_it_should_be": "`PyFlink` менее mature, чем `PySpark`; это слабое место, а не плюс `Flink`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "1) Высокая latency из-за micro-batch-модели обработки. 2) Меньше community по сравнению со `Spark`. 3) Меньше готовых connectors (хотя основные есть). 4) `SQL API` менее зрелый, чем `Spark SQL`. 5) Сложнее в `Python` (`PyFlink` не так mature, как `PySpark`). `Spark` доминирует в data engineering overall.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Flink` есть реальные минусы: круче кривая обучения, меньше community, менее зрелый `SQL API` и `PyFlink` по сравнению со `Spark`.",
+                "source_of_confusion": "Энтузиазм по поводу streaming-возможностей маскирует объективные слабые места.",
+                "if_it_were_true": "Тогда `Spark` не доминировал бы в data engineering, но он лидирует во многом из-за зрелости экосистемы.",
+                "how_it_should_be": "`Flink` имеет минусы: learning curve, меньшее community, менее зрелый SQL/`PyFlink`."
               }
             }
           ]

@@ -9,19 +9,6 @@
           "question_text": "Что такое stream processing?",
           "options": [
             {
-              "text": "`Stream processing` — модель обработки непрерывных потоков событий (events) в реальном времени по мере их поступления, в отличие от `batch processing`, где данные сначала накапливают, а потом обрабатывают разом.",
-              "correct": true,
-              "sections": {
-                "explanation": "Каждое событие проходит через pipeline сразу (или маленькими микробатчами), операторы могут быть stateful (помнят прошлые события), а реальные данные приходят out-of-order — не в том порядке, в котором произошли.",
-                "example": "`Flink`-джоба читает клики из топика `Kafka`, на лету считает число событий на пользователя за минуту и тут же отправляет алерт в `Slack` — без ожидания ночного прогона.",
-                "when_to_apply": "Применяют для real-time analytics по clickstream и IoT, fraud detection, рекомендаций, alerting и real-time ETL — везде, где задержка в часы (как у batch) недопустима.",
-                "edge_cases": "Out-of-order и late events ломают наивные подсчёты: без event time и watermarks агрегаты по окнам будут неверными, поэтому stream дороже batch по сложности.",
-                "related": "[[stream-processing-interview#Q2]] stream vs batch; [[stream-processing-interview#Q5]] event time vs processing time; [[stream-processing-interview#Q11]] stateful processing."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Stream processing` — это запуск обычной batch-джобы каждую минуту по расписанию через cron, то есть частый batch на коротком интервале.",
               "correct": false,
               "sections": {
@@ -30,8 +17,8 @@
                 "if_it_were_true": "Тогда latency всегда был бы кратен периоду cron (минуты), но true streaming даёт миллисекунды-секунды на событие.",
                 "how_it_should_be": "Stream — это непрерывная обработка unbounded-потока, а не периодический перезапуск batch-джобы по таймеру."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`Stream processing` — это исключительно транспорт сообщений между сервисами, как делает брокер `Kafka`.",
@@ -41,6 +28,19 @@
                 "source_of_confusion": "Stream-процессоры почти всегда читают из `Kafka`, поэтому транспорт и обработку легко смешать в одно понятие.",
                 "if_it_were_true": "Тогда `Kafka` сам считал бы агрегаты по окнам, но он только хранит и доставляет сообщения, не трансформируя их.",
                 "how_it_should_be": "Stream processing — это вычислительная модель над потоком; транспорт сообщений — отдельный слой (см. Q25)."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Stream processing` — модель обработки непрерывных потоков событий (events) в реальном времени по мере их поступления, в отличие от `batch processing`, где данные сначала накапливают, а потом обрабатывают разом.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждое событие проходит через pipeline сразу (или маленькими микробатчами), операторы могут быть stateful (помнят прошлые события), а реальные данные приходят out-of-order — не в том порядке, в котором произошли.",
+                "example": "`Flink`-джоба читает клики из топика `Kafka`, на лету считает число событий на пользователя за минуту и тут же отправляет алерт в `Slack` — без ожидания ночного прогона.",
+                "when_to_apply": "Применяют для real-time analytics по clickstream и IoT, fraud detection, рекомендаций, alerting и real-time ETL — везде, где задержка в часы (как у batch) недопустима.",
+                "edge_cases": "Out-of-order и late events ломают наивные подсчёты: без event time и watermarks агрегаты по окнам будут неверными, поэтому stream дороже batch по сложности.",
+                "related": "[[stream-processing-interview#Q2]] stream vs batch; [[stream-processing-interview#Q5]] event time vs processing time; [[stream-processing-interview#Q11]] stateful processing."
               },
               "label": "C",
               "order": 2
@@ -69,16 +69,28 @@
           "question_text": "Чем stream processing отличается от batch processing?",
           "options": [
             {
-              "text": "Batch processing даёт меньшую latency, чем stream, потому что группировка событий в крупные блоки убирает накладные расходы на обработку каждого события.",
+              "text": "Batch и stream строятся на разных несовместимых движках, поэтому batch-логику приходится реализовывать отдельным batch-фреймворком, а не stream-процессором.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: batch имеет latency в минуты-часы (накопить → обработать), а stream — миллисекунды-секунды на событие.",
-                "source_of_confusion": "Batch действительно даёт очень высокий throughput на больших блоках, что путают с низкой задержкой.",
-                "if_it_were_true": "Тогда fraud detection строили бы на ночном batch, но мошенничество надо ловить в реальном времени потоком.",
-                "how_it_should_be": "Stream выигрывает по latency (ms-sec), batch — по простоте и переобрабатываемости bounded-датасета."
+                "what_actually": "Современные движки исполняют batch как bounded stream: `Flink` и `Spark Structured Streaming` гоняют оба режима.",
+                "source_of_confusion": "Раньше batch и stream строили на разных системах (`Hadoop` vs `Storm`), поэтому кажется, что они несовместимы.",
+                "if_it_were_true": "Тогда не существовало бы Kappa-архитектуры, где всё (включая reprocessing) делается одним stream-движком.",
+                "how_it_should_be": "Batch — частный случай streaming (bounded), и unified-движки покрывают оба режима одним кодом."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Stream и batch различаются в основном инструментом: stream-задачи пишут на `Flink`/`Scala`, а batch — на `Spark`/`Python`, и выбор определяется стеком команды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие в модели обработки (continuous flow vs bounded dataset) и latency, а не в языке; и `Flink`, и `Spark` поддерживают много языков.",
+                "source_of_confusion": "Исторически `Flink`-примеры часто на `Scala`, а pandas-batch — на `Python`, отсюда ложная корреляция.",
+                "if_it_were_true": "Тогда переписав batch-джобу на `Scala`, мы получили бы stream, но семантика обработки от языка не меняется.",
+                "how_it_should_be": "Граница проходит по семантике (поток vs ограниченный датасет, latency, state), а язык — деталь реализации."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Stream обрабатывает continuous flow событий с latency в ms-секунды и сложнее (state, время, порядок); batch обрабатывает bounded-датасет с latency в минуты-часы, но проще и легко переигрывается (rerun по датасету).",
@@ -90,29 +102,17 @@
                 "edge_cases": "Тренд «streaming as the unified model»: batch трактуют как частный случай streaming (bounded vs unbounded), и `Flink` исполняет оба одним движком.",
                 "related": "[[stream-processing-interview#Q1]] что такое stream processing; [[stream-processing-interview#Q3]] bounded vs unbounded; [[stream-processing-interview#Q4]] real-time vs near-real-time."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Stream и batch различаются в основном инструментом: stream-задачи пишут на `Flink`/`Scala`, а batch — на `Spark`/`Python`, и выбор определяется стеком команды.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Различие в модели обработки (continuous flow vs bounded dataset) и latency, а не в языке; и `Flink`, и `Spark` поддерживают много языков.",
-                "source_of_confusion": "Исторически `Flink`-примеры часто на `Scala`, а pandas-batch — на `Python`, отсюда ложная корреляция.",
-                "if_it_were_true": "Тогда переписав batch-джобу на `Scala`, мы получили бы stream, но семантика обработки от языка не меняется.",
-                "how_it_should_be": "Граница проходит по семантике (поток vs ограниченный датасет, latency, state), а язык — деталь реализации."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Batch и stream строятся на разных несовместимых движках, поэтому batch-логику приходится реализовывать отдельным batch-фреймворком, а не stream-процессором.",
+              "text": "Batch processing даёт меньшую latency, чем stream, потому что группировка событий в крупные блоки убирает накладные расходы на обработку каждого события.",
               "correct": false,
               "sections": {
-                "what_actually": "Современные движки исполняют batch как bounded stream: `Flink` и `Spark Structured Streaming` гоняют оба режима.",
-                "source_of_confusion": "Раньше batch и stream строили на разных системах (`Hadoop` vs `Storm`), поэтому кажется, что они несовместимы.",
-                "if_it_were_true": "Тогда не существовало бы Kappa-архитектуры, где всё (включая reprocessing) делается одним stream-движком.",
-                "how_it_should_be": "Batch — частный случай streaming (bounded), и unified-движки покрывают оба режима одним кодом."
+                "what_actually": "Наоборот: batch имеет latency в минуты-часы (накопить → обработать), а stream — миллисекунды-секунды на событие.",
+                "source_of_confusion": "Batch действительно даёт очень высокий throughput на больших блоках, что путают с низкой задержкой.",
+                "if_it_were_true": "Тогда fraud detection строили бы на ночном batch, но мошенничество надо ловить в реальном времени потоком.",
+                "how_it_should_be": "Stream выигрывает по latency (ms-sec), batch — по простоте и переобрабатываемости bounded-датасета."
               },
               "label": "D",
               "order": 3
@@ -129,18 +129,6 @@
           "question_text": "Чем bounded поток отличается от unbounded?",
           "options": [
             {
-              "text": "Bounded и unbounded потоки различаются только размером: bounded меньше 1 ГБ, unbounded больше 1 ГБ.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Различие в конечности, а не в объёме: bounded имеет известный конец, unbounded никогда не заканчивается независимо от размера.",
-                "source_of_confusion": "Маленькие потоки часто конечны, а большие — бесконечны, отсюда ложная привязка к размеру.",
-                "if_it_were_true": "Тогда большой файл-снапшот на терабайты был бы unbounded, но это классический bounded-датасет.",
-                "how_it_should_be": "Граница — по наличию конца (finite vs never ends), а не по числу байт."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Unbounded поток — это поток, который можно полностью загрузить в память и обработать одним проходом.",
               "correct": false,
               "sections": {
@@ -149,8 +137,8 @@
                 "if_it_were_true": "Тогда не понадобились бы watermarks и управление state по времени, но бесконечность как раз их и требует.",
                 "how_it_should_be": "Unbounded обрабатывают инкрементально с windows/state; целиком в память грузят bounded."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Bounded stream — конечный, известный заранее целиком (файл, snapshot таблицы), по сути batch. Unbounded stream — бесконечный (топик `Kafka`, данные сенсоров, клики) и никогда не «заканчивается».",
@@ -161,6 +149,18 @@
                 "when_to_apply": "Разделение применяют при дизайне pipeline: если источник bounded — можно мыслить как batch; если unbounded — нужны time semantics и стратегии для late events.",
                 "edge_cases": "Bounded можно встроить в stream-движок как вырожденный unbounded, у которого на конце ставится watermark +∞, закрывающий все окна разом.",
                 "related": "[[stream-processing-interview#Q1]] что такое stream processing; [[stream-processing-interview#Q6]] watermarks; [[stream-processing-interview#Q8]] что такое window."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Bounded и unbounded потоки различаются только размером: bounded меньше 1 ГБ, unbounded больше 1 ГБ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие в конечности, а не в объёме: bounded имеет известный конец, unbounded никогда не заканчивается независимо от размера.",
+                "source_of_confusion": "Маленькие потоки часто конечны, а большие — бесконечны, отсюда ложная привязка к размеру.",
+                "if_it_were_true": "Тогда большой файл-снапшот на терабайты был бы unbounded, но это классический bounded-датасет.",
+                "how_it_should_be": "Граница — по наличию конца (finite vs never ends), а не по числу байт."
               },
               "label": "C",
               "order": 2
@@ -201,18 +201,6 @@
               "order": 0
             },
             {
-              "text": "Real-time и near-real-time — это одно и то же, разница только в маркетинговом названии.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это разные классы по latency: real-time — 1-100 мс (fraud, ad bidding), near-real-time — секунды.",
-                "source_of_confusion": "Оба содержат «real-time», и границы размыты, поэтому их легко считают синонимами.",
-                "if_it_were_true": "Тогда для ad bidding с бюджетом < 100 мс годился бы near-real-time на секунды, но это сорвало бы аукцион.",
-                "how_it_should_be": "Это соседние, но разные уровни SLA по задержке; путать их — значит выбрать неверный движок."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Большинство production «streaming»-приложений требуют hard real-time с задержкой меньше 1 мс.",
               "correct": false,
               "sections": {
@@ -220,6 +208,18 @@
                 "source_of_confusion": "Маркетинг «реального времени» создаёт впечатление, что всем нужны микросекунды.",
                 "if_it_were_true": "Тогда clickstream-аналитика и большинство ETL не могли бы работать на near-real-time, но они прекрасно работают.",
                 "how_it_should_be": "Hard real-time (< 1 мс) — узкая ниша; типичный streaming живёт в near-real-time на секундах."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Real-time и near-real-time — это одно и то же, разница только в маркетинговом названии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные классы по latency: real-time — 1-100 мс (fraud, ad bidding), near-real-time — секунды.",
+                "source_of_confusion": "Оба содержат «real-time», и границы размыты, поэтому их легко считают синонимами.",
+                "if_it_were_true": "Тогда для ad bidding с бюджетом < 100 мс годился бы near-real-time на секунды, но это сорвало бы аукцион.",
+                "how_it_should_be": "Это соседние, но разные уровни SLA по задержке; путать их — значит выбрать неверный движок."
               },
               "label": "C",
               "order": 2
@@ -262,18 +262,6 @@
               "order": 0
             },
             {
-              "text": "`Event time` — это системное время сервера в тот момент, когда событие обрабатывается движком.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Системное время обработки — это как раз processing time; event time берётся из timestamp внутри самого события.",
-                "source_of_confusion": "Если события приходят почти мгновенно, два времени близки, и их легко спутать.",
-                "if_it_were_true": "Тогда переигрывание истории давало бы другой результат каждый раз, но event time гарантирует повторяемость.",
-                "how_it_should_be": "Event time = когда событие произошло (из данных); время сервера при обработке — это processing time."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`Processing time` — более точная семантика, чем event time, потому что берётся из надёжных системных часов сервера.",
               "correct": false,
               "sections": {
@@ -281,6 +269,18 @@
                 "source_of_confusion": "«Системные часы» звучат надёжно, поэтому кажется, что они дают более верный ответ.",
                 "if_it_were_true": "Тогда задержка в `Kafka` сдвигала бы все агрегаты, и отчёт «кликов в 14:00» был бы неверным.",
                 "how_it_should_be": "Корректность даёт event time (момент события), а processing time лишь проще в реализации."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Event time` — это системное время сервера в тот момент, когда событие обрабатывается движком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Системное время обработки — это как раз processing time; event time берётся из timestamp внутри самого события.",
+                "source_of_confusion": "Если события приходят почти мгновенно, два времени близки, и их легко спутать.",
+                "if_it_were_true": "Тогда переигрывание истории давало бы другой результат каждый раз, но event time гарантирует повторяемость.",
+                "how_it_should_be": "Event time = когда событие произошло (из данных); время сервера при обработке — это processing time."
               },
               "label": "C",
               "order": 2
@@ -309,16 +309,28 @@
           "question_text": "Что такое watermark и зачем он нужен?",
           "options": [
             {
-              "text": "`Watermark` — это контрольная точка (checkpoint) state, по которой система восстанавливается после сбоя.",
+              "text": "`Watermark` — это водяной знак на данных для защиты от несанкционированного копирования датасета.",
               "correct": false,
               "sections": {
-                "what_actually": "Снапшот state для восстановления — это checkpoint; watermark — это маркер прогресса event time в потоке.",
-                "source_of_confusion": "Оба периодически «впрыскиваются» в поток как служебные сообщения, поэтому их путают.",
-                "if_it_were_true": "Тогда после сбоя система откатывалась бы к watermark, но восстановление идёт по checkpoint, а не по watermark.",
-                "how_it_should_be": "Watermark отвечает за продвижение времени и закрытие окон; за fault tolerance отвечает checkpoint (см. Q13)."
+                "what_actually": "В streaming watermark — это маркер прогресса event time, никак не связанный с защитой авторских прав.",
+                "source_of_confusion": "Термин «водяной знак» из мира изображений создаёт ложную ассоциацию.",
+                "if_it_were_true": "Тогда watermark не влиял бы на закрытие окон, но именно он триггерит window closure и детект late events.",
+                "how_it_should_be": "Watermark — это про продвижение времени в потоке, а не про маркировку контента."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "`Watermark` гарантирует, что после него ни одно опоздавшее (late) событие физически не сможет прийти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Watermark — это эвристическая оценка прогресса, а не гарантия: события позже watermark всё равно приходят и считаются late.",
+                "source_of_confusion": "Формулировка «все события до t обработаны» звучит как абсолютная гарантия отсутствия опоздавших.",
+                "if_it_were_true": "Тогда не существовало бы стратегий обработки late events и allowed lateness, но они существуют именно потому, что опоздавшие бывают.",
+                "how_it_should_be": "Watermark лишь оценивает, что разумно больше не ждать; реальные late events обрабатывают отдельно (см. Q7)."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`Watermark` — служебное мета-сообщение в потоке, заявляющее: «до этого event_time все события уже обработаны». Оно говорит движку, что событий с временем ≤ watermark больше можно не ждать.",
@@ -330,29 +342,17 @@
                 "edge_cases": "Стратегий две: periodic (watermark раз в N сек на основе увиденных событий) и punctuated (на каждом событии — для сильно out-of-order потоков); слишком агрессивный watermark теряет данные, слишком консервативный — задерживает результат.",
                 "related": "[[stream-processing-interview#Q5]] event time; [[stream-processing-interview#Q7]] late events; [[stream-processing-interview#Q8]] window."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Watermark` — это водяной знак на данных для защиты от несанкционированного копирования датасета.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В streaming watermark — это маркер прогресса event time, никак не связанный с защитой авторских прав.",
-                "source_of_confusion": "Термин «водяной знак» из мира изображений создаёт ложную ассоциацию.",
-                "if_it_were_true": "Тогда watermark не влиял бы на закрытие окон, но именно он триггерит window closure и детект late events.",
-                "how_it_should_be": "Watermark — это про продвижение времени в потоке, а не про маркировку контента."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Watermark` гарантирует, что после него ни одно опоздавшее (late) событие физически не сможет прийти.",
+              "text": "`Watermark` — это контрольная точка (checkpoint) state, по которой система восстанавливается после сбоя.",
               "correct": false,
               "sections": {
-                "what_actually": "Watermark — это эвристическая оценка прогресса, а не гарантия: события позже watermark всё равно приходят и считаются late.",
-                "source_of_confusion": "Формулировка «все события до t обработаны» звучит как абсолютная гарантия отсутствия опоздавших.",
-                "if_it_were_true": "Тогда не существовало бы стратегий обработки late events и allowed lateness, но они существуют именно потому, что опоздавшие бывают.",
-                "how_it_should_be": "Watermark лишь оценивает, что разумно больше не ждать; реальные late events обрабатывают отдельно (см. Q7)."
+                "what_actually": "Снапшот state для восстановления — это checkpoint; watermark — это маркер прогресса event time в потоке.",
+                "source_of_confusion": "Оба периодически «впрыскиваются» в поток как служебные сообщения, поэтому их путают.",
+                "if_it_were_true": "Тогда после сбоя система откатывалась бы к watermark, но восстановление идёт по checkpoint, а не по watermark.",
+                "how_it_should_be": "Watermark отвечает за продвижение времени и закрытие окон; за fault tolerance отвечает checkpoint (см. Q13)."
               },
               "label": "D",
               "order": 3
@@ -381,18 +381,6 @@
               "order": 0
             },
             {
-              "text": "Опоздавшие события движок по умолчанию отбрасывает, и чтобы их не терять, обычно расширяют интервал watermark, после чего они перестают считаться late.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Drop — лишь дефолт; есть ещё dead letter queue, обновление агрегата через allowed lateness и side output.",
-                "source_of_confusion": "Drop стоит по умолчанию во многих движках, поэтому кажется, что альтернатив нет.",
-                "if_it_were_true": "Тогда нельзя было бы пересчитать оконный результат при опоздавшем событии, но allowed lateness ровно это и делает.",
-                "how_it_should_be": "Стратегий несколько (drop / DLQ / update / side output); выбор зависит от ценности опоздавших данных."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Late event — событие, чей timestamp раньше текущего watermark (опоздало). Основные стратегии: drop (дефолт — игнорировать), отправка в dead letter queue, обновление существующей агрегации (если у окна есть allowed lateness) и side output в отдельный stream для отдельной обработки.",
               "correct": true,
               "sections": {
@@ -401,6 +389,18 @@
                 "when_to_apply": "Стратегию выбирают по цене данных: для метрик потерю терпят (drop), а для биллинга и аналитики опоздавшие либо обновляют агрегат, либо собираются в side output/DLQ для ручной доработки.",
                 "edge_cases": "Если выбран drop и watermark слишком агрессивен, тихо теряется значимая доля данных — поэтому долю late events стоит мониторить, а не считать пренебрежимой.",
                 "related": "[[stream-processing-interview#Q6]] watermarks; [[stream-processing-interview#Q10]] allowed lateness; [[stream-processing-interview#Q28]] pitfall слишком агрессивного watermark."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Опоздавшие события движок по умолчанию отбрасывает, и чтобы их не терять, обычно расширяют интервал watermark, после чего они перестают считаться late.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Drop — лишь дефолт; есть ещё dead letter queue, обновление агрегата через allowed lateness и side output.",
+                "source_of_confusion": "Drop стоит по умолчанию во многих движках, поэтому кажется, что альтернатив нет.",
+                "if_it_were_true": "Тогда нельзя было бы пересчитать оконный результат при опоздавшем событии, но allowed lateness ровно это и делает.",
+                "how_it_should_be": "Стратегий несколько (drop / DLQ / update / side output); выбор зависит от ценности опоздавших данных."
               },
               "label": "C",
               "order": 2
@@ -429,28 +429,17 @@
           "question_text": "Что такое window в stream processing?",
           "options": [
             {
-              "text": "`Window` — это размер сетевого буфера между операторами, измеряемый в килобайтах.",
-              "correct": false,
+              "text": "`Window` — конечный кусок (finite chunk) событий из бесконечного потока, к которому применяется агрегация. Бесконечный поток нарезается на окна W1, W2, W3, и внутри каждого считаются метрики.",
+              "correct": true,
               "sections": {
-                "what_actually": "Сетевой буфер между операторами — это про backpressure и пропускную способность; window — это конечный набор событий для агрегации.",
-                "source_of_confusion": "Термин «окно» используется и в TCP (sliding window буфера), отсюда путаница с буферами.",
-                "if_it_were_true": "Тогда window не задавался бы во времени (минуты) или числе событий, но именно так его и определяют.",
-                "how_it_should_be": "Window — это finite chunk событий из бесконечного потока для агрегации, а не размер буфера."
+                "explanation": "Поток e1 e2 e3 e4 e5 e6 e7 ... нарезается как [e1 e2 e3] [e4 e5 e6] [e7 ...]; внутри окна считают, например, число events/min, errors/hour, avg/sum или ищут паттерны.",
+                "example": "Из бесконечного потока кликов берут tumbling-окно в 1 минуту и считают clicks/min: окно [10:00–10:01] даёт 540 кликов, следующее [10:01–10:02] — 612, и так непрерывно.",
+                "when_to_apply": "Окна применяют, когда по бесконечному потоку нужна агрегация за интервал: подсчёт за минуту, скользящее среднее, обнаружение паттернов поведения за период.",
+                "edge_cases": "Граница окна определяется не только длиной, но и временем: при event time окно может «ждать» опоздавшие события через allowed lateness, тогда как при processing time оно закрывается строго по настенным часам.",
+                "related": "[[stream-processing-interview#Q9]] типы окон; [[stream-processing-interview#Q10]] allowed lateness; [[stream-processing-interview#Q6]] watermarks закрывают окна."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`Window` — это интервал, в течение которого приложение недоступно из-за рестарта (maintenance window).",
-              "correct": false,
-              "sections": {
-                "what_actually": "Maintenance window — операционное понятие про простой; в streaming window — это окно агрегации над потоком.",
-                "source_of_confusion": "Слово «window» в эксплуатации означает окно обслуживания, что сбивает с толку.",
-                "if_it_were_true": "Тогда window не использовался бы для подсчёта events/min и агрегаций, но это его прямое назначение.",
-                "how_it_should_be": "Window в streaming — это группа событий для aggregation, а не интервал недоступности сервиса."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`Window` — это графический интерфейс мониторинга потоковой джобы, например `Flink Web UI`.",
@@ -461,18 +450,29 @@
                 "if_it_were_true": "Тогда window нельзя было бы задать как tumbling/sliding/session в коде, но именно так его и конфигурируют.",
                 "how_it_should_be": "Window — это вычислительная конструкция (finite chunk потока), а не экран мониторинга."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Window` — это размер сетевого буфера между операторами, измеряемый в килобайтах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сетевой буфер между операторами — это про backpressure и пропускную способность; window — это конечный набор событий для агрегации.",
+                "source_of_confusion": "Термин «окно» используется и в TCP (sliding window буфера), отсюда путаница с буферами.",
+                "if_it_were_true": "Тогда window не задавался бы во времени (минуты) или числе событий, но именно так его и определяют.",
+                "how_it_should_be": "Window — это finite chunk событий из бесконечного потока для агрегации, а не размер буфера."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Window` — конечный кусок (finite chunk) событий из бесконечного потока, к которому применяется агрегация. Бесконечный поток нарезается на окна W1, W2, W3, и внутри каждого считаются метрики.",
-              "correct": true,
+              "text": "`Window` — это интервал, в течение которого приложение недоступно из-за рестарта (maintenance window).",
+              "correct": false,
               "sections": {
-                "explanation": "Поток e1 e2 e3 e4 e5 e6 e7 ... нарезается как [e1 e2 e3] [e4 e5 e6] [e7 ...]; внутри окна считают, например, число events/min, errors/hour, avg/sum или ищут паттерны.",
-                "example": "Из бесконечного потока кликов берут tumbling-окно в 1 минуту и считают clicks/min: окно [10:00–10:01] даёт 540 кликов, следующее [10:01–10:02] — 612, и так непрерывно.",
-                "when_to_apply": "Окна применяют, когда по бесконечному потоку нужна агрегация за интервал: подсчёт за минуту, скользящее среднее, обнаружение паттернов поведения за период.",
-                "edge_cases": "Граница окна определяется не только длиной, но и временем: при event time окно может «ждать» опоздавшие события через allowed lateness, тогда как при processing time оно закрывается строго по настенным часам.",
-                "related": "[[stream-processing-interview#Q9]] типы окон; [[stream-processing-interview#Q10]] allowed lateness; [[stream-processing-interview#Q6]] watermarks закрывают окна."
+                "what_actually": "Maintenance window — операционное понятие про простой; в streaming window — это окно агрегации над потоком.",
+                "source_of_confusion": "Слово «window» в эксплуатации означает окно обслуживания, что сбивает с толку.",
+                "if_it_were_true": "Тогда window не использовался бы для подсчёта events/min и агрегаций, но это его прямое назначение.",
+                "how_it_should_be": "Window в streaming — это группа событий для aggregation, а не интервал недоступности сервиса."
               },
               "label": "D",
               "order": 3
@@ -489,29 +489,16 @@
           "question_text": "Чем отличаются Tumbling, Sliding, Session и Global окна?",
           "options": [
             {
-              "text": "`Tumbling` — фиксированные неперекрывающиеся окна (0-5, 5-10, 10-15). `Sliding` — фиксированные перекрывающиеся со сдвигом (0-5, 1-6, 2-7). `Session` — gap-based, динамической длины (закрывается после паузы без событий). `Global` — все события в одном окне с кастомным триггером.",
-              "correct": true,
+              "text": "Global-окно автоматически закрывается каждые N секунд по таймеру, как tumbling.",
+              "correct": false,
               "sections": {
-                "explanation": "Для метрик «событий за 5 минут» берут tumbling; «среднее за 5 минут, обновляемое каждую минуту» — sliding; «активность пользователя до паузы 30 минут» — session; «всё до явного сигнала» — global.",
-                "example": "Tumbling 5 мин — почасовой отчёт по слотам; sliding 5 мин с шагом 1 мин — скользящее среднее CPU; session с gap 30 мин — веб-сессия пользователя; global — счётчик до явного сигнала «закрыть».",
-                "when_to_apply": "Tumbling выбирают для непересекающихся отчётов по интервалам, sliding — для скользящих метрик, session — для пользовательских сессий с переменной длиной, global — когда границу окна задаёт внешнее событие.",
-                "edge_cases": "Sliding с малым шагом порождает много перекрывающихся окон на каждое событие (рост state и нагрузки), а session при непрерывном потоке без пауз может «никогда не закрыться» — это надо учитывать.",
-                "related": "[[stream-processing-interview#Q8]] что такое window; [[stream-processing-interview#Q10]] allowed lateness; [[stream-processing-interview#Q11]] stateful processing для session."
+                "what_actually": "Global-окно держит все события в одном окне и не закрывается само — для эмиссии результата нужен кастомный trigger.",
+                "source_of_confusion": "Слово «окно» подразумевает закрытие по времени, отсюда ожидание автозакрытия и у global.",
+                "if_it_were_true": "Тогда global ничем не отличался бы от tumbling, но смысл global — собирать всё до явного триггера.",
+                "how_it_should_be": "Global-окно не закрывается по таймеру; результат эмитится только заданным вручную trigger."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Tumbling-окна перекрываются друг с другом, а sliding-окна — нет, они идут встык.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: tumbling не перекрываются (идут встык), а sliding перекрываются со сдвигом меньше своей длины.",
-                "source_of_confusion": "Оба окна фиксированной длины, и легко перепутать, какое из них даёт перекрытие.",
-                "if_it_were_true": "Тогда sliding не давал бы скользящих метрик с обновлением чаще, чем раз в длину окна, но именно это его и отличает.",
-                "how_it_should_be": "Tumbling — неперекрывающиеся, sliding — перекрывающиеся со сдвигом; это их ключевое различие."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Session-окно имеет фиксированную заранее заданную длину, как и tumbling.",
@@ -522,17 +509,30 @@
                 "if_it_were_true": "Тогда нельзя было бы группировать пользовательскую активность переменной длительности до паузы, а это главная задача session.",
                 "how_it_should_be": "Длина session определяется паузой между событиями (gap), а не фиксированным интервалом времени."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Tumbling` — фиксированные неперекрывающиеся окна (0-5, 5-10, 10-15). `Sliding` — фиксированные перекрывающиеся со сдвигом (0-5, 1-6, 2-7). `Session` — gap-based, динамической длины (закрывается после паузы без событий). `Global` — все события в одном окне с кастомным триггером.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для метрик «событий за 5 минут» берут tumbling; «среднее за 5 минут, обновляемое каждую минуту» — sliding; «активность пользователя до паузы 30 минут» — session; «всё до явного сигнала» — global.",
+                "example": "Tumbling 5 мин — почасовой отчёт по слотам; sliding 5 мин с шагом 1 мин — скользящее среднее CPU; session с gap 30 мин — веб-сессия пользователя; global — счётчик до явного сигнала «закрыть».",
+                "when_to_apply": "Tumbling выбирают для непересекающихся отчётов по интервалам, sliding — для скользящих метрик, session — для пользовательских сессий с переменной длиной, global — когда границу окна задаёт внешнее событие.",
+                "edge_cases": "Sliding с малым шагом порождает много перекрывающихся окон на каждое событие (рост state и нагрузки), а session при непрерывном потоке без пауз может «никогда не закрыться» — это надо учитывать.",
+                "related": "[[stream-processing-interview#Q8]] что такое window; [[stream-processing-interview#Q10]] allowed lateness; [[stream-processing-interview#Q11]] stateful processing для session."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Global-окно автоматически закрывается каждые N секунд по таймеру, как tumbling.",
+              "text": "Tumbling-окна перекрываются друг с другом, а sliding-окна — нет, они идут встык.",
               "correct": false,
               "sections": {
-                "what_actually": "Global-окно держит все события в одном окне и не закрывается само — для эмиссии результата нужен кастомный trigger.",
-                "source_of_confusion": "Слово «окно» подразумевает закрытие по времени, отсюда ожидание автозакрытия и у global.",
-                "if_it_were_true": "Тогда global ничем не отличался бы от tumbling, но смысл global — собирать всё до явного триггера.",
-                "how_it_should_be": "Global-окно не закрывается по таймеру; результат эмитится только заданным вручную trigger."
+                "what_actually": "Всё наоборот: tumbling не перекрываются (идут встык), а sliding перекрываются со сдвигом меньше своей длины.",
+                "source_of_confusion": "Оба окна фиксированной длины, и легко перепутать, какое из них даёт перекрытие.",
+                "if_it_were_true": "Тогда sliding не давал бы скользящих метрик с обновлением чаще, чем раз в длину окна, но именно это его и отличает.",
+                "how_it_should_be": "Tumbling — неперекрывающиеся, sliding — перекрывающиеся со сдвигом; это их ключевое различие."
               },
               "label": "D",
               "order": 3
@@ -549,16 +549,28 @@
           "question_text": "Что такое allowed lateness и каков его trade-off?",
           "options": [
             {
-              "text": "`Allowed lateness` определяет, на сколько раньше watermark событие может прийти, чтобы быть принятым.",
+              "text": "`Allowed lateness` — механизм экономии памяти: окна закрываются раньше и раньше освобождают удерживаемый state.",
               "correct": false,
               "sections": {
-                "what_actually": "Allowed lateness задаёт, как долго после закрытия окна оно ещё принимает опоздавшие события, а не «насколько раньше».",
-                "source_of_confusion": "И watermark, и allowed lateness работают со временем относительно окна, поэтому их легко перепутать.",
-                "if_it_were_true": "Тогда allowed lateness не увеличивал бы потребление памяти, но он именно держит state окна дольше.",
-                "how_it_should_be": "Allowed lateness продлевает жизнь окна после закрытия для приёма late events, а не ограничивает ранние."
+                "what_actually": "Наоборот: allowed lateness увеличивает потребление памяти, удерживая state окна дольше для приёма late events.",
+                "source_of_confusion": "Слово «allowed» звучит как ограничение/оптимизация, отсюда ложный вывод об экономии памяти.",
+                "if_it_were_true": "Тогда увеличение lateness снижало бы нагрузку на state, но в реальности оно её повышает.",
+                "how_it_should_be": "Больше allowed lateness = больше удерживаемого state и памяти, это явный trade-off."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "`Allowed lateness` не меняет число эмиссий: downstream получает результат окна один раз, а опоздавшие события лишь пишутся в отдельный лог.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Allowed lateness как раз приводит к повторной эмиссии (re-emit) обновлённого результата окна при late events.",
+                "source_of_confusion": "Привычка к «одно окно — один результат» создаёт ожидание единственной эмиссии.",
+                "if_it_were_true": "Тогда не было бы подвоха с обработкой обновлений на стороне downstream, но он есть именно из-за re-emit.",
+                "how_it_should_be": "Окно с allowed lateness может переэмитить результат несколько раз; downstream обязан это поддерживать."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`Allowed lateness` оставляет окно «открытым» ещё на заданное время после его закрытия (например, `.allowedLateness(Time.minutes(2))`), позволяя обновлять результат при поступлении опоздавших событий.",
@@ -570,29 +582,17 @@
                 "edge_cases": "Trade-off: больше lateness — больше удерживаемого state (память), меньше lateness — больше потерянных событий; и подвох в том, что downstream обязан корректно обрабатывать переэмит (re-emit) результата.",
                 "related": "[[stream-processing-interview#Q7]] стратегии late events; [[stream-processing-interview#Q8]] window; [[stream-processing-interview#Q12]] где хранится state."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Allowed lateness` — механизм экономии памяти: окна закрываются раньше и раньше освобождают удерживаемый state.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: allowed lateness увеличивает потребление памяти, удерживая state окна дольше для приёма late events.",
-                "source_of_confusion": "Слово «allowed» звучит как ограничение/оптимизация, отсюда ложный вывод об экономии памяти.",
-                "if_it_were_true": "Тогда увеличение lateness снижало бы нагрузку на state, но в реальности оно её повышает.",
-                "how_it_should_be": "Больше allowed lateness = больше удерживаемого state и памяти, это явный trade-off."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Allowed lateness` не меняет число эмиссий: downstream получает результат окна один раз, а опоздавшие события лишь пишутся в отдельный лог.",
+              "text": "`Allowed lateness` определяет, на сколько раньше watermark событие может прийти, чтобы быть принятым.",
               "correct": false,
               "sections": {
-                "what_actually": "Allowed lateness как раз приводит к повторной эмиссии (re-emit) обновлённого результата окна при late events.",
-                "source_of_confusion": "Привычка к «одно окно — один результат» создаёт ожидание единственной эмиссии.",
-                "if_it_were_true": "Тогда не было бы подвоха с обработкой обновлений на стороне downstream, но он есть именно из-за re-emit.",
-                "how_it_should_be": "Окно с allowed lateness может переэмитить результат несколько раз; downstream обязан это поддерживать."
+                "what_actually": "Allowed lateness задаёт, как долго после закрытия окна оно ещё принимает опоздавшие события, а не «насколько раньше».",
+                "source_of_confusion": "И watermark, и allowed lateness работают со временем относительно окна, поэтому их легко перепутать.",
+                "if_it_were_true": "Тогда allowed lateness не увеличивал бы потребление памяти, но он именно держит state окна дольше.",
+                "how_it_should_be": "Allowed lateness продлевает жизнь окна после закрытия для приёма late events, а не ограничивает ранние."
               },
               "label": "D",
               "order": 3
@@ -609,18 +609,6 @@
           "question_text": "Что такое stateful processing и зачем оно нужно?",
           "options": [
             {
-              "text": "Stateful processing означает, что движок хранит исходный код джобы между перезапусками.",
-              "correct": false,
-              "sections": {
-                "what_actually": "State — это данные о прошлых событиях (счётчики, агрегаты), которые оператор помнит при обработке, а не исходный код джобы.",
-                "source_of_confusion": "Слово «state» широко используется, и его путают с состоянием деплоя/кода.",
-                "if_it_were_true": "Тогда stateless map/filter тоже были бы stateful, ведь их код тоже хранится, но они состояния между событиями не держат.",
-                "how_it_should_be": "Stateful — это память о данных между событиями (counters, aggregations), а не хранение кода."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Stateful processing — это когда каждое событие обрабатывается полностью независимо от остальных.",
               "correct": false,
               "sections": {
@@ -629,8 +617,8 @@
                 "if_it_were_true": "Тогда были бы невозможны aggregations, joins, sessionization и CEP, но именно их даёт state.",
                 "how_it_should_be": "Stateful — оператор помнит prior events; независимая обработка каждого события — это stateless."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`Stateful processing` — оператор помнит данные между событиями (state): счётчик на пользователя, last seen value, оконные агрегаты, ML-модель, информация о сессии. Без state доступны только stateless-операции (map/filter), со state — aggregations, joins, sessionization, CEP.",
@@ -641,6 +629,18 @@
                 "when_to_apply": "Stateful нужен везде, где результат зависит от истории: подсчёты по ключу, обнаружение паттернов (fraud), джойны потоков, поддержание сессий и онлайн-инференс ML.",
                 "edge_cases": "State, привязанный к ключу, требует партиционирования по этому ключу (keyBy); без cleanup (TTL) state на бесконечном потоке растёт навсегда и приводит к memory leak.",
                 "related": "[[stream-processing-interview#Q12]] где хранится state; [[stream-processing-interview#Q13]] checkpointing; [[stream-processing-interview#Q19]] parallelism по ключу."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Stateful processing означает, что движок хранит исходный код джобы между перезапусками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "State — это данные о прошлых событиях (счётчики, агрегаты), которые оператор помнит при обработке, а не исходный код джобы.",
+                "source_of_confusion": "Слово «state» широко используется, и его путают с состоянием деплоя/кода.",
+                "if_it_were_true": "Тогда stateless map/filter тоже были бы stateful, ведь их код тоже хранится, но они состояния между событиями не держат.",
+                "how_it_should_be": "Stateful — это память о данных между событиями (counters, aggregations), а не хранение кода."
               },
               "label": "C",
               "order": 2
@@ -669,30 +669,6 @@
           "question_text": "Где хранится state в stream-движках?",
           "options": [
             {
-              "text": "State держат в JVM heap как в стандартном и самом быстром backend, а `RocksDB` и внешние хранилища задействуют под персистентность снапшотов, но не под горячий рабочий state.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Кроме JVM heap есть `RocksDB` на диске (для большого state) и внешние хранилища (`Redis`, `Cassandra`).",
-                "source_of_confusion": "Heap — самый быстрый и дефолтный для маленького state, отсюда вывод о единственности.",
-                "if_it_were_true": "Тогда нельзя было бы держать терабайтный state, но `RocksDB on disk` именно для этого и нужен.",
-                "how_it_should_be": "Backend'ов несколько: heap, `RocksDB` на диске, внешние store; выбор зависит от размера state."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`RocksDB`-backend быстрее JVM heap, потому что данные лежат на быстром SSD.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Heap самый быстрый (объекты в памяти без сериализации); `RocksDB` медленнее из-за ser/deser, даже на SSD.",
-                "source_of_confusion": "SSD ассоциируется со скоростью, поэтому disk-backend ошибочно считают быстрее памяти.",
-                "if_it_were_true": "Тогда heap не имел бы смысла для маленького state, но его выбирают именно ради скорости.",
-                "how_it_should_be": "Порядок по скорости: heap > `RocksDB` on disk > внешний store; `RocksDB` берут ради объёма, не скорости."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Внешний store (`Redis`, `Cassandra`) — самый быстрый backend и подходит для самого маленького state.",
               "correct": false,
               "sections": {
@@ -701,8 +677,8 @@
                 "if_it_were_true": "Тогда heap не использовали бы для горячего маленького state, но его берут именно за скорость.",
                 "how_it_should_be": "Внешний store берут для очень большого/shared state ценой latency; маленький держат в heap."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Backend'ы по trade-off скорость/размер: JVM heap — самый быстрый, но до ~1 ГБ на оператор; `RocksDB on disk` — медленнее (ser/deser), но терабайты; внешний store (`Redis`, `Cassandra`) — самый медленный, зато любой объём.",
@@ -713,6 +689,30 @@
                 "when_to_apply": "Выбирают по размеру state: маленький — heap, большой — `RocksDB`, очень большой или общий между джобами — внешний store.",
                 "edge_cases": "`RocksDB` хранит state вне кучи, поэтому не давит на GC, но цена — сериализация на каждый доступ; при росте state джоба становится IO-bound, и это надо мониторить.",
                 "related": "[[stream-processing-interview#Q11]] stateful processing; [[stream-processing-interview#Q13]] checkpointing state; [[stream-processing-interview#Q28]] pitfall роста state без cleanup."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "State держат в JVM heap как в стандартном и самом быстром backend, а `RocksDB` и внешние хранилища задействуют под персистентность снапшотов, но не под горячий рабочий state.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кроме JVM heap есть `RocksDB` на диске (для большого state) и внешние хранилища (`Redis`, `Cassandra`).",
+                "source_of_confusion": "Heap — самый быстрый и дефолтный для маленького state, отсюда вывод о единственности.",
+                "if_it_were_true": "Тогда нельзя было бы держать терабайтный state, но `RocksDB on disk` именно для этого и нужен.",
+                "how_it_should_be": "Backend'ов несколько: heap, `RocksDB` на диске, внешние store; выбор зависит от размера state."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`RocksDB`-backend быстрее JVM heap, потому что данные лежат на быстром SSD.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Heap самый быстрый (объекты в памяти без сериализации); `RocksDB` медленнее из-за ser/deser, даже на SSD.",
+                "source_of_confusion": "SSD ассоциируется со скоростью, поэтому disk-backend ошибочно считают быстрее памяти.",
+                "if_it_were_true": "Тогда heap не имел бы смысла для маленького state, но его выбирают именно ради скорости.",
+                "how_it_should_be": "Порядок по скорости: heap > `RocksDB` on disk > внешний store; `RocksDB` берут ради объёма, не скорости."
               },
               "label": "D",
               "order": 3
@@ -729,14 +729,13 @@
           "question_text": "Что такое checkpointing и как он работает?",
           "options": [
             {
-              "text": "`Checkpoint` — периодический снапшот всего state системы (`env.enableCheckpointing(60000)` — каждые 60 сек). Нужен для fault tolerance (после сбоя восстановиться с последнего checkpoint) и для exactly-once semantics при правильном sink.",
-              "correct": true,
+              "text": "Алгоритм checkpointing полностью останавливает поток (stop-the-world) на время снятия снапшота.",
+              "correct": false,
               "sections": {
-                "explanation": "Алгоритм Chandy-Lamport: в input впрыскивается barrier, он идёт через операторы; получив все barriers, оператор делает snapshot своего state; когда все операторы сняли snapshot — checkpoint завершён. При сбое — restart с последнего checkpoint.",
-                "example": "Джоба `enableCheckpointing(60000)` каждые 60 сек кладёт снапшот state в `s3://chk/`; при падении TaskManager рестартует с последнего снапшота, не теряя счётчики и offset'ы `Kafka`.",
-                "when_to_apply": "Включают всегда, когда нужна устойчивость к сбоям и/или exactly-once; хранят снапшоты в durable distributed-сторадже (`HDFS`, `S3`), а локальный диск — только для dev.",
-                "edge_cases": "Слишком частые checkpoints дают overhead и backpressure, слишком редкие — большой объём переобработки после сбоя; barrier-based снапшот при этом не останавливает поток (async).",
-                "related": "[[stream-processing-interview#Q12]] где хранится state; [[stream-processing-interview#Q15]] exactly-once через checkpointing; [[stream-processing-interview#Q11]] stateful processing."
+                "what_actually": "Barrier-based алгоритм (Chandy-Lamport) делает снапшот асинхронно, не останавливая обработку потока целиком.",
+                "source_of_confusion": "Слово «snapshot» ассоциируется с заморозкой системы, как в БД, отсюда ожидание stop-the-world.",
+                "if_it_were_true": "Тогда checkpointing был бы неприемлем для low-latency streaming, но его используют повсеместно именно из-за async.",
+                "how_it_should_be": "Снапшот снимается на лету через barriers без полной остановки потока."
               },
               "label": "A",
               "order": 0
@@ -766,13 +765,14 @@
               "order": 2
             },
             {
-              "text": "Алгоритм checkpointing полностью останавливает поток (stop-the-world) на время снятия снапшота.",
-              "correct": false,
+              "text": "`Checkpoint` — периодический снапшот всего state системы (`env.enableCheckpointing(60000)` — каждые 60 сек). Нужен для fault tolerance (после сбоя восстановиться с последнего checkpoint) и для exactly-once semantics при правильном sink.",
+              "correct": true,
               "sections": {
-                "what_actually": "Barrier-based алгоритм (Chandy-Lamport) делает снапшот асинхронно, не останавливая обработку потока целиком.",
-                "source_of_confusion": "Слово «snapshot» ассоциируется с заморозкой системы, как в БД, отсюда ожидание stop-the-world.",
-                "if_it_were_true": "Тогда checkpointing был бы неприемлем для low-latency streaming, но его используют повсеместно именно из-за async.",
-                "how_it_should_be": "Снапшот снимается на лету через barriers без полной остановки потока."
+                "explanation": "Алгоритм Chandy-Lamport: в input впрыскивается barrier, он идёт через операторы; получив все barriers, оператор делает snapshot своего state; когда все операторы сняли snapshot — checkpoint завершён. При сбое — restart с последнего checkpoint.",
+                "example": "Джоба `enableCheckpointing(60000)` каждые 60 сек кладёт снапшот state в `s3://chk/`; при падении TaskManager рестартует с последнего снапшота, не теряя счётчики и offset'ы `Kafka`.",
+                "when_to_apply": "Включают всегда, когда нужна устойчивость к сбоям и/или exactly-once; хранят снапшоты в durable distributed-сторадже (`HDFS`, `S3`), а локальный диск — только для dev.",
+                "edge_cases": "Слишком частые checkpoints дают overhead и backpressure, слишком редкие — большой объём переобработки после сбоя; barrier-based снапшот при этом не останавливает поток (async).",
+                "related": "[[stream-processing-interview#Q12]] где хранится state; [[stream-processing-interview#Q15]] exactly-once через checkpointing; [[stream-processing-interview#Q11]] stateful processing."
               },
               "label": "D",
               "order": 3
@@ -789,18 +789,6 @@
           "question_text": "Чем различаются at-most-once, at-least-once и exactly-once?",
           "options": [
             {
-              "text": "At-least-once гарантирует, что каждое событие обработано ровно один раз, без дублей.",
-              "correct": false,
-              "sections": {
-                "what_actually": "«Ровно один раз» — это exactly-once; at-least-once допускает дубли (≥1 раз), требуя идемпотентной обработки.",
-                "source_of_confusion": "Названия «at-least-once» и «exactly-once» близки, и их семантику легко перепутать.",
-                "if_it_were_true": "Тогда не нужна была бы идемпотентность поверх at-least-once, но именно дубли её и требуют.",
-                "how_it_should_be": "At-least-once = ≥1 раз (возможны дубли); ровно один раз гарантирует exactly-once."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`At-most-once` — событие обработано 0 или 1 раз (возможна потеря). `At-least-once` — ≥1 раз (возможны дубли). `Exactly-once` — ровно 1 раз. Без гарантий события могут и теряться, и дублироваться при сбоях.",
               "correct": true,
               "sections": {
@@ -810,8 +798,8 @@
                 "edge_cases": "Trade-off: at-least-once проще и быстрее, но требует идемпотентности; exactly-once строже, но дороже (транзакции, ~5-15% overhead к throughput).",
                 "related": "[[stream-processing-interview#Q15]] как достичь exactly-once; [[stream-processing-interview#Q16]] idempotent operations; [[stream-processing-interview#Q13]] checkpointing."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`Exactly-once` почти не влияет на throughput, поэтому его включают по умолчанию для большинства пайплайнов ради надёжности.",
@@ -822,8 +810,8 @@
                 "if_it_were_true": "Тогда at-least-once никогда не выбирали бы, но его берут именно ради скорости и простоты.",
                 "how_it_should_be": "Exactly-once стоит производительности; для многих задач достаточно at-least-once + идемпотентность."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "At-most-once гарантирует отсутствие потерь событий, обрабатывая каждое минимум один раз.",
@@ -833,6 +821,18 @@
                 "source_of_confusion": "«At-most» и «at-least» отличаются одним словом, и гарантии путают местами.",
                 "if_it_were_true": "Тогда at-most-once не годился бы только для метрик с допустимой потерей, но именно туда его и берут.",
                 "how_it_should_be": "At-most-once допускает потерю ради latency; отсутствие потерь даёт at-least-once или exactly-once."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "At-least-once гарантирует, что каждое событие обработано ровно один раз, без дублей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Ровно один раз» — это exactly-once; at-least-once допускает дубли (≥1 раз), требуя идемпотентной обработки.",
+                "source_of_confusion": "Названия «at-least-once» и «exactly-once» близки, и их семантику легко перепутать.",
+                "if_it_were_true": "Тогда не нужна была бы идемпотентность поверх at-least-once, но именно дубли её и требуют.",
+                "how_it_should_be": "At-least-once = ≥1 раз (возможны дубли); ровно один раз гарантирует exactly-once."
               },
               "label": "D",
               "order": 3
@@ -909,28 +909,17 @@
           "question_text": "Что такое idempotent operations и зачем они в streaming?",
           "options": [
             {
-              "text": "Idempotent-операция при повторном выполнении каждый раз создаёт новую запись в БД.",
-              "correct": false,
+              "text": "`Idempotent` — повторное выполнение даёт тот же результат. Пример: `INSERT ... ON CONFLICT (id) DO UPDATE` (UPSERT) идемпотентен, а `INSERT INTO orders ... VALUES (...)` — нет (каждый раз новая запись).",
+              "correct": true,
               "sections": {
-                "what_actually": "Создание новой записи на каждый вызов — это как раз НЕ idempotent (`INSERT INTO orders`); idempotent даёт тот же результат при повторе.",
-                "source_of_confusion": "Обычный `INSERT` — самая частая операция записи, и её свойства ошибочно переносят на идемпотентность.",
-                "if_it_were_true": "Тогда повтор при at-least-once плодил бы дубли, но идемпотентность именно это и предотвращает.",
-                "how_it_should_be": "Idempotent — повтор не меняет результат (UPSERT/MERGE); множащий записи `INSERT` идемпотентным не является."
+                "explanation": "При at-least-once + идемпотентные операции получается effectively exactly-once: повторная доставка события просто перезаписывает ту же строку по ключу, не создавая дубль.",
+                "example": "Запись в `Postgres` через `INSERT ... ON CONFLICT (order_id) DO UPDATE` при повторной доставке того же события перезапишет строку заказа, а не создаст дубль — at-least-once становится effectively exactly-once.",
+                "when_to_apply": "Идемпотентность применяют, когда нужен exactly-once-эффект без дорогих транзакций — особенно при нетранзакционных sink вроде `Elasticsearch` (запись по unique ID).",
+                "edge_cases": "Стратегии: unique IDs в записях (UUID), UPSERT/MERGE в БД, checkpoint в receiver. Подвох — идемпотентность по неверному ключу (например, по времени) дубли не уберёт.",
+                "related": "[[stream-processing-interview#Q14]] delivery semantics; [[stream-processing-interview#Q15]] exactly-once; [[stream-processing-interview#Q28]] pitfall неидемпотентного sink."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Idempotency нужна только при exactly-once и совершенно бесполезна при at-least-once.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Идемпотентность критична именно при at-least-once: она превращает возможные дубли в effectively exactly-once.",
-                "source_of_confusion": "Раз exactly-once «строже», кажется, что идемпотентность относится только к нему.",
-                "if_it_were_true": "Тогда at-least-once-системы массово дублировали бы данные, но идемпотентные записи это и спасают.",
-                "how_it_should_be": "Idempotency особенно ценна при at-least-once; при exactly-once она дополнительная страховка."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Idempotency достигается только хранением полной истории всех обработанных событий в памяти.",
@@ -941,18 +930,29 @@
                 "if_it_were_true": "Тогда идемпотентность была бы неприменима к большим потокам из-за памяти, но UPSERT по ключу её решает дёшево.",
                 "how_it_should_be": "Idempotency обеспечивают UPSERT/unique ID/checkpoint; хранить всю историю целиком не требуется."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Idempotency нужна только при exactly-once и совершенно бесполезна при at-least-once.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Идемпотентность критична именно при at-least-once: она превращает возможные дубли в effectively exactly-once.",
+                "source_of_confusion": "Раз exactly-once «строже», кажется, что идемпотентность относится только к нему.",
+                "if_it_were_true": "Тогда at-least-once-системы массово дублировали бы данные, но идемпотентные записи это и спасают.",
+                "how_it_should_be": "Idempotency особенно ценна при at-least-once; при exactly-once она дополнительная страховка."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Idempotent` — повторное выполнение даёт тот же результат. Пример: `INSERT ... ON CONFLICT (id) DO UPDATE` (UPSERT) идемпотентен, а `INSERT INTO orders ... VALUES (...)` — нет (каждый раз новая запись).",
-              "correct": true,
+              "text": "Idempotent-операция при повторном выполнении каждый раз создаёт новую запись в БД.",
+              "correct": false,
               "sections": {
-                "explanation": "При at-least-once + идемпотентные операции получается effectively exactly-once: повторная доставка события просто перезаписывает ту же строку по ключу, не создавая дубль.",
-                "example": "Запись в `Postgres` через `INSERT ... ON CONFLICT (order_id) DO UPDATE` при повторной доставке того же события перезапишет строку заказа, а не создаст дубль — at-least-once становится effectively exactly-once.",
-                "when_to_apply": "Идемпотентность применяют, когда нужен exactly-once-эффект без дорогих транзакций — особенно при нетранзакционных sink вроде `Elasticsearch` (запись по unique ID).",
-                "edge_cases": "Стратегии: unique IDs в записях (UUID), UPSERT/MERGE в БД, checkpoint в receiver. Подвох — идемпотентность по неверному ключу (например, по времени) дубли не уберёт.",
-                "related": "[[stream-processing-interview#Q14]] delivery semantics; [[stream-processing-interview#Q15]] exactly-once; [[stream-processing-interview#Q28]] pitfall неидемпотентного sink."
+                "what_actually": "Создание новой записи на каждый вызов — это как раз НЕ idempotent (`INSERT INTO orders`); idempotent даёт тот же результат при повторе.",
+                "source_of_confusion": "Обычный `INSERT` — самая частая операция записи, и её свойства ошибочно переносят на идемпотентность.",
+                "if_it_were_true": "Тогда повтор при at-least-once плодил бы дубли, но идемпотентность именно это и предотвращает.",
+                "how_it_should_be": "Idempotent — повтор не меняет результат (UPSERT/MERGE); множащий записи `INSERT` идемпотентным не является."
               },
               "label": "D",
               "order": 3
@@ -969,14 +969,13 @@
           "question_text": "Что такое backpressure в stream processing?",
           "options": [
             {
-              "text": "`Backpressure` — ситуация, когда медленный downstream-оператор тормозит upstream через накопление данных в буферах: буфер медленного оператора заполняется, upstream не может писать и замедляется, и в итоге притормаживает сам source.",
-              "correct": true,
+              "text": "Backpressure — это рост latency из-за медленной сети между брокером и потребителем.",
+              "correct": false,
               "sections": {
-                "explanation": "В цепочке Source → Op1 → Op2 (SLOW) буфер Op2 переполняется, Op1 не может писать и замедляется, что доходит до Source. Признаки: растущий lag (`Kafka` consumer lag, `Flink` backpressure UI), высокий RAM usage, рост latency.",
-                "example": "Медленный sink в `Elasticsearch` (5k rec/s) при входе 20k rec/s переполняет буферы: `Flink` Web UI красит оператор в backpressure HIGH, `Kafka` consumer lag растёт на тысячи в секунду.",
-                "when_to_apply": "Backpressure — нормальный защитный механизм, его отслеживают через метрики lag и UI движка; реагируют, когда throughput устойчиво проседает до скорости самого медленного оператора.",
-                "edge_cases": "Данные при backpressure не теряются (поток саморегулируется), но throughput падает до самого медленного оператора; если игнорировать, lag и latency растут безгранично, пока не кончится retention источника.",
-                "related": "[[stream-processing-interview#Q18]] как обрабатывать backpressure; [[stream-processing-interview#Q19]] parallelism; [[stream-processing-interview#Q28]] pitfall игнорирования backpressure."
+                "what_actually": "Backpressure порождается медленным оператором обработки и распространяется вверх по pipeline, а не только сетью.",
+                "source_of_confusion": "Сетевая задержка тоже растит latency, поэтому её путают с backpressure.",
+                "if_it_were_true": "Тогда увеличение CPU/parallelism на операторе не помогало бы, но именно это backpressure и лечит.",
+                "how_it_should_be": "Backpressure — это давление от медленного оператора вверх по конвейеру; сетевая latency — отдельная причина задержек."
               },
               "label": "A",
               "order": 0
@@ -994,13 +993,14 @@
               "order": 1
             },
             {
-              "text": "Backpressure — это рост latency из-за медленной сети между брокером и потребителем.",
-              "correct": false,
+              "text": "`Backpressure` — ситуация, когда медленный downstream-оператор тормозит upstream через накопление данных в буферах: буфер медленного оператора заполняется, upstream не может писать и замедляется, и в итоге притормаживает сам source.",
+              "correct": true,
               "sections": {
-                "what_actually": "Backpressure порождается медленным оператором обработки и распространяется вверх по pipeline, а не только сетью.",
-                "source_of_confusion": "Сетевая задержка тоже растит latency, поэтому её путают с backpressure.",
-                "if_it_were_true": "Тогда увеличение CPU/parallelism на операторе не помогало бы, но именно это backpressure и лечит.",
-                "how_it_should_be": "Backpressure — это давление от медленного оператора вверх по конвейеру; сетевая latency — отдельная причина задержек."
+                "explanation": "В цепочке Source → Op1 → Op2 (SLOW) буфер Op2 переполняется, Op1 не может писать и замедляется, что доходит до Source. Признаки: растущий lag (`Kafka` consumer lag, `Flink` backpressure UI), высокий RAM usage, рост latency.",
+                "example": "Медленный sink в `Elasticsearch` (5k rec/s) при входе 20k rec/s переполняет буферы: `Flink` Web UI красит оператор в backpressure HIGH, `Kafka` consumer lag растёт на тысячи в секунду.",
+                "when_to_apply": "Backpressure — нормальный защитный механизм, его отслеживают через метрики lag и UI движка; реагируют, когда throughput устойчиво проседает до скорости самого медленного оператора.",
+                "edge_cases": "Данные при backpressure не теряются (поток саморегулируется), но throughput падает до самого медленного оператора; если игнорировать, lag и latency растут безгранично, пока не кончится retention источника.",
+                "related": "[[stream-processing-interview#Q18]] как обрабатывать backpressure; [[stream-processing-interview#Q19]] parallelism; [[stream-processing-interview#Q28]] pitfall игнорирования backpressure."
               },
               "label": "C",
               "order": 2
@@ -1041,14 +1041,13 @@
               "order": 0
             },
             {
-              "text": "Алгоритм: 1) profile — найти медленный оператор (`Flink Web UI`, `Spark UI`); 2) scale up — больше parallelism; 3) оптимизировать код (UDF, joins); 4) увеличить ресурсы (CPU/RAM); 5) drop сообщений, если это допустимо; 6) buffer — увеличить network buffers как временное решение.",
-              "correct": true,
+              "text": "В `Kafka Streams` backpressure снимают, уменьшая число партиций топика.",
+              "correct": false,
               "sections": {
-                "explanation": "В `Kafka Streams` добавляют больше instances (rebalance consumer group), во `Flink` — повышают parallelism медленного оператора; начинают всегда с профилирования, чтобы не масштабировать вслепую.",
-                "example": "`Flink` Web UI показал backpressure на операторе обогащения (он синхронно ходит в БД): подняли его parallelism с 2 до 8 и заменили вызов на async I/O — lag упал с 50k до нуля.",
-                "when_to_apply": "Реагируют, когда lag и latency устойчиво растут: сперва диагностика узкого места, затем масштабирование/оптимизация, и лишь при допустимости потерь — drop.",
-                "edge_cases": "Buffer и drop — временные/крайние меры: больший буфер лишь отсрочивает проблему, а drop теряет данные; устойчивое решение — устранить настоящий bottleneck.",
-                "related": "[[stream-processing-interview#Q17]] что такое backpressure; [[stream-processing-interview#Q19]] parallelism; [[stream-processing-interview#Q12]] state как причина медленного оператора."
+                "what_actually": "Throughput в `Kafka Streams` растят добавлением instances (parallelism = #partitions); уменьшение партиций его, наоборот, ограничит.",
+                "source_of_confusion": "Меньше партиций кажется «проще», отсюда ошибочная рекомендация их сократить.",
+                "if_it_were_true": "Тогда нельзя было бы масштабировать обработку горизонтально, но именно партиции дают параллелизм.",
+                "how_it_should_be": "В `Kafka Streams` добавляют instances и опираются на число партиций; сокращение партиций снижает параллелизм."
               },
               "label": "B",
               "order": 1
@@ -1066,13 +1065,14 @@
               "order": 2
             },
             {
-              "text": "В `Kafka Streams` backpressure снимают, уменьшая число партиций топика.",
-              "correct": false,
+              "text": "Алгоритм: 1) profile — найти медленный оператор (`Flink Web UI`, `Spark UI`); 2) scale up — больше parallelism; 3) оптимизировать код (UDF, joins); 4) увеличить ресурсы (CPU/RAM); 5) drop сообщений, если это допустимо; 6) buffer — увеличить network buffers как временное решение.",
+              "correct": true,
               "sections": {
-                "what_actually": "Throughput в `Kafka Streams` растят добавлением instances (parallelism = #partitions); уменьшение партиций его, наоборот, ограничит.",
-                "source_of_confusion": "Меньше партиций кажется «проще», отсюда ошибочная рекомендация их сократить.",
-                "if_it_were_true": "Тогда нельзя было бы масштабировать обработку горизонтально, но именно партиции дают параллелизм.",
-                "how_it_should_be": "В `Kafka Streams` добавляют instances и опираются на число партиций; сокращение партиций снижает параллелизм."
+                "explanation": "В `Kafka Streams` добавляют больше instances (rebalance consumer group), во `Flink` — повышают parallelism медленного оператора; начинают всегда с профилирования, чтобы не масштабировать вслепую.",
+                "example": "`Flink` Web UI показал backpressure на операторе обогащения (он синхронно ходит в БД): подняли его parallelism с 2 до 8 и заменили вызов на async I/O — lag упал с 50k до нуля.",
+                "when_to_apply": "Реагируют, когда lag и latency устойчиво растут: сперва диагностика узкого места, затем масштабирование/оптимизация, и лишь при допустимости потерь — drop.",
+                "edge_cases": "Buffer и drop — временные/крайние меры: больший буфер лишь отсрочивает проблему, а drop теряет данные; устойчивое решение — устранить настоящий bottleneck.",
+                "related": "[[stream-processing-interview#Q17]] что такое backpressure; [[stream-processing-interview#Q19]] parallelism; [[stream-processing-interview#Q12]] state как причина медленного оператора."
               },
               "label": "D",
               "order": 3
@@ -1089,13 +1089,13 @@
           "question_text": "Что такое parallelism в streaming и как партиционируется поток?",
           "options": [
             {
-              "text": "Parallelism в `Kafka Streams` не зависит от числа партиций топика и задаётся произвольно.",
+              "text": "Broadcast-партиционирование отправляет каждое событие ровно в один subtask по hash ключа.",
               "correct": false,
               "sections": {
-                "what_actually": "В `Kafka Streams` parallelism = числу партиций входного топика — больше задач, чем партиций, не запустится.",
-                "source_of_confusion": "В `Flink` parallelism задаётся свободно (`setParallelism`), и это правило переносят на `Kafka Streams`.",
-                "if_it_were_true": "Тогда можно было бы бесконечно масштабировать `Kafka Streams` без репартиционирования, но партиции — жёсткий предел.",
-                "how_it_should_be": "В `Kafka Streams` параллелизм ограничен числом партиций; чтобы поднять его, увеличивают партиции."
+                "what_actually": "Отправка по hash в один subtask — это by-key (`keyBy`); broadcast как раз шлёт каждое событие во ВСЕ subtasks.",
+                "source_of_confusion": "Все три стратегии «направляют» события, поэтому broadcast путают с keyBy.",
+                "if_it_were_true": "Тогда нельзя было бы раздать общий справочник всем параллельным экземплярам, но broadcast именно для этого.",
+                "how_it_should_be": "Broadcast дублирует событие во все subtasks; направление в один subtask по hash — это keyBy."
               },
               "label": "A",
               "order": 0
@@ -1113,6 +1113,18 @@
               "order": 1
             },
             {
+              "text": "Parallelism в `Kafka Streams` не зависит от числа партиций топика и задаётся произвольно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Kafka Streams` parallelism = числу партиций входного топика — больше задач, чем партиций, не запустится.",
+                "source_of_confusion": "В `Flink` parallelism задаётся свободно (`setParallelism`), и это правило переносят на `Kafka Streams`.",
+                "if_it_were_true": "Тогда можно было бы бесконечно масштабировать `Kafka Streams` без репартиционирования, но партиции — жёсткий предел.",
+                "how_it_should_be": "В `Kafka Streams` параллелизм ограничен числом партиций; чтобы поднять его, увеличивают партиции."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "`Parallelism` — сколько параллельных subtasks обрабатывают поток. Во `Flink`: `env.setParallelism(8)` и override на оператор `stream.map(...).setParallelism(4)`. Партиционирование: round-robin (равномерно, для stateless), by key (`keyBy` — по hash, для stateful), broadcast (каждое событие во все subtasks).",
               "correct": true,
               "sections": {
@@ -1121,18 +1133,6 @@
                 "when_to_apply": "Parallelism повышают, когда упёрлись в throughput одного оператора (backpressure); масштабируют именно узкое место, а не весь pipeline вслепую.",
                 "edge_cases": "Перекос ключей (data skew) ломает выгоду параллелизма: при `keyBy` «горячий» ключ грузит один subtask, а остальные простаивают — нужен либо salting ключа, либо иное распределение.",
                 "related": "[[stream-processing-interview#Q11]] stateful по ключу; [[stream-processing-interview#Q18]] parallelism против backpressure; [[stream-processing-interview#Q23]] parallelism в разных движках."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Broadcast-партиционирование отправляет каждое событие ровно в один subtask по hash ключа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Отправка по hash в один subtask — это by-key (`keyBy`); broadcast как раз шлёт каждое событие во ВСЕ subtasks.",
-                "source_of_confusion": "Все три стратегии «направляют» события, поэтому broadcast путают с keyBy.",
-                "if_it_were_true": "Тогда нельзя было бы раздать общий справочник всем параллельным экземплярам, но broadcast именно для этого.",
-                "how_it_should_be": "Broadcast дублирует событие во все subtasks; направление в один subtask по hash — это keyBy."
               },
               "label": "D",
               "order": 3
@@ -1161,13 +1161,14 @@
               "order": 0
             },
             {
-              "text": "В Lambda Architecture batch-слой даёт low latency, а speed-слой отвечает за точность.",
-              "correct": false,
+              "text": "`Lambda Architecture` (Nathan Marz, 2011) — параллельные batch- и speed-слои: batch-слой (`Spark`/`Hadoop`) даёт точность, но медленный (часовая ETL); speed-слой (`Storm`/`Flink`) — быстрое приближение для свежих событий; serving-слой (`HBase`/`Cassandra`) сливает оба для запросов.",
+              "correct": true,
               "sections": {
-                "what_actually": "Наоборот: batch-слой даёт точность но медленный, а speed-слой — быстрое приближение для свежих событий.",
-                "source_of_confusion": "Роли слоёв легко перепутать, если запомнить только что «их два».",
-                "if_it_were_true": "Тогда speed-слой не нужен был бы для low latency, но именно он её и обеспечивает.",
-                "how_it_should_be": "Batch — accurate но slow, speed — quick approximation; serving-слой их объединяет для запросов."
+                "explanation": "Идея: batch гарантирует accuracy на всей истории, speed закрывает разрыв по свежим данным, а serving-слой при запросе объединяет batch-view и speed-view в один ответ.",
+                "example": "Аналитика просмотров: batch-слой на `Spark` ночью пересчитывает точные суммы за вчера, speed-слой на `Flink` даёт приблизительные счётчики за последний час, а serving-слой в `Cassandra` склеивает оба view в один ответ.",
+                "when_to_apply": "Lambda встречается в legacy и там, где источник не replayable или уже есть тяжёлая `Hadoop`-инфраструктура с batch-джобами, не выразимыми как stream.",
+                "edge_cases": "Главный недостаток — две кодовые базы: одна логика реализована дважды (batch и speed), что усложняет поддержку и рассуждения о консистентности; в 2024 подход вытесняется Kappa.",
+                "related": "[[stream-processing-interview#Q21]] Kappa Architecture; [[stream-processing-interview#Q22]] Lambda vs Kappa; [[stream-processing-interview#Q2]] batch vs stream."
               },
               "label": "B",
               "order": 1
@@ -1185,14 +1186,13 @@
               "order": 2
             },
             {
-              "text": "`Lambda Architecture` (Nathan Marz, 2011) — параллельные batch- и speed-слои: batch-слой (`Spark`/`Hadoop`) даёт точность, но медленный (часовая ETL); speed-слой (`Storm`/`Flink`) — быстрое приближение для свежих событий; serving-слой (`HBase`/`Cassandra`) сливает оба для запросов.",
-              "correct": true,
+              "text": "В Lambda Architecture batch-слой даёт low latency, а speed-слой отвечает за точность.",
+              "correct": false,
               "sections": {
-                "explanation": "Идея: batch гарантирует accuracy на всей истории, speed закрывает разрыв по свежим данным, а serving-слой при запросе объединяет batch-view и speed-view в один ответ.",
-                "example": "Аналитика просмотров: batch-слой на `Spark` ночью пересчитывает точные суммы за вчера, speed-слой на `Flink` даёт приблизительные счётчики за последний час, а serving-слой в `Cassandra` склеивает оба view в один ответ.",
-                "when_to_apply": "Lambda встречается в legacy и там, где источник не replayable или уже есть тяжёлая `Hadoop`-инфраструктура с batch-джобами, не выразимыми как stream.",
-                "edge_cases": "Главный недостаток — две кодовые базы: одна логика реализована дважды (batch и speed), что усложняет поддержку и рассуждения о консистентности; в 2024 подход вытесняется Kappa.",
-                "related": "[[stream-processing-interview#Q21]] Kappa Architecture; [[stream-processing-interview#Q22]] Lambda vs Kappa; [[stream-processing-interview#Q2]] batch vs stream."
+                "what_actually": "Наоборот: batch-слой даёт точность но медленный, а speed-слой — быстрое приближение для свежих событий.",
+                "source_of_confusion": "Роли слоёв легко перепутать, если запомнить только что «их два».",
+                "if_it_were_true": "Тогда speed-слой не нужен был бы для low latency, но именно он её и обеспечивает.",
+                "how_it_should_be": "Batch — accurate но slow, speed — quick approximation; serving-слой их объединяет для запросов."
               },
               "label": "D",
               "order": 3
@@ -1209,19 +1209,6 @@
           "question_text": "Что такое Kappa Architecture?",
           "options": [
             {
-              "text": "`Kappa Architecture` (Jay Kreps, 2014) — только speed-слой, без batch. Всё обрабатывается как stream (Source → Stream Processor → Serving → Queries); если нужен reprocessing, перематывают offset `Kafka` назад и переигрывают поток.",
-              "correct": true,
-              "sections": {
-                "explanation": "Преимущества: один codebase (только streaming), простота operations, а streaming-движки умеют работать как batch на bounded-потоках. Условия: источник replayable (`Kafka`) и движок одинаково обрабатывает bounded и unbounded.",
-                "example": "Нашли баг в логике агрегации — вместо отдельной batch-джобы просто перематывают consumer-group offset на начало топика `Kafka` и переигрывают всю историю тем же `Flink`-приложением.",
-                "when_to_apply": "Kappa выбирают для новых проектов с replayable-источником и движком вроде `Flink`/`Spark Structured Streaming`, когда хочется простоты и единого кода вместо двух слоёв Lambda.",
-                "edge_cases": "В 2024 Kappa дружит с `Flink` (unified batch + streaming) и Lakehouse (`Delta`/`Iceberg`) и вытесняет Lambda; ограничение — если источник не replayable, перемотка истории невозможна и Kappa неприменима.",
-                "related": "[[stream-processing-interview#Q20]] Lambda Architecture; [[stream-processing-interview#Q22]] Lambda vs Kappa; [[stream-processing-interview#Q3]] bounded vs unbounded для reprocessing."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Kappa Architecture сочетает batch- и speed-слои для гарантии точности.",
               "correct": false,
               "sections": {
@@ -1230,8 +1217,8 @@
                 "if_it_were_true": "Тогда у Kappa было бы две кодовые базы, но её главный плюс — ровно один codebase.",
                 "how_it_should_be": "Kappa = только speed-слой; batch + speed — это Lambda (см. Q20)."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Reprocessing в Kappa делается отдельной batch-джобой на `Hadoop`, не через stream.",
@@ -1242,8 +1229,8 @@
                 "if_it_were_true": "Тогда терялось бы главное преимущество Kappa (один codebase), ведь добавился бы batch-стек.",
                 "how_it_should_be": "В Kappa историю переигрывают replay-ем потока, а не отдельной `Hadoop`-джобой."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Kappa Architecture не требует, чтобы источник был replayable.",
@@ -1253,6 +1240,19 @@
                 "source_of_confusion": "Кажется, что «упрощённая» архитектура снимает требования к источнику.",
                 "if_it_were_true": "Тогда Kappa работала бы и поверх не-replayable HTTP push, но переиграть историю там нельзя.",
                 "how_it_should_be": "Kappa строится только на replayable-источнике; иначе reprocessing недостижим."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Kappa Architecture` (Jay Kreps, 2014) — только speed-слой, без batch. Всё обрабатывается как stream (Source → Stream Processor → Serving → Queries); если нужен reprocessing, перематывают offset `Kafka` назад и переигрывают поток.",
+              "correct": true,
+              "sections": {
+                "explanation": "Преимущества: один codebase (только streaming), простота operations, а streaming-движки умеют работать как batch на bounded-потоках. Условия: источник replayable (`Kafka`) и движок одинаково обрабатывает bounded и unbounded.",
+                "example": "Нашли баг в логике агрегации — вместо отдельной batch-джобы просто перематывают consumer-group offset на начало топика `Kafka` и переигрывают всю историю тем же `Flink`-приложением.",
+                "when_to_apply": "Kappa выбирают для новых проектов с replayable-источником и движком вроде `Flink`/`Spark Structured Streaming`, когда хочется простоты и единого кода вместо двух слоёв Lambda.",
+                "edge_cases": "В 2024 Kappa дружит с `Flink` (unified batch + streaming) и Lakehouse (`Delta`/`Iceberg`) и вытесняет Lambda; ограничение — если источник не replayable, перемотка истории невозможна и Kappa неприменима.",
+                "related": "[[stream-processing-interview#Q20]] Lambda Architecture; [[stream-processing-interview#Q22]] Lambda vs Kappa; [[stream-processing-interview#Q3]] bounded vs unbounded для reprocessing."
               },
               "label": "D",
               "order": 3
@@ -1269,18 +1269,6 @@
           "question_text": "Lambda vs Kappa — что и когда выбрать?",
           "options": [
             {
-              "text": "Lambda — дефолтный выбор для новых проектов в 2024, а Kappa осталась в legacy.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: в 2024 в новых проектах доминирует Kappa, а Lambda остаётся в legacy.",
-                "source_of_confusion": "Lambda исторически старше и известнее, отсюда ложное впечатление, что она «основная».",
-                "if_it_were_true": "Тогда тренд на единый stream-движок (`Flink`) был бы развёрнут в сторону двух слоёв, но он идёт к Kappa.",
-                "how_it_should_be": "Дефолт новых проектов — Kappa; Lambda — наследие, выбираемое в специфичных legacy-условиях."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Kappa выбирают, если источник = `Kafka` (replayable), движок умеет обрабатывать bounded-потоки (`Flink`, `Spark Structured Streaming`) и хочется простоты (один codebase). Lambda — если источник не replayable, уже есть `Hadoop`-инфраструктура или тяжёлые batch-джобы не выразимы как stream.",
               "correct": true,
               "sections": {
@@ -1290,20 +1278,20 @@
                 "edge_cases": "В 2024 Kappa доминирует в новых проектах, Lambda живёт в legacy; граничный случай — гибрид, где часть истории всё же считается batch'ем из-за нереализуемой в stream логики.",
                 "related": "[[stream-processing-interview#Q20]] Lambda Architecture; [[stream-processing-interview#Q21]] Kappa Architecture; [[stream-processing-interview#Q23]] выбор движка под Kappa."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "Kappa подходит, даже если источник не replayable, главное — наличие stream-движка.",
+              "text": "Lambda — дефолтный выбор для новых проектов в 2024, а Kappa осталась в legacy.",
               "correct": false,
               "sections": {
-                "what_actually": "Kappa требует replayable-источника (`Kafka`): без перемотки offset reprocessing невозможен, и тогда уместнее Lambda.",
-                "source_of_confusion": "Наличие мощного движка кажется достаточным условием, и про источник забывают.",
-                "if_it_were_true": "Тогда не-replayable источник всё равно давал бы корректный reprocessing в Kappa, но это не так.",
-                "how_it_should_be": "Без replayable-источника Kappa неприменима; именно такой случай — аргумент за Lambda."
+                "what_actually": "Наоборот: в 2024 в новых проектах доминирует Kappa, а Lambda остаётся в legacy.",
+                "source_of_confusion": "Lambda исторически старше и известнее, отсюда ложное впечатление, что она «основная».",
+                "if_it_were_true": "Тогда тренд на единый stream-движок (`Flink`) был бы развёрнут в сторону двух слоёв, но он идёт к Kappa.",
+                "how_it_should_be": "Дефолт новых проектов — Kappa; Lambda — наследие, выбираемое в специфичных legacy-условиях."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Выбор между Lambda и Kappa определяется только языком программирования команды.",
@@ -1313,6 +1301,18 @@
                 "source_of_confusion": "Технологические холивары про языки заслоняют реальные архитектурные критерии.",
                 "if_it_were_true": "Тогда смена языка меняла бы архитектуру, но Kappa/Lambda зависят от свойств данных и инфраструктуры.",
                 "how_it_should_be": "Решает replayability, зрелость движка и наличие batch-наследия; язык здесь вторичен."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Kappa подходит, даже если источник не replayable, главное — наличие stream-движка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kappa требует replayable-источника (`Kafka`): без перемотки offset reprocessing невозможен, и тогда уместнее Lambda.",
+                "source_of_confusion": "Наличие мощного движка кажется достаточным условием, и про источник забывают.",
+                "if_it_were_true": "Тогда не-replayable источник всё равно давал бы корректный reprocessing в Kappa, но это не так.",
+                "how_it_should_be": "Без replayable-источника Kappa неприменима; именно такой случай — аргумент за Lambda."
               },
               "label": "D",
               "order": 3
@@ -1329,18 +1329,6 @@
           "question_text": "Чем различаются Flink, Spark Structured Streaming и Kafka Streams?",
           "options": [
             {
-              "text": "`Spark Structured Streaming` — это true streaming с обработкой record-by-record и latency меньше 10 мс.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Spark Structured Streaming` работает в модели micro-batch с latency в секунды; true streaming с < 10 мс даёт `Flink`.",
-                "source_of_confusion": "`Spark` маркетингово называют «streaming», отсюда вывод о record-by-record и микросекундах.",
-                "if_it_were_true": "Тогда `Spark` подходил бы для ad bidding с бюджетом < 100 мс, но его latency обычно секунды.",
-                "how_it_should_be": "`Spark Structured Streaming` — micro-batch (sec); true streaming с минимальной latency — это `Flink`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Kafka Streams` может читать данные из любых источников, не только из `Kafka`.",
               "correct": false,
               "sections": {
@@ -1349,8 +1337,32 @@
                 "if_it_were_true": "Тогда `Kafka Streams` конкурировал бы с `Flink` по охвату коннекторов, но он намеренно ограничен `Kafka`.",
                 "how_it_should_be": "`Kafka Streams` привязан к `Kafka`; произвольные источники поддерживают `Flink`/`Spark`."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Flink` деплоится только как встраиваемая библиотека внутри микросервиса, без отдельного кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Деплой как library — это про `Kafka Streams`; `Flink` разворачивают отдельным кластером (JobManager + TaskManagers).",
+                "source_of_confusion": "Оба — стриминговые движки, и модель деплоя `Kafka Streams` ошибочно переносят на `Flink`.",
+                "if_it_were_true": "Тогда `Flink` не считался бы операционно сложным, но именно кластерный деплой это и обуславливает.",
+                "how_it_should_be": "`Flink` — кластерный деплой; library-режим (как микросервис) — особенность `Kafka Streams`."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "`Spark Structured Streaming` — это true streaming с обработкой record-by-record и latency меньше 10 мс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spark Structured Streaming` работает в модели micro-batch с latency в секунды; true streaming с < 10 мс даёт `Flink`.",
+                "source_of_confusion": "`Spark` маркетингово называют «streaming», отсюда вывод о record-by-record и микросекундах.",
+                "if_it_were_true": "Тогда `Spark` подходил бы для ad bidding с бюджетом < 100 мс, но его latency обычно секунды.",
+                "how_it_should_be": "`Spark Structured Streaming` — micro-batch (sec); true streaming с минимальной latency — это `Flink`."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`Flink` — true streaming, latency < 100 мс (часто < 10 мс), богатый state, любые источники, деплой кластером. `Spark Structured Streaming` — micro-batch, latency секунды, любые источники. `Kafka Streams` — true streaming, latency 10-100 мс, `RocksDB` + changelog, только `Kafka`, деплой как library (микросервис).",
@@ -1361,18 +1373,6 @@
                 "when_to_apply": "Под задачу: fraud detection с миллисекундным SLA → `Flink`; обогащение `Kafka`-топиков без кластера → `Kafka Streams`; пайплайн рядом с существующими `Spark`-джобами → `Spark Structured Streaming`.",
                 "edge_cases": "`Kafka Streams` не требует отдельного кластера (масштабируется как consumer group), но ограничен `Kafka`; `Flink`/`Spark` гибче по источникам, но операционно сложнее (нужен кластер).",
                 "related": "[[stream-processing-interview#Q19]] parallelism в движках; [[stream-processing-interview#Q21]] Kappa на Flink; [[stream-processing-interview#Q25]] streaming vs message queue."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Flink` деплоится только как встраиваемая библиотека внутри микросервиса, без отдельного кластера.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Деплой как library — это про `Kafka Streams`; `Flink` разворачивают отдельным кластером (JobManager + TaskManagers).",
-                "source_of_confusion": "Оба — стриминговые движки, и модель деплоя `Kafka Streams` ошибочно переносят на `Flink`.",
-                "if_it_were_true": "Тогда `Flink` не считался бы операционно сложным, но именно кластерный деплой это и обуславливает.",
-                "how_it_should_be": "`Flink` — кластерный деплой; library-режим (как микросервис) — особенность `Kafka Streams`."
               },
               "label": "D",
               "order": 3
@@ -1389,13 +1389,14 @@
           "question_text": "Почему Apache Storm считается deprecated?",
           "options": [
             {
-              "text": "`Apache Storm` deprecated, потому что он работал только в micro-batch и имел слишком высокую latency.",
-              "correct": false,
+              "text": "`Apache Storm` (2011) — первый популярный stream-процессор: true streaming (record-by-record), низкоуровневый API (spouts, bolts), at-least-once (exactly-once через `Trident`). Deprecated из-за низкоуровневого API, отсутствия богатого state API (его выиграл `Flink`), отсутствия интегрированного SQL и сжавшегося сообщества.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Storm` был true streaming (record-by-record) с низкой latency; устарел он из-за низкоуровневого API и слабого state, а не из-за micro-batch.",
-                "source_of_confusion": "`Storm` смешивают со `Spark`, который как раз micro-batch, отсюда ложная причина.",
-                "if_it_were_true": "Тогда переход на `Flink` не давал бы выигрыша в state-API, но именно богатый state у `Flink` и победил.",
-                "how_it_should_be": "`Storm` — true streaming; deprecated из-за низкоуровневого API и отсутствия богатого state/SQL."
+                "explanation": "Простой подсчёт по ключу в `Storm` требовал вручную писать spouts/bolts и управлять state, тогда как `Flink`/`Kafka Streams` дают это декларативно через `ValueState` и DSL/SQL.",
+                "example": "Подсчёт уникальных пользователей в `Storm` требовал вручную писать bolt и держать state в стороннем `Redis`; в `Flink` то же делается декларативно через `ValueState`, поэтому команды массово мигрировали.",
+                "when_to_apply": "Сегодня `Storm` встречается только в legacy-системах; новые проекты выбирают `Flink`, `Kafka Streams` или `Spark Structured Streaming`.",
+                "edge_cases": "Преемник `Heron` (от Twitter) широкого adoption так и не получил, и экосистема консолидировалась вокруг `Flink` — поэтому миграция со `Storm` чаще идёт именно на него.",
+                "related": "[[stream-processing-interview#Q23]] Flink vs Spark vs Kafka Streams; [[stream-processing-interview#Q11]] богатый state API; [[stream-processing-interview#Q14]] delivery semantics."
               },
               "label": "A",
               "order": 0
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "text": "`Apache Storm` (2011) — первый популярный stream-процессор: true streaming (record-by-record), низкоуровневый API (spouts, bolts), at-least-once (exactly-once через `Trident`). Deprecated из-за низкоуровневого API, отсутствия богатого state API (его выиграл `Flink`), отсутствия интегрированного SQL и сжавшегося сообщества.",
-              "correct": true,
+              "text": "`Apache Storm` deprecated, потому что он работал только в micro-batch и имел слишком высокую latency.",
+              "correct": false,
               "sections": {
-                "explanation": "Простой подсчёт по ключу в `Storm` требовал вручную писать spouts/bolts и управлять state, тогда как `Flink`/`Kafka Streams` дают это декларативно через `ValueState` и DSL/SQL.",
-                "example": "Подсчёт уникальных пользователей в `Storm` требовал вручную писать bolt и держать state в стороннем `Redis`; в `Flink` то же делается декларативно через `ValueState`, поэтому команды массово мигрировали.",
-                "when_to_apply": "Сегодня `Storm` встречается только в legacy-системах; новые проекты выбирают `Flink`, `Kafka Streams` или `Spark Structured Streaming`.",
-                "edge_cases": "Преемник `Heron` (от Twitter) широкого adoption так и не получил, и экосистема консолидировалась вокруг `Flink` — поэтому миграция со `Storm` чаще идёт именно на него.",
-                "related": "[[stream-processing-interview#Q23]] Flink vs Spark vs Kafka Streams; [[stream-processing-interview#Q11]] богатый state API; [[stream-processing-interview#Q14]] delivery semantics."
+                "what_actually": "`Storm` был true streaming (record-by-record) с низкой latency; устарел он из-за низкоуровневого API и слабого state, а не из-за micro-batch.",
+                "source_of_confusion": "`Storm` смешивают со `Spark`, который как раз micro-batch, отсюда ложная причина.",
+                "if_it_were_true": "Тогда переход на `Flink` не давал бы выигрыша в state-API, но именно богатый state у `Flink` и победил.",
+                "how_it_should_be": "`Storm` — true streaming; deprecated из-за низкоуровневого API и отсутствия богатого state/SQL."
               },
               "label": "D",
               "order": 3
@@ -1449,19 +1449,6 @@
           "question_text": "Чем stream processor отличается от message queue (Kafka)?",
           "options": [
             {
-              "text": "`Kafka` — это transport (доставка и хранение сообщений), а stream processor (`Flink`, `Kafka Streams`) — обработка данных поверх него. Поток: Producers → `Kafka` (transport) → Stream Processor (logic) → Sinks. Сам `Kafka` не делает aggregations — только хранит и доставляет сообщения.",
-              "correct": true,
-              "sections": {
-                "explanation": "Различия: назначение (обработка vs транспорт), state (богатый — windows, aggregations — vs минимальный), latency (включает время обработки vs сетевая), API (DSL для трансформаций vs Producer/Consumer).",
-                "example": "`Kafka` просто хранит топик `clicks` и отдаёт его консьюмерам; чтобы получить «кликов на пользователя за минуту», поверх запускают `Flink`, который читает топик и делает оконную агрегацию.",
-                "when_to_apply": "Различие важно при дизайне: `Kafka` ставят как шину событий, а вычисления (агрегаты, окна, joins) выносят в stream-процессор; нельзя ожидать, что брокер сам посчитает метрики.",
-                "edge_cases": "Грань размывается у `Kafka Streams`/`ksqlDB` — они построены поверх `Kafka` и формально часть её экосистемы, но это уже processing-слой, а не сам брокер-транспорт.",
-                "related": "[[stream-processing-interview#Q1]] что такое stream processing; [[stream-processing-interview#Q23]] Kafka Streams как processor; [[stream-processing-interview#Q11]] stateful обработка."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Kafka` сам выполняет aggregations и оконные вычисления над сообщениями в топиках.",
               "correct": false,
               "sections": {
@@ -1469,6 +1456,18 @@
                 "source_of_confusion": "`Kafka Streams` входит в экосистему `Kafka`, поэтому вычисления приписывают самому брокеру.",
                 "if_it_were_true": "Тогда не нужен был бы отдельный processing-слой, но именно он несёт логику окон и агрегатов.",
                 "how_it_should_be": "`Kafka` — транспорт без вычислений; агрегации выполняет stream-процессор над топиками."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "У message queue (`Kafka`) state богаче, чем у stream processor, ведь она хранит все сообщения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хранение лога сообщений ≠ богатый processing-state; windows/aggregations/joins держит именно процессор, а не брокер.",
+                "source_of_confusion": "Долгий retention `Kafka` путают с вычислительным состоянием обработки.",
+                "if_it_were_true": "Тогда `Kafka` сам поддерживал бы оконные агрегаты, но это задача stream-процессора.",
+                "how_it_should_be": "У `Kafka` минимальный processing-state (offset/лог); богатый state — у stream-процессора."
               },
               "label": "B",
               "order": 1
@@ -1486,13 +1485,14 @@
               "order": 2
             },
             {
-              "text": "У message queue (`Kafka`) state богаче, чем у stream processor, ведь она хранит все сообщения.",
-              "correct": false,
+              "text": "`Kafka` — это transport (доставка и хранение сообщений), а stream processor (`Flink`, `Kafka Streams`) — обработка данных поверх него. Поток: Producers → `Kafka` (transport) → Stream Processor (logic) → Sinks. Сам `Kafka` не делает aggregations — только хранит и доставляет сообщения.",
+              "correct": true,
               "sections": {
-                "what_actually": "Хранение лога сообщений ≠ богатый processing-state; windows/aggregations/joins держит именно процессор, а не брокер.",
-                "source_of_confusion": "Долгий retention `Kafka` путают с вычислительным состоянием обработки.",
-                "if_it_were_true": "Тогда `Kafka` сам поддерживал бы оконные агрегаты, но это задача stream-процессора.",
-                "how_it_should_be": "У `Kafka` минимальный processing-state (offset/лог); богатый state — у stream-процессора."
+                "explanation": "Различия: назначение (обработка vs транспорт), state (богатый — windows, aggregations — vs минимальный), latency (включает время обработки vs сетевая), API (DSL для трансформаций vs Producer/Consumer).",
+                "example": "`Kafka` просто хранит топик `clicks` и отдаёт его консьюмерам; чтобы получить «кликов на пользователя за минуту», поверх запускают `Flink`, который читает топик и делает оконную агрегацию.",
+                "when_to_apply": "Различие важно при дизайне: `Kafka` ставят как шину событий, а вычисления (агрегаты, окна, joins) выносят в stream-процессор; нельзя ожидать, что брокер сам посчитает метрики.",
+                "edge_cases": "Грань размывается у `Kafka Streams`/`ksqlDB` — они построены поверх `Kafka` и формально часть её экосистемы, но это уже processing-слой, а не сам брокер-транспорт.",
+                "related": "[[stream-processing-interview#Q1]] что такое stream processing; [[stream-processing-interview#Q23]] Kafka Streams как processor; [[stream-processing-interview#Q11]] stateful обработка."
               },
               "label": "D",
               "order": 3
@@ -1509,13 +1509,13 @@
           "question_text": "Где stream processing применяется в production?",
           "options": [
             {
-              "text": "Stream processing применяют только для ночного batch-ETL и больше нигде.",
+              "text": "Stream processing в production используют исключительно для high-frequency трейдинга.",
               "correct": false,
               "sections": {
-                "what_actually": "Stream используют для real-time задач (fraud, рекомендации, ad bidding, мониторинг, IoT), а ночной batch-ETL — это как раз НЕ streaming.",
-                "source_of_confusion": "Любую «обработку данных» обобщают до ETL, забывая о low-latency сценариях.",
-                "if_it_were_true": "Тогда fraud detection и ad bidding с миллисекундным SLA были бы невозможны, но это флагманские кейсы streaming.",
-                "how_it_should_be": "Streaming закрывает множество real-time доменов; ночной batch-ETL — противоположный (batch) случай."
+                "what_actually": "Трейдинг — лишь один из многих кейсов; стрим широко применяют для fraud, рекомендаций, мониторинга, IoT и ETL.",
+                "source_of_confusion": "Трейдинг — самый «жёсткий» по latency пример, поэтому его принимают за единственный.",
+                "if_it_were_true": "Тогда `Netflix`-рекомендации и `Datadog`-мониторинг не строились бы на streaming, но они на нём и работают.",
+                "how_it_should_be": "Streaming покрывает десяток доменов; трейдинг — лишь один из них."
               },
               "label": "A",
               "order": 0
@@ -1534,18 +1534,6 @@
               "order": 1
             },
             {
-              "text": "Stream processing в production используют исключительно для high-frequency трейдинга.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Трейдинг — лишь один из многих кейсов; стрим широко применяют для fraud, рекомендаций, мониторинга, IoT и ETL.",
-                "source_of_confusion": "Трейдинг — самый «жёсткий» по latency пример, поэтому его принимают за единственный.",
-                "if_it_were_true": "Тогда `Netflix`-рекомендации и `Datadog`-мониторинг не строились бы на streaming, но они на нём и работают.",
-                "how_it_should_be": "Streaming покрывает десяток доменов; трейдинг — лишь один из них."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Real-time ML inference не относится к stream processing и реализуется только как batch.",
               "correct": false,
               "sections": {
@@ -1553,6 +1541,18 @@
                 "source_of_confusion": "Инференс ассоциируется с офлайн-обучением на batch, отсюда вывод о его batch-природе.",
                 "if_it_were_true": "Тогда онлайн-предсказания (антифрод «на лету») были бы невозможны, но streaming их обеспечивает.",
                 "how_it_should_be": "Real-time ML inference — часть streaming-применений; batch-инференс — отдельный офлайн-сценарий (см. Q27)."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Stream processing применяют только для ночного batch-ETL и больше нигде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stream используют для real-time задач (fraud, рекомендации, ad bidding, мониторинг, IoT), а ночной batch-ETL — это как раз НЕ streaming.",
+                "source_of_confusion": "Любую «обработку данных» обобщают до ETL, забывая о low-latency сценариях.",
+                "if_it_were_true": "Тогда fraud detection и ad bidding с миллисекундным SLA были бы невозможны, но это флагманские кейсы streaming.",
+                "how_it_should_be": "Streaming закрывает множество real-time доменов; ночной batch-ETL — противоположный (batch) случай."
               },
               "label": "D",
               "order": 3
@@ -1569,13 +1569,14 @@
           "question_text": "Как устроен real-time ML inference в streaming?",
           "options": [
             {
-              "text": "Real-time ML inference подразумевает, что модель дообучается на свежих событиях потока прямо в момент предсказания.",
-              "correct": false,
+              "text": "Конвейер: events → feature extraction (streaming) → ML model serving → predictions. Паттерны: embedded model (инференс прямо в stream-процессоре), model service (отдельный микросервис по gRPC, в который зовёт стрим), feature store (`Tecton`, `Feast` — pre-computed фичи для инференса).",
+              "correct": true,
               "sections": {
-                "what_actually": "Инференс применяет уже обученную модель к фичам из потока; переобучение на каждом событии — это online learning, отдельная и редкая задача.",
-                "source_of_confusion": "«Real-time ML» звучит так, будто и обучение идёт в реальном времени.",
-                "if_it_were_true": "Тогда каждый клик запускал бы дорогой train-цикл, но в инференсе модель фиксирована и лишь применяется.",
-                "how_it_should_be": "Inference = применение готовой модели к streaming-фичам; постоянное переобучение — это другое (online learning)."
+                "explanation": "Антифрод: из потока транзакций извлекают фичи (сумма, частота, гео), `Flink` зовёт `Triton`/`TensorFlow Serving` по gRPC и получает скор риска до подтверждения платежа; `Feast` отдаёт исторические фичи клиента.",
+                "example": "Антифрод: из потока транзакций `Flink` извлекает фичи (сумма, частота, гео), зовёт `Triton` по gRPC и получает скор риска 0.92 за ~30 мс — до подтверждения платежа; `Feast` дополняет историческими фичами клиента.",
+                "when_to_apply": "Embedded-модель выбирают для минимальной latency (нет сетевого хопа), model service — когда модель тяжёлая или переиспользуется многими, feature store — когда нужны консистентные фичи между обучением и serving.",
+                "edge_cases": "Tools: `TensorFlow Serving`/`Triton` (model serving), `Feast` (feature store), `Flink ML` (embedded ML). Подвох — training/serving skew: фичи в стриме должны считаться так же, как при обучении, иначе предсказания деградируют.",
+                "related": "[[stream-processing-interview#Q26]] где streaming в production; [[stream-processing-interview#Q11]] stateful для фичей; [[stream-processing-interview#Q23]] Flink для инференса."
               },
               "label": "A",
               "order": 0
@@ -1593,19 +1594,6 @@
               "order": 1
             },
             {
-              "text": "Конвейер: events → feature extraction (streaming) → ML model serving → predictions. Паттерны: embedded model (инференс прямо в stream-процессоре), model service (отдельный микросервис по gRPC, в который зовёт стрим), feature store (`Tecton`, `Feast` — pre-computed фичи для инференса).",
-              "correct": true,
-              "sections": {
-                "explanation": "Антифрод: из потока транзакций извлекают фичи (сумма, частота, гео), `Flink` зовёт `Triton`/`TensorFlow Serving` по gRPC и получает скор риска до подтверждения платежа; `Feast` отдаёт исторические фичи клиента.",
-                "example": "Антифрод: из потока транзакций `Flink` извлекает фичи (сумма, частота, гео), зовёт `Triton` по gRPC и получает скор риска 0.92 за ~30 мс — до подтверждения платежа; `Feast` дополняет историческими фичами клиента.",
-                "when_to_apply": "Embedded-модель выбирают для минимальной latency (нет сетевого хопа), model service — когда модель тяжёлая или переиспользуется многими, feature store — когда нужны консистентные фичи между обучением и serving.",
-                "edge_cases": "Tools: `TensorFlow Serving`/`Triton` (model serving), `Feast` (feature store), `Flink ML` (embedded ML). Подвох — training/serving skew: фичи в стриме должны считаться так же, как при обучении, иначе предсказания деградируют.",
-                "related": "[[stream-processing-interview#Q26]] где streaming в production; [[stream-processing-interview#Q11]] stateful для фичей; [[stream-processing-interview#Q23]] Flink для инференса."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "В real-time inference модель встраивают прямо в stream-процессор ради минимальной latency, а вызов внешнего model service добавил бы лишний сетевой хоп.",
               "correct": false,
               "sections": {
@@ -1613,6 +1601,18 @@
                 "source_of_confusion": "Embedded даёт минимальную latency, поэтому его принимают за единственный вариант.",
                 "if_it_were_true": "Тогда нельзя было бы переиспользовать тяжёлую модель из многих пайплайнов, но model service именно для этого.",
                 "how_it_should_be": "Паттернов несколько (embedded, model service, feature store); выбор зависит от latency и веса модели."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Real-time ML inference подразумевает, что модель дообучается на свежих событиях потока прямо в момент предсказания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инференс применяет уже обученную модель к фичам из потока; переобучение на каждом событии — это online learning, отдельная и редкая задача.",
+                "source_of_confusion": "«Real-time ML» звучит так, будто и обучение идёт в реальном времени.",
+                "if_it_were_true": "Тогда каждый клик запускал бы дорогой train-цикл, но в инференсе модель фиксирована и лишь применяется.",
+                "how_it_should_be": "Inference = применение готовой модели к streaming-фичам; постоянное переобучение — это другое (online learning)."
               },
               "label": "D",
               "order": 3
@@ -1629,18 +1629,6 @@
           "question_text": "Какие частые pitfalls встречаются в streaming?",
           "options": [
             {
-              "text": "Главный pitfall streaming — использование event time там, где достаточно processing time: привязка к меткам событий добавляет лишние watermark-задержки и усложняет пайплайн без реальной пользы для агрегатов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Типичная ошибка обратная: processing time там, где нужен event time, что ломает агрегаты при out-of-order событиях.",
-                "source_of_confusion": "Два времени легко перепутать местами, особенно под давлением «упростить».",
-                "if_it_were_true": "Тогда корректные event-time агрегаты считались бы ошибкой, но именно они — правильный выбор для аналитики.",
-                "how_it_should_be": "Pitfall — processing time вместо event time; event time как раз правильная семантика (см. Q5)."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Слишком агрессивный watermark безопасен и не приводит к потере данных: late-события, пришедшие после закрытия окна, движок автоматически докидывает в следующее окно, поэтому агрессивная настройка лишь снижает latency.",
               "correct": false,
               "sections": {
@@ -1648,6 +1636,19 @@
                 "source_of_confusion": "Агрессивный watermark ускоряет закрытие окон, что выглядит как «эффективность» без минусов.",
                 "if_it_were_true": "Тогда стратегии обработки late events были бы не нужны, но их существование вызвано именно такими потерями.",
                 "how_it_should_be": "Агрессивный watermark теряет данные, консервативный — задерживает результат; нужен баланс (см. Q6)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Частые pitfalls: неверные time semantics (processing вместо event time → кривые агрегаты при out-of-order), слишком агрессивный watermark (теряем late data) или слишком консервативный (окна закрываются поздно), state без cleanup (memory leak), игнор backpressure (растут lag/latency), отсутствие тестов с late events, неверная delivery semantics (at-most-once там, где нужен exactly-once), неидемпотентный sink при at-least-once (дубли), sequential bottleneck (низкий parallelism в одном месте), отсутствие мониторинга размера state (раздутый `RocksDB` → IO-bound).",
+              "correct": true,
+              "sections": {
+                "explanation": "Команда поставила processing time ради простоты, и при всплеске задержек в `Kafka` ночной отчёт «событий в час» поехал; плюс sink в БД оказался неидемпотентным, и at-least-once дал дубли в биллинге.",
+                "example": "Команда поставила processing time ради простоты, и при всплеске lag в `Kafka` ночной отчёт «событий в час» поехал на 12%; плюс sink в БД оказался неидемпотентным `INSERT`, и at-least-once дал дубли в биллинге.",
+                "when_to_apply": "Этот чек-лист прогоняют на code review и при дизайне streaming-джобы: проверяют time semantics, watermark, cleanup state, идемпотентность sink, parallelism и мониторинг — до выката в production.",
+                "edge_cases": "Многие из ошибок не видны на dev-данных и проявляются только под реальной нагрузкой и out-of-order потоком — поэтому streaming в production требует намного больше заботы, чем batch.",
+                "related": "[[stream-processing-interview#Q5]] event vs processing time; [[stream-processing-interview#Q6]] watermarks; [[stream-processing-interview#Q16]] идемпотентность sink."
               },
               "label": "B",
               "order": 1
@@ -1665,14 +1666,13 @@
               "order": 2
             },
             {
-              "text": "Частые pitfalls: неверные time semantics (processing вместо event time → кривые агрегаты при out-of-order), слишком агрессивный watermark (теряем late data) или слишком консервативный (окна закрываются поздно), state без cleanup (memory leak), игнор backpressure (растут lag/latency), отсутствие тестов с late events, неверная delivery semantics (at-most-once там, где нужен exactly-once), неидемпотентный sink при at-least-once (дубли), sequential bottleneck (низкий parallelism в одном месте), отсутствие мониторинга размера state (раздутый `RocksDB` → IO-bound).",
-              "correct": true,
+              "text": "Главный pitfall streaming — использование event time там, где достаточно processing time: привязка к меткам событий добавляет лишние watermark-задержки и усложняет пайплайн без реальной пользы для агрегатов.",
+              "correct": false,
               "sections": {
-                "explanation": "Команда поставила processing time ради простоты, и при всплеске задержек в `Kafka` ночной отчёт «событий в час» поехал; плюс sink в БД оказался неидемпотентным, и at-least-once дал дубли в биллинге.",
-                "example": "Команда поставила processing time ради простоты, и при всплеске lag в `Kafka` ночной отчёт «событий в час» поехал на 12%; плюс sink в БД оказался неидемпотентным `INSERT`, и at-least-once дал дубли в биллинге.",
-                "when_to_apply": "Этот чек-лист прогоняют на code review и при дизайне streaming-джобы: проверяют time semantics, watermark, cleanup state, идемпотентность sink, parallelism и мониторинг — до выката в production.",
-                "edge_cases": "Многие из ошибок не видны на dev-данных и проявляются только под реальной нагрузкой и out-of-order потоком — поэтому streaming в production требует намного больше заботы, чем batch.",
-                "related": "[[stream-processing-interview#Q5]] event vs processing time; [[stream-processing-interview#Q6]] watermarks; [[stream-processing-interview#Q16]] идемпотентность sink."
+                "what_actually": "Типичная ошибка обратная: processing time там, где нужен event time, что ломает агрегаты при out-of-order событиях.",
+                "source_of_confusion": "Два времени легко перепутать местами, особенно под давлением «упростить».",
+                "if_it_were_true": "Тогда корректные event-time агрегаты считались бы ошибкой, но именно они — правильный выбор для аналитики.",
+                "how_it_should_be": "Pitfall — processing time вместо event time; event time как раз правильная семантика (см. Q5)."
               },
               "label": "D",
               "order": 3

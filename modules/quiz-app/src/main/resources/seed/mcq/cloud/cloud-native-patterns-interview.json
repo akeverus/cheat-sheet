@@ -9,14 +9,13 @@
           "question_text": "Что такое cloud-native?",
           "options": [
             {
-              "text": "`Cloud-native` — подход, при котором приложение проектируют ПОД облако, а не переносят в него готовым.",
-              "correct": true,
+              "text": "`Cloud-native` — это использование managed-сервисов `AWS` (RDS, S3) при сохранении монолитной архитектуры и ручного деплоя приложения.",
+              "correct": false,
               "sections": {
-                "explanation": "Ключевое — приложение проектируется ПОД облако, а не переносится в него: containerized + dynamically orchestrated + loosely coupled. Складывается из контейнеризации для упаковки, микросервисов для архитектуры, динамической оркестрации через `Kubernetes`, декларативных API (desired state), слабой связности, отказоустойчивости и observability. По определению `CNCF` это позволяет строить scalable-системы в public/private/hybrid облаках.",
-                "example": "Containerized-микросервисы в `K8s` с `HPA`, declarative-манифестами и метриками `Prometheus` — это cloud-native; тот же монолит, просто запущенный в `EC2` без контейнера, — нет.",
-                "when_to_apply": "Подход выбирают, когда нужны elasticity, fault isolation и независимый деплой частей системы; команда при этом должна владеть `CI/CD` и оркестрацией.",
-                "edge_cases": "`Lift-and-shift` legacy-монолита в облако (тот же `.war` в виртуалке) — это cloud hosting, но не cloud-native: нет авто-масштабирования и изоляции отказов.",
-                "related": "[[cloud-native-patterns-interview#Q2]] 12-factor как методология; [[cloud-native-patterns-interview#Q3]] CNCF и стандарты; [[cloud-native-patterns-interview#Q13]] stateless как основа масштабирования."
+                "what_actually": "Использование managed-сервисов при монолите — это cloud hosting: монолит не масштабируется горизонтально и не деплоится по частям.",
+                "source_of_confusion": "Managed-сервисы — облачные, поэтому их применение ошибочно считают достаточным признаком cloud-native.",
+                "if_it_were_true": "Тогда монолит на `RDS` был бы cloud-native, но архитектура осталась бы монолитной без independent deployment.",
+                "how_it_should_be": "Managed-сервисы помогают, но cloud-native определяется архитектурой: микросервисы, контейнеры и оркестрация."
               },
               "label": "A",
               "order": 0
@@ -34,13 +33,14 @@
               "order": 1
             },
             {
-              "text": "`Cloud-native` — это использование managed-сервисов `AWS` (RDS, S3) при сохранении монолитной архитектуры и ручного деплоя приложения.",
-              "correct": false,
+              "text": "`Cloud-native` — подход, при котором приложение проектируют ПОД облако, а не переносят в него готовым.",
+              "correct": true,
               "sections": {
-                "what_actually": "Использование managed-сервисов при монолите — это cloud hosting: монолит не масштабируется горизонтально и не деплоится по частям.",
-                "source_of_confusion": "Managed-сервисы — облачные, поэтому их применение ошибочно считают достаточным признаком cloud-native.",
-                "if_it_were_true": "Тогда монолит на `RDS` был бы cloud-native, но архитектура осталась бы монолитной без independent deployment.",
-                "how_it_should_be": "Managed-сервисы помогают, но cloud-native определяется архитектурой: микросервисы, контейнеры и оркестрация."
+                "explanation": "Ключевое — приложение проектируется ПОД облако, а не переносится в него: containerized + dynamically orchestrated + loosely coupled. Складывается из контейнеризации для упаковки, микросервисов для архитектуры, динамической оркестрации через `Kubernetes`, декларативных API (desired state), слабой связности, отказоустойчивости и observability. По определению `CNCF` это позволяет строить scalable-системы в public/private/hybrid облаках.",
+                "example": "Containerized-микросервисы в `K8s` с `HPA`, declarative-манифестами и метриками `Prometheus` — это cloud-native; тот же монолит, просто запущенный в `EC2` без контейнера, — нет.",
+                "when_to_apply": "Подход выбирают, когда нужны elasticity, fault isolation и независимый деплой частей системы; команда при этом должна владеть `CI/CD` и оркестрацией.",
+                "edge_cases": "`Lift-and-shift` legacy-монолита в облако (тот же `.war` в виртуалке) — это cloud hosting, но не cloud-native: нет авто-масштабирования и изоляции отказов.",
+                "related": "[[cloud-native-patterns-interview#Q2]] 12-factor как методология; [[cloud-native-patterns-interview#Q3]] CNCF и стандарты; [[cloud-native-patterns-interview#Q13]] stateless как основа масштабирования."
               },
               "label": "C",
               "order": 2
@@ -81,14 +81,13 @@
               "order": 0
             },
             {
-              "text": "`12-Factor App` (Heroku, 2012) — 12 принципов проектирования cloud-native приложений: код переносим, всё изменчивое вынесено наружу.",
-              "correct": true,
+              "text": "12-factor предписывает писать логи в файл `/var/log/app.log` на диск для надёжного persistence.",
+              "correct": false,
               "sections": {
-                "explanation": "Главные акценты: конфигурация выносится в окружение (не в код и не в образ), процессы stateless и share-nothing, логи пишутся в `stdout`, а сборка/релиз/рантайм строго разделены — это делает приложение переносимым и масштабируемым. Полный список 12 факторов: один codebase в git, явные зависимости, config в env-переменных, backing-сервисы как attached-ресурсы, разделение build/release/run, stateless-процессы, port binding, горизонтальное масштабирование процессами, fast startup + graceful shutdown, dev/prod parity, логи в stdout, admin-задачи как отдельные процессы.",
-                "example": "Вместо `application.properties` внутри образа — `DATABASE_URL` и `LOG_LEVEL` через env; один и тот же image катится в dev/stage/prod, отличаясь только переменными окружения.",
-                "when_to_apply": "Принципы применяют при проектировании приложений под `K8s` или `PaaS`, особенно когда нужен один артефакт на все окружения и беспроблемный rolling update.",
-                "edge_cases": "Современные дополнения «Beyond 12-factor» добавляют API-first, telemetry и явные authentication/authorization — исходные 12 факторов их прямо не покрывают.",
-                "related": "[[cloud-native-patterns-interview#Q1]] cloud-native в целом; [[cloud-native-patterns-interview#Q13]] stateless-процессы."
+                "what_actually": "Фактор Logs требует писать в `stdout` потоком событий; сбор и хранение — задача инфраструктуры, а не приложения.",
+                "source_of_confusion": "Запись в файл кажется надёжнее, и привычка из монолитов переносится на cloud-native.",
+                "if_it_were_true": "Тогда при рестарте контейнера логи терялись бы, и не было бы централизованного сбора и correlation между инстансами.",
+                "how_it_should_be": "Приложение пишет логи в `stdout`, а агрегацию (`Loki`/`ELK`) обеспечивает платформа."
               },
               "label": "B",
               "order": 1
@@ -106,13 +105,14 @@
               "order": 2
             },
             {
-              "text": "12-factor предписывает писать логи в файл `/var/log/app.log` на диск для надёжного persistence.",
-              "correct": false,
+              "text": "`12-Factor App` (Heroku, 2012) — 12 принципов проектирования cloud-native приложений: код переносим, всё изменчивое вынесено наружу.",
+              "correct": true,
               "sections": {
-                "what_actually": "Фактор Logs требует писать в `stdout` потоком событий; сбор и хранение — задача инфраструктуры, а не приложения.",
-                "source_of_confusion": "Запись в файл кажется надёжнее, и привычка из монолитов переносится на cloud-native.",
-                "if_it_were_true": "Тогда при рестарте контейнера логи терялись бы, и не было бы централизованного сбора и correlation между инстансами.",
-                "how_it_should_be": "Приложение пишет логи в `stdout`, а агрегацию (`Loki`/`ELK`) обеспечивает платформа."
+                "explanation": "Главные акценты: конфигурация выносится в окружение (не в код и не в образ), процессы stateless и share-nothing, логи пишутся в `stdout`, а сборка/релиз/рантайм строго разделены — это делает приложение переносимым и масштабируемым. Полный список 12 факторов: один codebase в git, явные зависимости, config в env-переменных, backing-сервисы как attached-ресурсы, разделение build/release/run, stateless-процессы, port binding, горизонтальное масштабирование процессами, fast startup + graceful shutdown, dev/prod parity, логи в stdout, admin-задачи как отдельные процессы.",
+                "example": "Вместо `application.properties` внутри образа — `DATABASE_URL` и `LOG_LEVEL` через env; один и тот же image катится в dev/stage/prod, отличаясь только переменными окружения.",
+                "when_to_apply": "Принципы применяют при проектировании приложений под `K8s` или `PaaS`, особенно когда нужен один артефакт на все окружения и беспроблемный rolling update.",
+                "edge_cases": "Современные дополнения «Beyond 12-factor» добавляют API-first, telemetry и явные authentication/authorization — исходные 12 факторов их прямо не покрывают.",
+                "related": "[[cloud-native-patterns-interview#Q1]] cloud-native в целом; [[cloud-native-patterns-interview#Q13]] stateless-процессы."
               },
               "label": "D",
               "order": 3
@@ -129,18 +129,6 @@
           "question_text": "Что такое CNCF?",
           "options": [
             {
-              "text": "`CNCF` — это управляемый `AWS` консорциум, задающий облачные стандарты под единоличным контролем Amazon и его партнёров.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`CNCF` vendor-neutral и находится под `Linux Foundation`; `AWS` — лишь один из многих участников и не управляет фондом.",
-                "source_of_confusion": "`AWS` — крупнейший облачный игрок, поэтому ему ошибочно приписывают контроль над стандартами.",
-                "if_it_were_true": "Тогда стандарты были бы заточены под `AWS`, но `K8s` и `Prometheus` работают в любом облаке нейтрально.",
-                "how_it_should_be": "`CNCF` — нейтральная организация `Linux Foundation`, где ни один вендор не имеет контроля."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`CNCF` — это фонд, ориентированный исключительно на `Kubernetes` и его официальные подпроекты вроде `Helm` и `etcd`.",
               "correct": false,
               "sections": {
@@ -149,8 +137,8 @@
                 "if_it_were_true": "Тогда `Prometheus` и `Envoy` были бы вне `CNCF`, но они тоже её Graduated-проекты.",
                 "how_it_should_be": "`CNCF` курирует широкую экосистему cloud-native, а не только `Kubernetes`."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`Cloud Native Computing Foundation` (CNCF) — vendor-neutral фонд под эгидой `Linux Foundation`, курирующий cloud-native проекты.",
@@ -161,6 +149,18 @@
                 "when_to_apply": "На статус `CNCF` смотрят при подборе observability-, networking- и `GitOps`-инструментов, чтобы взять battle-tested и vendor-neutral решение.",
                 "edge_cases": "`CNCF`-проекты open-source и бесплатны: платная сертификация (`CKA`/`CKAD`) — отдельная программа и не равна членству или статусу проекта.",
                 "related": "[[cloud-native-patterns-interview#Q1]] cloud-native в целом."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`CNCF` — это управляемый `AWS` консорциум, задающий облачные стандарты под единоличным контролем Amazon и его партнёров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CNCF` vendor-neutral и находится под `Linux Foundation`; `AWS` — лишь один из многих участников и не управляет фондом.",
+                "source_of_confusion": "`AWS` — крупнейший облачный игрок, поэтому ему ошибочно приписывают контроль над стандартами.",
+                "if_it_were_true": "Тогда стандарты были бы заточены под `AWS`, но `K8s` и `Prometheus` работают в любом облаке нейтрально.",
+                "how_it_should_be": "`CNCF` — нейтральная организация `Linux Foundation`, где ни один вендор не имеет контроля."
               },
               "label": "C",
               "order": 2
@@ -189,18 +189,6 @@
           "question_text": "Что такое sidecar pattern?",
           "options": [
             {
-              "text": "`Sidecar` — это init-контейнер, выполняющий миграции БД перед стартом основного приложения и завершающийся до него.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Init-контейнер завершается до старта main, а sidecar работает параллельно всё время жизни pod — это разные паттерны.",
-                "source_of_confusion": "И sidecar, и init-контейнер живут в одном pod рядом с app, поэтому их роли смешивают.",
-                "if_it_were_true": "Тогда sidecar нельзя было бы использовать для постоянного proxy, ведь init-контейнер выходит до старта app.",
-                "how_it_should_be": "Sidecar — это параллельный контейнер с общим network/volumes; миграции до старта — задача init-контейнера."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Sidecar` — это `DaemonSet`, обеспечивающий cluster-level логирование на каждой ноде кластера через общий node-агент.",
               "correct": false,
               "sections": {
@@ -209,8 +197,8 @@
                 "if_it_were_true": "Тогда у логгера не было бы доступа к `localhost` приложения, но sidecar как раз разделяет его network namespace.",
                 "how_it_should_be": "Sidecar — per-pod контейнер; node-level сбор логов делает `DaemonSet`, это другой механизм."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`Sidecar` — это отдельный микросервис для TLS-termination, развёрнутый на уровне ingress кластера перед всеми pod.",
@@ -221,8 +209,8 @@
                 "if_it_were_true": "Тогда у sidecar не было бы прямого доступа к трафику app по `localhost`, но именно это его и определяет.",
                 "how_it_should_be": "Sidecar делит pod с приложением; ingress-уровень TLS — отдельный компонент кластера."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`Sidecar` — вторичный контейнер в том же pod, разделяющий network namespace и volumes с приложением и работающий параллельно ему.",
@@ -233,6 +221,18 @@
                 "when_to_apply": "Паттерн применяют для separation of concerns: когда нужно добавить TLS-termination, proxy или сбор логов, не трогая бизнес-код и сохраняя независимые release-циклы.",
                 "edge_cases": "Минус — лишние ресурсы на каждый pod; в отличие от `DaemonSet` (один pod на ноду), sidecar живёт в каждом app-pod и имеет доступ к его network namespace.",
                 "related": "[[cloud-native-patterns-interview#Q5]] ambassador как outbound-sidecar; [[cloud-native-patterns-interview#Q6]] adapter-sidecar; [[cloud-native-patterns-interview#Q7]] init containers vs sidecar."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Sidecar` — это init-контейнер, выполняющий миграции БД перед стартом основного приложения и завершающийся до него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Init-контейнер завершается до старта main, а sidecar работает параллельно всё время жизни pod — это разные паттерны.",
+                "source_of_confusion": "И sidecar, и init-контейнер живут в одном pod рядом с app, поэтому их роли смешивают.",
+                "if_it_were_true": "Тогда sidecar нельзя было бы использовать для постоянного proxy, ведь init-контейнер выходит до старта app.",
+                "how_it_should_be": "Sidecar — это параллельный контейнер с общим network/volumes; миграции до старта — задача init-контейнера."
               },
               "label": "D",
               "order": 3
@@ -249,19 +249,6 @@
           "question_text": "Что такое ambassador pattern?",
           "options": [
             {
-              "text": "`Ambassador` — sidecar для исходящих (outbound) соединений: проксирует egress-вызовы, добавляя retry, circuit breaker и auth.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ambassador — это egress-proxy рядом с app: вместо того чтобы вшивать retry и auth в код, приложение шлёт запросы на локальный порт, а sidecar транслирует их во внешний сервис с нужной логикой. Приложение обращается к `localhost:8080`, думая, что говорит с простым сервисом, а ambassador берёт на себя всю сложность связи с внешним сервисом.",
-                "example": "Client-side часть `Envoy` в service mesh или connection-pooling sidecar для БД: app думает, что ходит на `localhost`, а ambassador добавляет балансировку и повторы при исходящих вызовах.",
-                "when_to_apply": "Паттерн применяют, когда нужно вынести логику outbound-вызовов (retry, circuit breaker, mTLS) из приложения, не меняя его код.",
-                "edge_cases": "Ambassador — про egress (исходящий трафик), тогда как API Gateway — про ingress (входящий от клиентов); путать их направления нельзя.",
-                "related": "[[cloud-native-patterns-interview#Q4]] ambassador как разновидность sidecar; [[cloud-native-patterns-interview#Q6]] adapter трансформирует output; [[cloud-native-patterns-interview#Q8]] circuit breaker внутри ambassador."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Ambassador` — это API Gateway для входящего (north-south) трафика от внешних клиентов к сервисам кластера через ingress.",
               "correct": false,
               "sections": {
@@ -270,8 +257,8 @@
                 "if_it_were_true": "Тогда ambassador стоял бы на входе кластера, но он живёт sidecar-ом рядом с app и обслуживает egress.",
                 "how_it_should_be": "Ambassador — это outbound-proxy sidecar; входящий трафик от клиентов обрабатывает API Gateway."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`Ambassador` — это adapter-sidecar для конвертации формата метрик приложения в `Prometheus` и логов в `JSON` для `ELK`.",
@@ -282,8 +269,8 @@
                 "if_it_were_true": "Тогда ambassador менял бы формат output, но его цель — проксировать outbound-соединения с retry и auth.",
                 "how_it_should_be": "Формат output меняет adapter; ambassador проксирует egress-вызовы — это разные паттерны."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`Ambassador` — это init-контейнер, ожидающий доступности зависимостей перед стартом приложения и завершающийся до main.",
@@ -293,6 +280,19 @@
                 "source_of_confusion": "И ambassador, и init-контейнер связаны с внешними зависимостями, отсюда путаница.",
                 "if_it_were_true": "Тогда ambassador не мог бы проксировать вызовы в рантайме, ведь init-контейнер к тому моменту вышел.",
                 "how_it_should_be": "Ambassador — постоянный egress-proxy в рантайме; ожидание зависимостей до старта — работа init-контейнера."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Ambassador` — sidecar для исходящих (outbound) соединений: проксирует egress-вызовы, добавляя retry, circuit breaker и auth.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ambassador — это egress-proxy рядом с app: вместо того чтобы вшивать retry и auth в код, приложение шлёт запросы на локальный порт, а sidecar транслирует их во внешний сервис с нужной логикой. Приложение обращается к `localhost:8080`, думая, что говорит с простым сервисом, а ambassador берёт на себя всю сложность связи с внешним сервисом.",
+                "example": "Client-side часть `Envoy` в service mesh или connection-pooling sidecar для БД: app думает, что ходит на `localhost`, а ambassador добавляет балансировку и повторы при исходящих вызовах.",
+                "when_to_apply": "Паттерн применяют, когда нужно вынести логику outbound-вызовов (retry, circuit breaker, mTLS) из приложения, не меняя его код.",
+                "edge_cases": "Ambassador — про egress (исходящий трафик), тогда как API Gateway — про ingress (входящий от клиентов); путать их направления нельзя.",
+                "related": "[[cloud-native-patterns-interview#Q4]] ambassador как разновидность sidecar; [[cloud-native-patterns-interview#Q6]] adapter трансформирует output; [[cloud-native-patterns-interview#Q8]] circuit breaker внутри ambassador."
               },
               "label": "D",
               "order": 3
@@ -309,6 +309,18 @@
           "question_text": "Что такое adapter pattern в контексте sidecar?",
           "options": [
             {
+              "text": "`Adapter` — это `DaemonSet` для агрегации метрик со всех нод кластера в единую точку через node-level агент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DaemonSet` — один pod на ноду для node-level задач; adapter — sidecar рядом с конкретным pod для трансформации его output.",
+                "source_of_confusion": "И `DaemonSet`, и adapter связаны с метриками, поэтому node-level агрегацию путают с per-pod трансформацией.",
+                "if_it_were_true": "Тогда adapter работал бы один на ноду, но он живёт в pod приложения и стандартизирует именно его вывод.",
+                "how_it_should_be": "Adapter — per-pod трансформер output; агрегация по нодам — задача `DaemonSet`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`Adapter` — это ambassador-паттерн для проксирования исходящих запросов с retry и circuit breaker через `localhost`.",
               "correct": false,
               "sections": {
@@ -316,19 +328,6 @@
                 "source_of_confusion": "Оба — sidecar, поэтому их задачи (трансформация vs проксирование) смешивают.",
                 "if_it_were_true": "Тогда adapter добавлял бы retry к egress, но его роль — приводить output к стандартному формату.",
                 "how_it_should_be": "Adapter — output transformer; проксирование исходящих вызовов выполняет ambassador."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Adapter` — sidecar, трансформирующий output приложения в стандартный формат без изменения его кода.",
-              "correct": true,
-              "sections": {
-                "explanation": "Adapter стандартизирует то, что выдаёт приложение: app пишет в своём формате, а sidecar переводит это в формат, понятный платформе мониторинга или логирования, не требуя правок кода app. Примеры: кастомные логи → `JSON`/`ELK`, кастомные метрики → формат `Prometheus`. Это позволяет интегрировать legacy-приложения с нестандартным выводом в общий observability-стек.",
-                "example": "Legacy-сервис пишет кастомные текстовые логи — adapter превращает их в `JSON` для `ELK`; либо app отдаёт свои метрики, а adapter экспонирует их в `Prometheus`-формате на `/metrics`.",
-                "when_to_apply": "Паттерн применяют для legacy-приложений с нестандартным форматом вывода, которые нельзя или дорого переписать под общий стандарт телеметрии.",
-                "edge_cases": "Adapter трансформирует output (output transformer), тогда как ambassador проксирует outbound-вызовы — это смежные, но разные задачи sidecar.",
-                "related": "[[cloud-native-patterns-interview#Q4]] adapter как тип sidecar; [[cloud-native-patterns-interview#Q5]] ambassador проксирует, а не трансформирует."
               },
               "label": "B",
               "order": 1
@@ -346,13 +345,14 @@
               "order": 2
             },
             {
-              "text": "`Adapter` — это `DaemonSet` для агрегации метрик со всех нод кластера в единую точку через node-level агент.",
-              "correct": false,
+              "text": "`Adapter` — sidecar, трансформирующий output приложения в стандартный формат без изменения его кода.",
+              "correct": true,
               "sections": {
-                "what_actually": "`DaemonSet` — один pod на ноду для node-level задач; adapter — sidecar рядом с конкретным pod для трансформации его output.",
-                "source_of_confusion": "И `DaemonSet`, и adapter связаны с метриками, поэтому node-level агрегацию путают с per-pod трансформацией.",
-                "if_it_were_true": "Тогда adapter работал бы один на ноду, но он живёт в pod приложения и стандартизирует именно его вывод.",
-                "how_it_should_be": "Adapter — per-pod трансформер output; агрегация по нодам — задача `DaemonSet`."
+                "explanation": "Adapter стандартизирует то, что выдаёт приложение: app пишет в своём формате, а sidecar переводит это в формат, понятный платформе мониторинга или логирования, не требуя правок кода app. Примеры: кастомные логи → `JSON`/`ELK`, кастомные метрики → формат `Prometheus`. Это позволяет интегрировать legacy-приложения с нестандартным выводом в общий observability-стек.",
+                "example": "Legacy-сервис пишет кастомные текстовые логи — adapter превращает их в `JSON` для `ELK`; либо app отдаёт свои метрики, а adapter экспонирует их в `Prometheus`-формате на `/metrics`.",
+                "when_to_apply": "Паттерн применяют для legacy-приложений с нестандартным форматом вывода, которые нельзя или дорого переписать под общий стандарт телеметрии.",
+                "edge_cases": "Adapter трансформирует output (output transformer), тогда как ambassador проксирует outbound-вызовы — это смежные, но разные задачи sidecar.",
+                "related": "[[cloud-native-patterns-interview#Q4]] adapter как тип sidecar; [[cloud-native-patterns-interview#Q5]] ambassador проксирует, а не трансформирует."
               },
               "label": "D",
               "order": 3
@@ -369,28 +369,16 @@
           "question_text": "Что такое init containers?",
           "options": [
             {
-              "text": "`Init containers` — это sidecar-контейнеры, работающие параллельно с main всё время жизни pod и разделяющие его network.",
+              "text": "`Init containers` — это отдельный `Kubernetes Job` для batch-миграций БД в собственном Pod вне жизненного цикла app.",
               "correct": false,
               "sections": {
-                "what_actually": "Sidecar работает параллельно с main; init-контейнер завершается ДО старта main — это разные паттерны.",
-                "source_of_confusion": "Оба живут в одном pod-spec, поэтому параллельный sidecar путают с последовательным init.",
-                "if_it_were_true": "Тогда init-контейнер постоянно бы работал рядом с app, но он по определению выходит до старта main.",
-                "how_it_should_be": "Init-контейнер выполняется и завершается до main; параллельная работа — это sidecar."
+                "what_actually": "`Job` создаёт отдельный Pod вне жизненного цикла app; init-контейнер встроен в pod-spec и скоординирован с lifecycle приложения.",
+                "source_of_confusion": "И `Job`, и init умеют запускать миграции, поэтому отдельный Pod путают со встроенным init.",
+                "if_it_were_true": "Тогда миграция шла бы в другом Pod без гарантии, что app дождётся её, но init встроен именно в pod app.",
+                "how_it_should_be": "Init-контейнер живёт в том же pod и блокирует старт main до успеха; `Job` — отдельный изолированный Pod."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`Init containers` — это `PostStart` lifecycle hook, выполняемый при старте main-контейнера без гарантии порядка.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`PostStart` — часть lifecycle самого main-контейнера без гарантии порядка; init-контейнер — отдельный контейнер с гарантией завершения до main.",
-                "source_of_confusion": "И init, и `PostStart` относятся к старту, поэтому их механизмы смешивают.",
-                "if_it_were_true": "Тогда нельзя было бы гарантировать, что setup завершён до старта app, но init как раз это и обеспечивает.",
-                "how_it_should_be": "Init-контейнер — отдельный контейнер до main с гарантией порядка; `PostStart` — hook внутри main."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`Init containers` — контейнеры, которые запускаются ДО основного, выполняют задачу, завершаются, и только потом стартует main.",
@@ -402,17 +390,29 @@
                 "edge_cases": "Если init-контейнер упал — весь pod рестартует и init выполняется заново; в отличие от sidecar, init не работает параллельно с main.",
                 "related": "[[cloud-native-patterns-interview#Q4]] sidecar работает параллельно, init — до старта; [[cloud-native-patterns-interview#Q12]] startup probe для медленного старта; [[cloud-native-patterns-interview#Q9]] retry при ожидании зависимостей."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Init containers` — это `PostStart` lifecycle hook, выполняемый при старте main-контейнера без гарантии порядка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PostStart` — часть lifecycle самого main-контейнера без гарантии порядка; init-контейнер — отдельный контейнер с гарантией завершения до main.",
+                "source_of_confusion": "И init, и `PostStart` относятся к старту, поэтому их механизмы смешивают.",
+                "if_it_were_true": "Тогда нельзя было бы гарантировать, что setup завершён до старта app, но init как раз это и обеспечивает.",
+                "how_it_should_be": "Init-контейнер — отдельный контейнер до main с гарантией порядка; `PostStart` — hook внутри main."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Init containers` — это отдельный `Kubernetes Job` для batch-миграций БД в собственном Pod вне жизненного цикла app.",
+              "text": "`Init containers` — это sidecar-контейнеры, работающие параллельно с main всё время жизни pod и разделяющие его network.",
               "correct": false,
               "sections": {
-                "what_actually": "`Job` создаёт отдельный Pod вне жизненного цикла app; init-контейнер встроен в pod-spec и скоординирован с lifecycle приложения.",
-                "source_of_confusion": "И `Job`, и init умеют запускать миграции, поэтому отдельный Pod путают со встроенным init.",
-                "if_it_were_true": "Тогда миграция шла бы в другом Pod без гарантии, что app дождётся её, но init встроен именно в pod app.",
-                "how_it_should_be": "Init-контейнер живёт в том же pod и блокирует старт main до успеха; `Job` — отдельный изолированный Pod."
+                "what_actually": "Sidecar работает параллельно с main; init-контейнер завершается ДО старта main — это разные паттерны.",
+                "source_of_confusion": "Оба живут в одном pod-spec, поэтому параллельный sidecar путают с последовательным init.",
+                "if_it_were_true": "Тогда init-контейнер постоянно бы работал рядом с app, но он по определению выходит до старта main.",
+                "how_it_should_be": "Init-контейнер выполняется и завершается до main; параллельная работа — это sidecar."
               },
               "label": "D",
               "order": 3
@@ -429,13 +429,14 @@
           "question_text": "Что такое circuit breaker?",
           "options": [
             {
-              "text": "`Circuit breaker` — это retry без exponential backoff, повторяющий запрос немедленно при каждой ошибке downstream.",
-              "correct": false,
+              "text": "`Circuit breaker` предотвращает каскадные сбои: при стабильных ошибках downstream размыкается (open) и сразу fail-fast.",
+              "correct": true,
               "sections": {
-                "what_actually": "Немедленный retry без backoff даёт thundering herd: 1000 клиентов одновременно добивают восстанавливающийся сервис; CB, наоборот, размыкает цепь и fail-fast.",
-                "source_of_confusion": "И retry, и CB — про обработку ошибок downstream, поэтому их механизмы смешивают.",
-                "if_it_were_true": "Тогда CB усиливал бы нагрузку на падающий сервис, но его цель — снять её через fail-fast при open.",
-                "how_it_should_be": "CB размыкает цепь и не делает реальных вызовов при open; немедленный retry — это анти-паттерн."
+                "explanation": "Когда downstream надёжно лежит, ждать timeout каждый раз — расточительно и опасно. Circuit breaker размыкается после N ошибок в окне и мгновенно отвечает ошибкой, защищая и клиента, и восстанавливающийся сервис от добивания. Состояния: `Closed` (вызовы идут нормально) → `Open` (все вызовы падают сразу без реального обращения) → `Half-open` (пробный вызов: успех → Closed, ошибка → Open). Инструменты: `Resilience4j`, `Polly`, `Istio`.",
+                "example": "`@circuit_breaker(failure_threshold=5, recovery_timeout=60)` вокруг вызова payment-сервиса: после 5 фейлов цепь open на 60 секунд, затем half-open пробует один запрос для проверки восстановления.",
+                "when_to_apply": "Паттерн применяют, когда downstream стабильно сбоит: fail-fast вместо ожидания N секунд timeout на каждый вызов спасает thread pool и предотвращает каскад.",
+                "edge_cases": "Circuit breaker — не то же, что health-check на `LB`: балансировщик убирает мёртвый instance, но не предотвращает каскад в цепочке микросервисов; и не заменяет timeout, а дополняет его.",
+                "related": "[[cloud-native-patterns-interview#Q9]] retry с backoff после CB; [[cloud-native-patterns-interview#Q10]] bulkhead изолирует ресурсы; [[cloud-native-patterns-interview#Q11]] timeout как дополнение к CB."
               },
               "label": "A",
               "order": 0
@@ -465,14 +466,13 @@
               "order": 2
             },
             {
-              "text": "`Circuit breaker` предотвращает каскадные сбои: при стабильных ошибках downstream размыкается (open) и сразу fail-fast.",
-              "correct": true,
+              "text": "`Circuit breaker` — это retry без exponential backoff, повторяющий запрос немедленно при каждой ошибке downstream.",
+              "correct": false,
               "sections": {
-                "explanation": "Когда downstream надёжно лежит, ждать timeout каждый раз — расточительно и опасно. Circuit breaker размыкается после N ошибок в окне и мгновенно отвечает ошибкой, защищая и клиента, и восстанавливающийся сервис от добивания. Состояния: `Closed` (вызовы идут нормально) → `Open` (все вызовы падают сразу без реального обращения) → `Half-open` (пробный вызов: успех → Closed, ошибка → Open). Инструменты: `Resilience4j`, `Polly`, `Istio`.",
-                "example": "`@circuit_breaker(failure_threshold=5, recovery_timeout=60)` вокруг вызова payment-сервиса: после 5 фейлов цепь open на 60 секунд, затем half-open пробует один запрос для проверки восстановления.",
-                "when_to_apply": "Паттерн применяют, когда downstream стабильно сбоит: fail-fast вместо ожидания N секунд timeout на каждый вызов спасает thread pool и предотвращает каскад.",
-                "edge_cases": "Circuit breaker — не то же, что health-check на `LB`: балансировщик убирает мёртвый instance, но не предотвращает каскад в цепочке микросервисов; и не заменяет timeout, а дополняет его.",
-                "related": "[[cloud-native-patterns-interview#Q9]] retry с backoff после CB; [[cloud-native-patterns-interview#Q10]] bulkhead изолирует ресурсы; [[cloud-native-patterns-interview#Q11]] timeout как дополнение к CB."
+                "what_actually": "Немедленный retry без backoff даёт thundering herd: 1000 клиентов одновременно добивают восстанавливающийся сервис; CB, наоборот, размыкает цепь и fail-fast.",
+                "source_of_confusion": "И retry, и CB — про обработку ошибок downstream, поэтому их механизмы смешивают.",
+                "if_it_were_true": "Тогда CB усиливал бы нагрузку на падающий сервис, но его цель — снять её через fail-fast при open.",
+                "how_it_should_be": "CB размыкает цепь и не делает реальных вызовов при open; немедленный retry — это анти-паттерн."
               },
               "label": "D",
               "order": 3
@@ -489,6 +489,18 @@
           "question_text": "Как правильно реализовать retry с exponential backoff?",
           "options": [
             {
+              "text": "Retry следует выполнять и при 4xx-ошибках (400, 404), чтобы повысить надёжность и устойчивость к сбоям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "4xx (400/404) — не transient: ответ не изменится при повторе, retry лишь создаёт лишнюю нагрузку.",
+                "source_of_confusion": "Кажется, что «повторим — вдруг получится», и retry применяют ко всем ошибкам подряд.",
+                "if_it_were_true": "Тогда 404 при повторе вернул бы данные, но ресурса просто нет — ответ детерминирован.",
+                "how_it_should_be": "Retry — только для transient-ошибок (5xx, timeouts); 4xx обрабатываются без повторов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Retry строится на `wait_exponential` с jitter, применяется только к идемпотентным операциям и transient-ошибкам (5xx, timeouts).",
               "correct": true,
               "sections": {
@@ -498,8 +510,8 @@
                 "edge_cases": "Retry на 4xx (400/404) бессмысленен — ответ не изменится; retry неидемпотентного `POST` без idempotency key дублирует заказы и приводит к двойному списанию средств.",
                 "related": "[[cloud-native-patterns-interview#Q8]] circuit breaker дополняет retry; [[cloud-native-patterns-interview#Q11]] timeout ограничивает каждый вызов; [[cloud-native-patterns-interview#Q12]] readiness против преждевременного трафика."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Retry нужно делать с фиксированной задержкой 1s без jitter — так проще, предсказуемее и равномернее по нагрузке.",
@@ -509,18 +521,6 @@
                 "source_of_confusion": "Фиксированный интервал проще в реализации, поэтому его выбирают «для простоты».",
                 "if_it_were_true": "Тогда нагрузка на падающий сервис была бы равномерной, но синхронные повторы как раз создают пики.",
                 "how_it_should_be": "Нужны exponential backoff и jitter, чтобы разнести повторы во времени и не добивать downstream."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Retry следует выполнять и при 4xx-ошибках (400, 404), чтобы повысить надёжность и устойчивость к сбоям.",
-              "correct": false,
-              "sections": {
-                "what_actually": "4xx (400/404) — не transient: ответ не изменится при повторе, retry лишь создаёт лишнюю нагрузку.",
-                "source_of_confusion": "Кажется, что «повторим — вдруг получится», и retry применяют ко всем ошибкам подряд.",
-                "if_it_were_true": "Тогда 404 при повторе вернул бы данные, но ресурса просто нет — ответ детерминирован.",
-                "how_it_should_be": "Retry — только для transient-ошибок (5xx, timeouts); 4xx обрабатываются без повторов."
               },
               "label": "C",
               "order": 2
@@ -549,13 +549,13 @@
           "question_text": "Что такое bulkhead pattern?",
           "options": [
             {
-              "text": "`Bulkhead` — это circuit breaker, работающий поверх одного общего thread pool для всех downstream-сервисов сразу.",
+              "text": "`Bulkhead` — это load balancer для распределения нагрузки между несколькими instance одного сервиса через round-robin.",
               "correct": false,
               "sections": {
-                "what_actually": "CB — временное размыкание цепи, а bulkhead — постоянная изоляция ресурсов; без отдельных пулов analytics всё равно влияет на users API.",
-                "source_of_confusion": "Оба — resilience-паттерны против сбоев downstream, поэтому их отождествляют.",
-                "if_it_were_true": "Тогда одного CB хватало бы для изоляции, но при общем пуле исчерпание потоков затронуло бы все сервисы сразу.",
-                "how_it_should_be": "Bulkhead — это изолированные пулы ресурсов на каждый downstream; CB лишь временно размыкает цепь."
+                "what_actually": "`LB` распределяет трафик между instance; bulkhead изолирует ресурсы внутри одного instance по downstream.",
+                "source_of_confusion": "И `LB`, и bulkhead связаны с управлением нагрузкой, поэтому уровни путают.",
+                "if_it_were_true": "Тогда добавление instance давало бы изоляцию downstream, но внутри instance пулы всё равно делились бы.",
+                "how_it_should_be": "Bulkhead изолирует ресурсы внутри instance (отдельные пулы); балансировка между instance — это `LB`."
               },
               "label": "A",
               "order": 0
@@ -574,6 +574,18 @@
               "order": 1
             },
             {
+              "text": "`Bulkhead` — это circuit breaker, работающий поверх одного общего thread pool для всех downstream-сервисов сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CB — временное размыкание цепи, а bulkhead — постоянная изоляция ресурсов; без отдельных пулов analytics всё равно влияет на users API.",
+                "source_of_confusion": "Оба — resilience-паттерны против сбоев downstream, поэтому их отождествляют.",
+                "if_it_were_true": "Тогда одного CB хватало бы для изоляции, но при общем пуле исчерпание потоков затронуло бы все сервисы сразу.",
+                "how_it_should_be": "Bulkhead — это изолированные пулы ресурсов на каждый downstream; CB лишь временно размыкает цепь."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "`Bulkhead` — это единый большой thread pool для всех downstream-сервисов ради эффективности и максимальной утилизации.",
               "correct": false,
               "sections": {
@@ -581,18 +593,6 @@
                 "source_of_confusion": "Общий большой пул кажется эффективнее по утилизации, и его принимают за «правильную» изоляцию.",
                 "if_it_were_true": "Тогда сбой одного downstream не задевал бы остальные, но при общем пуле потоки кончаются для всех.",
                 "how_it_should_be": "Bulkhead требует отдельных пулов на каждый downstream, чтобы failure containment работал."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Bulkhead` — это load balancer для распределения нагрузки между несколькими instance одного сервиса через round-robin.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`LB` распределяет трафик между instance; bulkhead изолирует ресурсы внутри одного instance по downstream.",
-                "source_of_confusion": "И `LB`, и bulkhead связаны с управлением нагрузкой, поэтому уровни путают.",
-                "if_it_were_true": "Тогда добавление instance давало бы изоляцию downstream, но внутри instance пулы всё равно делились бы.",
-                "how_it_should_be": "Bulkhead изолирует ресурсы внутри instance (отдельные пулы); балансировка между instance — это `LB`."
               },
               "label": "D",
               "order": 3
@@ -609,30 +609,6 @@
           "question_text": "Что такое timeout и deadline propagation?",
           "options": [
             {
-              "text": "Достаточно одного внешнего timeout на уровне API Gateway: дальше внутри цепочки он не нужен, downstream-вызовы оборвутся сами вместе с ответом клиенту.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без propagation внутренние сервисы продолжают обработку после ответа клиенту: лишние DB-запросы и waste ресурсов.",
-                "source_of_confusion": "Кажется, что внешний timeout «обрывает всё», но downstream-вызовы об этом не узнают.",
-                "if_it_were_true": "Тогда Service B останавливался бы вместе с ответом клиенту, но без переданного дедлайна он продолжает работу.",
-                "how_it_should_be": "Timeout ставится на каждый вызов, а оставшийся дедлайн передаётся downstream по всей цепочке."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Лучше ставить очень большой timeout 60s на downstream DB-запросы, чтобы медленный запрос всё-таки завершился и ничего не обрывалось зря под нагрузкой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "При slowdown БД все потоки виснут в ожидании 60s → connection pool exhausted → сервис становится unavailable.",
-                "source_of_confusion": "Большой timeout кажется «безопаснее», ведь медленный запрос всё же завершится.",
-                "if_it_were_true": "Тогда длинный timeout повышал бы надёжность, но он лишь дольше держит занятыми потоки и соединения.",
-                "how_it_should_be": "Timeout подбирают коротким и осмысленным, а дедлайн уменьшают вниз по цепочке, чтобы не копить занятые потоки."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Timeout обязателен на каждый external call, а deadline propagation — это проброс оставшегося бюджета времени вниз по цепочке вызовов.",
               "correct": true,
               "sections": {
@@ -642,8 +618,8 @@
                 "edge_cases": "Без propagation внутренние сервисы продолжают обработку после ответа клиенту — лишние DB-запросы и waste ресурсов; слишком большой timeout (60s) на БД исчерпывает connection pool при slowdown.",
                 "related": "[[cloud-native-patterns-interview#Q8]] circuit breaker дополняет timeout; [[cloud-native-patterns-interview#Q9]] retry уважает дедлайн; [[cloud-native-patterns-interview#Q10]] bulkhead защищает пул при долгих вызовах."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Лучше вообще не ставить timeout ради упрощения кода: пусть запрос ждёт ответа сколько нужно, а зависшие соединения освободит сборщик.",
@@ -653,6 +629,30 @@
                 "source_of_confusion": "Отсутствие timeout убирает строки кода, поэтому кажется «проще».",
                 "if_it_were_true": "Тогда зависший вызов сам бы освободился, но без timeout поток держится бесконечно и пул исчерпывается.",
                 "how_it_should_be": "Timeout обязателен на каждом external call, а оставшийся дедлайн передаётся downstream."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Достаточно одного внешнего timeout на уровне API Gateway: дальше внутри цепочки он не нужен, downstream-вызовы оборвутся сами вместе с ответом клиенту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без propagation внутренние сервисы продолжают обработку после ответа клиенту: лишние DB-запросы и waste ресурсов.",
+                "source_of_confusion": "Кажется, что внешний timeout «обрывает всё», но downstream-вызовы об этом не узнают.",
+                "if_it_were_true": "Тогда Service B останавливался бы вместе с ответом клиенту, но без переданного дедлайна он продолжает работу.",
+                "how_it_should_be": "Timeout ставится на каждый вызов, а оставшийся дедлайн передаётся downstream по всей цепочке."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Лучше ставить очень большой timeout 60s на downstream DB-запросы, чтобы медленный запрос всё-таки завершился и ничего не обрывалось зря под нагрузкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При slowdown БД все потоки виснут в ожидании 60s → connection pool exhausted → сервис становится unavailable.",
+                "source_of_confusion": "Большой timeout кажется «безопаснее», ведь медленный запрос всё же завершится.",
+                "if_it_were_true": "Тогда длинный timeout повышал бы надёжность, но он лишь дольше держит занятыми потоки и соединения.",
+                "how_it_should_be": "Timeout подбирают коротким и осмысленным, а дедлайн уменьшают вниз по цепочке, чтобы не копить занятые потоки."
               },
               "label": "D",
               "order": 3
@@ -669,18 +669,6 @@
           "question_text": "Зачем нужны health checks: liveness, readiness, startup?",
           "options": [
             {
-              "text": "Достаточно одного общего endpoint `/health` и для liveness, и для readiness — это проще поддерживать и не вызывает лишних рестартов при сбое БД.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Если liveness проверяет БД, то при slowdown БД `K8s` рестартует pod → каскадный цикл рестартов при временной перегрузке.",
-                "source_of_confusion": "Один endpoint проще завести, и разницу последствий fail (restart vs remove from LB) недооценивают.",
-                "if_it_were_true": "Тогда общий `/health` корректно различал бы «жив» и «готов», но при провале он всегда вёл бы к рестарту.",
-                "how_it_should_be": "Liveness и readiness должны быть разными: liveness — простой self-check, readiness — проверка зависимостей."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Readiness probe не должна проверять зависимости (БД, cache) — достаточно, что процесс отвечает, иначе временный slowdown БД будет убирать pod из трафика.",
               "correct": false,
               "sections": {
@@ -688,6 +676,19 @@
                 "source_of_confusion": "Проверять только сам процесс проще, и зависимости из readiness исключают «для скорости».",
                 "if_it_were_true": "Тогда pod был бы готов сразу после старта, но без коннекта к БД он отдаёт ошибки на реальный трафик.",
                 "how_it_should_be": "Readiness проверяет именно зависимости (БД, cache), чтобы трафик шёл только на полностью готовый pod."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В `Kubernetes` три пробы: `liveness` (fail → restart), `readiness` (fail → убрать из `LB` без рестарта) и `startup` (пауза liveness/readiness до конца старта).",
+              "correct": true,
+              "sections": {
+                "explanation": "Liveness отвечает «жив ли контейнер» и при провале рестартует pod; readiness — «готов ли принимать трафик» и при провале лишь выводит pod из балансировки без рестарта; startup нужен медленно стартующим приложениям и приостанавливает liveness/readiness до завершения старта. Поэтому readiness проверяет зависимости (БД), а liveness держат простым — просто что процесс жив.",
+                "example": "`livenessProbe` на `/health` (процесс жив), `readinessProbe` на `/ready` (проверка соединения с БД), `startupProbe` на `/startup` с `failureThreshold: 30` — 5 минут на прогрев медленного JVM-приложения.",
+                "when_to_apply": "Паттерн применяют так: liveness — простой self-check, readiness — проверка зависимостей, startup — для приложений с долгим warmup (JVM + Spring context).",
+                "edge_cases": "Одинаковый endpoint для liveness и readiness опасен: при slowdown БД `K8s` начнёт рестартовать pod в каскадный цикл; startup с `failureThreshold=3` (30s) убьёт JVM-app, не успев прогреться.",
+                "related": "[[cloud-native-patterns-interview#Q7]] init containers до старта; [[cloud-native-patterns-interview#Q1]] cloud-native resilience; [[cloud-native-patterns-interview#Q13]] stateless для лёгкой замены pod."
               },
               "label": "B",
               "order": 1
@@ -705,14 +706,13 @@
               "order": 2
             },
             {
-              "text": "В `Kubernetes` три пробы: `liveness` (fail → restart), `readiness` (fail → убрать из `LB` без рестарта) и `startup` (пауза liveness/readiness до конца старта).",
-              "correct": true,
+              "text": "Достаточно одного общего endpoint `/health` и для liveness, и для readiness — это проще поддерживать и не вызывает лишних рестартов при сбое БД.",
+              "correct": false,
               "sections": {
-                "explanation": "Liveness отвечает «жив ли контейнер» и при провале рестартует pod; readiness — «готов ли принимать трафик» и при провале лишь выводит pod из балансировки без рестарта; startup нужен медленно стартующим приложениям и приостанавливает liveness/readiness до завершения старта. Поэтому readiness проверяет зависимости (БД), а liveness держат простым — просто что процесс жив.",
-                "example": "`livenessProbe` на `/health` (процесс жив), `readinessProbe` на `/ready` (проверка соединения с БД), `startupProbe` на `/startup` с `failureThreshold: 30` — 5 минут на прогрев медленного JVM-приложения.",
-                "when_to_apply": "Паттерн применяют так: liveness — простой self-check, readiness — проверка зависимостей, startup — для приложений с долгим warmup (JVM + Spring context).",
-                "edge_cases": "Одинаковый endpoint для liveness и readiness опасен: при slowdown БД `K8s` начнёт рестартовать pod в каскадный цикл; startup с `failureThreshold=3` (30s) убьёт JVM-app, не успев прогреться.",
-                "related": "[[cloud-native-patterns-interview#Q7]] init containers до старта; [[cloud-native-patterns-interview#Q1]] cloud-native resilience; [[cloud-native-patterns-interview#Q13]] stateless для лёгкой замены pod."
+                "what_actually": "Если liveness проверяет БД, то при slowdown БД `K8s` рестартует pod → каскадный цикл рестартов при временной перегрузке.",
+                "source_of_confusion": "Один endpoint проще завести, и разницу последствий fail (restart vs remove from LB) недооценивают.",
+                "if_it_were_true": "Тогда общий `/health` корректно различал бы «жив» и «готов», но при провале он всегда вёл бы к рестарту.",
+                "how_it_should_be": "Liveness и readiness должны быть разными: liveness — простой self-check, readiness — проверка зависимостей."
               },
               "label": "D",
               "order": 3
@@ -729,19 +729,6 @@
           "question_text": "Почему stateless-приложения важны в cloud-native?",
           "options": [
             {
-              "text": "Stateless-приложение не хранит локального состояния: каждый запрос обрабатывается независимо, а состояние вынесено во внешний store.",
-              "correct": true,
-              "sections": {
-                "explanation": "Состояние выносят во внешнее хранилище — БД, кэш `Redis`, объектное `S3`, session store. Если состояния нет в памяти процесса, любой instance взаимозаменяем: упал — поднимаем новый, нужно больше throughput — клонируем. Это даёт лёгкое horizontal scaling, простую замену инстансов, балансировку любого запроса на любой instance и rolling updates без disruption.",
-                "example": "Web-app кладёт сессию в `Redis` (session_id в cookie) или использует JWT; при rolling update любой из 10 подов обслужит запрос, а упавший pod заменяется без потери данных.",
-                "when_to_apply": "Stateless-дизайн применяют для всех production web-приложений: состояние выносят в `Redis`/БД, чтобы горизонтальное масштабирование и rolling update работали бесшовно.",
-                "edge_cases": "Состояние в памяти требует sticky sessions и теряется при падении instance; при этом stateless ≠ «нет сессий» — сессии возможны через externalized store или JWT.",
-                "related": "[[cloud-native-patterns-interview#Q14]] session externalization; [[cloud-native-patterns-interview#Q2]] stateless-процессы в 12-factor."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Stateless-приложения проще масштабировать вертикально (bigger VM), а не горизонтально — поэтому в cloud-native их и предпочитают за простоту.",
               "correct": false,
               "sections": {
@@ -750,8 +737,8 @@
                 "if_it_were_true": "Тогда выгода stateless была бы в больших VM, но смысл — именно в добавлении одинаковых instance.",
                 "how_it_should_be": "Stateless обеспечивает горизонтальное масштабирование: любой instance обслуживает любой запрос."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Sticky sessions полностью решают проблему stateful-приложений при масштабировании, привязывая пользователя к одному инстансу без потерь.",
@@ -762,8 +749,8 @@
                 "if_it_were_true": "Тогда падение instance не задевало бы пользователя, но при sticky-привязке его сессия теряется вместе с подом.",
                 "how_it_should_be": "Состояние выносят во внешний store, а instance делают взаимозаменяемыми — sticky sessions лишь обходной костыль."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Stateless-приложения принципиально не могут иметь пользовательских сессий, поэтому для авторизации всегда переходят к stateful-дизайну.",
@@ -773,6 +760,19 @@
                 "source_of_confusion": "«Без состояния» буквально понимают как «без сессий», смешивая локальное состояние и сессию вообще.",
                 "if_it_were_true": "Тогда ни один stateless-сервис не поддерживал бы логин, но JWT и `Redis`-сессии это опровергают.",
                 "how_it_should_be": "Stateless означает отсутствие локального состояния; сессии хранятся во внешнем store или в самом токене."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Stateless-приложение не хранит локального состояния: каждый запрос обрабатывается независимо, а состояние вынесено во внешний store.",
+              "correct": true,
+              "sections": {
+                "explanation": "Состояние выносят во внешнее хранилище — БД, кэш `Redis`, объектное `S3`, session store. Если состояния нет в памяти процесса, любой instance взаимозаменяем: упал — поднимаем новый, нужно больше throughput — клонируем. Это даёт лёгкое horizontal scaling, простую замену инстансов, балансировку любого запроса на любой instance и rolling updates без disruption.",
+                "example": "Web-app кладёт сессию в `Redis` (session_id в cookie) или использует JWT; при rolling update любой из 10 подов обслужит запрос, а упавший pod заменяется без потери данных.",
+                "when_to_apply": "Stateless-дизайн применяют для всех production web-приложений: состояние выносят в `Redis`/БД, чтобы горизонтальное масштабирование и rolling update работали бесшовно.",
+                "edge_cases": "Состояние в памяти требует sticky sessions и теряется при падении instance; при этом stateless ≠ «нет сессий» — сессии возможны через externalized store или JWT.",
+                "related": "[[cloud-native-patterns-interview#Q14]] session externalization; [[cloud-native-patterns-interview#Q2]] stateless-процессы в 12-factor."
               },
               "label": "D",
               "order": 3
@@ -789,16 +789,28 @@
           "question_text": "Как реализуется session state externalization?",
           "options": [
             {
-              "text": "Сессию правильно хранить в памяти каждого сервера ради максимальной производительности — внешний store только добавляет сетевую задержку.",
+              "text": "Externalization сессии возможна только через реляционную БД с блокировками строк — кэши вроде `Redis` для этого недостаточно надёжны.",
               "correct": false,
               "sections": {
-                "what_actually": "Сессия в памяти означает, что только этот instance обслужит пользователя; при его падении сессия теряется, scaling ломается.",
-                "source_of_confusion": "Память быстрее внешнего стора, поэтому локальное хранение кажется производительнее.",
-                "if_it_were_true": "Тогда любой instance обслужил бы пользователя, но без shared store балансировщик не сможет переключить его на другой pod.",
-                "how_it_should_be": "Сессию выносят в shared store (`Redis`) или в JWT, чтобы любой instance мог её обработать."
+                "what_actually": "Сессии чаще хранят в `Redis` (быстрый KV) или вовсе в JWT; реляционная БД с блокировками — не требование и обычно избыточна.",
+                "source_of_confusion": "Любое «внешнее хранилище» по привычке ассоциируют именно с SQL-БД.",
+                "if_it_were_true": "Тогда session store всегда требовал бы транзакций, но `Redis` хранит сессии без реляционной модели.",
+                "how_it_should_be": "Сессии выносят в `Redis` или в подписанный JWT; реляционная БД — лишь один из возможных, не обязательный вариант."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "JWT можно мгновенно отозвать в любой момент, поэтому refresh-токены и `Redis` для revocation не нужны — достаточно одного самодостаточного токена.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JWT нельзя легко отозвать — он валиден до истечения; для revocation нужен refresh-токен + проверка в `Redis`.",
+                "source_of_confusion": "JWT подписан и проверяется без lookup, и из этого делают вывод о лёгкости отзыва.",
+                "if_it_were_true": "Тогда скомпрометированный JWT гасился бы сразу, но без серверного состояния он живёт до своего `exp`.",
+                "how_it_should_be": "Для отзыва комбинируют короткий JWT-access и refresh-токен с проверкой статуса в `Redis`."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Сессию выносят из памяти сервера в shared store: либо server-side сессии в `Redis` (cookie с `session_id`), либо stateless через подписанный JWT.",
@@ -810,29 +822,17 @@
                 "edge_cases": "JWT не отозвать просто (он валиден до истечения), поэтому в 2025 комбинируют короткий JWT-access + refresh-токен с проверкой в `Redis` для отзыва.",
                 "related": "[[cloud-native-patterns-interview#Q13]] зачем stateless."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "JWT можно мгновенно отозвать в любой момент, поэтому refresh-токены и `Redis` для revocation не нужны — достаточно одного самодостаточного токена.",
-              "correct": false,
-              "sections": {
-                "what_actually": "JWT нельзя легко отозвать — он валиден до истечения; для revocation нужен refresh-токен + проверка в `Redis`.",
-                "source_of_confusion": "JWT подписан и проверяется без lookup, и из этого делают вывод о лёгкости отзыва.",
-                "if_it_were_true": "Тогда скомпрометированный JWT гасился бы сразу, но без серверного состояния он живёт до своего `exp`.",
-                "how_it_should_be": "Для отзыва комбинируют короткий JWT-access и refresh-токен с проверкой статуса в `Redis`."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Externalization сессии возможна только через реляционную БД с блокировками строк — кэши вроде `Redis` для этого недостаточно надёжны.",
+              "text": "Сессию правильно хранить в памяти каждого сервера ради максимальной производительности — внешний store только добавляет сетевую задержку.",
               "correct": false,
               "sections": {
-                "what_actually": "Сессии чаще хранят в `Redis` (быстрый KV) или вовсе в JWT; реляционная БД с блокировками — не требование и обычно избыточна.",
-                "source_of_confusion": "Любое «внешнее хранилище» по привычке ассоциируют именно с SQL-БД.",
-                "if_it_were_true": "Тогда session store всегда требовал бы транзакций, но `Redis` хранит сессии без реляционной модели.",
-                "how_it_should_be": "Сессии выносят в `Redis` или в подписанный JWT; реляционная БД — лишь один из возможных, не обязательный вариант."
+                "what_actually": "Сессия в памяти означает, что только этот instance обслужит пользователя; при его падении сессия теряется, scaling ломается.",
+                "source_of_confusion": "Память быстрее внешнего стора, поэтому локальное хранение кажется производительнее.",
+                "if_it_were_true": "Тогда любой instance обслужил бы пользователя, но без shared store балансировщик не сможет переключить его на другой pod.",
+                "how_it_should_be": "Сессию выносят в shared store (`Redis`) или в JWT, чтобы любой instance мог её обработать."
               },
               "label": "D",
               "order": 3
@@ -849,13 +849,14 @@
           "question_text": "Что такое leader election и зачем оно нужно?",
           "options": [
             {
-              "text": "`Leader election` — это load balancer, равномерно распределяющий запросы между всеми instance, чтобы ни один не был перегружен задачами.",
-              "correct": false,
+              "text": "`Leader election` — выбор одного instance, который эксклюзивно выполняет задачу, тогда как остальные ждут в standby и подхватывают роль при сбое.",
+              "correct": true,
               "sections": {
-                "what_actually": "`LB` как раз раздаёт работу всем instance, а leader election наоборот выделяет одного эксклюзивного исполнителя, остальные простаивают.",
-                "source_of_confusion": "И `LB`, и leader election управляют тем, какой instance что делает, поэтому распределение путают с выбором единственного.",
-                "if_it_were_true": "Тогда cron-job запускался бы на всех репликах сразу, но именно этого leader election и избегает, оставляя одного исполнителя.",
-                "how_it_should_be": "Leader election выбирает один instance для эксклюзивной задачи; равномерное распределение запросов — это работа load balancer."
+                "explanation": "Реплики конкурируют за lease, и владелец становится лидером; при его падении лидерство автоматически переходит к другому. Нужно для cron-job'ов (запускаются только на лидере), миграций БД, прогрева кэша и координации. Инструменты: `Kubernetes` Lease/`ConfigMap`, `etcd`, `ZooKeeper`, `Consul`, `Redis Redlock` (с осторожностью).",
+                "example": "В `Kubernetes` через объект Lease реплики борются за лидерство: только текущий лидер запускает `do_cron_job()` каждые 60 секунд, а остальные поды простаивают, готовые подхватить роль при сбое.",
+                "when_to_apply": "Паттерн применяют, когда задачу должен выполнять ровно один instance из многих: периодические job'ы, миграции схемы, фоновая координация в реплицированном сервисе.",
+                "edge_cases": "`Redis Redlock` для leader election применяют осторожно: при сетевых разрывах возможны два лидера (split-brain); строгие гарантии дают lease-based `etcd` или `ZooKeeper`.",
+                "related": "[[cloud-native-patterns-interview#Q16]] distributed locking как смежный механизм; [[cloud-native-patterns-interview#Q13]] stateless-реплики, среди которых выбирается лидер; [[cloud-native-patterns-interview#Q3]] etcd и Consul как CNCF-инструменты."
               },
               "label": "A",
               "order": 0
@@ -873,14 +874,13 @@
               "order": 1
             },
             {
-              "text": "`Leader election` — выбор одного instance, который эксклюзивно выполняет задачу, тогда как остальные ждут в standby и подхватывают роль при сбое.",
-              "correct": true,
+              "text": "`Leader election` — это load balancer, равномерно распределяющий запросы между всеми instance, чтобы ни один не был перегружен задачами.",
+              "correct": false,
               "sections": {
-                "explanation": "Реплики конкурируют за lease, и владелец становится лидером; при его падении лидерство автоматически переходит к другому. Нужно для cron-job'ов (запускаются только на лидере), миграций БД, прогрева кэша и координации. Инструменты: `Kubernetes` Lease/`ConfigMap`, `etcd`, `ZooKeeper`, `Consul`, `Redis Redlock` (с осторожностью).",
-                "example": "В `Kubernetes` через объект Lease реплики борются за лидерство: только текущий лидер запускает `do_cron_job()` каждые 60 секунд, а остальные поды простаивают, готовые подхватить роль при сбое.",
-                "when_to_apply": "Паттерн применяют, когда задачу должен выполнять ровно один instance из многих: периодические job'ы, миграции схемы, фоновая координация в реплицированном сервисе.",
-                "edge_cases": "`Redis Redlock` для leader election применяют осторожно: при сетевых разрывах возможны два лидера (split-brain); строгие гарантии дают lease-based `etcd` или `ZooKeeper`.",
-                "related": "[[cloud-native-patterns-interview#Q16]] distributed locking как смежный механизм; [[cloud-native-patterns-interview#Q13]] stateless-реплики, среди которых выбирается лидер; [[cloud-native-patterns-interview#Q3]] etcd и Consul как CNCF-инструменты."
+                "what_actually": "`LB` как раз раздаёт работу всем instance, а leader election наоборот выделяет одного эксклюзивного исполнителя, остальные простаивают.",
+                "source_of_confusion": "И `LB`, и leader election управляют тем, какой instance что делает, поэтому распределение путают с выбором единственного.",
+                "if_it_were_true": "Тогда cron-job запускался бы на всех репликах сразу, но именно этого leader election и избегает, оставляя одного исполнителя.",
+                "how_it_should_be": "Leader election выбирает один instance для эксклюзивной задачи; равномерное распределение запросов — это работа load balancer."
               },
               "label": "C",
               "order": 2
@@ -909,6 +909,19 @@
           "question_text": "Что такое distributed locking и как его реализуют?",
           "options": [
             {
+              "text": "`Distributed lock` — координированный mutex поверх нескольких instance, чтобы критическую секцию выполнял только один из них.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реплики конкурируют за ключ во внешнем сторе с TTL, владелец получает право на критическую секцию и освобождает лок в `finally`. Реализации: `Redis` (`SET NX EX`) или `Redlock`, `etcd` (strong consistency, lease-based), `ZooKeeper` (ephemeral nodes), БД (`SELECT ... FOR UPDATE`). Подвох: распределённые локи тяжелы и хрупки — где возможно, лучше проектировать идемпотентно и обходиться без них.",
+                "example": "`redis.set(key, \"locked\", nx=True, ex=60)` захватывает лок с TTL 60 секунд; задача выполняется только при успешном захвате, а в блоке `finally` ключ удаляется, чтобы освободить лок.",
+                "when_to_apply": "Паттерн применяют для координации доступа к общему ресурсу из нескольких instance, когда идемпотентный дизайн невозможен и нужна явная взаимоисключающая секция.",
+                "edge_cases": "Распределённые локи хрупки: истёкший TTL во время долгой операции отдаёт лок второму держателю, поэтому `Redlock` спорен, а строгие гарантии дают lease-based `etcd`/`ZooKeeper`.",
+                "related": "[[cloud-native-patterns-interview#Q15]] leader election поверх того же примитива; [[cloud-native-patterns-interview#Q9]] идемпотентность как альтернатива локам; [[cloud-native-patterns-interview#Q3]] etcd и ZooKeeper как инструменты."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`Distributed lock` — это локальный `synchronized`-блок JVM, который автоматически распространяется на все поды одного кластера через сеть.",
               "correct": false,
               "sections": {
@@ -916,18 +929,6 @@
                 "source_of_confusion": "`synchronized` — привычный способ взаимного исключения внутри процесса, отсюда соблазн считать его работающим и между подами.",
                 "if_it_were_true": "Тогда два пода не входили бы в критическую секцию одновременно, но JVM-монитор о другом поде ничего не знает.",
                 "how_it_should_be": "Distributed lock держится во внешнем сторе (`Redis`/`etcd`), видимом всем подам; `synchronized` ограничен одной JVM."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Distributed lock` всегда даёт абсолютную надёжность и согласованность, поэтому его следует применять как можно шире в любой критической секции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Распределённые локи хрупки: при истечении TTL или сетевых сбоях возможны два держателя, поэтому их применяют точечно, а не повсеместно.",
-                "source_of_confusion": "Слово «lock» внушает ощущение строгой гарантии, и надёжность переоценивают.",
-                "if_it_were_true": "Тогда лок никогда не приводил бы к двойному исполнению, но истёкший TTL во время долгой задачи как раз это и вызывает.",
-                "how_it_should_be": "Локов избегают где возможно через идемпотентный дизайн, а применяют точечно с осознанием рисков TTL и split-brain."
               },
               "label": "B",
               "order": 1
@@ -945,14 +946,13 @@
               "order": 2
             },
             {
-              "text": "`Distributed lock` — координированный mutex поверх нескольких instance, чтобы критическую секцию выполнял только один из них.",
-              "correct": true,
+              "text": "`Distributed lock` всегда даёт абсолютную надёжность и согласованность, поэтому его следует применять как можно шире в любой критической секции.",
+              "correct": false,
               "sections": {
-                "explanation": "Реплики конкурируют за ключ во внешнем сторе с TTL, владелец получает право на критическую секцию и освобождает лок в `finally`. Реализации: `Redis` (`SET NX EX`) или `Redlock`, `etcd` (strong consistency, lease-based), `ZooKeeper` (ephemeral nodes), БД (`SELECT ... FOR UPDATE`). Подвох: распределённые локи тяжелы и хрупки — где возможно, лучше проектировать идемпотентно и обходиться без них.",
-                "example": "`redis.set(key, \"locked\", nx=True, ex=60)` захватывает лок с TTL 60 секунд; задача выполняется только при успешном захвате, а в блоке `finally` ключ удаляется, чтобы освободить лок.",
-                "when_to_apply": "Паттерн применяют для координации доступа к общему ресурсу из нескольких instance, когда идемпотентный дизайн невозможен и нужна явная взаимоисключающая секция.",
-                "edge_cases": "Распределённые локи хрупки: истёкший TTL во время долгой операции отдаёт лок второму держателю, поэтому `Redlock` спорен, а строгие гарантии дают lease-based `etcd`/`ZooKeeper`.",
-                "related": "[[cloud-native-patterns-interview#Q15]] leader election поверх того же примитива; [[cloud-native-patterns-interview#Q9]] идемпотентность как альтернатива локам; [[cloud-native-patterns-interview#Q3]] etcd и ZooKeeper как инструменты."
+                "what_actually": "Распределённые локи хрупки: при истечении TTL или сетевых сбоях возможны два держателя, поэтому их применяют точечно, а не повсеместно.",
+                "source_of_confusion": "Слово «lock» внушает ощущение строгой гарантии, и надёжность переоценивают.",
+                "if_it_were_true": "Тогда лок никогда не приводил бы к двойному исполнению, но истёкший TTL во время долгой задачи как раз это и вызывает.",
+                "how_it_should_be": "Локов избегают где возможно через идемпотентный дизайн, а применяют точечно с осознанием рисков TTL и split-brain."
               },
               "label": "D",
               "order": 3
@@ -969,29 +969,16 @@
           "question_text": "Чем горизонтальное масштабирование отличается от вертикального?",
           "options": [
             {
-              "text": "Вертикальное (scale-up) — мощнее одна машина, упирается в потолок VM; горизонтальное (scale-out) — больше машин, почти безгранично, но требует stateless.",
-              "correct": true,
+              "text": "Горизонтальное масштабирование работает с любым приложением независимо от хранения состояния — клонировать stateful-инстансы так же легко, как stateless.",
+              "correct": false,
               "sections": {
-                "explanation": "Вертикальное увеличивает CPU/RAM одной машины: упирается в потолок размера VM и требует рестарта, зато нет проблем с распределением трафика — инстанс один. Горизонтальное добавляет машины: практически безгранично, без downtime (rolling), но требует stateless-приложений. В cloud-native по умолчанию выбирают горизонтальное, например через `K8s HPA`.",
-                "example": "`K8s HPA` с `minReplicas: 2`, `maxReplicas: 100` и target `averageUtilization: 70` по CPU автоматически добавляет поды при росте нагрузки — это горизонтальное масштабирование без ручного увеличения размера машины.",
-                "when_to_apply": "Горизонтальное масштабирование применяют для stateless web-сервисов под переменную нагрузку; вертикальное — когда приложение нельзя клонировать (stateful, лицензионные ограничения) и проще дать больше ресурсов одной машине.",
-                "edge_cases": "Вертикальное масштабирование имеет жёсткий потолок (самый большой тип VM) и требует рестарта; горизонтальное бессмысленно для stateful-приложения с локальным состоянием — реплики не будут взаимозаменяемы.",
-                "related": "[[cloud-native-patterns-interview#Q18]] триггеры авто-масштабирования; [[cloud-native-patterns-interview#Q13]] stateless как условие scale-out; [[cloud-native-patterns-interview#Q19]] reactive vs predictive scaling."
+                "what_actually": "Горизонтальное масштабирование требует stateless-приложения: при локальном состоянии новые реплики не взаимозаменяемы и трафик нельзя свободно балансировать.",
+                "source_of_confusion": "Кажется, что «добавить ещё под» всегда возможно, и условие stateless упускают.",
+                "if_it_were_true": "Тогда stateful-монолит с сессией в памяти масштабировался бы клонированием, но пользователь терял бы сессию при смене пода.",
+                "how_it_should_be": "Для горизонтального масштабирования приложение должно быть stateless, иначе нужны sticky sessions и эффект теряется."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Горизонтальное и вертикальное масштабирование — это одно и то же, просто разные названия добавления ресурсов; на практике их выбирают как попало.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это разные подходы: вертикальное увеличивает мощность одной машины, горизонтальное добавляет новые машины с разными требованиями к stateless-дизайну.",
-                "source_of_confusion": "Оба называются «масштабированием» и повышают capacity, поэтому их ошибочно отождествляют.",
-                "if_it_were_true": "Тогда не было бы потолка размера VM, но вертикальное упирается в него, а горизонтальное — нет.",
-                "how_it_should_be": "Вертикальное — это scale-up одной машины; горизонтальное — scale-out добавлением реплик; это принципиально разные стратегии."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "В cloud-native по умолчанию предпочитают вертикальное масштабирование, потому что оно проще и не требует stateless-приложений и балансировки.",
@@ -1002,17 +989,30 @@
                 "if_it_were_true": "Тогда `HPA` был бы не нужен, но именно горизонтальный авто-скейлинг — основной инструмент cloud-native.",
                 "how_it_should_be": "Дефолт cloud-native — горизонтальное масштабирование stateless-приложений; вертикальное оставляют как исключение."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Вертикальное (scale-up) — мощнее одна машина, упирается в потолок VM; горизонтальное (scale-out) — больше машин, почти безгранично, но требует stateless.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вертикальное увеличивает CPU/RAM одной машины: упирается в потолок размера VM и требует рестарта, зато нет проблем с распределением трафика — инстанс один. Горизонтальное добавляет машины: практически безгранично, без downtime (rolling), но требует stateless-приложений. В cloud-native по умолчанию выбирают горизонтальное, например через `K8s HPA`.",
+                "example": "`K8s HPA` с `minReplicas: 2`, `maxReplicas: 100` и target `averageUtilization: 70` по CPU автоматически добавляет поды при росте нагрузки — это горизонтальное масштабирование без ручного увеличения размера машины.",
+                "when_to_apply": "Горизонтальное масштабирование применяют для stateless web-сервисов под переменную нагрузку; вертикальное — когда приложение нельзя клонировать (stateful, лицензионные ограничения) и проще дать больше ресурсов одной машине.",
+                "edge_cases": "Вертикальное масштабирование имеет жёсткий потолок (самый большой тип VM) и требует рестарта; горизонтальное бессмысленно для stateful-приложения с локальным состоянием — реплики не будут взаимозаменяемы.",
+                "related": "[[cloud-native-patterns-interview#Q18]] триггеры авто-масштабирования; [[cloud-native-patterns-interview#Q13]] stateless как условие scale-out; [[cloud-native-patterns-interview#Q19]] reactive vs predictive scaling."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Горизонтальное масштабирование работает с любым приложением независимо от хранения состояния — клонировать stateful-инстансы так же легко, как stateless.",
+              "text": "Горизонтальное и вертикальное масштабирование — это одно и то же, просто разные названия добавления ресурсов; на практике их выбирают как попало.",
               "correct": false,
               "sections": {
-                "what_actually": "Горизонтальное масштабирование требует stateless-приложения: при локальном состоянии новые реплики не взаимозаменяемы и трафик нельзя свободно балансировать.",
-                "source_of_confusion": "Кажется, что «добавить ещё под» всегда возможно, и условие stateless упускают.",
-                "if_it_were_true": "Тогда stateful-монолит с сессией в памяти масштабировался бы клонированием, но пользователь терял бы сессию при смене пода.",
-                "how_it_should_be": "Для горизонтального масштабирования приложение должно быть stateless, иначе нужны sticky sessions и эффект теряется."
+                "what_actually": "Это разные подходы: вертикальное увеличивает мощность одной машины, горизонтальное добавляет новые машины с разными требованиями к stateless-дизайну.",
+                "source_of_confusion": "Оба называются «масштабированием» и повышают capacity, поэтому их ошибочно отождествляют.",
+                "if_it_were_true": "Тогда не было бы потолка размера VM, но вертикальное упирается в него, а горизонтальное — нет.",
+                "how_it_should_be": "Вертикальное — это scale-up одной машины; горизонтальное — scale-out добавлением реплик; это принципиально разные стратегии."
               },
               "label": "D",
               "order": 3
@@ -1041,6 +1041,18 @@
               "order": 0
             },
             {
+              "text": "`KEDA` поддерживает масштабирование исключительно по CPU и не работает с очередями сообщений, поэтому для event-driven нагрузки он бесполезен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`KEDA` создан именно для event-driven источников: `Kafka`, `RabbitMQ`, `Redis`, облачные очереди — 30+ scalers, а не только CPU.",
+                "source_of_confusion": "Любой автоскейлер ассоциируют с CPU-метрикой, и специфику `KEDA` упускают.",
+                "if_it_were_true": "Тогда `KEDA` дублировал бы обычный `HPA`, но его ценность как раз в масштабировании по бэклогу очередей.",
+                "how_it_should_be": "`KEDA` масштабирует по 30+ событийным источникам, включая очереди; CPU — лишь один из множества scalers."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Триггеры: CPU/memory utilization, custom-метрики (глубина очереди, request rate), external (Kafka lag, размер SQS) и scheduled под известные паттерны.",
               "correct": true,
               "sections": {
@@ -1050,8 +1062,8 @@
                 "edge_cases": "CPU-триггер плохо работает для I/O-bound воркеров: очередь растёт, а CPU низкий, и масштабирование не сработает — для таких случаев нужны custom/external-метрики через `KEDA`.",
                 "related": "[[cloud-native-patterns-interview#Q17]] горизонтальное масштабирование, которым управляют триггеры; [[cloud-native-patterns-interview#Q19]] reactive vs predictive scaling; [[cloud-native-patterns-interview#Q20]] метрики как источник триггеров."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Авто-масштабирование можно настроить только вручную и оно не реагирует на метрики в реальном времени — инстансы добавляет оператор по своему усмотрению.",
@@ -1061,18 +1073,6 @@
                 "source_of_confusion": "Ручной scheduled-скейлинг существует, поэтому весь авто-скейлинг ошибочно считают ручным.",
                 "if_it_were_true": "Тогда при всплеске нагрузки кто-то должен был бы вручную добавлять поды, но `HPA` делает это сам по порогу.",
                 "how_it_should_be": "Авто-масштабирование автоматически следит за метриками и меняет реплики; ручное scheduled — лишь дополнение."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`KEDA` поддерживает масштабирование исключительно по CPU и не работает с очередями сообщений, поэтому для event-driven нагрузки он бесполезен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`KEDA` создан именно для event-driven источников: `Kafka`, `RabbitMQ`, `Redis`, облачные очереди — 30+ scalers, а не только CPU.",
-                "source_of_confusion": "Любой автоскейлер ассоциируют с CPU-метрикой, и специфику `KEDA` упускают.",
-                "if_it_were_true": "Тогда `KEDA` дублировал бы обычный `HPA`, но его ценность как раз в масштабировании по бэклогу очередей.",
-                "how_it_should_be": "`KEDA` масштабирует по 30+ событийным источникам, включая очереди; CPU — лишь один из множества scalers."
               },
               "label": "D",
               "order": 3
@@ -1161,13 +1161,14 @@
               "order": 0
             },
             {
-              "text": "Metrics и logs — это синонимы, просто разные форматы записи одного и того же события, поэтому хранить оба смысла нет, достаточно выбрать один формат.",
-              "correct": false,
+              "text": "Три столпа observability: metrics — числовые агрегаты, high volume и low cardinality; logs — события с контекстом; traces — путь запроса, обычно сэмплируются.",
+              "correct": true,
               "sections": {
-                "what_actually": "Метрики — числовые агрегаты (low cardinality), логи — дискретные события с контекстом (high cardinality); это разные по природе сигналы.",
-                "source_of_confusion": "И метрики, и логи генерируются приложением как телеметрия, поэтому их ошибочно считают одним и тем же.",
-                "if_it_were_true": "Тогда нельзя было бы дёшево агрегировать метрики, ведь логи дороги при высокой кардинальности.",
-                "how_it_should_be": "Метрики и логи различны: первые — числовые агрегаты, вторые — событийный контекст; они дополняют, а не дублируют друг друга."
+                "explanation": "Metrics — числовые агрегированные данные (counters, gauges, histograms; `Prometheus`, `Datadog`), high volume и low cardinality; они показывают, ЧТО пошло не так. Logs — дискретные события с контекстом (`ELK`, `Loki`), high volume и high cardinality; они объясняют ПОЧЕМУ. Traces — пути запроса через сервисы (`Jaeger`, `Zipkin`, `X-Ray`), обычно сэмплируются; они показывают ГДЕ. Все три дополняют друг друга, и production-система нуждается во всех.",
+                "example": "Алерт `Prometheus` ловит рост error rate (metrics), трейс в `Jaeger` указывает, что тормозит вызов payment-сервиса, а лог в `Loki` по тому же `traceId` показывает конкретный stack trace исключения.",
+                "when_to_apply": "Все три применяют вместе в любой production-системе: метрики — для алертов и дашбордов, логи — для разбора инцидента, трейсы — для поиска узкого места в распределённой цепочке.",
+                "edge_cases": "Трейсы обычно сэмплируются (не все запросы) ради объёма, поэтому конкретный редкий запрос может не попасть в трейсинг; метрики дёшевы по cardinality, а логи дороги при высокой кардинальности.",
+                "related": "[[cloud-native-patterns-interview#Q21]] OpenTelemetry как единый стандарт для трёх столпов; [[cloud-native-patterns-interview#Q22]] service mesh как источник телеметрии; [[cloud-native-patterns-interview#Q12]] health checks и сигналы готовности."
               },
               "label": "B",
               "order": 1
@@ -1185,14 +1186,13 @@
               "order": 2
             },
             {
-              "text": "Три столпа observability: metrics — числовые агрегаты, high volume и low cardinality; logs — события с контекстом; traces — путь запроса, обычно сэмплируются.",
-              "correct": true,
+              "text": "Metrics и logs — это синонимы, просто разные форматы записи одного и того же события, поэтому хранить оба смысла нет, достаточно выбрать один формат.",
+              "correct": false,
               "sections": {
-                "explanation": "Metrics — числовые агрегированные данные (counters, gauges, histograms; `Prometheus`, `Datadog`), high volume и low cardinality; они показывают, ЧТО пошло не так. Logs — дискретные события с контекстом (`ELK`, `Loki`), high volume и high cardinality; они объясняют ПОЧЕМУ. Traces — пути запроса через сервисы (`Jaeger`, `Zipkin`, `X-Ray`), обычно сэмплируются; они показывают ГДЕ. Все три дополняют друг друга, и production-система нуждается во всех.",
-                "example": "Алерт `Prometheus` ловит рост error rate (metrics), трейс в `Jaeger` указывает, что тормозит вызов payment-сервиса, а лог в `Loki` по тому же `traceId` показывает конкретный stack trace исключения.",
-                "when_to_apply": "Все три применяют вместе в любой production-системе: метрики — для алертов и дашбордов, логи — для разбора инцидента, трейсы — для поиска узкого места в распределённой цепочке.",
-                "edge_cases": "Трейсы обычно сэмплируются (не все запросы) ради объёма, поэтому конкретный редкий запрос может не попасть в трейсинг; метрики дёшевы по cardinality, а логи дороги при высокой кардинальности.",
-                "related": "[[cloud-native-patterns-interview#Q21]] OpenTelemetry как единый стандарт для трёх столпов; [[cloud-native-patterns-interview#Q22]] service mesh как источник телеметрии; [[cloud-native-patterns-interview#Q12]] health checks и сигналы готовности."
+                "what_actually": "Метрики — числовые агрегаты (low cardinality), логи — дискретные события с контекстом (high cardinality); это разные по природе сигналы.",
+                "source_of_confusion": "И метрики, и логи генерируются приложением как телеметрия, поэтому их ошибочно считают одним и тем же.",
+                "if_it_were_true": "Тогда нельзя было бы дёшево агрегировать метрики, ведь логи дороги при высокой кардинальности.",
+                "how_it_should_be": "Метрики и логи различны: первые — числовые агрегаты, вторые — событийный контекст; они дополняют, а не дублируют друг друга."
               },
               "label": "D",
               "order": 3
@@ -1222,18 +1222,6 @@
               "order": 0
             },
             {
-              "text": "`OpenTelemetry` — это проприетарный agent `Datadog`, работающий только с их backend и требующий отдельной лицензии на каждый язык SDK.",
-              "correct": false,
-              "sections": {
-                "what_actually": "OTel — vendor-neutral стандарт CNCF, а не агент `Datadog`: его телеметрию можно направить в любой backend, включая `Honeycomb` и `Jaeger`.",
-                "source_of_confusion": "`Datadog` поддерживает приём OTel-данных, поэтому OTel путают с его собственным агентом.",
-                "if_it_were_true": "Тогда смена backend требовала бы переписывания инструментации, но смысл OTel как раз в отсутствии этой привязки.",
-                "how_it_should_be": "OTel — нейтральный к вендору стандарт; `Datadog` — лишь один из множества возможных приёмников его данных."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`OpenTelemetry` поддерживает только трейсы и не работает с метриками и логами, для них нужен отдельный сторонний коллектор.",
               "correct": false,
               "sections": {
@@ -1242,8 +1230,8 @@
                 "if_it_were_true": "Тогда для метрик пришлось бы держать отдельный стандарт, но OTel metrics уже stable.",
                 "how_it_should_be": "OTel — единый стандарт для трёх столпов; трейсы лишь самый зрелый из них, но не единственный."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`OpenTelemetry` требует переписывать инструментацию приложения при каждой смене observability-backend, потому что SDK жёстко привязан к формату вендора.",
@@ -1253,6 +1241,18 @@
                 "source_of_confusion": "Привычка к vendor-specific агентам, которые меняются при смене вендора, переносится на OTel.",
                 "if_it_were_true": "Тогда исчезало бы ключевое преимущество OTel, но именно развязка инструментации и backend'а — его суть.",
                 "how_it_should_be": "При OTel смена backend меняет лишь конфиг Collector; инструментация в коде остаётся неизменной."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`OpenTelemetry` — это проприетарный agent `Datadog`, работающий только с их backend и требующий отдельной лицензии на каждый язык SDK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OTel — vendor-neutral стандарт CNCF, а не агент `Datadog`: его телеметрию можно направить в любой backend, включая `Honeycomb` и `Jaeger`.",
+                "source_of_confusion": "`Datadog` поддерживает приём OTel-данных, поэтому OTel путают с его собственным агентом.",
+                "if_it_were_true": "Тогда смена backend требовала бы переписывания инструментации, но смысл OTel как раз в отсутствии этой привязки.",
+                "how_it_should_be": "OTel — нейтральный к вендору стандарт; `Datadog` — лишь один из множества возможных приёмников его данных."
               },
               "label": "D",
               "order": 3
@@ -1269,6 +1269,30 @@
           "question_text": "Что такое service mesh (Istio, Linkerd)?",
           "options": [
             {
+              "text": "`Service mesh` устанавливается без накладных расходов и всегда обязателен в любом cloud-native проекте независимо от числа сервисов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mesh добавляет latency и ops-сложность из-за хопа через sidecar, поэтому в малых системах он не обязателен, а часто берут лишь mTLS+телеметрию.",
+                "source_of_confusion": "Польза mesh (mTLS, телеметрия) заметна, и связанные с ним издержки склонны игнорировать.",
+                "if_it_were_true": "Тогда mesh ставили бы в каждый проект без раздумий, но trade-off latency/сложности этому препятствует.",
+                "how_it_should_be": "Service mesh оправдан при большом числе сервисов; для малых систем его сложность обычно избыточна."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Service mesh` обязательно требует sidecar-прокси и не может работать без них, поэтому eBPF-реализации в принципе невозможны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sidecar — частый, но не единственный путь: `Cilium Service Mesh` реализует mesh на eBPF без отдельных sidecar-прокси.",
+                "source_of_confusion": "Классические `Istio`/`Linkerd` строятся на sidecar'ах, поэтому их считают обязательным условием.",
+                "if_it_were_true": "Тогда sidecarless-подход был бы невозможен, но `Cilium` на eBPF доказывает обратное.",
+                "how_it_should_be": "Mesh реализуем и без sidecar (eBPF в `Cilium`); sidecar-прокси — лишь одна из возможных архитектур."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "`Service mesh` — это просто API Gateway для входящего трафика от внешних клиентов, без участия во внутренней service-to-service коммуникации.",
               "correct": false,
               "sections": {
@@ -1277,8 +1301,8 @@
                 "if_it_were_true": "Тогда mesh не давал бы mTLS между внутренними сервисами, но именно service-to-service security — его ключевая функция.",
                 "how_it_should_be": "Service mesh — это слой east-west коммуникации между сервисами; входящий трафик клиентов обрабатывает API Gateway."
               },
-              "label": "A",
-              "order": 0
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`Service mesh` — инфраструктурный слой для service-to-service коммуникации: sidecar-прокси берут на себя трафик, безопасность и observability.",
@@ -1289,30 +1313,6 @@
                 "when_to_apply": "Service mesh применяют, когда нужны mTLS, единые traffic-политики и трейсинг между многими сервисами без вшивания этого в каждый сервис; в малых системах его сложность обычно не оправдана.",
                 "edge_cases": "Mesh добавляет latency и операционную сложность из-за лишнего хопа через sidecar, поэтому в 2025 многие берут только mTLS и телеметрию (`Linkerd`/`Cilium`) без полной сложности `Istio`.",
                 "related": "[[cloud-native-patterns-interview#Q4]] sidecar как основа mesh; [[cloud-native-patterns-interview#Q8]] circuit breaker на уровне mesh; [[cloud-native-patterns-interview#Q20]] mesh как источник трёх столпов телеметрии."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Service mesh` устанавливается без накладных расходов и всегда обязателен в любом cloud-native проекте независимо от числа сервисов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Mesh добавляет latency и ops-сложность из-за хопа через sidecar, поэтому в малых системах он не обязателен, а часто берут лишь mTLS+телеметрию.",
-                "source_of_confusion": "Польза mesh (mTLS, телеметрия) заметна, и связанные с ним издержки склонны игнорировать.",
-                "if_it_were_true": "Тогда mesh ставили бы в каждый проект без раздумий, но trade-off latency/сложности этому препятствует.",
-                "how_it_should_be": "Service mesh оправдан при большом числе сервисов; для малых систем его сложность обычно избыточна."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Service mesh` обязательно требует sidecar-прокси и не может работать без них, поэтому eBPF-реализации в принципе невозможны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Sidecar — частый, но не единственный путь: `Cilium Service Mesh` реализует mesh на eBPF без отдельных sidecar-прокси.",
-                "source_of_confusion": "Классические `Istio`/`Linkerd` строятся на sidecar'ах, поэтому их считают обязательным условием.",
-                "if_it_were_true": "Тогда sidecarless-подход был бы невозможен, но `Cilium` на eBPF доказывает обратное.",
-                "how_it_should_be": "Mesh реализуем и без sidecar (eBPF в `Cilium`); sidecar-прокси — лишь одна из возможных архитектур."
               },
               "label": "D",
               "order": 3
@@ -1341,18 +1341,6 @@
               "order": 0
             },
             {
-              "text": "`Blue-green` обновляет поды по одному прямо в текущей среде без второй копии инфраструктуры, экономя на двойных ресурсах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Поэтапное обновление подов на месте — это rolling update; blue-green требует второй полной среды (Green) рядом с Blue.",
-                "source_of_confusion": "И rolling, и blue-green обновляют версию без downtime, поэтому их механизмы смешивают.",
-                "if_it_were_true": "Тогда не было бы двойной стоимости инфраструктуры, но именно две параллельные среды — суть blue-green.",
-                "how_it_should_be": "Blue-green держит две полные среды и переключает между ними; обновление подов на месте — это rolling update."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`Blue-green` — две идентичные среды Blue и Green работают одновременно, и трафик переключается с одной на другую разом.",
               "correct": true,
               "sections": {
@@ -1362,8 +1350,8 @@
                 "edge_cases": "Главный минус — двойная стоимость инфраструктуры на время деплоя (обе среды живут одновременно); при stateful-данных нужна совместимость схемы БД между Blue и Green.",
                 "related": "[[cloud-native-patterns-interview#Q24]] canary как постепенная альтернатива; [[cloud-native-patterns-interview#Q26]] GitOps для управления манифестами сред; [[cloud-native-patterns-interview#Q25]] feature flags для разделения релиза и деплоя."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`Blue-green` не позволяет быстро откатиться: после переключения возврат к старой версии невозможен без полного передеплоя.",
@@ -1373,6 +1361,18 @@
                 "source_of_confusion": "Кажется, что после переключения старая версия удаляется, отсюда вывод о невозможности отката.",
                 "if_it_were_true": "Тогда blue-green был бы рискованнее rolling update, но его как раз выбирают ради мгновенного отката.",
                 "how_it_should_be": "Blue-green даёт instant rollback переключением на ещё работающую Blue-среду; это его главный плюс."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Blue-green` обновляет поды по одному прямо в текущей среде без второй копии инфраструктуры, экономя на двойных ресурсах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поэтапное обновление подов на месте — это rolling update; blue-green требует второй полной среды (Green) рядом с Blue.",
+                "source_of_confusion": "И rolling, и blue-green обновляют версию без downtime, поэтому их механизмы смешивают.",
+                "if_it_were_true": "Тогда не было бы двойной стоимости инфраструктуры, но именно две параллельные среды — суть blue-green.",
+                "how_it_should_be": "Blue-green держит две полные среды и переключает между ними; обновление подов на месте — это rolling update."
               },
               "label": "D",
               "order": 3
@@ -1389,13 +1389,14 @@
           "question_text": "Что такое canary deployment?",
           "options": [
             {
-              "text": "`Canary` переключает 100% трафика на новую версию сразу, без постепенного наращивания доли и без промежуточных ступеней.",
-              "correct": false,
+              "text": "`Canary` — постепенное наращивание доли трафика на новую версию с наблюдением за метриками и авто-откатом при их ухудшении.",
+              "correct": true,
               "sections": {
-                "what_actually": "Мгновенное переключение 100% — это blue-green; суть canary именно в постепенном наращивании доли (1%→5%→25%).",
-                "source_of_confusion": "Оба — безопасные стратегии релиза, поэтому атомарное переключение путают с постепенным.",
-                "if_it_were_true": "Тогда canary не уменьшал бы радиус поражения, но именно поэтапность ограничивает число затронутых пользователей.",
-                "how_it_should_be": "Canary наращивает долю трафика постепенно; мгновенное переключение всего трафика — это blue-green."
+                "explanation": "Canary ограничивает радиус поражения: новую версию сначала видит малая доля пользователей, её метрики (ошибки, latency) сравнивают с базовой версией, и только при здоровых показателях долю наращивают — иначе откатывают, затронув лишь немногих. Доля растёт ступенями (1% → 5% → 25% → 50% → 100%); при росте error rate или latency срабатывает автоматический rollback. Инструменты: `Argo Rollouts` (K8s-native canary), `Flagger` (automated canary), service mesh (`Istio`, `Linkerd`) для traffic splitting. Auto-rollback по порогам метрик — best practice.",
+                "example": "`Argo Rollouts` поднимает canary на 5% трафика, `Flagger` следит за error rate и p99; при превышении порога автоматически откатывает, а при здоровье — продвигает до 25%, 50% и 100%.",
+                "when_to_apply": "Паттерн применяют для рискованных изменений, где важно проверить версию на реальном трафике с минимальным радиусом поражения и автоматическим откатом по метрикам.",
+                "edge_cases": "Без автоматического сравнения метрик canary бесполезен: если не следить за error rate и latency на каждой ступени, сбой просто медленно расползётся на 100% вместо мгновенного, но локального удара.",
+                "related": "[[cloud-native-patterns-interview#Q23]] blue-green как мгновенное переключение; [[cloud-native-patterns-interview#Q25]] feature flags для таргетинга по сегментам; [[cloud-native-patterns-interview#Q22]] service mesh для traffic splitting."
               },
               "label": "A",
               "order": 0
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "text": "`Canary` — постепенное наращивание доли трафика на новую версию с наблюдением за метриками и авто-откатом при их ухудшении.",
-              "correct": true,
+              "text": "`Canary` переключает 100% трафика на новую версию сразу, без постепенного наращивания доли и без промежуточных ступеней.",
+              "correct": false,
               "sections": {
-                "explanation": "Canary ограничивает радиус поражения: новую версию сначала видит малая доля пользователей, её метрики (ошибки, latency) сравнивают с базовой версией, и только при здоровых показателях долю наращивают — иначе откатывают, затронув лишь немногих. Доля растёт ступенями (1% → 5% → 25% → 50% → 100%); при росте error rate или latency срабатывает автоматический rollback. Инструменты: `Argo Rollouts` (K8s-native canary), `Flagger` (automated canary), service mesh (`Istio`, `Linkerd`) для traffic splitting. Auto-rollback по порогам метрик — best practice.",
-                "example": "`Argo Rollouts` поднимает canary на 5% трафика, `Flagger` следит за error rate и p99; при превышении порога автоматически откатывает, а при здоровье — продвигает до 25%, 50% и 100%.",
-                "when_to_apply": "Паттерн применяют для рискованных изменений, где важно проверить версию на реальном трафике с минимальным радиусом поражения и автоматическим откатом по метрикам.",
-                "edge_cases": "Без автоматического сравнения метрик canary бесполезен: если не следить за error rate и latency на каждой ступени, сбой просто медленно расползётся на 100% вместо мгновенного, но локального удара.",
-                "related": "[[cloud-native-patterns-interview#Q23]] blue-green как мгновенное переключение; [[cloud-native-patterns-interview#Q25]] feature flags для таргетинга по сегментам; [[cloud-native-patterns-interview#Q22]] service mesh для traffic splitting."
+                "what_actually": "Мгновенное переключение 100% — это blue-green; суть canary именно в постепенном наращивании доли (1%→5%→25%).",
+                "source_of_confusion": "Оба — безопасные стратегии релиза, поэтому атомарное переключение путают с постепенным.",
+                "if_it_were_true": "Тогда canary не уменьшал бы радиус поражения, но именно поэтапность ограничивает число затронутых пользователей.",
+                "how_it_should_be": "Canary наращивает долю трафика постепенно; мгновенное переключение всего трафика — это blue-green."
               },
               "label": "D",
               "order": 3
@@ -1449,17 +1449,28 @@
           "question_text": "Что такое feature flags?",
           "options": [
             {
-              "text": "`Feature flags` (фиче-флаги) — переключатели функциональности в рантайме, активирующие фичу без редеплоя приложения.",
-              "correct": true,
+              "text": "`Feature flags` — это то же самое, что переменные окружения, и они идентичны по назначению и способу изменения в рантайме.",
+              "correct": false,
               "sections": {
-                "explanation": "Фиче-флаг разделяет деплой кода и его активацию: новый код едет в прод выключенным, а включается отдельным решением, поэтому фичу можно раскатывать постепенно или мгновенно гасить kill switch'ем, не выкатывая новый билд. Use cases: постепенный rollout (10%→50%→100%), kill switch (мгновенно отключить сломанную фичу), A/B-тестирование, таргетинг по пользователю/сегменту. Инструменты: `LaunchDarkly`, `Unleash` (open-source), `Flagsmith`, `GrowthBook`, `Statsig`. Главная идея — decoupling релиза из деплоя.",
-                "example": "`if feature_flag(\"new_checkout_flow\", user=current_user)` отдаёт новый чекаут 10% пользователей; при росте ошибок флаг выключают мгновенно, и весь трафик возвращается на старый путь без редеплоя.",
-                "when_to_apply": "Флаги применяют для постепенного rollout, kill switch при инцидентах, A/B-тестов и таргетинга по сегментам — когда нужно управлять активацией фичи независимо от выкладки.",
-                "edge_cases": "Флаги накапливают технический долг: устаревшие флаги, которые забыли удалить, превращаются в мёртвые ветки кода, поэтому их жизненный цикл нужно отслеживать и чистить.",
-                "related": "[[cloud-native-patterns-interview#Q24]] canary как альтернативный механизм постепенного rollout; [[cloud-native-patterns-interview#Q23]] blue-green и разделение релиза/деплоя; [[cloud-native-patterns-interview#Q3]] Unleash и инструменты экосистемы."
+                "what_actually": "Env-переменные задаются при старте процесса и для смены требуют рестарта; фиче-флаги меняются динамически в рантайме с таргетингом по пользователю.",
+                "source_of_confusion": "И флаги, и env-vars конфигурируют поведение приложения, поэтому их отождествляют.",
+                "if_it_were_true": "Тогда нельзя было бы включить фичу на 10% пользователей, но флаги поддерживают per-user таргетинг, а env-vars — нет.",
+                "how_it_should_be": "Флаги — динамические переключатели рантайма с таргетингом; env-переменные статичны и применяются при старте."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "`Feature flags` можно использовать только для A/B-тестирования и ни для чего больше, постепенный rollout ими недостижим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "A/B-тесты — лишь один сценарий: флаги также дают постепенный rollout, kill switch и таргетинг по сегментам.",
+                "source_of_confusion": "A/B-тестирование — заметный кейс флагов, поэтому к нему сводят всю их функциональность.",
+                "if_it_were_true": "Тогда kill switch для отключения сломанной фичи был бы невозможен, но это один из главных кейсов флагов.",
+                "how_it_should_be": "Флаги применяют для rollout, kill switch, таргетинга и A/B-тестов; последнее — лишь один из сценариев."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`Feature flags` требуют редеплоя приложения каждый раз при включении или выключении фичи, поэтому kill switch занимает минуты.",
@@ -1470,29 +1481,18 @@
                 "if_it_were_true": "Тогда kill switch не давал бы мгновенного отключения, но флаг гасит фичу в реальном времени без выкладки.",
                 "how_it_should_be": "Флаги переключаются в рантайме без редеплоя; именно это отделяет релиз кода от его активации."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Feature flags` — это то же самое, что переменные окружения, и они идентичны по назначению и способу изменения в рантайме.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Env-переменные задаются при старте процесса и для смены требуют рестарта; фиче-флаги меняются динамически в рантайме с таргетингом по пользователю.",
-                "source_of_confusion": "И флаги, и env-vars конфигурируют поведение приложения, поэтому их отождествляют.",
-                "if_it_were_true": "Тогда нельзя было бы включить фичу на 10% пользователей, но флаги поддерживают per-user таргетинг, а env-vars — нет.",
-                "how_it_should_be": "Флаги — динамические переключатели рантайма с таргетингом; env-переменные статичны и применяются при старте."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Feature flags` можно использовать только для A/B-тестирования и ни для чего больше, постепенный rollout ими недостижим.",
-              "correct": false,
+              "text": "`Feature flags` (фиче-флаги) — переключатели функциональности в рантайме, активирующие фичу без редеплоя приложения.",
+              "correct": true,
               "sections": {
-                "what_actually": "A/B-тесты — лишь один сценарий: флаги также дают постепенный rollout, kill switch и таргетинг по сегментам.",
-                "source_of_confusion": "A/B-тестирование — заметный кейс флагов, поэтому к нему сводят всю их функциональность.",
-                "if_it_were_true": "Тогда kill switch для отключения сломанной фичи был бы невозможен, но это один из главных кейсов флагов.",
-                "how_it_should_be": "Флаги применяют для rollout, kill switch, таргетинга и A/B-тестов; последнее — лишь один из сценариев."
+                "explanation": "Фиче-флаг разделяет деплой кода и его активацию: новый код едет в прод выключенным, а включается отдельным решением, поэтому фичу можно раскатывать постепенно или мгновенно гасить kill switch'ем, не выкатывая новый билд. Use cases: постепенный rollout (10%→50%→100%), kill switch (мгновенно отключить сломанную фичу), A/B-тестирование, таргетинг по пользователю/сегменту. Инструменты: `LaunchDarkly`, `Unleash` (open-source), `Flagsmith`, `GrowthBook`, `Statsig`. Главная идея — decoupling релиза из деплоя.",
+                "example": "`if feature_flag(\"new_checkout_flow\", user=current_user)` отдаёт новый чекаут 10% пользователей; при росте ошибок флаг выключают мгновенно, и весь трафик возвращается на старый путь без редеплоя.",
+                "when_to_apply": "Флаги применяют для постепенного rollout, kill switch при инцидентах, A/B-тестов и таргетинга по сегментам — когда нужно управлять активацией фичи независимо от выкладки.",
+                "edge_cases": "Флаги накапливают технический долг: устаревшие флаги, которые забыли удалить, превращаются в мёртвые ветки кода, поэтому их жизненный цикл нужно отслеживать и чистить.",
+                "related": "[[cloud-native-patterns-interview#Q24]] canary как альтернативный механизм постепенного rollout; [[cloud-native-patterns-interview#Q23]] blue-green и разделение релиза/деплоя; [[cloud-native-patterns-interview#Q3]] Unleash и инструменты экосистемы."
               },
               "label": "D",
               "order": 3
@@ -1509,18 +1509,6 @@
           "question_text": "Что такое GitOps?",
           "options": [
             {
-              "text": "`GitOps` — это запуск `kubectl apply` вручную из CI-пайплайна при каждом коммите, без агента и drift detection в кластере.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Императивный push через `kubectl apply` из CI — это push-based CI/CD, а не GitOps: в GitOps агент в кластере сам тянет desired state из Git (pull-модель) и устраняет дрейф.",
-                "source_of_confusion": "И то, и другое выкатывает изменения после коммита, поэтому push из CI путают с pull-моделью GitOps.",
-                "if_it_were_true": "Тогда дрейф от ручного `kubectl edit` не исправлялся бы, но GitOps-агент непрерывно возвращает кластер к версии из Git.",
-                "how_it_should_be": "GitOps — это pull-модель с continuous reconciliation агентом; разовый `kubectl apply` из CI её не обеспечивает."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`GitOps` — декларативное управление инфраструктурой, где Git выступает single source of truth, а агент синхронизирует кластер к desired state.",
               "correct": true,
               "sections": {
@@ -1530,8 +1518,8 @@
                 "edge_cases": "GitOps требует, чтобы всё состояние было декларативным в Git: императивные `kubectl edit` напрямую в кластере создают дрейф, который агент при следующей синхронизации откатит обратно к версии из репозитория.",
                 "related": "[[cloud-native-patterns-interview#Q27]] configuration management в связке с GitOps; [[cloud-native-patterns-interview#Q23]] blue-green-манифесты под управлением GitOps; [[cloud-native-patterns-interview#Q3]] Argo и Flux как проекты CNCF."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`GitOps` хранит секреты в открытом виде прямо в Git-репозитории для удобства доступа, полагаясь на приватность репозитория.",
@@ -1542,8 +1530,8 @@
                 "if_it_were_true": "Тогда любой с доступом к репозиторию читал бы пароли, но именно поэтому секреты в Git только в зашифрованном виде.",
                 "how_it_should_be": "В GitOps в Git попадают лишь зашифрованные секреты или ссылки на внешний store, а не открытые значения."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`GitOps` исключает version control: изменения применяются напрямую в кластере без истории и без возможности `git revert`.",
@@ -1553,6 +1541,18 @@
                 "source_of_confusion": "Слово «Ops» ассоциируется с прямыми действиями в кластере, отсюда вывод об отсутствии истории.",
                 "if_it_were_true": "Тогда не было бы аудита и лёгкого отката, но это два ключевых преимущества GitOps.",
                 "how_it_should_be": "GitOps целиком строится на version control: все изменения декларативны и зафиксированы в Git-истории."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`GitOps` — это запуск `kubectl apply` вручную из CI-пайплайна при каждом коммите, без агента и drift detection в кластере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Императивный push через `kubectl apply` из CI — это push-based CI/CD, а не GitOps: в GitOps агент в кластере сам тянет desired state из Git (pull-модель) и устраняет дрейф.",
+                "source_of_confusion": "И то, и другое выкатывает изменения после коммита, поэтому push из CI путают с pull-моделью GitOps.",
+                "if_it_were_true": "Тогда дрейф от ручного `kubectl edit` не исправлялся бы, но GitOps-агент непрерывно возвращает кластер к версии из Git.",
+                "how_it_should_be": "GitOps — это pull-модель с continuous reconciliation агентом; разовый `kubectl apply` из CI её не обеспечивает."
               },
               "label": "D",
               "order": 3
@@ -1569,18 +1569,6 @@
           "question_text": "Как устроен configuration management в cloud-native?",
           "options": [
             {
-              "text": "Конфигурацию правильно зашивать в `Docker`-образ, чтобы она ехала вместе с приложением и не зависела от внешнего окружения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Конфиг в образе нарушает 12-factor: при смене окружения нужен rebuild, и для каждого стенда получается отдельный image.",
-                "source_of_confusion": "«Всё вместе в одном артефакте» кажется удобным, и конфиг кладут внутрь образа.",
-                "if_it_were_true": "Тогда один image не катился бы во все среды, но именно неизменность артефакта между стендами — цель подхода.",
-                "how_it_should_be": "Конфигурация выносится в окружение (env/`ConfigMap`), а образ остаётся одинаковым для всех окружений."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Секреты удобнее всего хранить прямо в `ConfigMap` вместе с обычной конфигурацией, ведь `ConfigMap` тоже шифруется в etcd.",
               "correct": false,
               "sections": {
@@ -1589,8 +1577,32 @@
                 "if_it_were_true": "Тогда пароли лежали бы наравне с обычным конфигом без разграничения доступа, но `Secret` как раз вводит это разграничение.",
                 "how_it_should_be": "Секреты держат в `Secret`/внешнем сторе; `ConfigMap` — только для нечувствительной конфигурации."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Конфигурацию правильно зашивать в `Docker`-образ, чтобы она ехала вместе с приложением и не зависела от внешнего окружения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конфиг в образе нарушает 12-factor: при смене окружения нужен rebuild, и для каждого стенда получается отдельный image.",
+                "source_of_confusion": "«Всё вместе в одном артефакте» кажется удобным, и конфиг кладут внутрь образа.",
+                "if_it_were_true": "Тогда один image не катился бы во все среды, но именно неизменность артефакта между стендами — цель подхода.",
+                "how_it_should_be": "Конфигурация выносится в окружение (env/`ConfigMap`), а образ остаётся одинаковым для всех окружений."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "Конфигурацию для всех окружений нужно держать единым одинаковым файлом без разделения по средам, чтобы избежать рассинхрона.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Per-environment различия задают разными `ConfigMap`, Helm values или Kustomize overlay; единый файл на все среды стирает нужные различия (`LOG_LEVEL`, URL БД).",
+                "source_of_confusion": "Один файл проще поддерживать, поэтому разделение по средам кажется избыточным.",
+                "if_it_were_true": "Тогда dev и prod имели бы одинаковые URL БД и уровни логирования, что недопустимо.",
+                "how_it_should_be": "Конфиг разделяют по окружениям через overlay'ы/values, сохраняя один образ, но разные параметры на стенд."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "По 12-factor конфигурация передаётся через env-переменные: `ConfigMaps` для обычного конфига, `Secrets` — для чувствительных данных.",
@@ -1601,18 +1613,6 @@
                 "when_to_apply": "Подход применяют во всех cloud-native приложениях: env-vars и `ConfigMap` для обычного конфига, `Secret`+внешний store для чувствительных данных, overlay'ы для per-environment различий.",
                 "edge_cases": "Главный анти-паттерн — захардкодить конфиг в образ: тогда для каждого окружения нужен свой build, а секреты, попавшие в image или Git, становятся утечкой; их держат только во внешнем сторе.",
                 "related": "[[cloud-native-patterns-interview#Q28]] secrets management как часть конфигурации; [[cloud-native-patterns-interview#Q2]] фактор Config в 12-factor; [[cloud-native-patterns-interview#Q26]] GitOps как способ доставки конфигурации."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Конфигурацию для всех окружений нужно держать единым одинаковым файлом без разделения по средам, чтобы избежать рассинхрона.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Per-environment различия задают разными `ConfigMap`, Helm values или Kustomize overlay; единый файл на все среды стирает нужные различия (`LOG_LEVEL`, URL БД).",
-                "source_of_confusion": "Один файл проще поддерживать, поэтому разделение по средам кажется избыточным.",
-                "if_it_were_true": "Тогда dev и prod имели бы одинаковые URL БД и уровни логирования, что недопустимо.",
-                "how_it_should_be": "Конфиг разделяют по окружениям через overlay'ы/values, сохраняя один образ, но разные параметры на стенд."
               },
               "label": "D",
               "order": 3
@@ -1629,28 +1629,17 @@
           "question_text": "Как организуется secrets management в cloud-native?",
           "options": [
             {
-              "text": "Секреты достаточно хранить в env-переменных `Docker`-образа — это безопасно и удобно, ведь образ лежит в приватном registry.",
-              "correct": false,
+              "text": "Секреты хранят в специализированном store (`HashiCorp Vault`, `AWS Secrets Manager`) с шифрованием, аудитом и ротацией доступа.",
+              "correct": true,
               "sections": {
-                "what_actually": "Секреты в образе видны в истории слоёв и через `docker inspect`, попадают в registry — это утечка, а не безопасное хранение.",
-                "source_of_confusion": "Env-vars — штатный способ передачи конфига по 12-factor, и его по инерции распространяют и на секреты.",
-                "if_it_were_true": "Тогда любой с доступом к образу не получал бы пароли, но слои и `inspect` их раскрывают.",
-                "how_it_should_be": "Секреты держат во внешнем сторе (`Vault`) или зашифрованными (`Sealed Secrets`), а не в env-vars образа."
+                "explanation": "Секреты выносят в специализированный store с шифрованием, аудитом и контролем доступа, а приложение получает их в рантайме — так пароли и токены не попадают в образ, Git или логи, а доступ ограничен по least privilege. Инструменты: `HashiCorp Vault` (enterprise-стандарт), `AWS Secrets Manager`, `Azure Key Vault`, `GCP Secret Manager`, `Sealed Secrets` (K8s-native, шифрование в Git), `External Secrets Operator` (синхронизация внешнего стора в `K8s Secrets`). Best practices: rotation (авто-ротация), audit logging (кто и когда обращался), least privilege (доступ по IAM только нужным), encryption at rest и in transit, никаких секретов в env-vars Docker-образов или в Git.",
+                "example": "`External Secrets Operator` синхронизирует значение из `Vault` в `K8s Secret`, который монтируется в под; `Vault` при этом ведёт audit log обращений и поддерживает авто-ротацию учётных данных БД.",
+                "when_to_apply": "Подход применяют везде, где есть чувствительные данные: подключения к БД, API-ключи, TLS-сертификаты — особенно при требованиях аудита, ротации и разграничения доступа по IAM.",
+                "edge_cases": "Хранение секретов в env-vars `Docker`-образа или в Git — частая утечка: их видно в истории и в `docker inspect`; правильно держать только зашифрованные (`Sealed Secrets`) или ссылки на внешний store.",
+                "related": "[[cloud-native-patterns-interview#Q27]] configuration management как контекст секретов; [[cloud-native-patterns-interview#Q26]] GitOps и шифрование секретов в Git; [[cloud-native-patterns-interview#Q3]] Vault и OPA в экосистеме."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Ротация секретов не нужна, если секрет достаточно длинный и сложный, и его всё равно не видно в audit-логах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Длина не отменяет ротацию: при утечке статичный секрет действует бессрочно, поэтому периодическая авто-ротация — обязательная практика.",
-                "source_of_confusion": "Сильный секрет кажется «достаточно надёжным навсегда», и про ротацию забывают.",
-                "if_it_were_true": "Тогда утёкший ключ оставался бы валидным неограниченно, но ротация ограничивает окно его эксплуатации.",
-                "how_it_should_be": "Секреты ротируют периодически независимо от сложности, чтобы ограничить ущерб от возможной утечки."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`Sealed Secrets` хранит секреты в Git в открытом виде, полагаясь на приватность репозитория, а не на шифрование манифеста.",
@@ -1661,18 +1650,29 @@
                 "if_it_were_true": "Тогда любой с доступом к репозиторию читал бы секреты, но шифрование `Sealed Secrets` это исключает.",
                 "how_it_should_be": "`Sealed Secrets` коммитит в Git только зашифрованные данные; расшифровка возможна лишь контроллером в кластере."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Секреты достаточно хранить в env-переменных `Docker`-образа — это безопасно и удобно, ведь образ лежит в приватном registry.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Секреты в образе видны в истории слоёв и через `docker inspect`, попадают в registry — это утечка, а не безопасное хранение.",
+                "source_of_confusion": "Env-vars — штатный способ передачи конфига по 12-factor, и его по инерции распространяют и на секреты.",
+                "if_it_were_true": "Тогда любой с доступом к образу не получал бы пароли, но слои и `inspect` их раскрывают.",
+                "how_it_should_be": "Секреты держат во внешнем сторе (`Vault`) или зашифрованными (`Sealed Secrets`), а не в env-vars образа."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Секреты хранят в специализированном store (`HashiCorp Vault`, `AWS Secrets Manager`) с шифрованием, аудитом и ротацией доступа.",
-              "correct": true,
+              "text": "Ротация секретов не нужна, если секрет достаточно длинный и сложный, и его всё равно не видно в audit-логах.",
+              "correct": false,
               "sections": {
-                "explanation": "Секреты выносят в специализированный store с шифрованием, аудитом и контролем доступа, а приложение получает их в рантайме — так пароли и токены не попадают в образ, Git или логи, а доступ ограничен по least privilege. Инструменты: `HashiCorp Vault` (enterprise-стандарт), `AWS Secrets Manager`, `Azure Key Vault`, `GCP Secret Manager`, `Sealed Secrets` (K8s-native, шифрование в Git), `External Secrets Operator` (синхронизация внешнего стора в `K8s Secrets`). Best practices: rotation (авто-ротация), audit logging (кто и когда обращался), least privilege (доступ по IAM только нужным), encryption at rest и in transit, никаких секретов в env-vars Docker-образов или в Git.",
-                "example": "`External Secrets Operator` синхронизирует значение из `Vault` в `K8s Secret`, который монтируется в под; `Vault` при этом ведёт audit log обращений и поддерживает авто-ротацию учётных данных БД.",
-                "when_to_apply": "Подход применяют везде, где есть чувствительные данные: подключения к БД, API-ключи, TLS-сертификаты — особенно при требованиях аудита, ротации и разграничения доступа по IAM.",
-                "edge_cases": "Хранение секретов в env-vars `Docker`-образа или в Git — частая утечка: их видно в истории и в `docker inspect`; правильно держать только зашифрованные (`Sealed Secrets`) или ссылки на внешний store.",
-                "related": "[[cloud-native-patterns-interview#Q27]] configuration management как контекст секретов; [[cloud-native-patterns-interview#Q26]] GitOps и шифрование секретов в Git; [[cloud-native-patterns-interview#Q3]] Vault и OPA в экосистеме."
+                "what_actually": "Длина не отменяет ротацию: при утечке статичный секрет действует бессрочно, поэтому периодическая авто-ротация — обязательная практика.",
+                "source_of_confusion": "Сильный секрет кажется «достаточно надёжным навсегда», и про ротацию забывают.",
+                "if_it_were_true": "Тогда утёкший ключ оставался бы валидным неограниченно, но ротация ограничивает окно его эксплуатации.",
+                "how_it_should_be": "Секреты ротируют периодически независимо от сложности, чтобы ограничить ущерб от возможной утечки."
               },
               "label": "D",
               "order": 3
@@ -1689,31 +1689,6 @@
           "question_text": "Какие частые анти-паттерны встречаются в cloud-native?",
           "options": [
             {
-              "text": "Частые анти-паттерны: distributed monolith, shared database между сервисами, синхронные цепочки без circuit breaker, hardcoded-конфиги и `latest`-теги.",
-              "correct": true,
-              "sections": {
-                "explanation": "Большинство анти-паттернов сводятся к перенесённым из монолита привычкам: общая БД и tight coupling убивают независимость, отсутствие circuit breaker и timeout даёт каскады, а hardcoded-конфиги и `latest`-теги ломают воспроизводимость деплоя. Полный список: distributed monolith (микросервисы с tight coupling), shared database между сервисами, синхронные цепочки (A→B→C→D с каскадными сбоями), отсутствие circuit breaker'ов, stateful-поды без `StatefulSet`, hardcoded-конфиги в образах, логирование в файлы (вместо `stdout`), отсутствие health checks и resource limits, untagged-образы (`latest`), big-bang деплои без canary, отсутствие observability и GitOps, непроверяемые бэкапы.",
-                "example": "Сервисы ходят в одну общую БД и выстроены в синхронную цепочку `A→B→C→D` без circuit breaker — падение C каскадом роняет всю цепочку; это классический distributed monolith.",
-                "when_to_apply": "Список используют как чек-лист при ревью архитектуры и production-readiness: проверяют изоляцию данных, наличие resilience-паттернов, health checks, resource limits, тегирование образов и observability.",
-                "edge_cases": "Особо опасны untagged `latest`-образы (невоспроизводимый деплой) и отсутствие resource limits (один под съедает ресурсы ноды); shared database незаметно превращает микросервисы в distributed monolith.",
-                "related": "[[cloud-native-patterns-interview#Q8]] circuit breaker против каскадов; [[cloud-native-patterns-interview#Q13]] stateless вместо stateful-подов; [[cloud-native-patterns-interview#Q30]] maturity model как путь устранения анти-паттернов."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Главный и единственный анти-паттерн cloud-native — это использование контейнеров слишком большого размера, всё остальное вторично.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Размер образа — второстепенная оптимизация; ключевые анти-паттерны — distributed monolith, shared database, отсутствие circuit breaker и health checks.",
-                "source_of_confusion": "Большие образы — заметная и измеримая проблема, поэтому её ошибочно ставят во главу угла.",
-                "if_it_were_true": "Тогда уменьшение образа решало бы каскадные сбои, но они идут от связности и отсутствия resilience, а не от размера.",
-                "how_it_should_be": "Анти-паттернов много (общая БД, синхронные цепочки, нет limits/health checks); размер образа — не главный из них."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Shared database между сервисами — это рекомендуемая практика, упрощающая согласованность данных и снижающая число интеграций.",
               "correct": false,
               "sections": {
@@ -1722,8 +1697,8 @@
                 "if_it_were_true": "Тогда сервисы деплоились бы независимо, но связь через общую схему заставляет менять и катить их вместе.",
                 "how_it_should_be": "Каждый сервис должен владеть своей БД (database per service); общая база — анти-паттерн, а не практика."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Логирование в локальные файлы предпочтительнее записи в `stdout` ради надёжного persistence и сохранности логов при рестарте пода.",
@@ -1733,6 +1708,31 @@
                 "source_of_confusion": "Файл на диске кажется надёжнее эфемерного потока, и привычка из монолитов переносится сюда.",
                 "if_it_were_true": "Тогда логи переживали бы рестарт пода, но эфемерная ФС контейнера их теряет, в отличие от собранного `stdout`.",
                 "how_it_should_be": "Логи пишут в `stdout`, а агрегацию обеспечивает платформа; запись в файлы внутри пода — анти-паттерн."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Частые анти-паттерны: distributed monolith, shared database между сервисами, синхронные цепочки без circuit breaker, hardcoded-конфиги и `latest`-теги.",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство анти-паттернов сводятся к перенесённым из монолита привычкам: общая БД и tight coupling убивают независимость, отсутствие circuit breaker и timeout даёт каскады, а hardcoded-конфиги и `latest`-теги ломают воспроизводимость деплоя. Полный список: distributed monolith (микросервисы с tight coupling), shared database между сервисами, синхронные цепочки (A→B→C→D с каскадными сбоями), отсутствие circuit breaker'ов, stateful-поды без `StatefulSet`, hardcoded-конфиги в образах, логирование в файлы (вместо `stdout`), отсутствие health checks и resource limits, untagged-образы (`latest`), big-bang деплои без canary, отсутствие observability и GitOps, непроверяемые бэкапы.",
+                "example": "Сервисы ходят в одну общую БД и выстроены в синхронную цепочку `A→B→C→D` без circuit breaker — падение C каскадом роняет всю цепочку; это классический distributed monolith.",
+                "when_to_apply": "Список используют как чек-лист при ревью архитектуры и production-readiness: проверяют изоляцию данных, наличие resilience-паттернов, health checks, resource limits, тегирование образов и observability.",
+                "edge_cases": "Особо опасны untagged `latest`-образы (невоспроизводимый деплой) и отсутствие resource limits (один под съедает ресурсы ноды); shared database незаметно превращает микросервисы в distributed monolith.",
+                "related": "[[cloud-native-patterns-interview#Q8]] circuit breaker против каскадов; [[cloud-native-patterns-interview#Q13]] stateless вместо stateful-подов; [[cloud-native-patterns-interview#Q30]] maturity model как путь устранения анти-паттернов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Главный и единственный анти-паттерн cloud-native — это использование контейнеров слишком большого размера, всё остальное вторично.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер образа — второстепенная оптимизация; ключевые анти-паттерны — distributed monolith, shared database, отсутствие circuit breaker и health checks.",
+                "source_of_confusion": "Большие образы — заметная и измеримая проблема, поэтому её ошибочно ставят во главу угла.",
+                "if_it_were_true": "Тогда уменьшение образа решало бы каскадные сбои, но они идут от связности и отсутствия resilience, а не от размера.",
+                "how_it_should_be": "Анти-паттернов много (общая БД, синхронные цепочки, нет limits/health checks); размер образа — не главный из них."
               },
               "label": "D",
               "order": 3
@@ -1749,13 +1749,13 @@
           "question_text": "Что такое cloud-native maturity model?",
           "options": [
             {
-              "text": "Cloud-native maturity model оценивает зрелость исключительно по числу развёрнутых микросервисов, без учёта оркестрации и observability.",
+              "text": "Cloud-native maturity model — это требование сразу внедрить chaos engineering на самом первом уровне, ещё до контейнеризации.",
               "correct": false,
               "sections": {
-                "what_actually": "Зрелость измеряют по практикам (контейнеризация, оркестрация, observability, GitOps, chaos engineering), а не по количеству сервисов.",
-                "source_of_confusion": "Больше сервисов интуитивно ассоциируется с «более продвинутой» архитектурой, отсюда подмена метрики.",
-                "if_it_were_true": "Тогда монолит на 200 сервисов считался бы зрелым, но без observability и автоматизации это лишь distributed monolith.",
-                "how_it_should_be": "Зрелость определяется набором практик по уровням Build/Operate/Scale/Improve, а не числом микросервисов."
+                "what_actually": "Chaos engineering относится к высшему уровню Improve (Level 4) и требует зрелой observability и auto-scaling с предыдущих уровней.",
+                "source_of_confusion": "Chaos engineering — яркая «продвинутая» практика, поэтому её ошибочно ставят в начало пути.",
+                "if_it_were_true": "Тогда команда без метрик и трейсинга осмысленно ломала бы прод, но без observability последствия не увидеть.",
+                "how_it_should_be": "Chaos engineering — это Level 4; до него проходят Build, Operate и Scale с observability и автоматизацией."
               },
               "label": "A",
               "order": 0
@@ -1774,18 +1774,6 @@
               "order": 1
             },
             {
-              "text": "Cloud-native maturity model — это требование сразу внедрить chaos engineering на самом первом уровне, ещё до контейнеризации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Chaos engineering относится к высшему уровню Improve (Level 4) и требует зрелой observability и auto-scaling с предыдущих уровней.",
-                "source_of_confusion": "Chaos engineering — яркая «продвинутая» практика, поэтому её ошибочно ставят в начало пути.",
-                "if_it_were_true": "Тогда команда без метрик и трейсинга осмысленно ломала бы прод, но без observability последствия не увидеть.",
-                "how_it_should_be": "Chaos engineering — это Level 4; до него проходят Build, Operate и Scale с observability и автоматизацией."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Cloud-native maturity model состоит ровно из двух уровней: «в облаке» и «не в облаке», без промежуточных ступеней зрелости.",
               "correct": false,
               "sections": {
@@ -1793,6 +1781,18 @@
                 "source_of_confusion": "Бинарное мышление «облако или не облако» проще, поэтому градацию зрелости сводят к двум состояниям.",
                 "if_it_were_true": "Тогда между базовым `CI/CD` и chaos engineering не было бы промежуточных ступеней, но модель их явно описывает.",
                 "how_it_should_be": "Модель содержит четыре уровня зрелости с нарастающими практиками, а не два бинарных состояния."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Cloud-native maturity model оценивает зрелость исключительно по числу развёрнутых микросервисов, без учёта оркестрации и observability.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Зрелость измеряют по практикам (контейнеризация, оркестрация, observability, GitOps, chaos engineering), а не по количеству сервисов.",
+                "source_of_confusion": "Больше сервисов интуитивно ассоциируется с «более продвинутой» архитектурой, отсюда подмена метрики.",
+                "if_it_were_true": "Тогда монолит на 200 сервисов считался бы зрелым, но без observability и автоматизации это лишь distributed monolith.",
+                "how_it_should_be": "Зрелость определяется набором практик по уровням Build/Operate/Scale/Improve, а не числом микросервисов."
               },
               "label": "D",
               "order": 3

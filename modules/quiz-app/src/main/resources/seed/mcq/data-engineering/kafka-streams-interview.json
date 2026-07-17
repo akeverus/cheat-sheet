@@ -11,19 +11,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Kafka Streams` — client-библиотека для stream processing на JVM, часть `Apache Kafka` (с 0.10). Это обычное Java/Scala-приложение, без отдельного кластера; state хранится в Kafka-топиках (changelog), что даёт fault tolerance из коробки, а с 0.11+ поддерживается exactly-once.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ключевая идея: это не framework с кластером, а зависимость, которую запускаешь как любой JVM-сервис; Kafka одновременно и транспорт, и хранилище состояния через changelog-топики.",
-                "example": "Подключаешь `kafka-streams` как зависимость, пишешь `KafkaStreams streams = new KafkaStreams(topology, props); streams.start();` — и деплоишь как любой микросервис, например в `Kubernetes` pod.",
-                "when_to_apply": "Применяют для event-driven микросервисов, real-time-агрегаций, join'ов потоков и fraud detection в финтехе, когда источник и приёмник данных — Kafka.",
-                "edge_cases": "Раз это библиотека, у неё нет своего scheduler'а: масштабирование и failover идут через consumer groups Kafka, а не через cluster manager.",
-                "related": "[[kafka-streams-interview#Q2]] отличие от Spark/Flink; [[kafka-streams-interview#Q3]] почему отдельный процесс; [[kafka-streams-interview#Q22]] exactly-once."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Kafka Streams` — это отдельный распределённый кластер обработки, который ставится рядом с Kafka и управляется собственным JobManager'ом.",
               "correct": false,
               "sections": {
@@ -34,8 +21,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Kafka Streams` — это REST-сервер от Confluent, через который SQL-запросы выполняются над топиками Kafka.",
               "correct": false,
               "sections": {
@@ -43,6 +30,19 @@
                 "source_of_confusion": "`ksqlDB` построен поверх `Kafka Streams`, поэтому их легко перепутать.",
                 "if_it_were_true": "Тогда не было бы DSL и Processor API на Java, но именно они и есть основной интерфейс `Kafka Streams`.",
                 "how_it_should_be": "`Kafka Streams` — библиотека с Java-DSL; `ksqlDB` — отдельный продукт-обёртка с SQL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Kafka Streams` — client-библиотека для stream processing на JVM, часть `Apache Kafka` (с 0.10). Это обычное Java/Scala-приложение, без отдельного кластера; state хранится в Kafka-топиках (changelog), что даёт fault tolerance из коробки, а с 0.11+ поддерживается exactly-once.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевая идея: это не framework с кластером, а зависимость, которую запускаешь как любой JVM-сервис; Kafka одновременно и транспорт, и хранилище состояния через changelog-топики.",
+                "example": "Подключаешь `kafka-streams` как зависимость, пишешь `KafkaStreams streams = new KafkaStreams(topology, props); streams.start();` — и деплоишь как любой микросервис, например в `Kubernetes` pod.",
+                "when_to_apply": "Применяют для event-driven микросервисов, real-time-агрегаций, join'ов потоков и fraud detection в финтехе, когда источник и приёмник данных — Kafka.",
+                "edge_cases": "Раз это библиотека, у неё нет своего scheduler'а: масштабирование и failover идут через consumer groups Kafka, а не через cluster manager.",
+                "related": "[[kafka-streams-interview#Q2]] отличие от Spark/Flink; [[kafka-streams-interview#Q3]] почему отдельный процесс; [[kafka-streams-interview#Q22]] exactly-once."
               }
             },
             {
@@ -71,18 +71,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Kafka Streams` — это framework с собственным кластером, как `Spark`/`Flink`, только оптимизированный под Kafka в качестве источника.",
+              "text": "`Kafka Streams` отличается тем, что не хранит state локально и полностью stateless, тогда как `Spark`/`Flink` поддерживают stateful-обработку.",
               "correct": false,
               "sections": {
-                "what_actually": "`Kafka Streams` — именно library, а не framework с кластером; в этом и состоит ключевое отличие от `Spark`/`Flink`.",
-                "source_of_confusion": "Слово «Streams» звучит как название движка, поэтому его принимают за полноценный framework.",
-                "if_it_were_true": "Тогда пришлось бы поднимать JobManager/Driver, но `Kafka Streams` деплоится как обычный Java-app.",
-                "how_it_should_be": "`Kafka Streams` — library без кластера; `Spark`/`Flink` — framework + cluster."
+                "what_actually": "`Kafka Streams` как раз stateful: он держит state в RocksDB + changelog-топиках, а не отбрасывает его.",
+                "source_of_confusion": "«Library» воспринимают как «лёгкий и stateless», но это не так.",
+                "if_it_were_true": "Тогда нельзя было бы делать агрегации и join'ы с состоянием, но это базовые операции `Kafka Streams`.",
+                "how_it_should_be": "Оба класса инструментов stateful; различие — в способе хранения (Kafka-changelog vs custom backends)."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "Главное отличие в том, что `Kafka Streams` поддерживает любые источники и приёмники (файлы, БД, S3), а `Spark`/`Flink` умеют работать только с Kafka.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: это у `Kafka Streams` source/sink ограничены Kafka, а `Spark`/`Flink` поддерживают множество источников.",
+                "source_of_confusion": "Кажется логичным, что более «тяжёлый» инструмент должен быть ограниченнее, но тут связь обратная.",
+                "if_it_were_true": "Тогда `Kafka Streams` читал бы из S3 и БД напрямую, но он умеет только Kafka-топики.",
+                "how_it_should_be": "`Kafka Streams` — только Kafka; универсальность по источникам — сильная сторона Spark/Flink."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Kafka Streams` — это library, а не framework: деплоится как обычный Java-app (например, K8s pod), без отдельного кластера. `Spark`/`Flink` — framework + cluster (Spark cluster, Flink JobManager). Source/sink у `Kafka Streams` — только Kafka, scaling — через consumer groups, fault tolerance — через сам Kafka, и operational-сложность низкая.",
               "correct": true,
               "sections": {
@@ -94,27 +106,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Главное отличие в том, что `Kafka Streams` поддерживает любые источники и приёмники (файлы, БД, S3), а `Spark`/`Flink` умеют работать только с Kafka.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: это у `Kafka Streams` source/sink ограничены Kafka, а `Spark`/`Flink` поддерживают множество источников.",
-                "source_of_confusion": "Кажется логичным, что более «тяжёлый» инструмент должен быть ограниченнее, но тут связь обратная.",
-                "if_it_were_true": "Тогда `Kafka Streams` читал бы из S3 и БД напрямую, но он умеет только Kafka-топики.",
-                "how_it_should_be": "`Kafka Streams` — только Kafka; универсальность по источникам — сильная сторона Spark/Flink."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`Kafka Streams` отличается тем, что не хранит state локально и полностью stateless, тогда как `Spark`/`Flink` поддерживают stateful-обработку.",
+              "text": "`Kafka Streams` — это framework с собственным кластером, как `Spark`/`Flink`, только оптимизированный под Kafka в качестве источника.",
               "correct": false,
               "sections": {
-                "what_actually": "`Kafka Streams` как раз stateful: он держит state в RocksDB + changelog-топиках, а не отбрасывает его.",
-                "source_of_confusion": "«Library» воспринимают как «лёгкий и stateless», но это не так.",
-                "if_it_were_true": "Тогда нельзя было бы делать агрегации и join'ы с состоянием, но это базовые операции `Kafka Streams`.",
-                "how_it_should_be": "Оба класса инструментов stateful; различие — в способе хранения (Kafka-changelog vs custom backends)."
+                "what_actually": "`Kafka Streams` — именно library, а не framework с кластером; в этом и состоит ключевое отличие от `Spark`/`Flink`.",
+                "source_of_confusion": "Слово «Streams» звучит как название движка, поэтому его принимают за полноценный framework.",
+                "if_it_were_true": "Тогда пришлось бы поднимать JobManager/Driver, но `Kafka Streams` деплоится как обычный Java-app.",
+                "how_it_should_be": "`Kafka Streams` — library без кластера; `Spark`/`Flink` — framework + cluster."
               }
             }
           ]
@@ -131,18 +131,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Потому что у `Kafka Streams` есть центральный JobManager, который запускает каждый instance как подчинённый worker-процесс.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `Kafka Streams` нет JobManager/Driver — это и есть причина, почему каждый instance самостоятелен.",
-                "source_of_confusion": "Архитектуру `Flink` (JobManager + TaskManager) ошибочно переносят на `Kafka Streams`.",
-                "if_it_were_true": "Тогда падение JobManager'а останавливало бы всё, но в `Kafka Streams` нет такой точки.",
-                "how_it_should_be": "Координацию берёт на себя Kafka через consumer groups, а не отдельный менеджер."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Потому что каждый instance должен сам поднимать встроенный кластер `Zookeeper`/`KRaft` для координации обработки.",
               "correct": false,
               "sections": {
@@ -153,8 +141,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Потому что в `Kafka Streams` нет JobManager/Driver: каждый instance приложения — это standalone JVM-процесс. Координация идёт через сам Kafka: топики как input/output, partition assignment через consumer groups, persistence state через changelog-топики. Это даёт простой deployment (обычный Java app), хорошо ложится на K8s, нет single point of failure для координации и авто-failover через consumer rebalance.",
               "correct": true,
               "sections": {
@@ -163,6 +151,18 @@
                 "when_to_apply": "Такой подход выбирают для микросервисной архитектуры на K8s, где хочется масштабировать обработку обычным изменением числа реплик.",
                 "edge_cases": "Координация без отдельного менеджера означает, что rebalance при scale up/down вызывает кратковременную паузу обработки — за простоту платишь этим.",
                 "related": "[[kafka-streams-interview#Q1]] что такое Kafka Streams; [[kafka-streams-interview#Q24]] сбой instance и rebalance; [[kafka-streams-interview#Q18]] changelog для восстановления."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Потому что у `Kafka Streams` есть центральный JobManager, который запускает каждый instance как подчинённый worker-процесс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Kafka Streams` нет JobManager/Driver — это и есть причина, почему каждый instance самостоятелен.",
+                "source_of_confusion": "Архитектуру `Flink` (JobManager + TaskManager) ошибочно переносят на `Kafka Streams`.",
+                "if_it_were_true": "Тогда падение JobManager'а останавливало бы всё, но в `Kafka Streams` нет такой точки.",
+                "how_it_should_be": "Координацию берёт на себя Kafka через consumer groups, а не отдельный менеджер."
               }
             },
             {
@@ -203,18 +203,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Topology` — это физический план выполнения, который генерирует cost-based оптимизатор, как в SQL-движках.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Topology` в `Kafka Streams` — логический DAG, который ты задаёшь сам кодом; cost-based оптимизатора там нет.",
-                "source_of_confusion": "Аналогия с query planner'ами реляционных СУБД и `ksqlDB` создаёт ложное впечатление.",
-                "if_it_were_true": "Тогда один и тот же код давал бы разные планы в зависимости от статистики, но топология детерминирована по коду.",
-                "how_it_should_be": "Это DAG из source/processor/sink, собранный из вызовов DSL; оптимизатора плана здесь нет."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Topology` — это набор партиций input-топика; число партиций задаёт число узлов в DAG.",
               "correct": false,
               "sections": {
@@ -222,6 +210,18 @@
                 "source_of_confusion": "Параллелизм по партициям смешивают с самим графом операций.",
                 "if_it_were_true": "Тогда добавление партиции добавляло бы операцию в DAG, но граф зависит только от написанного кода.",
                 "how_it_should_be": "Топология — DAG операторов; партиции определяют, на сколько task'ов он разворачивается."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Topology` — это физический план выполнения, который генерирует cost-based оптимизатор, как в SQL-движках.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Topology` в `Kafka Streams` — логический DAG, который ты задаёшь сам кодом; cost-based оптимизатора там нет.",
+                "source_of_confusion": "Аналогия с query planner'ами реляционных СУБД и `ksqlDB` создаёт ложное впечатление.",
+                "if_it_were_true": "Тогда один и тот же код давал бы разные планы в зависимости от статистики, но топология детерминирована по коду.",
+                "how_it_should_be": "Это DAG из source/processor/sink, собранный из вызовов DSL; оптимизатора плана здесь нет."
               }
             },
             {
@@ -264,18 +264,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Streams DSL` исполняется на брокере Kafka, а `Processor API` — на клиенте; в этом и состоит главная разница.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оба API исполняются на клиенте, внутри твоего JVM-приложения; брокер обработку не выполняет.",
-                "source_of_confusion": "Server-side обработку из ksqlDB-сервера ошибочно приписывают DSL.",
-                "if_it_were_true": "Тогда брокер тратил бы CPU на твою бизнес-логику, но Kafka-брокеры только хранят и отдают сообщения.",
-                "how_it_should_be": "Разница в уровне абстракции API, а не в месте исполнения — оба работают client-side."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Processor API` — это декларативный SQL-подобный язык, а `Streams DSL` — императивный Java-API.",
               "correct": false,
               "sections": {
@@ -283,6 +271,18 @@
                 "source_of_confusion": "Слово «API» в обоих и наличие SQL-обёртки `ksqlDB` создают путаницу.",
                 "if_it_were_true": "Тогда Processor API писали бы запросами `SELECT`, но он требует ручной реализации `process()`.",
                 "how_it_should_be": "DSL — высокоуровневый Java-API, Processor API — низкоуровневый Java-API; SQL — это отдельный ksqlDB."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Streams DSL` исполняется на брокере Kafka, а `Processor API` — на клиенте; в этом и состоит главная разница.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба API исполняются на клиенте, внутри твоего JVM-приложения; брокер обработку не выполняет.",
+                "source_of_confusion": "Server-side обработку из ksqlDB-сервера ошибочно приписывают DSL.",
+                "if_it_were_true": "Тогда брокер тратил бы CPU на твою бизнес-логику, но Kafka-брокеры только хранят и отдают сообщения.",
+                "how_it_should_be": "Разница в уровне абстракции API, а не в месте исполнения — оба работают client-side."
               }
             },
             {
@@ -311,18 +311,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`KStream` — это таблица с последним значением per key, а `KTable` — поток независимых событий; то есть KStream хранит state, а KTable нет.",
+              "text": "`KStream` и `KTable` — это одно и то же, просто `KTable` дополнительно сжимает дубликаты ключей в памяти для экономии.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё перепутано местами: `KStream` — это поток событий (insert-only), а `KTable` — таблица с последним значением per key.",
-                "source_of_confusion": "Названия сбивают: «Stream» интуитивно кажется накапливающим, «Table» — потоковым.",
-                "if_it_were_true": "Тогда `(alice,+10)` и `(alice,+30)` в KStream давали бы одно значение, но это два отдельных события.",
-                "how_it_should_be": "`KStream` — независимые факты; `KTable` — current state с upsert по ключу."
+                "what_actually": "Это разные абстракции с разной семантикой обновления, а не один тип с опцией дедупликации.",
+                "source_of_confusion": "Поверхностно «таблица как сжатый стрим» звучит правдоподобно, но семантика обработки различается.",
+                "if_it_were_true": "Тогда join KStream-KStream и KTable-KTable вели бы себя одинаково, но они принципиально разные (windowed vs нет).",
+                "how_it_should_be": "KStream — append-only события; KTable — changelog с upsert-семантикой по ключу."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "`KTable` хранится на брокере Kafka, а `KStream` — только в памяти клиента; этим они и отличаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обе абстракции живут на клиенте; KTable материализуется в локальный state store (RocksDB), а не на брокере.",
+                "source_of_confusion": "Наличие changelog-топика создаёт иллюзию, что KTable «живёт на брокере».",
+                "if_it_were_true": "Тогда чтение KTable шло бы сетевым запросом к брокеру на каждый ключ, но оно идёт из локального store.",
+                "how_it_should_be": "Различие семантическое (события vs current state), а не «где физически лежит»."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`KStream` — поток независимых событий (insert-only): каждая запись — отдельный факт, записи с одинаковым ключом не перетирают друг друга. `KTable` — таблица с последним значением per key: запись с тем же ключом обновляет (upsert) предыдущее. KStream — для immutable facts (orders, clicks), KTable — для current state (профили, цены).",
               "correct": true,
               "sections": {
@@ -334,27 +346,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`KStream` и `KTable` — это одно и то же, просто `KTable` дополнительно сжимает дубликаты ключей в памяти для экономии.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это разные абстракции с разной семантикой обновления, а не один тип с опцией дедупликации.",
-                "source_of_confusion": "Поверхностно «таблица как сжатый стрим» звучит правдоподобно, но семантика обработки различается.",
-                "if_it_were_true": "Тогда join KStream-KStream и KTable-KTable вели бы себя одинаково, но они принципиально разные (windowed vs нет).",
-                "how_it_should_be": "KStream — append-only события; KTable — changelog с upsert-семантикой по ключу."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`KTable` хранится на брокере Kafka, а `KStream` — только в памяти клиента; этим они и отличаются.",
+              "text": "`KStream` — это таблица с последним значением per key, а `KTable` — поток независимых событий; то есть KStream хранит state, а KTable нет.",
               "correct": false,
               "sections": {
-                "what_actually": "Обе абстракции живут на клиенте; KTable материализуется в локальный state store (RocksDB), а не на брокере.",
-                "source_of_confusion": "Наличие changelog-топика создаёт иллюзию, что KTable «живёт на брокере».",
-                "if_it_were_true": "Тогда чтение KTable шло бы сетевым запросом к брокеру на каждый ключ, но оно идёт из локального store.",
-                "how_it_should_be": "Различие семантическое (события vs current state), а не «где физически лежит»."
+                "what_actually": "Всё перепутано местами: `KStream` — это поток событий (insert-only), а `KTable` — таблица с последним значением per key.",
+                "source_of_confusion": "Названия сбивают: «Stream» интуитивно кажется накапливающим, «Table» — потоковым.",
+                "if_it_were_true": "Тогда `(alice,+10)` и `(alice,+30)` в KStream давали бы одно значение, но это два отдельных события.",
+                "how_it_should_be": "`KStream` — независимые факты; `KTable` — current state с upsert по ключу."
               }
             }
           ]
@@ -383,18 +383,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`GlobalKTable` используют, когда нужно записывать агрегаты обратно в Kafka с exactly-once-гарантией.",
-              "correct": false,
-              "sections": {
-                "what_actually": "GlobalKTable — это read-only lookup-структура для обогащения, а не механизм записи агрегатов.",
-                "source_of_confusion": "Любую KTable ассоциируют с «результатом агрегации», отсюда подмена назначения.",
-                "if_it_were_true": "Тогда GlobalKTable имел бы write-API, но он лишь предоставляет полную локальную копию для join'ов.",
-                "how_it_should_be": "Запись агрегатов делают через `aggregate(...).toStream().to(...)`, а не через GlobalKTable."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`GlobalKTable` используют для небольших lookup-таблиц, которые нужны целиком на каждом instance: в отличие от `KTable` (шард по партициям Kafka-топика), `GlobalKTable` не разделена — каждый instance держит полную копию. Главное преимущество — join без repartitioning, потому что у любого instance есть все данные; недостаток — не масштабируется (большая таблица → OOM).",
               "correct": true,
               "sections": {
@@ -403,6 +391,18 @@
                 "when_to_apply": "Берут для справочников: пользователи, валюты, конфигурация — маленькие и нужны на каждом instance для обогащения потока.",
                 "edge_cases": "Если справочник растёт, полная копия на каждом instance упирается в память — тогда нужен обычный KTable с co-partition либо внешний lookup.",
                 "related": "[[kafka-streams-interview#Q6]] KStream vs KTable; [[kafka-streams-interview#Q12]] join'ы и co-partition; [[kafka-streams-interview#Q2]] отличие от Spark/Flink."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`GlobalKTable` используют, когда нужно записывать агрегаты обратно в Kafka с exactly-once-гарантией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GlobalKTable — это read-only lookup-структура для обогащения, а не механизм записи агрегатов.",
+                "source_of_confusion": "Любую KTable ассоциируют с «результатом агрегации», отсюда подмена назначения.",
+                "if_it_were_true": "Тогда GlobalKTable имел бы write-API, но он лишь предоставляет полную локальную копию для join'ов.",
+                "how_it_should_be": "Запись агрегатов делают через `aggregate(...).toStream().to(...)`, а не через GlobalKTable."
               }
             },
             {
@@ -431,30 +431,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`KStream` превращают в `KTable` вызовом `stream.toTable()` без агрегации, а обратно — методом `table.toStream()`; других способов получить KTable из KStream нет.",
-              "correct": false,
+              "text": "`KStream → KTable`: через агрегацию, например `KTable<String,Long> counts = events.groupByKey().count();` или `events.groupByKey().reduce((oldVal,newVal)->newVal)` для «последнего по ключу». `KTable → KStream`: `KStream<String,Long> changeLog = counts.toStream();` — даёт стрим ИЗМЕНЕНИЙ (changelog), что полезно для отправки апдейтов в downstream.",
+              "correct": true,
               "sections": {
-                "what_actually": "Помимо `toTable()`, KTable из KStream получают через `groupByKey().count()/reduce()/aggregate()` — это стандартный путь из примеров.",
-                "source_of_confusion": "Знание только про `toTable()`/`toStream()` пропускает основной агрегационный путь.",
-                "if_it_were_true": "Тогда `events.groupByKey().count()` не возвращал бы KTable, но он возвращает именно его.",
-                "how_it_should_be": "Способов несколько: прямой `toTable()` и агрегации `count/reduce/aggregate`, дающие KTable."
+                "explanation": "Это две стороны двойственности «поток ↔ таблица»: агрегация сворачивает события в текущее состояние, а `toStream()` разворачивает изменения состояния обратно в поток.",
+                "example": "`KTable<String,Order> latest = orders.groupByKey().reduce((o,n)->n);` собирает последнюю запись по ключу, а `latest.toStream().to(\"latest-orders\")` пробрасывает изменения дальше.",
+                "when_to_apply": "Конвертацию применяют, когда поток фактов надо свернуть в current state (KTable) или, наоборот, эмитить изменения таблицы как события (toStream).",
+                "edge_cases": "`toStream()` на оконной KTable отдаёт ключ типа `Windowed<K>`, а не голый ключ — это надо учитывать при записи результата.",
+                "related": "[[kafka-streams-interview#Q6]] KStream vs KTable; [[kafka-streams-interview#Q11]] aggregate/reduce/count; [[kafka-streams-interview#Q18]] changelog-топик."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`KTable.toStream()` отдаёт снимок текущего состояния таблицы целиком на момент вызова, а не поток изменений.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`toStream()` даёт поток ИЗМЕНЕНИЙ (changelog), а не одноразовый снимок состояния.",
-                "source_of_confusion": "«Из таблицы в стрим» интуитивно читают как «выгрузить таблицу», а не «эмитить апдейты».",
-                "if_it_were_true": "Тогда downstream не получал бы новые обновления после вызова, но changelog-стрим продолжает эмитить их.",
-                "how_it_should_be": "`toStream()` эмитит каждое изменение записи как событие в стриме."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Конвертация `KStream → KTable` всегда требует windowing, иначе таблица будет расти бесконечно и упадёт по памяти.",
               "correct": false,
               "sections": {
@@ -465,16 +454,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`KStream` превращают в `KTable` вызовом `stream.toTable()` без агрегации, а обратно — методом `table.toStream()`; других способов получить KTable из KStream нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо `toTable()`, KTable из KStream получают через `groupByKey().count()/reduce()/aggregate()` — это стандартный путь из примеров.",
+                "source_of_confusion": "Знание только про `toTable()`/`toStream()` пропускает основной агрегационный путь.",
+                "if_it_were_true": "Тогда `events.groupByKey().count()` не возвращал бы KTable, но он возвращает именно его.",
+                "how_it_should_be": "Способов несколько: прямой `toTable()` и агрегации `count/reduce/aggregate`, дающие KTable."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`KStream → KTable`: через агрегацию, например `KTable<String,Long> counts = events.groupByKey().count();` или `events.groupByKey().reduce((oldVal,newVal)->newVal)` для «последнего по ключу». `KTable → KStream`: `KStream<String,Long> changeLog = counts.toStream();` — даёт стрим ИЗМЕНЕНИЙ (changelog), что полезно для отправки апдейтов в downstream.",
-              "correct": true,
+              "text": "`KTable.toStream()` отдаёт снимок текущего состояния таблицы целиком на момент вызова, а не поток изменений.",
+              "correct": false,
               "sections": {
-                "explanation": "Это две стороны двойственности «поток ↔ таблица»: агрегация сворачивает события в текущее состояние, а `toStream()` разворачивает изменения состояния обратно в поток.",
-                "example": "`KTable<String,Order> latest = orders.groupByKey().reduce((o,n)->n);` собирает последнюю запись по ключу, а `latest.toStream().to(\"latest-orders\")` пробрасывает изменения дальше.",
-                "when_to_apply": "Конвертацию применяют, когда поток фактов надо свернуть в current state (KTable) или, наоборот, эмитить изменения таблицы как события (toStream).",
-                "edge_cases": "`toStream()` на оконной KTable отдаёт ключ типа `Windowed<K>`, а не голый ключ — это надо учитывать при записи результата.",
-                "related": "[[kafka-streams-interview#Q6]] KStream vs KTable; [[kafka-streams-interview#Q11]] aggregate/reduce/count; [[kafka-streams-interview#Q18]] changelog-топик."
+                "what_actually": "`toStream()` даёт поток ИЗМЕНЕНИЙ (changelog), а не одноразовый снимок состояния.",
+                "source_of_confusion": "«Из таблицы в стрим» интуитивно читают как «выгрузить таблицу», а не «эмитить апдейты».",
+                "if_it_were_true": "Тогда downstream не получал бы новые обновления после вызова, но changelog-стрим продолжает эмитить их.",
+                "how_it_should_be": "`toStream()` эмитит каждое изменение записи как событие в стриме."
               }
             }
           ]
@@ -491,6 +491,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`branch` доступен только через старый метод `KStream.branch(...)`, возвращающий массив; синтаксиса `split().branch(...)` в Kafka Streams нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Kafka Streams 2.8+ ввели именно `split().branch(...)` с `Branched`/`defaultBranch`; старый `branch(...)` с массивом задеприкейчен.",
+                "source_of_confusion": "Память о старом API создаёт впечатление, что нового нет.",
+                "if_it_were_true": "Тогда нельзя было бы дать веткам имена через `Branched.as(...)`, но это часть нового API.",
+                "how_it_should_be": "Современный способ — `stream.split().branch(...).defaultBranch(...)`, возвращающий `Map`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`flatMap` отбрасывает записи по предикату (как `filter`), а `branch` объединяет несколько потоков в один.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`flatMap` превращает один элемент в НЕСКОЛЬКО, а `branch` РАЗДЕЛЯЕТ поток на несколько — обе функции описаны неверно.",
+                "source_of_confusion": "Названия `flatMap`/`branch` путают с фильтрацией и слиянием.",
+                "if_it_were_true": "Тогда `flatMap` уменьшал бы число записей, но он способен их размножать.",
+                "how_it_should_be": "`flatMap` — один→много, `branch`/`split` — один поток→несколько; фильтрация — это `filter`, слияние — `merge`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`map` меняет ключ и/или значение (`(k,v)->KeyValue.pair(...)`), `mapValues` — только значение и НЕ вызывает repartition. `filter` отсеивает по предикату. `flatMap` превращает один элемент в несколько. `branch` (в 2.8+ — `split().branch(...)`) разделяет поток на несколько по предикатам с `defaultBranch`. Главный подвох: `map` с изменением ключа триггерит repartitioning, а `mapValues` — нет.",
               "correct": true,
               "sections": {
@@ -502,8 +526,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`mapValues` меняет ключ записи, а `map` — только значение; поэтому именно `mapValues` вызывает repartitioning.",
               "correct": false,
               "sections": {
@@ -511,30 +535,6 @@
                 "source_of_confusion": "Похожие названия `map`/`mapValues` легко перепутать по эффекту.",
                 "if_it_were_true": "Тогда `mapValues` создавал бы repartition-топик, но он специально сделан, чтобы его избежать.",
                 "how_it_should_be": "`mapValues` — только значение, без repartition; смена ключа (через `map`) — то, что вызывает repartition."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`flatMap` отбрасывает записи по предикату (как `filter`), а `branch` объединяет несколько потоков в один.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`flatMap` превращает один элемент в НЕСКОЛЬКО, а `branch` РАЗДЕЛЯЕТ поток на несколько — обе функции описаны неверно.",
-                "source_of_confusion": "Названия `flatMap`/`branch` путают с фильтрацией и слиянием.",
-                "if_it_were_true": "Тогда `flatMap` уменьшал бы число записей, но он способен их размножать.",
-                "how_it_should_be": "`flatMap` — один→много, `branch`/`split` — один поток→несколько; фильтрация — это `filter`, слияние — `merge`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`branch` доступен только через старый метод `KStream.branch(...)`, возвращающий массив; синтаксиса `split().branch(...)` в Kafka Streams нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В Kafka Streams 2.8+ ввели именно `split().branch(...)` с `Branched`/`defaultBranch`; старый `branch(...)` с массивом задеприкейчен.",
-                "source_of_confusion": "Память о старом API создаёт впечатление, что нового нет.",
-                "if_it_were_true": "Тогда нельзя было бы дать веткам имена через `Branched.as(...)`, но это часть нового API.",
-                "how_it_should_be": "Современный способ — `stream.split().branch(...).defaultBranch(...)`, возвращающий `Map`."
               }
             }
           ]
@@ -551,18 +551,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`groupByKey` всегда создаёт internal repartition-топик, а `groupBy` работает по текущему ключу без repartition.",
+              "text": "`groupBy` нельзя применять к `KStream` — он работает только с `KTable`, тогда как `groupByKey` только с `KStream`.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё перепутано: `groupByKey` использует текущий ключ БЕЗ repartition, а `groupBy` задаёт новый ключ и ТРИГГЕРИТ repartition.",
-                "source_of_confusion": "Похожие имена методов меняют местами их эффект на repartition.",
-                "if_it_were_true": "Тогда `groupByKey` был бы дороже `groupBy`, но это не так.",
-                "how_it_should_be": "`groupByKey` — без repartition; `groupBy` — с repartition-топиком."
+                "what_actually": "Оба метода доступны для KStream (и KTable); это не взаимоисключающие по типу операции.",
+                "source_of_confusion": "Кажется, что разные имена закреплены за разными абстракциями.",
+                "if_it_were_true": "Тогда нельзя было бы сделать `events.groupBy(...)` на KStream, но это валидный код.",
+                "how_it_should_be": "Различие — в источнике ключа (текущий vs новый) и repartition, а не в типе KStream/KTable."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "`groupByKey` и `groupBy` идентичны по поведению; второй — лишь устаревший алиас первого, оставленный для совместимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные операции: одна сохраняет ключ без repartition, другая задаёт новый ключ с repartition.",
+                "source_of_confusion": "Похожесть имён создаёт впечатление синонимов.",
+                "if_it_were_true": "Тогда выбор между ними не влиял бы на производительность, но `groupBy` добавляет repartition-топик.",
+                "how_it_should_be": "`groupByKey` ≠ `groupBy`: ключевое различие — нужен ли repartition."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`groupByKey()` группирует по ТЕКУЩЕМУ ключу и НЕ вызывает repartition. `groupBy((k,v)->v.userId)` задаёт НОВЫЙ ключ и ТРИГГЕРИТ repartitioning: Kafka Streams создаёт internal repartition-топик. `groupBy` дороже, но позволяет группировать по любому полю значения.",
               "correct": true,
               "sections": {
@@ -574,27 +586,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`groupBy` нельзя применять к `KStream` — он работает только с `KTable`, тогда как `groupByKey` только с `KStream`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оба метода доступны для KStream (и KTable); это не взаимоисключающие по типу операции.",
-                "source_of_confusion": "Кажется, что разные имена закреплены за разными абстракциями.",
-                "if_it_were_true": "Тогда нельзя было бы сделать `events.groupBy(...)` на KStream, но это валидный код.",
-                "how_it_should_be": "Различие — в источнике ключа (текущий vs новый) и repartition, а не в типе KStream/KTable."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`groupByKey` и `groupBy` идентичны по поведению; второй — лишь устаревший алиас первого, оставленный для совместимости.",
+              "text": "`groupByKey` всегда создаёт internal repartition-топик, а `groupBy` работает по текущему ключу без repartition.",
               "correct": false,
               "sections": {
-                "what_actually": "Это разные операции: одна сохраняет ключ без repartition, другая задаёт новый ключ с repartition.",
-                "source_of_confusion": "Похожесть имён создаёт впечатление синонимов.",
-                "if_it_were_true": "Тогда выбор между ними не влиял бы на производительность, но `groupBy` добавляет repartition-топик.",
-                "how_it_should_be": "`groupByKey` ≠ `groupBy`: ключевое различие — нужен ли repartition."
+                "what_actually": "Всё перепутано: `groupByKey` использует текущий ключ БЕЗ repartition, а `groupBy` задаёт новый ключ и ТРИГГЕРИТ repartition.",
+                "source_of_confusion": "Похожие имена методов меняют местами их эффект на repartition.",
+                "if_it_were_true": "Тогда `groupByKey` был бы дороже `groupBy`, но это не так.",
+                "how_it_should_be": "`groupByKey` — без repartition; `groupBy` — с repartition-топиком."
               }
             }
           ]
@@ -611,18 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`count` суммирует значения записей per key, `reduce` считает их число, а `aggregate` объединяет два потока в один.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё описано неверно: `count` считает ЧИСЛО записей per key, `reduce` сворачивает значения в значение того же типа, а `aggregate` строит произвольный результат, а не объединяет потоки.",
-                "source_of_confusion": "Назначения трёх операций перепутаны между собой.",
-                "if_it_were_true": "Тогда `events.groupByKey().count()` возвращал бы сумму значений, но он возвращает количество событий.",
-                "how_it_should_be": "`count` — количество, `reduce` — свёртка в тот же тип, `aggregate` — свёртка в произвольный тип."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`reduce` может менять тип результата (например, из `Order` в `Stats`), а `aggregate` обязан возвращать тот же тип, что и вход.",
               "correct": false,
               "sections": {
@@ -633,8 +621,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`count` — число записей per key: `events.groupByKey().count()`. `reduce` — свёртка значений в значение ТОГО ЖЕ типа: `events.groupByKey().reduce((v1,v2)->v1+v2)`. `aggregate` — самый мощный: строит произвольный output-тип через initializer + aggregator (+ Serdes), например собирает `Stats` из потока `Order`. `aggregate` может строить любое состояние per key.",
               "correct": true,
               "sections": {
@@ -643,6 +631,18 @@
                 "when_to_apply": "`count` берут для счётчиков, `reduce` — для сумм/мин/макс того же типа, `aggregate` — когда output отличается от input или нужно богатое состояние.",
                 "edge_cases": "У `reduce` нет initializer'а, поэтому он не определён на «пустом» состоянии и не умеет менять тип — для этого и существует `aggregate`.",
                 "related": "[[kafka-streams-interview#Q10]] groupByKey vs groupBy перед агрегацией; [[kafka-streams-interview#Q8]] KStream→KTable через count; [[kafka-streams-interview#Q16]] куда пишется агрегат (state store)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`count` суммирует значения записей per key, `reduce` считает их число, а `aggregate` объединяет два потока в один.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё описано неверно: `count` считает ЧИСЛО записей per key, `reduce` сворачивает значения в значение того же типа, а `aggregate` строит произвольный результат, а не объединяет потоки.",
+                "source_of_confusion": "Назначения трёх операций перепутаны между собой.",
+                "if_it_were_true": "Тогда `events.groupByKey().count()` возвращал бы сумму значений, но он возвращает количество событий.",
+                "how_it_should_be": "`count` — количество, `reduce` — свёртка в тот же тип, `aggregate` — свёртка в произвольный тип."
               }
             },
             {
@@ -671,30 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "KStream-KStream join не требует окна — он просто матчит все записи с одинаковым ключом за всё время.",
-              "correct": false,
-              "sections": {
-                "what_actually": "KStream-KStream join ОБЯЗАТЕЛЬНО оконный (`JoinWindows`), иначе пришлось бы хранить оба потока целиком бесконечно.",
-                "source_of_confusion": "Привычка к non-windowed join'ам в БД переносится на потоки.",
-                "if_it_were_true": "Тогда state рос бы неограниченно, но именно окно ограничивает, какие пары событий джойнятся.",
-                "how_it_should_be": "KStream-KStream join всегда windowed; non-windowed — это KStream-KTable и KTable-KTable."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "KStream-KTable join — оконный, и для него нужно задавать `JoinWindows`, как для KStream-KStream.",
-              "correct": false,
-              "sections": {
-                "what_actually": "KStream-KTable join НЕ оконный: это lookup в таблицу по ключу, без `JoinWindows`.",
-                "source_of_confusion": "Все join'ы Kafka Streams ошибочно считают оконными.",
-                "if_it_were_true": "Тогда для обогащения события данными из таблицы требовалось бы окно, но lookup работает мгновенно по текущему значению.",
-                "how_it_should_be": "Окно обязательно только для KStream-KStream; KStream-KTable — это non-windowed lookup."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "KStream-GlobalKTable join требует co-partition stream'а с таблицей, как и обычный KStream-KTable join.",
               "correct": false,
               "sections": {
@@ -705,8 +681,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "KStream-KStream join — ОКОННЫЙ (`JoinWindows`, обязателен), repartition если разные партиции. KStream-KTable join — non-windowed lookup; стрим должен быть co-partitioned с таблицей. KStream-GlobalKTable — non-windowed, repartition НЕ нужен. KTable-KTable — non-windowed, требует co-partition. Есть также `leftJoin` и `outerJoin`.",
               "correct": true,
               "sections": {
@@ -715,6 +691,30 @@
                 "when_to_apply": "Windowed KStream-KStream join берут для корреляции событий во времени (заказ↔отгрузка), KStream-KTable — для обогащения событий current-state-данными.",
                 "edge_cases": "Для co-partition оба топика должны иметь одинаковое число партиций и одинаковую стратегию партиционирования; иначе нужен repartition либо GlobalKTable.",
                 "related": "[[kafka-streams-interview#Q7]] GlobalKTable и join без repartition; [[kafka-streams-interview#Q13]] оконные типы; [[kafka-streams-interview#Q10]] repartition при смене ключа."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "KStream-KStream join не требует окна — он просто матчит все записи с одинаковым ключом за всё время.",
+              "correct": false,
+              "sections": {
+                "what_actually": "KStream-KStream join ОБЯЗАТЕЛЬНО оконный (`JoinWindows`), иначе пришлось бы хранить оба потока целиком бесконечно.",
+                "source_of_confusion": "Привычка к non-windowed join'ам в БД переносится на потоки.",
+                "if_it_were_true": "Тогда state рос бы неограниченно, но именно окно ограничивает, какие пары событий джойнятся.",
+                "how_it_should_be": "KStream-KStream join всегда windowed; non-windowed — это KStream-KTable и KTable-KTable."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "KStream-KTable join — оконный, и для него нужно задавать `JoinWindows`, как для KStream-KStream.",
+              "correct": false,
+              "sections": {
+                "what_actually": "KStream-KTable join НЕ оконный: это lookup в таблицу по ключу, без `JoinWindows`.",
+                "source_of_confusion": "Все join'ы Kafka Streams ошибочно считают оконными.",
+                "if_it_were_true": "Тогда для обогащения события данными из таблицы требовалось бы окно, но lookup работает мгновенно по текущему значению.",
+                "how_it_should_be": "Окно обязательно только для KStream-KStream; KStream-KTable — это non-windowed lookup."
               }
             }
           ]
@@ -731,14 +731,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Tumbling` — фиксированные неперекрывающиеся окна: `TimeWindows.of(Duration.ofMinutes(5))`. `Hopping` — фиксированного размера, но перекрывающиеся: `TimeWindows.of(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1))`. `Session` — gap-based, окно «закрывается» после паузы без событий: `SessionWindows.with(Duration.ofMinutes(15))`. Важно: то, что в `Kafka Streams` зовётся hopping, в `Flink`/`Spark` называют sliding.",
-              "correct": true,
+              "text": "`Tumbling` — фиксированные неперекрывающиеся окна: `TimeWindows.of(Duration.ofMinutes(5))`. `Hopping` — фиксированного размера, но перекрывающиеся через `advanceBy(Duration.ofMinutes(1))`. `Session` — gap-based: `SessionWindows.with(Duration.ofMinutes(15))`. Важно: внутри `Kafka Streams` `Hopping` и `SlidingWindows` — полные синонимы, класс `SlidingWindows` задаёт ровно те же hopping-окна.",
+              "correct": false,
               "sections": {
-                "explanation": "Три типа отличаются тем, как нарезается время: tumbling — встык, hopping — с перекрытием по шагу, session — динамически по паузам активности, а не по фиксированной сетке.",
-                "example": "`events.groupByKey().windowedBy(TimeWindows.of(Duration.ofMinutes(5))).count();` — считает события в неперекрывающихся 5-минутных окнах (tumbling).",
-                "when_to_apply": "Tumbling берут для непересекающихся интервалов (поминутная агрегация), hopping — для скользящих метрик с шагом, session — для группировки активности пользователя в сессии.",
-                "edge_cases": "Терминологический подвох: «hopping» в Kafka Streams ≠ «sliding window» (это отдельная концепция с 2.7+, см. Q14).",
-                "related": "[[kafka-streams-interview#Q14]] sliding windows как отдельная концепция; [[kafka-streams-interview#Q15]] grace period; [[kafka-streams-interview#Q20]] event time vs processing time."
+                "what_actually": "В Kafka Streams hopping и sliding — РАЗНЫЕ вещи: hopping — это `TimeWindows.advanceBy`, а `SlidingWindows` (2.7+) — отдельная концепция (см. Q14).",
+                "source_of_confusion": "Терминология Flink/Spark (где sliding=hopping) переносится на Kafka Streams.",
+                "if_it_were_true": "Тогда `SlidingWindows` был бы просто алиасом, но он создаёт окно на каждую пару записей.",
+                "how_it_should_be": "Hopping = `advanceBy`; sliding = отдельный `SlidingWindows` с иной семантикой."
               }
             },
             {
@@ -768,13 +767,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Tumbling` — фиксированные неперекрывающиеся окна: `TimeWindows.of(Duration.ofMinutes(5))`. `Hopping` — фиксированного размера, но перекрывающиеся через `advanceBy(Duration.ofMinutes(1))`. `Session` — gap-based: `SessionWindows.with(Duration.ofMinutes(15))`. Важно: внутри `Kafka Streams` `Hopping` и `SlidingWindows` — полные синонимы, класс `SlidingWindows` задаёт ровно те же hopping-окна.",
-              "correct": false,
+              "text": "`Tumbling` — фиксированные неперекрывающиеся окна: `TimeWindows.of(Duration.ofMinutes(5))`. `Hopping` — фиксированного размера, но перекрывающиеся: `TimeWindows.of(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1))`. `Session` — gap-based, окно «закрывается» после паузы без событий: `SessionWindows.with(Duration.ofMinutes(15))`. Важно: то, что в `Kafka Streams` зовётся hopping, в `Flink`/`Spark` называют sliding.",
+              "correct": true,
               "sections": {
-                "what_actually": "В Kafka Streams hopping и sliding — РАЗНЫЕ вещи: hopping — это `TimeWindows.advanceBy`, а `SlidingWindows` (2.7+) — отдельная концепция (см. Q14).",
-                "source_of_confusion": "Терминология Flink/Spark (где sliding=hopping) переносится на Kafka Streams.",
-                "if_it_were_true": "Тогда `SlidingWindows` был бы просто алиасом, но он создаёт окно на каждую пару записей.",
-                "how_it_should_be": "Hopping = `advanceBy`; sliding = отдельный `SlidingWindows` с иной семантикой."
+                "explanation": "Три типа отличаются тем, как нарезается время: tumbling — встык, hopping — с перекрытием по шагу, session — динамически по паузам активности, а не по фиксированной сетке.",
+                "example": "`events.groupByKey().windowedBy(TimeWindows.of(Duration.ofMinutes(5))).count();` — считает события в неперекрывающихся 5-минутных окнах (tumbling).",
+                "when_to_apply": "Tumbling берут для непересекающихся интервалов (поминутная агрегация), hopping — для скользящих метрик с шагом, session — для группировки активности пользователя в сессии.",
+                "edge_cases": "Терминологический подвох: «hopping» в Kafka Streams ≠ «sliding window» (это отдельная концепция с 2.7+, см. Q14).",
+                "related": "[[kafka-streams-interview#Q14]] sliding windows как отдельная концепция; [[kafka-streams-interview#Q15]] grace period; [[kafka-streams-interview#Q20]] event time vs processing time."
               }
             }
           ]
@@ -791,18 +791,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SlidingWindows` — это просто новое имя для tumbling-окон, добавленное в Kafka Streams 2.7 для совместимости с Flink.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`SlidingWindows` — отдельная концепция, а не алиас tumbling: она создаёт окно для каждой пары записей в пределах timeDifference.",
-                "source_of_confusion": "Слово «sliding» в Flink/Spark означает hopping, отсюда путаница с другими типами.",
-                "if_it_were_true": "Тогда sliding-окна были бы фиксированными и непересекающимися, но они строятся вокруг пар событий.",
-                "how_it_should_be": "Это самостоятельный тип окна (`SlidingWindows`, 2.7+), не переименование tumbling."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "С Kafka Streams 2.7+ появились `SlidingWindows` как отдельная концепция: `SlidingWindows.ofTimeDifferenceWithNoGrace(Duration.ofMinutes(5))`. Окно создаётся для КАЖДОЙ пары записей в пределах заданного timeDifference. Это полезно для pattern matching — когда важны попарные соотношения событий во времени, а не фиксированная сетка интервалов.",
               "correct": true,
               "sections": {
@@ -814,8 +802,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`SlidingWindows` требуют, чтобы каждое окно имело фиксированный шаг `advanceBy`, как hopping-окна.",
               "correct": false,
               "sections": {
@@ -826,8 +814,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`SlidingWindows` доступны с самой первой версии Kafka Streams 0.10 и являются дефолтным типом окна.",
               "correct": false,
               "sections": {
@@ -835,6 +823,18 @@
                 "source_of_confusion": "Кажется, что базовый по названию тип должен существовать с самого начала.",
                 "if_it_were_true": "Тогда код на 0.10 мог бы использовать `SlidingWindows`, но этого класса там ещё нет.",
                 "how_it_should_be": "Это относительно новая возможность (2.7+), а не дефолт с первых релизов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SlidingWindows` — это просто новое имя для tumbling-окон, добавленное в Kafka Streams 2.7 для совместимости с Flink.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SlidingWindows` — отдельная концепция, а не алиас tumbling: она создаёт окно для каждой пары записей в пределах timeDifference.",
+                "source_of_confusion": "Слово «sliding» в Flink/Spark означает hopping, отсюда путаница с другими типами.",
+                "if_it_were_true": "Тогда sliding-окна были бы фиксированными и непересекающимися, но они строятся вокруг пар событий.",
+                "how_it_should_be": "Это самостоятельный тип окна (`SlidingWindows`, 2.7+), не переименование tumbling."
               }
             }
           ]
@@ -911,30 +911,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "State store — это таблица в самом Kafka-кластере, к которой Streams-app обращается сетевыми запросами на каждое чтение.",
-              "correct": false,
+              "text": "State store — это ЛОКАЛЬНОЕ key-value-хранилище для stateful-операций (агрегации, join'ы). По умолчанию — RocksDB на локальном диске (быстрее JVM heap для большого state). Создаётся неявно через `aggregate`/`count`/`Materialized.as(\"my-store\")` либо явно в Processor API через `Stores.keyValueStoreBuilder(...)` + `builder.addStateStore(...)`.",
+              "correct": true,
               "sections": {
-                "what_actually": "State store — ЛОКАЛЬНОЕ key-value-хранилище на диске instance (по умолчанию RocksDB), а не таблица на брокере с сетевым доступом.",
-                "source_of_confusion": "Наличие changelog-топика создаёт впечатление, что state живёт «в Kafka».",
-                "if_it_were_true": "Тогда каждое чтение state шло бы по сети к брокеру, но оно идёт из локального RocksDB.",
-                "how_it_should_be": "Store локален; changelog-топик в Kafka — лишь его backup для восстановления."
+                "explanation": "State store — это память stateful-оператора: чтобы накапливать результат между записями, Streams держит его локально на диске, а не пересчитывает из топика каждый раз.",
+                "example": "`events.groupByKey().aggregate(..., Materialized.as(\"my-store\"));` неявно создаёт persistent store `my-store`, к которому потом можно обращаться и через Interactive Queries.",
+                "when_to_apply": "Store используют везде, где операция должна помнить накопленное состояние per key между записями — счётчики, суммы, оконные агрегаты, буферы join'ов.",
+                "edge_cases": "Для большого state важно следить за местом на диске: RocksDB растёт, и при недостатке диска instance падает; ограничивает state именно локальный диск.",
+                "related": "[[kafka-streams-interview#Q17]] RocksDB как backend; [[kafka-streams-interview#Q18]] changelog для восстановления store; [[kafka-streams-interview#Q19]] Interactive Queries к store."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "State store по умолчанию хранится в JVM heap, потому что так быстрее для любого размера состояния.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию state хранится в RocksDB НА ДИСКЕ, что лучше heap для большого state; in-memory store — это опция, не дефолт.",
-                "source_of_confusion": "«Локальное и быстрое» ассоциируют с памятью, а не с embedded-диском.",
-                "if_it_were_true": "Тогда большой state упирался бы в размер heap и вызывал GC-паузы, но RocksDB как раз снимает это ограничение.",
-                "how_it_should_be": "Дефолт — persistent RocksDB на диске; in-memory store берут лишь для маленького state."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "State store нужен только для stateless-операций вроде `filter` и `mapValues`, чтобы кэшировать предикаты.",
               "correct": false,
               "sections": {
@@ -945,16 +934,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "State store по умолчанию хранится в JVM heap, потому что так быстрее для любого размера состояния.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию state хранится в RocksDB НА ДИСКЕ, что лучше heap для большого state; in-memory store — это опция, не дефолт.",
+                "source_of_confusion": "«Локальное и быстрое» ассоциируют с памятью, а не с embedded-диском.",
+                "if_it_were_true": "Тогда большой state упирался бы в размер heap и вызывал GC-паузы, но RocksDB как раз снимает это ограничение.",
+                "how_it_should_be": "Дефолт — persistent RocksDB на диске; in-memory store берут лишь для маленького state."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "State store — это ЛОКАЛЬНОЕ key-value-хранилище для stateful-операций (агрегации, join'ы). По умолчанию — RocksDB на локальном диске (быстрее JVM heap для большого state). Создаётся неявно через `aggregate`/`count`/`Materialized.as(\"my-store\")` либо явно в Processor API через `Stores.keyValueStoreBuilder(...)` + `builder.addStateStore(...)`.",
-              "correct": true,
+              "text": "State store — это таблица в самом Kafka-кластере, к которой Streams-app обращается сетевыми запросами на каждое чтение.",
+              "correct": false,
               "sections": {
-                "explanation": "State store — это память stateful-оператора: чтобы накапливать результат между записями, Streams держит его локально на диске, а не пересчитывает из топика каждый раз.",
-                "example": "`events.groupByKey().aggregate(..., Materialized.as(\"my-store\"));` неявно создаёт persistent store `my-store`, к которому потом можно обращаться и через Interactive Queries.",
-                "when_to_apply": "Store используют везде, где операция должна помнить накопленное состояние per key между записями — счётчики, суммы, оконные агрегаты, буферы join'ов.",
-                "edge_cases": "Для большого state важно следить за местом на диске: RocksDB растёт, и при недостатке диска instance падает; ограничивает state именно локальный диск.",
-                "related": "[[kafka-streams-interview#Q17]] RocksDB как backend; [[kafka-streams-interview#Q18]] changelog для восстановления store; [[kafka-streams-interview#Q19]] Interactive Queries к store."
+                "what_actually": "State store — ЛОКАЛЬНОЕ key-value-хранилище на диске instance (по умолчанию RocksDB), а не таблица на брокере с сетевым доступом.",
+                "source_of_confusion": "Наличие changelog-топика создаёт впечатление, что state живёт «в Kafka».",
+                "if_it_were_true": "Тогда каждое чтение state шло бы по сети к брокеру, но оно идёт из локального RocksDB.",
+                "how_it_should_be": "Store локален; changelog-топик в Kafka — лишь его backup для восстановления."
               }
             }
           ]
@@ -971,14 +971,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RocksDB` — embedded LSM-tree key-value store от Facebook, дефолтный backend state stores в `Kafka Streams`. Плюсы: state не ограничен RAM (живёт на диске), хорошая производительность (LSM-tree оптимизирован под write-heavy нагрузку), встроенная компрессия. Тюнится через `RocksDBConfigSetter`.",
-              "correct": true,
+              "text": "`RocksDB` использует B-tree-структуру, оптимизированную под read-heavy нагрузку и точечные чтения.",
+              "correct": false,
               "sections": {
-                "explanation": "RocksDB выбран как backend именно потому, что LSM-дерево и хранение на диске позволяют держать state больше доступной RAM без GC-пауз JVM heap.",
-                "example": "`public class CustomRocksDBConfig implements RocksDBConfigSetter { public void setConfig(String name, Options o, Map<String,Object> c){ var t=new BlockBasedTableConfig(); t.setBlockCacheSize(50*1024*1024L); o.setTableFormatConfig(t);} }` — увеличивает block cache.",
-                "when_to_apply": "RocksDB подходит, когда state большой и не помещается в память; именно поэтому он дефолт для persistent stores.",
-                "edge_cases": "RocksDB embedded в процесс и пишет на локальный диск instance, поэтому требует места на диске и грамотного тюнинга block cache/compaction под нагрузку.",
-                "related": "[[kafka-streams-interview#Q16]] что такое state store; [[kafka-streams-interview#Q18]] changelog-бэкап RocksDB; [[kafka-streams-interview#Q28]] минусы: state ограничен диском."
+                "what_actually": "`RocksDB` — это LSM-tree, оптимизированный под WRITE-heavy нагрузку, а не B-tree под чтение.",
+                "source_of_confusion": "Большинство привычных СУБД на B-tree, поэтому его приписывают и RocksDB.",
+                "if_it_were_true": "Тогда тяжёлые записи changelog'а были бы дорогими, но LSM как раз эффективен на write-нагрузке.",
+                "how_it_should_be": "RocksDB — LSM-tree (write-optimized) со встроенной компрессией."
               }
             },
             {
@@ -996,13 +995,14 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`RocksDB` использует B-tree-структуру, оптимизированную под read-heavy нагрузку и точечные чтения.",
-              "correct": false,
+              "text": "`RocksDB` — embedded LSM-tree key-value store от Facebook, дефолтный backend state stores в `Kafka Streams`. Плюсы: state не ограничен RAM (живёт на диске), хорошая производительность (LSM-tree оптимизирован под write-heavy нагрузку), встроенная компрессия. Тюнится через `RocksDBConfigSetter`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`RocksDB` — это LSM-tree, оптимизированный под WRITE-heavy нагрузку, а не B-tree под чтение.",
-                "source_of_confusion": "Большинство привычных СУБД на B-tree, поэтому его приписывают и RocksDB.",
-                "if_it_were_true": "Тогда тяжёлые записи changelog'а были бы дорогими, но LSM как раз эффективен на write-нагрузке.",
-                "how_it_should_be": "RocksDB — LSM-tree (write-optimized) со встроенной компрессией."
+                "explanation": "RocksDB выбран как backend именно потому, что LSM-дерево и хранение на диске позволяют держать state больше доступной RAM без GC-пауз JVM heap.",
+                "example": "`public class CustomRocksDBConfig implements RocksDBConfigSetter { public void setConfig(String name, Options o, Map<String,Object> c){ var t=new BlockBasedTableConfig(); t.setBlockCacheSize(50*1024*1024L); o.setTableFormatConfig(t);} }` — увеличивает block cache.",
+                "when_to_apply": "RocksDB подходит, когда state большой и не помещается в память; именно поэтому он дефолт для persistent stores.",
+                "edge_cases": "RocksDB embedded в процесс и пишет на локальный диск instance, поэтому требует места на диске и грамотного тюнинга block cache/compaction под нагрузку.",
+                "related": "[[kafka-streams-interview#Q16]] что такое state store; [[kafka-streams-interview#Q18]] changelog-бэкап RocksDB; [[kafka-streams-interview#Q28]] минусы: state ограничен диском."
               }
             },
             {
@@ -1043,14 +1043,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "У каждого persistent state store есть свой changelog topic в Kafka. Зачем: при сбое instance — восстановление state из changelog; при scale-up — новый instance читает свою партицию из changelog. Changelog — COMPACTED-топик (хранится только last value per key), поэтому он не растёт бесконечно. Чем больше state, тем больше storage в Kafka — это trade-off за простоту.",
-              "correct": true,
+              "text": "Changelog topic существует только для in-memory state stores; у persistent RocksDB-store его нет.",
+              "correct": false,
               "sections": {
-                "explanation": "Changelog — это durable-журнал изменений локального state в Kafka: локальный RocksDB можно потерять, но из реплицированного changelog'а его всегда восстановят на любом instance.",
-                "example": "Топик `my-app-store-changelog` хранит `key1→value1`, `key2→value2`, `key1→value3` (last write wins): после падения instance его state восстанавливается прогоном этого топика.",
-                "when_to_apply": "Changelog незаменим при failover и rebalance: новый владелец партиции восстанавливает state, читая changelog, а не пересчитывая всё заново.",
-                "edge_cases": "Если состояние огромно, restore из changelog при rebalance долгий — это и решают standby replicas, держащие горячую копию.",
-                "related": "[[kafka-streams-interview#Q16]] state store; [[kafka-streams-interview#Q23]] standby replicas против долгого restore; [[kafka-streams-interview#Q24]] restore при сбое instance."
+                "what_actually": "Всё наоборот: changelog по умолчанию есть именно у persistent stores для восстановления после падения.",
+                "source_of_confusion": "Кажется, что дисковому store backup не нужен, а волатильной памяти — нужен.",
+                "if_it_were_true": "Тогда падение instance теряло бы RocksDB-state навсегда, но changelog позволяет его восстановить.",
+                "how_it_should_be": "Persistent store имеет changelog по умолчанию; его можно лишь отключить явно (logging disabled)."
               }
             },
             {
@@ -1068,13 +1067,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Changelog topic существует только для in-memory state stores; у persistent RocksDB-store его нет.",
-              "correct": false,
+              "text": "У каждого persistent state store есть свой changelog topic в Kafka. Зачем: при сбое instance — восстановление state из changelog; при scale-up — новый instance читает свою партицию из changelog. Changelog — COMPACTED-топик (хранится только last value per key), поэтому он не растёт бесконечно. Чем больше state, тем больше storage в Kafka — это trade-off за простоту.",
+              "correct": true,
               "sections": {
-                "what_actually": "Всё наоборот: changelog по умолчанию есть именно у persistent stores для восстановления после падения.",
-                "source_of_confusion": "Кажется, что дисковому store backup не нужен, а волатильной памяти — нужен.",
-                "if_it_were_true": "Тогда падение instance теряло бы RocksDB-state навсегда, но changelog позволяет его восстановить.",
-                "how_it_should_be": "Persistent store имеет changelog по умолчанию; его можно лишь отключить явно (logging disabled)."
+                "explanation": "Changelog — это durable-журнал изменений локального state в Kafka: локальный RocksDB можно потерять, но из реплицированного changelog'а его всегда восстановят на любом instance.",
+                "example": "Топик `my-app-store-changelog` хранит `key1→value1`, `key2→value2`, `key1→value3` (last write wins): после падения instance его state восстанавливается прогоном этого топика.",
+                "when_to_apply": "Changelog незаменим при failover и rebalance: новый владелец партиции восстанавливает state, читая changelog, а не пересчитывая всё заново.",
+                "edge_cases": "Если состояние огромно, restore из changelog при rebalance долгий — это и решают standby replicas, держащие горячую копию.",
+                "related": "[[kafka-streams-interview#Q16]] state store; [[kafka-streams-interview#Q23]] standby replicas против долгого restore; [[kafka-streams-interview#Q24]] restore при сбое instance."
               }
             }
           ]
@@ -1091,13 +1091,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Interactive Queries` — это возможность писать SQL-запросы прямо к топикам Kafka из приложения: объявляешь `CREATE STREAM ... WITH (KAFKA_TOPIC=...)` и получаешь результат через `SELECT ... EMIT CHANGES`, минуя state stores и `store.get(...)`.",
+              "text": "`Interactive Queries` требуют отдельного кластера запросов: он индексирует state stores со всех instances и централизованно отвечает на `store.get(...)`, поэтому приложение обращается не к локальному store, а к этому кластеру через `metadataForKey(...)`.",
               "correct": false,
               "sections": {
-                "what_actually": "SQL к Kafka — это `ksqlDB`; Interactive Queries — это прямое чтение локальных state stores из кода через Java-API.",
-                "source_of_confusion": "SQL-слой `ksqlDB` смешивают с механизмом доступа к store.",
-                "if_it_were_true": "Тогда был бы парсер `SELECT`, но Interactive Queries — это `store.get(key)` на Java.",
-                "how_it_should_be": "IQ — программное чтение state stores; SQL над Kafka — отдельный ksqlDB."
+                "what_actually": "Никакого отдельного кластера запросов нет — чтение идёт напрямую из локального store текущего instance.",
+                "source_of_confusion": "Аналогию с поисковыми/индексными кластерами переносят сюда.",
+                "if_it_were_true": "Тогда надо было бы эксплуатировать ещё один сервис, но IQ — это вызов API внутри самого app.",
+                "how_it_should_be": "IQ обходятся локальным store + маршрутизацией по `metadataForKey`, без отдельного кластера."
               }
             },
             {
@@ -1115,6 +1115,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`Interactive Queries` — это возможность писать SQL-запросы прямо к топикам Kafka из приложения: объявляешь `CREATE STREAM ... WITH (KAFKA_TOPIC=...)` и получаешь результат через `SELECT ... EMIT CHANGES`, минуя state stores и `store.get(...)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SQL к Kafka — это `ksqlDB`; Interactive Queries — это прямое чтение локальных state stores из кода через Java-API.",
+                "source_of_confusion": "SQL-слой `ksqlDB` смешивают с механизмом доступа к store.",
+                "if_it_were_true": "Тогда был бы парсер `SELECT`, но Interactive Queries — это `store.get(key)` на Java.",
+                "how_it_should_be": "IQ — программное чтение state stores; SQL над Kafka — отдельный ksqlDB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Interactive Queries` — это прямое ЧТЕНИЕ state stores из приложения, без обращения к Kafka. Получаешь store через `streams.store(StoreQueryParameters.fromNameAndType(\"my-store\", QueryableStoreTypes.keyValueStore()))` и читаешь `store.get(\"alice\")`. State распределён между instances, поэтому, чтобы найти, где лежит ключ, используют `streams.metadataForKey(\"my-store\", key)`. Так app становится читаемым store, как in-memory DB, без отдельной базы.",
               "correct": true,
               "sections": {
@@ -1123,18 +1135,6 @@
                 "when_to_apply": "Применяют, чтобы отдавать наружу актуальные агрегаты (например, REST-эндпоинт «текущий баланс пользователя») без отдельной БД-копии.",
                 "edge_cases": "В distributed-режиме ключ может жить на другом instance — приложению нужен слой маршрутизации запросов между instances по `metadataForKey`.",
                 "related": "[[kafka-streams-interview#Q16]] state store; [[kafka-streams-interview#Q18]] changelog; [[kafka-streams-interview#Q25]] ksqlDB как альтернатива для запросов."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Interactive Queries` требуют отдельного кластера запросов: он индексирует state stores со всех instances и централизованно отвечает на `store.get(...)`, поэтому приложение обращается не к локальному store, а к этому кластеру через `metadataForKey(...)`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Никакого отдельного кластера запросов нет — чтение идёт напрямую из локального store текущего instance.",
-                "source_of_confusion": "Аналогию с поисковыми/индексными кластерами переносят сюда.",
-                "if_it_were_true": "Тогда надо было бы эксплуатировать ещё один сервис, но IQ — это вызов API внутри самого app.",
-                "how_it_should_be": "IQ обходятся локальным store + маршрутизацией по `metadataForKey`, без отдельного кластера."
               }
             }
           ]
@@ -1163,13 +1163,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Kafka Streams` поддерживает только processing time; event time доступен лишь во `Flink`.",
-              "correct": false,
+              "text": "`Kafka Streams` поддерживает оба: event time — timestamp создания записи (из Kafka header или из payload), processing time — wall-clock-время обработки. По умолчанию используется EVENT time через timestamp в Kafka-record. Переключиться на processing time можно, задав `WallclockTimestampExtractor`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Kafka Streams` поддерживает ОБА; более того, по умолчанию используется именно event time через timestamp в Kafka-record.",
-                "source_of_confusion": "Богатую работу с event time приписывают исключительно Flink.",
-                "if_it_were_true": "Тогда нельзя было бы корректно агрегировать опоздавшие события, но именно event time + grace это и решают.",
-                "how_it_should_be": "Kafka Streams поддерживает и event, и processing time; дефолт — event time."
+                "explanation": "Это про то, по каким часам идёт обработка: по времени, когда событие реально произошло (event time), или по времени, когда оно дошло до обработчика (processing time).",
+                "example": "`props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);` заставляет окна опираться на wall-clock вместо времени события.",
+                "when_to_apply": "Event time выбирают, когда важна корректность по времени самого события (поздняя доставка не должна искажать агрегаты); processing time — когда нужна простая привязка к моменту обработки.",
+                "edge_cases": "Если event-time-метки идут с задержкой или вразнобой, окна и grace начинают зависеть от качества timestamp'ов — поэтому важно, откуда берётся время.",
+                "related": "[[kafka-streams-interview#Q21]] TimestampExtractor для времени из payload; [[kafka-streams-interview#Q15]] grace period для late events; [[kafka-streams-interview#Q13]] оконные типы."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Kafka Streams` поддерживает оба: event time — timestamp создания записи (из Kafka header или из payload), processing time — wall-clock-время обработки. По умолчанию используется EVENT time через timestamp в Kafka-record. Переключиться на processing time можно, задав `WallclockTimestampExtractor`.",
-              "correct": true,
+              "text": "`Kafka Streams` поддерживает только processing time; event time доступен лишь во `Flink`.",
+              "correct": false,
               "sections": {
-                "explanation": "Это про то, по каким часам идёт обработка: по времени, когда событие реально произошло (event time), или по времени, когда оно дошло до обработчика (processing time).",
-                "example": "`props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);` заставляет окна опираться на wall-clock вместо времени события.",
-                "when_to_apply": "Event time выбирают, когда важна корректность по времени самого события (поздняя доставка не должна искажать агрегаты); processing time — когда нужна простая привязка к моменту обработки.",
-                "edge_cases": "Если event-time-метки идут с задержкой или вразнобой, окна и grace начинают зависеть от качества timestamp'ов — поэтому важно, откуда берётся время.",
-                "related": "[[kafka-streams-interview#Q21]] TimestampExtractor для времени из payload; [[kafka-streams-interview#Q15]] grace period для late events; [[kafka-streams-interview#Q13]] оконные типы."
+                "what_actually": "`Kafka Streams` поддерживает ОБА; более того, по умолчанию используется именно event time через timestamp в Kafka-record.",
+                "source_of_confusion": "Богатую работу с event time приписывают исключительно Flink.",
+                "if_it_were_true": "Тогда нельзя было бы корректно агрегировать опоздавшие события, но именно event time + grace это и решают.",
+                "how_it_should_be": "Kafka Streams поддерживает и event, и processing time; дефолт — event time."
               }
             }
           ]
@@ -1211,19 +1211,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`TimestampExtractor` — интерфейс, определяющий, какой timestamp `Kafka Streams` берёт для записи. Реализуешь `long extract(ConsumerRecord<Object,Object> record, long partitionTime)` и возвращаешь нужное время — например, из payload, а не из Kafka-метаданных. Полезно, когда event time зашит ВНУТРИ payload, а не в Kafka headers.",
-              "correct": true,
-              "sections": {
-                "explanation": "Extractor — это точка расширения, через которую ты говоришь Streams, что считать «временем записи»: метку Kafka, поле внутри payload или wall-clock.",
-                "example": "`public class CustomExtractor implements TimestampExtractor { public long extract(ConsumerRecord<Object,Object> r, long pt){ Order o=(Order)r.value(); return o.eventTime; } }` — берёт время из поля `eventTime` события.",
-                "when_to_apply": "Кастомный extractor пишут, когда реальное время события лежит в теле сообщения (поле `eventTime`), а не в timestamp Kafka-записи.",
-                "edge_cases": "Параметр `partitionTime` — fallback (например, для записей с битым/отрицательным timestamp): можно вернуть его, чтобы не сломать порядок времени.",
-                "related": "[[kafka-streams-interview#Q20]] event time vs processing time; [[kafka-streams-interview#Q15]] grace period; [[kafka-streams-interview#Q13]] окна по времени."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`TimestampExtractor` извлекает ключ записи для партиционирования, определяя, в какую партицию попадёт сообщение.",
               "correct": false,
               "sections": {
@@ -1234,8 +1221,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`TimestampExtractor` запускается на брокере Kafka и переписывает timestamp записи перед её сохранением в топик.",
               "correct": false,
               "sections": {
@@ -1246,8 +1233,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`TimestampExtractor` нужен только для processing time; для event time Kafka Streams всегда использует системные часы.",
               "correct": false,
               "sections": {
@@ -1255,6 +1242,19 @@
                 "source_of_confusion": "Назначение wall-clock-экстрактора обобщают на весь интерфейс.",
                 "if_it_were_true": "Тогда нельзя было бы достать `eventTime` из payload, но именно для этого пишут кастомный extractor.",
                 "how_it_should_be": "Extractor обслуживает event time; processing time — это частный встроенный extractor."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TimestampExtractor` — интерфейс, определяющий, какой timestamp `Kafka Streams` берёт для записи. Реализуешь `long extract(ConsumerRecord<Object,Object> record, long partitionTime)` и возвращаешь нужное время — например, из payload, а не из Kafka-метаданных. Полезно, когда event time зашит ВНУТРИ payload, а не в Kafka headers.",
+              "correct": true,
+              "sections": {
+                "explanation": "Extractor — это точка расширения, через которую ты говоришь Streams, что считать «временем записи»: метку Kafka, поле внутри payload или wall-clock.",
+                "example": "`public class CustomExtractor implements TimestampExtractor { public long extract(ConsumerRecord<Object,Object> r, long pt){ Order o=(Order)r.value(); return o.eventTime; } }` — берёт время из поля `eventTime` события.",
+                "when_to_apply": "Кастомный extractor пишут, когда реальное время события лежит в теле сообщения (поле `eventTime`), а не в timestamp Kafka-записи.",
+                "edge_cases": "Параметр `partitionTime` — fallback (например, для записей с битым/отрицательным timestamp): можно вернуть его, чтобы не сломать порядок времени.",
+                "related": "[[kafka-streams-interview#Q20]] event time vs processing time; [[kafka-streams-interview#Q15]] grace period; [[kafka-streams-interview#Q13]] окна по времени."
               }
             }
           ]
@@ -1271,18 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Exactly-once в Kafka Streams достигается идемпотентной дедупликацией: продюсер проставляет sequence number, а потребитель отбрасывает повторы на стороне чтения через `PROCESSING_GUARANTEE_CONFIG`, без транзакций и атомарного commit'а offset'ов вместе со state.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Exactly-once реализован через Kafka TRANSACTIONS (атомарная запись в output + commit offset + changelog), а не клиентскую дедупликацию по id.",
-                "source_of_confusion": "Идемпотентность через message-id из других систем переносят сюда.",
-                "if_it_were_true": "Тогда хватило бы хранить id обработанных сообщений, но реальная гарантия — транзакционная.",
-                "how_it_should_be": "EOS опирается на Kafka-транзакции, а не на ручную дедупликацию по идентификаторам."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "С Kafka Streams 0.11+ exactly-once реализован через Kafka transactions: `props.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_V2)`. Гарантия end-to-end: Kafka source → обработка → Kafka sink — exactly-once, причём ВКЛЮЧАЯ state stores (changelog-апдейты тоже транзакционны). Стоимость — примерно 5-15% throughput на overhead транзакций; альтернатива — `at_least_once` (default), быстрее, но возможны дубли.",
               "correct": true,
               "sections": {
@@ -1294,20 +1282,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Exactly-once через `EXACTLY_ONCE_V2` покрывает только stateless-пайплайны (`map`/`filter`); как только в топологию добавляется state store, changelog-апдейты выпадают из транзакции и гарантия деградирует до at-least-once.",
+              "order": 1,
+              "label": "B",
+              "text": "Exactly-once в Kafka Streams достигается идемпотентной дедупликацией: продюсер проставляет sequence number, а потребитель отбрасывает повторы на стороне чтения через `PROCESSING_GUARANTEE_CONFIG`, без транзакций и атомарного commit'а offset'ов вместе со state.",
               "correct": false,
               "sections": {
-                "what_actually": "EOS как раз охватывает state: changelog-апдейты включены в транзакцию, поэтому stateful-обработка тоже exactly-once.",
-                "source_of_confusion": "Кажется, что состояние нельзя сделать транзакционным.",
-                "if_it_were_true": "Тогда агрегации при сбое давали бы дубли, но транзакционный changelog это исключает.",
-                "how_it_should_be": "Exactly-once покрывает и stateful-операции, не только stateless."
+                "what_actually": "Exactly-once реализован через Kafka TRANSACTIONS (атомарная запись в output + commit offset + changelog), а не клиентскую дедупликацию по id.",
+                "source_of_confusion": "Идемпотентность через message-id из других систем переносят сюда.",
+                "if_it_were_true": "Тогда хватило бы хранить id обработанных сообщений, но реальная гарантия — транзакционная.",
+                "how_it_should_be": "EOS опирается на Kafka-транзакции, а не на ручную дедупликацию по идентификаторам."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Exactly-once в Kafka Streams включён по умолчанию: `PROCESSING_GUARANTEE_CONFIG` уже стоит в `EXACTLY_ONCE_V2`, поэтому отдельная конфигурация не нужна, а `at_least_once` наоборот приходится включать вручную.",
               "correct": false,
               "sections": {
@@ -1315,6 +1303,18 @@
                 "source_of_confusion": "«Современный default безопасен» — частое необоснованное допущение.",
                 "if_it_were_true": "Тогда все пайплайны платили бы 5-15% throughput без спроса, но дефолт сделан быстрым (at-least-once).",
                 "how_it_should_be": "EOS — opt-in настройка, а не поведение по умолчанию."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Exactly-once через `EXACTLY_ONCE_V2` покрывает только stateless-пайплайны (`map`/`filter`); как только в топологию добавляется state store, changelog-апдейты выпадают из транзакции и гарантия деградирует до at-least-once.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EOS как раз охватывает state: changelog-апдейты включены в транзакцию, поэтому stateful-обработка тоже exactly-once.",
+                "source_of_confusion": "Кажется, что состояние нельзя сделать транзакционным.",
+                "if_it_were_true": "Тогда агрегации при сбое давали бы дубли, но транзакционный changelog это исключает.",
+                "how_it_should_be": "Exactly-once покрывает и stateful-операции, не только stateless."
               }
             }
           ]
@@ -1331,18 +1331,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Standby replicas — это дополнительные партиции input-топика, создаваемые для увеличения параллелизма обработки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Standby replicas — это запасные ГОРЯЧИЕ КОПИИ state stores на других instances, а не дополнительные партиции для параллелизма.",
-                "source_of_confusion": "«Replica» в Kafka привычно означает реплику партиции, отсюда подмена.",
-                "if_it_were_true": "Тогда они увеличивали бы throughput, но их цель — быстрый failover, а не параллелизм.",
-                "how_it_should_be": "Standby — это копии state для отказоустойчивости, а не партиции топика."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Standby replicas активно обрабатывают те же записи параллельно с основным instance для удвоения пропускной способности.",
               "correct": false,
               "sections": {
@@ -1353,8 +1341,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Standby replicas хранят копию state ИСКЛЮЧИТЕЛЬНО в Kafka-топике, не занимая локальный диск instance.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Standby держат материализованную копию state ЛОКАЛЬНО (RocksDB) на другом instance, а не только в топике.",
+                "source_of_confusion": "Changelog-топик принимают за единственное место хранения standby-состояния.",
+                "if_it_were_true": "Тогда takeover всё равно требовал бы restore с нуля, но смысл standby — иметь готовый локальный state.",
+                "how_it_should_be": "Standby материализуют state локально, поэтому failover быстрый; changelog лишь источник для их синхронизации."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Standby replicas — это дополнительные партиции input-топика, создаваемые для увеличения параллелизма обработки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Standby replicas — это запасные ГОРЯЧИЕ КОПИИ state stores на других instances, а не дополнительные партиции для параллелизма.",
+                "source_of_confusion": "«Replica» в Kafka привычно означает реплику партиции, отсюда подмена.",
+                "if_it_were_true": "Тогда они увеличивали бы throughput, но их цель — быстрый failover, а не параллелизм.",
+                "how_it_should_be": "Standby — это копии state для отказоустойчивости, а не партиции топика."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Standby replicas (`props.put(StreamsConfig.NUM_STANDBY_REPLICAS_CONFIG, 1)`) — это instances, которые держат ГОРЯЧУЮ копию state stores. При failover takeover почти мгновенный: не нужно читать changelog с нуля и восстанавливать большой state. Trade-off: больше ресурсов (память/диск/трафик changelog'а), зато выше availability.",
               "correct": true,
               "sections": {
@@ -1363,18 +1375,6 @@
                 "when_to_apply": "Standby включают, когда state большой и недопустима долгая пауза на восстановление при rebalance/падении instance.",
                 "edge_cases": "Standby постоянно тянут changelog, чтобы не отставать, поэтому платишь дополнительным сетевым трафиком и диском за быстрый failover.",
                 "related": "[[kafka-streams-interview#Q24]] что происходит при сбое instance; [[kafka-streams-interview#Q18]] changelog для restore; [[kafka-streams-interview#Q22]] exactly-once и state."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Standby replicas хранят копию state ИСКЛЮЧИТЕЛЬНО в Kafka-топике, не занимая локальный диск instance.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Standby держат материализованную копию state ЛОКАЛЬНО (RocksDB) на другом instance, а не только в топике.",
-                "source_of_confusion": "Changelog-топик принимают за единственное место хранения standby-состояния.",
-                "if_it_were_true": "Тогда takeover всё равно требовал бы restore с нуля, но смысл standby — иметь готовый локальный state.",
-                "how_it_should_be": "Standby материализуют state локально, поэтому failover быстрый; changelog лишь источник для их синхронизации."
               }
             }
           ]
@@ -1391,13 +1391,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При сбое instance вся обработка останавливается до ручного перезапуска упавшего процесса администратором.",
-              "correct": false,
+              "text": "При сбое instance: 1) Kafka детектирует мёртвого consumer'а по timeout; 2) происходит rebalance — партиции перераспределяются на живые instances; 3) новый владелец партиции читает changelog для восстановления state; 4) после восстановления продолжает обработку. Время recovery зависит от РАЗМЕРА state; со standby replicas — быстро.",
+              "correct": true,
               "sections": {
-                "what_actually": "Обработка не ждёт ручного вмешательства: Kafka детектит мёртвого consumer'а и делает rebalance на живые instances автоматически.",
-                "source_of_confusion": "Опыт систем с единым master'ом переносят на Kafka Streams.",
-                "if_it_were_true": "Тогда падение одного pod'а роняло бы весь пайплайн, но consumer rebalance перераспределяет работу сам.",
-                "how_it_should_be": "Failover автоматический через consumer group; ручной рестарт не требуется для продолжения."
+                "explanation": "Восстановление держится на двух механизмах Kafka: consumer rebalance перераспределяет работу, а changelog возвращает потерянное состояние — поэтому обработка продолжается без потери агрегатов.",
+                "example": "Падает один из трёх pod'ов — Kafka переназначает его партиции двум оставшимся, те догружают соответствующий changelog в свой RocksDB и подхватывают обработку.",
+                "when_to_apply": "Этот механизм — основа отказоустойчивости Kafka Streams: проектируя пайплайн, закладывают паузу на rebalance + restore при выкатке/падении.",
+                "edge_cases": "Если state большой, restore из changelog долгий и пауза заметна — поэтому для критичных пайплайнов добавляют standby replicas.",
+                "related": "[[kafka-streams-interview#Q23]] standby replicas ускоряют failover; [[kafka-streams-interview#Q18]] changelog для restore; [[kafka-streams-interview#Q3]] координация через consumer groups."
               }
             },
             {
@@ -1427,14 +1428,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "При сбое instance: 1) Kafka детектирует мёртвого consumer'а по timeout; 2) происходит rebalance — партиции перераспределяются на живые instances; 3) новый владелец партиции читает changelog для восстановления state; 4) после восстановления продолжает обработку. Время recovery зависит от РАЗМЕРА state; со standby replicas — быстро.",
-              "correct": true,
+              "text": "При сбое instance вся обработка останавливается до ручного перезапуска упавшего процесса администратором.",
+              "correct": false,
               "sections": {
-                "explanation": "Восстановление держится на двух механизмах Kafka: consumer rebalance перераспределяет работу, а changelog возвращает потерянное состояние — поэтому обработка продолжается без потери агрегатов.",
-                "example": "Падает один из трёх pod'ов — Kafka переназначает его партиции двум оставшимся, те догружают соответствующий changelog в свой RocksDB и подхватывают обработку.",
-                "when_to_apply": "Этот механизм — основа отказоустойчивости Kafka Streams: проектируя пайплайн, закладывают паузу на rebalance + restore при выкатке/падении.",
-                "edge_cases": "Если state большой, restore из changelog долгий и пауза заметна — поэтому для критичных пайплайнов добавляют standby replicas.",
-                "related": "[[kafka-streams-interview#Q23]] standby replicas ускоряют failover; [[kafka-streams-interview#Q18]] changelog для restore; [[kafka-streams-interview#Q3]] координация через consumer groups."
+                "what_actually": "Обработка не ждёт ручного вмешательства: Kafka детектит мёртвого consumer'а и делает rebalance на живые instances автоматически.",
+                "source_of_confusion": "Опыт систем с единым master'ом переносят на Kafka Streams.",
+                "if_it_were_true": "Тогда падение одного pod'а роняло бы весь пайплайн, но consumer rebalance перераспределяет работу сам.",
+                "how_it_should_be": "Failover автоматический через consumer group; ручной рестарт не требуется для продолжения."
               }
             }
           ]
@@ -1451,19 +1451,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ksqlDB` — SQL-like-слой над `Kafka Streams`: позволяет писать stream processing на SQL без Java-кода. Определяешь стримы/таблицы (`CREATE STREAM ... WITH (KAFKA_TOPIC=..., VALUE_FORMAT='JSON')`), агрегируешь оконно (`WINDOW TUMBLING (SIZE 5 MINUTES)`) и читаешь push-запросом `SELECT ... EMIT CHANGES`. `ksqlDB Server` — процесс, выполняющий запросы; под капотом — `Kafka Streams`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`ksqlDB` снимает порог входа: ту же топологию Kafka Streams описываешь декларативным SQL, а сервер компилирует запросы в Streams-приложения и исполняет их за тебя.",
-                "example": "`CREATE TABLE total_per_user AS SELECT user_id, SUM(amount) AS total FROM orders WINDOW TUMBLING (SIZE 5 MINUTES) GROUP BY user_id;` делает оконную агрегацию без единой строки Java.",
-                "when_to_apply": "ksqlDB берут для простых трансформаций без Java, BI/аналитики и low-code stream processing, когда не хочется писать и деплоить JVM-приложение.",
-                "edge_cases": "ksqlDB удобнее, но менее гибок, чем Java/Scala-API: сложную кастомную логику и тонкий контроль state на нём не выразить (см. минусы в Q28).",
-                "related": "[[kafka-streams-interview#Q1]] Kafka Streams под капотом; [[kafka-streams-interview#Q5]] DSL vs Processor API; [[kafka-streams-interview#Q19]] Interactive Queries как альтернатива чтению."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`ksqlDB` — самостоятельный движок обработки, реализованный с нуля на C++ и никак не связанный с `Kafka Streams`: у него собственный runtime, а `CREATE STREAM ... SELECT ... EMIT CHANGES` компилируется в нативный план, а не в топологию `Kafka Streams`.",
               "correct": false,
               "sections": {
@@ -1471,6 +1458,18 @@
                 "source_of_confusion": "Самостоятельный SQL-сервер ассоциируют с собственным нативным движком.",
                 "if_it_were_true": "Тогда у него были бы свои механизмы state и окон, но он переиспользует Kafka Streams.",
                 "how_it_should_be": "ksqlDB — SQL-обёртка над Kafka Streams, а не независимая реализация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ksqlDB`-запросы выполняются прямо на брокерах Kafka: брокер парсит `CREATE STREAM ... SELECT ... EMIT CHANGES` и считает агрегаты у себя, поэтому отдельный `ksqlDB Server` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запросы выполняет отдельный `ksqlDB Server` (на Kafka Streams), а не брокеры Kafka.",
+                "source_of_confusion": "Server-side SQL ассоциируют с исполнением «внутри» Kafka.",
+                "if_it_were_true": "Тогда брокеры тратили бы ресурсы на агрегации, но они лишь хранят данные.",
+                "how_it_should_be": "Нужен ksqlDB Server-процесс; брокеры обработку не выполняют."
               }
             },
             {
@@ -1488,13 +1487,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ksqlDB`-запросы выполняются прямо на брокерах Kafka: брокер парсит `CREATE STREAM ... SELECT ... EMIT CHANGES` и считает агрегаты у себя, поэтому отдельный `ksqlDB Server` не нужен.",
-              "correct": false,
+              "text": "`ksqlDB` — SQL-like-слой над `Kafka Streams`: позволяет писать stream processing на SQL без Java-кода. Определяешь стримы/таблицы (`CREATE STREAM ... WITH (KAFKA_TOPIC=..., VALUE_FORMAT='JSON')`), агрегируешь оконно (`WINDOW TUMBLING (SIZE 5 MINUTES)`) и читаешь push-запросом `SELECT ... EMIT CHANGES`. `ksqlDB Server` — процесс, выполняющий запросы; под капотом — `Kafka Streams`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Запросы выполняет отдельный `ksqlDB Server` (на Kafka Streams), а не брокеры Kafka.",
-                "source_of_confusion": "Server-side SQL ассоциируют с исполнением «внутри» Kafka.",
-                "if_it_were_true": "Тогда брокеры тратили бы ресурсы на агрегации, но они лишь хранят данные.",
-                "how_it_should_be": "Нужен ksqlDB Server-процесс; брокеры обработку не выполняют."
+                "explanation": "`ksqlDB` снимает порог входа: ту же топологию Kafka Streams описываешь декларативным SQL, а сервер компилирует запросы в Streams-приложения и исполняет их за тебя.",
+                "example": "`CREATE TABLE total_per_user AS SELECT user_id, SUM(amount) AS total FROM orders WINDOW TUMBLING (SIZE 5 MINUTES) GROUP BY user_id;` делает оконную агрегацию без единой строки Java.",
+                "when_to_apply": "ksqlDB берут для простых трансформаций без Java, BI/аналитики и low-code stream processing, когда не хочется писать и деплоить JVM-приложение.",
+                "edge_cases": "ksqlDB удобнее, но менее гибок, чем Java/Scala-API: сложную кастомную логику и тонкий контроль state на нём не выразить (см. минусы в Q28).",
+                "related": "[[kafka-streams-interview#Q1]] Kafka Streams под капотом; [[kafka-streams-interview#Q5]] DSL vs Processor API; [[kafka-streams-interview#Q19]] Interactive Queries как альтернатива чтению."
               }
             }
           ]
@@ -1511,13 +1511,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Flink` стоит выбирать всегда, когда источник и приёмник — Kafka, потому что `Kafka Streams` не умеет работать с Kafka-топиками напрямую.",
+              "text": "`Kafka Streams` всегда даёт меньшую latency, чем `Flink`, поэтому для real-time-задач берут именно его.",
               "correct": false,
               "sections": {
-                "what_actually": "`Kafka Streams` как раз НАТИВНО работает с Kafka; для Kafka-only пайплайнов с простым деплоем он зачастую предпочтительнее Flink.",
-                "source_of_confusion": "Превосходство Flink в фичах ошибочно расширяют на все сценарии.",
-                "if_it_were_true": "Тогда Kafka Streams был бы бесполезен на своей же платформе, но он создан именно под Kafka.",
-                "how_it_should_be": "Для Kafka source/sink + простого деплоя берут Kafka Streams, а не обязательно Flink."
+                "what_actually": "Обычно наоборот: `Flink` достигает более низкой latency (<10ms), тогда как Kafka Streams — порядка ~10-100ms.",
+                "source_of_confusion": "Простоту Kafka Streams путают с превосходством по latency.",
+                "if_it_were_true": "Тогда для sub-10ms всегда брали бы Kafka Streams, но в таких кейсах выигрывает Flink.",
+                "how_it_should_be": "Самую низкую latency обычно даёт Flink; Kafka Streams выигрывает простотой, а не пиковой задержкой."
               }
             },
             {
@@ -1536,18 +1536,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Kafka Streams` всегда даёт меньшую latency, чем `Flink`, поэтому для real-time-задач берут именно его.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Обычно наоборот: `Flink` достигает более низкой latency (<10ms), тогда как Kafka Streams — порядка ~10-100ms.",
-                "source_of_confusion": "Простоту Kafka Streams путают с превосходством по latency.",
-                "if_it_were_true": "Тогда для sub-10ms всегда брали бы Kafka Streams, но в таких кейсах выигрывает Flink.",
-                "how_it_should_be": "Самую низкую latency обычно даёт Flink; Kafka Streams выигрывает простотой, а не пиковой задержкой."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`Flink` и `Kafka Streams` функционально идентичны, и выбор между ними чисто вопрос вкуса без технических критериев.",
               "correct": false,
               "sections": {
@@ -1555,6 +1543,18 @@
                 "source_of_confusion": "Поверхностно оба «делают stream processing», отсюда вывод об эквивалентности.",
                 "if_it_were_true": "Тогда не было бы кейсов, где один явно лучше, но CEP/мульти-источники/<10ms — чёткие критерии за Flink.",
                 "how_it_should_be": "Выбор опирается на конкретные технические критерии, а не только на предпочтения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Flink` стоит выбирать всегда, когда источник и приёмник — Kafka, потому что `Kafka Streams` не умеет работать с Kafka-топиками напрямую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kafka Streams` как раз НАТИВНО работает с Kafka; для Kafka-only пайплайнов с простым деплоем он зачастую предпочтительнее Flink.",
+                "source_of_confusion": "Превосходство Flink в фичах ошибочно расширяют на все сценарии.",
+                "if_it_were_true": "Тогда Kafka Streams был бы бесполезен на своей же платформе, но он создан именно под Kafka.",
+                "how_it_should_be": "Для Kafka source/sink + простого деплоя берут Kafka Streams, а не обязательно Flink."
               }
             }
           ]
@@ -1571,13 +1571,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Kafka Streams` в production используют почти исключительно для batch-ETL: ночные выгрузки в дата-склады (`Snowflake`, `Hadoop`), пересчёт витрин по расписанию и миграции таблиц — то есть для offline-обработки, а не для real-time-стриминга.",
-              "correct": false,
+              "text": "`Kafka Streams` в production используют: `Confluent` (создатели) — внутренние сервисы; `LinkedIn` — множество кейсов (Kafka родом из LinkedIn); `Uber` — fraud detection и real-time pricing; `Pinterest`, `Airbnb`, `Slack` — event-driven-сервисы; банки (`Goldman Sachs`, `ING`) — risk и fraud; `Walmart` — supply chain. В банках и финтехе особенно популярен: простой deployment плюс exactly-once.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Kafka Streams` — инструмент REAL-TIME stream processing (fraud detection, real-time pricing, event-driven сервисы), а не ночной batch-ETL.",
-                "source_of_confusion": "Любую «обработку данных» обобщают до batch-ETL.",
-                "if_it_were_true": "Тогда его не использовали бы для fraud detection в реальном времени, но это один из ключевых кейсов.",
-                "how_it_should_be": "Kafka Streams применяют для потоковых real-time-сценариев, batch — это про Spark/Airflow."
+                "explanation": "Список adopters показывает нишу Kafka Streams: real-time event-driven-сервисы поверх Kafka, особенно там, где важны простой деплой и exactly-once — соцсети, райдшеринг, финтех, ритейл.",
+                "example": "`Uber` гоняет на нём fraud detection и динамическое ценообразование, обрабатывая потоки событий в реальном времени без отдельного Spark/Flink-кластера.",
+                "when_to_apply": "На эти кейсы ссылаются, обосновывая выбор Kafka Streams для event-driven-сервисов на Kafka, особенно в финтехе с требованием exactly-once.",
+                "edge_cases": "Популярность в банках во многом из-за связки «простой деплой как микросервис + exactly-once», а не из-за пиковой производительности.",
+                "related": "[[kafka-streams-interview#Q22]] exactly-once для финтеха; [[kafka-streams-interview#Q26]] когда выбирать Kafka Streams vs Flink; [[kafka-streams-interview#Q28]] его ограничения."
               }
             },
             {
@@ -1595,19 +1596,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Kafka Streams` в production используют: `Confluent` (создатели) — внутренние сервисы; `LinkedIn` — множество кейсов (Kafka родом из LinkedIn); `Uber` — fraud detection и real-time pricing; `Pinterest`, `Airbnb`, `Slack` — event-driven-сервисы; банки (`Goldman Sachs`, `ING`) — risk и fraud; `Walmart` — supply chain. В банках и финтехе особенно популярен: простой deployment плюс exactly-once.",
-              "correct": true,
-              "sections": {
-                "explanation": "Список adopters показывает нишу Kafka Streams: real-time event-driven-сервисы поверх Kafka, особенно там, где важны простой деплой и exactly-once — соцсети, райдшеринг, финтех, ритейл.",
-                "example": "`Uber` гоняет на нём fraud detection и динамическое ценообразование, обрабатывая потоки событий в реальном времени без отдельного Spark/Flink-кластера.",
-                "when_to_apply": "На эти кейсы ссылаются, обосновывая выбор Kafka Streams для event-driven-сервисов на Kafka, особенно в финтехе с требованием exactly-once.",
-                "edge_cases": "Популярность в банках во многом из-за связки «простой деплой как микросервис + exactly-once», а не из-за пиковой производительности.",
-                "related": "[[kafka-streams-interview#Q22]] exactly-once для финтеха; [[kafka-streams-interview#Q26]] когда выбирать Kafka Streams vs Flink; [[kafka-streams-interview#Q28]] его ограничения."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`Kafka Streams` в production используют в основном стартапы и небольшие команды за простой deployment; в банках и финтехе (`Goldman Sachs`, `ING`) он почти не встречается — там для strong-гарантий берут `Flink` и `Spark`.",
               "correct": false,
               "sections": {
@@ -1615,6 +1603,18 @@
                 "source_of_confusion": "Отсутствие enterprise-гарантий ошибочно приписывают «лёгкой» библиотеке.",
                 "if_it_were_true": "Тогда финтех обходил бы его стороной, но именно там он особенно популярен.",
                 "how_it_should_be": "Банки используют Kafka Streams; exactly-once — одна из причин его выбора в финтехе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Kafka Streams` в production используют почти исключительно для batch-ETL: ночные выгрузки в дата-склады (`Snowflake`, `Hadoop`), пересчёт витрин по расписанию и миграции таблиц — то есть для offline-обработки, а не для real-time-стриминга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kafka Streams` — инструмент REAL-TIME stream processing (fraud detection, real-time pricing, event-driven сервисы), а не ночной batch-ETL.",
+                "source_of_confusion": "Любую «обработку данных» обобщают до batch-ETL.",
+                "if_it_were_true": "Тогда его не использовали бы для fraud detection в реальном времени, но это один из ключевых кейсов.",
+                "how_it_should_be": "Kafka Streams применяют для потоковых real-time-сценариев, batch — это про Spark/Airflow."
               }
             }
           ]
@@ -1631,18 +1631,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Ключевой минус — слабые гарантии доставки: `Kafka Streams` даёт только at-most-once и не поддерживает exactly-once, поэтому под платежи и финансовые пайплайны берут `Flink`, а не его.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: Kafka Streams работает ТОЛЬКО с Kafka; минус как раз в том, что НЕ-Kafka-источники напрямую недоступны.",
-                "source_of_confusion": "Ограничение «только Kafka» переворачивают в «не умеет Kafka».",
-                "if_it_were_true": "Тогда библиотека была бы бессмысленной на своей платформе, но она создана именно под Kafka.",
-                "how_it_should_be": "Минус — невозможность читать из не-Kafka-источников напрямую, а не из Kafka."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Существенный недостаток — отсутствие stateful-операций: `Kafka Streams` не хранит состояние между событиями, поэтому оконные агрегации и джойны приходится выносить во внешнюю БД.",
               "correct": false,
               "sections": {
@@ -1650,6 +1638,19 @@
                 "source_of_confusion": "Реальное ограничение по размеру state раздувают до «нет state вообще».",
                 "if_it_were_true": "Тогда `groupByKey().count()` был бы невозможен, но это базовая операция.",
                 "how_it_should_be": "Stateful есть; ограничение — рост RocksDB по диску, за которым нужно следить."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Минусы `Kafka Streams`: 1) только Kafka — нельзя читать из других источников напрямую; 2) state ограничен локальным диском (RocksDB растёт, нужно следить); 3) rebalance при scale up/down — пауза в обработке; 4) сложно debug (distributed processing); 5) CEP беднее, чем у Flink; 6) у ksqlDB есть ограничения vs Java/Scala API; 7) JVM-only (нет Python); 8) менее зрелый для очень больших scale. В 2024 — отличный выбор для event-driven-микросервисов на Kafka, но не general-purpose stream processing.",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство минусов — оборотная сторона дизайна «библиотека только для Kafka»: за простоту платишь ограничениями по источникам, размеру state, языкам и предельному масштабу.",
+                "example": "На очень большом state Flink с его богатым state API и под огромный масштаб обычно выигрывает, а Kafka Streams упирается в локальный диск и паузы rebalance.",
+                "when_to_apply": "Эти ограничения взвешивают при выборе: если нужны не-Kafka-источники, Python, sub-10ms latency или огромный масштаб — смотрят в сторону Flink.",
+                "edge_cases": "Многие минусы — обратная сторона простоты: «library без кластера» влечёт rebalance-паузы, ограничение state диском и JVM-only.",
+                "related": "[[kafka-streams-interview#Q26]] Kafka Streams vs Flink; [[kafka-streams-interview#Q24]] rebalance-пауза при сбое; [[kafka-streams-interview#Q16]] state ограничен локальным диском."
               }
             },
             {
@@ -1667,14 +1668,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Минусы `Kafka Streams`: 1) только Kafka — нельзя читать из других источников напрямую; 2) state ограничен локальным диском (RocksDB растёт, нужно следить); 3) rebalance при scale up/down — пауза в обработке; 4) сложно debug (distributed processing); 5) CEP беднее, чем у Flink; 6) у ksqlDB есть ограничения vs Java/Scala API; 7) JVM-only (нет Python); 8) менее зрелый для очень больших scale. В 2024 — отличный выбор для event-driven-микросервисов на Kafka, но не general-purpose stream processing.",
-              "correct": true,
+              "text": "Ключевой минус — слабые гарантии доставки: `Kafka Streams` даёт только at-most-once и не поддерживает exactly-once, поэтому под платежи и финансовые пайплайны берут `Flink`, а не его.",
+              "correct": false,
               "sections": {
-                "explanation": "Большинство минусов — оборотная сторона дизайна «библиотека только для Kafka»: за простоту платишь ограничениями по источникам, размеру state, языкам и предельному масштабу.",
-                "example": "На очень большом state Flink с его богатым state API и под огромный масштаб обычно выигрывает, а Kafka Streams упирается в локальный диск и паузы rebalance.",
-                "when_to_apply": "Эти ограничения взвешивают при выборе: если нужны не-Kafka-источники, Python, sub-10ms latency или огромный масштаб — смотрят в сторону Flink.",
-                "edge_cases": "Многие минусы — обратная сторона простоты: «library без кластера» влечёт rebalance-паузы, ограничение state диском и JVM-only.",
-                "related": "[[kafka-streams-interview#Q26]] Kafka Streams vs Flink; [[kafka-streams-interview#Q24]] rebalance-пауза при сбое; [[kafka-streams-interview#Q16]] state ограничен локальным диском."
+                "what_actually": "Наоборот: Kafka Streams работает ТОЛЬКО с Kafka; минус как раз в том, что НЕ-Kafka-источники напрямую недоступны.",
+                "source_of_confusion": "Ограничение «только Kafka» переворачивают в «не умеет Kafka».",
+                "if_it_were_true": "Тогда библиотека была бы бессмысленной на своей платформе, но она создана именно под Kafka.",
+                "how_it_should_be": "Минус — невозможность читать из не-Kafka-источников напрямую, а не из Kafka."
               }
             }
           ]

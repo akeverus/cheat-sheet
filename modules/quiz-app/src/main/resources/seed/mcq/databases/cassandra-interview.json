@@ -24,18 +24,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Cassandra` — это реляционная БД с поддержкой JOIN и ACID-транзакций на множестве таблиц.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Cassandra` — wide-column NoSQL без JOIN и без мультистрочных ACID-транзакций; есть лишь LWT в рамках одной партиции.",
-                "source_of_confusion": "SQL-подобный `CQL` создаёт впечатление реляционной модели.",
-                "if_it_were_true": "Тогда можно было бы делать `JOIN orders ON users`, но `CQL` это не поддерживает.",
-                "how_it_should_be": "Это NoSQL wide-column стор; реляционные задачи решает `PostgreSQL`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Cassandra` — это CP-система с master-узлом, обеспечивающим строгую консистентность по умолчанию.",
               "correct": false,
               "sections": {
@@ -43,6 +31,18 @@
                 "source_of_confusion": "Привычка к master-based БД (MongoDB/HBase) переносится на Cassandra.",
                 "if_it_were_true": "Тогда падение master останавливало бы кластер, но masterless-архитектура этого не допускает.",
                 "how_it_should_be": "Это AP, masterless; уровень консистентности настраивается per-query."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Cassandra` — это реляционная БД с поддержкой JOIN и ACID-транзакций на множестве таблиц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cassandra` — wide-column NoSQL без JOIN и без мультистрочных ACID-транзакций; есть лишь LWT в рамках одной партиции.",
+                "source_of_confusion": "SQL-подобный `CQL` создаёт впечатление реляционной модели.",
+                "if_it_were_true": "Тогда можно было бы делать `JOIN orders ON users`, но `CQL` это не поддерживает.",
+                "how_it_should_be": "Это NoSQL wide-column стор; реляционные задачи решает `PostgreSQL`."
               }
             },
             {
@@ -83,6 +83,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Узлы `Cassandra` не общаются между собой — топологию хранит внешний реестр вроде ZooKeeper.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Узлы обмениваются состоянием напрямую через Gossip-протокол; внешний координатор (ZooKeeper) не нужен.",
+                "source_of_confusion": "Опыт Kafka/HBase с ZooKeeper переносят на Cassandra.",
+                "if_it_were_true": "Тогда без ZooKeeper кластер не работал бы, но Cassandra самодостаточна благодаря Gossip.",
+                "how_it_should_be": "Топология распространяется через Gossip; внешний реестр не требуется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Архитектура `Cassandra` — peer-to-peer (masterless): все узлы равноправны и принимают чтение/запись; иерархия — `Node` → `Rack` → `Data Center` → `Cluster`; узел, принявший запрос клиента, становится координатором — он по `partition key` определяет реплики, рассылает запрос и собирает ответы согласно `Consistency Level`.",
               "correct": true,
               "sections": {
@@ -94,8 +106,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "В кластере `Cassandra` есть выделенный узел-координатор, через который проходят все запросы.",
               "correct": false,
               "sections": {
@@ -103,18 +115,6 @@
                 "source_of_confusion": "Слово «координатор» наводит на мысль о постоянной роли.",
                 "if_it_were_true": "Тогда падение координатора останавливало бы кластер, но координация распределена.",
                 "how_it_should_be": "Координатор — это роль на время запроса, а не выделенный узел."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Узлы `Cassandra` не общаются между собой — топологию хранит внешний реестр вроде ZooKeeper.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Узлы обмениваются состоянием напрямую через Gossip-протокол; внешний координатор (ZooKeeper) не нужен.",
-                "source_of_confusion": "Опыт Kafka/HBase с ZooKeeper переносят на Cassandra.",
-                "if_it_were_true": "Тогда без ZooKeeper кластер не работал бы, но Cassandra самодостаточна благодаря Gossip.",
-                "how_it_should_be": "Топология распространяется через Gossip; внешний реестр не требуется."
               }
             }
           ]
@@ -131,13 +131,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Gossip` — это протокол, по которому master рассылает конфигурацию всем подчинённым узлам.",
+              "text": "`Gossip` работает по расписанию раз в час и поэтому узнаёт о падении узла с большой задержкой.",
               "correct": false,
               "sections": {
-                "what_actually": "В Cassandra нет master; Gossip — это симметричный peer-to-peer обмен, где каждый узел общается со случайными узлами.",
-                "source_of_confusion": "Привычка к централизованной рассылке конфигурации.",
-                "if_it_were_true": "Тогда был бы единый источник, но Gossip децентрализован.",
-                "how_it_should_be": "Gossip — равноправный обмен состоянием между узлами, без master."
+                "what_actually": "Gossip-раунд происходит каждую секунду, и информация о падении распространяется за секунды, а не часы.",
+                "source_of_confusion": "Слово «слухи» наводит на мысль о медленном распространении.",
+                "if_it_were_true": "Тогда failover занимал бы часы, но детектор отказов реагирует быстро.",
+                "how_it_should_be": "Gossip-обмен — ежесекундный; отказ обнаруживается быстро."
               }
             },
             {
@@ -155,6 +155,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`Gossip` — это протокол, по которому master рассылает конфигурацию всем подчинённым узлам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Cassandra нет master; Gossip — это симметричный peer-to-peer обмен, где каждый узел общается со случайными узлами.",
+                "source_of_confusion": "Привычка к централизованной рассылке конфигурации.",
+                "if_it_were_true": "Тогда был бы единый источник, но Gossip децентрализован.",
+                "how_it_should_be": "Gossip — равноправный обмен состоянием между узлами, без master."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Gossip` — peer-to-peer протокол обмена состоянием: каждую секунду каждый узел обменивается информацией о себе и известных ему узлах с 1-3 случайно выбранными узлами, за несколько раундов распространяя данные по всему кластеру; передаёт состояние (UP/DOWN), load, schema version и token ranges, а обнаружение отказов делает `Phi Accrual Failure Detector`.",
               "correct": true,
               "sections": {
@@ -163,18 +175,6 @@
                 "when_to_apply": "Понимание нужно при диагностике flapping-узлов и настройке детектора отказов.",
                 "edge_cases": "Слишком низкий `phi_convict_threshold` даёт ложные «падения» узлов при сетевых всплесках.",
                 "related": "[[cassandra-interview#Q2]] архитектура; [[cassandra-interview#Q4]] Snitch; [[cassandra-interview#Q23]] hinted handoff при недоступности."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Gossip` работает по расписанию раз в час и поэтому узнаёт о падении узла с большой задержкой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Gossip-раунд происходит каждую секунду, и информация о падении распространяется за секунды, а не часы.",
-                "source_of_confusion": "Слово «слухи» наводит на мысль о медленном распространении.",
-                "if_it_were_true": "Тогда failover занимал бы часы, но детектор отказов реагирует быстро.",
-                "how_it_should_be": "Gossip-обмен — ежесекундный; отказ обнаруживается быстро."
               }
             }
           ]
@@ -203,18 +203,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Snitch` вычисляет `token` от partition key и определяет, какой узел кольца владеет строкой, направляя запрос напрямую его владельцу; типы: `Murmur3Partitioner` (по умолчанию), `RandomPartitioner` (legacy на MD5), `ByteOrderedPartitioner` (сохраняет порядок ключей).",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сжатие выполняет compression на уровне SSTable; `Snitch` к сжатию отношения не имеет.",
-                "source_of_confusion": "Незнакомый термин ассоциируют с любой низкоуровневой функцией.",
-                "if_it_were_true": "Тогда у snitch были бы параметры алгоритма сжатия, но их нет.",
-                "how_it_should_be": "Сжатие — это `compression`; `Snitch` определяет топологию узлов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Snitch` задаётся на уровне keyspace и может отличаться для разных таблиц: одна таблица использует `SimpleSnitch`, другая — `GossipingPropertyFileSnitch`; это позволяет гранулярно настраивать топологию под каждую модель данных.",
               "correct": false,
               "sections": {
@@ -222,6 +210,18 @@
                 "source_of_confusion": "Кажется, что определение топологии — фиксированная деталь.",
                 "if_it_were_true": "Тогда не было бы разных типов для dev/AWS/GCP, но они есть.",
                 "how_it_should_be": "Snitch выбирают под окружение; для prod — `GossipingPropertyFileSnitch`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Snitch` вычисляет `token` от partition key и определяет, какой узел кольца владеет строкой, направляя запрос напрямую его владельцу; типы: `Murmur3Partitioner` (по умолчанию), `RandomPartitioner` (legacy на MD5), `ByteOrderedPartitioner` (сохраняет порядок ключей).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сжатие выполняет compression на уровне SSTable; `Snitch` к сжатию отношения не имеет.",
+                "source_of_confusion": "Незнакомый термин ассоциируют с любой низкоуровневой функцией.",
+                "if_it_were_true": "Тогда у snitch были бы параметры алгоритма сжатия, но их нет.",
+                "how_it_should_be": "Сжатие — это `compression`; `Snitch` определяет топологию узлов."
               }
             },
             {
@@ -251,19 +251,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Consistent Hashing` распределяет данные по кольцу токенов (диапазон −2^63..2^63−1): `partition_key` хэшируется (по умолчанию `Murmur3`), хэш определяет позицию на кольце, и данные пишутся на узел, ответственный за следующий по часовой стрелке токен, а реплики — на последующие узлы по стратегии репликации; ключевое преимущество — при добавлении/удалении узла перераспределяется только часть данных.",
-              "correct": true,
-              "sections": {
-                "explanation": "Кольцо делает масштабирование плавным: новый узел забирает себе часть диапазона у соседей, а не вызывает полную ребалансировку.",
-                "example": "`partition_key='user_123'` → `Murmur3` → хэш 37 → попадает в диапазон 25–50 → пишется на узел, владеющий токеном 50.",
-                "when_to_apply": "Понимание нужно при выборе partition key и оценке равномерности распределения.",
-                "edge_cases": "Низкокардинальный или skew-ключ даёт неравномерное кольцо и hot spots даже при consistent hashing.",
-                "related": "[[cassandra-interview#Q6]] vnodes; [[cassandra-interview#Q8]] partition key; [[cassandra-interview#Q10]] равномерность распределения."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Cassandra` распределяет данные через обычный `hash(key) mod N`, где N — число узлов.",
               "correct": false,
               "sections": {
@@ -274,8 +261,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Партиционер по умолчанию сортирует ключи лексикографически (`ByteOrderedPartitioner`).",
               "correct": false,
               "sections": {
@@ -283,6 +270,19 @@
                 "source_of_confusion": "Хочется, чтобы ключи лежали по порядку для range-сканов.",
                 "if_it_were_true": "Тогда соседние ключи были бы на одном узле, что и создаёт hot spots — поэтому от него отказались.",
                 "how_it_should_be": "Дефолт — `Murmur3Partitioner` ради равномерности, не упорядоченности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Consistent Hashing` распределяет данные по кольцу токенов (диапазон −2^63..2^63−1): `partition_key` хэшируется (по умолчанию `Murmur3`), хэш определяет позицию на кольце, и данные пишутся на узел, ответственный за следующий по часовой стрелке токен, а реплики — на последующие узлы по стратегии репликации; ключевое преимущество — при добавлении/удалении узла перераспределяется только часть данных.",
+              "correct": true,
+              "sections": {
+                "explanation": "Кольцо делает масштабирование плавным: новый узел забирает себе часть диапазона у соседей, а не вызывает полную ребалансировку.",
+                "example": "`partition_key='user_123'` → `Murmur3` → хэш 37 → попадает в диапазон 25–50 → пишется на узел, владеющий токеном 50.",
+                "when_to_apply": "Понимание нужно при выборе partition key и оценке равномерности распределения.",
+                "edge_cases": "Низкокардинальный или skew-ключ даёт неравномерное кольцо и hot spots даже при consistent hashing.",
+                "related": "[[cassandra-interview#Q6]] vnodes; [[cassandra-interview#Q8]] partition key; [[cassandra-interview#Q10]] равномерность распределения."
               }
             },
             {
@@ -323,6 +323,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Vnodes уменьшают число диапазонов токенов на узел до одного для упрощения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vnodes наоборот увеличивают число диапазонов на узел (по умолчанию 256), а не сводят к одному.",
+                "source_of_confusion": "«Упрощение» трактуют как уменьшение числа диапазонов.",
+                "if_it_were_true": "Тогда параметр `num_tokens` был бы всегда равен 1, но дефолт — 256.",
+                "how_it_should_be": "Vnodes дают много мелких диапазонов на узел, а не один."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Vnodes` — механизм, при котором каждый физический узел отвечает за множество небольших диапазонов токенов вместо одного большого (по умолчанию `num_tokens = 256`); это даёт более равномерное распределение данных, быстрое и автоматическое перераспределение при добавлении/удалении узлов и возможность дать узлам разной мощности разное число токенов.",
               "correct": true,
               "sections": {
@@ -334,8 +346,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "При использовании vnodes добавление узла требует ручного расчёта токенов и `nodetool move`.",
               "correct": false,
               "sections": {
@@ -343,18 +355,6 @@
                 "source_of_confusion": "Ручную операцию `nodetool move` ошибочно связывают с vnodes.",
                 "if_it_were_true": "Тогда vnodes не давали бы заявленного упрощения, но именно ради него их и ввели.",
                 "how_it_should_be": "Ручной `nodetool move` — это случай без vnodes; vnodes автоматизируют."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Vnodes уменьшают число диапазонов токенов на узел до одного для упрощения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Vnodes наоборот увеличивают число диапазонов на узел (по умолчанию 256), а не сводят к одному.",
-                "source_of_confusion": "«Упрощение» трактуют как уменьшение числа диапазонов.",
-                "if_it_were_true": "Тогда параметр `num_tokens` был бы всегда равен 1, но дефолт — 256.",
-                "how_it_should_be": "Vnodes дают много мелких диапазонов на узел, а не один."
               }
             }
           ]
@@ -371,13 +371,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cassandra` использует документную модель, как `MongoDB`, храня JSON-документы.",
-              "correct": false,
+              "text": "`Cassandra` использует модель wide-column store: данные в таблицах со строками и столбцами, но строки группируются в партиции по `partition key`, внутри партиции упорядочены по `clustering key`, у строк может быть разный набор столбцов, нет JOIN и referential integrity, а схема гибкая; иерархия — `Cluster` → `Keyspace` → `Table` → `Partition` → `Row` → `Column`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Модель — wide-column store (таблицы со строками/столбцами и гибкой схемой), а не документы JSON.",
-                "source_of_confusion": "Обе NoSQL, отсюда смешение моделей.",
-                "if_it_were_true": "Тогда были бы запросы по вложенным полям документа, но в Cassandra доступ идёт по ключам таблицы.",
-                "how_it_should_be": "Модель — wide-column; документная — это MongoDB."
+                "explanation": "Keyspace — аналог схемы/БД (задаёт репликацию); таблица денормализована под конкретные запросы. Каждый столбец хранится с timestamp для разрешения конфликтов.",
+                "example": "`CREATE KEYSPACE ecommerce WITH replication = {...}`; `CREATE TABLE orders (... PRIMARY KEY ((user_id), order_date, order_id))`.",
+                "when_to_apply": "Понимание модели нужно для query-driven проектирования таблиц.",
+                "edge_cases": "Гибкость схемы не отменяет дисциплины: неудачный partition key ведёт к hot spots и большим партициям.",
+                "related": "[[cassandra-interview#Q8]] primary/partition/clustering key; [[cassandra-interview#Q9]] моделирование от запросов; [[cassandra-interview#Q1]] что такое Cassandra."
               }
             },
             {
@@ -395,19 +396,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Cassandra` использует модель wide-column store: данные в таблицах со строками и столбцами, но строки группируются в партиции по `partition key`, внутри партиции упорядочены по `clustering key`, у строк может быть разный набор столбцов, нет JOIN и referential integrity, а схема гибкая; иерархия — `Cluster` → `Keyspace` → `Table` → `Partition` → `Row` → `Column`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Keyspace — аналог схемы/БД (задаёт репликацию); таблица денормализована под конкретные запросы. Каждый столбец хранится с timestamp для разрешения конфликтов.",
-                "example": "`CREATE KEYSPACE ecommerce WITH replication = {...}`; `CREATE TABLE orders (... PRIMARY KEY ((user_id), order_date, order_id))`.",
-                "when_to_apply": "Понимание модели нужно для query-driven проектирования таблиц.",
-                "edge_cases": "Гибкость схемы не отменяет дисциплины: неудачный partition key ведёт к hot spots и большим партициям.",
-                "related": "[[cassandra-interview#Q8]] primary/partition/clustering key; [[cassandra-interview#Q9]] моделирование от запросов; [[cassandra-interview#Q1]] что такое Cassandra."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "В `Cassandra` все строки таблицы обязаны иметь одинаковый фиксированный набор столбцов.",
               "correct": false,
               "sections": {
@@ -415,6 +403,18 @@
                 "source_of_confusion": "Привычка к жёсткой схеме реляционных таблиц.",
                 "if_it_were_true": "Тогда нельзя было бы `ALTER TABLE ADD column` без миграции данных, но это дешёвая операция.",
                 "how_it_should_be": "Набор столбцов у строк может различаться; схема гибкая."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Cassandra` использует документную модель, как `MongoDB`, храня JSON-документы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модель — wide-column store (таблицы со строками/столбцами и гибкой схемой), а не документы JSON.",
+                "source_of_confusion": "Обе NoSQL, отсюда смешение моделей.",
+                "if_it_were_true": "Тогда были бы запросы по вложенным полям документа, но в Cassandra доступ идёт по ключам таблицы.",
+                "how_it_should_be": "Модель — wide-column; документная — это MongoDB."
               }
             }
           ]
@@ -431,13 +431,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Partition Key` определяет порядок сортировки строк, а `Clustering Key` — узел хранения.",
-              "correct": false,
+              "text": "`Primary Key` состоит из двух частей: `Partition Key` определяет узел хранения (хэшируется через `Murmur3`) и может быть составным `((user_id, region))`, а `Clustering Key` задаёт порядок строк внутри партиции (`order_date DESC`); вместе они уникально идентифицируют строку. Partition key выбирают высококардинальным, с равномерным распределением запросов и партициями <100 MB / <100k строк.",
+              "correct": true,
               "sections": {
-                "what_actually": "Всё наоборот: `Partition Key` определяет узел (хэшируется), а `Clustering Key` — порядок строк внутри партиции.",
-                "source_of_confusion": "Роли двух частей ключа легко перепутать.",
-                "if_it_were_true": "Тогда сортировка зависела бы от хэша, но она задаётся clustering-колонками.",
-                "how_it_should_be": "`Partition Key` → узел; `Clustering Key` → порядок внутри партиции."
+                "explanation": "Первая скобка PK — partition key (одна или несколько колонок), остальные колонки — clustering. От partition key зависит размещение и доступ; от clustering — сортировка и range-запросы внутри партиции.",
+                "example": "`PRIMARY KEY ((user_id), order_date, order_id) WITH CLUSTERING ORDER BY (order_date DESC)` — заказы пользователя, новые сверху.",
+                "when_to_apply": "Проектирование PK — центральное решение: под него затачивают WHERE и ORDER BY запроса.",
+                "edge_cases": "Низкокардинальный partition key (например `status`) создаёт огромные партиции и hot spots.",
+                "related": "[[cassandra-interview#Q9]] моделирование от запросов; [[cassandra-interview#Q5]] consistent hashing; [[cassandra-interview#Q11]] размер партиции."
               }
             },
             {
@@ -467,14 +468,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Primary Key` состоит из двух частей: `Partition Key` определяет узел хранения (хэшируется через `Murmur3`) и может быть составным `((user_id, region))`, а `Clustering Key` задаёт порядок строк внутри партиции (`order_date DESC`); вместе они уникально идентифицируют строку. Partition key выбирают высококардинальным, с равномерным распределением запросов и партициями <100 MB / <100k строк.",
-              "correct": true,
+              "text": "`Partition Key` определяет порядок сортировки строк, а `Clustering Key` — узел хранения.",
+              "correct": false,
               "sections": {
-                "explanation": "Первая скобка PK — partition key (одна или несколько колонок), остальные колонки — clustering. От partition key зависит размещение и доступ; от clustering — сортировка и range-запросы внутри партиции.",
-                "example": "`PRIMARY KEY ((user_id), order_date, order_id) WITH CLUSTERING ORDER BY (order_date DESC)` — заказы пользователя, новые сверху.",
-                "when_to_apply": "Проектирование PK — центральное решение: под него затачивают WHERE и ORDER BY запроса.",
-                "edge_cases": "Низкокардинальный partition key (например `status`) создаёт огромные партиции и hot spots.",
-                "related": "[[cassandra-interview#Q9]] моделирование от запросов; [[cassandra-interview#Q5]] consistent hashing; [[cassandra-interview#Q11]] размер партиции."
+                "what_actually": "Всё наоборот: `Partition Key` определяет узел (хэшируется), а `Clustering Key` — порядок строк внутри партиции.",
+                "source_of_confusion": "Роли двух частей ключа легко перепутать.",
+                "if_it_were_true": "Тогда сортировка зависела бы от хэша, но она задаётся clustering-колонками.",
+                "how_it_should_be": "`Partition Key` → узел; `Clustering Key` → порядок внутри партиции."
               }
             }
           ]
@@ -491,19 +491,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Cassandra` моделируют от запросов, а не от сущностей (query-driven design): сначала определяют запросы приложения, затем под каждый проектируют отдельную таблицу; принципы — одна таблица под один запрос (денормализация), partition key соответствует WHERE, clustering key задаёт сортировку, дублирование данных — норма, партиции держат <100 MB.",
-              "correct": true,
-              "sections": {
-                "explanation": "Поскольку JOIN нет, данные дублируют в несколько таблиц-проекций под разные запросы. Это противоположность реляционной нормализации.",
-                "example": "Под «заказы пользователя» — `orders_by_user ((user_id), order_date)`; под «заказы по статусу» — отдельная `orders_by_status ((status), order_date, order_id)`.",
-                "when_to_apply": "Подход применяют на старте: список запросов → набор денормализованных таблиц.",
-                "edge_cases": "Анти-паттерны: `ALLOW FILTERING`, слишком мелкий partition key (всё на одном узле), огромные партиции, моделирование «как в PostgreSQL».",
-                "related": "[[cassandra-interview#Q8]] partition/clustering key; [[cassandra-interview#Q39]] анти-паттерны; [[cassandra-interview#Q13]] почему не secondary index."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Правильное моделирование в `Cassandra` означает нормализацию данных, как в реляционной БД.",
               "correct": false,
               "sections": {
@@ -511,6 +498,18 @@
                 "source_of_confusion": "Привычка к 3NF из реляционных БД.",
                 "if_it_were_true": "Тогда дублирование данных было бы ошибкой, но в Cassandra оно норма.",
                 "how_it_should_be": "Моделируют денормализованно, дублируя данные под каждый запрос."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для нового паттерна запроса достаточно добавить `ALLOW FILTERING` к существующей таблице.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ALLOW FILTERING` сканирует кластер и неприемлем в prod; под новый запрос создают отдельную денормализованную таблицу.",
+                "source_of_confusion": "`ALLOW FILTERING` выглядит как простой способ «дозапросить».",
+                "if_it_were_true": "Тогда query-driven моделирование было бы не нужно, но именно из-за дороговизны filtering оно и существует.",
+                "how_it_should_be": "Под новый запрос делают новую таблицу, а не `ALLOW FILTERING`."
               }
             },
             {
@@ -528,13 +527,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для нового паттерна запроса достаточно добавить `ALLOW FILTERING` к существующей таблице.",
-              "correct": false,
+              "text": "В `Cassandra` моделируют от запросов, а не от сущностей (query-driven design): сначала определяют запросы приложения, затем под каждый проектируют отдельную таблицу; принципы — одна таблица под один запрос (денормализация), partition key соответствует WHERE, clustering key задаёт сортировку, дублирование данных — норма, партиции держат <100 MB.",
+              "correct": true,
               "sections": {
-                "what_actually": "`ALLOW FILTERING` сканирует кластер и неприемлем в prod; под новый запрос создают отдельную денормализованную таблицу.",
-                "source_of_confusion": "`ALLOW FILTERING` выглядит как простой способ «дозапросить».",
-                "if_it_were_true": "Тогда query-driven моделирование было бы не нужно, но именно из-за дороговизны filtering оно и существует.",
-                "how_it_should_be": "Под новый запрос делают новую таблицу, а не `ALLOW FILTERING`."
+                "explanation": "Поскольку JOIN нет, данные дублируют в несколько таблиц-проекций под разные запросы. Это противоположность реляционной нормализации.",
+                "example": "Под «заказы пользователя» — `orders_by_user ((user_id), order_date)`; под «заказы по статусу» — отдельная `orders_by_status ((status), order_date, order_id)`.",
+                "when_to_apply": "Подход применяют на старте: список запросов → набор денормализованных таблиц.",
+                "edge_cases": "Анти-паттерны: `ALLOW FILTERING`, слишком мелкий partition key (всё на одном узле), огромные партиции, моделирование «как в PostgreSQL».",
+                "related": "[[cassandra-interview#Q8]] partition/clustering key; [[cassandra-interview#Q39]] анти-паттерны; [[cassandra-interview#Q13]] почему не secondary index."
               }
             }
           ]
@@ -551,18 +551,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главное для равномерности — выбрать низкокардинальный partition key вроде статуса или страны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: нужен ВЫСОКОкардинальный ключ (UUID, user_id); низкокардинальный (статус/страна) создаёт hot spots.",
-                "source_of_confusion": "Кажется, что мало значений = проще распределить.",
-                "if_it_were_true": "Тогда `partition key = country_code` распределял бы ровно, но даёт огромную партицию `RU`.",
-                "how_it_should_be": "Берут высококардинальный ключ; низкая кардинальность ведёт к hot spots."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "На равномерность влияют: высокая кардинальность partition key (UUID/user_id, а не статус/страна), размер партиции (<100 MB, <100k строк), partitioner (`Murmur3Partitioner` даёт равномерный разброс), включённые vnodes и паттерн запросов (если 90% запросов идут к 10% ключей — hot spots); при перекосе добавляют bucket (например день/hash) в partition key.",
               "correct": true,
               "sections": {
@@ -574,8 +562,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Размер партиции не влияет на распределение — Cassandra сама разбивает большие партиции.",
               "correct": false,
               "sections": {
@@ -586,8 +574,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Выбор partitioner не влияет на равномерность — любой даёт одинаковый результат.",
               "correct": false,
               "sections": {
@@ -595,6 +583,18 @@
                 "source_of_confusion": "Кажется, что партиционер — несущественная деталь.",
                 "if_it_were_true": "Тогда не отказались бы от `ByteOrderedPartitioner`, но именно из-за неравномерности он deprecated.",
                 "how_it_should_be": "Партиционер важен; дефолтный `Murmur3` обеспечивает равномерность."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главное для равномерности — выбрать низкокардинальный partition key вроде статуса или страны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: нужен ВЫСОКОкардинальный ключ (UUID, user_id); низкокардинальный (статус/страна) создаёт hot spots.",
+                "source_of_confusion": "Кажется, что мало значений = проще распределить.",
+                "if_it_were_true": "Тогда `partition key = country_code` распределял бы ровно, но даёт огромную партицию `RU`.",
+                "how_it_should_be": "Берут высококардинальный ключ; низкая кардинальность ведёт к hot spots."
               }
             }
           ]
@@ -611,18 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Wide Row` — это строка с очень большим числом столбцов в определении таблицы (сотни колонок).",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Wide Row` — это партиция с большим числом СТРОК (по clustering key), а не таблица с сотнями колонок.",
-                "source_of_confusion": "«Широкая строка» буквально воспринимается как много колонок.",
-                "if_it_were_true": "Тогда лимит измерялся бы в колонках схемы, но он про число строк/ячеек в партиции.",
-                "how_it_should_be": "Wide row — много строк в одной партиции, упорядоченных по clustering key."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Практический лимит размера партиции — 2 GB, и большие партиции не вызывают проблем.",
               "correct": false,
               "sections": {
@@ -633,8 +621,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Строки одной партиции в `Cassandra` распределяются по разным узлам для балансировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все строки одной партиции хранятся вместе на узлах-репликах этой партиции, а не разбросаны по кластеру.",
+                "source_of_confusion": "Кажется, что БД сама раскидывает большие партиции.",
+                "if_it_were_true": "Тогда не было бы проблемы больших партиций, но она есть именно из-за их локальности.",
+                "how_it_should_be": "Партиция целиком лежит на своих репликах; распределяются партиции, не строки внутри."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "`Wide Row` — это строка с очень большим числом столбцов в определении таблицы (сотни колонок).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Wide Row` — это партиция с большим числом СТРОК (по clustering key), а не таблица с сотнями колонок.",
+                "source_of_confusion": "«Широкая строка» буквально воспринимается как много колонок.",
+                "if_it_were_true": "Тогда лимит измерялся бы в колонках схемы, но он про число строк/ячеек в партиции.",
+                "how_it_should_be": "Wide row — много строк в одной партиции, упорядоченных по clustering key."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Wide Row` — партиция с большим количеством строк (по clustering key); все строки одной партиции хранятся вместе на диске. Теоретический лимит — ~2 млрд ячеек, но практическая рекомендация — <100 MB на партицию, иначе медленные чтения, GC pressure и проблемы при компакции; борются bucketing-ом (разбиением partition key, например по месяцу).",
               "correct": true,
               "sections": {
@@ -643,18 +655,6 @@
                 "when_to_apply": "Bucketing применяют для time-series и любых неограниченно растущих партиций.",
                 "edge_cases": "Слишком мелкие bucket-ы дробят данные так, что чтение требует много партиций — баланс подбирают по объёму.",
                 "related": "[[cassandra-interview#Q10]] равномерность; [[cassandra-interview#Q8]] partition key; [[cassandra-interview#Q39]] unbounded partitions."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Строки одной партиции в `Cassandra` распределяются по разным узлам для балансировки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Все строки одной партиции хранятся вместе на узлах-репликах этой партиции, а не разбросаны по кластеру.",
-                "source_of_confusion": "Кажется, что БД сама раскидывает большие партиции.",
-                "if_it_were_true": "Тогда не было бы проблемы больших партиций, но она есть именно из-за их локальности.",
-                "how_it_should_be": "Партиция целиком лежит на своих репликах; распределяются партиции, не строки внутри."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`CQL` (`Cassandra Query Language`) — SQL-подобный язык: DDL (`CREATE KEYSPACE/TABLE/INDEX`, `ALTER`, `DROP`), DML (`INSERT`/`SELECT`/`UPDATE`/`DELETE`, `BATCH`); `INSERT`/`UPDATE` — upsert, `DELETE` создаёт tombstone, а вдобавок `CQL` поддерживает `JOIN` и коррелированные подзапросы между таблицами, как реляционный SQL.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`CQL` НЕ поддерживает JOIN и подзапросы; WHERE ограничен ключевыми колонками.",
-                "source_of_confusion": "SQL-подобный синтаксис создаёт ложные ожидания.",
-                "if_it_were_true": "Тогда можно было бы соединять таблицы запросом, но в Cassandra это делают денормализацией.",
-                "how_it_should_be": "`CQL` без JOIN/подзапросов; связи решают дублированием данных."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`INSERT` в `Cassandra` ведёт себя как в реляционных БД: если строка с таким primary key уже существует, команда падает с ошибкой дубликата и для перезаписи нужен отдельный `UPDATE`; при этом `DELETE` создаёт tombstone, а `WHERE` обязан содержать partition key.",
               "correct": false,
               "sections": {
@@ -690,6 +678,19 @@
                 "source_of_confusion": "Опыт реляционного `INSERT` с уникальным ключом.",
                 "if_it_were_true": "Тогда нужен был бы `UPDATE` для изменения, но `INSERT`/`UPDATE` тут эквивалентны.",
                 "how_it_should_be": "`INSERT` = upsert; для conditional-вставки нужен `IF NOT EXISTS` (LWT)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CQL` (`Cassandra Query Language`) — SQL-подобный язык: DDL (`CREATE KEYSPACE/TABLE/INDEX`, `ALTER`, `DROP`), DML (`INSERT`/`SELECT`/`UPDATE`/`DELETE`, `BATCH`); ключевые особенности — `INSERT` и `UPDATE` суть upsert, `DELETE` создаёт tombstone, `WHERE` обязан содержать partition key (фильтрация по неключевым требует `ALLOW FILTERING`, что крайне неэффективно), JOIN и подзапросов нет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ограничение WHERE ключами — прямое следствие модели хранения: без partition key БД не знает, на каком узле искать. `USING TTL` задаёт срок жизни записи.",
+                "example": "`INSERT INTO products (...) VALUES (...) USING TTL 86400`; `SELECT * FROM products WHERE category='electronics' AND product_id=?`.",
+                "when_to_apply": "CQL используют для всех операций; запросы проектируют под partition/clustering key таблицы.",
+                "edge_cases": "`ALLOW FILTERING` запускает scatter-gather по кластеру — в prod это анти-паттерн.",
+                "related": "[[cassandra-interview#Q9]] моделирование под запросы; [[cassandra-interview#Q18]] tombstone от DELETE; [[cassandra-interview#Q39]] ALLOW FILTERING анти-паттерн."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`CQL` (`Cassandra Query Language`) — SQL-подобный язык: DDL (`CREATE KEYSPACE/TABLE/INDEX`, `ALTER`, `DROP`), DML (`INSERT`/`SELECT`/`UPDATE`/`DELETE`, `BATCH`); ключевые особенности — `INSERT` и `UPDATE` суть upsert, `DELETE` создаёт tombstone, `WHERE` обязан содержать partition key (фильтрация по неключевым требует `ALLOW FILTERING`, что крайне неэффективно), JOIN и подзапросов нет.",
-              "correct": true,
+              "text": "`CQL` (`Cassandra Query Language`) — SQL-подобный язык: DDL (`CREATE KEYSPACE/TABLE/INDEX`, `ALTER`, `DROP`), DML (`INSERT`/`SELECT`/`UPDATE`/`DELETE`, `BATCH`); `INSERT`/`UPDATE` — upsert, `DELETE` создаёт tombstone, а вдобавок `CQL` поддерживает `JOIN` и коррелированные подзапросы между таблицами, как реляционный SQL.",
+              "correct": false,
               "sections": {
-                "explanation": "Ограничение WHERE ключами — прямое следствие модели хранения: без partition key БД не знает, на каком узле искать. `USING TTL` задаёт срок жизни записи.",
-                "example": "`INSERT INTO products (...) VALUES (...) USING TTL 86400`; `SELECT * FROM products WHERE category='electronics' AND product_id=?`.",
-                "when_to_apply": "CQL используют для всех операций; запросы проектируют под partition/clustering key таблицы.",
-                "edge_cases": "`ALLOW FILTERING` запускает scatter-gather по кластеру — в prod это анти-паттерн.",
-                "related": "[[cassandra-interview#Q9]] моделирование под запросы; [[cassandra-interview#Q18]] tombstone от DELETE; [[cassandra-interview#Q39]] ALLOW FILTERING анти-паттерн."
+                "what_actually": "`CQL` НЕ поддерживает JOIN и подзапросы; WHERE ограничен ключевыми колонками.",
+                "source_of_confusion": "SQL-подобный синтаксис создаёт ложные ожидания.",
+                "if_it_were_true": "Тогда можно было бы соединять таблицы запросом, но в Cassandra это делают денормализацией.",
+                "how_it_should_be": "`CQL` без JOIN/подзапросов; связи решают дублированием данных."
               }
             }
           ]
@@ -731,14 +731,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Secondary Index` (SI) позволяет запрашивать по неключевым колонкам без `ALLOW FILTERING`; его уместно использовать при низкой кардинальности (статусы, типы) и фильтрации в рамках партиции, но НЕ для высококардинальных колонок (email/UUID) и не как основной путь доступа, потому что запрос идёт scatter-gather по всем узлам; альтернативы — `SAI` (Cassandra 4.0+) или отдельная денормализованная таблица.",
-              "correct": true,
+              "text": "`Secondary Index` лучше всего работает на высококардинальных колонках вроде email или UUID.",
+              "correct": false,
               "sections": {
-                "explanation": "SI хранится локально на каждом узле, поэтому запрос по нему опрашивает все узлы (scatter-gather). На высокой кардинальности и throughput это убивает производительность.",
-                "example": "`CREATE INDEX idx_email ON users (email)` — допустимо для редких запросов, но для горячего пути лучше `users_by_email` как отдельная таблица.",
-                "when_to_apply": "SI берут для нечастых запросов по низкокардинальному полю; для основного доступа — отдельная таблица.",
-                "edge_cases": "Высококардинальный SI (email/UUID) даёт scatter-gather и деградацию; это частая ошибка.",
-                "related": "[[cassandra-interview#Q9]] отдельная таблица вместо SI; [[cassandra-interview#Q14]] materialized views; [[cassandra-interview#Q12]] ALLOW FILTERING."
+                "what_actually": "Наоборот: SI уместен при НИЗКОЙ кардинальности; на высокой он опрашивает все узлы по одному значению — крайне дорого.",
+                "source_of_confusion": "Интуиция из RDBMS, где индекс по уникальному полю эффективен.",
+                "if_it_were_true": "Тогда `CREATE INDEX ON users(email)` был бы оптимален, но это классическая ошибка.",
+                "how_it_should_be": "SI — для низкой кардинальности; высокая → отдельная таблица или SAI."
               }
             },
             {
@@ -756,13 +755,14 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Secondary Index` лучше всего работает на высококардинальных колонках вроде email или UUID.",
-              "correct": false,
+              "text": "`Secondary Index` (SI) позволяет запрашивать по неключевым колонкам без `ALLOW FILTERING`; его уместно использовать при низкой кардинальности (статусы, типы) и фильтрации в рамках партиции, но НЕ для высококардинальных колонок (email/UUID) и не как основной путь доступа, потому что запрос идёт scatter-gather по всем узлам; альтернативы — `SAI` (Cassandra 4.0+) или отдельная денормализованная таблица.",
+              "correct": true,
               "sections": {
-                "what_actually": "Наоборот: SI уместен при НИЗКОЙ кардинальности; на высокой он опрашивает все узлы по одному значению — крайне дорого.",
-                "source_of_confusion": "Интуиция из RDBMS, где индекс по уникальному полю эффективен.",
-                "if_it_were_true": "Тогда `CREATE INDEX ON users(email)` был бы оптимален, но это классическая ошибка.",
-                "how_it_should_be": "SI — для низкой кардинальности; высокая → отдельная таблица или SAI."
+                "explanation": "SI хранится локально на каждом узле, поэтому запрос по нему опрашивает все узлы (scatter-gather). На высокой кардинальности и throughput это убивает производительность.",
+                "example": "`CREATE INDEX idx_email ON users (email)` — допустимо для редких запросов, но для горячего пути лучше `users_by_email` как отдельная таблица.",
+                "when_to_apply": "SI берут для нечастых запросов по низкокардинальному полю; для основного доступа — отдельная таблица.",
+                "edge_cases": "Высококардинальный SI (email/UUID) даёт scatter-gather и деградацию; это частая ошибка.",
+                "related": "[[cassandra-interview#Q9]] отдельная таблица вместо SI; [[cassandra-interview#Q14]] materialized views; [[cassandra-interview#Q12]] ALLOW FILTERING."
               }
             },
             {
@@ -791,6 +791,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "DataStax рекомендует использовать Materialized Views как основной способ денормализации в production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DataStax наоборот советует ИЗБЕГАТЬ MV в prod из-за багов и нагрузки, предпочитая денормализованные таблицы.",
+                "source_of_confusion": "Наличие фичи воспринимают как рекомендацию к использованию.",
+                "if_it_were_true": "Тогда не было бы предупреждений «избегать MV в prod», но они стандартны.",
+                "how_it_should_be": "В prod предпочитают денормализованные таблицы, а не MV."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Materialized View нужно вручную обновлять при каждом изменении базовой таблицы.",
               "correct": false,
               "sections": {
@@ -801,8 +813,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`Materialized View` — автоматически обновляемая таблица-проекция базовой таблицы с другим Primary Key (например, доступ по `status` вместо `user_id`); плюс — авто-синхронизация без дублирования логики в приложении; минусы — задержка синхронизации (eventual consistency), дополнительная нагрузка на запись и известные баги (вплоть до потери данных), поэтому DataStax рекомендует в prod избегать MV в пользу денормализованных таблиц с записью из приложения.",
               "correct": true,
               "sections": {
@@ -814,8 +826,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Materialized View обновляется мгновенно и строго консистентна с базовой таблицей.",
               "correct": false,
               "sections": {
@@ -823,18 +835,6 @@
                 "source_of_confusion": "Слово «view» наводит на мысль о мгновенном отражении.",
                 "if_it_were_true": "Тогда не было бы рассинхронизации, но она реальна и упоминается в ограничениях.",
                 "how_it_should_be": "MV синхронизируется с задержкой (eventual), не мгновенно."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "DataStax рекомендует использовать Materialized Views как основной способ денормализации в production.",
-              "correct": false,
-              "sections": {
-                "what_actually": "DataStax наоборот советует ИЗБЕГАТЬ MV в prod из-за багов и нагрузки, предпочитая денормализованные таблицы.",
-                "source_of_confusion": "Наличие фичи воспринимают как рекомендацию к использованию.",
-                "if_it_were_true": "Тогда не было бы предупреждений «избегать MV в prod», но они стандартны.",
-                "how_it_should_be": "В prod предпочитают денормализованные таблицы, а не MV."
               }
             }
           ]
@@ -851,13 +851,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cassandra` — полноценная OLAP-система с эффективными `GROUP BY` и кросс-кластерными агрегатами.",
-              "correct": false,
+              "text": "`Cassandra` — не OLAP: встроенные агрегаты (`COUNT`/`SUM`/`AVG`/`MIN`/`MAX`) эффективны только в рамках одной партиции и не масштабируются на кластер; для аналитики используют предварительную агрегацию (счётчики при записи), `Apache Spark` + Cassandra Connector (batch/streaming), `DSE Analytics` или CDC → `Kafka` → аналитическую БД (`ClickHouse`/`Elasticsearch`).",
+              "correct": true,
               "sections": {
-                "what_actually": "Cassandra — не OLAP; встроенные агрегаты (`COUNT`/`SUM`/`AVG`) работают только в рамках одной партиции и не масштабируются.",
-                "source_of_confusion": "Наличие `COUNT`/`SUM` в CQL создаёт иллюзию аналитики.",
-                "if_it_were_true": "Тогда `SELECT COUNT(*) FROM orders` по всему кластеру был бы быстрым, но это дорогой full scan.",
-                "how_it_should_be": "Для аналитики берут Spark/CDC→OLAP; встроенные агрегаты — только по партиции."
+                "explanation": "Кросс-партиционная агрегация в Cassandra = full cluster scan, что недопустимо в prod. Поэтому аналитику выносят наружу или считают инкрементально при записи.",
+                "example": "`SELECT COUNT(*), AVG(price) FROM orders WHERE user_id=?` — ок (одна партиция); кластерную выручку считают через Spark RDD.",
+                "when_to_apply": "Выбор подхода: real-time — предагрегация/Flink; ad-hoc SQL — Trino; batch ETL — Spark.",
+                "edge_cases": "User-Defined Aggregates (UDA) дают кастомную логику, но не снимают ограничение «в пределах партиции».",
+                "related": "[[cassandra-interview#Q43]] аналитика поверх Cassandra; [[cassandra-interview#Q44]] CDC → Kafka; [[cassandra-interview#Q30]] счётчики/предагрегация."
               }
             },
             {
@@ -875,19 +876,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Cassandra` — не OLAP: встроенные агрегаты (`COUNT`/`SUM`/`AVG`/`MIN`/`MAX`) эффективны только в рамках одной партиции и не масштабируются на кластер; для аналитики используют предварительную агрегацию (счётчики при записи), `Apache Spark` + Cassandra Connector (batch/streaming), `DSE Analytics` или CDC → `Kafka` → аналитическую БД (`ClickHouse`/`Elasticsearch`).",
-              "correct": true,
-              "sections": {
-                "explanation": "Кросс-партиционная агрегация в Cassandra = full cluster scan, что недопустимо в prod. Поэтому аналитику выносят наружу или считают инкрементально при записи.",
-                "example": "`SELECT COUNT(*), AVG(price) FROM orders WHERE user_id=?` — ок (одна партиция); кластерную выручку считают через Spark RDD.",
-                "when_to_apply": "Выбор подхода: real-time — предагрегация/Flink; ad-hoc SQL — Trino; batch ETL — Spark.",
-                "edge_cases": "User-Defined Aggregates (UDA) дают кастомную логику, но не снимают ограничение «в пределах партиции».",
-                "related": "[[cassandra-interview#Q43]] аналитика поверх Cassandra; [[cassandra-interview#Q44]] CDC → Kafka; [[cassandra-interview#Q30]] счётчики/предагрегация."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Для кластерной аналитики достаточно добавить `ALLOW FILTERING` к агрегирующему запросу.",
               "correct": false,
               "sections": {
@@ -895,6 +883,18 @@
                 "source_of_confusion": "`ALLOW FILTERING` кажется простым обходом ограничений.",
                 "if_it_were_true": "Тогда не нужны были бы внешние движки, но именно из-за дороговизны filtering они и нужны.",
                 "how_it_should_be": "Кластерную аналитику делают вне Cassandra, не через `ALLOW FILTERING`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Cassandra` — полноценная OLAP-система с эффективными `GROUP BY` и кросс-кластерными агрегатами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra — не OLAP; встроенные агрегаты (`COUNT`/`SUM`/`AVG`) работают только в рамках одной партиции и не масштабируются.",
+                "source_of_confusion": "Наличие `COUNT`/`SUM` в CQL создаёт иллюзию аналитики.",
+                "if_it_were_true": "Тогда `SELECT COUNT(*) FROM orders` по всему кластеру был бы быстрым, но это дорогой full scan.",
+                "how_it_should_be": "Для аналитики берут Spark/CDC→OLAP; встроенные агрегаты — только по партиции."
               }
             }
           ]
@@ -911,18 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При записи `Cassandra` сначала делает случайный поиск места на диске и обновляет существующую запись на месте.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Запись всегда sequential (Commit Log + Memtable → flush в immutable SSTable); обновлений на месте нет.",
-                "source_of_confusion": "Опыт B-tree СУБД с update-in-place.",
-                "if_it_were_true": "Тогда Cassandra не была бы так быстра на запись, но именно append-модель даёт скорость.",
-                "how_it_should_be": "Запись sequential; обновление = новая запись с большим timestamp."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Координатор записывает данные только на один узел, остальные реплики догоняют через Gossip.",
               "correct": false,
               "sections": {
@@ -933,8 +921,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "SSTable можно изменять на месте, дописывая новые версии строк в существующий файл.",
               "correct": false,
               "sections": {
@@ -945,8 +933,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Путь записи: клиент → координатор → реплики; на каждой реплике запись идёт сначала в Commit Log (WAL, sequential I/O — быстро), затем в Memtable (in-memory), а при заполнении Memtable делается flush на диск в immutable SSTable; координатор отвечает клиенту после подтверждений от нужного числа реплик (по `Consistency Level`). Запись всегда sequential, поэтому Cassandra быстра на запись (LSM-tree).",
               "correct": true,
               "sections": {
@@ -955,6 +943,18 @@
                 "when_to_apply": "Понимание пути записи нужно для тюнинга commit log, memtable и компакции.",
                 "edge_cases": "Много мелких SSTable от частых flush → read amplification, пока компакция их не сольёт.",
                 "related": "[[cassandra-interview#Q17]] read path; [[cassandra-interview#Q26]] компакция; [[cassandra-interview#Q18]] tombstone."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При записи `Cassandra` сначала делает случайный поиск места на диске и обновляет существующую запись на месте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запись всегда sequential (Commit Log + Memtable → flush в immutable SSTable); обновлений на месте нет.",
+                "source_of_confusion": "Опыт B-tree СУБД с update-in-place.",
+                "if_it_were_true": "Тогда Cassandra не была бы так быстра на запись, но именно append-модель даёт скорость.",
+                "how_it_should_be": "Запись sequential; обновление = новая запись с большим timestamp."
               }
             }
           ]
@@ -971,19 +971,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Путь чтения: координатор шлёт полный запрос ближайшей реплике и digest-запросы остальным (для сверки); на реплике Bloom Filter быстро исключает SSTable без ключа, далее Partition Key Cache/Compression Info находят смещение, читаются нужные SSTable + Memtable, и результаты мёржатся по timestamp (latest wins); при расхождении digest запускается Read Repair.",
-              "correct": true,
-              "sections": {
-                "explanation": "Чтение сложнее записи: данные одной строки могут лежать в нескольких SSTable + Memtable, и их надо слить. Bloom Filter, Key Cache и Row Cache минимизируют дисковые обращения.",
-                "example": "При `CL=QUORUM` и RF=3 координатор берёт данные с одной реплики и digest с двух; при несовпадении чинит отстающие.",
-                "when_to_apply": "Понимание нужно для тюнинга кэшей, bloom_filter_fp_chance и диагностики медленных чтений.",
-                "edge_cases": "Много SSTable на партицию (read amplification) и накопленные tombstones замедляют чтение — следят за компакцией.",
-                "related": "[[cassandra-interview#Q16]] write path; [[cassandra-interview#Q18]] tombstone и чтение; [[cassandra-interview#Q24]] read repair."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "При чтении `Cassandra` всегда читает данные только из одного SSTable.",
               "correct": false,
               "sections": {
@@ -994,8 +981,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Bloom Filter` точно сообщает, что SSTable содержит ключ, без ложных срабатываний.",
               "correct": false,
               "sections": {
@@ -1006,8 +993,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "При чтении конфликт версий разрешается выбором записи с наименьшим timestamp.",
               "correct": false,
               "sections": {
@@ -1015,6 +1002,19 @@
                 "source_of_confusion": "Путают направление разрешения конфликта.",
                 "if_it_were_true": "Тогда новые обновления игнорировались бы в пользу старых, что абсурдно.",
                 "how_it_should_be": "Конфликт версий: побеждает наибольший timestamp (latest wins)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Путь чтения: координатор шлёт полный запрос ближайшей реплике и digest-запросы остальным (для сверки); на реплике Bloom Filter быстро исключает SSTable без ключа, далее Partition Key Cache/Compression Info находят смещение, читаются нужные SSTable + Memtable, и результаты мёржатся по timestamp (latest wins); при расхождении digest запускается Read Repair.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чтение сложнее записи: данные одной строки могут лежать в нескольких SSTable + Memtable, и их надо слить. Bloom Filter, Key Cache и Row Cache минимизируют дисковые обращения.",
+                "example": "При `CL=QUORUM` и RF=3 координатор берёт данные с одной реплики и digest с двух; при несовпадении чинит отстающие.",
+                "when_to_apply": "Понимание нужно для тюнинга кэшей, bloom_filter_fp_chance и диагностики медленных чтений.",
+                "edge_cases": "Много SSTable на партицию (read amplification) и накопленные tombstones замедляют чтение — следят за компакцией.",
+                "related": "[[cassandra-interview#Q16]] write path; [[cassandra-interview#Q18]] tombstone и чтение; [[cassandra-interview#Q24]] read repair."
               }
             }
           ]
@@ -1031,18 +1031,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Tombstone мгновенно удаляет данные с диска при выполнении `DELETE`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Tombstone — лишь маркер удаления; физически данные исчезают при компакции после `gc_grace_seconds` (по умолчанию 10 дней).",
-                "source_of_confusion": "Привычно, что DELETE стирает сразу.",
-                "if_it_were_true": "Тогда не было бы проблемы накопления tombstones, но она центральна.",
-                "how_it_should_be": "Tombstone — маркер; удаление при компакции после gc_grace_seconds."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Tombstone` — маркер удаления: поскольку SSTable immutable, `DELETE` (и истёкший TTL) не стирают данные сразу, а пишут tombstone с timestamp, который реплицируется и физически удаляется при компакции лишь после `gc_grace_seconds` (по умолчанию 10 дней); накопление tombstones замедляет чтение (их надо сканировать) и вызывает `TombstoneOverwhelmingException` при >100k на запрос.",
               "correct": true,
               "sections": {
@@ -1054,8 +1042,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Tombstone не влияет на чтение — он полностью прозрачен для производительности.",
               "correct": false,
               "sections": {
@@ -1066,8 +1054,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Уменьшение `gc_grace_seconds` до нуля — безопасный способ избавиться от tombstones.",
               "correct": false,
               "sections": {
@@ -1075,6 +1063,18 @@
                 "source_of_confusion": "Кажется, что быстрее удалить tombstone = лучше.",
                 "if_it_were_true": "Тогда не предупреждали бы «не слишком маленьким», но это известный риск.",
                 "how_it_should_be": "`gc_grace_seconds` держат достаточным для repair; ноль опасен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Tombstone мгновенно удаляет данные с диска при выполнении `DELETE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tombstone — лишь маркер удаления; физически данные исчезают при компакции после `gc_grace_seconds` (по умолчанию 10 дней).",
+                "source_of_confusion": "Привычно, что DELETE стирает сразу.",
+                "if_it_were_true": "Тогда не было бы проблемы накопления tombstones, но она центральна.",
+                "how_it_should_be": "Tombstone — маркер; удаление при компакции после gc_grace_seconds."
               }
             }
           ]
@@ -1091,18 +1091,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Сжатие в `Cassandra` применяется ко всему SSTable целиком, поэтому чтение одного значения требует распаковки всего файла.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сжатие поблочное (по умолчанию 64 KB): чтение значения распаковывает только нужный блок, а не весь SSTable.",
-                "source_of_confusion": "Кажется, что сжатый файл надо распаковать целиком.",
-                "if_it_were_true": "Тогда сжатие убивало бы латентность чтения, но поблочность этого избегает.",
-                "how_it_should_be": "Данные сжимаются блоками; читается только нужный блок."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Сжатие `Cassandra` уменьшает нагрузку на CPU за счёт увеличения дискового I/O.",
               "correct": false,
               "sections": {
@@ -1113,8 +1101,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`Cassandra` не поддерживает сжатие — данные всегда хранятся в сыром виде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сжатие поддерживается на уровне SSTable и включено по умолчанию (`LZ4`).",
+                "source_of_confusion": "Кажется, что NoSQL хранит «как есть».",
+                "if_it_were_true": "Тогда не было бы параметра `compression` в `CREATE TABLE`, но он есть.",
+                "how_it_should_be": "Сжатие штатно (дефолт `LZ4`); можно отключить `NoopCompressor`."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Сжатие в `Cassandra` применяется ко всему SSTable целиком, поэтому чтение одного значения требует распаковки всего файла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сжатие поблочное (по умолчанию 64 KB): чтение значения распаковывает только нужный блок, а не весь SSTable.",
+                "source_of_confusion": "Кажется, что сжатый файл надо распаковать целиком.",
+                "if_it_were_true": "Тогда сжатие убивало бы латентность чтения, но поблочность этого избегает.",
+                "how_it_should_be": "Данные сжимаются блоками; читается только нужный блок."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Cassandra` поддерживает прозрачное поблочное сжатие SSTable (по умолчанию блок 64 KB), поэтому чтение значения распаковывает только один блок; алгоритмы — `LZ4Compressor` (быстрый, дефолт), `SnappyCompressor`, `DeflateCompressor` (лучше сжатие, медленнее), `ZstdCompressor` (4.0+, баланс), `NoopCompressor`; сжатие снижает дисковый I/O ценой CPU, и для SSD обычно выбирают `LZ4` из-за минимальной латентности.",
               "correct": true,
               "sections": {
@@ -1123,18 +1135,6 @@
                 "when_to_apply": "Алгоритм выбирают по нагрузке: латентность → LZ4; экономия места → Zstd/Deflate.",
                 "edge_cases": "Слишком большой `chunk_length` улучшает сжатие, но удорожает чтение мелких значений (распаковка лишнего).",
                 "related": "[[cassandra-interview#Q16]] SSTable; [[cassandra-interview#Q26]] компакция; [[cassandra-interview#Q36]] метрики диска."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Cassandra` не поддерживает сжатие — данные всегда хранятся в сыром виде.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сжатие поддерживается на уровне SSTable и включено по умолчанию (`LZ4`).",
-                "source_of_confusion": "Кажется, что NoSQL хранит «как есть».",
-                "if_it_were_true": "Тогда не было бы параметра `compression` в `CREATE TABLE`, но он есть.",
-                "how_it_should_be": "Сжатие штатно (дефолт `LZ4`); можно отключить `NoopCompressor`."
               }
             }
           ]
@@ -1151,18 +1151,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Фактор репликации (RF) задаётся для всего кластера один раз и одинаков для всех данных.",
-              "correct": false,
-              "sections": {
-                "what_actually": "RF задаётся per-keyspace при его создании, и для разных keyspace он может различаться; в multi-DC — per-DC.",
-                "source_of_confusion": "Кажется, что репликация — глобальная настройка кластера.",
-                "if_it_were_true": "Тогда нельзя было бы держать `RF=3` для одного keyspace и `RF=1` для другого, но это возможно.",
-                "how_it_should_be": "RF настраивается на keyspace (и на DC для NetworkTopologyStrategy)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`SimpleStrategy` рекомендуется для production multi-DC кластеров.",
               "correct": false,
               "sections": {
@@ -1170,6 +1158,19 @@
                 "source_of_confusion": "Простое имя кажется «правильным выбором».",
                 "if_it_were_true": "Тогда не было бы отдельной `NetworkTopologyStrategy` для prod, но она и есть рекомендуемая.",
                 "how_it_should_be": "Prod/multi-DC → `NetworkTopologyStrategy`; `SimpleStrategy` — для dev."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Replication` — автоматическое создание копий данных на нескольких узлах для отказоустойчивости; фактор репликации (`RF`) задаётся при создании keyspace; стратегии: `SimpleStrategy` (реплики на следующих по кольцу узлах, только для одного ДЦ/dev) и `NetworkTopologyStrategy` (RF per-DC, учитывает rack — рекомендуется для prod и multi-DC); типичная рекомендация — RF=3 на ДЦ, что переживает потерю одного узла при `QUORUM`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`NetworkTopologyStrategy` размещает реплики в разных rack/ДЦ, повышая устойчивость к отказу стойки или целого датацентра. RF задаётся в `WITH replication = {...}`.",
+                "example": "`CREATE KEYSPACE prod WITH replication = {'class':'NetworkTopologyStrategy','dc-moscow':3,'dc-spb':2}`.",
+                "when_to_apply": "Стратегию и RF выбирают при создании keyspace под требования доступности и топологию.",
+                "edge_cases": "RF=1 не даёт отказоустойчивости (потеря узла = потеря данных); чрезмерный RF растит стоимость записи и хранения.",
+                "related": "[[cassandra-interview#Q21]] consistency levels; [[cassandra-interview#Q4]] snitch и топология; [[cassandra-interview#Q25]] repair поддерживает консистентность."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Replication` — автоматическое создание копий данных на нескольких узлах для отказоустойчивости; фактор репликации (`RF`) задаётся при создании keyspace; стратегии: `SimpleStrategy` (реплики на следующих по кольцу узлах, только для одного ДЦ/dev) и `NetworkTopologyStrategy` (RF per-DC, учитывает rack — рекомендуется для prod и multi-DC); типичная рекомендация — RF=3 на ДЦ, что переживает потерю одного узла при `QUORUM`.",
-              "correct": true,
+              "text": "Фактор репликации (RF) задаётся для всего кластера один раз и одинаков для всех данных.",
+              "correct": false,
               "sections": {
-                "explanation": "`NetworkTopologyStrategy` размещает реплики в разных rack/ДЦ, повышая устойчивость к отказу стойки или целого датацентра. RF задаётся в `WITH replication = {...}`.",
-                "example": "`CREATE KEYSPACE prod WITH replication = {'class':'NetworkTopologyStrategy','dc-moscow':3,'dc-spb':2}`.",
-                "when_to_apply": "Стратегию и RF выбирают при создании keyspace под требования доступности и топологию.",
-                "edge_cases": "RF=1 не даёт отказоустойчивости (потеря узла = потеря данных); чрезмерный RF растит стоимость записи и хранения.",
-                "related": "[[cassandra-interview#Q21]] consistency levels; [[cassandra-interview#Q4]] snitch и топология; [[cassandra-interview#Q25]] repair поддерживает консистентность."
+                "what_actually": "RF задаётся per-keyspace при его создании, и для разных keyspace он может различаться; в multi-DC — per-DC.",
+                "source_of_confusion": "Кажется, что репликация — глобальная настройка кластера.",
+                "if_it_were_true": "Тогда нельзя было бы держать `RF=3` для одного keyspace и `RF=1` для другого, но это возможно.",
+                "how_it_should_be": "RF настраивается на keyspace (и на DC для NetworkTopologyStrategy)."
               }
             }
           ]
@@ -1224,18 +1224,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Consistency Level` задаётся один раз для всего кластера в `cassandra.yaml` и применяется ко всем запросам одинаково; чтобы сменить уровень (например с `ONE` на `QUORUM`), нужен rolling restart всех узлов, поэтому per-query tunable consistency в Cassandra недоступна.",
-              "correct": false,
-              "sections": {
-                "what_actually": "CL — параметр каждого запроса (tunable consistency): один запрос может идти на `ONE`, другой на `QUORUM`.",
-                "source_of_confusion": "Кажется, что консистентность — глобальная настройка.",
-                "if_it_were_true": "Тогда нельзя было бы балансировать латентность и консистентность по запросам, но это ключевая возможность.",
-                "how_it_should_be": "CL настраивается per-query, не глобально."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`QUORUM` всегда означает подтверждение от всех `RF` реплик, поэтому по консистентности он эквивалентен `ALL`; отличие лишь в том, что `QUORUM` ждёт ответа только локального ДЦ, а `ALL` — глобально, но число требуемых реплик у них совпадает.",
               "correct": false,
               "sections": {
@@ -1243,6 +1231,18 @@
                 "source_of_confusion": "Слово «кворум» путают с «все».",
                 "if_it_were_true": "Тогда QUORUM и ALL не различались бы, но различие принципиально для доступности.",
                 "how_it_should_be": "QUORUM = большинство (⌊RF/2⌋+1); все реплики — это ALL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Consistency Level` задаётся один раз для всего кластера в `cassandra.yaml` и применяется ко всем запросам одинаково; чтобы сменить уровень (например с `ONE` на `QUORUM`), нужен rolling restart всех узлов, поэтому per-query tunable consistency в Cassandra недоступна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CL — параметр каждого запроса (tunable consistency): один запрос может идти на `ONE`, другой на `QUORUM`.",
+                "source_of_confusion": "Кажется, что консистентность — глобальная настройка.",
+                "if_it_were_true": "Тогда нельзя было бы балансировать латентность и консистентность по запросам, но это ключевая возможность.",
+                "how_it_should_be": "CL настраивается per-query, не глобально."
               }
             },
             {
@@ -1283,14 +1283,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`R + W > N` — условие strong consistency (линеаризуемого чтения): R — число реплик для чтения, W — для записи, N — фактор репликации; если сумма больше N, read-набор и write-набор гарантированно пересекаются хотя бы в одной реплике, содержащей последнюю запись. Пример: RF=3, QUORUM=2 → W=2 + R=2 = 4 > 3 → strong.",
-              "correct": true,
+              "text": "При `R + W <= N` чтение всегда возвращает ошибку.",
+              "correct": false,
               "sections": {
-                "explanation": "Пересечение наборов означает, что хотя бы одна прочитанная реплика видела последнюю запись; merge по timestamp вернёт актуальное значение.",
-                "example": "W=QUORUM+R=QUORUM (2+2>3) — strong; W=ONE+R=ONE (1+1<3) — eventual; W=ALL+R=ONE (3+1>3) — strong.",
-                "when_to_apply": "Формулу применяют при выборе CL под требования: нужна строгая консистентность → подбирают R,W так, чтобы R+W>N.",
-                "edge_cases": "R+W>N даёт консистентность, но `ALL` снижает доступность; обычно берут QUORUM+QUORUM как баланс.",
-                "related": "[[cassandra-interview#Q21]] consistency levels; [[cassandra-interview#Q20]] RF=N; [[cassandra-interview#Q24]] read repair при чтении."
+                "what_actually": "При R+W≤N операции выполняются успешно, но дают лишь eventual consistency (можно прочитать устаревшее), а не ошибку.",
+                "source_of_confusion": "«Не strong» путают с «не работает».",
+                "if_it_were_true": "Тогда `W=ONE,R=ONE` был бы нерабочим, но это валидная низколатентная конфигурация.",
+                "how_it_should_be": "R+W≤N — это eventual consistency, не ошибка."
               }
             },
             {
@@ -1308,13 +1307,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "При `R + W <= N` чтение всегда возвращает ошибку.",
-              "correct": false,
+              "text": "`R + W > N` — условие strong consistency (линеаризуемого чтения): R — число реплик для чтения, W — для записи, N — фактор репликации; если сумма больше N, read-набор и write-набор гарантированно пересекаются хотя бы в одной реплике, содержащей последнюю запись. Пример: RF=3, QUORUM=2 → W=2 + R=2 = 4 > 3 → strong.",
+              "correct": true,
               "sections": {
-                "what_actually": "При R+W≤N операции выполняются успешно, но дают лишь eventual consistency (можно прочитать устаревшее), а не ошибку.",
-                "source_of_confusion": "«Не strong» путают с «не работает».",
-                "if_it_were_true": "Тогда `W=ONE,R=ONE` был бы нерабочим, но это валидная низколатентная конфигурация.",
-                "how_it_should_be": "R+W≤N — это eventual consistency, не ошибка."
+                "explanation": "Пересечение наборов означает, что хотя бы одна прочитанная реплика видела последнюю запись; merge по timestamp вернёт актуальное значение.",
+                "example": "W=QUORUM+R=QUORUM (2+2>3) — strong; W=ONE+R=ONE (1+1<3) — eventual; W=ALL+R=ONE (3+1>3) — strong.",
+                "when_to_apply": "Формулу применяют при выборе CL под требования: нужна строгая консистентность → подбирают R,W так, чтобы R+W>N.",
+                "edge_cases": "R+W>N даёт консистентность, но `ALL` снижает доступность; обычно берут QUORUM+QUORUM как баланс.",
+                "related": "[[cassandra-interview#Q21]] consistency levels; [[cassandra-interview#Q20]] RF=N; [[cassandra-interview#Q24]] read repair при чтении."
               }
             }
           ]
@@ -1331,30 +1331,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Hinted Handoff` — механизм, при котором координатор для каждой записи постоянно хранит у себя полную копию данных всех реплик и обслуживает из неё чтения, снимая нагрузку с основных узлов; накопленные копии живут до `max_hint_window` и не отменяют repair.",
+              "text": "`Hinted Handoff` — координатор сохраняет hint для недоступной реплики и держит его сколь угодно долго, пока узел не восстановится, после чего досылает накопленные записи; ограничения по времени жизни hint нет, поэтому даже многодневный простой не ведёт к потере данных.",
               "correct": false,
               "sections": {
-                "what_actually": "Hint — временная подсказка для НЕДОСТУПНОЙ реплики, хранимая ограниченное время (`max_hint_window`, по умолчанию 3 часа), а не постоянная копия.",
-                "source_of_confusion": "«Хранит данные» трактуют как постоянное хранилище.",
-                "if_it_were_true": "Тогда координатор дублировал бы весь датасет, но hints копят лишь для упавших реплик.",
-                "how_it_should_be": "Hint — временная запись для упавшей реплики, передаётся при её восстановлении."
+                "what_actually": "Hints живут ограниченное время (`max_hint_window`, дефолт 3 часа); по истечении они отбрасываются.",
+                "source_of_confusion": "Кажется, что система дождётся реплику любой ценой.",
+                "if_it_were_true": "Тогда долгий простой не приводил бы к потере данных, но именно поэтому нужен repair.",
+                "how_it_should_be": "Hints имеют окно жизни; после него их чистят, пропуски закрывает repair."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Hinted Handoff` — координатор при недоступности реплики сохраняет hint локально и досылает записи после восстановления узла; поскольку накопленные hints покрывают все пропущенные за простой записи, плановый `repair` для консистентности этих строк становится избыточным.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Hints не заменяют repair: при длительном простое (> `max_hint_window`) они истекают и данные теряются, поэтому repair всё равно нужен.",
-                "source_of_confusion": "Кажется, что hints закрывают все рассогласования.",
-                "if_it_were_true": "Тогда `nodetool repair` был бы не нужен, но он обязателен.",
-                "how_it_should_be": "Hints дополняют, но не заменяют anti-entropy repair."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Hinted Handoff` — механизм временного хранения записей для НЕДОСТУПНОЙ реплики: координатор, не сумев записать на упавшую реплику, сохраняет hint (подсказку) локально и передаёт накопленные hints, когда реплика восстанавливается; hint живёт ограниченное время (`max_hint_window`, по умолчанию 3 часа), не заменяет полноценный repair, а `CL=ANY` позволяет считать сам hint подтверждением записи (опасно — данные могут не дойти).",
               "correct": true,
               "sections": {
@@ -1366,15 +1354,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`Hinted Handoff` — координатор сохраняет hint для недоступной реплики и держит его сколь угодно долго, пока узел не восстановится, после чего досылает накопленные записи; ограничения по времени жизни hint нет, поэтому даже многодневный простой не ведёт к потере данных.",
+              "order": 2,
+              "label": "C",
+              "text": "`Hinted Handoff` — координатор при недоступности реплики сохраняет hint локально и досылает записи после восстановления узла; поскольку накопленные hints покрывают все пропущенные за простой записи, плановый `repair` для консистентности этих строк становится избыточным.",
               "correct": false,
               "sections": {
-                "what_actually": "Hints живут ограниченное время (`max_hint_window`, дефолт 3 часа); по истечении они отбрасываются.",
-                "source_of_confusion": "Кажется, что система дождётся реплику любой ценой.",
-                "if_it_were_true": "Тогда долгий простой не приводил бы к потере данных, но именно поэтому нужен repair.",
-                "how_it_should_be": "Hints имеют окно жизни; после него их чистят, пропуски закрывает repair."
+                "what_actually": "Hints не заменяют repair: при длительном простое (> `max_hint_window`) они истекают и данные теряются, поэтому repair всё равно нужен.",
+                "source_of_confusion": "Кажется, что hints закрывают все рассогласования.",
+                "if_it_were_true": "Тогда `nodetool repair` был бы не нужен, но он обязателен.",
+                "how_it_should_be": "Hints дополняют, но не заменяют anti-entropy repair."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Hinted Handoff` — механизм, при котором координатор для каждой записи постоянно хранит у себя полную копию данных всех реплик и обслуживает из неё чтения, снимая нагрузку с основных узлов; накопленные копии живут до `max_hint_window` и не отменяют repair.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hint — временная подсказка для НЕДОСТУПНОЙ реплики, хранимая ограниченное время (`max_hint_window`, по умолчанию 3 часа), а не постоянная копия.",
+                "source_of_confusion": "«Хранит данные» трактуют как постоянное хранилище.",
+                "if_it_were_true": "Тогда координатор дублировал бы весь датасет, но hints копят лишь для упавших реплик.",
+                "how_it_should_be": "Hint — временная запись для упавшей реплики, передаётся при её восстановлении."
               }
             }
           ]
@@ -1403,18 +1403,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Read Repair запускается асинхронно всегда и никогда не задерживает ответ клиенту.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Blocking Read Repair (при CL>ONE) ждёт исправления отстающих реплик ПЕРЕД ответом клиенту; background-вариант в 4.0+ убран.",
-                "source_of_confusion": "Кажется, что починка всегда фоновая.",
-                "if_it_were_true": "Тогда не было бы понятия blocking read repair, но оно существует.",
-                "how_it_should_be": "При CL>ONE read repair блокирующий — ответ после согласования."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Read Repair определяет актуальную версию данных по узлу с наибольшим uptime.",
               "correct": false,
               "sections": {
@@ -1425,8 +1413,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Read Repair` — восстановление согласованности при чтении: координатор запрашивает данные у нескольких реплик, сравнивает ответы (digest или полные данные) и, если они расходятся, отправляет актуальную версию (по timestamp, latest wins) на отстающие реплики; бывает Blocking (при CL>ONE координатор чинит перед ответом клиенту) и Background (после ответа, настраивался `read_repair_chance`, в Cassandra 4.0+ убран).",
               "correct": true,
               "sections": {
@@ -1435,6 +1423,18 @@
                 "when_to_apply": "Работает автоматически при чтении с CL>ONE; не требует ручного запуска.",
                 "edge_cases": "Холодные (редко читаемые) данные read repair не покрывает — для них нужен `nodetool repair`.",
                 "related": "[[cassandra-interview#Q17]] read path и digest; [[cassandra-interview#Q23]] hinted handoff; [[cassandra-interview#Q25]] anti-entropy repair."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Read Repair запускается асинхронно всегда и никогда не задерживает ответ клиенту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Blocking Read Repair (при CL>ONE) ждёт исправления отстающих реплик ПЕРЕД ответом клиенту; background-вариант в 4.0+ убран.",
+                "source_of_confusion": "Кажется, что починка всегда фоновая.",
+                "if_it_were_true": "Тогда не было бы понятия blocking read repair, но оно существует.",
+                "how_it_should_be": "При CL>ONE read repair блокирующий — ответ после согласования."
               }
             }
           ]
@@ -1464,6 +1464,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Anti-entropy repair можно заменить механизмом hinted handoff: координатор сохраняет пропущенные записи для недоступной реплики и доставляет их после восстановления, что покрывает случаи расхождения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hinted handoff покрывает лишь короткие сбои (hints истекают через `max_hint_window`); долгие простои и холодные данные закрывает только repair.",
+                "source_of_confusion": "Кажется, что hints решают все рассогласования.",
+                "if_it_were_true": "Тогда regular repair был бы не нужен, но он обязателен.",
+                "how_it_should_be": "Repair незаменим; hinted handoff — лишь для коротких сбоев."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`nodetool repair` достаточно запустить один раз при первоначальной настройке кластера: после первичной синхронизации реплики поддерживаются в согласии автоматически через hinted handoff и read repair, регулярный повтор не требуется.",
               "correct": false,
               "sections": {
@@ -1474,8 +1486,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Repair сравнивает данные реплик, передавая весь датасет целиком по сети на координатор, который построчно сверяет копии; поэтому repair тяжёл и его стараются не запускать на больших таблицах.",
               "correct": false,
               "sections": {
@@ -1483,18 +1495,6 @@
                 "source_of_confusion": "Кажется, что синхронизация = полная пересылка.",
                 "if_it_were_true": "Тогда repair был бы неподъёмен на больших данных, но Merkle-деревья делают его выборочным.",
                 "how_it_should_be": "Передаются только расходящиеся диапазоны (по Merkle Tree)."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Anti-entropy repair можно заменить механизмом hinted handoff: координатор сохраняет пропущенные записи для недоступной реплики и доставляет их после восстановления, что покрывает случаи расхождения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Hinted handoff покрывает лишь короткие сбои (hints истекают через `max_hint_window`); долгие простои и холодные данные закрывает только repair.",
-                "source_of_confusion": "Кажется, что hints решают все рассогласования.",
-                "if_it_were_true": "Тогда regular repair был бы не нужен, но он обязателен.",
-                "how_it_should_be": "Repair незаменим; hinted handoff — лишь для коротких сбоев."
               }
             }
           ]
@@ -1511,6 +1511,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`LCS` (Leveled) рекомендуется для write-heavy нагрузок: уровни и небольшие SSTable снижают write amplification при записи, тогда как `STCS` (SizeTiered) лучше подходит для read-heavy, обеспечивая чтение из одного SSTable примерно в 90% случаев.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LCS` — для READ-heavy (предсказуемое чтение из 1 SSTable ценой write I/O); для write-heavy берут `STCS`.",
+                "source_of_confusion": "Путают, под какую нагрузку оптимизирована каждая стратегия.",
+                "if_it_were_true": "Тогда LCS снижал бы стоимость записи, но он её повышает.",
+                "how_it_should_be": "Write-heavy → STCS; read-heavy → LCS."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Compaction` открывает существующие SSTable и дописывает результат слияния прямо в них, обновляя строки на месте (in-place) и вычищая устаревшие версии и tombstones без создания новых файлов; стратегии `STCS`, `LCS`, `TWCS` различаются лишь тем, какие SSTable выбираются для такой правки.",
               "correct": false,
               "sections": {
@@ -1521,8 +1533,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`Compaction` сливает SSTable, удаляя устаревшие данные и tombstones и оптимизируя чтение; стратегии: `STCS` (SizeTiered — для write-heavy, сливает SSTable похожего размера, может временно удвоить диск), `LCS` (Leveled — для read-heavy, уровни, ~90% чтений из 1 SSTable, но больше I/O при записи), `TWCS` (TimeWindow — для time-series с TTL, группирует по временным окнам), `UCS` (Unified, 5.0+ — универсальная, автоадаптация).",
               "correct": true,
               "sections": {
@@ -1534,8 +1546,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Стратегия компакции задаётся один раз на весь кластер параметром в `cassandra.yaml` и применяется одинаково ко всем keyspace и таблицам; назначить отдельной таблице свою стратегию (например `TWCS` для time-series) нельзя без рестарта всего кластера.",
               "correct": false,
               "sections": {
@@ -1543,18 +1555,6 @@
                 "source_of_confusion": "Кажется, что компакция — глобальная настройка.",
                 "if_it_were_true": "Тогда нельзя было бы для логов взять STCS, а для метрик TWCS, но это типовая практика.",
                 "how_it_should_be": "Компакция настраивается на уровне таблицы."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`LCS` (Leveled) рекомендуется для write-heavy нагрузок: уровни и небольшие SSTable снижают write amplification при записи, тогда как `STCS` (SizeTiered) лучше подходит для read-heavy, обеспечивая чтение из одного SSTable примерно в 90% случаев.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`LCS` — для READ-heavy (предсказуемое чтение из 1 SSTable ценой write I/O); для write-heavy берут `STCS`.",
-                "source_of_confusion": "Путают, под какую нагрузку оптимизирована каждая стратегия.",
-                "if_it_were_true": "Тогда LCS снижал бы стоимость записи, но он её повышает.",
-                "how_it_should_be": "Write-heavy → STCS; read-heavy → LCS."
               }
             }
           ]
@@ -1571,13 +1571,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "TTL в `Cassandra` можно задать в том числе на колонки partition/clustering key.",
+              "text": "`TTL=0` означает немедленное удаление записи.",
               "correct": false,
               "sections": {
-                "what_actually": "TTL нельзя задать для ключевых колонок (partition/clustering key) — только для обычных значений.",
-                "source_of_confusion": "Кажется, что TTL применим к любой колонке.",
-                "if_it_were_true": "Тогда истечение TTL удаляло бы часть ключа, ломая строку, что недопустимо.",
-                "how_it_should_be": "TTL — только для неключевых колонок; не для PK."
+                "what_actually": "`TTL=0` означает ОТСУТСТВИЕ TTL — данные живут вечно; немедленного удаления это не вызывает.",
+                "source_of_confusion": "Ноль интуитивно трактуют как «ноль секунд жизни».",
+                "if_it_were_true": "Тогда `default_time_to_live = 0` стирал бы таблицу, но это «без срока».",
+                "how_it_should_be": "`TTL=0` = без срока жизни (вечно), не мгновенное удаление."
               }
             },
             {
@@ -1608,13 +1608,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`TTL=0` означает немедленное удаление записи.",
+              "text": "TTL в `Cassandra` можно задать в том числе на колонки partition/clustering key.",
               "correct": false,
               "sections": {
-                "what_actually": "`TTL=0` означает ОТСУТСТВИЕ TTL — данные живут вечно; немедленного удаления это не вызывает.",
-                "source_of_confusion": "Ноль интуитивно трактуют как «ноль секунд жизни».",
-                "if_it_were_true": "Тогда `default_time_to_live = 0` стирал бы таблицу, но это «без срока».",
-                "how_it_should_be": "`TTL=0` = без срока жизни (вечно), не мгновенное удаление."
+                "what_actually": "TTL нельзя задать для ключевых колонок (partition/clustering key) — только для обычных значений.",
+                "source_of_confusion": "Кажется, что TTL применим к любой колонке.",
+                "if_it_were_true": "Тогда истечение TTL удаляло бы часть ключа, ломая строку, что недопустимо.",
+                "how_it_should_be": "TTL — только для неключевых колонок; не для PK."
               }
             }
           ]
@@ -1643,18 +1643,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`LWT` по латентности практически не отличаются от обычной записи: `Paxos`-раунды выполняются асинхронно в фоне уже после ответа клиенту, поэтому дополнительных round-trip на критическом пути нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "LWT в 4-6 раз медленнее обычной записи: Paxos требует ~4 round-trips вместо 1.",
-                "source_of_confusion": "Кажется, что условие добавляет мало накладных расходов.",
-                "if_it_were_true": "Тогда LWT можно было бы использовать везде, но их избегают на горячих путях именно из-за латентности.",
-                "how_it_should_be": "LWT существенно медленнее (Paxos); применять точечно."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`LWT` и обычные записи можно свободно смешивать на одних и тех же данных: `Paxos`-состояние хранится в отдельной служебной колонке и обычные `UPDATE` его не затрагивают, поэтому race condition между ними не возникает.",
               "correct": false,
               "sections": {
@@ -1662,6 +1650,18 @@
                 "source_of_confusion": "Кажется, что они совместимы по умолчанию.",
                 "if_it_were_true": "Тогда не было бы предупреждения «не смешивать LWT и обычные записи», но оно стандартно.",
                 "how_it_should_be": "На данных с LWT все изменения должны идти через LWT, иначе гонка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`LWT` по латентности практически не отличаются от обычной записи: `Paxos`-раунды выполняются асинхронно в фоне уже после ответа клиенту, поэтому дополнительных round-trip на критическом пути нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LWT в 4-6 раз медленнее обычной записи: Paxos требует ~4 round-trips вместо 1.",
+                "source_of_confusion": "Кажется, что условие добавляет мало накладных расходов.",
+                "if_it_were_true": "Тогда LWT можно было бы использовать везде, но их избегают на горячих путях именно из-за латентности.",
+                "how_it_should_be": "LWT существенно медленнее (Paxos); применять точечно."
               }
             },
             {
@@ -1691,14 +1691,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Batch` группирует несколько CQL-операций в один запрос: `LOGGED` (по умолчанию — атомарность «всё или ничего», для операций в РАЗНЫХ партициях, но с overhead на координаторе), `UNLOGGED` (без атомарности, оптимально для ОДНОЙ партиции), `COUNTER` (для counter-операций); ключевое: batch — НЕ транзакция RDBMS (нет изоляции), размер ~5 MB, а LOGGED batch на разных партициях делает координатор bottleneck.",
-              "correct": true,
+              "text": "`LOGGED` batch на разных партициях не создаёт дополнительной нагрузки.",
+              "correct": false,
               "sections": {
-                "explanation": "Главное заблуждение — использовать batch как транзакцию для производительности. На деле LOGGED batch на multiple partitions медленнее отдельных асинхронных записей.",
-                "example": "`BEGIN UNLOGGED BATCH INSERT ...; INSERT ...; APPLY BATCH` — несколько строк ОДНОЙ партиции атомарно и эффективно.",
-                "when_to_apply": "Batch уместен для нескольких операций в одной партиции (UNLOGGED) или когда нужна атомарность связанных записей (LOGGED, осознанно).",
-                "edge_cases": "Для массовой загрузки batch — анти-паттерн; лучше асинхронные одиночные записи с пулом (`executeAsync`).",
-                "related": "[[cassandra-interview#Q33]] executeAsync для bulk; [[cassandra-interview#Q30]] counter batch; [[cassandra-interview#Q39]] batch как анти-паттерн."
+                "what_actually": "LOGGED batch на разных партициях делает координатор bottleneck (он логирует и координирует все мутации).",
+                "source_of_confusion": "Кажется, что batch всегда дешевле набора запросов.",
+                "if_it_were_true": "Тогда не предупреждали бы об overhead LOGGED multi-partition batch, но это известная проблема.",
+                "how_it_should_be": "LOGGED multi-partition batch нагружает координатор; UNLOGGED single-partition — оптимум."
               }
             },
             {
@@ -1716,6 +1715,19 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`Batch` группирует несколько CQL-операций в один запрос: `LOGGED` (по умолчанию — атомарность «всё или ничего», для операций в РАЗНЫХ партициях, но с overhead на координаторе), `UNLOGGED` (без атомарности, оптимально для ОДНОЙ партиции), `COUNTER` (для counter-операций); ключевое: batch — НЕ транзакция RDBMS (нет изоляции), размер ~5 MB, а LOGGED batch на разных партициях делает координатор bottleneck.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное заблуждение — использовать batch как транзакцию для производительности. На деле LOGGED batch на multiple partitions медленнее отдельных асинхронных записей.",
+                "example": "`BEGIN UNLOGGED BATCH INSERT ...; INSERT ...; APPLY BATCH` — несколько строк ОДНОЙ партиции атомарно и эффективно.",
+                "when_to_apply": "Batch уместен для нескольких операций в одной партиции (UNLOGGED) или когда нужна атомарность связанных записей (LOGGED, осознанно).",
+                "edge_cases": "Для массовой загрузки batch — анти-паттерн; лучше асинхронные одиночные записи с пулом (`executeAsync`).",
+                "related": "[[cassandra-interview#Q33]] executeAsync для bulk; [[cassandra-interview#Q30]] counter batch; [[cassandra-interview#Q39]] batch как анти-паттерн."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Batch` ускоряет массовую загрузку данных по сравнению с отдельными записями.",
               "correct": false,
               "sections": {
@@ -1723,18 +1735,6 @@
                 "source_of_confusion": "«Сгруппировать = быстрее» — ложная интуиция из RDBMS.",
                 "if_it_were_true": "Тогда советовали бы batch для загрузки, но рекомендуют `executeAsync`.",
                 "how_it_should_be": "Массовую загрузку делают асинхронными одиночными записями, не batch."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`LOGGED` batch на разных партициях не создаёт дополнительной нагрузки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "LOGGED batch на разных партициях делает координатор bottleneck (он логирует и координирует все мутации).",
-                "source_of_confusion": "Кажется, что batch всегда дешевле набора запросов.",
-                "if_it_were_true": "Тогда не предупреждали бы об overhead LOGGED multi-partition batch, но это известная проблема.",
-                "how_it_should_be": "LOGGED multi-partition batch нагружает координатор; UNLOGGED single-partition — оптимум."
               }
             }
           ]
@@ -1811,30 +1811,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для `Spring Data Cassandra` достаточно указать host — keyspace и datacenter определяются автоматически.",
+              "text": "`Spring Data Cassandra` использует JPA-аннотации (`@Entity`, `@Id`), как Spring Data JPA.",
               "correct": false,
               "sections": {
-                "what_actually": "Нужно явно задать `keyspace-name`, `contact-points`, `local-datacenter` (для DC-aware load balancing) и port.",
-                "source_of_confusion": "Кажется, что Spring всё определит сам.",
-                "if_it_were_true": "Тогда `local-datacenter` не был бы обязательным, но без него драйвер v4 не стартует.",
-                "how_it_should_be": "Указывают keyspace, contact-points, local-datacenter и port."
+                "what_actually": "Используются специфичные аннотации (`@Table`, `@PrimaryKeyColumn`), а не JPA; модель Cassandra иная.",
+                "source_of_confusion": "Общий бренд Spring Data создаёт ожидание JPA-аннотаций.",
+                "if_it_were_true": "Тогда `@Entity`/`@Id` маппили бы Cassandra-таблицы, но нужны `@Table`/`@PrimaryKeyColumn`.",
+                "how_it_should_be": "Spring Data Cassandra использует свои аннотации, не JPA."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`schema-action: create_if_not_exists` рекомендуется для production.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В production используют `schema-action: none` (схему версионируют миграциями); авто-создание схемы — для dev.",
-                "source_of_confusion": "Удобство авто-создания принимают за prod-практику.",
-                "if_it_were_true": "Тогда схему меняли бы рантаймом в проде, но это рискованно — её мигрируют контролируемо.",
-                "how_it_should_be": "Prod → `schema-action: none`; create_if_not_exists — для dev."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Spring Data Cassandra` подключают зависимостью `spring-boot-starter-data-cassandra` и настраивают через `spring.cassandra.*`: `keyspace-name`, `contact-points`, `port`, `local-datacenter` (обязателен для DC-aware балансировки в драйвере v4), `schema-action` (`none` для prod, `create_if_not_exists` для dev), `request.consistency: LOCAL_QUORUM`; для тонкой настройки наследуют `AbstractCassandraConfiguration` с `@EnableCassandraRepositories`.",
               "correct": true,
               "sections": {
@@ -1846,15 +1834,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`Spring Data Cassandra` использует JPA-аннотации (`@Entity`, `@Id`), как Spring Data JPA.",
+              "order": 2,
+              "label": "C",
+              "text": "Для `Spring Data Cassandra` достаточно указать host — keyspace и datacenter определяются автоматически.",
               "correct": false,
               "sections": {
-                "what_actually": "Используются специфичные аннотации (`@Table`, `@PrimaryKeyColumn`), а не JPA; модель Cassandra иная.",
-                "source_of_confusion": "Общий бренд Spring Data создаёт ожидание JPA-аннотаций.",
-                "if_it_were_true": "Тогда `@Entity`/`@Id` маппили бы Cassandra-таблицы, но нужны `@Table`/`@PrimaryKeyColumn`.",
-                "how_it_should_be": "Spring Data Cassandra использует свои аннотации, не JPA."
+                "what_actually": "Нужно явно задать `keyspace-name`, `contact-points`, `local-datacenter` (для DC-aware load balancing) и port.",
+                "source_of_confusion": "Кажется, что Spring всё определит сам.",
+                "if_it_were_true": "Тогда `local-datacenter` не был бы обязательным, но без него драйвер v4 не стартует.",
+                "how_it_should_be": "Указывают keyspace, contact-points, local-datacenter и port."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`schema-action: create_if_not_exists` рекомендуется для production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В production используют `schema-action: none` (схему версионируют миграциями); авто-создание схемы — для dev.",
+                "source_of_confusion": "Удобство авто-создания принимают за prod-практику.",
+                "if_it_were_true": "Тогда схему меняли бы рантаймом в проде, но это рискованно — её мигрируют контролируемо.",
+                "how_it_should_be": "Prod → `schema-action: none`; create_if_not_exists — для dev."
               }
             }
           ]
@@ -1871,30 +1871,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Entity в `Spring Data Cassandra` размечают стандартными JPA-аннотациями `@Entity`, `@Id` и `@Column`: маппинг общий для всех Spring Data модулей, поэтому одни и те же классы работают и с реляционной БД, и с Cassandra.",
-              "correct": false,
+              "text": "Entity размечают Cassandra-аннотациями: `@Table(\"orders\")`, `@PrimaryKeyColumn(type=PARTITIONED/CLUSTERED, ordinal=..., ordering=...)`, `@Column`; репозиторий наследуют от `CassandraRepository<T, ID>` с derived-методами (`findByUserId`) и `@Query` для CQL; для сложных запросов используют `CassandraTemplate` (`Query`/`Criteria`, `InsertOptions` с TTL).",
+              "correct": true,
               "sections": {
-                "what_actually": "Используют Cassandra-аннотации: `@Table`, `@PrimaryKeyColumn` (с `PrimaryKeyType.PARTITIONED`/`CLUSTERED`), `@Column`.",
-                "source_of_confusion": "Опыт JPA переносят на Cassandra.",
-                "if_it_were_true": "Тогда `@Id` описывал бы составной partition/clustering key, но для этого есть `@PrimaryKeyColumn`.",
-                "how_it_should_be": "Размечают `@Table`/`@PrimaryKeyColumn`/`@Column`, не JPA."
+                "explanation": "`@PrimaryKeyColumn` точно описывает структуру PK (partition vs clustering, порядок сортировки), чего нет в JPA. Derived-методы должны соответствовать ключам таблицы.",
+                "example": "`@PrimaryKeyColumn(name=\"user_id\", ordinal=0, type=PARTITIONED)`; `interface OrderRepository extends CassandraRepository<Order, UUID> { List<Order> findByUserId(UUID id); }`.",
+                "when_to_apply": "Repository + derived-методы — для типового доступа по ключу; `CassandraTemplate` — для лимитов, TTL, кастомных критериев.",
+                "edge_cases": "Derived-метод по неключевому полю молча приведёт к неэффективному запросу — структуру entity проектируют под запросы.",
+                "related": "[[cassandra-interview#Q31]] подключение Spring Data; [[cassandra-interview#Q9]] моделирование под запросы; [[cassandra-interview#Q8]] partition/clustering key."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Репозиторий наследуют от `JpaRepository<T, ID>` — он даёт `save`/`findById`/`findAll` и derived-методы; отдельного Cassandra-интерфейса не требуется, абстракция Spring Data одинакова для всех хранилищ.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наследуют от `CassandraRepository<T, ID>`; `JpaRepository` — для реляционных БД.",
-                "source_of_confusion": "Привычка к `JpaRepository` из Spring Data JPA.",
-                "if_it_were_true": "Тогда генерировался бы SQL, но нужен CQL — отсюда `CassandraRepository`.",
-                "how_it_should_be": "Базовый интерфейс — `CassandraRepository`, не `JpaRepository`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Derived-методы вроде `findByStatus` работают по не-ключевым полям без дополнительной настройки: `Spring Data Cassandra` сам строит запрос и при необходимости добавляет `ALLOW FILTERING`, так что вторичный индекс не обязателен.",
               "correct": false,
               "sections": {
@@ -1905,16 +1894,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Entity в `Spring Data Cassandra` размечают стандартными JPA-аннотациями `@Entity`, `@Id` и `@Column`: маппинг общий для всех Spring Data модулей, поэтому одни и те же классы работают и с реляционной БД, и с Cassandra.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используют Cassandra-аннотации: `@Table`, `@PrimaryKeyColumn` (с `PrimaryKeyType.PARTITIONED`/`CLUSTERED`), `@Column`.",
+                "source_of_confusion": "Опыт JPA переносят на Cassandra.",
+                "if_it_were_true": "Тогда `@Id` описывал бы составной partition/clustering key, но для этого есть `@PrimaryKeyColumn`.",
+                "how_it_should_be": "Размечают `@Table`/`@PrimaryKeyColumn`/`@Column`, не JPA."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Entity размечают Cassandra-аннотациями: `@Table(\"orders\")`, `@PrimaryKeyColumn(type=PARTITIONED/CLUSTERED, ordinal=..., ordering=...)`, `@Column`; репозиторий наследуют от `CassandraRepository<T, ID>` с derived-методами (`findByUserId`) и `@Query` для CQL; для сложных запросов используют `CassandraTemplate` (`Query`/`Criteria`, `InsertOptions` с TTL).",
-              "correct": true,
+              "text": "Репозиторий наследуют от `JpaRepository<T, ID>` — он даёт `save`/`findById`/`findAll` и derived-методы; отдельного Cassandra-интерфейса не требуется, абстракция Spring Data одинакова для всех хранилищ.",
+              "correct": false,
               "sections": {
-                "explanation": "`@PrimaryKeyColumn` точно описывает структуру PK (partition vs clustering, порядок сортировки), чего нет в JPA. Derived-методы должны соответствовать ключам таблицы.",
-                "example": "`@PrimaryKeyColumn(name=\"user_id\", ordinal=0, type=PARTITIONED)`; `interface OrderRepository extends CassandraRepository<Order, UUID> { List<Order> findByUserId(UUID id); }`.",
-                "when_to_apply": "Repository + derived-методы — для типового доступа по ключу; `CassandraTemplate` — для лимитов, TTL, кастомных критериев.",
-                "edge_cases": "Derived-метод по неключевому полю молча приведёт к неэффективному запросу — структуру entity проектируют под запросы.",
-                "related": "[[cassandra-interview#Q31]] подключение Spring Data; [[cassandra-interview#Q9]] моделирование под запросы; [[cassandra-interview#Q8]] partition/clustering key."
+                "what_actually": "Наследуют от `CassandraRepository<T, ID>`; `JpaRepository` — для реляционных БД.",
+                "source_of_confusion": "Привычка к `JpaRepository` из Spring Data JPA.",
+                "if_it_were_true": "Тогда генерировался бы SQL, но нужен CQL — отсюда `CassandraRepository`.",
+                "how_it_should_be": "Базовый интерфейс — `CassandraRepository`, не `JpaRepository`."
               }
             }
           ]
@@ -1931,6 +1931,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`PreparedStatement` нужно готовить заново перед каждым выполнением: повторный `prepare` подхватывает актуальную схему таблицы и защищает от stale-метаданных, поэтому кэшировать его между вызовами не стоит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PreparedStatement готовят ОДИН раз и переиспользуют много раз (он кэшируется на узлах); повторная подготовка теряет смысл.",
+                "source_of_confusion": "Путают prepare с bind: bind делают каждый раз, prepare — однократно.",
+                "if_it_were_true": "Тогда исчезло бы преимущество prepared statements, но оно в переиспользовании.",
+                "how_it_should_be": "`prepare` — один раз; `bind`+`execute` — многократно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`DataStax Java Driver` (v4.x): `CqlSession` — основной объект с пулом соединений, создаётся как singleton на приложение (дорого создавать); `PreparedStatement` готовят один раз и переиспользуют (кэшируются на узлах, нужны для token-awareness); политики — Load Balancing (`DefaultLoadBalancingPolicy` с `local-datacenter`), Retry и Reconnection (`ExponentialReconnectionPolicy`); поддерживает синхронное (`execute`) и асинхронное (`executeAsync`) выполнение.",
               "correct": true,
               "sections": {
@@ -1942,8 +1954,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`CqlSession` нужно создавать заново на каждый запрос и закрывать в `try-with-resources`: так гарантируется изоляция и свежий пул соединений, а утечки сокетов при пиковой нагрузке исключены.",
               "correct": false,
               "sections": {
@@ -1951,18 +1963,6 @@
                 "source_of_confusion": "Привычка к коротко-живущим соединениям (как JDBC Connection из пула).",
                 "if_it_were_true": "Тогда каждый запрос платил бы за установку пула, что катастрофично для латентности.",
                 "how_it_should_be": "`CqlSession` — singleton на приложение, не пересоздаётся."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`PreparedStatement` нужно готовить заново перед каждым выполнением: повторный `prepare` подхватывает актуальную схему таблицы и защищает от stale-метаданных, поэтому кэшировать его между вызовами не стоит.",
-              "correct": false,
-              "sections": {
-                "what_actually": "PreparedStatement готовят ОДИН раз и переиспользуют много раз (он кэшируется на узлах); повторная подготовка теряет смысл.",
-                "source_of_confusion": "Путают prepare с bind: bind делают каждый раз, prepare — однократно.",
-                "if_it_were_true": "Тогда исчезло бы преимущество prepared statements, но оно в переиспользовании.",
-                "how_it_should_be": "`prepare` — один раз; `bind`+`execute` — многократно."
               }
             },
             {
@@ -1991,13 +1991,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cassandra` имеет встроенный механизм миграций, аналогичный `Flyway` для RDBMS.",
+              "text": "В `Cassandra` `partition key` расширяют на месте через `ALTER TABLE ... ADD`, добавляя столбец в ключ; движок в фоне перераспределяет строки по новым токенам, поэтому пересоздавать таблицу и переносить данные не нужно.",
               "correct": false,
               "sections": {
-                "what_actually": "Встроенного механизма нет; миграции делают скриптами CQL + таблицей версий или сторонними инструментами.",
-                "source_of_confusion": "Опыт Flyway/Liquibase в реляционных БД.",
-                "if_it_were_true": "Тогда не было бы инструментов вроде `cassandra-migration`/`cqlmigrate`, но они существуют именно из-за отсутствия встроенного.",
-                "how_it_should_be": "Миграции организуют вручную (таблица версий + CQL) или внешними тулами."
+                "what_actually": "Изменить partition/clustering key через `ALTER` нельзя — нужна новая таблица и перенос данных.",
+                "source_of_confusion": "`ALTER TABLE` умеет добавлять колонки, и это обобщают на ключи.",
+                "if_it_were_true": "Тогда переезд данных при смене ключа был бы не нужен, но он обязателен.",
+                "how_it_should_be": "Смена partition key = новая таблица + миграция данных, не `ALTER`."
               }
             },
             {
@@ -2016,18 +2016,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `Cassandra` `partition key` расширяют на месте через `ALTER TABLE ... ADD`, добавляя столбец в ключ; движок в фоне перераспределяет строки по новым токенам, поэтому пересоздавать таблицу и переносить данные не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Изменить partition/clustering key через `ALTER` нельзя — нужна новая таблица и перенос данных.",
-                "source_of_confusion": "`ALTER TABLE` умеет добавлять колонки, и это обобщают на ключи.",
-                "if_it_were_true": "Тогда переезд данных при смене ключа был бы не нужен, но он обязателен.",
-                "how_it_should_be": "Смена partition key = новая таблица + миграция данных, не `ALTER`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Миграции в `Cassandra` не обязаны быть идемпотентными: повторный запуск скрипта безопасен, потому что `CREATE TABLE` без `IF NOT EXISTS` просто пропускает уже существующие таблицы вместо ошибки.",
               "correct": false,
               "sections": {
@@ -2035,6 +2023,18 @@
                 "source_of_confusion": "Кажется, что миграция выполняется ровно один раз.",
                 "if_it_were_true": "Тогда повторный деплой ломал бы схему, но идемпотентность это предотвращает.",
                 "how_it_should_be": "Скрипты делают идемпотентными для безопасного повторного применения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Cassandra` имеет встроенный механизм миграций, аналогичный `Flyway` для RDBMS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенного механизма нет; миграции делают скриптами CQL + таблицей версий или сторонними инструментами.",
+                "source_of_confusion": "Опыт Flyway/Liquibase в реляционных БД.",
+                "if_it_were_true": "Тогда не было бы инструментов вроде `cassandra-migration`/`cqlmigrate`, но они существуют именно из-за отсутствия встроенного.",
+                "how_it_should_be": "Миграции организуют вручную (таблица версий + CQL) или внешними тулами."
               }
             }
           ]
@@ -2051,6 +2051,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Безопасность кластера: аутентификация (`authenticator: PasswordAuthenticator`) и авторизация (`authorizer: CassandraAuthorizer`) с ролями и грантами (`CREATE ROLE`, `GRANT SELECT/MODIFY`); шифрование `internode` (`server_encryption_options`) и клиент-узел (`client_encryption_options`) через keystore/TLS; рекомендации — отдельная учётка на приложение (least privilege), ротация паролей, TLS на оба канала, аудит в enterprise-версиях.",
+              "correct": true,
+              "sections": {
+                "explanation": "По умолчанию Cassandra не защищена (`AllowAll`), поэтому prod-хардинг обязателен. Роли с минимальными правами ограничивают радиус компрометации.",
+                "example": "`CREATE ROLE app_user WITH PASSWORD='...' AND LOGIN=true; GRANT MODIFY ON TABLE ecommerce.orders TO app_user`.",
+                "when_to_apply": "Хардинг применяют при любом выводе кластера за пределы доверенной сети.",
+                "edge_cases": "Включение auth/TLS требует перезапуска и корректных keystore; least-privilege-роли тестируют, чтобы не отрезать приложение.",
+                "related": "[[cassandra-interview#Q31]] credentials в Spring; [[cassandra-interview#Q36]] мониторинг; [[cassandra-interview#Q20]] топология/репликация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "По умолчанию `Cassandra` стартует с `authenticator: PasswordAuthenticator` и требует логин и пароль, поэтому анонимный доступ закрыт «из коробки», а `CassandraAuthorizer` применяет гранты ролей ко всем запросам без дополнительной настройки.",
               "correct": false,
               "sections": {
@@ -2061,8 +2074,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Шифрование настраивается через `server_encryption_options` (internode) и `client_encryption_options` (клиент-узел), но эти каналы делят общий keystore и не могут быть включены одновременно — активировав TLS для клиентов, межузловой трафик приходится оставлять незашифрованным.",
               "correct": false,
               "sections": {
@@ -2070,19 +2083,6 @@
                 "source_of_confusion": "Кажется, что есть один общий переключатель TLS.",
                 "if_it_were_true": "Тогда был бы единый параметр, но их два — для разных каналов.",
                 "how_it_should_be": "Internode и client-to-node TLS включают независимо, оба сразу."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Безопасность кластера: аутентификация (`authenticator: PasswordAuthenticator`) и авторизация (`authorizer: CassandraAuthorizer`) с ролями и грантами (`CREATE ROLE`, `GRANT SELECT/MODIFY`); шифрование `internode` (`server_encryption_options`) и клиент-узел (`client_encryption_options`) через keystore/TLS; рекомендации — отдельная учётка на приложение (least privilege), ротация паролей, TLS на оба канала, аудит в enterprise-версиях.",
-              "correct": true,
-              "sections": {
-                "explanation": "По умолчанию Cassandra не защищена (`AllowAll`), поэтому prod-хардинг обязателен. Роли с минимальными правами ограничивают радиус компрометации.",
-                "example": "`CREATE ROLE app_user WITH PASSWORD='...' AND LOGIN=true; GRANT MODIFY ON TABLE ecommerce.orders TO app_user`.",
-                "when_to_apply": "Хардинг применяют при любом выводе кластера за пределы доверенной сети.",
-                "edge_cases": "Включение auth/TLS требует перезапуска и корректных keystore; least-privilege-роли тестируют, чтобы не отрезать приложение.",
-                "related": "[[cassandra-interview#Q31]] credentials в Spring; [[cassandra-interview#Q36]] мониторинг; [[cassandra-interview#Q20]] топология/репликация."
               }
             },
             {
@@ -2123,13 +2123,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Рост `PendingCompactions` — нормальное и безопасное явление: Cassandra сама сериализует их в фоне на отдельном пуле, и очередь любой длины рассасывается без влияния на латентность чтений.",
-              "correct": false,
+              "text": "Ключевые prod-метрики (через JMX/Prometheus exporter): латентность `ReadLatency`/`WriteLatency` (p99 < SLA), throughput, ошибки (`Timeouts`/`Unavailables`/`Failures`), `PendingCompactions` (не должно стабильно расти), heap/off-heap (GC pressure), диск, `PendingTasks` по thread pools (blocked/dropped — проблема), `SSTableCount` per table и `TombstoneScannedHistogram`; инструменты — `nodetool status/tablestats/tpstats`, Prometheus+Grafana, OpsCenter.",
+              "correct": true,
               "sections": {
-                "what_actually": "Постоянный рост `PendingCompactions` — тревожный сигнал: компакция не успевает, растёт read amplification и диск.",
-                "source_of_confusion": "Кажется, что фоновый процесс сам разгребёт очередь.",
-                "if_it_were_true": "Тогда метрику не включали бы в ключевые, но за ней следят.",
-                "how_it_should_be": "Стабильный рост pending compactions — проблема, требует внимания."
+                "explanation": "Эти метрики покрывают здоровье узлов и типовые деградации: рост pending compactions/SSTable count и tombstones напрямую бьёт по латентности чтения.",
+                "example": "`nodetool tpstats` показывает dropped mutations/blocked tasks; рост `TombstoneScannedHistogram` указывает на проблему модели.",
+                "when_to_apply": "Мониторинг настраивают при выводе кластера в prod и алертят по p99/ошибкам/pending.",
+                "edge_cases": "Dropped mutations означают пропущенные записи (нужен repair); их легко не заметить без алертов.",
+                "related": "[[cassandra-interview#Q26]] компакция и SSTable count; [[cassandra-interview#Q18]] tombstones; [[cassandra-interview#Q35]] безопасность/эксплуатация."
               }
             },
             {
@@ -2147,14 +2148,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Ключевые prod-метрики (через JMX/Prometheus exporter): латентность `ReadLatency`/`WriteLatency` (p99 < SLA), throughput, ошибки (`Timeouts`/`Unavailables`/`Failures`), `PendingCompactions` (не должно стабильно расти), heap/off-heap (GC pressure), диск, `PendingTasks` по thread pools (blocked/dropped — проблема), `SSTableCount` per table и `TombstoneScannedHistogram`; инструменты — `nodetool status/tablestats/tpstats`, Prometheus+Grafana, OpsCenter.",
-              "correct": true,
+              "text": "Рост `PendingCompactions` — нормальное и безопасное явление: Cassandra сама сериализует их в фоне на отдельном пуле, и очередь любой длины рассасывается без влияния на латентность чтений.",
+              "correct": false,
               "sections": {
-                "explanation": "Эти метрики покрывают здоровье узлов и типовые деградации: рост pending compactions/SSTable count и tombstones напрямую бьёт по латентности чтения.",
-                "example": "`nodetool tpstats` показывает dropped mutations/blocked tasks; рост `TombstoneScannedHistogram` указывает на проблему модели.",
-                "when_to_apply": "Мониторинг настраивают при выводе кластера в prod и алертят по p99/ошибкам/pending.",
-                "edge_cases": "Dropped mutations означают пропущенные записи (нужен repair); их легко не заметить без алертов.",
-                "related": "[[cassandra-interview#Q26]] компакция и SSTable count; [[cassandra-interview#Q18]] tombstones; [[cassandra-interview#Q35]] безопасность/эксплуатация."
+                "what_actually": "Постоянный рост `PendingCompactions` — тревожный сигнал: компакция не успевает, растёт read amplification и диск.",
+                "source_of_confusion": "Кажется, что фоновый процесс сам разгребёт очередь.",
+                "if_it_were_true": "Тогда метрику не включали бы в ключевые, но за ней следят.",
+                "how_it_should_be": "Стабильный рост pending compactions — проблема, требует внимания."
               }
             }
           ]
@@ -2171,6 +2171,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Для добавления узла кластер останавливают целиком: гасят все ноды, вручную пересчитывают распределение токенов через `initial_token` в `cassandra.yaml`, синхронно перезапускают узлы и прогоняют `nodetool repair` на всём кластере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Узел добавляют без остановки кластера; с vnodes токены распределяются автоматически (bootstrap на лету).",
+                "source_of_confusion": "Опыт ручного шардирования.",
+                "if_it_were_true": "Тогда масштабирование вызывало бы downtime, но оно онлайн.",
+                "how_it_should_be": "Узлы добавляют онлайн; с vnodes — без ручного расчёта токенов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Горизонтальное масштабирование — добавление узлов: ставят `Cassandra` с той же конфигурацией, указывают seed-ноды, запускают (узел автоматически делает bootstrap и забирает свою долю данных), проверяют `nodetool status`, затем `nodetool cleanup` на старых узлах (убрать данные, переехавшие на новый); с vnodes ребалансировка автоматическая, без vnodes — ручной `nodetool move`; вертикально — больше RAM (page cache), SSD, CPU (компакция).",
               "correct": true,
               "sections": {
@@ -2182,32 +2194,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Для добавления узла кластер останавливают целиком: гасят все ноды, вручную пересчитывают распределение токенов через `initial_token` в `cassandra.yaml`, синхронно перезапускают узлы и прогоняют `nodetool repair` на всём кластере.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Узел добавляют без остановки кластера; с vnodes токены распределяются автоматически (bootstrap на лету).",
-                "source_of_confusion": "Опыт ручного шардирования.",
-                "if_it_were_true": "Тогда масштабирование вызывало бы downtime, но оно онлайн.",
-                "how_it_should_be": "Узлы добавляют онлайн; с vnodes — без ручного расчёта токенов."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "После добавления узла запускают `nodetool repair` на новом узле, а `nodetool cleanup` на старых не нужен — `Cassandra` сама удаляет переехавшие данные при следующей компакции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`nodetool cleanup` на старых узлах нужен, чтобы удалить данные, переехавшие на новый узел; иначе они хранятся дважды.",
-                "source_of_confusion": "Кажется, что bootstrap нового узла сам всё подчистит.",
-                "if_it_were_true": "Тогда диск старых узлов не освобождался бы, что и происходит без cleanup.",
-                "how_it_should_be": "После расширения делают `nodetool cleanup` на существующих узлах."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Основной способ масштабирования — вертикальный: `Cassandra` не перераспределяет данные при добавлении узлов автоматически, поэтому под рост нагрузки увеличивают RAM, CPU и переходят на быстрые NVMe-диски.",
               "correct": false,
               "sections": {
@@ -2215,6 +2203,18 @@
                 "source_of_confusion": "Опыт монолитных БД, где масштабируют вверх.",
                 "if_it_were_true": "Тогда терялось бы главное преимущество Cassandra — линейное горизонтальное масштабирование.",
                 "how_it_should_be": "Основное — горизонтальное масштабирование; вертикальное вспомогательно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После добавления узла запускают `nodetool repair` на новом узле, а `nodetool cleanup` на старых не нужен — `Cassandra` сама удаляет переехавшие данные при следующей компакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`nodetool cleanup` на старых узлах нужен, чтобы удалить данные, переехавшие на новый узел; иначе они хранятся дважды.",
+                "source_of_confusion": "Кажется, что bootstrap нового узла сам всё подчистит.",
+                "if_it_were_true": "Тогда диск старых узлов не освобождался бы, что и происходит без cleanup.",
+                "how_it_should_be": "После расширения делают `nodetool cleanup` на существующих узлах."
               }
             }
           ]
@@ -2231,31 +2231,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cassandra` и `MongoDB` устроены одинаково: обе masterless P2P без выделенного primary и обе относятся к AP по CAP, различаясь лишь моделью данных — wide-column против document.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Cassandra` — masterless wide-column, AP; `MongoDB` — document, primary-secondary (replica set), CP. Это разные архитектуры и компромиссы CAP.",
-                "source_of_confusion": "Обе популярные NoSQL, отсюда смешение.",
-                "if_it_were_true": "Тогда у них совпадали бы модель и поведение при разделении сети, но они различны.",
-                "how_it_should_be": "Cassandra — AP/masterless/wide-column; MongoDB — CP/replica set/document."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Сравнение: `Cassandra` — wide-column, masterless (P2P), AP, очень быстрая запись (LSM), tunable consistency, нативная multi-DC, аналитика через Spark — для IoT/логов/time-series; `MongoDB` — document, replica set (primary-secondary), CP, гибкие запросы и Aggregation Pipeline — для CRUD/каталогов; `Redis` — key-value in-memory, eventual у реплик — кэш/сессии; `HBase` — wide-column поверх HDFS, CP, master (HMaster) — большие таблицы на Hadoop.",
-              "correct": true,
-              "sections": {
-                "explanation": "Выбор определяется моделью доступа и компромиссом CAP: Cassandra выигрывает на write-heavy и доступности/multi-DC; MongoDB — на гибких запросах; Redis — на латентности; HBase — на интеграции с Hadoop.",
-                "example": "Write-heavy time-series с multi-DC → Cassandra; каталог товаров с разнообразными фильтрами → MongoDB; кэш сессий → Redis.",
-                "when_to_apply": "Базу выбирают по паттерну доступа, требованиям к консистентности и инфраструктуре (есть ли Hadoop для HBase).",
-                "edge_cases": "Cassandra слаба в ad-hoc аналитике и JOIN; это не «лучшая БД вообще», а специализированная под свой класс задач.",
-                "related": "[[cassandra-interview#Q1]] когда выбирать Cassandra; [[cassandra-interview#Q15]] аналитика через Spark; [[cassandra-interview#Q20]] multi-DC репликация."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`HBase`, как и `Cassandra`, построена на masterless P2P-архитектуре без единой точки отказа: region-серверы равноправны и координируются напрямую, поэтому падение любого узла не выводит кластер из строя.",
               "correct": false,
               "sections": {
@@ -2266,8 +2241,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`Cassandra`, как и `MongoDB`, по умолчанию отдаёт strong consistency: запись подтверждается после применения на всех репликах, а понизить уровень до eventual можно лишь явной настройкой `CL`.",
               "correct": false,
               "sections": {
@@ -2275,6 +2250,31 @@
                 "source_of_confusion": "Кажется, что все БД «по умолчанию консистентны».",
                 "if_it_were_true": "Тогда не нужна была бы формула R+W>N, но именно ею добиваются strong в Cassandra.",
                 "how_it_should_be": "У Cassandra консистентность настраиваемая; strong требует R+W>N."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Cassandra` и `MongoDB` устроены одинаково: обе masterless P2P без выделенного primary и обе относятся к AP по CAP, различаясь лишь моделью данных — wide-column против document.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cassandra` — masterless wide-column, AP; `MongoDB` — document, primary-secondary (replica set), CP. Это разные архитектуры и компромиссы CAP.",
+                "source_of_confusion": "Обе популярные NoSQL, отсюда смешение.",
+                "if_it_were_true": "Тогда у них совпадали бы модель и поведение при разделении сети, но они различны.",
+                "how_it_should_be": "Cassandra — AP/masterless/wide-column; MongoDB — CP/replica set/document."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сравнение: `Cassandra` — wide-column, masterless (P2P), AP, очень быстрая запись (LSM), tunable consistency, нативная multi-DC, аналитика через Spark — для IoT/логов/time-series; `MongoDB` — document, replica set (primary-secondary), CP, гибкие запросы и Aggregation Pipeline — для CRUD/каталогов; `Redis` — key-value in-memory, eventual у реплик — кэш/сессии; `HBase` — wide-column поверх HDFS, CP, master (HMaster) — большие таблицы на Hadoop.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор определяется моделью доступа и компромиссом CAP: Cassandra выигрывает на write-heavy и доступности/multi-DC; MongoDB — на гибких запросах; Redis — на латентности; HBase — на интеграции с Hadoop.",
+                "example": "Write-heavy time-series с multi-DC → Cassandra; каталог товаров с разнообразными фильтрами → MongoDB; кэш сессий → Redis.",
+                "when_to_apply": "Базу выбирают по паттерну доступа, требованиям к консистентности и инфраструктуре (есть ли Hadoop для HBase).",
+                "edge_cases": "Cassandra слаба в ad-hoc аналитике и JOIN; это не «лучшая БД вообще», а специализированная под свой класс задач.",
+                "related": "[[cassandra-interview#Q1]] когда выбирать Cassandra; [[cassandra-interview#Q15]] аналитика через Spark; [[cassandra-interview#Q20]] multi-DC репликация."
               }
             }
           ]
@@ -2291,30 +2291,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ALLOW FILTERING` — приемлемый способ запросов по неключевым колонкам в production: координатор распараллеливает фильтрацию по узлам, а при вторичном индексе на нужной колонке он читает релевантные партиции, а не весь кластер.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ALLOW FILTERING` — анти-паттерн №1: полное сканирование партиций кластера; под такой запрос делают отдельную таблицу.",
-                "source_of_confusion": "Cassandra принимает `ALLOW FILTERING`, и это кажется штатным.",
-                "if_it_were_true": "Тогда его не называли бы главным анти-паттерном, но именно он чаще всего убивает prod.",
-                "how_it_should_be": "Вместо `ALLOW FILTERING` создают денормализованную таблицу под запрос."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Неограниченно растущие wide-партиции не требуют bucketing: paging (`fetch_size`) читает партицию порциями и не грузит её в память целиком, так что рост числа строк сказывается на объёме диска, но не на латентности чтения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Неограниченные партиции (например все события пользователя навсегда) растут бесконечно → медленные чтения, GC, OOM; решение — bucketing.",
-                "source_of_confusion": "Кажется, что партиция «просто хранит больше».",
-                "if_it_were_true": "Тогда рекомендация <100 MB и bucketing была бы лишней, но она ключевая.",
-                "how_it_should_be": "Растущие партиции дробят bucketing-ом (по времени/хэшу)."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Основные анти-паттерны: (1) `ALLOW FILTERING` — full scan кластера, вместо него отдельная таблица; (2) неограниченно растущие wide-партиции — лечатся bucketing-ом; (3) использование Cassandra как реляционной БД (нормализация → нет JOIN → много roundtrips); (4) обилие tombstones (частые DELETE + малый `gc_grace_seconds`); (5) hot spots из-за низкокардинального partition key; (6) синхронный `LWT` везде (Paxos в 5-10× медленнее); (7) unbounded `IN` (запросы ко многим партициям).",
               "correct": true,
               "sections": {
@@ -2326,8 +2302,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Большое число tombstones почти не влияет на производительность чтения: при `SELECT` Cassandra пропускает tombstone-ячейки на этапе чтения из SSTable, а физически они убираются compaction'ом после `gc_grace_seconds`, так что опасны лишь для роста диска.",
               "correct": false,
               "sections": {
@@ -2335,6 +2311,30 @@
                 "source_of_confusion": "Маркеры удаления кажутся безвредными.",
                 "if_it_were_true": "Тогда tombstones не входили бы в список анти-паттернов, но они там есть.",
                 "how_it_should_be": "Много tombstones деградирует чтение; минимизируют DELETE, используют TTL/repair."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Неограниченно растущие wide-партиции не требуют bucketing: paging (`fetch_size`) читает партицию порциями и не грузит её в память целиком, так что рост числа строк сказывается на объёме диска, но не на латентности чтения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Неограниченные партиции (например все события пользователя навсегда) растут бесконечно → медленные чтения, GC, OOM; решение — bucketing.",
+                "source_of_confusion": "Кажется, что партиция «просто хранит больше».",
+                "if_it_were_true": "Тогда рекомендация <100 MB и bucketing была бы лишней, но она ключевая.",
+                "how_it_should_be": "Растущие партиции дробят bucketing-ом (по времени/хэшу)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ALLOW FILTERING` — приемлемый способ запросов по неключевым колонкам в production: координатор распараллеливает фильтрацию по узлам, а при вторичном индексе на нужной колонке он читает релевантные партиции, а не весь кластер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ALLOW FILTERING` — анти-паттерн №1: полное сканирование партиций кластера; под такой запрос делают отдельную таблицу.",
+                "source_of_confusion": "Cassandra принимает `ALLOW FILTERING`, и это кажется штатным.",
+                "if_it_were_true": "Тогда его не называли бы главным анти-паттерном, но именно он чаще всего убивает prod.",
+                "how_it_should_be": "Вместо `ALLOW FILTERING` создают денормализованную таблицу под запрос."
               }
             }
           ]
@@ -2351,18 +2351,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Элемент коллекции в `Cassandra` можно прочитать отдельно по индексу или ключу через `collection[key]` в `SELECT`, не загружая всю коллекцию, — драйвер подтягивает из `SSTable` только нужную ячейку.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Коллекции читаются ЦЕЛИКОМ — нельзя получить один элемент без всей коллекции.",
-                "source_of_confusion": "Опыт реляционных/документных БД с доступом к элементу.",
-                "if_it_were_true": "Тогда большие коллекции были бы дёшевы в чтении, но именно поэтому их держат малыми.",
-                "how_it_should_be": "Коллекция читается целиком; для частого доступа к элементам — отдельная таблица."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Максимальный размер коллекции практически неограничен (миллионы элементов): начиная с версии 3.x лимит в 64K снят, и каждый элемент хранится как отдельная ячейка со своим timestamp без общего потолка.",
               "correct": false,
               "sections": {
@@ -2373,20 +2361,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`FROZEN`-коллекция позволяет изменять отдельные элементы без перезаписи всего объекта, тогда как non-frozen сериализуется как единый blob; поэтому `FROZEN` эффективнее для частых точечных обновлений больших коллекций.",
+              "order": 1,
+              "label": "B",
+              "text": "Элемент коллекции в `Cassandra` можно прочитать отдельно по индексу или ключу через `collection[key]` в `SELECT`, не загружая всю коллекцию, — драйвер подтягивает из `SSTable` только нужную ячейку.",
               "correct": false,
               "sections": {
-                "what_actually": "`FROZEN` сериализует коллекцию как единый blob — любое изменение заменяет ВЕСЬ объект целиком.",
-                "source_of_confusion": "Кажется, что frozen — обычная коллекция с оптимизацией.",
-                "if_it_were_true": "Тогда можно было бы менять элемент frozen-set, но изменения заменяют его полностью.",
-                "how_it_should_be": "Частичные обновления — у non-frozen; `FROZEN` меняется только целиком."
+                "what_actually": "Коллекции читаются ЦЕЛИКОМ — нельзя получить один элемент без всей коллекции.",
+                "source_of_confusion": "Опыт реляционных/документных БД с доступом к элементу.",
+                "if_it_were_true": "Тогда большие коллекции были бы дёшевы в чтении, но именно поэтому их держат малыми.",
+                "how_it_should_be": "Коллекция читается целиком; для частого доступа к элементам — отдельная таблица."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Cassandra` поддерживает три коллекции как тип колонки: `SET` (уникальные, неупорядоченные), `LIST` (упорядоченные, с дублями), `MAP` (ключ-значение), плюс `FROZEN`-обёртку и `UDT`; ключевые правила — коллекции читаются ЦЕЛИКОМ (нельзя достать один элемент), лимит 65 535 элементов (рекомендуется <100), `FROZEN` сериализуется как blob (изменения заменяют весь объект), `SET` предпочтительнее `LIST` (нет проблем с дублями при partial failures), а для частых обновлений элементов большой коллекции лучше отдельная таблица.",
               "correct": true,
               "sections": {
@@ -2395,6 +2383,18 @@
                 "when_to_apply": "Коллекции берут для малых вложенных наборов; большие/часто меняемые — выносят в clustering-строки отдельной таблицы.",
                 "edge_cases": "`LIST` при retry может задвоить элементы (idempotency); `FROZEN` нужен для вложенных коллекций и UDT в составе PK.",
                 "related": "[[cassandra-interview#Q11]] wide rows вместо больших коллекций; [[cassandra-interview#Q7]] wide-column модель; [[cassandra-interview#Q8]] FROZEN в PK."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`FROZEN`-коллекция позволяет изменять отдельные элементы без перезаписи всего объекта, тогда как non-frozen сериализуется как единый blob; поэтому `FROZEN` эффективнее для частых точечных обновлений больших коллекций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FROZEN` сериализует коллекцию как единый blob — любое изменение заменяет ВЕСЬ объект целиком.",
+                "source_of_confusion": "Кажется, что frozen — обычная коллекция с оптимизацией.",
+                "if_it_were_true": "Тогда можно было бы менять элемент frozen-set, но изменения заменяют его полностью.",
+                "how_it_should_be": "Частичные обновления — у non-frozen; `FROZEN` меняется только целиком."
               }
             }
           ]
@@ -2411,19 +2411,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Cassandra` нет `OFFSET`, поэтому используют cursor-based pagination через `paging state`: Java Driver автоматически разбивает результат на страницы (`setPageSize`), а для REST API сохраняют `PagingState` (кодируют в Base64-токен `nextPageToken`) и передают его для следующей страницы; альтернатива для time-series — пейджинг по clustering key (`WHERE ... AND event_ts < ? LIMIT N`).",
-              "correct": true,
-              "sections": {
-                "explanation": "`PagingState` — непрозрачный курсор, привязанный к запросу и кластеру; он позволяет идти только последовательно (нельзя прыгнуть на страницу N). Clustering-key пейджинг даёт стабильный курсор по значению.",
-                "example": "`stmt.setPageSize(20)` → `rs.getExecutionInfo().getPagingState()` → Base64 в `nextPageToken`; следующая страница — `stmt.copy().setPagingState(saved)`.",
-                "when_to_apply": "Авто-пейджинг (итерация ResultSet) — для бэкенд-обработки; ручной (PagingState/clustering) — для stateless REST API.",
-                "edge_cases": "`PagingState` может устареть при изменении схемы/данных; нельзя перейти сразу на произвольную страницу — только вперёд.",
-                "related": "[[cassandra-interview#Q33]] Java Driver; [[cassandra-interview#Q8]] clustering key для курсора; [[cassandra-interview#Q12]] LIMIT в CQL."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "В `Cassandra` пейджинг делают через `LIMIT` с `OFFSET`: `SELECT ... LIMIT 20 OFFSET 40` пропускает первые страницы на стороне координатора, как в SQL; для REST API номер страницы умножают на размер и передают в `OFFSET`.",
               "correct": false,
               "sections": {
@@ -2434,8 +2421,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "С помощью `PagingState` можно перейти сразу на произвольную страницу N: токен кодирует смещение, поэтому клиент прибавляет к нему `pageSize × N` и получает нужную страницу, не обходя предыдущие.",
               "correct": false,
               "sections": {
@@ -2446,8 +2433,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`PagingState` универсален: сохранённый токен применяют к другому запросу или на другом кластере, так как он содержит абсолютную позицию строки в таблице, а не привязан к конкретному `SELECT`.",
               "correct": false,
               "sections": {
@@ -2455,6 +2442,19 @@
                 "source_of_confusion": "Кажется, что токен — самодостаточный универсальный курсор.",
                 "if_it_were_true": "Тогда один токен работал бы для любых запросов, но он специфичен.",
                 "how_it_should_be": "PagingState валиден только для своего запроса/кластера."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Cassandra` нет `OFFSET`, поэтому используют cursor-based pagination через `paging state`: Java Driver автоматически разбивает результат на страницы (`setPageSize`), а для REST API сохраняют `PagingState` (кодируют в Base64-токен `nextPageToken`) и передают его для следующей страницы; альтернатива для time-series — пейджинг по clustering key (`WHERE ... AND event_ts < ? LIMIT N`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`PagingState` — непрозрачный курсор, привязанный к запросу и кластеру; он позволяет идти только последовательно (нельзя прыгнуть на страницу N). Clustering-key пейджинг даёт стабильный курсор по значению.",
+                "example": "`stmt.setPageSize(20)` → `rs.getExecutionInfo().getPagingState()` → Base64 в `nextPageToken`; следующая страница — `stmt.copy().setPagingState(saved)`.",
+                "when_to_apply": "Авто-пейджинг (итерация ResultSet) — для бэкенд-обработки; ручной (PagingState/clustering) — для stateless REST API.",
+                "edge_cases": "`PagingState` может устареть при изменении схемы/данных; нельзя перейти сразу на произвольную страницу — только вперёд.",
+                "related": "[[cassandra-interview#Q33]] Java Driver; [[cassandra-interview#Q8]] clustering key для курсора; [[cassandra-interview#Q12]] LIMIT в CQL."
               }
             }
           ]
@@ -2483,19 +2483,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Token-aware routing` — политика, при которой Java Driver отправляет запрос НАПРЯМУЮ на узел, хранящий нужную партицию, минуя лишний сетевой хоп через координатор; в драйвере v4 включена по умолчанию (`DefaultLoadBalancingPolicy`), но требует prepared statement (драйвер должен знать partition key, чтобы вычислить `token`); важность — снижает задержку на хоп (~5 мс → ~1 мс в одном ДЦ), разгружает координаторы, а при `CL=ONE` даёт обработку без координации.",
-              "correct": true,
-              "sections": {
-                "explanation": "Без token-awareness координатор сам пересылает запрос на узел-владельца — лишний хоп. С prepared statement драйвер вычисляет token и сразу идёт к правильному узлу.",
-                "example": "`PreparedStatement ps = session.prepare(\"SELECT ... WHERE user_id=?\"); session.execute(ps.bind(userId))` — драйвер сам маршрутизирует по token(userId).",
-                "when_to_apply": "Token-awareness важна для низколатентных read/write по ключу; работает только с prepared statements.",
-                "edge_cases": "`SimpleStatement` без подготовки лишает драйвер token-awareness — запрос идёт через случайный координатор с лишним хопом.",
-                "related": "[[cassandra-interview#Q33]] prepared statements; [[cassandra-interview#Q5]] consistent hashing/token; [[cassandra-interview#Q2]] координатор."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Token-aware routing` работает одинаково для `SimpleStatement` и `PreparedStatement`: драйвер парсит текст CQL, извлекает значение partition key из `WHERE` и вычисляет `token` в обоих случаях, поэтому подготовка запроса на маршрутизацию не влияет.",
               "correct": false,
               "sections": {
@@ -2506,8 +2493,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Token-aware routing` увеличивает задержку: драйвер сначала спрашивает у координатора, какой узел владеет партицией, а затем делает второй запрос напрямую к нему, поэтому на каждый вызов приходится дополнительный сетевой хоп.",
               "correct": false,
               "sections": {
@@ -2515,6 +2502,19 @@
                 "source_of_confusion": "Путают направление эффекта.",
                 "if_it_were_true": "Тогда от token-awareness отказывались бы ради скорости, но её включают именно ради скорости.",
                 "how_it_should_be": "Token-awareness снижает задержку, устраняя хоп до координатора."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Token-aware routing` — политика, при которой Java Driver отправляет запрос НАПРЯМУЮ на узел, хранящий нужную партицию, минуя лишний сетевой хоп через координатор; в драйвере v4 включена по умолчанию (`DefaultLoadBalancingPolicy`), но требует prepared statement (драйвер должен знать partition key, чтобы вычислить `token`); важность — снижает задержку на хоп (~5 мс → ~1 мс в одном ДЦ), разгружает координаторы, а при `CL=ONE` даёт обработку без координации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без token-awareness координатор сам пересылает запрос на узел-владельца — лишний хоп. С prepared statement драйвер вычисляет token и сразу идёт к правильному узлу.",
+                "example": "`PreparedStatement ps = session.prepare(\"SELECT ... WHERE user_id=?\"); session.execute(ps.bind(userId))` — драйвер сам маршрутизирует по token(userId).",
+                "when_to_apply": "Token-awareness важна для низколатентных read/write по ключу; работает только с prepared statements.",
+                "edge_cases": "`SimpleStatement` без подготовки лишает драйвер token-awareness — запрос идёт через случайный координатор с лишним хопом.",
+                "related": "[[cassandra-interview#Q33]] prepared statements; [[cassandra-interview#Q5]] consistent hashing/token; [[cassandra-interview#Q2]] координатор."
               }
             }
           ]
@@ -2531,18 +2531,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cassandra` поддерживает `GROUP BY` и `HAVING` по всему кластеру, как OLAP-система.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Cassandra намеренно ограничивает аналитику (нет кластерных GROUP BY/HAVING/JOIN); агрегаты — только в пределах партиции, остальное — внешними движками.",
-                "source_of_confusion": "Наличие агрегатных функций создаёт иллюзию OLAP.",
-                "if_it_were_true": "Тогда не нужен был бы Spark/Trino, но они основной путь аналитики.",
-                "how_it_should_be": "Кластерную аналитику делают Spark/Flink/Trino, не нативным GROUP BY."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Materialized Views — рекомендуемый способ аналитики в production.",
               "correct": false,
               "sections": {
@@ -2553,8 +2541,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Cassandra` намеренно ограничивает аналитику (нет кластерных JOIN/GROUP BY/HAVING): встроенные агрегаты (`COUNT`/`SUM`/`AVG`) работают только в пределах одной партиции; для аналитики используют `Apache Spark` + Cassandra Connector (batch/ETL поверх всего кластера), `Apache Flink`/`Kafka Streams` (real-time агрегации), `Presto`/`Trino` (ad-hoc SQL), а MV и `ALLOW FILTERING` в prod избегают.",
               "correct": true,
               "sections": {
@@ -2566,8 +2554,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Встроенные UDA (User-Defined Aggregates) снимают ограничение «в пределах партиции».",
               "correct": false,
               "sections": {
@@ -2575,6 +2563,18 @@
                 "source_of_confusion": "Кажется, что кастомная функция масштабируется на кластер.",
                 "if_it_were_true": "Тогда Spark был бы не нужен для кластерной агрегации, но он именно для этого.",
                 "how_it_should_be": "UDA — кастомизация, но не кластерная агрегация; для неё внешние движки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Cassandra` поддерживает `GROUP BY` и `HAVING` по всему кластеру, как OLAP-система.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra намеренно ограничивает аналитику (нет кластерных GROUP BY/HAVING/JOIN); агрегаты — только в пределах партиции, остальное — внешними движками.",
+                "source_of_confusion": "Наличие агрегатных функций создаёт иллюзию OLAP.",
+                "if_it_were_true": "Тогда не нужен был бы Spark/Trino, но они основной путь аналитики.",
+                "how_it_should_be": "Кластерную аналитику делают Spark/Flink/Trino, не нативным GROUP BY."
               }
             }
           ]
@@ -2603,6 +2603,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`CDC` (`Change Data Capture`) — захват изменений данных в реальном времени для публикации в другие системы (Kafka, Elasticsearch, DWH); включается per-table (`WITH cdc = true`) плюс `cdc_enabled: true` в `cassandra.yaml`, мутации пишутся в `cdc_raw` директорию из commit log, откуда их читает, например, Debezium Connector → Kafka; используется для синхронизации в Elasticsearch, event-driven архитектур, репликации и аудита.",
+              "correct": true,
+              "sections": {
+                "explanation": "CDC превращает Cassandra в источник событий, не нагружая основной путь чтения. Debezium — популярный коннектор для стриминга мутаций в Kafka.",
+                "example": "`ALTER TABLE orders WITH cdc = true`; Debezium `CassandraConnector` с `kafka.producer.bootstrap.servers` стримит изменения в топик.",
+                "when_to_apply": "CDC берут для интеграции Cassandra → поиск/аналитика/реплики через Kafka.",
+                "edge_cases": "Ограничения: только мутации (без TTL-expiry/компакции), нагрузка на диск (`cdc_raw` мониторят), нет гарантии межпартиционного порядка.",
+                "related": "[[cassandra-interview#Q43]] аналитика через внешние системы; [[cassandra-interview#Q15]] CDC → OLAP; [[cassandra-interview#Q18]] tombstone/TTL не в CDC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`CDC` включается только глобально: параметр `cdc_enabled: true` в `cassandra.yaml` активирует захват сразу для всех таблиц кластера, и отключить его для отдельной таблицы нельзя.",
               "correct": false,
               "sections": {
@@ -2613,8 +2626,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`CDC` гарантирует строгий глобальный порядок изменений между всеми партициями: события в `cdc_raw` упорядочены по единому кластерному timestamp, поэтому потребитель видит их в том же порядке, в каком они произошли на разных узлах.",
               "correct": false,
               "sections": {
@@ -2622,19 +2635,6 @@
                 "source_of_confusion": "Ожидают от CDC глобального упорядочивания, как от единого лога.",
                 "if_it_were_true": "Тогда можно было бы полагаться на глобальный порядок событий, но это ограничение CDC.",
                 "how_it_should_be": "Гарантированного межпартиционного порядка нет; учитывают при потреблении."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`CDC` (`Change Data Capture`) — захват изменений данных в реальном времени для публикации в другие системы (Kafka, Elasticsearch, DWH); включается per-table (`WITH cdc = true`) плюс `cdc_enabled: true` в `cassandra.yaml`, мутации пишутся в `cdc_raw` директорию из commit log, откуда их читает, например, Debezium Connector → Kafka; используется для синхронизации в Elasticsearch, event-driven архитектур, репликации и аудита.",
-              "correct": true,
-              "sections": {
-                "explanation": "CDC превращает Cassandra в источник событий, не нагружая основной путь чтения. Debezium — популярный коннектор для стриминга мутаций в Kafka.",
-                "example": "`ALTER TABLE orders WITH cdc = true`; Debezium `CassandraConnector` с `kafka.producer.bootstrap.servers` стримит изменения в топик.",
-                "when_to_apply": "CDC берут для интеграции Cassandra → поиск/аналитика/реплики через Kafka.",
-                "edge_cases": "Ограничения: только мутации (без TTL-expiry/компакции), нагрузка на диск (`cdc_raw` мониторят), нет гарантии межпартиционного порядка.",
-                "related": "[[cassandra-interview#Q43]] аналитика через внешние системы; [[cassandra-interview#Q15]] CDC → OLAP; [[cassandra-interview#Q18]] tombstone/TTL не в CDC."
               }
             }
           ]
