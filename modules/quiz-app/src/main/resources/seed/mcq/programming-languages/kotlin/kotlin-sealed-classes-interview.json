@@ -11,6 +11,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`sealed class` — это синтаксический сахар над `enum class`: компилятор разворачивает его в `enum` с типизированным payload.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sealed` и `enum` — два разных механизма. `enum` хранит фиксированное число одинаково устроенных констант одного класса, а `sealed` объявляет ограниченное множество разных подклассов с произвольной структурой полей; и байткод у них разный.",
+                "source_of_confusion": "Оба позволяют делать exhaustive `when` и оба «закрытые» иерархии, поэтому поверхностно кажется, что разница лишь в keyword.",
+                "if_it_were_true": "Тогда нельзя было бы хранить разные поля в подклассах (`Success(data)` против `Error(message)`), создавать несколько инстансов одного варианта или использовать дженерики `Result<out T>`.",
+                "how_it_should_be": "Это абстрактный класс с закрытым множеством разных подклассов; `enum` — отдельный механизм с константами одинаковой структуры."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`sealed class` — это абстрактный класс с закрытым множеством подклассов, известным компилятору на этапе сборки; все наследники должны лежать в том же модуле (Kotlin 1.5+).",
               "correct": true,
               "sections": {
@@ -22,32 +34,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`sealed class` — это синтаксический сахар над `enum class`: компилятор разворачивает его в `enum` с типизированным payload.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`sealed` и `enum` — два разных механизма. `enum` хранит фиксированное число одинаково устроенных констант одного класса, а `sealed` объявляет ограниченное множество разных подклассов с произвольной структурой полей; и байткод у них разный.",
-                "source_of_confusion": "Оба позволяют делать exhaustive `when` и оба «закрытые» иерархии, поэтому поверхностно кажется, что разница лишь в keyword.",
-                "if_it_were_true": "Тогда нельзя было бы хранить разные поля в подклассах (`Success(data)` против `Error(message)`), создавать несколько инстансов одного варианта или использовать дженерики `Result<out T>`.",
-                "how_it_should_be": "Это абстрактный класс с закрытым множеством разных подклассов; `enum` — отдельный механизм с константами одинаковой структуры."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`sealed class` запрещает создавать любые экземпляры и работает только как marker interface для типизации на компиляции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сам `sealed class` не инстанцируется (как abstract), но его наследники прекрасно создают экземпляры: `Result.Success(42)` — полноценный объект с данными, существующий в рантайме; без этого не было бы pattern matching.",
-                "source_of_confusion": "Аналогия с marker-интерфейсами (`Serializable`, `Cloneable`) — там тоже «нельзя инстанцировать», и это переносят на sealed.",
-                "if_it_were_true": "Тогда нельзя было бы написать `val state: UiState = UiState.Loading` или вернуть `Result.Success(user)` из репозитория — sealed был бы compile-time-only фичей без runtime-смысла.",
-                "how_it_should_be": "Инстанцируются именно подклассы sealed; запрет касается только самого абстрактного родителя."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`sealed class` гарантирует, что все наследники находятся в одном пакете (не модуле) — это и позволяет проверять exhaustiveness.",
               "correct": false,
               "sections": {
@@ -55,6 +43,18 @@
                 "source_of_confusion": "В Java 17 `sealed` требует `permits`-список, и неопытные проецируют это на Kotlin как «один пакет»; добавляет путаницы и модификатор `internal`, который ограничен модулем.",
                 "if_it_were_true": "Тогда ADT с большим числом вариантов был бы вынужден лежать в одном пакете и превращаться в «свалку» типа `com.app.allstates`.",
                 "how_it_should_be": "Scope наследников — модуль; внутри него типы свободно раскладываются по пакетам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`sealed class` запрещает создавать любые экземпляры и работает только как marker interface для типизации на компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сам `sealed class` не инстанцируется (как abstract), но его наследники прекрасно создают экземпляры: `Result.Success(42)` — полноценный объект с данными, существующий в рантайме; без этого не было бы pattern matching.",
+                "source_of_confusion": "Аналогия с marker-интерфейсами (`Serializable`, `Cloneable`) — там тоже «нельзя инстанцировать», и это переносят на sealed.",
+                "if_it_were_true": "Тогда нельзя было бы написать `val state: UiState = UiState.Loading` или вернуть `Result.Success(user)` из репозитория — sealed был бы compile-time-only фичей без runtime-смысла.",
+                "how_it_should_be": "Инстанцируются именно подклассы sealed; запрет касается только самого абстрактного родителя."
               }
             }
           ]
@@ -83,14 +83,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`sealed class` — закрытая иерархия разных подклассов с произвольной структурой и собственными данными; `enum class` — фиксированный набор singleton-констант одинаковой структуры.",
-              "correct": true,
+              "text": "И `sealed`, и `enum` компилируются в одинаковый Java-байткод (`final class extends Enum`); разница только в синтаксисе Kotlin.",
+              "correct": false,
               "sections": {
-                "explanation": "У `enum` все константы — один класс с одинаковыми полями и по одному экземпляру на константу (singleton); у `sealed` каждый наследник — свой класс со своими полями, и можно создать сколько угодно `Success(1)`, `Success(2)`. `enum` поддерживает `values()`/`valueOf()` и сериализуется по имени, `sealed` — нет; байткод тоже разный.",
-                "example": "`enum class HttpMethod(val safe, val idempotent)` — одинаковая структура у всех; `sealed class HttpResponse` с `Success(body, etag)`, `Redirect(location, permanent)`, `ClientError(status, problemJson)` — разные поля в каждом варианте.",
-                "when_to_apply": "`enum` берут для простых перечислений без данных (статусы заказа, дни недели, протоколы), особенно если нужен `valueOf` для строкового маппинга; `sealed` — для ADT с разными payload, дженериками или различающимися данными в вариантах.",
-                "edge_cases": "`enum` нельзя расширить без поломки binary compatibility; у `sealed` нет `values()` — итерировать подклассы можно только через рефлексию `MyClass::class.sealedSubclasses` (top-level, JVM). `enum` сериализуется по имени из коробки, `sealed` требует дискриминатора.",
-                "related": "[[kotlin-sealed-classes-interview#Q1]] основы `sealed class`; [[kotlin-sealed-classes-interview#Q3]] exhaustive `when`; [[kotlin-sealed-classes-interview#Q10]] сериализация sealed через kotlinx."
+                "what_actually": "Байткод существенно разный: `enum` → `final class Foo extends java.lang.Enum<Foo>` с константами-полями, а `sealed class` → обычный `abstract class` плюс отдельные классы-наследники (в Kotlin 1.5+/Java 17 — с атрибутом `PermittedSubclasses`).",
+                "source_of_confusion": "Оба «закрытые» в смысле exhaustiveness, поэтому кажется, что компилятор делает похожую проверку, а значит и байткод похож.",
+                "if_it_were_true": "Тогда не работала бы Java-интероп с sealed и нельзя было бы создавать несколько экземпляров `Success` (enum-константы — singleton), а рефлексия `sealedSubclasses` и `enumConstants` вела бы себя одинаково.",
+                "how_it_should_be": "Это два разных JVM-механизма (`Enum` против abstract class + `PermittedSubclasses`), не отличающиеся лишь синтаксисом."
               }
             },
             {
@@ -108,13 +107,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "И `sealed`, и `enum` компилируются в одинаковый Java-байткод (`final class extends Enum`); разница только в синтаксисе Kotlin.",
-              "correct": false,
+              "text": "`sealed class` — закрытая иерархия разных подклассов с произвольной структурой и собственными данными; `enum class` — фиксированный набор singleton-констант одинаковой структуры.",
+              "correct": true,
               "sections": {
-                "what_actually": "Байткод существенно разный: `enum` → `final class Foo extends java.lang.Enum<Foo>` с константами-полями, а `sealed class` → обычный `abstract class` плюс отдельные классы-наследники (в Kotlin 1.5+/Java 17 — с атрибутом `PermittedSubclasses`).",
-                "source_of_confusion": "Оба «закрытые» в смысле exhaustiveness, поэтому кажется, что компилятор делает похожую проверку, а значит и байткод похож.",
-                "if_it_were_true": "Тогда не работала бы Java-интероп с sealed и нельзя было бы создавать несколько экземпляров `Success` (enum-константы — singleton), а рефлексия `sealedSubclasses` и `enumConstants` вела бы себя одинаково.",
-                "how_it_should_be": "Это два разных JVM-механизма (`Enum` против abstract class + `PermittedSubclasses`), не отличающиеся лишь синтаксисом."
+                "explanation": "У `enum` все константы — один класс с одинаковыми полями и по одному экземпляру на константу (singleton); у `sealed` каждый наследник — свой класс со своими полями, и можно создать сколько угодно `Success(1)`, `Success(2)`. `enum` поддерживает `values()`/`valueOf()` и сериализуется по имени, `sealed` — нет; байткод тоже разный.",
+                "example": "`enum class HttpMethod(val safe, val idempotent)` — одинаковая структура у всех; `sealed class HttpResponse` с `Success(body, etag)`, `Redirect(location, permanent)`, `ClientError(status, problemJson)` — разные поля в каждом варианте.",
+                "when_to_apply": "`enum` берут для простых перечислений без данных (статусы заказа, дни недели, протоколы), особенно если нужен `valueOf` для строкового маппинга; `sealed` — для ADT с разными payload, дженериками или различающимися данными в вариантах.",
+                "edge_cases": "`enum` нельзя расширить без поломки binary compatibility; у `sealed` нет `values()` — итерировать подклассы можно только через рефлексию `MyClass::class.sealedSubclasses` (top-level, JVM). `enum` сериализуется по имени из коробки, `sealed` требует дискриминатора.",
+                "related": "[[kotlin-sealed-classes-interview#Q1]] основы `sealed class`; [[kotlin-sealed-classes-interview#Q3]] exhaustive `when`; [[kotlin-sealed-classes-interview#Q10]] сериализация sealed через kotlinx."
               }
             }
           ]
@@ -143,13 +143,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Нужно всегда добавлять `else -> throw IllegalStateException()` — это и есть exhaustive.",
+              "text": "Exhaustive `when` достигается только через `kotlin-reflect`: компилятор использует `sealedSubclasses` для проверки.",
               "correct": false,
               "sections": {
-                "what_actually": "`else` над sealed — антипаттерн, который отключает exhaustive-проверку: компилятор перестаёт сообщать «missing branch» при добавлении нового подкласса, и баг уходит в runtime; цель exhaustive — поймать пропуск на компиляции.",
-                "source_of_confusion": "Java `switch` исторически требовал `default`, и многие линтеры до Java 14 ругались на его отсутствие — этот рефлекс плюс «defensive programming» переносят в Kotlin.",
-                "if_it_were_true": "Тогда sealed терял бы главную ценность — fail-fast на сборке: добавили `PaymentMethod.ApplePay`, а при `else -> throw` баг проявится только когда пользователь нажмёт Apple Pay в проде.",
-                "how_it_should_be": "Покрывайте все ветки явно без `else`; throw в `else` лишь маскирует непокрытые варианты."
+                "what_actually": "Exhaustive — compile-time проверка K1/K2 frontend, она не использует `kotlin-reflect`: компилятор знает permitted subclasses из FIR. `kotlin-reflect` — рантайм-библиотека и в проверке `when` не участвует.",
+                "source_of_confusion": "Существование `KClass.sealedSubclasses` намекает на «список подклассов», а reflect-зависимость нужна для kotlinx.serialization — это и путает.",
+                "if_it_were_true": "Тогда проекты без `kotlin-reflect` (минимальный Android, KMP-таргеты JS/Native) не могли бы использовать exhaustive `when` — но они могут, и cold-start рос бы из-за загрузки reflect.",
+                "how_it_should_be": "Проверку делает фронтенд компилятора по FIR на этапе сборки; reflection здесь не нужен."
               }
             },
             {
@@ -168,13 +168,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Exhaustive `when` достигается только через `kotlin-reflect`: компилятор использует `sealedSubclasses` для проверки.",
+              "text": "Нужно всегда добавлять `else -> throw IllegalStateException()` — это и есть exhaustive.",
               "correct": false,
               "sections": {
-                "what_actually": "Exhaustive — compile-time проверка K1/K2 frontend, она не использует `kotlin-reflect`: компилятор знает permitted subclasses из FIR. `kotlin-reflect` — рантайм-библиотека и в проверке `when` не участвует.",
-                "source_of_confusion": "Существование `KClass.sealedSubclasses` намекает на «список подклассов», а reflect-зависимость нужна для kotlinx.serialization — это и путает.",
-                "if_it_were_true": "Тогда проекты без `kotlin-reflect` (минимальный Android, KMP-таргеты JS/Native) не могли бы использовать exhaustive `when` — но они могут, и cold-start рос бы из-за загрузки reflect.",
-                "how_it_should_be": "Проверку делает фронтенд компилятора по FIR на этапе сборки; reflection здесь не нужен."
+                "what_actually": "`else` над sealed — антипаттерн, который отключает exhaustive-проверку: компилятор перестаёт сообщать «missing branch» при добавлении нового подкласса, и баг уходит в runtime; цель exhaustive — поймать пропуск на компиляции.",
+                "source_of_confusion": "Java `switch` исторически требовал `default`, и многие линтеры до Java 14 ругались на его отсутствие — этот рефлекс плюс «defensive programming» переносят в Kotlin.",
+                "if_it_were_true": "Тогда sealed терял бы главную ценность — fail-fast на сборке: добавили `PaymentMethod.ApplePay`, а при `else -> throw` баг проявится только когда пользователь нажмёт Apple Pay в проде.",
+                "how_it_should_be": "Покрывайте все ветки явно без `else`; throw в `else` лишь маскирует непокрытые варианты."
               }
             }
           ]
@@ -191,30 +191,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`sealed interface` создаётся через `interface sealed Error { ... }` — порядок keyword другой, чем у `sealed class`.",
-              "correct": false,
+              "text": "`sealed interface` позволяет одному классу реализовать несколько sealed-иерархий одновременно (multiple inheritance), но не хранит состояние; `sealed class` ограничен одной иерархией, зато несёт общие поля.",
+              "correct": true,
               "sections": {
-                "what_actually": "Синтаксис идентичен: `sealed interface Error` и `sealed class Error` — `sealed` всегда первый модификатор перед keyword типа, никаких особых правил порядка нет.",
-                "source_of_confusion": "Java 17 имеет похожий, но иной синтаксис `sealed interface Foo permits Bar, Baz` — можно подумать, что и у Kotlin особые правила.",
-                "if_it_were_true": "Тогда все примеры в документации Kotlin использовали бы этот «новый» порядок, а IDE не давала бы писать `sealed interface Foo`.",
-                "how_it_should_be": "Модификатор `sealed` ставится перед `interface`/`class` одинаково; порядок не меняется."
+                "explanation": "`sealed interface` (Kotlin 1.5) гибче: класс может одновременно входить в несколько sealed-семейств, что невозможно с sealed class (JVM не поддерживает множественное наследование классов). Interface не имеет конструктора и полей, но допускает default-методы; sealed class несёт общий конструктор/поля и реализации.",
+                "example": "`sealed interface Error`, `NetworkError : Error`, `RetryableError : Error`, и `data class TimeoutError(...) : NetworkError, RetryableError` — `TimeoutError` входит сразу в обе оси, что позволяет `when (e) { is RetryableError -> ... }`.",
+                "when_to_apply": "Выбирайте `sealed interface`, когда у иерархии нет общих полей или нужны пересекающиеся категории (`NetworkError ∩ RetryableError`); `sealed class` — когда нужен общий конструктор/поля (общий `timestamp`, `traceId`) или общие методы через `super`.",
+                "edge_cases": "При множественной реализации `when` exhaustive считается только по одной оси — `TimeoutError` подойдёт нескольким веткам, первая выиграет. По умолчанию scope — один модуль, как у sealed class; Java 17 sealed interface требует `permits`.",
+                "related": "[[kotlin-sealed-classes-interview#Q1]] основы sealed; [[kotlin-sealed-classes-interview#Q7]] выбор class против interface; [[kotlin-sealed-classes-interview#Q8]] ограничения 1.5+."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`sealed interface` — это синтаксический сахар над `sealed class` с одним абстрактным методом, без иных отличий.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это разные механизмы: `sealed interface` — обычный интерфейс (без primary constructor, без состояния, с default-методами), а `sealed class` — абстрактный класс с конструктором и полями; они компилируются в разный байткод (interface против abstract class).",
-                "source_of_confusion": "Аналогия со Scala 3, где `enum`/`case class` действительно близки, переносится на Kotlin.",
-                "if_it_were_true": "Тогда не было бы возможности multiple inheritance иерархий и не было бы смысла вводить отдельный keyword `sealed interface` в Kotlin 1.5.",
-                "how_it_should_be": "`sealed interface` отличается семантикой interface (нет состояния, есть multiple inheritance), а не числом абстрактных методов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`sealed interface` запрещён в Kotlin/JVM и доступен только в Kotlin/Native и Kotlin/JS.",
               "correct": false,
               "sections": {
@@ -225,16 +214,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`sealed interface` — это синтаксический сахар над `sealed class` с одним абстрактным методом, без иных отличий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные механизмы: `sealed interface` — обычный интерфейс (без primary constructor, без состояния, с default-методами), а `sealed class` — абстрактный класс с конструктором и полями; они компилируются в разный байткод (interface против abstract class).",
+                "source_of_confusion": "Аналогия со Scala 3, где `enum`/`case class` действительно близки, переносится на Kotlin.",
+                "if_it_were_true": "Тогда не было бы возможности multiple inheritance иерархий и не было бы смысла вводить отдельный keyword `sealed interface` в Kotlin 1.5.",
+                "how_it_should_be": "`sealed interface` отличается семантикой interface (нет состояния, есть multiple inheritance), а не числом абстрактных методов."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`sealed interface` позволяет одному классу реализовать несколько sealed-иерархий одновременно (multiple inheritance), но не хранит состояние; `sealed class` ограничен одной иерархией, зато несёт общие поля.",
-              "correct": true,
+              "text": "`sealed interface` создаётся через `interface sealed Error { ... }` — порядок keyword другой, чем у `sealed class`.",
+              "correct": false,
               "sections": {
-                "explanation": "`sealed interface` (Kotlin 1.5) гибче: класс может одновременно входить в несколько sealed-семейств, что невозможно с sealed class (JVM не поддерживает множественное наследование классов). Interface не имеет конструктора и полей, но допускает default-методы; sealed class несёт общий конструктор/поля и реализации.",
-                "example": "`sealed interface Error`, `NetworkError : Error`, `RetryableError : Error`, и `data class TimeoutError(...) : NetworkError, RetryableError` — `TimeoutError` входит сразу в обе оси, что позволяет `when (e) { is RetryableError -> ... }`.",
-                "when_to_apply": "Выбирайте `sealed interface`, когда у иерархии нет общих полей или нужны пересекающиеся категории (`NetworkError ∩ RetryableError`); `sealed class` — когда нужен общий конструктор/поля (общий `timestamp`, `traceId`) или общие методы через `super`.",
-                "edge_cases": "При множественной реализации `when` exhaustive считается только по одной оси — `TimeoutError` подойдёт нескольким веткам, первая выиграет. По умолчанию scope — один модуль, как у sealed class; Java 17 sealed interface требует `permits`.",
-                "related": "[[kotlin-sealed-classes-interview#Q1]] основы sealed; [[kotlin-sealed-classes-interview#Q7]] выбор class против interface; [[kotlin-sealed-classes-interview#Q8]] ограничения 1.5+."
+                "what_actually": "Синтаксис идентичен: `sealed interface Error` и `sealed class Error` — `sealed` всегда первый модификатор перед keyword типа, никаких особых правил порядка нет.",
+                "source_of_confusion": "Java 17 имеет похожий, но иной синтаксис `sealed interface Foo permits Bar, Baz` — можно подумать, что и у Kotlin особые правила.",
+                "if_it_were_true": "Тогда все примеры в документации Kotlin использовали бы этот «новый» порядок, а IDE не давала бы писать `sealed interface Foo`.",
+                "how_it_should_be": "Модификатор `sealed` ставится перед `interface`/`class` одинаково; порядок не меняется."
               }
             }
           ]
@@ -251,31 +251,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`sealed class Result<out T, out E>` позволяет типизировать error (не только `Throwable`), даёт exhaustive `when` и поддерживает `map`/`flatMap`/`fold` — это полноценный `Either`; `kotlin.Result` фиксирует `E = Throwable` и не годится для доменных ошибок.",
-              "correct": true,
-              "sections": {
-                "explanation": "`kotlin.Result<T>` концептуально `Either<Throwable, T>`: error жёстко зафиксирован как `Throwable`, поэтому нельзя смоделировать `Result<User, UserNotFoundError>` с доменной sealed-ошибкой; вдобавок он не рекомендуется как return type (warning) и не имеет `map`/`flatMap`. Кастомный двухпараметрический `Result` снимает оба ограничения.",
-                "example": "`fun fetchUser(id): Result<User, UserError>` возвращает `Success(user)` или `Failure(UserError.NotFound(id))`, а цепочка `.map { ... }.flatMap { createOrder(it) }` прозрачно прокидывает ошибки доменного типа `UserError`, а не `Throwable`.",
-                "when_to_apply": "Применяют в DDD, где ошибки — часть домена, в hexagonal/clean-архитектуре, где доменный слой не должен зависеть от `Throwable`, и в `Ktor`/`Spring WebFlux` handlers для типизации API-ошибок через sealed вместо исключений.",
-                "edge_cases": "`@UnsafeVariance` в `flatMap` — необходимое зло для variance; кастомный `Result` теряет интеграцию с `runCatching` (нужен мост `runCatching {}.fold(::Success){Failure(toDomainError(it))}`), а `Arrow.Either<L, R>` функционально эквивалентен и его стоит рассмотреть.",
-                "related": "[[kotlin-sealed-classes-interview#Q1]] основы sealed; [[kotlin-sealed-classes-interview#Q6]] ADT и sum types; [[kotlin-sealed-classes-interview#Q12]] type-safety против stringly-typed."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`kotlin.Result<T>` запрещён к использованию в production — компилятор не даёт его компилировать вне stdlib.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`kotlin.Result<T>` компилируется и используется (особенно в coroutines), но не рекомендуется как тип возвращаемого значения (warning «Result is not designed to be returned from functions») и завязан на `Throwable`; это design choice, а не запрет.",
-                "source_of_confusion": "Предупреждение про return type многие воспринимают как «вообще нельзя», а долгий experimental-статус усиливает это впечатление.",
-                "if_it_were_true": "Тогда не было бы `runCatching { ... }` в stdlib, и `kotlinx.coroutines` не использовала бы `Result` внутри `Continuation<T>.resumeWith(result: Result<T>)`.",
-                "how_it_should_be": "Это рекомендация против возврата из функций, а не запрет компиляции; использовать `kotlin.Result` можно."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Кастомный `sealed Result` использует Java reflection для exhaustive-проверки, это медленно, поэтому `kotlin.Result` всегда предпочтительнее.",
               "correct": false,
               "sections": {
@@ -286,8 +261,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`kotlin.Result<T>` поддерживает covariant error type через `Result<T, in E>`, поэтому пользовательский sealed `Result` не нужен.",
               "correct": false,
               "sections": {
@@ -295,6 +270,31 @@
                 "source_of_confusion": "`Either`-аналоги (`Arrow.Either<L, R>`, Scala) двухпараметрические — кажется, что и `kotlin.Result` мог бы быть таким.",
                 "if_it_were_true": "Тогда не было бы нужды в `Arrow.Either` и в DDD-подходе с типизированными ошибками — стандартного хватало бы, но проекты массово делают свои Result/Either-обёртки.",
                 "how_it_should_be": "Чтобы типизировать ошибку, нужен собственный двухпараметрический sealed `Result` или `Arrow.Either`; в `kotlin.Result` E недоступен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`kotlin.Result<T>` запрещён к использованию в production — компилятор не даёт его компилировать вне stdlib.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`kotlin.Result<T>` компилируется и используется (особенно в coroutines), но не рекомендуется как тип возвращаемого значения (warning «Result is not designed to be returned from functions») и завязан на `Throwable`; это design choice, а не запрет.",
+                "source_of_confusion": "Предупреждение про return type многие воспринимают как «вообще нельзя», а долгий experimental-статус усиливает это впечатление.",
+                "if_it_were_true": "Тогда не было бы `runCatching { ... }` в stdlib, и `kotlinx.coroutines` не использовала бы `Result` внутри `Continuation<T>.resumeWith(result: Result<T>)`.",
+                "how_it_should_be": "Это рекомендация против возврата из функций, а не запрет компиляции; использовать `kotlin.Result` можно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`sealed class Result<out T, out E>` позволяет типизировать error (не только `Throwable`), даёт exhaustive `when` и поддерживает `map`/`flatMap`/`fold` — это полноценный `Either`; `kotlin.Result` фиксирует `E = Throwable` и не годится для доменных ошибок.",
+              "correct": true,
+              "sections": {
+                "explanation": "`kotlin.Result<T>` концептуально `Either<Throwable, T>`: error жёстко зафиксирован как `Throwable`, поэтому нельзя смоделировать `Result<User, UserNotFoundError>` с доменной sealed-ошибкой; вдобавок он не рекомендуется как return type (warning) и не имеет `map`/`flatMap`. Кастомный двухпараметрический `Result` снимает оба ограничения.",
+                "example": "`fun fetchUser(id): Result<User, UserError>` возвращает `Success(user)` или `Failure(UserError.NotFound(id))`, а цепочка `.map { ... }.flatMap { createOrder(it) }` прозрачно прокидывает ошибки доменного типа `UserError`, а не `Throwable`.",
+                "when_to_apply": "Применяют в DDD, где ошибки — часть домена, в hexagonal/clean-архитектуре, где доменный слой не должен зависеть от `Throwable`, и в `Ktor`/`Spring WebFlux` handlers для типизации API-ошибок через sealed вместо исключений.",
+                "edge_cases": "`@UnsafeVariance` в `flatMap` — необходимое зло для variance; кастомный `Result` теряет интеграцию с `runCatching` (нужен мост `runCatching {}.fold(::Success){Failure(toDomainError(it))}`), а `Arrow.Either<L, R>` функционально эквивалентен и его стоит рассмотреть.",
+                "related": "[[kotlin-sealed-classes-interview#Q1]] основы sealed; [[kotlin-sealed-classes-interview#Q6]] ADT и sum types; [[kotlin-sealed-classes-interview#Q12]] type-safety против stringly-typed."
               }
             }
           ]
@@ -311,6 +311,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "ADT — это только sum types (`sealed class`); product types (`data class`) к ADT не относятся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ADT — это sum + product в комбинации: `data class` — product (несколько полей вместе), `sealed class` — sum (один из вариантов); полноценный ADT использует оба, как `Tree { object Leaf; data class Node(left, value, right) }`.",
+                "source_of_confusion": "В Kotlin keyword `sealed` ассоциируется с ADT, а `data class` воспринимается как «просто DTO», хотя это две стороны одной концепции.",
+                "if_it_were_true": "Тогда ADT в Haskell существовал бы без records, но `data Person = Person { name :: String, age :: Int }` — это product type и часть ADT-системы.",
+                "how_it_should_be": "Product-типы — равноправная половина ADT; без них не выразить структуру внутри вариантов sum."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "ADT — это объекты-singletons, аналог `enum`-констант; `sealed class` — просто пересборка enum под новым именем.",
               "correct": false,
               "sections": {
@@ -321,8 +333,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "ADT — типы, построенные комбинацией sum («или один из N», реализуется через `sealed class`) и product («все поля одновременно», реализуется через `data class`); вместе они дают exhaustive pattern matching и compile-time проверку доменных инвариантов.",
               "correct": true,
               "sections": {
@@ -331,18 +343,6 @@
                 "when_to_apply": "Применяют для доменного моделирования в DDD (заказ «либо draft, либо confirmed, либо paid»), для AST парсеров и compiler IR, для событий event-sourcing (`UserCreated | UserDeleted | UserUpdated`) и state machines; на ADT построена библиотека `Arrow`.",
                 "edge_cases": "ADT с большим числом вариантов (10+) делают `when` неудобными — рассмотрите Visitor или вложенные sealed; рекурсивные ADT на JVM имеют overhead на boxing, а сериализация требует дискриминатора.",
                 "related": "[[kotlin-sealed-classes-interview#Q1]] основы sealed; [[kotlin-sealed-classes-interview#Q5]] `Result` как ADT; [[kotlin-sealed-classes-interview#Q13]] state machine как ADT."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "ADT — это только sum types (`sealed class`); product types (`data class`) к ADT не относятся.",
-              "correct": false,
-              "sections": {
-                "what_actually": "ADT — это sum + product в комбинации: `data class` — product (несколько полей вместе), `sealed class` — sum (один из вариантов); полноценный ADT использует оба, как `Tree { object Leaf; data class Node(left, value, right) }`.",
-                "source_of_confusion": "В Kotlin keyword `sealed` ассоциируется с ADT, а `data class` воспринимается как «просто DTO», хотя это две стороны одной концепции.",
-                "if_it_were_true": "Тогда ADT в Haskell существовал бы без records, но `data Person = Person { name :: String, age :: Int }` — это product type и часть ADT-системы.",
-                "how_it_should_be": "Product-типы — равноправная половина ADT; без них не выразить структуру внутри вариантов sum."
               }
             },
             {
@@ -371,30 +371,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Всегда `sealed class` — interface не поддерживает default-методы, поэтому код будет дублироваться в каждой реализации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Kotlin interface (как Java 8+) поддерживает default-методы через обычные `fun` с телом и properties с custom getter без backing field, поэтому дублирование в sealed interface не неизбежно.",
-                "source_of_confusion": "Java до 8 не имел default-методов, и старая привычка сидит глубоко; добавляет путаницы то, что у interface нет конструктора и init.",
-                "if_it_were_true": "Тогда `sealed interface` не имел бы практического смысла, и Kotlin 1.5 не добавил бы эту фичу.",
-                "how_it_should_be": "Выбор зависит от потребности в общих полях и multiple inheritance, а не от мнимого отсутствия default-методов."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Всегда `sealed interface` — interface быстрее на JVM из-за оптимизаций `invokeinterface`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На современном HotSpot JIT разница между `invokevirtual` (class) и `invokeinterface` (interface) исчезающе мала — JIT часто инлайнит обе; заметная разница возможна лишь на cold path в monomorphic call sites.",
-                "source_of_confusion": "До Java 7 `invokeinterface` действительно был дороже из-за iTable lookup, и это знание устарело, но осело в памяти.",
-                "if_it_were_true": "Тогда все Spring-проекты на абстрактных классах пришлось бы рефакторить в interfaces ради скорости — но никто этого не делает.",
-                "how_it_should_be": "Производительность не должна определять выбор; решают наличие общих полей и пересекающихся иерархий."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`sealed class` — когда нужны общие поля/методы в primary constructor или общая реализация в подклассах; `sealed interface` — когда общего состояния нет или подклассы должны принадлежать нескольким иерархиям (multiple inheritance).",
               "correct": true,
               "sections": {
@@ -406,8 +382,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Зависит от платформы — для KMP всегда `sealed interface`, для JVM-only всегда `sealed class`.",
               "correct": false,
               "sections": {
@@ -415,6 +391,30 @@
                 "source_of_confusion": "Некоторые JVM-фичи (reflection, ServiceLoader) ограничены в KMP, и кажется, что и sealed может иметь такие ограничения.",
                 "if_it_were_true": "Тогда в KMP-проектах нельзя было бы использовать `sealed class` в `expect`/`actual` — но это стандартная KMP-практика.",
                 "how_it_should_be": "Платформа не определяет выбор; решают общие поля и необходимость multiple inheritance."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Всегда `sealed interface` — interface быстрее на JVM из-за оптимизаций `invokeinterface`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На современном HotSpot JIT разница между `invokevirtual` (class) и `invokeinterface` (interface) исчезающе мала — JIT часто инлайнит обе; заметная разница возможна лишь на cold path в monomorphic call sites.",
+                "source_of_confusion": "До Java 7 `invokeinterface` действительно был дороже из-за iTable lookup, и это знание устарело, но осело в памяти.",
+                "if_it_were_true": "Тогда все Spring-проекты на абстрактных классах пришлось бы рефакторить в interfaces ради скорости — но никто этого не делает.",
+                "how_it_should_be": "Производительность не должна определять выбор; решают наличие общих полей и пересекающихся иерархий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Всегда `sealed class` — interface не поддерживает default-методы, поэтому код будет дублироваться в каждой реализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kotlin interface (как Java 8+) поддерживает default-методы через обычные `fun` с телом и properties с custom getter без backing field, поэтому дублирование в sealed interface не неизбежно.",
+                "source_of_confusion": "Java до 8 не имел default-методов, и старая привычка сидит глубоко; добавляет путаницы то, что у interface нет конструктора и init.",
+                "if_it_were_true": "Тогда `sealed interface` не имел бы практического смысла, и Kotlin 1.5 не добавил бы эту фичу.",
+                "how_it_should_be": "Выбор зависит от потребности в общих полях и multiple inheritance, а не от мнимого отсутствия default-методов."
               }
             }
           ]
@@ -431,6 +431,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Все прямые наследники должны находиться в том же модуле (compilation unit Gradle/Maven), но могут лежать в разных файлах и пакетах внутри этого модуля.",
+              "correct": true,
+              "sections": {
+                "explanation": "Kotlin 1.5 (май 2021) ослабил правило с file до module: до 1.5 наследники были в одном файле, с 1.5+ — в одном compilation unit (обычно Gradle subproject / Maven artifact), хотя в разных пакетах и файлах. Тем же релизом появился `sealed interface` с таким же scope-правилом.",
+                "example": "В модуле `domain-payments`: `Payment.kt` в пакете `com.app.domain` объявляет `sealed class Payment`, а `CardPayment` и `CryptoPayment` лежат в `com.app.domain.methods` того же модуля; попытка унаследовать `Payment` из модуля `api` даёт ошибку компиляции.",
+                "when_to_apply": "Применяйте в multi-module проектах: размещайте всю sealed-иерархию в одном модуле (`domain` или shared `api`); если нужен расширяемый API — используйте обычный `interface` без sealed.",
+                "edge_cases": "`sealed` нельзя делать `local` (внутри функции) или `inner` — только top-level или nested; конструктор sealed implicit `protected`; наследник может быть `class`, `data class`, `object`, `data object` или другим `sealed`. Тестовые подклассы должны лежать в том же модуле (обычно `src/test/kotlin` это удовлетворяет).",
+                "related": "[[kotlin-sealed-classes-interview#Q1]] основы sealed; [[kotlin-sealed-classes-interview#Q4]] sealed interface с тем же scope; [[kotlin-sealed-classes-interview#Q15]] типичные ошибки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Все наследники должны находиться в том же файле, как и до Kotlin 1.5 — изменений в 1.5 не было.",
               "correct": false,
               "sections": {
@@ -438,18 +451,6 @@
                 "source_of_confusion": "Многие проекты до сих пор опираются на туториалы 1.4-эпохи, где file-scope ещё актуален.",
                 "if_it_were_true": "Тогда release notes Kotlin 1.5–2.0 лгали бы, и проекты вроде `Ktor`, `Spring Modulith`, `Compose` не могли бы держать domain layer в одном модуле из нескольких файлов.",
                 "how_it_should_be": "С 1.5+ наследники свободно лежат в разных файлах и пакетах одного модуля; правило «один файл» устарело."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "С Kotlin 1.5+ наследники могут быть в любом модуле, если помечены аннотацией `permits`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В Kotlin нет аннотации `permits` (это Java 17 синтаксис); правило строго фиксировано — module-scope без возможности расширения, потому что sealed закрыты по определению.",
-                "source_of_confusion": "Java 17 sealed взаимодействуют через keyword `permits`, и кажется, что Kotlin тоже это перенял.",
-                "if_it_were_true": "Тогда появилась бы лазейка для расширения sealed снаружи, что нарушало бы инвариант exhaustiveness — компилятор не был бы уверен, что видит все варианты в `when`.",
-                "how_it_should_be": "Расширить sealed из другого модуля нельзя ничем; scope ограничен одним модулем по дизайну."
               }
             },
             {
@@ -467,14 +468,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Все прямые наследники должны находиться в том же модуле (compilation unit Gradle/Maven), но могут лежать в разных файлах и пакетах внутри этого модуля.",
-              "correct": true,
+              "text": "С Kotlin 1.5+ наследники могут быть в любом модуле, если помечены аннотацией `permits`.",
+              "correct": false,
               "sections": {
-                "explanation": "Kotlin 1.5 (май 2021) ослабил правило с file до module: до 1.5 наследники были в одном файле, с 1.5+ — в одном compilation unit (обычно Gradle subproject / Maven artifact), хотя в разных пакетах и файлах. Тем же релизом появился `sealed interface` с таким же scope-правилом.",
-                "example": "В модуле `domain-payments`: `Payment.kt` в пакете `com.app.domain` объявляет `sealed class Payment`, а `CardPayment` и `CryptoPayment` лежат в `com.app.domain.methods` того же модуля; попытка унаследовать `Payment` из модуля `api` даёт ошибку компиляции.",
-                "when_to_apply": "Применяйте в multi-module проектах: размещайте всю sealed-иерархию в одном модуле (`domain` или shared `api`); если нужен расширяемый API — используйте обычный `interface` без sealed.",
-                "edge_cases": "`sealed` нельзя делать `local` (внутри функции) или `inner` — только top-level или nested; конструктор sealed implicit `protected`; наследник может быть `class`, `data class`, `object`, `data object` или другим `sealed`. Тестовые подклассы должны лежать в том же модуле (обычно `src/test/kotlin` это удовлетворяет).",
-                "related": "[[kotlin-sealed-classes-interview#Q1]] основы sealed; [[kotlin-sealed-classes-interview#Q4]] sealed interface с тем же scope; [[kotlin-sealed-classes-interview#Q15]] типичные ошибки."
+                "what_actually": "В Kotlin нет аннотации `permits` (это Java 17 синтаксис); правило строго фиксировано — module-scope без возможности расширения, потому что sealed закрыты по определению.",
+                "source_of_confusion": "Java 17 sealed взаимодействуют через keyword `permits`, и кажется, что Kotlin тоже это перенял.",
+                "if_it_were_true": "Тогда появилась бы лазейка для расширения sealed снаружи, что нарушало бы инвариант exhaustiveness — компилятор не был бы уверен, что видит все варианты в `when`.",
+                "how_it_should_be": "Расширить sealed из другого модуля нельзя ничем; scope ограничен одним модулем по дизайну."
               }
             }
           ]
@@ -504,13 +504,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Sealed class в DSL заменяет builder pattern — каждый шаг билдера выбирает один из вариантов sealed, и компилятор гарантирует exhaustive обработку.",
+              "text": "`sealed class` в DSL заменяет `@DslMarker` — sealed-варианты автоматически изолируют scope.",
               "correct": false,
               "sections": {
-                "what_actually": "В DSL sealed обычно играет роль результата или узла AST, а не «шага билдера»: сам builder реализуется через scoped-функции (`apply`, `with`, `run`) и `@DslMarker` на receiver-классах, а sealed появляется как outcome или node-тип.",
-                "source_of_confusion": "Оба паттерна про «построение чего-то типизированного», поэтому кажется, что sealed может вытеснить builder.",
-                "if_it_were_true": "Тогда в Kotlin DSL не нужны были бы `@DslMarker`-аннотации и type-safe builders в html-dsl и coroutines builders — но они существуют.",
-                "how_it_should_be": "Builder остаётся отдельным паттерном на receiver-функциях; sealed лишь типизирует его результат или узлы."
+                "what_actually": "`@DslMarker` — отдельная meta-аннотация для предотвращения «двойного receiver» в nested DSL (чтобы внутри `html { body { ... } }` внешний `body` не резолвился случайно); sealed такой семантики не имеет и решает другую задачу — закрытость иерархии.",
+                "source_of_confusion": "Обе фичи относятся к «продвинутому Kotlin DSL», и можно подумать, что одна замещает другую.",
+                "if_it_were_true": "Тогда документация Kotlin DSL не упоминала бы `@DslMarker` отдельно — но это явная и независимая фича.",
+                "how_it_should_be": "Scope isolation даёт `@DslMarker`, а sealed закрывает множество вариантов; функции у них не пересекаются."
               }
             },
             {
@@ -528,13 +528,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`sealed class` в DSL заменяет `@DslMarker` — sealed-варианты автоматически изолируют scope.",
+              "text": "Sealed class в DSL заменяет builder pattern — каждый шаг билдера выбирает один из вариантов sealed, и компилятор гарантирует exhaustive обработку.",
               "correct": false,
               "sections": {
-                "what_actually": "`@DslMarker` — отдельная meta-аннотация для предотвращения «двойного receiver» в nested DSL (чтобы внутри `html { body { ... } }` внешний `body` не резолвился случайно); sealed такой семантики не имеет и решает другую задачу — закрытость иерархии.",
-                "source_of_confusion": "Обе фичи относятся к «продвинутому Kotlin DSL», и можно подумать, что одна замещает другую.",
-                "if_it_were_true": "Тогда документация Kotlin DSL не упоминала бы `@DslMarker` отдельно — но это явная и независимая фича.",
-                "how_it_should_be": "Scope isolation даёт `@DslMarker`, а sealed закрывает множество вариантов; функции у них не пересекаются."
+                "what_actually": "В DSL sealed обычно играет роль результата или узла AST, а не «шага билдера»: сам builder реализуется через scoped-функции (`apply`, `with`, `run`) и `@DslMarker` на receiver-классах, а sealed появляется как outcome или node-тип.",
+                "source_of_confusion": "Оба паттерна про «построение чего-то типизированного», поэтому кажется, что sealed может вытеснить builder.",
+                "if_it_were_true": "Тогда в Kotlin DSL не нужны были бы `@DslMarker`-аннотации и type-safe builders в html-dsl и coroutines builders — но они существуют.",
+                "how_it_should_be": "Builder остаётся отдельным паттерном на receiver-функциях; sealed лишь типизирует его результат или узлы."
               }
             }
           ]
@@ -551,18 +551,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`kotlinx.serialization` распознаёт sealed автоматически без дополнительных аннотаций — достаточно `@Serializable` на sealed-родителе.",
+              "text": "Нужно сериализовать вручную через `JsonPrimitive` и `JsonObject` — kotlinx.serialization не поддерживает sealed напрямую.",
               "correct": false,
               "sections": {
-                "what_actually": "Нужно аннотировать `@Serializable` и родителя, и каждый подкласс — иначе compiler plugin не сгенерирует сериализаторы для подклассов и в рантайме будет `SerializationException: Serializer for class ... is not found`; `@SerialName` рекомендуется для стабильности дискриминатора при рефакторинге.",
-                "source_of_confusion": "Compiler plugin делает много автоматически (например, `@Serializable` на data class), и кажется, что для sealed тоже всё magic.",
-                "if_it_were_true": "Тогда не было бы знаменитой ошибки `Serializer for ... is not found` — самой частой проблемы при сериализации sealed.",
-                "how_it_should_be": "Аннотировать нужно и родителя, и каждый подкласс; одного `@Serializable` на вершине недостаточно."
+                "what_actually": "kotlinx.serialization полностью поддерживает sealed «из коробки» с версии 0.20+: сериализатор создаётся compiler-плагином и добавляет дискриминатор типа (по умолчанию поле `type`); ручная сериализация — крайняя мера для нестандартных схем.",
+                "source_of_confusion": "В Jackson sealed/polymorphism требует ручной конфигурации `@JsonTypeInfo`/`@JsonSubTypes`, и этот опыт переносят на kotlinx.",
+                "if_it_were_true": "Тогда `Ktor` server, активно использующий sealed для request/response типов, не работал бы — а он работает.",
+                "how_it_should_be": "Ручная сборка JSON не нужна; sealed обрабатывается автоматически через `@Serializable` и `@SerialName`."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "Нужно использовать `@JsonTypeInfo` и `@JsonSubTypes`, как в Jackson — kotlinx.serialization копирует Jackson API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "kotlinx.serialization — отдельная библиотека со своим API; `@JsonTypeInfo`/`@JsonSubTypes` — это Jackson-аннотации и они не работают с kotlinx, аналог здесь — `@SerialName` плюс автоматический discovery sealed.",
+                "source_of_confusion": "Долгое время Jackson был стандартом на JVM, и разработчики по инерции ищут его аннотации в любой JVM-библиотеке.",
+                "if_it_were_true": "Тогда kotlinx.serialization не работал бы на Kotlin/Native (где Jackson нет) — но он работает там, это KMP-библиотека.",
+                "how_it_should_be": "Используйте `@SerialName` из kotlinx; Jackson-аннотации для sealed в kotlinx бесполезны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "На родителе ставится `@Serializable`, на каждом подклассе — `@Serializable @SerialName(\"tag\")`; по умолчанию kotlinx добавляет в JSON поле `\"type\": \"tag\"`, а дискриминатор настраивается через `Json { classDiscriminator = \"_type\" }`.",
               "correct": true,
               "sections": {
@@ -574,27 +586,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Нужно сериализовать вручную через `JsonPrimitive` и `JsonObject` — kotlinx.serialization не поддерживает sealed напрямую.",
-              "correct": false,
-              "sections": {
-                "what_actually": "kotlinx.serialization полностью поддерживает sealed «из коробки» с версии 0.20+: сериализатор создаётся compiler-плагином и добавляет дискриминатор типа (по умолчанию поле `type`); ручная сериализация — крайняя мера для нестандартных схем.",
-                "source_of_confusion": "В Jackson sealed/polymorphism требует ручной конфигурации `@JsonTypeInfo`/`@JsonSubTypes`, и этот опыт переносят на kotlinx.",
-                "if_it_were_true": "Тогда `Ktor` server, активно использующий sealed для request/response типов, не работал бы — а он работает.",
-                "how_it_should_be": "Ручная сборка JSON не нужна; sealed обрабатывается автоматически через `@Serializable` и `@SerialName`."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Нужно использовать `@JsonTypeInfo` и `@JsonSubTypes`, как в Jackson — kotlinx.serialization копирует Jackson API.",
+              "text": "`kotlinx.serialization` распознаёт sealed автоматически без дополнительных аннотаций — достаточно `@Serializable` на sealed-родителе.",
               "correct": false,
               "sections": {
-                "what_actually": "kotlinx.serialization — отдельная библиотека со своим API; `@JsonTypeInfo`/`@JsonSubTypes` — это Jackson-аннотации и они не работают с kotlinx, аналог здесь — `@SerialName` плюс автоматический discovery sealed.",
-                "source_of_confusion": "Долгое время Jackson был стандартом на JVM, и разработчики по инерции ищут его аннотации в любой JVM-библиотеке.",
-                "if_it_were_true": "Тогда kotlinx.serialization не работал бы на Kotlin/Native (где Jackson нет) — но он работает там, это KMP-библиотека.",
-                "how_it_should_be": "Используйте `@SerialName` из kotlinx; Jackson-аннотации для sealed в kotlinx бесполезны."
+                "what_actually": "Нужно аннотировать `@Serializable` и родителя, и каждый подкласс — иначе compiler plugin не сгенерирует сериализаторы для подклассов и в рантайме будет `SerializationException: Serializer for class ... is not found`; `@SerialName` рекомендуется для стабильности дискриминатора при рефакторинге.",
+                "source_of_confusion": "Compiler plugin делает много автоматически (например, `@Serializable` на data class), и кажется, что для sealed тоже всё magic.",
+                "if_it_were_true": "Тогда не было бы знаменитой ошибки `Serializer for ... is not found` — самой частой проблемы при сериализации sealed.",
+                "how_it_should_be": "Аннотировать нужно и родителя, и каждый подкласс; одного `@Serializable` на вершине недостаточно."
               }
             }
           ]
@@ -611,13 +611,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Sealed UiState быстрее на JIT из-за меньшего количества полей в каждом подклассе.",
+              "text": "Sealed UiState обязателен в Jetpack Compose — без него рекомпозиция не работает.",
               "correct": false,
               "sections": {
-                "what_actually": "Перформанс — не главная причина: разница в скорости (если есть) — наносекунды на UI thread, незаметные; реальная причина — корректность типов и невозможность невалидных комбинаций на этапе компиляции.",
-                "source_of_confusion": "Фраза «sealed = меньше полей в варианте» звучит как perf-оптимизация.",
-                "if_it_were_true": "Тогда замеры `BenchmarkRule` показывали бы существенную разницу — но бенчмарки Jetpack Compose её не показывают.",
-                "how_it_should_be": "Ценность sealed UiState — в типобезопасности и exhaustive-обработке, а не в скорости."
+                "what_actually": "Compose работает с любыми observable state holders, а recomposition запускается снимками `@Stable`/`@Immutable` и `MutableState`; sealed — это паттерн моделирования, а не требование фреймворка.",
+                "source_of_confusion": "Примеры в Compose docs часто используют sealed для UiState, и кажется, что это требование.",
+                "if_it_were_true": "Тогда Compose не работал бы с `List<Item>` или `Map<K, V>` напрямую — но работает.",
+                "how_it_should_be": "Рекомпозиция зависит от snapshot-системы, а не от того, sealed ли модель состояния."
               }
             },
             {
@@ -648,13 +648,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Sealed UiState обязателен в Jetpack Compose — без него рекомпозиция не работает.",
+              "text": "Sealed UiState быстрее на JIT из-за меньшего количества полей в каждом подклассе.",
               "correct": false,
               "sections": {
-                "what_actually": "Compose работает с любыми observable state holders, а recomposition запускается снимками `@Stable`/`@Immutable` и `MutableState`; sealed — это паттерн моделирования, а не требование фреймворка.",
-                "source_of_confusion": "Примеры в Compose docs часто используют sealed для UiState, и кажется, что это требование.",
-                "if_it_were_true": "Тогда Compose не работал бы с `List<Item>` или `Map<K, V>` напрямую — но работает.",
-                "how_it_should_be": "Рекомпозиция зависит от snapshot-системы, а не от того, sealed ли модель состояния."
+                "what_actually": "Перформанс — не главная причина: разница в скорости (если есть) — наносекунды на UI thread, незаметные; реальная причина — корректность типов и невозможность невалидных комбинаций на этапе компиляции.",
+                "source_of_confusion": "Фраза «sealed = меньше полей в варианте» звучит как perf-оптимизация.",
+                "if_it_were_true": "Тогда замеры `BenchmarkRule` показывали бы существенную разницу — но бенчмарки Jetpack Compose её не показывают.",
+                "how_it_should_be": "Ценность sealed UiState — в типобезопасности и exhaustive-обработке, а не в скорости."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Sealed class — исключительно про null-safety, это альтернативный синтаксис `Option<T>`/`Maybe<T>`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Null-safety в Kotlin обеспечивают nullable-типы (`String?`) и safe-call (`?.`); sealed class — более широкое моделирование вариантов. Сделать `sealed class Option<T>` можно, но это редко нужно — `T?` идиоматичнее.",
-                "source_of_confusion": "Функциональные языки (Haskell `Maybe`, Scala `Option`) популяризируют sealed как замену null, но Kotlin уже имеет nullable types.",
-                "if_it_were_true": "Тогда все примеры sealed были бы про Option/Maybe, а они про Result, UiState, AST, DomainEvent — гораздо шире.",
-                "how_it_should_be": "Sealed моделирует произвольные варианты с разными данными; null-safety — отдельная фича языка."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Sealed class конвертирует `String` в enum-подобные константы автоматически на этапе компиляции.",
               "correct": false,
               "sections": {
@@ -690,6 +678,19 @@
                 "source_of_confusion": "У `enum` есть `valueOf(s)` для строкового парсинга, и кажется, что sealed тоже так умеет.",
                 "if_it_were_true": "Тогда имя дискриминатора в JSON всегда совпадало бы с именем класса без явного `@SerialName` — но `@SerialName` существует именно для управления этим.",
                 "how_it_should_be": "Маппинг строки в sealed-вариант пишут руками или через сериализатор; встроенного `valueOf` у sealed нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Sealed class закрывает множество значений на этапе компиляции и связывает каждый вариант с его payload: вместо параметра `String`, который может быть произвольной строкой, у нас фиксированный набор подклассов с разными полями.",
+              "correct": true,
+              "sections": {
+                "explanation": "Stringly-typed код (`\"card\"`, `\"paypal\"`, `\"crypto\"`) страдает от runtime-ошибок (опечатка `\"paypall\"` пройдёт компиляцию), небезопасного рефакторинга (rename ищется по строкам), отсутствия полноты (компилятор не знает значений) и слабой связи с данными (нужны отдельные nullable-поля). Sealed решает все четыре проблемы сразу.",
+                "example": "Вместо `data class Payment(type: String, cardNumber: String?, paypalEmail: String?, ...)` с опасными `!!` берут `sealed class PaymentMethod` с `Card(number, cvv)`, `PayPal(email)`, `Crypto(walletAddress, currency)`, и `when (m)` со smart-cast обрабатывает варианты без `!!` и exhaustive.",
+                "when_to_apply": "Применяют для доменных перечислений с разной структурой (payment methods, notification channels, identity providers — OAuth/SAML/SSO), как замену String-параметров и для polymorphic request DTO и JSONB-колонок (event store, audit log).",
+                "edge_cases": "На границе системы (REST, очереди) всё равно нужен маппинг `String ↔ sealed` — делайте explicit `fromString(s): PaymentMethod?` с nullable для невалидных; дискриминатор в JSON — это контролируемая, а не произвольная строка; слишком много подклассов → рассмотрите тип-параметр или композицию.",
+                "related": "[[kotlin-sealed-classes-interview#Q1]] основы sealed; [[kotlin-sealed-classes-interview#Q6]] теория ADT; [[kotlin-sealed-classes-interview#Q10]] сериализация через дискриминатор."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Sealed class закрывает множество значений на этапе компиляции и связывает каждый вариант с его payload: вместо параметра `String`, который может быть произвольной строкой, у нас фиксированный набор подклассов с разными полями.",
-              "correct": true,
+              "text": "Sealed class — исключительно про null-safety, это альтернативный синтаксис `Option<T>`/`Maybe<T>`.",
+              "correct": false,
               "sections": {
-                "explanation": "Stringly-typed код (`\"card\"`, `\"paypal\"`, `\"crypto\"`) страдает от runtime-ошибок (опечатка `\"paypall\"` пройдёт компиляцию), небезопасного рефакторинга (rename ищется по строкам), отсутствия полноты (компилятор не знает значений) и слабой связи с данными (нужны отдельные nullable-поля). Sealed решает все четыре проблемы сразу.",
-                "example": "Вместо `data class Payment(type: String, cardNumber: String?, paypalEmail: String?, ...)` с опасными `!!` берут `sealed class PaymentMethod` с `Card(number, cvv)`, `PayPal(email)`, `Crypto(walletAddress, currency)`, и `when (m)` со smart-cast обрабатывает варианты без `!!` и exhaustive.",
-                "when_to_apply": "Применяют для доменных перечислений с разной структурой (payment methods, notification channels, identity providers — OAuth/SAML/SSO), как замену String-параметров и для polymorphic request DTO и JSONB-колонок (event store, audit log).",
-                "edge_cases": "На границе системы (REST, очереди) всё равно нужен маппинг `String ↔ sealed` — делайте explicit `fromString(s): PaymentMethod?` с nullable для невалидных; дискриминатор в JSON — это контролируемая, а не произвольная строка; слишком много подклассов → рассмотрите тип-параметр или композицию.",
-                "related": "[[kotlin-sealed-classes-interview#Q1]] основы sealed; [[kotlin-sealed-classes-interview#Q6]] теория ADT; [[kotlin-sealed-classes-interview#Q10]] сериализация через дискриминатор."
+                "what_actually": "Null-safety в Kotlin обеспечивают nullable-типы (`String?`) и safe-call (`?.`); sealed class — более широкое моделирование вариантов. Сделать `sealed class Option<T>` можно, но это редко нужно — `T?` идиоматичнее.",
+                "source_of_confusion": "Функциональные языки (Haskell `Maybe`, Scala `Option`) популяризируют sealed как замену null, но Kotlin уже имеет nullable types.",
+                "if_it_were_true": "Тогда все примеры sealed были бы про Option/Maybe, а они про Result, UiState, AST, DomainEvent — гораздо шире.",
+                "how_it_should_be": "Sealed моделирует произвольные варианты с разными данными; null-safety — отдельная фича языка."
               }
             }
           ]
@@ -731,19 +731,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Каждое состояние — отдельный подкласс sealed `OrderState`, реализующий метод `next(event: OrderEvent): OrderState` с `when (event)`, где перечислены только разрешённые из этого состояния переходы; невалидные либо отсутствуют, либо явно бросают `IllegalStateException`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Паттерн состоит из четырёх частей: `sealed class State` (все состояния как подклассы), `sealed class Event` (все события), функция перехода `State.next(Event): State` в каждом подклассе индивидуально, и обработка невалидного перехода через исключение или возврат текущего состояния. Для строгой type-safety применяют typed states с разными методами в каждом классе.",
-                "example": "`OrderState.Pending.next(Confirm)` возвращает `Confirmed(Instant.now())`, а `Pending.next(Ship)` уходит в `else -> throw IllegalStateException`; так из `Pending` разрешён только `Confirm`/`Cancel`, остальные переходы запрещены на уровне реализации.",
-                "when_to_apply": "Применяют для доменных state machines (Order, Subscription, KYC flow, OAuth grant), workflow engines, saga-координаторов в распределённых системах и navigation flows; production-реализации — Tinder StateMachine и Square Workflow.",
-                "edge_cases": "Runtime-исключение на невалидном переходе — не идеал: сильнее типизирует type-state pattern (`Pending.confirm(): Confirmed`, у `Shipped` нет `confirm()`), но он усложняет хранение. State machine с side effects требует transactional boundary, а для распределённых сценариев берут Saga с компенсациями.",
-                "related": "[[kotlin-sealed-classes-interview#Q1]] основы sealed; [[kotlin-sealed-classes-interview#Q6]] ADT для states/events; [[kotlin-sealed-classes-interview#Q11]] UiState как state machine для UI."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Все возможные переходы хранятся как глобальная `Map<State, List<Event>>` — sealed class не даёт type-safety для transitions.",
               "correct": false,
               "sections": {
@@ -751,6 +738,18 @@
                 "source_of_confusion": "Библиотеки state machine (Tinder StateMachine, Statelyx) часто используют DSL с map-подобной декларацией, и кажется, что это обязательный паттерн.",
                 "if_it_were_true": "Тогда sealed state machines не имели бы преимуществ над enum-based — но имеют, ведь состояния несут разные данные и методы.",
                 "how_it_should_be": "Переходы кодируют в методах состояний, а не в внешней Map; так сохраняется типизация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Sealed state machine требует обязательного хранения в БД через JPA `@DiscriminatorColumn` — без этого не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "State machine как концепция не привязан к persistence: состояние можно держать in-memory, в Redis, в JSON-колонке или вообще не персистить; `@DiscriminatorColumn` — опциональный JPA-механизм для single-table inheritance.",
+                "source_of_confusion": "Многие state machines в реальности персистируются, чтобы пережить рестарт, и JPA inheritance всплывает в этом контексте.",
+                "if_it_were_true": "Тогда in-memory state machines (например, Compose UI state) не работали бы — но работают.",
+                "how_it_should_be": "Persistence выбирают по требованиям; sealed state machine функционирует и полностью в памяти."
               }
             },
             {
@@ -768,13 +767,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Sealed state machine требует обязательного хранения в БД через JPA `@DiscriminatorColumn` — без этого не работает.",
-              "correct": false,
+              "text": "Каждое состояние — отдельный подкласс sealed `OrderState`, реализующий метод `next(event: OrderEvent): OrderState` с `when (event)`, где перечислены только разрешённые из этого состояния переходы; невалидные либо отсутствуют, либо явно бросают `IllegalStateException`.",
+              "correct": true,
               "sections": {
-                "what_actually": "State machine как концепция не привязан к persistence: состояние можно держать in-memory, в Redis, в JSON-колонке или вообще не персистить; `@DiscriminatorColumn` — опциональный JPA-механизм для single-table inheritance.",
-                "source_of_confusion": "Многие state machines в реальности персистируются, чтобы пережить рестарт, и JPA inheritance всплывает в этом контексте.",
-                "if_it_were_true": "Тогда in-memory state machines (например, Compose UI state) не работали бы — но работают.",
-                "how_it_should_be": "Persistence выбирают по требованиям; sealed state machine функционирует и полностью в памяти."
+                "explanation": "Паттерн состоит из четырёх частей: `sealed class State` (все состояния как подклассы), `sealed class Event` (все события), функция перехода `State.next(Event): State` в каждом подклассе индивидуально, и обработка невалидного перехода через исключение или возврат текущего состояния. Для строгой type-safety применяют typed states с разными методами в каждом классе.",
+                "example": "`OrderState.Pending.next(Confirm)` возвращает `Confirmed(Instant.now())`, а `Pending.next(Ship)` уходит в `else -> throw IllegalStateException`; так из `Pending` разрешён только `Confirm`/`Cancel`, остальные переходы запрещены на уровне реализации.",
+                "when_to_apply": "Применяют для доменных state machines (Order, Subscription, KYC flow, OAuth grant), workflow engines, saga-координаторов в распределённых системах и navigation flows; production-реализации — Tinder StateMachine и Square Workflow.",
+                "edge_cases": "Runtime-исключение на невалидном переходе — не идеал: сильнее типизирует type-state pattern (`Pending.confirm(): Confirmed`, у `Shipped` нет `confirm()`), но он усложняет хранение. State machine с side effects требует transactional boundary, а для распределённых сценариев берут Saga с компенсациями.",
+                "related": "[[kotlin-sealed-classes-interview#Q1]] основы sealed; [[kotlin-sealed-classes-interview#Q6]] ADT для states/events; [[kotlin-sealed-classes-interview#Q11]] UiState как state machine для UI."
               }
             }
           ]
@@ -851,30 +851,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Использование `data class` вместо `class` для подкласса sealed — это ломает hashCode/equals.",
+              "text": "Объявление sealed класса внутри функции (local class) — это «тихая» runtime-проблема, незаметная до прода.",
               "correct": false,
               "sections": {
-                "what_actually": "`data class` как подкласс sealed — рекомендуемая практика: он даёт автогенерируемые `equals`/`hashCode`/`toString`/`copy`, что критично для сравнения state и debug-логов; никаких поломок нет, это идиоматично.",
-                "source_of_confusion": "В Java иерархии с наследованием часто требуют ручной реализации equals, а Kotlin data class делает это по primary constructor properties — отсюда сомнения.",
-                "if_it_were_true": "Тогда документация Kotlin не рекомендовала бы data class для sealed-вариантов — но рекомендует.",
-                "how_it_should_be": "`data class` — правильный выбор для вариантов с данными; equals/hashCode он генерирует корректно."
+                "what_actually": "Local sealed действительно запрещён («Modifier 'sealed' is not applicable to local class»), но это compile-time error, а не «тихая» runtime-ошибка — её невозможно случайно протащить через CI.",
+                "source_of_confusion": "Ограничение известно, но его по ошибке считают «возможной runtime-проблемой».",
+                "if_it_were_true": "Тогда не было бы build-failure на стадии компиляции — но он есть, и сборка просто не пройдёт.",
+                "how_it_should_be": "Local/inner sealed отсекает компилятор сразу; самая «тихая» ошибка — это `when`-statement без exhaustive до 2.0."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Использование `object` для singleton-вариантов без данных — это создаёт OOM при сериализации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`object` — singleton (один экземпляр на JVM), он расходует меньше памяти, а не больше, и это корректная практика для `Loading`/`Empty`; сериализация идёт через `@SerialName`-дискриминатор без OOM.",
-                "source_of_confusion": "Kotlin 1.9 ввёл `data object`, и некоторые думают, что обычный `object` устарел или проблемный, хотя `data object` отличается лишь читаемым `toString()`.",
-                "if_it_were_true": "Тогда Android UI state recommendations не использовали бы `object Loading` — но используют.",
-                "how_it_should_be": "`object`/`data object` — правильный способ для вариантов без данных; памяти он экономит, а не теряет."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Использование `when` как statement (без присваивания и `return`) вместо expression в Kotlin до 2.0 — компилятор не требовал exhaustiveness, и при добавлении нового подкласса баг тихо уходит в прод как «необработанный case».",
               "correct": true,
               "sections": {
@@ -886,15 +874,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Объявление sealed класса внутри функции (local class) — это «тихая» runtime-проблема, незаметная до прода.",
+              "order": 2,
+              "label": "C",
+              "text": "Использование `object` для singleton-вариантов без данных — это создаёт OOM при сериализации.",
               "correct": false,
               "sections": {
-                "what_actually": "Local sealed действительно запрещён («Modifier 'sealed' is not applicable to local class»), но это compile-time error, а не «тихая» runtime-ошибка — её невозможно случайно протащить через CI.",
-                "source_of_confusion": "Ограничение известно, но его по ошибке считают «возможной runtime-проблемой».",
-                "if_it_were_true": "Тогда не было бы build-failure на стадии компиляции — но он есть, и сборка просто не пройдёт.",
-                "how_it_should_be": "Local/inner sealed отсекает компилятор сразу; самая «тихая» ошибка — это `when`-statement без exhaustive до 2.0."
+                "what_actually": "`object` — singleton (один экземпляр на JVM), он расходует меньше памяти, а не больше, и это корректная практика для `Loading`/`Empty`; сериализация идёт через `@SerialName`-дискриминатор без OOM.",
+                "source_of_confusion": "Kotlin 1.9 ввёл `data object`, и некоторые думают, что обычный `object` устарел или проблемный, хотя `data object` отличается лишь читаемым `toString()`.",
+                "if_it_were_true": "Тогда Android UI state recommendations не использовали бы `object Loading` — но используют.",
+                "how_it_should_be": "`object`/`data object` — правильный способ для вариантов без данных; памяти он экономит, а не теряет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использование `data class` вместо `class` для подкласса sealed — это ломает hashCode/equals.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`data class` как подкласс sealed — рекомендуемая практика: он даёт автогенерируемые `equals`/`hashCode`/`toString`/`copy`, что критично для сравнения state и debug-логов; никаких поломок нет, это идиоматично.",
+                "source_of_confusion": "В Java иерархии с наследованием часто требуют ручной реализации equals, а Kotlin data class делает это по primary constructor properties — отсюда сомнения.",
+                "if_it_were_true": "Тогда документация Kotlin не рекомендовала бы data class для sealed-вариантов — но рекомендует.",
+                "how_it_should_be": "`data class` — правильный выбор для вариантов с данными; equals/hashCode он генерирует корректно."
               }
             }
           ]

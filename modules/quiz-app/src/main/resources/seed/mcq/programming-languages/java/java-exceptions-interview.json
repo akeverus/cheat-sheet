@@ -11,6 +11,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Все исключения в Java наследуются напрямую от `Exception`, а класс `Error` к иерархии `Throwable` отношения не имеет и существует отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корень иерархии — `Throwable`, и `Error` — его прямой наследник наравне с `Exception`; `Error` полноценно входит в иерархию `Throwable`.",
+                "source_of_confusion": "Имена `Exception` и `Error` звучат как разные понятия, поэтому кажется, что у них нет общего предка.",
+                "if_it_were_true": "Тогда `catch (Throwable)` не ловил бы `Error`, но на практике он перехватывает и `OutOfMemoryError`, и `StackOverflowError`.",
+                "how_it_should_be": "`Error` и `Exception` — два прямых наследника `Throwable`; общий корень именно `Throwable`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Exception` — ненормальное событие во время выполнения, нарушающее нормальный поток инструкций. Все исключения наследуются от `Throwable`, у которого два прямых наследника: `Error` (проблемы JVM) и `Exception` (проблемы приложения). Внутри `Exception` особняком стоит `RuntimeException` — ветка unchecked-исключений.",
               "correct": true,
               "sections": {
@@ -19,18 +31,6 @@
                 "when_to_apply": "Знание иерархии нужно при выборе типа для catch, при проектировании кастомных исключений и при объяснении, почему `catch (Exception)` не ловит `Error`.",
                 "edge_cases": "Граничный случай: `catch (Throwable)` перехватывает и `Error`, и `Exception`, но ловить `Error` в бизнес-коде нельзя — после `OutOfMemoryError` состояние JVM непредсказуемо.",
                 "related": "[[java-exceptions-interview#Q5]] checked vs unchecked; [[java-exceptions-interview#Q6]] Exception vs Error; [[java-exceptions-interview#Q24]] catch Throwable на границах."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Все исключения в Java наследуются напрямую от `Exception`, а класс `Error` к иерархии `Throwable` отношения не имеет и существует отдельно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Корень иерархии — `Throwable`, и `Error` — его прямой наследник наравне с `Exception`; `Error` полноценно входит в иерархию `Throwable`.",
-                "source_of_confusion": "Имена `Exception` и `Error` звучат как разные понятия, поэтому кажется, что у них нет общего предка.",
-                "if_it_were_true": "Тогда `catch (Throwable)` не ловил бы `Error`, но на практике он перехватывает и `OutOfMemoryError`, и `StackOverflowError`.",
-                "how_it_should_be": "`Error` и `Exception` — два прямых наследника `Throwable`; общий корень именно `Throwable`."
               }
             },
             {
@@ -71,18 +71,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`throw` и `throws` — взаимозаменяемые синонимы: оба ставятся в сигнатуре метода и объявляют список исключений, которые метод способен выбросить.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`throw` ставится в теле и выбрасывает один объект, а `throws` — в сигнатуре и перечисляет типы; это разные конструкции с разными ролями.",
-                "source_of_confusion": "Слова отличаются лишь буквой `s`, поэтому их легко принять за один и тот же оператор.",
-                "if_it_were_true": "Тогда можно было бы написать `void m() throw IOException`, но это синтаксическая ошибка — в сигнатуре допустим только `throws`.",
-                "how_it_should_be": "`throw` выбрасывает объект в теле метода, `throws` декларирует типы в сигнатуре — конструкции не взаимозаменяемы."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`throws` объявляется в сигнатуре метода и говорит, что метод может выбросить указанные исключения, обязывая вызывающий код обрабатывать checked-типы. `throw` ставится в теле метода и выбрасывает конкретный объект исключения, немедленно прерывая нормальный поток.",
               "correct": true,
               "sections": {
@@ -91,6 +79,18 @@
                 "when_to_apply": "`throws` пишут, когда метод пробрасывает checked-исключение наверх и не хочет ловить его сам; `throw` — когда нужно сигнализировать о нарушении контракта или ошибке прямо сейчас.",
                 "edge_cases": "Граничный случай: для unchecked-исключений `throws` указывать необязательно (можно для документации), а через запятую в `throws` перечисляют несколько типов сразу.",
                 "related": "[[java-exceptions-interview#Q1]] иерархия Throwable; [[java-exceptions-interview#Q5]] checked vs unchecked; [[java-exceptions-interview#Q16]] контракт throws при переопределении."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`throw` применяется только к unchecked-исключениям, а `throws` — исключительно к `Error`, поэтому checked-исключения нельзя ни выбросить, ни объявить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`throw` выбрасывает любые `Throwable` (включая checked), а `throws` объявляет именно checked-исключения; `Error` обычно вообще не декларируют.",
+                "source_of_confusion": "Деление на checked/unchecked путают с делением на сами ключевые слова `throw`/`throws`.",
+                "if_it_were_true": "Тогда `throw new IOException()` было бы невозможно, но это валидный код, требующий лишь объявления `throws` или catch.",
+                "how_it_should_be": "`throw` работает с любым `Throwable`, `throws` декларирует checked-типы; привязки к `Error` тут нет."
               }
             },
             {
@@ -108,13 +108,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`throw` применяется только к unchecked-исключениям, а `throws` — исключительно к `Error`, поэтому checked-исключения нельзя ни выбросить, ни объявить.",
+              "text": "`throw` и `throws` — взаимозаменяемые синонимы: оба ставятся в сигнатуре метода и объявляют список исключений, которые метод способен выбросить.",
               "correct": false,
               "sections": {
-                "what_actually": "`throw` выбрасывает любые `Throwable` (включая checked), а `throws` объявляет именно checked-исключения; `Error` обычно вообще не декларируют.",
-                "source_of_confusion": "Деление на checked/unchecked путают с делением на сами ключевые слова `throw`/`throws`.",
-                "if_it_were_true": "Тогда `throw new IOException()` было бы невозможно, но это валидный код, требующий лишь объявления `throws` или catch.",
-                "how_it_should_be": "`throw` работает с любым `Throwable`, `throws` декларирует checked-типы; привязки к `Error` тут нет."
+                "what_actually": "`throw` ставится в теле и выбрасывает один объект, а `throws` — в сигнатуре и перечисляет типы; это разные конструкции с разными ролями.",
+                "source_of_confusion": "Слова отличаются лишь буквой `s`, поэтому их легко принять за один и тот же оператор.",
+                "if_it_were_true": "Тогда можно было бы написать `void m() throw IOException`, но это синтаксическая ошибка — в сигнатуре допустим только `throws`.",
+                "how_it_should_be": "`throw` выбрасывает объект в теле метода, `throws` декларирует типы в сигнатуре — конструкции не взаимозаменяемы."
               }
             }
           ]
@@ -131,18 +131,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `try-catch-finally` блок `finally` выполняется только тогда, когда исключение не было выброшено; при ошибке он пропускается.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`finally` выполняется всегда — и при нормальном завершении, и при исключении, и даже при `return`; пропуск возможен лишь при `System.exit()`.",
-                "source_of_confusion": "Слово finally ассоциируется с «успешным финалом», поэтому кажется, что при ошибке он не нужен.",
-                "if_it_were_true": "Тогда `finally` не годился бы для закрытия ресурсов, но именно эту задачу он и решает при любом исходе.",
-                "how_it_should_be": "`finally` гарантированно выполняется независимо от того, было исключение или нет."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Родительский тип исключения в списке `catch` должен идти раньше дочернего, иначе родитель не перехватит ничего.",
               "correct": false,
               "sections": {
@@ -153,8 +141,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "В `try-catch-finally` блок `finally` выполняется только тогда, когда исключение не было выброшено; при ошибке он пропускается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`finally` выполняется всегда — и при нормальном завершении, и при исключении, и даже при `return`; пропуск возможен лишь при `System.exit()`.",
+                "source_of_confusion": "Слово finally ассоциируется с «успешным финалом», поэтому кажется, что при ошибке он не нужен.",
+                "if_it_were_true": "Тогда `finally` не годился бы для закрытия ресурсов, но именно эту задачу он и решает при любом исходе.",
+                "how_it_should_be": "`finally` гарантированно выполняется независимо от того, было исключение или нет."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Блок `catch` обязателен в любой конструкции `try`, а `finally` можно опускать; конструкция `try-finally` без `catch` недопустима.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обязателен только `try`; допустима форма `try-finally` без `catch` (часто с `try-with-resources`), а нужен хотя бы один из `catch`/`finally`.",
+                "source_of_confusion": "`catch` встречается в примерах чаще, поэтому кажется обязательным элементом конструкции.",
+                "if_it_were_true": "Тогда `try (var r = open()) { ... } finally { ... }` не компилировался бы, но это валидная и распространённая форма.",
+                "how_it_should_be": "Обязателен `try` плюс минимум один блок из `catch` или `finally`; `try-finally` без catch корректен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Защищённый код помещают в `try`, обработку конкретных типов — в один или несколько `catch` (от более специфичного к более общему), а гарантированный код освобождения ресурсов — в `finally`. Блок `try` обязателен, а из `catch`/`finally` нужен хотя бы один.",
               "correct": true,
               "sections": {
@@ -163,18 +175,6 @@
                 "when_to_apply": "Конструкцию применяют, когда нужно поймать ожидаемый сбой и при этом гарантированно выполнить завершающие действия (логирование, закрытие, сброс состояния) независимо от результата.",
                 "edge_cases": "Граничный случай: `finally` выполняется даже при `return` внутри `try` или `catch`; для ресурсов с `Java 7+` предпочтительнее `try-with-resources`.",
                 "related": "[[java-exceptions-interview#Q4]] несколько catch и multi-catch; [[java-exceptions-interview#Q22]] порядок try-catch-finally; [[java-exceptions-interview#Q23]] return в finally."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Блок `catch` обязателен в любой конструкции `try`, а `finally` можно опускать; конструкция `try-finally` без `catch` недопустима.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Обязателен только `try`; допустима форма `try-finally` без `catch` (часто с `try-with-resources`), а нужен хотя бы один из `catch`/`finally`.",
-                "source_of_confusion": "`catch` встречается в примерах чаще, поэтому кажется обязательным элементом конструкции.",
-                "if_it_were_true": "Тогда `try (var r = open()) { ... } finally { ... }` не компилировался бы, но это валидная и распространённая форма.",
-                "how_it_should_be": "Обязателен `try` плюс минимум один блок из `catch` или `finally`; `try-finally` без catch корректен."
               }
             }
           ]
@@ -203,18 +203,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `multi-catch` можно перечислять типы, связанные наследованием, например `catch (IOException | FileNotFoundException ex)` — это рекомендуемая практика.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Связанные наследованием типы в `multi-catch` запрещены: `FileNotFoundException` уже покрывается `IOException`, и такой код не компилируется.",
-                "source_of_confusion": "Кажется логичным перечислить и базовый, и дочерний тип «на всякий случай», но компилятор это запрещает как избыточность.",
-                "if_it_were_true": "Тогда компилятор принимал бы `IOException | FileNotFoundException`, но он выдаёт ошибку о подтипе в multi-catch.",
-                "how_it_should_be": "В `multi-catch` типы должны быть несвязанными; для иерархии хватает одного — родительского — типа."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Переменную исключения в `multi-catch` можно свободно переприсваивать внутри блока, например `ex = new IOException(...)`.",
               "correct": false,
               "sections": {
@@ -225,8 +213,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Есть три способа: несколько последовательных `catch`-блоков (от специфичного к общему), один `multi-catch` блок (`Java 7+`) для несвязанных типов через `|`, и общий `catch (Exception)` как крайний (и часто нежелательный) вариант.",
               "correct": true,
               "sections": {
@@ -235,6 +223,18 @@
                 "when_to_apply": "Несколько `catch` применяют при разной обработке, `multi-catch` — при одинаковой для разных типов, а широкий `catch (Exception)` оставляют для верхних границ системы.",
                 "edge_cases": "Граничный случай: в `multi-catch` типы не должны быть связаны наследованием — `catch (IOException | FileNotFoundException ex)` не скомпилируется, так как `FileNotFoundException` — подкласс `IOException`.",
                 "related": "[[java-exceptions-interview#Q3]] базовый try-catch-finally; [[java-exceptions-interview#Q5]] checked vs unchecked; [[java-exceptions-interview#Q36]] ограничения multi-catch."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `multi-catch` можно перечислять типы, связанные наследованием, например `catch (IOException | FileNotFoundException ex)` — это рекомендуемая практика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Связанные наследованием типы в `multi-catch` запрещены: `FileNotFoundException` уже покрывается `IOException`, и такой код не компилируется.",
+                "source_of_confusion": "Кажется логичным перечислить и базовый, и дочерний тип «на всякий случай», но компилятор это запрещает как избыточность.",
+                "if_it_were_true": "Тогда компилятор принимал бы `IOException | FileNotFoundException`, но он выдаёт ошибку о подтипе в multi-catch.",
+                "how_it_should_be": "В `multi-catch` типы должны быть несвязанными; для иерархии хватает одного — родительского — типа."
               }
             }
           ]
@@ -251,6 +251,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Разница между checked и unchecked чисто стилистическая и существует только в IDE; на уровне компилятора оба типа идентичны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разница реальна и enforced компилятором: checked без обработки или `throws` не компилируется, unchecked компилируется свободно.",
+                "source_of_confusion": "Современные IDE подсвечивают оба вида, отчего кажется, что различие живёт лишь в подсказках редактора.",
+                "if_it_were_true": "Тогда метод с `throws IOException` можно было бы вызвать без обработки, но компилятор это запретит.",
+                "how_it_should_be": "Это семантика языка: компилятор по-разному относится к checked и unchecked."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Компилятор требует обрабатывать unchecked-исключения, а checked можно игнорировать — поэтому checked удобнее в новых API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: компилятор требует обрабатывать именно checked, а unchecked обрабатывать необязательно.",
+                "source_of_confusion": "Сама приставка «un-» в unchecked сбивает с толку насчёт того, что именно проверяется.",
+                "if_it_were_true": "Тогда `IllegalArgumentException` нужно было бы объявлять в `throws`, но это unchecked и таких требований нет.",
+                "how_it_should_be": "Checked проверяются компилятором и требуют `throws`/catch; unchecked — нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Checked Exception` наследуется от `Exception` (но не от `RuntimeException`), и компилятор обязывает обрабатывать его через `try-catch` или объявлять в `throws`. `Unchecked Exception` — это `RuntimeException` и его подклассы; компилятор обработку не требует.",
               "correct": true,
               "sections": {
@@ -262,8 +286,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Checked-исключения наследуются от `RuntimeException`, а unchecked — от `Error`; деление проходит ровно по этим двум классам.",
               "correct": false,
               "sections": {
@@ -271,30 +295,6 @@
                 "source_of_confusion": "Слова «runtime» и «unchecked» оба про «не проверяется заранее», поэтому их привязку путают.",
                 "if_it_were_true": "Тогда `NullPointerException` (наследник `RuntimeException`) был бы checked, но компилятор его обработки не требует.",
                 "how_it_should_be": "Checked = `Exception` без `RuntimeException`; unchecked = `RuntimeException` и потомки."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Компилятор требует обрабатывать unchecked-исключения, а checked можно игнорировать — поэтому checked удобнее в новых API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: компилятор требует обрабатывать именно checked, а unchecked обрабатывать необязательно.",
-                "source_of_confusion": "Сама приставка «un-» в unchecked сбивает с толку насчёт того, что именно проверяется.",
-                "if_it_were_true": "Тогда `IllegalArgumentException` нужно было бы объявлять в `throws`, но это unchecked и таких требований нет.",
-                "how_it_should_be": "Checked проверяются компилятором и требуют `throws`/catch; unchecked — нет."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Разница между checked и unchecked чисто стилистическая и существует только в IDE; на уровне компилятора оба типа идентичны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Разница реальна и enforced компилятором: checked без обработки или `throws` не компилируется, unchecked компилируется свободно.",
-                "source_of_confusion": "Современные IDE подсвечивают оба вида, отчего кажется, что различие живёт лишь в подсказках редактора.",
-                "if_it_were_true": "Тогда метод с `throws IOException` можно было бы вызвать без обработки, но компилятор это запретит.",
-                "how_it_should_be": "Это семантика языка: компилятор по-разному относится к checked и unchecked."
               }
             }
           ]
@@ -323,6 +323,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Error` относится к checked-типам, а `Exception` — к unchecked, поэтому компилятор требует обрабатывать `OutOfMemoryError`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Error` не проверяется компилятором (его не объявляют в `throws`), а среди `Exception` есть и checked, и unchecked.",
+                "source_of_confusion": "Деление checked/unchecked путают с делением `Exception`/`Error`.",
+                "if_it_were_true": "Тогда каждый метод, способный исчерпать память, объявлял бы `throws OutOfMemoryError`, чего на практике нет.",
+                "how_it_should_be": "`Error` не требует обработки компилятором; checked/unchecked — это про подтипы `Exception`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Exception` наследуется от `Throwable` через ветку `Exception` и описывает проблемы приложения, которые можно и нужно обрабатывать. `Error` — отдельная ветка `Throwable`, отражающая серьёзные сбои JVM и системных ресурсов, от которых обычно нельзя восстановиться.",
               "correct": true,
               "sections": {
@@ -334,8 +346,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Error` отражает восстановимые сбои JVM (`OutOfMemoryError`, `StackOverflowError`), которые в бизнес-коде штатно перехватывают и из которых программа продолжает работу, а `Exception` — невосстановимые проблемы приложения.",
               "correct": false,
               "sections": {
@@ -343,18 +355,6 @@
                 "source_of_confusion": "Оба слова про «что-то пошло не так», поэтому источник и восстановимость путают местами.",
                 "if_it_were_true": "Тогда после `OutOfMemoryError` можно было бы спокойно продолжить работу, но состояние JVM после него непредсказуемо.",
                 "how_it_should_be": "`Exception` обрабатывают и восстанавливаются; `Error` — невосстановимый сбой JVM, перехватываемый лишь для логирования."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Error` относится к checked-типам, а `Exception` — к unchecked, поэтому компилятор требует обрабатывать `OutOfMemoryError`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Error` не проверяется компилятором (его не объявляют в `throws`), а среди `Exception` есть и checked, и unchecked.",
-                "source_of_confusion": "Деление checked/unchecked путают с делением `Exception`/`Error`.",
-                "if_it_were_true": "Тогда каждый метод, способный исчерпать память, объявлял бы `throws OutOfMemoryError`, чего на практике нет.",
-                "how_it_should_be": "`Error` не требует обработки компилятором; checked/unchecked — это про подтипы `Exception`."
               }
             }
           ]
@@ -371,6 +371,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Будет выброшен `ArrayIndexOutOfBoundsException`. Второй вложенный массив `{null}` содержит лишь один элемент с индексом 0, а обращение идёт к индексу 1 (`ints[1][1]`), что выходит за границы массива ещё до разыменования.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сначала вычисляется `ints[1]` (массив `{null}` длиной 1), затем индекс `[1]` проверяется на границы. Поскольку валидный индекс только 0, JVM бросает `ArrayIndexOutOfBoundsException` раньше, чем дело дойдёт до `.intValue()`.",
+                "example": "Если бы обращение было к `ints[1][0].intValue()`, то элемент существует, но равен `null`, и был бы `NullPointerException`; а `ints[1][1]` падает с `ArrayIndexOutOfBoundsException`.",
+                "when_to_apply": "Такой разбор применяют, чтобы показать порядок вычисления: проверка границ массива происходит до автораспаковки и до обращения к методу элемента.",
+                "edge_cases": "Граничный случай: тип ошибки зависит от индекса — индекс вне границ даёт `ArrayIndexOutOfBoundsException`, а валидный индекс с `null`-элементом — `NullPointerException`.",
+                "related": "[[java-exceptions-interview#Q1]] иерархия исключений; [[java-exceptions-interview#Q5]] unchecked NPE и AIOOBE; [[java-exceptions-interview#Q30]] AssertionError и проверки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Будет выброшен `NullPointerException`, потому что элемент `ints[1]` содержит `null`, и любое обращение к нему через `[1]` разыменовывает null.",
               "correct": false,
               "sections": {
@@ -381,8 +394,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Код вообще не скомпилируется, потому что нельзя класть `null` в массив `Integer[]` при инициализации литералом.",
               "correct": false,
               "sections": {
@@ -390,19 +403,6 @@
                 "source_of_confusion": "Путают `Integer[]` (можно null) с примитивным `int[]` (null недопустим), отсюда мысль об ошибке компиляции.",
                 "if_it_were_true": "Тогда `Integer x = null;` тоже не компилировалось бы, но это валидное присваивание ссылочному типу.",
                 "how_it_should_be": "Литерал с `null` в `Integer[]` валиден; ошибка возникает в runtime, а не на компиляции."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Будет выброшен `ArrayIndexOutOfBoundsException`. Второй вложенный массив `{null}` содержит лишь один элемент с индексом 0, а обращение идёт к индексу 1 (`ints[1][1]`), что выходит за границы массива ещё до разыменования.",
-              "correct": true,
-              "sections": {
-                "explanation": "Сначала вычисляется `ints[1]` (массив `{null}` длиной 1), затем индекс `[1]` проверяется на границы. Поскольку валидный индекс только 0, JVM бросает `ArrayIndexOutOfBoundsException` раньше, чем дело дойдёт до `.intValue()`.",
-                "example": "Если бы обращение было к `ints[1][0].intValue()`, то элемент существует, но равен `null`, и был бы `NullPointerException`; а `ints[1][1]` падает с `ArrayIndexOutOfBoundsException`.",
-                "when_to_apply": "Такой разбор применяют, чтобы показать порядок вычисления: проверка границ массива происходит до автораспаковки и до обращения к методу элемента.",
-                "edge_cases": "Граничный случай: тип ошибки зависит от индекса — индекс вне границ даёт `ArrayIndexOutOfBoundsException`, а валидный индекс с `null`-элементом — `NullPointerException`.",
-                "related": "[[java-exceptions-interview#Q1]] иерархия исключений; [[java-exceptions-interview#Q5]] unchecked NPE и AIOOBE; [[java-exceptions-interview#Q30]] AssertionError и проверки."
               }
             },
             {
@@ -443,18 +443,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Exception Chaining` означает, что исключения автоматически связываются в связный список и обрабатываются по очереди несколькими `catch`-блоками.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Несколько `catch`-блоков ловят разные типы независимо; chaining же — это вложение исключений через ссылку `cause`, а не очередь обработчиков.",
-                "source_of_confusion": "Слово «цепочка» наводит на мысль о последовательной обработке блоками catch.",
-                "if_it_were_true": "Тогда исключение проходило бы через несколько catch подряд, но реально первый подходящий catch его перехватывает целиком.",
-                "how_it_should_be": "Chaining связывает причинно-следственно (через `cause`), а не выстраивает очередь catch-блоков."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Exception Chaining` — это автоматическое подавление (`suppressed`) исключения из `close()` в `try-with-resources`.",
               "correct": false,
               "sections": {
@@ -462,6 +450,18 @@
                 "source_of_confusion": "И chaining, и suppressed сохраняют «дополнительное» исключение, поэтому их путают.",
                 "if_it_were_true": "Тогда `getCause()` возвращал бы исключение из `close()`, но оно доступно через `getSuppressed()`, а не `getCause()`.",
                 "how_it_should_be": "Chaining — это `cause`; подавленные из `close()` — это `getSuppressed()` (см. Q13)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Exception Chaining` означает, что исключения автоматически связываются в связный список и обрабатываются по очереди несколькими `catch`-блоками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Несколько `catch`-блоков ловят разные типы независимо; chaining же — это вложение исключений через ссылку `cause`, а не очередь обработчиков.",
+                "source_of_confusion": "Слово «цепочка» наводит на мысль о последовательной обработке блоками catch.",
+                "if_it_were_true": "Тогда исключение проходило бы через несколько catch подряд, но реально первый подходящий catch его перехватывает целиком.",
+                "how_it_should_be": "Chaining связывает причинно-следственно (через `cause`), а не выстраивает очередь catch-блоков."
               }
             },
             {
@@ -491,6 +491,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Stack trace` — это просто текст из `getMessage()`, и отдельной структуры стека вызовов у исключения нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stack trace хранится как структурированный массив `StackTraceElement[]`, отдельный от текстового `message`.",
+                "source_of_confusion": "В консоли message и стек печатаются рядом, поэтому их воспринимают как одно поле.",
+                "if_it_were_true": "Тогда `getStackTrace()` возвращал бы строку сообщения, но он возвращает массив `StackTraceElement`.",
+                "how_it_should_be": "`message` и stack trace — разные сущности; стек доступен через `getStackTrace()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Stack trace` — это снимок стека вызовов в момент создания исключения. Он показывает цепочку методов от точки возникновения до корня потока и формируется при вызове `new` (создании объекта), а не при `throw`.",
               "correct": true,
               "sections": {
@@ -502,32 +514,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`Stack trace` формируется в момент `throw`, поэтому если создать исключение заранее, а бросить позже, стек укажет на строку с `throw`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стек снимается при создании объекта (`new`/конструктор `Throwable`), а не при `throw`; место `throw` на содержимое стека не влияет.",
-                "source_of_confusion": "Кажется логичным, что стек «фиксируется» в момент броска, ведь именно тогда начинается раскрутка.",
-                "if_it_were_true": "Тогда заранее созданное и переиспользуемое исключение каждый раз показывало бы разные строки `throw`, но оно хранит стек от точки `new`.",
-                "how_it_should_be": "Стек формируется в конструкторе через `fillInStackTrace()`; `throw` его не пересоздаёт."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`Stack trace` — это просто текст из `getMessage()`, и отдельной структуры стека вызовов у исключения нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Stack trace хранится как структурированный массив `StackTraceElement[]`, отдельный от текстового `message`.",
-                "source_of_confusion": "В консоли message и стек печатаются рядом, поэтому их воспринимают как одно поле.",
-                "if_it_were_true": "Тогда `getStackTrace()` возвращал бы строку сообщения, но он возвращает массив `StackTraceElement`.",
-                "how_it_should_be": "`message` и stack trace — разные сущности; стек доступен через `getStackTrace()`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`printStackTrace()` — рекомендуемый способ логирования в production, так как он пишет стек прямо в лог-файл приложения.",
               "correct": false,
               "sections": {
@@ -535,6 +523,18 @@
                 "source_of_confusion": "Метод буквально печатает стек, поэтому кажется готовым решением для логирования.",
                 "if_it_were_true": "Тогда стектрейсы оказывались бы в общем логе с уровнями и MDC, но `System.err` обходит логгер.",
                 "how_it_should_be": "Для логов нужен `log.error(\"...\", ex)`; `printStackTrace()` уходит в `System.err`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Stack trace` формируется в момент `throw`, поэтому если создать исключение заранее, а бросить позже, стек укажет на строку с `throw`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стек снимается при создании объекта (`new`/конструктор `Throwable`), а не при `throw`; место `throw` на содержимое стека не влияет.",
+                "source_of_confusion": "Кажется логичным, что стек «фиксируется» в момент броска, ведь именно тогда начинается раскрутка.",
+                "if_it_were_true": "Тогда заранее созданное и переиспользуемое исключение каждый раз показывало бы разные строки `throw`, но оно хранит стек от точки `new`.",
+                "how_it_should_be": "Стек формируется в конструкторе через `fillInStackTrace()`; `throw` его не пересоздаёт."
               }
             }
           ]
@@ -551,31 +551,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Подклассы `Exception` создают только ради скорости — пользовательские исключения работают быстрее стандартных за счёт меньшего стека.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Главная причина — доменная семантика и дополнительный контекст, а не производительность; скорость создания зависит от `fillInStackTrace`, а не от того, кастомный класс или нет.",
-                "source_of_confusion": "Тему производительности исключений (Q41) ошибочно приплетают к мотивации подклассов.",
-                "if_it_were_true": "Тогда переход на кастомный класс ускорял бы код, но стоимость определяется снятием стека, одинаковым для любого `Throwable`.",
-                "how_it_should_be": "Подклассы нужны для смысла и контекста; на скорость сам факт наследования не влияет."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Подклассы создают, когда ни одно стандартное исключение не описывает ситуацию семантически точно, когда нужно добавить контекст (коды ошибок, ID ресурса) или когда требуется доменная иерархия для группировки ошибок.",
-              "correct": true,
-              "sections": {
-                "explanation": "Кастомный класс несёт доменный смысл (`PaymentException`), дополнительные поля (`paymentId`, `errorCode`) и позволяет ловить как конкретный тип, так и общий предок. Базовый класс выбирают по восстановимости: восстановимо — `Exception`, баг — `RuntimeException`.",
-                "example": "`class PaymentException extends RuntimeException { private final String paymentId; private final ErrorCode errorCode; ... }` — добавляет контекст, недоступный в стандартных типах.",
-                "when_to_apply": "Подклассы вводят, когда доменная семантика и дополнительный контекст важны для вызывающего кода или для логирования и обработки на верхних слоях.",
-                "edge_cases": "Граничный случай: не стоит плодить класс на каждую мелочь — где уместно, переиспользуют `IllegalArgumentException`/`IllegalStateException`, а иерархию держат неглубокой.",
-                "related": "[[java-exceptions-interview#Q8]] exception chaining; [[java-exceptions-interview#Q19]] оформление кастомного исключения; [[java-exceptions-interview#Q21]] best practices иерархии."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Подклассы создают, чтобы выразить доменную семантику, добавить контекст (коды ошибок, ID ресурса) и построить иерархию для группировки ошибок.",
               "correct": false,
               "sections": {
@@ -586,8 +561,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Подклассы `Exception` обязательны для каждого метода: Java требует, чтобы у любого метода был собственный класс исключения.",
               "correct": false,
               "sections": {
@@ -595,6 +570,31 @@
                 "source_of_confusion": "Совет «бросать конкретный тип» преувеличивают до мнимого правила «класс на каждый метод».",
                 "if_it_were_true": "Тогда стандартная библиотека утонула бы в классах-исключениях, но она широко переиспользует `IllegalArgumentException` и подобные.",
                 "how_it_should_be": "Подклассы вводят выборочно; обязательного класса на метод в Java нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подклассы `Exception` создают только ради скорости — пользовательские исключения работают быстрее стандартных за счёт меньшего стека.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная причина — доменная семантика и дополнительный контекст, а не производительность; скорость создания зависит от `fillInStackTrace`, а не от того, кастомный класс или нет.",
+                "source_of_confusion": "Тему производительности исключений (Q41) ошибочно приплетают к мотивации подклассов.",
+                "if_it_were_true": "Тогда переход на кастомный класс ускорял бы код, но стоимость определяется снятием стека, одинаковым для любого `Throwable`.",
+                "how_it_should_be": "Подклассы нужны для смысла и контекста; на скорость сам факт наследования не влияет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подклассы создают, когда ни одно стандартное исключение не описывает ситуацию семантически точно, когда нужно добавить контекст (коды ошибок, ID ресурса) или когда требуется доменная иерархия для группировки ошибок.",
+              "correct": true,
+              "sections": {
+                "explanation": "Кастомный класс несёт доменный смысл (`PaymentException`), дополнительные поля (`paymentId`, `errorCode`) и позволяет ловить как конкретный тип, так и общий предок. Базовый класс выбирают по восстановимости: восстановимо — `Exception`, баг — `RuntimeException`.",
+                "example": "`class PaymentException extends RuntimeException { private final String paymentId; private final ErrorCode errorCode; ... }` — добавляет контекст, недоступный в стандартных типах.",
+                "when_to_apply": "Подклассы вводят, когда доменная семантика и дополнительный контекст важны для вызывающего кода или для логирования и обработки на верхних слоях.",
+                "edge_cases": "Граничный случай: не стоит плодить класс на каждую мелочь — где уместно, переиспользуют `IllegalArgumentException`/`IllegalStateException`, а иерархию держат неглубокой.",
+                "related": "[[java-exceptions-interview#Q8]] exception chaining; [[java-exceptions-interview#Q19]] оформление кастомного исключения; [[java-exceptions-interview#Q21]] best practices иерархии."
               }
             }
           ]
@@ -623,13 +623,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Преимущество исключений — что любую ошибку можно полностью проигнорировать пустым `catch`, и программа продолжит работу как ни в чём не бывало.",
+              "text": "Преимущества: разделение логики и обработки ошибок, автоматическое распространение по стеку, группировка по типам, обязательность обработки для checked и информативность объекта (message, cause, stack trace).",
               "correct": false,
               "sections": {
-                "what_actually": "Пустой `catch` (swallowing) — известный антипаттерн, теряющий ошибку; преимущество механизма как раз в том, что ошибку трудно проглотить незаметно.",
-                "source_of_confusion": "Возможность написать пустой `catch` ошибочно подают как достоинство.",
-                "if_it_were_true": "Тогда «проглатывание» было бы нормой, но это прямо названо плохой практикой в Q34.",
-                "how_it_should_be": "Сила механизма — в том, что ошибка всплывает наверх, а не в возможности её скрыть."
+                "what_actually": "Это и есть ключевые достоинства механизма исключений по сравнению с кодами возврата.",
+                "source_of_confusion": "Иногда называют лишь одно преимущество, упуская комплексность подхода.",
+                "if_it_were_true": "Тогда не было бы разницы с кодами ошибок из C, но именно эти свойства её и создают.",
+                "how_it_should_be": "Механизм даёт структуру обработки ошибок: распространение, группировку, гарантии и контекст."
               }
             },
             {
@@ -648,13 +648,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Преимущества: разделение логики и обработки ошибок, автоматическое распространение по стеку, группировка по типам, обязательность обработки для checked и информативность объекта (message, cause, stack trace).",
+              "text": "Преимущество исключений — что любую ошибку можно полностью проигнорировать пустым `catch`, и программа продолжит работу как ни в чём не бывало.",
               "correct": false,
               "sections": {
-                "what_actually": "Это и есть ключевые достоинства механизма исключений по сравнению с кодами возврата.",
-                "source_of_confusion": "Иногда называют лишь одно преимущество, упуская комплексность подхода.",
-                "if_it_were_true": "Тогда не было бы разницы с кодами ошибок из C, но именно эти свойства её и создают.",
-                "how_it_should_be": "Механизм даёт структуру обработки ошибок: распространение, группировку, гарантии и контекст."
+                "what_actually": "Пустой `catch` (swallowing) — известный антипаттерн, теряющий ошибку; преимущество механизма как раз в том, что ошибку трудно проглотить незаметно.",
+                "source_of_confusion": "Возможность написать пустой `catch` ошибочно подают как достоинство.",
+                "if_it_were_true": "Тогда «проглатывание» было бы нормой, но это прямо названо плохой практикой в Q34.",
+                "how_it_should_be": "Сила механизма — в том, что ошибка всплывает наверх, а не в возможности её скрыть."
               }
             }
           ]
@@ -671,13 +671,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`try-with-resources` закрывает ресурсы только при нормальном завершении блока; если в `try` вылетело исключение, `close()` не вызывается.",
-              "correct": false,
+              "text": "`try-with-resources` (`Java 7+`) автоматически закрывает ресурсы, реализующие `AutoCloseable`, после выхода из блока `try`. Ресурсы объявляют в круглых скобках `try(...)`, и `close()` вызывается гарантированно, даже при исключении.",
+              "correct": true,
               "sections": {
-                "what_actually": "`close()` вызывается всегда — и при успехе, и при исключении в теле; именно гарантия закрытия при ошибке и есть смысл конструкции.",
-                "source_of_confusion": "Аналогия с обычным потоком выполнения наводит на мысль, что при ошибке «не дойдёт» до закрытия.",
-                "if_it_were_true": "Тогда при исключении ресурсы текли бы, но конструкция как раз гарантирует их освобождение в любом случае.",
-                "how_it_should_be": "Ресурсы закрываются и при нормальном выходе, и при исключении в блоке `try`."
+                "explanation": "Ресурсы создаются в порядке объявления, а закрываются в обратном (LIFO). Если исключение бросают и тело, и `close()`, основным остаётся исключение тела, а исключение `close()` добавляется как suppressed — оно не теряется.",
+                "example": "`try (var reader = new BufferedReader(...); var writer = new BufferedWriter(...)) { ... }` — `writer` закроется раньше `reader`; с `Java 9+` в `try(reader)` можно указывать effectively final переменную.",
+                "when_to_apply": "Конструкцию применяют всегда, когда работают с закрываемыми ресурсами (файлы, сокеты, соединения), чтобы избежать boilerplate ручного `finally` и не потерять исключения при закрытии.",
+                "edge_cases": "Граничный случай: при ручном `finally` исключение из `close()` затирает исключение из `try`; `try-with-resources` решает это через suppressed-механизм.",
+                "related": "[[java-exceptions-interview#Q3]] try-catch-finally; [[java-exceptions-interview#Q13]] suppressed exceptions; [[java-exceptions-interview#Q37]] AutoCloseable и порядок закрытия."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`try-with-resources` (`Java 7+`) автоматически закрывает ресурсы, реализующие `AutoCloseable`, после выхода из блока `try`. Ресурсы объявляют в круглых скобках `try(...)`, и `close()` вызывается гарантированно, даже при исключении.",
-              "correct": true,
+              "text": "`try-with-resources` закрывает ресурсы только при нормальном завершении блока; если в `try` вылетело исключение, `close()` не вызывается.",
+              "correct": false,
               "sections": {
-                "explanation": "Ресурсы создаются в порядке объявления, а закрываются в обратном (LIFO). Если исключение бросают и тело, и `close()`, основным остаётся исключение тела, а исключение `close()` добавляется как suppressed — оно не теряется.",
-                "example": "`try (var reader = new BufferedReader(...); var writer = new BufferedWriter(...)) { ... }` — `writer` закроется раньше `reader`; с `Java 9+` в `try(reader)` можно указывать effectively final переменную.",
-                "when_to_apply": "Конструкцию применяют всегда, когда работают с закрываемыми ресурсами (файлы, сокеты, соединения), чтобы избежать boilerplate ручного `finally` и не потерять исключения при закрытии.",
-                "edge_cases": "Граничный случай: при ручном `finally` исключение из `close()` затирает исключение из `try`; `try-with-resources` решает это через suppressed-механизм.",
-                "related": "[[java-exceptions-interview#Q3]] try-catch-finally; [[java-exceptions-interview#Q13]] suppressed exceptions; [[java-exceptions-interview#Q37]] AutoCloseable и порядок закрытия."
+                "what_actually": "`close()` вызывается всегда — и при успехе, и при исключении в теле; именно гарантия закрытия при ошибке и есть смысл конструкции.",
+                "source_of_confusion": "Аналогия с обычным потоком выполнения наводит на мысль, что при ошибке «не дойдёт» до закрытия.",
+                "if_it_were_true": "Тогда при исключении ресурсы текли бы, но конструкция как раз гарантирует их освобождение в любом случае.",
+                "how_it_should_be": "Ресурсы закрываются и при нормальном выходе, и при исключении в блоке `try`."
               }
             }
           ]
@@ -731,6 +731,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "При двойном исключении основным становится исключение из `close()`, а исключение тела `try` отбрасывается полностью.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: основное — исключение тела `try`, а исключение `close()` становится подавленным, а не главным.",
+                "source_of_confusion": "Закрытие происходит «последним», поэтому кажется, что именно его исключение и побеждает.",
+                "if_it_were_true": "Тогда первопричина из тела терялась бы, но конструкция сохраняет именно её как основную.",
+                "how_it_should_be": "Главным остаётся исключение тела; ошибка `close()` уходит в suppressed."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Suppressed Exceptions` — это исключения, которые JVM полностью игнорирует и нигде не сохраняет, лишь бы не падало приложение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подавленные исключения не игнорируются — они присоединяются к основному и доступны через `getSuppressed()`.",
+                "source_of_confusion": "Слово «suppressed» воспринимают как «подавлено и забыто».",
+                "if_it_were_true": "Тогда `ex.getSuppressed()` всегда возвращал бы пустой массив, но он содержит ошибки из `close()`.",
+                "how_it_should_be": "Suppressed сохраняются при основном исключении и читаются через `getSuppressed()`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Когда в блоке `try` возникло исключение И при закрытии ресурса (`close()`) тоже возникло исключение, исключение из `close()` не теряется, а добавляется к основному (из `try`) как подавленное — suppressed.",
               "correct": true,
               "sections": {
@@ -742,8 +766,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Если тело `try` бросило исключение и `close()` тоже бросил, то исключение из `close()` полностью затирает исключение тела `try`: наверх летит только ошибка `close()`, а первопричина из тела навсегда теряется.",
               "correct": false,
               "sections": {
@@ -751,30 +775,6 @@
                 "source_of_confusion": "Так ведёт себя ручной `finally` без suppressed-механизма, и это поведение ошибочно переносят на `try-with-resources`.",
                 "if_it_were_true": "Тогда `try-with-resources` ничем не отличался бы от старого ручного `finally`, но он специально вводит suppressed, чтобы первопричина не пропадала.",
                 "how_it_should_be": "Главным остаётся исключение тела `try`; ошибка `close()` сохраняется как suppressed, а не затирает основное."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "При двойном исключении основным становится исключение из `close()`, а исключение тела `try` отбрасывается полностью.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: основное — исключение тела `try`, а исключение `close()` становится подавленным, а не главным.",
-                "source_of_confusion": "Закрытие происходит «последним», поэтому кажется, что именно его исключение и побеждает.",
-                "if_it_were_true": "Тогда первопричина из тела терялась бы, но конструкция сохраняет именно её как основную.",
-                "how_it_should_be": "Главным остаётся исключение тела; ошибка `close()` уходит в suppressed."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Suppressed Exceptions` — это исключения, которые JVM полностью игнорирует и нигде не сохраняет, лишь бы не падало приложение.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Подавленные исключения не игнорируются — они присоединяются к основному и доступны через `getSuppressed()`.",
-                "source_of_confusion": "Слово «suppressed» воспринимают как «подавлено и забыто».",
-                "if_it_were_true": "Тогда `ex.getSuppressed()` всегда возвращал бы пустой массив, но он содержит ошибки из `close()`.",
-                "how_it_should_be": "Suppressed сохраняются при основном исключении и читаются через `getSuppressed()`."
               }
             }
           ]
@@ -791,18 +791,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`addSuppressed()` устанавливает причину исключения (`cause`), а `getSuppressed()` возвращает её — это синонимы `initCause()` и `getCause()`.",
+              "text": "`addSuppressed(Throwable)` устанавливает причину (`cause`) текущего исключения, а `getSuppressed()` возвращает эту единственную причину как объект `Throwable`.",
               "correct": false,
               "sections": {
-                "what_actually": "Подавленные исключения и `cause` — разные вещи: `addSuppressed`/`getSuppressed` работают со списком подавленных, а `initCause`/`getCause` — с единственной причиной.",
-                "source_of_confusion": "И то, и другое хранит «дополнительное» исключение, поэтому пары методов путают.",
-                "if_it_were_true": "Тогда `getSuppressed()` возвращал бы один `cause`, но он возвращает массив подавленных.",
-                "how_it_should_be": "Suppressed — это список (`getSuppressed()`), а `cause` — одиночная причина (`getCause()`)."
+                "what_actually": "`addSuppressed`/`getSuppressed` работают с подавленными исключениями, а не с `cause`: `getSuppressed()` возвращает массив `Throwable[]`, а причину задают `initCause`/конструктором.",
+                "source_of_confusion": "И подавленные, и `cause` хранят «дополнительное» исключение, поэтому две пары методов путают между собой.",
+                "if_it_were_true": "Тогда `addSuppressed` дублировал бы `initCause`, но это разные механизмы: причина одна, а подавленных может быть несколько.",
+                "how_it_should_be": "`addSuppressed` копит подавленные исключения, `getSuppressed()` отдаёт их массивом; за `cause` отвечают `initCause`/`getCause`."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "`getSuppressed()` возвращает единственное последнее подавленное исключение в виде объекта `Throwable`, а не массив.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод возвращает именно массив `Throwable[]`, поскольку подавленных может быть несколько (по числу ресурсов).",
+                "source_of_confusion": "Кажется, что подавлено всегда одно исключение, отсюда ожидание одиночного объекта.",
+                "if_it_were_true": "Тогда при трёх упавших `close()` две ошибки терялись бы, но массив сохраняет все.",
+                "how_it_should_be": "`getSuppressed()` всегда отдаёт массив, даже если подавленное одно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Это методы класса `Throwable` для работы с подавленными исключениями: `addSuppressed(Throwable)` добавляет подавленное исключение к текущему, а `getSuppressed()` возвращает массив `Throwable[]` всех подавленных.",
               "correct": true,
               "sections": {
@@ -814,27 +826,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`addSuppressed(Throwable)` устанавливает причину (`cause`) текущего исключения, а `getSuppressed()` возвращает эту единственную причину как объект `Throwable`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`addSuppressed`/`getSuppressed` работают с подавленными исключениями, а не с `cause`: `getSuppressed()` возвращает массив `Throwable[]`, а причину задают `initCause`/конструктором.",
-                "source_of_confusion": "И подавленные, и `cause` хранят «дополнительное» исключение, поэтому две пары методов путают между собой.",
-                "if_it_were_true": "Тогда `addSuppressed` дублировал бы `initCause`, но это разные механизмы: причина одна, а подавленных может быть несколько.",
-                "how_it_should_be": "`addSuppressed` копит подавленные исключения, `getSuppressed()` отдаёт их массивом; за `cause` отвечают `initCause`/`getCause`."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`getSuppressed()` возвращает единственное последнее подавленное исключение в виде объекта `Throwable`, а не массив.",
+              "text": "`addSuppressed()` устанавливает причину исключения (`cause`), а `getSuppressed()` возвращает её — это синонимы `initCause()` и `getCause()`.",
               "correct": false,
               "sections": {
-                "what_actually": "Метод возвращает именно массив `Throwable[]`, поскольку подавленных может быть несколько (по числу ресурсов).",
-                "source_of_confusion": "Кажется, что подавлено всегда одно исключение, отсюда ожидание одиночного объекта.",
-                "if_it_were_true": "Тогда при трёх упавших `close()` две ошибки терялись бы, но массив сохраняет все.",
-                "how_it_should_be": "`getSuppressed()` всегда отдаёт массив, даже если подавленное одно."
+                "what_actually": "Подавленные исключения и `cause` — разные вещи: `addSuppressed`/`getSuppressed` работают со списком подавленных, а `initCause`/`getCause` — с единственной причиной.",
+                "source_of_confusion": "И то, и другое хранит «дополнительное» исключение, поэтому пары методов путают.",
+                "if_it_were_true": "Тогда `getSuppressed()` возвращал бы один `cause`, но он возвращает массив подавленных.",
+                "how_it_should_be": "Suppressed — это список (`getSuppressed()`), а `cause` — одиночная причина (`getCause()`)."
               }
             }
           ]
@@ -851,18 +851,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Любое исключение, включая checked, можно бросать из лямбды напрямую — функциональные интерфейсы Java поддерживают `throws` для всех типов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стандартные интерфейсы (`Function`, `Consumer`) не объявляют checked в сигнатуре, поэтому checked-исключение из лямбды напрямую не пробросить — нужен обходной путь.",
-                "source_of_confusion": "Unchecked действительно бросаются свободно, и это правило ошибочно распространяют на checked.",
-                "if_it_were_true": "Тогда `path -> Files.readString(path)` компилировался бы без обёрток, но компилятор требует обработать `IOException`.",
-                "how_it_should_be": "Напрямую идут только unchecked; checked нужно оборачивать или использовать `@FunctionalInterface` с `throws`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Чтобы бросить checked из лямбды, достаточно добавить `throws Exception` в саму лямбду: `path -> throws IOException { ... }`.",
               "correct": false,
               "sections": {
@@ -873,8 +861,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Любое исключение, включая checked, можно бросать из лямбды напрямую — функциональные интерфейсы Java поддерживают `throws` для всех типов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартные интерфейсы (`Function`, `Consumer`) не объявляют checked в сигнатуре, поэтому checked-исключение из лямбды напрямую не пробросить — нужен обходной путь.",
+                "source_of_confusion": "Unchecked действительно бросаются свободно, и это правило ошибочно распространяют на checked.",
+                "if_it_were_true": "Тогда `path -> Files.readString(path)` компилировался бы без обёрток, но компилятор требует обработать `IOException`.",
+                "how_it_should_be": "Напрямую идут только unchecked; checked нужно оборачивать или использовать `@FunctionalInterface` с `throws`."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Unchecked работают в лямбде напрямую, а для checked нужен обходной путь: обернуть в unchecked (`UncheckedIOException`), создать свой интерфейс с `throws` или применить sneaky throw.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это и есть три рабочих подхода к checked-исключениям в лямбдах при неизменных стандартных интерфейсах.",
+                "source_of_confusion": "Иногда знают лишь про один из приёмов, не видя всей картины.",
+                "if_it_were_true": "Тогда checked в `Stream` было бы вообще невозможно использовать, но перечисленные приёмы это решают.",
+                "how_it_should_be": "Unchecked — напрямую; checked — обёртка в unchecked, свой `@FunctionalInterface` или sneaky throw."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Стандартные функциональные интерфейсы (`Function`, `Consumer`, `Supplier`) не объявляют checked-исключений, поэтому unchecked в лямбде работают напрямую, а checked требуют обходного пути: обернуть в unchecked, использовать свой интерфейс с `throws` или применить sneaky throw.",
               "correct": true,
               "sections": {
@@ -883,18 +895,6 @@
                 "when_to_apply": "Эти приёмы нужны, когда лямбда вызывает API с checked-исключениями (`Files.readString`, JDBC) внутри `Stream`/`forEach`, где сигнатура не допускает `throws`.",
                 "edge_cases": "Граничный случай: unchecked-исключения (`IllegalArgumentException`) выбрасываются из лямбды без всяких ухищрений, поскольку их не нужно объявлять.",
                 "related": "[[java-exceptions-interview#Q5]] checked vs unchecked; [[java-exceptions-interview#Q18]] sneaky throw; [[java-exceptions-interview#Q39]] checked exceptions в lambda."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Unchecked работают в лямбде напрямую, а для checked нужен обходной путь: обернуть в unchecked (`UncheckedIOException`), создать свой интерфейс с `throws` или применить sneaky throw.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это и есть три рабочих подхода к checked-исключениям в лямбдах при неизменных стандартных интерфейсах.",
-                "source_of_confusion": "Иногда знают лишь про один из приёмов, не видя всей картины.",
-                "if_it_were_true": "Тогда checked в `Stream` было бы вообще невозможно использовать, но перечисленные приёмы это решают.",
-                "how_it_should_be": "Unchecked — напрямую; checked — обёртка в unchecked, свой `@FunctionalInterface` или sneaky throw."
               }
             }
           ]
@@ -911,30 +911,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При переопределении дочерний метод обязан объявить в `throws` ровно те же исключения, что и родитель — ни убрать, ни сузить нельзя.",
-              "correct": false,
+              "text": "При переопределении дочерний метод может объявлять в `throws` только те же или более узкие checked-исключения, что и родитель (или вовсе их не объявлять). Расширять список checked нельзя — это контравариантность по исключениям.",
+              "correct": true,
               "sections": {
-                "what_actually": "Дочерний метод может сузить список или вовсе убрать checked-исключения; он не обязан повторять их один в один.",
-                "source_of_confusion": "Идея «контракт должен совпадать буквально» переносится на `throws` слишком строго.",
-                "if_it_were_true": "Тогда `Child.process()` без `throws` не компилировался бы при `Parent.process() throws IOException`, но это валидно.",
-                "how_it_should_be": "Можно сузить или опустить checked; нельзя только расширить."
+                "explanation": "Правило вытекает из принципа подстановки Лисков: клиент работает с типом родителя и обрабатывает только объявленные им исключения. Дочерний класс не вправе бросать более широкий или новый checked, иначе обработчик его не поймает. Unchecked можно бросать любые.",
+                "example": "Если `Parent.process() throws IOException`, то `Child.process() throws FileNotFoundException` допустимо (подтип), а `throws Exception` (шире) или `throws SQLException` (другой checked) — ошибка компиляции.",
+                "when_to_apply": "Контракт соблюдают при наследовании и реализации интерфейсов, чтобы код, работающий через ссылку на родителя, корректно обрабатывал исключения подклассов.",
+                "edge_cases": "Граничный случай: если родитель не объявляет `throws`, дочерний метод может бросать только unchecked; добавить checked нельзя.",
+                "related": "[[java-exceptions-interview#Q2]] throw и throws; [[java-exceptions-interview#Q5]] checked vs unchecked; [[java-exceptions-interview#Q17]] компиляция с цепочкой исключений."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Переопределяющий метод может бросать любые более широкие checked-исключения, чем родитель, например заменить `IOException` на `Exception`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Расширять checked запрещено: `Child` не может объявить `throws Exception`, если у `Parent` было `throws IOException`.",
-                "source_of_confusion": "Кажется, что подкласс «свободнее» и может больше, но по исключениям контракт, наоборот, сужается.",
-                "if_it_were_true": "Тогда клиент с `catch (IOException)` пропустил бы более широкий `Exception` из подкласса, ломая обработку.",
-                "how_it_should_be": "Допустимо только сужение checked (подтип) или их отсутствие, но не расширение."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Дочерний метод может объявлять в `throws` совершенно другие checked-исключения, не связанные с теми, что у родителя (например, добавить `SQLException`).",
               "correct": false,
               "sections": {
@@ -945,16 +934,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "При переопределении дочерний метод обязан объявить в `throws` ровно те же исключения, что и родитель — ни убрать, ни сузить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дочерний метод может сузить список или вовсе убрать checked-исключения; он не обязан повторять их один в один.",
+                "source_of_confusion": "Идея «контракт должен совпадать буквально» переносится на `throws` слишком строго.",
+                "if_it_were_true": "Тогда `Child.process()` без `throws` не компилировался бы при `Parent.process() throws IOException`, но это валидно.",
+                "how_it_should_be": "Можно сузить или опустить checked; нельзя только расширить."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "При переопределении дочерний метод может объявлять в `throws` только те же или более узкие checked-исключения, что и родитель (или вовсе их не объявлять). Расширять список checked нельзя — это контравариантность по исключениям.",
-              "correct": true,
+              "text": "Переопределяющий метод может бросать любые более широкие checked-исключения, чем родитель, например заменить `IOException` на `Exception`.",
+              "correct": false,
               "sections": {
-                "explanation": "Правило вытекает из принципа подстановки Лисков: клиент работает с типом родителя и обрабатывает только объявленные им исключения. Дочерний класс не вправе бросать более широкий или новый checked, иначе обработчик его не поймает. Unchecked можно бросать любые.",
-                "example": "Если `Parent.process() throws IOException`, то `Child.process() throws FileNotFoundException` допустимо (подтип), а `throws Exception` (шире) или `throws SQLException` (другой checked) — ошибка компиляции.",
-                "when_to_apply": "Контракт соблюдают при наследовании и реализации интерфейсов, чтобы код, работающий через ссылку на родителя, корректно обрабатывал исключения подклассов.",
-                "edge_cases": "Граничный случай: если родитель не объявляет `throws`, дочерний метод может бросать только unchecked; добавить checked нельзя.",
-                "related": "[[java-exceptions-interview#Q2]] throw и throws; [[java-exceptions-interview#Q5]] checked vs unchecked; [[java-exceptions-interview#Q17]] компиляция с цепочкой исключений."
+                "what_actually": "Расширять checked запрещено: `Child` не может объявить `throws Exception`, если у `Parent` было `throws IOException`.",
+                "source_of_confusion": "Кажется, что подкласс «свободнее» и может больше, но по исключениям контракт, наоборот, сужается.",
+                "if_it_were_true": "Тогда клиент с `catch (IOException)` пропустил бы более широкий `Exception` из подкласса, ломая обработку.",
+                "how_it_should_be": "Допустимо только сужение checked (подтип) или их отсутствие, но не расширение."
               }
             }
           ]
@@ -971,6 +971,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Нет, код не скомпилируется: нельзя передавать `Exception` в конструктор `RuntimeException` — типы несовместимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `RuntimeException` есть конструктор `RuntimeException(Throwable cause)`, а `Exception` — подтип `Throwable`, так что передача легальна.",
+                "source_of_confusion": "Кажется, что `RuntimeException` принимает только строку-сообщение, а не другое исключение.",
+                "if_it_were_true": "Тогда chaining через конструктор был бы невозможен, но `new RuntimeException(cause)` — стандартная идиома.",
+                "how_it_should_be": "`RuntimeException(Throwable)` существует; `Exception` подходит как `cause`, код компилируется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Да, код компилируется. `RuntimeException` — unchecked, поэтому его не нужно объявлять в `throws`. Вложенный `Exception` передаётся как `cause` через конструктор `RuntimeException(Throwable)` — это обычная цепочка исключений.",
               "correct": true,
               "sections": {
@@ -982,32 +994,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Нет, код не скомпилируется: вложенный `Exception` — checked, поэтому метод обязан объявить `throws Exception`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Компилятор смотрит на тип выбрасываемого `RuntimeException` (unchecked), а не на тип `cause`; checked внутри как аргумент конструктора `throws` не требует.",
-                "source_of_confusion": "Наличие слова `Exception` внутри `new Exception(...)` создаёт ложное ощущение checked-броска.",
-                "if_it_were_true": "Тогда любая цепочка с checked-причиной требовала бы `throws`, но это не так — наружу летит `RuntimeException`.",
-                "how_it_should_be": "Бросается unchecked `RuntimeException`; checked-причина внутри ничего не требует."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "Нет, код не скомпилируется: нельзя передавать `Exception` в конструктор `RuntimeException` — типы несовместимы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У `RuntimeException` есть конструктор `RuntimeException(Throwable cause)`, а `Exception` — подтип `Throwable`, так что передача легальна.",
-                "source_of_confusion": "Кажется, что `RuntimeException` принимает только строку-сообщение, а не другое исключение.",
-                "if_it_were_true": "Тогда chaining через конструктор был бы невозможен, но `new RuntimeException(cause)` — стандартная идиома.",
-                "how_it_should_be": "`RuntimeException(Throwable)` существует; `Exception` подходит как `cause`, код компилируется."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Да, но только потому, что компилятор молча оборачивает `Exception` в `RuntimeException` сам — без явного `new RuntimeException(...)` это не работает.",
               "correct": false,
               "sections": {
@@ -1015,6 +1003,18 @@
                 "source_of_confusion": "Результат верный, но объяснён выдуманным механизмом авто-обёртки.",
                 "if_it_were_true": "Тогда `throw new Exception(...)` тоже компилировался бы без `throws`, но он его требует.",
                 "how_it_should_be": "Компиляция проходит из-за явного unchecked-броска, а не из-за неявной обёртки компилятора."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Нет, код не скомпилируется: вложенный `Exception` — checked, поэтому метод обязан объявить `throws Exception`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компилятор смотрит на тип выбрасываемого `RuntimeException` (unchecked), а не на тип `cause`; checked внутри как аргумент конструктора `throws` не требует.",
+                "source_of_confusion": "Наличие слова `Exception` внутри `new Exception(...)` создаёт ложное ощущение checked-броска.",
+                "if_it_were_true": "Тогда любая цепочка с checked-причиной требовала бы `throws`, но это не так — наружу летит `RuntimeException`.",
+                "how_it_should_be": "Бросается unchecked `RuntimeException`; checked-причина внутри ничего не требует."
               }
             }
           ]
@@ -1031,13 +1031,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Нет: компилятор проверяет checked-исключения на этапе компиляции, поэтому без `throws` или обёртки в unchecked выбросить их не получится.",
+              "text": "Да — через sneaky throw на дженериках и стирании типов: приведение к выводимому `T extends Throwable` вынуждает компилятор считать бросок unchecked, а в runtime летит исходный checked.",
               "correct": false,
               "sections": {
-                "what_actually": "Это возможно через sneaky throw (дженерики + стирание типов): `Lombok @SneakyThrows` и подобные приёмы выбрасывают checked без объявления `throws`.",
-                "source_of_confusion": "Строгость правила про checked создаёт впечатление, что обойти его нельзя вообще.",
-                "if_it_were_true": "Тогда `@SneakyThrows` из Lombok не существовал бы, но он широко применяется именно для этого.",
-                "how_it_should_be": "Sneaky throw обходит требование `throws`, эксплуатируя стирание типов в дженериках."
+                "what_actually": "Это и есть классический sneaky throw — компилятор обманут стиранием типов, реальный тип сохраняется в runtime.",
+                "source_of_confusion": "Механизм неочевиден, поэтому о нём часто не знают.",
+                "if_it_were_true": "Тогда `Lombok @SneakyThrows` был бы невозможен, но он реализован именно так.",
+                "how_it_should_be": "Sneaky throw через `<T extends Throwable>` и `(T) ex` пробрасывает checked без `throws`."
               }
             },
             {
@@ -1056,18 +1056,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Да — через sneaky throw на дженериках и стирании типов: приведение к выводимому `T extends Throwable` вынуждает компилятор считать бросок unchecked, а в runtime летит исходный checked.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это и есть классический sneaky throw — компилятор обманут стиранием типов, реальный тип сохраняется в runtime.",
-                "source_of_confusion": "Механизм неочевиден, поэтому о нём часто не знают.",
-                "if_it_were_true": "Тогда `Lombok @SneakyThrows` был бы невозможен, но он реализован именно так.",
-                "how_it_should_be": "Sneaky throw через `<T extends Throwable>` и `(T) ex` пробрасывает checked без `throws`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Да — достаточно обернуть checked в `RuntimeException`, и тогда наружу полетит именно checked-исключение без `throws`.",
               "correct": false,
               "sections": {
@@ -1075,6 +1063,18 @@
                 "source_of_confusion": "Chaining (Q8/Q17) путают со sneaky throw — там и там «checked внутри».",
                 "if_it_were_true": "Тогда `catch (IOException)` ловил бы обёрнутое исключение напрямую, но он поймает `RuntimeException`.",
                 "how_it_should_be": "Sneaky throw сохраняет исходный тип; обёртка же подменяет его на `RuntimeException`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Нет: компилятор проверяет checked-исключения на этапе компиляции, поэтому без `throws` или обёртки в unchecked выбросить их не получится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это возможно через sneaky throw (дженерики + стирание типов): `Lombok @SneakyThrows` и подобные приёмы выбрасывают checked без объявления `throws`.",
+                "source_of_confusion": "Строгость правила про checked создаёт впечатление, что обойти его нельзя вообще.",
+                "if_it_were_true": "Тогда `@SneakyThrows` из Lombok не существовал бы, но он широко применяется именно для этого.",
+                "how_it_should_be": "Sneaky throw обходит требование `throws`, эксплуатируя стирание типов в дженериках."
               }
             }
           ]
@@ -1103,18 +1103,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Кастомному исключению достаточно одного конструктора с сообщением; конструктор с `Throwable cause` не нужен, ведь причину можно задать позже.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Конструктор с `cause` считают обязательным, чтобы поддержать chaining; без него легко потерять первопричину при оборачивании.",
-                "source_of_confusion": "Кажется, что `initCause()` всегда выручит, поэтому конструктор с cause считают необязательным.",
-                "if_it_were_true": "Тогда оборачивание исходного исключения было бы неудобным, но именно конструктор с `cause` делает chaining идиоматичным.",
-                "how_it_should_be": "Правильное оформление включает конструктор `(message, Throwable cause)` для сохранения причины."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Кастомное исключение создают, когда нужна доменная семантика (`OrderNotFoundException`), дополнительный контекст (коды ошибок, ID ресурсов) или когда стандартные типы недостаточно точны. Оформляют его по набору правил именования, конструкторов и полей.",
               "correct": true,
               "sections": {
@@ -1123,6 +1111,18 @@
                 "when_to_apply": "Кастомное исключение вводят, когда доменный смысл и контекст важны для обработки на верхних слоях или для информативного логирования.",
                 "edge_cases": "Граничный случай: не нужно создавать класс на каждую ошибку — для невалидного аргумента или состояния переиспользуют `IllegalArgumentException`/`IllegalStateException`.",
                 "related": "[[java-exceptions-interview#Q10]] зачем подклассы Exception; [[java-exceptions-interview#Q20]] RuntimeException vs checked; [[java-exceptions-interview#Q38]] best practices и serialVersionUID."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Кастомному исключению достаточно одного конструктора с сообщением; конструктор с `Throwable cause` не нужен, ведь причину можно задать позже.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конструктор с `cause` считают обязательным, чтобы поддержать chaining; без него легко потерять первопричину при оборачивании.",
+                "source_of_confusion": "Кажется, что `initCause()` всегда выручит, поэтому конструктор с cause считают необязательным.",
+                "if_it_were_true": "Тогда оборачивание исходного исключения было бы неудобным, но именно конструктор с `cause` делает chaining идиоматичным.",
+                "how_it_should_be": "Правильное оформление включает конструктор `(message, Throwable cause)` для сохранения причины."
               }
             },
             {
@@ -1151,13 +1151,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RuntimeException` используют для восстановимых внешних ошибок (I/O, сеть, БД), а checked — для багов программиста, которые нельзя обработать.",
-              "correct": false,
+              "text": "Checked `Exception` выбирают, когда вызывающий код может и должен восстановиться (повтор, fallback, иное решение). `RuntimeException` — когда это ошибка программиста или невосстановимая ситуация. Тренд индустрии — чаще unchecked.",
+              "correct": true,
               "sections": {
-                "what_actually": "Распределение обратное: checked — для восстановимых внешних условий, unchecked (`RuntimeException`) — для багов и невосстановимых ситуаций.",
-                "source_of_confusion": "Понятия «восстановимое» и «обязательная обработка» легко перепутать местами.",
-                "if_it_were_true": "Тогда `IOException` была бы unchecked, но она checked именно как восстановимое внешнее условие.",
-                "how_it_should_be": "Checked — восстановимое внешнее; `RuntimeException` — ошибка кода или невосстановимое."
+                "explanation": "Checked обязывает обработать ошибку (`throws` в сигнатуре), что уместно для восстановимых внешних условий. Unchecked не требует объявления и подходит для багов и нарушений контракта, не засоряя сигнатуры.",
+                "example": "`IOException`, `SQLException` — checked (внешние, восстановимые); `NullPointerException`, `IllegalArgumentException` — unchecked (ошибки кода). В `Spring`, `Hibernate`, `Kotlin` доменные исключения почти всегда unchecked.",
+                "when_to_apply": "Выбор делают при проектировании API: восстановимое внешнее условие — checked; ошибка программиста или нет смысла обрабатывать — unchecked.",
+                "edge_cases": "Граничный случай: современная практика (`Spring`-экосистема) тяготеет к unchecked, оставляя checked лишь там, где вызывающий обязан принять решение.",
+                "related": "[[java-exceptions-interview#Q5]] checked vs unchecked; [[java-exceptions-interview#Q19]] оформление кастомного исключения; [[java-exceptions-interview#Q21]] best practices иерархии."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Checked `Exception` выбирают, когда вызывающий код может и должен восстановиться (повтор, fallback, иное решение). `RuntimeException` — когда это ошибка программиста или невосстановимая ситуация. Тренд индустрии — чаще unchecked.",
-              "correct": true,
+              "text": "`RuntimeException` используют для восстановимых внешних ошибок (I/O, сеть, БД), а checked — для багов программиста, которые нельзя обработать.",
+              "correct": false,
               "sections": {
-                "explanation": "Checked обязывает обработать ошибку (`throws` в сигнатуре), что уместно для восстановимых внешних условий. Unchecked не требует объявления и подходит для багов и нарушений контракта, не засоряя сигнатуры.",
-                "example": "`IOException`, `SQLException` — checked (внешние, восстановимые); `NullPointerException`, `IllegalArgumentException` — unchecked (ошибки кода). В `Spring`, `Hibernate`, `Kotlin` доменные исключения почти всегда unchecked.",
-                "when_to_apply": "Выбор делают при проектировании API: восстановимое внешнее условие — checked; ошибка программиста или нет смысла обрабатывать — unchecked.",
-                "edge_cases": "Граничный случай: современная практика (`Spring`-экосистема) тяготеет к unchecked, оставляя checked лишь там, где вызывающий обязан принять решение.",
-                "related": "[[java-exceptions-interview#Q5]] checked vs unchecked; [[java-exceptions-interview#Q19]] оформление кастомного исключения; [[java-exceptions-interview#Q21]] best practices иерархии."
+                "what_actually": "Распределение обратное: checked — для восстановимых внешних условий, unchecked (`RuntimeException`) — для багов и невосстановимых ситуаций.",
+                "source_of_confusion": "Понятия «восстановимое» и «обязательная обработка» легко перепутать местами.",
+                "if_it_were_true": "Тогда `IOException` была бы unchecked, но она checked именно как восстановимое внешнее условие.",
+                "how_it_should_be": "Checked — восстановимое внешнее; `RuntimeException` — ошибка кода или невосстановимое."
               }
             }
           ]
@@ -1211,31 +1211,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Наследовать от подходящего базового типа (не от `Exception` напрямую, если есть лучше), включать контекст (message, cause, поля), документировать `@throws`, переиспользовать стандартные типы, не плодить класс на каждую ошибку и придерживаться именования `<Причина>Exception`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Иерархию строят неглубокой: общий доменный базовый класс плюс конкретные подтипы. Это позволяет ловить и конкретное (`InsufficientFundsException`), и общее (`PaymentException`) исключение, не перечисляя каждый тип.",
-                "example": "`abstract class PaymentException extends RuntimeException {}` с подтипами `PaymentDeclinedException`, `PaymentTimeoutException`, `InsufficientFundsException` — вызывающий ловит либо конкретный тип, либо общий `PaymentException`.",
-                "when_to_apply": "Эти практики применяют при дизайне доменной модели ошибок, чтобы обработка была гибкой, а код — читаемым и поддерживаемым.",
-                "edge_cases": "Граничный случай: слишком глубокая иерархия вредит — обычно хватает 1-2 уровней; стандартные типы (`IllegalArgumentException`) переиспользуют там, где они уместны.",
-                "related": "[[java-exceptions-interview#Q10]] зачем подклассы; [[java-exceptions-interview#Q19]] оформление кастомного исключения; [[java-exceptions-interview#Q20]] RuntimeException vs checked."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Best practice — строить максимально глубокую иерархию исключений (5-6 уровней), чтобы каждый нюанс ошибки имел свой класс.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Рекомендуется как раз неглубокая иерархия (1-2 уровня); чрезмерная глубина усложняет код без пользы.",
-                "source_of_confusion": "Кажется, что больше уровней — точнее модель, но на практике это лишь усложнение.",
-                "if_it_were_true": "Тогда обработка ошибок тонула бы в десятках типов, но best practice советует группировать по смыслу.",
-                "how_it_should_be": "Иерархию держат плоской: общий базовый тип плюс несколько конкретных подтипов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Каждое доменное исключение нужно наследовать напрямую от `Exception`, игнорируя более специфичные базовые типы.",
               "correct": false,
               "sections": {
@@ -1246,8 +1221,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Best practice запрещает переиспользовать стандартные исключения вроде `IllegalArgumentException` — под каждую ситуацию обязателен только свой класс.",
               "correct": false,
               "sections": {
@@ -1255,6 +1230,31 @@
                 "source_of_confusion": "Желание «всё своё, доменное» преувеличивают до запрета стандартных типов.",
                 "if_it_were_true": "Тогда `IllegalArgumentException` был бы не нужен, но его как раз советуют применять для невалидных аргументов.",
                 "how_it_should_be": "Стандартные типы переиспользуют где уместно; кастомные — только при реальной необходимости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Best practice — строить максимально глубокую иерархию исключений (5-6 уровней), чтобы каждый нюанс ошибки имел свой класс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуется как раз неглубокая иерархия (1-2 уровня); чрезмерная глубина усложняет код без пользы.",
+                "source_of_confusion": "Кажется, что больше уровней — точнее модель, но на практике это лишь усложнение.",
+                "if_it_were_true": "Тогда обработка ошибок тонула бы в десятках типов, но best practice советует группировать по смыслу.",
+                "how_it_should_be": "Иерархию держат плоской: общий базовый тип плюс несколько конкретных подтипов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Наследовать от подходящего базового типа (не от `Exception` напрямую, если есть лучше), включать контекст (message, cause, поля), документировать `@throws`, переиспользовать стандартные типы, не плодить класс на каждую ошибку и придерживаться именования `<Причина>Exception`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Иерархию строят неглубокой: общий доменный базовый класс плюс конкретные подтипы. Это позволяет ловить и конкретное (`InsufficientFundsException`), и общее (`PaymentException`) исключение, не перечисляя каждый тип.",
+                "example": "`abstract class PaymentException extends RuntimeException {}` с подтипами `PaymentDeclinedException`, `PaymentTimeoutException`, `InsufficientFundsException` — вызывающий ловит либо конкретный тип, либо общий `PaymentException`.",
+                "when_to_apply": "Эти практики применяют при дизайне доменной модели ошибок, чтобы обработка была гибкой, а код — читаемым и поддерживаемым.",
+                "edge_cases": "Граничный случай: слишком глубокая иерархия вредит — обычно хватает 1-2 уровней; стандартные типы (`IllegalArgumentException`) переиспользуют там, где они уместны.",
+                "related": "[[java-exceptions-interview#Q10]] зачем подклассы; [[java-exceptions-interview#Q19]] оформление кастомного исключения; [[java-exceptions-interview#Q20]] RuntimeException vs checked."
               }
             }
           ]
@@ -1271,18 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Порядок такой: `finally` выполняется до `catch`, поэтому завершающий код успевает отработать раньше обработки исключения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`finally` выполняется после `try` и после соответствующего `catch`, а не до него; обработка исключения предшествует завершающему блоку.",
-                "source_of_confusion": "Слово finally ассоциируют с «подготовкой», что путает порядок.",
-                "if_it_were_true": "Тогда ресурс закрывался бы до обработки ошибки в catch, но реально catch отрабатывает первым.",
-                "how_it_should_be": "Сначала `try`, затем подходящий `catch`, и только потом `finally`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Сначала выполняется `try`; при исключении ищется подходящий `catch`, и если он найден — выполняется его тело; затем в любом случае выполняется `finally`; после чего программа продолжается (или исключение пробрасывается выше, если catch не нашёлся).",
               "correct": true,
               "sections": {
@@ -1294,8 +1282,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Сначала `try`; при исключении сразу выполняется `finally`, и только потом — подходящий `catch`; после чего программа продолжается или исключение уходит наверх.",
               "correct": false,
               "sections": {
@@ -1306,8 +1294,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Если подходящего `catch` нет, блок `finally` пропускается, и исключение сразу улетает наверх без выполнения завершающего кода.",
               "correct": false,
               "sections": {
@@ -1315,6 +1303,18 @@
                 "source_of_confusion": "Кажется, что «непойманное» исключение сразу покидает метод, минуя всё остальное.",
                 "if_it_were_true": "Тогда ресурсы текли бы при любой необработанной ошибке, но `finally` гарантирует очистку.",
                 "how_it_should_be": "`finally` отрабатывает и при ненайденном catch, до проброса исключения наверх."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Порядок такой: `finally` выполняется до `catch`, поэтому завершающий код успевает отработать раньше обработки исключения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`finally` выполняется после `try` и после соответствующего `catch`, а не до него; обработка исключения предшествует завершающему блоку.",
+                "source_of_confusion": "Слово finally ассоциируют с «подготовкой», что путает порядок.",
+                "if_it_were_true": "Тогда ресурс закрывался бы до обработки ошибки в catch, но реально catch отрабатывает первым.",
+                "how_it_should_be": "Сначала `try`, затем подходящий `catch`, и только потом `finally`."
               }
             }
           ]
@@ -1331,18 +1331,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`return` в `finally` игнорируется компилятором: вернётся значение из `try`, а строка с `return` в `finally` не имеет эффекта.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`return` в `finally` не игнорируется — он перезаписывает значение из `try`/`catch` и выполняется именно он.",
-                "source_of_confusion": "Кажется логичным, что «основной» return из try должен победить.",
-                "if_it_were_true": "Тогда `try { return 1; } finally { return 2; }` возвращал бы `1`, но реально возвращает `2`.",
-                "how_it_should_be": "`return` в `finally` имеет приоритет и затирает результат из `try`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`return` в `finally` вызовет ошибку компиляции, так как Java запрещает любые операторы выхода внутри блока `finally`.",
               "correct": false,
               "sections": {
@@ -1350,6 +1338,18 @@
                 "source_of_confusion": "Серьёзность антипаттерна преувеличивают до уровня ошибки компиляции.",
                 "if_it_were_true": "Тогда IDE не показывала бы предупреждение (warning), а сразу ошибку компиляции, но это именно warning.",
                 "how_it_should_be": "Код компилируется; `return` в `finally` — антипаттерн, а не синтаксическая ошибка."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`return` в `finally` игнорируется компилятором: вернётся значение из `try`, а строка с `return` в `finally` не имеет эффекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`return` в `finally` не игнорируется — он перезаписывает значение из `try`/`catch` и выполняется именно он.",
+                "source_of_confusion": "Кажется логичным, что «основной» return из try должен победить.",
+                "if_it_were_true": "Тогда `try { return 1; } finally { return 2; }` возвращал бы `1`, но реально возвращает `2`.",
+                "how_it_should_be": "`return` в `finally` имеет приоритет и затирает результат из `try`."
               }
             },
             {
@@ -1403,13 +1403,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`catch (Throwable t)` — рекомендуемая практика в любом бизнес-коде, потому что так гарантированно ничего не упадёт.",
-              "correct": false,
+              "text": "`catch (Throwable t)` перехватывает и `Exception`, и `Error`, поскольку оба — наследники `Throwable`. Это допустимо только на границах системы (верхний обработчик потока, фреймворк, `UncaughtExceptionHandler`), но не в обычном бизнес-коде.",
+              "correct": true,
               "sections": {
-                "what_actually": "В бизнес-коде ловят конкретные подтипы; `catch (Throwable)` уместен только на границах системы, иначе он маскирует и `Error`, после которого нельзя продолжать.",
-                "source_of_confusion": "Желание «поймать всё» подают как универсально полезное.",
-                "if_it_were_true": "Тогда ловить `OutOfMemoryError` в сервисе было бы нормой, но восстановиться после него нельзя.",
-                "how_it_should_be": "В бизнес-логике — конкретные типы; `Throwable` — только на внешних границах."
+                "explanation": "Ловля `Throwable` опасна тем, что захватывает и невосстановимые `Error` (`OutOfMemoryError`, `StackOverflowError`), после которых нельзя продолжать работу. В бизнес-логике ловят конкретные подтипы `Exception`.",
+                "example": "`try { riskyOperation(); } catch (Throwable t) { log.error(\"Критическая ошибка\", t); }` — уместно лишь для логирования перед graceful shutdown на верхнем уровне.",
+                "when_to_apply": "`catch (Throwable)` применяют на самых внешних границах: top-level потока, контейнере сервлетов, `Spring`, обработчике необработанных исключений — где нужно залогировать всё перед завершением.",
+                "edge_cases": "Граничный случай: восстановиться после `OutOfMemoryError` или `StackOverflowError` нельзя, поэтому даже поймав `Throwable`, такие `Error` лишь логируют, а не «обрабатывают».",
+                "related": "[[java-exceptions-interview#Q1]] иерархия Throwable; [[java-exceptions-interview#Q6]] Exception vs Error; [[java-exceptions-interview#Q26]] UncaughtExceptionHandler."
               }
             },
             {
@@ -1427,14 +1428,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`catch (Throwable t)` перехватывает и `Exception`, и `Error`, поскольку оба — наследники `Throwable`. Это допустимо только на границах системы (верхний обработчик потока, фреймворк, `UncaughtExceptionHandler`), но не в обычном бизнес-коде.",
-              "correct": true,
+              "text": "`catch (Throwable t)` — рекомендуемая практика в любом бизнес-коде, потому что так гарантированно ничего не упадёт.",
+              "correct": false,
               "sections": {
-                "explanation": "Ловля `Throwable` опасна тем, что захватывает и невосстановимые `Error` (`OutOfMemoryError`, `StackOverflowError`), после которых нельзя продолжать работу. В бизнес-логике ловят конкретные подтипы `Exception`.",
-                "example": "`try { riskyOperation(); } catch (Throwable t) { log.error(\"Критическая ошибка\", t); }` — уместно лишь для логирования перед graceful shutdown на верхнем уровне.",
-                "when_to_apply": "`catch (Throwable)` применяют на самых внешних границах: top-level потока, контейнере сервлетов, `Spring`, обработчике необработанных исключений — где нужно залогировать всё перед завершением.",
-                "edge_cases": "Граничный случай: восстановиться после `OutOfMemoryError` или `StackOverflowError` нельзя, поэтому даже поймав `Throwable`, такие `Error` лишь логируют, а не «обрабатывают».",
-                "related": "[[java-exceptions-interview#Q1]] иерархия Throwable; [[java-exceptions-interview#Q6]] Exception vs Error; [[java-exceptions-interview#Q26]] UncaughtExceptionHandler."
+                "what_actually": "В бизнес-коде ловят конкретные подтипы; `catch (Throwable)` уместен только на границах системы, иначе он маскирует и `Error`, после которого нельзя продолжать.",
+                "source_of_confusion": "Желание «поймать всё» подают как универсально полезное.",
+                "if_it_were_true": "Тогда ловить `OutOfMemoryError` в сервисе было бы нормой, но восстановиться после него нельзя.",
+                "how_it_should_be": "В бизнес-логике — конкретные типы; `Throwable` — только на внешних границах."
               }
             }
           ]
@@ -1451,31 +1451,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Исключение в потоке не пробрасывается в создавший его поток — у каждого свой стек. Способы обработки: `Thread.setUncaughtExceptionHandler` для «сырых» потоков, `Future.get()` через `ExecutorService` (ловит `ExecutionException`), и `CompletableFuture.exceptionally(...)` для реактивного стиля.",
-              "correct": true,
+              "text": "Единственный способ обработать ошибку потока — обернуть весь `Runnable` в `catch (Throwable)`, других механизмов в Java нет.",
+              "correct": false,
               "sections": {
-                "explanation": "Для «сырого» потока обработчик ловит то, что не поймано внутри. В `ExecutorService` исключение задачи заворачивается в `ExecutionException`, и оригинал доступен через `getCause()`. `CompletableFuture` обрабатывает ошибку в `exceptionally`/`handle`.",
-                "example": "`Future<String> f = executor.submit(() -> { throw new IOException(); }); try { f.get(); } catch (ExecutionException ex) { Throwable cause = ex.getCause(); }` — оригинальная `IOException` внутри `cause`.",
-                "when_to_apply": "Подход выбирают по модели: `UncaughtExceptionHandler` — для ручных потоков, `Future.get()` — для пула задач, `CompletableFuture` — для асинхронных конвейеров.",
-                "edge_cases": "Граничный случай: `future.get()` оборачивает исключение задачи в `ExecutionException` (а прерывание — в `InterruptedException`), поэтому всегда смотрят на `getCause()`.",
-                "related": "[[java-exceptions-interview#Q8]] exception chaining; [[java-exceptions-interview#Q26]] UncaughtExceptionHandler; [[java-exceptions-interview#Q24]] catch Throwable на границах."
+                "what_actually": "Есть несколько штатных механизмов: `UncaughtExceptionHandler`, `Future.get()` и `CompletableFuture.exceptionally`, а не только catch внутри задачи.",
+                "source_of_confusion": "Один знакомый приём (catch внутри Runnable) принимают за единственно возможный.",
+                "if_it_were_true": "Тогда `CompletableFuture.exceptionally(...)` был бы не нужен, но он специально создан для обработки ошибок.",
+                "how_it_should_be": "Кроме catch внутри задачи есть хендлеры потока, `Future.get()` и реактивный `CompletableFuture`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Исключение в дочернем потоке автоматически пробрасывается в родительский поток и может быть поймано обычным `try-catch` вокруг `thread.start()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У каждого потока свой стек: исключение не пробрасывается в родителя, и `try-catch` вокруг `start()` его не поймает; нужны `UncaughtExceptionHandler`, `Future.get()` или `CompletableFuture`.",
-                "source_of_confusion": "Синхронная интуиция «исключение всплывает к вызывающему» ошибочно переносится на потоки.",
-                "if_it_were_true": "Тогда `try { thread.start(); } catch (...)` ловил бы ошибку задачи, но `start()` лишь запускает поток и сразу возвращается.",
-                "how_it_should_be": "Исключение остаётся в своём потоке; ловят его через хендлер, `Future.get()` или `CompletableFuture`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "В `ExecutorService` исключение задачи теряется навсегда: `Future.get()` возвращает `null` и никак не сигнализирует об ошибке.",
               "correct": false,
               "sections": {
@@ -1486,15 +1473,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Единственный способ обработать ошибку потока — обернуть весь `Runnable` в `catch (Throwable)`, других механизмов в Java нет.",
+              "order": 2,
+              "label": "C",
+              "text": "Исключение в дочернем потоке автоматически пробрасывается в родительский поток и может быть поймано обычным `try-catch` вокруг `thread.start()`.",
               "correct": false,
               "sections": {
-                "what_actually": "Есть несколько штатных механизмов: `UncaughtExceptionHandler`, `Future.get()` и `CompletableFuture.exceptionally`, а не только catch внутри задачи.",
-                "source_of_confusion": "Один знакомый приём (catch внутри Runnable) принимают за единственно возможный.",
-                "if_it_were_true": "Тогда `CompletableFuture.exceptionally(...)` был бы не нужен, но он специально создан для обработки ошибок.",
-                "how_it_should_be": "Кроме catch внутри задачи есть хендлеры потока, `Future.get()` и реактивный `CompletableFuture`."
+                "what_actually": "У каждого потока свой стек: исключение не пробрасывается в родителя, и `try-catch` вокруг `start()` его не поймает; нужны `UncaughtExceptionHandler`, `Future.get()` или `CompletableFuture`.",
+                "source_of_confusion": "Синхронная интуиция «исключение всплывает к вызывающему» ошибочно переносится на потоки.",
+                "if_it_were_true": "Тогда `try { thread.start(); } catch (...)` ловил бы ошибку задачи, но `start()` лишь запускает поток и сразу возвращается.",
+                "how_it_should_be": "Исключение остаётся в своём потоке; ловят его через хендлер, `Future.get()` или `CompletableFuture`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Исключение в потоке не пробрасывается в создавший его поток — у каждого свой стек. Способы обработки: `Thread.setUncaughtExceptionHandler` для «сырых» потоков, `Future.get()` через `ExecutorService` (ловит `ExecutionException`), и `CompletableFuture.exceptionally(...)` для реактивного стиля.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для «сырого» потока обработчик ловит то, что не поймано внутри. В `ExecutorService` исключение задачи заворачивается в `ExecutionException`, и оригинал доступен через `getCause()`. `CompletableFuture` обрабатывает ошибку в `exceptionally`/`handle`.",
+                "example": "`Future<String> f = executor.submit(() -> { throw new IOException(); }); try { f.get(); } catch (ExecutionException ex) { Throwable cause = ex.getCause(); }` — оригинальная `IOException` внутри `cause`.",
+                "when_to_apply": "Подход выбирают по модели: `UncaughtExceptionHandler` — для ручных потоков, `Future.get()` — для пула задач, `CompletableFuture` — для асинхронных конвейеров.",
+                "edge_cases": "Граничный случай: `future.get()` оборачивает исключение задачи в `ExecutionException` (а прерывание — в `InterruptedException`), поэтому всегда смотрят на `getCause()`.",
+                "related": "[[java-exceptions-interview#Q8]] exception chaining; [[java-exceptions-interview#Q26]] UncaughtExceptionHandler; [[java-exceptions-interview#Q24]] catch Throwable на границах."
               }
             }
           ]
@@ -1511,18 +1511,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`UncaughtExceptionHandler` вызывается перед каждым исключением в потоке и позволяет отменить его, чтобы поток продолжил работу.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Хендлер вызывается уже после того, как исключение не поймано и поток завершается; «отменить» исключение и продолжить выполнение он не может.",
-                "source_of_confusion": "Слово handler наводит на мысль о перехвате и восстановлении, как в обычном catch.",
-                "if_it_were_true": "Тогда поток продолжал бы работу после необработанной ошибки, но он к этому моменту уже завершается.",
-                "how_it_should_be": "Это финальный колбэк при завершении потока, а не способ восстановить его выполнение."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Thread.UncaughtExceptionHandler` — интерфейс с методом, который JVM вызывает, когда поток завершается из-за необработанного исключения. Его ставят на конкретный поток (`setUncaughtExceptionHandler`) или глобально (`setDefaultUncaughtExceptionHandler`).",
               "correct": true,
               "sections": {
@@ -1534,20 +1522,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`Thread.UncaughtExceptionHandler` можно задать только глобально через `setDefaultUncaughtExceptionHandler`; повесить отдельный обработчик на конкретный поток нельзя.",
+              "order": 1,
+              "label": "B",
+              "text": "`UncaughtExceptionHandler` вызывается перед каждым исключением в потоке и позволяет отменить его, чтобы поток продолжил работу.",
               "correct": false,
               "sections": {
-                "what_actually": "Обработчик ставят и на конкретный поток (`thread.setUncaughtExceptionHandler(...)`), и глобально; per-thread-обработчик имеет приоритет над дефолтным.",
-                "source_of_confusion": "Глобальный `setDefaultUncaughtExceptionHandler` встречается чаще, отсюда мысль, что это единственный способ.",
-                "if_it_were_true": "Тогда `thread.setUncaughtExceptionHandler(...)` не существовал бы, но это рабочий метод класса `Thread`.",
-                "how_it_should_be": "Хендлер можно задать и на конкретный поток, и глобально; JVM ищет per-thread, затем `ThreadGroup`, затем дефолтный."
+                "what_actually": "Хендлер вызывается уже после того, как исключение не поймано и поток завершается; «отменить» исключение и продолжить выполнение он не может.",
+                "source_of_confusion": "Слово handler наводит на мысль о перехвате и восстановлении, как в обычном catch.",
+                "if_it_were_true": "Тогда поток продолжал бы работу после необработанной ошибки, но он к этому моменту уже завершается.",
+                "how_it_should_be": "Это финальный колбэк при завершении потока, а не способ восстановить его выполнение."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`UncaughtExceptionHandler` работает только для пула `ExecutorService` и не применим к обычным потокам, созданным через `new Thread()`.",
               "correct": false,
               "sections": {
@@ -1555,6 +1543,18 @@
                 "source_of_confusion": "Многопоточность ассоциируют только с пулами, отсюда мнимое ограничение.",
                 "if_it_were_true": "Тогда `new Thread(...).setUncaughtExceptionHandler(...)` был бы бесполезен, но это рабочий и распространённый приём.",
                 "how_it_should_be": "Хендлер применим к обычным потокам и глобально; в пуле обычно используют `Future.get()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Thread.UncaughtExceptionHandler` можно задать только глобально через `setDefaultUncaughtExceptionHandler`; повесить отдельный обработчик на конкретный поток нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработчик ставят и на конкретный поток (`thread.setUncaughtExceptionHandler(...)`), и глобально; per-thread-обработчик имеет приоритет над дефолтным.",
+                "source_of_confusion": "Глобальный `setDefaultUncaughtExceptionHandler` встречается чаще, отсюда мысль, что это единственный способ.",
+                "if_it_were_true": "Тогда `thread.setUncaughtExceptionHandler(...)` не существовал бы, но это рабочий метод класса `Thread`.",
+                "how_it_should_be": "Хендлер можно задать и на конкретный поток, и глобально; JVM ищет per-thread, затем `ThreadGroup`, затем дефолтный."
               }
             }
           ]
@@ -1571,6 +1571,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Исключение нужно конкатенировать прямо в строку сообщения (`log.error(\"err \" + e)`), а не передавать отдельным аргументом, — так логгер точно увидит весь stack trace.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конкатенация `\"err \" + e` подставляет лишь `toString()` без полного стека и обходит механизм логгера; исключение надо передавать отдельным последним аргументом.",
+                "source_of_confusion": "Кажется, что склеить всё в одну строку «нагляднее», но так теряется структурированный вывод стека.",
+                "if_it_were_true": "Тогда `log.error(\"err \" + e)` давал бы полный трейс, но он печатает только сообщение исключения без цепочки вызовов.",
+                "how_it_should_be": "Передавать `ex` отдельным аргументом: `log.error(\"msg {}\", id, ex)` — логгер сам отформатирует stack trace."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Правильно логировать так: `log.error(\"Ошибка: \" + ex.getMessage())` — этого достаточно, ведь сообщение содержит всю нужную информацию.",
               "correct": false,
               "sections": {
@@ -1581,8 +1593,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`printStackTrace()` — корректный способ логирования в production, эквивалентный вызову `log.error(...)`.",
               "correct": false,
               "sections": {
@@ -1593,8 +1605,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Исключение передают логгеру как последний аргумент (`log.error(\"msg {}\", id, ex)`), а не конкатенируют в строку. Так логгер форматирует полный stack trace. Конкатенация или логирование только `getMessage()` теряют стек.",
               "correct": true,
               "sections": {
@@ -1603,18 +1615,6 @@
                 "when_to_apply": "Эти правила применяют при любом логировании ошибок, чтобы в логах был полный контекст (ID, стек) и не было дублей или потерянных трейсов.",
                 "edge_cases": "Граничный случай: логировать И пробрасывать одно и то же исключение приводит к двойной записи — логируют либо здесь, либо на верхнем уровне.",
                 "related": "[[java-exceptions-interview#Q9]] stack trace; [[java-exceptions-interview#Q34]] антипаттерны обработки; [[java-exceptions-interview#Q40]] что включать в message."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Исключение нужно конкатенировать прямо в строку сообщения (`log.error(\"err \" + e)`), а не передавать отдельным аргументом, — так логгер точно увидит весь stack trace.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Конкатенация `\"err \" + e` подставляет лишь `toString()` без полного стека и обходит механизм логгера; исключение надо передавать отдельным последним аргументом.",
-                "source_of_confusion": "Кажется, что склеить всё в одну строку «нагляднее», но так теряется структурированный вывод стека.",
-                "if_it_were_true": "Тогда `log.error(\"err \" + e)` давал бы полный трейс, но он печатает только сообщение исключения без цепочки вызовов.",
-                "how_it_should_be": "Передавать `ex` отдельным аргументом: `log.error(\"msg {}\", id, ex)` — логгер сам отформатирует stack trace."
               }
             }
           ]
@@ -1631,6 +1631,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Отсутствие исключения нельзя выразить в тесте — для проверки, что метод НЕ бросает, специального ассерта в JUnit нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для этого есть `assertDoesNotThrow(() -> ...)`, явно фиксирующий, что код выполняется без исключений.",
+                "source_of_confusion": "Внимание обычно сосредоточено на проверке броска, а не его отсутствия.",
+                "if_it_were_true": "Тогда нельзя было бы протестировать happy-path на отсутствие ошибок, но `assertDoesNotThrow` это делает.",
+                "how_it_should_be": "Отсутствие исключения проверяют через `assertDoesNotThrow(...)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Код, выбрасывающий исключения, нельзя протестировать автоматически — нужно ловить ошибку вручную в `try-catch` и при отсутствии исключения вызывать `fail()`.",
               "correct": false,
               "sections": {
@@ -1641,8 +1653,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Проверить тип исключения нельзя — `assertThrows` лишь констатирует факт броска, но не возвращает объект для проверки сообщения или полей.",
               "correct": false,
               "sections": {
@@ -1650,18 +1662,6 @@
                 "source_of_confusion": "Кажется, что ассерт лишь «да/нет», без доступа к объекту.",
                 "if_it_were_true": "Тогда нельзя было бы проверить `ex.getMessage()`, но `assertThrows` как раз отдаёт объект для этого.",
                 "how_it_should_be": "`assertThrows` возвращает исключение, что позволяет проверять его сообщение и поля."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Отсутствие исключения нельзя выразить в тесте — для проверки, что метод НЕ бросает, специального ассерта в JUnit нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для этого есть `assertDoesNotThrow(() -> ...)`, явно фиксирующий, что код выполняется без исключений.",
-                "source_of_confusion": "Внимание обычно сосредоточено на проверке броска, а не его отсутствия.",
-                "if_it_were_true": "Тогда нельзя было бы протестировать happy-path на отсутствие ошибок, но `assertDoesNotThrow` это делает.",
-                "how_it_should_be": "Отсутствие исключения проверяют через `assertDoesNotThrow(...)`."
               }
             },
             {
@@ -1691,31 +1691,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Это методы `Throwable` для работы с цепочкой: `getCause()` возвращает исключение-причину (или `null`), а `initCause(Throwable)` устанавливает причину один раз. Повторный вызов `initCause()` бросает `IllegalStateException`.",
-              "correct": true,
+              "text": "`initCause()` можно вызывать сколько угодно раз, каждый раз переопределяя причину исключения новым значением.",
+              "correct": false,
               "sections": {
-                "explanation": "`getCause()` позволяет идти вглубь цепочки (`ex.getCause().getCause()`) до корневой причины. `initCause()` существует в основном для совместимости с исключениями без конструктора с `cause`; в новом коде предпочитают конструктор `(message, cause)`.",
-                "example": "`IOException io = new IOException(\"read\"); io.initCause(new DiskFailureException(\"диск повреждён\"));` — причину задают через `initCause`, после чего повторный вызов бросит `IllegalStateException`.",
-                "when_to_apply": "`getCause()` применяют при разборе многослойных ошибок (доменное -> инфраструктурное -> низкоуровневое), а `initCause()` — когда у класса нет конструктора с `cause`.",
-                "edge_cases": "Граничный случай: `initCause()` можно вызвать лишь раз и только если причина ещё не задана конструктором; иначе — `IllegalStateException`.",
-                "related": "[[java-exceptions-interview#Q8]] exception chaining; [[java-exceptions-interview#Q17]] RuntimeException с cause; [[java-exceptions-interview#Q35]] initCause, getCause, addSuppressed."
+                "what_actually": "`initCause()` допускает лишь один вызов; повторный (или если причина уже задана конструктором) бросает `IllegalStateException`.",
+                "source_of_confusion": "По аналогии с обычным сеттером кажется, что значение можно менять повторно.",
+                "if_it_were_true": "Тогда `io.initCause(a); io.initCause(b);` работал бы, но второй вызов упадёт с `IllegalStateException`.",
+                "how_it_should_be": "Причину устанавливают один раз; повторный `initCause()` — ошибка."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`initCause(Throwable)` возвращает исключение-причину, а `getCause()` устанавливает её; при этом `getCause()` можно вызвать только один раз.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Роли перепутаны: причину читает `getCause()` (без ограничений на число вызовов), а устанавливает её однократно `initCause(Throwable)`.",
-                "source_of_confusion": "Оба метода работают с `cause`, поэтому их назначение легко поменять местами.",
-                "if_it_were_true": "Тогда `getCause()` принимал бы аргумент и менял состояние, но он лишь возвращает ранее заданную причину.",
-                "how_it_should_be": "`getCause()` читает причину (сколько угодно раз), `initCause(Throwable)` задаёт её ровно один раз."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`getCause()` возвращает массив всех подавленных исключений, как `getSuppressed()`.",
               "correct": false,
               "sections": {
@@ -1726,15 +1713,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`initCause()` можно вызывать сколько угодно раз, каждый раз переопределяя причину исключения новым значением.",
+              "order": 2,
+              "label": "C",
+              "text": "`initCause(Throwable)` возвращает исключение-причину, а `getCause()` устанавливает её; при этом `getCause()` можно вызвать только один раз.",
               "correct": false,
               "sections": {
-                "what_actually": "`initCause()` допускает лишь один вызов; повторный (или если причина уже задана конструктором) бросает `IllegalStateException`.",
-                "source_of_confusion": "По аналогии с обычным сеттером кажется, что значение можно менять повторно.",
-                "if_it_were_true": "Тогда `io.initCause(a); io.initCause(b);` работал бы, но второй вызов упадёт с `IllegalStateException`.",
-                "how_it_should_be": "Причину устанавливают один раз; повторный `initCause()` — ошибка."
+                "what_actually": "Роли перепутаны: причину читает `getCause()` (без ограничений на число вызовов), а устанавливает её однократно `initCause(Throwable)`.",
+                "source_of_confusion": "Оба метода работают с `cause`, поэтому их назначение легко поменять местами.",
+                "if_it_were_true": "Тогда `getCause()` принимал бы аргумент и менял состояние, но он лишь возвращает ранее заданную причину.",
+                "how_it_should_be": "`getCause()` читает причину (сколько угодно раз), `initCause(Throwable)` задаёт её ровно один раз."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это методы `Throwable` для работы с цепочкой: `getCause()` возвращает исключение-причину (или `null`), а `initCause(Throwable)` устанавливает причину один раз. Повторный вызов `initCause()` бросает `IllegalStateException`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`getCause()` позволяет идти вглубь цепочки (`ex.getCause().getCause()`) до корневой причины. `initCause()` существует в основном для совместимости с исключениями без конструктора с `cause`; в новом коде предпочитают конструктор `(message, cause)`.",
+                "example": "`IOException io = new IOException(\"read\"); io.initCause(new DiskFailureException(\"диск повреждён\"));` — причину задают через `initCause`, после чего повторный вызов бросит `IllegalStateException`.",
+                "when_to_apply": "`getCause()` применяют при разборе многослойных ошибок (доменное -> инфраструктурное -> низкоуровневое), а `initCause()` — когда у класса нет конструктора с `cause`.",
+                "edge_cases": "Граничный случай: `initCause()` можно вызвать лишь раз и только если причина ещё не задана конструктором; иначе — `IllegalStateException`.",
+                "related": "[[java-exceptions-interview#Q8]] exception chaining; [[java-exceptions-interview#Q17]] RuntimeException с cause; [[java-exceptions-interview#Q35]] initCause, getCause, addSuppressed."
               }
             }
           ]
@@ -1751,18 +1751,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`AssertionError` — это подкласс `RuntimeException`, и `assert` по умолчанию включён, поэтому он годится для валидации аргументов публичного API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`AssertionError` наследует `Error`, а не `RuntimeException`; assertions по умолчанию выключены, поэтому для валидации аргументов используют `IllegalArgumentException`/`requireNonNull`.",
-                "source_of_confusion": "Раз это «ошибка проверки», её путают с unchecked-исключением и считают всегда активной.",
-                "if_it_were_true": "Тогда `assert name != null` защищал бы API без флага `-ea`, но без него проверка просто не выполнится.",
-                "how_it_should_be": "`AssertionError` — это `Error`; assertions выключены по умолчанию, для валидации они не годятся."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`AssertionError` — наследник `Error`, выбрасывается при нарушении условия в операторе `assert`. Сам `assert` по умолчанию отключён в JVM и включается флагом `-ea`. Его используют для инвариантов и внутренних допущений, а не для валидации входных данных.",
               "correct": true,
               "sections": {
@@ -1774,20 +1762,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`AssertionError` — наследник `Error` для нарушенного `assert`; assertions включены в JVM по умолчанию, а флаг `-da` нужен лишь чтобы их отключить, поэтому `assert` надёжно работает и в production.",
+              "order": 1,
+              "label": "B",
+              "text": "`AssertionError` — это подкласс `RuntimeException`, и `assert` по умолчанию включён, поэтому он годится для валидации аргументов публичного API.",
               "correct": false,
               "sections": {
-                "what_actually": "Assertions по умолчанию ВЫКЛЮЧЕНЫ и включаются флагом `-ea`; без него тело `assert` не исполняется, поэтому полагаться на него в production нельзя.",
-                "source_of_confusion": "Раз `assert` — ключевое слово языка, кажется, что проверка активна всегда без отдельного флага.",
-                "if_it_were_true": "Тогда `assert age >= 0` срабатывал бы в проде без `-ea`, но по умолчанию JVM его просто пропускает.",
-                "how_it_should_be": "Assertions выключены по умолчанию (включаются `-ea`); `assert` — для инвариантов, валидацию делают исключениями."
+                "what_actually": "`AssertionError` наследует `Error`, а не `RuntimeException`; assertions по умолчанию выключены, поэтому для валидации аргументов используют `IllegalArgumentException`/`requireNonNull`.",
+                "source_of_confusion": "Раз это «ошибка проверки», её путают с unchecked-исключением и считают всегда активной.",
+                "if_it_were_true": "Тогда `assert name != null` защищал бы API без флага `-ea`, но без него проверка просто не выполнится.",
+                "how_it_should_be": "`AssertionError` — это `Error`; assertions выключены по умолчанию, для валидации они не годятся."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`assert` нужно использовать для проверки аргументов публичных методов вместо `Objects.requireNonNull`, так как он лаконичнее.",
               "correct": false,
               "sections": {
@@ -1795,6 +1783,18 @@
                 "source_of_confusion": "Краткость `assert` соблазняет применять его как валидатор.",
                 "if_it_were_true": "Тогда отключение assertions ломало бы валидацию в проде, но именно поэтому её делают явными исключениями.",
                 "how_it_should_be": "Валидацию аргументов делают через `requireNonNull`/исключения; `assert` оставляют для инвариантов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`AssertionError` — наследник `Error` для нарушенного `assert`; assertions включены в JVM по умолчанию, а флаг `-da` нужен лишь чтобы их отключить, поэтому `assert` надёжно работает и в production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Assertions по умолчанию ВЫКЛЮЧЕНЫ и включаются флагом `-ea`; без него тело `assert` не исполняется, поэтому полагаться на него в production нельзя.",
+                "source_of_confusion": "Раз `assert` — ключевое слово языка, кажется, что проверка активна всегда без отдельного флага.",
+                "if_it_were_true": "Тогда `assert age >= 0` срабатывал бы в проде без `-ea`, но по умолчанию JVM его просто пропускает.",
+                "how_it_should_be": "Assertions выключены по умолчанию (включаются `-ea`); `assert` — для инвариантов, валидацию делают исключениями."
               }
             }
           ]
@@ -1811,30 +1811,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OutOfMemoryError` нужно ловить в бизнес-коде и продолжать работу — после `catch` память освободится сама, и приложение восстановится.",
+              "text": "Оба наследуют `Error`; `OutOfMemoryError` диагностируют через heap dump, а `StackOverflowError` штатно лечится увеличением кучи флагом `-Xmx`, после чего глубокая рекурсия перестаёт переполнять стек.",
               "correct": false,
               "sections": {
-                "what_actually": "После `OutOfMemoryError` состояние JVM непредсказуемо; его не ловят в бизнес-коде, а решают через heap dump, поиск утечек и тюнинг `-Xmx`.",
-                "source_of_confusion": "Перехват в catch создаёт иллюзию «обработали и пошли дальше».",
-                "if_it_were_true": "Тогда OOM был бы рядовой ситуацией, но восстановиться после него штатно нельзя.",
-                "how_it_should_be": "OOM не ловят для продолжения; диагностируют через дамп и устраняют утечку/нехватку памяти."
+                "what_actually": "`-Xmx` управляет размером кучи и на стек не влияет; `StackOverflowError` лечат базовым случаем рекурсии или итерацией, а предел стека двигает `-Xss`, а не `-Xmx`.",
+                "source_of_confusion": "Оба флага начинаются с `-X` и оба «про память», поэтому `-Xmx` и `-Xss` путают.",
+                "if_it_were_true": "Тогда рост `-Xmx` устранял бы переполнение стека, но он расширяет кучу, а стек остаётся прежним.",
+                "how_it_should_be": "SOE решают базовым случаем рекурсии/итерацией (стек двигает `-Xss`); `-Xmx` относится к OOM и куче."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`StackOverflowError` лечится исключительно увеличением `-Xss`; исправлять саму рекурсию не нужно, ведь стек можно сделать сколь угодно большим.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Корень `StackOverflowError` — обычно отсутствие базового случая рекурсии; `-Xss` лишь отодвигает предел, а исправляют добавлением базы или переходом на итерацию.",
-                "source_of_confusion": "Раз ошибка про стек, кажется, что достаточно «дать больше стека».",
-                "if_it_were_true": "Тогда бесконечная рекурсия работала бы при большом `-Xss`, но она всё равно исчерпает любой стек.",
-                "how_it_should_be": "Основное лечение — базовый случай/итерация; `-Xss` — временная мера."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Оба наследуют `Error` и обычно сигнализируют о серьёзных, нерешаемых в runtime проблемах. `OutOfMemoryError` не ловят в бизнес-коде (состояние JVM непредсказуемо), а `StackOverflowError` лечат исправлением рекурсии. Ловить их допустимо лишь для логирования и graceful shutdown.",
               "correct": true,
               "sections": {
@@ -1846,15 +1834,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Оба наследуют `Error`; `OutOfMemoryError` диагностируют через heap dump, а `StackOverflowError` штатно лечится увеличением кучи флагом `-Xmx`, после чего глубокая рекурсия перестаёт переполнять стек.",
+              "order": 2,
+              "label": "C",
+              "text": "`OutOfMemoryError` нужно ловить в бизнес-коде и продолжать работу — после `catch` память освободится сама, и приложение восстановится.",
               "correct": false,
               "sections": {
-                "what_actually": "`-Xmx` управляет размером кучи и на стек не влияет; `StackOverflowError` лечат базовым случаем рекурсии или итерацией, а предел стека двигает `-Xss`, а не `-Xmx`.",
-                "source_of_confusion": "Оба флага начинаются с `-X` и оба «про память», поэтому `-Xmx` и `-Xss` путают.",
-                "if_it_were_true": "Тогда рост `-Xmx` устранял бы переполнение стека, но он расширяет кучу, а стек остаётся прежним.",
-                "how_it_should_be": "SOE решают базовым случаем рекурсии/итерацией (стек двигает `-Xss`); `-Xmx` относится к OOM и куче."
+                "what_actually": "После `OutOfMemoryError` состояние JVM непредсказуемо; его не ловят в бизнес-коде, а решают через heap dump, поиск утечек и тюнинг `-Xmx`.",
+                "source_of_confusion": "Перехват в catch создаёт иллюзию «обработали и пошли дальше».",
+                "if_it_were_true": "Тогда OOM был бы рядовой ситуацией, но восстановиться после него штатно нельзя.",
+                "how_it_should_be": "OOM не ловят для продолжения; диагностируют через дамп и устраняют утечку/нехватку памяти."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`StackOverflowError` лечится исключительно увеличением `-Xss`; исправлять саму рекурсию не нужно, ведь стек можно сделать сколь угодно большим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корень `StackOverflowError` — обычно отсутствие базового случая рекурсии; `-Xss` лишь отодвигает предел, а исправляют добавлением базы или переходом на итерацию.",
+                "source_of_confusion": "Раз ошибка про стек, кажется, что достаточно «дать больше стека».",
+                "if_it_were_true": "Тогда бесконечная рекурсия работала бы при большом `-Xss`, но она всё равно исчерпает любой стек.",
+                "how_it_should_be": "Основное лечение — базовый случай/итерация; `-Xss` — временная мера."
               }
             }
           ]
@@ -1895,18 +1895,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Fail-fast`-итератор `ArrayList` молча игнорирует изменения коллекции во время обхода, а `fail-safe` `CopyOnWriteArrayList` бросает `ConcurrentModificationException`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: `ArrayList` (fail-fast) бросает `ConcurrentModificationException`, а `CopyOnWriteArrayList` (fail-safe) работает с копией и не падает.",
-                "source_of_confusion": "Поведение двух коллекций путают местами.",
-                "if_it_were_true": "Тогда `for (s : arrayList) arrayList.remove(s)` отрабатывал бы тихо, но он бросает `ConcurrentModificationException`.",
-                "how_it_should_be": "Fail-fast (`ArrayList`) бросает CME; fail-safe (`CopyOnWriteArrayList`) переживает модификацию через копию."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`Fail-fast` — при ошибке немедленно бросить исключение (рано обнаружить баг); `fail-safe` — продолжить работу, избежав сбоя (доступность важнее строгой корректности). Это две стратегии реакции на нештатную ситуацию.",
               "correct": true,
               "sections": {
@@ -1915,6 +1903,18 @@
                 "when_to_apply": "В бизнес-логике выбирают `fail-fast` (баги ловить рано), а на границах системы — `fail-safe` с логированием (не ронять весь сервис из-за одного запроса).",
                 "edge_cases": "Граничный случай: `fail-safe` не значит «без ошибок» — он лишь не прерывает работу; ошибку всё равно логируют, иначе она тихо теряется.",
                 "related": "[[java-exceptions-interview#Q30]] AssertionError и инварианты; [[java-exceptions-interview#Q34]] антипаттерны обработки; [[java-exceptions-interview#Q27]] логирование при fail-safe."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Fail-fast`-итератор `ArrayList` молча игнорирует изменения коллекции во время обхода, а `fail-safe` `CopyOnWriteArrayList` бросает `ConcurrentModificationException`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `ArrayList` (fail-fast) бросает `ConcurrentModificationException`, а `CopyOnWriteArrayList` (fail-safe) работает с копией и не падает.",
+                "source_of_confusion": "Поведение двух коллекций путают местами.",
+                "if_it_were_true": "Тогда `for (s : arrayList) arrayList.remove(s)` отрабатывал бы тихо, но он бросает `ConcurrentModificationException`.",
+                "how_it_should_be": "Fail-fast (`ArrayList`) бросает CME; fail-safe (`CopyOnWriteArrayList`) переживает модификацию через копию."
               }
             }
           ]
@@ -1931,14 +1931,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring MVC` даёт централизованную обработку через `@ExceptionHandler`-методы, собранные в классе с `@ControllerAdvice`/`@RestControllerAdvice`. Каждый метод привязан к типу исключения и формирует HTTP-ответ с нужным статусом.",
-              "correct": true,
+              "text": "При нескольких подходящих `@ExceptionHandler` Spring выбирает обработчик самого общего типа (`Exception`), а более специфичные не задействуются.",
+              "correct": false,
               "sections": {
-                "explanation": "`@ControllerAdvice` применяется ко всем контроллерам, убирая дублирование try-catch. Приоритет: сначала `@ExceptionHandler` в самом контроллере, затем в advice, затем дефолтный обработчик Spring. Для общего `Exception` обычно отдают 500 без раскрытия деталей.",
-                "example": "`@RestControllerAdvice class GlobalHandler { @ExceptionHandler(OrderNotFoundException.class) @ResponseStatus(NOT_FOUND) ErrorResponse h(OrderNotFoundException ex){...} }` — централизованно мапит исключение на 404.",
-                "when_to_apply": "Механизм применяют для REST API, чтобы единообразно превращать доменные исключения в HTTP-ответы и логировать неожиданные ошибки в одном месте.",
-                "edge_cases": "Граничный случай: более специфичный тип исключения имеет приоритет над общим; при нескольких advice порядок задают через `@Order`.",
-                "related": "[[java-exceptions-interview#Q19]] кастомные исключения для маппинга; [[java-exceptions-interview#Q24]] catch на границах системы; [[java-exceptions-interview#Q42]] ControllerAdvice и ProblemDetail."
+                "what_actually": "Spring выбирает наиболее специфичный по типу обработчик; общий `Exception`-метод срабатывает лишь как fallback.",
+                "source_of_confusion": "Кажется, что «широкий» обработчик перехватывает всё первым.",
+                "if_it_were_true": "Тогда `@ExceptionHandler(Exception.class)` перекрывал бы `@ExceptionHandler(OrderNotFoundException.class)`, но приоритет у специфичного.",
+                "how_it_should_be": "Приоритет — у самого специфичного типа; общий `Exception` — последний резерв."
               }
             },
             {
@@ -1956,6 +1955,19 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`Spring MVC` даёт централизованную обработку через `@ExceptionHandler`-методы, собранные в классе с `@ControllerAdvice`/`@RestControllerAdvice`. Каждый метод привязан к типу исключения и формирует HTTP-ответ с нужным статусом.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@ControllerAdvice` применяется ко всем контроллерам, убирая дублирование try-catch. Приоритет: сначала `@ExceptionHandler` в самом контроллере, затем в advice, затем дефолтный обработчик Spring. Для общего `Exception` обычно отдают 500 без раскрытия деталей.",
+                "example": "`@RestControllerAdvice class GlobalHandler { @ExceptionHandler(OrderNotFoundException.class) @ResponseStatus(NOT_FOUND) ErrorResponse h(OrderNotFoundException ex){...} }` — централизованно мапит исключение на 404.",
+                "when_to_apply": "Механизм применяют для REST API, чтобы единообразно превращать доменные исключения в HTTP-ответы и логировать неожиданные ошибки в одном месте.",
+                "edge_cases": "Граничный случай: более специфичный тип исключения имеет приоритет над общим; при нескольких advice порядок задают через `@Order`.",
+                "related": "[[java-exceptions-interview#Q19]] кастомные исключения для маппинга; [[java-exceptions-interview#Q24]] catch на границах системы; [[java-exceptions-interview#Q42]] ControllerAdvice и ProblemDetail."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`@ExceptionHandler` работает только для unchecked-исключений; checked-исключения Spring через этот механизм обрабатывать не может.",
               "correct": false,
               "sections": {
@@ -1963,18 +1975,6 @@
                 "source_of_confusion": "Деление checked/unchecked ошибочно проецируют на возможности Spring-обработчика.",
                 "if_it_were_true": "Тогда нельзя было бы обработать, например, кастомное checked-исключение, но `@ExceptionHandler` его поймает по типу.",
                 "how_it_should_be": "Обработчик срабатывает по типу исключения; checked/unchecked тут роли не играет."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "При нескольких подходящих `@ExceptionHandler` Spring выбирает обработчик самого общего типа (`Exception`), а более специфичные не задействуются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spring выбирает наиболее специфичный по типу обработчик; общий `Exception`-метод срабатывает лишь как fallback.",
-                "source_of_confusion": "Кажется, что «широкий» обработчик перехватывает всё первым.",
-                "if_it_were_true": "Тогда `@ExceptionHandler(Exception.class)` перекрывал бы `@ExceptionHandler(OrderNotFoundException.class)`, но приоритет у специфичного.",
-                "how_it_should_be": "Приоритет — у самого специфичного типа; общий `Exception` — последний резерв."
               }
             }
           ]
@@ -1991,13 +1991,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главный антипаттерн — это вообще использование `try-catch`: правильный код не должен ловить исключения, а лишь пробрасывать их все наверх.",
+              "text": "Антипаттерн — это передавать `cause` при оборачивании исключения: правильнее создавать новое исключение без причины, чтобы не раздувать стек.",
               "correct": false,
               "sections": {
-                "what_actually": "Антипаттерны — это конкретные ошибки (пустой catch, double logging, flow control), а не сам факт использования `try-catch`, который абсолютно нормален.",
-                "source_of_confusion": "Лозунг «не глотать исключения» доводят до абсурда «не ловить вовсе».",
-                "if_it_were_true": "Тогда нельзя было бы обработать восстановимую ошибку, но именно для этого `catch` и существует.",
-                "how_it_should_be": "Проблема в неправильной обработке (swallowing, double logging), а не в наличии `try-catch`."
+                "what_actually": "Передача `cause` — наоборот, best practice; антипаттерн — потеря причины (`throw new ServiceException(\"error\")` без исходного `ex`).",
+                "source_of_confusion": "Желание «упростить» стек выдают за пользу, теряя при этом первопричину.",
+                "if_it_were_true": "Тогда chaining (Q8) был бы вреден, но он рекомендуется именно для сохранения первопричины.",
+                "how_it_should_be": "Сохранять `cause` правильно; антипаттерн — терять причину при оборачивании."
               }
             },
             {
@@ -2016,6 +2016,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Главный антипаттерн — это вообще использование `try-catch`: правильный код не должен ловить исключения, а лишь пробрасывать их все наверх.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Антипаттерны — это конкретные ошибки (пустой catch, double logging, flow control), а не сам факт использования `try-catch`, который абсолютно нормален.",
+                "source_of_confusion": "Лозунг «не глотать исключения» доводят до абсурда «не ловить вовсе».",
+                "if_it_were_true": "Тогда нельзя было бы обработать восстановимую ошибку, но именно для этого `catch` и существует.",
+                "how_it_should_be": "Проблема в неправильной обработке (swallowing, double logging), а не в наличии `try-catch`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Антипаттерны: передача `cause` при оборачивании исключения, использование конкретных доменных типов вместо общего `Exception` и логирование исключения через `log.error(msg, ex)`.",
               "correct": false,
               "sections": {
@@ -2023,18 +2035,6 @@
                 "source_of_confusion": "Хорошие практики выдают за антипаттерны, перепутав рекомендации с тем, чего следует избегать.",
                 "if_it_were_true": "Тогда chaining (Q8) и типизированные исключения были бы вредны, но их прямо рекомендуют.",
                 "how_it_should_be": "Антипаттерны — это swallowing, `catch (Exception)` везде, double logging, flow control и `throw new Exception(...)`; сохранение `cause` и конкретные типы — правильно."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Антипаттерн — это передавать `cause` при оборачивании исключения: правильнее создавать новое исключение без причины, чтобы не раздувать стек.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Передача `cause` — наоборот, best practice; антипаттерн — потеря причины (`throw new ServiceException(\"error\")` без исходного `ex`).",
-                "source_of_confusion": "Желание «упростить» стек выдают за пользу, теряя при этом первопричину.",
-                "if_it_were_true": "Тогда chaining (Q8) был бы вреден, но он рекомендуется именно для сохранения первопричины.",
-                "how_it_should_be": "Сохранять `cause` правильно; антипаттерн — терять причину при оборачивании."
               }
             }
           ]
@@ -2051,18 +2051,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Chaining через `getCause()` возвращает массив всех подавленных исключений, а `addSuppressed()` задаёт единственную причину.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`getCause()` возвращает одну причину, а `addSuppressed()` добавляет подавленные в список (`getSuppressed()`); роли перепутаны.",
-                "source_of_confusion": "Оба механизма «накапливают» дополнительные исключения, поэтому их смешивают.",
-                "if_it_were_true": "Тогда `getCause()` отдавал бы массив, но он возвращает одно исключение-причину.",
-                "how_it_should_be": "`getCause()` — одиночная причина; `addSuppressed()`/`getSuppressed()` — список подавленных."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`initCause()` можно вызывать многократно, поэтому цепочку причин строят, переустанавливая `cause` на каждом уровне обработки.",
               "correct": false,
               "sections": {
@@ -2073,8 +2061,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Exception Chaining — сохранение первопричины при оборачивании исключения. `initCause()`/`getCause()` (или конструктор с `cause`) связывают причинно-следственную цепочку, а `addSuppressed()`/`getSuppressed()` сохраняют дополнительные исключения (например, из `close()`), не подавляя основное.",
               "correct": true,
               "sections": {
@@ -2083,6 +2071,18 @@
                 "when_to_apply": "Эти методы применяют при многослойной обработке (доменное оборачивает инфраструктурное) и при ручном освобождении ресурсов, где важно сохранить все ошибки.",
                 "edge_cases": "Граничный случай: `try-with-resources` делает `addSuppressed` автоматически; вручную это нужно лишь при освобождении ресурсов в `finally`.",
                 "related": "[[java-exceptions-interview#Q8]] exception chaining; [[java-exceptions-interview#Q14]] addSuppressed и getSuppressed; [[java-exceptions-interview#Q29]] getCause и initCause."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Chaining через `getCause()` возвращает массив всех подавленных исключений, а `addSuppressed()` задаёт единственную причину.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`getCause()` возвращает одну причину, а `addSuppressed()` добавляет подавленные в список (`getSuppressed()`); роли перепутаны.",
+                "source_of_confusion": "Оба механизма «накапливают» дополнительные исключения, поэтому их смешивают.",
+                "if_it_were_true": "Тогда `getCause()` отдавал бы массив, но он возвращает одно исключение-причину.",
+                "how_it_should_be": "`getCause()` — одиночная причина; `addSuppressed()`/`getSuppressed()` — список подавленных."
               }
             },
             {
@@ -2111,18 +2111,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В multi-catch переменную можно переприсваивать внутри блока, а перечислять разрешено любые типы, включая связанные наследованием.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оба утверждения неверны: переменная effectively final (переприсвоить нельзя), а связанные наследованием типы (`IOException | FileNotFoundException`) запрещены.",
-                "source_of_confusion": "Свободу обычного `catch` ошибочно переносят на multi-catch сразу по двум пунктам.",
-                "if_it_were_true": "Тогда `catch (IOException | FileNotFoundException e) { e = ...; }` компилировался бы, но он нарушает оба правила.",
-                "how_it_should_be": "Переменная multi-catch неизменяема, а типы должны быть несвязанными."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Multi-catch использует разделитель `&` (логическое И), то есть `catch (IOException & ParseException e)` ловит исключения, являющиеся обоими типами сразу.",
               "correct": false,
               "sections": {
@@ -2133,8 +2121,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Multi-catch — это просто старый стиль с двумя отдельными блоками `catch`, идущими подряд; нового синтаксиса с одним блоком в Java нет.",
               "correct": false,
               "sections": {
@@ -2142,6 +2130,18 @@
                 "source_of_confusion": "До Java 7 действительно писали два блока, и это представление устаревает.",
                 "if_it_were_true": "Тогда `catch (IOException | ParseException e)` не компилировался бы, но это валидный синтаксис с Java 7.",
                 "how_it_should_be": "Multi-catch объединяет типы в один блок через `|`, а не оставляет два отдельных catch."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В multi-catch переменную можно переприсваивать внутри блока, а перечислять разрешено любые типы, включая связанные наследованием.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба утверждения неверны: переменная effectively final (переприсвоить нельзя), а связанные наследованием типы (`IOException | FileNotFoundException`) запрещены.",
+                "source_of_confusion": "Свободу обычного `catch` ошибочно переносят на multi-catch сразу по двум пунктам.",
+                "if_it_were_true": "Тогда `catch (IOException | FileNotFoundException e) { e = ...; }` компилировался бы, но он нарушает оба правила.",
+                "how_it_should_be": "Переменная multi-catch неизменяема, а типы должны быть несвязанными."
               }
             },
             {
@@ -2256,18 +2256,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Кастомное исключение наследуют от подходящего типа и включают контекст в поля/конструкторы, но `serialVersionUID` им не нужен, потому что исключения не сериализуются и существуют только в памяти.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Исключения сериализуемы: `Throwable implements Serializable`, поэтому `serialVersionUID` как раз уместен и защищает от `InvalidClassException` при десериализации.",
-                "source_of_confusion": "Кажется, что исключения «живут только в рамках одного вызова» и никогда не сериализуются.",
-                "if_it_were_true": "Тогда исключение нельзя было бы передать между JVM (RMI, кеш, очередь), но это штатный сценарий, требующий стабильного ID.",
-                "how_it_should_be": "Подходящий предок, явный `serialVersionUID` (т.к. `Throwable` сериализуем), контекст в полях/конструкторах и плоская иерархия."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Поскольку в объявлении кастомного исключения нет `implements Serializable`, `serialVersionUID` ему не требуется — это поле имеет смысл лишь для классов, где `Serializable` указан явно.",
               "correct": false,
               "sections": {
@@ -2275,6 +2263,18 @@
                 "source_of_confusion": "Кажется, что исключения «живут только в памяти» и не сериализуются.",
                 "if_it_were_true": "Тогда нельзя было бы передать исключение между JVM (RMI, кеш), но это штатный сценарий.",
                 "how_it_should_be": "`Throwable` сериализуем, поэтому `serialVersionUID` для кастомного исключения осмыслен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кастомное исключение наследуют от подходящего типа и включают контекст в поля/конструкторы, но `serialVersionUID` им не нужен, потому что исключения не сериализуются и существуют только в памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исключения сериализуемы: `Throwable implements Serializable`, поэтому `serialVersionUID` как раз уместен и защищает от `InvalidClassException` при десериализации.",
+                "source_of_confusion": "Кажется, что исключения «живут только в рамках одного вызова» и никогда не сериализуются.",
+                "if_it_were_true": "Тогда исключение нельзя было бы передать между JVM (RMI, кеш, очередь), но это штатный сценарий, требующий стабильного ID.",
+                "how_it_should_be": "Подходящий предок, явный `serialVersionUID` (т.к. `Throwable` сериализуем), контекст в полях/конструкторах и плоская иерархия."
               }
             }
           ]
@@ -2291,30 +2291,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Проблемы нет: функциональные интерфейсы вроде `Function` объявляют `throws Exception`, поэтому checked-исключения внутри лямбды компилируются без обёрток.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стандартные интерфейсы (`Function`, `Consumer`) не объявляют checked в сигнатуре, поэтому `Files.readString` в `map` не компилируется без обёртки.",
-                "source_of_confusion": "Наличие исключений в самих библиотечных методах принимают за поддержку checked в интерфейсе.",
-                "if_it_were_true": "Тогда `.map(Files::readString)` компилировался бы напрямую, но компилятор требует обработать `IOException`.",
-                "how_it_should_be": "`Function` не объявляет `throws`; checked нужно оборачивать или прятать через wrapper/sneaky throw."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Единственный способ — пометить весь метод `throws Exception`, и тогда checked из лямбды автоматически пробросится наружу через `Stream`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`throws` на методе не помогает: лямбда внутри `Stream` всё равно ограничена сигнатурой функционального интерфейса; нужны обёртка, wrapper или sneaky throw.",
-                "source_of_confusion": "Кажется, что `throws` на внешнем методе «легализует» checked внутри лямбды.",
-                "if_it_were_true": "Тогда `void m() throws IOException { paths.stream().map(Files::readString)... }` компилировался бы, но он всё равно не пройдёт.",
-                "how_it_should_be": "`throws` на методе не снимает ограничения внутри лямбды; нужны явные приёмы обёртки."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Функциональные интерфейсы (`Function`, `Consumer`, `Supplier`) не объявляют checked-исключений, поэтому checked в лямбде запрещён компилятором. Решения: try-catch внутри лямбды с оборачиванием в unchecked, вспомогательный wrapper-интерфейс с `throws`, sneaky throw или стандартные unchecked-обёртки (`UncheckedIOException`).",
               "correct": true,
               "sections": {
@@ -2326,8 +2302,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "Проблемы нет: функциональные интерфейсы вроде `Function` объявляют `throws Exception`, поэтому checked-исключения внутри лямбды компилируются без обёрток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартные интерфейсы (`Function`, `Consumer`) не объявляют checked в сигнатуре, поэтому `Files.readString` в `map` не компилируется без обёртки.",
+                "source_of_confusion": "Наличие исключений в самих библиотечных методах принимают за поддержку checked в интерфейсе.",
+                "if_it_were_true": "Тогда `.map(Files::readString)` компилировался бы напрямую, но компилятор требует обработать `IOException`.",
+                "how_it_should_be": "`Function` не объявляет `throws`; checked нужно оборачивать или прятать через wrapper/sneaky throw."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Самый простой способ — прямо в лямбде `Function` дописать `throws IOException` (например, `(Function<Path,String>) path throws IOException -> ...`), и тогда checked-исключение легально вылетает из стандартного интерфейса без всяких обёрток.",
               "correct": false,
               "sections": {
@@ -2335,6 +2323,18 @@
                 "source_of_confusion": "По аналогии с обычными методами кажется, что и у лямбды можно дописать `throws` в сигнатуру.",
                 "if_it_were_true": "Тогда `path throws IOException -> ...` компилировался бы, но грамматика лямбд такого не допускает и `IOException` остаётся непокрытой.",
                 "how_it_should_be": "Checked в лямбде решают обёрткой в unchecked (`UncheckedIOException`), wrapper-интерфейсом с `throws` или sneaky throw — у самой `Function` секции `throws` нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственный способ — пометить весь метод `throws Exception`, и тогда checked из лямбды автоматически пробросится наружу через `Stream`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`throws` на методе не помогает: лямбда внутри `Stream` всё равно ограничена сигнатурой функционального интерфейса; нужны обёртка, wrapper или sneaky throw.",
+                "source_of_confusion": "Кажется, что `throws` на внешнем методе «легализует» checked внутри лямбды.",
+                "if_it_were_true": "Тогда `void m() throws IOException { paths.stream().map(Files::readString)... }` компилировался бы, но он всё равно не пройдёт.",
+                "how_it_should_be": "`throws` на методе не снимает ограничения внутри лямбды; нужны явные приёмы обёртки."
               }
             }
           ]
@@ -2351,18 +2351,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В message исключения включают весь входной payload и сериализованное состояние объектов запроса, чтобы по одной записи можно было воспроизвести ситуацию целиком.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Пароли, токены и PII в логи включать нельзя — это нарушение безопасности; логируют только нетайные ID и состояние.",
-                "source_of_confusion": "Желание «больше контекста для отладки» доводят до опасной крайности.",
-                "if_it_were_true": "Тогда логи становились бы хранилищем секретов, но их утечка — серьёзный инцидент безопасности.",
-                "how_it_should_be": "В message — ID и контекст без секретов; пароли, токены и PII не логируют."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Логировать ошибку и тут же пробрасывать её дальше — рекомендуемая практика, ведь чем больше записей об ошибке, тем лучше для диагностики.",
               "correct": false,
               "sections": {
@@ -2370,6 +2358,19 @@
                 "source_of_confusion": "Кажется, что «больше логов — надёжнее», но дубли лишь зашумляют.",
                 "if_it_were_true": "Тогда одна ошибка засоряла бы лог несколькими одинаковыми трейсами, что и есть антипаттерн.",
                 "how_it_should_be": "Логируют один раз (обычно наверху); одновременный лог и проброс — антипаттерн."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Исключение передают логгеру отдельным аргументом (не в строку), включают контекст (что, где, с какими данными — ID), не логируют и не пробрасывают одновременно (double logging), выбирают уровень по смыслу и используют структурированное логирование (MDC).",
+              "correct": true,
+              "sections": {
+                "explanation": "В `message` кладут ключевые ID (`orderId`, `userId`, `requestId`), краткое состояние входных данных и что пытались сделать. Не включают пароли, токены и PII. MDC автоматически добавляет контекстные поля ко всем записям в области.",
+                "example": "`log.error(\"Failed to process order [orderId={}, userId={}]\", orderId, userId, e);` — контекст в плейсхолдерах, исключение последним аргументом; `MDC.put(\"orderId\", ...)` добавит поле во все логи блока.",
+                "when_to_apply": "Эти правила применяют при логировании любых ошибок, чтобы по логам можно было восстановить контекст и причину, не раскрывая чувствительные данные.",
+                "edge_cases": "Граничный случай: логирование `getMessage()` без передачи самого исключения теряет stack trace, а логирование секретов (токены, PII) — нарушение безопасности.",
+                "related": "[[java-exceptions-interview#Q9]] stack trace; [[java-exceptions-interview#Q27]] правильное логирование; [[java-exceptions-interview#Q34]] антипаттерны (double logging)."
               }
             },
             {
@@ -2387,14 +2388,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Исключение передают логгеру отдельным аргументом (не в строку), включают контекст (что, где, с какими данными — ID), не логируют и не пробрасывают одновременно (double logging), выбирают уровень по смыслу и используют структурированное логирование (MDC).",
-              "correct": true,
+              "text": "В message исключения включают весь входной payload и сериализованное состояние объектов запроса, чтобы по одной записи можно было воспроизвести ситуацию целиком.",
+              "correct": false,
               "sections": {
-                "explanation": "В `message` кладут ключевые ID (`orderId`, `userId`, `requestId`), краткое состояние входных данных и что пытались сделать. Не включают пароли, токены и PII. MDC автоматически добавляет контекстные поля ко всем записям в области.",
-                "example": "`log.error(\"Failed to process order [orderId={}, userId={}]\", orderId, userId, e);` — контекст в плейсхолдерах, исключение последним аргументом; `MDC.put(\"orderId\", ...)` добавит поле во все логи блока.",
-                "when_to_apply": "Эти правила применяют при логировании любых ошибок, чтобы по логам можно было восстановить контекст и причину, не раскрывая чувствительные данные.",
-                "edge_cases": "Граничный случай: логирование `getMessage()` без передачи самого исключения теряет stack trace, а логирование секретов (токены, PII) — нарушение безопасности.",
-                "related": "[[java-exceptions-interview#Q9]] stack trace; [[java-exceptions-interview#Q27]] правильное логирование; [[java-exceptions-interview#Q34]] антипаттерны (double logging)."
+                "what_actually": "Пароли, токены и PII в логи включать нельзя — это нарушение безопасности; логируют только нетайные ID и состояние.",
+                "source_of_confusion": "Желание «больше контекста для отладки» доводят до опасной крайности.",
+                "if_it_were_true": "Тогда логи становились бы хранилищем секретов, но их утечка — серьёзный инцидент безопасности.",
+                "how_it_should_be": "В message — ID и контекст без секретов; пароли, токены и PII не логируют."
               }
             }
           ]
@@ -2411,6 +2411,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Стоимость исключения не зависит от глубины стека: создание `Exception` занимает примерно одинаковое время независимо от числа кадров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стоимость растёт с глубиной стека — `fillInStackTrace` обходит все кадры; чем глубже стек, тем дороже создание.",
+                "source_of_confusion": "«Фиксированная стоимость операции» — удобное, но неверное упрощение.",
+                "if_it_were_true": "Тогда исключение в глубоко вложенном вызове стоило бы как в верхнем, но глубина увеличивает цену.",
+                "how_it_should_be": "Чем глубже стек, тем дороже `fillInStackTrace`; стоимость не фиксирована."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Дороговизна исключения целиком в самом операторе `throw` и раскрутке стека до обработчика, а создание объекта (`new`) практически бесплатно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Основная стоимость — в конструкторе (`fillInStackTrace` при `new`), а не в `throw`; именно создание объекта со стеком дорого.",
+                "source_of_confusion": "Кажется, что «бросок и поиск catch» — самая тяжёлая часть.",
+                "if_it_were_true": "Тогда отключение стека (writableStackTrace=false) не помогало бы, но оно резко удешевляет именно создание.",
+                "how_it_should_be": "Дорого — создание со стеком (`fillInStackTrace`), а не сам `throw`/раскрутка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Создание исключения дорого, потому что конструктор `Throwable` вызывает нативный `fillInStackTrace()` — он обходит стек вызовов и строит массив `StackTraceElement`. Поэтому исключения не используют для flow control, а для часто бросаемых sentinel-исключений отключают стек.",
               "correct": true,
               "sections": {
@@ -2422,8 +2446,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Создание исключения дорого из-за нативного `fillInStackTrace()`; чтобы ускорить часто бросаемые исключения, в конструктор передают `writableStackTrace=true` — это включает быстрый режим снятия стека.",
               "correct": false,
               "sections": {
@@ -2431,30 +2455,6 @@
                 "source_of_confusion": "Слово «writable» воспринимают как «оптимизированный/быстрый» режим, хотя оно лишь разрешает запись стека.",
                 "if_it_were_true": "Тогда `super(msg, cause, true, true)` ускорял бы создание, но он оставляет дорогой `fillInStackTrace`, а ускоряет `false`.",
                 "how_it_should_be": "Часто бросаемым исключениям ставят `writableStackTrace=false`, чтобы отключить снятие стека; `true` — это дорогой режим по умолчанию."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Дороговизна исключения целиком в самом операторе `throw` и раскрутке стека до обработчика, а создание объекта (`new`) практически бесплатно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Основная стоимость — в конструкторе (`fillInStackTrace` при `new`), а не в `throw`; именно создание объекта со стеком дорого.",
-                "source_of_confusion": "Кажется, что «бросок и поиск catch» — самая тяжёлая часть.",
-                "if_it_were_true": "Тогда отключение стека (writableStackTrace=false) не помогало бы, но оно резко удешевляет именно создание.",
-                "how_it_should_be": "Дорого — создание со стеком (`fillInStackTrace`), а не сам `throw`/раскрутка."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Стоимость исключения не зависит от глубины стека: создание `Exception` занимает примерно одинаковое время независимо от числа кадров.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стоимость растёт с глубиной стека — `fillInStackTrace` обходит все кадры; чем глубже стек, тем дороже создание.",
-                "source_of_confusion": "«Фиксированная стоимость операции» — удобное, но неверное упрощение.",
-                "if_it_were_true": "Тогда исключение в глубоко вложенном вызове стоило бы как в верхнем, но глубина увеличивает цену.",
-                "how_it_should_be": "Чем глубже стек, тем дороже `fillInStackTrace`; стоимость не фиксирована."
               }
             }
           ]
@@ -2471,18 +2471,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ProblemDetail` — это сторонняя библиотека, которую нужно подключать отдельной зависимостью; в Spring из коробки её нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ProblemDetail` входит в `Spring Framework 6+`/`Spring Boot 3+` из коробки (реализация RFC 7807), отдельная зависимость не нужна.",
-                "source_of_confusion": "Стандарт RFC 7807 ассоциируют с внешними библиотеками вроде Zalando Problem.",
-                "if_it_were_true": "Тогда пришлось бы добавлять зависимость ради `ProblemDetail`, но он доступен в самом Spring 6+.",
-                "how_it_should_be": "`ProblemDetail` — встроенный класс Spring 6+, дополнительная зависимость не требуется."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`@RestControllerAdvice` с `@ExceptionHandler`-методами централизует обработку исключений всех контроллеров. С `Spring 6+` ответы об ошибках формируют как `ProblemDetail` (RFC 7807) — стандартизированное тело с полями type, title, status, detail, instance и кастомными свойствами.",
               "correct": true,
               "sections": {
@@ -2494,8 +2482,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`@RestControllerAdvice` обрабатывает исключения только внутри того контроллера, где он объявлен, а ответы об ошибках формируют как `ProblemDetail` (RFC 7807) с полями type/title/status/detail/instance.",
               "correct": false,
               "sections": {
@@ -2503,6 +2491,18 @@
                 "source_of_confusion": "`@ExceptionHandler` внутри самого контроллера действительно локален, и это свойство ошибочно переносят на advice.",
                 "if_it_were_true": "Тогда для каждого контроллера пришлось бы заводить свой advice, но один `@RestControllerAdvice` покрывает все.",
                 "how_it_should_be": "`@RestControllerAdvice` централизует обработку всех контроллеров; `ProblemDetail` даёт стандартное тело ошибки RFC 7807."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ProblemDetail` — это сторонняя библиотека, которую нужно подключать отдельной зависимостью; в Spring из коробки её нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ProblemDetail` входит в `Spring Framework 6+`/`Spring Boot 3+` из коробки (реализация RFC 7807), отдельная зависимость не нужна.",
+                "source_of_confusion": "Стандарт RFC 7807 ассоциируют с внешними библиотеками вроде Zalando Problem.",
+                "if_it_were_true": "Тогда пришлось бы добавлять зависимость ради `ProblemDetail`, но он доступен в самом Spring 6+.",
+                "how_it_should_be": "`ProblemDetail` — встроенный класс Spring 6+, дополнительная зависимость не требуется."
               }
             },
             {

@@ -11,6 +11,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Stream` — это просто более быстрая реализация `List`, которая хранит те же элементы в памяти, но позволяет вызывать `filter` и `map` прямо на коллекции без копирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Stream` вообще не хранит элементы: он описывает pipeline и тянет данные из источника по требованию, поэтому это не «быстрый List», а другая абстракция.",
+                "source_of_confusion": "Цепочка `.filter().map()` визуально похожа на методы коллекции, и кажется, что стрим — обёртка над тем же хранилищем.",
+                "if_it_were_true": "Тогда стрим можно было бы переиспользовать многократно и читать `size()`, но повторный обход бросает `IllegalStateException`, а размера у стрима нет.",
+                "how_it_should_be": "Stream — ленивый одноразовый pipeline без хранения данных; хранилище и индексация — это про `Collection`, а не про стрим."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Stream API` (Java 8+) — декларативный pipeline обработки последовательностей: он не хранит данные, не модифицирует источник, ленив (intermediate-операции откладываются до terminal) и одноразов. `Collection`, наоборот, хранит элементы, мутируется через `add`/`remove` и обходится внешним циклом.",
               "correct": true,
               "sections": {
@@ -19,18 +31,6 @@
                 "when_to_apply": "Stream берут для трансформаций и агрегаций (filter/map/reduce), а `Collection` — когда нужно хранить, индексировать, многократно перебирать данные или мутировать их на месте.",
                 "edge_cases": "Stream бесконечен через `iterate`/`generate` (с `limit`), а `Collection` всегда конечна; повторный вызов terminal на закрытом стриме бросает `IllegalStateException`.",
                 "related": "[[java-stream-interview#Q2]] из чего состоит pipeline; [[java-stream-interview#Q3]] lazy evaluation; [[java-stream-interview#Q5]] intermediate vs terminal."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Stream` — это просто более быстрая реализация `List`, которая хранит те же элементы в памяти, но позволяет вызывать `filter` и `map` прямо на коллекции без копирования.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Stream` вообще не хранит элементы: он описывает pipeline и тянет данные из источника по требованию, поэтому это не «быстрый List», а другая абстракция.",
-                "source_of_confusion": "Цепочка `.filter().map()` визуально похожа на методы коллекции, и кажется, что стрим — обёртка над тем же хранилищем.",
-                "if_it_were_true": "Тогда стрим можно было бы переиспользовать многократно и читать `size()`, но повторный обход бросает `IllegalStateException`, а размера у стрима нет.",
-                "how_it_should_be": "Stream — ленивый одноразовый pipeline без хранения данных; хранилище и индексация — это про `Collection`, а не про стрим."
               }
             },
             {
@@ -71,18 +71,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Pipeline состоит из двух частей: source и сразу за ним terminal-операция; intermediate-операции (`filter`, `map`) — это не часть pipeline, а отдельные методы коллекции, выполняемые до создания стрима.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Intermediate-операции — полноправная средняя часть pipeline: именно они формируют ленивую цепочку между source и terminal, возвращая новый `Stream`.",
-                "source_of_confusion": "Из-за fluent-синтаксиса кажется, что `filter`/`map` вызываются «на коллекции», а не внутри стрима.",
-                "if_it_were_true": "Тогда `filter` отрабатывал бы сразу при вызове, но он ленив и ничего не делает до terminal-операции.",
-                "how_it_should_be": "Pipeline — это source + intermediate-операции + одна terminal-операция; промежуточные шаги входят в стрим, а не в коллекцию."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Stream pipeline состоит из трёх частей: `source` (источник — коллекция, массив, `Stream.of`, `generate`), цепочки `intermediate operations` (ленивые `filter`/`map`/`sorted`, каждая возвращает новый `Stream`) и одной завершающей `terminal operation` (`collect`/`forEach`/`reduce`), которая запускает выполнение и даёт результат.",
               "correct": true,
               "sections": {
@@ -91,6 +79,18 @@
                 "when_to_apply": "Эту трёхчастную модель держат в голове при чтении любого стрим-кода: где источник, какие шаги ленивые и какая операция реально запускает вычисление.",
                 "edge_cases": "Terminal-операция строго одна; после неё стрим закрыт. Без terminal-операции ни один элемент не обрабатывается, сколько бы intermediate-операций ни стояло.",
                 "related": "[[java-stream-interview#Q1]] Stream vs Collection; [[java-stream-interview#Q3]] почему intermediate ленивые; [[java-stream-interview#Q5]] классификация операций."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pipeline обрабатывает данные горизонтально: сначала `filter` проходит по ВСЕМ элементам, затем `map` по всем, затем `limit` — каждая операция полностью завершается, прежде чем начнётся следующая.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработка вертикальная: каждый элемент проходит всю цепочку операций по очереди, что и позволяет `limit`/`findFirst` оборвать pipeline досрочно.",
+                "source_of_confusion": "Цепочка методов читается сверху вниз, и кажется, что они выполняются последовательно над всей коллекцией.",
+                "if_it_were_true": "Тогда `limit(2)` всё равно прогнал бы `map` по всем элементам, но на деле после второго результата pipeline останавливается.",
+                "how_it_should_be": "Элементы идут по pipeline вертикально (element-by-element), поэтому short-circuit-операции экономят работу."
               }
             },
             {
@@ -108,13 +108,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Pipeline обрабатывает данные горизонтально: сначала `filter` проходит по ВСЕМ элементам, затем `map` по всем, затем `limit` — каждая операция полностью завершается, прежде чем начнётся следующая.",
+              "text": "Pipeline состоит из двух частей: source и сразу за ним terminal-операция; intermediate-операции (`filter`, `map`) — это не часть pipeline, а отдельные методы коллекции, выполняемые до создания стрима.",
               "correct": false,
               "sections": {
-                "what_actually": "Обработка вертикальная: каждый элемент проходит всю цепочку операций по очереди, что и позволяет `limit`/`findFirst` оборвать pipeline досрочно.",
-                "source_of_confusion": "Цепочка методов читается сверху вниз, и кажется, что они выполняются последовательно над всей коллекцией.",
-                "if_it_were_true": "Тогда `limit(2)` всё равно прогнал бы `map` по всем элементам, но на деле после второго результата pipeline останавливается.",
-                "how_it_should_be": "Элементы идут по pipeline вертикально (element-by-element), поэтому short-circuit-операции экономят работу."
+                "what_actually": "Intermediate-операции — полноправная средняя часть pipeline: именно они формируют ленивую цепочку между source и terminal, возвращая новый `Stream`.",
+                "source_of_confusion": "Из-за fluent-синтаксиса кажется, что `filter`/`map` вызываются «на коллекции», а не внутри стрима.",
+                "if_it_were_true": "Тогда `filter` отрабатывал бы сразу при вызове, но он ленив и ничего не делает до terminal-операции.",
+                "how_it_should_be": "Pipeline — это source + intermediate-операции + одна terminal-операция; промежуточные шаги входят в стрим, а не в коллекцию."
               }
             }
           ]
@@ -131,18 +131,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Lazy evaluation означает, что `Stream` кэширует результаты вычислений и при повторном вызове terminal-операции отдаёт их из кэша, не пересчитывая pipeline заново.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Никакого кэша нет: стрим одноразов, и повторный terminal на нём бросает `IllegalStateException`, а не возвращает закэшированный результат.",
-                "source_of_confusion": "Слово «lazy» ассоциируется с мемоизацией и кэшированием в других языках и фреймворках.",
-                "if_it_were_true": "Тогда `stream.count()` дважды подряд работал бы и отдавал то же число, но второй вызов падает на закрытом стриме.",
-                "how_it_should_be": "Lazy здесь — это отложенное выполнение intermediate-операций до terminal, а не кэширование результата."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Lazy evaluation запускает intermediate-операции немедленно при их добавлении, но откладывает только terminal-операцию до момента, когда результат реально понадобится.",
               "correct": false,
               "sections": {
@@ -153,8 +141,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Lazy evaluation означает, что `Stream` кэширует результаты вычислений и при повторном вызове terminal-операции отдаёт их из кэша, не пересчитывая pipeline заново.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого кэша нет: стрим одноразов, и повторный terminal на нём бросает `IllegalStateException`, а не возвращает закэшированный результат.",
+                "source_of_confusion": "Слово «lazy» ассоциируется с мемоизацией и кэшированием в других языках и фреймворках.",
+                "if_it_were_true": "Тогда `stream.count()` дважды подряд работал бы и отдавал то же число, но второй вызов падает на закрытом стриме.",
+                "how_it_should_be": "Lazy здесь — это отложенное выполнение intermediate-операций до terminal, а не кэширование результата."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Lazy evaluation важна тем, что позволяет `sorted()` работать на бесконечном стриме: благодаря ленивости сортировка применяется только к нужным элементам и не требует буферизации всех данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sorted()` — stateful-операция, которой нужны ВСЕ элементы, поэтому на бесконечном стриме она зависает или даёт OOM, несмотря на общую ленивость pipeline.",
+                "source_of_confusion": "Кажется, что ленивость спасает любую операцию от обработки всех элементов.",
+                "if_it_were_true": "Тогда `Stream.generate(Math::random).sorted().limit(5)` отрабатывал бы мгновенно, но он не завершается.",
+                "how_it_should_be": "Ленивость даёт short-circuit для `limit`/`findFirst`, но `sorted` всё равно буферизует весь поток — ставьте `limit` перед ним."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Lazy evaluation означает, что intermediate-операции не выполняются сразу — они лишь формируют описание pipeline, а реальная обработка запускается только terminal-операцией. Это даёт loop fusion, short-circuit (`findFirst`, `limit`, `anyMatch`) и возможность работать с бесконечными стримами.",
               "correct": true,
               "sections": {
@@ -163,18 +175,6 @@
                 "when_to_apply": "На ленивость опираются, чтобы пропускать лишнюю работу (short-circuit), объединять операции и безопасно ограничивать бесконечные источники через `limit`.",
                 "edge_cases": "Из-за ленивости легко забыть terminal-операцию и удивляться, что код «не работает»; а stateful-операция вроде `sorted` всё равно вынуждена буферизовать данные при выполнении.",
                 "related": "[[java-stream-interview#Q2]] из чего состоит pipeline; [[java-stream-interview#Q10]] short-circuit операции; [[java-stream-interview#Q35]] забытая terminal-операция как ошибка."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Lazy evaluation важна тем, что позволяет `sorted()` работать на бесконечном стриме: благодаря ленивости сортировка применяется только к нужным элементам и не требует буферизации всех данных.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`sorted()` — stateful-операция, которой нужны ВСЕ элементы, поэтому на бесконечном стриме она зависает или даёт OOM, несмотря на общую ленивость pipeline.",
-                "source_of_confusion": "Кажется, что ленивость спасает любую операцию от обработки всех элементов.",
-                "if_it_were_true": "Тогда `Stream.generate(Math::random).sorted().limit(5)` отрабатывал бы мгновенно, но он не завершается.",
-                "how_it_should_be": "Ленивость даёт short-circuit для `limit`/`findFirst`, но `sorted` всё равно буферизует весь поток — ставьте `limit` перед ним."
               }
             }
           ]
@@ -203,18 +203,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Stream.generate(supplier)` создаёт конечный стрим ровно из одного элемента — результата единственного вызова `supplier`, поэтому `limit` для него не нужен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Stream.generate` создаёт бесконечный стрим, вызывая `supplier` снова и снова; без `limit` (или другого short-circuit) terminal-операция не завершится.",
-                "source_of_confusion": "Имя `generate` (сгенерировать значение) наводит на мысль об одном элементе.",
-                "if_it_were_true": "Тогда `Stream.generate(Math::random).forEach(...)` напечатал бы одно число и остановился, но он крутится бесконечно.",
-                "how_it_should_be": "`generate` бесконечен — его обязательно ограничивают `limit(n)` или короткозамкнутой terminal-операцией."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Files.lines(path)` читает файл целиком в память и сразу возвращает обычный `List<String>`, поэтому try-with-resources для него не требуется.",
               "correct": false,
               "sections": {
@@ -225,8 +213,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Стрим создают из коллекции (`list.stream()`), массива (`Arrays.stream(arr)`), фабрикой `Stream.of(...)`, пустой `Stream.empty()`, генераторами `Stream.iterate`/`Stream.generate`, диапазонами `IntStream.range`/`rangeClosed`, из строки (`\"hello\".chars()`), из файла (`Files.lines(path)`), через `Pattern.splitAsStream` или `Stream.builder()`.",
               "correct": true,
               "sections": {
@@ -235,6 +223,18 @@
                 "when_to_apply": "Из коллекции — самый частый случай; `range`/`rangeClosed` — для числовых индексов; `generate`/`iterate` — для бесконечных последовательностей; `Files.lines` — для потоковой обработки файлов.",
                 "edge_cases": "`range(0,10)` исключает верхнюю границу, `rangeClosed(1,10)` включает; `Files.lines` держит файловый дескриптор — обязателен try-with-resources, иначе ресурс утечёт.",
                 "related": "[[java-stream-interview#Q18]] когда нужны примитивные стримы; [[java-stream-interview#Q19]] range vs rangeClosed; [[java-stream-interview#Q26]] iterate и generate подробно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Stream.generate(supplier)` создаёт конечный стрим ровно из одного элемента — результата единственного вызова `supplier`, поэтому `limit` для него не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Stream.generate` создаёт бесконечный стрим, вызывая `supplier` снова и снова; без `limit` (или другого short-circuit) terminal-операция не завершится.",
+                "source_of_confusion": "Имя `generate` (сгенерировать значение) наводит на мысль об одном элементе.",
+                "if_it_were_true": "Тогда `Stream.generate(Math::random).forEach(...)` напечатал бы одно число и остановился, но он крутится бесконечно.",
+                "how_it_should_be": "`generate` бесконечен — его обязательно ограничивают `limit(n)` или короткозамкнутой terminal-операцией."
               }
             }
           ]
@@ -251,6 +251,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "После terminal-операции стрим можно переиспользовать повторно: достаточно вызвать ещё одну terminal, например сначала `count()`, потом `toList()` на том же объекте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стрим одноразов: после первой terminal-операции он закрыт, и вторая бросает `IllegalStateException`.",
+                "source_of_confusion": "Стрим выглядит как объект-переменная, который логично переиспользовать.",
+                "if_it_were_true": "Тогда два terminal подряд давали бы два результата, но второй падает с «already operated upon or closed».",
+                "how_it_should_be": "Каждый стрим допускает ровно одну terminal-операцию; для нового результата создают новый стрим."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главное различие в том, что intermediate-операции выполняются немедленно при вызове, а terminal-операции откладываются и могут вообще не выполниться, если результат не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ленивы именно intermediate-операции; terminal как раз всегда выполняется и запускает отложенную цепочку.",
+                "source_of_confusion": "Слово «terminal» (конечная) наводит на мысль, что её можно отложить на потом.",
+                "if_it_were_true": "Тогда `stream.forEach(...)` мог бы не сработать, но terminal всегда триггерит обработку.",
+                "how_it_should_be": "Intermediate ленивы и откладываются; terminal немедленно выполняет pipeline."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Intermediate-операции (`filter`, `map`, `flatMap`, `sorted`, `distinct`, `limit`) возвращают новый `Stream`, ленивы и позволяют строить цепочку. Terminal-операции (`collect`, `toList`, `forEach`, `reduce`, `count`, а также short-circuit `findFirst`/`anyMatch`) запускают выполнение pipeline и возвращают результат, после чего стрим закрыт.",
               "correct": true,
               "sections": {
@@ -262,8 +286,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Intermediate-операции возвращают результат сразу (например, `filter` отдаёт `List`), а terminal-операции возвращают новый `Stream` для дальнейшей цепочки.",
               "correct": false,
               "sections": {
@@ -271,30 +295,6 @@
                 "source_of_confusion": "Путают направление: кажется, что «промежуточная» уже даёт данные, а «терминальная» продолжает поток.",
                 "if_it_were_true": "Тогда после `filter` можно было бы сразу читать `size()`, но `filter` возвращает `Stream`, у которого размера нет.",
                 "how_it_should_be": "Intermediate → `Stream<T>` (ленивая цепочка), terminal → результат и закрытие стрима."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Главное различие в том, что intermediate-операции выполняются немедленно при вызове, а terminal-операции откладываются и могут вообще не выполниться, если результат не используется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ленивы именно intermediate-операции; terminal как раз всегда выполняется и запускает отложенную цепочку.",
-                "source_of_confusion": "Слово «terminal» (конечная) наводит на мысль, что её можно отложить на потом.",
-                "if_it_were_true": "Тогда `stream.forEach(...)` мог бы не сработать, но terminal всегда триггерит обработку.",
-                "how_it_should_be": "Intermediate ленивы и откладываются; terminal немедленно выполняет pipeline."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "После terminal-операции стрим можно переиспользовать повторно: достаточно вызвать ещё одну terminal, например сначала `count()`, потом `toList()` на том же объекте.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стрим одноразов: после первой terminal-операции он закрыт, и вторая бросает `IllegalStateException`.",
-                "source_of_confusion": "Стрим выглядит как объект-переменная, который логично переиспользовать.",
-                "if_it_were_true": "Тогда два terminal подряд давали бы два результата, но второй падает с «already operated upon or closed».",
-                "how_it_should_be": "Каждый стрим допускает ровно одну terminal-операцию; для нового результата создают новый стрим."
               }
             }
           ]
@@ -323,6 +323,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Stateless и stateful операции различаются только тем, что stateless возвращают `Stream`, а stateful сразу являются terminal-операциями и закрывают стрим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "И stateless, и stateful — intermediate-операции, обе возвращают `Stream`; различие в наличии внутреннего состояния, а не в terminal-природе.",
+                "source_of_confusion": "Слово «stateful» ассоциируется с финализацией и накоплением итогового результата, как у terminal.",
+                "if_it_were_true": "Тогда после `sorted()` нельзя было бы вызвать `map()`, но цепочку легко продолжить.",
+                "how_it_should_be": "Обе категории — intermediate; разница в том, нужно ли операции состояние по другим элементам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Stateless-операции (`filter`, `map`, `flatMap`) обрабатывают каждый элемент независимо, не зная о других, поэтому дёшевы и хорошо параллелятся. Stateful-операции (`sorted`, `distinct`, `limit`, `skip`) требуют информации о других элементах или позиции и могут буферизовать весь поток, ухудшая параллелизм.",
               "correct": true,
               "sections": {
@@ -334,8 +346,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Stateful-операция `sorted()` безопасно работает на бесконечном стриме, потому что она обрабатывает элементы по одному и не нуждается во всём наборе данных.",
               "correct": false,
               "sections": {
@@ -343,18 +355,6 @@
                 "source_of_confusion": "Общая ленивость стрима создаёт впечатление, что любая операция обходится без полного набора.",
                 "if_it_were_true": "Тогда `Stream.iterate(0, n->n+1).sorted().limit(5)` отрабатывал бы, но он зависает.",
                 "how_it_should_be": "`sorted` требует всех элементов; на потенциально бесконечном источнике сначала ставят `limit`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Stateless и stateful операции различаются только тем, что stateless возвращают `Stream`, а stateful сразу являются terminal-операциями и закрывают стрим.",
-              "correct": false,
-              "sections": {
-                "what_actually": "И stateless, и stateful — intermediate-операции, обе возвращают `Stream`; различие в наличии внутреннего состояния, а не в terminal-природе.",
-                "source_of_confusion": "Слово «stateful» ассоциируется с финализацией и накоплением итогового результата, как у terminal.",
-                "if_it_were_true": "Тогда после `sorted()` нельзя было бы вызвать `map()`, но цепочку легко продолжить.",
-                "how_it_should_be": "Обе категории — intermediate; разница в том, нужно ли операции состояние по другим элементам."
               }
             }
           ]
@@ -371,6 +371,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`filter(Predicate)` отбирает элементы по условию (число уменьшается, тип тот же); `map(Function)` преобразует каждый элемент 1:1 (число неизменно, тип может смениться); `flatMap(Function)` превращает каждый элемент в `Stream` и «сплющивает» результаты в один поток (соотношение 1:N).",
+              "correct": true,
+              "sections": {
+                "explanation": "`filter` — про отбор без изменения элементов; `map` — про преобразование один-к-одному; `flatMap` — про разворачивание вложенности, когда из одного элемента получается ноль, один или много элементов, объединяемых в плоский стрим.",
+                "example": "`users.stream().filter(User::isActive).map(User::getEmail).filter(e -> e.contains(\"@company.com\")).toList()` сочетает отбор и преобразование; `customers.stream().flatMap(c -> c.getOrders().stream())` собирает все заказы всех клиентов.",
+                "when_to_apply": "`filter` — когда нужно сузить выборку; `map` — когда меняется тип или форма элемента; `flatMap` — когда элемент сам содержит коллекцию/`Optional` или раскрывается в несколько значений.",
+                "edge_cases": "`map` на коллекции-элементе даёт `Stream<Stream<R>>` (обычно не то, что нужно) — здесь и требуется `flatMap`; `filter` не меняет тип, поэтому смена типа через него невозможна.",
+                "related": "[[java-stream-interview#Q8]] flatMap vs map подробно; [[java-stream-interview#Q28]] mapMulti как альтернатива flatMap; [[java-stream-interview#Q9]] другие intermediate-операции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`map` нужно использовать, когда из одного элемента получается несколько (1:N), а `flatMap` — когда преобразование строго один-к-одному (1:1) без изменения количества элементов.",
               "correct": false,
               "sections": {
@@ -381,8 +394,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`filter(Function)` нужно использовать для преобразования типа элемента (например, `User` → `String`), потому что предикат может вернуть значение другого типа.",
               "correct": false,
               "sections": {
@@ -390,19 +403,6 @@
                 "source_of_confusion": "`filter` и `map` стоят рядом в цепочках, и кажется, что `filter` тоже умеет преобразовывать.",
                 "if_it_were_true": "Тогда `filter(User::getEmail)` возвращал бы `Stream<String>`, но `filter` ждёт `Predicate` и тип не меняет.",
                 "how_it_should_be": "`filter` отбирает по `Predicate` без смены типа; смену типа делает `map(Function)`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`filter(Predicate)` отбирает элементы по условию (число уменьшается, тип тот же); `map(Function)` преобразует каждый элемент 1:1 (число неизменно, тип может смениться); `flatMap(Function)` превращает каждый элемент в `Stream` и «сплющивает» результаты в один поток (соотношение 1:N).",
-              "correct": true,
-              "sections": {
-                "explanation": "`filter` — про отбор без изменения элементов; `map` — про преобразование один-к-одному; `flatMap` — про разворачивание вложенности, когда из одного элемента получается ноль, один или много элементов, объединяемых в плоский стрим.",
-                "example": "`users.stream().filter(User::isActive).map(User::getEmail).filter(e -> e.contains(\"@company.com\")).toList()` сочетает отбор и преобразование; `customers.stream().flatMap(c -> c.getOrders().stream())` собирает все заказы всех клиентов.",
-                "when_to_apply": "`filter` — когда нужно сузить выборку; `map` — когда меняется тип или форма элемента; `flatMap` — когда элемент сам содержит коллекцию/`Optional` или раскрывается в несколько значений.",
-                "edge_cases": "`map` на коллекции-элементе даёт `Stream<Stream<R>>` (обычно не то, что нужно) — здесь и требуется `flatMap`; `filter` не меняет тип, поэтому смена типа через него невозможна.",
-                "related": "[[java-stream-interview#Q8]] flatMap vs map подробно; [[java-stream-interview#Q28]] mapMulti как альтернатива flatMap; [[java-stream-interview#Q9]] другие intermediate-операции."
               }
             },
             {
@@ -443,18 +443,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`flatMap` отличается тем, что преобразует элемент в один элемент (1:1), тогда как `map` способен из одного элемента создать стрим элементов (1:N) и склеить их.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Роли перепутаны: 1:1 — это `map`, а разворачивание 1:N со склейкой вложенных стримов — это `flatMap`.",
-                "source_of_confusion": "Названия не подсказывают направление, и пары `map`/`flatMap` часто меняют местами.",
-                "if_it_were_true": "Тогда `map(c -> c.getOrders().stream())` дал бы плоский поток заказов, но он возвращает `Stream<Stream<Order>>`.",
-                "how_it_should_be": "`map` — 1:1, `flatMap` — 1:N со сплющиванием вложенных стримов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Функция, переданная в `flatMap`, должна возвращать одиночное значение `R`; если вернуть `Stream`, компилятор выдаст ошибку типов, так как `flatMap` сам оборачивает результат в стрим.",
               "correct": false,
               "sections": {
@@ -462,6 +450,18 @@
                 "source_of_confusion": "Кажется логичным, что `flatMap` сам уплощает, а функция отдаёт скаляр.",
                 "if_it_were_true": "Тогда `flatMap(Collection::stream)` не компилировался бы, но это канонический рабочий пример.",
                 "how_it_should_be": "Функция `flatMap` возвращает `Stream<R>`, который затем сплющивается; одиночное значение — это про `map`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`flatMap` отличается тем, что преобразует элемент в один элемент (1:1), тогда как `map` способен из одного элемента создать стрим элементов (1:N) и склеить их.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: 1:1 — это `map`, а разворачивание 1:N со склейкой вложенных стримов — это `flatMap`.",
+                "source_of_confusion": "Названия не подсказывают направление, и пары `map`/`flatMap` часто меняют местами.",
+                "if_it_were_true": "Тогда `map(c -> c.getOrders().stream())` дал бы плоский поток заказов, но он возвращает `Stream<Stream<Order>>`.",
+                "how_it_should_be": "`map` — 1:1, `flatMap` — 1:N со сплющиванием вложенных стримов."
               }
             },
             {
@@ -491,6 +491,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`distinct()` удаляет дубликаты, сравнивая элементы по ссылке (`==`), поэтому два равных по `equals` объекта с разными ссылками оба останутся в результате.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`distinct()` сравнивает элементы по `equals`/`hashCode`, а не по ссылке, поэтому equals-равные объекты схлопываются в один.",
+                "source_of_confusion": "Дедупликацию иногда ассоциируют с identity-сравнением, как в `IdentityHashMap`.",
+                "if_it_were_true": "Тогда `Stream.of(new String(\"a\"), new String(\"a\")).distinct().count()` дал бы 2, но он даёт 1.",
+                "how_it_should_be": "`distinct` опирается на `equals`/`hashCode`; корректный `equals` у элементов обязателен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`sorted()` — stateful, сортирует весь поток (O(n log n), буферизует всё). `distinct()` — stateful, убирает дубликаты по `equals`/`hashCode` через внутренний `Set`. `limit(n)` — short-circuit stateful, оставляет первые N. `skip(n)` — stateful, пропускает первые N. Все четыре — intermediate-операции.",
               "correct": true,
               "sections": {
@@ -502,32 +514,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`limit(n)` — stateless-операция: она обрабатывает каждый элемент независимо и не способна оборвать pipeline, поэтому проходит все элементы источника.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`limit(n)` — stateful и short-circuit: она считает выданные элементы и обрывает обход после N-го, не трогая остальные.",
-                "source_of_confusion": "`limit` выглядит простой и «безобидной», поэтому её относят к stateless-операциям.",
-                "if_it_were_true": "Тогда `Stream.iterate(0, n->n+1).limit(5)` зависал бы, перебирая бесконечный источник, но он корректно завершается на 5 элементах.",
-                "how_it_should_be": "`limit` — stateful short-circuit: знает позицию и прерывает pipeline, что и спасает бесконечные стримы."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`distinct()` удаляет дубликаты, сравнивая элементы по ссылке (`==`), поэтому два равных по `equals` объекта с разными ссылками оба останутся в результате.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`distinct()` сравнивает элементы по `equals`/`hashCode`, а не по ссылке, поэтому equals-равные объекты схлопываются в один.",
-                "source_of_confusion": "Дедупликацию иногда ассоциируют с identity-сравнением, как в `IdentityHashMap`.",
-                "if_it_were_true": "Тогда `Stream.of(new String(\"a\"), new String(\"a\")).distinct().count()` дал бы 2, но он даёт 1.",
-                "how_it_should_be": "`distinct` опирается на `equals`/`hashCode`; корректный `equals` у элементов обязателен."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`sorted()` и `skip(n)` стоят O(1) на элемент и не буферизуют данные, поэтому их можно ставить в любом месте бесконечного стрима без последствий.",
               "correct": false,
               "sections": {
@@ -535,6 +523,18 @@
                 "source_of_confusion": "`skip` действительно дешёвый, и эту лёгкость ошибочно переносят на `sorted`.",
                 "if_it_were_true": "Тогда `Stream.generate(Math::random).sorted().limit(5)` отрабатывал бы мгновенно, но он зависает.",
                 "how_it_should_be": "`sorted` — дорогая буферизующая stateful-операция; на бесконечных источниках ей предшествует `limit`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`limit(n)` — stateless-операция: она обрабатывает каждый элемент независимо и не способна оборвать pipeline, поэтому проходит все элементы источника.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`limit(n)` — stateful и short-circuit: она считает выданные элементы и обрывает обход после N-го, не трогая остальные.",
+                "source_of_confusion": "`limit` выглядит простой и «безобидной», поэтому её относят к stateless-операциям.",
+                "if_it_were_true": "Тогда `Stream.iterate(0, n->n+1).limit(5)` зависал бы, перебирая бесконечный источник, но он корректно завершается на 5 элементах.",
+                "how_it_should_be": "`limit` — stateful short-circuit: знает позицию и прерывает pipeline, что и спасает бесконечные стримы."
               }
             }
           ]
@@ -551,31 +551,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Short-circuit операции — это все terminal-операции без исключения, потому что любая terminal завершает стрим и тем самым «замыкает» pipeline.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Завершение стрима и short-circuit — разные вещи: `collect`, `count`, `forEach` обходят все элементы, а short-circuit (`findFirst`, `anyMatch`, `limit`) могут остановиться раньше.",
-                "source_of_confusion": "Слово «terminal» и «short-circuit» оба про завершение, поэтому их отождествляют.",
-                "if_it_were_true": "Тогда `collect` останавливался бы на первом элементе, но он собирает весь поток.",
-                "how_it_should_be": "Short-circuit — лишь часть terminal-операций (`findFirst`, `anyMatch`, ...) плюс intermediate `limit`; `collect`/`count` обходят всё."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Short-circuit операции могут завершить обработку, не обходя все элементы. Intermediate short-circuit — `limit(n)` (обрывает pipeline после N элементов). Terminal short-circuit — `findFirst`, `findAny`, `anyMatch`, `allMatch`, `noneMatch` (возвращают результат, как только ответ известен). Это критично для производительности и бесконечных стримов.",
-              "correct": true,
-              "sections": {
-                "explanation": "Такие операции прекращают обход досрочно: `anyMatch` останавливается на первом `true`, `allMatch` — на первом `false`, `limit` — после N элементов. Это экономит работу и делает безопасной работу с бесконечными источниками.",
-                "example": "`Stream.iterate(1, n -> n+1).map(n -> n*n).filter(n -> n%2==0).findFirst()` возвращает `Optional[4]`, не перебирая бесконечный стрим — `findFirst` срабатывает на первом подходящем элементе.",
-                "when_to_apply": "Short-circuit берут, когда достаточно одного ответа (есть ли элемент, найти первый) или нужно ограничить бесконечный/огромный источник без полного обхода.",
-                "edge_cases": "На пустом стриме `allMatch`/`noneMatch` возвращают `true` (vacuous truth), `anyMatch` — `false`; в parallel порядок `findFirst` сохраняется, а `findAny` может вернуть любой.",
-                "related": "[[java-stream-interview#Q3]] ленивость как основа short-circuit; [[java-stream-interview#Q9]] limit среди intermediate; [[java-stream-interview#Q23]] encounter order и findFirst/findAny."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Short-circuit нужны, чтобы пропускать первые элементы потока: `skip(n)` и `limit(n)` отбрасывают начало и поэтому относятся к короткому замыканию.",
               "correct": false,
               "sections": {
@@ -586,8 +561,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`anyMatch` всегда проходит все элементы стрима до конца, чтобы убедиться, что не пропустил ни одного совпадения, поэтому на бесконечном стриме он зависает.",
               "correct": false,
               "sections": {
@@ -595,6 +570,31 @@
                 "source_of_confusion": "Кажется, что для надёжного ответа нужно проверить все элементы.",
                 "if_it_were_true": "Тогда `Stream.iterate(1, n->n+1).anyMatch(n -> n>5)` не завершался бы, но он быстро возвращает `true`.",
                 "how_it_should_be": "`anyMatch` завершается на первом `true`; полный обход не нужен и не выполняется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Short-circuit операции — это все terminal-операции без исключения, потому что любая terminal завершает стрим и тем самым «замыкает» pipeline.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Завершение стрима и short-circuit — разные вещи: `collect`, `count`, `forEach` обходят все элементы, а short-circuit (`findFirst`, `anyMatch`, `limit`) могут остановиться раньше.",
+                "source_of_confusion": "Слово «terminal» и «short-circuit» оба про завершение, поэтому их отождествляют.",
+                "if_it_were_true": "Тогда `collect` останавливался бы на первом элементе, но он собирает весь поток.",
+                "how_it_should_be": "Short-circuit — лишь часть terminal-операций (`findFirst`, `anyMatch`, ...) плюс intermediate `limit`; `collect`/`count` обходят всё."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Short-circuit операции могут завершить обработку, не обходя все элементы. Intermediate short-circuit — `limit(n)` (обрывает pipeline после N элементов). Terminal short-circuit — `findFirst`, `findAny`, `anyMatch`, `allMatch`, `noneMatch` (возвращают результат, как только ответ известен). Это критично для производительности и бесконечных стримов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Такие операции прекращают обход досрочно: `anyMatch` останавливается на первом `true`, `allMatch` — на первом `false`, `limit` — после N элементов. Это экономит работу и делает безопасной работу с бесконечными источниками.",
+                "example": "`Stream.iterate(1, n -> n+1).map(n -> n*n).filter(n -> n%2==0).findFirst()` возвращает `Optional[4]`, не перебирая бесконечный стрим — `findFirst` срабатывает на первом подходящем элементе.",
+                "when_to_apply": "Short-circuit берут, когда достаточно одного ответа (есть ли элемент, найти первый) или нужно ограничить бесконечный/огромный источник без полного обхода.",
+                "edge_cases": "На пустом стриме `allMatch`/`noneMatch` возвращают `true` (vacuous truth), `anyMatch` — `false`; в parallel порядок `findFirst` сохраняется, а `findAny` может вернуть любой.",
+                "related": "[[java-stream-interview#Q3]] ленивость как основа short-circuit; [[java-stream-interview#Q9]] limit среди intermediate; [[java-stream-interview#Q23]] encounter order и findFirst/findAny."
               }
             }
           ]
@@ -623,13 +623,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Collectors` нужны только для сборки в `List`; для `Map`, группировки и конкатенации строк используются отдельные terminal-операции вроде `toMap()` и `joining()`, вызываемые прямо на стриме.",
+              "text": "`collect` берёт ровно две функции — `accumulator` и `finisher`; `combiner` и `supplier` не используются, потому что стрим всегда создаёт контейнер сам и работает последовательно.",
               "correct": false,
               "sections": {
-                "what_actually": "`toMap`, `groupingBy`, `joining` — это методы класса `Collectors`, возвращающие `Collector`, который передаётся в `collect(...)`; отдельных terminal-операций с такими именами на стриме нет.",
-                "source_of_confusion": "В коде пишут `Collectors.joining()` коротко, и кажется, что это самостоятельная операция стрима.",
-                "if_it_were_true": "Тогда можно было бы вызвать `stream.toMap(...)` напрямую, но такого метода у `Stream` нет — только `collect(Collectors.toMap(...))`.",
-                "how_it_should_be": "`Collectors` покрывают list/set/map/группировку/строки; все они идут аргументом в `collect`."
+                "what_actually": "`collect` опирается на три функции — `supplier`, `accumulator`, `combiner` (плюс finisher у `Collector`); `supplier` создаёт контейнер, а `combiner` нужен для parallel.",
+                "source_of_confusion": "В последовательном случае `combiner` редко вызывается, а создание контейнера кажется автоматическим.",
+                "if_it_were_true": "Тогда параллельный `collect` не смог бы слить частичные результаты, но именно `combiner` это и делает.",
+                "how_it_should_be": "`collect` использует supplier+accumulator+combiner; без supplier неоткуда взять контейнер, без combiner ломается parallel."
               }
             },
             {
@@ -648,13 +648,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`collect` берёт ровно две функции — `accumulator` и `finisher`; `combiner` и `supplier` не используются, потому что стрим всегда создаёт контейнер сам и работает последовательно.",
+              "text": "`Collectors` нужны только для сборки в `List`; для `Map`, группировки и конкатенации строк используются отдельные terminal-операции вроде `toMap()` и `joining()`, вызываемые прямо на стриме.",
               "correct": false,
               "sections": {
-                "what_actually": "`collect` опирается на три функции — `supplier`, `accumulator`, `combiner` (плюс finisher у `Collector`); `supplier` создаёт контейнер, а `combiner` нужен для parallel.",
-                "source_of_confusion": "В последовательном случае `combiner` редко вызывается, а создание контейнера кажется автоматическим.",
-                "if_it_were_true": "Тогда параллельный `collect` не смог бы слить частичные результаты, но именно `combiner` это и делает.",
-                "how_it_should_be": "`collect` использует supplier+accumulator+combiner; без supplier неоткуда взять контейнер, без combiner ломается parallel."
+                "what_actually": "`toMap`, `groupingBy`, `joining` — это методы класса `Collectors`, возвращающие `Collector`, который передаётся в `collect(...)`; отдельных terminal-операций с такими именами на стриме нет.",
+                "source_of_confusion": "В коде пишут `Collectors.joining()` коротко, и кажется, что это самостоятельная операция стрима.",
+                "if_it_were_true": "Тогда можно было бы вызвать `stream.toMap(...)` напрямую, но такого метода у `Stream` нет — только `collect(Collectors.toMap(...))`.",
+                "how_it_should_be": "`Collectors` покрывают list/set/map/группировку/строки; все они идут аргументом в `collect`."
               }
             }
           ]
@@ -671,13 +671,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`partitioningBy` группирует элементы по произвольному ключу любого типа (например, по отделу `String`), создавая `Map` с любым числом групп — так же, как `groupingBy`, только короче.",
-              "correct": false,
+              "text": "`groupingBy(classifier)` группирует элементы в `Map<K, List<V>>` по произвольной функции-классификатору (поддерживает downstream-коллектор и многоуровневую группировку). `partitioningBy(predicate)` делит на ровно две группы `Map<Boolean, List<V>>` (true/false). `toMap(keyFn, valueFn)` строит `Map` из пар ключ-значение и без merge-функции бросает исключение при дубликате ключа.",
+              "correct": true,
               "sections": {
-                "what_actually": "`partitioningBy` принимает `Predicate` и даёт ровно два бакета `Map<Boolean, List<V>>`; произвольный ключ любого типа — это `groupingBy`.",
-                "source_of_confusion": "Оба коллектора «разбивают на группы», и кажется, что разница лишь в синтаксисе.",
-                "if_it_were_true": "Тогда `partitioningBy(Employee::getDepartment)` дал бы карту по отделам, но он требует `boolean`-предикат и даёт только true/false.",
-                "how_it_should_be": "`partitioningBy` — два булевых бакета; произвольное число групп по ключу — `groupingBy`."
+                "explanation": "`groupingBy` — для произвольного числа групп по ключу; `partitioningBy` — частный случай на два бакета по предикату (оба ключа всегда присутствуют); `toMap` — прямое отображение элемента в ключ и значение с явной обработкой коллизий.",
+                "example": "`employees.stream().collect(Collectors.groupingBy(Employee::getDepartment, Collectors.counting()))` даёт число сотрудников по отделам; `partitioningBy(e -> e.getSalary() > 100_000)` разделяет на высоко- и низкооплачиваемых.",
+                "when_to_apply": "`groupingBy` — когда групп много и заранее неизвестны; `partitioningBy` — когда строго два бакета по булеву условию; `toMap` — когда нужна карта по уникальному ключу.",
+                "edge_cases": "`partitioningBy` всегда содержит оба ключа `true` и `false` (пусть и с пустыми списками), а `groupingBy` создаёт ключ только при наличии элементов; `toMap` без merge падает на дубликатах.",
+                "related": "[[java-stream-interview#Q11]] collect и Collectors; [[java-stream-interview#Q13]] joining и teeing; [[java-stream-interview#Q35]] toMap без merge как типичная ошибка."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`groupingBy(classifier)` группирует элементы в `Map<K, List<V>>` по произвольной функции-классификатору (поддерживает downstream-коллектор и многоуровневую группировку). `partitioningBy(predicate)` делит на ровно две группы `Map<Boolean, List<V>>` (true/false). `toMap(keyFn, valueFn)` строит `Map` из пар ключ-значение и без merge-функции бросает исключение при дубликате ключа.",
-              "correct": true,
+              "text": "`partitioningBy` группирует элементы по произвольному ключу любого типа (например, по отделу `String`), создавая `Map` с любым числом групп — так же, как `groupingBy`, только короче.",
+              "correct": false,
               "sections": {
-                "explanation": "`groupingBy` — для произвольного числа групп по ключу; `partitioningBy` — частный случай на два бакета по предикату (оба ключа всегда присутствуют); `toMap` — прямое отображение элемента в ключ и значение с явной обработкой коллизий.",
-                "example": "`employees.stream().collect(Collectors.groupingBy(Employee::getDepartment, Collectors.counting()))` даёт число сотрудников по отделам; `partitioningBy(e -> e.getSalary() > 100_000)` разделяет на высоко- и низкооплачиваемых.",
-                "when_to_apply": "`groupingBy` — когда групп много и заранее неизвестны; `partitioningBy` — когда строго два бакета по булеву условию; `toMap` — когда нужна карта по уникальному ключу.",
-                "edge_cases": "`partitioningBy` всегда содержит оба ключа `true` и `false` (пусть и с пустыми списками), а `groupingBy` создаёт ключ только при наличии элементов; `toMap` без merge падает на дубликатах.",
-                "related": "[[java-stream-interview#Q11]] collect и Collectors; [[java-stream-interview#Q13]] joining и teeing; [[java-stream-interview#Q35]] toMap без merge как типичная ошибка."
+                "what_actually": "`partitioningBy` принимает `Predicate` и даёт ровно два бакета `Map<Boolean, List<V>>`; произвольный ключ любого типа — это `groupingBy`.",
+                "source_of_confusion": "Оба коллектора «разбивают на группы», и кажется, что разница лишь в синтаксисе.",
+                "if_it_were_true": "Тогда `partitioningBy(Employee::getDepartment)` дал бы карту по отделам, но он требует `boolean`-предикат и даёт только true/false.",
+                "how_it_should_be": "`partitioningBy` — два булевых бакета; произвольное число групп по ключу — `groupingBy`."
               }
             }
           ]
@@ -731,6 +731,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`teeing` (Java 12+) делает два независимых прохода по стриму — по одному на каждый downstream-коллектор — и затем объединяет результаты, поэтому на бесконечном или одноразовом источнике он непригоден.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`teeing` делает ровно один проход, пропуская каждый элемент через оба downstream одновременно, поэтому он как раз подходит для одноразовых и lazy-источников.",
+                "source_of_confusion": "Два коллектора наводят на мысль о двух обходах данных.",
+                "if_it_were_true": "Тогда `teeing` нельзя было бы применить к `Files.lines(...)`, но он корректно собирает два агрегата за один проход.",
+                "how_it_should_be": "`teeing` — один проход на оба коллектора; именно это его главное преимущество перед двумя отдельными сборками."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`joining(\", \", \"[\", \"]\")` добавит разделитель `, ` между элементами, но префикс `[` и суффикс `]` он игнорирует — для обрамления нужен отдельный `map`, дописывающий скобки вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Трёхаргументный `joining(delimiter, prefix, suffix)` сам добавляет префикс в начало и суффикс в конец результата; ручное обрамление не требуется.",
+                "source_of_confusion": "Не все знают про трёхаргументную перегрузку и помнят только `joining(delimiter)`.",
+                "if_it_were_true": "Тогда результат был бы `Alice, Bob` без скобок, но реально получается `[Alice, Bob]`.",
+                "how_it_should_be": "`joining(delimiter, prefix, suffix)` обрамляет результат заданными префиксом и суффиксом автоматически."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`joining` конкатенирует строки с разделителем, опциональными префиксом и суффиксом (`joining(\", \", \"[\", \"]\")`). `teeing` (Java 12+) применяет два коллектора одновременно за один проход и объединяет их результаты функцией слияния (`BiFunction`).",
               "correct": true,
               "sections": {
@@ -742,8 +766,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`joining` можно вызывать на стриме любых объектов (`Stream<Employee>`), и он сам приведёт каждый элемент к строке через `toString()`, поэтому предварительный `map` в строку не нужен.",
               "correct": false,
               "sections": {
@@ -751,30 +775,6 @@
                 "source_of_confusion": "Кажется логичным, что коллектор сам вызовет `toString()` у элементов.",
                 "if_it_were_true": "Тогда `employees.stream().collect(Collectors.joining(\", \"))` компилировался бы, но он требует `Stream<CharSequence>`.",
                 "how_it_should_be": "Перед `joining` приводят элементы к строке: `.map(Employee::getName).collect(Collectors.joining(\", \"))`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`teeing` (Java 12+) делает два независимых прохода по стриму — по одному на каждый downstream-коллектор — и затем объединяет результаты, поэтому на бесконечном или одноразовом источнике он непригоден.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`teeing` делает ровно один проход, пропуская каждый элемент через оба downstream одновременно, поэтому он как раз подходит для одноразовых и lazy-источников.",
-                "source_of_confusion": "Два коллектора наводят на мысль о двух обходах данных.",
-                "if_it_were_true": "Тогда `teeing` нельзя было бы применить к `Files.lines(...)`, но он корректно собирает два агрегата за один проход.",
-                "how_it_should_be": "`teeing` — один проход на оба коллектора; именно это его главное преимущество перед двумя отдельными сборками."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`joining(\", \", \"[\", \"]\")` добавит разделитель `, ` между элементами, но префикс `[` и суффикс `]` он игнорирует — для обрамления нужен отдельный `map`, дописывающий скобки вручную.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Трёхаргументный `joining(delimiter, prefix, suffix)` сам добавляет префикс в начало и суффикс в конец результата; ручное обрамление не требуется.",
-                "source_of_confusion": "Не все знают про трёхаргументную перегрузку и помнят только `joining(delimiter)`.",
-                "if_it_were_true": "Тогда результат был бы `Alice, Bob` без скобок, но реально получается `[Alice, Bob]`.",
-                "how_it_should_be": "`joining(delimiter, prefix, suffix)` обрамляет результат заданными префиксом и суффиксом автоматически."
               }
             }
           ]
@@ -791,18 +791,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`reduce` и `collect` взаимозаменяемы по производительности: сборка строк через `reduce(\"\", String::concat)` так же эффективна, как `Collectors.joining()`, потому что JVM оптимизирует конкатенацию в `StringBuilder`.",
+              "text": "Трёхаргументная форма `reduce(identity, accumulator, combiner)` существует только ради читаемости; на параллельном стриме `combiner` игнорируется, и свёртка всё равно идёт последовательно.",
               "correct": false,
               "sections": {
-                "what_actually": "`reduce(\"\", String::concat)` создаёт новый `String` на каждом шаге — это O(n²); `joining()` использует один `StringBuilder` и даёт O(n). JVM эту разницу не убирает.",
-                "source_of_confusion": "Обычная конкатенация `a + b` в цикле компилируется в `StringBuilder`, и это ожидание переносят на `reduce`.",
-                "if_it_were_true": "Тогда на 100k строк оба варианта работали бы одинаково, но `reduce` деградирует квадратично.",
-                "how_it_should_be": "Для строк используют `collect(Collectors.joining())`; `reduce` с конкатенацией — антипаттерн из-за O(n²)."
+                "what_actually": "Трёхаргументный `reduce` нужен именно для parallel: `combiner` сливает частичные результаты потоков, и без него параллельная свёртка с другим типом аккумулятора невозможна.",
+                "source_of_confusion": "Двухаргументная форма используется чаще, и роль `combiner` в параллели недооценивают.",
+                "if_it_were_true": "Тогда `combiner` можно было бы передавать любым — но неверный (неассоциативный) combiner даёт неправильный результат в parallel.",
+                "how_it_should_be": "`combiner` в трёхаргументном `reduce` обязателен и реально сливает частичные результаты при параллельной обработке."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "`collect` хорош для ассоциативных числовых операций (сумма, произведение), а `reduce` — для накопления в изменяемые коллекции вроде `ArrayList` и `HashMap`, потому что он мутирует аргумент на месте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перевёрнуты: `reduce` — для иммутабельных числовых свёрток, `collect` — для мутабельных коллекций; `reduce` как раз не должен мутировать аргумент.",
+                "source_of_confusion": "Оба «сворачивают» поток, и легко перепутать, какой работает с контейнерами.",
+                "if_it_were_true": "Тогда сборка в `List` через `reduce` была бы каноном, но она нарушает контракт и ломается в parallel.",
+                "how_it_should_be": "`collect` — мутабельные контейнеры; `reduce` — иммутабельные ассоциативные значения вроде суммы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`reduce` — свёртка к иммутабельному значению: каждый шаг создаёт новое значение, accumulator должен быть ассоциативным и возвращать новый объект (хорош для суммы, произведения). `collect` — мутабельная свёртка: накапливает результат в изменяемый контейнер (`ArrayList`, `StringBuilder`, `HashMap`), что эффективнее для коллекций и строк.",
               "correct": true,
               "sections": {
@@ -814,27 +826,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Трёхаргументная форма `reduce(identity, accumulator, combiner)` существует только ради читаемости; на параллельном стриме `combiner` игнорируется, и свёртка всё равно идёт последовательно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Трёхаргументный `reduce` нужен именно для parallel: `combiner` сливает частичные результаты потоков, и без него параллельная свёртка с другим типом аккумулятора невозможна.",
-                "source_of_confusion": "Двухаргументная форма используется чаще, и роль `combiner` в параллели недооценивают.",
-                "if_it_were_true": "Тогда `combiner` можно было бы передавать любым — но неверный (неассоциативный) combiner даёт неправильный результат в parallel.",
-                "how_it_should_be": "`combiner` в трёхаргументном `reduce` обязателен и реально сливает частичные результаты при параллельной обработке."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`collect` хорош для ассоциативных числовых операций (сумма, произведение), а `reduce` — для накопления в изменяемые коллекции вроде `ArrayList` и `HashMap`, потому что он мутирует аргумент на месте.",
+              "text": "`reduce` и `collect` взаимозаменяемы по производительности: сборка строк через `reduce(\"\", String::concat)` так же эффективна, как `Collectors.joining()`, потому что JVM оптимизирует конкатенацию в `StringBuilder`.",
               "correct": false,
               "sections": {
-                "what_actually": "Роли перевёрнуты: `reduce` — для иммутабельных числовых свёрток, `collect` — для мутабельных коллекций; `reduce` как раз не должен мутировать аргумент.",
-                "source_of_confusion": "Оба «сворачивают» поток, и легко перепутать, какой работает с контейнерами.",
-                "if_it_were_true": "Тогда сборка в `List` через `reduce` была бы каноном, но она нарушает контракт и ломается в parallel.",
-                "how_it_should_be": "`collect` — мутабельные контейнеры; `reduce` — иммутабельные ассоциативные значения вроде суммы."
+                "what_actually": "`reduce(\"\", String::concat)` создаёт новый `String` на каждом шаге — это O(n²); `joining()` использует один `StringBuilder` и даёт O(n). JVM эту разницу не убирает.",
+                "source_of_confusion": "Обычная конкатенация `a + b` в цикле компилируется в `StringBuilder`, и это ожидание переносят на `reduce`.",
+                "if_it_were_true": "Тогда на 100k строк оба варианта работали бы одинаково, но `reduce` деградирует квадратично.",
+                "how_it_should_be": "Для строк используют `collect(Collectors.joining())`; `reduce` с конкатенацией — антипаттерн из-за O(n²)."
               }
             }
           ]
@@ -851,18 +851,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Собственный `Collector` определяется двумя функциями — `supplier` и `accumulator`; `combiner` и `finisher` не нужны, так как стрим всегда последователен и финальное преобразование делается отдельно вызывающим кодом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Collector` требует четырёх функций, включая `combiner` (для parallel) и `finisher` (преобразование контейнера в результат); их нельзя опустить произвольно.",
-                "source_of_confusion": "В последовательном случае combiner редко срабатывает, и про него забывают.",
-                "if_it_were_true": "Тогда `Collector.of(supplier, accumulator)` компилировался бы, но сигнатура требует ещё combiner (и finisher либо characteristics).",
-                "how_it_should_be": "Полный `Collector` — это supplier + accumulator + combiner + finisher (finisher опускается лишь с `IDENTITY_FINISH`)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "В кастомном `Collector` функция `combiner` вызывается на каждом элементе вместо `accumulator`, объединяя текущий элемент с контейнером, поэтому `accumulator` для параллельных стримов не используется.",
               "correct": false,
               "sections": {
@@ -873,8 +861,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Собственный `Collector` определяется двумя функциями — `supplier` и `accumulator`; `combiner` и `finisher` не нужны, так как стрим всегда последователен и финальное преобразование делается отдельно вызывающим кодом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Collector` требует четырёх функций, включая `combiner` (для parallel) и `finisher` (преобразование контейнера в результат); их нельзя опустить произвольно.",
+                "source_of_confusion": "В последовательном случае combiner редко срабатывает, и про него забывают.",
+                "if_it_were_true": "Тогда `Collector.of(supplier, accumulator)` компилировался бы, но сигнатура требует ещё combiner (и finisher либо characteristics).",
+                "how_it_should_be": "Полный `Collector` — это supplier + accumulator + combiner + finisher (finisher опускается лишь с `IDENTITY_FINISH`)."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Характеристика `IDENTITY_FINISH` означает, что коллектор обязан иметь нетривиальный `finisher`, преобразующий контейнер в результат другого типа; без неё finisher запрещён.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`IDENTITY_FINISH` означает обратное: finisher не нужен, потому что контейнер уже является результатом (тождественное преобразование), и его можно опустить.",
+                "source_of_confusion": "Слово `FINISH` в имени наводит на мысль о наличии полноценного финализатора.",
+                "if_it_were_true": "Тогда `Collectors.toList()` (где контейнер `ArrayList` и есть результат) не мог бы иметь `IDENTITY_FINISH`, но он его имеет.",
+                "how_it_should_be": "`IDENTITY_FINISH` — это «finisher не требуется»; контейнер возвращается как итоговый результат напрямую."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Collector<T, A, R>` определяется четырьмя функциями: `supplier` (создать контейнер-аккумулятор `A`), `accumulator` (добавить элемент `T` в `A`), `combiner` (слить два `A` при параллелизме), `finisher` (преобразовать `A` в результат `R`). Создают через `Collector.of(...)`; характеристики (`CONCURRENT`, `UNORDERED`, `IDENTITY_FINISH`) задают поведение.",
               "correct": true,
               "sections": {
@@ -883,18 +895,6 @@
                 "when_to_apply": "Свой `Collector` пишут, когда готовых из `Collectors` не хватает: нестандартный контейнер, сторонняя коллекция, особая логика слияния или финализации.",
                 "edge_cases": "`combiner` обязан быть ассоциативным и корректным для parallel, иначе результат гонки; `CONCURRENT` без потокобезопасного контейнера приведёт к порче данных.",
                 "related": "[[java-stream-interview#Q11]] три функции collect; [[java-stream-interview#Q12]] готовые коллекторы; [[java-stream-interview#Q29]] аналогичные компоненты у Gatherer."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Характеристика `IDENTITY_FINISH` означает, что коллектор обязан иметь нетривиальный `finisher`, преобразующий контейнер в результат другого типа; без неё finisher запрещён.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`IDENTITY_FINISH` означает обратное: finisher не нужен, потому что контейнер уже является результатом (тождественное преобразование), и его можно опустить.",
-                "source_of_confusion": "Слово `FINISH` в имени наводит на мысль о наличии полноценного финализатора.",
-                "if_it_were_true": "Тогда `Collectors.toList()` (где контейнер `ArrayList` и есть результат) не мог бы иметь `IDENTITY_FINISH`, но он его имеет.",
-                "how_it_should_be": "`IDENTITY_FINISH` — это «finisher не требуется»; контейнер возвращается как итоговый результат напрямую."
               }
             }
           ]
@@ -911,30 +911,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В контексте стрима `findFirst()` возвращает сам элемент `T` (или `null`, если ничего не найдено), а не `Optional`, поэтому проверять присутствие через `Optional` не нужно — достаточно сравнения с `null`.",
-              "correct": false,
+              "text": "`findFirst`, `findAny`, `min`, `max`, `reduce` (без identity) возвращают `Optional<T>` — явное указание, что результат может отсутствовать. Правильно: цепочка `map`/`filter`/`orElse` на `Optional`, а `Optional.stream()` (Java 9+) элегантно встраивает `Optional` в pipeline через `flatMap`. Анти-паттерны: `get()` без проверки, `Optional.of(nullable)`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`findFirst()` возвращает `Optional<T>`, а не сырое значение или `null`; именно `Optional` инкапсулирует возможное отсутствие результата.",
-                "source_of_confusion": "Привычка к методам, возвращающим `null` при отсутствии, переносится на стрим-операции.",
-                "if_it_were_true": "Тогда `users.stream().findFirst().map(...)` не компилировался бы (у `T` нет `map`), но `Optional.map` существует.",
-                "how_it_should_be": "Поисковые/агрегирующие операции возвращают `Optional<T>`; присутствие проверяют через `orElse`/`map`, а не через `null`."
+                "explanation": "`Optional` заставляет явно обработать отсутствие значения вместо `null`. В стримах его комбинируют с `map`/`orElse`, а `Optional.stream()` превращает `Optional` в стрим из 0 или 1 элемента, чтобы через `flatMap` отбросить пустые без ручной проверки `isPresent`.",
+                "example": "`users.stream().map(User::getEmail).flatMap(Optional::stream).toList()` собирает только присутствующие email; `user.map(User::getName).orElse(\"Unknown\")` безопасно достаёт имя или дефолт.",
+                "when_to_apply": "`Optional` уместен как возвращаемое значение метода поиска/агрегации; в стримах — через `map`/`filter`/`flatMap(Optional::stream)` и `orElse`/`orElseGet`.",
+                "edge_cases": "`get()` без проверки бросает `NoSuchElementException`; `Optional.of(null)` — `NullPointerException` (нужен `ofNullable`); `Optional` не предназначен для полей и параметров.",
+                "related": "[[java-stream-interview#Q10]] findFirst/findAny возвращают Optional; [[java-stream-interview#Q14]] reduce без identity даёт Optional; [[java-stream-interview#Q27]] комбинирование Stream и Optional."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Optional.of(nullableValue)` — правильный способ обернуть значение, которое может быть `null`: метод просто вернёт пустой `Optional`, если значение оказалось `null`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Optional.of(null)` бросает `NullPointerException`; для потенциально null-значений используют `Optional.ofNullable(...)`, который и даёт пустой `Optional`.",
-                "source_of_confusion": "`of` звучит как универсальная фабрика, и про null-safe вариант `ofNullable` забывают.",
-                "if_it_were_true": "Тогда `Optional.of(maybeNull)` молча давал бы empty, но он падает с `NullPointerException`.",
-                "how_it_should_be": "Для возможного `null` берут `Optional.ofNullable(value)`; `of` — только для гарантированно ненулевого значения."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Optional.stream()` (Java 9+) возвращает бесконечный стрим, повторяющий хранимое значение, поэтому его всегда ограничивают `limit(1)` перед использованием в pipeline.",
               "correct": false,
               "sections": {
@@ -945,16 +934,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "В контексте стрима `findFirst()` возвращает сам элемент `T` (или `null`, если ничего не найдено), а не `Optional`, поэтому проверять присутствие через `Optional` не нужно — достаточно сравнения с `null`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`findFirst()` возвращает `Optional<T>`, а не сырое значение или `null`; именно `Optional` инкапсулирует возможное отсутствие результата.",
+                "source_of_confusion": "Привычка к методам, возвращающим `null` при отсутствии, переносится на стрим-операции.",
+                "if_it_were_true": "Тогда `users.stream().findFirst().map(...)` не компилировался бы (у `T` нет `map`), но `Optional.map` существует.",
+                "how_it_should_be": "Поисковые/агрегирующие операции возвращают `Optional<T>`; присутствие проверяют через `orElse`/`map`, а не через `null`."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`findFirst`, `findAny`, `min`, `max`, `reduce` (без identity) возвращают `Optional<T>` — явное указание, что результат может отсутствовать. Правильно: цепочка `map`/`filter`/`orElse` на `Optional`, а `Optional.stream()` (Java 9+) элегантно встраивает `Optional` в pipeline через `flatMap`. Анти-паттерны: `get()` без проверки, `Optional.of(nullable)`.",
-              "correct": true,
+              "text": "`Optional.of(nullableValue)` — правильный способ обернуть значение, которое может быть `null`: метод просто вернёт пустой `Optional`, если значение оказалось `null`.",
+              "correct": false,
               "sections": {
-                "explanation": "`Optional` заставляет явно обработать отсутствие значения вместо `null`. В стримах его комбинируют с `map`/`orElse`, а `Optional.stream()` превращает `Optional` в стрим из 0 или 1 элемента, чтобы через `flatMap` отбросить пустые без ручной проверки `isPresent`.",
-                "example": "`users.stream().map(User::getEmail).flatMap(Optional::stream).toList()` собирает только присутствующие email; `user.map(User::getName).orElse(\"Unknown\")` безопасно достаёт имя или дефолт.",
-                "when_to_apply": "`Optional` уместен как возвращаемое значение метода поиска/агрегации; в стримах — через `map`/`filter`/`flatMap(Optional::stream)` и `orElse`/`orElseGet`.",
-                "edge_cases": "`get()` без проверки бросает `NoSuchElementException`; `Optional.of(null)` — `NullPointerException` (нужен `ofNullable`); `Optional` не предназначен для полей и параметров.",
-                "related": "[[java-stream-interview#Q10]] findFirst/findAny возвращают Optional; [[java-stream-interview#Q14]] reduce без identity даёт Optional; [[java-stream-interview#Q27]] комбинирование Stream и Optional."
+                "what_actually": "`Optional.of(null)` бросает `NullPointerException`; для потенциально null-значений используют `Optional.ofNullable(...)`, который и даёт пустой `Optional`.",
+                "source_of_confusion": "`of` звучит как универсальная фабрика, и про null-safe вариант `ofNullable` забывают.",
+                "if_it_were_true": "Тогда `Optional.of(maybeNull)` молча давал бы empty, но он падает с `NullPointerException`.",
+                "how_it_should_be": "Для возможного `null` берут `Optional.ofNullable(value)`; `of` — только для гарантированно ненулевого значения."
               }
             }
           ]
@@ -971,6 +971,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`forEach` возвращает новый `Stream` с обработанными элементами, поэтому после него можно продолжить цепочку, например `.map(...)` или `.filter(...)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`forEach` — terminal-операция, возвращающая `void`; после неё стрим закрыт и продолжать цепочку нельзя.",
+                "source_of_confusion": "Многие intermediate-операции возвращают `Stream`, и это ожидание распространяют на `forEach`.",
+                "if_it_were_true": "Тогда `stream.forEach(...).map(...)` компилировался бы, но `forEach` возвращает `void`.",
+                "how_it_should_be": "`forEach` завершает pipeline и ничего не возвращает; для преобразований используют `map`/`peek` до терминала."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`forEach` — terminal-операция, выполняющая побочный эффект для каждого элемента. В `parallelStream` порядок вызовов НЕ гарантируется (для порядка есть `forEachOrdered`). Нельзя использовать `break`/`continue`, бросать checked exception без обёртки, а мутация внешней коллекции через `forEach` не потокобезопасна.",
               "correct": true,
               "sections": {
@@ -982,32 +994,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`forEach` гарантирует исходный порядок обработки даже в `parallelStream`, поэтому `forEachOrdered` — это просто его устаревший синоним без практической разницы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`forEach` в parallel НЕ гарантирует порядок; именно `forEachOrdered` принудительно сохраняет encounter order, и разница между ними существенна.",
-                "source_of_confusion": "В последовательном стриме `forEach` действительно идёт по порядку, и это переносят на parallel.",
-                "if_it_were_true": "Тогда `list.parallelStream().forEach(...)` всегда печатал бы по порядку, но вывод оказывается перемешанным.",
-                "how_it_should_be": "Для гарантии порядка в parallel нужен `forEachOrdered`; `forEach` порядок не обещает."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`forEach` возвращает новый `Stream` с обработанными элементами, поэтому после него можно продолжить цепочку, например `.map(...)` или `.filter(...)`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`forEach` — terminal-операция, возвращающая `void`; после неё стрим закрыт и продолжать цепочку нельзя.",
-                "source_of_confusion": "Многие intermediate-операции возвращают `Stream`, и это ожидание распространяют на `forEach`.",
-                "if_it_were_true": "Тогда `stream.forEach(...).map(...)` компилировался бы, но `forEach` возвращает `void`.",
-                "how_it_should_be": "`forEach` завершает pipeline и ничего не возвращает; для преобразований используют `map`/`peek` до терминала."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Внутри `forEach` можно безопасно накапливать результаты в общий `ArrayList` даже в параллельном стриме, потому что стрим сам синхронизирует доступ к внешним коллекциям.",
               "correct": false,
               "sections": {
@@ -1015,6 +1003,18 @@
                 "source_of_confusion": "Кажется, что раз стрим управляет потоками, он же позаботится о безопасности записи.",
                 "if_it_were_true": "Тогда `parallelStream().forEach(list::add)` всегда давал бы полный список, но он теряет/портит элементы.",
                 "how_it_should_be": "Для накопления используют `collect(Collectors.toList())`; ручная запись в shared-коллекцию из parallel небезопасна."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`forEach` гарантирует исходный порядок обработки даже в `parallelStream`, поэтому `forEachOrdered` — это просто его устаревший синоним без практической разницы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`forEach` в parallel НЕ гарантирует порядок; именно `forEachOrdered` принудительно сохраняет encounter order, и разница между ними существенна.",
+                "source_of_confusion": "В последовательном стриме `forEach` действительно идёт по порядку, и это переносят на parallel.",
+                "if_it_were_true": "Тогда `list.parallelStream().forEach(...)` всегда печатал бы по порядку, но вывод оказывается перемешанным.",
+                "how_it_should_be": "Для гарантии порядка в parallel нужен `forEachOrdered`; `forEach` порядок не обещает."
               }
             }
           ]
@@ -1031,13 +1031,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Примитивные стримы стоит применять для любых данных, включая строки и объекты, потому что `IntStream` универсальнее `Stream<T>` и всегда быстрее.",
+              "text": "Метод `sum()` есть и у объектного `Stream<Integer>`, поэтому переходить на `IntStream` ради агрегатов не нужно — достаточно вызвать `numbers.stream().sum()` напрямую.",
               "correct": false,
               "sections": {
-                "what_actually": "Примитивные стримы работают только с `int`/`long`/`double`; для строк и объектов нужен `Stream<T>`, а выигрыш есть лишь на числах.",
-                "source_of_confusion": "Слово «быстрее» обобщают на все типы данных, забывая, что специализация только числовая.",
-                "if_it_were_true": "Тогда существовал бы `IntStream<String>`, но примитивные стримы не параметризуются объектами.",
-                "how_it_should_be": "Примитивные стримы — для чисел; объекты и строки обрабатывает `Stream<T>`."
+                "what_actually": "У `Stream<Integer>` нет метода `sum()`; числовые агрегаты (`sum`, `average`, `summaryStatistics`) доступны только у примитивных стримов после `mapToInt`/`mapToDouble`.",
+                "source_of_confusion": "Агрегация суммы кажется настолько базовой, что её ожидают у любого числового стрима.",
+                "if_it_were_true": "Тогда `List.of(1,2,3).stream().sum()` компилировался бы, но такого метода у `Stream<Integer>` нет.",
+                "how_it_should_be": "Для `sum`/`average` объектный стрим сначала переводят в примитивный: `.mapToInt(Integer::intValue).sum()`."
               }
             },
             {
@@ -1056,18 +1056,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Метод `sum()` есть и у объектного `Stream<Integer>`, поэтому переходить на `IntStream` ради агрегатов не нужно — достаточно вызвать `numbers.stream().sum()` напрямую.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У `Stream<Integer>` нет метода `sum()`; числовые агрегаты (`sum`, `average`, `summaryStatistics`) доступны только у примитивных стримов после `mapToInt`/`mapToDouble`.",
-                "source_of_confusion": "Агрегация суммы кажется настолько базовой, что её ожидают у любого числового стрима.",
-                "if_it_were_true": "Тогда `List.of(1,2,3).stream().sum()` компилировался бы, но такого метода у `Stream<Integer>` нет.",
-                "how_it_should_be": "Для `sum`/`average` объектный стрим сначала переводят в примитивный: `.mapToInt(Integer::intValue).sum()`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`IntStream` стоит использовать вместо `Stream<Integer>` только ради специальных методов, при этом по скорости разницы нет — JVM одинаково оптимизирует боксинг в обоих случаях.",
               "correct": false,
               "sections": {
@@ -1075,6 +1063,18 @@
                 "source_of_confusion": "JIT действительно умеет escape-анализ, но он не устраняет боксинг полностью в стрим-цепочках.",
                 "if_it_were_true": "Тогда бенчмарки не показывали бы разрыва, но `Stream<Integer>.sum()` стабильно медленнее в несколько раз.",
                 "how_it_should_be": "Примитивные стримы быстрее именно из-за отсутствия боксинга, а не только удобнее по API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Примитивные стримы стоит применять для любых данных, включая строки и объекты, потому что `IntStream` универсальнее `Stream<T>` и всегда быстрее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Примитивные стримы работают только с `int`/`long`/`double`; для строк и объектов нужен `Stream<T>`, а выигрыш есть лишь на числах.",
+                "source_of_confusion": "Слово «быстрее» обобщают на все типы данных, забывая, что специализация только числовая.",
+                "if_it_were_true": "Тогда существовал бы `IntStream<String>`, но примитивные стримы не параметризуются объектами.",
+                "how_it_should_be": "Примитивные стримы — для чисел; объекты и строки обрабатывает `Stream<T>`."
               }
             }
           ]
@@ -1103,18 +1103,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы получить count, sum, min, max и average, нужно сделать пять отдельных проходов по стриму — по одному на каждую метрику, так как одна операция возвращает только одно значение.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`summaryStatistics()` собирает все пять метрик за один проход в объект `IntSummaryStatistics`, поэтому пять обходов не нужны.",
-                "source_of_confusion": "`sum()`, `max()` и т.п. по отдельности действительно одноразовы, и кажется, что их надо комбинировать вручную.",
-                "if_it_were_true": "Тогда не существовало бы `summaryStatistics`, но он специально отдаёт все агрегаты разом.",
-                "how_it_should_be": "Один вызов `summaryStatistics()` даёт count/sum/min/max/average за единственный проход."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`IntStream.range(start, end)` даёт полуинтервал `[start, end)`, `IntStream.rangeClosed(start, end)` — отрезок `[start, end]`. `summaryStatistics()` за один проход возвращает count, sum, min, max и average (`IntSummaryStatistics`/`DoubleSummaryStatistics`), а несколько статистик можно объединить через `combine`.",
               "correct": true,
               "sections": {
@@ -1123,6 +1111,18 @@
                 "when_to_apply": "`range` — для индексов цикла (конец исключён, как `size()`); `rangeClosed` — когда нужна верхняя граница включительно; `summaryStatistics` — когда требуется несколько агрегатов сразу.",
                 "edge_cases": "На пустом диапазоне `getMin()/getMax()` возвращают `Integer.MAX_VALUE`/`MIN_VALUE`, а `getAverage()` — 0.0; `combine` позволяет слить статистики из батчей или потоков.",
                 "related": "[[java-stream-interview#Q4]] range среди способов создания; [[java-stream-interview#Q18]] зачем примитивные стримы; [[java-stream-interview#Q42]] range и summaryStatistics детально."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы получить count, sum, min, max и average, нужно сделать пять отдельных проходов по стриму — по одному на каждую метрику, так как одна операция возвращает только одно значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`summaryStatistics()` собирает все пять метрик за один проход в объект `IntSummaryStatistics`, поэтому пять обходов не нужны.",
+                "source_of_confusion": "`sum()`, `max()` и т.п. по отдельности действительно одноразовы, и кажется, что их надо комбинировать вручную.",
+                "if_it_were_true": "Тогда не существовало бы `summaryStatistics`, но он специально отдаёт все агрегаты разом.",
+                "how_it_should_be": "Один вызов `summaryStatistics()` даёт count/sum/min/max/average за единственный проход."
               }
             },
             {
@@ -1151,13 +1151,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`parallelStream` стоит выбирать для обработки коллекций: общий `ForkJoinPool` масштабируется под число ядер, а издержки split на типовых списках окупаются распараллеливанием.",
-              "correct": false,
+              "text": "`parallelStream` оправдан только при выполнении всех условий: большой объём данных, CPU-bound операции без I/O-блокировок, независимые элементы (нет shared mutable state), хороший `Spliterator` (`ArrayList`/массив делятся эффективно, `LinkedList`/`iterate` — плохо) и ассоциативные операции. Правило: начинать с последовательного стрима и переходить на parallel только после замера JMH.",
+              "correct": true,
               "sections": {
-                "what_actually": "Параллелизм добавляет overhead на split и слияние, который на малых данных и лёгких операциях делает parallel МЕДЛЕННЕЕ последовательного.",
-                "source_of_confusion": "Кажется, что раз пул сам подстраивается под число ядер, распараллеливание даёт выигрыш почти на любой коллекции.",
-                "if_it_were_true": "Тогда `smallList.parallelStream()` был бы не медленнее, но на маленьких списках он проигрывает из-за координации потоков.",
-                "how_it_should_be": "По умолчанию используют sequential; parallel включают только после замера на больших CPU-bound данных."
+                "explanation": "Параллелизм даёт overhead (split, слияние, координация потоков), который окупается лишь на больших объёмах тяжёлых независимых вычислений. На маленьких коллекциях или I/O-операциях он чаще вредит.",
+                "example": "Хорошо: `largeArray.parallelStream().mapToDouble(this::expensiveCalculation).toArray()`; плохо: `smallList.parallelStream().filter(s -> s.startsWith(\"A\")).toList()` — overhead больше выигрыша.",
+                "when_to_apply": "Переходить на parallel, когда подтверждены большой объём, CPU-bound нагрузка, независимость элементов и хороший источник, и только после бенчмарка.",
+                "edge_cases": "`LinkedList` и `Stream.iterate` плохо делятся (последовательный split), сводя выигрыш к нулю; блокирующий I/O в parallel забивает общий `ForkJoinPool`.",
+                "related": "[[java-stream-interview#Q21]] риски и анти-паттерны parallel; [[java-stream-interview#Q22]] ForkJoinPool и свой пул; [[java-stream-interview#Q25]] Spliterator и качество split."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`parallelStream` оправдан только при выполнении всех условий: большой объём данных, CPU-bound операции без I/O-блокировок, независимые элементы (нет shared mutable state), хороший `Spliterator` (`ArrayList`/массив делятся эффективно, `LinkedList`/`iterate` — плохо) и ассоциативные операции. Правило: начинать с последовательного стрима и переходить на parallel только после замера JMH.",
-              "correct": true,
+              "text": "`parallelStream` стоит выбирать для обработки коллекций: общий `ForkJoinPool` масштабируется под число ядер, а издержки split на типовых списках окупаются распараллеливанием.",
+              "correct": false,
               "sections": {
-                "explanation": "Параллелизм даёт overhead (split, слияние, координация потоков), который окупается лишь на больших объёмах тяжёлых независимых вычислений. На маленьких коллекциях или I/O-операциях он чаще вредит.",
-                "example": "Хорошо: `largeArray.parallelStream().mapToDouble(this::expensiveCalculation).toArray()`; плохо: `smallList.parallelStream().filter(s -> s.startsWith(\"A\")).toList()` — overhead больше выигрыша.",
-                "when_to_apply": "Переходить на parallel, когда подтверждены большой объём, CPU-bound нагрузка, независимость элементов и хороший источник, и только после бенчмарка.",
-                "edge_cases": "`LinkedList` и `Stream.iterate` плохо делятся (последовательный split), сводя выигрыш к нулю; блокирующий I/O в parallel забивает общий `ForkJoinPool`.",
-                "related": "[[java-stream-interview#Q21]] риски и анти-паттерны parallel; [[java-stream-interview#Q22]] ForkJoinPool и свой пул; [[java-stream-interview#Q25]] Spliterator и качество split."
+                "what_actually": "Параллелизм добавляет overhead на split и слияние, который на малых данных и лёгких операциях делает parallel МЕДЛЕННЕЕ последовательного.",
+                "source_of_confusion": "Кажется, что раз пул сам подстраивается под число ядер, распараллеливание даёт выигрыш почти на любой коллекции.",
+                "if_it_were_true": "Тогда `smallList.parallelStream()` был бы не медленнее, но на маленьких списках он проигрывает из-за координации потоков.",
+                "how_it_should_be": "По умолчанию используют sequential; parallel включают только после замера на больших CPU-bound данных."
               }
             }
           ]
@@ -1211,31 +1211,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Основные риски: race condition на shared mutable state (запись в небезопасный `ArrayList` из `forEach`), блокирующие операции в общем `ForkJoinPool` (забивают commonPool), non-associative `reduce` (вычитание даёт непредсказуемый результат) и stateful-лямбды (счётчик `AtomicInteger`, зависящий от порядка).",
-              "correct": true,
-              "sections": {
-                "explanation": "В parallel элементы обрабатываются конкурентно, поэтому любое разделяемое изменяемое состояние, блокировки и зависимость от порядка ломают корректность или производительность. Безопасны только чистые ассоциативные операции и `collect`.",
-                "example": "Гонка: `stream.parallel().forEach(result::add)` на обычном `ArrayList`; правильно — `stream.parallel().collect(Collectors.toList())`. Неассоциативность: `IntStream.rangeClosed(1,4).parallel().reduce(0, (a,b) -> a-b)` непредсказуем.",
-                "when_to_apply": "Эти риски проверяют перед любым переходом на parallel: нет ли shared state, блокировок, неассоциативных операций и зависимости от порядка.",
-                "edge_cases": "`AtomicInteger` как счётчик в `peek` даёт корректную сумму, но порядок инкрементов случаен; блокирующий I/O в commonPool деградирует все параллельные стримы приложения.",
-                "related": "[[java-stream-interview#Q20]] когда переходить на parallel; [[java-stream-interview#Q22]] изоляция через свой ForkJoinPool; [[java-stream-interview#Q17]] небезопасный forEach с накоплением."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Все эти риски (гонки, блокировки, неассоциативность) автоматически снимаются, если просто обернуть тело лямбды в `synchronized`-блок: это делает любой parallel stream корректным без потери производительности.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`synchronized` устраняет гонку, но сериализует доступ к разделяемому состоянию, сводя параллелизм на нет; он не лечит неассоциативность и не возвращает производительность.",
-                "source_of_confusion": "`synchronized` — привычный способ чинить гонки в обычном многопоточном коде, и его механически переносят на стримы.",
-                "if_it_were_true": "Тогда `synchronized`-обёртка вокруг `list.add` дала бы и корректность, и скорость, но она убивает выигрыш параллелизма.",
-                "how_it_should_be": "Правильный путь — убрать shared state и использовать `collect`/ассоциативные операции, а не сериализовать всё через `synchronized`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Накопление результатов через `parallel().forEach(list::add)` в обычный `ArrayList` полностью безопасно, если список заранее проинициализирован нужным размером.",
               "correct": false,
               "sections": {
@@ -1246,8 +1221,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Неассоциативные операции вроде вычитания в `reduce` безопасны в parallel, потому что стрим всегда применяет их строго слева направо, как в последовательном случае.",
               "correct": false,
               "sections": {
@@ -1255,6 +1230,31 @@
                 "source_of_confusion": "Кажется, что порядок reduce всегда слева направо, как у последовательного стрима.",
                 "if_it_were_true": "Тогда `rangeClosed(1,4).parallel().reduce(0, (a,b)->a-b)` совпадал бы с sequential, но результаты расходятся.",
                 "how_it_should_be": "В parallel `reduce` требует ассоциативной операции; вычитание и деление нарушают корректность."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все эти риски (гонки, блокировки, неассоциативность) автоматически снимаются, если просто обернуть тело лямбды в `synchronized`-блок: это делает любой parallel stream корректным без потери производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`synchronized` устраняет гонку, но сериализует доступ к разделяемому состоянию, сводя параллелизм на нет; он не лечит неассоциативность и не возвращает производительность.",
+                "source_of_confusion": "`synchronized` — привычный способ чинить гонки в обычном многопоточном коде, и его механически переносят на стримы.",
+                "if_it_were_true": "Тогда `synchronized`-обёртка вокруг `list.add` дала бы и корректность, и скорость, но она убивает выигрыш параллелизма.",
+                "how_it_should_be": "Правильный путь — убрать shared state и использовать `collect`/ассоциативные операции, а не сериализовать всё через `synchronized`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Основные риски: race condition на shared mutable state (запись в небезопасный `ArrayList` из `forEach`), блокирующие операции в общем `ForkJoinPool` (забивают commonPool), non-associative `reduce` (вычитание даёт непредсказуемый результат) и stateful-лямбды (счётчик `AtomicInteger`, зависящий от порядка).",
+              "correct": true,
+              "sections": {
+                "explanation": "В parallel элементы обрабатываются конкурентно, поэтому любое разделяемое изменяемое состояние, блокировки и зависимость от порядка ломают корректность или производительность. Безопасны только чистые ассоциативные операции и `collect`.",
+                "example": "Гонка: `stream.parallel().forEach(result::add)` на обычном `ArrayList`; правильно — `stream.parallel().collect(Collectors.toList())`. Неассоциативность: `IntStream.rangeClosed(1,4).parallel().reduce(0, (a,b) -> a-b)` непредсказуем.",
+                "when_to_apply": "Эти риски проверяют перед любым переходом на parallel: нет ли shared state, блокировок, неассоциативных операций и зависимости от порядка.",
+                "edge_cases": "`AtomicInteger` как счётчик в `peek` даёт корректную сумму, но порядок инкрементов случаен; блокирующий I/O в commonPool деградирует все параллельные стримы приложения.",
+                "related": "[[java-stream-interview#Q20]] когда переходить на parallel; [[java-stream-interview#Q22]] изоляция через свой ForkJoinPool; [[java-stream-interview#Q17]] небезопасный forEach с накоплением."
               }
             }
           ]
@@ -1271,18 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Каждый `parallelStream` создаёт собственный новый `ForkJoinPool` под капотом, поэтому стримы не влияют друг на друга и общего пула не существует.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию все `parallelStream` делят ОДИН общий `ForkJoinPool.commonPool()`; отдельный пул на стрим не создаётся.",
-                "source_of_confusion": "Изоляция кажется естественной, и предполагают, что у каждого стрима свой пул.",
-                "if_it_were_true": "Тогда блокировка в одном parallelStream не влияла бы на другие, но на деле она забивает общий commonPool.",
-                "how_it_should_be": "Все parallelStream используют общий commonPool; свой пул нужно создавать явно через `new ForkJoinPool(n)`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "По умолчанию все `parallelStream` используют общий `ForkJoinPool.commonPool()` с `availableProcessors() - 1` потоками. Чтобы изолировать параллельный стрим от остального приложения, его запускают в собственном `ForkJoinPool` через `customPool.submit(() -> stream.parallelStream()...).get()` — это недокументированная, но рабочая техника.",
               "correct": true,
               "sections": {
@@ -1294,8 +1282,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Чтобы задать число потоков для конкретного `parallelStream`, достаточно вызвать метод `.parallel(8)` с нужным аргументом — стрим создаст ровно столько рабочих потоков.",
               "correct": false,
               "sections": {
@@ -1306,8 +1294,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Запустить parallelStream в своём `ForkJoinPool` невозможно: стрим жёстко привязан к commonPool на уровне JVM, и `submit` на другом пуле его поведение не меняет.",
               "correct": false,
               "sections": {
@@ -1315,6 +1303,18 @@
                 "source_of_confusion": "Отсутствие официального API для смены пула наводит на мысль о жёсткой привязке.",
                 "if_it_were_true": "Тогда трюк с `submit` не давал бы эффекта, но он демонстрируемо переносит работу стрима в нужный пул.",
                 "how_it_should_be": "`submit` на собственном `ForkJoinPool` действительно изолирует параллельный стрим от commonPool."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Каждый `parallelStream` создаёт собственный новый `ForkJoinPool` под капотом, поэтому стримы не влияют друг на друга и общего пула не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию все `parallelStream` делят ОДИН общий `ForkJoinPool.commonPool()`; отдельный пул на стрим не создаётся.",
+                "source_of_confusion": "Изоляция кажется естественной, и предполагают, что у каждого стрима свой пул.",
+                "if_it_were_true": "Тогда блокировка в одном parallelStream не влияла бы на другие, но на деле она забивает общий commonPool.",
+                "how_it_should_be": "Все parallelStream используют общий commonPool; свой пул нужно создавать явно через `new ForkJoinPool(n)`."
               }
             }
           ]
@@ -1331,18 +1331,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Encounter order не влияет на parallel streams: сохранение порядка бесплатно, поэтому `unordered()` — чисто косметический метод без эффекта на производительность.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Поддержка порядка в parallel НЕ бесплатна: она требует упорядоченного слияния результатов, и `unordered()` реально ускоряет `limit`/`distinct`, снимая эти накладные расходы.",
-                "source_of_confusion": "В последовательном стриме порядок действительно ничего не стоит, и это переносят на parallel.",
-                "if_it_were_true": "Тогда `unordered()` не давал бы прироста, но в parallel он ускоряет порядко-зависимые операции.",
-                "how_it_should_be": "Сохранение encounter order в parallel стоит ресурсов; `unordered()` ускоряет, когда порядок не нужен."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Для ускорения parallel предпочитают `forEachOrdered` вместо `forEach`: упорядоченный вывод помогает пулу координировать потоки и снижает накладные расходы на синхронизацию результатов.",
               "correct": false,
               "sections": {
@@ -1350,6 +1338,18 @@
                 "source_of_confusion": "Слово «ordered» ассоциируется с предсказуемостью и кажется более «правильным» и оптимизированным.",
                 "if_it_were_true": "Тогда `forEachOrdered` был бы быстрее `forEach`, но он медленнее из-за принудительного порядка.",
                 "how_it_should_be": "Для скорости в parallel берут `forEach`; `forEachOrdered` нужен только когда порядок обязателен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Encounter order не влияет на parallel streams: сохранение порядка бесплатно, поэтому `unordered()` — чисто косметический метод без эффекта на производительность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддержка порядка в parallel НЕ бесплатна: она требует упорядоченного слияния результатов, и `unordered()` реально ускоряет `limit`/`distinct`, снимая эти накладные расходы.",
+                "source_of_confusion": "В последовательном стриме порядок действительно ничего не стоит, и это переносят на parallel.",
+                "if_it_were_true": "Тогда `unordered()` не давал бы прироста, но в parallel он ускоряет порядко-зависимые операции.",
+                "how_it_should_be": "Сохранение encounter order в parallel стоит ресурсов; `unordered()` ускоряет, когда порядок не нужен."
               }
             },
             {
@@ -1403,13 +1403,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Операции `filter` и `map` могут менять порядок элементов даже на упорядоченном источнике, поэтому после них последовательность результата непредсказуема.",
-              "correct": false,
+              "text": "Encounter order — порядок, в котором источник предоставляет элементы. Не все источники упорядочены: `List`/массив/`LinkedHashSet`/`TreeSet`/`Stream.iterate` упорядочены, а `HashSet`/`HashMap`/`Stream.generate` — нет. `sorted` устанавливает порядок, `unordered` снимает гарантию, а `filter`/`map`/`flatMap` сохраняют порядок источника; `distinct` сохраняет порядок первого вхождения.",
+              "correct": true,
               "sections": {
-                "what_actually": "`filter`/`map`/`flatMap` СОХРАНЯЮТ encounter order источника; они не переставляют элементы, а лишь отбирают/преобразуют их на месте.",
-                "source_of_confusion": "Преобразование элементов ассоциируют с возможной перестановкой их порядка.",
-                "if_it_were_true": "Тогда `List.of(1,2,3).stream().map(x->x*2).toList()` мог бы дать `[4,2,6]`, но он всегда даёт `[2,4,6]`.",
-                "how_it_should_be": "`filter`/`map`/`flatMap` сохраняют порядок источника; изменить его могут `sorted` или `unordered`."
+                "explanation": "Упорядоченность — свойство источника и характеристик `Spliterator`. Промежуточные операции по-разному с ним обращаются: большинство сохраняют, `sorted` навязывает естественный порядок, `unordered` явно отказывается от гарантии порядка ради скорости.",
+                "example": "`Set.of(\"c\",\"a\",\"b\").stream().forEach(...)` печатает в неопределённом порядке (`HashSet`); `.sorted()` перед `forEach` даёт `abc`; `List.of(...)` всегда сохраняет исходный порядок.",
+                "when_to_apply": "Знать упорядоченность источника нужно, чтобы предсказывать результат и понимать, где порядок гарантирован, а где зависит от реализации хеш-таблицы.",
+                "edge_cases": "`HashMap`/`HashSet` дают порядок, зависящий от хеш-функции и размера таблицы — на него нельзя полагаться; `distinct` на неупорядоченном источнике не гарантирует, какой из дубликатов останется.",
+                "related": "[[java-stream-interview#Q23]] encounter order и parallel; [[java-stream-interview#Q25]] характеристики Spliterator (ORDERED); [[java-stream-interview#Q9]] sorted и distinct."
               }
             },
             {
@@ -1427,14 +1428,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Encounter order — порядок, в котором источник предоставляет элементы. Не все источники упорядочены: `List`/массив/`LinkedHashSet`/`TreeSet`/`Stream.iterate` упорядочены, а `HashSet`/`HashMap`/`Stream.generate` — нет. `sorted` устанавливает порядок, `unordered` снимает гарантию, а `filter`/`map`/`flatMap` сохраняют порядок источника; `distinct` сохраняет порядок первого вхождения.",
-              "correct": true,
+              "text": "Операции `filter` и `map` могут менять порядок элементов даже на упорядоченном источнике, поэтому после них последовательность результата непредсказуема.",
+              "correct": false,
               "sections": {
-                "explanation": "Упорядоченность — свойство источника и характеристик `Spliterator`. Промежуточные операции по-разному с ним обращаются: большинство сохраняют, `sorted` навязывает естественный порядок, `unordered` явно отказывается от гарантии порядка ради скорости.",
-                "example": "`Set.of(\"c\",\"a\",\"b\").stream().forEach(...)` печатает в неопределённом порядке (`HashSet`); `.sorted()` перед `forEach` даёт `abc`; `List.of(...)` всегда сохраняет исходный порядок.",
-                "when_to_apply": "Знать упорядоченность источника нужно, чтобы предсказывать результат и понимать, где порядок гарантирован, а где зависит от реализации хеш-таблицы.",
-                "edge_cases": "`HashMap`/`HashSet` дают порядок, зависящий от хеш-функции и размера таблицы — на него нельзя полагаться; `distinct` на неупорядоченном источнике не гарантирует, какой из дубликатов останется.",
-                "related": "[[java-stream-interview#Q23]] encounter order и parallel; [[java-stream-interview#Q25]] характеристики Spliterator (ORDERED); [[java-stream-interview#Q9]] sorted и distinct."
+                "what_actually": "`filter`/`map`/`flatMap` СОХРАНЯЮТ encounter order источника; они не переставляют элементы, а лишь отбирают/преобразуют их на месте.",
+                "source_of_confusion": "Преобразование элементов ассоциируют с возможной перестановкой их порядка.",
+                "if_it_were_true": "Тогда `List.of(1,2,3).stream().map(x->x*2).toList()` мог бы дать `[4,2,6]`, но он всегда даёт `[2,4,6]`.",
+                "how_it_should_be": "`filter`/`map`/`flatMap` сохраняют порядок источника; изменить его могут `sorted` или `unordered`."
               }
             }
           ]
@@ -1451,31 +1451,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spliterator` (splitable iterator) — основа параллелизма в `Stream`: он перебирает элементы (`tryAdvance`, `forEachRemaining`), делит себя на части (`trySplit`) для parallel и сообщает характеристики и примерный размер (`estimateSize`). Характеристики: `ORDERED`, `DISTINCT`, `SORTED`, `SIZED`, `SUBSIZED`, `NONNULL`, `IMMUTABLE`, `CONCURRENT`.",
-              "correct": true,
+              "text": "`estimateSize()` возвращает точное число оставшихся элементов, а не оценку, поэтому на нём можно безопасно строить логику, которой нужен размер до обхода потока.",
+              "correct": false,
               "sections": {
-                "explanation": "`trySplit` отдаёт часть элементов новому `Spliterator`, позволяя `ForkJoinPool` распараллелить обход. Характеристики помогают оптимизировать: `SIZED` даёт точный размер, `DISTINCT` избавляет от лишнего `distinct`, `ORDERED` обязывает хранить порядок.",
-                "example": "`list.spliterator().hasCharacteristics(Spliterator.ORDERED)` → true для `List`; `estimateSize()` даёт примерное число элементов, а `characteristics()` — битовую маску свойств.",
-                "when_to_apply": "Понимание `Spliterator` нужно, чтобы оценивать качество параллелизма источника и при написании собственного источника стрима (`StreamSupport.stream`).",
-                "edge_cases": "`ArrayList` даёт `SIZED`+`SUBSIZED` (части после split тоже sized) и делится за O(1); `LinkedList` и `iterate` не `SUBSIZED` и делятся плохо, что убивает выигрыш parallel.",
-                "related": "[[java-stream-interview#Q20]] хороший Spliterator как условие parallel; [[java-stream-interview#Q24]] характеристика ORDERED; [[java-stream-interview#Q23]] порядок и parallel."
+                "what_actually": "`estimateSize()` даёт лишь ОЦЕНКУ и для многих источников (`Stream.generate`, некоторые фильтры) возвращает приблизительное значение или `Long.MAX_VALUE`; точный размер гарантирует только характеристика `SIZED`.",
+                "source_of_confusion": "Для `ArrayList` со `SIZED` оценка совпадает с точным размером, и это обобщают на все источники.",
+                "if_it_were_true": "Тогда метод назвали бы `size()`, а флаг `SIZED` был бы избыточен, но он специально отличает точный размер от оценки.",
+                "how_it_should_be": "`estimateSize()` — оценка; полагаться на точность можно только при наличии характеристики `SIZED`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Spliterator` умеет только перебирать элементы по одному (`tryAdvance`), а делить поток на части для параллельной обработки он не может — этим занимается сам `ForkJoinPool`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Деление на части делает именно `Spliterator` через `trySplit`; `ForkJoinPool` лишь выполняет полученные подзадачи, а не разбивает данные сам.",
-                "source_of_confusion": "Параллелизм ассоциируют с пулом потоков, а не с источником данных.",
-                "if_it_were_true": "Тогда качество split не зависело бы от источника, но `LinkedList` параллелится плохо именно из-за слабого `trySplit`.",
-                "how_it_should_be": "`trySplit` у `Spliterator` делит данные; пул лишь исполняет подзадачи на этих частях."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Характеристика `SIZED` означает, что элементы стрима отсортированы по возрастанию, а `SORTED` — что известно их точное количество; эти два флага дублируют друг друга.",
               "correct": false,
               "sections": {
@@ -1486,15 +1473,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`estimateSize()` возвращает точное число оставшихся элементов, а не оценку, поэтому на нём можно безопасно строить логику, которой нужен размер до обхода потока.",
+              "order": 2,
+              "label": "C",
+              "text": "`Spliterator` умеет только перебирать элементы по одному (`tryAdvance`), а делить поток на части для параллельной обработки он не может — этим занимается сам `ForkJoinPool`.",
               "correct": false,
               "sections": {
-                "what_actually": "`estimateSize()` даёт лишь ОЦЕНКУ и для многих источников (`Stream.generate`, некоторые фильтры) возвращает приблизительное значение или `Long.MAX_VALUE`; точный размер гарантирует только характеристика `SIZED`.",
-                "source_of_confusion": "Для `ArrayList` со `SIZED` оценка совпадает с точным размером, и это обобщают на все источники.",
-                "if_it_were_true": "Тогда метод назвали бы `size()`, а флаг `SIZED` был бы избыточен, но он специально отличает точный размер от оценки.",
-                "how_it_should_be": "`estimateSize()` — оценка; полагаться на точность можно только при наличии характеристики `SIZED`."
+                "what_actually": "Деление на части делает именно `Spliterator` через `trySplit`; `ForkJoinPool` лишь выполняет полученные подзадачи, а не разбивает данные сам.",
+                "source_of_confusion": "Параллелизм ассоциируют с пулом потоков, а не с источником данных.",
+                "if_it_were_true": "Тогда качество split не зависело бы от источника, но `LinkedList` параллелится плохо именно из-за слабого `trySplit`.",
+                "how_it_should_be": "`trySplit` у `Spliterator` делит данные; пул лишь исполняет подзадачи на этих частях."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spliterator` (splitable iterator) — основа параллелизма в `Stream`: он перебирает элементы (`tryAdvance`, `forEachRemaining`), делит себя на части (`trySplit`) для parallel и сообщает характеристики и примерный размер (`estimateSize`). Характеристики: `ORDERED`, `DISTINCT`, `SORTED`, `SIZED`, `SUBSIZED`, `NONNULL`, `IMMUTABLE`, `CONCURRENT`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`trySplit` отдаёт часть элементов новому `Spliterator`, позволяя `ForkJoinPool` распараллелить обход. Характеристики помогают оптимизировать: `SIZED` даёт точный размер, `DISTINCT` избавляет от лишнего `distinct`, `ORDERED` обязывает хранить порядок.",
+                "example": "`list.spliterator().hasCharacteristics(Spliterator.ORDERED)` → true для `List`; `estimateSize()` даёт примерное число элементов, а `characteristics()` — битовую маску свойств.",
+                "when_to_apply": "Понимание `Spliterator` нужно, чтобы оценивать качество параллелизма источника и при написании собственного источника стрима (`StreamSupport.stream`).",
+                "edge_cases": "`ArrayList` даёт `SIZED`+`SUBSIZED` (части после split тоже sized) и делится за O(1); `LinkedList` и `iterate` не `SUBSIZED` и делятся плохо, что убивает выигрыш parallel.",
+                "related": "[[java-stream-interview#Q20]] хороший Spliterator как условие parallel; [[java-stream-interview#Q24]] характеристика ORDERED; [[java-stream-interview#Q23]] порядок и parallel."
               }
             }
           ]
@@ -1511,18 +1511,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Stream.iterate(seed, op)` и `Stream.generate(supplier)` создают конечные стримы по умолчанию: они автоматически останавливаются, когда `op`/`supplier` вернёт `null`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Обе формы бесконечны: ни `iterate` (двухаргументный), ни `generate` не останавливаются на `null` — для конечности нужен `limit` или предикат в `iterate` (Java 9+).",
-                "source_of_confusion": "По аналогии с итераторами ожидают, что `null` сигнализирует конец последовательности.",
-                "if_it_were_true": "Тогда `Stream.generate(() -> null).count()` завершился бы сразу, но он зависает на бесконечном стриме из null.",
-                "how_it_should_be": "`iterate`/`generate` бесконечны; ограничивают их `limit(n)` или предикатом `iterate(seed, hasNext, next)`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Stream.iterate(seed, UnaryOperator)` генерирует элементы на основе предыдущего значения (упорядоченный, каждый зависит от предыдущего); с предикатом (Java 9+) `iterate(seed, hasNext, next)` заменяет `iterate + limit`. `Stream.generate(Supplier)` генерирует независимые элементы без seed (неупорядоченный, лучше параллелится). Оба бесконечны без ограничения.",
               "correct": true,
               "sections": {
@@ -1534,20 +1522,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Трёхаргументный `Stream.iterate(seed, hasNext, next)` (Java 9+) — это всего лишь параллельная версия двухаргументного `iterate`, она не добавляет условия завершения и так же требует `limit`.",
+              "order": 1,
+              "label": "B",
+              "text": "`Stream.iterate(seed, op)` и `Stream.generate(supplier)` создают конечные стримы по умолчанию: они автоматически останавливаются, когда `op`/`supplier` вернёт `null`.",
               "correct": false,
               "sections": {
-                "what_actually": "Трёхаргументный `iterate` добавляет именно предикат завершения `hasNext`: стрим останавливается сам, когда предикат вернёт false, и `limit` уже не нужен.",
-                "source_of_confusion": "Лишний аргумент ассоциируют с параллелизмом, а не с условием остановки.",
-                "if_it_were_true": "Тогда `Stream.iterate(1, n -> n <= 100, n -> n*2)` был бы бесконечным, но он сам завершается на 128.",
-                "how_it_should_be": "Трёхаргументный `iterate` — это `iterate + limit` через предикат `hasNext`, заменяющий явный `limit`."
+                "what_actually": "Обе формы бесконечны: ни `iterate` (двухаргументный), ни `generate` не останавливаются на `null` — для конечности нужен `limit` или предикат в `iterate` (Java 9+).",
+                "source_of_confusion": "По аналогии с итераторами ожидают, что `null` сигнализирует конец последовательности.",
+                "if_it_were_true": "Тогда `Stream.generate(() -> null).count()` завершился бы сразу, но он зависает на бесконечном стриме из null.",
+                "how_it_should_be": "`iterate`/`generate` бесконечны; ограничивают их `limit(n)` или предикатом `iterate(seed, hasNext, next)`."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Stream.generate(supplier)` создаёт упорядоченный стрим, где каждый элемент вычисляется из предыдущего, а `Stream.iterate` — независимые элементы без зависимости от seed.",
               "correct": false,
               "sections": {
@@ -1555,6 +1543,18 @@
                 "source_of_confusion": "Оба метода «порождают» элементы, и легко перепутать, какой опирается на предыдущее значение.",
                 "if_it_were_true": "Тогда `generate` требовал бы seed-аргумент, но он принимает только `Supplier` без начального значения.",
                 "how_it_should_be": "`iterate` — зависимая упорядоченная последовательность с seed; `generate` — независимые элементы из `Supplier`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Трёхаргументный `Stream.iterate(seed, hasNext, next)` (Java 9+) — это всего лишь параллельная версия двухаргументного `iterate`, она не добавляет условия завершения и так же требует `limit`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Трёхаргументный `iterate` добавляет именно предикат завершения `hasNext`: стрим останавливается сам, когда предикат вернёт false, и `limit` уже не нужен.",
+                "source_of_confusion": "Лишний аргумент ассоциируют с параллелизмом, а не с условием остановки.",
+                "if_it_were_true": "Тогда `Stream.iterate(1, n -> n <= 100, n -> n*2)` был бы бесконечным, но он сам завершается на 128.",
+                "how_it_should_be": "Трёхаргументный `iterate` — это `iterate + limit` через предикат `hasNext`, заменяющий явный `limit`."
               }
             }
           ]
@@ -1571,6 +1571,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`flatMap(Optional::stream)` нужно вызывать на стриме `Optional`-ов до Java 9 точно так же — метод `Optional.stream()` существует с самого появления `Optional` в Java 8.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Optional.stream()` появился только в Java 9; в Java 8 такого метода не было, и пустые `Optional` отбрасывали через `filter(Optional::isPresent).map(Optional::get)`.",
+                "source_of_confusion": "`Optional` и `Stream` оба из Java 8, поэтому интеграцию `Optional.stream()` ошибочно датируют тем же релизом.",
+                "if_it_were_true": "Тогда код на Java 8 компилировался бы с `flatMap(Optional::stream)`, но метода `stream()` у `Optional` там нет.",
+                "how_it_should_be": "`Optional.stream()` — это Java 9; на Java 8 используют связку `filter(isPresent).map(get)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Чтобы собрать присутствующие значения, в pipeline используют `map(Optional::get)` сразу после `map(User::getPhone)` — `get()` безопасно вернёт значение или пропустит пустой `Optional`.",
               "correct": false,
               "sections": {
@@ -1581,8 +1593,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`Optional.or(fallback)` принимает уже готовое значение типа `Optional`, которое вычисляется немедленно, поэтому все fallback-источники в цепочке `or` выполняются заранее, даже если первый `Optional` оказался непустым.",
               "correct": false,
               "sections": {
@@ -1593,8 +1605,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "С Java 9+ `Optional.stream()` возвращает `Stream` из 0 или 1 элемента, что позволяет элегантно встроить `Optional` в pipeline через `flatMap`, отбросив пустые без `isPresent`/`get`. Также полезны `Optional.or()` (цепочка fallback-ов) и `Optional.ifPresentOrElse()` (две ветки) — обе из Java 9.",
               "correct": true,
               "sections": {
@@ -1603,18 +1615,6 @@
                 "when_to_apply": "`Optional.stream()` — когда метод возвращает `Optional`, а нужно собрать все присутствующие значения; `or`/`ifPresentOrElse` — для fallback-ов и обработки наличия/отсутствия.",
                 "edge_cases": "`Optional.stream()` даёт ровно 0 или 1 элемент — не бесконечный; `or` принимает `Supplier<Optional>` (ленивый fallback), а не готовое значение.",
                 "related": "[[java-stream-interview#Q16]] Optional в контексте Stream; [[java-stream-interview#Q8]] flatMap и разворачивание; [[java-stream-interview#Q7]] map/flatMap/filter."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`flatMap(Optional::stream)` нужно вызывать на стриме `Optional`-ов до Java 9 точно так же — метод `Optional.stream()` существует с самого появления `Optional` в Java 8.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Optional.stream()` появился только в Java 9; в Java 8 такого метода не было, и пустые `Optional` отбрасывали через `filter(Optional::isPresent).map(Optional::get)`.",
-                "source_of_confusion": "`Optional` и `Stream` оба из Java 8, поэтому интеграцию `Optional.stream()` ошибочно датируют тем же релизом.",
-                "if_it_were_true": "Тогда код на Java 8 компилировался бы с `flatMap(Optional::stream)`, но метода `stream()` у `Optional` там нет.",
-                "how_it_should_be": "`Optional.stream()` — это Java 9; на Java 8 используют связку `filter(isPresent).map(get)`."
               }
             }
           ]
@@ -1631,6 +1631,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "В `mapMulti` лямбда принимает только сам элемент `(n)` и должна вернуть новый `Stream` результатов, как и в `flatMap` — разница лишь в имени метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лямбда `mapMulti` принимает ДВА аргумента — элемент и `Consumer<R>` — и ничего не возвращает; результаты пушатся через `consumer.accept(...)`, а не через возврат `Stream`.",
+                "source_of_confusion": "`mapMulti` и `flatMap` решают похожую задачу, поэтому сигнатуру `flatMap` приписывают и ему.",
+                "if_it_were_true": "Тогда `mapMulti(n -> Stream.of(n))` компилировался бы, но он требует `(n, consumer) -> consumer.accept(n)`.",
+                "how_it_should_be": "`mapMulti` принимает `BiConsumer<T, Consumer<R>>` и пушит результаты в consumer, ничего не возвращая."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`mapMulti` — это terminal-операция, которая сразу собирает результаты в `List` через переданный `Consumer`, поэтому после неё `.toList()` или `collect` вызывать не нужно.",
               "correct": false,
               "sections": {
@@ -1641,8 +1653,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`mapMulti` быстрее `flatMap` практически в любом сценарии, потому что не создаёт промежуточный `Stream`, поэтому в production его берут вместо `flatMap` по умолчанию.",
               "correct": false,
               "sections": {
@@ -1650,18 +1662,6 @@
                 "source_of_confusion": "«Нет промежуточного `Stream`» звучит как безусловная оптимизация и обобщается на все случаи.",
                 "if_it_were_true": "Тогда `flatMap` устарел бы, но его оставили как основной инструмент для многозначных преобразований.",
                 "how_it_should_be": "`mapMulti` выгоден при 0-2 результатах на элемент; при большом fan-out разумнее `flatMap`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "В `mapMulti` лямбда принимает только сам элемент `(n)` и должна вернуть новый `Stream` результатов, как и в `flatMap` — разница лишь в имени метода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Лямбда `mapMulti` принимает ДВА аргумента — элемент и `Consumer<R>` — и ничего не возвращает; результаты пушатся через `consumer.accept(...)`, а не через возврат `Stream`.",
-                "source_of_confusion": "`mapMulti` и `flatMap` решают похожую задачу, поэтому сигнатуру `flatMap` приписывают и ему.",
-                "if_it_were_true": "Тогда `mapMulti(n -> Stream.of(n))` компилировался бы, но он требует `(n, consumer) -> consumer.accept(n)`.",
-                "how_it_should_be": "`mapMulti` принимает `BiConsumer<T, Consumer<R>>` и пушит результаты в consumer, ничего не возвращая."
               }
             },
             {
@@ -1691,31 +1691,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Gatherers` (JEP 461) — механизм для создания произвольных промежуточных операций через `stream.gather(gatherer)`. Они заполняют пробел: раньше для кастомной логики писали либо terminal-`Collector`, либо stateful-`flatMap`-хак. `Gatherer<T,A,R>` определяет initializer, integrator (emit 0..N, может остановить pipeline), опциональный combiner и finisher.",
-              "correct": true,
+              "text": "Кастомную промежуточную операцию (скользящее окно) и до `Gatherers` можно было выразить штатным API через комбинацию `map` и `filter`, поэтому `gather` не закрывает никакого пробела.",
+              "correct": false,
               "sections": {
-                "explanation": "До Gatherers нельзя было выразить кастомную промежуточную операцию (скользящее окно, группировку соседей) штатно. `gather` даёт intermediate-операцию с состоянием: integrator получает элемент и downstream, эмитит результаты и может прервать обход.",
-                "example": "`Stream.of(1,2,3,4,5,6,7,8,9).gather(Gatherers.windowFixed(3)).toList()` даёт `[[1,2,3],[4,5,6],[7,8,9]]` — окна по 3, чего нет среди стандартных операций.",
-                "when_to_apply": "`Gatherers` берут, когда нужна промежуточная операция с состоянием: окна, скользящие агрегаты, scan, дедупликация соседей, ограниченная конкурентность (`mapConcurrent`).",
-                "edge_cases": "Gatherer по умолчанию последователен; combiner для parallel опционален и есть не у всех (например, окна параллелить нельзя); integrator может вернуть false, останавливая pipeline.",
-                "related": "[[java-stream-interview#Q30]] встроенные Gatherers; [[java-stream-interview#Q36]] Stream.gather и кастомный Gatherer; [[java-stream-interview#Q15]] Collector с похожими компонентами."
+                "what_actually": "Операции с состоянием между элементами (окна, scan) штатными `map`/`filter` не выражались — нужны были кастомный `Spliterator` или хаки; `Gatherers` как раз закрывают этот пробел.",
+                "source_of_confusion": "`map`/`filter` кажутся достаточно гибкими для любой трансформации.",
+                "if_it_were_true": "Тогда `windowSliding(3)` собирался бы из `map`+`filter`, но они не хранят состояние соседних элементов.",
+                "how_it_should_be": "`Gatherers` дают то, что нельзя выразить через stateless `map`/`filter` — stateful промежуточные операции."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Gatherers` — это новый вид terminal-операций, заменяющий `Collectors`: `stream.gather(...)` сразу возвращает готовый результат (`List`, `Map`), а не стрим.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`gather` — intermediate-операция, возвращающая `Stream`; она НЕ заменяет `Collectors` и требует последующего терминала (`toList`/`collect`).",
-                "source_of_confusion": "Сходство `Gatherer` и `Collector` по структуре (4 компонента) наводит на мысль о терминальности.",
-                "if_it_were_true": "Тогда `stream.gather(windowFixed(3))` возвращал бы `List`, но он возвращает `Stream<List<...>>`, требующий `.toList()`.",
-                "how_it_should_be": "`gather` — промежуточная операция (даёт `Stream`); `collect` с `Collector` остаётся терминальной."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Gatherers` нужны исключительно для параллельной обработки и не добавляют новых видов операций — это просто синоним для `parallelStream()` с другим синтаксисом.",
               "correct": false,
               "sections": {
@@ -1726,15 +1713,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Кастомную промежуточную операцию (скользящее окно) и до `Gatherers` можно было выразить штатным API через комбинацию `map` и `filter`, поэтому `gather` не закрывает никакого пробела.",
+              "order": 2,
+              "label": "C",
+              "text": "`Gatherers` — это новый вид terminal-операций, заменяющий `Collectors`: `stream.gather(...)` сразу возвращает готовый результат (`List`, `Map`), а не стрим.",
               "correct": false,
               "sections": {
-                "what_actually": "Операции с состоянием между элементами (окна, scan) штатными `map`/`filter` не выражались — нужны были кастомный `Spliterator` или хаки; `Gatherers` как раз закрывают этот пробел.",
-                "source_of_confusion": "`map`/`filter` кажутся достаточно гибкими для любой трансформации.",
-                "if_it_were_true": "Тогда `windowSliding(3)` собирался бы из `map`+`filter`, но они не хранят состояние соседних элементов.",
-                "how_it_should_be": "`Gatherers` дают то, что нельзя выразить через stateless `map`/`filter` — stateful промежуточные операции."
+                "what_actually": "`gather` — intermediate-операция, возвращающая `Stream`; она НЕ заменяет `Collectors` и требует последующего терминала (`toList`/`collect`).",
+                "source_of_confusion": "Сходство `Gatherer` и `Collector` по структуре (4 компонента) наводит на мысль о терминальности.",
+                "if_it_were_true": "Тогда `stream.gather(windowFixed(3))` возвращал бы `List`, но он возвращает `Stream<List<...>>`, требующий `.toList()`.",
+                "how_it_should_be": "`gather` — промежуточная операция (даёт `Stream`); `collect` с `Collector` остаётся терминальной."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Gatherers` (JEP 461) — механизм для создания произвольных промежуточных операций через `stream.gather(gatherer)`. Они заполняют пробел: раньше для кастомной логики писали либо terminal-`Collector`, либо stateful-`flatMap`-хак. `Gatherer<T,A,R>` определяет initializer, integrator (emit 0..N, может остановить pipeline), опциональный combiner и finisher.",
+              "correct": true,
+              "sections": {
+                "explanation": "До Gatherers нельзя было выразить кастомную промежуточную операцию (скользящее окно, группировку соседей) штатно. `gather` даёт intermediate-операцию с состоянием: integrator получает элемент и downstream, эмитит результаты и может прервать обход.",
+                "example": "`Stream.of(1,2,3,4,5,6,7,8,9).gather(Gatherers.windowFixed(3)).toList()` даёт `[[1,2,3],[4,5,6],[7,8,9]]` — окна по 3, чего нет среди стандартных операций.",
+                "when_to_apply": "`Gatherers` берут, когда нужна промежуточная операция с состоянием: окна, скользящие агрегаты, scan, дедупликация соседей, ограниченная конкурентность (`mapConcurrent`).",
+                "edge_cases": "Gatherer по умолчанию последователен; combiner для parallel опционален и есть не у всех (например, окна параллелить нельзя); integrator может вернуть false, останавливая pipeline.",
+                "related": "[[java-stream-interview#Q30]] встроенные Gatherers; [[java-stream-interview#Q36]] Stream.gather и кастомный Gatherer; [[java-stream-interview#Q15]] Collector с похожими компонентами."
               }
             }
           ]
@@ -1751,18 +1751,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`windowSliding(3)` и `windowFixed(3)` дают одинаковый результат — они оба режут стрим на непересекающиеся блоки по 3 элемента, отличаясь лишь именем.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`windowFixed(3)` даёт непересекающиеся окна (`[1,2,3],[4,5,6]`), а `windowSliding(3)` — перекрывающиеся со сдвигом на 1 (`[1,2,3],[2,3,4],[3,4,5]`).",
-                "source_of_confusion": "Оба про «окна размером 3», и разницу между fixed и sliding легко упустить.",
-                "if_it_were_true": "Тогда `windowSliding(3)` на `1..5` дал бы 2 окна, но он даёт 3 перекрывающихся окна.",
-                "how_it_should_be": "`windowFixed` — без перекрытия, `windowSliding` — со сдвигом на 1 (перекрывающиеся окна)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Класс `java.util.stream.Gatherers` даёт готовые: `windowFixed(n)` (окна фиксированного размера), `windowSliding(n)` (скользящее окно), `fold(init, fn)` (stateful-редукция как промежуточная операция), `scan(init, fn)` (кумулятивные промежуточные результаты), `mapConcurrent(n, fn)` (параллельная обработка с ограничением конкурентности через виртуальные потоки).",
               "correct": true,
               "sections": {
@@ -1774,20 +1762,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`Gatherers.mapConcurrent(4, fn)` запускает обработку на платформенных потоках из общего `ForkJoinPool.commonPool()`, поэтому при блокирующем I/O он, как и `parallelStream`, забивает этот пул.",
+              "order": 1,
+              "label": "B",
+              "text": "`windowSliding(3)` и `windowFixed(3)` дают одинаковый результат — они оба режут стрим на непересекающиеся блоки по 3 элемента, отличаясь лишь именем.",
               "correct": false,
               "sections": {
-                "what_actually": "`mapConcurrent` использует виртуальные потоки (Java 21+), а не commonPool, поэтому блокирующий I/O в нём дешёв и не исчерпывает `ForkJoinPool`.",
-                "source_of_confusion": "Любой параллелизм в стримах ассоциируют с `ForkJoinPool.commonPool()`, как у `parallelStream`.",
-                "if_it_were_true": "Тогда `mapConcurrent` страдал бы от тех же проблем, что parallelStream на I/O, но он специально решает их через виртуальные потоки.",
-                "how_it_should_be": "`mapConcurrent` работает на виртуальных потоках с лимитом конкурентности и не привязан к commonPool."
+                "what_actually": "`windowFixed(3)` даёт непересекающиеся окна (`[1,2,3],[4,5,6]`), а `windowSliding(3)` — перекрывающиеся со сдвигом на 1 (`[1,2,3],[2,3,4],[3,4,5]`).",
+                "source_of_confusion": "Оба про «окна размером 3», и разницу между fixed и sliding легко упустить.",
+                "if_it_were_true": "Тогда `windowSliding(3)` на `1..5` дал бы 2 окна, но он даёт 3 перекрывающихся окна.",
+                "how_it_should_be": "`windowFixed` — без перекрытия, `windowSliding` — со сдвигом на 1 (перекрывающиеся окна)."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`scan(init, fn)` возвращает один итоговый элемент — результат полной свёртки, как `reduce`, поэтому `scan` и `fold` полностью эквивалентны.",
               "correct": false,
               "sections": {
@@ -1795,6 +1783,18 @@
                 "source_of_confusion": "Оба накапливают значение через функцию свёртки, и кажется, что итог одинаков.",
                 "if_it_were_true": "Тогда `scan(() -> 0, Integer::sum)` на `1,2,3,4` дал бы `[10]`, но он даёт `[1,3,6,10]`.",
                 "how_it_should_be": "`scan` — все промежуточные результаты накопления; `fold` — единственный финальный."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Gatherers.mapConcurrent(4, fn)` запускает обработку на платформенных потоках из общего `ForkJoinPool.commonPool()`, поэтому при блокирующем I/O он, как и `parallelStream`, забивает этот пул.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`mapConcurrent` использует виртуальные потоки (Java 21+), а не commonPool, поэтому блокирующий I/O в нём дешёв и не исчерпывает `ForkJoinPool`.",
+                "source_of_confusion": "Любой параллелизм в стримах ассоциируют с `ForkJoinPool.commonPool()`, как у `parallelStream`.",
+                "if_it_were_true": "Тогда `mapConcurrent` страдал бы от тех же проблем, что parallelStream на I/O, но он специально решает их через виртуальные потоки.",
+                "how_it_should_be": "`mapConcurrent` работает на виртуальных потоках с лимитом конкурентности и не привязан к commonPool."
               }
             }
           ]
@@ -1811,30 +1811,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Чтобы уменьшить аллокации, сортировку (`sorted`) ставят ПЕРЕД фильтрацией (`filter`): упорядоченные данные позволяют фильтру быстрее находить нужные элементы и меньше пересоздавать буферы.",
+              "text": "`toList()` (Java 16+) и `collect(Collectors.toList())` возвращают одинаковый изменяемый `ArrayList`, поэтому замена ради аллокаций бессмысленна — разницы между ними нет вообще.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: `filter` ставят ДО `sorted`, чтобы сортировать меньше элементов — `sorted` буферизует весь поток, и лишние элементы означают лишние аллокации и работу.",
-                "source_of_confusion": "Кажется, что «сначала упорядочить, потом искать» эффективнее, как бинарный поиск в отсортированном массиве.",
-                "if_it_were_true": "Тогда порядок операций не влиял бы на аллокации, но `sorted` до `filter` буферизует и сортирует лишние элементы.",
-                "how_it_should_be": "Фильтровать ДО сортировки: так `sorted` буферизует и упорядочивает меньше элементов."
+                "what_actually": "`toList()` (Java 16+) возвращает НЕИЗМЕНЯЕМЫЙ список (и может быть оптимизирован JVM), а `Collectors.toList()` — обычно изменяемый `ArrayList`; это разные гарантии.",
+                "source_of_confusion": "Оба «собирают в список», и кажется, что результат идентичен по типу и изменяемости.",
+                "if_it_were_true": "Тогда `stream.toList().add(x)` работал бы, но он бросает `UnsupportedOperationException` (список неизменяем).",
+                "how_it_should_be": "`toList()` — неизменяемый и потенциально оптимизированный; `Collectors.toList()` — изменяемый `ArrayList`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы убрать боксинг, в цепочке оставляют `Stream<Integer>` и считают сумму через `reduce(0, Integer::sum)` — это эффективнее, чем `mapToInt`, потому что не создаёт новый стрим.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Stream<Integer>` + `reduce(0, Integer::sum)` как раз боксит каждый элемент; `mapToInt(...).sum()` переходит в `IntStream` без боксинга и эффективнее.",
-                "source_of_confusion": "`mapToInt` выглядит как лишний шаг, создающий новый стрим, и кажется накладным.",
-                "if_it_were_true": "Тогда `Stream<Integer>.reduce` не уступал бы `IntStream.sum`, но он медленнее из-за боксинга.",
-                "how_it_should_be": "Для чисел переходят в примитивный стрим через `mapToInt`/`mapToDouble`, убирая боксинг."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Основные техники: использовать примитивные стримы вместо боксинга (`mapToInt` вместо `map` + `Integer::sum`); правильный порядок операций (фильтрация ДО сортировки, чтобы сортировать меньше элементов); `toList()` (Java 16+) вместо `collect(Collectors.toList())`; избегать `peek` в production (лишний overhead).",
               "correct": true,
               "sections": {
@@ -1846,15 +1834,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`toList()` (Java 16+) и `collect(Collectors.toList())` возвращают одинаковый изменяемый `ArrayList`, поэтому замена ради аллокаций бессмысленна — разницы между ними нет вообще.",
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы уменьшить аллокации, сортировку (`sorted`) ставят ПЕРЕД фильтрацией (`filter`): упорядоченные данные позволяют фильтру быстрее находить нужные элементы и меньше пересоздавать буферы.",
               "correct": false,
               "sections": {
-                "what_actually": "`toList()` (Java 16+) возвращает НЕИЗМЕНЯЕМЫЙ список (и может быть оптимизирован JVM), а `Collectors.toList()` — обычно изменяемый `ArrayList`; это разные гарантии.",
-                "source_of_confusion": "Оба «собирают в список», и кажется, что результат идентичен по типу и изменяемости.",
-                "if_it_were_true": "Тогда `stream.toList().add(x)` работал бы, но он бросает `UnsupportedOperationException` (список неизменяем).",
-                "how_it_should_be": "`toList()` — неизменяемый и потенциально оптимизированный; `Collectors.toList()` — изменяемый `ArrayList`."
+                "what_actually": "Наоборот: `filter` ставят ДО `sorted`, чтобы сортировать меньше элементов — `sorted` буферизует весь поток, и лишние элементы означают лишние аллокации и работу.",
+                "source_of_confusion": "Кажется, что «сначала упорядочить, потом искать» эффективнее, как бинарный поиск в отсортированном массиве.",
+                "if_it_were_true": "Тогда порядок операций не влиял бы на аллокации, но `sorted` до `filter` буферизует и сортирует лишние элементы.",
+                "how_it_should_be": "Фильтровать ДО сортировки: так `sorted` буферизует и упорядочивает меньше элементов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы убрать боксинг, в цепочке оставляют `Stream<Integer>` и считают сумму через `reduce(0, Integer::sum)` — это эффективнее, чем `mapToInt`, потому что не создаёт новый стрим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Stream<Integer>` + `reduce(0, Integer::sum)` как раз боксит каждый элемент; `mapToInt(...).sum()` переходит в `IntStream` без боксинга и эффективнее.",
+                "source_of_confusion": "`mapToInt` выглядит как лишний шаг, создающий новый стрим, и кажется накладным.",
+                "if_it_were_true": "Тогда `Stream<Integer>.reduce` не уступал бы `IntStream.sum`, но он медленнее из-за боксинга.",
+                "how_it_should_be": "Для чисел переходят в примитивный стрим через `mapToInt`/`mapToDouble`, убирая боксинг."
               }
             }
           ]
@@ -1895,18 +1895,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "IntelliJ Stream Debugger (`Trace Current Stream Chain`) ускоряет работающий pipeline, выполняя его параллельно, но не показывает промежуточные данные по шагам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Stream Debugger ничего не ускоряет: он визуализирует состояние данных ПОСЛЕ каждой операции в виде таблицы, помогая увидеть трансформацию пошагово.",
-                "source_of_confusion": "Слово «debugger» и панель исполнения наводят на мысль о влиянии на производительность.",
-                "if_it_were_true": "Тогда инструмент менял бы режим выполнения стрима, но он лишь отображает данные на каждом шаге.",
-                "how_it_should_be": "Stream Debugger — это визуализатор данных по шагам цепочки, а не ускоритель выполнения."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Способы отладки: `peek` для временного логирования промежуточных значений; разбиение длинной цепочки на именованные переменные/стримы; breakpoints в IDE внутри лямбд (ставить на строку лямбды); IntelliJ Stream Debugger (`Trace Current Stream Chain`) показывает состояние после каждой операции таблицей. `peek` нельзя оставлять в production.",
               "correct": true,
               "sections": {
@@ -1915,6 +1903,18 @@
                 "when_to_apply": "`peek` и разбиение — для быстрой диагностики логики; Stream Debugger — для визуального анализа сложной цепочки; breakpoints в лямбдах — для пошаговой отладки конкретного шага.",
                 "edge_cases": "`peek` без terminal-операции не выполнится (ленивость); в parallel порядок `peek`-логов не определён; `peek` нужно убирать перед коммитом.",
                 "related": "[[java-stream-interview#Q40]] peek — когда уместен; [[java-stream-interview#Q3]] ленивость и отсутствие выполнения; [[java-stream-interview#Q35]] забытый терминал."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "IntelliJ Stream Debugger (`Trace Current Stream Chain`) ускоряет работающий pipeline, выполняя его параллельно, но не показывает промежуточные данные по шагам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stream Debugger ничего не ускоряет: он визуализирует состояние данных ПОСЛЕ каждой операции в виде таблицы, помогая увидеть трансформацию пошагово.",
+                "source_of_confusion": "Слово «debugger» и панель исполнения наводят на мысль о влиянии на производительность.",
+                "if_it_were_true": "Тогда инструмент менял бы режим выполнения стрима, но он лишь отображает данные на каждом шаге.",
+                "how_it_should_be": "Stream Debugger — это визуализатор данных по шагам цепочки, а не ускоритель выполнения."
               }
             }
           ]
@@ -1931,14 +1931,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Обычный цикл предпочтительнее при: сложном control flow (`break`, `continue`, множественные выходы); мутации нескольких структур (несколько `Map`/`List` сразу); checked exceptions (лямбды их не поддерживают без обёрток); performance-critical hot path (минимум абстракции); обработке одного элемента (`if`/`else` читабельнее).",
-              "correct": true,
+              "text": "В лямбдах Stream можно свободно бросать checked exceptions без обёрток, поэтому работа с проверяемыми исключениями — не повод отказываться от Stream в пользу цикла.",
+              "correct": false,
               "sections": {
-                "explanation": "Stream силён в декларативных трансформациях, но плох там, где нужен императивный контроль: прерывание из середины, побочные эффекты на несколько структур, проброс checked exception. В таких случаях цикл яснее и часто быстрее.",
-                "example": "Цикл с `break`/`continue`: `for (User u : users) { if (u.isBlocked()) continue; if (u.isSuperAdmin()) break; process(u); }` — стрим так из середины не прервать.",
-                "when_to_apply": "Выбирать цикл, когда нужен сложный control flow, обновление нескольких коллекций, checked exceptions или предельная производительность горячего пути.",
-                "edge_cases": "`break` в стриме эмулируется через `takeWhile`/`findFirst`, но это менее очевидно; checked exception в лямбде требует обёртки в unchecked, что усложняет код.",
-                "related": "[[java-stream-interview#Q34]] читабельность Stream-кода; [[java-stream-interview#Q17]] ограничения forEach; [[java-stream-interview#Q41]] takeWhile как замена break."
+                "what_actually": "Функциональные интерфейсы (`Function`, `Predicate`) не объявляют checked exceptions, поэтому бросить их из лямбды без обёртки в unchecked нельзя — это как раз аргумент за цикл.",
+                "source_of_confusion": "В обычном коде checked exception пробрасывается легко, и это ожидание переносят на лямбды.",
+                "if_it_were_true": "Тогда `.map(path -> Files.readString(path))` компилировался бы, но `IOException` требует try/catch внутри лямбды.",
+                "how_it_should_be": "Checked exception в лямбде нужно ловить/оборачивать; при их обилии цикл с try/catch чище."
               }
             },
             {
@@ -1956,6 +1955,19 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Обычный цикл предпочтительнее при: сложном control flow (`break`, `continue`, множественные выходы); мутации нескольких структур (несколько `Map`/`List` сразу); checked exceptions (лямбды их не поддерживают без обёрток); performance-critical hot path (минимум абстракции); обработке одного элемента (`if`/`else` читабельнее).",
+              "correct": true,
+              "sections": {
+                "explanation": "Stream силён в декларативных трансформациях, но плох там, где нужен императивный контроль: прерывание из середины, побочные эффекты на несколько структур, проброс checked exception. В таких случаях цикл яснее и часто быстрее.",
+                "example": "Цикл с `break`/`continue`: `for (User u : users) { if (u.isBlocked()) continue; if (u.isSuperAdmin()) break; process(u); }` — стрим так из середины не прервать.",
+                "when_to_apply": "Выбирать цикл, когда нужен сложный control flow, обновление нескольких коллекций, checked exceptions или предельная производительность горячего пути.",
+                "edge_cases": "`break` в стриме эмулируется через `takeWhile`/`findFirst`, но это менее очевидно; checked exception в лямбде требует обёртки в unchecked, что усложняет код.",
+                "related": "[[java-stream-interview#Q34]] читабельность Stream-кода; [[java-stream-interview#Q17]] ограничения forEach; [[java-stream-interview#Q41]] takeWhile как замена break."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "От `Stream` стоит отказываться в большинстве задач: обычный цикл заметно быстрее из-за отсутствия абстракций, а Stream API оправдан лишь на очень крупных коллекциях, где выигрывает parallel.",
               "correct": false,
               "sections": {
@@ -1963,18 +1975,6 @@
                 "source_of_confusion": "JIT-микробенчмарки на простых операциях иногда показывают перевес цикла, и это обобщают на все задачи.",
                 "if_it_were_true": "Тогда Stream применяли бы только для parallel, но его основная ценность — декларативность и читабельность на любом объёме.",
                 "how_it_should_be": "Цикл выбирают по характеру логики (break/continue, checked exceptions, hot path), а не «в большинстве задач по умолчанию»."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "В лямбдах Stream можно свободно бросать checked exceptions без обёрток, поэтому работа с проверяемыми исключениями — не повод отказываться от Stream в пользу цикла.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Функциональные интерфейсы (`Function`, `Predicate`) не объявляют checked exceptions, поэтому бросить их из лямбды без обёртки в unchecked нельзя — это как раз аргумент за цикл.",
-                "source_of_confusion": "В обычном коде checked exception пробрасывается легко, и это ожидание переносят на лямбды.",
-                "if_it_were_true": "Тогда `.map(path -> Files.readString(path))` компилировался бы, но `IOException` требует try/catch внутри лямбды.",
-                "how_it_should_be": "Checked exception в лямбде нужно ловить/оборачивать; при их обилии цикл с try/catch чище."
               }
             }
           ]
@@ -1991,13 +1991,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Читабельность повышается, когда всю бизнес-логику фильтрации запихивают в одну длинную инлайн-лямбду с несколькими условиями `&&` — так весь критерий виден в одном месте.",
+              "text": "Лучшая практика — собирать как можно больше операций в одну цепочку (15-20 шагов), потому что чем длиннее pipeline, тем меньше вспомогательных методов и тем чище класс.",
               "correct": false,
               "sections": {
-                "what_actually": "Длинная инлайн-лямбда с множеством `&&` как раз ухудшает читаемость и тестируемость; критерий выносят в именованный `Predicate` или метод.",
-                "source_of_confusion": "«Всё в одном месте» кажется удобным, и компактность путают с читаемостью.",
-                "if_it_were_true": "Тогда `filter(u -> a && b && c && d && e)` был бы эталоном, но такой предикат сложно понять и переиспользовать.",
-                "how_it_should_be": "Сложный критерий выносят в `Predicate<User> isEligible` или метод `this::isEligible` — это самодокументируемо."
+                "what_actually": "Слишком длинные цепочки (15-20 шагов) нечитаемы; рекомендуют максимум 5-7 операций, а сложные участки выносить в отдельные методы.",
+                "source_of_confusion": "Меньше именованных методов кажется признаком лаконичности, и длину цепочки принимают за чистоту.",
+                "if_it_were_true": "Тогда 20-шаговый pipeline был бы образцом, но его невозможно прочитать и отладить целиком.",
+                "how_it_should_be": "Цепочку держат в пределах 5-7 операций; длинные части выносят в методы с понятными именами."
               }
             },
             {
@@ -2016,6 +2016,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Читабельность повышается, когда всю бизнес-логику фильтрации запихивают в одну длинную инлайн-лямбду с несколькими условиями `&&` — так весь критерий виден в одном месте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Длинная инлайн-лямбда с множеством `&&` как раз ухудшает читаемость и тестируемость; критерий выносят в именованный `Predicate` или метод.",
+                "source_of_confusion": "«Всё в одном месте» кажется удобным, и компактность путают с читаемостью.",
+                "if_it_were_true": "Тогда `filter(u -> a && b && c && d && e)` был бы эталоном, но такой предикат сложно понять и переиспользовать.",
+                "how_it_should_be": "Сложный критерий выносят в `Predicate<User> isEligible` или метод `this::isEligible` — это самодокументируемо."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Чтобы код был чище, комментарии в стрим-цепочке должны описывать механику каждой операции (`// здесь filter отбирает активных`, `// map преобразует в DTO`), а бизнес-смысл документировать не нужно.",
               "correct": false,
               "sections": {
@@ -2023,18 +2035,6 @@
                 "source_of_confusion": "Привычка комментировать «что делает строка» переносится и на самоочевидные стрим-операции.",
                 "if_it_were_true": "Тогда `// map преобразует элемент` считался бы полезным, но он лишь дублирует очевидное и засоряет код.",
                 "how_it_should_be": "Комментируют намерение и бизнес-правила, а не механику `filter`/`map`, которая видна из кода."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Лучшая практика — собирать как можно больше операций в одну цепочку (15-20 шагов), потому что чем длиннее pipeline, тем меньше вспомогательных методов и тем чище класс.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Слишком длинные цепочки (15-20 шагов) нечитаемы; рекомендуют максимум 5-7 операций, а сложные участки выносить в отдельные методы.",
-                "source_of_confusion": "Меньше именованных методов кажется признаком лаконичности, и длину цепочки принимают за чистоту.",
-                "if_it_were_true": "Тогда 20-шаговый pipeline был бы образцом, но его невозможно прочитать и отладить целиком.",
-                "how_it_should_be": "Цепочку держат в пределах 5-7 операций; длинные части выносят в методы с понятными именами."
               }
             }
           ]
@@ -2051,18 +2051,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Один и тот же `Stream` можно безопасно использовать несколько раз: после `count()` его легко переиспользовать для `toList()`, так как терминальная операция не закрывает стрим.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стрим одноразов: после первой terminal-операции он закрыт, и второй терминал бросает `IllegalStateException` («stream has already been operated upon or closed»).",
-                "source_of_confusion": "Стрим хранится в переменной и выглядит как переиспользуемый объект-коллекция.",
-                "if_it_were_true": "Тогда `s.count(); s.toList();` отрабатывало бы подряд, но второй вызов падает с исключением.",
-                "how_it_should_be": "Для повторной обработки создают новый стрим из источника; один стрим — одна terminal-операция."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`toMap` с дублирующимися ключами безопасен по умолчанию — при коллизии он просто оставляет первое значение и не требует merge-функции.",
               "correct": false,
               "sections": {
@@ -2073,8 +2061,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Частые ошибки: повторное использование `Stream` (после терминала — `IllegalStateException`); бесконечный стрим без `limit` (`sorted` на нём зависает/OOM); забытая terminal-операция (`peek` без терминала ничего не делает); `toMap` без merge-функции (исключение при дубликатах ключей); модификация источника во время стрима (`ConcurrentModificationException`); `forEach` вместо `collect` для накопления.",
               "correct": true,
               "sections": {
@@ -2083,6 +2071,18 @@
                 "when_to_apply": "Этот чек-лист держат в голове при ревью и написании стрим-кода, чтобы заранее отлавливать типовые грабли.",
                 "edge_cases": "`peek` без терминала не выполнится из-за ленивости; модификация `list` внутри `forEach` того же стрима даёт `ConcurrentModificationException`.",
                 "related": "[[java-stream-interview#Q5]] одноразовость стрима; [[java-stream-interview#Q12]] toMap без merge; [[java-stream-interview#Q3]] ленивость и забытый терминал."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один и тот же `Stream` можно безопасно использовать несколько раз: после `count()` его легко переиспользовать для `toList()`, так как терминальная операция не закрывает стрим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стрим одноразов: после первой terminal-операции он закрыт, и второй терминал бросает `IllegalStateException` («stream has already been operated upon or closed»).",
+                "source_of_confusion": "Стрим хранится в переменной и выглядит как переиспользуемый объект-коллекция.",
+                "if_it_were_true": "Тогда `s.count(); s.toList();` отрабатывало бы подряд, но второй вызов падает с исключением.",
+                "how_it_should_be": "Для повторной обработки создают новый стрим из источника; один стрим — одна terminal-операция."
               }
             },
             {
@@ -2111,18 +2111,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Stream.gather()` — это терминальная операция, аналог `collect`: она сразу сворачивает поток в результат, поэтому `.toList()` после неё избыточен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`gather` — ПРОМЕЖУТОЧНАЯ операция, возвращающая `Stream`; для материализации нужен терминал (`toList`/`collect`), в отличие от `collect`.",
-                "source_of_confusion": "Структурное сходство `Gatherer` и `Collector` (initializer/integrator/finisher) наводит на мысль о терминальности.",
-                "if_it_were_true": "Тогда `stream.gather(windowFixed(3))` возвращал бы `List`, но он даёт `Stream<List<...>>`.",
-                "how_it_should_be": "`gather` — intermediate-операция (даёт `Stream`); терминалом остаётся `collect`/`toList`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Кастомный `Gatherer` нельзя написать самому — доступны только встроенные в `Gatherers`, а пользовательскую логику окна или RLE приходится по-прежнему делать через кастомный `Spliterator`.",
               "correct": false,
               "sections": {
@@ -2133,8 +2121,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "В кастомном `Gatherer` integrator может только преобразовать один элемент в один результат и не способен ни эмитить несколько значений, ни прервать pipeline досрочно.",
               "correct": false,
               "sections": {
@@ -2142,6 +2130,18 @@
                 "source_of_confusion": "По аналогии с `map` (1:1) ожидают, что integrator тоже строго один-к-одному.",
                 "if_it_were_true": "Тогда `windowFixed` не мог бы собирать несколько элементов в одно окно, но он именно так и работает.",
                 "how_it_should_be": "integrator эмитит произвольное число результатов и может прервать pipeline, возвращая false."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Stream.gather()` — это терминальная операция, аналог `collect`: она сразу сворачивает поток в результат, поэтому `.toList()` после неё избыточен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`gather` — ПРОМЕЖУТОЧНАЯ операция, возвращающая `Stream`; для материализации нужен терминал (`toList`/`collect`), в отличие от `collect`.",
+                "source_of_confusion": "Структурное сходство `Gatherer` и `Collector` (initializer/integrator/finisher) наводит на мысль о терминальности.",
+                "if_it_were_true": "Тогда `stream.gather(windowFixed(3))` возвращал бы `List`, но он даёт `Stream<List<...>>`.",
+                "how_it_should_be": "`gather` — intermediate-операция (даёт `Stream`); терминалом остаётся `collect`/`toList`."
               }
             },
             {
@@ -2256,18 +2256,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Главное преимущество `mapMulti` над `flatMap` — читаемость: императивная лямбда с `Consumer` понятнее декларативного `flatMap`, поэтому в production `mapMulti` предпочитают именно ради ясности кода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Преимущество `mapMulti` — производительность (меньше аллокаций), а не читаемость; декларативный `flatMap` как раз читается ЛУЧШЕ, поэтому он остаётся выбором по умолчанию.",
-                "source_of_confusion": "Раз операция новее, кажется, что она лучше по всем параметрам, включая читаемость.",
-                "if_it_were_true": "Тогда `flatMap` вытеснялся бы ради ясности, но `mapMulti` берут только при доказанной GC pressure.",
-                "how_it_should_be": "`mapMulti` выигрывает по аллокациям, но проигрывает по читаемости; `flatMap` — дефолт ради ясности."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`mapMulti` теряет ленивость стрима: в отличие от `flatMap`, он собирает все результаты в буфер заранее, поэтому на бесконечных источниках с `limit` он зависает.",
               "correct": false,
               "sections": {
@@ -2275,6 +2263,18 @@
                 "source_of_confusion": "Императивный `Consumer` создаёт впечатление активного накопления результатов в буфер.",
                 "if_it_were_true": "Тогда `infiniteStream.mapMulti(...).limit(5)` зависал бы, но он завершается благодаря ленивости и short-circuit.",
                 "how_it_should_be": "`mapMulti` так же ленив, как `flatMap`; буферизации всех результатов не происходит."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главное преимущество `mapMulti` над `flatMap` — читаемость: императивная лямбда с `Consumer` понятнее декларативного `flatMap`, поэтому в production `mapMulti` предпочитают именно ради ясности кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Преимущество `mapMulti` — производительность (меньше аллокаций), а не читаемость; декларативный `flatMap` как раз читается ЛУЧШЕ, поэтому он остаётся выбором по умолчанию.",
+                "source_of_confusion": "Раз операция новее, кажется, что она лучше по всем параметрам, включая читаемость.",
+                "if_it_were_true": "Тогда `flatMap` вытеснялся бы ради ясности, но `mapMulti` берут только при доказанной GC pressure.",
+                "how_it_should_be": "`mapMulti` выигрывает по аллокациям, но проигрывает по читаемости; `flatMap` — дефолт ради ясности."
               }
             }
           ]
@@ -2291,30 +2291,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Каждый `parallelStream` создаёт собственный `ForkJoinPool` под капотом, поэтому блокирующие операции в одном стриме не влияют на другие параллельные стримы JVM.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Все parallelStream делят ОДИН общий `commonPool`; блокирующая операция в одном стриме исчерпывает его и тормозит все остальные параллельные стримы процесса.",
-                "source_of_confusion": "Изоляция кажется естественной, и предполагают отдельный пул на каждый стрим.",
-                "if_it_were_true": "Тогда блокирующий `httpClient.get` в одном стриме не влиял бы на другие, но на деле он забивает общий commonPool.",
-                "how_it_should_be": "По умолчанию все parallelStream используют общий commonPool; изоляция требует явного `new ForkJoinPool(n)`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Для I/O-bound задач (HTTP, БД) `parallelStream` на commonPool — оптимальный выбор: потоки эффективно ждут ответа, и пул при этом не страдает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Блокирующий I/O в parallelStream забивает commonPool, деградируя все параллельные стримы; для I/O берут виртуальные потоки или `Gatherers.mapConcurrent`.",
-                "source_of_confusion": "Параллельное ожидание ответов кажется идеальным сценарием для parallelStream.",
-                "if_it_were_true": "Тогда HTTP-фетчинг через parallelStream масштабировался бы, но он исчерпывает commonPool и тормозит JVM.",
-                "how_it_should_be": "I/O-bound — на виртуальные потоки/`mapConcurrent`; parallelStream на commonPool — для CPU-bound."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Parallel streams по умолчанию используют общий `ForkJoinPool.commonPool()` (parallelism = CPU count - 1) — один на весь JVM-процесс. Блокирующие операции в нём деградируют все параллельные стримы. Изолируют задачу запуском в собственном `ForkJoinPool` (`customPool.submit(() -> ...parallelStream()...).get()`); для I/O лучше виртуальные потоки или `Gatherers.mapConcurrent`.",
               "correct": true,
               "sections": {
@@ -2326,8 +2302,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "Каждый `parallelStream` создаёт собственный `ForkJoinPool` под капотом, поэтому блокирующие операции в одном стриме не влияют на другие параллельные стримы JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все parallelStream делят ОДИН общий `commonPool`; блокирующая операция в одном стриме исчерпывает его и тормозит все остальные параллельные стримы процесса.",
+                "source_of_confusion": "Изоляция кажется естественной, и предполагают отдельный пул на каждый стрим.",
+                "if_it_were_true": "Тогда блокирующий `httpClient.get` в одном стриме не влиял бы на другие, но на деле он забивает общий commonPool.",
+                "how_it_should_be": "По умолчанию все parallelStream используют общий commonPool; изоляция требует явного `new ForkJoinPool(n)`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "По умолчанию `commonPool` имеет parallelism, равный полному числу ядер CPU, а изменить его глобально невозможно — это hardcoded-значение JVM.",
               "correct": false,
               "sections": {
@@ -2335,6 +2323,18 @@
                 "source_of_confusion": "Ожидают, что пул задействует все ядра, а конфигурируемость такого «системного» пула недооценивают.",
                 "if_it_were_true": "Тогда `-Djava.util.concurrent.ForkJoinPool.common.parallelism=4` не имел бы эффекта, но он реально переопределяет parallelism.",
                 "how_it_should_be": "Дефолт — `CPU - 1` поток; значение настраивается системным свойством на весь процесс."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для I/O-bound задач (HTTP, БД) `parallelStream` на commonPool — оптимальный выбор: потоки эффективно ждут ответа, и пул при этом не страдает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Блокирующий I/O в parallelStream забивает commonPool, деградируя все параллельные стримы; для I/O берут виртуальные потоки или `Gatherers.mapConcurrent`.",
+                "source_of_confusion": "Параллельное ожидание ответов кажется идеальным сценарием для parallelStream.",
+                "if_it_were_true": "Тогда HTTP-фетчинг через parallelStream масштабировался бы, но он исчерпывает commonPool и тормозит JVM.",
+                "how_it_should_be": "I/O-bound — на виртуальные потоки/`mapConcurrent`; parallelStream на commonPool — для CPU-bound."
               }
             }
           ]
@@ -2351,18 +2351,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`peek()` — это terminal-операция для отладки, поэтому её можно ставить в конец цепочки вместо `forEach`, и она сама запустит выполнение pipeline для логирования.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`peek()` — ПРОМЕЖУТОЧНАЯ операция: без последующего терминала она не выполнится из-за ленивости, поэтому в конце цепочки она ничего не залогирует.",
-                "source_of_confusion": "`peek` принимает `Consumer`, как `forEach`, и кажется таким же финальным потребителем.",
-                "if_it_were_true": "Тогда `stream.filter(...).peek(log::debug)` сам бы логировал, но без терминала ни один элемент не пройдёт.",
-                "how_it_should_be": "`peek` — intermediate-операция; чтобы она сработала, нужен терминал (`toList`/`forEach`) после неё."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`peek()` идеально подходит для бизнес-side-effects вроде сохранения в БД (`peek(repo::save)`), потому что гарантирует выполнение для каждого элемента строго по порядку даже в parallel.",
               "correct": false,
               "sections": {
@@ -2370,6 +2358,19 @@
                 "source_of_confusion": "`peek` удобно вписывается в цепочку, и его соблазнительно использовать для побочных действий.",
                 "if_it_were_true": "Тогда `stream.peek(repo::save)` надёжно сохранял бы всё по порядку, но в parallel порядок случаен, а без терминала ничего не произойдёт.",
                 "how_it_should_be": "Бизнес-side-effects выносят в `forEach` или отдельный шаг; `peek` — только для отладочного наблюдения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`peek()` — промежуточная операция с `Consumer<T>`, предназначенная для ОТЛАДКИ (логирование промежуточных значений). Распространённые ошибки: `peek` без terminal-операции (ничего не выполнится из-за ленивости); мутация объектов через `peek` (антипаттерн — лучше `map`); бизнес-логика/side effects в `peek` (нет гарантий порядка, особенно в parallel). Перед коммитом `peek` убирают.",
+              "correct": true,
+              "sections": {
+                "explanation": "`peek` хорош для временного логирования между операциями, но плох как место для бизнес-логики: он промежуточный (без терминала не сработает), порядок в parallel не гарантирован, а мутация через него — скрытый side effect вместо явного `map`.",
+                "example": "Уместно: `.filter(s -> s.length()>3).peek(s -> log.debug(\"after filter: {}\", s)).map(String::toUpperCase)`; неуместно: `.peek(item -> database.save(item))` — side effect в промежуточной операции.",
+                "when_to_apply": "`peek` применяют только для отладочного логирования и временно; для трансформации берут `map`, для финального side-effect — `forEach`.",
+                "edge_cases": "`peek` без терминала не выполнится (lazy); на parallel-стриме порядок вызовов случаен; бизнес-side-effect в `peek` может вообще не сработать или выполниться частично.",
+                "related": "[[java-stream-interview#Q32]] отладка пайплайнов; [[java-stream-interview#Q3]] ленивость и невыполнение; [[java-stream-interview#Q31]] peek как overhead."
               }
             },
             {
@@ -2387,14 +2388,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`peek()` — промежуточная операция с `Consumer<T>`, предназначенная для ОТЛАДКИ (логирование промежуточных значений). Распространённые ошибки: `peek` без terminal-операции (ничего не выполнится из-за ленивости); мутация объектов через `peek` (антипаттерн — лучше `map`); бизнес-логика/side effects в `peek` (нет гарантий порядка, особенно в parallel). Перед коммитом `peek` убирают.",
-              "correct": true,
+              "text": "`peek()` — это terminal-операция для отладки, поэтому её можно ставить в конец цепочки вместо `forEach`, и она сама запустит выполнение pipeline для логирования.",
+              "correct": false,
               "sections": {
-                "explanation": "`peek` хорош для временного логирования между операциями, но плох как место для бизнес-логики: он промежуточный (без терминала не сработает), порядок в parallel не гарантирован, а мутация через него — скрытый side effect вместо явного `map`.",
-                "example": "Уместно: `.filter(s -> s.length()>3).peek(s -> log.debug(\"after filter: {}\", s)).map(String::toUpperCase)`; неуместно: `.peek(item -> database.save(item))` — side effect в промежуточной операции.",
-                "when_to_apply": "`peek` применяют только для отладочного логирования и временно; для трансформации берут `map`, для финального side-effect — `forEach`.",
-                "edge_cases": "`peek` без терминала не выполнится (lazy); на parallel-стриме порядок вызовов случаен; бизнес-side-effect в `peek` может вообще не сработать или выполниться частично.",
-                "related": "[[java-stream-interview#Q32]] отладка пайплайнов; [[java-stream-interview#Q3]] ленивость и невыполнение; [[java-stream-interview#Q31]] peek как overhead."
+                "what_actually": "`peek()` — ПРОМЕЖУТОЧНАЯ операция: без последующего терминала она не выполнится из-за ленивости, поэтому в конце цепочки она ничего не залогирует.",
+                "source_of_confusion": "`peek` принимает `Consumer`, как `forEach`, и кажется таким же финальным потребителем.",
+                "if_it_were_true": "Тогда `stream.filter(...).peek(log::debug)` сам бы логировал, но без терминала ни один элемент не пройдёт.",
+                "how_it_should_be": "`peek` — intermediate-операция; чтобы она сработала, нужен терминал (`toList`/`forEach`) после неё."
               }
             }
           ]
@@ -2411,6 +2411,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`dropWhile(predicate)`, если условие ни разу не выполнилось для первого элемента, выбрасывает весь стрим и возвращает пустой результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если первый элемент сразу не удовлетворяет условию `dropWhile`, ничего не пропускается и возвращается ВЕСЬ стрим целиком, а не пустой.",
+                "source_of_confusion": "«drop» ассоциируется с удалением, и кажется, что при невыполнении условия дропается всё.",
+                "if_it_were_true": "Тогда `Stream.of(5,6,7).dropWhile(n -> n<5)` дал бы `[]`, но он возвращает `[5,6,7]`.",
+                "how_it_should_be": "`dropWhile` пропускает только начальный префикс; если он пуст, возвращается весь поток."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`takeWhile(predicate)` работает в точности как `filter(predicate)`: оба возвращают все элементы, удовлетворяющие условию, независимо от их позиции в потоке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`takeWhile` останавливается на ПЕРВОМ элементе, нарушающем условие, и не смотрит дальше; `filter` же проходит все элементы и собирает все подходящие, где бы они ни стояли.",
+                "source_of_confusion": "На отсортированных данных результаты иногда совпадают, и операции считают взаимозаменяемыми.",
+                "if_it_were_true": "Тогда `Stream.of(1,6,2,3).takeWhile(n -> n<5)` дал бы `[1,2,3]`, но он даёт `[1]` (стоп на 6).",
+                "how_it_should_be": "`takeWhile` обрывается при первом false; `filter` отбирает все подходящие элементы по всему потоку."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`takeWhile(predicate)` берёт элементы, ПОКА условие истинно, и останавливается на первом нарушении (short-circuit). `dropWhile(predicate)` пропускает элементы, пока условие истинно, затем берёт всё остальное. В отличие от `filter`, они не проходят все элементы и работают предсказуемо только на упорядоченных источниках.",
               "correct": true,
               "sections": {
@@ -2422,8 +2446,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`takeWhile` и `dropWhile` дополняют друг друга: раз обе режут поток в точке первого false, то `stream.takeWhile(p)` даёт префикс, а `stream.dropWhile(p)` — остаток, поэтому их выводы — точные дополнения на любом источнике, включая `HashSet` и parallel-стрим.",
               "correct": false,
               "sections": {
@@ -2431,30 +2455,6 @@
                 "source_of_confusion": "На отсортированном `List` операции действительно делят поток на префикс и остаток, и это принимают за общий контракт самих операций.",
                 "if_it_were_true": "Тогда `set.parallelStream().takeWhile(p)` давал бы детерминированный префикс, но на `HashSet` результат недетерминирован.",
                 "how_it_should_be": "Свойство префикс/остаток держится только при стабильном encounter order (`List`, `SortedSet`, `sorted()`)."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`takeWhile(predicate)` работает в точности как `filter(predicate)`: оба возвращают все элементы, удовлетворяющие условию, независимо от их позиции в потоке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`takeWhile` останавливается на ПЕРВОМ элементе, нарушающем условие, и не смотрит дальше; `filter` же проходит все элементы и собирает все подходящие, где бы они ни стояли.",
-                "source_of_confusion": "На отсортированных данных результаты иногда совпадают, и операции считают взаимозаменяемыми.",
-                "if_it_were_true": "Тогда `Stream.of(1,6,2,3).takeWhile(n -> n<5)` дал бы `[1,2,3]`, но он даёт `[1]` (стоп на 6).",
-                "how_it_should_be": "`takeWhile` обрывается при первом false; `filter` отбирает все подходящие элементы по всему потоку."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`dropWhile(predicate)`, если условие ни разу не выполнилось для первого элемента, выбрасывает весь стрим и возвращает пустой результат.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Если первый элемент сразу не удовлетворяет условию `dropWhile`, ничего не пропускается и возвращается ВЕСЬ стрим целиком, а не пустой.",
-                "source_of_confusion": "«drop» ассоциируется с удалением, и кажется, что при невыполнении условия дропается всё.",
-                "if_it_were_true": "Тогда `Stream.of(5,6,7).dropWhile(n -> n<5)` дал бы `[]`, но он возвращает `[5,6,7]`.",
-                "how_it_should_be": "`dropWhile` пропускает только начальный префикс; если он пуст, возвращается весь поток."
               }
             }
           ]
@@ -2471,18 +2471,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Stream<Integer>.sum()` и `IntStream.sum()` имеют одинаковую производительность, потому что JVM полностью устраняет автобоксинг в обоих случаях за счёт escape-анализа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Stream<Integer>` боксит каждый элемент и нагружает GC, поэтому он в разы медленнее `IntStream.sum()`; escape-анализ не убирает боксинг в стрим-цепочках полностью.",
-                "source_of_confusion": "Возможности JIT-оптимизаций переоценивают и считают автобоксинг в стрим-цепочках практически бесплатным для производительности.",
-                "if_it_were_true": "Тогда бенчмарки не показывали бы разрыва, но `Stream<Integer>` стабильно медленнее в несколько раз.",
-                "how_it_should_be": "Для скорости переходят в `IntStream` через `mapToInt`; боксинг в `Stream<Integer>` реально стоит производительности."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Примитивные стримы (`IntStream`/`LongStream`/`DoubleStream`) избегают автобоксинга и эффективнее для чисел. `IntStream.range(a,b)` — `[a,b)`, `rangeClosed(a,b)` — `[a,b]`. `summaryStatistics()` за один проход даёт count/sum/min/max/average. `Stream<Integer>` боксит каждый элемент (GC pressure), поэтому `Stream<Integer>.sum()` через reduce ~в разы медленнее `IntStream.sum()`. Конвертация: `mapToInt`, `boxed`, `asLongStream`.",
               "correct": true,
               "sections": {
@@ -2494,8 +2482,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Чтобы собрать `List<Integer>` из `IntStream`, достаточно вызвать `intStream.toList()` напрямую — он сам автоматически боксит примитивы в объекты `Integer`.",
               "correct": false,
               "sections": {
@@ -2503,6 +2491,18 @@
                 "source_of_confusion": "У объектного `Stream` есть `toList()`, и его наличие ожидают и у примитивного стрима.",
                 "if_it_were_true": "Тогда `IntStream.range(0,10).toList()` давал бы `List<Integer>`, но у `IntStream` `toList()` нет — есть лишь `toArray()`.",
                 "how_it_should_be": "Для `List<Integer>` из `IntStream` пишут `.boxed().toList()`; голый `toList()` у `IntStream` отсутствует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Stream<Integer>.sum()` и `IntStream.sum()` имеют одинаковую производительность, потому что JVM полностью устраняет автобоксинг в обоих случаях за счёт escape-анализа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Stream<Integer>` боксит каждый элемент и нагружает GC, поэтому он в разы медленнее `IntStream.sum()`; escape-анализ не убирает боксинг в стрим-цепочках полностью.",
+                "source_of_confusion": "Возможности JIT-оптимизаций переоценивают и считают автобоксинг в стрим-цепочках практически бесплатным для производительности.",
+                "if_it_were_true": "Тогда бенчмарки не показывали бы разрыва, но `Stream<Integer>` стабильно медленнее в несколько раз.",
+                "how_it_should_be": "Для скорости переходят в `IntStream` через `mapToInt`; боксинг в `Stream<Integer>` реально стоит производительности."
               }
             },
             {

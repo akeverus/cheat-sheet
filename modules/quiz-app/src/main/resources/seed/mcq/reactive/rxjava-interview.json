@@ -24,13 +24,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "RxJava использует pull-модель: подписчик запрашивает следующий элемент через `request(1)`, а источник передаёт его только после явного запроса; это одинаково работает для `Observable` и `Flowable`.",
+              "text": "Модель доставки зависит от `Scheduler`: на `Schedulers.io()` источник работает в push-режиме, а на `Schedulers.computation()` подписчик управляет потоком через pull-запросы.",
               "correct": false,
               "sections": {
-                "what_actually": "Это модель `Iterator`/`Stream`, а не RxJava: там потребитель активно вызывает `next()`. В RxJava потребитель пассивен, источник сам вызывает `onNext()`.",
-                "source_of_confusion": "И `Iterator`, и `Observable` обходят последовательность элементов, поэтому кажется, что механизм доставки одинаковый.",
-                "if_it_were_true": "Тогда `Observable` не мог бы работать асинхронно — `next()` блокировал бы поток в ожидании элемента, как `BlockingObservable`.",
-                "how_it_should_be": "Источник сам проталкивает элементы; pull в RxJava есть только частично у `Flowable` через `request(n)`."
+                "what_actually": "`Scheduler` управляет только потоком исполнения (на каком thread выполняется работа), а не моделью доставки данных. Модель всегда push.",
+                "source_of_confusion": "`Scheduler` влияет на поведение цепочки, поэтому ему ошибочно приписывают и смену модели доставки.",
+                "if_it_were_true": "Тогда смена `Schedulers.io()` на `computation()` переключала бы push в pull, но данные продолжают пушиться независимо от планировщика.",
+                "how_it_should_be": "Модель доставки задаёт тип (`Observable`/`Flowable`), а `Scheduler` — только thread исполнения."
               }
             },
             {
@@ -48,13 +48,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Модель доставки зависит от `Scheduler`: на `Schedulers.io()` источник работает в push-режиме, а на `Schedulers.computation()` подписчик управляет потоком через pull-запросы.",
+              "text": "RxJava использует pull-модель: подписчик запрашивает следующий элемент через `request(1)`, а источник передаёт его только после явного запроса; это одинаково работает для `Observable` и `Flowable`.",
               "correct": false,
               "sections": {
-                "what_actually": "`Scheduler` управляет только потоком исполнения (на каком thread выполняется работа), а не моделью доставки данных. Модель всегда push.",
-                "source_of_confusion": "`Scheduler` влияет на поведение цепочки, поэтому ему ошибочно приписывают и смену модели доставки.",
-                "if_it_were_true": "Тогда смена `Schedulers.io()` на `computation()` переключала бы push в pull, но данные продолжают пушиться независимо от планировщика.",
-                "how_it_should_be": "Модель доставки задаёт тип (`Observable`/`Flowable`), а `Scheduler` — только thread исполнения."
+                "what_actually": "Это модель `Iterator`/`Stream`, а не RxJava: там потребитель активно вызывает `next()`. В RxJava потребитель пассивен, источник сам вызывает `onNext()`.",
+                "source_of_confusion": "И `Iterator`, и `Observable` обходят последовательность элементов, поэтому кажется, что механизм доставки одинаковый.",
+                "if_it_were_true": "Тогда `Observable` не мог бы работать асинхронно — `next()` блокировал бы поток в ожидании элемента, как `BlockingObservable`.",
+                "how_it_should_be": "Источник сам проталкивает элементы; pull в RxJava есть только частично у `Flowable` через `request(n)`."
               }
             }
           ]
@@ -83,6 +83,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`onNext()`, `onComplete()` и `onError()` можно вызывать повторно, а RxJava самостоятельно оставляет первый терминальный сигнал и объединяет остальные в единый результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RxJava не дедуплицирует терминалы: повторные `onComplete`/`onError` либо игнорируются emitter'ом, либо уходят в plugin-handler.",
+                "source_of_confusion": "Кажется, что библиотека «умная» и защитит от лишних вызовов, поэтому контракт считают необязательным.",
+                "if_it_were_true": "Тогда несколько `onComplete()` в custom-операторе были бы безопасны, но под нагрузкой это даёт data race и `IllegalStateException`.",
+                "how_it_should_be": "Контракт обязателен: после первого терминала поток закрыт, и за корректность отвечает автор источника."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`onNext(T)` доставляет очередной элемент (0..N раз), `onComplete()` сигнализирует успешное завершение (≤1 раз), `onError(Throwable)` — ошибку и завершение (≤1 раз). После любого терминала поток закрыт.",
               "correct": true,
               "sections": {
@@ -94,8 +106,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`onNext(T)` доставляет ровно один элемент, после чего источник обязан вызвать либо `onComplete()`, либо `onError(Throwable)`; повторные значения допускаются только у `Flowable`.",
               "correct": false,
               "sections": {
@@ -103,18 +115,6 @@
                 "source_of_confusion": "`Single` тоже использует похожий контракт, и его «ровно одно значение» ошибочно переносят на `Observable`.",
                 "if_it_were_true": "Тогда `Observable` для Kafka-стрима терял бы все события кроме первого, но он спокойно эмитит сотни элементов через `onNext`.",
                 "how_it_should_be": "`onNext()` 0..N раз для `Observable`; «ровно 1» — это семантика `Single`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`onNext()`, `onComplete()` и `onError()` можно вызывать повторно, а RxJava самостоятельно оставляет первый терминальный сигнал и объединяет остальные в единый результат.",
-              "correct": false,
-              "sections": {
-                "what_actually": "RxJava не дедуплицирует терминалы: повторные `onComplete`/`onError` либо игнорируются emitter'ом, либо уходят в plugin-handler.",
-                "source_of_confusion": "Кажется, что библиотека «умная» и защитит от лишних вызовов, поэтому контракт считают необязательным.",
-                "if_it_were_true": "Тогда несколько `onComplete()` в custom-операторе были бы безопасны, но под нагрузкой это даёт data race и `IllegalStateException`.",
-                "how_it_should_be": "Контракт обязателен: после первого терминала поток закрыт, и за корректность отвечает автор источника."
               }
             }
           ]
@@ -131,6 +131,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`onNext()` — от 0 до бесконечности раз; `onComplete()` — максимум 1 раз; `onError()` — максимум 1 раз; причём `onComplete` и `onError` взаимоисключающие.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это формальный контракт `onNext* (onComplete | onError)?`: любое число элементов, затем ровно один терминал. Один поток — один финал.",
+                "example": "`Observable.create(e -> { e.onNext(\"Первый\"); e.onComplete(); e.onNext(\"X\"); })` выведет только `Первый`, потому что `onNext` после `onComplete` игнорируется.",
+                "when_to_apply": "Знание контракта нужно при написании `Observable.create()`, custom-операторов и при отладке «потерянных» событий после завершения.",
+                "edge_cases": "В RxJava 1 лишние терминалы тихо игнорировались, в RxJava 2+ они проходят через `RxJavaPlugins.onError` — это меняет диагностику.",
+                "related": "[[rxjava-interview#Q2]] назначение трёх методов; [[rxjava-interview#Q31]] backpressure и переполнение потока."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`onNext()` можно вызывать 0..N раз, а после `onComplete()` допускается передать ещё одно финальное значение, если оно было вычислено до завершения источника.",
               "correct": false,
               "sections": {
@@ -141,8 +154,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`onNext()` можно вызывать 0..N раз до отписки подписчика, поэтому после `onError()` допустимо продолжить эмиссию, пока `Disposable` явно не закрыт.",
               "correct": false,
               "sections": {
@@ -150,19 +163,6 @@
                 "source_of_confusion": "Наличие активного подписчика путают с открытостью потока, хотя терминал закрывает поток раньше отписки.",
                 "if_it_were_true": "Тогда «ручной retry» через повторный `onNext` после `onError` работал бы, но события молча теряются.",
                 "how_it_should_be": "Для повтора после ошибки нужны операторы `retry`/`retryWhen`, а не доэмит после терминала."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`onNext()` — от 0 до бесконечности раз; `onComplete()` — максимум 1 раз; `onError()` — максимум 1 раз; причём `onComplete` и `onError` взаимоисключающие.",
-              "correct": true,
-              "sections": {
-                "explanation": "Это формальный контракт `onNext* (onComplete | onError)?`: любое число элементов, затем ровно один терминал. Один поток — один финал.",
-                "example": "`Observable.create(e -> { e.onNext(\"Первый\"); e.onComplete(); e.onNext(\"X\"); })` выведет только `Первый`, потому что `onNext` после `onComplete` игнорируется.",
-                "when_to_apply": "Знание контракта нужно при написании `Observable.create()`, custom-операторов и при отладке «потерянных» событий после завершения.",
-                "edge_cases": "В RxJava 1 лишние терминалы тихо игнорировались, в RxJava 2+ они проходят через `RxJavaPlugins.onError` — это меняет диагностику.",
-                "related": "[[rxjava-interview#Q2]] назначение трёх методов; [[rxjava-interview#Q31]] backpressure и переполнение потока."
               }
             },
             {
@@ -203,18 +203,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "RxJava 2/3 предоставляет `Observable`, `Flowable`, `Single`, `Maybe` и `Completable`; `Maybe<T>` всегда испускает ровно один элемент либо ошибку, как `Single`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Maybe` отдаёт **0 или 1** — это реактивный `Optional<T>`; «ровно 1» — это `Single`.",
-                "source_of_confusion": "`Maybe` и `Single` похожи по форме API, поэтому их кардинальности смешивают.",
-                "if_it_were_true": "Тогда `cache.get(key)` с промахом падал бы, но `Maybe` корректно отдаст `onComplete` без значения.",
-                "how_it_should_be": "`Maybe` — 0 или 1; «ровно 1» — это `Single`, а под `Single` пустой результат даст `NoSuchElementException`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "RxJava 2/3 предоставляет `Observable`, `Flowable`, `Single`, `Maybe` и `Completable`; `Completable` завершает поток одним значением `Void` либо ошибкой.",
               "correct": false,
               "sections": {
@@ -222,6 +210,18 @@
                 "source_of_confusion": "Имя `CompletableFuture<Void>` наводит на мысль о «значении Void», которого у `Completable` нет.",
                 "if_it_were_true": "Тогда `blockingGet()` вернул бы Void-объект, но `Completable` значений не несёт, и downstream упадёт на NPE.",
                 "how_it_should_be": "`Completable` — только сигнал завершения; для запроса-ответа используют `Single`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "RxJava 2/3 предоставляет `Observable`, `Flowable`, `Single`, `Maybe` и `Completable`; `Maybe<T>` всегда испускает ровно один элемент либо ошибку, как `Single`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Maybe` отдаёт **0 или 1** — это реактивный `Optional<T>`; «ровно 1» — это `Single`.",
+                "source_of_confusion": "`Maybe` и `Single` похожи по форме API, поэтому их кардинальности смешивают.",
+                "if_it_were_true": "Тогда `cache.get(key)` с промахом падал бы, но `Maybe` корректно отдаст `onComplete` без значения.",
+                "how_it_should_be": "`Maybe` — 0 или 1; «ровно 1» — это `Single`, а под `Single` пустой результат даст `NoSuchElementException`."
               }
             },
             {
@@ -251,6 +251,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`RxJava 1`, `RxJava 2` и `RxJava 3` допускают `null` в `onNext()`, но в версиях 2/3 рекомендуется заменять его на `Maybe` только из соображений читаемости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`null` запрещён начиная с `RxJava 2`: `onNext(null)` бросает `NullPointerException`.",
+                "source_of_confusion": "В RxJava 1 `null` действительно проходил, и это правило ошибочно переносят на v2/v3.",
+                "if_it_were_true": "Тогда `onNext(null)` из БД проходил бы спокойно, но при миграции на v2 первый же `null` даёт NPE в проде.",
+                "how_it_should_be": "В RxJava 2/3 `null` запрещён; вместо него используют `Maybe`/`Optional` или sentinel-значения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RxJava 3` сохранил пакет `io.reactivex`, но заменил `Disposable` на `Subscription` для всех реактивных типов, чтобы унифицировать API с `Reactive Streams`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: RxJava 2/3 ушли от `Subscription` (RxJava 1) к `Disposable`; `Subscription` остался только внутри `Flowable`/`Reactive Streams`.",
+                "source_of_confusion": "Термин `Subscription` из `Reactive Streams` путают с пользовательским handle отписки.",
+                "if_it_were_true": "Тогда `Subscription.unsubscribe()` работал бы в RxJava 3, но там `Disposable.dispose()`, и старый вызов даёт `NoSuchMethodError`.",
+                "how_it_should_be": "Handle отписки в RxJava 2/3 — `Disposable`; `Subscription` — это backpressure-канал `Flowable`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`RxJava 2` использует пакет `io.reactivex`, `RxJava 3` — `io.reactivex.rxjava3`; `null` запрещён в потоках в обеих, обе совместимы с `Reactive Streams` и используют `Disposable`.",
               "correct": true,
               "sections": {
@@ -262,8 +286,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "В `RxJava 1` уже были отдельный `Flowable`, поддержка `Reactive Streams` и backpressure через `request(n)`; в `RxJava 2` изменились в основном пакеты и API подписки.",
               "correct": false,
               "sections": {
@@ -271,30 +295,6 @@
                 "source_of_confusion": "Раз RxJava всегда умела backpressure, кажется, что и `Flowable` был с самого начала.",
                 "if_it_were_true": "Тогда миграция `rx.Observable` 1.x добавлением `Flowable` компилировалась бы, но пакет `io.reactivex` в v1 ещё не существует.",
                 "how_it_should_be": "В RxJava 1 нет `Flowable`; для backpressure-типа нужна минимум v2."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`RxJava 1`, `RxJava 2` и `RxJava 3` допускают `null` в `onNext()`, но в версиях 2/3 рекомендуется заменять его на `Maybe` только из соображений читаемости.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`null` запрещён начиная с `RxJava 2`: `onNext(null)` бросает `NullPointerException`.",
-                "source_of_confusion": "В RxJava 1 `null` действительно проходил, и это правило ошибочно переносят на v2/v3.",
-                "if_it_were_true": "Тогда `onNext(null)` из БД проходил бы спокойно, но при миграции на v2 первый же `null` даёт NPE в проде.",
-                "how_it_should_be": "В RxJava 2/3 `null` запрещён; вместо него используют `Maybe`/`Optional` или sentinel-значения."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`RxJava 3` сохранил пакет `io.reactivex`, но заменил `Disposable` на `Subscription` для всех реактивных типов, чтобы унифицировать API с `Reactive Streams`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: RxJava 2/3 ушли от `Subscription` (RxJava 1) к `Disposable`; `Subscription` остался только внутри `Flowable`/`Reactive Streams`.",
-                "source_of_confusion": "Термин `Subscription` из `Reactive Streams` путают с пользовательским handle отписки.",
-                "if_it_were_true": "Тогда `Subscription.unsubscribe()` работал бы в RxJava 3, но там `Disposable.dispose()`, и старый вызов даёт `NoSuchMethodError`.",
-                "how_it_should_be": "Handle отписки в RxJava 2/3 — `Disposable`; `Subscription` — это backpressure-канал `Flowable`."
               }
             }
           ]
@@ -311,18 +311,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Marble-диаграмма показывает взаимодействие `Observable` и `Observer` как UML sequence: вертикальные линии — участники, а стрелки — вызовы `onNext`, `onComplete` и `onError`.",
+              "text": "Marble-диаграмма — это машиночитаемое JSON-представление последовательности `onNext`, `onComplete` и `onError`, которое RxJava использует в тестах операторов.",
               "correct": false,
               "sections": {
-                "what_actually": "UML sequence показывает вызовы методов между объектами; marble показывает поток событий во времени с элементами-«шариками».",
-                "source_of_confusion": "Обе диаграммы рисуют взаимодействие, поэтому их назначение смешивают.",
-                "if_it_were_true": "Тогда `flatMap` документировался бы через UML, но это потеряло бы суть параллельности и порядка emission'ов.",
-                "how_it_should_be": "Marble — графическая нотация потока во времени, а не диаграмма вызовов между объектами."
+                "what_actually": "JSON-снимок потока — это `TestObserver.values()`; marble же графическая нотация, а не сериализованный формат.",
+                "source_of_confusion": "Тесты тоже фиксируют последовательность значений, поэтому marble путают с дампом значений.",
+                "if_it_were_true": "Тогда «marble JSON» можно было бы парсить автоматически, но такого стандарта нет и тесты упадут на отсутствии формата.",
+                "how_it_should_be": "Для проверки значений в тестах берут `TestObserver`, а marble остаётся визуальной нотацией."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "Marble-диаграмма описывает поток событий во времени и подключается к оператору через аннотацию `@Marble`, чтобы JavaDoc генерировался автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации `@Marble` в RxJava нет — диаграммы рисуют вручную в комментариях/JavaDoc или в ASCII.",
+                "source_of_confusion": "Привычка к code-gen-аннотациям наводит на мысль о специальной аннотации для marble.",
+                "if_it_were_true": "Тогда `@Marble` в коде компилировался бы, но такого символа нет, и сборка упадёт.",
+                "how_it_should_be": "Marble — визуальная нотация в документации; никакой обязательной аннотации она не требует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Marble-диаграмма — визуализация оператора через временную ось с элементами-«шариками»: `(значение)` это `onNext`, `|` обозначает `onComplete`, `X` — `onError`, а блок посередине — преобразование.",
               "correct": true,
               "sections": {
@@ -334,27 +346,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Marble-диаграмма — это машиночитаемое JSON-представление последовательности `onNext`, `onComplete` и `onError`, которое RxJava использует в тестах операторов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "JSON-снимок потока — это `TestObserver.values()`; marble же графическая нотация, а не сериализованный формат.",
-                "source_of_confusion": "Тесты тоже фиксируют последовательность значений, поэтому marble путают с дампом значений.",
-                "if_it_were_true": "Тогда «marble JSON» можно было бы парсить автоматически, но такого стандарта нет и тесты упадут на отсутствии формата.",
-                "how_it_should_be": "Для проверки значений в тестах берут `TestObserver`, а marble остаётся визуальной нотацией."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Marble-диаграмма описывает поток событий во времени и подключается к оператору через аннотацию `@Marble`, чтобы JavaDoc генерировался автоматически.",
+              "text": "Marble-диаграмма показывает взаимодействие `Observable` и `Observer` как UML sequence: вертикальные линии — участники, а стрелки — вызовы `onNext`, `onComplete` и `onError`.",
               "correct": false,
               "sections": {
-                "what_actually": "Аннотации `@Marble` в RxJava нет — диаграммы рисуют вручную в комментариях/JavaDoc или в ASCII.",
-                "source_of_confusion": "Привычка к code-gen-аннотациям наводит на мысль о специальной аннотации для marble.",
-                "if_it_were_true": "Тогда `@Marble` в коде компилировался бы, но такого символа нет, и сборка упадёт.",
-                "how_it_should_be": "Marble — визуальная нотация в документации; никакой обязательной аннотации она не требует."
+                "what_actually": "UML sequence показывает вызовы методов между объектами; marble показывает поток событий во времени с элементами-«шариками».",
+                "source_of_confusion": "Обе диаграммы рисуют взаимодействие, поэтому их назначение смешивают.",
+                "if_it_were_true": "Тогда `flatMap` документировался бы через UML, но это потеряло бы суть параллельности и порядка emission'ов.",
+                "how_it_should_be": "Marble — графическая нотация потока во времени, а не диаграмма вызовов между объектами."
               }
             }
           ]
@@ -383,13 +383,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Pure-функция всегда возвращает одинаковый результат для одинакового входа, но может изменять внешнее состояние, если это изменение выполняется атомарно.",
+              "text": "Pure-функции обязательны только в Android-цепочках, потому что UI-поток требует детерминированности; на сервере побочные эффекты внутри `map()` безопасны.",
               "correct": false,
               "sections": {
-                "what_actually": "Исключения в `onError` превращает оператор независимо от чистоты функции; чистота вообще про детерминизм и отсутствие сайд-эффектов.",
-                "source_of_confusion": "Обработку ошибок и чистоту функции — две разные темы — объединяют в одно свойство.",
-                "if_it_were_true": "Тогда нечистая функция не могла бы бросить исключение, но `map(s -> 1/0)` с побочным эффектом тоже даст `onError`.",
-                "how_it_should_be": "В `onError` уходит любое исключение из оператора; чистота к этому не относится."
+                "what_actually": "Чистота важна везде, где возможна работа на нескольких потоках, — на бэкенде так же, как на Android.",
+                "source_of_confusion": "RxJava ассоциируется с Android, поэтому требование чистоты сужают до мобильной разработки.",
+                "if_it_were_true": "Тогда на сервере можно было бы безопасно мутировать общий список в `map`, но data race возникнет и там.",
+                "how_it_should_be": "Чистота функций — общий принцип реактивного кода, не зависящий от платформы."
               }
             },
             {
@@ -408,13 +408,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Pure-функции обязательны только в Android-цепочках, потому что UI-поток требует детерминированности; на сервере побочные эффекты внутри `map()` безопасны.",
+              "text": "Pure-функция всегда возвращает одинаковый результат для одинакового входа, но может изменять внешнее состояние, если это изменение выполняется атомарно.",
               "correct": false,
               "sections": {
-                "what_actually": "Чистота важна везде, где возможна работа на нескольких потоках, — на бэкенде так же, как на Android.",
-                "source_of_confusion": "RxJava ассоциируется с Android, поэтому требование чистоты сужают до мобильной разработки.",
-                "if_it_were_true": "Тогда на сервере можно было бы безопасно мутировать общий список в `map`, но data race возникнет и там.",
-                "how_it_should_be": "Чистота функций — общий принцип реактивного кода, не зависящий от платформы."
+                "what_actually": "Исключения в `onError` превращает оператор независимо от чистоты функции; чистота вообще про детерминизм и отсутствие сайд-эффектов.",
+                "source_of_confusion": "Обработку ошибок и чистоту функции — две разные темы — объединяют в одно свойство.",
+                "if_it_were_true": "Тогда нечистая функция не могла бы бросить исключение, но `map(s -> 1/0)` с побочным эффектом тоже даст `onError`.",
+                "how_it_should_be": "В `onError` уходит любое исключение из оператора; чистота к этому не относится."
               }
             }
           ]
@@ -431,18 +431,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Cold `Observable` начинает выполнять источник сразу при создании, а `subscribe()` только подключает подписчика к уже запущенной последовательности.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Cold `Observable` ленив: код внутри выполняется только при подписке (`subscribe()`), а не при создании.",
-                "source_of_confusion": "Привычка из императивного кода (создал объект — он работает) переносится на ленивый `Observable`.",
-                "if_it_were_true": "Тогда `Observable.create(...)` печатал бы «Начинаю генерацию» немедленно, но вывод появляется только после `subscribe`.",
-                "how_it_should_be": "Cold `Observable` стартует при подписке (lazy evaluation), а не при создании."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Observable` начинает испускать элементы после построения цепочки операторов, даже без `subscribe()`, если в ней есть `interval()`, `timer()` или `delay()`.",
               "correct": false,
               "sections": {
@@ -453,8 +441,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Cold `Observable` запускается, когда выбран `Scheduler` через `subscribeOn()`, а вызов `subscribe()` лишь регистрирует обработчики результата.",
               "correct": false,
               "sections": {
@@ -462,6 +450,18 @@
                 "source_of_confusion": "`Scheduler` влияет на исполнение цепочки, поэтому его путают с триггером старта.",
                 "if_it_were_true": "Тогда `Observable` запускался бы при инициализации `Schedulers.io()`, но без `subscribe` он остаётся бездействующим.",
                 "how_it_should_be": "Триггер испускания — подписка; `Scheduler` лишь задаёт поток исполнения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cold `Observable` начинает выполнять источник сразу при создании, а `subscribe()` только подключает подписчика к уже запущенной последовательности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cold `Observable` ленив: код внутри выполняется только при подписке (`subscribe()`), а не при создании.",
+                "source_of_confusion": "Привычка из императивного кода (создал объект — он работает) переносится на ленивый `Observable`.",
+                "if_it_were_true": "Тогда `Observable.create(...)` печатал бы «Начинаю генерацию» немедленно, но вывод появляется только после `subscribe`.",
+                "how_it_should_be": "Cold `Observable` стартует при подписке (lazy evaluation), а не при создании."
               }
             },
             {
@@ -504,18 +504,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Cold `Observable` использует один общий источник для всех подписчиков, а Hot создаёт независимую последовательность для каждого и воспроизводит её с начала.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: cold даёт каждому свою копию с начала, а hot шарит один поток между всеми.",
-                "source_of_confusion": "Термины «cold/hot» абстрактны, поэтому их семантику легко поменять местами.",
-                "if_it_were_true": "Тогда два подписчика на cold `Observable.range(1,5)` делили бы элементы, но каждый получает полный 1..5.",
-                "how_it_should_be": "Cold = персональная копия каждому; hot = один общий поток на всех."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Cold и Hot различаются способом планирования: cold по умолчанию выполняется на `io()`, а hot — на `computation()`, поэтому поздние подписчики видят разные данные.",
               "correct": false,
               "sections": {
@@ -526,8 +514,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Hot `Observable` испускает элементы независимо от подписчиков и по умолчанию хранит всю историю, поэтому каждый новый подписчик получает поток с самого начала.",
               "correct": false,
               "sections": {
@@ -535,6 +523,18 @@
                 "source_of_confusion": "`replay` тоже относится к hot-семейству, поэтому его поведение обобщают на весь hot.",
                 "if_it_were_true": "Тогда поздний подписчик hot-потока котировок получил бы всю историю, но `PublishSubject` отдаст только новые тики.",
                 "how_it_should_be": "Чтобы hot отдавал прошлое, нужен явный `replay()`; по умолчанию hot отдаёт только будущие элементы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cold `Observable` использует один общий источник для всех подписчиков, а Hot создаёт независимую последовательность для каждого и воспроизводит её с начала.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: cold даёт каждому свою копию с начала, а hot шарит один поток между всеми.",
+                "source_of_confusion": "Термины «cold/hot» абстрактны, поэтому их семантику легко поменять местами.",
+                "if_it_were_true": "Тогда два подписчика на cold `Observable.range(1,5)` делили бы элементы, но каждый получает полный 1..5.",
+                "how_it_should_be": "Cold = персональная копия каждому; hot = один общий поток на всех."
               }
             }
           ]
@@ -551,13 +551,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Cold `Observable` нельзя преобразовать в Hot без изменения источника: операторы `publish()` и `share()` только кешируют значения, но не меняют модель подписки.",
+              "text": "Cold `Observable` становится Hot после `subscribeOn(Schedulers.io())`, потому что источник начинает работать независимо от отдельных подписчиков в общем пуле.",
               "correct": false,
               "sections": {
-                "what_actually": "Можно: операторы `publish()`/`share()`/`replay()` превращают cold в hot, переиспользуя тот же источник.",
-                "source_of_confusion": "Раз hot часто строят через `Subject`, кажется, что cold-источник для hot непригоден.",
-                "if_it_were_true": "Тогда нельзя было бы шарить один HTTP-вызов между подписчиками, но `cold.publish().refCount()` делает именно это.",
-                "how_it_should_be": "Cold превращают в hot операторами мультикастинга — `publish`, `share`, `replay`."
+                "what_actually": "`subscribeOn` лишь меняет поток подписки; для hot нужен мультикастинг через `publish`/`share`/`replay`.",
+                "source_of_confusion": "Любой «новый» оператор кажется кандидатом на смену температуры, и под руку попадает `subscribeOn`.",
+                "if_it_were_true": "Тогда `cold.subscribeOn(io())` шарил бы поток между подписчиками, но каждый всё равно получит свою копию.",
+                "how_it_should_be": "Горячим делает `publish`/`share`/`replay`, а `subscribeOn` управляет только потоком исполнения."
               }
             },
             {
@@ -576,18 +576,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Cold `Observable` становится Hot после `subscribeOn(Schedulers.io())`, потому что источник начинает работать независимо от отдельных подписчиков в общем пуле.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`subscribeOn` лишь меняет поток подписки; для hot нужен мультикастинг через `publish`/`share`/`replay`.",
-                "source_of_confusion": "Любой «новый» оператор кажется кандидатом на смену температуры, и под руку попадает `subscribeOn`.",
-                "if_it_were_true": "Тогда `cold.subscribeOn(io())` шарил бы поток между подписчиками, но каждый всё равно получит свою копию.",
-                "how_it_should_be": "Горячим делает `publish`/`share`/`replay`, а `subscribeOn` управляет только потоком исполнения."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Cold `Observable` можно сделать Hot, если использовать `map()` с разделяемым состоянием: общая функция создаёт единый поток данных для всех подписчиков.",
               "correct": false,
               "sections": {
@@ -595,6 +583,18 @@
                 "source_of_confusion": "Шаринг состояния через поле путают с шарингом самого потока событий.",
                 "if_it_were_true": "Тогда `map` с общим счётчиком превращал бы cold в hot, но это лишь даёт data race без единого upstream.",
                 "how_it_should_be": "Для hot применяют `publish`/`share`/`replay`, а не сайд-эффекты в `map`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cold `Observable` нельзя преобразовать в Hot без изменения источника: операторы `publish()` и `share()` только кешируют значения, но не меняют модель подписки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Можно: операторы `publish()`/`share()`/`replay()` превращают cold в hot, переиспользуя тот же источник.",
+                "source_of_confusion": "Раз hot часто строят через `Subject`, кажется, что cold-источник для hot непригоден.",
+                "if_it_were_true": "Тогда нельзя было бы шарить один HTTP-вызов между подписчиками, но `cold.publish().refCount()` делает именно это.",
+                "how_it_should_be": "Cold превращают в hot операторами мультикастинга — `publish`, `share`, `replay`."
               }
             }
           ]
@@ -611,18 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Hot `Observable` нельзя приблизить к cold-семантике: после начала эмиссии прошлые элементы всегда недоступны поздним подписчикам, даже при использовании `replay()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Можно: `replay()` буферизует элементы и воспроизводит их каждому новому подписчику, давая cold-семантику.",
-                "source_of_confusion": "Кажется, что раз hot не хранит прошлое по умолчанию, восстановить cold невозможно.",
-                "if_it_were_true": "Тогда поздний подписчик никогда не получил бы ранние элементы, но `hot.replay().autoConnect()` отдаёт их всем.",
-                "how_it_should_be": "Hot превращают в cold через `replay()`, который кеширует и переигрывает элементы."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Hot `Observable` можно сделать cold через `publish()`: оператор сохраняет всю историю и воспроизводит её отдельно для каждого нового подписчика.",
               "correct": false,
               "sections": {
@@ -633,8 +621,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Hot `Observable` нельзя приблизить к cold-семантике: после начала эмиссии прошлые элементы всегда недоступны поздним подписчикам, даже при использовании `replay()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Можно: `replay()` буферизует элементы и воспроизводит их каждому новому подписчику, давая cold-семантику.",
+                "source_of_confusion": "Кажется, что раз hot не хранит прошлое по умолчанию, восстановить cold невозможно.",
+                "if_it_were_true": "Тогда поздний подписчик никогда не получил бы ранние элементы, но `hot.replay().autoConnect()` отдаёт их всем.",
+                "how_it_should_be": "Hot превращают в cold через `replay()`, который кеширует и переигрывает элементы."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Hot `Observable` становится cold после `subscribeOn(Schedulers.single())`, потому что последовательное выполнение создаёт независимую историю для каждого подписчика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`subscribeOn` лишь задаёт поток подписки; превращение hot→cold делает `replay()`, а не выбор `Scheduler`.",
+                "source_of_confusion": "Сериализацию исполнения путают с пересозданием потока для каждого подписчика.",
+                "if_it_were_true": "Тогда `hot.subscribeOn(single())` отдавал бы историю новым подписчикам, но `subscribeOn` на это не влияет.",
+                "how_it_should_be": "Hot→cold реализует `replay()`; `subscribeOn` отвечает только за поток исполнения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Да, через `replay()`: он буферизует все элементы и воспроизводит их для каждого нового подписчика, давая cold-поведение поверх hot-источника.",
               "correct": true,
               "sections": {
@@ -643,18 +655,6 @@
                 "when_to_apply": "Приём применяют для late subscribers, которым нужна вся история (кеш конфигурации, последнее состояние), а не только будущие события.",
                 "edge_cases": "`replay(int n)` хранит только последние n элементов, `replay(time, unit)` — за период; полный `replay()` на бесконечном потоке грозит OOM.",
                 "related": "[[rxjava-interview#Q10]] обратное превращение cold → hot; [[rxjava-interview#Q29]] ReplaySubject с похожей семантикой кеша."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Hot `Observable` становится cold после `subscribeOn(Schedulers.single())`, потому что последовательное выполнение создаёт независимую историю для каждого подписчика.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`subscribeOn` лишь задаёт поток подписки; превращение hot→cold делает `replay()`, а не выбор `Scheduler`.",
-                "source_of_confusion": "Сериализацию исполнения путают с пересозданием потока для каждого подписчика.",
-                "if_it_were_true": "Тогда `hot.subscribeOn(single())` отдавал бы историю новым подписчикам, но `subscribeOn` на это не влияет.",
-                "how_it_should_be": "Hot→cold реализует `replay()`; `subscribeOn` отвечает только за поток исполнения."
               }
             }
           ]
@@ -671,30 +671,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Observable Chain — это группа подписчиков, одновременно подключённых к одному источнику и получающих результат после общей последовательности операторов.",
-              "correct": false,
+              "text": "Observable Chain — последовательность операторов, применяемых к исходному `Observable`: каждый оператор принимает `Observable` на вход и возвращает новый `Observable`, что строит декларативный конвейер обработки.",
+              "correct": true,
               "sections": {
-                "what_actually": "Chain — последовательность операторов, применяемых к источнику, а не набор подписчиков; подписчики — это конечные потребители.",
-                "source_of_confusion": "Слово «цепочка» ассоциируется с цепочкой слушателей, а не операторов.",
-                "if_it_were_true": "Тогда добавление `map`/`filter` означало бы новых подписчиков, но операторы лишь трансформируют поток до подписки.",
-                "how_it_should_be": "Chain — это конвейер операторов `source → map → filter → ...`, а подписчик один в конце."
+                "explanation": "Каждый оператор создаёт новый `Observable`, не мутируя исходный, поэтому цепочку можно читать сверху вниз как pipeline трансформаций. Это даёт иммутабельность и композируемость.",
+                "example": "`Observable.just(\"  hello \",\" WORLD \").map(String::trim).map(String::toLowerCase).filter(s -> s.length() > 4).sorted().subscribe(...)` — каждый шаг возвращает новый поток.",
+                "when_to_apply": "Цепочки строят для декларативной обработки данных; длинные цепочки выносят в переиспользуемые `Transformer` через `compose()`.",
+                "edge_cases": "Цепочка ленива: ни один оператор не выполнится, пока не будет вызван `subscribe()` в конце.",
+                "related": "[[rxjava-interview#Q18]] несколько операторов одного типа в цепочке; [[rxjava-interview#Q22]] переиспользование цепочек через compose."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Observable Chain — последовательность операторов, каждый из которых изменяет состояние исходного `Observable` и возвращает ссылку на тот же объект.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Каждый оператор НЕ мутирует исходный `Observable`, а создаёт новый — цепочка иммутабельна.",
-                "source_of_confusion": "Привычка к мутирующим builder'ам наводит на мысль об изменении исходного объекта.",
-                "if_it_were_true": "Тогда повторное использование исходного `Observable` после цепочки было бы небезопасно, но он остаётся неизменным.",
-                "how_it_should_be": "Операторы возвращают новый `Observable`, не трогая исходный — это обеспечивает иммутабельность."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Observable Chain — последовательность связанных `Disposable`, где каждый оператор создаёт отдельную подписку, которую нужно освобождать независимо.",
               "correct": false,
               "sections": {
@@ -705,16 +694,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Observable Chain — это группа подписчиков, одновременно подключённых к одному источнику и получающих результат после общей последовательности операторов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chain — последовательность операторов, применяемых к источнику, а не набор подписчиков; подписчики — это конечные потребители.",
+                "source_of_confusion": "Слово «цепочка» ассоциируется с цепочкой слушателей, а не операторов.",
+                "if_it_were_true": "Тогда добавление `map`/`filter` означало бы новых подписчиков, но операторы лишь трансформируют поток до подписки.",
+                "how_it_should_be": "Chain — это конвейер операторов `source → map → filter → ...`, а подписчик один в конце."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Observable Chain — последовательность операторов, применяемых к исходному `Observable`: каждый оператор принимает `Observable` на вход и возвращает новый `Observable`, что строит декларативный конвейер обработки.",
-              "correct": true,
+              "text": "Observable Chain — последовательность операторов, каждый из которых изменяет состояние исходного `Observable` и возвращает ссылку на тот же объект.",
+              "correct": false,
               "sections": {
-                "explanation": "Каждый оператор создаёт новый `Observable`, не мутируя исходный, поэтому цепочку можно читать сверху вниз как pipeline трансформаций. Это даёт иммутабельность и композируемость.",
-                "example": "`Observable.just(\"  hello \",\" WORLD \").map(String::trim).map(String::toLowerCase).filter(s -> s.length() > 4).sorted().subscribe(...)` — каждый шаг возвращает новый поток.",
-                "when_to_apply": "Цепочки строят для декларативной обработки данных; длинные цепочки выносят в переиспользуемые `Transformer` через `compose()`.",
-                "edge_cases": "Цепочка ленива: ни один оператор не выполнится, пока не будет вызван `subscribe()` в конце.",
-                "related": "[[rxjava-interview#Q18]] несколько операторов одного типа в цепочке; [[rxjava-interview#Q22]] переиспользование цепочек через compose."
+                "what_actually": "Каждый оператор НЕ мутирует исходный `Observable`, а создаёт новый — цепочка иммутабельна.",
+                "source_of_confusion": "Привычка к мутирующим builder'ам наводит на мысль об изменении исходного объекта.",
+                "if_it_were_true": "Тогда повторное использование исходного `Observable` после цепочки было бы небезопасно, но он остаётся неизменным.",
+                "how_it_should_be": "Операторы возвращают новый `Observable`, не трогая исходный — это обеспечивает иммутабельность."
               }
             }
           ]
@@ -731,6 +731,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Основные операторы создания — `just`, `fromIterable`, `create`, `range`, `interval`, `timer` и `defer`; у `range(start, end)` второй аргумент задаёт конечное значение диапазона.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`range(start, count)` принимает start и **количество** элементов, а не конечное значение: `range(1,10)` даёт 1..10, а не 1..9.",
+                "source_of_confusion": "Семантику `count` путают с привычным `end` из циклов `for (i=start; i<=end)`.",
+                "if_it_were_true": "Тогда `range(5,8)` дал бы 5,6,7,8, но на деле это 5,6,7,8,9,10,11,12 (8 элементов).",
+                "how_it_should_be": "Второй аргумент `range` — это count (сколько элементов), а не верхняя граница."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`interval()` и `timer()` относятся к горячим фабрикам: отсчёт начинается при создании `Observable`, а подписчики подключаются к уже работающему таймеру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Как и все cold-операторы, `interval`/`timer` стартуют только при `subscribe()`; до этого таймер не запущен.",
+                "source_of_confusion": "Таймерная семантика наводит на мысль, что отсчёт идёт «сам по себе» с момента создания.",
+                "if_it_were_true": "Тогда `Observable.interval(1,SECONDS)` тикал бы без подписчиков, но без `subscribe` он бездействует.",
+                "how_it_should_be": "`interval`/`timer` ленивы: отсчёт начинается с момента подписки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Основные: `just(T...)`, `fromIterable`/`fromArray`/`fromCallable`, `create(ObservableOnSubscribe)`, `range(start,count)`, `interval`/`timer`, `defer(Supplier)`, плюс `empty()`, `never()`, `error(Throwable)`.",
               "correct": true,
               "sections": {
@@ -742,8 +766,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Основным универсальным способом создания является `Observable.create()`: `just`, `fromIterable`, `range` и `defer` внутри также сводятся к обязательному ручному управлению `emitter`.",
               "correct": false,
               "sections": {
@@ -751,30 +775,6 @@
                 "source_of_confusion": "`create` самый «явный», поэтому кажется единственным или основным способом.",
                 "if_it_were_true": "Тогда `Observable.just(1,2,3)` был бы невозможен, но это самый частый способ создания.",
                 "how_it_should_be": "Операторов создания много; `create` нужен в основном для адаптации callback-API."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Основные операторы создания — `just`, `fromIterable`, `create`, `range`, `interval`, `timer` и `defer`; у `range(start, end)` второй аргумент задаёт конечное значение диапазона.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`range(start, count)` принимает start и **количество** элементов, а не конечное значение: `range(1,10)` даёт 1..10, а не 1..9.",
-                "source_of_confusion": "Семантику `count` путают с привычным `end` из циклов `for (i=start; i<=end)`.",
-                "if_it_were_true": "Тогда `range(5,8)` дал бы 5,6,7,8, но на деле это 5,6,7,8,9,10,11,12 (8 элементов).",
-                "how_it_should_be": "Второй аргумент `range` — это count (сколько элементов), а не верхняя граница."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`interval()` и `timer()` относятся к горячим фабрикам: отсчёт начинается при создании `Observable`, а подписчики подключаются к уже работающему таймеру.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Как и все cold-операторы, `interval`/`timer` стартуют только при `subscribe()`; до этого таймер не запущен.",
-                "source_of_confusion": "Таймерная семантика наводит на мысль, что отсчёт идёт «сам по себе» с момента создания.",
-                "if_it_were_true": "Тогда `Observable.interval(1,SECONDS)` тикал бы без подписчиков, но без `subscribe` он бездействует.",
-                "how_it_should_be": "`interval`/`timer` ленивы: отсчёт начинается с момента подписки."
               }
             }
           ]
@@ -791,18 +791,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`create()` и `defer()` выполняют одну задачу: оба принимают фабрику значений и создают новый `Observable` для каждого подписчика с одинаковой семантикой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`create()` даёт ручной контроль над `onNext/onComplete/onError`; `defer()` оборачивает фабрику `Observable` и пересоздаёт его для каждого подписчика.",
-                "source_of_confusion": "Оба «лениво стартуют при подписке», и из этого делают вывод об идентичности.",
-                "if_it_were_true": "Тогда не было бы смысла в двух операторах, но `defer` решает проблему eager-вычисления аргумента, чего `create` не делает.",
-                "how_it_should_be": "`create` — про ручную эмиссию; `defer` — про откладывание создания всего `Observable` на момент подписки."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`create()` создаёт `Observable` с полным ручным контролем над `onNext/onComplete/onError` (тело выполняется при подписке); `defer()` оборачивает фабрику и откладывает создание `Observable` до подписки, давая каждому подписчику свежий экземпляр.",
               "correct": true,
               "sections": {
@@ -814,8 +802,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`create()` выполняет функцию источника на каждую подписку, а `defer()` вычисляет вложенный `Observable` один раз при сборке цепочки и затем переиспользует его.",
               "correct": false,
               "sections": {
@@ -826,8 +814,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`create()` доступен только для `Single` и `Maybe`, а `defer()` используется только с `Observable` и `Flowable` для отложенного создания потока.",
               "correct": false,
               "sections": {
@@ -835,6 +823,18 @@
                 "source_of_confusion": "Разнообразие реактивных типов наводит на мысль о жёсткой привязке операторов к типам.",
                 "if_it_were_true": "Тогда `Single.defer(...)` был бы невозможен, но он существует и широко используется.",
                 "how_it_should_be": "`create` и `defer` есть у всех реактивных типов; выбор типа не ограничивает доступ к этим операторам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`create()` и `defer()` выполняют одну задачу: оба принимают фабрику значений и создают новый `Observable` для каждого подписчика с одинаковой семантикой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`create()` даёт ручной контроль над `onNext/onComplete/onError`; `defer()` оборачивает фабрику `Observable` и пересоздаёт его для каждого подписчика.",
+                "source_of_confusion": "Оба «лениво стартуют при подписке», и из этого делают вывод об идентичности.",
+                "if_it_were_true": "Тогда не было бы смысла в двух операторах, но `defer` решает проблему eager-вычисления аргумента, чего `create` не делает.",
+                "how_it_should_be": "`create` — про ручную эмиссию; `defer` — про откладывание создания всего `Observable` на момент подписки."
               }
             }
           ]
@@ -875,6 +875,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`flatMap()` преобразует `T` в `Observable<R>`, но обрабатывает внутренние источники строго последовательно и всегда сохраняет порядок исходных элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`flatMap` может выполнять внутренние `Observable` асинхронно и параллельно (особенно с `subscribeOn`), в отличие от синхронного `map`.",
+                "source_of_confusion": "Без явного `Scheduler` `flatMap` тоже работает в вызывающем потоке, и из этого делают вывод о полной синхронности.",
+                "if_it_were_true": "Тогда `flatMap(url -> api.get(url).subscribeOn(io()))` шёл бы последовательно, но запросы уходят параллельно.",
+                "how_it_should_be": "`flatMap` поддерживает асинхронность и параллелизм внутренних потоков; `map` всегда 1:1 в текущем шаге."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`map()` делает синхронную трансформацию `T → R` (1:1, сохраняет порядок); `flatMap()` делает `T → Observable<R>` (1:N), разворачивает внутренние потоки и не гарантирует порядок, работая асинхронно.",
               "correct": true,
               "sections": {
@@ -883,18 +895,6 @@
                 "when_to_apply": "Правило: если функция возвращает `Observable` (асинхронный вызов) — `flatMap`; если простое значение — `map`.",
                 "edge_cases": "Из-за параллельности `flatMap` порядок ответов может отличаться от порядка входа; для сохранения порядка берут `concatMap`.",
                 "related": "[[rxjava-interview#Q16]] flatMap vs concatMap vs switchMap; [[rxjava-interview#Q7]] чистота функции-трансформера."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`flatMap()` преобразует `T` в `Observable<R>`, но обрабатывает внутренние источники строго последовательно и всегда сохраняет порядок исходных элементов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`flatMap` может выполнять внутренние `Observable` асинхронно и параллельно (особенно с `subscribeOn`), в отличие от синхронного `map`.",
-                "source_of_confusion": "Без явного `Scheduler` `flatMap` тоже работает в вызывающем потоке, и из этого делают вывод о полной синхронности.",
-                "if_it_were_true": "Тогда `flatMap(url -> api.get(url).subscribeOn(io()))` шёл бы последовательно, но запросы уходят параллельно.",
-                "how_it_should_be": "`flatMap` поддерживает асинхронность и параллелизм внутренних потоков; `map` всегда 1:1 в текущем шаге."
               }
             }
           ]
@@ -911,18 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`flatMap()`, `concatMap()` и `switchMap()` разворачивают внутренние потоки последовательно и сохраняют порядок; различаются только способом обработки ошибок.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Только `concatMap` сохраняет порядок и идёт последовательно; `flatMap` параллелен без гарантии порядка, `switchMap` оставляет лишь последний.",
-                "source_of_confusion": "Раз все три «map-операторы для потоков», их поведение ошибочно считают одинаковым.",
-                "if_it_were_true": "Тогда `flatMap` для поисковых запросов держал бы порядок, но быстрый ответ обгонит медленный.",
-                "how_it_should_be": "Порядок держит только `concatMap`; `flatMap` параллелен, `switchMap` отменяет предыдущее."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`switchMap()` подписывается на все внутренние `Observable` одновременно и объединяет все результаты, но отдаёт элементы в порядке появления исходных значений.",
               "correct": false,
               "sections": {
@@ -933,8 +921,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`concatMap()` начинает следующий внутренний поток при новом элементе и отменяет предыдущий, поэтому подходит для сценариев, где нужен только актуальный результат.",
               "correct": false,
               "sections": {
@@ -942,6 +930,18 @@
                 "source_of_confusion": "Отмену предыдущего (поведение `switchMap`) ошибочно приписывают `concatMap`.",
                 "if_it_were_true": "Тогда `concatMap` терял бы элементы при быстром входе, но он буферизует и обрабатывает их по очереди.",
                 "how_it_should_be": "Отменяет предыдущее `switchMap`; `concatMap` ждёт завершения текущего и сохраняет порядок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`flatMap()`, `concatMap()` и `switchMap()` разворачивают внутренние потоки последовательно и сохраняют порядок; различаются только способом обработки ошибок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только `concatMap` сохраняет порядок и идёт последовательно; `flatMap` параллелен без гарантии порядка, `switchMap` оставляет лишь последний.",
+                "source_of_confusion": "Раз все три «map-операторы для потоков», их поведение ошибочно считают одинаковым.",
+                "if_it_were_true": "Тогда `flatMap` для поисковых запросов держал бы порядок, но быстрый ответ обгонит медленный.",
+                "how_it_should_be": "Порядок держит только `concatMap`; `flatMap` параллелен, `switchMap` отменяет предыдущее."
               }
             },
             {
@@ -971,6 +971,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`concat()` подписывается на все источники одновременно, буферизует их элементы и сортирует результат по порядку объявления источников.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`concat` подписывается на следующий источник только после завершения предыдущего и ничего не сортирует — порядок берётся из последовательной подписки.",
+                "source_of_confusion": "Раз оба объединяют источники, кажется, что и подписываются они одинаково — на все сразу.",
+                "if_it_were_true": "Тогда `concat(slow, fast)` запускал бы fast немедленно, но он стартует только после завершения slow.",
+                "how_it_should_be": "Одновременная подписка — это `merge`; `concat` строго последователен и не сортирует."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`concat()` сохраняет порядок и подписывается последовательно — следующий источник стартует только после завершения предыдущего; `merge()` порядок не гарантирует и подписывается на все источники одновременно.",
               "correct": true,
               "sections": {
@@ -982,32 +994,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`merge()` подписывается на источники последовательно и сохраняет их порядок, а `concat()` подключается ко всем сразу и чередует элементы по мере готовности.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: `concat` сохраняет порядок (последовательная подписка), а `merge` чередует элементы без гарантии порядка.",
-                "source_of_confusion": "Имена операторов абстрактны, поэтому их поведение легко поменять местами.",
-                "if_it_were_true": "Тогда `merge` двух источников давал бы строго source1, затем source2, но быстрый source2 обгонит медленный source1.",
-                "how_it_should_be": "Порядок держит `concat`; `merge` подписывается на всё сразу и чередует элементы."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`concat()` подписывается на все источники одновременно, буферизует их элементы и сортирует результат по порядку объявления источников.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`concat` подписывается на следующий источник только после завершения предыдущего и ничего не сортирует — порядок берётся из последовательной подписки.",
-                "source_of_confusion": "Раз оба объединяют источники, кажется, что и подписываются они одинаково — на все сразу.",
-                "if_it_were_true": "Тогда `concat(slow, fast)` запускал бы fast немедленно, но он стартует только после завершения slow.",
-                "how_it_should_be": "Одновременная подписка — это `merge`; `concat` строго последователен и не сортирует."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`concat()` применяется только к `Observable`, а `merge()` — только к `Flowable`; стратегия подписки и порядок элементов у них одинаковые.",
               "correct": false,
               "sections": {
@@ -1015,6 +1003,18 @@
                 "source_of_confusion": "Разнообразие типов наводит на мысль о привязке операторов к конкретному типу.",
                 "if_it_were_true": "Тогда `Flowable.concat(...)` был бы невозможен, но он существует наравне с `Observable.concat`.",
                 "how_it_should_be": "Различие — порядок и стратегия подписки; оба работают и с `Observable`, и с `Flowable`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`merge()` подписывается на источники последовательно и сохраняет их порядок, а `concat()` подключается ко всем сразу и чередует элементы по мере готовности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `concat` сохраняет порядок (последовательная подписка), а `merge` чередует элементы без гарантии порядка.",
+                "source_of_confusion": "Имена операторов абстрактны, поэтому их поведение легко поменять местами.",
+                "if_it_were_true": "Тогда `merge` двух источников давал бы строго source1, затем source2, но быстрый source2 обгонит медленный source1.",
+                "how_it_should_be": "Порядок держит `concat`; `merge` подписывается на всё сразу и чередует элементы."
               }
             }
           ]
@@ -1031,18 +1031,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В одной цепочке допускается только один оператор каждого типа: два `map()` или `filter()` подряд нужно обязательно объединять в одну функцию.",
+              "text": "Несколько операторов одного типа допустимы, но только до первого `observeOn()`; после переключения потока повторять оператор нельзя.",
               "correct": false,
               "sections": {
-                "what_actually": "RxJava разрешает сколько угодно операторов одного типа подряд; каждый создаёт новый `Observable`, и цепочка `map().map().map()` легальна.",
-                "source_of_confusion": "Идея «оптимизации» наводит на мысль о запрете дублирования операторов.",
-                "if_it_were_true": "Тогда `.map(trim).map(toUpperCase)` не компилировался бы, но это абсолютно валидный код.",
-                "how_it_should_be": "Несколько `map`/`filter` подряд допустимы; их объединение — вопрос читаемости, а не требование."
+                "what_actually": "Позиция не ограничена: операторы одного типа можно ставить в любом месте цепочки и сколько угодно раз.",
+                "source_of_confusion": "Кажется, что есть скрытое правило порядка, хотя цепочка свободно компонуется.",
+                "if_it_were_true": "Тогда `filter().map().filter()` был бы запрещён, но смешанный порядок операторов абсолютно нормален.",
+                "how_it_should_be": "Операторы одного типа допустимы в любой позиции цепочки без ограничений."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "Несколько операторов одного типа допустимы, однако каждый следующий мутирует предыдущий `Observable`, поэтому повторная подписка может дать другой результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый `map` создаёт новый `Observable`, не мутируя предыдущий; цепочка иммутабельна и переиспользуема.",
+                "source_of_confusion": "Мутирующие builder-паттерны наводят на мысль об изменении промежуточного результата.",
+                "if_it_were_true": "Тогда повторная подписка на цепочку давала бы другой результат, но она детерминирована и безопасна.",
+                "how_it_should_be": "Операторы возвращают новые `Observable`; никакой мутации промежуточных результатов нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Да, это нормальная практика: каждый оператор создаёт новый `Observable`, поэтому можно цеплять сколько угодно операторов одного типа подряд.",
               "correct": true,
               "sections": {
@@ -1054,27 +1066,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Несколько операторов одного типа допустимы, но только до первого `observeOn()`; после переключения потока повторять оператор нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Позиция не ограничена: операторы одного типа можно ставить в любом месте цепочки и сколько угодно раз.",
-                "source_of_confusion": "Кажется, что есть скрытое правило порядка, хотя цепочка свободно компонуется.",
-                "if_it_were_true": "Тогда `filter().map().filter()` был бы запрещён, но смешанный порядок операторов абсолютно нормален.",
-                "how_it_should_be": "Операторы одного типа допустимы в любой позиции цепочки без ограничений."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Несколько операторов одного типа допустимы, однако каждый следующий мутирует предыдущий `Observable`, поэтому повторная подписка может дать другой результат.",
+              "text": "В одной цепочке допускается только один оператор каждого типа: два `map()` или `filter()` подряд нужно обязательно объединять в одну функцию.",
               "correct": false,
               "sections": {
-                "what_actually": "Каждый `map` создаёт новый `Observable`, не мутируя предыдущий; цепочка иммутабельна и переиспользуема.",
-                "source_of_confusion": "Мутирующие builder-паттерны наводят на мысль об изменении промежуточного результата.",
-                "if_it_were_true": "Тогда повторная подписка на цепочку давала бы другой результат, но она детерминирована и безопасна.",
-                "how_it_should_be": "Операторы возвращают новые `Observable`; никакой мутации промежуточных результатов нет."
+                "what_actually": "RxJava разрешает сколько угодно операторов одного типа подряд; каждый создаёт новый `Observable`, и цепочка `map().map().map()` легальна.",
+                "source_of_confusion": "Идея «оптимизации» наводит на мысль о запрете дублирования операторов.",
+                "if_it_were_true": "Тогда `.map(trim).map(toUpperCase)` не компилировался бы, но это абсолютно валидный код.",
+                "how_it_should_be": "Несколько `map`/`filter` подряд допустимы; их объединение — вопрос читаемости, а не требование."
               }
             }
           ]
@@ -1091,13 +1091,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "К операторам фильтрации относятся `filter`, `take`, `skip`, `distinct` и `debounce`; при этом `filter` выбирает первые N элементов, а `take` применяет предикат.",
-              "correct": false,
+              "text": "Есть `filter(Predicate)`, `take`/`takeLast`/`skip`, `distinct`/`distinctUntilChanged`, временные `debounce`/`throttleFirst`/`throttleLast`(=`sample`), а также `elementAt`, `first`/`last`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Наоборот: `filter` пропускает элементы по предикату, а `take(n)` берёт первые N элементов — их роли перепутаны.",
-                "source_of_confusion": "Оба «отбирают» элементы, поэтому их функции легко поменять местами.",
-                "if_it_were_true": "Тогда `take(n)` фильтровал бы по условию, но он просто ограничивает количество первыми N.",
-                "how_it_should_be": "`filter` — по предикату, `take(n)` — первые N; это разные операторы фильтрации."
+                "explanation": "Операторы фильтрации отбирают подмножество элементов: по условию (`filter`), по позиции (`take`/`skip`/`elementAt`), по уникальности (`distinct*`) и по времени (`debounce`/`throttle`).",
+                "example": "`Observable.just(1,1,2,2,3,1,1).distinctUntilChanged()` даёт 1,2,3,1; а `debounce(300,MS)` в поиске пропустит элемент только после паузы во вводе.",
+                "when_to_apply": "Фильтрацию применяют для поиска (`debounce` + `distinctUntilChanged`), ограничения частоты (`throttle`) и выборки нужных элементов (`filter`/`take`).",
+                "edge_cases": "`debounce` ждёт паузу и может вообще ничего не пропустить в непрерывном потоке; для гарантированной выборки в окне берут `throttleLast`/`sample`.",
+                "related": "[[rxjava-interview#Q16]] switchMap + debounce в autocomplete; [[rxjava-interview#Q20]] операторы агрегации потока."
               }
             },
             {
@@ -1115,14 +1116,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Есть `filter(Predicate)`, `take`/`takeLast`/`skip`, `distinct`/`distinctUntilChanged`, временные `debounce`/`throttleFirst`/`throttleLast`(=`sample`), а также `elementAt`, `first`/`last`.",
-              "correct": true,
+              "text": "К операторам фильтрации относятся `filter`, `take`, `skip`, `distinct` и `debounce`; при этом `filter` выбирает первые N элементов, а `take` применяет предикат.",
+              "correct": false,
               "sections": {
-                "explanation": "Операторы фильтрации отбирают подмножество элементов: по условию (`filter`), по позиции (`take`/`skip`/`elementAt`), по уникальности (`distinct*`) и по времени (`debounce`/`throttle`).",
-                "example": "`Observable.just(1,1,2,2,3,1,1).distinctUntilChanged()` даёт 1,2,3,1; а `debounce(300,MS)` в поиске пропустит элемент только после паузы во вводе.",
-                "when_to_apply": "Фильтрацию применяют для поиска (`debounce` + `distinctUntilChanged`), ограничения частоты (`throttle`) и выборки нужных элементов (`filter`/`take`).",
-                "edge_cases": "`debounce` ждёт паузу и может вообще ничего не пропустить в непрерывном потоке; для гарантированной выборки в окне берут `throttleLast`/`sample`.",
-                "related": "[[rxjava-interview#Q16]] switchMap + debounce в autocomplete; [[rxjava-interview#Q20]] операторы агрегации потока."
+                "what_actually": "Наоборот: `filter` пропускает элементы по предикату, а `take(n)` берёт первые N элементов — их роли перепутаны.",
+                "source_of_confusion": "Оба «отбирают» элементы, поэтому их функции легко поменять местами.",
+                "if_it_were_true": "Тогда `take(n)` фильтровал бы по условию, но он просто ограничивает количество первыми N.",
+                "how_it_should_be": "`filter` — по предикату, `take(n)` — первые N; это разные операторы фильтрации."
               }
             },
             {
@@ -1163,13 +1163,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`toList()` агрегирует элементы в коллекцию, но возвращает `Observable<T>`, который затем повторно испускает собранные значения по одному.",
-              "correct": false,
+              "text": "Есть `reduce(BiFunction)` (свёртка в одно значение, `Single`/`Maybe`), `scan` (промежуточные результаты, `Observable`), `count` (`Single<Long>`), `toList`/`toMap` и `collect` для произвольной аккумуляции.",
+              "correct": true,
               "sections": {
-                "what_actually": "`toList()` собирает все элементы и возвращает `Single<List<T>>` — один список после завершения потока, а не поэлементный `Observable`.",
-                "source_of_confusion": "Раз исходный поток поэлементный, кажется, что и результат поэлементный.",
-                "if_it_were_true": "Тогда подписчик `toList()` получал бы элементы по одному, но он получит один готовый `List` целиком.",
-                "how_it_should_be": "`toList()` агрегирует в `Single<List<T>>`; для поэлементного вывода `toList` не нужен."
+                "explanation": "Операторы агрегации собирают поток в одно значение или коллекцию. Важно: `reduce`/`toList`/`toMap` ждут `onComplete`, поэтому опасны на бесконечных потоках.",
+                "example": "`Observable.range(1,5).reduce(0, Integer::sum)` даёт 15; `scan(0, Integer::sum)` даёт 0,1,3,6,10,15 (промежуточные суммы).",
+                "when_to_apply": "Агрегацию применяют к конечным потокам: подсчёт, сбор результатов в список/мапу, кастомная аккумуляция через `collect`.",
+                "edge_cases": "`toMap` при дублирующихся ключах перезапишет значение последним; для бесконечного потока агрегаторы вообще не завершатся.",
+                "related": "[[rxjava-interview#Q19]] операторы фильтрации потока; [[rxjava-interview#Q4]] Single и Maybe как результат агрегации."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Есть `reduce(BiFunction)` (свёртка в одно значение, `Single`/`Maybe`), `scan` (промежуточные результаты, `Observable`), `count` (`Single<Long>`), `toList`/`toMap` и `collect` для произвольной аккумуляции.",
-              "correct": true,
+              "text": "`toList()` агрегирует элементы в коллекцию, но возвращает `Observable<T>`, который затем повторно испускает собранные значения по одному.",
+              "correct": false,
               "sections": {
-                "explanation": "Операторы агрегации собирают поток в одно значение или коллекцию. Важно: `reduce`/`toList`/`toMap` ждут `onComplete`, поэтому опасны на бесконечных потоках.",
-                "example": "`Observable.range(1,5).reduce(0, Integer::sum)` даёт 15; `scan(0, Integer::sum)` даёт 0,1,3,6,10,15 (промежуточные суммы).",
-                "when_to_apply": "Агрегацию применяют к конечным потокам: подсчёт, сбор результатов в список/мапу, кастомная аккумуляция через `collect`.",
-                "edge_cases": "`toMap` при дублирующихся ключах перезапишет значение последним; для бесконечного потока агрегаторы вообще не завершатся.",
-                "related": "[[rxjava-interview#Q19]] операторы фильтрации потока; [[rxjava-interview#Q4]] Single и Maybe как результат агрегации."
+                "what_actually": "`toList()` собирает все элементы и возвращает `Single<List<T>>` — один список после завершения потока, а не поэлементный `Observable`.",
+                "source_of_confusion": "Раз исходный поток поэлементный, кажется, что и результат поэлементный.",
+                "if_it_were_true": "Тогда подписчик `toList()` получал бы элементы по одному, но он получит один готовый `List` целиком.",
+                "how_it_should_be": "`toList()` агрегирует в `Single<List<T>>`; для поэлементного вывода `toList` не нужен."
               }
             }
           ]
@@ -1211,6 +1211,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Собственные операторы создаются только через `ObservableOperator` и `lift()`; `ObservableTransformer` применяется лишь для смены `Scheduler`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`lift` — лишь один из двух способов; рекомендуемый — `compose()` с `Transformer`, который проще и безопаснее.",
+                "source_of_confusion": "`lift` самый «низкоуровневый», поэтому его принимают за единственный механизм.",
+                "if_it_were_true": "Тогда `compose(applySchedulers())` был бы невозможен, но это самый частый способ кастомизации.",
+                "how_it_should_be": "Кроме `lift` есть `compose`/`Transformer`, который и предпочтителен на практике."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Да, двумя способами: низкоуровневый `ObservableOperator` через `lift()` (управление на уровне `Observer`) и рекомендуемый `ObservableTransformer` через `compose()` (на уровне `Observable`).",
               "correct": true,
               "sections": {
@@ -1219,18 +1231,6 @@
                 "when_to_apply": "Кастомные операторы создают для переиспользуемой логики (повтор с задержкой, схема `Schedulers`), которую не хочется дублировать по цепочкам.",
                 "edge_cases": "`lift` опасен: ошибка в ручном управлении `Observer` ломает контракт; поэтому в 90% случаев берут `compose` + `Transformer`.",
                 "related": "[[rxjava-interview#Q22]] Transformer и compose подробнее; [[rxjava-interview#Q18]] цепочки операторов одного типа."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Собственные операторы создавать нельзя: RxJava допускает только композицию встроенных операторов, а `lift()` и `compose()` предназначены для внутреннего API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Кастомные операторы создавать можно — через `ObservableOperator`/`lift` или `ObservableTransformer`/`compose`.",
-                "source_of_confusion": "Богатый набор встроенных операторов наводит на мысль, что расширение невозможно.",
-                "if_it_were_true": "Тогда нельзя было бы вынести общую `retryWithDelay`-логику в переиспользуемый компонент, но `compose` это позволяет.",
-                "how_it_should_be": "Свои операторы создают через `lift` или `compose`; встроенными набор не ограничен."
               }
             },
             {
@@ -1248,13 +1248,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Собственные операторы создаются только через `ObservableOperator` и `lift()`; `ObservableTransformer` применяется лишь для смены `Scheduler`.",
+              "text": "Собственные операторы создавать нельзя: RxJava допускает только композицию встроенных операторов, а `lift()` и `compose()` предназначены для внутреннего API.",
               "correct": false,
               "sections": {
-                "what_actually": "`lift` — лишь один из двух способов; рекомендуемый — `compose()` с `Transformer`, который проще и безопаснее.",
-                "source_of_confusion": "`lift` самый «низкоуровневый», поэтому его принимают за единственный механизм.",
-                "if_it_were_true": "Тогда `compose(applySchedulers())` был бы невозможен, но это самый частый способ кастомизации.",
-                "how_it_should_be": "Кроме `lift` есть `compose`/`Transformer`, который и предпочтителен на практике."
+                "what_actually": "Кастомные операторы создавать можно — через `ObservableOperator`/`lift` или `ObservableTransformer`/`compose`.",
+                "source_of_confusion": "Богатый набор встроенных операторов наводит на мысль, что расширение невозможно.",
+                "if_it_were_true": "Тогда нельзя было бы вынести общую `retryWithDelay`-логику в переиспользуемый компонент, но `compose` это позволяет.",
+                "how_it_should_be": "Свои операторы создают через `lift` или `compose`; встроенными набор не ограничен."
               }
             }
           ]
@@ -1296,18 +1296,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`compose()` создаёт новый `Scheduler` для всей цепочки и всегда переносит upstream и downstream на выбранный поток исполнения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`compose()` лишь подставляет цепочку операторов; смену `Scheduler` делают только если она прописана внутри `Transformer` (`subscribeOn`/`observeOn`).",
-                "source_of_confusion": "Частое использование `compose` для схемы `Schedulers` создаёт впечатление, что он сам управляет потоками.",
-                "if_it_were_true": "Тогда любой `compose()` переключал бы поток, но `compose(addLogging())` без `Scheduler` ничего в потоках не меняет.",
-                "how_it_should_be": "`compose` сам по себе нейтрален к потокам; за `Scheduler` отвечает содержимое `Transformer`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`compose()` применяется отдельно к каждому элементу, как `map()`, но позволяет возвращать сразу несколько значений из одной функции.",
               "correct": false,
               "sections": {
@@ -1315,6 +1303,18 @@
                 "source_of_confusion": "Поэлементную семантику `map` ошибочно переносят на `compose`.",
                 "if_it_were_true": "Тогда `Transformer` пересобирался бы на каждый элемент, но он встраивается в цепочку единожды при построении.",
                 "how_it_should_be": "`compose` трансформирует поток целиком при сборке; поэлементно работает `map`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`compose()` создаёт новый `Scheduler` для всей цепочки и всегда переносит upstream и downstream на выбранный поток исполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`compose()` лишь подставляет цепочку операторов; смену `Scheduler` делают только если она прописана внутри `Transformer` (`subscribeOn`/`observeOn`).",
+                "source_of_confusion": "Частое использование `compose` для схемы `Schedulers` создаёт впечатление, что он сам управляет потоками.",
+                "if_it_were_true": "Тогда любой `compose()` переключал бы поток, но `compose(addLogging())` без `Scheduler` ничего в потоках не меняет.",
+                "how_it_should_be": "`compose` сам по себе нейтрален к потокам; за `Scheduler` отвечает содержимое `Transformer`."
               }
             }
           ]
@@ -1331,6 +1331,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Schedulers.io()` использует фиксированный пул размером по числу ядер, чтобы ограничить число параллельных сетевых и файловых операций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фиксированный по числу ядер пул — это `computation()`; `io()` использует растущий кешированный пул без жёсткого лимита.",
+                "source_of_confusion": "Свойство `computation()` ошибочно приписывают `io()`.",
+                "if_it_were_true": "Тогда 1000 параллельных сетевых вызовов на `io()` упёрлись бы в число ядер, но `io()` создаст под них новые потоки.",
+                "how_it_should_be": "`io()` — растущий кешированный пул; фиксированный размер = число ядер у `computation()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Scheduler` определяет порядок обработки элементов и обеспечивает их сортировку между операторами, а поток исполнения остаётся прежним.",
               "correct": false,
               "sections": {
@@ -1341,8 +1353,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`Schedulers.computation()` использует растущий пул для блокирующего I/O, а `Schedulers.io()` ограничен числом CPU и предназначен для вычислений.",
               "correct": false,
               "sections": {
@@ -1353,8 +1365,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Scheduler` — механизм управления потоками: он определяет, на каком thread выполняется работа. Основные: `io()` (кешированный пул для I/O), `computation()` (= числу ядер, для CPU), `newThread`, `single`, `trampoline`, `from(Executor)`.",
               "correct": true,
               "sections": {
@@ -1363,18 +1375,6 @@
                 "when_to_apply": "Выбор `Scheduler` диктуется характером работы: блокирующий I/O → `io()`, тяжёлые вычисления → `computation()`, кастомный пул → `from(Executor)`.",
                 "edge_cases": "`Schedulers.io()` неограничен и может создать слишком много потоков; для prod рекомендуют `from()` с настроенным `ThreadPoolExecutor`.",
                 "related": "[[rxjava-interview#Q24]] subscribeOn vs observeOn; [[rxjava-interview#Q28]] параллелизм через runOn и Schedulers."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Schedulers.io()` использует фиксированный пул размером по числу ядер, чтобы ограничить число параллельных сетевых и файловых операций.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Фиксированный по числу ядер пул — это `computation()`; `io()` использует растущий кешированный пул без жёсткого лимита.",
-                "source_of_confusion": "Свойство `computation()` ошибочно приписывают `io()`.",
-                "if_it_were_true": "Тогда 1000 параллельных сетевых вызовов на `io()` упёрлись бы в число ядер, но `io()` создаст под них новые потоки.",
-                "how_it_should_be": "`io()` — растущий кешированный пул; фиксированный размер = число ядер у `computation()`."
               }
             }
           ]
@@ -1391,30 +1391,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`subscribeOn()` переключает поток только для операторов ниже места вызова, а `observeOn()` задаёт поток подписки и всего upstream.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: `subscribeOn` влияет на весь upstream (где идёт подписка и генерация), а `observeOn` переключает только downstream с точки вызова.",
-                "source_of_confusion": "Роли двух операторов перепутаны, потому что оба связаны с `Scheduler`.",
-                "if_it_were_true": "Тогда `observeOn` в начале цепочки задавал бы поток источника, но источник определяет `subscribeOn`.",
-                "how_it_should_be": "`subscribeOn` — upstream и подписка; `observeOn` — downstream с точки вызова."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Позиция `subscribeOn()` определяет участок, на котором меняется поток, а `observeOn()` действует на всю цепочку независимо от места вызова.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: позиция `subscribeOn` неважна (он влияет на всё), а позиция `observeOn` важна — он переключает поток именно с этой точки вниз.",
-                "source_of_confusion": "Свойства двух операторов меняют местами из-за их кажущейся симметрии.",
-                "if_it_were_true": "Тогда перенос `observeOn` в другое место не менял бы поток downstream, но он переключает именно с точки вызова.",
-                "how_it_should_be": "Позиция важна для `observeOn`; `subscribeOn` влияет на upstream независимо от места."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "В цепочке учитывается только первый `observeOn()`, тогда как каждый `subscribeOn()` последовательно переключает поток для нового участка upstream.",
               "correct": false,
               "sections": {
@@ -1425,8 +1401,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`subscribeOn()` задаёт поток для всего upstream (где выполняется подписка и генерация) и его позиция неважна; `observeOn()` переключает поток только для downstream с точки вызова, и его позиция важна.",
               "correct": true,
               "sections": {
@@ -1435,6 +1411,30 @@
                 "when_to_apply": "`subscribeOn` ставят для выбора потока источника, `observeOn` — для перевода обработки на нужный пул (например, парсинг на computation, UI на main).",
                 "edge_cases": "Несколько `subscribeOn` бесполезны — побеждает ближайший к источнику; несколько `observeOn`, наоборот, осмысленны и каждый переключает поток.",
                 "related": "[[rxjava-interview#Q25]] несколько subscribeOn в цепочке; [[rxjava-interview#Q26]] несколько observeOn в цепочке."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`subscribeOn()` переключает поток только для операторов ниже места вызова, а `observeOn()` задаёт поток подписки и всего upstream.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `subscribeOn` влияет на весь upstream (где идёт подписка и генерация), а `observeOn` переключает только downstream с точки вызова.",
+                "source_of_confusion": "Роли двух операторов перепутаны, потому что оба связаны с `Scheduler`.",
+                "if_it_were_true": "Тогда `observeOn` в начале цепочки задавал бы поток источника, но источник определяет `subscribeOn`.",
+                "how_it_should_be": "`subscribeOn` — upstream и подписка; `observeOn` — downstream с точки вызова."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Позиция `subscribeOn()` определяет участок, на котором меняется поток, а `observeOn()` действует на всю цепочку независимо от места вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: позиция `subscribeOn` неважна (он влияет на всё), а позиция `observeOn` важна — он переключает поток именно с этой точки вниз.",
+                "source_of_confusion": "Свойства двух операторов меняют местами из-за их кажущейся симметрии.",
+                "if_it_were_true": "Тогда перенос `observeOn` в другое место не менял бы поток downstream, но он переключает именно с точки вызова.",
+                "how_it_should_be": "Позиция важна для `observeOn`; `subscribeOn` влияет на upstream независимо от места."
               }
             }
           ]
@@ -1451,6 +1451,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "RxJava запрещает несколько `subscribeOn()` в одной цепочке и выбрасывает `IllegalStateException` при второй попытке назначить поток подписки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дублирование `subscribeOn` не вызывает исключения — лишние просто игнорируются, цепочка собирается нормально.",
+                "source_of_confusion": "Кажется, что библиотека «защищает» от неоднозначности через ошибку.",
+                "if_it_were_true": "Тогда сборка падала бы при двух `subscribeOn`, но она проходит, а второй вызов молча не действует.",
+                "how_it_should_be": "Лишние `subscribeOn` игнорируются без ошибки; работает первый."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Только первый `subscribeOn()` в цепочке (ближайший к источнику) имеет эффект; все последующие игнорируются, потому что подписка происходит один раз и распространяется снизу вверх.",
               "correct": true,
               "sections": {
@@ -1459,18 +1471,6 @@
                 "when_to_apply": "Знание этого нужно при отладке «не на том потоке»: если поток источника неожиданный, ищут самый верхний `subscribeOn`.",
                 "edge_cases": "Несколько `subscribeOn` обычно признак ошибки; для смены потока обработки используют `observeOn`, который как раз действует многократно.",
                 "related": "[[rxjava-interview#Q24]] базовая разница subscribeOn/observeOn; [[rxjava-interview#Q26]] поведение нескольких observeOn."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "При нескольких `subscribeOn()` работает последний оператор в цепочке: он переопределяет планировщик всех предыдущих и задаёт поток источника.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Работает первый (ближайший к источнику) `subscribeOn`; подписка идёт снизу вверх, и более ранний побеждает.",
-                "source_of_confusion": "Аналогия с переопределением переменной «последним значением» переносится на `subscribeOn`.",
-                "if_it_were_true": "Тогда `subscribeOn(computation())` в конце менял бы поток, но всё останется на io от первого `subscribeOn`.",
-                "how_it_should_be": "Побеждает первый `subscribeOn`; последний игнорируется."
               }
             },
             {
@@ -1488,13 +1488,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "RxJava запрещает несколько `subscribeOn()` в одной цепочке и выбрасывает `IllegalStateException` при второй попытке назначить поток подписки.",
+              "text": "При нескольких `subscribeOn()` работает последний оператор в цепочке: он переопределяет планировщик всех предыдущих и задаёт поток источника.",
               "correct": false,
               "sections": {
-                "what_actually": "Дублирование `subscribeOn` не вызывает исключения — лишние просто игнорируются, цепочка собирается нормально.",
-                "source_of_confusion": "Кажется, что библиотека «защищает» от неоднозначности через ошибку.",
-                "if_it_were_true": "Тогда сборка падала бы при двух `subscribeOn`, но она проходит, а второй вызов молча не действует.",
-                "how_it_should_be": "Лишние `subscribeOn` игнорируются без ошибки; работает первый."
+                "what_actually": "Работает первый (ближайший к источнику) `subscribeOn`; подписка идёт снизу вверх, и более ранний побеждает.",
+                "source_of_confusion": "Аналогия с переопределением переменной «последним значением» переносится на `subscribeOn`.",
+                "if_it_were_true": "Тогда `subscribeOn(computation())` в конце менял бы поток, но всё останется на io от первого `subscribeOn`.",
+                "how_it_should_be": "Побеждает первый `subscribeOn`; последний игнорируется."
               }
             }
           ]
@@ -1511,18 +1511,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При нескольких `observeOn()` действует только первый, потому что последующие не могут изменить поток уже созданной подписки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Каждый `observeOn` переключает поток для всех последующих операторов; «только первый» — это правило для `subscribeOn`.",
-                "source_of_confusion": "Поведение `subscribeOn` ошибочно переносят на `observeOn`.",
-                "if_it_were_true": "Тогда второй `observeOn(single())` не менял бы поток, но он переводит downstream на `single`.",
-                "how_it_should_be": "Каждый `observeOn` действует; правило «первый» относится к `subscribeOn`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Каждый `observeOn()` переключает поток для всех операторов, следующих за ним; в отличие от `subscribeOn`, повторные `observeOn` все действуют.",
               "correct": true,
               "sections": {
@@ -1534,20 +1522,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Несколько `observeOn()` объединяются, и RxJava выбирает один из указанных `Scheduler` динамически в зависимости от загрузки пулов.",
+              "order": 1,
+              "label": "B",
+              "text": "При нескольких `observeOn()` действует только первый, потому что последующие не могут изменить поток уже созданной подписки.",
               "correct": false,
               "sections": {
-                "what_actually": "Никакой случайности: каждый `observeOn` детерминированно задаёт поток для следующих за ним операторов.",
-                "source_of_confusion": "Многопоточность ассоциируется с недетерминизмом, отсюда идея «случайного» выбора.",
-                "if_it_were_true": "Тогда нельзя было бы предсказать поток обработки, но он строго определяется последним `observeOn` перед оператором.",
-                "how_it_should_be": "Поток детерминирован: его задаёт ближайший предшествующий `observeOn`."
+                "what_actually": "Каждый `observeOn` переключает поток для всех последующих операторов; «только первый» — это правило для `subscribeOn`.",
+                "source_of_confusion": "Поведение `subscribeOn` ошибочно переносят на `observeOn`.",
+                "if_it_were_true": "Тогда второй `observeOn(single())` не менял бы поток, но он переводит downstream на `single`.",
+                "how_it_should_be": "Каждый `observeOn` действует; правило «первый» относится к `subscribeOn`."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Каждый новый `observeOn()` меняет поток всей цепочки, включая источник, и тем самым отменяет ранее заданный `subscribeOn()`.",
               "correct": false,
               "sections": {
@@ -1555,6 +1543,18 @@
                 "source_of_confusion": "Границу действия двух операторов (upstream vs downstream) путают.",
                 "if_it_were_true": "Тогда `observeOn` менял бы поток генерации источника, но он переключает только обработку ниже по цепочке.",
                 "how_it_should_be": "Upstream держит `subscribeOn`; `observeOn` переключает только то, что ниже него."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Несколько `observeOn()` объединяются, и RxJava выбирает один из указанных `Scheduler` динамически в зависимости от загрузки пулов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой случайности: каждый `observeOn` детерминированно задаёт поток для следующих за ним операторов.",
+                "source_of_confusion": "Многопоточность ассоциируется с недетерминизмом, отсюда идея «случайного» выбора.",
+                "if_it_were_true": "Тогда нельзя было бы предсказать поток обработки, но он строго определяется последним `observeOn` перед оператором.",
+                "how_it_should_be": "Поток детерминирован: его задаёт ближайший предшествующий `observeOn`."
               }
             }
           ]
@@ -1571,6 +1571,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Режим зависит от реактивного типа: `Observable` выполняется синхронно, а `Flowable` всегда асинхронно из-за поддержки backpressure.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба типа по умолчанию синхронны; асинхронность задаётся `Scheduler`-ами, а не выбором `Observable`/`Flowable`.",
+                "source_of_confusion": "Связь `Flowable` с backpressure наводит на мысль о встроенной асинхронности.",
+                "if_it_were_true": "Тогда `Flowable.just(1).map(...)` уходил бы в фон, но он тоже синхронен без `subscribeOn`/`observeOn`.",
+                "how_it_should_be": "И `Observable`, и `Flowable` синхронны по умолчанию; асинхронность даёт `Scheduler`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "По умолчанию RxJava выполняет цепочку асинхронно и создаёт отдельный фоновый поток для каждой подписки, даже без явного `Scheduler`.",
               "correct": false,
               "sections": {
@@ -1578,18 +1590,6 @@
                 "source_of_confusion": "Реактивность ассоциируется с асинхронностью, отсюда вывод об автоматических фоновых потоках.",
                 "if_it_were_true": "Тогда `just(1,2,3).map(...).subscribe(...)` уходил бы в другой поток, но всё выполнится на текущем (main).",
                 "how_it_should_be": "Без явного `Scheduler` всё синхронно в вызывающем потоке; асинхронность включают вручную."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "По умолчанию все операторы выполняются на `Schedulers.computation()`, а `subscribeOn()` нужен только для переключения на `io()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию `Scheduler` вообще не назначен — код идёт синхронно в вызывающем потоке, а не на `computation()`.",
-                "source_of_confusion": "Наличие готовых `Schedulers` создаёт впечатление, что один из них применяется автоматически.",
-                "if_it_were_true": "Тогда `map` всегда шёл бы на computation-пуле, но без `observeOn`/`subscribeOn` он на вызывающем потоке.",
-                "how_it_should_be": "По умолчанию планировщик не задан; `computation()` подключают явно через `observeOn`/`subscribeOn`."
               }
             },
             {
@@ -1608,13 +1608,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Режим зависит от реактивного типа: `Observable` выполняется синхронно, а `Flowable` всегда асинхронно из-за поддержки backpressure.",
+              "text": "По умолчанию все операторы выполняются на `Schedulers.computation()`, а `subscribeOn()` нужен только для переключения на `io()`.",
               "correct": false,
               "sections": {
-                "what_actually": "Оба типа по умолчанию синхронны; асинхронность задаётся `Scheduler`-ами, а не выбором `Observable`/`Flowable`.",
-                "source_of_confusion": "Связь `Flowable` с backpressure наводит на мысль о встроенной асинхронности.",
-                "if_it_were_true": "Тогда `Flowable.just(1).map(...)` уходил бы в фон, но он тоже синхронен без `subscribeOn`/`observeOn`.",
-                "how_it_should_be": "И `Observable`, и `Flowable` синхронны по умолчанию; асинхронность даёт `Scheduler`."
+                "what_actually": "По умолчанию `Scheduler` вообще не назначен — код идёт синхронно в вызывающем потоке, а не на `computation()`.",
+                "source_of_confusion": "Наличие готовых `Schedulers` создаёт впечатление, что один из них применяется автоматически.",
+                "if_it_were_true": "Тогда `map` всегда шёл бы на computation-пуле, но без `observeOn`/`subscribeOn` он на вызывающем потоке.",
+                "how_it_should_be": "По умолчанию планировщик не задан; `computation()` подключают явно через `observeOn`/`subscribeOn`."
               }
             }
           ]
@@ -1631,6 +1631,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Да: по умолчанию RxJava последовательна, но параллелизм достигается через `flatMap`+`subscribeOn` для каждого внутреннего `Observable`, через `ParallelFlowable` (`parallel().runOn().sequential()`) или через `merge` нескольких источников на разных `Schedulers`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ParallelFlowable` идиоматичен для CPU-bound задач (рельсы по числу ядер), а `flatMap`+`Schedulers.io()` — для I/O-bound (много параллельных сетевых вызовов).",
+                "example": "`Flowable.range(1,10).parallel().runOn(computation()).map(this::heavy).sequential().subscribe(...)` распределяет работу по ядрам.",
+                "when_to_apply": "Параллелизм применяют для ускорения независимых задач: батч сетевых запросов (`flatMap`+`io`) или тяжёлые вычисления (`parallel`+`computation`).",
+                "edge_cases": "У `flatMap` есть параметр `maxConcurrency`, ограничивающий число параллельных внутренних потоков, чтобы не перегрузить пул.",
+                "related": "[[rxjava-interview#Q23]] Schedulers для параллелизма; [[rxjava-interview#Q16]] flatMap для параллельных вызовов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "RxJava гарантирует последовательное выполнение и не поддерживает параллелизм внутри одной цепочки; для этого нужен внешний `ExecutorService`.",
               "correct": false,
               "sections": {
@@ -1641,8 +1654,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "RxJava автоматически распределяет каждый оператор по доступным ядрам, поэтому `flatMap`, `parallel()` и явные `Scheduler` нужны только для оптимизации.",
               "correct": false,
               "sections": {
@@ -1653,8 +1666,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Параллелизм доступен только через `ParallelFlowable`; `flatMap()` и `merge()` могут работать конкурентно, но всегда остаются в одном потоке.",
               "correct": false,
               "sections": {
@@ -1662,19 +1675,6 @@
                 "source_of_confusion": "Идиоматичность `ParallelFlowable` для CPU-задач принимают за единственный механизм.",
                 "if_it_were_true": "Тогда параллельные сетевые вызовы делались бы только через `parallel()`, но для I/O чаще берут `flatMap`+`io()`.",
                 "how_it_should_be": "Способов несколько; `ParallelFlowable` хорош для CPU, а `flatMap`+`io()` — для I/O."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Да: по умолчанию RxJava последовательна, но параллелизм достигается через `flatMap`+`subscribeOn` для каждого внутреннего `Observable`, через `ParallelFlowable` (`parallel().runOn().sequential()`) или через `merge` нескольких источников на разных `Schedulers`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`ParallelFlowable` идиоматичен для CPU-bound задач (рельсы по числу ядер), а `flatMap`+`Schedulers.io()` — для I/O-bound (много параллельных сетевых вызовов).",
-                "example": "`Flowable.range(1,10).parallel().runOn(computation()).map(this::heavy).sequential().subscribe(...)` распределяет работу по ядрам.",
-                "when_to_apply": "Параллелизм применяют для ускорения независимых задач: батч сетевых запросов (`flatMap`+`io`) или тяжёлые вычисления (`parallel`+`computation`).",
-                "edge_cases": "У `flatMap` есть параметр `maxConcurrency`, ограничивающий число параллельных внутренних потоков, чтобы не перегрузить пул.",
-                "related": "[[rxjava-interview#Q23]] Schedulers для параллелизма; [[rxjava-interview#Q16]] flatMap для параллельных вызовов."
               }
             }
           ]
@@ -1691,14 +1691,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Subject` — это одновременно `Observable` и `Observer`: он принимает элементы через `onNext()` и перенаправляет их подписчикам, выступая мостом между императивным и реактивным кодом. Типы: `Publish`, `Behavior`, `Replay`, `Async`, `Unicast`.",
-              "correct": true,
+              "text": "`BehaviorSubject` хранит все полученные значения и воспроизводит их новому подписчику, после чего продолжает отдавать будущие элементы.",
+              "correct": false,
               "sections": {
-                "explanation": "Различие типов — в том, что получает новый подписчик: `PublishSubject` только будущие, `BehaviorSubject` последнее + будущие, `ReplaySubject` всю историю, `AsyncSubject` только последний после `onComplete`.",
-                "example": "`BehaviorSubject.createDefault(\"init\")`: после `onNext(\"A\"); onNext(\"B\")` новый подписчик сразу получит \"B\", затем будущие значения.",
-                "when_to_apply": "`Subject` применяют, когда нет готового реактивного источника — для адаптации callback-API или ручного проброса событий в поток.",
-                "edge_cases": "`Subject` называют антипаттерном: он нарушает однонаправленный поток данных и легко завершается случайным `onComplete`; вместо него часто берут `Relay`.",
-                "related": "[[rxjava-interview#Q30]] разница Subject и RxRelay; [[rxjava-interview#Q11]] ReplaySubject и replay-семантика кеша."
+                "what_actually": "`BehaviorSubject` хранит только последнее значение (плюс будущие); всю историю хранит `ReplaySubject`.",
+                "source_of_confusion": "`Behavior` и `Replay` оба «кешируют», поэтому их объём кеша путают.",
+                "if_it_were_true": "Тогда `BehaviorSubject` на длинном потоке отдавал бы все прошлые значения, но он отдаёт лишь последнее.",
+                "how_it_should_be": "`BehaviorSubject` = последнее значение + будущие; вся история — это `ReplaySubject`."
               }
             },
             {
@@ -1728,13 +1727,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`BehaviorSubject` хранит все полученные значения и воспроизводит их новому подписчику, после чего продолжает отдавать будущие элементы.",
-              "correct": false,
+              "text": "`Subject` — это одновременно `Observable` и `Observer`: он принимает элементы через `onNext()` и перенаправляет их подписчикам, выступая мостом между императивным и реактивным кодом. Типы: `Publish`, `Behavior`, `Replay`, `Async`, `Unicast`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`BehaviorSubject` хранит только последнее значение (плюс будущие); всю историю хранит `ReplaySubject`.",
-                "source_of_confusion": "`Behavior` и `Replay` оба «кешируют», поэтому их объём кеша путают.",
-                "if_it_were_true": "Тогда `BehaviorSubject` на длинном потоке отдавал бы все прошлые значения, но он отдаёт лишь последнее.",
-                "how_it_should_be": "`BehaviorSubject` = последнее значение + будущие; вся история — это `ReplaySubject`."
+                "explanation": "Различие типов — в том, что получает новый подписчик: `PublishSubject` только будущие, `BehaviorSubject` последнее + будущие, `ReplaySubject` всю историю, `AsyncSubject` только последний после `onComplete`.",
+                "example": "`BehaviorSubject.createDefault(\"init\")`: после `onNext(\"A\"); onNext(\"B\")` новый подписчик сразу получит \"B\", затем будущие значения.",
+                "when_to_apply": "`Subject` применяют, когда нет готового реактивного источника — для адаптации callback-API или ручного проброса событий в поток.",
+                "edge_cases": "`Subject` называют антипаттерном: он нарушает однонаправленный поток данных и легко завершается случайным `onComplete`; вместо него часто берут `Relay`.",
+                "related": "[[rxjava-interview#Q30]] разница Subject и RxRelay; [[rxjava-interview#Q11]] ReplaySubject и replay-семантика кеша."
               }
             }
           ]
@@ -1751,6 +1751,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Subject` и `Relay` совпадают по API и жизненному циклу; отличие состоит только в названиях методов `onNext()` и `accept()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они отличаются и API (`accept` вместо `onNext` у `Relay`), и поведением (`Relay` не завершается терминалами).",
+                "source_of_confusion": "Похожая роль «мост в реактивный поток» создаёт впечатление полной эквивалентности.",
+                "if_it_were_true": "Тогда `relay.onComplete()` существовал бы и завершал поток, но у `Relay` такого метода нет.",
+                "how_it_should_be": "`Relay` использует `accept()` и не завершается; это отличает его от `Subject`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`RxRelay` входит в ядро RxJava 3 и предоставляет те же типы, что и `Subject`, без необходимости подключать дополнительную библиотеку.",
               "correct": false,
               "sections": {
@@ -1758,19 +1770,6 @@
                 "source_of_confusion": "Тесная связь `Relay` с RxJava создаёт впечатление, что он часть ядра.",
                 "if_it_were_true": "Тогда `PublishRelay.create()` работал бы без зависимости, но нужен артефакт `rxrelay`.",
                 "how_it_should_be": "`Subject` встроен в RxJava; `RxRelay` подключают отдельной зависимостью."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`RxRelay` (библиотека Jake Wharton) предоставляет `Relay` — вариант `Subject`, который никогда не завершается: вызовы `onComplete()`/`onError()` у него игнорируются (точнее, их нет — есть только `accept()`).",
-              "correct": true,
-              "sections": {
-                "explanation": "Главное отличие — защита от случайного завершения. Обычный `Subject` можно нечаянно закрыть `onComplete`, после чего новые подписчики ничего не получат; `Relay` от этого защищён.",
-                "example": "`PublishSubject` после `onComplete()` молча проглатывает `onNext(\"B\")`; `PublishRelay.create(); relay.accept(\"A\"); relay.accept(\"B\")` работает всегда.",
-                "when_to_apply": "`Relay` применяют для event bus и UI-событий, где поток событий должен жить всё время и не должен случайно завершаться.",
-                "edge_cases": "`Relay` нельзя завершить вообще — если по логике нужен терминал (конец загрузки), `Relay` не подойдёт, нужен `Subject`.",
-                "related": "[[rxjava-interview#Q29]] типы Subject и их семантика; [[rxjava-interview#Q39]] управление подписками и утечки."
               }
             },
             {
@@ -1788,13 +1787,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Subject` и `Relay` совпадают по API и жизненному циклу; отличие состоит только в названиях методов `onNext()` и `accept()`.",
-              "correct": false,
+              "text": "`RxRelay` (библиотека Jake Wharton) предоставляет `Relay` — вариант `Subject`, который никогда не завершается: вызовы `onComplete()`/`onError()` у него игнорируются (точнее, их нет — есть только `accept()`).",
+              "correct": true,
               "sections": {
-                "what_actually": "Они отличаются и API (`accept` вместо `onNext` у `Relay`), и поведением (`Relay` не завершается терминалами).",
-                "source_of_confusion": "Похожая роль «мост в реактивный поток» создаёт впечатление полной эквивалентности.",
-                "if_it_were_true": "Тогда `relay.onComplete()` существовал бы и завершал поток, но у `Relay` такого метода нет.",
-                "how_it_should_be": "`Relay` использует `accept()` и не завершается; это отличает его от `Subject`."
+                "explanation": "Главное отличие — защита от случайного завершения. Обычный `Subject` можно нечаянно закрыть `onComplete`, после чего новые подписчики ничего не получат; `Relay` от этого защищён.",
+                "example": "`PublishSubject` после `onComplete()` молча проглатывает `onNext(\"B\")`; `PublishRelay.create(); relay.accept(\"A\"); relay.accept(\"B\")` работает всегда.",
+                "when_to_apply": "`Relay` применяют для event bus и UI-событий, где поток событий должен жить всё время и не должен случайно завершаться.",
+                "edge_cases": "`Relay` нельзя завершить вообще — если по логике нужен терминал (конец загрузки), `Relay` не подойдёт, нужен `Subject`.",
+                "related": "[[rxjava-interview#Q29]] типы Subject и их семантика; [[rxjava-interview#Q39]] управление подписками и утечки."
               }
             }
           ]
@@ -1811,18 +1811,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Backpressure — механизм, при котором RxJava автоматически увеличивает число потоков потребителя, пока его скорость не сравняется со скоростью производителя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Backpressure — это управление потоком, когда производитель быстрее потребителя; оно не ускоряет потребителя, а согласует темпы (буфер, drop, request).",
-                "source_of_confusion": "Слово «давление» наводит на мысль о «подталкивании» потребителя к ускорению.",
-                "if_it_were_true": "Тогда медленный consumer магически догонял бы producer, но реально backpressure либо тормозит producer, либо отбрасывает элементы.",
-                "how_it_should_be": "Backpressure согласует скорости через `request(n)`/буфер/drop, а не ускоряет потребителя."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Backpressure одинаково поддерживается `Observable` и `Flowable`: оба используют `request(n)`, но у `Observable` этот механизм включён по умолчанию.",
               "correct": false,
               "sections": {
@@ -1833,8 +1821,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Backpressure — механизм управления потоком, когда производитель (`Observable`/`Flowable`) генерирует данные быстрее, чем потребитель может их обработать; без него возможны `MissingBackpressureException`, `OutOfMemoryError` или потеря данных.",
               "correct": true,
               "sections": {
@@ -1843,6 +1831,18 @@
                 "when_to_apply": "Backpressure учитывают при работе с быстрыми источниками: чтение больших файлов, Kafka-стримы, БД-курсоры — там берут `Flowable`.",
                 "edge_cases": "`Observable` намеренно без backpressure ради простоты; для быстрых/бесконечных источников его заменяют на `Flowable`.",
                 "related": "[[rxjava-interview#Q32]] Observable vs Flowable; [[rxjava-interview#Q33]] стратегии BackpressureStrategy."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Backpressure — механизм, при котором RxJava автоматически увеличивает число потоков потребителя, пока его скорость не сравняется со скоростью производителя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backpressure — это управление потоком, когда производитель быстрее потребителя; оно не ускоряет потребителя, а согласует темпы (буфер, drop, request).",
+                "source_of_confusion": "Слово «давление» наводит на мысль о «подталкивании» потребителя к ускорению.",
+                "if_it_were_true": "Тогда медленный consumer магически догонял бы producer, но реально backpressure либо тормозит producer, либо отбрасывает элементы.",
+                "how_it_should_be": "Backpressure согласует скорости через `request(n)`/буфер/drop, а не ускоряет потребителя."
               }
             },
             {
@@ -1871,18 +1871,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Observable` реализует `Reactive Streams Publisher` и поддерживает `request(n)`, а `Flowable` использует упрощённый API без backpressure.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: `Flowable` поддерживает backpressure (`Reactive Streams`, `request(n)`), а `Observable` его не имеет.",
-                "source_of_confusion": "Роли двух типов перепутаны: backpressure-возможности `Flowable` ошибочно приписывают `Observable`.",
-                "if_it_were_true": "Тогда быстрый источник в `Observable` контролировался бы `request(n)`, но без backpressure он переполняется.",
-                "how_it_should_be": "Backpressure поддерживает `Flowable` через `request(n)`; `Observable` работает без него и потому проще."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Flowable` быстрее `Observable`, потому что backpressure уменьшает накладные расходы и всегда предотвращает внутреннюю буферизацию.",
               "correct": false,
               "sections": {
@@ -1890,6 +1878,19 @@
                 "source_of_confusion": "Связь `Flowable` с «продвинутым» API наводит на мысль о его большей производительности.",
                 "if_it_were_true": "Тогда для UI-событий стоило бы брать `Flowable`, но там как раз выгоднее лёгкий `Observable`.",
                 "how_it_should_be": "Без backpressure `Observable` чуть производительнее; `Flowable` платит за контроль скорости."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Flowable` поддерживает backpressure (реализует `Reactive Streams` `Publisher`), а `Observable` — нет; `Observable` чуть производительнее (без overhead) и подходит для UI-событий и малых потоков, `Flowable` — для больших потоков, файлов, БД и сети.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор по объёму и скорости: `< 1000` элементов или UI-события → `Observable`; большие/бесконечные потоки с риском переполнения → `Flowable`.",
+                "example": "UI-клики берут `Observable` (потеря некритична), а чтение большого CSV — `Flowable.create(..., BackpressureStrategy.BUFFER)` с контролем скорости.",
+                "when_to_apply": "Тип выбирают на этапе дизайна: источник быстрый и большой → `Flowable`; конечный и небольшой → `Observable`.",
+                "edge_cases": "Конвертация: `Observable.toFlowable(strategy)` добавляет backpressure, а `Flowable.toObservable()` его теряет.",
+                "related": "[[rxjava-interview#Q31]] что такое backpressure; [[rxjava-interview#Q33]] стратегии BackpressureStrategy для Flowable."
               }
             },
             {
@@ -1907,14 +1908,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Flowable` поддерживает backpressure (реализует `Reactive Streams` `Publisher`), а `Observable` — нет; `Observable` чуть производительнее (без overhead) и подходит для UI-событий и малых потоков, `Flowable` — для больших потоков, файлов, БД и сети.",
-              "correct": true,
+              "text": "`Observable` реализует `Reactive Streams Publisher` и поддерживает `request(n)`, а `Flowable` использует упрощённый API без backpressure.",
+              "correct": false,
               "sections": {
-                "explanation": "Выбор по объёму и скорости: `< 1000` элементов или UI-события → `Observable`; большие/бесконечные потоки с риском переполнения → `Flowable`.",
-                "example": "UI-клики берут `Observable` (потеря некритична), а чтение большого CSV — `Flowable.create(..., BackpressureStrategy.BUFFER)` с контролем скорости.",
-                "when_to_apply": "Тип выбирают на этапе дизайна: источник быстрый и большой → `Flowable`; конечный и небольшой → `Observable`.",
-                "edge_cases": "Конвертация: `Observable.toFlowable(strategy)` добавляет backpressure, а `Flowable.toObservable()` его теряет.",
-                "related": "[[rxjava-interview#Q31]] что такое backpressure; [[rxjava-interview#Q33]] стратегии BackpressureStrategy для Flowable."
+                "what_actually": "Наоборот: `Flowable` поддерживает backpressure (`Reactive Streams`, `request(n)`), а `Observable` его не имеет.",
+                "source_of_confusion": "Роли двух типов перепутаны: backpressure-возможности `Flowable` ошибочно приписывают `Observable`.",
+                "if_it_were_true": "Тогда быстрый источник в `Observable` контролировался бы `request(n)`, но без backpressure он переполняется.",
+                "how_it_should_be": "Backpressure поддерживает `Flowable` через `request(n)`; `Observable` работает без него и потому проще."
               }
             }
           ]
@@ -1931,6 +1931,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`DROP` сохраняет новые элементы, удаляя самые старые из внутреннего буфера, поэтому потребитель всегда получает наиболее актуальные данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DROP` отбрасывает именно НОВЫЕ элементы, которые не помещаются; сохранение последнего — это `LATEST`, а отбрасывание старых — `DROP_OLDEST` overflow-стратегия.",
+                "source_of_confusion": "`DROP` и `LATEST` оба «теряют данные», поэтому их поведение путают.",
+                "if_it_were_true": "Тогда `onBackpressureDrop` всегда отдавал бы свежие значения, но он роняет новые при заполненном буфере.",
+                "how_it_should_be": "`DROP` теряет новые элементы; «последнее важнее» реализует `LATEST`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`BUFFER` (буферизует все элементы, риск OOM), `DROP` (отбрасывает новые, что не помещаются), `LATEST` (хранит только последний), `ERROR` (бросает `MissingBackpressureException`), `MISSING` (без стратегии — управляешь сам через `onBackpressure*`).",
               "correct": true,
               "sections": {
@@ -1939,18 +1951,6 @@
                 "when_to_apply": "Стратегию выбирают по семантике данных: пакетная обработка → `BUFFER`, телеметрия → `DROP`, актуальное состояние → `LATEST`.",
                 "edge_cases": "`BUFFER` без ограничения размера опасен на бесконечных потоках (OOM); поэтому часто задают `onBackpressureBuffer(capacity, onOverflow, DROP_OLDEST)`.",
                 "related": "[[rxjava-interview#Q31]] что такое backpressure; [[rxjava-interview#Q45]] выбор стратегии под нагрузку."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`DROP` сохраняет новые элементы, удаляя самые старые из внутреннего буфера, поэтому потребитель всегда получает наиболее актуальные данные.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`DROP` отбрасывает именно НОВЫЕ элементы, которые не помещаются; сохранение последнего — это `LATEST`, а отбрасывание старых — `DROP_OLDEST` overflow-стратегия.",
-                "source_of_confusion": "`DROP` и `LATEST` оба «теряют данные», поэтому их поведение путают.",
-                "if_it_were_true": "Тогда `onBackpressureDrop` всегда отдавал бы свежие значения, но он роняет новые при заполненном буфере.",
-                "how_it_should_be": "`DROP` теряет новые элементы; «последнее важнее» реализует `LATEST`."
               }
             },
             {
@@ -1991,18 +1991,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для решения backpressure достаточно перенести обработку на `Schedulers.io()`: растущий пул автоматически выравнивает скорость producer и consumer.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Backpressure решают сменой на `Flowable`, операторами ограничения скорости (`throttle`/`buffer`/`window`), параллелизмом потребителя и `onBackpressure*`; больший пул сам по себе проблему не убирает.",
-                "source_of_confusion": "Идея «больше потоков = быстрее обработка» подменяет согласование скоростей.",
-                "if_it_were_true": "Тогда `subscribeOn(io())` чинил бы переполнение, но при медленном consumer буфер всё равно растёт до OOM.",
-                "how_it_should_be": "Нужны `Flowable`, rate-limiting и `onBackpressure*`; пул потоков лишь меняет thread исполнения."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Использовать `Flowable` вместо `Observable`; применять операторы ограничения скорости (`throttleLast`/`sample`, `buffer`, `window`); увеличить параллелизм потребителя (`parallel`+`runOn`); и применить `onBackpressure*` (`Buffer`/`Drop`/`Latest`).",
               "correct": true,
               "sections": {
@@ -2014,20 +2002,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Проблему backpressure решают увеличением буфера до максимально возможного размера, чтобы производитель никогда не ждал потребителя.",
+              "order": 1,
+              "label": "B",
+              "text": "Для решения backpressure достаточно перенести обработку на `Schedulers.io()`: растущий пул автоматически выравнивает скорость producer и consumer.",
               "correct": false,
               "sections": {
-                "what_actually": "Бесконечный буфер не решает проблему, а откладывает OOM; нужны rate-limiting, параллелизм и осознанная overflow-политика.",
-                "source_of_confusion": "Кажется, что «достаточно большой буфер» вместит любой поток.",
-                "if_it_were_true": "Тогда бесконечный `onBackpressureBuffer` работал бы вечно, но при устойчиво быстром producer память кончится.",
-                "how_it_should_be": "Решение — согласование скоростей и политика переполнения, а не безразмерный буфер."
+                "what_actually": "Backpressure решают сменой на `Flowable`, операторами ограничения скорости (`throttle`/`buffer`/`window`), параллелизмом потребителя и `onBackpressure*`; больший пул сам по себе проблему не убирает.",
+                "source_of_confusion": "Идея «больше потоков = быстрее обработка» подменяет согласование скоростей.",
+                "if_it_were_true": "Тогда `subscribeOn(io())` чинил бы переполнение, но при медленном consumer буфер всё равно растёт до OOM.",
+                "how_it_should_be": "Нужны `Flowable`, rate-limiting и `onBackpressure*`; пул потоков лишь меняет thread исполнения."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Backpressure лучше обрабатывать через `try/catch` вокруг `subscribe()`, перехватывая `MissingBackpressureException` и продолжая текущую подписку.",
               "correct": false,
               "sections": {
@@ -2035,6 +2023,18 @@
                 "source_of_confusion": "Императивная привычка ловить исключения через `try/catch` переносится на асинхронный поток.",
                 "if_it_were_true": "Тогда `try/catch` вокруг `subscribe` гасил бы проблему, но ошибка приходит в `onError`, а не выбрасывается синхронно.",
                 "how_it_should_be": "Причину устраняют `Flowable`/rate-limiting/`onBackpressure*`, а ошибки обрабатывают в `onError`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Проблему backpressure решают увеличением буфера до максимально возможного размера, чтобы производитель никогда не ждал потребителя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бесконечный буфер не решает проблему, а откладывает OOM; нужны rate-limiting, параллелизм и осознанная overflow-политика.",
+                "source_of_confusion": "Кажется, что «достаточно большой буфер» вместит любой поток.",
+                "if_it_were_true": "Тогда бесконечный `onBackpressureBuffer` работал бы вечно, но при устойчиво быстром producer память кончится.",
+                "how_it_should_be": "Решение — согласование скоростей и политика переполнения, а не безразмерный буфер."
               }
             }
           ]
@@ -2063,6 +2063,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`onErrorResumeNext()` заменяет ошибку одним значением того же типа, тогда как `onErrorReturn()` переключается на альтернативный `Observable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`onErrorResumeNext` переключается на альтернативный `Observable` (поток), а замена одним значением — это `onErrorReturn`/`onErrorReturnItem`.",
+                "source_of_confusion": "`onErrorReturn` и `onErrorResumeNext` похожи по названию, поэтому их результат путают.",
+                "if_it_were_true": "Тогда `onErrorResumeNext(e -> cache.getUser(id))` отдавал бы одно значение, но он подписывается на целый fallback-поток.",
+                "how_it_should_be": "`onErrorResumeNext` — альтернативный поток; одно значение даёт `onErrorReturn`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`doOnError()` перехватывает ошибку, заменяет её на `onComplete()` и позволяет downstream продолжить обработку без терминального сигнала.",
               "correct": false,
               "sections": {
@@ -2073,8 +2085,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Есть `onErrorReturn`/`onErrorReturnItem` (заменить ошибку значением), `onErrorResumeNext` (переключиться на другой `Observable`), `onErrorComplete` (превратить ошибку в `onComplete`), `retry`/`retry(n)`/`retryWhen` (повтор), `doOnError` (side-effect без перехвата).",
               "correct": true,
               "sections": {
@@ -2083,18 +2095,6 @@
                 "when_to_apply": "Выбор зависит от сценария: есть осмысленный fallback → `onErrorReturn`/`onErrorResumeNext`; ошибка временная → `retry`; нужно только залогировать → `doOnError`.",
                 "edge_cases": "`retry` без задержки бьёт по сервису немедленными повторами; для нестабильных сервисов берут `retryWhen` с backoff и jitter.",
                 "related": "[[rxjava-interview#Q36]] несколько ошибок и CompositeException; [[rxjava-interview#Q44]] retry с exponential backoff."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`onErrorResumeNext()` заменяет ошибку одним значением того же типа, тогда как `onErrorReturn()` переключается на альтернативный `Observable`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`onErrorResumeNext` переключается на альтернативный `Observable` (поток), а замена одним значением — это `onErrorReturn`/`onErrorReturnItem`.",
-                "source_of_confusion": "`onErrorReturn` и `onErrorResumeNext` похожи по названию, поэтому их результат путают.",
-                "if_it_were_true": "Тогда `onErrorResumeNext(e -> cache.getUser(id))` отдавал бы одно значение, но он подписывается на целый fallback-поток.",
-                "how_it_should_be": "`onErrorResumeNext` — альтернативный поток; одно значение даёт `onErrorReturn`."
               }
             }
           ]
@@ -2111,13 +2111,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Если в цепочке возникает несколько ошибок, RxJava доставляет их подписчику последовательно через несколько вызовов `onError()`.",
-              "correct": false,
+              "text": "В стандартном `Observable` первая ошибка терминальна — цепочка останавливается, последующие ошибки не обрабатываются; для сбора нескольких есть `mergeDelayError` (откладывает ошибки, оборачивает в `CompositeException`) и `onErrorResumeNext` (замена каждой ошибки).",
+              "correct": true,
               "sections": {
-                "what_actually": "По контракту `onError` вызывается максимум один раз и терминален; несколько `onError` подряд невозможны.",
-                "source_of_confusion": "Идея «список ошибок по очереди» противоречит правилу одного терминала.",
-                "if_it_were_true": "Тогда подписчик получал бы серию `onError`, но после первого поток закрыт, а лишние уйдут в `RxJavaPlugins.onError`.",
-                "how_it_should_be": "В стандартном потоке доставляется одна (первая) ошибка; для нескольких нужен `mergeDelayError` с `CompositeException`."
+                "explanation": "По контракту `onNext* (onComplete | onError)?` поток завершается на первой ошибке. Чтобы пройти все источники несмотря на ошибки, применяют `mergeDelayError`.",
+                "example": "`Observable.mergeDelayError(src1, errSrc2, errSrc3)` отдаст значения src1, затем единый `CompositeException` с обеими ошибками.",
+                "when_to_apply": "`mergeDelayError` нужен, когда важно обработать максимум источников (например, опросить все сервисы), а ошибки собрать вместе.",
+                "edge_cases": "Множественные ошибки оборачиваются в `CompositeException`, и список достаётся через `getExceptions()`.",
+                "related": "[[rxjava-interview#Q35]] операторы обработки ошибок; [[rxjava-interview#Q17]] merge и mergeDelayError для нескольких источников."
               }
             },
             {
@@ -2147,14 +2148,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В стандартном `Observable` первая ошибка терминальна — цепочка останавливается, последующие ошибки не обрабатываются; для сбора нескольких есть `mergeDelayError` (откладывает ошибки, оборачивает в `CompositeException`) и `onErrorResumeNext` (замена каждой ошибки).",
-              "correct": true,
+              "text": "Если в цепочке возникает несколько ошибок, RxJava доставляет их подписчику последовательно через несколько вызовов `onError()`.",
+              "correct": false,
               "sections": {
-                "explanation": "По контракту `onNext* (onComplete | onError)?` поток завершается на первой ошибке. Чтобы пройти все источники несмотря на ошибки, применяют `mergeDelayError`.",
-                "example": "`Observable.mergeDelayError(src1, errSrc2, errSrc3)` отдаст значения src1, затем единый `CompositeException` с обеими ошибками.",
-                "when_to_apply": "`mergeDelayError` нужен, когда важно обработать максимум источников (например, опросить все сервисы), а ошибки собрать вместе.",
-                "edge_cases": "Множественные ошибки оборачиваются в `CompositeException`, и список достаётся через `getExceptions()`.",
-                "related": "[[rxjava-interview#Q35]] операторы обработки ошибок; [[rxjava-interview#Q17]] merge и mergeDelayError для нескольких источников."
+                "what_actually": "По контракту `onError` вызывается максимум один раз и терминален; несколько `onError` подряд невозможны.",
+                "source_of_confusion": "Идея «список ошибок по очереди» противоречит правилу одного терминала.",
+                "if_it_were_true": "Тогда подписчик получал бы серию `onError`, но после первого поток закрыт, а лишние уйдут в `RxJavaPlugins.onError`.",
+                "how_it_should_be": "В стандартном потоке доставляется одна (первая) ошибка; для нескольких нужен `mergeDelayError` с `CompositeException`."
               }
             }
           ]
@@ -2171,6 +2171,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Для RxJava стандартно используют `StepVerifier`, а `TestObserver` предназначен только для внутренних тестов библиотеки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`StepVerifier` — инструмент тестирования `Project Reactor`; в RxJava тестируют через `TestObserver`/`TestSubscriber`.",
+                "source_of_confusion": "Reactor и RxJava оба реактивные, поэтому их тестовые API смешивают.",
+                "if_it_were_true": "Тогда `StepVerifier.create(observable)` работал бы в RxJava, но он рассчитан на `Flux`/`Mono`.",
+                "how_it_should_be": "В RxJava — `TestObserver`; `StepVerifier` относится к Reactor."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Через `TestObserver`/`TestSubscriber` (метод `.test()` подписывается и даёт assertions: `assertComplete`, `assertNoErrors`, `assertValues`), `TestScheduler` для управления временем и `RxJavaPlugins` для подмены `Schedulers` на синхронные.",
               "correct": true,
               "sections": {
@@ -2179,18 +2191,6 @@
                 "when_to_apply": "Эти инструменты применяют для всех реактивных тестов: проверка значений, обработки ошибок и поведения во времени без флакающих задержек.",
                 "edge_cases": "В `@BeforeEach` подменяют `Schedulers` на `trampoline` через `RxJavaPlugins.setIoSchedulerHandler`, а в `@AfterEach` обязательно зовут `RxJavaPlugins.reset()`.",
                 "related": "[[rxjava-interview#Q38]] TestScheduler и виртуальное время; [[rxjava-interview#Q23]] Schedulers, которые подменяют в тестах."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Реактивные цепочки тестируют через `Thread.sleep()` и обычные assertions: это точнее отражает реальное время, чем виртуальный `TestScheduler`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Thread.sleep` делает тесты флакающими и медленными; RxJava даёт `TestObserver` и `TestScheduler` для детерминированной проверки без сна.",
-                "source_of_confusion": "Императивная привычка «подождать и проверить» переносится на реактивные тесты.",
-                "if_it_were_true": "Тогда тест с `interval` приходилось бы ждать реальными секундами, но `TestScheduler.advanceTimeBy` двигает время мгновенно.",
-                "how_it_should_be": "Используют `TestObserver`/`TestScheduler`; `Thread.sleep` — антипаттерн для реактивных тестов."
               }
             },
             {
@@ -2208,13 +2208,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для RxJava стандартно используют `StepVerifier`, а `TestObserver` предназначен только для внутренних тестов библиотеки.",
+              "text": "Реактивные цепочки тестируют через `Thread.sleep()` и обычные assertions: это точнее отражает реальное время, чем виртуальный `TestScheduler`.",
               "correct": false,
               "sections": {
-                "what_actually": "`StepVerifier` — инструмент тестирования `Project Reactor`; в RxJava тестируют через `TestObserver`/`TestSubscriber`.",
-                "source_of_confusion": "Reactor и RxJava оба реактивные, поэтому их тестовые API смешивают.",
-                "if_it_were_true": "Тогда `StepVerifier.create(observable)` работал бы в RxJava, но он рассчитан на `Flux`/`Mono`.",
-                "how_it_should_be": "В RxJava — `TestObserver`; `StepVerifier` относится к Reactor."
+                "what_actually": "`Thread.sleep` делает тесты флакающими и медленными; RxJava даёт `TestObserver` и `TestScheduler` для детерминированной проверки без сна.",
+                "source_of_confusion": "Императивная привычка «подождать и проверить» переносится на реактивные тесты.",
+                "if_it_were_true": "Тогда тест с `interval` приходилось бы ждать реальными секундами, но `TestScheduler.advanceTimeBy` двигает время мгновенно.",
+                "how_it_should_be": "Используют `TestObserver`/`TestScheduler`; `Thread.sleep` — антипаттерн для реактивных тестов."
               }
             }
           ]
@@ -2231,6 +2231,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "После подписки `TestScheduler` автоматически выполняет все отложенные действия; `advanceTimeBy()` нужен только для проверки промежуточного состояния.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без продвижения времени отложенные действия не выполнятся; их запускают `advanceTimeBy`/`advanceTimeTo` или `triggerActions`.",
+                "source_of_confusion": "Кажется, что планировщик «сам всё прогонит» при подписке.",
+                "if_it_were_true": "Тогда `interval`-тики появлялись бы сразу после `.test()`, но до `advanceTimeBy` `assertNoValues()` верно.",
+                "how_it_should_be": "Действия выполняются только при явном продвижении времени или `triggerActions`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`TestScheduler` ускоряет реальные системные таймеры и выполняет задержки быстрее, сохраняя зависимость от текущего времени ОС.",
               "correct": false,
               "sections": {
@@ -2241,8 +2253,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`TestScheduler` — виртуальный планировщик, позволяющий вручную управлять временем в тестах через `advanceTimeBy`/`advanceTimeTo`/`triggerActions`; незаменим для операторов, зависящих от времени (`delay`, `interval`, `debounce`, `timeout`).",
               "correct": true,
               "sections": {
@@ -2251,18 +2263,6 @@
                 "when_to_apply": "`TestScheduler` применяют для проверки `retryWhen` с задержкой, `debounce`, `timeout` — везде, где поведение зависит от времени.",
                 "edge_cases": "Виртуальное время надо передать оператору явным аргументом (`interval(1,SECONDS,scheduler)`); иначе оператор возьмёт реальный `computation()`-планировщик.",
                 "related": "[[rxjava-interview#Q37]] инструменты тестирования RxJava; [[rxjava-interview#Q44]] тестирование retry с задержкой."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "После подписки `TestScheduler` автоматически выполняет все отложенные действия; `advanceTimeBy()` нужен только для проверки промежуточного состояния.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без продвижения времени отложенные действия не выполнятся; их запускают `advanceTimeBy`/`advanceTimeTo` или `triggerActions`.",
-                "source_of_confusion": "Кажется, что планировщик «сам всё прогонит» при подписке.",
-                "if_it_were_true": "Тогда `interval`-тики появлялись бы сразу после `.test()`, но до `advanceTimeBy` `assertNoValues()` верно.",
-                "how_it_should_be": "Действия выполняются только при явном продвижении времени или `triggerActions`."
               }
             },
             {
@@ -2291,6 +2291,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "RxJava сама утечек не создаёт, но неправильное использование — частая причина: забытые подписки на бесконечный `Observable`, удержание ссылок на `Activity`/контекст, hot-источники без управления подписками. Избегают через `Disposable.dispose()`, `CompositeDisposable.clear()`, `takeUntil`, `using`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Подписка держит ссылки на upstream и на колбэки; если её не закрыть, удерживаемые объекты не собираются GC. Особенно опасны бесконечные источники (`interval`) и ссылки на UI.",
+                "example": "`Disposable d = interval(1,SECONDS).subscribe(...); ... d.dispose();` либо `Observable.using(open, use, close)` для гарантированного освобождения ресурса.",
+                "when_to_apply": "Контроль подписок применяют в любых долгоживущих компонентах: ViewModel, сервисы, контроллеры — там, где источник переживает потребителя.",
+                "edge_cases": "`takeUntil(lifecycle.onDestroy())` автоматически отписывается по событию; это удобнее ручного `dispose` в Android-жизненном цикле.",
+                "related": "[[rxjava-interview#Q40]] CompositeDisposable для групповой отписки; [[rxjava-interview#Q29]] hot-источники и управление подписками."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "RxJava автоматически освобождает подписки после выхода владельца из области видимости, поэтому бесконечные источники не требуют `dispose()`.",
               "correct": false,
               "sections": {
@@ -2301,8 +2314,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Для предотвращения утечек после каждой подписки нужно вызывать `System.gc()`, чтобы сборщик освободил `Observer` и upstream.",
               "correct": false,
               "sections": {
@@ -2310,19 +2323,6 @@
                 "source_of_confusion": "Вера в `System.gc()` как универсальное средство против утечек ошибочна.",
                 "if_it_were_true": "Тогда `System.gc()` собирал бы активную подписку, но она удерживается ссылками и не освобождается.",
                 "how_it_should_be": "Утечки лечат корректной отпиской, а не вызовом `System.gc()`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "RxJava сама утечек не создаёт, но неправильное использование — частая причина: забытые подписки на бесконечный `Observable`, удержание ссылок на `Activity`/контекст, hot-источники без управления подписками. Избегают через `Disposable.dispose()`, `CompositeDisposable.clear()`, `takeUntil`, `using`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Подписка держит ссылки на upstream и на колбэки; если её не закрыть, удерживаемые объекты не собираются GC. Особенно опасны бесконечные источники (`interval`) и ссылки на UI.",
-                "example": "`Disposable d = interval(1,SECONDS).subscribe(...); ... d.dispose();` либо `Observable.using(open, use, close)` для гарантированного освобождения ресурса.",
-                "when_to_apply": "Контроль подписок применяют в любых долгоживущих компонентах: ViewModel, сервисы, контроллеры — там, где источник переживает потребителя.",
-                "edge_cases": "`takeUntil(lifecycle.onDestroy())` автоматически отписывается по событию; это удобнее ручного `dispose` в Android-жизненном цикле.",
-                "related": "[[rxjava-interview#Q40]] CompositeDisposable для групповой отписки; [[rxjava-interview#Q29]] hot-источники и управление подписками."
               }
             },
             {
@@ -2375,18 +2375,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`clear()` и `dispose()` одинаково закрывают контейнер навсегда: после любого из них новые `Disposable` сразу отклоняются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Различие есть: `clear()` отписывает все, но контейнер можно использовать дальше; `dispose()` отписывает все и больше не принимает новые `Disposable`.",
-                "source_of_confusion": "Похожий эффект «всех отписать» создаёт впечатление полной идентичности.",
-                "if_it_were_true": "Тогда после `dispose()` можно было бы добавлять новые подписки, но они сразу будут disposed.",
-                "how_it_should_be": "`clear()` — переиспользуемо, `dispose()` — финально; это разные методы."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`CompositeDisposable` — контейнер для группового управления подписками: позволяет добавлять `Disposable` через `add()` и массово отписываться через `clear()` или `dispose()`, обычно в `onDestroy`/`onCleared`.",
               "correct": true,
               "sections": {
@@ -2395,6 +2383,18 @@
                 "when_to_apply": "Применяют в ViewModel, презентерах, сервисах — везде, где несколько подписок должны закрываться вместе с жизненным циклом владельца.",
                 "edge_cases": "Разница методов: `clear()` отписывает, но контейнер пригоден дальше; `dispose()` отписывает и блокирует приём новых `Disposable`.",
                 "related": "[[rxjava-interview#Q39]] утечки памяти и отписка; [[rxjava-interview#Q41]] обработка ошибок в fire-and-forget подписках."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`clear()` и `dispose()` одинаково закрывают контейнер навсегда: после любого из них новые `Disposable` сразу отклоняются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие есть: `clear()` отписывает все, но контейнер можно использовать дальше; `dispose()` отписывает все и больше не принимает новые `Disposable`.",
+                "source_of_confusion": "Похожий эффект «всех отписать» создаёт впечатление полной идентичности.",
+                "if_it_were_true": "Тогда после `dispose()` можно было бы добавлять новые подписки, но они сразу будут disposed.",
+                "how_it_should_be": "`clear()` — переиспользуемо, `dispose()` — финально; это разные методы."
               }
             }
           ]
@@ -2411,6 +2411,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Для fire-and-forget достаточно вызвать `Completable.subscribe()` без обработчика ошибок, потому что отсутствие результата означает отсутствие обязательного `onError`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже в fire-and-forget ошибку обрабатывают: без `onError` исключение уйдёт в `RxJavaPlugins.onError` и может уронить приложение.",
+                "source_of_confusion": "Раз результат не нужен, кажется, что и ошибки можно не ловить.",
+                "if_it_were_true": "Тогда сбой аналитики проходил бы незаметно, но необработанная ошибка способна завершить процесс.",
+                "how_it_should_be": "Всегда передают `onError`-колбэк (хотя бы логирование), даже когда результат не нужен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Fire-and-forget реализуют отдельным `new Thread()`, поскольку `Completable` всегда ожидает завершения операции перед возвратом управления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RxJava даёт `Completable`+`Schedulers.io()` с управлением ошибками и потоками; ручной `Thread` теряет эти возможности и неудобен для интеграции.",
+                "source_of_confusion": "Простота `new Thread` создаёт впечатление, что реактивный подход избыточен.",
+                "if_it_were_true": "Тогда пришлось бы вручную ловить исключения и управлять пулом, но `Completable` уже это инкапсулирует.",
+                "how_it_should_be": "Идиоматично использовать `Completable`+`io()`; сырой `Thread` лишает обработки ошибок и композиции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Использовать `Completable` (`fromAction`/`fromRunnable`) с `subscribeOn(Schedulers.io())`: отправить запрос и не ждать результата, но обязательно обработать `onError`. Для отложенного вызова — `defer`.",
               "correct": true,
               "sections": {
@@ -2422,8 +2446,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Для fire-and-forget лучше использовать `Single` и вызвать `blockingGet()`: результат можно проигнорировать после синхронного ожидания ответа.",
               "correct": false,
               "sections": {
@@ -2431,30 +2455,6 @@
                 "source_of_confusion": "Привычка «получить результат вызова» переносится на сценарий, где он не требуется.",
                 "if_it_were_true": "Тогда отправка аналитики блокировала бы UI-поток на время сети, но смысл fire-and-forget — не ждать.",
                 "how_it_should_be": "Для fire-and-forget берут `Completable` без блокировки; `blockingGet` ждёт результат."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Для fire-and-forget достаточно вызвать `Completable.subscribe()` без обработчика ошибок, потому что отсутствие результата означает отсутствие обязательного `onError`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Даже в fire-and-forget ошибку обрабатывают: без `onError` исключение уйдёт в `RxJavaPlugins.onError` и может уронить приложение.",
-                "source_of_confusion": "Раз результат не нужен, кажется, что и ошибки можно не ловить.",
-                "if_it_were_true": "Тогда сбой аналитики проходил бы незаметно, но необработанная ошибка способна завершить процесс.",
-                "how_it_should_be": "Всегда передают `onError`-колбэк (хотя бы логирование), даже когда результат не нужен."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Fire-and-forget реализуют отдельным `new Thread()`, поскольку `Completable` всегда ожидает завершения операции перед возвратом управления.",
-              "correct": false,
-              "sections": {
-                "what_actually": "RxJava даёт `Completable`+`Schedulers.io()` с управлением ошибками и потоками; ручной `Thread` теряет эти возможности и неудобен для интеграции.",
-                "source_of_confusion": "Простота `new Thread` создаёт впечатление, что реактивный подход избыточен.",
-                "if_it_were_true": "Тогда пришлось бы вручную ловить исключения и управлять пулом, но `Completable` уже это инкапсулирует.",
-                "how_it_should_be": "Идиоматично использовать `Completable`+`io()`; сырой `Thread` лишает обработки ошибок и композиции."
               }
             }
           ]
@@ -2471,18 +2471,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "RxJava нельзя использовать из Kotlin напрямую: для совместимости требуется оборачивать все реактивные типы в Java-адаптеры.",
-              "correct": false,
-              "sections": {
-                "what_actually": "RxJava отлично работает с Kotlin: лямбды, SAM-конверсия, extension-функции и библиотека `RxKotlin` делают код лаконичным.",
-                "source_of_confusion": "Java-происхождение RxJava наводит на мысль о несовместимости с Kotlin.",
-                "if_it_were_true": "Тогда `Observable.just(1).subscribeBy(...)` не компилировался бы в Kotlin, но `RxKotlin` это поддерживает.",
-                "how_it_should_be": "RxJava полноценно используется из Kotlin, особенно с `RxKotlin`-расширениями."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Да, отличное сочетание: null-safety Kotlin совпадает с контрактом RxJava 2+ (null запрещён), лаконичные лямбды и SAM-конверсия, extension-функции для реактивных типов и библиотека `RxKotlin` (`subscribeBy`, `addTo`).",
               "correct": true,
               "sections": {
@@ -2491,6 +2479,18 @@
                 "when_to_apply": "Связку применяют в Android и Kotlin-бэкенде, где уже есть RxJava-код и нужна выразительность Kotlin.",
                 "edge_cases": "Для новых Kotlin-проектов всё же часто рекомендуют Coroutines + `Flow` — они идиоматичнее и нативно интегрированы с языком.",
                 "related": "[[rxjava-interview#Q43]] альтернативы RxJava включая Coroutines; [[rxjava-interview#Q40]] addTo и CompositeDisposable."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "RxJava нельзя использовать из Kotlin напрямую: для совместимости требуется оборачивать все реактивные типы в Java-адаптеры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RxJava отлично работает с Kotlin: лямбды, SAM-конверсия, extension-функции и библиотека `RxKotlin` делают код лаконичным.",
+                "source_of_confusion": "Java-происхождение RxJava наводит на мысль о несовместимости с Kotlin.",
+                "if_it_were_true": "Тогда `Observable.just(1).subscribeBy(...)` не компилировался бы в Kotlin, но `RxKotlin` это поддерживает.",
+                "how_it_should_be": "RxJava полноценно используется из Kotlin, особенно с `RxKotlin`-расширениями."
               }
             },
             {
@@ -2543,6 +2543,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "RxJava и Project Reactor реализуют одинаковые типы и операторы, поэтому код можно переносить между ними без изменения API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API различается: у Reactor `Flux`/`Mono` вместо `Observable`/`Flowable`/`Single`, свой `Context` и `StepVerifier`; концепции близки, но классы и методы разные.",
+                "source_of_confusion": "Похожая идеология `Reactive Streams` создаёт впечатление идентичности API.",
+                "if_it_were_true": "Тогда RxJava-код компилировался бы под Reactor без изменений, но типы и операторы у них различны.",
+                "how_it_should_be": "Концептуально близки, но API разный: `Flux`/`Mono`, `Context`, `StepVerifier` у Reactor."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Kotlin Coroutines + Flow` являются частью RxJava для Kotlin и используют те же `Observable`, `Scheduler` и `Disposable`.",
               "correct": false,
               "sections": {
@@ -2553,8 +2565,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Основные альтернативы: `Project Reactor` (`Flux`/`Mono`, нативен в Spring WebFlux), `Kotlin Coroutines + Flow` (идиоматичен для Kotlin), `Mutiny` (Quarkus), `Akka Streams`, `Vert.x` и `Java 9 Flow API`; все поддерживают backpressure.",
               "correct": true,
               "sections": {
@@ -2563,18 +2575,6 @@
                 "when_to_apply": "Альтернативы сравнивают при старте проекта: под Spring-стек берут Reactor, под чистый Kotlin — Coroutines, под существующий RxJava-код — RxJava.",
                 "edge_cases": "`Flux` ≈ `Flowable`, а `Mono` ≈ `Single`/`Maybe`; зная RxJava, переход на Reactor по концепциям почти бесшовный.",
                 "related": "[[rxjava-interview#Q42]] RxJava и Kotlin/Coroutines; [[rxjava-interview#Q32]] Observable/Flowable против Flux/Mono."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "RxJava и Project Reactor реализуют одинаковые типы и операторы, поэтому код можно переносить между ними без изменения API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "API различается: у Reactor `Flux`/`Mono` вместо `Observable`/`Flowable`/`Single`, свой `Context` и `StepVerifier`; концепции близки, но классы и методы разные.",
-                "source_of_confusion": "Похожая идеология `Reactive Streams` создаёт впечатление идентичности API.",
-                "if_it_were_true": "Тогда RxJava-код компилировался бы под Reactor без изменений, но типы и операторы у них различны.",
-                "how_it_should_be": "Концептуально близки, но API разный: `Flux`/`Mono`, `Context`, `StepVerifier` у Reactor."
               }
             }
           ]
@@ -2591,30 +2591,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`retry(3)` автоматически выполняет три повтора с экспоненциальными задержками и jitter, поэтому дополнительный `retryWhen` не требуется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`retry(3)` повторяет НЕМЕДЛЕННО, без задержки; для backoff нужен `retryWhen` с `timer` и растущим интервалом.",
-                "source_of_confusion": "Кажется, что у `retry` есть встроенный «умный» backoff.",
-                "if_it_were_true": "Тогда три повтора шли бы с паузами, но `retry(3)` ударит по сервису тремя мгновенными запросами.",
-                "how_it_should_be": "Backoff реализуют через `retryWhen` + `timer`; `retry(n)` повторяет без задержки."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Exponential backoff реализуют через `delay()` перед `subscribe()`: при ошибке оператор сам повторяет исходную подписку с увеличенной задержкой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`delay()` лишь сдвигает эмиссию во времени и не повторяет вызов при ошибке; за повтор отвечает `retryWhen`.",
-                "source_of_confusion": "`delay` (задержка) и `retry` (повтор) смешивают из-за общей темы «времени».",
-                "if_it_were_true": "Тогда `delay(2,SECONDS)` повторял бы упавший запрос, но он только отодвигает поток, не перезапуская его.",
-                "how_it_should_be": "Повтор делает `retryWhen`; `delay` лишь откладывает эмиссию без перезапуска."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "При exponential backoff следует повторять любые ошибки, включая `4xx`, поскольку увеличение задержки делает такие повторы безопасными для сервиса.",
               "correct": false,
               "sections": {
@@ -2625,8 +2601,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "`retry(3)` автоматически выполняет три повтора с экспоненциальными задержками и jitter, поэтому дополнительный `retryWhen` не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`retry(3)` повторяет НЕМЕДЛЕННО, без задержки; для backoff нужен `retryWhen` с `timer` и растущим интервалом.",
+                "source_of_confusion": "Кажется, что у `retry` есть встроенный «умный» backoff.",
+                "if_it_were_true": "Тогда три повтора шли бы с паузами, но `retry(3)` ударит по сервису тремя мгновенными запросами.",
+                "how_it_should_be": "Backoff реализуют через `retryWhen` + `timer`; `retry(n)` повторяет без задержки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Через `retryWhen`, где поток ошибок зипуется со счётчиком попыток и для каждой попытки возвращается `Observable.timer` с растущей задержкой (`2^attempt`); добавляют лимит попыток, jitter (случайный компонент) и фильтрацию по типу ошибки.",
               "correct": true,
               "sections": {
@@ -2635,6 +2623,18 @@
                 "when_to_apply": "Паттерн применяют для нестабильных внешних сервисов (сеть, сторонние API), где временные сбои ожидаемы и повтор оправдан.",
                 "edge_cases": "Частые ошибки: `retry(3)` без задержки бьёт сервис, ретрай на `4xx` бессмыслен, а отсутствие jitter в нагруженной системе даёт thundering herd.",
                 "related": "[[rxjava-interview#Q35]] операторы обработки ошибок; [[rxjava-interview#Q38]] тестирование retry через TestScheduler."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Exponential backoff реализуют через `delay()` перед `subscribe()`: при ошибке оператор сам повторяет исходную подписку с увеличенной задержкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`delay()` лишь сдвигает эмиссию во времени и не повторяет вызов при ошибке; за повтор отвечает `retryWhen`.",
+                "source_of_confusion": "`delay` (задержка) и `retry` (повтор) смешивают из-за общей темы «времени».",
+                "if_it_were_true": "Тогда `delay(2,SECONDS)` повторял бы упавший запрос, но он только отодвигает поток, не перезапуская его.",
+                "how_it_should_be": "Повтор делает `retryWhen`; `delay` лишь откладывает эмиссию без перезапуска."
               }
             }
           ]
@@ -2651,14 +2651,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`BUFFER` — пакетная обработка и короткие всплески (риск OOM); `DROP` — метрики, где потеря приемлема; `LATEST` — UI-события, важнее последнее значение; `ERROR` — тестирование и протокольные потоки; `MISSING` — внутренние операторы. `Observable` без backpressure берут для конечных/быстрых источников, `Flowable` — для бесконечных/медленного consumer/IO.",
-              "correct": true,
+              "text": "`DROP` выбирает случайные элементы для удаления, чтобы равномерно разгрузить поток и сохранить статистическое распределение данных.",
+              "correct": false,
               "sections": {
-                "explanation": "Стратегию выбирают по цене потери и характеру данных: накопить (`BUFFER`), отбросить лишнее (`DROP`), держать актуальное (`LATEST`) или явно упасть (`ERROR`). `MISSING` отдаёт управление операторам `onBackpressure*`.",
-                "example": "Kafka-стрим: `onBackpressureBuffer(10_000, () -> log.warn(\"overflow\"), DROP_OLDEST)`; телеметрия: `BackpressureStrategy.DROP` + `sample(1,SECONDS)`; поле ввода: `LATEST` + `debounce`.",
-                "when_to_apply": "Выбор делают на проде по требованиям: финансовые события — `BUFFER` (нельзя терять), метрики — `DROP`, состояние UI — `LATEST`.",
-                "edge_cases": "`BUFFER` без лимита грозит OOM при устойчиво быстром producer, поэтому буфер ограничивают и задают overflow-политику (`DROP_OLDEST`).",
-                "related": "[[rxjava-interview#Q33]] перечень стратегий BackpressureStrategy; [[rxjava-interview#Q34]] общие способы решения backpressure."
+                "what_actually": "`DROP` детерминированно отбрасывает НОВЫЕ элементы, которые не помещаются в запрос consumer, а не случайные.",
+                "source_of_confusion": "Многопоточность ассоциируется со случайностью, отсюда идея «случайного» drop.",
+                "if_it_were_true": "Тогда нельзя было бы предсказать, что отбросится, но `DROP` всегда роняет неуместившиеся новые элементы.",
+                "how_it_should_be": "`DROP` теряет новые элементы детерминированно, без случайной выборки."
               }
             },
             {
@@ -2688,13 +2687,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`DROP` выбирает случайные элементы для удаления, чтобы равномерно разгрузить поток и сохранить статистическое распределение данных.",
-              "correct": false,
+              "text": "`BUFFER` — пакетная обработка и короткие всплески (риск OOM); `DROP` — метрики, где потеря приемлема; `LATEST` — UI-события, важнее последнее значение; `ERROR` — тестирование и протокольные потоки; `MISSING` — внутренние операторы. `Observable` без backpressure берут для конечных/быстрых источников, `Flowable` — для бесконечных/медленного consumer/IO.",
+              "correct": true,
               "sections": {
-                "what_actually": "`DROP` детерминированно отбрасывает НОВЫЕ элементы, которые не помещаются в запрос consumer, а не случайные.",
-                "source_of_confusion": "Многопоточность ассоциируется со случайностью, отсюда идея «случайного» drop.",
-                "if_it_were_true": "Тогда нельзя было бы предсказать, что отбросится, но `DROP` всегда роняет неуместившиеся новые элементы.",
-                "how_it_should_be": "`DROP` теряет новые элементы детерминированно, без случайной выборки."
+                "explanation": "Стратегию выбирают по цене потери и характеру данных: накопить (`BUFFER`), отбросить лишнее (`DROP`), держать актуальное (`LATEST`) или явно упасть (`ERROR`). `MISSING` отдаёт управление операторам `onBackpressure*`.",
+                "example": "Kafka-стрим: `onBackpressureBuffer(10_000, () -> log.warn(\"overflow\"), DROP_OLDEST)`; телеметрия: `BackpressureStrategy.DROP` + `sample(1,SECONDS)`; поле ввода: `LATEST` + `debounce`.",
+                "when_to_apply": "Выбор делают на проде по требованиям: финансовые события — `BUFFER` (нельзя терять), метрики — `DROP`, состояние UI — `LATEST`.",
+                "edge_cases": "`BUFFER` без лимита грозит OOM при устойчиво быстром producer, поэтому буфер ограничивают и задают overflow-политику (`DROP_OLDEST`).",
+                "related": "[[rxjava-interview#Q33]] перечень стратегий BackpressureStrategy; [[rxjava-interview#Q34]] общие способы решения backpressure."
               }
             }
           ]

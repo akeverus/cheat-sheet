@@ -9,6 +9,18 @@
           "question_text": "Опишите операторы `if-then` и `if-then-else`. Какие типы выражений допустимы в условии `if` в `Java`?",
           "options": [
             {
+              "text": "В условии `if` в `Java`, как и в `C/C++`, допустимо любое числовое выражение: ненулевое значение трактуется как `true`, ноль -- как `false`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Java` условие `if` принимает строго `boolean`/`Boolean`; число вроде `if (count)` не компилируется.",
+                "source_of_confusion": "Привычка из `C/C++`, где целые числа неявно приводятся к булеву результату, переносится на `Java`.",
+                "if_it_were_true": "Тогда `if (list.size())` было бы валидным, но `Java`-компилятор выдаёт `incompatible types`.",
+                "how_it_should_be": "Нужно писать явное сравнение, например `if (count != 0)` или `if (!list.isEmpty())`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`if-then` выполняет блок при истинном условии, `if-then-else` добавляет ветку для `false`, а цепочка `else if` -- промежуточные ветки. В условии `if` в `Java` допустим **только** `boolean` или `Boolean` -- ни `int`, ни `String`, ни `null` подставить нельзя.",
               "correct": true,
               "sections": {
@@ -17,18 +29,6 @@
                 "when_to_apply": "Применяют `if-then-else` для произвольных булевых условий и диапазонов; когда веток много и они по одной переменной-константе, читабельнее `switch` (см. Q4).",
                 "edge_cases": "Граничный случай -- `Boolean flag = null`: компиляция проходит, но в рантайме `if (flag)` падает с `NPE` на анбоксинге, а не даёт `false`.",
                 "related": "[[java-conditional-statements-interview#Q2]] оператор `switch` и допустимые типы; [[java-conditional-statements-interview#Q4]] когда `switch` лучше `if-else`; [[java-conditional-statements-interview#Q40]] правильные null-checks через `Objects.requireNonNull`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "В условии `if` в `Java`, как и в `C/C++`, допустимо любое числовое выражение: ненулевое значение трактуется как `true`, ноль -- как `false`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `Java` условие `if` принимает строго `boolean`/`Boolean`; число вроде `if (count)` не компилируется.",
-                "source_of_confusion": "Привычка из `C/C++`, где целые числа неявно приводятся к булеву результату, переносится на `Java`.",
-                "if_it_were_true": "Тогда `if (list.size())` было бы валидным, но `Java`-компилятор выдаёт `incompatible types`.",
-                "how_it_should_be": "Нужно писать явное сравнение, например `if (count != 0)` или `if (!list.isEmpty())`."
               },
               "label": "B",
               "order": 1
@@ -69,18 +69,6 @@
           "question_text": "Опишите оператор `switch`. Какие типы можно использовать в выражении `switch` и какие требования к значениям `case`?",
           "options": [
             {
-              "text": "В `switch` можно использовать любой примитив, включая `long`, `float` и `double`, если значения `case` -- литералы соответствующего типа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`switch` не поддерживает `long`, `float`, `double` и `boolean`; допустимы лишь `byte`/`short`/`char`/`int`, `enum`, `String` и (с `Java 21`) ссылочные типы.",
-                "source_of_confusion": "Кажется логичным, что раз `int` разрешён, то и остальные числовые типы тоже.",
-                "if_it_were_true": "Тогда `switch (price)` по `double` компилировался бы, но компилятор выдаёт ошибку о недопустимом типе селектора.",
-                "how_it_should_be": "Для `long`/`double` применяют `if-else` или приводят значение к допустимому типу, если это безопасно."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`switch` выбирает путь выполнения по значению переменной; метки -- `case` и `default`. Допустимые типы росли: `byte`/`short`/`char`/`int` и обёртки (с `1.0`), `enum` (с `5`), `String` (с `7`), а с `Java 21` -- любой ссылочный тип через type patterns. Значения `case` обязаны быть **compile-time константами**.",
               "correct": true,
               "sections": {
@@ -89,6 +77,18 @@
                 "when_to_apply": "Используют `switch`, когда одна переменная сопоставляется с фиксированным набором констант; для `enum` это особенно выгодно из-за exhaustiveness в `switch expression` (см. Q8).",
                 "edge_cases": "Граничный случай -- `String`-`switch`: внутри он работает по `hashCode()` строки плюс `equals()`, поэтому `null` в селекторе классического `switch` бросает `NPE` до `Java 21`.",
                 "related": "[[java-conditional-statements-interview#Q1]] типы выражений в условии `if`; [[java-conditional-statements-interview#Q8]] exhaustive switch для `enum`; [[java-conditional-statements-interview#Q11]] pattern matching for switch и любой ссылочный тип."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`switch` по `String` появился ещё в `Java 1.0` наравне с целочисленными типами и доступен в языке с самых ранних версий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`switch` по `String` добавлен только в `Java 7`; в `1.0` поддерживались лишь целочисленные типы.",
+                "source_of_confusion": "Строковый `switch` сейчас настолько привычен, что кажется существовавшим всегда.",
+                "if_it_were_true": "Тогда код со строковым `switch` собирался бы под `Java 6`, но там это ошибка компиляции.",
+                "how_it_should_be": "Хронология: целые с `1.0`, `enum` с `5`, `String` с `7`, ссылочные типы с `21`."
               },
               "label": "B",
               "order": 1
@@ -106,13 +106,13 @@
               "order": 2
             },
             {
-              "text": "`switch` по `String` появился ещё в `Java 1.0` наравне с целочисленными типами и доступен в языке с самых ранних версий.",
+              "text": "В `switch` можно использовать любой примитив, включая `long`, `float` и `double`, если значения `case` -- литералы соответствующего типа.",
               "correct": false,
               "sections": {
-                "what_actually": "`switch` по `String` добавлен только в `Java 7`; в `1.0` поддерживались лишь целочисленные типы.",
-                "source_of_confusion": "Строковый `switch` сейчас настолько привычен, что кажется существовавшим всегда.",
-                "if_it_were_true": "Тогда код со строковым `switch` собирался бы под `Java 6`, но там это ошибка компиляции.",
-                "how_it_should_be": "Хронология: целые с `1.0`, `enum` с `5`, `String` с `7`, ссылочные типы с `21`."
+                "what_actually": "`switch` не поддерживает `long`, `float`, `double` и `boolean`; допустимы лишь `byte`/`short`/`char`/`int`, `enum`, `String` и (с `Java 21`) ссылочные типы.",
+                "source_of_confusion": "Кажется логичным, что раз `int` разрешён, то и остальные числовые типы тоже.",
+                "if_it_were_true": "Тогда `switch (price)` по `double` компилировался бы, но компилятор выдаёт ошибку о недопустимом типе селектора.",
+                "how_it_should_be": "Для `long`/`double` применяют `if-else` или приводят значение к допустимому типу, если это безопасно."
               },
               "label": "D",
               "order": 3
@@ -129,18 +129,6 @@
           "question_text": "Что такое `fall-through` в `switch` и когда он полезен? В каком синтаксисе он невозможен?",
           "options": [
             {
-              "text": "`fall-through` -- это автоматическая вставка `break` после каждой ветки `case`, благодаря которой выполняется ровно одна ветка.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: без `break` выполнение проваливается в следующие ветки; автоматического `break` в классическом `switch` нет.",
-                "source_of_confusion": "Желаемое (одна ветка) выдают за поведение по умолчанию, путая `switch` со стрелочным синтаксисом.",
-                "if_it_were_true": "Тогда забытый `break` ничего не ломал бы, но именно он -- классический источник багов в `switch`.",
-                "how_it_should_be": "В классическом `switch` `break` нужно ставить явно; без него идёт `fall-through`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`fall-through` работает и в стрелочном синтаксисе (`case L ->`): после ветки без фигурных скобок выполнение переходит к следующей.",
               "correct": false,
               "sections": {
@@ -149,8 +137,32 @@
                 "if_it_were_true": "Тогда `case A -> doA();` могло бы провалиться в `case B`, но язык это запрещает по дизайну.",
                 "how_it_should_be": "В стрелочном `switch` каждая ветка изолирована; для общей логики метки объединяют запятой."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`fall-through` -- это автоматическая вставка `break` после каждой ветки `case`, благодаря которой выполняется ровно одна ветка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: без `break` выполнение проваливается в следующие ветки; автоматического `break` в классическом `switch` нет.",
+                "source_of_confusion": "Желаемое (одна ветка) выдают за поведение по умолчанию, путая `switch` со стрелочным синтаксисом.",
+                "if_it_were_true": "Тогда забытый `break` ничего не ломал бы, но именно он -- классический источник багов в `switch`.",
+                "how_it_should_be": "В классическом `switch` `break` нужно ставить явно; без него идёт `fall-through`."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "`fall-through` -- это исключение, которое `switch` бросает, если ни один `case` не совпал и нет `default`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При отсутствии совпадения и `default` `switch` просто ничего не делает; никакого исключения `fall-through` не существует.",
+                "source_of_confusion": "Незнакомый термин принимают за название ошибки рантайма.",
+                "if_it_were_true": "Тогда любой `switch` без `default` был бы рискованным, но он легально завершается без действий.",
+                "how_it_should_be": "`fall-through` -- это проваливание между ветками без `break`, а не исключение."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`fall-through` -- продолжение выполнения следующих веток `case` при отсутствии `break`. Это поведение по умолчанию у классического `switch` с двоеточием. Оно полезно, когда несколько значений обрабатываются одинаково (например, номера месяцев с 31 днём). В стрелочном синтаксисе (`->`) `fall-through` невозможен.",
@@ -161,18 +173,6 @@
                 "when_to_apply": "Применяют `fall-through` сознательно для объединения нескольких меток с общей логикой; в современном коде вместо него предпочитают стрелочный `switch` или метки через запятую `case 1, 3, 5 ->`.",
                 "edge_cases": "Главная ловушка -- забытый `break`: код «проваливается» в следующую ветку незаметно, давая трудноуловимый баг; стрелочный синтаксис устраняет этот класс ошибок целиком.",
                 "related": "[[java-conditional-statements-interview#Q2]] классический оператор `switch`; [[java-conditional-statements-interview#Q6]] switch expression без `fall-through`; [[java-conditional-statements-interview#Q9]] запрет смешивать `->` и `:` в одном `switch`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`fall-through` -- это исключение, которое `switch` бросает, если ни один `case` не совпал и нет `default`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "При отсутствии совпадения и `default` `switch` просто ничего не делает; никакого исключения `fall-through` не существует.",
-                "source_of_confusion": "Незнакомый термин принимают за название ошибки рантайма.",
-                "if_it_were_true": "Тогда любой `switch` без `default` был бы рискованным, но он легально завершается без действий.",
-                "how_it_should_be": "`fall-through` -- это проваливание между ветками без `break`, а не исключение."
               },
               "label": "D",
               "order": 3
@@ -201,18 +201,6 @@
               "order": 0
             },
             {
-              "text": "`switch` умеет проверять и диапазоны вроде `case x > 100:`, поэтому во многих случаях заменяет `if-else`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Классический `switch` сравнивает только на равенство с константами; диапазоны и предикаты в нём выразить нельзя.",
-                "source_of_confusion": "Мощь `switch` для констант ошибочно распространяют на произвольные условия.",
-                "if_it_were_true": "Тогда `case score > 60:` компилировался бы, но это синтаксическая ошибка вне guard-паттернов.",
-                "how_it_should_be": "Для диапазонов и комбинаций используют `if-else`; `switch` -- для равенства с константами."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`switch` и `if-else` взаимозаменяемы, и выбор между ними обычно определяется личным стилем, а не техническими критериями.",
               "correct": false,
               "sections": {
@@ -221,8 +209,8 @@
                 "if_it_were_true": "Тогда exhaustive-проверка `enum` в `switch` не давала бы преимущества, но она ловит пропущенные ветки на компиляции.",
                 "how_it_should_be": "Решают по критериям: константы и `enum` -> `switch`; диапазоны и сложная логика -> `if-else`."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`switch` выигрывает, когда одна переменная сравнивается с набором констант (4+ вариантов): он читабельнее, а для `enum` в `switch expression` компилятор проверит exhaustiveness.",
@@ -233,6 +221,18 @@
                 "when_to_apply": "Берут `switch` для сопоставления одной переменной с константами и особенно для `enum`; берут `if-else` для диапазонов (`x > 1000`), сложных предикатов и логических комбинаций, которые `switch` выразить не может.",
                 "edge_cases": "Граница размывается при сложных guard-условиях: с `Java 21` `switch` с `when`-guards покрывает часть кейсов `if-else`, но для несравнимых условий и диапазонов `if-else` остаётся естественнее.",
                 "related": "[[java-conditional-statements-interview#Q2]] типы и константы в `switch`; [[java-conditional-statements-interview#Q29]] guard clauses против вложенного `if-else`; [[java-conditional-statements-interview#Q39]] сравнение `if-else` / `switch` / `Map dispatch`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`switch` умеет проверять и диапазоны вроде `case x > 100:`, поэтому во многих случаях заменяет `if-else`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Классический `switch` сравнивает только на равенство с константами; диапазоны и предикаты в нём выразить нельзя.",
+                "source_of_confusion": "Мощь `switch` для констант ошибочно распространяют на произвольные условия.",
+                "if_it_were_true": "Тогда `case score > 60:` компилировался бы, но это синтаксическая ошибка вне guard-паттернов.",
+                "how_it_should_be": "Для диапазонов и комбинаций используют `if-else`; `switch` -- для равенства с константами."
               },
               "label": "D",
               "order": 3
@@ -249,29 +249,16 @@
           "question_text": "Что такое тернарный оператор и когда его использовать?",
           "options": [
             {
-              "text": "Тернарный оператор `condition ? valueIfTrue : valueIfFalse` -- единственный трёхместный оператор `Java` и одновременно **выражение**, возвращающее значение.",
-              "correct": true,
+              "text": "Тип результата тернарника совпадает с типом первой ветки, а вторая ветка приводится к нему принудительно.",
+              "correct": false,
               "sections": {
-                "explanation": "Тернарный оператор `condition ? valueIfTrue : valueIfFalse` -- единственный трёхместный оператор `Java` и одновременно **выражение**, возвращающее значение. Его применяют для коротких присваиваний в одну строку; вкладывать тернарники друг в друга не стоит -- читаемость резко падает.",
-                "example": "`String status = score >= 60 ? \"Pass\" : \"Fail\";` и `int abs = x >= 0 ? x : -x;` -- идеальные кейсы. Тип результата выводится по правилам binary numeric promotion: `true ? 1 : 2.0` даёт `double`.",
-                "when_to_apply": "Тернарник уместен для простых однострочных присваиваний, где условие очевидно; для множества веток переходят на `switch expression` (`Java 14+`), а для вложенной логики -- на `if-else` или вынос в метод.",
-                "edge_cases": "Антипаттерн -- вложенный тернарник `exp > 5 ? \"Senior\" : exp > 2 ? \"Middle\" : ...`: формально валиден, но нечитаем, поэтому его заменяют `switch expression` (подробнее в Q38).",
-                "related": "[[java-conditional-statements-interview#Q38]] антипаттерны тернарного оператора; [[java-conditional-statements-interview#Q6]] switch expression для множества веток; [[java-conditional-statements-interview#Q1]] булево условие как основа тернарника."
+                "what_actually": "Тип определяется правилами binary numeric promotion и общего супертипа, а не просто типом первой ветки.",
+                "source_of_confusion": "Кажется естественным, что «главная» ветка задаёт тип всего выражения.",
+                "if_it_were_true": "Тогда `true ? 1 : 2.0` имел бы тип `int`, но фактически результат -- `double` из-за промоции.",
+                "how_it_should_be": "Тип -- это общий тип обеих веток после числовой промоции и поиска супертипа."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Тернарный оператор -- это инструкция (statement), которая выполняет одну из двух веток, но не возвращает значения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Тернарник -- именно выражение: он возвращает значение и может стоять справа от `=`, в `return` или в аргументе метода.",
-                "source_of_confusion": "Внешнее сходство с `if-else` создаёт впечатление, что это инструкция без результата.",
-                "if_it_were_true": "Тогда `int max = a > b ? a : b;` не компилировалось бы, но это базовая идиома `Java`.",
-                "how_it_should_be": "Тернарник возвращает значение; его используют там, где нужен результат, а не побочный эффект."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Вложенные тернарные операторы -- рекомендуемый способ заменить длинные цепочки `if-else if`.",
@@ -282,17 +269,30 @@
                 "if_it_were_true": "Тогда `a ? b ? x : y : z` считался бы хорошим стилем, но он нечитаем и легко ломается.",
                 "how_it_should_be": "Множество веток выражают через `switch expression` или `if-else` с именованными переменными."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Тернарный оператор `condition ? valueIfTrue : valueIfFalse` -- единственный трёхместный оператор `Java` и одновременно **выражение**, возвращающее значение.",
+              "correct": true,
+              "sections": {
+                "explanation": "Тернарный оператор `condition ? valueIfTrue : valueIfFalse` -- единственный трёхместный оператор `Java` и одновременно **выражение**, возвращающее значение. Его применяют для коротких присваиваний в одну строку; вкладывать тернарники друг в друга не стоит -- читаемость резко падает.",
+                "example": "`String status = score >= 60 ? \"Pass\" : \"Fail\";` и `int abs = x >= 0 ? x : -x;` -- идеальные кейсы. Тип результата выводится по правилам binary numeric promotion: `true ? 1 : 2.0` даёт `double`.",
+                "when_to_apply": "Тернарник уместен для простых однострочных присваиваний, где условие очевидно; для множества веток переходят на `switch expression` (`Java 14+`), а для вложенной логики -- на `if-else` или вынос в метод.",
+                "edge_cases": "Антипаттерн -- вложенный тернарник `exp > 5 ? \"Senior\" : exp > 2 ? \"Middle\" : ...`: формально валиден, но нечитаем, поэтому его заменяют `switch expression` (подробнее в Q38).",
+                "related": "[[java-conditional-statements-interview#Q38]] антипаттерны тернарного оператора; [[java-conditional-statements-interview#Q6]] switch expression для множества веток; [[java-conditional-statements-interview#Q1]] булево условие как основа тернарника."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Тип результата тернарника совпадает с типом первой ветки, а вторая ветка приводится к нему принудительно.",
+              "text": "Тернарный оператор -- это инструкция (statement), которая выполняет одну из двух веток, но не возвращает значения.",
               "correct": false,
               "sections": {
-                "what_actually": "Тип определяется правилами binary numeric promotion и общего супертипа, а не просто типом первой ветки.",
-                "source_of_confusion": "Кажется естественным, что «главная» ветка задаёт тип всего выражения.",
-                "if_it_were_true": "Тогда `true ? 1 : 2.0` имел бы тип `int`, но фактически результат -- `double` из-за промоции.",
-                "how_it_should_be": "Тип -- это общий тип обеих веток после числовой промоции и поиска супертипа."
+                "what_actually": "Тернарник -- именно выражение: он возвращает значение и может стоять справа от `=`, в `return` или в аргументе метода.",
+                "source_of_confusion": "Внешнее сходство с `if-else` создаёт впечатление, что это инструкция без результата.",
+                "if_it_were_true": "Тогда `int max = a > b ? a : b;` не компилировалось бы, но это базовая идиома `Java`.",
+                "how_it_should_be": "Тернарник возвращает значение; его используют там, где нужен результат, а не побочный эффект."
               },
               "label": "D",
               "order": 3
@@ -321,6 +321,18 @@
               "order": 0
             },
             {
+              "text": "`switch expression`, как и statement, не обязан покрывать все значения: компилятор не требует exhaustiveness.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для expression exhaustiveness обязательна: для `enum`/`sealed` нужно покрыть все варианты, для остальных -- `default`.",
+                "source_of_confusion": "В `switch statement` `default` опционален, и это переносят на expression.",
+                "if_it_were_true": "Тогда `enum`-switch без всех веток и без `default` компилировался бы, но это ошибка.",
+                "how_it_should_be": "expression обязан быть исчерпывающим -- это и даёт безопасность при добавлении новых констант."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "`switch expression` (финал в `Java 14`, JEP 361) -- это **выражение**, возвращающее значение.",
               "correct": true,
               "sections": {
@@ -330,8 +342,8 @@
                 "edge_cases": "Тонкость -- завершающая `;`: `switch expression` -- часть выражения присваивания, поэтому без точки с запятой после `}` будет ошибка компиляции, в отличие от `switch statement`.",
                 "related": "[[java-conditional-statements-interview#Q3]] `fall-through` в классическом `switch`; [[java-conditional-statements-interview#Q7]] `yield` в switch expression; [[java-conditional-statements-interview#Q8]] exhaustiveness в switch expression."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`switch expression` обязательно использует двоеточный синтаксис `case L:` и `break` для выхода из каждой ветки.",
@@ -341,18 +353,6 @@
                 "source_of_confusion": "Старый `switch statement` с `break` -- более знакомый образ `switch`.",
                 "if_it_were_true": "Тогда `case 1 -> \"one\"` было бы запрещено, но это рекомендованная форма с `Java 14`.",
                 "how_it_should_be": "В expression используют `->` (значение неявно) либо `:` с `yield`; `break` не возвращает значение."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`switch expression`, как и statement, не обязан покрывать все значения: компилятор не требует exhaustiveness.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для expression exhaustiveness обязательна: для `enum`/`sealed` нужно покрыть все варианты, для остальных -- `default`.",
-                "source_of_confusion": "В `switch statement` `default` опционален, и это переносят на expression.",
-                "if_it_were_true": "Тогда `enum`-switch без всех веток и без `default` компилировался бы, но это ошибка.",
-                "how_it_should_be": "expression обязан быть исчерпывающим -- это и даёт безопасность при добавлении новых констант."
               },
               "label": "D",
               "order": 3
@@ -369,6 +369,19 @@
           "question_text": "Что такое `yield` в `switch expression` и чем он отличается от `return`?",
           "options": [
             {
+              "text": "`yield` -- ключевое слово, возвращающее значение из **блока кода** в `switch expression`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`yield` -- ключевое слово, возвращающее значение из **блока кода** в `switch expression`. При одиночном выражении со стрелкой значение возвращается неявно (`case 200 -> \"OK\"`), а для блока `{ ... }` нужен явный `yield`. `yield` -- не `return`: он завершает только текущую ветку `switch`, а не метод.",
+                "example": "`case 500 -> { logger.error(...); notifyOps(); yield \"Server Error\"; }` -- блок выполняет действия и через `yield` отдаёт результат ветки. `yield` работает и с двоеточием: `case 1: yield \"one\";` внутри `switch expression`.",
+                "when_to_apply": "`yield` нужен, когда ветка `switch expression` -- это блок с несколькими операциями, а не одно выражение; для однострочной стрелочной ветки `yield` писать не надо.",
+                "edge_cases": "Ключевая путаница -- `yield` против `return`: `return` вышел бы из всего метода, а `yield` лишь даёт значение текущей ветке и продолжает выражение `switch`; перепутать их -- частая ошибка.",
+                "related": "[[java-conditional-statements-interview#Q6]] switch expression и его синтаксис; [[java-conditional-statements-interview#Q8]] exhaustiveness требует значения в каждой ветке; [[java-conditional-statements-interview#Q22]] `return` против `break` в потоке управления."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`yield` полностью эквивалентен `return`: оба завершают метод и возвращают из него значение.",
               "correct": false,
               "sections": {
@@ -377,8 +390,8 @@
                 "if_it_were_true": "Тогда код после `switch` стал бы недостижим, но он спокойно выполняется дальше.",
                 "how_it_should_be": "`return` выходит из метода, `yield` -- из ветки `switch`, отдавая ей результат."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`yield` обязателен в каждой ветке `switch expression`, включая однострочные стрелочные `case L -> value`.",
@@ -388,19 +401,6 @@
                 "source_of_confusion": "Раз `yield` отдаёт значение, кажется, что он требуется везде.",
                 "if_it_were_true": "Тогда `case 200 -> \"OK\";` не компилировался бы без `yield`, но это валидная форма.",
                 "how_it_should_be": "`yield` ставят только в блоках; в однострочной стрелке значение возвращается само."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`yield` -- ключевое слово, возвращающее значение из **блока кода** в `switch expression`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`yield` -- ключевое слово, возвращающее значение из **блока кода** в `switch expression`. При одиночном выражении со стрелкой значение возвращается неявно (`case 200 -> \"OK\"`), а для блока `{ ... }` нужен явный `yield`. `yield` -- не `return`: он завершает только текущую ветку `switch`, а не метод.",
-                "example": "`case 500 -> { logger.error(...); notifyOps(); yield \"Server Error\"; }` -- блок выполняет действия и через `yield` отдаёт результат ветки. `yield` работает и с двоеточием: `case 1: yield \"one\";` внутри `switch expression`.",
-                "when_to_apply": "`yield` нужен, когда ветка `switch expression` -- это блок с несколькими операциями, а не одно выражение; для однострочной стрелочной ветки `yield` писать не надо.",
-                "edge_cases": "Ключевая путаница -- `yield` против `return`: `return` вышел бы из всего метода, а `yield` лишь даёт значение текущей ветке и продолжает выражение `switch`; перепутать их -- частая ошибка.",
-                "related": "[[java-conditional-statements-interview#Q6]] switch expression и его синтаксис; [[java-conditional-statements-interview#Q8]] exhaustiveness требует значения в каждой ветке; [[java-conditional-statements-interview#Q22]] `return` против `break` в потоке управления."
               },
               "label": "C",
               "order": 2
@@ -441,18 +441,6 @@
               "order": 0
             },
             {
-              "text": "Exhaustiveness требуется и в `switch statement` -- классический `switch` без `default` не компилируется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `switch statement` `default` опционален, и неполный switch легально ничего не делает при несовпадении; требование полноты -- только у expression.",
-                "source_of_confusion": "Свойство `switch expression` ошибочно переносят на старый statement.",
-                "if_it_were_true": "Тогда старый код со `switch` без `default` не собирался бы, но он валиден десятилетиями.",
-                "how_it_should_be": "Полнота обязательна только в `switch expression`; statement может быть неполным."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Для `int` и `String` компилятор сам выводит exhaustiveness и `default` указывать не нужно.",
               "correct": false,
               "sections": {
@@ -460,6 +448,18 @@
                 "source_of_confusion": "Опыт с `enum` (где `default` не нужен) ошибочно распространяют на все типы.",
                 "if_it_were_true": "Тогда `switch (code)` по `int` без `default` компилировался бы как expression, но это ошибка.",
                 "how_it_should_be": "Для типов с неограниченным набором значений `default` нужен как обязательная ветка-страховка."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Exhaustiveness требуется и в `switch statement` -- классический `switch` без `default` не компилируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `switch statement` `default` опционален, и неполный switch легально ничего не делает при несовпадении; требование полноты -- только у expression.",
+                "source_of_confusion": "Свойство `switch expression` ошибочно переносят на старый statement.",
+                "if_it_were_true": "Тогда старый код со `switch` без `default` не собирался бы, но он валиден десятилетиями.",
+                "how_it_should_be": "Полнота обязательна только в `switch expression`; statement может быть неполным."
               },
               "label": "C",
               "order": 2
@@ -489,6 +489,18 @@
           "question_text": "Можно ли комбинировать стрелочный (`case L ->`) и двоеточный (`case L:`) синтаксис в одном `switch`?",
           "options": [
             {
+              "text": "Смешивать можно только в `switch statement`, но не в `switch expression`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запрет действует одинаково и для statement, и для expression -- в обоих смешение стилей не компилируется.",
+                "source_of_confusion": "expression кажется «строже», поэтому ограничение приписывают только ему.",
+                "if_it_were_true": "Тогда старый statement допускал бы оба стиля сразу, но это тоже ошибка компиляции.",
+                "how_it_should_be": "Правило единого стиля распространяется на любой `switch`, независимо от его вида."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Нет. В одном `switch` (как statement, так и expression) **нельзя** смешивать `case L ->` и `case L:`.",
               "correct": true,
               "sections": {
@@ -498,32 +510,8 @@
                 "edge_cases": "Ограничение чисто синтаксическое: смешать стили нельзя даже если логически ветки независимы; ошибка возникает на этапе компиляции, а не в рантайме.",
                 "related": "[[java-conditional-statements-interview#Q3]] `fall-through` в двоеточном синтаксисе; [[java-conditional-statements-interview#Q6]] стрелочный синтаксис switch expression; [[java-conditional-statements-interview#Q7]] `yield` в обоих синтаксисах."
               },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Да, смешивать стили можно: компилятор просто применит правила `fall-through` к двоеточным веткам и изоляцию -- к стрелочным.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Смешение `->` и `:` в одном `switch` запрещено и не компилируется -- стиль должен быть единым.",
-                "source_of_confusion": "Кажется, что раз обе формы валидны по отдельности, их можно сочетать.",
-                "if_it_were_true": "Тогда был бы блок с частичным `fall-through`, но язык такой неоднозначности не допускает.",
-                "how_it_should_be": "Выбирают один синтаксис на весь `switch`; смешение даёт ошибку компиляции."
-              },
               "label": "B",
               "order": 1
-            },
-            {
-              "text": "Смешивать можно только в `switch statement`, но не в `switch expression`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Запрет действует одинаково и для statement, и для expression -- в обоих смешение стилей не компилируется.",
-                "source_of_confusion": "expression кажется «строже», поэтому ограничение приписывают только ему.",
-                "if_it_were_true": "Тогда старый statement допускал бы оба стиля сразу, но это тоже ошибка компиляции.",
-                "how_it_should_be": "Правило единого стиля распространяется на любой `switch`, независимо от его вида."
-              },
-              "label": "C",
-              "order": 2
             },
             {
               "text": "Смешивание разрешено, если двоеточные ветки идут первыми, а стрелочные -- после `default`.",
@@ -533,6 +521,18 @@
                 "source_of_confusion": "Выдумывают «правило порядка», чтобы оправдать желаемую гибкость.",
                 "if_it_were_true": "Тогда существовал бы легальный порядок смешения, но спецификация его не предусматривает.",
                 "how_it_should_be": "Никакой порядок не легализует смешение; нужен единый синтаксис для всех веток."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Да, смешивать стили можно: компилятор просто применит правила `fall-through` к двоеточным веткам и изоляцию -- к стрелочным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смешение `->` и `:` в одном `switch` запрещено и не компилируется -- стиль должен быть единым.",
+                "source_of_confusion": "Кажется, что раз обе формы валидны по отдельности, их можно сочетать.",
+                "if_it_were_true": "Тогда был бы блок с частичным `fall-through`, но язык такой неоднозначности не допускает.",
+                "how_it_should_be": "Выбирают один синтаксис на весь `switch`; смешение даёт ошибку компиляции."
               },
               "label": "D",
               "order": 3
@@ -549,6 +549,30 @@
           "question_text": "Что такое `pattern matching for instanceof` (`Java 16`) и как работает flow scoping?",
           "options": [
             {
+              "text": "Pattern-переменная видна во всём методе, начиная с `instanceof`, независимо от того, совпал паттерн или нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Область определяется flow scoping: переменная видна только там, где компилятор доказал совпадение паттерна.",
+                "source_of_confusion": "Обычные локальные переменные видны до конца блока, и это ожидание переносят на pattern-переменную.",
+                "if_it_were_true": "Тогда `s` была бы доступна в `else`-ветке, где `obj` точно не `String`, что небезопасно.",
+                "how_it_should_be": "Видимость ограничена ветками, где паттерн гарантированно истинен (после `&&`, после early return)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`pattern matching for instanceof` работает только внутри `switch`, но не в обычном `if`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фича JEP 394 предназначена именно для `instanceof` в `if`; pattern matching for switch -- отдельная фича `Java 21`.",
+                "source_of_confusion": "Обе фичи про «паттерны», поэтому их области применения смешивают.",
+                "if_it_were_true": "Тогда `if (obj instanceof String s)` был бы недопустим, но это каноничный пример JEP 394.",
+                "how_it_should_be": "`instanceof`-паттерны живут в `if`; type patterns в `case` -- это уже `Java 21`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "`pattern matching for instanceof` проверяет тип, но переменную всё равно нужно объявлять отдельным явным приведением.",
               "correct": false,
               "sections": {
@@ -557,8 +581,8 @@
                 "if_it_were_true": "Тогда `if (obj instanceof String s)` не давал бы готовую `s`, но именно её предоставляет JEP 394.",
                 "how_it_should_be": "После `instanceof String s` переменная `s` уже типизирована и готова к использованию без каста."
               },
-              "label": "A",
-              "order": 0
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`pattern matching for instanceof` (финал в `Java 16`, JEP 394) позволяет одной конструкцией проверить тип и связать pattern-переменную без явного приведения: `if (obj instanceof String s)`.",
@@ -569,30 +593,6 @@
                 "when_to_apply": "Применяют для устранения шаблона «проверка типа + явный каст»; особенно полезно в цепочках `if-else if` по типам, хотя с `Java 21` их часто заменяет pattern matching for switch.",
                 "edge_cases": "Flow scoping контринтуитивен: `s` НЕ видна в `else`-ветке `if (obj instanceof String s)`, потому что там паттерн заведомо не совпал; попытка использовать `s` там -- ошибка компиляции.",
                 "related": "[[java-conditional-statements-interview#Q11]] pattern matching for switch как развитие idea; [[java-conditional-statements-interview#Q12]] guarded patterns с `when`; [[java-conditional-statements-interview#Q1]] булево условие и flow scoping."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Pattern-переменная видна во всём методе, начиная с `instanceof`, независимо от того, совпал паттерн или нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Область определяется flow scoping: переменная видна только там, где компилятор доказал совпадение паттерна.",
-                "source_of_confusion": "Обычные локальные переменные видны до конца блока, и это ожидание переносят на pattern-переменную.",
-                "if_it_were_true": "Тогда `s` была бы доступна в `else`-ветке, где `obj` точно не `String`, что небезопасно.",
-                "how_it_should_be": "Видимость ограничена ветками, где паттерн гарантированно истинен (после `&&`, после early return)."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`pattern matching for instanceof` работает только внутри `switch`, но не в обычном `if`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Фича JEP 394 предназначена именно для `instanceof` в `if`; pattern matching for switch -- отдельная фича `Java 21`.",
-                "source_of_confusion": "Обе фичи про «паттерны», поэтому их области применения смешивают.",
-                "if_it_were_true": "Тогда `if (obj instanceof String s)` был бы недопустим, но это каноничный пример JEP 394.",
-                "how_it_should_be": "`instanceof`-паттерны живут в `if`; type patterns в `case` -- это уже `Java 21`."
               },
               "label": "D",
               "order": 3
@@ -621,13 +621,13 @@
               "order": 0
             },
             {
-              "text": "В `pattern matching for switch` нельзя добавить дополнительное условие к паттерну -- только проверка типа.",
+              "text": "`pattern matching for switch` -- это просто синтаксический сахар, и exhaustiveness для `sealed`-типов он не проверяет.",
               "correct": false,
               "sections": {
-                "what_actually": "Guarded patterns через `when` (`case String s when s.length() > 5`) позволяют уточнить срабатывание паттерна.",
-                "source_of_confusion": "Кажется, что `case` -- это только сопоставление, без места для условий.",
-                "if_it_were_true": "Тогда фильтрацию пришлось бы делать внутри тела ветки, но `when` встроен в `case`.",
-                "how_it_should_be": "К паттерну добавляют `when`-guard для дополнительного булева условия."
+                "what_actually": "Для `sealed` иерархий компилятор как раз проверяет полноту: покрыты должны быть все `permits`-подтипы.",
+                "source_of_confusion": "Сахарность стрелочного `switch` распространяют на отсутствие compile-time проверок.",
+                "if_it_were_true": "Тогда пропуск подтипа `sealed` остался бы незамеченным, но это ошибка компиляции.",
+                "how_it_should_be": "Для `sealed` switch обязан покрыть все подтипы -- иначе код не соберётся."
               },
               "label": "B",
               "order": 1
@@ -646,13 +646,13 @@
               "order": 2
             },
             {
-              "text": "`pattern matching for switch` -- это просто синтаксический сахар, и exhaustiveness для `sealed`-типов он не проверяет.",
+              "text": "В `pattern matching for switch` нельзя добавить дополнительное условие к паттерну -- только проверка типа.",
               "correct": false,
               "sections": {
-                "what_actually": "Для `sealed` иерархий компилятор как раз проверяет полноту: покрыты должны быть все `permits`-подтипы.",
-                "source_of_confusion": "Сахарность стрелочного `switch` распространяют на отсутствие compile-time проверок.",
-                "if_it_were_true": "Тогда пропуск подтипа `sealed` остался бы незамеченным, но это ошибка компиляции.",
-                "how_it_should_be": "Для `sealed` switch обязан покрыть все подтипы -- иначе код не соберётся."
+                "what_actually": "Guarded patterns через `when` (`case String s when s.length() > 5`) позволяют уточнить срабатывание паттерна.",
+                "source_of_confusion": "Кажется, что `case` -- это только сопоставление, без места для условий.",
+                "if_it_were_true": "Тогда фильтрацию пришлось бы делать внутри тела ветки, но `when` встроен в `case`.",
+                "how_it_should_be": "К паттерну добавляют `when`-guard для дополнительного булева условия."
               },
               "label": "D",
               "order": 3
@@ -669,13 +669,14 @@
           "question_text": "Что такое `guarded patterns` (клауза `when`) в `pattern matching`?",
           "options": [
             {
-              "text": "`when` -- это полноценное зарезервированное ключевое слово `Java`, которое нельзя использовать как имя переменной или метода.",
-              "correct": false,
+              "text": "`guarded pattern` -- это паттерн в `case`, дополненный условием `when`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`when` -- контекстно-зависимое слово: вне `case` его можно свободно использовать как обычный идентификатор.",
-                "source_of_confusion": "Большинство управляющих слов зарезервированы жёстко, и это ожидание переносят на `when`.",
-                "if_it_were_true": "Тогда переменная `int when = 5;` ломала бы компиляцию, но она валидна вне `switch`-паттернов.",
-                "how_it_should_be": "`when` действует как ключевое слово только в позиции guard внутри `case`."
+                "explanation": "`guarded pattern` -- это паттерн в `case`, дополненный условием `when`. Он позволяет уточнить, когда именно ветка должна сработать: `case String s when s.isEmpty()`. `when` -- не самостоятельное ключевое слово, а контекстно-зависимое, действующее только в `case`; оно пришло на замену синтаксису `&&` из preview-версий.",
+                "example": "`case Integer i when i < 0 -> \"отрицательное\"; case Integer i when i == 0 -> \"ноль\"; case Integer i -> \"положительное\";` -- три ветки по одному типу `Integer`, разделённые guard-условиями, проверяются сверху вниз.",
+                "when_to_apply": "Применяют guard, когда мало проверить тип -- нужно ещё условие на значение (пустота строки, знак числа, диапазон); это короче, чем тип-паттерн плюс вложенный `if`.",
+                "edge_cases": "Из-за dominance более частный guard (`case String s when s.isEmpty()`) обязан стоять **до** общего `case String s`, иначе общий перехватит все строки и guard-ветка станет недостижимой.",
+                "related": "[[java-conditional-statements-interview#Q11]] pattern matching for switch и type patterns; [[java-conditional-statements-interview#Q14]] dominance и порядок `case`; [[java-conditional-statements-interview#Q42]] sealed classes с guards в реальном коде."
               },
               "label": "A",
               "order": 0
@@ -705,14 +706,13 @@
               "order": 2
             },
             {
-              "text": "`guarded pattern` -- это паттерн в `case`, дополненный условием `when`.",
-              "correct": true,
+              "text": "`when` -- это полноценное зарезервированное ключевое слово `Java`, которое нельзя использовать как имя переменной или метода.",
+              "correct": false,
               "sections": {
-                "explanation": "`guarded pattern` -- это паттерн в `case`, дополненный условием `when`. Он позволяет уточнить, когда именно ветка должна сработать: `case String s when s.isEmpty()`. `when` -- не самостоятельное ключевое слово, а контекстно-зависимое, действующее только в `case`; оно пришло на замену синтаксису `&&` из preview-версий.",
-                "example": "`case Integer i when i < 0 -> \"отрицательное\"; case Integer i when i == 0 -> \"ноль\"; case Integer i -> \"положительное\";` -- три ветки по одному типу `Integer`, разделённые guard-условиями, проверяются сверху вниз.",
-                "when_to_apply": "Применяют guard, когда мало проверить тип -- нужно ещё условие на значение (пустота строки, знак числа, диапазон); это короче, чем тип-паттерн плюс вложенный `if`.",
-                "edge_cases": "Из-за dominance более частный guard (`case String s when s.isEmpty()`) обязан стоять **до** общего `case String s`, иначе общий перехватит все строки и guard-ветка станет недостижимой.",
-                "related": "[[java-conditional-statements-interview#Q11]] pattern matching for switch и type patterns; [[java-conditional-statements-interview#Q14]] dominance и порядок `case`; [[java-conditional-statements-interview#Q42]] sealed classes с guards в реальном коде."
+                "what_actually": "`when` -- контекстно-зависимое слово: вне `case` его можно свободно использовать как обычный идентификатор.",
+                "source_of_confusion": "Большинство управляющих слов зарезервированы жёстко, и это ожидание переносят на `when`.",
+                "if_it_were_true": "Тогда переменная `int when = 5;` ломала бы компиляцию, но она валидна вне `switch`-паттернов.",
+                "how_it_should_be": "`when` действует как ключевое слово только в позиции guard внутри `case`."
               },
               "label": "D",
               "order": 3
@@ -729,31 +729,6 @@
           "question_text": "Как обрабатывается `null` в `pattern matching for switch`?",
           "options": [
             {
-              "text": "До `Java 21` передача `null` в `switch` всегда бросала `NullPointerException`.",
-              "correct": true,
-              "sections": {
-                "explanation": "До `Java 21` передача `null` в `switch` всегда бросала `NullPointerException`. С `Java 21` `null` можно обработать явно веткой `case null`, в том числе скомбинировать с `default` как `case null, default`. Если `case null` не указан, `null` по-прежнему даёт `NPE` -- для обратной совместимости.",
-                "example": "`switch (input) { case null -> \"null value\"; case String s -> \"string\"; default -> \"other\"; }` ловит `null` отдельно, а `case null, default -> ...` объединяет `null` и неизвестные типы в одну ветку.",
-                "when_to_apply": "Явный `case null` применяют, когда `null` -- легитимное значение, которое надо обработать без отдельного `if (x == null)` перед `switch`; это убирает лишнюю проверку и `NPE`.",
-                "edge_cases": "Тонкий момент: без `case null` поведение остаётся старым -- `null` бросает `NPE`, даже если есть `default`; чтобы `default` ловил и `null`, нужно писать именно `case null, default`.",
-                "related": "[[java-conditional-statements-interview#Q11]] pattern matching for switch в целом; [[java-conditional-statements-interview#Q2]] `null` в классическом string-switch; [[java-conditional-statements-interview#Q40]] null-checks и fail-fast стратегии."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "С `Java 21` `null` автоматически попадает в ветку `default`, поэтому отдельный `case null` не нужен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`null` не идёт в `default` сам по себе; без явного `case null` он бросает `NPE`, как и раньше.",
-                "source_of_confusion": "`default` воспринимают как «ловушку для всего», включая `null`.",
-                "if_it_were_true": "Тогда `switch` с `default` никогда не падал бы на `null`, но без `case null` он бросает `NPE`.",
-                "how_it_should_be": "Чтобы `null` обрабатывался `default`, его явно объединяют: `case null, default -> ...`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "В `Java 21` `switch` по `null` больше не бросает `NPE`, даже если ветки `case null` нет.",
               "correct": false,
               "sections": {
@@ -762,8 +737,8 @@
                 "if_it_were_true": "Тогда старый код, рассчитанный на `NPE` при `null`, поменял бы поведение, но совместимость сохранена.",
                 "how_it_should_be": "`NPE` на `null` исчезает только при наличии явной ветки `case null`."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`case null` нельзя комбинировать с `default`: это две отдельные взаимоисключающие ветки.",
@@ -773,6 +748,31 @@
                 "source_of_confusion": "`null` и `default` кажутся принципиально разными случаями, которые нельзя объединить.",
                 "if_it_were_true": "Тогда пришлось бы дублировать логику в двух ветках, но язык разрешает их слить.",
                 "how_it_should_be": "`case null, default` -- легальная объединённая ветка для `null` и всех непокрытых значений."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "До `Java 21` передача `null` в `switch` всегда бросала `NullPointerException`.",
+              "correct": true,
+              "sections": {
+                "explanation": "До `Java 21` передача `null` в `switch` всегда бросала `NullPointerException`. С `Java 21` `null` можно обработать явно веткой `case null`, в том числе скомбинировать с `default` как `case null, default`. Если `case null` не указан, `null` по-прежнему даёт `NPE` -- для обратной совместимости.",
+                "example": "`switch (input) { case null -> \"null value\"; case String s -> \"string\"; default -> \"other\"; }` ловит `null` отдельно, а `case null, default -> ...` объединяет `null` и неизвестные типы в одну ветку.",
+                "when_to_apply": "Явный `case null` применяют, когда `null` -- легитимное значение, которое надо обработать без отдельного `if (x == null)` перед `switch`; это убирает лишнюю проверку и `NPE`.",
+                "edge_cases": "Тонкий момент: без `case null` поведение остаётся старым -- `null` бросает `NPE`, даже если есть `default`; чтобы `default` ловил и `null`, нужно писать именно `case null, default`.",
+                "related": "[[java-conditional-statements-interview#Q11]] pattern matching for switch в целом; [[java-conditional-statements-interview#Q2]] `null` в классическом string-switch; [[java-conditional-statements-interview#Q40]] null-checks и fail-fast стратегии."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "С `Java 21` `null` автоматически попадает в ветку `default`, поэтому отдельный `case null` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`null` не идёт в `default` сам по себе; без явного `case null` он бросает `NPE`, как и раньше.",
+                "source_of_confusion": "`default` воспринимают как «ловушку для всего», включая `null`.",
+                "if_it_were_true": "Тогда `switch` с `default` никогда не падал бы на `null`, но без `case null` он бросает `NPE`.",
+                "how_it_should_be": "Чтобы `null` обрабатывался `default`, его явно объединяют: `case null, default -> ...`."
               },
               "label": "D",
               "order": 3
@@ -789,16 +789,28 @@
           "question_text": "Что такое `dominance` (доминирование) паттернов и как влияет на порядок `case`?",
           "options": [
             {
-              "text": "Dominance означает, что компилятор сам переставляет ветки `case` от конкретных к общим, поэтому порядок писать можно любой.",
+              "text": "Dominance относится только к type patterns; на guarded patterns (`when`) правило порядка не распространяется.",
               "correct": false,
               "sections": {
-                "what_actually": "Компилятор не переставляет ветки -- он лишь проверяет порядок и при доминировании выдаёт ошибку; порядок задаёт программист.",
-                "source_of_confusion": "Автооптимизации `JIT` создают иллюзию, что и порядок `case` правится автоматически.",
-                "if_it_were_true": "Тогда `case Object o` перед `case String s` компилировался бы, но это ошибка недостижимого кода.",
-                "how_it_should_be": "Разработчик сам располагает ветки от конкретного к общему; компилятор только проверяет это."
+                "what_actually": "Правило действует и для guards: `case String s when ...` должен идти перед безусловным `case String s`.",
+                "source_of_confusion": "Guards выглядят как «дополнение», поэтому кажется, что dominance их не касается.",
+                "if_it_were_true": "Тогда безусловный `case String s` мог бы стоять выше guard-ветки без последствий, но guard стал бы недостижим.",
+                "how_it_should_be": "Guarded-ветки по тому же типу ставят выше безусловной, иначе она их перекроет."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Dominance -- это рантайм-проверка: если ветки расставлены неверно, `switch` бросает `MatchException` при выполнении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это compile-time проверка: недостижимый из-за доминирования `case` -- ошибка компиляции, а не рантайм-исключение.",
+                "source_of_confusion": "`MatchException` существует для других случаев, и его приписывают и сюда.",
+                "if_it_were_true": "Тогда ошибка порядка всплывала бы только в проде, но компилятор ловит её заранее.",
+                "how_it_should_be": "Неверный порядок паттернов отлавливается на компиляции как недостижимый код."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`dominance` -- компилятор проверяет, что ни один `case` не перекрывается (не доминируется) предыдущим.",
@@ -810,29 +822,17 @@
                 "edge_cases": "Dominance касается и guards: `case String s when s.isEmpty()` обязан стоять перед безусловным `case String s`; иначе общий `case String s` перехватит все строки и guard-ветка станет недостижимой.",
                 "related": "[[java-conditional-statements-interview#Q11]] type patterns в switch; [[java-conditional-statements-interview#Q12]] guarded patterns и `when`; [[java-conditional-statements-interview#Q15]] sealed classes и порядок подтипов."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Dominance относится только к type patterns; на guarded patterns (`when`) правило порядка не распространяется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Правило действует и для guards: `case String s when ...` должен идти перед безусловным `case String s`.",
-                "source_of_confusion": "Guards выглядят как «дополнение», поэтому кажется, что dominance их не касается.",
-                "if_it_were_true": "Тогда безусловный `case String s` мог бы стоять выше guard-ветки без последствий, но guard стал бы недостижим.",
-                "how_it_should_be": "Guarded-ветки по тому же типу ставят выше безусловной, иначе она их перекроет."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Dominance -- это рантайм-проверка: если ветки расставлены неверно, `switch` бросает `MatchException` при выполнении.",
+              "text": "Dominance означает, что компилятор сам переставляет ветки `case` от конкретных к общим, поэтому порядок писать можно любой.",
               "correct": false,
               "sections": {
-                "what_actually": "Это compile-time проверка: недостижимый из-за доминирования `case` -- ошибка компиляции, а не рантайм-исключение.",
-                "source_of_confusion": "`MatchException` существует для других случаев, и его приписывают и сюда.",
-                "if_it_were_true": "Тогда ошибка порядка всплывала бы только в проде, но компилятор ловит её заранее.",
-                "how_it_should_be": "Неверный порядок паттернов отлавливается на компиляции как недостижимый код."
+                "what_actually": "Компилятор не переставляет ветки -- он лишь проверяет порядок и при доминировании выдаёт ошибку; порядок задаёт программист.",
+                "source_of_confusion": "Автооптимизации `JIT` создают иллюзию, что и порядок `case` правится автоматически.",
+                "if_it_were_true": "Тогда `case Object o` перед `case String s` компилировался бы, но это ошибка недостижимого кода.",
+                "how_it_should_be": "Разработчик сам располагает ветки от конкретного к общему; компилятор только проверяет это."
               },
               "label": "D",
               "order": 3
@@ -849,18 +849,6 @@
           "question_text": "Как `sealed classes` работают с `pattern matching for switch`?",
           "options": [
             {
-              "text": "`sealed classes` не влияют на exhaustiveness: в `switch` по `sealed`-типу компилятор всё равно требует ветку `default`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: при покрытии всех `permits`-подтипов `default` не нужен -- именно это и даёт безопасность `sealed`.",
-                "source_of_confusion": "Привычка добавлять `default` «на всякий случай» мешает увидеть выгоду `sealed`.",
-                "if_it_were_true": "Тогда добавление `Pentagon` не ломало бы компиляцию (его поймал бы `default`), и преимущество исчезло бы.",
-                "how_it_should_be": "Для `sealed` покрывают все подтипы без `default`, чтобы компилятор ловил новые варианты."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`sealed`-иерархия позволяет любым внешним классам наследоваться от интерфейса, лишь бы они были в том же пакете.",
               "correct": false,
               "sections": {
@@ -869,8 +857,32 @@
                 "if_it_were_true": "Тогда компилятор не мог бы знать полный список подтипов, и exhaustiveness была бы невозможна.",
                 "how_it_should_be": "Наследоваться могут только классы из `permits`, что и делает множество подтипов конечным."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`sealed classes` не влияют на exhaustiveness: в `switch` по `sealed`-типу компилятор всё равно требует ветку `default`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: при покрытии всех `permits`-подтипов `default` не нужен -- именно это и даёт безопасность `sealed`.",
+                "source_of_confusion": "Привычка добавлять `default` «на всякий случай» мешает увидеть выгоду `sealed`.",
+                "if_it_were_true": "Тогда добавление `Pentagon` не ломало бы компиляцию (его поймал бы `default`), и преимущество исчезло бы.",
+                "how_it_should_be": "Для `sealed` покрывают все подтипы без `default`, чтобы компилятор ловил новые варианты."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "Exhaustiveness для `sealed` проверяется только в рантайме: при непокрытом подтипе бросается `IncompatibleClassChangeError`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полнота `sealed`-switch проверяется компилятором; непокрытый подтип -- ошибка компиляции, а не рантайм-сбой.",
+                "source_of_confusion": "Рантайм-ошибки иерархий классов приписывают и проверке полноты switch.",
+                "if_it_were_true": "Тогда пропуск подтипа всплывал бы в проде, но компилятор не даст собрать такой код.",
+                "how_it_should_be": "Непокрытый `permits`-подтип ловится на этапе компиляции."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`sealed classes` (`Java 17`, JEP 409) ограничивают иерархию через `permits`.",
@@ -881,18 +893,6 @@
                 "when_to_apply": "Применяют связку `sealed` + `switch` для безопасного exhaustive-dispatch по доменной иерархии; это заменяет паттерн `Visitor` для простых случаев и надёжнее ветки `default`.",
                 "edge_cases": "Нюанс: если в `switch` по `sealed` всё же добавить `default`, защита ослабнет -- новый подтип «проглотится» в `default` без ошибки компиляции, поэтому `default` тут обычно не пишут.",
                 "related": "[[java-conditional-statements-interview#Q11]] pattern matching for switch; [[java-conditional-statements-interview#Q8]] exhaustiveness и роль `default`; [[java-conditional-statements-interview#Q42]] sealed classes с guards в реальном коде."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Exhaustiveness для `sealed` проверяется только в рантайме: при непокрытом подтипе бросается `IncompatibleClassChangeError`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Полнота `sealed`-switch проверяется компилятором; непокрытый подтип -- ошибка компиляции, а не рантайм-сбой.",
-                "source_of_confusion": "Рантайм-ошибки иерархий классов приписывают и проверке полноты switch.",
-                "if_it_were_true": "Тогда пропуск подтипа всплывал бы в проде, но компилятор не даст собрать такой код.",
-                "how_it_should_be": "Непокрытый `permits`-подтип ловится на этапе компиляции."
               },
               "label": "D",
               "order": 3
@@ -909,28 +909,17 @@
           "question_text": "Что такое `record patterns` (`Java 21`) и деконструкция записей?",
           "options": [
             {
-              "text": "`record patterns` извлекают компоненты, вызывая под капотом аксессоры, поэтому в паттерне можно опускать любые поля без указания.",
-              "correct": false,
+              "text": "`record patterns` (финал в `Java 21`, JEP 440) позволяют деконструировать `record` прямо в `case`: извлечь компоненты без явных вызовов аксессоров.",
+              "correct": true,
               "sections": {
-                "what_actually": "В record pattern нужно перечислить все компоненты записи в правильном порядке; опускать произвольные нельзя (для этого с `Java 22` есть `_`).",
-                "source_of_confusion": "Свобода именования переменных создаёт впечатление, что и сами компоненты опциональны.",
-                "if_it_were_true": "Тогда `case Point(int x) -> ...` для двухкомпонентного `Point` компилировался бы, но это ошибка арности.",
-                "how_it_should_be": "Паттерн обязан соответствовать всем компонентам записи; пропуск появился позже как `unnamed patterns`."
+                "explanation": "`record patterns` (финал в `Java 21`, JEP 440) позволяют деконструировать `record` прямо в `case`: извлечь компоненты без явных вызовов аксессоров. Деконструкция может быть вложенной -- `Pair(Point(var x1, var y1), Point(...))`. Это убирает шаблон `record.component()` и делает извлечение полей частью самого паттерна.",
+                "example": "`case Point(int x, int y) when x == 0 && y == 0 -> \"начало координат\";` сразу связывает `x` и `y` без `point.x()`/`point.y()`. Вложенно: `case Pair(Point(var x1, var y1), Point(var x2, var y2)) -> ...` раскрывает оба уровня.",
+                "when_to_apply": "Применяют record patterns, когда нужно одновременно проверить тип записи и достать её компоненты -- особенно для иерархий доменных событий и `Result`-типов поверх `record`.",
+                "edge_cases": "Граничный случай -- вложенная деконструкция: можно использовать `var` для вывода типа компонента (`Point(var x, var y)`), но число и порядок компонентов в паттерне обязаны точно совпадать с сигнатурой `record`.",
+                "related": "[[java-conditional-statements-interview#Q11]] pattern matching for switch как контекст; [[java-conditional-statements-interview#Q12]] guards для record-паттернов; [[java-conditional-statements-interview#Q17]] unnamed patterns для ненужных компонентов."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Деконструкция работает только для одного уровня -- вложенные record patterns (`Pair(Point(...), ...)`) не поддерживаются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Вложенная деконструкция полностью поддерживается: можно раскрывать записи внутри записей на произвольную глубину.",
-                "source_of_confusion": "Простые примеры с одним уровнем создают впечатление об ограничении глубины.",
-                "if_it_were_true": "Тогда `Pair(Point(var x1, var y1), ...)` не компилировался бы, но это штатная возможность JEP 440.",
-                "how_it_should_be": "Record patterns деконструируются вложенно, отражая структуру самих записей."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`record patterns` нельзя комбинировать с `when`-guards: guard допустим только для простых type patterns.",
@@ -941,18 +930,29 @@
                 "if_it_were_true": "Тогда нельзя было бы фильтровать точки по координатам в одном `case`, но это рабочий приём.",
                 "how_it_should_be": "Record pattern свободно дополняется `when`-условием по уже извлечённым компонентам."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`record patterns` извлекают компоненты, вызывая под капотом аксессоры, поэтому в паттерне можно опускать любые поля без указания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В record pattern нужно перечислить все компоненты записи в правильном порядке; опускать произвольные нельзя (для этого с `Java 22` есть `_`).",
+                "source_of_confusion": "Свобода именования переменных создаёт впечатление, что и сами компоненты опциональны.",
+                "if_it_were_true": "Тогда `case Point(int x) -> ...` для двухкомпонентного `Point` компилировался бы, но это ошибка арности.",
+                "how_it_should_be": "Паттерн обязан соответствовать всем компонентам записи; пропуск появился позже как `unnamed patterns`."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`record patterns` (финал в `Java 21`, JEP 440) позволяют деконструировать `record` прямо в `case`: извлечь компоненты без явных вызовов аксессоров.",
-              "correct": true,
+              "text": "Деконструкция работает только для одного уровня -- вложенные record patterns (`Pair(Point(...), ...)`) не поддерживаются.",
+              "correct": false,
               "sections": {
-                "explanation": "`record patterns` (финал в `Java 21`, JEP 440) позволяют деконструировать `record` прямо в `case`: извлечь компоненты без явных вызовов аксессоров. Деконструкция может быть вложенной -- `Pair(Point(var x1, var y1), Point(...))`. Это убирает шаблон `record.component()` и делает извлечение полей частью самого паттерна.",
-                "example": "`case Point(int x, int y) when x == 0 && y == 0 -> \"начало координат\";` сразу связывает `x` и `y` без `point.x()`/`point.y()`. Вложенно: `case Pair(Point(var x1, var y1), Point(var x2, var y2)) -> ...` раскрывает оба уровня.",
-                "when_to_apply": "Применяют record patterns, когда нужно одновременно проверить тип записи и достать её компоненты -- особенно для иерархий доменных событий и `Result`-типов поверх `record`.",
-                "edge_cases": "Граничный случай -- вложенная деконструкция: можно использовать `var` для вывода типа компонента (`Point(var x, var y)`), но число и порядок компонентов в паттерне обязаны точно совпадать с сигнатурой `record`.",
-                "related": "[[java-conditional-statements-interview#Q11]] pattern matching for switch как контекст; [[java-conditional-statements-interview#Q12]] guards для record-паттернов; [[java-conditional-statements-interview#Q17]] unnamed patterns для ненужных компонентов."
+                "what_actually": "Вложенная деконструкция полностью поддерживается: можно раскрывать записи внутри записей на произвольную глубину.",
+                "source_of_confusion": "Простые примеры с одним уровнем создают впечатление об ограничении глубины.",
+                "if_it_were_true": "Тогда `Pair(Point(var x1, var y1), ...)` не компилировался бы, но это штатная возможность JEP 440.",
+                "how_it_should_be": "Record patterns деконструируются вложенно, отражая структуру самих записей."
               },
               "label": "D",
               "order": 3
@@ -969,6 +969,18 @@
           "question_text": "Что такое `unnamed patterns` (`Java 22`) и зачем нужен `_`?",
           "options": [
             {
+              "text": "`unnamed patterns` появились ещё в `Java 16` вместе с pattern matching for instanceof.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`unnamed patterns` -- это `Java 22` (JEP 456); в `Java 16` был лишь `instanceof`-pattern без поддержки `_`.",
+                "source_of_confusion": "Все «pattern»-фичи воспринимают как появившиеся одновременно.",
+                "if_it_were_true": "Тогда `case Dog(var name, _)` собирался бы под `Java 16`, но там это ошибка компиляции.",
+                "how_it_should_be": "Хронология: `instanceof`-паттерны -- `Java 16`, switch-паттерны -- `21`, unnamed -- `22`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`unnamed patterns` (JEP 456, `Java 22`) позволяют использовать `_` для компонентов или паттернов, которые не нужны в текущей ветке: `case Dog(var name, _)` игнорирует возраст.",
               "correct": true,
               "sections": {
@@ -978,32 +990,8 @@
                 "edge_cases": "Особенность -- `_` не создаёт переменную и не может использоваться как значение; несколько `_` в одном паттерне допустимы, т.к. ни один не вводит имени в область видимости.",
                 "related": "[[java-conditional-statements-interview#Q16]] record patterns и деконструкция; [[java-conditional-statements-interview#Q12]] guards вместе с unnamed patterns; [[java-conditional-statements-interview#Q15]] sealed classes для exhaustive switch."
               },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`_` в `unnamed patterns` создаёт обычную переменную с именем подчёркивания, к которой можно обращаться внутри ветки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`_` намеренно НЕ связывает переменную -- к нему нельзя обратиться; он лишь помечает компонент как неиспользуемый.",
-                "source_of_confusion": "В старом `Java` `_` был легальным идентификатором, и это наследие путает.",
-                "if_it_were_true": "Тогда `case Dog(_, _)` давал бы доступ к обоим полям, но `_` как раз отказывается от доступа.",
-                "how_it_should_be": "`_` -- это «выброшенный» компонент без имени; для использования значения дают обычную переменную."
-              },
               "label": "B",
               "order": 1
-            },
-            {
-              "text": "`unnamed patterns` появились ещё в `Java 16` вместе с pattern matching for instanceof.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`unnamed patterns` -- это `Java 22` (JEP 456); в `Java 16` был лишь `instanceof`-pattern без поддержки `_`.",
-                "source_of_confusion": "Все «pattern»-фичи воспринимают как появившиеся одновременно.",
-                "if_it_were_true": "Тогда `case Dog(var name, _)` собирался бы под `Java 16`, но там это ошибка компиляции.",
-                "how_it_should_be": "Хронология: `instanceof`-паттерны -- `Java 16`, switch-паттерны -- `21`, unnamed -- `22`."
-              },
-              "label": "C",
-              "order": 2
             },
             {
               "text": "В одном record pattern можно использовать только один `_`; два подчёркивания подряд запрещены из-за конфликта имён.",
@@ -1013,6 +1001,18 @@
                 "source_of_confusion": "Запрет на дублирование обычных имён ошибочно переносят на `_`.",
                 "if_it_were_true": "Тогда `case Cat(_, _)` не компилировался бы, но это каноничный пример unnamed pattern.",
                 "how_it_should_be": "Поскольку `_` не объявляет переменную, его можно повторять сколько угодно в одном паттерне."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`_` в `unnamed patterns` создаёт обычную переменную с именем подчёркивания, к которой можно обращаться внутри ветки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`_` намеренно НЕ связывает переменную -- к нему нельзя обратиться; он лишь помечает компонент как неиспользуемый.",
+                "source_of_confusion": "В старом `Java` `_` был легальным идентификатором, и это наследие путает.",
+                "if_it_were_true": "Тогда `case Dog(_, _)` давал бы доступ к обоим полям, но `_` как раз отказывается от доступа.",
+                "how_it_should_be": "`_` -- это «выброшенный» компонент без имени; для использования значения дают обычную переменную."
               },
               "label": "D",
               "order": 3
@@ -1029,13 +1029,13 @@
           "question_text": "Какие типы циклов поддерживает `Java` и в чём их различия?",
           "options": [
             {
-              "text": "`while` и `do-while` идентичны: оба проверяют условие перед выполнением тела, разница только в синтаксисе.",
+              "text": "`Java` поддерживает только `for` и `while`; конструкции `do-while` в языке нет.",
               "correct": false,
               "sections": {
-                "what_actually": "`do-while` проверяет условие ПОСЛЕ тела, поэтому тело выполняется минимум один раз; `while` может не войти в цикл.",
-                "source_of_confusion": "Похожее ключевое слово `while` в обоих создаёт впечатление одинаковой семантики.",
-                "if_it_were_true": "Тогда `do { ... } while (false)` не выполнял бы тело, но он выполняет его ровно один раз.",
-                "how_it_should_be": "`while` проверяет условие до тела, `do-while` -- после; гарантия «минимум раз» только у второго."
+                "what_actually": "`do-while` -- полноценный цикл `Java` с проверкой условия после тела; он существует с самых ранних версий.",
+                "source_of_confusion": "`do-while` используют реже, поэтому забывают о его существовании.",
+                "if_it_were_true": "Тогда `do { ... } while (cond);` был бы синтаксической ошибкой, но это валидный цикл.",
+                "how_it_should_be": "Базовых циклов три: `for`, `while`, `do-while`; плюс enhanced `for` с `Java 5`."
               },
               "label": "A",
               "order": 0
@@ -1054,18 +1054,6 @@
               "order": 1
             },
             {
-              "text": "`Java` поддерживает только `for` и `while`; конструкции `do-while` в языке нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`do-while` -- полноценный цикл `Java` с проверкой условия после тела; он существует с самых ранних версий.",
-                "source_of_confusion": "`do-while` используют реже, поэтому забывают о его существовании.",
-                "if_it_were_true": "Тогда `do { ... } while (cond);` был бы синтаксической ошибкой, но это валидный цикл.",
-                "how_it_should_be": "Базовых циклов три: `for`, `while`, `do-while`; плюс enhanced `for` с `Java 5`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Enhanced `for` (`for-each`) существует в `Java` с самой первой версии 1.0 наравне с обычным `for`.",
               "correct": false,
               "sections": {
@@ -1073,6 +1061,18 @@
                 "source_of_confusion": "`for-each` сейчас настолько привычен, что кажется ровесником языка.",
                 "if_it_were_true": "Тогда `for (String s : list)` собирался бы под `Java 1.4`, но там это ошибка компиляции.",
                 "how_it_should_be": "Enhanced `for` появился в `Java 5` вместе с дженериками и autoboxing."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`while` и `do-while` идентичны: оба проверяют условие перед выполнением тела, разница только в синтаксисе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`do-while` проверяет условие ПОСЛЕ тела, поэтому тело выполняется минимум один раз; `while` может не войти в цикл.",
+                "source_of_confusion": "Похожее ключевое слово `while` в обоих создаёт впечатление одинаковой семантики.",
+                "if_it_were_true": "Тогда `do { ... } while (false)` не выполнял бы тело, но он выполняет его ровно один раз.",
+                "how_it_should_be": "`while` проверяет условие до тела, `do-while` -- после; гарантия «минимум раз» только у второго."
               },
               "label": "D",
               "order": 3
@@ -1101,18 +1101,6 @@
               "order": 0
             },
             {
-              "text": "Внутри `for-each` можно безопасно удалять элементы коллекции через `collection.remove(...)`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Удаление через `collection.remove()` внутри `for-each` ломает fail-fast итератор и бросает `ConcurrentModificationException`.",
-                "source_of_confusion": "Кажется логичным удалять «текущий» элемент прямо в цикле.",
-                "if_it_were_true": "Тогда `for (x : list) list.remove(x);` работал бы, но он падает на структурной модификации.",
-                "how_it_should_be": "Безопасное удаление -- через `Iterator.remove()` или `removeIf()`, а не внутри `for-each`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Enhanced `for` (`for-each`) перебирает все элементы массива или любого объекта, реализующего `Iterable`: `for (String name : names) { ... }`.",
               "correct": true,
               "sections": {
@@ -1121,6 +1109,18 @@
                 "when_to_apply": "Применяют `for-each` для простого перебора всех элементов без нужды в индексе; когда нужен индекс или обратный порядок -- берут классический `for` или `IntStream.range`.",
                 "edge_cases": "Граничный случай -- удаление во время итерации: безопасно удалять можно только через `Iterator.remove()`, а `for-each` к итератору доступа не даёт, поэтому модификация коллекции внутри него ломает цикл.",
                 "related": "[[java-conditional-statements-interview#Q18]] три базовых типа циклов; [[java-conditional-statements-interview#Q33]] условия и фильтрация в Stream API; [[java-conditional-statements-interview#Q21]] маркированный `continue` в циклах."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Внутри `for-each` можно безопасно удалять элементы коллекции через `collection.remove(...)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Удаление через `collection.remove()` внутри `for-each` ломает fail-fast итератор и бросает `ConcurrentModificationException`.",
+                "source_of_confusion": "Кажется логичным удалять «текущий» элемент прямо в цикле.",
+                "if_it_were_true": "Тогда `for (x : list) list.remove(x);` работал бы, но он падает на структурной модификации.",
+                "how_it_should_be": "Безопасное удаление -- через `Iterator.remove()` или `removeIf()`, а не внутри `for-each`."
               },
               "label": "C",
               "order": 2
@@ -1149,13 +1149,14 @@
           "question_text": "В чём разница между немаркированным и маркированным `break`?",
           "options": [
             {
-              "text": "Немаркированный `break` завершает все вложенные циклы сразу, а маркированный -- только один помеченный.",
-              "correct": false,
+              "text": "Немаркированный `break` завершает **самый внутренний** цикл или `switch`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Всё наоборот: немаркированный `break` прерывает лишь самый внутренний цикл, а маркированный выходит из помеченного внешнего.",
-                "source_of_confusion": "Метку воспринимают как «ограничитель» действия, хотя она его расширяет на внешний цикл.",
-                "if_it_were_true": "Тогда обычный `break` во вложенном цикле выходил бы из всех уровней, но он завершает только текущий.",
-                "how_it_should_be": "Немаркированный `break` -- внутренний цикл; маркированный `break label` -- весь помеченный цикл."
+                "explanation": "Немаркированный `break` завершает **самый внутренний** цикл или `switch`. Маркированный `break label;` завершает **помеченный** внешний цикл целиком. Это полезно при поиске в многомерных структурах, но часто читабельнее заменить отдельным методом с `return`.",
+                "example": "В двойном цикле по `matrix` с `break outer;` при `cell == 37` выход происходит из **обоих** циклов -- `checks == 5`. Без метки завершился бы только внутренний цикл, и обход продолжился бы дальше -- `checks == 8`.",
+                "when_to_apply": "Маркированный `break` применяют, когда из вложенных циклов нужно выйти разом по найденному условию; при этом обычно лучше вынести вложенные циклы в метод и сделать `return`.",
+                "edge_cases": "Тонкость: метка ставится перед циклом (`outer:`), а `break outer;` прерывает именно его; немаркированный `break` в той же точке прервал бы лишь внутренний цикл, и внешний продолжил бы итерации.",
+                "related": "[[java-conditional-statements-interview#Q21]] маркированный `continue`; [[java-conditional-statements-interview#Q22]] `break` против `return` в циклах; [[java-conditional-statements-interview#Q29]] guard clauses вместо вложенности."
               },
               "label": "A",
               "order": 0
@@ -1185,14 +1186,13 @@
               "order": 2
             },
             {
-              "text": "Немаркированный `break` завершает **самый внутренний** цикл или `switch`.",
-              "correct": true,
+              "text": "Немаркированный `break` завершает все вложенные циклы сразу, а маркированный -- только один помеченный.",
+              "correct": false,
               "sections": {
-                "explanation": "Немаркированный `break` завершает **самый внутренний** цикл или `switch`. Маркированный `break label;` завершает **помеченный** внешний цикл целиком. Это полезно при поиске в многомерных структурах, но часто читабельнее заменить отдельным методом с `return`.",
-                "example": "В двойном цикле по `matrix` с `break outer;` при `cell == 37` выход происходит из **обоих** циклов -- `checks == 5`. Без метки завершился бы только внутренний цикл, и обход продолжился бы дальше -- `checks == 8`.",
-                "when_to_apply": "Маркированный `break` применяют, когда из вложенных циклов нужно выйти разом по найденному условию; при этом обычно лучше вынести вложенные циклы в метод и сделать `return`.",
-                "edge_cases": "Тонкость: метка ставится перед циклом (`outer:`), а `break outer;` прерывает именно его; немаркированный `break` в той же точке прервал бы лишь внутренний цикл, и внешний продолжил бы итерации.",
-                "related": "[[java-conditional-statements-interview#Q21]] маркированный `continue`; [[java-conditional-statements-interview#Q22]] `break` против `return` в циклах; [[java-conditional-statements-interview#Q29]] guard clauses вместо вложенности."
+                "what_actually": "Всё наоборот: немаркированный `break` прерывает лишь самый внутренний цикл, а маркированный выходит из помеченного внешнего.",
+                "source_of_confusion": "Метку воспринимают как «ограничитель» действия, хотя она его расширяет на внешний цикл.",
+                "if_it_were_true": "Тогда обычный `break` во вложенном цикле выходил бы из всех уровней, но он завершает только текущий.",
+                "how_it_should_be": "Немаркированный `break` -- внутренний цикл; маркированный `break label` -- весь помеченный цикл."
               },
               "label": "D",
               "order": 3
@@ -1209,17 +1209,28 @@
           "question_text": "В чём разница между немаркированным и маркированным `continue`?",
           "options": [
             {
-              "text": "Немаркированный `continue` переходит к **следующей итерации** самого внутреннего цикла.",
-              "correct": true,
+              "text": "Немаркированный `continue` пропускает следующую итерацию цикла, а текущую доделывает до конца.",
+              "correct": false,
               "sections": {
-                "explanation": "Немаркированный `continue` переходит к **следующей итерации** самого внутреннего цикла. Маркированный `continue label;` переходит к следующей итерации **помеченного** внешнего цикла, пропуская остаток текущей итерации внутреннего и продолжая внешний.",
-                "example": "В двойном цикле с `continue outer;` при `cell == 15` пропускаются оставшиеся ячейки текущей строки, и сразу начинается обработка следующей строки -- `processed == 5`. Без метки пропускалась бы лишь одна ячейка -- `processed == 9`.",
-                "when_to_apply": "Маркированный `continue` применяют, когда при некотором условии надо немедленно перейти к следующей итерации внешнего цикла, не доделывая внутренний; немаркированный -- когда достаточно пропустить шаг внутреннего.",
-                "edge_cases": "Тонкость: `continue outer` не выходит из циклов (в отличие от `break outer`), а лишь переводит управление на следующую итерацию внешнего цикла, пропуская остаток текущего прохода внутреннего.",
-                "related": "[[java-conditional-statements-interview#Q20]] маркированный `break`; [[java-conditional-statements-interview#Q22]] `break` против `return`; [[java-conditional-statements-interview#Q18]] базовые типы циклов."
+                "what_actually": "`continue` пропускает остаток ТЕКУЩЕЙ итерации и сразу переходит к следующей; код после него в этом проходе не выполняется.",
+                "source_of_confusion": "Слово «continue» наводит на мысль о продолжении текущего прохода.",
+                "if_it_were_true": "Тогда код после `continue` в теле цикла исполнялся бы, но он пропускается до конца итерации.",
+                "how_it_should_be": "`continue` обрывает текущую итерацию и переходит к проверке условия следующей."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "`continue` работает только в `for`, а в `while` и `do-while` его использовать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`continue` работает во всех типах циклов -- `for`, `while`, `do-while`; в `do-while` он переходит к проверке условия.",
+                "source_of_confusion": "Примеры с `continue` чаще показывают на `for`, отсюда ложное ограничение.",
+                "if_it_were_true": "Тогда `while (...) { if (x) continue; }` не компилировался бы, но это валидный код.",
+                "how_it_should_be": "`continue` допустим в любом цикле; различается лишь, к какой проверке он ведёт."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Маркированный `continue` завершает помеченный цикл полностью, как и маркированный `break`.",
@@ -1230,29 +1241,18 @@
                 "if_it_were_true": "Тогда `continue outer` прекращал бы внешний цикл, но он лишь начинает его следующую итерацию.",
                 "how_it_should_be": "`continue label` -- следующая итерация цикла; полный выход даёт `break label`."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Немаркированный `continue` пропускает следующую итерацию цикла, а текущую доделывает до конца.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`continue` пропускает остаток ТЕКУЩЕЙ итерации и сразу переходит к следующей; код после него в этом проходе не выполняется.",
-                "source_of_confusion": "Слово «continue» наводит на мысль о продолжении текущего прохода.",
-                "if_it_were_true": "Тогда код после `continue` в теле цикла исполнялся бы, но он пропускается до конца итерации.",
-                "how_it_should_be": "`continue` обрывает текущую итерацию и переходит к проверке условия следующей."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`continue` работает только в `for`, а в `while` и `do-while` его использовать нельзя.",
-              "correct": false,
+              "text": "Немаркированный `continue` переходит к **следующей итерации** самого внутреннего цикла.",
+              "correct": true,
               "sections": {
-                "what_actually": "`continue` работает во всех типах циклов -- `for`, `while`, `do-while`; в `do-while` он переходит к проверке условия.",
-                "source_of_confusion": "Примеры с `continue` чаще показывают на `for`, отсюда ложное ограничение.",
-                "if_it_were_true": "Тогда `while (...) { if (x) continue; }` не компилировался бы, но это валидный код.",
-                "how_it_should_be": "`continue` допустим в любом цикле; различается лишь, к какой проверке он ведёт."
+                "explanation": "Немаркированный `continue` переходит к **следующей итерации** самого внутреннего цикла. Маркированный `continue label;` переходит к следующей итерации **помеченного** внешнего цикла, пропуская остаток текущей итерации внутреннего и продолжая внешний.",
+                "example": "В двойном цикле с `continue outer;` при `cell == 15` пропускаются оставшиеся ячейки текущей строки, и сразу начинается обработка следующей строки -- `processed == 5`. Без метки пропускалась бы лишь одна ячейка -- `processed == 9`.",
+                "when_to_apply": "Маркированный `continue` применяют, когда при некотором условии надо немедленно перейти к следующей итерации внешнего цикла, не доделывая внутренний; немаркированный -- когда достаточно пропустить шаг внутреннего.",
+                "edge_cases": "Тонкость: `continue outer` не выходит из циклов (в отличие от `break outer`), а лишь переводит управление на следующую итерацию внешнего цикла, пропуская остаток текущего прохода внутреннего.",
+                "related": "[[java-conditional-statements-interview#Q20]] маркированный `break`; [[java-conditional-statements-interview#Q22]] `break` против `return`; [[java-conditional-statements-interview#Q18]] базовые типы циклов."
               },
               "label": "D",
               "order": 3
@@ -1269,18 +1269,6 @@
           "question_text": "В чём разница между `break` и `return` в контексте циклов?",
           "options": [
             {
-              "text": "`break` и `return` внутри цикла эквивалентны: оба прекращают выполнение метода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`break` лишь выходит из цикла -- метод продолжает работу; метод прекращает только `return`.",
-                "source_of_confusion": "Оба «прерывают» исполнение, и эту общность принимают за полную эквивалентность.",
-                "if_it_were_true": "Тогда код после цикла никогда не выполнялся бы после `break`, но он спокойно исполняется.",
-                "how_it_should_be": "`break` завершает цикл и оставляет метод; `return` завершает метод целиком."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`break` завершает текущий цикл или `switch` -- код **после** цикла продолжает выполняться.",
               "correct": true,
               "sections": {
@@ -1290,8 +1278,8 @@
                 "edge_cases": "Тонкость: `break` затрагивает только ближайший цикл/`switch` и оставляет метод живым, тогда как `return` игнорирует все объемлющие циклы и немедленно покидает метод вместе с возвратом значения.",
                 "related": "[[java-conditional-statements-interview#Q20]] маркированный `break`; [[java-conditional-statements-interview#Q21]] маркированный `continue`; [[java-conditional-statements-interview#Q7]] `yield` против `return` в switch."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`break` может вернуть значение из цикла, если за ним указать выражение: `break value;`.",
@@ -1302,8 +1290,8 @@
                 "if_it_were_true": "Тогда `break result;` в цикле был бы валиден, но это синтаксическая ошибка.",
                 "how_it_should_be": "Для возврата значения используют `return` (метод) или `yield` (ветка switch expression)."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "После `return` внутри цикла код, идущий после цикла в том же методе, всё равно выполнится.",
@@ -1313,6 +1301,18 @@
                 "source_of_confusion": "`return` путают с `break`, который действительно оставляет метод живым.",
                 "if_it_were_true": "Тогда `return` не гарантировал бы выход из метода, но именно это -- его определение.",
                 "how_it_should_be": "Код после цикла достижим после `break`, но недостижим после `return`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`break` и `return` внутри цикла эквивалентны: оба прекращают выполнение метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`break` лишь выходит из цикла -- метод продолжает работу; метод прекращает только `return`.",
+                "source_of_confusion": "Оба «прерывают» исполнение, и эту общность принимают за полную эквивалентность.",
+                "if_it_were_true": "Тогда код после цикла никогда не выполнялся бы после `break`, но он спокойно исполняется.",
+                "how_it_should_be": "`break` завершает цикл и оставляет метод; `return` завершает метод целиком."
               },
               "label": "D",
               "order": 3
@@ -1329,18 +1329,6 @@
           "question_text": "Как обработать бесконечный цикл и когда он уместен?",
           "options": [
             {
-              "text": "Бесконечный цикл `while (true)` `JVM` оптимизирует и автоматически завершит, если тело не меняет состояние.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`JVM` не завершает `while (true)` сама -- без явного `break`/прерывания цикл крутится бесконечно и держит поток.",
-                "source_of_confusion": "Оптимизации `JIT` создают иллюзию, что и зависание цикла будет «исправлено».",
-                "if_it_were_true": "Тогда серверный цикл сам останавливался бы, но его приходится завершать сигналом shutdown.",
-                "how_it_should_be": "Условие выхода закладывает программист: флаг, `break`, таймаут `poll` или прерывание потока."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`for (;;)` -- это синтаксическая ошибка; бесконечный цикл можно записать только как `while (true)`.",
               "correct": false,
               "sections": {
@@ -1348,6 +1336,18 @@
                 "source_of_confusion": "Пустое условие в `for` выглядит «сломанным», хотя оно трактуется как `true`.",
                 "if_it_were_true": "Тогда `for (;;)` не компилировался бы, но это классическая идиома бесконечного цикла.",
                 "how_it_should_be": "И `while (true)`, и `for (;;)` -- эквивалентные способы записать бесконечный цикл."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Бесконечный цикл `while (true)` `JVM` оптимизирует и автоматически завершит, если тело не меняет состояние.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JVM` не завершает `while (true)` сама -- без явного `break`/прерывания цикл крутится бесконечно и держит поток.",
+                "source_of_confusion": "Оптимизации `JIT` создают иллюзию, что и зависание цикла будет «исправлено».",
+                "if_it_were_true": "Тогда серверный цикл сам останавливался бы, но его приходится завершать сигналом shutdown.",
+                "how_it_should_be": "Условие выхода закладывает программист: флаг, `break`, таймаут `poll` или прерывание потока."
               },
               "label": "B",
               "order": 1
@@ -1401,13 +1401,14 @@
               "order": 0
             },
             {
-              "text": "Если подходящего `catch` нет, `finally` пропускается, и исключение сразу летит выше.",
-              "correct": false,
+              "text": "Сначала выполняется блок `try`. Если исключение не брошено -- `catch`-блоки пропускаются; затем в любом случае выполняется `finally`. Если исключение брошено -- ищется первый подходящий по типу `catch`, после чего тоже отрабатывает `finally`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`finally` выполняется даже при отсутствии подходящего `catch` -- перед тем как исключение пробросится выше.",
-                "source_of_confusion": "Кажется, что необработанное исключение «обрывает» всё, включая `finally`.",
-                "if_it_were_true": "Тогда ресурсы в `finally` не освобождались бы при пробросе, но `finally` гарантирует очистку.",
-                "how_it_should_be": "`finally` отрабатывает до проброса исключения наверх -- это и есть его гарантия."
+                "explanation": "Сначала выполняется блок `try`. Если исключение не брошено -- `catch`-блоки пропускаются. Если брошено -- ищется первый подходящий по типу `catch`. Блок `finally` выполняется **всегда** (за редкими исключениями вроде `System.exit()`). Если подходящего `catch` нет, исключение пробрасывается выше, но `finally` всё равно отработает.",
+                "example": "При исключении в `try` управление идёт в подходящий `catch`, затем -- в `finally`; при нормальном завершении `try` -- сразу в `finally`. То есть `finally` -- общая точка для нормального и аварийного путей.",
+                "when_to_apply": "Используют `try-catch-finally` для обработки исключений с гарантированной очисткой ресурсов в `finally`; для `AutoCloseable`-ресурсов предпочтительнее `try-with-resources` (см. Q27).",
+                "edge_cases": "Граничный случай -- отсутствие подходящего `catch`: исключение пробрасывается наверх по стеку, но `finally` всё равно выполнится до выхода из метода; полностью пропустить `finally` могут лишь `System.exit()` или краш `JVM` (см. Q25).",
+                "related": "[[java-conditional-statements-interview#Q25]] когда `finally` не выполняется; [[java-conditional-statements-interview#Q26]] `return` в `catch` и присваивание в `finally`; [[java-conditional-statements-interview#Q27]] try-with-resources и suppressed exceptions."
               },
               "label": "B",
               "order": 1
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "text": "Сначала выполняется блок `try`. Если исключение не брошено -- `catch`-блоки пропускаются; затем в любом случае выполняется `finally`. Если исключение брошено -- ищется первый подходящий по типу `catch`, после чего тоже отрабатывает `finally`.",
-              "correct": true,
+              "text": "Если подходящего `catch` нет, `finally` пропускается, и исключение сразу летит выше.",
+              "correct": false,
               "sections": {
-                "explanation": "Сначала выполняется блок `try`. Если исключение не брошено -- `catch`-блоки пропускаются. Если брошено -- ищется первый подходящий по типу `catch`. Блок `finally` выполняется **всегда** (за редкими исключениями вроде `System.exit()`). Если подходящего `catch` нет, исключение пробрасывается выше, но `finally` всё равно отработает.",
-                "example": "При исключении в `try` управление идёт в подходящий `catch`, затем -- в `finally`; при нормальном завершении `try` -- сразу в `finally`. То есть `finally` -- общая точка для нормального и аварийного путей.",
-                "when_to_apply": "Используют `try-catch-finally` для обработки исключений с гарантированной очисткой ресурсов в `finally`; для `AutoCloseable`-ресурсов предпочтительнее `try-with-resources` (см. Q27).",
-                "edge_cases": "Граничный случай -- отсутствие подходящего `catch`: исключение пробрасывается наверх по стеку, но `finally` всё равно выполнится до выхода из метода; полностью пропустить `finally` могут лишь `System.exit()` или краш `JVM` (см. Q25).",
-                "related": "[[java-conditional-statements-interview#Q25]] когда `finally` не выполняется; [[java-conditional-statements-interview#Q26]] `return` в `catch` и присваивание в `finally`; [[java-conditional-statements-interview#Q27]] try-with-resources и suppressed exceptions."
+                "what_actually": "`finally` выполняется даже при отсутствии подходящего `catch` -- перед тем как исключение пробросится выше.",
+                "source_of_confusion": "Кажется, что необработанное исключение «обрывает» всё, включая `finally`.",
+                "if_it_were_true": "Тогда ресурсы в `finally` не освобождались бы при пробросе, но `finally` гарантирует очистку.",
+                "how_it_should_be": "`finally` отрабатывает до проброса исключения наверх -- это и есть его гарантия."
               },
               "label": "D",
               "order": 3
@@ -1449,29 +1449,16 @@
           "question_text": "В каких ситуациях блок `finally` может не выполниться?",
           "options": [
             {
-              "text": "Блок `finally` не выполняется при вызове `System.exit()` в `try`/`catch`, при аварийном завершении `JVM` (краш, `OutOfMemoryError` в критическом месте), при бесконечном цикле или deadlock в `try`/`catch`, при принудительном уничтожении потока (`Thread.stop()`) и при убийстве процесса ОС (`kill -9`).",
-              "correct": true,
+              "text": "`finally` не выполнится, если в `catch` стоит `throw new Exception()`, перебрасывающий новое исключение.",
+              "correct": false,
               "sections": {
-                "explanation": "Блок `finally` не выполняется при вызове `System.exit()` в `try`/`catch`, при аварийном завершении `JVM` (краш, `OutOfMemoryError` в критическом месте), при бесконечном цикле или deadlock в `try`/`catch`, при принудительном уничтожении потока (`Thread.stop()`, deprecated) и при убийстве процесса ОС (`kill -9`).",
-                "example": "`try { System.exit(0); } finally { System.out.println(\"finally\"); }` -- `finally` НЕ напечатается, потому что `System.exit()` завершает `JVM` немедленно, не давая стеку размотаться.",
-                "when_to_apply": "Знание этих случаев важно при проектировании очистки ресурсов: критичную очистку нельзя целиком полагать на `finally`, если в коде возможен `System.exit()` или фатальная ошибка `JVM`.",
-                "edge_cases": "Тонкость -- `System.exit()` против обычного `return`/исключения: при `return` или брошенном исключении `finally` отрабатывает, а при `System.exit()` -- нет, т.к. процесс гасится до размотки стека.",
-                "related": "[[java-conditional-statements-interview#Q24]] нормальный поток try-catch-finally; [[java-conditional-statements-interview#Q26]] `return` и присваивание в finally; [[java-conditional-statements-interview#Q23]] deadlock/бесконечный цикл в try."
+                "what_actually": "Повторный `throw` из `catch` тоже не отменяет `finally`: блок отрабатывает перед распространением нового исключения.",
+                "source_of_confusion": "Перебрасывание выглядит как «прерывание» всей конструкции вместе с `finally`.",
+                "if_it_were_true": "Тогда rethrow-паттерн терял бы очистку, но `finally` всё равно срабатывает.",
+                "how_it_should_be": "После `throw` в `catch` выполняется `finally`, и лишь затем исключение идёт выше."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`finally` не выполняется, если в `try` сработал `return` -- возврат из метода отменяет `finally`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Именно `return` в `try` НЕ отменяет `finally`: блок отрабатывает до фактического возврата значения из метода.",
-                "source_of_confusion": "`return` кажется немедленным выходом, «опережающим» `finally`.",
-                "if_it_were_true": "Тогда очистка ресурсов терялась бы при любом `return` из `try`, но `finally` для того и существует.",
-                "how_it_should_be": "При `return` в `try` сначала выполняется `finally`, затем метод возвращает значение."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`finally` пропускается всякий раз, когда в `try` брошено исключение, не пойманное локальным `catch`.",
@@ -1482,17 +1469,30 @@
                 "if_it_were_true": "Тогда ресурсы терялись бы при любом пробросе, но `finally` гарантирует их освобождение.",
                 "how_it_should_be": "`finally` выполняется и при проброшенном исключении -- до того как оно уйдёт наверх."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`finally` не выполняется, если в `try` сработал `return` -- возврат из метода отменяет `finally`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно `return` в `try` НЕ отменяет `finally`: блок отрабатывает до фактического возврата значения из метода.",
+                "source_of_confusion": "`return` кажется немедленным выходом, «опережающим» `finally`.",
+                "if_it_were_true": "Тогда очистка ресурсов терялась бы при любом `return` из `try`, но `finally` для того и существует.",
+                "how_it_should_be": "При `return` в `try` сначала выполняется `finally`, затем метод возвращает значение."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`finally` не выполнится, если в `catch` стоит `throw new Exception()`, перебрасывающий новое исключение.",
-              "correct": false,
+              "text": "Блок `finally` не выполняется при вызове `System.exit()` в `try`/`catch`, при аварийном завершении `JVM` (краш, `OutOfMemoryError` в критическом месте), при бесконечном цикле или deadlock в `try`/`catch`, при принудительном уничтожении потока (`Thread.stop()`) и при убийстве процесса ОС (`kill -9`).",
+              "correct": true,
               "sections": {
-                "what_actually": "Повторный `throw` из `catch` тоже не отменяет `finally`: блок отрабатывает перед распространением нового исключения.",
-                "source_of_confusion": "Перебрасывание выглядит как «прерывание» всей конструкции вместе с `finally`.",
-                "if_it_were_true": "Тогда rethrow-паттерн терял бы очистку, но `finally` всё равно срабатывает.",
-                "how_it_should_be": "После `throw` в `catch` выполняется `finally`, и лишь затем исключение идёт выше."
+                "explanation": "Блок `finally` не выполняется при вызове `System.exit()` в `try`/`catch`, при аварийном завершении `JVM` (краш, `OutOfMemoryError` в критическом месте), при бесконечном цикле или deadlock в `try`/`catch`, при принудительном уничтожении потока (`Thread.stop()`, deprecated) и при убийстве процесса ОС (`kill -9`).",
+                "example": "`try { System.exit(0); } finally { System.out.println(\"finally\"); }` -- `finally` НЕ напечатается, потому что `System.exit()` завершает `JVM` немедленно, не давая стеку размотаться.",
+                "when_to_apply": "Знание этих случаев важно при проектировании очистки ресурсов: критичную очистку нельзя целиком полагать на `finally`, если в коде возможен `System.exit()` или фатальная ошибка `JVM`.",
+                "edge_cases": "Тонкость -- `System.exit()` против обычного `return`/исключения: при `return` или брошенном исключении `finally` отрабатывает, а при `System.exit()` -- нет, т.к. процесс гасится до размотки стека.",
+                "related": "[[java-conditional-statements-interview#Q24]] нормальный поток try-catch-finally; [[java-conditional-statements-interview#Q26]] `return` и присваивание в finally; [[java-conditional-statements-interview#Q23]] deadlock/бесконечный цикл в try."
               },
               "label": "D",
               "order": 3
@@ -1509,18 +1509,6 @@
           "question_text": "Каков результат выполнения кода с `return` в `catch` и присваиванием переменной в `finally`?",
           "options": [
             {
-              "text": "Метод вернёт `4`: присваивание в `finally` перекрывает значение, зафиксированное `return` в `catch`, ведь `finally` выполняется последним.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для примитива `return` снимает значение ДО `finally`; обычное присваивание там результат не меняет -- вернётся `3`.",
-                "source_of_confusion": "Кажется, что раз `finally` выполняется последним, его присваивание и определяет результат.",
-                "if_it_were_true": "Тогда любой `finally` с присваиванием менял бы возврат, но изменить его может только `return` в `finally`.",
-                "how_it_should_be": "Возвращаемое значение примитива фиксируется на `return`; перекрыть его способен лишь `return` в `finally`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Для примитива результат равен значению, зафиксированному оператором `return` в `catch`, а последующее присваивание в `finally` на возвращаемое значение **не влияет**.",
               "correct": true,
               "sections": {
@@ -1530,20 +1518,20 @@
                 "edge_cases": "Для ссылочных типов поведение иное: `return` фиксирует **ссылку**, поэтому `finally` может изменить состояние возвращаемого объекта (например, добавить элемент в список), и вызывающий код это увидит.",
                 "related": "[[java-conditional-statements-interview#Q24]] поток try-catch-finally; [[java-conditional-statements-interview#Q25]] когда finally не выполняется; [[java-conditional-statements-interview#Q27]] try-with-resources и порядок закрытия."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "Код не скомпилируется: иметь `return` в `catch` и присваивание в `finally` одновременно запрещено.",
+              "text": "Метод вернёт `4`: присваивание в `finally` перекрывает значение, зафиксированное `return` в `catch`, ведь `finally` выполняется последним.",
               "correct": false,
               "sections": {
-                "what_actually": "Такая комбинация полностью валидна и компилируется; это классический пример на поведение `finally`.",
-                "source_of_confusion": "Сложность поведения принимают за признак синтаксической ошибки.",
-                "if_it_were_true": "Тогда вопрос о результате не имел бы смысла, но код собирается и стабильно возвращает `3`.",
-                "how_it_should_be": "Конструкция легальна; обсуждается её результат, а не компилируемость."
+                "what_actually": "Для примитива `return` снимает значение ДО `finally`; обычное присваивание там результат не меняет -- вернётся `3`.",
+                "source_of_confusion": "Кажется, что раз `finally` выполняется последним, его присваивание и определяет результат.",
+                "if_it_were_true": "Тогда любой `finally` с присваиванием менял бы возврат, но изменить его может только `return` в `finally`.",
+                "how_it_should_be": "Возвращаемое значение примитива фиксируется на `return`; перекрыть его способен лишь `return` в `finally`."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Для ссылочных типов `finally` не может повлиять на возвращаемый объект -- `return` копирует объект целиком.",
@@ -1553,6 +1541,18 @@
                 "source_of_confusion": "Семантику примитивов (фиксация значения) ошибочно переносят на объекты.",
                 "if_it_were_true": "Тогда мутация списка в `finally` не отражалась бы у вызывающего, но она отражается.",
                 "how_it_should_be": "Возвращается ссылка; изменение состояния объекта в `finally` видно вызывающему коду."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Код не скомпилируется: иметь `return` в `catch` и присваивание в `finally` одновременно запрещено.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такая комбинация полностью валидна и компилируется; это классический пример на поведение `finally`.",
+                "source_of_confusion": "Сложность поведения принимают за признак синтаксической ошибки.",
+                "if_it_were_true": "Тогда вопрос о результате не имел бы смысла, но код собирается и стабильно возвращает `3`.",
+                "how_it_should_be": "Конструкция легальна; обсуждается её результат, а не компилируемость."
               },
               "label": "D",
               "order": 3
@@ -1569,6 +1569,18 @@
           "question_text": "Как работает `try-with-resources` и что такое `suppressed exceptions`?",
           "options": [
             {
+              "text": "`try-with-resources` закрывает любые объекты, у которых есть метод `close()`, даже без интерфейса `AutoCloseable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автозакрытие работает только для типов, реализующих `AutoCloseable` (или `Closeable`); просто наличия метода `close()` мало.",
+                "source_of_confusion": "Наличие метода `close()` путают с реализацией интерфейса.",
+                "if_it_were_true": "Тогда любой класс с `close()` подходил бы в `try (...)`, но компилятор требует `AutoCloseable`.",
+                "how_it_should_be": "Ресурс обязан реализовать `AutoCloseable`; иначе его в `try-with-resources` использовать нельзя."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Ресурсы в `try-with-resources` закрываются в том же порядке, в каком были объявлены.",
               "correct": false,
               "sections": {
@@ -1577,8 +1589,8 @@
                 "if_it_were_true": "Тогда соединение закрылось бы раньше зависящего от него statement, что некорректно.",
                 "how_it_should_be": "Порядок закрытия -- обратный объявлению, чтобы зависимые ресурсы закрывались до базовых."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Если исключение брошено и в `try`, и в `close()`, основным становится исключение из `close()`, а из `try` теряется.",
@@ -1589,8 +1601,8 @@
                 "if_it_were_true": "Тогда исходная ошибка терялась бы, но именно её сохраняют как основную.",
                 "how_it_should_be": "Исключение из `try` -- основное; исключение из `close()` доступно через `getSuppressed()`."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`try-with-resources` (`Java 7+`) автоматически закрывает ресурсы, реализующие `AutoCloseable`, причём в **обратном** порядке объявления.",
@@ -1601,18 +1613,6 @@
                 "when_to_apply": "Применяют `try-with-resources` всегда, когда ресурс реализует `AutoCloseable` (потоки, соединения, statements): это надёжнее ручного `finally { close(); }` и не теряет исходное исключение.",
                 "edge_cases": "Тонкость -- порядок и suppressed: ресурсы закрываются в обратном порядке объявления, а исключение из `close()` не затирает исключение из `try`, а присоединяется как suppressed -- иначе первопричина была бы потеряна.",
                 "related": "[[java-conditional-statements-interview#Q24]] ручной try-catch-finally; [[java-conditional-statements-interview#Q25]] случаи невыполнения finally; [[java-conditional-statements-interview#Q28]] multi-catch нескольких исключений."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`try-with-resources` закрывает любые объекты, у которых есть метод `close()`, даже без интерфейса `AutoCloseable`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Автозакрытие работает только для типов, реализующих `AutoCloseable` (или `Closeable`); просто наличия метода `close()` мало.",
-                "source_of_confusion": "Наличие метода `close()` путают с реализацией интерфейса.",
-                "if_it_were_true": "Тогда любой класс с `close()` подходил бы в `try (...)`, но компилятор требует `AutoCloseable`.",
-                "how_it_should_be": "Ресурс обязан реализовать `AutoCloseable`; иначе его в `try-with-resources` использовать нельзя."
               },
               "label": "D",
               "order": 3
@@ -1629,6 +1629,18 @@
           "question_text": "Как обработать несколько исключений в одном `catch` (`Java 7+`) и каковы ограничения multi-catch?",
           "options": [
             {
+              "text": "Multi-catch появился в `Java 5` вместе с дженериками и `enum`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-catch добавлен в `Java 7` (project Coin), а не в `Java 5`; в `5` были дженерики и `enum`, но не он.",
+                "source_of_confusion": "Несколько языковых улучшений сваливают в одну версию.",
+                "if_it_were_true": "Тогда `catch (A | B e)` собирался бы под `Java 6`, но там это ошибка компиляции.",
+                "how_it_should_be": "Multi-catch и try-with-resources -- это `Java 7`; дженерики и `enum` -- `Java 5`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "В multi-catch переменную `e` можно свободно переприсваивать внутри блока, например `e = wrap(e);`.",
               "correct": false,
               "sections": {
@@ -1637,8 +1649,8 @@
                 "if_it_were_true": "Тогда `e = другое;` внутри multi-catch компилировался бы, но компилятор это запрещает.",
                 "how_it_should_be": "Переменную multi-catch не переприсваивают; при необходимости заводят новую локальную."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Типы в multi-catch можно перечислять в любом отношении, включая `IOException | Exception`.",
@@ -1648,18 +1660,6 @@
                 "source_of_confusion": "Кажется, что чем шире список, тем безопаснее, даже с супертипами.",
                 "if_it_were_true": "Тогда перечисление с родителем и потомком было бы валидным, но это ошибка компиляции.",
                 "how_it_should_be": "Перечисляют только несвязанные наследованием типы; иначе достаточно одного супертипа."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Multi-catch появился в `Java 5` вместе с дженериками и `enum`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Multi-catch добавлен в `Java 7` (project Coin), а не в `Java 5`; в `5` были дженерики и `enum`, но не он.",
-                "source_of_confusion": "Несколько языковых улучшений сваливают в одну версию.",
-                "if_it_were_true": "Тогда `catch (A | B e)` собирался бы под `Java 6`, но там это ошибка компиляции.",
-                "how_it_should_be": "Multi-catch и try-with-resources -- это `Java 7`; дженерики и `enum` -- `Java 5`."
               },
               "label": "C",
               "order": 2
@@ -1689,29 +1689,16 @@
           "question_text": "Как избежать глубокой вложенности `if-else` с помощью guard clauses?",
           "options": [
             {
-              "text": "**Guard clauses** -- ранний выход при невыполнении предусловий, благодаря которому основная логика остаётся на верхнем уровне вложенности.",
-              "correct": true,
+              "text": "Guard clauses применимы только в void-методах, потому что ранний `return` не может вернуть значение.",
+              "correct": false,
               "sections": {
-                "explanation": "**Guard clauses** -- ранний выход при невыполнении предусловий, благодаря которому основная логика остаётся на верхнем уровне вложенности. Вместо «лесенки» вложенных `if` пишут серию проверок с `return`/`throw` в начале метода, а ниже -- основной код без отступов.",
-                "example": "Вместо вложенных `if (order != null) { if (order.isValid()) { ... } }` пишут: `if (order == null) return; if (!order.isValid()) throw ...; shipOrder(order);` -- основная логика без отступов в самом конце.",
-                "when_to_apply": "Применяют guard clauses, когда метод начинается с серии проверок аргументов и предусловий; для более сложного ветвления подключают Strategy, `Map<Key, Handler>`, `Optional` или pattern matching switch.",
-                "edge_cases": "Тонкость: guard clauses снижают цикломатическую сложность визуально и метрически, но логически число ветвлений не меняется -- меняется их плоская, читаемая форма вместо глубокой вложенности.",
-                "related": "[[java-conditional-statements-interview#Q34]] цикломатическая сложность и тестируемость; [[java-conditional-statements-interview#Q30]] замена if-else паттерном Strategy; [[java-conditional-statements-interview#Q40]] fail-fast null-checks как guard."
+                "what_actually": "Ранний `return` в guard может возвращать и значение (`return Optional.empty();`), поэтому guard clauses работают и в не-void методах.",
+                "source_of_confusion": "Простые примеры guard в void-методах создают ложное ограничение.",
+                "if_it_were_true": "Тогда метод с результатом не мог бы иметь guard, но `if (x == null) return defaultValue;` -- норма.",
+                "how_it_should_be": "Guard clause возвращает подходящее значение или бросает исключение -- в любом типе метода."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Guard clauses требуют вкладывать проверки одну в другую, чтобы основная логика была защищена со всех сторон.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Guard clauses, наоборот, УБИРАЮТ вложенность: проверки делают плоскими через ранний `return`/`throw`, а не вкладывают.",
-                "source_of_confusion": "Слово «guard» («защита») наводит на образ многослойной обороны вложенными `if`.",
-                "if_it_were_true": "Тогда guard clauses усугубляли бы вложенность, но их цель -- именно её устранить.",
-                "how_it_should_be": "Предусловия проверяют сверху с ранним выходом; основной код идёт плоско, без отступов."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Guard clause обязан использовать только `return` и не может бросать исключение при нарушении предусловия.",
@@ -1722,17 +1709,30 @@
                 "if_it_were_true": "Тогда нельзя было бы фейлить невалидный аргумент исключением, но это типичный guard.",
                 "how_it_should_be": "Для опционального отсутствия данных -- `return`; для нарушенного контракта -- `throw`."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Guard clauses требуют вкладывать проверки одну в другую, чтобы основная логика была защищена со всех сторон.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Guard clauses, наоборот, УБИРАЮТ вложенность: проверки делают плоскими через ранний `return`/`throw`, а не вкладывают.",
+                "source_of_confusion": "Слово «guard» («защита») наводит на образ многослойной обороны вложенными `if`.",
+                "if_it_were_true": "Тогда guard clauses усугубляли бы вложенность, но их цель -- именно её устранить.",
+                "how_it_should_be": "Предусловия проверяют сверху с ранним выходом; основной код идёт плоско, без отступов."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Guard clauses применимы только в void-методах, потому что ранний `return` не может вернуть значение.",
-              "correct": false,
+              "text": "**Guard clauses** -- ранний выход при невыполнении предусловий, благодаря которому основная логика остаётся на верхнем уровне вложенности.",
+              "correct": true,
               "sections": {
-                "what_actually": "Ранний `return` в guard может возвращать и значение (`return Optional.empty();`), поэтому guard clauses работают и в не-void методах.",
-                "source_of_confusion": "Простые примеры guard в void-методах создают ложное ограничение.",
-                "if_it_were_true": "Тогда метод с результатом не мог бы иметь guard, но `if (x == null) return defaultValue;` -- норма.",
-                "how_it_should_be": "Guard clause возвращает подходящее значение или бросает исключение -- в любом типе метода."
+                "explanation": "**Guard clauses** -- ранний выход при невыполнении предусловий, благодаря которому основная логика остаётся на верхнем уровне вложенности. Вместо «лесенки» вложенных `if` пишут серию проверок с `return`/`throw` в начале метода, а ниже -- основной код без отступов.",
+                "example": "Вместо вложенных `if (order != null) { if (order.isValid()) { ... } }` пишут: `if (order == null) return; if (!order.isValid()) throw ...; shipOrder(order);` -- основная логика без отступов в самом конце.",
+                "when_to_apply": "Применяют guard clauses, когда метод начинается с серии проверок аргументов и предусловий; для более сложного ветвления подключают Strategy, `Map<Key, Handler>`, `Optional` или pattern matching switch.",
+                "edge_cases": "Тонкость: guard clauses снижают цикломатическую сложность визуально и метрически, но логически число ветвлений не меняется -- меняется их плоская, читаемая форма вместо глубокой вложенности.",
+                "related": "[[java-conditional-statements-interview#Q34]] цикломатическая сложность и тестируемость; [[java-conditional-statements-interview#Q30]] замена if-else паттерном Strategy; [[java-conditional-statements-interview#Q40]] fail-fast null-checks как guard."
               },
               "label": "D",
               "order": 3
@@ -1749,18 +1749,6 @@
           "question_text": "Как заменить цепочку `if-else` паттерном `Strategy`?",
           "options": [
             {
-              "text": "Паттерн `Strategy` можно реализовать только через отдельные классы-стратегии; `Map` лямбд или `enum` для этого не подходят.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Strategy` отлично выражается через `Map` лямбд или `enum` с методом -- отдельные классы не обязательны.",
-                "source_of_confusion": "Классический GoF-`Strategy` показывают через иерархию классов, отсюда узкое понимание.",
-                "if_it_were_true": "Тогда `Map<String, DoubleUnaryOperator>` не считался бы `Strategy`, но это его компактная форма.",
-                "how_it_should_be": "`Strategy` -- это инкапсуляция взаимозаменяемого поведения; форма (класс/лямбда/`enum`) вторична."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Когда `if-else` выбирает поведение по типу или ключу, это признак паттерна `Strategy`.",
               "correct": true,
               "sections": {
@@ -1770,20 +1758,20 @@
                 "edge_cases": "Тонкость -- обработка неизвестного ключа: при `Map`-dispatch `get()` вернёт `null` для незнакомого ключа, поэтому нужен явный fallback (`getOrDefault` или проверка на `null`), иначе будет `NPE`.",
                 "related": "[[java-conditional-statements-interview#Q29]] guard clauses против вложенности; [[java-conditional-statements-interview#Q39]] if-else vs switch vs Map dispatch; [[java-conditional-statements-interview#Q4]] когда switch предпочтительнее if-else."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "Замена `if-else` на `Map`-dispatch не требует обрабатывать неизвестный ключ -- `get()` сам безопасно вернёт пустое поведение.",
+              "text": "Паттерн `Strategy` можно реализовать только через отдельные классы-стратегии; `Map` лямбд или `enum` для этого не подходят.",
               "correct": false,
               "sections": {
-                "what_actually": "`Map.get()` для отсутствующего ключа вернёт `null`, и без явного fallback вызов стратегии даст `NPE`.",
-                "source_of_confusion": "Кажется, что `Map` «по умолчанию безопасна» для любых ключей.",
-                "if_it_were_true": "Тогда незнакомый `type` отрабатывал бы тихо, но без обработки `null` будет `NPE`.",
-                "how_it_should_be": "Неизвестный ключ обрабатывают через `getOrDefault` или проверку `null` с осмысленным fallback."
+                "what_actually": "`Strategy` отлично выражается через `Map` лямбд или `enum` с методом -- отдельные классы не обязательны.",
+                "source_of_confusion": "Классический GoF-`Strategy` показывают через иерархию классов, отсюда узкое понимание.",
+                "if_it_were_true": "Тогда `Map<String, DoubleUnaryOperator>` не считался бы `Strategy`, но это его компактная форма.",
+                "how_it_should_be": "`Strategy` -- это инкапсуляция взаимозаменяемого поведения; форма (класс/лямбда/`enum`) вторична."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Перевод `if-else` в `enum` со `switch` нарушает Open-Closed Principle сильнее, чем исходная цепочка.",
@@ -1793,6 +1781,18 @@
                 "source_of_confusion": "Любое появление `switch` ошибочно считают нарушением OCP.",
                 "if_it_were_true": "Тогда `enum`-метод был бы хуже разбросанных `if-else`, но он централизует поведение типобезопасно.",
                 "how_it_should_be": "`enum` с методом или exhaustive `switch` лучше поддерживает расширение, чем дублированные `if-else`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Замена `if-else` на `Map`-dispatch не требует обрабатывать неизвестный ключ -- `get()` сам безопасно вернёт пустое поведение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Map.get()` для отсутствующего ключа вернёт `null`, и без явного fallback вызов стратегии даст `NPE`.",
+                "source_of_confusion": "Кажется, что `Map` «по умолчанию безопасна» для любых ключей.",
+                "if_it_were_true": "Тогда незнакомый `type` отрабатывал бы тихо, но без обработки `null` будет `NPE`.",
+                "how_it_should_be": "Неизвестный ключ обрабатывают через `getOrDefault` или проверку `null` с осмысленным fallback."
               },
               "label": "D",
               "order": 3
@@ -1809,28 +1809,16 @@
           "question_text": "Что такое `assert` и когда его применять?",
           "options": [
             {
-              "text": "`assert` включён по умолчанию, и в продакшене он надёжно проверяет все указанные условия.",
+              "text": "При ложном условии `assert` бросает `AssertionException`, которое следует ловить и обрабатывать в бизнес-логике.",
               "correct": false,
               "sections": {
-                "what_actually": "Ассерты по умолчанию ОТКЛЮЧЕНЫ; чтобы они работали, нужен флаг `-ea`, поэтому в проде они обычно не выполняются.",
-                "source_of_confusion": "Раз конструкция в языке есть, кажется, что она работает всегда.",
-                "if_it_were_true": "Тогда `assert` годился бы для валидации ввода, но без `-ea` он просто не проверяется.",
-                "how_it_should_be": "Ассерты включают флагом `-ea`; для прод-валидации используют явные проверки и исключения."
+                "what_actually": "При ложном условии бросается `AssertionError` (наследник `Error`), который НЕ предназначен для ловли в бизнес-логике.",
+                "source_of_confusion": "По аналогии с `Exception`-классами выдумывают `AssertionException`.",
+                "if_it_were_true": "Тогда нарушенный инвариант штатно обрабатывался бы как ошибка домена, но это сигнал о баге.",
+                "how_it_should_be": "`AssertionError` сигнализирует о нарушенном инварианте кода и обычно не перехватывается."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`assert` -- правильный инструмент для валидации аргументов публичного API вместо `Objects.requireNonNull`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для контракта public API ассерты не годятся (в проде отключены); используют `Objects.requireNonNull` или явный `throw`.",
-                "source_of_confusion": "И ассерт, и `requireNonNull` «проверяют условие», поэтому их взаимозаменяют.",
-                "if_it_were_true": "Тогда выключенный `assert` всё равно защищал бы API, но без `-ea` проверка исчезает.",
-                "how_it_should_be": "Контракты public API проверяют всегда-активными средствами, а `assert` -- для внутренних инвариантов."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`assert` -- проверка инвариантов в режиме отладки: `assert age >= 0 : \"сообщение\";`.",
@@ -1842,17 +1830,29 @@
                 "edge_cases": "Главная ловушка: поскольку ассерты по умолчанию отключены, они НЕ заменяют валидацию -- код, корректность которого зависит от `assert`, в проде (без `-ea`) работать не будет; бизнес-логику в `assert` помещать нельзя.",
                 "related": "[[java-conditional-statements-interview#Q34]] сложность и проверки в коде; [[java-conditional-statements-interview#Q40]] Objects.requireNonNull для валидации; [[java-conditional-statements-interview#Q29]] guard clauses для проверки предусловий."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`assert` включён по умолчанию, и в продакшене он надёжно проверяет все указанные условия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ассерты по умолчанию ОТКЛЮЧЕНЫ; чтобы они работали, нужен флаг `-ea`, поэтому в проде они обычно не выполняются.",
+                "source_of_confusion": "Раз конструкция в языке есть, кажется, что она работает всегда.",
+                "if_it_were_true": "Тогда `assert` годился бы для валидации ввода, но без `-ea` он просто не проверяется.",
+                "how_it_should_be": "Ассерты включают флагом `-ea`; для прод-валидации используют явные проверки и исключения."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "При ложном условии `assert` бросает `AssertionException`, которое следует ловить и обрабатывать в бизнес-логике.",
+              "text": "`assert` -- правильный инструмент для валидации аргументов публичного API вместо `Objects.requireNonNull`.",
               "correct": false,
               "sections": {
-                "what_actually": "При ложном условии бросается `AssertionError` (наследник `Error`), который НЕ предназначен для ловли в бизнес-логике.",
-                "source_of_confusion": "По аналогии с `Exception`-классами выдумывают `AssertionException`.",
-                "if_it_were_true": "Тогда нарушенный инвариант штатно обрабатывался бы как ошибка домена, но это сигнал о баге.",
-                "how_it_should_be": "`AssertionError` сигнализирует о нарушенном инварианте кода и обычно не перехватывается."
+                "what_actually": "Для контракта public API ассерты не годятся (в проде отключены); используют `Objects.requireNonNull` или явный `throw`.",
+                "source_of_confusion": "И ассерт, и `requireNonNull` «проверяют условие», поэтому их взаимозаменяют.",
+                "if_it_were_true": "Тогда выключенный `assert` всё равно защищал бы API, но без `-ea` проверка исчезает.",
+                "how_it_should_be": "Контракты public API проверяют всегда-активными средствами, а `assert` -- для внутренних инвариантов."
               },
               "label": "D",
               "order": 3
@@ -1893,18 +1893,6 @@
               "order": 1
             },
             {
-              "text": "Разница между `tableswitch` и `lookupswitch` критична, поэтому выбор `if`/`switch` стоит делать в первую очередь ради микрооптимизации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На практике разница ничтожна, а `JIT` ещё и оптимизирует горячие пути; выбор делают по читаемости.",
-                "source_of_confusion": "Знание о двух инструкциях преувеличивают до правила «всегда оптимизировать».",
-                "if_it_were_true": "Тогда читаемость приносили бы в жертву наносекундам, но это преждевременная оптимизация.",
-                "how_it_should_be": "Выбор `if`/`switch` определяется ясностью кода; разница инструкций почти всегда несущественна."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "`JVM` компилирует `switch` в одну из двух инструкций байткода.",
               "correct": true,
               "sections": {
@@ -1913,6 +1901,18 @@
                 "when_to_apply": "Понимание этих инструкций полезно для интуиции о стоимости `switch`, но на практике разница ничтожна: `JIT` дополнительно оптимизирует горячие пути, и выбор `if` vs `switch` определяется читаемостью.",
                 "edge_cases": "Граничный случай -- разреженные значения: для них компилятор выбирает `lookupswitch` (`O(log n)`), а не `tableswitch`, т.к. плотная таблица переходов на диапазон 200..500 заняла бы массу памяти под пустые слоты.",
                 "related": "[[java-conditional-statements-interview#Q4]] switch против if-else; [[java-conditional-statements-interview#Q39]] if-else vs switch vs Map dispatch; [[java-conditional-statements-interview#Q34]] сложность и производительность ветвлений."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Разница между `tableswitch` и `lookupswitch` критична, поэтому выбор `if`/`switch` стоит делать в первую очередь ради микрооптимизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На практике разница ничтожна, а `JIT` ещё и оптимизирует горячие пути; выбор делают по читаемости.",
+                "source_of_confusion": "Знание о двух инструкциях преувеличивают до правила «всегда оптимизировать».",
+                "if_it_were_true": "Тогда читаемость приносили бы в жертву наносекундам, но это преждевременная оптимизация.",
+                "how_it_should_be": "Выбор `if`/`switch` определяется ясностью кода; разница инструкций почти всегда несущественна."
               },
               "label": "D",
               "order": 3
@@ -1929,14 +1929,13 @@
           "question_text": "Как использовать условия в `Stream API` (`filter`, `takeWhile`, `dropWhile`)?",
           "options": [
             {
-              "text": "`filter(Predicate)` (`Java 8`) оставляет элементы, удовлетворяющие условию.",
-              "correct": true,
+              "text": "`takeWhile` и `dropWhile` появились в `Java 8` вместе с `filter` как часть исходного Stream API.",
+              "correct": false,
               "sections": {
-                "explanation": "`filter(Predicate)` (`Java 8`) оставляет элементы, удовлетворяющие условию. `takeWhile(Predicate)` (`Java 9`) берёт элементы, **пока** условие истинно, и останавливается на первом ложном. `dropWhile(Predicate)` (`Java 9`) пропускает элементы, пока условие истинно, и берёт остаток начиная с первого ложного.",
-                "example": "Для `[2, 4, 6, 3, 8, 10]`: `filter(n -> n%2==0)` даёт `[2,4,6,8,10]` (проверяет все); `takeWhile(n -> n%2==0)` даёт `[2,4,6]` (остановка на 3); `dropWhile(n -> n<5)` даёт `[6,3,8,10]` (пропустит 2,4).",
-                "when_to_apply": "`filter` применяют, когда нужны все подходящие элементы; `takeWhile`/`dropWhile` -- для упорядоченных последовательностей, где важна позиция перелома условия (например, отсортированные данные).",
-                "edge_cases": "Ключевое отличие от `filter`: `takeWhile`/`dropWhile` чувствительны к **порядку** и останавливаются/начинают на первом нарушении предиката, тогда как `filter` всегда сканирует весь стрим целиком.",
-                "related": "[[java-conditional-statements-interview#Q36]] short-circuit как лень в условиях; [[java-conditional-statements-interview#Q41]] условия в map и flatMap; [[java-conditional-statements-interview#Q39]] ветвление if-else vs Map."
+                "what_actually": "`takeWhile`/`dropWhile` добавлены в `Java 9`; в `Java 8` Stream API имел `filter`, но не их.",
+                "source_of_confusion": "Все потоковые операции воспринимают как появившиеся одновременно в `Java 8`.",
+                "if_it_were_true": "Тогда `stream.takeWhile(...)` компилировался бы под `Java 8`, но там этого метода нет.",
+                "how_it_should_be": "`filter` -- `Java 8`; `takeWhile`/`dropWhile` -- `Java 9`."
               },
               "label": "A",
               "order": 0
@@ -1954,6 +1953,19 @@
               "order": 1
             },
             {
+              "text": "`filter(Predicate)` (`Java 8`) оставляет элементы, удовлетворяющие условию.",
+              "correct": true,
+              "sections": {
+                "explanation": "`filter(Predicate)` (`Java 8`) оставляет элементы, удовлетворяющие условию. `takeWhile(Predicate)` (`Java 9`) берёт элементы, **пока** условие истинно, и останавливается на первом ложном. `dropWhile(Predicate)` (`Java 9`) пропускает элементы, пока условие истинно, и берёт остаток начиная с первого ложного.",
+                "example": "Для `[2, 4, 6, 3, 8, 10]`: `filter(n -> n%2==0)` даёт `[2,4,6,8,10]` (проверяет все); `takeWhile(n -> n%2==0)` даёт `[2,4,6]` (остановка на 3); `dropWhile(n -> n<5)` даёт `[6,3,8,10]` (пропустит 2,4).",
+                "when_to_apply": "`filter` применяют, когда нужны все подходящие элементы; `takeWhile`/`dropWhile` -- для упорядоченных последовательностей, где важна позиция перелома условия (например, отсортированные данные).",
+                "edge_cases": "Ключевое отличие от `filter`: `takeWhile`/`dropWhile` чувствительны к **порядку** и останавливаются/начинают на первом нарушении предиката, тогда как `filter` всегда сканирует весь стрим целиком.",
+                "related": "[[java-conditional-statements-interview#Q36]] short-circuit как лень в условиях; [[java-conditional-statements-interview#Q41]] условия в map и flatMap; [[java-conditional-statements-interview#Q39]] ветвление if-else vs Map."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "`dropWhile` пропускает все элементы, не удовлетворяющие предикату, по всему стриму.",
               "correct": false,
               "sections": {
@@ -1961,18 +1973,6 @@
                 "source_of_confusion": "`dropWhile` путают с `filter`, инвертированным по условию.",
                 "if_it_were_true": "Тогда `dropWhile(n -> n<5)` на `[2,4,6,3]` дал бы `[6]`, но он даёт `[6,3]`.",
                 "how_it_should_be": "`dropWhile` отбрасывает префикс по предикату и оставляет хвост целиком, не фильтруя его."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`takeWhile` и `dropWhile` появились в `Java 8` вместе с `filter` как часть исходного Stream API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`takeWhile`/`dropWhile` добавлены в `Java 9`; в `Java 8` Stream API имел `filter`, но не их.",
-                "source_of_confusion": "Все потоковые операции воспринимают как появившиеся одновременно в `Java 8`.",
-                "if_it_were_true": "Тогда `stream.takeWhile(...)` компилировался бы под `Java 8`, но там этого метода нет.",
-                "how_it_should_be": "`filter` -- `Java 8`; `takeWhile`/`dropWhile` -- `Java 9`."
               },
               "label": "D",
               "order": 3
@@ -1989,13 +1989,13 @@
           "question_text": "Как условия и ветвление связаны с тестируемостью и цикломатической сложностью?",
           "options": [
             {
-              "text": "Цикломатическая сложность считает только количество методов в классе, а не ветвления внутри них.",
+              "text": "Высокая цикломатическая сложность улучшает тестируемость, потому что даёт больше путей для проверки.",
               "correct": false,
               "sections": {
-                "what_actually": "Сложность измеряет число независимых ПУТЕЙ внутри метода: её повышают `if`, `case`, `&&`, `||`, `?:`, а не число методов.",
-                "source_of_confusion": "Любую метрику размера ошибочно сводят к подсчёту методов.",
-                "if_it_were_true": "Тогда один огромный метод с десятком `if` имел бы сложность 1, но она у него высокая.",
-                "how_it_should_be": "Сложность считают по точкам ветвления внутри метода, а не по числу методов."
+                "what_actually": "Высокая сложность УХУДШАЕТ тестируемость: путей становится так много, что покрыть их все тестами трудно.",
+                "source_of_confusion": "«Больше путей» ошибочно трактуют как «больше тестового покрытия».",
+                "if_it_were_true": "Тогда метод со сложностью 30 был бы легко тестируемым, но его как раз тяжело покрыть.",
+                "how_it_should_be": "Низкая сложность облегчает тестирование; высокая требует множества тестов и рефакторинга."
               },
               "label": "A",
               "order": 0
@@ -2014,6 +2014,18 @@
               "order": 1
             },
             {
+              "text": "Цикломатическая сложность считает только количество методов в классе, а не ветвления внутри них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сложность измеряет число независимых ПУТЕЙ внутри метода: её повышают `if`, `case`, `&&`, `||`, `?:`, а не число методов.",
+                "source_of_confusion": "Любую метрику размера ошибочно сводят к подсчёту методов.",
+                "if_it_were_true": "Тогда один огромный метод с десятком `if` имел бы сложность 1, но она у него высокая.",
+                "how_it_should_be": "Сложность считают по точкам ветвления внутри метода, а не по числу методов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "Логические операторы `&&` и `||` не влияют на цикломатическую сложность -- учитываются только `if` и `case`.",
               "correct": false,
               "sections": {
@@ -2021,18 +2033,6 @@
                 "source_of_confusion": "Операторы внутри одного условия кажутся «частью» единственного `if`.",
                 "if_it_were_true": "Тогда `if (a && b && c)` имел бы ту же сложность, что и `if (a)`, но у него она выше.",
                 "how_it_should_be": "Сложность растёт на каждом `&&`/`||`, поэтому составные условия тоже её повышают."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Высокая цикломатическая сложность улучшает тестируемость, потому что даёт больше путей для проверки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Высокая сложность УХУДШАЕТ тестируемость: путей становится так много, что покрыть их все тестами трудно.",
-                "source_of_confusion": "«Больше путей» ошибочно трактуют как «больше тестового покрытия».",
-                "if_it_were_true": "Тогда метод со сложностью 30 был бы легко тестируемым, но его как раз тяжело покрыть.",
-                "how_it_should_be": "Низкая сложность облегчает тестирование; высокая требует множества тестов и рефакторинга."
               },
               "label": "D",
               "order": 3
@@ -2049,18 +2049,6 @@
           "question_text": "Как эволюционировал `switch` от `Java 1` до `Java 21+`?",
           "options": [
             {
-              "text": "`switch` по `String` появился в `Java 5` одновременно с поддержкой `enum`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`enum`-switch -- это `Java 5`, а `String`-switch -- только `Java 7`; это разные версии.",
-                "source_of_confusion": "`enum` и `String` -- оба «нечисловые» типы, и их добавление сливают в одну версию.",
-                "if_it_were_true": "Тогда строковый `switch` собирался бы под `Java 5`, но там это ошибка компиляции.",
-                "how_it_should_be": "`enum` -- `Java 5`, `String` -- `Java 7`; добавления разнесены во времени."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`switch expression` и pattern matching for switch -- это одна и та же фича, добавленная в `Java 14`.",
               "correct": false,
               "sections": {
@@ -2069,8 +2057,8 @@
                 "if_it_were_true": "Тогда type patterns в `case` работали бы уже в `Java 14`, но они появились лишь в `21`.",
                 "how_it_should_be": "Выражение-`switch` -- `Java 14`; паттерны в `switch` -- `Java 21`."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`switch` развивался поэтапно: `Java 1.0` -- по `int`/`byte`/`short`/`char`.",
@@ -2081,6 +2069,18 @@
                 "when_to_apply": "Знание этой хронологии помогает на собеседовании обосновать выбор синтаксиса и понимать, какие возможности доступны на конкретной версии JDK в проекте.",
                 "edge_cases": "Важный нюанс совместимости: несмотря на радикальное расширение, `switch` остаётся полностью обратно совместимым -- старый код со `switch statement` и `fall-through` компилируется и работает на `Java 21+` без изменений.",
                 "related": "[[java-conditional-statements-interview#Q2]] типы в switch по версиям; [[java-conditional-statements-interview#Q6]] switch expression Java 14; [[java-conditional-statements-interview#Q11]] pattern matching for switch Java 21."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`switch` по `String` появился в `Java 5` одновременно с поддержкой `enum`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`enum`-switch -- это `Java 5`, а `String`-switch -- только `Java 7`; это разные версии.",
+                "source_of_confusion": "`enum` и `String` -- оба «нечисловые» типы, и их добавление сливают в одну версию.",
+                "if_it_were_true": "Тогда строковый `switch` собирался бы под `Java 5`, но там это ошибка компиляции.",
+                "how_it_should_be": "`enum` -- `Java 5`, `String` -- `Java 7`; добавления разнесены во времени."
               },
               "label": "C",
               "order": 2
@@ -2109,18 +2109,6 @@
           "question_text": "Что такое short-circuit evaluation и как использовать его для оптимизации?",
           "options": [
             {
-              "text": "Short-circuit означает, что `Java` сама переставляет операнды `&&`/`||` так, чтобы дешёвый шёл первым.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Перестановки нет: порядок операндов гарантирован JLS, и оптимальный порядок задаёт программист, а не компилятор.",
-                "source_of_confusion": "Автооптимизации `JIT` создают иллюзию, что и порядок условий правится автоматически.",
-                "if_it_were_true": "Тогда `null != obj && obj.f()` могло бы выполниться в другом порядке и дать `NPE`, но порядок фиксирован.",
-                "how_it_should_be": "Программист сам ставит дешёвую/защитную проверку первой; язык лишь гарантирует левый-направо порядок."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Операторы `&` и `|` ведут себя как `&&`/`||`, но дополнительно кэшируют результат вычисления.",
               "correct": false,
               "sections": {
@@ -2129,8 +2117,8 @@
                 "if_it_were_true": "Тогда `a & expensive()` пропускал бы `expensive()` при `a == false`, но он его вычисляет.",
                 "how_it_should_be": "`&`/`|` всегда считают оба операнда; ленивы только `&&`/`||`."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Для `A || B` short-circuit пропускает `B`, когда `A == false`.",
@@ -2140,6 +2128,18 @@
                 "source_of_confusion": "Правило для `&&` (пропуск при `false`) ошибочно переносят на `||`.",
                 "if_it_were_true": "Тогда `cache != null || compute()` вызывал бы `compute()` при наличии кэша, что бессмысленно.",
                 "how_it_should_be": "`||` пропускает `B` при истинном `A`; `&&` -- при ложном `A`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Short-circuit означает, что `Java` сама переставляет операнды `&&`/`||` так, чтобы дешёвый шёл первым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перестановки нет: порядок операндов гарантирован JLS, и оптимальный порядок задаёт программист, а не компилятор.",
+                "source_of_confusion": "Автооптимизации `JIT` создают иллюзию, что и порядок условий правится автоматически.",
+                "if_it_were_true": "Тогда `null != obj && obj.f()` могло бы выполниться в другом порядке и дать `NPE`, но порядок фиксирован.",
+                "how_it_should_be": "Программист сам ставит дешёвую/защитную проверку первой; язык лишь гарантирует левый-направо порядок."
               },
               "label": "C",
               "order": 2
@@ -2254,18 +2254,6 @@
               "order": 1
             },
             {
-              "text": "Тернарник `x > 0 ? true : false` -- корректный и предпочтительный способ получить булево значение.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это избыточный антипаттерн: `x > 0` уже булево, поэтому пишут `boolean b = x > 0;` без тернарника.",
-                "source_of_confusion": "Явные `true`/`false` кажутся более «понятными», чем голое сравнение.",
-                "if_it_were_true": "Тогда оборачивание любого предиката в `? true : false` улучшало бы код, но это лишний шум.",
-                "how_it_should_be": "Булев результат присваивают напрямую из условия, без `? true : false`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Side effects (вызовы, меняющие состояние) в ветках тернарника -- хороший способ сократить код.",
               "correct": false,
               "sections": {
@@ -2273,6 +2261,18 @@
                 "source_of_confusion": "Тернарник короче `if-else`, поэтому в него соблазняются прятать действия.",
                 "if_it_were_true": "Тогда `isActive ? save() : delete()` был бы чистым стилем, но он маскирует мутацию состояния.",
                 "how_it_should_be": "Тернарник применяют для выбора значения; действия с side effects пишут в явных ветках `if-else`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Тернарник `x > 0 ? true : false` -- корректный и предпочтительный способ получить булево значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это избыточный антипаттерн: `x > 0` уже булево, поэтому пишут `boolean b = x > 0;` без тернарника.",
+                "source_of_confusion": "Явные `true`/`false` кажутся более «понятными», чем голое сравнение.",
+                "if_it_were_true": "Тогда оборачивание любого предиката в `? true : false` улучшало бы код, но это лишний шум.",
+                "how_it_should_be": "Булев результат присваивают напрямую из условия, без `? true : false`."
               },
               "label": "D",
               "order": 3
@@ -2289,30 +2289,6 @@
           "question_text": "`if-else` vs `switch` vs `Map dispatch` -- производительность и читаемость?",
           "options": [
             {
-              "text": "`if-else chain` работает за `O(1)`, потому что `JIT` превращает её в таблицу переходов как у `switch`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`if-else` -- это последовательные сравнения за `O(n)`; в таблицу переходов её `JIT` в общем случае не сворачивает.",
-                "source_of_confusion": "Веру в всемогущество `JIT` распространяют и на сложность `if-else`.",
-                "if_it_were_true": "Тогда не было бы смысла в `tableswitch`, но именно `switch` даёт `O(1)`, а не `if-else`.",
-                "how_it_should_be": "`if-else` -- `O(n)`; `O(1)` обеспечивают `switch` (через таблицу) и `Map` (через хеш-lookup)."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Map dispatch` обеспечивает exhaustiveness: компилятор проверит, что в карте есть обработчики на все случаи.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Map dispatch` НЕ даёт exhaustiveness -- отсутствие ключа выясняется в рантайме; полноту проверяет только `switch` по `enum`/`sealed`.",
-                "source_of_confusion": "Структурированность `Map` ошибочно приравнивают к compile-time гарантиям `switch`.",
-                "if_it_were_true": "Тогда пропущенный обработчик ловился бы на компиляции, но он всплывает как `null`/fallback в рантайме.",
-                "how_it_should_be": "Полноту гарантирует exhaustive `switch`; для `Map` нужен явный `getOrDefault`/fallback."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`if-else chain` работает за `O(n)`, но гибок: подходит для сложных предикатов, диапазонов и несравнимых типов.",
               "correct": true,
               "sections": {
@@ -2322,8 +2298,20 @@
                 "edge_cases": "Тонкость по расширяемости: `switch` и `if-else` плохо расширяемы (правка кода при каждой новой ветке), а `Map dispatch` хорошо -- обработчики добавляют в рантайме без изменения вызывающего кода.",
                 "related": "[[java-conditional-statements-interview#Q4]] когда switch лучше if-else; [[java-conditional-statements-interview#Q30]] замена if-else паттерном Strategy; [[java-conditional-statements-interview#Q32]] tableswitch vs lookupswitch."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`if-else chain` работает за `O(1)`, потому что `JIT` превращает её в таблицу переходов как у `switch`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`if-else` -- это последовательные сравнения за `O(n)`; в таблицу переходов её `JIT` в общем случае не сворачивает.",
+                "source_of_confusion": "Веру в всемогущество `JIT` распространяют и на сложность `if-else`.",
+                "if_it_were_true": "Тогда не было бы смысла в `tableswitch`, но именно `switch` даёт `O(1)`, а не `if-else`.",
+                "how_it_should_be": "`if-else` -- `O(n)`; `O(1)` обеспечивают `switch` (через таблицу) и `Map` (через хеш-lookup)."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`switch expression` -- самый расширяемый вариант: новые обработчики добавляются без изменения кода `switch`.",
@@ -2333,6 +2321,18 @@
                 "source_of_confusion": "Удобство `switch` для чтения принимают за лёгкость расширения.",
                 "if_it_were_true": "Тогда плагин мог бы добавить ветку в `switch` извне, но для этого нужен `Map`, а не `switch`.",
                 "how_it_should_be": "Для рантайм-регистрации обработчиков выбирают `Map dispatch`, а не `switch`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Map dispatch` обеспечивает exhaustiveness: компилятор проверит, что в карте есть обработчики на все случаи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Map dispatch` НЕ даёт exhaustiveness -- отсутствие ключа выясняется в рантайме; полноту проверяет только `switch` по `enum`/`sealed`.",
+                "source_of_confusion": "Структурированность `Map` ошибочно приравнивают к compile-time гарантиям `switch`.",
+                "if_it_were_true": "Тогда пропущенный обработчик ловился бы на компиляции, но он всплывает как `null`/fallback в рантайме.",
+                "how_it_should_be": "Полноту гарантирует exhaustive `switch`; для `Map` нужен явный `getOrDefault`/fallback."
               },
               "label": "D",
               "order": 3
@@ -2349,18 +2349,6 @@
           "question_text": "Как правильно делать null-checks: `Objects.requireNonNull`, `Optional`, fail-fast?",
           "options": [
             {
-              "text": "`Objects.requireNonNull` возвращает `Optional`, поэтому результат нужно разворачивать через `orElse`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`requireNonNull` возвращает сам переданный объект (или бросает `NPE`), а не `Optional`; разворачивать нечего.",
-                "source_of_confusion": "Оба инструмента про `null`, поэтому их API смешивают.",
-                "if_it_were_true": "Тогда `this.repo = requireNonNull(repo).orElseThrow();` было бы нормой, но `requireNonNull` отдаёт объект напрямую.",
-                "how_it_should_be": "`requireNonNull(x)` возвращает `x` либо бросает `NPE`; `Optional` создают через `Optional.ofNullable`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Optional` лучше всего использовать как тип параметра метода, чтобы явно показать, что аргумент может отсутствовать.",
               "correct": false,
               "sections": {
@@ -2368,6 +2356,19 @@
                 "source_of_confusion": "Идея «явно показать отсутствие» соблазняет применить `Optional` и к параметрам.",
                 "if_it_were_true": "Тогда `void process(Optional<User> u)` был бы рекомендованным стилем, но это считается антипаттерном.",
                 "how_it_should_be": "Для опционального параметра используют перегрузку или `@Nullable`; `Optional` -- для возврата."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Objects.requireNonNull(x, \"msg\")` -- fail-fast валидация параметров в конструкторах и методах (с `Java 9` есть `requireNonNullElse`/`requireNonNullElseGet`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`Objects.requireNonNull(x, \"msg\")` -- fail-fast валидация параметров в конструкторах и методах (с `Java 9` есть `requireNonNullElse`/`requireNonNullElseGet`). `Optional` -- для **возвращаемых** значений, а не параметров. `@NonNull`/`@Nullable` -- для документирования контракта под статический анализ. Принцип fail-fast: лучше `NPE` с понятным сообщением сразу, чем глубоко в стеке позже.",
+                "example": "В конструкторе: `this.repo = Objects.requireNonNull(repo, \"repo must not be null\");`. Для возврата: `Optional<User> findById(Long id)`. Антипаттерн -- `Optional` как параметр метода: `void process(Optional<User> u)` так делать не стоит.",
+                "when_to_apply": "Используют `requireNonNull` для контроля аргументов, `Optional` -- для возможно-отсутствующего возвращаемого значения, аннотации `@NonNull`/`@Nullable` -- для документирования, Null Object Pattern -- когда `null` хотят устранить вовсе.",
+                "edge_cases": "Тонкость -- `Optional` именно для возврата, не для параметров: передавать `Optional` в параметре считается антипаттерном (лучше перегрузка метода или `@Nullable`), а как тип возврата он явно сигнализирует о возможном отсутствии значения.",
+                "related": "[[java-conditional-statements-interview#Q31]] assert vs валидация ввода; [[java-conditional-statements-interview#Q29]] guard clauses как fail-fast; [[java-conditional-statements-interview#Q37]] null-check первым в условии; [[java-conditional-statements-interview#Q1]] Boolean null и NPE в if."
               },
               "label": "B",
               "order": 1
@@ -2385,14 +2386,13 @@
               "order": 2
             },
             {
-              "text": "`Objects.requireNonNull(x, \"msg\")` -- fail-fast валидация параметров в конструкторах и методах (с `Java 9` есть `requireNonNullElse`/`requireNonNullElseGet`).",
-              "correct": true,
+              "text": "`Objects.requireNonNull` возвращает `Optional`, поэтому результат нужно разворачивать через `orElse`.",
+              "correct": false,
               "sections": {
-                "explanation": "`Objects.requireNonNull(x, \"msg\")` -- fail-fast валидация параметров в конструкторах и методах (с `Java 9` есть `requireNonNullElse`/`requireNonNullElseGet`). `Optional` -- для **возвращаемых** значений, а не параметров. `@NonNull`/`@Nullable` -- для документирования контракта под статический анализ. Принцип fail-fast: лучше `NPE` с понятным сообщением сразу, чем глубоко в стеке позже.",
-                "example": "В конструкторе: `this.repo = Objects.requireNonNull(repo, \"repo must not be null\");`. Для возврата: `Optional<User> findById(Long id)`. Антипаттерн -- `Optional` как параметр метода: `void process(Optional<User> u)` так делать не стоит.",
-                "when_to_apply": "Используют `requireNonNull` для контроля аргументов, `Optional` -- для возможно-отсутствующего возвращаемого значения, аннотации `@NonNull`/`@Nullable` -- для документирования, Null Object Pattern -- когда `null` хотят устранить вовсе.",
-                "edge_cases": "Тонкость -- `Optional` именно для возврата, не для параметров: передавать `Optional` в параметре считается антипаттерном (лучше перегрузка метода или `@Nullable`), а как тип возврата он явно сигнализирует о возможном отсутствии значения.",
-                "related": "[[java-conditional-statements-interview#Q31]] assert vs валидация ввода; [[java-conditional-statements-interview#Q29]] guard clauses как fail-fast; [[java-conditional-statements-interview#Q37]] null-check первым в условии; [[java-conditional-statements-interview#Q1]] Boolean null и NPE в if."
+                "what_actually": "`requireNonNull` возвращает сам переданный объект (или бросает `NPE`), а не `Optional`; разворачивать нечего.",
+                "source_of_confusion": "Оба инструмента про `null`, поэтому их API смешивают.",
+                "if_it_were_true": "Тогда `this.repo = requireNonNull(repo).orElseThrow();` было бы нормой, но `requireNonNull` отдаёт объект напрямую.",
+                "how_it_should_be": "`requireNonNull(x)` возвращает `x` либо бросает `NPE`; `Optional` создают через `Optional.ofNullable`."
               },
               "label": "D",
               "order": 3
@@ -2409,29 +2409,16 @@
           "question_text": "Как использовать условия в `Stream API` с `map` и `flatMap`?",
           "options": [
             {
-              "text": "В `map` условную логику кладут для простых случаев (`u.isAdmin() ? \"[ADMIN] \"+u.getName() : u.getName()`), а сложную выносят в отдельный метод со `switch expression`.",
-              "correct": true,
+              "text": "`partitioningBy` разбивает стрим на произвольное число групп по значению ключа.",
+              "correct": false,
               "sections": {
-                "explanation": "В `map` условную логику кладут для простых случаев (`u.isAdmin() ? \"[ADMIN] \"+u.getName() : u.getName()`), а сложную выносят в отдельный метод со `switch expression`. `flatMap(Optional::stream)` (`Java 9`) убирает пустые `Optional`. `mapMulti` (`Java 16`) условно генерирует элементы. `partitioningBy`/`groupingBy` разделяют стрим по условию.",
-                "example": "`userIds.stream().map(svc::findById).flatMap(Optional::stream).map(User::getEmail).toList()` -- `flatMap(Optional::stream)` отбрасывает пустые `Optional`. А `partitioningBy(User::isActive)` делит пользователей на активных и неактивных по булеву условию.",
-                "when_to_apply": "Условную логику в стримах применяют, когда преобразование зависит от свойства элемента; для нетривиальных правил выносят её в метод, чтобы стрим оставался декларативным и читаемым.",
-                "edge_cases": "Тонкость -- декларативность: если логика внутри `map`/`flatMap` разрастается, её выносят в отдельный метод или `switch expression`; перегруженная лямбда внутри стрима ухудшает читаемость сильнее, чем эквивалентный именованный метод.",
-                "related": "[[java-conditional-statements-interview#Q33]] filter/takeWhile/dropWhile в стримах; [[java-conditional-statements-interview#Q5]] тернарник внутри map; [[java-conditional-statements-interview#Q30]] switch/Map для выбора поведения."
+                "what_actually": "`partitioningBy` всегда даёт ровно ДВЕ группы (`true`/`false`) по булеву предикату; на много групп делит `groupingBy`.",
+                "source_of_confusion": "`partitioningBy` и `groupingBy` путают по функции группировки.",
+                "if_it_were_true": "Тогда `partitioningBy(User::getRole)` давал бы группу на каждую роль, но он принимает только предикат.",
+                "how_it_should_be": "`partitioningBy` -- две группы по `Predicate`; для многих групп используют `groupingBy`."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`flatMap(Optional::stream)` дублирует каждый элемент дважды в результирующем стриме.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`flatMap(Optional::stream)` разворачивает `Optional` в 0 или 1 элемент, ОТБРАСЫВАЯ пустые; дублирования нет.",
-                "source_of_confusion": "`flatMap` ассоциируют с «размножением» элементов, как при раскрытии коллекций.",
-                "if_it_were_true": "Тогда список email удваивался бы, но `Optional::stream` лишь убирает пустые значения.",
-                "how_it_should_be": "`Optional::stream` даёт поток из одного элемента для непустого `Optional` и пустой -- для пустого."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Условную логику любой сложности следует писать прямо внутри лямбды `map`, не вынося в методы.",
@@ -2442,17 +2429,30 @@
                 "if_it_were_true": "Тогда громоздкая лямбда считалась бы хорошим стилем, но она ухудшает читаемость пайплайна.",
                 "how_it_should_be": "Нетривиальное преобразование выносят в именованный метод; стрим остаётся коротким и ясным."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В `map` условную логику кладут для простых случаев (`u.isAdmin() ? \"[ADMIN] \"+u.getName() : u.getName()`), а сложную выносят в отдельный метод со `switch expression`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `map` условную логику кладут для простых случаев (`u.isAdmin() ? \"[ADMIN] \"+u.getName() : u.getName()`), а сложную выносят в отдельный метод со `switch expression`. `flatMap(Optional::stream)` (`Java 9`) убирает пустые `Optional`. `mapMulti` (`Java 16`) условно генерирует элементы. `partitioningBy`/`groupingBy` разделяют стрим по условию.",
+                "example": "`userIds.stream().map(svc::findById).flatMap(Optional::stream).map(User::getEmail).toList()` -- `flatMap(Optional::stream)` отбрасывает пустые `Optional`. А `partitioningBy(User::isActive)` делит пользователей на активных и неактивных по булеву условию.",
+                "when_to_apply": "Условную логику в стримах применяют, когда преобразование зависит от свойства элемента; для нетривиальных правил выносят её в метод, чтобы стрим оставался декларативным и читаемым.",
+                "edge_cases": "Тонкость -- декларативность: если логика внутри `map`/`flatMap` разрастается, её выносят в отдельный метод или `switch expression`; перегруженная лямбда внутри стрима ухудшает читаемость сильнее, чем эквивалентный именованный метод.",
+                "related": "[[java-conditional-statements-interview#Q33]] filter/takeWhile/dropWhile в стримах; [[java-conditional-statements-interview#Q5]] тернарник внутри map; [[java-conditional-statements-interview#Q30]] switch/Map для выбора поведения."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`partitioningBy` разбивает стрим на произвольное число групп по значению ключа.",
+              "text": "`flatMap(Optional::stream)` дублирует каждый элемент дважды в результирующем стриме.",
               "correct": false,
               "sections": {
-                "what_actually": "`partitioningBy` всегда даёт ровно ДВЕ группы (`true`/`false`) по булеву предикату; на много групп делит `groupingBy`.",
-                "source_of_confusion": "`partitioningBy` и `groupingBy` путают по функции группировки.",
-                "if_it_were_true": "Тогда `partitioningBy(User::getRole)` давал бы группу на каждую роль, но он принимает только предикат.",
-                "how_it_should_be": "`partitioningBy` -- две группы по `Predicate`; для многих групп используют `groupingBy`."
+                "what_actually": "`flatMap(Optional::stream)` разворачивает `Optional` в 0 или 1 элемент, ОТБРАСЫВАЯ пустые; дублирования нет.",
+                "source_of_confusion": "`flatMap` ассоциируют с «размножением» элементов, как при раскрытии коллекций.",
+                "if_it_were_true": "Тогда список email удваивался бы, но `Optional::stream` лишь убирает пустые значения.",
+                "how_it_should_be": "`Optional::stream` даёт поток из одного элемента для непустого `Optional` и пустой -- для пустого."
               },
               "label": "D",
               "order": 3
@@ -2469,18 +2469,6 @@
           "question_text": "Как использовать `sealed classes` с `guards` в реальном коде?",
           "options": [
             {
-              "text": "В exhaustive `switch` по `sealed`-типу с guards всё равно обязателен `default` -- иначе guard-ветки делают switch неполным.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Если безусловные ветки покрывают все подтипы, `default` не нужен; guard-ветки лишь уточняют, но не отменяют exhaustiveness по типам.",
-                "source_of_confusion": "Наличие `when`-условий создаёт впечатление «дыр» в покрытии, требующих `default`.",
-                "if_it_were_true": "Тогда добавление `default` было бы обязательным и убивало бы защиту от новых подтипов.",
-                "how_it_should_be": "Достаточно безусловной ветки на каждый подтип; guarded-ветки добавляют поверх неё, не требуя `default`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Связка `sealed classes` + `pattern matching for switch` + `when`-guards даёт безопасный exhaustive dispatch.",
               "correct": true,
               "sections": {
@@ -2490,8 +2478,8 @@
                 "edge_cases": "Главное преимущество перед `if-else`: добавление нового подтипа в `sealed` иерархию вызывает **ошибку компиляции** во всех exhaustive-switch, тогда как с `if-else` пропущенный вариант стал бы тихим багом в рантайме.",
                 "related": "[[java-conditional-statements-interview#Q15]] sealed classes и exhaustiveness; [[java-conditional-statements-interview#Q12]] guarded patterns с when; [[java-conditional-statements-interview#Q16]] record patterns и деконструкция."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Guard-условие `when` в `case` по `sealed`-типу можно вычислять до проверки типа, поэтому оно может обращаться к полям объекта любого подтипа.",
@@ -2501,6 +2489,18 @@
                 "source_of_confusion": "Расположение `when` в одной строке с паттерном создаёт впечатление, что условие первично.",
                 "if_it_were_true": "Тогда `case PaymentFailed e when e.retriable()` мог бы дёрнуть `retriable()` на не-`PaymentFailed`, что было бы небезопасно.",
                 "how_it_should_be": "Сначала проверяется тип и связывается переменная, и лишь затем вычисляется guard по её полям."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В exhaustive `switch` по `sealed`-типу с guards всё равно обязателен `default` -- иначе guard-ветки делают switch неполным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если безусловные ветки покрывают все подтипы, `default` не нужен; guard-ветки лишь уточняют, но не отменяют exhaustiveness по типам.",
+                "source_of_confusion": "Наличие `when`-условий создаёт впечатление «дыр» в покрытии, требующих `default`.",
+                "if_it_were_true": "Тогда добавление `default` было бы обязательным и убивало бы защиту от новых подтипов.",
+                "how_it_should_be": "Достаточно безусловной ветки на каждый подтип; guarded-ветки добавляют поверх неё, не требуя `default`."
               },
               "label": "C",
               "order": 2

@@ -11,6 +11,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`listOf()` возвращает ту же неизменяемую обёртку, что и Java `List.of`, поэтому запись через cast к `MutableList` отклоняется на уровне backing-реализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`listOf` для 2+ элементов отдаёт обычную `ArrayList`-обёртку без unmodifiable-защиты, и запись через cast меняет оригинал.",
+                "source_of_confusion": "Kotlin `listOf` внешне похож на Java `List.of`, поэтому его считают таким же неизменяемым контейнером.",
+                "if_it_were_true": "Тогда `toList()` как защитная копия был бы избыточен, но он реально нужен именно из-за отсутствия защиты.",
+                "how_it_should_be": "Для 0–1 элементов бывают спец-реализации, но для 2+ это незащищённый `ArrayList`; неизменяемость нужно обеспечивать явно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`MutableList<String>` ковариантен и совместим с `MutableList<Any>`, поэтому его можно передать туда, где ждут `MutableList<Any>`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mutable-интерфейсы инвариантны: иначе через `add(Any)` в `MutableList<String>` можно было бы положить не-String и получить heap pollution.",
+                "source_of_confusion": "Read-only `List<out T>` действительно ковариантен, и это свойство ошибочно переносят на mutable-ветку.",
+                "if_it_were_true": "Тогда при чтении из такого списка возникал бы `ClassCastException` на чужих типах элементов.",
+                "how_it_should_be": "Ковариантна только read-only ветка (`List<out T>`); mutable инвариантна именно для защиты записи."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`List`/`Set`/`Map` vs `MutableList`/`MutableSet`/`MutableMap` — это compile-time контракт системы типов, а не runtime-иммутабельность: read-only интерфейсы просто не имеют методов `add`/`remove`/`clear`, но реальный объект под ними обычно `ArrayList`, и через cast или из `Java` содержимое всё ещё можно изменить.",
               "correct": true,
               "sections": {
@@ -22,8 +46,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`List` в Kotlin runtime-immutable: любая попытка `add` через cast или рефлексию бросает `UnsupportedOperationException`.",
               "correct": false,
               "sections": {
@@ -31,30 +55,6 @@
                 "source_of_confusion": "Слово «read-only» в документации часто переводят как «immutable», создавая иллюзию runtime-защиты.",
                 "if_it_were_true": "Тогда не нужна была бы `kotlinx.collections.immutable`, но именно она существует ради настоящей неизменяемости.",
                 "how_it_should_be": "read-only — это compile-time запрет мутирующих методов на уровне типа, а не runtime-замок на backing-коллекции."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`MutableList<String>` ковариантен и совместим с `MutableList<Any>`, поэтому его можно передать туда, где ждут `MutableList<Any>`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Mutable-интерфейсы инвариантны: иначе через `add(Any)` в `MutableList<String>` можно было бы положить не-String и получить heap pollution.",
-                "source_of_confusion": "Read-only `List<out T>` действительно ковариантен, и это свойство ошибочно переносят на mutable-ветку.",
-                "if_it_were_true": "Тогда при чтении из такого списка возникал бы `ClassCastException` на чужих типах элементов.",
-                "how_it_should_be": "Ковариантна только read-only ветка (`List<out T>`); mutable инвариантна именно для защиты записи."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`listOf()` возвращает ту же неизменяемую обёртку, что и Java `List.of`, поэтому запись через cast к `MutableList` отклоняется на уровне backing-реализации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`listOf` для 2+ элементов отдаёт обычную `ArrayList`-обёртку без unmodifiable-защиты, и запись через cast меняет оригинал.",
-                "source_of_confusion": "Kotlin `listOf` внешне похож на Java `List.of`, поэтому его считают таким же неизменяемым контейнером.",
-                "if_it_were_true": "Тогда `toList()` как защитная копия был бы избыточен, но он реально нужен именно из-за отсутствия защиты.",
-                "how_it_should_be": "Для 0–1 элементов бывают спец-реализации, но для 2+ это незащищённый `ArrayList`; неизменяемость нужно обеспечивать явно."
               }
             }
           ]
@@ -71,31 +71,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Iterable` наследует `Collection`, потому что любая коллекция итерируема — итерируемость надстраивается над размером.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: `Collection<T>` наследует `Iterable<T>`; итерируемость — более общий контракт, чем `size` и `contains`.",
-                "source_of_confusion": "Интуитивно «коллекция важнее простого обхода», поэтому направление наследования путают.",
-                "if_it_were_true": "Тогда `Sequence`, передаваемую в `fun f(c: Collection<T>)`, нельзя было бы обойти без size, но обход не требует Collection.",
-                "how_it_should_be": "Корень иерархии — `Iterable<T>`; `Collection<T>` добавляет `size`/`contains`, далее идут `List` и `Set`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Read-only интерфейсы ковариантны (`List<out T>`), mutable инвариантны (`MutableList<T>`); `Map` НЕ наследует `Collection` (как и в Java), а `Collection` наследует `Iterable`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ковариантность read-only позволяет присвоить `List<String>` в `List<Any>`; инвариантность mutable защищает от heap pollution при записи; mutable-ветка дублирует read-only через `MutableIterable`/`MutableCollection`.",
-                "example": "`Spring Data`-репозитории возвращают `List<Entity>` ради ковариантности — caller может работать с `List<Any>` для общего логирования.",
-                "when_to_apply": "Применяй read-only тип на выходе API ради covariance, mutable — только внутри реализации, где запись безопасна.",
-                "edge_cases": "`Map` стоит особняком и не является `Collection`; `map.toList()` даёт `List<Pair<K,V>>`, а не наследование от Collection.",
-                "related": "[[kotlin-collections-interview#Q1]] read-only vs mutable контракт; [[kotlin-collections-interview#Q21]] отличия от Java Collections."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Map<K, V>` наследует `Collection<Pair<K, V>>`, поэтому `filter`/`map` работают над ним как над обычной коллекцией.",
               "correct": false,
               "sections": {
@@ -106,8 +81,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "`Iterable` наследует `Collection`, потому что любая коллекция итерируема — итерируемость надстраивается над размером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Collection<T>` наследует `Iterable<T>`; итерируемость — более общий контракт, чем `size` и `contains`.",
+                "source_of_confusion": "Интуитивно «коллекция важнее простого обхода», поэтому направление наследования путают.",
+                "if_it_were_true": "Тогда `Sequence`, передаваемую в `fun f(c: Collection<T>)`, нельзя было бы обойти без size, но обход не требует Collection.",
+                "how_it_should_be": "Корень иерархии — `Iterable<T>`; `Collection<T>` добавляет `size`/`contains`, далее идут `List` и `Set`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "И `List`, и `MutableList` ковариантны (`out T`), иначе нельзя было бы передать `MutableList<String>` в функцию с параметром `MutableList<Any>`.",
               "correct": false,
               "sections": {
@@ -115,6 +102,19 @@
                 "source_of_confusion": "Ковариантность read-only `List<out T>` реальна, и её ошибочно распространяют на mutable.",
                 "if_it_were_true": "Тогда «исправление» сигнатуры на `MutableList<Any>` давало бы heap pollution и `ClassCastException` при чтении.",
                 "how_it_should_be": "Ковариантна только read-only ветка; mutable инвариантна по дизайну ради безопасности записи."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Read-only интерфейсы ковариантны (`List<out T>`), mutable инвариантны (`MutableList<T>`); `Map` НЕ наследует `Collection` (как и в Java), а `Collection` наследует `Iterable`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ковариантность read-only позволяет присвоить `List<String>` в `List<Any>`; инвариантность mutable защищает от heap pollution при записи; mutable-ветка дублирует read-only через `MutableIterable`/`MutableCollection`.",
+                "example": "`Spring Data`-репозитории возвращают `List<Entity>` ради ковариантности — caller может работать с `List<Any>` для общего логирования.",
+                "when_to_apply": "Применяй read-only тип на выходе API ради covariance, mutable — только внутри реализации, где запись безопасна.",
+                "edge_cases": "`Map` стоит особняком и не является `Collection`; `map.toList()` даёт `List<Pair<K,V>>`, а не наследование от Collection.",
+                "related": "[[kotlin-collections-interview#Q1]] read-only vs mutable контракт; [[kotlin-collections-interview#Q21]] отличия от Java Collections."
               }
             }
           ]
@@ -143,6 +143,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`listOf(1, 2, 3)` оборачивается в `Collections.unmodifiableList`, поэтому `as MutableList` бросит `UnsupportedOperationException`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На JVM `listOf(2+)` возвращает `Arrays$ArrayList` (обёртку `Arrays.asList`), а не `Collections.unmodifiableList`; сам cast `as MutableList` не бросает, но структурные `add`/`remove` дают `UnsupportedOperationException` (список фиксированного размера).",
+                "source_of_confusion": "Defensive-стиль из Java (`unmodifiableList`) ожидают и от `listOf`.",
+                "if_it_were_true": "Тогда `listOf` сам был бы защитной копией, но реально для защиты нужен `toList()` или persistent-коллекция.",
+                "how_it_should_be": "`listOf` отдаёт `List` (read-only Kotlin-интерфейс) поверх `Arrays$ArrayList` фиксированного размера; для снимка/защиты делают явный `toList()` (создаёт независимый `ArrayList`)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`mapOf(\"a\" to 1)` под капотом — это Java 9+ `Map.of` (`ImmutableCollections`), поэтому запись через cast бросает `UnsupportedOperationException`.",
               "correct": false,
               "sections": {
@@ -153,8 +165,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Под капотом `listOf` — `Arrays.asList`-обёртка (`Arrays$ArrayList`, фиксированного размера), `setOf`/`mapOf` — `LinkedHashSet`/`LinkedHashMap` (порядок вставки); Kotlin- и Java-интерфейсы реализуются одним классом, поэтому конвертация при интеропе не нужна.",
               "correct": true,
               "sections": {
@@ -163,18 +175,6 @@
                 "when_to_apply": "Полагайся на это при передаче коллекций в Java-код и обратно; для предсказуемого порядка используй `setOf`/`mapOf`, для скорости — `hashSetOf`/`hashMapOf`.",
                 "edge_cases": "Для 0–1 элементов есть оптимизированные синглтоны (`emptyList`, одноэлементная обёртка), но для 2+ — `Arrays.asList()`-обёртка (`Arrays$ArrayList`) фиксированного размера: `set` по индексу работает, а `add`/`remove` бросают `UnsupportedOperationException`.",
                 "related": "[[kotlin-collections-interview#Q28]] LinkedHashMap vs TreeMap; [[kotlin-collections-interview#Q29]] hashSetOf/linkedSetOf/sortedSetOf; [[kotlin-collections-interview#Q22]] интероп с Java-коллекциями."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`listOf(1, 2, 3)` оборачивается в `Collections.unmodifiableList`, поэтому `as MutableList` бросит `UnsupportedOperationException`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На JVM `listOf(2+)` возвращает `Arrays$ArrayList` (обёртку `Arrays.asList`), а не `Collections.unmodifiableList`; сам cast `as MutableList` не бросает, но структурные `add`/`remove` дают `UnsupportedOperationException` (список фиксированного размера).",
-                "source_of_confusion": "Defensive-стиль из Java (`unmodifiableList`) ожидают и от `listOf`.",
-                "if_it_were_true": "Тогда `listOf` сам был бы защитной копией, но реально для защиты нужен `toList()` или persistent-коллекция.",
-                "how_it_should_be": "`listOf` отдаёт `List` (read-only Kotlin-интерфейс) поверх `Arrays$ArrayList` фиксированного размера; для снимка/защиты делают явный `toList()` (создаёт независимый `ArrayList`)."
               }
             }
           ]
@@ -189,13 +189,13 @@
           "question_text": "Как создать коллекцию в Kotlin: listOf, mutableListOf, emptyList?",
           "options": [
             {
-              "text": "`listOf(1, 2, 3)` создаёт `MutableList`, поэтому к результату сразу можно применять `add` и `remove` без приведения типа.",
+              "text": "Чтобы получить пустой изменяемый список, достаточно написать `listOf<Int>()`, а затем добавлять в него элементы через `add`.",
               "correct": false,
               "sections": {
-                "what_actually": "`listOf` возвращает read-only `List`, у которого в API нет методов `add` и `remove`, так что компилятор не даст их вызвать напрямую.",
-                "source_of_confusion": "И `listOf`, и `mutableListOf` под капотом на JVM используют `ArrayList`, и кажется, что раз класс один, то и доступные операции одинаковые.",
-                "if_it_were_true": "Если бы `listOf` отдавал `MutableList`, исчезла бы разница между read-only и mutable фабриками и пропал бы compile-time контракт неизменяемости.",
-                "how_it_should_be": "Для изменяемой коллекции нужно явно вызвать `mutableListOf(1, 2, 3)`, который возвращает `MutableList` с методами `add` и `remove`."
+                "what_actually": "`listOf<Int>()` даёт read-only пустой `List`, в который нельзя ничего добавить; для пустого изменяемого списка нужен `mutableListOf<Int>()`.",
+                "source_of_confusion": "Пустой список визуально выглядит как «заготовка под наполнение», и легко предположить, что в него можно дописывать элементы.",
+                "if_it_were_true": "Если бы в пустой `listOf()` можно было добавлять элементы, то read-only тип `List` перестал бы гарантировать отсутствие мутаций.",
+                "how_it_should_be": "Используйте `mutableListOf<Int>()` для пустого изменяемого списка, а `listOf()` или `emptyList()` — когда наполнение не нужно."
               },
               "label": "A",
               "order": 0
@@ -213,13 +213,13 @@
               "order": 1
             },
             {
-              "text": "Чтобы получить пустой изменяемый список, достаточно написать `listOf<Int>()`, а затем добавлять в него элементы через `add`.",
+              "text": "`listOf(1, 2, 3)` создаёт `MutableList`, поэтому к результату сразу можно применять `add` и `remove` без приведения типа.",
               "correct": false,
               "sections": {
-                "what_actually": "`listOf<Int>()` даёт read-only пустой `List`, в который нельзя ничего добавить; для пустого изменяемого списка нужен `mutableListOf<Int>()`.",
-                "source_of_confusion": "Пустой список визуально выглядит как «заготовка под наполнение», и легко предположить, что в него можно дописывать элементы.",
-                "if_it_were_true": "Если бы в пустой `listOf()` можно было добавлять элементы, то read-only тип `List` перестал бы гарантировать отсутствие мутаций.",
-                "how_it_should_be": "Используйте `mutableListOf<Int>()` для пустого изменяемого списка, а `listOf()` или `emptyList()` — когда наполнение не нужно."
+                "what_actually": "`listOf` возвращает read-only `List`, у которого в API нет методов `add` и `remove`, так что компилятор не даст их вызвать напрямую.",
+                "source_of_confusion": "И `listOf`, и `mutableListOf` под капотом на JVM используют `ArrayList`, и кажется, что раз класс один, то и доступные операции одинаковые.",
+                "if_it_were_true": "Если бы `listOf` отдавал `MutableList`, исчезла бы разница между read-only и mutable фабриками и пропал бы compile-time контракт неизменяемости.",
+                "how_it_should_be": "Для изменяемой коллекции нужно явно вызвать `mutableListOf(1, 2, 3)`, который возвращает `MutableList` с методами `add` и `remove`."
               },
               "label": "C",
               "order": 2
@@ -276,18 +276,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`buildMap` создаёт промежуточные `Pair`-объекты так же, как `mapOf(\"a\" to 1)`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`buildMap` использует `put(key, value)` напрямую без `Pair` — это одно из его преимуществ при построении больших Map.",
-                "source_of_confusion": "И `mapOf`, и `buildMap` строят Map, отсюда предположение об одинаковом механизме.",
-                "if_it_were_true": "Тогда у `buildMap` не было бы выигрыша по аллокациям, но он как раз избегает Pair-объектов.",
-                "how_it_should_be": "`buildMap` пишет пары через `put` без промежуточных `Pair`, экономя аллокации."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`buildList`/`buildSet`/`buildMap` недоступны без подключения дополнительной библиотеки.",
               "correct": false,
               "sections": {
@@ -295,6 +283,18 @@
                 "source_of_confusion": "Persistent-коллекции действительно живут в отдельной `kotlinx.collections.immutable`, и это путают с builder-функциями.",
                 "if_it_were_true": "Тогда нужно было бы менять `build.gradle.kts` ради `buildList`, но он доступен из коробки.",
                 "how_it_should_be": "Builder-функции встроены в stdlib; отдельная зависимость нужна только для `kotlinx.collections.immutable`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`buildMap` создаёт промежуточные `Pair`-объекты так же, как `mapOf(\"a\" to 1)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`buildMap` использует `put(key, value)` напрямую без `Pair` — это одно из его преимуществ при построении больших Map.",
+                "source_of_confusion": "И `mapOf`, и `buildMap` строят Map, отсюда предположение об одинаковом механизме.",
+                "if_it_were_true": "Тогда у `buildMap` не было бы выигрыша по аллокациям, но он как раз избегает Pair-объектов.",
+                "how_it_should_be": "`buildMap` пишет пары через `put` без промежуточных `Pair`, экономя аллокации."
               }
             }
           ]
@@ -311,18 +311,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Read-only `List<T>` гарантирует неизменяемость в многопоточном коде, поэтому `synchronized` или concurrent-коллекции не нужны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Read-only — это типовое ограничение, а не runtime-гарантия: другой поток через cast или из Java может мутировать backing-`ArrayList`, что даёт `ConcurrentModificationException` или порчу данных.",
-                "source_of_confusion": "Раз методов записи у типа нет, кажется, что и гонок быть не может.",
-                "if_it_were_true": "Тогда shared-state можно было бы свободно передавать как `List`, но это приводит к data race на общей mutable-коллекции.",
-                "how_it_should_be": "Для конкурентного доступа нужны `ConcurrentHashMap`, `CopyOnWriteArrayList` или `kotlinx.collections.immutable`, а не read-only тип."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Нет: read-only — это ограничение на уровне типов; через `(readOnly as MutableList).add(x)` или из Java-кода содержимое можно изменить, поэтому для настоящей иммутабельности нужна `kotlinx.collections.immutable`.",
               "correct": true,
               "sections": {
@@ -331,6 +319,18 @@
                 "when_to_apply": "Применяй persistent-коллекции (`persistentListOf`) для shared-state и многопоточности; read-only оставляй как API-контракт, не как защиту от мутаций.",
                 "edge_cases": "Для 0–1 элементов фабрики могут вернуть действительно неизменяемые синглтоны, но это исключение, а не правило.",
                 "related": "[[kotlin-collections-interview#Q1]] read-only vs mutable базово; [[kotlin-collections-interview#Q7]] когда нужна kotlinx.collections.immutable; [[kotlin-collections-interview#Q37]] PersistentList и structural sharing."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Read-only `List<T>` гарантирует неизменяемость в многопоточном коде, поэтому `synchronized` или concurrent-коллекции не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Read-only — это типовое ограничение, а не runtime-гарантия: другой поток через cast или из Java может мутировать backing-`ArrayList`, что даёт `ConcurrentModificationException` или порчу данных.",
+                "source_of_confusion": "Раз методов записи у типа нет, кажется, что и гонок быть не может.",
+                "if_it_were_true": "Тогда shared-state можно было бы свободно передавать как `List`, но это приводит к data race на общей mutable-коллекции.",
+                "how_it_should_be": "Для конкурентного доступа нужны `ConcurrentHashMap`, `CopyOnWriteArrayList` или `kotlinx.collections.immutable`, а не read-only тип."
               }
             },
             {
@@ -371,30 +371,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Использовать `kotlinx.collections.immutable` для всех коллекций по умолчанию — это лучшая практика.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Persistent-коллекции несут overhead structural sharing; для локальных короткоживущих коллекций обычный `MutableList` проще и быстрее.",
-                "source_of_confusion": "«Иммутабельность всегда хороша» — упрощённое правило из функционального программирования.",
-                "if_it_were_true": "Тогда stdlib-фабрики `listOf`/`mutableListOf` были бы не нужны, но они остаются дефолтом для большинства задач.",
-                "how_it_should_be": "Persistent-коллекции применяют точечно: shared mutable state, многопоточность, event sourcing — не везде."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`kotlinx.collections.immutable` входит в `kotlin-stdlib`, поэтому подключать ничего не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это отдельная библиотека `org.jetbrains.kotlinx:kotlinx-collections-immutable`; без явной зависимости в `build.gradle.kts` код не скомпилируется.",
-                "source_of_confusion": "`buildList`/`buildMap` действительно в stdlib, и это смешивают с persistent-коллекциями.",
-                "if_it_were_true": "Тогда `persistentListOf` был бы доступен из коробки, но он требует отдельной зависимости.",
-                "how_it_should_be": "Нужно явно добавить `kotlinx-collections-immutable` в зависимости проекта."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Persistent-коллекции (`PersistentList`/`PersistentMap`/`PersistentSet`) нужны для shared/иммутабельного состояния: UI/Redux-MVI state, event sourcing, многопоточность без блокировок — каждая операция возвращает новую версию со structural sharing.",
               "correct": true,
               "sections": {
@@ -406,8 +382,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "Использовать `kotlinx.collections.immutable` для всех коллекций по умолчанию — это лучшая практика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Persistent-коллекции несут overhead structural sharing; для локальных короткоживущих коллекций обычный `MutableList` проще и быстрее.",
+                "source_of_confusion": "«Иммутабельность всегда хороша» — упрощённое правило из функционального программирования.",
+                "if_it_were_true": "Тогда stdlib-фабрики `listOf`/`mutableListOf` были бы не нужны, но они остаются дефолтом для большинства задач.",
+                "how_it_should_be": "Persistent-коллекции применяют точечно: shared mutable state, многопоточность, event sourcing — не везде."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`persistentListOf().add(x)` мутирует исходный список на месте — слово immutable в названии условное.",
               "correct": false,
               "sections": {
@@ -415,6 +403,18 @@
                 "source_of_confusion": "Привычка к `MutableList.add` (мутация на месте) переносится на persistent-API.",
                 "if_it_were_true": "Тогда не было бы snapshot-семантики и безопасного конкурентного чтения, но именно они — цель persistent-коллекций.",
                 "how_it_should_be": "Каждая операция persistent-коллекции создаёт новую версию; исходная ссылка видит прежнее состояние."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`kotlinx.collections.immutable` входит в `kotlin-stdlib`, поэтому подключать ничего не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это отдельная библиотека `org.jetbrains.kotlinx:kotlinx-collections-immutable`; без явной зависимости в `build.gradle.kts` код не скомпилируется.",
+                "source_of_confusion": "`buildList`/`buildMap` действительно в stdlib, и это смешивают с persistent-коллекциями.",
+                "if_it_were_true": "Тогда `persistentListOf` был бы доступен из коробки, но он требует отдельной зависимости.",
+                "how_it_should_be": "Нужно явно добавить `kotlinx-collections-immutable` в зависимости проекта."
               }
             }
           ]
@@ -431,18 +431,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Sequence` и `List` дают одинаковый результат — разница только в стиле кода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Семантика результата та же, но `List` на каждом `.filter{}`/`.map{}` создаёт промежуточную коллекцию (O(N) аллокаций на шаг), а `Sequence` — нет.",
-                "source_of_confusion": "Идентичный API (`map`/`filter`) и одинаковый итог скрывают разницу в модели вычисления.",
-                "if_it_were_true": "Тогда на больших данных не было бы GC-давления и OOM от промежуточных списков, но при `List` оно реально.",
-                "how_it_should_be": "`Sequence` — ленивый pipeline без промежуточных коллекций; `List` — eager с материализацией на каждом шаге."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Sequence` эффективнее `List`, поэтому переход на `.asSequence()` — безопасная оптимизация по умолчанию для любых цепочек операций.",
               "correct": false,
               "sections": {
@@ -453,8 +441,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`.filter{}.map{}` на `Sequence` выполняется параллельно автоматически — в этом её главный выигрыш.",
               "correct": false,
               "sections": {
@@ -462,6 +450,18 @@
                 "source_of_confusion": "Похожесть API на Java Stream (где есть `parallel()`) рождает ожидание автопараллелизма.",
                 "if_it_were_true": "Тогда на 16 ядрах `asSequence()` ускорял бы отчёты, но CPU остаётся на одном ядре.",
                 "how_it_should_be": "Выигрыш `Sequence` — в lazy-вычислении и отсутствии промежуточных коллекций, а не в параллельности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Sequence` и `List` дают одинаковый результат — разница только в стиле кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Семантика результата та же, но `List` на каждом `.filter{}`/`.map{}` создаёт промежуточную коллекцию (O(N) аллокаций на шаг), а `Sequence` — нет.",
+                "source_of_confusion": "Идентичный API (`map`/`filter`) и одинаковый итог скрывают разницу в модели вычисления.",
+                "if_it_were_true": "Тогда на больших данных не было бы GC-давления и OOM от промежуточных списков, но при `List` оно реально.",
+                "how_it_should_be": "`Sequence` — ленивый pipeline без промежуточных коллекций; `List` — eager с материализацией на каждом шаге."
               }
             },
             {
@@ -504,18 +504,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`generateSequence(1) { it + 1 }` создаёт конечную последовательность — бесконечную в Kotlin сделать нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`generateSequence(1) { it + 1 }` бесконечна; её `.toList()` без `.take(N)` зависнет и упадёт по памяти.",
-                "source_of_confusion": "Привычка, что «генератор когда-то остановится», переносится на функцию без условия завершения.",
-                "if_it_were_true": "Тогда `naturals.take(10)` был бы не нужен, но именно он отсекает бесконечный поток.",
-                "how_it_should_be": "Бесконечность задаётся отсутствием `null` из генератора; конечность — возвратом `null`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`sequence { yield(x) }` — это полноценная корутина и требует `CoroutineScope`.",
               "correct": false,
               "sections": {
@@ -526,8 +514,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Sequence нельзя создать из Java `Iterator` — только из Kotlin-коллекций.",
               "correct": false,
               "sections": {
@@ -535,6 +523,18 @@
                 "source_of_confusion": "Кажется, что интероп с Java-итераторами требует ручной обёртки.",
                 "if_it_were_true": "Тогда нельзя было бы лениво обрабатывать Java-итераторы, но `asSequence()` это позволяет.",
                 "how_it_should_be": "`asSequence()` доступен и для Java `Iterator`/`Stream`, и для любого `Iterable`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`generateSequence(1) { it + 1 }` создаёт конечную последовательность — бесконечную в Kotlin сделать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`generateSequence(1) { it + 1 }` бесконечна; её `.toList()` без `.take(N)` зависнет и упадёт по памяти.",
+                "source_of_confusion": "Привычка, что «генератор когда-то остановится», переносится на функцию без условия завершения.",
+                "if_it_were_true": "Тогда `naturals.take(10)` был бы не нужен, но именно он отсекает бесконечный поток.",
+                "how_it_should_be": "Бесконечность задаётся отсутствием `null` из генератора; конечность — возвратом `null`."
               }
             }
           ]
@@ -576,18 +576,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При одной операции `filter`/`map` на `List` обязательно нужно вызывать `.asSequence()` ради скорости.",
-              "correct": false,
-              "sections": {
-                "what_actually": "При одной промежуточной операции `List` создаёт ровно одну коллекцию, и overhead `Sequence` не окупается — один шаг лучше делать на `List`.",
-                "source_of_confusion": "«Sequence экономит аллокации» обобщают и на одношаговые цепочки.",
-                "if_it_were_true": "Тогда `list.asSequence().filter{}.toList()` был бы быстрее `list.filter{}`, но это избыточно.",
-                "how_it_should_be": "`Sequence` оправдан от 2+ операций; для одной — обычный `List`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`Sequence` хранит элементы в памяти как `List`, но вычисляет их лениво.",
               "correct": false,
               "sections": {
@@ -595,6 +583,18 @@
                 "source_of_confusion": "Слово «последовательность» наводит на мысль о хранилище наподобие списка.",
                 "if_it_were_true": "Тогда нельзя было бы обрабатывать бесконечные или потоковые источники, но `Sequence` это умеет.",
                 "how_it_should_be": "`Sequence` — это описание вычисления, а не контейнер; элементы не материализуются до терминальной операции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При одной операции `filter`/`map` на `List` обязательно нужно вызывать `.asSequence()` ради скорости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При одной промежуточной операции `List` создаёт ровно одну коллекцию, и overhead `Sequence` не окупается — один шаг лучше делать на `List`.",
+                "source_of_confusion": "«Sequence экономит аллокации» обобщают и на одношаговые цепочки.",
+                "if_it_were_true": "Тогда `list.asSequence().filter{}.toList()` был бы быстрее `list.filter{}`, но это избыточно.",
+                "how_it_should_be": "`Sequence` оправдан от 2+ операций; для одной — обычный `List`."
               }
             }
           ]
@@ -611,18 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`reduce` и `fold` идентичны — разница только в синтаксисе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`reduce` бросает `UnsupportedOperationException` на пустой коллекции (берёт первый элемент как seed); `fold(initial)` с начальным значением безопасен на пустой.",
-                "source_of_confusion": "Обе функции «сворачивают» коллекцию, и их семантику на пустом входе путают.",
-                "if_it_were_true": "Тогда `emptyList<Int>().reduce { a, b -> a + b }` возвращал бы что-то осмысленное, но он падает.",
-                "how_it_should_be": "`fold` = safe accumulate с seed; `reduce` = unsafe, первый элемент как seed, бросает на пустой."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`partition()` возвращает один `List` с true-элементами в начале и false-элементами в конце.",
               "correct": false,
               "sections": {
@@ -630,6 +618,18 @@
                 "source_of_confusion": "Слово «разбиение» наводит на мысль об одном переупорядоченном списке.",
                 "if_it_were_true": "Тогда нельзя было бы сразу получить две независимые коллекции, но `partition` даёт именно Pair.",
                 "how_it_should_be": "`partition` отдаёт пару списков (true, false), а не один отсортированный список."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`flatMap` аналогичен `map` и используется для любого преобразования элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`map` возвращает `List<B>` (один элемент → одно значение); `flatMap` ждёт `Iterable<B>` из каждого элемента и делает flatten.",
+                "source_of_confusion": "Похожие имена и сигнатуры создают иллюзию взаимозаменяемости.",
+                "if_it_were_true": "Тогда `map` вместо `flatMap` давал бы плоский результат, но он даёт `List<List<B>>`.",
+                "how_it_should_be": "`flatMap` = `map` + `flatten`; `map` сохраняет размер, `flatMap` разворачивает one-to-many."
               }
             },
             {
@@ -648,13 +648,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`flatMap` аналогичен `map` и используется для любого преобразования элементов.",
+              "text": "`reduce` и `fold` идентичны — разница только в синтаксисе.",
               "correct": false,
               "sections": {
-                "what_actually": "`map` возвращает `List<B>` (один элемент → одно значение); `flatMap` ждёт `Iterable<B>` из каждого элемента и делает flatten.",
-                "source_of_confusion": "Похожие имена и сигнатуры создают иллюзию взаимозаменяемости.",
-                "if_it_were_true": "Тогда `map` вместо `flatMap` давал бы плоский результат, но он даёт `List<List<B>>`.",
-                "how_it_should_be": "`flatMap` = `map` + `flatten`; `map` сохраняет размер, `flatMap` разворачивает one-to-many."
+                "what_actually": "`reduce` бросает `UnsupportedOperationException` на пустой коллекции (берёт первый элемент как seed); `fold(initial)` с начальным значением безопасен на пустой.",
+                "source_of_confusion": "Обе функции «сворачивают» коллекцию, и их семантику на пустом входе путают.",
+                "if_it_were_true": "Тогда `emptyList<Int>().reduce { a, b -> a + b }` возвращал бы что-то осмысленное, но он падает.",
+                "how_it_should_be": "`fold` = safe accumulate с seed; `reduce` = unsafe, первый элемент как seed, бросает на пустой."
               }
             }
           ]
@@ -671,13 +671,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`flatMap` и `map` взаимозаменяемы — оба просто преобразуют элементы списка.",
-              "correct": false,
+              "text": "`flatMap` = `map` + `flatten`: преобразует каждый элемент в коллекцию (`T -> Iterable<R>`) и склеивает все результаты в один плоский список; `map` оставляет размер исходной коллекции.",
+              "correct": true,
               "sections": {
-                "what_actually": "`map` возвращает `List<B>` (один элемент на вход), `flatMap` ждёт `Iterable<B>` и склеивает результаты в плоский список; подмена даёт `List<List<B>>`.",
-                "source_of_confusion": "Похожие имена и общий «преобразующий» смысл создают иллюзию эквивалентности.",
-                "if_it_were_true": "Тогда `sentences.map { it.split(\" \") }` сразу давал бы плоский список слов, но он даёт список списков.",
-                "how_it_should_be": "`map` — one-to-one, `flatMap` — one-to-many с автоматическим flatten."
+                "explanation": "`sentences.map { it.split(\" \") }` даёт `List<List<String>>`, а `sentences.flatMap { it.split(\" \") }` — плоский `List<String>`; эквивалент — `map { ... }.flatten()`.",
+                "example": "`customers.flatMap { it.orders }` собирает все заказы всех клиентов в один `List<Order>` (one-to-many).",
+                "when_to_apply": "Используй `flatMap`, когда один элемент разворачивается в несколько или нужно склеить вложенные структуры; для one-to-one бери `map`.",
+                "edge_cases": "`flatMap` за один проход эффективнее `map { }.flatten()` (нет промежуточного `List<List<R>>`).",
+                "related": "[[kotlin-collections-interview#Q11]] базовые операции коллекций; [[kotlin-collections-interview#Q34]] flatten vs flatMap."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`flatMap` = `map` + `flatten`: преобразует каждый элемент в коллекцию (`T -> Iterable<R>`) и склеивает все результаты в один плоский список; `map` оставляет размер исходной коллекции.",
-              "correct": true,
+              "text": "`flatMap` и `map` взаимозаменяемы — оба просто преобразуют элементы списка.",
+              "correct": false,
               "sections": {
-                "explanation": "`sentences.map { it.split(\" \") }` даёт `List<List<String>>`, а `sentences.flatMap { it.split(\" \") }` — плоский `List<String>`; эквивалент — `map { ... }.flatten()`.",
-                "example": "`customers.flatMap { it.orders }` собирает все заказы всех клиентов в один `List<Order>` (one-to-many).",
-                "when_to_apply": "Используй `flatMap`, когда один элемент разворачивается в несколько или нужно склеить вложенные структуры; для one-to-one бери `map`.",
-                "edge_cases": "`flatMap` за один проход эффективнее `map { }.flatten()` (нет промежуточного `List<List<R>>`).",
-                "related": "[[kotlin-collections-interview#Q11]] базовые операции коллекций; [[kotlin-collections-interview#Q34]] flatten vs flatMap."
+                "what_actually": "`map` возвращает `List<B>` (один элемент на вход), `flatMap` ждёт `Iterable<B>` и склеивает результаты в плоский список; подмена даёт `List<List<B>>`.",
+                "source_of_confusion": "Похожие имена и общий «преобразующий» смысл создают иллюзию эквивалентности.",
+                "if_it_were_true": "Тогда `sentences.map { it.split(\" \") }` сразу давал бы плоский список слов, но он даёт список списков.",
+                "how_it_should_be": "`map` — one-to-one, `flatMap` — one-to-many с автоматическим flatten."
               }
             }
           ]
@@ -731,6 +731,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`partition` возвращает один `List` с true-элементами в начале и false в конце.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`partition` возвращает `Pair<List<T>, List<T>>`; нужен destructuring `val (positive, negative) = ...`.",
+                "source_of_confusion": "Слово «разбиение» наводит на один переупорядоченный список.",
+                "if_it_were_true": "Тогда нельзя было бы сразу получить две коллекции, но `partition` даёт пару.",
+                "how_it_should_be": "`partition` отдаёт пару списков (true, false)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`associateBy` безопасен при дубликатах ключей — он автоматически объединяет элементы в список.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`associateBy` при дубликатах молча перезаписывает (last wins); объединяет в список именно `groupBy`.",
+                "source_of_confusion": "Желание «безопасного поведения по умолчанию» переносят с `groupBy` на `associateBy`.",
+                "if_it_were_true": "Тогда `associateBy` всегда сохранял бы все значения, но он теряет все, кроме последнего.",
+                "how_it_should_be": "Для сохранения всех значений по ключу используй `groupBy`, не `associateBy`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`groupBy` → `Map<K, List<T>>` (сохраняет все элементы группы); `associateBy` → `Map<K, T>` (при дубликате ключа побеждает последний); `associateWith` → `Map<T, V>` (элемент становится ключом); `partition` → `Pair<List<T>, List<T>>`.",
               "correct": true,
               "sections": {
@@ -742,8 +766,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`groupBy` и `associateBy` взаимозаменяемы при уникальных ключах.",
               "correct": false,
               "sections": {
@@ -751,30 +775,6 @@
                 "source_of_confusion": "При уникальных ключах оба «индексируют по ключу», что скрывает разницу типов значения.",
                 "if_it_were_true": "Тогда `groupBy{}.mapValues{it.single()}` всегда был бы лишним, но он нужен, чтобы из List получить элемент.",
                 "how_it_should_be": "`groupBy` всегда даёт списки значений, `associateBy` — одиночные элементы; типы несовместимы."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`partition` возвращает один `List` с true-элементами в начале и false в конце.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`partition` возвращает `Pair<List<T>, List<T>>`; нужен destructuring `val (positive, negative) = ...`.",
-                "source_of_confusion": "Слово «разбиение» наводит на один переупорядоченный список.",
-                "if_it_were_true": "Тогда нельзя было бы сразу получить две коллекции, но `partition` даёт пару.",
-                "how_it_should_be": "`partition` отдаёт пару списков (true, false)."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`associateBy` безопасен при дубликатах ключей — он автоматически объединяет элементы в список.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`associateBy` при дубликатах молча перезаписывает (last wins); объединяет в список именно `groupBy`.",
-                "source_of_confusion": "Желание «безопасного поведения по умолчанию» переносят с `groupBy` на `associateBy`.",
-                "if_it_were_true": "Тогда `associateBy` всегда сохранял бы все значения, но он теряет все, кроме последнего.",
-                "how_it_should_be": "Для сохранения всех значений по ключу используй `groupBy`, не `associateBy`."
               }
             }
           ]
@@ -791,13 +791,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`groupBy` и `groupingBy` дают одинаковый результат — разница только в синтаксисе.",
+              "text": "`groupingBy` возвращает `Map<K, List<T>>` так же, как `groupBy`.",
               "correct": false,
               "sections": {
-                "what_actually": "`groupBy` сразу материализует `Map<K, List<T>>`; `groupingBy` возвращает `Grouping<T, K>` для однопроходной агрегации без промежуточных списков.",
-                "source_of_confusion": "Похожие имена и общая идея группировки скрывают разницу в модели вычисления.",
-                "if_it_were_true": "Тогда `eachCount()` и `groupBy{}.mapValues{it.size}` имели бы одинаковую производительность, но первая дешевле по памяти.",
-                "how_it_should_be": "`groupBy` — eager с материализацией групп; `groupingBy` — lazy-описатель для агрегации."
+                "what_actually": "`groupingBy` возвращает `Grouping<T, K>` — промежуточный объект без материализации; `Map` появляется только после `eachCount()`/`fold()`/`reduce()`.",
+                "source_of_confusion": "Раз обе функции «группируют», ожидается одинаковый тип результата.",
+                "if_it_were_true": "Тогда у `groupingBy` не было бы выигрыша по памяти, но он есть именно из-за отсутствия промежуточных списков.",
+                "how_it_should_be": "`groupingBy` отдаёт `Grouping`, а не Map; материализация — за терминальной операцией."
               }
             },
             {
@@ -816,13 +816,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`groupingBy` возвращает `Map<K, List<T>>` так же, как `groupBy`.",
+              "text": "`groupBy` и `groupingBy` дают одинаковый результат — разница только в синтаксисе.",
               "correct": false,
               "sections": {
-                "what_actually": "`groupingBy` возвращает `Grouping<T, K>` — промежуточный объект без материализации; `Map` появляется только после `eachCount()`/`fold()`/`reduce()`.",
-                "source_of_confusion": "Раз обе функции «группируют», ожидается одинаковый тип результата.",
-                "if_it_were_true": "Тогда у `groupingBy` не было бы выигрыша по памяти, но он есть именно из-за отсутствия промежуточных списков.",
-                "how_it_should_be": "`groupingBy` отдаёт `Grouping`, а не Map; материализация — за терминальной операцией."
+                "what_actually": "`groupBy` сразу материализует `Map<K, List<T>>`; `groupingBy` возвращает `Grouping<T, K>` для однопроходной агрегации без промежуточных списков.",
+                "source_of_confusion": "Похожие имена и общая идея группировки скрывают разницу в модели вычисления.",
+                "if_it_were_true": "Тогда `eachCount()` и `groupBy{}.mapValues{it.size}` имели бы одинаковую производительность, но первая дешевле по памяти.",
+                "how_it_should_be": "`groupBy` — eager с материализацией групп; `groupingBy` — lazy-описатель для агрегации."
               }
             },
             {
@@ -851,30 +851,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`chunked` и `windowed` взаимозаменяемы — оба просто разбивают список на части.",
+              "text": "`zipWithNext()` возвращает вложенный `List<List<Pair<T,T>>>`.",
               "correct": false,
               "sections": {
-                "what_actually": "`chunked` даёт непересекающиеся блоки (batch), `windowed` — скользящее окно с перекрытием; путаница искажает агрегаты.",
-                "source_of_confusion": "Оба принимают `size` и возвращают `List<List<T>>`, что скрывает разницу в перекрытии.",
-                "if_it_were_true": "Тогда `windowed(500)` годился бы для batch insert по 500, но он создаёт окна с перекрытием и кратно больше запросов.",
-                "how_it_should_be": "`chunked` = split без перекрытия; `windowed` = slide с перекрытием."
+                "what_actually": "`zipWithNext` возвращает плоский `List<Pair<T, T>>`, где каждая пара — смежные элементы `(a[i], a[i+1])`, без вложенности.",
+                "source_of_confusion": "Слово «with next» рождает ассоциацию с группировкой по окнам.",
+                "if_it_were_true": "Тогда `zipWithNext().all { it }` не компилировался бы для `Pair<Boolean>`, но он работает с плоскими парами.",
+                "how_it_should_be": "`zipWithNext` даёт одномерный список пар соседних элементов."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`windowed(3)` по умолчанию создаёт окна вместе с последним неполным — `partialWindows` по умолчанию true.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`partialWindows` по умолчанию `false`; последнее неполное окно отбрасывается, для включения нужен явный `partialWindows = true`.",
-                "source_of_confusion": "Интуиция «окно должно покрыть весь список» наводит на мысль о включении хвоста.",
-                "if_it_were_true": "Тогда `windowed(30)` на 365 днях покрывал бы последние 29 дней, но по умолчанию они выпадают.",
-                "how_it_should_be": "По умолчанию неполные окна исключаются; включаются только явным флагом."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`chunked(n)` — непересекающиеся блоки фиксированного размера (batch); `windowed(size, step, partialWindows)` — скользящее окно с настраиваемым шагом; `zipWithNext` — пары соседних элементов (`List<Pair<T,T>>`).",
               "correct": true,
               "sections": {
@@ -886,15 +874,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`zipWithNext()` возвращает вложенный `List<List<Pair<T,T>>>`.",
+              "order": 2,
+              "label": "C",
+              "text": "`chunked` и `windowed` взаимозаменяемы — оба просто разбивают список на части.",
               "correct": false,
               "sections": {
-                "what_actually": "`zipWithNext` возвращает плоский `List<Pair<T, T>>`, где каждая пара — смежные элементы `(a[i], a[i+1])`, без вложенности.",
-                "source_of_confusion": "Слово «with next» рождает ассоциацию с группировкой по окнам.",
-                "if_it_were_true": "Тогда `zipWithNext().all { it }` не компилировался бы для `Pair<Boolean>`, но он работает с плоскими парами.",
-                "how_it_should_be": "`zipWithNext` даёт одномерный список пар соседних элементов."
+                "what_actually": "`chunked` даёт непересекающиеся блоки (batch), `windowed` — скользящее окно с перекрытием; путаница искажает агрегаты.",
+                "source_of_confusion": "Оба принимают `size` и возвращают `List<List<T>>`, что скрывает разницу в перекрытии.",
+                "if_it_were_true": "Тогда `windowed(500)` годился бы для batch insert по 500, но он создаёт окна с перекрытием и кратно больше запросов.",
+                "how_it_should_be": "`chunked` = split без перекрытия; `windowed` = slide с перекрытием."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`windowed(3)` по умолчанию создаёт окна вместе с последним неполным — `partialWindows` по умолчанию true.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`partialWindows` по умолчанию `false`; последнее неполное окно отбрасывается, для включения нужен явный `partialWindows = true`.",
+                "source_of_confusion": "Интуиция «окно должно покрыть весь список» наводит на мысль о включении хвоста.",
+                "if_it_were_true": "Тогда `windowed(30)` на 365 днях покрывал бы последние 29 дней, но по умолчанию они выпадают.",
+                "how_it_should_be": "По умолчанию неполные окна исключаются; включаются только явным флагом."
               }
             }
           ]
@@ -911,18 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`sortedBy` и `sortBy` взаимозаменяемы — оба возвращают новый список.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`sortedBy` (с `ed`) на read-only `List` возвращает новый список; `sortBy` (без `ed`) — extension на `MutableList`, меняет in-place и возвращает `Unit`.",
-                "source_of_confusion": "Похожие имена различаются лишь суффиксом `ed`, что легко не заметить.",
-                "if_it_were_true": "Тогда `val r = list.sortBy { it.x }` давал бы отсортированный список, но `r` имеет тип `Unit`.",
-                "how_it_should_be": "`sortedBy` → new List; `sortBy` → in-place мутация и `Unit` (только для MutableList)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`sortedWith(compareBy { it.age })` не поддерживает множественные критерии сортировки.",
               "correct": false,
               "sections": {
@@ -933,8 +921,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Kotlin не поддерживает stable sort — равные элементы могут переставляться.",
               "correct": false,
               "sections": {
@@ -945,8 +933,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`sorted`/`sortedBy`/`sortedWith` (с `ed`) возвращают новый `List`; `sort`/`sortBy`/`sortWith` (без `ed`) меняют `MutableList` in-place и возвращают `Unit`.",
               "correct": true,
               "sections": {
@@ -955,6 +943,18 @@
                 "when_to_apply": "Бери `sorted*` в read-only API (возвращают новую коллекцию); `sort*` — внутри mutable-структур ради экономии аллокаций.",
                 "edge_cases": "`sort*` нельзя вызвать на read-only `List` — только на `MutableList`; результат — `Unit`, а не список.",
                 "related": "[[kotlin-collections-interview#Q39]] sortedBy/sortedWith/compareBy детально; [[kotlin-collections-interview#Q11]] базовые операции коллекций."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`sortedBy` и `sortBy` взаимозаменяемы — оба возвращают новый список.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sortedBy` (с `ed`) на read-only `List` возвращает новый список; `sortBy` (без `ed`) — extension на `MutableList`, меняет in-place и возвращает `Unit`.",
+                "source_of_confusion": "Похожие имена различаются лишь суффиксом `ed`, что легко не заметить.",
+                "if_it_were_true": "Тогда `val r = list.sortBy { it.x }` давал бы отсортированный список, но `r` имеет тип `Unit`.",
+                "how_it_should_be": "`sortedBy` → new List; `sortBy` → in-place мутация и `Unit` (только для MutableList)."
               }
             }
           ]
@@ -971,6 +971,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`toSet()` не сохраняет порядок — это обычный `HashSet`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`toSet()` в Kotlin возвращает `LinkedHashSet`; порядок основан на первом вхождении элемента после дедупликации.",
+                "source_of_confusion": "Привычка из Java (где `toSet`-аналог даёт `HashSet`) переносится на Kotlin.",
+                "if_it_were_true": "Тогда сериализация результата `toSet()` давала бы нестабильный порядок, но он предсказуем.",
+                "how_it_should_be": "`toSet()` сохраняет порядок первого вхождения; для натурального порядка — `toSortedSet()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`toMutableList()` на уже-`MutableList` создаёт обёртку без копирования данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`toMutableList()` всегда создаёт новый `ArrayList` с копией элементов; изменения в одной коллекции не затрагивают другую.",
+                "source_of_confusion": "Ожидание «обёртки вместо копии» для однотипного преобразования.",
+                "if_it_were_true": "Тогда две ссылки делили бы один backing-массив, но `toMutableList()` их разделяет.",
+                "how_it_should_be": "`toMutableList()` копирует элементы в новый список — это независимая mutable-копия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`to*()`-функции создают независимую копию нужного типа: `toList()` — read-only snapshot, `toSet()` убирает дубликаты и даёт быстрый `contains`, `toMutableList()` — изменяемую копию для дальнейшей модификации.",
               "correct": true,
               "sections": {
@@ -982,8 +1006,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`toList()` на `MutableList` возвращает тот же объект без копирования.",
               "correct": false,
               "sections": {
@@ -991,30 +1015,6 @@
                 "source_of_confusion": "Кажется, что для уже-списка копирование избыточно и возвращается ссылка.",
                 "if_it_were_true": "Тогда `toList()` не защищал бы от внешней мутации, но он именно для этого и нужен.",
                 "how_it_should_be": "`toList()` всегда даёт snapshot; для совместного владения нужна та же ссылка, а не `toList()`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`toSet()` не сохраняет порядок — это обычный `HashSet`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`toSet()` в Kotlin возвращает `LinkedHashSet`; порядок основан на первом вхождении элемента после дедупликации.",
-                "source_of_confusion": "Привычка из Java (где `toSet`-аналог даёт `HashSet`) переносится на Kotlin.",
-                "if_it_were_true": "Тогда сериализация результата `toSet()` давала бы нестабильный порядок, но он предсказуем.",
-                "how_it_should_be": "`toSet()` сохраняет порядок первого вхождения; для натурального порядка — `toSortedSet()`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`toMutableList()` на уже-`MutableList` создаёт обёртку без копирования данных.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`toMutableList()` всегда создаёт новый `ArrayList` с копией элементов; изменения в одной коллекции не затрагивают другую.",
-                "source_of_confusion": "Ожидание «обёртки вместо копии» для однотипного преобразования.",
-                "if_it_were_true": "Тогда две ссылки делили бы один backing-массив, но `toMutableList()` их разделяет.",
-                "how_it_should_be": "`toMutableList()` копирует элементы в новый список — это независимая mutable-копия."
               }
             }
           ]
@@ -1043,6 +1043,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`colors zip animals` и `colors.zip(animals)` различаются: инфиксная форма не отбрасывает лишние элементы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обе формы полностью эквивалентны; обрезка по меньшей длине одинакова, отличие лишь в синтаксисе вызова.",
+                "source_of_confusion": "Инфиксная запись выглядит «особенной», что рождает ожидание иного поведения.",
+                "if_it_were_true": "Тогда выбор между `a zip b` и `a.zip(b)` влиял бы на результат, но он одинаков.",
+                "how_it_should_be": "Инфиксная и точечная формы `zip` идентичны; вариант с лямбдой просто избегает промежуточных `Pair`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`zip` объединяет два списка в `List<Pair>` по меньшей длине; `unzip` разделяет `List<Pair>` обратно на два списка.",
               "correct": true,
               "sections": {
@@ -1051,18 +1063,6 @@
                 "when_to_apply": "Бери `zip` для связывания parallel-массивов, `unzip` — для destructuring `List<Pair>` в две колонки.",
                 "edge_cases": "Длина результата `zip` = min(len(a), len(b)); элементы за этой границей теряются без предупреждения.",
                 "related": "[[kotlin-collections-interview#Q15]] windowed/chunked/zipWithNext; [[kotlin-collections-interview#Q11]] базовые операции коллекций."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`colors zip animals` и `colors.zip(animals)` различаются: инфиксная форма не отбрасывает лишние элементы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Обе формы полностью эквивалентны; обрезка по меньшей длине одинакова, отличие лишь в синтаксисе вызова.",
-                "source_of_confusion": "Инфиксная запись выглядит «особенной», что рождает ожидание иного поведения.",
-                "if_it_were_true": "Тогда выбор между `a zip b` и `a.zip(b)` влиял бы на результат, но он одинаков.",
-                "how_it_should_be": "Инфиксная и точечная формы `zip` идентичны; вариант с лямбдой просто избегает промежуточных `Pair`."
               }
             },
             {
@@ -1091,18 +1091,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`mapNotNull` и `map{}.filterNotNull()` одинаковы по производительности.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`mapNotNull` делает один проход; `map { } + filterNotNull` — два прохода и промежуточная коллекция с null-элементами.",
-                "source_of_confusion": "Одинаковый итоговый результат скрывает разницу в числе проходов и аллокаций.",
-                "if_it_were_true": "Тогда на тысячах элементов GC-давление было бы равным, но `map + filterNotNull` создаёт лишний список.",
-                "how_it_should_be": "`mapNotNull` объединяет преобразование и отсев null за один проход."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`mapKeys` при коллизии нового ключа бросает `IllegalArgumentException`.",
               "correct": false,
               "sections": {
@@ -1113,8 +1101,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`mapNotNull` = `map` + `filterNotNull` за один проход; `mapKeys` трансформирует ключи Map; `mapValues` — значения; `mapIndexed` даёт доступ к индексу элемента.",
               "correct": true,
               "sections": {
@@ -1126,8 +1114,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`mapIndexed` нумерует элементы с 1, а не с 0.",
               "correct": false,
               "sections": {
@@ -1135,6 +1123,18 @@
                 "source_of_confusion": "Привычка к 1-based нумерации из бизнес-логики переносится на индексы массива.",
                 "if_it_were_true": "Тогда `mapIndexed` смещал бы все индексы на 1, но он совпадает с индексами `get`.",
                 "how_it_should_be": "Индексация в `mapIndexed` начинается с 0, как у `list[i]`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`mapNotNull` и `map{}.filterNotNull()` одинаковы по производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`mapNotNull` делает один проход; `map { } + filterNotNull` — два прохода и промежуточная коллекция с null-элементами.",
+                "source_of_confusion": "Одинаковый итоговый результат скрывает разницу в числе проходов и аллокаций.",
+                "if_it_were_true": "Тогда на тысячах элементов GC-давление было бы равным, но `map + filterNotNull` создаёт лишний список.",
+                "how_it_should_be": "`mapNotNull` объединяет преобразование и отсев null за один проход."
               }
             }
           ]
@@ -1151,13 +1151,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`apply` возвращает `Unit` — это настроечный блок для побочных эффектов, результат из него получить нельзя.",
-              "correct": false,
+              "text": "`apply` настраивает mutable-объект (`this` = receiver) и возвращает receiver; `also` для side-effect (`it` = receiver) тоже возвращает receiver; `let` для nullable-safe цепочки (`it`) возвращает результат лямбды; `run` вычисляет результат с `this`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`apply` возвращает сам receiver (`this`), что и делает его пригодным для fluent-инициализации; `Unit` возвращает не он.",
-                "source_of_confusion": "Роль «блока конфигурации без возвращаемого значения» рождает ожидание `Unit` на выходе.",
-                "if_it_were_true": "Тогда `mutableListOf<String>().apply { add(\"a\") }` давал бы `Unit`, но он возвращает настроенный список.",
-                "how_it_should_be": "`apply` возвращает receiver; `run` возвращает результат лямбды — это разные контракты."
+                "explanation": "Scope-функции не специфичны для коллекций, но удобны в цепочках: `let` передаёт результат в функцию, `also` логирует, `apply` инициализирует, `run` вычисляет.",
+                "example": "`mutableListOf<String>().apply { add(\"first\"); addAll(other); sort() }` собирает и настраивает список; `users.filter { it.age > 18 }.also { println(it.size) }.map { it.name }` логирует без прерывания цепочки.",
+                "when_to_apply": "Бери `apply` для конфигурации mutable-коллекции, `also` для логирования промежуточных результатов, `let` для NPE-safe трансформации, `run` для вычисления значения.",
+                "edge_cases": "`apply`/`also` возвращают receiver, `let`/`run` — результат лямбды; `takeIf`/`takeUnless` дают условный `this`/`null`.",
+                "related": "[[kotlin-collections-interview#Q11]] базовые операции коллекций; [[kotlin-collections-interview#Q5]] buildList с условной логикой."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`apply` настраивает mutable-объект (`this` = receiver) и возвращает receiver; `also` для side-effect (`it` = receiver) тоже возвращает receiver; `let` для nullable-safe цепочки (`it`) возвращает результат лямбды; `run` вычисляет результат с `this`.",
-              "correct": true,
+              "text": "`apply` возвращает `Unit` — это настроечный блок для побочных эффектов, результат из него получить нельзя.",
+              "correct": false,
               "sections": {
-                "explanation": "Scope-функции не специфичны для коллекций, но удобны в цепочках: `let` передаёт результат в функцию, `also` логирует, `apply` инициализирует, `run` вычисляет.",
-                "example": "`mutableListOf<String>().apply { add(\"first\"); addAll(other); sort() }` собирает и настраивает список; `users.filter { it.age > 18 }.also { println(it.size) }.map { it.name }` логирует без прерывания цепочки.",
-                "when_to_apply": "Бери `apply` для конфигурации mutable-коллекции, `also` для логирования промежуточных результатов, `let` для NPE-safe трансформации, `run` для вычисления значения.",
-                "edge_cases": "`apply`/`also` возвращают receiver, `let`/`run` — результат лямбды; `takeIf`/`takeUnless` дают условный `this`/`null`.",
-                "related": "[[kotlin-collections-interview#Q11]] базовые операции коллекций; [[kotlin-collections-interview#Q5]] buildList с условной логикой."
+                "what_actually": "`apply` возвращает сам receiver (`this`), что и делает его пригодным для fluent-инициализации; `Unit` возвращает не он.",
+                "source_of_confusion": "Роль «блока конфигурации без возвращаемого значения» рождает ожидание `Unit` на выходе.",
+                "if_it_were_true": "Тогда `mutableListOf<String>().apply { add(\"a\") }` давал бы `Unit`, но он возвращает настроенный список.",
+                "how_it_should_be": "`apply` возвращает receiver; `run` возвращает результат лямбды — это разные контракты."
               }
             }
           ]
@@ -1211,6 +1211,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`listOf(1, 2) + listOf(3, 4)` мутирует первый список, добавляя в него элементы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оператор `+` на read-only `List` возвращает новый список; исходные не изменяются — это не `add`.",
+                "source_of_confusion": "Знак `+` ассоциируется с `+=`/`add`, что наводит на мысль о мутации.",
+                "if_it_were_true": "Тогда `a + b` менял бы `a`, но он создаёт новую коллекцию.",
+                "how_it_should_be": "`+`/`-` на коллекциях возвращают новые коллекции, не мутируя операнды."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "В Kotlin read-only и mutable интерфейсы разделены на уровне типов, `setOf`→`LinkedHashSet` (порядок вставки), есть операторы `+`/`-`/`in` для коллекций и встроенные extension-функции (`map`/`filter`) без `Stream API`.",
               "correct": true,
               "sections": {
@@ -1222,32 +1234,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Kotlin `setOf()` возвращает `HashSet`, как Java, — порядок вставки не гарантирован.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Kotlin `setOf()` возвращает `LinkedHashSet` с сохранением порядка вставки, в отличие от Java `HashSet`.",
-                "source_of_confusion": "Привычка из Java, где `Set`-дефолт — `HashSet`, переносится на Kotlin.",
-                "if_it_were_true": "Тогда JSON-сериализация Set давала бы разный порядок между запусками, но Kotlin его фиксирует.",
-                "how_it_should_be": "`setOf`/`mapOf` в Kotlin — это `LinkedHashSet`/`LinkedHashMap` с порядком вставки."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`listOf(1, 2) + listOf(3, 4)` мутирует первый список, добавляя в него элементы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оператор `+` на read-only `List` возвращает новый список; исходные не изменяются — это не `add`.",
-                "source_of_confusion": "Знак `+` ассоциируется с `+=`/`add`, что наводит на мысль о мутации.",
-                "if_it_were_true": "Тогда `a + b` менял бы `a`, но он создаёт новую коллекцию.",
-                "how_it_should_be": "`+`/`-` на коллекциях возвращают новые коллекции, не мутируя операнды."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Kotlin `List<T>` инвариантна, как Java `List<T>` — ковариантности нет.",
               "correct": false,
               "sections": {
@@ -1255,6 +1243,18 @@
                 "source_of_confusion": "Опыт инвариантных Java-дженериков переносится на Kotlin.",
                 "if_it_were_true": "Тогда нельзя было бы передать `List<Dog>` в `fun f(a: List<Animal>)`, но Kotlin это позволяет.",
                 "how_it_should_be": "Read-only `List` ковариантен (`out T`); mutable инвариантен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Kotlin `setOf()` возвращает `HashSet`, как Java, — порядок вставки не гарантирован.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kotlin `setOf()` возвращает `LinkedHashSet` с сохранением порядка вставки, в отличие от Java `HashSet`.",
+                "source_of_confusion": "Привычка из Java, где `Set`-дефолт — `HashSet`, переносится на Kotlin.",
+                "if_it_were_true": "Тогда JSON-сериализация Set давала бы разный порядок между запусками, но Kotlin его фиксирует.",
+                "how_it_should_be": "`setOf`/`mapOf` в Kotlin — это `LinkedHashSet`/`LinkedHashMap` с порядком вставки."
               }
             }
           ]
@@ -1271,31 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Java-коллекции безопасны в Kotlin — компилятор автоматически проставляет `@NotNull` на элементы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без аннотаций Java-коллекции приходят как платформенные типы (`List<String!>!`); компилятор не знает о nullability, и при null-элементе возможен NPE в рантайме.",
-                "source_of_confusion": "Желание, чтобы интероп «просто работал безопасно», рождает иллюзию автопроверок.",
-                "if_it_were_true": "Тогда явное указание типа при получении было бы лишним, но именно оно защищает от NPE.",
-                "how_it_should_be": "Платформенные типы требуют явного объявления (`List<String>` или `List<String?>`) на стороне Kotlin."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Java-коллекции приходят как платформенные типы (`List<String!>!`); нужно явно объявлять тип при получении, а `toList()` создаёт безопасную read-only копию-snapshot.",
-              "correct": true,
-              "sections": {
-                "explanation": "Без аннотаций `@Nullable`/`@NotNull` Kotlin не знает nullability элементов; явный тип фиксирует контракт, а `toList()` отвязывает от внешней мутации из Java.",
-                "example": "`val safe: List<String?> = javaObject.names` — безопасное nullable-объявление; `val copy: List<String> = javaList.toList()` — read-only snapshot.",
-                "when_to_apply": "Всегда указывай тип явно при получении коллекций из Java и делай `toList()` при неуверенности; без аннотаций считай элементы nullable.",
-                "edge_cases": "Kotlin `MutableList` реализует `java.util.List`, поэтому передаётся в Java-метод без конвертации.",
-                "related": "[[kotlin-collections-interview#Q21]] отличия от Java Collections; [[kotlin-collections-interview#Q3]] общий backing на JVM."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`javaList.toList()` не нужен — Kotlin может напрямую использовать Java `List<String>` как `List<String>` без рисков.",
               "correct": false,
               "sections": {
@@ -1306,8 +1281,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "Java-коллекции безопасны в Kotlin — компилятор автоматически проставляет `@NotNull` на элементы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без аннотаций Java-коллекции приходят как платформенные типы (`List<String!>!`); компилятор не знает о nullability, и при null-элементе возможен NPE в рантайме.",
+                "source_of_confusion": "Желание, чтобы интероп «просто работал безопасно», рождает иллюзию автопроверок.",
+                "if_it_were_true": "Тогда явное указание типа при получении было бы лишним, но именно оно защищает от NPE.",
+                "how_it_should_be": "Платформенные типы требуют явного объявления (`List<String>` или `List<String?>`) на стороне Kotlin."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Kotlin `MutableList` нельзя передать в Java-метод, принимающий `java.util.List`.",
               "correct": false,
               "sections": {
@@ -1315,6 +1302,19 @@
                 "source_of_confusion": "Разделение интерфейсов на read-only/mutable в Kotlin создаёт впечатление несовместимости с Java.",
                 "if_it_were_true": "Тогда нужны были бы конвертеры на границе Kotlin/Java, но коллекции совместимы напрямую.",
                 "how_it_should_be": "`MutableList` — это `java.util.List` на JVM; интероп идёт без конвертации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Java-коллекции приходят как платформенные типы (`List<String!>!`); нужно явно объявлять тип при получении, а `toList()` создаёт безопасную read-only копию-snapshot.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без аннотаций `@Nullable`/`@NotNull` Kotlin не знает nullability элементов; явный тип фиксирует контракт, а `toList()` отвязывает от внешней мутации из Java.",
+                "example": "`val safe: List<String?> = javaObject.names` — безопасное nullable-объявление; `val copy: List<String> = javaList.toList()` — read-only snapshot.",
+                "when_to_apply": "Всегда указывай тип явно при получении коллекций из Java и делай `toList()` при неуверенности; без аннотаций считай элементы nullable.",
+                "edge_cases": "Kotlin `MutableList` реализует `java.util.List`, поэтому передаётся в Java-метод без конвертации.",
+                "related": "[[kotlin-collections-interview#Q21]] отличия от Java Collections; [[kotlin-collections-interview#Q3]] общий backing на JVM."
               }
             }
           ]
@@ -1343,13 +1343,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ArrayDeque.addFirst()` — это O(n) операция из-за сдвига всех элементов.",
+              "text": "`ArrayDeque` нельзя использовать как стек (LIFO) — только как очередь (FIFO).",
               "correct": false,
               "sections": {
-                "what_actually": "`ArrayDeque` использует circular buffer, поэтому `addFirst`/`removeFirst` — O(1) амортизированная; именно это отличает его от `ArrayList`.",
-                "source_of_confusion": "Аналогия с `ArrayList.add(0, x)` (где сдвиг O(n)) переносится на deque.",
-                "if_it_were_true": "Тогда `ArrayDeque` не давал бы выигрыша для очередей, но он O(1) с обоих концов.",
-                "how_it_should_be": "Операции с обоих концов `ArrayDeque` — O(1) амортизированно за счёт circular buffer."
+                "what_actually": "`ArrayDeque` реализует оба паттерна: `addLast`/`removeLast` = Stack, `addLast`/`removeFirst` = Queue.",
+                "source_of_confusion": "Слово «очередь» в названии deque наводит на мысль только о FIFO.",
+                "if_it_were_true": "Тогда для стека пришлось бы брать отдельный класс, но `ArrayDeque` покрывает оба сценария.",
+                "how_it_should_be": "Универсальность (стек и очередь сразу) — основное преимущество deque."
               }
             },
             {
@@ -1368,13 +1368,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ArrayDeque` нельзя использовать как стек (LIFO) — только как очередь (FIFO).",
+              "text": "`ArrayDeque.addFirst()` — это O(n) операция из-за сдвига всех элементов.",
               "correct": false,
               "sections": {
-                "what_actually": "`ArrayDeque` реализует оба паттерна: `addLast`/`removeLast` = Stack, `addLast`/`removeFirst` = Queue.",
-                "source_of_confusion": "Слово «очередь» в названии deque наводит на мысль только о FIFO.",
-                "if_it_were_true": "Тогда для стека пришлось бы брать отдельный класс, но `ArrayDeque` покрывает оба сценария.",
-                "how_it_should_be": "Универсальность (стек и очередь сразу) — основное преимущество deque."
+                "what_actually": "`ArrayDeque` использует circular buffer, поэтому `addFirst`/`removeFirst` — O(1) амортизированная; именно это отличает его от `ArrayList`.",
+                "source_of_confusion": "Аналогия с `ArrayList.add(0, x)` (где сдвиг O(n)) переносится на deque.",
+                "if_it_were_true": "Тогда `ArrayDeque` не давал бы выигрыша для очередей, но он O(1) с обоих концов.",
+                "how_it_should_be": "Операции с обоих концов `ArrayDeque` — O(1) амортизированно за счёт circular buffer."
               }
             }
           ]
@@ -1391,13 +1391,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`LinkedList` лучше `ArrayList` для всех операций — у него O(1) insert/delete.",
+              "text": "`HashSet` поддерживает sorted order элементов автоматически.",
               "correct": false,
               "sections": {
-                "what_actually": "`LinkedList` даёт O(1) insert только при наличии итератора; `contains` — O(n), а pointer chasing делает его cache-unfriendly — `ArrayList` быстрее для большинства задач.",
-                "source_of_confusion": "Теоретическая O(1)-вставка в список заслоняет реальную стоимость доступа и кэш-промахов.",
-                "if_it_were_true": "Тогда `LinkedList` был бы дефолтом для List, но на практике им остаётся `ArrayList`.",
-                "how_it_should_be": "`ArrayList` выигрывает за счёт random access и cache locality; `LinkedList` редко оправдан."
+                "what_actually": "`HashSet` не гарантирует порядок; для сортировки нужен `TreeSet` (O(log n)), для порядка вставки — `LinkedHashSet` (O(1)).",
+                "source_of_confusion": "Раз Set хранит уникальные элементы, кажется, что он их и упорядочивает.",
+                "if_it_were_true": "Тогда `sortedSetOf` был бы избыточен, но именно он даёт натуральный порядок.",
+                "how_it_should_be": "Порядок в `HashSet` непредсказуем; сортировку даёт `TreeSet`, порядок вставки — `LinkedHashSet`."
               }
             },
             {
@@ -1415,13 +1415,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`HashSet` поддерживает sorted order элементов автоматически.",
+              "text": "`LinkedList` лучше `ArrayList` для всех операций — у него O(1) insert/delete.",
               "correct": false,
               "sections": {
-                "what_actually": "`HashSet` не гарантирует порядок; для сортировки нужен `TreeSet` (O(log n)), для порядка вставки — `LinkedHashSet` (O(1)).",
-                "source_of_confusion": "Раз Set хранит уникальные элементы, кажется, что он их и упорядочивает.",
-                "if_it_were_true": "Тогда `sortedSetOf` был бы избыточен, но именно он даёт натуральный порядок.",
-                "how_it_should_be": "Порядок в `HashSet` непредсказуем; сортировку даёт `TreeSet`, порядок вставки — `LinkedHashSet`."
+                "what_actually": "`LinkedList` даёт O(1) insert только при наличии итератора; `contains` — O(n), а pointer chasing делает его cache-unfriendly — `ArrayList` быстрее для большинства задач.",
+                "source_of_confusion": "Теоретическая O(1)-вставка в список заслоняет реальную стоимость доступа и кэш-промахов.",
+                "if_it_were_true": "Тогда `LinkedList` был бы дефолтом для List, но на практике им остаётся `ArrayList`.",
+                "how_it_should_be": "`ArrayList` выигрывает за счёт random access и cache locality; `LinkedList` редко оправдан."
               }
             },
             {
@@ -1451,6 +1451,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Flow` можно использовать вместо `Sequence` везде — `Flow` строго мощнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flow` требует suspend-контекста и `CoroutineScope`; для синхронного pipeline `Sequence` проще и без overhead корутин.",
+                "source_of_confusion": "«Async-абстракция мощнее sync» воспринимают как «годится везде».",
+                "if_it_were_true": "Тогда `Sequence` был бы не нужен, но для синхронной ленивой обработки он минимально достаточен.",
+                "how_it_should_be": "Выбирай минимально достаточный контракт: синхронно — `Sequence`, асинхронно — `Flow`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Flow.toList()` — стандартная терминальная операция, поэтому она безопасно собирает поток целиком без риска memory overflow.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flow.toList()` собирает все элементы в память; для бесконечного `Flow` это OOM — нужен `.take(n).toList()` или обработка без материализации.",
+                "source_of_confusion": "Терминальную `toList()` на конечных коллекциях считают одинаково безопасной и для потока.",
+                "if_it_were_true": "Тогда `infiniteFlow.toList()` завершался бы, но он копит элементы до исчерпания памяти.",
+                "how_it_should_be": "Перед `toList()` ограничивай поток (`take`) или обрабатывай инкрементально (`collect`/`onEach`)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`List` — для конечного результата, который нужен целиком (eager, синхронный, random access); `Sequence` — для ленивых синхронных вычислений (lazy, один проход); `Flow` — для асинхронных/потоковых данных (lazy, async, backpressure, отмена).",
               "correct": true,
               "sections": {
@@ -1462,20 +1486,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`Flow` можно использовать вместо `Sequence` везде — `Flow` строго мощнее.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Flow` требует suspend-контекста и `CoroutineScope`; для синхронного pipeline `Sequence` проще и без overhead корутин.",
-                "source_of_confusion": "«Async-абстракция мощнее sync» воспринимают как «годится везде».",
-                "if_it_were_true": "Тогда `Sequence` был бы не нужен, но для синхронной ленивой обработки он минимально достаточен.",
-                "how_it_should_be": "Выбирай минимально достаточный контракт: синхронно — `Sequence`, асинхронно — `Flow`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Sequence` подходит для асинхронных операций с suspend-функциями.",
               "correct": false,
               "sections": {
@@ -1483,18 +1495,6 @@
                 "source_of_confusion": "Похожий ленивый API `Sequence` и `Flow` создаёт иллюзию взаимозаменяемости.",
                 "if_it_were_true": "Тогда `sequence { delay(...) }` компилировался бы, но suspend в Sequence недоступен.",
                 "how_it_should_be": "Для асинхронных/suspend-операций используют `Flow`, а не `Sequence`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Flow.toList()` — стандартная терминальная операция, поэтому она безопасно собирает поток целиком без риска memory overflow.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Flow.toList()` собирает все элементы в память; для бесконечного `Flow` это OOM — нужен `.take(n).toList()` или обработка без материализации.",
-                "source_of_confusion": "Терминальную `toList()` на конечных коллекциях считают одинаково безопасной и для потока.",
-                "if_it_were_true": "Тогда `infiniteFlow.toList()` завершался бы, но он копит элементы до исчерпания памяти.",
-                "how_it_should_be": "Перед `toList()` ограничивай поток (`take`) или обрабатывай инкрементально (`collect`/`onEach`)."
               }
             }
           ]
@@ -1511,6 +1511,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`runningReduce` безопасен на пустой коллекции — возвращает `emptyList`... но и `reduce` тоже безопасен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runningReduce` на пустой действительно возвращает пустой `List`, а вот `reduce` (без `running`) бросает `UnsupportedOperationException` на пустой коллекции.",
+                "source_of_confusion": "Похожие имена `reduce`/`runningReduce` рождают ожидание одинакового поведения на пустом входе.",
+                "if_it_were_true": "Тогда `emptyList<Int>().reduce { a, b -> a + b }` возвращал бы что-то, но он падает.",
+                "how_it_should_be": "`runningReduce` на пустой → пустой List; `reduce` на пустой → исключение; `scan` на пустой → `[initial]`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`scan` и `fold` возвращают одинаковый результат — финальное накопленное значение.",
               "correct": false,
               "sections": {
@@ -1521,8 +1533,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`scan` (он же `runningFold`) возвращает все промежуточные состояния, включая начальное (размер n+1); `runningReduce` — без начального значения, начинает с первого элемента (размер n).",
               "correct": true,
               "sections": {
@@ -1534,8 +1546,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`runningFold` не включает начальное значение в результат.",
               "correct": false,
               "sections": {
@@ -1543,18 +1555,6 @@
                 "source_of_confusion": "Интуиция «трасса из N шагов = N точек» упускает стартовую точку.",
                 "if_it_were_true": "Тогда `numbers.scan(0){...}` имел бы размер N, но он N+1 из-за initial.",
                 "how_it_should_be": "Результат `runningFold(init)` имеет размер n+1 — initial плюс по элементу на шаг."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`runningReduce` безопасен на пустой коллекции — возвращает `emptyList`... но и `reduce` тоже безопасен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`runningReduce` на пустой действительно возвращает пустой `List`, а вот `reduce` (без `running`) бросает `UnsupportedOperationException` на пустой коллекции.",
-                "source_of_confusion": "Похожие имена `reduce`/`runningReduce` рождают ожидание одинакового поведения на пустом входе.",
-                "if_it_were_true": "Тогда `emptyList<Int>().reduce { a, b -> a + b }` возвращал бы что-то, но он падает.",
-                "how_it_should_be": "`runningReduce` на пустой → пустой List; `reduce` на пустой → исключение; `scan` на пустой → `[initial]`."
               }
             }
           ]
@@ -1571,30 +1571,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`takeWhile` и `filter` для отсортированного списка дают одинаковый результат.",
+              "text": "`takeLastWhile` требует `reverse()` перед применением.",
               "correct": false,
               "sections": {
-                "what_actually": "`takeWhile` останавливается при первом несовпадении; `filter` сканирует всё: для `[2,4,6,7,8,10].takeWhile{it<8}` → `[2,4,6]`, а `filter{it<8}` → `[2,4,6,7]`.",
-                "source_of_confusion": "На монотонных данных результаты иногда совпадают, что маскирует разницу.",
-                "if_it_were_true": "Тогда `takeWhile` всегда был бы синонимом `filter`, но он рвёт обход на первом нарушении.",
-                "how_it_should_be": "`takeWhile` = stop at first mismatch; `filter` = scan all."
+                "what_actually": "`takeLastWhile` напрямую работает с конца без `reverse()`: внутри делает обратный обход.",
+                "source_of_confusion": "Кажется, что «с конца» обязательно реализуется через разворот списка.",
+                "if_it_were_true": "Тогда `logs.takeLastWhile { it.startsWith(\"INFO\") }` требовал бы предварительного reverse, но он не нужен.",
+                "how_it_should_be": "`takeLastWhile`/`dropLastWhile` работают с хвоста коллекции сами, без `reverse`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`distinctBy` сохраняет последнее вхождение при дубликате ключа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`distinctBy` сохраняет первое вхождение: `users.distinctBy { it.dept }` оставляет первого пользователя каждого отдела, не последнего.",
-                "source_of_confusion": "Привычка «last wins» из map-функций переносится на дедупликацию.",
-                "if_it_were_true": "Тогда из `[Alice(Eng), Bob(Eng)]` оставался бы Bob, но остаётся Alice.",
-                "how_it_should_be": "`distinctBy` берёт первое вхождение по ключу; для последнего нужна явная логика."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`takeWhile` — ранняя остановка при первом несовпадении (не то же, что `filter`); `distinctBy` — дедупликация по ключу с сохранением первого вхождения; `dropWhile`/`takeLastWhile`/`dropLastWhile` — пропуск/взятие с начала или конца.",
               "correct": true,
               "sections": {
@@ -1606,15 +1594,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`takeLastWhile` требует `reverse()` перед применением.",
+              "order": 2,
+              "label": "C",
+              "text": "`takeWhile` и `filter` для отсортированного списка дают одинаковый результат.",
               "correct": false,
               "sections": {
-                "what_actually": "`takeLastWhile` напрямую работает с конца без `reverse()`: внутри делает обратный обход.",
-                "source_of_confusion": "Кажется, что «с конца» обязательно реализуется через разворот списка.",
-                "if_it_were_true": "Тогда `logs.takeLastWhile { it.startsWith(\"INFO\") }` требовал бы предварительного reverse, но он не нужен.",
-                "how_it_should_be": "`takeLastWhile`/`dropLastWhile` работают с хвоста коллекции сами, без `reverse`."
+                "what_actually": "`takeWhile` останавливается при первом несовпадении; `filter` сканирует всё: для `[2,4,6,7,8,10].takeWhile{it<8}` → `[2,4,6]`, а `filter{it<8}` → `[2,4,6,7]`.",
+                "source_of_confusion": "На монотонных данных результаты иногда совпадают, что маскирует разницу.",
+                "if_it_were_true": "Тогда `takeWhile` всегда был бы синонимом `filter`, но он рвёт обход на первом нарушении.",
+                "how_it_should_be": "`takeWhile` = stop at first mismatch; `filter` = scan all."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`distinctBy` сохраняет последнее вхождение при дубликате ключа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`distinctBy` сохраняет первое вхождение: `users.distinctBy { it.dept }` оставляет первого пользователя каждого отдела, не последнего.",
+                "source_of_confusion": "Привычка «last wins» из map-функций переносится на дедупликацию.",
+                "if_it_were_true": "Тогда из `[Alice(Eng), Bob(Eng)]` оставался бы Bob, но остаётся Alice.",
+                "how_it_should_be": "`distinctBy` берёт первое вхождение по ключу; для последнего нужна явная логика."
               }
             }
           ]
@@ -1631,30 +1631,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`mapOf()` в Kotlin возвращает `HashMap`, как в Java — порядок не гарантирован.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`mapOf()` возвращает `LinkedHashMap` с порядком вставки; для произвольного порядка и максимальной скорости нужен явный `hashMapOf()`.",
-                "source_of_confusion": "Привычка из Java, где `Map`-дефолт — `HashMap`, переносится на Kotlin.",
-                "if_it_were_true": "Тогда итерация по `mapOf` давала бы разный порядок ключей, но он стабилен (порядок вставки).",
-                "how_it_should_be": "`mapOf` → `LinkedHashMap` (insertion order); `hashMapOf` → `HashMap` (без порядка)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`TreeMap.headMap(\"c\")` включает ключ `\"c\"` в результат.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`headMap(toKey)` исключает `toKey`: `headMap(\"c\")` = ключи строго меньше `\"c\"`; для включения нужен `headMap(\"c\", true)`.",
-                "source_of_confusion": "Слово «headMap» наводит на мысль о включении граничного ключа.",
-                "if_it_were_true": "Тогда `subMap`/`headMap`/`tailMap` нельзя было бы стыковать без перекрытия, но границы согласованы.",
-                "how_it_should_be": "`headMap` по умолчанию exclusive по верхней границе; inclusive — через второй аргумент."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`sortedMapOf` не поддерживает кастомный компаратор — только натуральный порядок.",
               "correct": false,
               "sections": {
@@ -1665,8 +1641,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`mapOf`→`LinkedHashMap` (insertion order, O(1)*); `hashMapOf`→`HashMap` (без порядка, O(1)*); `sortedMapOf`→`TreeMap` (натуральная сортировка ключей, O(log n)).",
               "correct": true,
               "sections": {
@@ -1675,6 +1651,30 @@
                 "when_to_apply": "Бери `mapOf` для предсказуемого порядка (например, JSON-ответы), `hashMapOf` для скорости, `sortedMapOf` для range-запросов (`headMap`/`tailMap`/`subMap`).",
                 "edge_cases": "Не полагайся на порядок `mapOf` как на API-контракт — используй `linkedMapOf` явно, если порядок критичен.",
                 "related": "[[kotlin-collections-interview#Q3]] что под капотом на JVM; [[kotlin-collections-interview#Q29]] hashSetOf/linkedSetOf/sortedSetOf; [[kotlin-collections-interview#Q24]] сложность операций и выбор типа."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`TreeMap.headMap(\"c\")` включает ключ `\"c\"` в результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`headMap(toKey)` исключает `toKey`: `headMap(\"c\")` = ключи строго меньше `\"c\"`; для включения нужен `headMap(\"c\", true)`.",
+                "source_of_confusion": "Слово «headMap» наводит на мысль о включении граничного ключа.",
+                "if_it_were_true": "Тогда `subMap`/`headMap`/`tailMap` нельзя было бы стыковать без перекрытия, но границы согласованы.",
+                "how_it_should_be": "`headMap` по умолчанию exclusive по верхней границе; inclusive — через второй аргумент."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`mapOf()` в Kotlin возвращает `HashMap`, как в Java — порядок не гарантирован.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`mapOf()` возвращает `LinkedHashMap` с порядком вставки; для произвольного порядка и максимальной скорости нужен явный `hashMapOf()`.",
+                "source_of_confusion": "Привычка из Java, где `Map`-дефолт — `HashMap`, переносится на Kotlin.",
+                "if_it_were_true": "Тогда итерация по `mapOf` давала бы разный порядок ключей, но он стабилен (порядок вставки).",
+                "how_it_should_be": "`mapOf` → `LinkedHashMap` (insertion order); `hashMapOf` → `HashMap` (без порядка)."
               }
             }
           ]
@@ -1691,6 +1691,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`setOf()` возвращает `HashSet` — как и в Java, порядок итерации не гарантирован и зависит от хешей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`setOf()` возвращает `LinkedHashSet` с порядком вставки; для произвольного порядка и максимальной скорости нужен явный `hashSetOf()`.",
+                "source_of_confusion": "Дефолт `HashSet` из Java переносят на `setOf` в Kotlin.",
+                "if_it_were_true": "Тогда итерация по `setOf` давала бы непредсказуемый порядок, но он сохраняет вставку.",
+                "how_it_should_be": "`setOf`/`linkedSetOf` → `LinkedHashSet` (insertion order); произвольный порядок — у `hashSetOf`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Kotlin `setOf` и Java `HashSet` одинаковы — оба без гарантии порядка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kotlin `setOf` = `LinkedHashSet` (порядок вставки), а Java `HashSet` — без порядка; это ключевое отличие, влияющее на тесты и JSON-сериализацию.",
+                "source_of_confusion": "Общее слово «set» создаёт впечатление идентичного поведения.",
+                "if_it_were_true": "Тогда миграция на Kotlin не меняла бы порядок сериализации Set, но он становится стабильным.",
+                "how_it_should_be": "`setOf` в Kotlin сохраняет порядок вставки; для Java-семантики без порядка нужен `hashSetOf`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`hashSetOf` = `HashSet` (O(1)*, произвольный порядок); `setOf`/`linkedSetOf` = `LinkedHashSet` (O(1)*, порядок вставки); `sortedSetOf` = `TreeSet` (O(log n), натуральная сортировка + NavigableSet API).",
               "correct": true,
               "sections": {
@@ -1702,20 +1726,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`setOf()` возвращает `HashSet` — как и в Java, порядок итерации не гарантирован и зависит от хешей.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`setOf()` возвращает `LinkedHashSet` с порядком вставки; для произвольного порядка и максимальной скорости нужен явный `hashSetOf()`.",
-                "source_of_confusion": "Дефолт `HashSet` из Java переносят на `setOf` в Kotlin.",
-                "if_it_were_true": "Тогда итерация по `setOf` давала бы непредсказуемый порядок, но он сохраняет вставку.",
-                "how_it_should_be": "`setOf`/`linkedSetOf` → `LinkedHashSet` (insertion order); произвольный порядок — у `hashSetOf`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`sortedSetOf.headSet(\"cherry\")` включает `\"cherry\"` в результат.",
               "correct": false,
               "sections": {
@@ -1723,18 +1735,6 @@
                 "source_of_confusion": "Слово «headSet» наводит на включение верхней границы.",
                 "if_it_were_true": "Тогда `headSet`/`tailSet` перекрывались бы по граничному элементу, но они согласованы.",
                 "how_it_should_be": "`headSet` exclusive по умолчанию; для включения границы используют двухаргументную форму."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Kotlin `setOf` и Java `HashSet` одинаковы — оба без гарантии порядка.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Kotlin `setOf` = `LinkedHashSet` (порядок вставки), а Java `HashSet` — без порядка; это ключевое отличие, влияющее на тесты и JSON-сериализацию.",
-                "source_of_confusion": "Общее слово «set» создаёт впечатление идентичного поведения.",
-                "if_it_were_true": "Тогда миграция на Kotlin не меняла бы порядок сериализации Set, но он становится стабильным.",
-                "how_it_should_be": "`setOf` в Kotlin сохраняет порядок вставки; для Java-семантики без порядка нужен `hashSetOf`."
               }
             }
           ]
@@ -1751,18 +1751,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`asSequence()` убирает промежуточные списки, поэтому для цепочки из 2+ операций оно быстрее `List` независимо от размера коллекции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У `Sequence` постоянный overhead: wrapper-итератор на каждую промежуточную операцию, упаковка лямбд через `Function1`, boxing примитивов — для малых коллекций или одной операции он медленнее `List`.",
-                "source_of_confusion": "«Меньше аллокаций = всегда быстрее» переносят с больших данных на любые, забывая про постоянный overhead итераторов.",
-                "if_it_were_true": "Тогда `listOf(a,b,c).asSequence().map{}.toList()` в hot path ускорял бы код, но даёт замедление.",
-                "how_it_should_be": "На малых коллекциях overhead wrapper-итераторов перевешивает экономию на аллокациях — `Sequence` окупается лишь на больших данных, длинных цепочках или ранней остановке."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Sequence` окупается на больших данных + длинной цепочке + ранней остановке; для маленьких коллекций overhead итераторов перевешивает выгоду от lazy.",
               "correct": true,
               "sections": {
@@ -1774,20 +1762,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`Sequence` поддерживает специализированные `IntSequence`/`LongSequence` без boxing — в этом её главная выгода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Stdlib Kotlin не содержит специализаций для примитивов (в отличие от Java `IntStream`); `Sequence<Int>` идёт через `Iterator<Int>` с boxing каждого `Int` в `Integer`.",
-                "source_of_confusion": "Java-фон с `IntStream`/`LongStream` рождает ожидание аналогичных специализаций в Kotlin.",
-                "if_it_were_true": "Тогда `intArray.asSequence().sum()` работал бы без аллокаций, но он боксит каждый элемент.",
-                "how_it_should_be": "Главная выгода Sequence — lazy-вычисление и отсутствие промежуточных коллекций, а не unboxed-арифметика."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`Sequence` параллелится автоматически через `parallelStream()` — это аналог Java Stream.",
               "correct": false,
               "sections": {
@@ -1795,6 +1771,30 @@
                 "source_of_confusion": "Синтаксическое сходство API (`map`/`filter`/`reduce`) с Java Stream рождает ожидание `parallel()`.",
                 "if_it_were_true": "Тогда на 16 ядрах `asSequence()` ускорял бы отчёт, но CPU остаётся на одном ядре.",
                 "how_it_should_be": "`Sequence` ≠ `Stream`: для параллелизма нужен `Flow` или Java Stream API, а не Sequence."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`asSequence()` убирает промежуточные списки, поэтому для цепочки из 2+ операций оно быстрее `List` независимо от размера коллекции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Sequence` постоянный overhead: wrapper-итератор на каждую промежуточную операцию, упаковка лямбд через `Function1`, boxing примитивов — для малых коллекций или одной операции он медленнее `List`.",
+                "source_of_confusion": "«Меньше аллокаций = всегда быстрее» переносят с больших данных на любые, забывая про постоянный overhead итераторов.",
+                "if_it_were_true": "Тогда `listOf(a,b,c).asSequence().map{}.toList()` в hot path ускорял бы код, но даёт замедление.",
+                "how_it_should_be": "На малых коллекциях overhead wrapper-итераторов перевешивает экономию на аллокациях — `Sequence` окупается лишь на больших данных, длинных цепочках или ранней остановке."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Sequence` поддерживает специализированные `IntSequence`/`LongSequence` без boxing — в этом её главная выгода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stdlib Kotlin не содержит специализаций для примитивов (в отличие от Java `IntStream`); `Sequence<Int>` идёт через `Iterator<Int>` с boxing каждого `Int` в `Integer`.",
+                "source_of_confusion": "Java-фон с `IntStream`/`LongStream` рождает ожидание аналогичных специализаций в Kotlin.",
+                "if_it_were_true": "Тогда `intArray.asSequence().sum()` работал бы без аллокаций, но он боксит каждый элемент.",
+                "how_it_should_be": "Главная выгода Sequence — lazy-вычисление и отсутствие промежуточных коллекций, а не unboxed-арифметика."
               }
             }
           ]
@@ -1835,6 +1835,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`(a intersect b).isNotEmpty()` — идиоматичный способ проверить пересечение двух Set.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`intersect` создаёт новый Set со всеми общими элементами; для проверки существования достаточно `a.any { it in b }` без аллокации нового множества.",
+                "source_of_confusion": "Красивое set-theory-название `intersect` ассоциируется с проверкой пересечения.",
+                "if_it_were_true": "Тогда `intersect().isNotEmpty()` был бы дешёвым, но он строит всё пересечение ради булева ответа.",
+                "how_it_should_be": "Для проверки пересечения бери `a.any { it in b }`; `intersect` — когда нужно само множество общих элементов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Используй combined-операции (`mapNotNull`, `sumOf`, `flatMap`), short-circuit предикаты (`any`/`none`/`all`), задавай initial capacity для `ArrayList`/`HashMap`, применяй `Sequence` для длинных цепочек и `a.any { it in b }` вместо `(a intersect b).isNotEmpty()`.",
               "correct": true,
               "sections": {
@@ -1843,18 +1855,6 @@
                 "when_to_apply": "Применяй в hot-path коде, где число проходов и промежуточных коллекций критично для GC и latency.",
                 "edge_cases": "Для `HashMap` нужна capacity `expected * 4/3 + 1` (load factor 0.75); `average()` на пустой даёт `NaN`, не исключение.",
                 "related": "[[kotlin-collections-interview#Q11]] базовые операции; [[kotlin-collections-interview#Q30]] overhead Sequence; [[kotlin-collections-interview#Q19]] mapNotNull детально."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`(a intersect b).isNotEmpty()` — идиоматичный способ проверить пересечение двух Set.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`intersect` создаёт новый Set со всеми общими элементами; для проверки существования достаточно `a.any { it in b }` без аллокации нового множества.",
-                "source_of_confusion": "Красивое set-theory-название `intersect` ассоциируется с проверкой пересечения.",
-                "if_it_were_true": "Тогда `intersect().isNotEmpty()` был бы дешёвым, но он строит всё пересечение ради булева ответа.",
-                "how_it_should_be": "Для проверки пересечения бери `a.any { it in b }`; `intersect` — когда нужно само множество общих элементов."
               }
             }
           ]
@@ -1871,30 +1871,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`listOf()` возвращает истинно неизменяемую коллекцию — она потокобезопасна без дополнительной работы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`listOf(...)` — read-only view над mutable JVM-классом (`ArrayList`); если кто-то держит ссылку на тот же объект как `MutableList`, он может изменить его параллельно с чтением.",
-                "source_of_confusion": "В документации «read-only» часто переводят как «immutable», что воспринимают как thread-safety.",
-                "if_it_were_true": "Тогда `List<Order>` можно было бы свободно делить между корутинами, но это даёт `ConcurrentModificationException`.",
-                "how_it_should_be": "Истинная неизменяемость — только в `kotlinx.collections.immutable.PersistentList`, не в `listOf`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`MutableList` и `MutableMap` в Kotlin синхронизированы, как `Vector`/`Hashtable` в Java.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`mutableListOf()` — это `ArrayList` (unsynchronized), `mutableMapOf()` — `LinkedHashMap` (тоже unsynchronized); legacy `Vector`/`Hashtable` не используются.",
-                "source_of_confusion": "Память о `Vector` из ранних версий Java рождает ожидание встроенной синхронизации.",
-                "if_it_were_true": "Тогда shared `MutableMap` под нагрузкой был бы безопасен, но конкурентная запись портит внутреннее состояние.",
-                "how_it_should_be": "Kotlin построен поверх современных несинхронизированных Java-коллекций; синхронизации по умолчанию нет."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Достаточно обернуть в `Collections.synchronizedList()` и итерировать без дополнительных мер.",
               "correct": false,
               "sections": {
@@ -1905,8 +1881,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "`listOf()` возвращает истинно неизменяемую коллекцию — она потокобезопасна без дополнительной работы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`listOf(...)` — read-only view над mutable JVM-классом (`ArrayList`); если кто-то держит ссылку на тот же объект как `MutableList`, он может изменить его параллельно с чтением.",
+                "source_of_confusion": "В документации «read-only» часто переводят как «immutable», что воспринимают как thread-safety.",
+                "if_it_were_true": "Тогда `List<Order>` можно было бы свободно делить между корутинами, но это даёт `ConcurrentModificationException`.",
+                "how_it_should_be": "Истинная неизменяемость — только в `kotlinx.collections.immutable.PersistentList`, не в `listOf`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Ни read-only, ни mutable Kotlin-коллекции не потокобезопасны; для shared mutable state нужны `ConcurrentHashMap`, `CopyOnWriteArrayList` или `kotlinx.collections.immutable`.",
               "correct": true,
               "sections": {
@@ -1915,6 +1903,18 @@
                 "when_to_apply": "Передавай коллекции между потоками как read-only только при гарантии отсутствия мутаций; для shared mutable state бери concurrent- или persistent-коллекции.",
                 "edge_cases": "`ConcurrentHashMap.computeIfAbsent` блокирует бакет на время лямбды; `CopyOnWriteArrayList` дорог на запись (копия массива) — подходит для read-heavy.",
                 "related": "[[kotlin-collections-interview#Q1]] read-only vs mutable; [[kotlin-collections-interview#Q6]] read-only != immutable; [[kotlin-collections-interview#Q37]] PersistentList детально."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`MutableList` и `MutableMap` в Kotlin синхронизированы, как `Vector`/`Hashtable` в Java.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`mutableListOf()` — это `ArrayList` (unsynchronized), `mutableMapOf()` — `LinkedHashMap` (тоже unsynchronized); legacy `Vector`/`Hashtable` не используются.",
+                "source_of_confusion": "Память о `Vector` из ранних версий Java рождает ожидание встроенной синхронизации.",
+                "if_it_were_true": "Тогда shared `MutableMap` под нагрузкой был бы безопасен, но конкурентная запись портит внутреннее состояние.",
+                "how_it_should_be": "Kotlin построен поверх современных несинхронизированных Java-коллекций; синхронизации по умолчанию нет."
               }
             }
           ]
@@ -1931,6 +1931,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`associate` эффективнее `associateBy` на больших коллекциях: он кладёт готовую пару в `Map` напрямую, тогда как `associateBy` пересобирает её из ключа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `associate { k to v }` создаёт `Pair` на каждом элементе; `associateBy { keySelector }` пишет `put(key, element)` напрямую без `Pair`.",
+                "source_of_confusion": "Кажется, что раз `associate` принимает готовый `Pair`, движок вставляет его без лишних шагов, а `associateBy` делает что-то поверх.",
+                "if_it_were_true": "Тогда переход на `associate { it.id to it }` в hot loop ускорял бы индексацию, но добавляет N Pair-аллокаций.",
+                "how_it_should_be": "Наоборот: `associate` аллоцирует `Pair` на каждом элементе, а `associateBy` пишет `put(key, element)` напрямую; для кастомных ключа/значения без Pair есть `associateBy({}, {})`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`associate { T -> Pair<K, V> }` → `Map<K, V>` (обе части из лямбды); `associateBy { T -> K }` → `Map<K, T>` (ключ из лямбды, значение = элемент); `associateWith { T -> V }` → `Map<T, V>` (элемент = ключ, значение из лямбды).",
               "correct": true,
               "sections": {
@@ -1942,8 +1954,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`associateBy { it.id }` создаёт `Map<User, Int>` — ключом становится сам элемент.",
               "correct": false,
               "sections": {
@@ -1954,8 +1966,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "При дублирующемся ключе `associateBy` бросает `IllegalStateException` — это безопасный default.",
               "correct": false,
               "sections": {
@@ -1963,18 +1975,6 @@
                 "source_of_confusion": "Интуиция «дубликат = ошибка» из реляционных БД (UNIQUE) рождает ожидание исключения.",
                 "if_it_were_true": "Тогда `orders.associateBy { it.customerId }` падал бы при нескольких заказах клиента, но он тихо теряет данные.",
                 "how_it_should_be": "Контракт stdlib — last wins без exception; контроль дубликатов делают через `groupBy`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`associate` эффективнее `associateBy` на больших коллекциях: он кладёт готовую пару в `Map` напрямую, тогда как `associateBy` пересобирает её из ключа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: `associate { k to v }` создаёт `Pair` на каждом элементе; `associateBy { keySelector }` пишет `put(key, element)` напрямую без `Pair`.",
-                "source_of_confusion": "Кажется, что раз `associate` принимает готовый `Pair`, движок вставляет его без лишних шагов, а `associateBy` делает что-то поверх.",
-                "if_it_were_true": "Тогда переход на `associate { it.id to it }` в hot loop ускорял бы индексацию, но добавляет N Pair-аллокаций.",
-                "how_it_should_be": "Наоборот: `associate` аллоцирует `Pair` на каждом элементе, а `associateBy` пишет `put(key, element)` напрямую; для кастомных ключа/значения без Pair есть `associateBy({}, {})`."
               }
             }
           ]
@@ -1991,13 +1991,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`flatten` разворачивает на любую глубину: `listOf(listOf(listOf(1,2)))` → `[1,2]`.",
+              "text": "`words.map { it.split(\" \") }.flatten()` и `words.flatMap { it.split(\" \") }` одинаковы по производительности.",
               "correct": false,
               "sections": {
-                "what_actually": "`flatten` снимает ровно один уровень: `listOf(listOf(listOf(1,2))).flatten()` → `[listOf(1,2)]` (тип `List<List<Int>>`), не `[1,2]`.",
-                "source_of_confusion": "JavaScript `Array.flat(Infinity)` создаёт ожидание глубокого flatten.",
-                "if_it_were_true": "Тогда дерево комментариев `tree.flatten()` давало бы плоский `List<Comment>`, но остаётся вложенность.",
-                "how_it_should_be": "`flatten` снимает один уровень; для глубокого нужен рекурсивный flatMap или своя функция."
+                "what_actually": "По результату — да, но `map + flatten` делает два прохода и создаёт промежуточный `List<List<String>>`; `flatMap` — один проход с прямой записью.",
+                "source_of_confusion": "Совпадение итогов скрывает разницу в числе проходов и аллокаций.",
+                "if_it_were_true": "Тогда компилятор делал бы fusion `map().flatten() → flatMap()`, но в Kotlin такого rewrite нет.",
+                "how_it_should_be": "`flatMap` — один проход без промежуточного списка списков; `map + flatten` — два прохода."
               }
             },
             {
@@ -2016,13 +2016,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`words.map { it.split(\" \") }.flatten()` и `words.flatMap { it.split(\" \") }` одинаковы по производительности.",
+              "text": "`flatten` разворачивает на любую глубину: `listOf(listOf(listOf(1,2)))` → `[1,2]`.",
               "correct": false,
               "sections": {
-                "what_actually": "По результату — да, но `map + flatten` делает два прохода и создаёт промежуточный `List<List<String>>`; `flatMap` — один проход с прямой записью.",
-                "source_of_confusion": "Совпадение итогов скрывает разницу в числе проходов и аллокаций.",
-                "if_it_were_true": "Тогда компилятор делал бы fusion `map().flatten() → flatMap()`, но в Kotlin такого rewrite нет.",
-                "how_it_should_be": "`flatMap` — один проход без промежуточного списка списков; `map + flatten` — два прохода."
+                "what_actually": "`flatten` снимает ровно один уровень: `listOf(listOf(listOf(1,2))).flatten()` → `[listOf(1,2)]` (тип `List<List<Int>>`), не `[1,2]`.",
+                "source_of_confusion": "JavaScript `Array.flat(Infinity)` создаёт ожидание глубокого flatten.",
+                "if_it_were_true": "Тогда дерево комментариев `tree.flatten()` давало бы плоский `List<Comment>`, но остаётся вложенность.",
+                "how_it_should_be": "`flatten` снимает один уровень; для глубокого нужен рекурсивный flatMap или своя функция."
               }
             },
             {
@@ -2051,18 +2051,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`min()` и `max()` возвращают `null` на пустой коллекции — это безопасный default.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`min()`/`max()` (без суффикса) бросают `NoSuchElementException` на пустой; `null` возвращают только `minOrNull()`/`maxOrNull()`; старые `min`/`max` @Deprecated с Kotlin 1.7.",
-                "source_of_confusion": "Ожидание «null-safe by default» в современном Kotlin переносят на базовые `min`/`max`.",
-                "if_it_were_true": "Тогда `/stats/min-price` с пустым фильтром возвращал бы null, но `min()` падает с исключением.",
-                "how_it_should_be": "Для пустых коллекций бери `minOrNull`/`maxOrNull`; `min`/`max` бросают `NoSuchElementException`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`coerceIn(min, max)` бросает `IllegalArgumentException`, если значение вне диапазона.",
               "correct": false,
               "sections": {
@@ -2073,8 +2061,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`coerceIn(a, b)` clamps значение в диапазон без if-else; `minOrNull`/`maxOrNull` безопасны на пустой коллекции; `sumOf{}` агрегирует без промежуточного `List`; `min()`/`max()` бросают `NoSuchElementException` на пустой.",
               "correct": true,
               "sections": {
@@ -2086,8 +2074,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`sumOf { it.price }` и `map { it.price }.sum()` идентичны по производительности — компилятор оптимизирует автоматически.",
               "correct": false,
               "sections": {
@@ -2095,6 +2083,18 @@
                 "source_of_confusion": "Привычка к stream fusion из Haskell/Scala рождает ожидание автоматического слияния.",
                 "if_it_were_true": "Тогда `.map{}.sum()` по 10М транзакций не давал бы лишней памяти, но он создаёт большой промежуточный список.",
                 "how_it_should_be": "`sumOf` агрегирует за один проход без промежуточного списка; `map().sum()` материализует его целиком."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`min()` и `max()` возвращают `null` на пустой коллекции — это безопасный default.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`min()`/`max()` (без суффикса) бросают `NoSuchElementException` на пустой; `null` возвращают только `minOrNull()`/`maxOrNull()`; старые `min`/`max` @Deprecated с Kotlin 1.7.",
+                "source_of_confusion": "Ожидание «null-safe by default» в современном Kotlin переносят на базовые `min`/`max`.",
+                "if_it_were_true": "Тогда `/stats/min-price` с пустым фильтром возвращал бы null, но `min()` падает с исключением.",
+                "how_it_should_be": "Для пустых коллекций бери `minOrNull`/`maxOrNull`; `min`/`max` бросают `NoSuchElementException`."
               }
             }
           ]
@@ -2111,6 +2111,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`*OrNull`-варианты безопасны на пустой/missing (возвращают `null`); `single()` требует ровно один элемент (иначе exception); `elementAtOrElse(n) { }` вызывает лямбду с индексом при out-of-bounds.",
+              "correct": true,
+              "sections": {
+                "explanation": "Семантика разделена: existence (`first`/`firstOrNull`), cardinality assertion (`single`/`singleOrNull`), index access (`elementAt`/`elementAtOrNull`/`elementAtOrElse`).",
+                "example": "`users.firstOrNull { it.id == id } ?: throw NotFound(id)`; `users.single { it.role == ROOT_ADMIN }`; `list.elementAtOrElse(i) { Item.EMPTY }`.",
+                "when_to_apply": "Бери `firstOrNull`/`singleOrNull` в production с явной обработкой `null`; `single` — для assertion «ровно один» (fail fast), `elementAtOrElse` — для resilient доступа по индексу.",
+                "edge_cases": "`singleOrNull` при >1 возвращает null (может маскировать data corruption); `elementAt` на `Sequence` — O(n), а не O(1).",
+                "related": "[[kotlin-collections-interview#Q11]] базовые операции; [[kotlin-collections-interview#Q35]] minOrNull/maxOrNull; [[kotlin-collections-interview#Q19]] mapNotNull для inline-фильтрации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`single()` возвращает `null`, если элементов больше одного — это безопасное API.",
               "correct": false,
               "sections": {
@@ -2121,8 +2134,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`firstOrNull { predicate }` быстрее `first { predicate }` на happy path, потому что не готовит стектрейс на случай отсутствия совпадения.",
               "correct": false,
               "sections": {
@@ -2133,8 +2146,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`singleOrNull { it.isActive }` возвращает первый активный элемент даже при множестве совпадений.",
               "correct": false,
               "sections": {
@@ -2142,19 +2155,6 @@
                 "source_of_confusion": "Имя «single OR null» читают как «single OR fallback на null при empty», как у `firstOrNull`.",
                 "if_it_were_true": "Тогда `configs.singleOrNull { it.isDefault }` при двух default-записях вернул бы первую, но он вернёт null.",
                 "how_it_should_be": "`singleOrNull` всегда про cardinality = 1; для «первого подходящего» — `firstOrNull`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`*OrNull`-варианты безопасны на пустой/missing (возвращают `null`); `single()` требует ровно один элемент (иначе exception); `elementAtOrElse(n) { }` вызывает лямбду с индексом при out-of-bounds.",
-              "correct": true,
-              "sections": {
-                "explanation": "Семантика разделена: existence (`first`/`firstOrNull`), cardinality assertion (`single`/`singleOrNull`), index access (`elementAt`/`elementAtOrNull`/`elementAtOrElse`).",
-                "example": "`users.firstOrNull { it.id == id } ?: throw NotFound(id)`; `users.single { it.role == ROOT_ADMIN }`; `list.elementAtOrElse(i) { Item.EMPTY }`.",
-                "when_to_apply": "Бери `firstOrNull`/`singleOrNull` в production с явной обработкой `null`; `single` — для assertion «ровно один» (fail fast), `elementAtOrElse` — для resilient доступа по индексу.",
-                "edge_cases": "`singleOrNull` при >1 возвращает null (может маскировать data corruption); `elementAt` на `Sequence` — O(n), а не O(1).",
-                "related": "[[kotlin-collections-interview#Q11]] базовые операции; [[kotlin-collections-interview#Q35]] minOrNull/maxOrNull; [[kotlin-collections-interview#Q19]] mapNotNull для inline-фильтрации."
               }
             }
           ]
@@ -2171,19 +2171,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`kotlinx.collections.immutable` (`PersistentList`/`PersistentMap`/`PersistentSet`) даёт истинную неизменяемость через structural sharing (HAMT для Map/Set, RRB-tree для List); `add`/`put` выполняются за O(log n) без полной копии.",
-              "correct": true,
-              "sections": {
-                "explanation": "При `list.add(x)` копируются только узлы вдоль пути от корня к изменённому листу, остальные поддеревья разделяются между версиями — это даёт snapshot-семантику без полного копирования.",
-                "example": "`val _orders = MutableStateFlow<PersistentList<Order>>(persistentListOf()); _orders.value = _orders.value.add(order)` — каждый emit это новый snapshot, безопасный для Compose-diff.",
-                "when_to_apply": "Бери для Compose/MVI UI-state в `StateFlow`, event sourcing и concurrency без блокировок (`@Volatile var state: PersistentMap`).",
-                "edge_cases": "Не входит в stdlib (нужна зависимость `kotlinx-collections-immutable`); для маленьких N overhead дерева перевешивает; для batch-изменений используй `.builder().build()`.",
-                "related": "[[kotlin-collections-interview#Q6]] read-only != immutable; [[kotlin-collections-interview#Q7]] когда нужна kotlinx.collections.immutable; [[kotlin-collections-interview#Q32]] потокобезопасность коллекций."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`PersistentList.add()` создаёт полную копию списка — это O(n), как `ArrayList.add(0, x)` со сдвигом.",
               "correct": false,
               "sections": {
@@ -2191,6 +2178,18 @@
                 "source_of_confusion": "Опыт `ArrayList.add(0, x)` (O(n) сдвиг) экстраполируют на любые immutable-обёртки.",
                 "if_it_were_true": "Тогда persistent-коллекции были бы непрактичны (каждая мутация O(n)), но structural sharing делает их дешёвыми.",
                 "how_it_should_be": "`add`/`put` в persistent-коллекциях — O(log n) благодаря structural sharing, а не O(n) copy."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`listOf()` и `persistentListOf()` эквивалентны — оба создают immutable список.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`listOf()` — read-only view над JVM-классом (`ArrayList`/`SingletonList`), изменяемым через cast; `persistentListOf()` — отдельный tree-класс без mutation-API на уровне типа.",
+                "source_of_confusion": "Оба читаются «как immutable list» и имеют тип `List<T>` на compile-time.",
+                "if_it_were_true": "Тогда `(listOf(...) as MutableList).add()` был бы невозможен, но он проходит; у persistent — нет.",
+                "how_it_should_be": "`listOf` — read-only обёртка над mutable backing; `persistentListOf` — гарантированно иммутабельная структура."
               }
             },
             {
@@ -2208,13 +2207,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`listOf()` и `persistentListOf()` эквивалентны — оба создают immutable список.",
-              "correct": false,
+              "text": "`kotlinx.collections.immutable` (`PersistentList`/`PersistentMap`/`PersistentSet`) даёт истинную неизменяемость через structural sharing (HAMT для Map/Set, RRB-tree для List); `add`/`put` выполняются за O(log n) без полной копии.",
+              "correct": true,
               "sections": {
-                "what_actually": "`listOf()` — read-only view над JVM-классом (`ArrayList`/`SingletonList`), изменяемым через cast; `persistentListOf()` — отдельный tree-класс без mutation-API на уровне типа.",
-                "source_of_confusion": "Оба читаются «как immutable list» и имеют тип `List<T>` на compile-time.",
-                "if_it_were_true": "Тогда `(listOf(...) as MutableList).add()` был бы невозможен, но он проходит; у persistent — нет.",
-                "how_it_should_be": "`listOf` — read-only обёртка над mutable backing; `persistentListOf` — гарантированно иммутабельная структура."
+                "explanation": "При `list.add(x)` копируются только узлы вдоль пути от корня к изменённому листу, остальные поддеревья разделяются между версиями — это даёт snapshot-семантику без полного копирования.",
+                "example": "`val _orders = MutableStateFlow<PersistentList<Order>>(persistentListOf()); _orders.value = _orders.value.add(order)` — каждый emit это новый snapshot, безопасный для Compose-diff.",
+                "when_to_apply": "Бери для Compose/MVI UI-state в `StateFlow`, event sourcing и concurrency без блокировок (`@Volatile var state: PersistentMap`).",
+                "edge_cases": "Не входит в stdlib (нужна зависимость `kotlinx-collections-immutable`); для маленьких N overhead дерева перевешивает; для batch-изменений используй `.builder().build()`.",
+                "related": "[[kotlin-collections-interview#Q6]] read-only != immutable; [[kotlin-collections-interview#Q7]] когда нужна kotlinx.collections.immutable; [[kotlin-collections-interview#Q32]] потокобезопасность коллекций."
               }
             }
           ]
@@ -2231,18 +2231,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Iterable<T>` имеет `size`, поэтому подходит везде, где нужен подсчёт элементов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Iterable<T>` не имеет `size` — это минимальный контракт с единственным методом `iterator()`; `.count()` на нём — O(n); `size` есть только у `Collection<T>`.",
-                "source_of_confusion": "В Java `List`/`Set` реализуют и `Iterable`, и `Collection`, отсюда смешение их возможностей.",
-                "if_it_were_true": "Тогда `if (items.count() > 100)` на Iterable был бы O(1), но это O(n)-обход, а для Sequence ещё и опасен.",
-                "how_it_should_be": "`size` доступен у `Collection`; `Iterable` даёт только обход, подсчёт через `count()` — O(n)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Iterable<T>` — базовый контракт «можно итерировать»; `Collection<T>` добавляет `size`/`contains`; `Sequence<T>` — lazy chain без промежуточных коллекций; `Flow<T>` — асинхронный поток.",
               "correct": true,
               "sections": {
@@ -2254,20 +2242,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`Sequence<T>` можно обойти повторно как `List` — терминальные `count()` и `forEach` не расходуют источник, а лишь читают его.",
+              "order": 1,
+              "label": "B",
+              "text": "`Iterable<T>` имеет `size`, поэтому подходит везде, где нужен подсчёт элементов.",
               "correct": false,
               "sections": {
-                "what_actually": "Sequence может быть one-shot: generator-источник (`sequence { yield ... }`) при втором проходе бросает `IllegalStateException` или даёт пустой результат; повторяема только `iterable.asSequence()`.",
-                "source_of_confusion": "Туториалы показывают Sequence на `list.asSequence()`, где повторный обход и правда работает, и это обобщают на любой источник.",
-                "if_it_were_true": "Тогда `generateSequence { reader.readLine() }` можно было бы обойти дважды, но reader исчерпан после первого прохода.",
-                "how_it_should_be": "Многопроходность Sequence не гарантирована: generator-источники (`sequence { }`, `generateSequence`) одноразовы и на втором проходе бросают ошибку или дают пусто."
+                "what_actually": "`Iterable<T>` не имеет `size` — это минимальный контракт с единственным методом `iterator()`; `.count()` на нём — O(n); `size` есть только у `Collection<T>`.",
+                "source_of_confusion": "В Java `List`/`Set` реализуют и `Iterable`, и `Collection`, отсюда смешение их возможностей.",
+                "if_it_were_true": "Тогда `if (items.count() > 100)` на Iterable был бы O(1), но это O(n)-обход, а для Sequence ещё и опасен.",
+                "how_it_should_be": "`size` доступен у `Collection`; `Iterable` даёт только обход, подсчёт через `count()` — O(n)."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Между `Collection` и `Sequence` нет принципиальной разницы — обе ленивые.",
               "correct": false,
               "sections": {
@@ -2275,6 +2263,18 @@
                 "source_of_confusion": "Похожий API (`map`/`filter`/`fold`) рождает ожидание, что компилятор сам оптимизирует.",
                 "if_it_were_true": "Тогда `list.map { expensive(it) }.first()` коротко замыкался бы, но `map` уже выполнился eager на всех.",
                 "how_it_should_be": "`Collection` — eager; `Sequence` — lazy; для streaming-семантики на коллекции нужен `asSequence()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Sequence<T>` можно обойти повторно как `List` — терминальные `count()` и `forEach` не расходуют источник, а лишь читают его.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sequence может быть one-shot: generator-источник (`sequence { yield ... }`) при втором проходе бросает `IllegalStateException` или даёт пустой результат; повторяема только `iterable.asSequence()`.",
+                "source_of_confusion": "Туториалы показывают Sequence на `list.asSequence()`, где повторный обход и правда работает, и это обобщают на любой источник.",
+                "if_it_were_true": "Тогда `generateSequence { reader.readLine() }` можно было бы обойти дважды, но reader исчерпан после первого прохода.",
+                "how_it_should_be": "Многопроходность Sequence не гарантирована: generator-источники (`sequence { }`, `generateSequence`) одноразовы и на втором проходе бросают ошибку или дают пусто."
               }
             }
           ]
@@ -2291,18 +2291,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`sortedBy { it.age }` модифицирует исходный список in-place — это эффективнее `sortedWith`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Все `sorted*` (с `ed`) возвращают новый список; in-place — это `sortBy`/`sortWith` (без `ed`), доступные только на `MutableList`.",
-                "source_of_confusion": "Java-привычка `Collections.sort(list)` (in-place) переносится на Kotlin.",
-                "if_it_were_true": "Тогда после `users.sortedBy { it.age }` исходный `users` был бы отсортирован, но он не меняется.",
-                "how_it_should_be": "`sortedBy` → new List; для in-place нужен `sortBy` на MutableList."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`compareBy({a}, {b})` сравнивает по сумме обоих полей одновременно.",
               "correct": false,
               "sections": {
@@ -2313,8 +2301,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`sortedByDescending` доступна только для чисел — для строк нужен `sortedBy { -it.length }`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sortedByDescending` работает для любого `Comparable<R>` (числа, строки, даты, BigDecimal, кастомные классы); `sortedBy { -it.length }` — антипаттерн (overflow на `Int.MIN_VALUE`).",
+                "source_of_confusion": "Трюк `-x` для обратной сортировки из C-стиля (`qsort`) переносят на Kotlin.",
+                "if_it_were_true": "Тогда строки нельзя было бы отсортировать по убыванию напрямую, но `sortedByDescending` это умеет.",
+                "how_it_should_be": "Для обратного порядка бери `sortedByDescending`/`compareByDescending`, а не отрицание ключа."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "`sortedBy { it.age }` модифицирует исходный список in-place — это эффективнее `sortedWith`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все `sorted*` (с `ed`) возвращают новый список; in-place — это `sortBy`/`sortWith` (без `ed`), доступные только на `MutableList`.",
+                "source_of_confusion": "Java-привычка `Collections.sort(list)` (in-place) переносится на Kotlin.",
+                "if_it_were_true": "Тогда после `users.sortedBy { it.age }` исходный `users` был бы отсортирован, но он не меняется.",
+                "how_it_should_be": "`sortedBy` → new List; для in-place нужен `sortBy` на MutableList."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`sortedBy { k }` — одно поле через keySelector; `sortedWith(comparator)` — произвольный `Comparator`; `compareBy({a}, {b})` строит лексикографический Comparator из нескольких ключей; `thenBy` цепляет вторичную сортировку.",
               "correct": true,
               "sections": {
@@ -2323,18 +2335,6 @@
                 "when_to_apply": "Бери `sortedBy` для одного поля, `compareBy(...)`/`thenBy` для многоуровневой сортировки, `sortedWith` для применения готового компаратора.",
                 "edge_cases": "`sortedBy` требует `Comparable<R>`; для nullable-ключей используй `nullsFirst()`/`nullsLast()`; сортировки stdlib стабильны (важно для multi-stage).",
                 "related": "[[kotlin-collections-interview#Q16]] sorted/sortedBy/sortWith; [[kotlin-collections-interview#Q11]] базовые операции коллекций."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`sortedByDescending` доступна только для чисел — для строк нужен `sortedBy { -it.length }`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`sortedByDescending` работает для любого `Comparable<R>` (числа, строки, даты, BigDecimal, кастомные классы); `sortedBy { -it.length }` — антипаттерн (overflow на `Int.MIN_VALUE`).",
-                "source_of_confusion": "Трюк `-x` для обратной сортировки из C-стиля (`qsort`) переносят на Kotlin.",
-                "if_it_were_true": "Тогда строки нельзя было бы отсортировать по убыванию напрямую, но `sortedByDescending` это умеет.",
-                "how_it_should_be": "Для обратного порядка бери `sortedByDescending`/`compareByDescending`, а не отрицание ключа."
               }
             }
           ]
@@ -2351,30 +2351,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`groupBy` и `groupingBy` идентичны — оба возвращают `Map<K, List<V>>`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`groupBy { keySelector }` возвращает `Map<K, List<V>>` сразу (eager); `groupingBy { keySelector }` возвращает `Grouping<T, K>` без материализации, к которому применяют `eachCount()`/`fold()`/`reduce()`.",
-                "source_of_confusion": "Имена отличаются на одну букву (`groupBy` vs `groupingBy`), легко перепутать.",
-                "if_it_were_true": "Тогда `groupingBy{}.mapValues{...}` компилировался бы, но `Grouping` не имеет `mapValues` — нужен `eachCount()`.",
-                "how_it_should_be": "`groupBy` — eager Map с группами; `groupingBy` — lazy-описатель для агрегации."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`groupingBy` ленив в том смысле, что `eachCount` запускается только при `.toList()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`eachCount()`/`fold()`/`reduce()` — terminal-операции на `Grouping`: они сразу делают один проход и материализуют `Map<K, R>`; «lazy» здесь — отсутствие промежуточных List, а не отложенное выполнение.",
-                "source_of_confusion": "Визуальное сходство `Grouping` с промежуточным шагом Sequence рождает ожидание terminal-`toList()`.",
-                "if_it_were_true": "Тогда `lazy { grouping.eachCount() }` имел бы смысл, но `eachCount` уже выполнил O(N)-обход.",
-                "how_it_should_be": "У `Grouping` нет intermediate-операций; `eachCount`/`fold` — сами terminal и сразу считают."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`groupingBy.eachCount()` возвращает `List<Int>` — позиционно по группам.",
               "correct": false,
               "sections": {
@@ -2385,8 +2361,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`groupBy` материализует `Map<K, List<V>>` с полными списками (eager); `groupingBy` возвращает `Grouping<T, K>` для агрегаций (`eachCount`/`fold`/`reduce`) без хранения промежуточных списков.",
               "correct": true,
               "sections": {
@@ -2395,6 +2371,30 @@
                 "when_to_apply": "Бери `groupingBy` для агрегаций (count/sum/max) на больших данных; `groupBy` — когда нужны сами списки элементов.",
                 "edge_cases": "`Grouping` нельзя итерировать напрямую (это описатель); `fold` принимает initial и безопасен на пустых группах, `reduce` бросает на пустой.",
                 "related": "[[kotlin-collections-interview#Q13]] groupBy/associateBy/partition; [[kotlin-collections-interview#Q14]] groupingBy базово; [[kotlin-collections-interview#Q33]] associate functions."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`groupingBy` ленив в том смысле, что `eachCount` запускается только при `.toList()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`eachCount()`/`fold()`/`reduce()` — terminal-операции на `Grouping`: они сразу делают один проход и материализуют `Map<K, R>`; «lazy» здесь — отсутствие промежуточных List, а не отложенное выполнение.",
+                "source_of_confusion": "Визуальное сходство `Grouping` с промежуточным шагом Sequence рождает ожидание terminal-`toList()`.",
+                "if_it_were_true": "Тогда `lazy { grouping.eachCount() }` имел бы смысл, но `eachCount` уже выполнил O(N)-обход.",
+                "how_it_should_be": "У `Grouping` нет intermediate-операций; `eachCount`/`fold` — сами terminal и сразу считают."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`groupBy` и `groupingBy` идентичны — оба возвращают `Map<K, List<V>>`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`groupBy { keySelector }` возвращает `Map<K, List<V>>` сразу (eager); `groupingBy { keySelector }` возвращает `Grouping<T, K>` без материализации, к которому применяют `eachCount()`/`fold()`/`reduce()`.",
+                "source_of_confusion": "Имена отличаются на одну букву (`groupBy` vs `groupingBy`), легко перепутать.",
+                "if_it_were_true": "Тогда `groupingBy{}.mapValues{...}` компилировался бы, но `Grouping` не имеет `mapValues` — нужен `eachCount()`.",
+                "how_it_should_be": "`groupBy` — eager Map с группами; `groupingBy` — lazy-описатель для агрегации."
               }
             }
           ]
@@ -2424,18 +2424,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`chunked(3)` и `windowed(3)` дают одинаковый результат для списка из 10 элементов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это разные алгоритмы: `chunked(3)` на `[1..10]` → 4 блока без перекрытия; `windowed(3)` → 8 окон с перекрытием (step=1, partialWindows=false).",
-                "source_of_confusion": "Оба принимают `size` первым параметром и возвращают `List<List<T>>`.",
-                "if_it_were_true": "Тогда batch-загрузчик через `windowed(500)` работал бы как `chunked(500)`, но создавал бы кратно больше запросов из-за overlap.",
-                "how_it_should_be": "`chunked` — split без перекрытия; `windowed` — slide с перекрытием; результаты сильно различаются."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`zipWithNext { a, b -> b - a }` — это частный случай `chunked(2)` с overlap=0.",
               "correct": false,
               "sections": {
@@ -2443,6 +2431,18 @@
                 "source_of_confusion": "Оба «работают парами», но overlap-семантика противоположна.",
                 "if_it_were_true": "Тогда `readings.chunked(2) { it[1]-it[0] }` давал бы все дельты, но теряет половину (для `[10,12,14,17]` → `[2,3]` вместо `[2,2,3]`).",
                 "how_it_should_be": "`zipWithNext` = windowed(2) с перекрытием; `chunked(2)` — непересекающиеся пары."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`chunked(3)` и `windowed(3)` дают одинаковый результат для списка из 10 элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные алгоритмы: `chunked(3)` на `[1..10]` → 4 блока без перекрытия; `windowed(3)` → 8 окон с перекрытием (step=1, partialWindows=false).",
+                "source_of_confusion": "Оба принимают `size` первым параметром и возвращают `List<List<T>>`.",
+                "if_it_were_true": "Тогда batch-загрузчик через `windowed(500)` работал бы как `chunked(500)`, но создавал бы кратно больше запросов из-за overlap.",
+                "how_it_should_be": "`chunked` — split без перекрытия; `windowed` — slide с перекрытием; результаты сильно различаются."
               }
             },
             {
@@ -2471,18 +2471,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`associateWith { it.email }` создаёт `Map<String, User>`, где email — ключ.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`associateWith` ставит сам элемент ключом, а результат лямбды — значением: `users.associateWith { it.email }` → `Map<User, String>` (User → email).",
-                "source_of_confusion": "Суффикс «With» читают как «associate user with email = key», хотя он значит «значение из лямбды».",
-                "if_it_were_true": "Тогда `userByEmail[email]` находил бы пользователя, но ключ типа `User`, и обращение со String даст null.",
-                "how_it_should_be": "Чтобы получить `Map<String, User>` по email, нужен `associateBy { it.email }`, а не `associateWith`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`associateBy { k }` ставит результат лямбды ключом, элемент значением (`Map<K, T>`); `associateWith { v }` — наоборот, элемент ключом, результат лямбды значением (`Map<T, V>`); `associate { k to v }` — обе части из лямбды (`Map<K, V>`).",
               "correct": true,
               "sections": {
@@ -2491,6 +2479,18 @@
                 "when_to_apply": "Бери `associateBy` для индекса по полю (O(1) lookup), `associateWith` для обогащения, `associate` для кастомной пары ключ/значение.",
                 "edge_cases": "Все три при дубликатах ключей молча перезаписывают (last wins — для группировки используй `groupBy`); возвращают `LinkedHashMap` с порядком вставки.",
                 "related": "[[kotlin-collections-interview#Q33]] associate/associateBy/associateWith базово; [[kotlin-collections-interview#Q13]] groupBy/associateBy/partition; [[kotlin-collections-interview#Q14]] groupingBy для агрегаций."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`associateWith { it.email }` создаёт `Map<String, User>`, где email — ключ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`associateWith` ставит сам элемент ключом, а результат лямбды — значением: `users.associateWith { it.email }` → `Map<User, String>` (User → email).",
+                "source_of_confusion": "Суффикс «With» читают как «associate user with email = key», хотя он значит «значение из лямбды».",
+                "if_it_were_true": "Тогда `userByEmail[email]` находил бы пользователя, но ключ типа `User`, и обращение со String даст null.",
+                "how_it_should_be": "Чтобы получить `Map<String, User>` по email, нужен `associateBy { it.email }`, а не `associateWith`."
               }
             },
             {
@@ -2555,6 +2555,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`scan(init){}` возвращает `List<T>` размера ровно `n` — без начального значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`scan(init)` возвращает `List<T>` размера `n+1`, включая initial: `listOf(1,2,3).scan(0) { a, b -> a + b }` → `[0,1,3,6]` (4 элемента).",
+                "source_of_confusion": "Интуиция «трасса из N действий = N точек» упускает стартовую точку (initial).",
+                "if_it_were_true": "Тогда `dates.zip(amounts.scan(0){...})` совпадал бы по длине, но результат сдвинут на 1 из-за initial.",
+                "how_it_should_be": "Размер `scan(init)` = n+1; для размера n без initial есть `runningReduce`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`fold(init){}` сворачивает коллекцию в одно значение; `scan(init){}` (он же `runningFold`) возвращает все промежуточные накопления + начальное (размер n+1); `runningReduce{}` — то же, но без init (размер n).",
               "correct": true,
               "sections": {
@@ -2563,18 +2575,6 @@
                 "when_to_apply": "Бери `scan` для running balance/state с начальным значением; `runningReduce` для running max/product без seed; `fold` — когда нужен только итог.",
                 "edge_cases": "`scan` включает initial (размер n+1) — частая off-by-one ошибка при alignment с датами; `reduce`/`runningReduce` без init опасны на пустой.",
                 "related": "[[kotlin-collections-interview#Q11]] fold/reduce базово; [[kotlin-collections-interview#Q26]] scan/runningFold/runningReduce детально; [[kotlin-collections-interview#Q19]] паттерны агрегации."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`scan(init){}` возвращает `List<T>` размера ровно `n` — без начального значения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`scan(init)` возвращает `List<T>` размера `n+1`, включая initial: `listOf(1,2,3).scan(0) { a, b -> a + b }` → `[0,1,3,6]` (4 элемента).",
-                "source_of_confusion": "Интуиция «трасса из N действий = N точек» упускает стартовую точку (initial).",
-                "if_it_were_true": "Тогда `dates.zip(amounts.scan(0){...})` совпадал бы по длине, но результат сдвинут на 1 из-за initial.",
-                "how_it_should_be": "Размер `scan(init)` = n+1; для размера n без initial есть `runningReduce`."
               }
             }
           ]

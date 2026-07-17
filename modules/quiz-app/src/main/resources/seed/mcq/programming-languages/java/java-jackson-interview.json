@@ -34,18 +34,6 @@
               "order": 1
             },
             {
-              "text": "`Jackson` умеет работать только с JSON и не поддерживает никакие другие форматы данных.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Помимо JSON, `Jackson` через отдельные dataformat-модули поддерживает XML, YAML, CBOR, Smile и другие форматы.",
-                "source_of_confusion": "На практике `Jackson` почти всегда используют именно для JSON, поэтому про остальные форматы забывают.",
-                "if_it_were_true": "Если бы поддерживался только JSON, не существовало бы `jackson-dataformat-xml` и `jackson-dataformat-yaml`, которые реально публикуются.",
-                "how_it_should_be": "Ядро форматонезависимо: тот же `databind` работает с любым backend-форматом через подходящий `JsonFactory`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Аннотации вроде `@JsonProperty` живут в `jackson-databind`, а отдельного модуля `jackson-annotations` не существует.",
               "correct": false,
               "sections": {
@@ -53,6 +41,18 @@
                 "source_of_confusion": "Раз аннотации обрабатываются при биндинге, кажется логичным, что они и лежат в `databind`.",
                 "if_it_were_true": "Если бы аннотации были в `databind`, любой класс с `@JsonProperty` тянул бы весь биндинг, а так достаточно лёгкого `annotations`.",
                 "how_it_should_be": "`jackson-annotations` — самостоятельный модуль; `databind` зависит от него, а не наоборот."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Jackson` умеет работать только с JSON и не поддерживает никакие другие форматы данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо JSON, `Jackson` через отдельные dataformat-модули поддерживает XML, YAML, CBOR, Smile и другие форматы.",
+                "source_of_confusion": "На практике `Jackson` почти всегда используют именно для JSON, поэтому про остальные форматы забывают.",
+                "if_it_were_true": "Если бы поддерживался только JSON, не существовало бы `jackson-dataformat-xml` и `jackson-dataformat-yaml`, которые реально публикуются.",
+                "how_it_should_be": "Ядро форматонезависимо: тот же `databind` работает с любым backend-форматом через подходящий `JsonFactory`."
               },
               "label": "D",
               "order": 3
@@ -69,13 +69,13 @@
           "question_text": "Что такое `ObjectMapper` и как его использовать?",
           "options": [
             {
-              "text": "`ObjectMapper` — это аннотация, которой помечают POJO, чтобы `Jackson` понял, что класс надо сериализовать.",
+              "text": "`ObjectMapper` работает только в одну сторону — сериализует POJO в JSON, но десериализовать JSON обратно не умеет.",
               "correct": false,
               "sections": {
-                "what_actually": "`ObjectMapper` — это класс с методами `readValue`/`writeValueAsString`, а не аннотация; аннотации — это `@JsonProperty` и подобные.",
-                "source_of_confusion": "В `Jackson` много аннотаций с префиксом `@Json`, поэтому ещё одно «mapper»-имя легко принять за аннотацию.",
-                "if_it_were_true": "Если бы это была аннотация, её нельзя было бы инстанцировать через `new ObjectMapper()`, но именно так с ним и работают.",
-                "how_it_should_be": "Это центральный класс data binding; для разметки полей служат отдельные аннотации, а не он сам."
+                "what_actually": "`ObjectMapper` двунаправлен: `writeValueAsString` пишет JSON, а `readValue` читает JSON обратно в объект.",
+                "source_of_confusion": "Имя «mapper» иногда ассоциируют только с выводом наружу, упуская обратное чтение.",
+                "if_it_were_true": "Если бы он только писал, не существовало бы метода `readValue`, который повсеместно используют для парсинга запросов.",
+                "how_it_should_be": "Это симметричный инструмент: и сериализация, и десериализация через один и тот же класс."
               },
               "label": "A",
               "order": 0
@@ -94,13 +94,13 @@
               "order": 1
             },
             {
-              "text": "`ObjectMapper` работает только в одну сторону — сериализует POJO в JSON, но десериализовать JSON обратно не умеет.",
+              "text": "`ObjectMapper` — это аннотация, которой помечают POJO, чтобы `Jackson` понял, что класс надо сериализовать.",
               "correct": false,
               "sections": {
-                "what_actually": "`ObjectMapper` двунаправлен: `writeValueAsString` пишет JSON, а `readValue` читает JSON обратно в объект.",
-                "source_of_confusion": "Имя «mapper» иногда ассоциируют только с выводом наружу, упуская обратное чтение.",
-                "if_it_were_true": "Если бы он только писал, не существовало бы метода `readValue`, который повсеместно используют для парсинга запросов.",
-                "how_it_should_be": "Это симметричный инструмент: и сериализация, и десериализация через один и тот же класс."
+                "what_actually": "`ObjectMapper` — это класс с методами `readValue`/`writeValueAsString`, а не аннотация; аннотации — это `@JsonProperty` и подобные.",
+                "source_of_confusion": "В `Jackson` много аннотаций с префиксом `@Json`, поэтому ещё одно «mapper»-имя легко принять за аннотацию.",
+                "if_it_were_true": "Если бы это была аннотация, её нельзя было бы инстанцировать через `new ObjectMapper()`, но именно так с ним и работают.",
+                "how_it_should_be": "Это центральный класс data binding; для разметки полей служат отдельные аннотации, а не он сам."
               },
               "label": "C",
               "order": 2
@@ -129,13 +129,14 @@
           "question_text": "Нужно ли создавать новый `ObjectMapper` на каждый запрос?",
           "options": [
             {
-              "text": "Да, на каждый HTTP-запрос обязательно создавать новый `ObjectMapper`, иначе данные разных запросов перемешаются.",
-              "correct": false,
+              "text": "Нет. `ObjectMapper` — дорогой объект: он строит и кэширует рефлексию по типам. Создание на каждый запрос — anti-pattern, который легко даёт ~10× просадку производительности. Правильно — один singleton на приложение, а для вариаций настроек использовать `mapper.copy()`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Один настроенный `ObjectMapper` потокобезопасен и не смешивает данные запросов — состояние операции живёт в локальных парсерах, а не в самом mapper.",
-                "source_of_confusion": "Страх «общего состояния» заставляет думать, что общий объект приведёт к гонкам данных между запросами.",
-                "if_it_were_true": "Если бы он мешал данные, Spring Boot с его единственным бином `ObjectMapper` выдавал бы испорченные ответы под нагрузкой.",
-                "how_it_should_be": "Mapper переиспользуют как singleton; изоляция запросов обеспечивается отдельными `JsonParser`/`JsonGenerator` на вызов."
+                "explanation": "Стоимость `ObjectMapper` — в построении кэшей рефлексии при создании, поэтому его держат как один долгоживущий объект и амортизируют эту стоимость на множестве вызовов.",
+                "example": "В Spring это `@Bean public ObjectMapper objectMapper()`, собранный через `JsonMapper.builder()` один раз; дальше его инжектят во все сервисы.",
+                "when_to_apply": "Singleton-подход применяют всегда в долгоживущих приложениях; новый экземпляр оправдан лишь в одноразовом скрипте, где кэш не успевает себя окупить.",
+                "edge_cases": "Если нужны разные конфигурации, делают именованные бины или `mapper.copy()` — это поверхностная копия, переиспользующая дорогие внутренние кэши.",
+                "related": "[[java-jackson-interview#Q2]] базовое использование `ObjectMapper`; [[java-jackson-interview#Q28]] настройка `ObjectMapper` в Spring Boot; [[java-jackson-interview#Q31]] производительность Jackson."
               },
               "label": "A",
               "order": 0
@@ -153,19 +154,6 @@
               "order": 1
             },
             {
-              "text": "Нет. `ObjectMapper` — дорогой объект: он строит и кэширует рефлексию по типам. Создание на каждый запрос — anti-pattern, который легко даёт ~10× просадку производительности. Правильно — один singleton на приложение, а для вариаций настроек использовать `mapper.copy()`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Стоимость `ObjectMapper` — в построении кэшей рефлексии при создании, поэтому его держат как один долгоживущий объект и амортизируют эту стоимость на множестве вызовов.",
-                "example": "В Spring это `@Bean public ObjectMapper objectMapper()`, собранный через `JsonMapper.builder()` один раз; дальше его инжектят во все сервисы.",
-                "when_to_apply": "Singleton-подход применяют всегда в долгоживущих приложениях; новый экземпляр оправдан лишь в одноразовом скрипте, где кэш не успевает себя окупить.",
-                "edge_cases": "Если нужны разные конфигурации, делают именованные бины или `mapper.copy()` — это поверхностная копия, переиспользующая дорогие внутренние кэши.",
-                "related": "[[java-jackson-interview#Q2]] базовое использование `ObjectMapper`; [[java-jackson-interview#Q28]] настройка `ObjectMapper` в Spring Boot; [[java-jackson-interview#Q31]] производительность Jackson."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Чтобы получить копию настроенного `ObjectMapper`, нужно вручную пересоздать его через `new ObjectMapper()` и заново применить все настройки.",
               "correct": false,
               "sections": {
@@ -173,6 +161,18 @@
                 "source_of_confusion": "Про метод `copy()` часто не знают, поэтому копируют конфигурацию руками.",
                 "if_it_were_true": "Если бы копии не было, любая вариация настроек требовала бы дублировать весь builder-код, а `copy()` решает это в одну строку.",
                 "how_it_should_be": "Правильно вызвать `mapper.copy()` и точечно поменять нужные флаги, сохранив дорогие внутренние структуры."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Да, на каждый HTTP-запрос обязательно создавать новый `ObjectMapper`, иначе данные разных запросов перемешаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один настроенный `ObjectMapper` потокобезопасен и не смешивает данные запросов — состояние операции живёт в локальных парсерах, а не в самом mapper.",
+                "source_of_confusion": "Страх «общего состояния» заставляет думать, что общий объект приведёт к гонкам данных между запросами.",
+                "if_it_were_true": "Если бы он мешал данные, Spring Boot с его единственным бином `ObjectMapper` выдавал бы испорченные ответы под нагрузкой.",
+                "how_it_should_be": "Mapper переиспользуют как singleton; изоляция запросов обеспечивается отдельными `JsonParser`/`JsonGenerator` на вызов."
               },
               "label": "D",
               "order": 3
@@ -262,6 +262,18 @@
               "order": 0
             },
             {
+              "text": "`TypeReference` нужен только для `Map`, а для `List` он бесполезен — список всегда десериализуется типизированно сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TypeReference` одинаково важен и для `List<Foo>`: без него элементы списка тоже станут `LinkedHashMap`.",
+                "source_of_confusion": "`List` визуально проще `Map`, поэтому кажется, что для него erasure не проблема.",
+                "if_it_were_true": "Если бы списки восстанавливали тип сами, проблема `List<LinkedHashMap>` вообще не существовала бы.",
+                "how_it_should_be": "Type erasure стирает параметр и у `List`, и у `Map`, поэтому `TypeReference` нужен в обоих случаях."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Чтобы прочитать JSON-массив в `List<User>`, достаточно передать `List.class`, и `Jackson` сам подставит тип `User`.",
               "correct": false,
               "sections": {
@@ -270,8 +282,8 @@
                 "if_it_were_true": "Если бы тип элемента восстанавливался, не понадобились бы ни `TypeReference`, ни `constructCollectionType`.",
                 "how_it_should_be": "Нужен `TypeReference<List<User>>` или `TypeFactory.constructCollectionType(List.class, User.class)`, чтобы сохранить тип элемента."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "JSON-объект нельзя прочитать в `Map`; `Jackson` всегда требует заранее описанный POJO-класс.",
@@ -281,18 +293,6 @@
                 "source_of_confusion": "Привычка всегда мапить на DTO создаёт впечатление, что `Map` не поддерживается.",
                 "if_it_were_true": "Если бы `Map` был запрещён, не работал бы `mapper.readValue(json, Map.class)`, который повсеместно применяют для динамичных данных.",
                 "how_it_should_be": "Для заранее неизвестной структуры читают в `Map` или в `JsonNode`, а POJO нужен лишь когда схема фиксирована."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`TypeReference` нужен только для `Map`, а для `List` он бесполезен — список всегда десериализуется типизированно сам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`TypeReference` одинаково важен и для `List<Foo>`: без него элементы списка тоже станут `LinkedHashMap`.",
-                "source_of_confusion": "`List` визуально проще `Map`, поэтому кажется, что для него erasure не проблема.",
-                "if_it_were_true": "Если бы списки восстанавливали тип сами, проблема `List<LinkedHashMap>` вообще не существовала бы.",
-                "how_it_should_be": "Type erasure стирает параметр и у `List`, и у `Map`, поэтому `TypeReference` нужен в обоих случаях."
               },
               "label": "D",
               "order": 3
@@ -309,16 +309,28 @@
           "question_text": "Как настроить `Jackson`, чтобы он не падал на unknown properties?",
           "options": [
             {
-              "text": "Чтобы игнорировать неизвестные поля, надо включить `SerializationFeature.FAIL_ON_UNKNOWN_PROPERTIES`.",
+              "text": "Единственный способ — пометить каждое лишнее поле аннотацией `@JsonIgnore` в POJO.",
               "correct": false,
               "sections": {
-                "what_actually": "Unknown properties — это десериализация, поэтому флаг живёт в `DeserializationFeature`, и его надо `disable`, а не `enable`.",
-                "source_of_confusion": "Названия `SerializationFeature` и `DeserializationFeature` похожи, а слово «enable» путают с «выключить падение».",
-                "if_it_were_true": "Если бы это был serialization-флаг, он влиял бы на запись JSON, а лишние поля приходят именно при чтении.",
-                "how_it_should_be": "Правильно `disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)` — отключить падение на чтении."
+                "what_actually": "`@JsonIgnore` скрывает известное поле объекта, а проблема — в полях JSON, которых в POJO нет вообще, так что аннотировать нечего.",
+                "source_of_confusion": "Обе аннотации содержат слово «ignore», поэтому их роли смешивают.",
+                "if_it_were_true": "Если бы помогал `@JsonIgnore`, пришлось бы заранее знать все будущие лишние поля внешнего API, что невозможно.",
+                "how_it_should_be": "Для неизвестных полей служит `@JsonIgnoreProperties(ignoreUnknown = true)` или глобальный флаг, а не `@JsonIgnore` на каждом поле."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "По умолчанию `Jackson` и так молча игнорирует поля, которых нет в POJO, — никакой настройки не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `FAIL_ON_UNKNOWN_PROPERTIES` включён, и `Jackson` бросает `UnrecognizedPropertyException` на лишнем поле.",
+                "source_of_confusion": "Многие тестируют только на «чистых» JSON без лишних полей и не сталкиваются с исключением.",
+                "if_it_were_true": "Если бы он игнорировал по умолчанию, не было бы массовой рекомендации отключать этот флаг при интеграции с внешними API.",
+                "how_it_should_be": "Поведение надо явно ослабить — флагом, аннотацией `@JsonIgnoreProperties(ignoreUnknown = true)` или настройкой Spring."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "По умолчанию `Jackson` кидает `UnrecognizedPropertyException` на неизвестном поле. Глобально это лечат `mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)`, локально — `@JsonIgnoreProperties(ignoreUnknown = true)` на классе, а в Spring Boot — `spring.jackson.deserialization.fail-on-unknown-properties: false`.",
@@ -330,29 +342,17 @@
                 "edge_cases": "В strict-контрактах внутри компании флаг наоборот оставляют включённым, чтобы ловить опечатки и расхождения схемы как ошибку.",
                 "related": "[[java-jackson-interview#Q7]] другие важные `DeserializationFeature`; [[java-jackson-interview#Q10]] `@JsonIgnoreProperties` среди аннотаций; [[java-jackson-interview#Q28]] настройка через `application.yml`."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "По умолчанию `Jackson` и так молча игнорирует поля, которых нет в POJO, — никакой настройки не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию `FAIL_ON_UNKNOWN_PROPERTIES` включён, и `Jackson` бросает `UnrecognizedPropertyException` на лишнем поле.",
-                "source_of_confusion": "Многие тестируют только на «чистых» JSON без лишних полей и не сталкиваются с исключением.",
-                "if_it_were_true": "Если бы он игнорировал по умолчанию, не было бы массовой рекомендации отключать этот флаг при интеграции с внешними API.",
-                "how_it_should_be": "Поведение надо явно ослабить — флагом, аннотацией `@JsonIgnoreProperties(ignoreUnknown = true)` или настройкой Spring."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Единственный способ — пометить каждое лишнее поле аннотацией `@JsonIgnore` в POJO.",
+              "text": "Чтобы игнорировать неизвестные поля, надо включить `SerializationFeature.FAIL_ON_UNKNOWN_PROPERTIES`.",
               "correct": false,
               "sections": {
-                "what_actually": "`@JsonIgnore` скрывает известное поле объекта, а проблема — в полях JSON, которых в POJO нет вообще, так что аннотировать нечего.",
-                "source_of_confusion": "Обе аннотации содержат слово «ignore», поэтому их роли смешивают.",
-                "if_it_were_true": "Если бы помогал `@JsonIgnore`, пришлось бы заранее знать все будущие лишние поля внешнего API, что невозможно.",
-                "how_it_should_be": "Для неизвестных полей служит `@JsonIgnoreProperties(ignoreUnknown = true)` или глобальный флаг, а не `@JsonIgnore` на каждом поле."
+                "what_actually": "Unknown properties — это десериализация, поэтому флаг живёт в `DeserializationFeature`, и его надо `disable`, а не `enable`.",
+                "source_of_confusion": "Названия `SerializationFeature` и `DeserializationFeature` похожи, а слово «enable» путают с «выключить падение».",
+                "if_it_were_true": "Если бы это был serialization-флаг, он влиял бы на запись JSON, а лишние поля приходят именно при чтении.",
+                "how_it_should_be": "Правильно `disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)` — отключить падение на чтении."
               },
               "label": "D",
               "order": 3
@@ -369,18 +369,6 @@
           "question_text": "Какие флаги `SerializationFeature` / `DeserializationFeature` важны?",
           "options": [
             {
-              "text": "`WRITE_DATES_AS_TIMESTAMPS` относится к `DeserializationFeature` и управляет тем, как читаются входящие даты.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`WRITE_DATES_AS_TIMESTAMPS` — это `SerializationFeature`: он влияет на запись дат (число vs ISO-8601), а не на чтение.",
-                "source_of_confusion": "Слово «dates» в имени наводит на мысль, что флаг общий для чтения и записи.",
-                "if_it_were_true": "Если бы он управлял чтением, отключение не меняло бы формат исходящего JSON — а оно меняет.",
-                "how_it_should_be": "Это serialization-флаг вывода; за разбор входящих дат отвечают модуль `jsr310` и `@JsonFormat`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`FAIL_ON_NULL_FOR_PRIMITIVES` по умолчанию запрещает `null` для примитивов, поэтому `null` в `int` всегда падает.",
               "correct": false,
               "sections": {
@@ -389,8 +377,8 @@
                 "if_it_were_true": "Если бы он падал по умолчанию, не было бы классического бага «пришёл null, а в поле оказался 0».",
                 "how_it_should_be": "Чтобы `null` в примитив падал, флаг надо явно включить; по умолчанию подставляется значение по умолчанию типа."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Ключевые: на сериализации — `WRITE_DATES_AS_TIMESTAMPS` (даты числом vs ISO-8601, лучше отключить), `INDENT_OUTPUT` (pretty-print), `FAIL_ON_EMPTY_BEANS`; на десериализации — `FAIL_ON_UNKNOWN_PROPERTIES`, `FAIL_ON_NULL_FOR_PRIMITIVES`, `ACCEPT_SINGLE_VALUE_AS_ARRAY`, `READ_UNKNOWN_ENUM_VALUES_AS_NULL`.",
@@ -402,8 +390,8 @@
                 "edge_cases": "`ACCEPT_SINGLE_VALUE_AS_ARRAY` превращает `\"tags\": \"one\"` в `List.of(\"one\")` — удобно, но маскирует кривой контракт, если включать без необходимости.",
                 "related": "[[java-jackson-interview#Q6]] `FAIL_ON_UNKNOWN_PROPERTIES` подробно; [[java-jackson-interview#Q8]] `INDENT_OUTPUT` для pretty-print; [[java-jackson-interview#Q24]] `WRITE_DATES_AS_TIMESTAMPS` и даты."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`INDENT_OUTPUT` — это `DeserializationFeature`, который требует, чтобы входной JSON был с отступами.",
@@ -413,6 +401,18 @@
                 "source_of_confusion": "Pretty-print визуально связан с «красивым JSON», и его ошибочно привязывают к валидации входа.",
                 "if_it_were_true": "Если бы он валидировал вход, минифицированный JSON не парсился бы — а `Jackson` читает любой пробельный вариант.",
                 "how_it_should_be": "Это флаг форматирования вывода; чтение терпимо к любым пробелам независимо от него."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`WRITE_DATES_AS_TIMESTAMPS` относится к `DeserializationFeature` и управляет тем, как читаются входящие даты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WRITE_DATES_AS_TIMESTAMPS` — это `SerializationFeature`: он влияет на запись дат (число vs ISO-8601), а не на чтение.",
+                "source_of_confusion": "Слово «dates» в имени наводит на мысль, что флаг общий для чтения и записи.",
+                "if_it_were_true": "Если бы он управлял чтением, отключение не меняло бы формат исходящего JSON — а оно меняет.",
+                "how_it_should_be": "Это serialization-флаг вывода; за разбор входящих дат отвечают модуль `jsr310` и `@JsonFormat`."
               },
               "label": "D",
               "order": 3
@@ -429,18 +429,6 @@
           "question_text": "Как включить pretty-print?",
           "options": [
             {
-              "text": "Pretty-print включается только аннотацией `@JsonFormat(pretty = true)` на каждом классе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Pretty-print задаётся на уровне writer/mapper (`INDENT_OUTPUT` или `writerWithDefaultPrettyPrinter`), а не аннотацией с несуществующим атрибутом `pretty`.",
-                "source_of_confusion": "У `@JsonFormat` много опций форматирования, поэтому кажется, что и отступы там же.",
-                "if_it_were_true": "Если бы был атрибут `@JsonFormat(pretty = true)`, не нужен был бы глобальный `INDENT_OUTPUT` — но именно им и пользуются.",
-                "how_it_should_be": "Включают через `enable(SerializationFeature.INDENT_OUTPUT)` или `writerWithDefaultPrettyPrinter()`, без таких аннотаций."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Pretty-print рекомендуется всегда держать включённым в продакшене — он ускоряет сериализацию.",
               "correct": false,
               "sections": {
@@ -449,20 +437,20 @@
                 "if_it_were_true": "Если бы он ускорял сериализацию, не было бы рекомендации оставлять его только в dev-эндпоинтах.",
                 "how_it_should_be": "В проде вывод минифицируют ради скорости и трафика; отступы оставляют для отладки и людей."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "Чтобы получить отступы, надо вручную вставлять `\\n` и пробелы в результат `writeValueAsString`.",
+              "text": "Pretty-print включается только аннотацией `@JsonFormat(pretty = true)` на каждом классе.",
               "correct": false,
               "sections": {
-                "what_actually": "Форматирование делает сам `Jackson` через pretty-printer; руками строку не правят.",
-                "source_of_confusion": "Раз результат — обычная строка, появляется соблазн «доформатировать» её вручную.",
-                "if_it_were_true": "Если бы пришлось вставлять переносы руками, встроенный `DefaultPrettyPrinter` был бы не нужен.",
-                "how_it_should_be": "Корректно делегировать отступы writer'у: `writerWithDefaultPrettyPrinter()` сам расставит структуру."
+                "what_actually": "Pretty-print задаётся на уровне writer/mapper (`INDENT_OUTPUT` или `writerWithDefaultPrettyPrinter`), а не аннотацией с несуществующим атрибутом `pretty`.",
+                "source_of_confusion": "У `@JsonFormat` много опций форматирования, поэтому кажется, что и отступы там же.",
+                "if_it_were_true": "Если бы был атрибут `@JsonFormat(pretty = true)`, не нужен был бы глобальный `INDENT_OUTPUT` — но именно им и пользуются.",
+                "how_it_should_be": "Включают через `enable(SerializationFeature.INDENT_OUTPUT)` или `writerWithDefaultPrettyPrinter()`, без таких аннотаций."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Точечно — `mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj)`; глобально — `mapper.enable(SerializationFeature.INDENT_OUTPUT)`. В продакшене pretty-print обычно не нужен: он тратит лишние байты и CPU, поэтому его оставляют только в dev/тестовых эндпоинтах.",
@@ -473,6 +461,18 @@
                 "when_to_apply": "Pretty-print включают для отладочных ответов, логов и dev-инструментов, где читаемость человеком важнее компактности.",
                 "edge_cases": "В горячем продакшен-пути его отключают: отступы раздувают payload и нагружают сериализацию без пользы для клиента-машины.",
                 "related": "[[java-jackson-interview#Q7]] `INDENT_OUTPUT` среди важных флагов; [[java-jackson-interview#Q28]] `indent-output` в `application.yml`; [[java-jackson-interview#Q31]] влияние на производительность."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чтобы получить отступы, надо вручную вставлять `\\n` и пробелы в результат `writeValueAsString`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Форматирование делает сам `Jackson` через pretty-printer; руками строку не правят.",
+                "source_of_confusion": "Раз результат — обычная строка, появляется соблазн «доформатировать» её вручную.",
+                "if_it_were_true": "Если бы пришлось вставлять переносы руками, встроенный `DefaultPrettyPrinter` был бы не нужен.",
+                "how_it_should_be": "Корректно делегировать отступы writer'у: `writerWithDefaultPrettyPrinter()` сам расставит структуру."
               },
               "label": "D",
               "order": 3
@@ -489,14 +489,13 @@
           "question_text": "Как настроить стратегию именования полей (`snake_case`)?",
           "options": [
             {
-              "text": "Глобально — `mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)`; в Spring Boot — `spring.jackson.property-naming-strategy: SNAKE_CASE`; локально на классе — `@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)`. Тогда поле `firstName` сериализуется как `\"first_name\"`.",
-              "correct": true,
+              "text": "`@JsonNaming` применяют на отдельном поле, чтобы сделать только это поле `snake_case`.",
+              "correct": false,
               "sections": {
-                "explanation": "Naming strategy преобразует camelCase-поля Java в требуемый стиль JSON (`snake_case`, `kebab-case`) на лету, не трогая имена самих полей в коде.",
-                "example": "С `SNAKE_CASE` объект `{firstName: \"Ann\"}` выйдет как `{\"first_name\": \"Ann\"}`, а на чтении распознается обратно.",
-                "when_to_apply": "Глобальную стратегию задают, когда внешний контракт API целиком в `snake_case`, а Java-код держит camelCase-поля.",
-                "edge_cases": "Если контракт смешанный, глобальная стратегия всё сломает — тогда переименовывают точечно через `@JsonProperty` на конкретных полях.",
-                "related": "[[java-jackson-interview#Q10]] `@JsonProperty` для точечного переименования; [[java-jackson-interview#Q15]] `@JsonAlias` при миграции имён; [[java-jackson-interview#Q28]] `property-naming-strategy` в Spring Boot."
+                "what_actually": "`@JsonNaming` ставится на класс и задаёт стратегию для всех его полей; для одного поля используют `@JsonProperty`.",
+                "source_of_confusion": "Раз речь об именах полей, аннотацию по аналогии вешают на поле.",
+                "if_it_were_true": "Если бы `@JsonNaming` работала на поле, не было бы нужды в `@JsonProperty` для точечного переименования.",
+                "how_it_should_be": "`@JsonNaming` — class-level стратегия; одиночное имя задаёт `@JsonProperty(\"...\")`."
               },
               "label": "A",
               "order": 0
@@ -526,13 +525,14 @@
               "order": 2
             },
             {
-              "text": "`@JsonNaming` применяют на отдельном поле, чтобы сделать только это поле `snake_case`.",
-              "correct": false,
+              "text": "Глобально — `mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)`; в Spring Boot — `spring.jackson.property-naming-strategy: SNAKE_CASE`; локально на классе — `@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)`. Тогда поле `firstName` сериализуется как `\"first_name\"`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`@JsonNaming` ставится на класс и задаёт стратегию для всех его полей; для одного поля используют `@JsonProperty`.",
-                "source_of_confusion": "Раз речь об именах полей, аннотацию по аналогии вешают на поле.",
-                "if_it_were_true": "Если бы `@JsonNaming` работала на поле, не было бы нужды в `@JsonProperty` для точечного переименования.",
-                "how_it_should_be": "`@JsonNaming` — class-level стратегия; одиночное имя задаёт `@JsonProperty(\"...\")`."
+                "explanation": "Naming strategy преобразует camelCase-поля Java в требуемый стиль JSON (`snake_case`, `kebab-case`) на лету, не трогая имена самих полей в коде.",
+                "example": "С `SNAKE_CASE` объект `{firstName: \"Ann\"}` выйдет как `{\"first_name\": \"Ann\"}`, а на чтении распознается обратно.",
+                "when_to_apply": "Глобальную стратегию задают, когда внешний контракт API целиком в `snake_case`, а Java-код держит camelCase-поля.",
+                "edge_cases": "Если контракт смешанный, глобальная стратегия всё сломает — тогда переименовывают точечно через `@JsonProperty` на конкретных полях.",
+                "related": "[[java-jackson-interview#Q10]] `@JsonProperty` для точечного переименования; [[java-jackson-interview#Q15]] `@JsonAlias` при миграции имён; [[java-jackson-interview#Q28]] `property-naming-strategy` в Spring Boot."
               },
               "label": "D",
               "order": 3
@@ -549,13 +549,13 @@
           "question_text": "Что делают `@JsonProperty`, `@JsonIgnore` и `@JsonIgnoreProperties`?",
           "options": [
             {
-              "text": "`@JsonIgnore` исключает поле только из сериализации, но на десериализации оно по-прежнему читается из JSON.",
+              "text": "`@JsonProperty` нужен исключительно для переименования и никогда не требуется для immutable-классов без сеттеров.",
               "correct": false,
               "sections": {
-                "what_actually": "`@JsonIgnore` действует в обе стороны — поле не пишется в JSON и не читается из него.",
-                "source_of_confusion": "Кажется, что «ignore» относится лишь к выводу наружу, а вход остаётся как есть.",
-                "if_it_were_true": "Если бы поле всё равно читалось, нельзя было бы им защититься от mass-assignment лишних полей на входе.",
-                "how_it_should_be": "По умолчанию `@JsonIgnore` блокирует и запись, и чтение поля целиком."
+                "what_actually": "Для immutable-объектов `@JsonProperty` на параметрах конструктора часто обязателен — иначе без `parameter-names` `Jackson` не знает имён аргументов.",
+                "source_of_confusion": "Видна только функция переименования, а роль для конструкторов остаётся незаметной.",
+                "if_it_were_true": "Если бы он был только про имена, `record` без `ParameterNamesModule` не десериализовался бы — но именно `@JsonProperty` это чинит.",
+                "how_it_should_be": "Помимо переименования, аннотация связывает JSON-поле с параметром конструктора immutable-типа."
               },
               "label": "A",
               "order": 0
@@ -574,6 +574,18 @@
               "order": 1
             },
             {
+              "text": "`@JsonIgnore` исключает поле только из сериализации, но на десериализации оно по-прежнему читается из JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@JsonIgnore` действует в обе стороны — поле не пишется в JSON и не читается из него.",
+                "source_of_confusion": "Кажется, что «ignore» относится лишь к выводу наружу, а вход остаётся как есть.",
+                "if_it_were_true": "Если бы поле всё равно читалось, нельзя было бы им защититься от mass-assignment лишних полей на входе.",
+                "how_it_should_be": "По умолчанию `@JsonIgnore` блокирует и запись, и чтение поля целиком."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "`@JsonIgnoreProperties(ignoreUnknown = true)` перечисляет конкретные поля класса, которые надо игнорировать.",
               "correct": false,
               "sections": {
@@ -581,18 +593,6 @@
                 "source_of_confusion": "Один и тот же атрибут аннотации используют в двух режимах, и их легко перепутать.",
                 "if_it_were_true": "Если бы `ignoreUnknown = true` был списком, он не спасал бы от заранее неизвестных полей внешнего API.",
                 "how_it_should_be": "Список и флаг — разные функции одной аннотации: `{...}` скрывает известные поля, `ignoreUnknown` терпит неизвестные."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`@JsonProperty` нужен исключительно для переименования и никогда не требуется для immutable-классов без сеттеров.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для immutable-объектов `@JsonProperty` на параметрах конструктора часто обязателен — иначе без `parameter-names` `Jackson` не знает имён аргументов.",
-                "source_of_confusion": "Видна только функция переименования, а роль для конструкторов остаётся незаметной.",
-                "if_it_were_true": "Если бы он был только про имена, `record` без `ParameterNamesModule` не десериализовался бы — но именно `@JsonProperty` это чинит.",
-                "how_it_should_be": "Помимо переименования, аннотация связывает JSON-поле с параметром конструктора immutable-типа."
               },
               "label": "D",
               "order": 3
@@ -609,18 +609,6 @@
           "question_text": "Зачем нужны `@JsonCreator` и `@JsonValue`?",
           "options": [
             {
-              "text": "`@JsonValue` ставят на поле, и оно становится единственным сериализуемым полем класса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@JsonValue` помечают метод (геттер), чьё возвращаемое значение заменяет весь объект в JSON, а не поле.",
-                "source_of_confusion": "Раз речь о «значении», аннотацию по аналогии с полями вешают на поле.",
-                "if_it_were_true": "Если бы это работало на поле, нельзя было бы вычислять представление через логику метода, как у enum-кода.",
-                "how_it_should_be": "Аннотируют именно метод, возвращающий скаляр; результат метода и есть JSON-представление объекта."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`@JsonCreator` нужен только для обычных multi-field POJO и бесполезен для enum и value objects.",
               "correct": false,
               "sections": {
@@ -629,8 +617,8 @@
                 "if_it_were_true": "Если бы он не работал с enum, `@JsonValue` на enum нельзя было бы прочитать обратно — а пара именно для этого.",
                 "how_it_should_be": "`@JsonCreator` штатно применяют к фабрикам enum и value objects для парсинга их скалярного представления."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Это пара для single-value типов (enum, value objects, wrapper'ы). `@JsonValue` помечает метод, чьё значение пойдёт в JSON вместо всего объекта (например `getCode()` у enum → `\"A\"`). `@JsonCreator` помечает фабричный метод/конструктор для обратной десериализации из этого значения.",
@@ -642,8 +630,8 @@
                 "edge_cases": "Если задать только `@JsonValue` без `@JsonCreator`, объект сериализуется в скаляр, но обратно не десериализуется — нужны обе аннотации для round-trip.",
                 "related": "[[java-jackson-interview#Q10]] `@JsonProperty` для обычных полей; [[java-jackson-interview#Q18]] кастомный сериализатор как альтернатива; [[java-jackson-interview#Q19]] кастомный десериализатор."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`@JsonValue` и `@JsonCreator` — синонимы: достаточно любой одной, она обеспечит и запись, и чтение.",
@@ -653,6 +641,18 @@
                 "source_of_confusion": "Обе аннотации про «одно значение», поэтому их функции сливают в одну.",
                 "if_it_were_true": "Если бы хватало одной, объект с только `@JsonValue` десериализовался бы — а он падает без `@JsonCreator`.",
                 "how_it_should_be": "Запись и чтение разделены: одна аннотация даёт только половину цикла, нужны обе."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@JsonValue` ставят на поле, и оно становится единственным сериализуемым полем класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@JsonValue` помечают метод (геттер), чьё возвращаемое значение заменяет весь объект в JSON, а не поле.",
+                "source_of_confusion": "Раз речь о «значении», аннотацию по аналогии с полями вешают на поле.",
+                "if_it_were_true": "Если бы это работало на поле, нельзя было бы вычислять представление через логику метода, как у enum-кода.",
+                "how_it_should_be": "Аннотируют именно метод, возвращающий скаляр; результат метода и есть JSON-представление объекта."
               },
               "label": "D",
               "order": 3
@@ -681,6 +681,19 @@
               "order": 0
             },
             {
+              "text": "`@JsonInclude` управляет тем, какие пустые значения попадают в JSON при сериализации. `Include.NON_NULL` пропускает `null`-поля, `NON_ABSENT` — ещё и пустой `Optional`, `NON_EMPTY` — пустые `Collection`/`Map`/`String`, `NON_DEFAULT` — значения по умолчанию класса. Глобально — `mapper.setSerializationInclusion(Include.NON_NULL)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@JsonInclude` решает, попадают ли в JSON пустые значения, через градацию `NON_NULL` → `NON_ABSENT` → `NON_EMPTY` → `NON_DEFAULT` от мягкой к агрессивной.",
+                "example": "`@JsonInclude(Include.NON_NULL)` над классом уберёт поле `name`, если оно `null`, оставив в JSON только заполненные поля.",
+                "when_to_apply": "Применяют, чтобы не гонять по сети `null`-поля и не раздувать payload, особенно в API с большим числом необязательных полей.",
+                "edge_cases": "`NON_EMPTY` агрессивнее `NON_NULL`: он выкинет и пустую строку `\"\"`, и пустой список — это может скрыть поля, которые клиент ожидает видеть всегда.",
+                "related": "[[java-jackson-interview#Q10]] `@JsonIgnore` для полного скрытия поля; [[java-jackson-interview#Q28]] `default-property-inclusion` в Spring; [[java-jackson-interview#Q24]] сериализация дат рядом с inclusion."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "`Include.NON_NULL` и `Include.NON_EMPTY` ведут себя одинаково и оба пропускают пустые строки.",
               "correct": false,
               "sections": {
@@ -689,8 +702,8 @@
                 "if_it_were_true": "Если бы они совпадали, не было бы двух отдельных режимов с разным поведением для `\"\"`.",
                 "how_it_should_be": "`NON_NULL` уже `NON_EMPTY`: первый трогает только `null`, второй — ещё и пустые контейнеры и строки."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`@JsonInclude` можно поставить только глобально на `ObjectMapper`, на уровне класса или поля он не работает.",
@@ -700,19 +713,6 @@
                 "source_of_confusion": "Глобальная настройка `setSerializationInclusion` запоминается лучше, и про аннотацию-уровни забывают.",
                 "if_it_were_true": "Если бы аннотация не работала на поле, нельзя было бы сделать `NON_NULL` для одного поля при `ALWAYS` для остальных.",
                 "how_it_should_be": "Область действия настраивается: глобально, на классе или на конкретном поле — по убыванию приоритета."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`@JsonInclude` управляет тем, какие пустые значения попадают в JSON при сериализации. `Include.NON_NULL` пропускает `null`-поля, `NON_ABSENT` — ещё и пустой `Optional`, `NON_EMPTY` — пустые `Collection`/`Map`/`String`, `NON_DEFAULT` — значения по умолчанию класса. Глобально — `mapper.setSerializationInclusion(Include.NON_NULL)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@JsonInclude` решает, попадают ли в JSON пустые значения, через градацию `NON_NULL` → `NON_ABSENT` → `NON_EMPTY` → `NON_DEFAULT` от мягкой к агрессивной.",
-                "example": "`@JsonInclude(Include.NON_NULL)` над классом уберёт поле `name`, если оно `null`, оставив в JSON только заполненные поля.",
-                "when_to_apply": "Применяют, чтобы не гонять по сети `null`-поля и не раздувать payload, особенно в API с большим числом необязательных полей.",
-                "edge_cases": "`NON_EMPTY` агрессивнее `NON_NULL`: он выкинет и пустую строку `\"\"`, и пустой список — это может скрыть поля, которые клиент ожидает видеть всегда.",
-                "related": "[[java-jackson-interview#Q10]] `@JsonIgnore` для полного скрытия поля; [[java-jackson-interview#Q28]] `default-property-inclusion` в Spring; [[java-jackson-interview#Q24]] сериализация дат рядом с inclusion."
               },
               "label": "D",
               "order": 3
@@ -742,13 +742,13 @@
               "order": 0
             },
             {
-              "text": "`@JsonFormat` задаёт формат сразу для всех полей класса и не может применяться к одному полю.",
+              "text": "`@JsonFormat` применим исключительно к датам и не работает ни с enum, ни с числами.",
               "correct": false,
               "sections": {
-                "what_actually": "`@JsonFormat` ставится на конкретное поле (или тип) и форматирует именно его, а не весь класс целиком.",
-                "source_of_confusion": "Аннотации уровня класса (`@JsonNaming`, `@JsonIgnoreProperties`) задают тон, и `@JsonFormat` принимают за такую же.",
-                "if_it_were_true": "Если бы она была class-level, нельзя было бы дать разным датам класса разные паттерны — а это типичная задача.",
-                "how_it_should_be": "Это field-level (или type-level) аннотация для точечного управления форматом отдельного значения."
+                "what_actually": "`@JsonFormat` шире: через `shape` он управляет и enum (`NUMBER_INT` как ordinal), и числами/`BigDecimal` (`STRING`).",
+                "source_of_confusion": "Самый частый кейс — даты, поэтому его область сужают только до них.",
+                "if_it_were_true": "Если бы он работал лишь с датами, нельзя было бы сериализовать enum как ordinal через `Shape.NUMBER_INT`.",
+                "how_it_should_be": "Аннотация управляет `shape` любого совместимого типа: дат, enum, чисел, булевых значений."
               },
               "label": "B",
               "order": 1
@@ -766,13 +766,13 @@
               "order": 2
             },
             {
-              "text": "`@JsonFormat` применим исключительно к датам и не работает ни с enum, ни с числами.",
+              "text": "`@JsonFormat` задаёт формат сразу для всех полей класса и не может применяться к одному полю.",
               "correct": false,
               "sections": {
-                "what_actually": "`@JsonFormat` шире: через `shape` он управляет и enum (`NUMBER_INT` как ordinal), и числами/`BigDecimal` (`STRING`).",
-                "source_of_confusion": "Самый частый кейс — даты, поэтому его область сужают только до них.",
-                "if_it_were_true": "Если бы он работал лишь с датами, нельзя было бы сериализовать enum как ordinal через `Shape.NUMBER_INT`.",
-                "how_it_should_be": "Аннотация управляет `shape` любого совместимого типа: дат, enum, чисел, булевых значений."
+                "what_actually": "`@JsonFormat` ставится на конкретное поле (или тип) и форматирует именно его, а не весь класс целиком.",
+                "source_of_confusion": "Аннотации уровня класса (`@JsonNaming`, `@JsonIgnoreProperties`) задают тон, и `@JsonFormat` принимают за такую же.",
+                "if_it_were_true": "Если бы она была class-level, нельзя было бы дать разным датам класса разные паттерны — а это типичная задача.",
+                "how_it_should_be": "Это field-level (или type-level) аннотация для точечного управления форматом отдельного значения."
               },
               "label": "D",
               "order": 3
@@ -789,6 +789,18 @@
           "question_text": "В чём разница между `@JsonSetter` и `@JsonGetter`?",
           "options": [
             {
+              "text": "`@JsonGetter` и `@JsonSetter` ставят на поле, а не на методы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти аннотации привязаны к методам (getter/setter) — в этом их смысл; для поля используют `@JsonProperty`.",
+                "source_of_confusion": "Привычка размечать поля переносит ожидание и на эти аннотации.",
+                "if_it_were_true": "Если бы они работали на поле, нельзя было бы встроить конвертацию единиц прямо в getter/setter.",
+                "how_it_should_be": "Их вешают именно на методы доступа, чтобы зацепиться за логику преобразования значения."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`@JsonGetter` управляет десериализацией (чтением из JSON), а `@JsonSetter` — сериализацией (записью в JSON).",
               "correct": false,
               "sections": {
@@ -797,8 +809,8 @@
                 "if_it_were_true": "Если бы было наоборот, аннотация на setter влияла бы на исходящий JSON, чего не бывает.",
                 "how_it_should_be": "Getter ↔ запись наружу, setter ↔ чтение внутрь — направление совпадает с ролью метода."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Это направленные альтернативы `@JsonProperty`: `@JsonGetter(\"name\")` ставится на метод-getter и действует только при сериализации, а `@JsonSetter(\"name\")` — на метод-setter и только при десериализации. Полезно, когда JSON-имя для чтения и записи должно различаться.",
@@ -809,18 +821,6 @@
                 "when_to_apply": "Используют, когда контракт асимметричен: одно имя/единица на входе, другое на выходе, без заведения отдельных DTO.",
                 "edge_cases": "Если хватает одинакового имени в обе стороны, проще `@JsonProperty`; пара getter/setter оправдана именно для расхождения направлений.",
                 "related": "[[java-jackson-interview#Q10]] `@JsonProperty` как симметричный вариант; [[java-jackson-interview#Q15]] `@JsonAlias` для альтернативных имён на чтении; [[java-jackson-interview#Q11]] `@JsonValue` для скалярного представления."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`@JsonGetter` и `@JsonSetter` ставят на поле, а не на методы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Эти аннотации привязаны к методам (getter/setter) — в этом их смысл; для поля используют `@JsonProperty`.",
-                "source_of_confusion": "Привычка размечать поля переносит ожидание и на эти аннотации.",
-                "if_it_were_true": "Если бы они работали на поле, нельзя было бы встроить конвертацию единиц прямо в getter/setter.",
-                "how_it_should_be": "Их вешают именно на методы доступа, чтобы зацепиться за логику преобразования значения."
               },
               "label": "C",
               "order": 2
@@ -861,6 +861,18 @@
               "order": 0
             },
             {
+              "text": "`@JsonAlias` принимает ровно одно альтернативное имя — массив имён он не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@JsonAlias` принимает массив имён `{\"a\", \"b\", \"c\"}`, что и нужно при нескольких legacy-вариантах поля.",
+                "source_of_confusion": "Простые аннотации часто берут один аргумент, поэтому массив не ожидают.",
+                "if_it_were_true": "Если бы поддерживалось одно имя, нельзя было бы за раз покрыть и `firstName`, и `first_name`, и `fn`.",
+                "how_it_should_be": "Аргумент — массив строк, перечисляющий все альтернативные имена сразу."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "`@JsonAlias` заменяет `@JsonProperty`: если есть алиасы, основное имя задавать не нужно.",
               "correct": false,
               "sections": {
@@ -869,8 +881,8 @@
                 "if_it_were_true": "Если бы `@JsonAlias` задавал основное имя, было бы неоднозначно, под каким из алиасов сериализовать поле.",
                 "how_it_should_be": "Основное имя нужно отдельно: `@JsonAlias` только добавляет к нему дополнительные принимаемые варианты."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`@JsonAlias` разрешает несколько имён для одного поля при **десериализации**: `@JsonAlias({\"firstName\", \"first_name\", \"fn\"})` примет любое из перечисленных имён на входе. При сериализации поле пишется под своим основным именем. Это удобно при миграции имён в API.",
@@ -881,18 +893,6 @@
                 "when_to_apply": "Применяют, когда внешний источник может прислать поле под устаревшим или альтернативным именем, а ломать обратную совместимость нельзя.",
                 "edge_cases": "Алиасы влияют только на чтение: на выводе остаётся одно каноническое имя, поэтому несколько имён в исходящем JSON через `@JsonAlias` не получить.",
                 "related": "[[java-jackson-interview#Q10]] `@JsonProperty` для основного имени; [[java-jackson-interview#Q14]] `@JsonSetter` для имени только на чтении; [[java-jackson-interview#Q9]] naming strategy при массовом переименовании."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`@JsonAlias` принимает ровно одно альтернативное имя — массив имён он не поддерживает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@JsonAlias` принимает массив имён `{\"a\", \"b\", \"c\"}`, что и нужно при нескольких legacy-вариантах поля.",
-                "source_of_confusion": "Простые аннотации часто берут один аргумент, поэтому массив не ожидают.",
-                "if_it_were_true": "Если бы поддерживалось одно имя, нельзя было бы за раз покрыть и `firstName`, и `first_name`, и `fn`.",
-                "how_it_should_be": "Аргумент — массив строк, перечисляющий все альтернативные имена сразу."
               },
               "label": "D",
               "order": 3
@@ -909,30 +909,6 @@
           "question_text": "Как десериализовать `List<Foo>` или сложный generic-тип?",
           "options": [
             {
-              "text": "Достаточно передать `List<User>.class` напрямую — Java позволяет указать generic-класс в литерале класса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В Java нет литерала `List<User>.class` — generic-параметры стираются, поэтому и нужен `TypeReference`.",
-                "source_of_confusion": "Синтаксис `Foo.class` привычен, и кажется, что параметризованный класс тоже можно так записать.",
-                "if_it_were_true": "Если бы `List<User>.class` компилировался, проблема type erasure для десериализации вообще не возникала бы.",
-                "how_it_should_be": "Параметр элемента передают через `TypeReference<List<User>>` или `constructCollectionType`, а не через несуществующий class-литерал."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`TypeReference` создаётся обычным `new TypeReference<List<User>>()` без фигурных скобок-подкласса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`TypeReference` абстрактный — его создают анонимным подклассом `new TypeReference<List<User>>() {}`, иначе тип не сохранится.",
-                "source_of_confusion": "Без `{}` код иногда выглядит синтаксически допустимым в голове, и скобки опускают.",
-                "if_it_were_true": "Если бы скобки были не нужны, generic-сигнатуру негде было бы взять — её читают из суперкласса анонимного класса.",
-                "how_it_should_be": "Обязательны `{}`: именно подкласс несёт реифицированный generic-тип через `getGenericSuperclass`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Для коллекций надо использовать `constructType(List.class)`, передав только сырой класс контейнера.",
               "correct": false,
               "sections": {
@@ -941,8 +917,8 @@
                 "if_it_were_true": "Если бы хватило сырого `List.class`, результат был бы тем же `List<LinkedHashMap>`, что и так является багом.",
                 "how_it_should_be": "Указывают оба типа: контейнер и элемент, через `constructCollectionType` или `TypeReference`."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Из-за type erasure нужно передать `TypeReference`: `List<User> users = mapper.readValue(json, new TypeReference<List<User>>() {})`. Альтернатива — `TypeFactory`: `JavaType type = mapper.getTypeFactory().constructCollectionType(List.class, User.class); mapper.readValue(json, type)`.",
@@ -953,6 +929,30 @@
                 "when_to_apply": "`TypeReference` или `constructCollectionType` нужны всегда, когда тип содержит generic-параметры, которые иначе стираются в рантайме.",
                 "edge_cases": "`new TypeReference<>() {}` обязательно создаётся как анонимный подкласс (с `{}`) — без него generic-сигнатура не сохранится в `getGenericSuperclass`.",
                 "related": "[[java-jackson-interview#Q5]] чтение в `Map`/`List`; [[java-jackson-interview#Q17]] почему `List.class` даёт `LinkedHashMap`; [[java-jackson-interview#Q19]] кастомный десериализатор для нестандартных типов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`TypeReference` создаётся обычным `new TypeReference<List<User>>()` без фигурных скобок-подкласса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TypeReference` абстрактный — его создают анонимным подклассом `new TypeReference<List<User>>() {}`, иначе тип не сохранится.",
+                "source_of_confusion": "Без `{}` код иногда выглядит синтаксически допустимым в голове, и скобки опускают.",
+                "if_it_were_true": "Если бы скобки были не нужны, generic-сигнатуру негде было бы взять — её читают из суперкласса анонимного класса.",
+                "how_it_should_be": "Обязательны `{}`: именно подкласс несёт реифицированный generic-тип через `getGenericSuperclass`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Достаточно передать `List<User>.class` напрямую — Java позволяет указать generic-класс в литерале класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Java нет литерала `List<User>.class` — generic-параметры стираются, поэтому и нужен `TypeReference`.",
+                "source_of_confusion": "Синтаксис `Foo.class` привычен, и кажется, что параметризованный класс тоже можно так записать.",
+                "if_it_were_true": "Если бы `List<User>.class` компилировался, проблема type erasure для десериализации вообще не возникала бы.",
+                "how_it_should_be": "Параметр элемента передают через `TypeReference<List<User>>` или `constructCollectionType`, а не через несуществующий class-литерал."
               },
               "label": "D",
               "order": 3
@@ -969,19 +969,6 @@
           "question_text": "Почему `readValue(json, List.class)` возвращает `List<LinkedHashMap>`?",
           "options": [
             {
-              "text": "Причина — type erasure: при `mapper.readValue(json, List.class)` `Jackson` не знает generic-параметр `List`, поэтому каждый JSON-объект элемента конвертирует в `LinkedHashMap` (дефолтное представление JSON-объекта). Фикс — всегда `TypeReference` или `constructCollectionType`.",
-              "correct": true,
-              "sections": {
-                "explanation": "При стёртом generic-параметре `Jackson` не знает тип элемента и конвертирует каждый JSON-объект в `LinkedHashMap` — дефолтное представление JSON-объекта без целевого класса.",
-                "example": "`List list = mapper.readValue(json, List.class)` даст `List<LinkedHashMap>`, и `(User) list.get(0)` упадёт с `ClassCastException`.",
-                "when_to_apply": "Об этом вспоминают при дебаге `ClassCastException` на доступе к элементам коллекции, прочитанной без указания типа элемента.",
-                "edge_cases": "Элементы выглядят корректно при печати (`toString` карты похож на объект), и баг всплывает только при явном приведении к POJO.",
-                "related": "[[java-jackson-interview#Q5]] правильное чтение в `List` через `TypeReference`; [[java-jackson-interview#Q16]] generic-десериализация; [[java-jackson-interview#Q27]] `JsonNode` как осознанная альтернатива картам."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Потому что `Jackson` по умолчанию десериализует любой JSON-массив в `LinkedHashMap`, даже если указать тип элемента.",
               "correct": false,
               "sections": {
@@ -990,20 +977,8 @@
                 "if_it_were_true": "Если бы он всегда давал `LinkedHashMap`, `TypeReference<List<User>>` не возвращал бы реальные `User` — а он возвращает.",
                 "how_it_should_be": "Дефолт в `LinkedHashMap` срабатывает лишь при стёртом типе; с явным типом получаются нужные объекты."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Потому что класс `User` не реализует `Serializable`, и `Jackson` подменяет его на `LinkedHashMap`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Jackson` не использует Java-`Serializable` вообще; причина — не интерфейс, а отсутствие generic-параметра из-за type erasure.",
-                "source_of_confusion": "JSON-сериализацию путают с Java-сериализацией, где `Serializable` действительно важен.",
-                "if_it_were_true": "Если бы дело было в `Serializable`, добавление интерфейса чинило бы баг — но помогает только `TypeReference`.",
-                "how_it_should_be": "Решает указание типа элемента, а не реализация `Serializable`; `Jackson` строит объекты по рефлексии полей."
-              },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Потому что `LinkedHashMap` быстрее, и `Jackson` сознательно выбирает его ради производительности.",
@@ -1013,6 +988,31 @@
                 "source_of_confusion": "`LinkedHashMap` действительно дешёвая структура, что наводит на мысль о намеренной оптимизации.",
                 "if_it_were_true": "Если бы это была оптимизация, `Jackson` не давал бы реальные POJO при указанном типе, где они «медленнее».",
                 "how_it_should_be": "Это вынужденный fallback при стёртом generic; при известном типе создаётся именно нужный POJO."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Причина — type erasure: при `mapper.readValue(json, List.class)` `Jackson` не знает generic-параметр `List`, поэтому каждый JSON-объект элемента конвертирует в `LinkedHashMap` (дефолтное представление JSON-объекта). Фикс — всегда `TypeReference` или `constructCollectionType`.",
+              "correct": true,
+              "sections": {
+                "explanation": "При стёртом generic-параметре `Jackson` не знает тип элемента и конвертирует каждый JSON-объект в `LinkedHashMap` — дефолтное представление JSON-объекта без целевого класса.",
+                "example": "`List list = mapper.readValue(json, List.class)` даст `List<LinkedHashMap>`, и `(User) list.get(0)` упадёт с `ClassCastException`.",
+                "when_to_apply": "Об этом вспоминают при дебаге `ClassCastException` на доступе к элементам коллекции, прочитанной без указания типа элемента.",
+                "edge_cases": "Элементы выглядят корректно при печати (`toString` карты похож на объект), и баг всплывает только при явном приведении к POJO.",
+                "related": "[[java-jackson-interview#Q5]] правильное чтение в `List` через `TypeReference`; [[java-jackson-interview#Q16]] generic-десериализация; [[java-jackson-interview#Q27]] `JsonNode` как осознанная альтернатива картам."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Потому что класс `User` не реализует `Serializable`, и `Jackson` подменяет его на `LinkedHashMap`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jackson` не использует Java-`Serializable` вообще; причина — не интерфейс, а отсутствие generic-параметра из-за type erasure.",
+                "source_of_confusion": "JSON-сериализацию путают с Java-сериализацией, где `Serializable` действительно важен.",
+                "if_it_were_true": "Если бы дело было в `Serializable`, добавление интерфейса чинило бы баг — но помогает только `TypeReference`.",
+                "how_it_should_be": "Решает указание типа элемента, а не реализация `Serializable`; `Jackson` строит объекты по рефлексии полей."
               },
               "label": "D",
               "order": 3
@@ -1029,18 +1029,6 @@
           "question_text": "Как написать кастомный сериализатор?",
           "options": [
             {
-              "text": "Кастомный сериализатор пишут, реализуя интерфейс `Serializable` и метод `writeObject` из Java-сериализации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Jackson` не использует `Serializable`/`writeObject`; сериализатор наследует `StdSerializer<T>` и переопределяет `serialize` с `JsonGenerator`.",
-                "source_of_confusion": "Слово «сериализатор» вызывает ассоциацию со встроенной Java-сериализацией.",
-                "if_it_were_true": "Если бы работал `writeObject`, не нужен был бы `JsonGenerator` и регистрация через `SimpleModule`.",
-                "how_it_should_be": "Расширяют `StdSerializer` (или `JsonSerializer`) и пишут JSON через `gen.writeStartObject()` и поля."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Наследуют `StdSerializer<T>` и переопределяют `serialize(value, JsonGenerator gen, SerializerProvider sp)`, вручную выписывая поля через `gen.writeStartObject()` / `gen.writeStringField(...)` / `gen.writeEndObject()`. Регистрируют либо `@JsonSerialize(using = MoneySerializer.class)` на классе, либо `module.addSerializer(Money.class, new MoneySerializer())`.",
               "correct": true,
               "sections": {
@@ -1049,6 +1037,18 @@
                 "when_to_apply": "Кастомный сериализатор берут, когда дефолтное bean-представление не подходит: нестандартный формат, плоское представление value object, маскирование части данных.",
                 "edge_cases": "В `StdSerializer` важно балансировать `writeStartObject`/`writeEndObject` — несбалансированный генератор даёт битый JSON, который тяжело отлаживать.",
                 "related": "[[java-jackson-interview#Q19]] парный кастомный десериализатор; [[java-jackson-interview#Q20]] вызов default-сериализатора из кастомного; [[java-jackson-interview#Q21]] регистрация через `SimpleModule`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Кастомный сериализатор пишут, реализуя интерфейс `Serializable` и метод `writeObject` из Java-сериализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jackson` не использует `Serializable`/`writeObject`; сериализатор наследует `StdSerializer<T>` и переопределяет `serialize` с `JsonGenerator`.",
+                "source_of_confusion": "Слово «сериализатор» вызывает ассоциацию со встроенной Java-сериализацией.",
+                "if_it_were_true": "Если бы работал `writeObject`, не нужен был бы `JsonGenerator` и регистрация через `SimpleModule`.",
+                "how_it_should_be": "Расширяют `StdSerializer` (или `JsonSerializer`) и пишут JSON через `gen.writeStartObject()` и поля."
               },
               "label": "B",
               "order": 1
@@ -1101,13 +1101,13 @@
               "order": 0
             },
             {
-              "text": "`@JsonDeserialize` и кастомный десериализатор не нужны: достаточно `@JsonCreator`, он покрывает любой формат входа.",
+              "text": "В `deserialize` нельзя обращаться к дереву — `JsonParser` отдаёт только сырую строку JSON для ручного парсинга.",
               "correct": false,
               "sections": {
-                "what_actually": "`@JsonCreator` хорош для простого скаляра/набора полей, но для сложного или нестандартного входа нужен полноценный десериализатор.",
-                "source_of_confusion": "`@JsonCreator` решает многие кейсы, и кажется, что он покрывает все.",
-                "if_it_were_true": "Если бы `@JsonCreator` хватало всегда, классы `StdDeserializer` и `@JsonDeserialize` были бы не нужны.",
-                "how_it_should_be": "Простые случаи — `@JsonCreator`; нетривиальный разбор дерева — кастомный `StdDeserializer`."
+                "what_actually": "Через `p.getCodec().readTree(p)` доступно `JsonNode`-дерево; парсить сырую строку руками не нужно.",
+                "source_of_confusion": "Streaming-природа `JsonParser` создаёт впечатление, что доступен лишь сырой текст.",
+                "if_it_were_true": "Если бы дерево было недоступно, типовой паттерн `readTree` + `node.get(...)` не работал бы — а он стандартный.",
+                "how_it_should_be": "Можно и токены читать потоково, и поддерево разобрать через `readTree`, выбирая удобный способ."
               },
               "label": "B",
               "order": 1
@@ -1126,13 +1126,13 @@
               "order": 2
             },
             {
-              "text": "В `deserialize` нельзя обращаться к дереву — `JsonParser` отдаёт только сырую строку JSON для ручного парсинга.",
+              "text": "`@JsonDeserialize` и кастомный десериализатор не нужны: достаточно `@JsonCreator`, он покрывает любой формат входа.",
               "correct": false,
               "sections": {
-                "what_actually": "Через `p.getCodec().readTree(p)` доступно `JsonNode`-дерево; парсить сырую строку руками не нужно.",
-                "source_of_confusion": "Streaming-природа `JsonParser` создаёт впечатление, что доступен лишь сырой текст.",
-                "if_it_were_true": "Если бы дерево было недоступно, типовой паттерн `readTree` + `node.get(...)` не работал бы — а он стандартный.",
-                "how_it_should_be": "Можно и токены читать потоково, и поддерево разобрать через `readTree`, выбирая удобный способ."
+                "what_actually": "`@JsonCreator` хорош для простого скаляра/набора полей, но для сложного или нестандартного входа нужен полноценный десериализатор.",
+                "source_of_confusion": "`@JsonCreator` решает многие кейсы, и кажется, что он покрывает все.",
+                "if_it_were_true": "Если бы `@JsonCreator` хватало всегда, классы `StdDeserializer` и `@JsonDeserialize` были бы не нужны.",
+                "how_it_should_be": "Простые случаи — `@JsonCreator`; нетривиальный разбор дерева — кастомный `StdDeserializer`."
               },
               "label": "D",
               "order": 3
@@ -1149,18 +1149,6 @@
           "question_text": "Как вызвать default-сериализатор из кастомного?",
           "options": [
             {
-              "text": "Чтобы добавить одно поле, проще всего вызвать `mapper.writeValueAsString(obj)` внутри кастомного сериализатора и дописать поле в полученную строку.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Вызывать `writeValueAsString` внутри `serialize` и править строку — хрупко и неэффективно; правильно делегировать дефолтному `JsonSerializer` через `JsonGenerator`.",
-                "source_of_confusion": "Знакомый `writeValueAsString` кажется самым прямым способом получить «обычный» JSON.",
-                "if_it_were_true": "Если бы так делали, ломалась бы потоковая запись и появлялся бы двойной парсинг ради одного поля.",
-                "how_it_should_be": "Сохраняют дефолтного делегата и пишут оба источника в один `JsonGenerator`, без промежуточной строки."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Default-сериализатор недоступен из кастомного — `Jackson` не даёт ссылку на стандартную логику, её всегда переписывают целиком.",
               "correct": false,
               "sections": {
@@ -1169,8 +1157,8 @@
                 "if_it_were_true": "Если бы делегата нельзя было получить, не существовало бы паттерна с полем `defaultSer` и `ResolvableSerializer`.",
                 "how_it_should_be": "Стандартный сериализатор получают как делегата и переиспользуют, дописывая только дополнительное поле."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Добавить вычисляемое поле к стандартной сериализации можно только аннотацией `@JsonProperty` на этом поле.",
@@ -1180,6 +1168,18 @@
                 "source_of_confusion": "Аннотация на геттер действительно добавляет поле, поэтому кажется универсальным решением.",
                 "if_it_were_true": "Если бы хватало `@JsonProperty`, не было бы нужды в `BeanSerializerModifier` для оборачивания дефолта.",
                 "how_it_should_be": "Геттер с `@JsonProperty` решает простой случай; обёртка над дефолтным сериализатором — для добавления к уже готовому выводу."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Чтобы добавить одно поле, проще всего вызвать `mapper.writeValueAsString(obj)` внутри кастомного сериализатора и дописать поле в полученную строку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вызывать `writeValueAsString` внутри `serialize` и править строку — хрупко и неэффективно; правильно делегировать дефолтному `JsonSerializer` через `JsonGenerator`.",
+                "source_of_confusion": "Знакомый `writeValueAsString` кажется самым прямым способом получить «обычный» JSON.",
+                "if_it_were_true": "Если бы так делали, ломалась бы потоковая запись и появлялся бы двойной парсинг ради одного поля.",
+                "how_it_should_be": "Сохраняют дефолтного делегата и пишут оба источника в один `JsonGenerator`, без промежуточной строки."
               },
               "label": "C",
               "order": 2
@@ -1209,31 +1209,6 @@
           "question_text": "Что такое `Module` / `SimpleModule` в `Jackson`?",
           "options": [
             {
-              "text": "`Module` — контейнер расширений `Jackson`: сериализаторы, десериализаторы, маппинги абстрактных типов на реализации. `SimpleModule` — простая реализация, куда добавляют `addSerializer`/`addDeserializer`/`setAbstractTypes` и регистрируют через `mapper.registerModule(m)`. Готовые модули: `JavaTimeModule`, `Jdk8Module`, `ParameterNamesModule`, `KotlinModule`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Module`/`SimpleModule` — контейнер расширений `Jackson`: в него складывают сериализаторы, десериализаторы и маппинги типов и подключают одним `registerModule`.",
-                "example": "`SimpleModule m = new SimpleModule(); m.addSerializer(Money.class, new MoneySerializer()); m.addDeserializer(Money.class, new MoneyDeserializer()); mapper.registerModule(m)` регистрирует пару разом.",
-                "when_to_apply": "Модули используют, чтобы упаковать связанные расширения и подключать их одним вызовом, а также чтобы переиспользовать набор сериализаторов между разными `ObjectMapper`.",
-                "edge_cases": "Для автоподключения есть `ObjectMapper.findAndRegisterModules()` — он сканирует classpath через `ServiceLoader`, но добавляет все найденные модули, что иногда тянет лишнее.",
-                "related": "[[java-jackson-interview#Q18]] сериализатор внутри модуля; [[java-jackson-interview#Q19]] десериализатор внутри модуля; [[java-jackson-interview#Q24]] `JavaTimeModule` как готовый модуль."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Module` в `Jackson` — это Java Platform Module System (`module-info.java`), а не контейнер расширений библиотеки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Jackson`-`Module` — это собственная абстракция расширения (сериализаторы/десериализаторы), не имеющая отношения к JPMS `module-info`.",
-                "source_of_confusion": "Совпадение слова «module» с модульной системой Java сбивает с толку.",
-                "if_it_were_true": "Если бы это был JPMS, нельзя было бы вызвать `mapper.registerModule(new JavaTimeModule())` в рантайме.",
-                "how_it_should_be": "Это API-контейнер расширений `Jackson`; платформенные модули Java — отдельная и независимая концепция."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "В `SimpleModule` можно добавлять только сериализаторы; десериализаторы регистрируют где-то отдельно.",
               "correct": false,
               "sections": {
@@ -1242,8 +1217,8 @@
                 "if_it_were_true": "Если бы десериализаторы шли отдельно, типовой пример с `addDeserializer` в том же модуле не работал бы.",
                 "how_it_should_be": "Один `SimpleModule` держит оба направления и связанные настройки вместе."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`JavaTimeModule` и `Jdk8Module` надо писать самому — готовых модулей `Jackson` не поставляет.",
@@ -1253,6 +1228,31 @@
                 "source_of_confusion": "Раз модули пишут под кастомные типы, кажется, что и под стандартные тоже надо вручную.",
                 "if_it_were_true": "Если бы готовых модулей не было, поддержка `java.time` не подключалась бы одной зависимостью `jsr310`.",
                 "how_it_should_be": "Стандартные типы покрыты официальными модулями, которые достаточно подключить и зарегистрировать."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Module` — контейнер расширений `Jackson`: сериализаторы, десериализаторы, маппинги абстрактных типов на реализации. `SimpleModule` — простая реализация, куда добавляют `addSerializer`/`addDeserializer`/`setAbstractTypes` и регистрируют через `mapper.registerModule(m)`. Готовые модули: `JavaTimeModule`, `Jdk8Module`, `ParameterNamesModule`, `KotlinModule`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Module`/`SimpleModule` — контейнер расширений `Jackson`: в него складывают сериализаторы, десериализаторы и маппинги типов и подключают одним `registerModule`.",
+                "example": "`SimpleModule m = new SimpleModule(); m.addSerializer(Money.class, new MoneySerializer()); m.addDeserializer(Money.class, new MoneyDeserializer()); mapper.registerModule(m)` регистрирует пару разом.",
+                "when_to_apply": "Модули используют, чтобы упаковать связанные расширения и подключать их одним вызовом, а также чтобы переиспользовать набор сериализаторов между разными `ObjectMapper`.",
+                "edge_cases": "Для автоподключения есть `ObjectMapper.findAndRegisterModules()` — он сканирует classpath через `ServiceLoader`, но добавляет все найденные модули, что иногда тянет лишнее.",
+                "related": "[[java-jackson-interview#Q18]] сериализатор внутри модуля; [[java-jackson-interview#Q19]] десериализатор внутри модуля; [[java-jackson-interview#Q24]] `JavaTimeModule` как готовый модуль."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Module` в `Jackson` — это Java Platform Module System (`module-info.java`), а не контейнер расширений библиотеки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jackson`-`Module` — это собственная абстракция расширения (сериализаторы/десериализаторы), не имеющая отношения к JPMS `module-info`.",
+                "source_of_confusion": "Совпадение слова «module» с модульной системой Java сбивает с толку.",
+                "if_it_were_true": "Если бы это был JPMS, нельзя было бы вызвать `mapper.registerModule(new JavaTimeModule())` в рантайме.",
+                "how_it_should_be": "Это API-контейнер расширений `Jackson`; платформенные модули Java — отдельная и независимая концепция."
               },
               "label": "D",
               "order": 3
@@ -1281,14 +1281,13 @@
               "order": 0
             },
             {
-              "text": "На базовом классе ставят `@JsonTypeInfo(use = Id.NAME, property = \"type\")` плюс `@JsonSubTypes` со списком подтипов и их логических имён. Тогда в JSON появляется поле-дискриминатор (`{\"type\": \"circle\", \"radius\": 5}`), по которому `Jackson` выбирает конкретный класс при чтении.",
-              "correct": true,
+              "text": "`Id.CLASS` — рекомендуемый безопасный вариант, потому что FQN однозначно идентифицирует класс.",
+              "correct": false,
               "sections": {
-                "explanation": "Полиморфию задают на базовом классе через `@JsonTypeInfo` + `@JsonSubTypes`: в JSON появляется поле-дискриминатор, по которому `Jackson` выбирает конкретный подтип при чтении.",
-                "example": "`@JsonSubTypes({@Type(value = Circle.class, name = \"circle\"), @Type(value = Rectangle.class, name = \"rect\")})` на `abstract Shape` даёт `{\"type\": \"circle\", ...}` / `{\"type\": \"rect\", ...}`.",
-                "when_to_apply": "Подход применяют для иерархий DTO/событий, где один endpoint принимает или отдаёт разные подтипы общего базового типа.",
-                "edge_cases": "`Id.CLASS` пишет FQN и опасен при версионировании и для внешних данных; для безопасной полиморфии берут `Id.NAME` с явным whitelist через `@JsonSubTypes`.",
-                "related": "[[java-jackson-interview#Q23]] почему Default Typing опасен; [[java-jackson-interview#Q21]] маппинг абстрактных типов через модуль; [[java-jackson-interview#Q30]] ошибка `Could not resolve type id`."
+                "what_actually": "`Id.CLASS` как раз опасен: он завязывает JSON на FQN и открывает вектор для подстановки вредоносного класса; безопаснее `Id.NAME` с whitelist.",
+                "source_of_confusion": "Однозначность FQN воспринимается как «более надёжная», отсюда вывод о безопасности.",
+                "if_it_were_true": "Если бы `Id.CLASS` был безопасен, не было бы предостережений про него при работе с внешними данными.",
+                "how_it_should_be": "Рекомендуют `Id.NAME` с явными `@JsonSubTypes`; `Id.CLASS`/`MINIMAL_CLASS` оставляют только для доверенного внутреннего обмена."
               },
               "label": "B",
               "order": 1
@@ -1306,13 +1305,14 @@
               "order": 2
             },
             {
-              "text": "`Id.CLASS` — рекомендуемый безопасный вариант, потому что FQN однозначно идентифицирует класс.",
-              "correct": false,
+              "text": "На базовом классе ставят `@JsonTypeInfo(use = Id.NAME, property = \"type\")` плюс `@JsonSubTypes` со списком подтипов и их логических имён. Тогда в JSON появляется поле-дискриминатор (`{\"type\": \"circle\", \"radius\": 5}`), по которому `Jackson` выбирает конкретный класс при чтении.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Id.CLASS` как раз опасен: он завязывает JSON на FQN и открывает вектор для подстановки вредоносного класса; безопаснее `Id.NAME` с whitelist.",
-                "source_of_confusion": "Однозначность FQN воспринимается как «более надёжная», отсюда вывод о безопасности.",
-                "if_it_were_true": "Если бы `Id.CLASS` был безопасен, не было бы предостережений про него при работе с внешними данными.",
-                "how_it_should_be": "Рекомендуют `Id.NAME` с явными `@JsonSubTypes`; `Id.CLASS`/`MINIMAL_CLASS` оставляют только для доверенного внутреннего обмена."
+                "explanation": "Полиморфию задают на базовом классе через `@JsonTypeInfo` + `@JsonSubTypes`: в JSON появляется поле-дискриминатор, по которому `Jackson` выбирает конкретный подтип при чтении.",
+                "example": "`@JsonSubTypes({@Type(value = Circle.class, name = \"circle\"), @Type(value = Rectangle.class, name = \"rect\")})` на `abstract Shape` даёт `{\"type\": \"circle\", ...}` / `{\"type\": \"rect\", ...}`.",
+                "when_to_apply": "Подход применяют для иерархий DTO/событий, где один endpoint принимает или отдаёт разные подтипы общего базового типа.",
+                "edge_cases": "`Id.CLASS` пишет FQN и опасен при версионировании и для внешних данных; для безопасной полиморфии берут `Id.NAME` с явным whitelist через `@JsonSubTypes`.",
+                "related": "[[java-jackson-interview#Q23]] почему Default Typing опасен; [[java-jackson-interview#Q21]] маппинг абстрактных типов через модуль; [[java-jackson-interview#Q30]] ошибка `Could not resolve type id`."
               },
               "label": "D",
               "order": 3
@@ -1329,18 +1329,6 @@
           "question_text": "Что такое Default Typing и почему он опасен?",
           "options": [
             {
-              "text": "Default Typing безопасен по умолчанию, потому что `Jackson` инстанцирует только классы из стандартной библиотеки JDK.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Jackson` инстанцирует любой класс с подходящим FQN из payload, включая гаджеты вне JDK, — отсюда и RCE.",
-                "source_of_confusion": "Кажется, что встроенные защиты ограничивают создание объектов «безопасными» классами.",
-                "if_it_were_true": "Если бы создавались только JDK-классы, серия CVE через `TemplatesImpl` и сторонние гаджеты была бы невозможна.",
-                "how_it_should_be": "Без жёсткого `PolymorphicTypeValidator` любой класс на classpath потенциально инстанцируем — поэтому на внешних данных это запрещают."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Default Typing записывает только логическое имя типа (`Id.NAME`), поэтому FQN злоумышленник подставить не может.",
               "correct": false,
               "sections": {
@@ -1349,8 +1337,32 @@
                 "if_it_were_true": "Если бы писалось только логическое имя из whitelist, подстановка произвольного FQN была бы невозможна.",
                 "how_it_should_be": "Default Typing оперирует FQN без whitelist — этим он принципиально отличается от безопасного `Id.NAME`."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Чтобы обезопасить Default Typing, достаточно включить `INDENT_OUTPUT` и валидировать JSON по схеме на входе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`INDENT_OUTPUT` — про форматирование и к безопасности отношения не имеет; защищает ограничение типов через `PolymorphicTypeValidator` или отказ от Default Typing.",
+                "source_of_confusion": "Любую «настройку валидации» принимают за меру безопасности, не разбирая её суть.",
+                "if_it_were_true": "Если бы помогал `INDENT_OUTPUT`, RCE-уязвимости лечились бы косметическим флагом вывода, что абсурдно.",
+                "how_it_should_be": "Реальная защита — whitelist типов (`PolymorphicTypeValidator`) или полный отказ от Default Typing на недоверенных данных."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "Default Typing безопасен по умолчанию, потому что `Jackson` инстанцирует только классы из стандартной библиотеки JDK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jackson` инстанцирует любой класс с подходящим FQN из payload, включая гаджеты вне JDK, — отсюда и RCE.",
+                "source_of_confusion": "Кажется, что встроенные защиты ограничивают создание объектов «безопасными» классами.",
+                "if_it_were_true": "Если бы создавались только JDK-классы, серия CVE через `TemplatesImpl` и сторонние гаджеты была бы невозможна.",
+                "how_it_should_be": "Без жёсткого `PolymorphicTypeValidator` любой класс на classpath потенциально инстанцируем — поэтому на внешних данных это запрещают."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`mapper.activateDefaultTyping(...)` заставляет `Jackson` записывать FQN классов в каждый JSON-объект, чтобы десериализовать полиморфные поля без аннотаций. Опасность: атакующий подсовывает FQN гаджет-класса (`TemplatesImpl` и цепочки), и `Jackson` инстанцирует его — это remote code execution (CVE-2017-7525 и серия). Правило — никогда не включать его для внешних данных.",
@@ -1361,18 +1373,6 @@
                 "when_to_apply": "Знание об этом применяют при ревью безопасности: любой `activateDefaultTyping` на данных извне — красный флаг, требующий замены на whitelist-полиморфию.",
                 "edge_cases": "Даже с `PolymorphicTypeValidator` Default Typing на недоверенном входе остаётся рискованным; безопаснее `@JsonTypeInfo(use = NAME)` с явными `@JsonSubTypes`.",
                 "related": "[[java-jackson-interview#Q22]] безопасная полиморфия через аннотации; [[java-jackson-interview#Q30]] диагностика ошибок типов; [[java-jackson-interview#Q31]] выбор библиотеки с учётом истории CVE."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Чтобы обезопасить Default Typing, достаточно включить `INDENT_OUTPUT` и валидировать JSON по схеме на входе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`INDENT_OUTPUT` — про форматирование и к безопасности отношения не имеет; защищает ограничение типов через `PolymorphicTypeValidator` или отказ от Default Typing.",
-                "source_of_confusion": "Любую «настройку валидации» принимают за меру безопасности, не разбирая её суть.",
-                "if_it_were_true": "Если бы помогал `INDENT_OUTPUT`, RCE-уязвимости лечились бы косметическим флагом вывода, что абсурдно.",
-                "how_it_should_be": "Реальная защита — whitelist типов (`PolymorphicTypeValidator`) или полный отказ от Default Typing на недоверенных данных."
               },
               "label": "D",
               "order": 3
@@ -1389,13 +1389,14 @@
           "question_text": "Почему `LocalDateTime` сериализуется как массив и как это исправить?",
           "options": [
             {
-              "text": "Массив получается из-за бага в `Jackson`, и единственный фикс — обернуть дату в строку вручную через `toString()` перед сериализацией.",
-              "correct": false,
+              "text": "По умолчанию `Jackson` не знает про `java.time` и сериализует `LocalDateTime` через bean-свойства, получая массив `[2026,4,20,12,0,0]`. Фикс — подключить `JavaTimeModule` и отключить `WRITE_DATES_AS_TIMESTAMPS`, тогда выйдет ISO-8601 строка. В Spring Boot это работает автоматически при наличии `jackson-datatype-jsr310` на classpath.",
+              "correct": true,
               "sections": {
-                "what_actually": "Это не баг, а отсутствие модуля `java.time`; правильный фикс — `JavaTimeModule`, а не ручное превращение даты в строку.",
-                "source_of_confusion": "Симптом выглядит как поломка, поэтому ищут обходной путь вместо подключения модуля.",
-                "if_it_were_true": "Если бы помогал только ручной `toString()`, не существовало бы штатного `jackson-datatype-jsr310`.",
-                "how_it_should_be": "Регистрируют `JavaTimeModule` и отключают timestamps — даты сами становятся ISO-строкой без ручной обработки."
+                "explanation": "По умолчанию `Jackson` не знает про `java.time` и сериализует дату как массив компонентов; `JavaTimeModule` плюс отключение timestamps дают ISO-8601 строку.",
+                "example": "`mapper.registerModule(new JavaTimeModule()); mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)` превратит дату из `[2026,4,20]` в `\"2026-04-20T12:00:00\"`.",
+                "when_to_apply": "Это первое, что проверяют, когда даты в JSON выглядят как массивы чисел или таймстампы вместо человекочитаемой ISO-строки.",
+                "edge_cases": "Даже с `JavaTimeModule`, но без отключения `WRITE_DATES_AS_TIMESTAMPS`, даты выйдут числовым таймстампом, а не ISO-строкой — нужны оба шага.",
+                "related": "[[java-jackson-interview#Q7]] флаг `WRITE_DATES_AS_TIMESTAMPS`; [[java-jackson-interview#Q13]] `@JsonFormat` для кастомного формата даты; [[java-jackson-interview#Q21]] `JavaTimeModule` как готовый модуль."
               },
               "label": "A",
               "order": 0
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "text": "По умолчанию `Jackson` не знает про `java.time` и сериализует `LocalDateTime` через bean-свойства, получая массив `[2026,4,20,12,0,0]`. Фикс — подключить `JavaTimeModule` и отключить `WRITE_DATES_AS_TIMESTAMPS`, тогда выйдет ISO-8601 строка. В Spring Boot это работает автоматически при наличии `jackson-datatype-jsr310` на classpath.",
-              "correct": true,
+              "text": "Массив получается из-за бага в `Jackson`, и единственный фикс — обернуть дату в строку вручную через `toString()` перед сериализацией.",
+              "correct": false,
               "sections": {
-                "explanation": "По умолчанию `Jackson` не знает про `java.time` и сериализует дату как массив компонентов; `JavaTimeModule` плюс отключение timestamps дают ISO-8601 строку.",
-                "example": "`mapper.registerModule(new JavaTimeModule()); mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)` превратит дату из `[2026,4,20]` в `\"2026-04-20T12:00:00\"`.",
-                "when_to_apply": "Это первое, что проверяют, когда даты в JSON выглядят как массивы чисел или таймстампы вместо человекочитаемой ISO-строки.",
-                "edge_cases": "Даже с `JavaTimeModule`, но без отключения `WRITE_DATES_AS_TIMESTAMPS`, даты выйдут числовым таймстампом, а не ISO-строкой — нужны оба шага.",
-                "related": "[[java-jackson-interview#Q7]] флаг `WRITE_DATES_AS_TIMESTAMPS`; [[java-jackson-interview#Q13]] `@JsonFormat` для кастомного формата даты; [[java-jackson-interview#Q21]] `JavaTimeModule` как готовый модуль."
+                "what_actually": "Это не баг, а отсутствие модуля `java.time`; правильный фикс — `JavaTimeModule`, а не ручное превращение даты в строку.",
+                "source_of_confusion": "Симптом выглядит как поломка, поэтому ищут обходной путь вместо подключения модуля.",
+                "if_it_were_true": "Если бы помогал только ручной `toString()`, не существовало бы штатного `jackson-datatype-jsr310`.",
+                "how_it_should_be": "Регистрируют `JavaTimeModule` и отключают timestamps — даты сами становятся ISO-строкой без ручной обработки."
               },
               "label": "D",
               "order": 3
@@ -1449,17 +1449,28 @@
           "question_text": "Как работать с `BigDecimal` в JSON?",
           "options": [
             {
-              "text": "По умолчанию `BigDecimal` сериализуется как число, а на чтении JSON-число может уйти в `double` с потерей точности. Рекомендация — `mapper.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)`, чтобы дробные читались как `BigDecimal`, либо хранить значение строкой через `@JsonFormat(shape = Shape.STRING)`. Для денег — всегда `BigDecimal`.",
-              "correct": true,
+              "text": "Точность сохраняет `SerializationFeature.WRITE_BIGDECIMAL_AS_PLAIN`, включающий чтение чисел как `BigDecimal`.",
+              "correct": false,
               "sections": {
-                "explanation": "`double` не хранит десятичные дроби точно, поэтому для денег берут `BigDecimal` и защищают его флагом `USE_BIG_DECIMAL_FOR_FLOATS` или строковым представлением.",
-                "example": "С `@JsonFormat(shape = Shape.STRING)` поле `amount` выйдет как `\"19.99\"`, что исключает любую float-погрешность при round-trip.",
-                "when_to_apply": "Эти меры применяют для денежных и финансовых полей, где даже малейшая потеря точности (например `0.1 + 0.2`) недопустима.",
-                "edge_cases": "Без `USE_BIG_DECIMAL_FOR_FLOATS` чтение в `Object`/`double` теряет точность ещё до того, как значение попадёт в `BigDecimal` — поэтому флаг важно включить именно на десериализации.",
-                "related": "[[java-jackson-interview#Q13]] `@JsonFormat` с `Shape.STRING`; [[java-jackson-interview#Q7]] флаги `DeserializationFeature`; [[java-jackson-interview#Q24]] аналогичные нюансы с датами."
+                "what_actually": "`WRITE_BIGDECIMAL_AS_PLAIN` влияет лишь на формат записи (без экспоненты); чтение дробных как `BigDecimal` включает `USE_BIG_DECIMAL_FOR_FLOATS`.",
+                "source_of_confusion": "Оба флага про `BigDecimal`, поэтому их функции смешивают.",
+                "if_it_were_true": "Если бы запись-флаг управлял чтением, потеря точности на входе всё равно случалась бы до записи.",
+                "how_it_should_be": "За чтение отвечает `DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS`, а не serialization-флаг форматирования."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Для денег лучше использовать `double`, а `BigDecimal` избыточен — `Jackson` округляет всё корректно сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`double` принципиально не хранит десятичные дроби точно (`0.1` непредставим в двоичном виде); для денег нужен именно `BigDecimal`.",
+                "source_of_confusion": "`Jackson` выглядит «умным», и кажется, что он компенсирует слабости `double`.",
+                "if_it_were_true": "Если бы `double` хватало, не было бы классических ошибок копеек при суммировании денежных значений.",
+                "how_it_should_be": "Деньги держат в `BigDecimal` и при сериализации защищают флагом или строкой, а `double` для них не используют."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`BigDecimal` по умолчанию всегда сериализуется как строка, поэтому потери точности невозможны.",
@@ -1470,29 +1481,18 @@
                 "if_it_were_true": "Если бы он по умолчанию был строкой, не было бы нужды в `USE_BIG_DECIMAL_FOR_FLOATS` и `Shape.STRING`.",
                 "how_it_should_be": "Чтобы гарантировать точность как строки, формат задают явно через `@JsonFormat(shape = Shape.STRING)`."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Точность сохраняет `SerializationFeature.WRITE_BIGDECIMAL_AS_PLAIN`, включающий чтение чисел как `BigDecimal`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`WRITE_BIGDECIMAL_AS_PLAIN` влияет лишь на формат записи (без экспоненты); чтение дробных как `BigDecimal` включает `USE_BIG_DECIMAL_FOR_FLOATS`.",
-                "source_of_confusion": "Оба флага про `BigDecimal`, поэтому их функции смешивают.",
-                "if_it_were_true": "Если бы запись-флаг управлял чтением, потеря точности на входе всё равно случалась бы до записи.",
-                "how_it_should_be": "За чтение отвечает `DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS`, а не serialization-флаг форматирования."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Для денег лучше использовать `double`, а `BigDecimal` избыточен — `Jackson` округляет всё корректно сам.",
-              "correct": false,
+              "text": "По умолчанию `BigDecimal` сериализуется как число, а на чтении JSON-число может уйти в `double` с потерей точности. Рекомендация — `mapper.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)`, чтобы дробные читались как `BigDecimal`, либо хранить значение строкой через `@JsonFormat(shape = Shape.STRING)`. Для денег — всегда `BigDecimal`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`double` принципиально не хранит десятичные дроби точно (`0.1` непредставим в двоичном виде); для денег нужен именно `BigDecimal`.",
-                "source_of_confusion": "`Jackson` выглядит «умным», и кажется, что он компенсирует слабости `double`.",
-                "if_it_were_true": "Если бы `double` хватало, не было бы классических ошибок копеек при суммировании денежных значений.",
-                "how_it_should_be": "Деньги держат в `BigDecimal` и при сериализации защищают флагом или строкой, а `double` для них не используют."
+                "explanation": "`double` не хранит десятичные дроби точно, поэтому для денег берут `BigDecimal` и защищают его флагом `USE_BIG_DECIMAL_FOR_FLOATS` или строковым представлением.",
+                "example": "С `@JsonFormat(shape = Shape.STRING)` поле `amount` выйдет как `\"19.99\"`, что исключает любую float-погрешность при round-trip.",
+                "when_to_apply": "Эти меры применяют для денежных и финансовых полей, где даже малейшая потеря точности (например `0.1 + 0.2`) недопустима.",
+                "edge_cases": "Без `USE_BIG_DECIMAL_FOR_FLOATS` чтение в `Object`/`double` теряет точность ещё до того, как значение попадёт в `BigDecimal` — поэтому флаг важно включить именно на десериализации.",
+                "related": "[[java-jackson-interview#Q13]] `@JsonFormat` с `Shape.STRING`; [[java-jackson-interview#Q7]] флаги `DeserializationFeature`; [[java-jackson-interview#Q24]] аналогичные нюансы с датами."
               },
               "label": "D",
               "order": 3
@@ -1509,18 +1509,6 @@
           "question_text": "Когда использовать Streaming API (`JsonParser`/`JsonGenerator`)?",
           "options": [
             {
-              "text": "Streaming API стоит использовать всегда, потому что он удобнее и читабельнее, чем data binding.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Streaming низкоуровневый и многословный; для обычных задач удобнее и читабельнее именно data binding, а streaming берут лишь под большие/потоковые данные.",
-                "source_of_confusion": "Слово «streaming» звучит современно, и его принимают за универсально лучший выбор.",
-                "if_it_were_true": "Если бы он был удобнее везде, никто не пользовался бы `readValue` для обычных DTO — а это основной путь.",
-                "how_it_should_be": "По умолчанию берут data binding; streaming — нишевый инструмент для огромных или потоковых JSON."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Когда JSON настолько большой, что не помещается в память, или обрабатывается потоково (NDJSON, event-stream). Тогда читают токен за токеном: внутри массива вызывают `mapper.readValue(p, User.class)` для каждого элемента и сразу его обрабатывают, не держа весь документ. Для обычных API (килобайты) берут data binding.",
               "correct": true,
               "sections": {
@@ -1530,8 +1518,8 @@
                 "edge_cases": "Streaming требует заметно больше кода и ручного управления токенами; для маленьких payload его сложность не окупается и даёт лишь источник багов.",
                 "related": "[[java-jackson-interview#Q4]] streaming среди трёх API; [[java-jackson-interview#Q27]] Tree Model как промежуточный по гибкости; [[java-jackson-interview#Q31]] streaming ради производительности на больших данных."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Streaming API применяют, когда нужно держать весь JSON в памяти и многократно обходить его поля.",
@@ -1541,6 +1529,18 @@
                 "source_of_confusion": "И streaming, и tree «обходят» структуру, поэтому их назначения путают.",
                 "if_it_were_true": "Если бы streaming держал всё в памяти, он не давал бы преимущества на данных, которые в память не влезают.",
                 "how_it_should_be": "Streaming — однопроходный и экономный по памяти; для случайного доступа к полям берут дерево."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Streaming API стоит использовать всегда, потому что он удобнее и читабельнее, чем data binding.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Streaming низкоуровневый и многословный; для обычных задач удобнее и читабельнее именно data binding, а streaming берут лишь под большие/потоковые данные.",
+                "source_of_confusion": "Слово «streaming» звучит современно, и его принимают за универсально лучший выбор.",
+                "if_it_were_true": "Если бы он был удобнее везде, никто не пользовался бы `readValue` для обычных DTO — а это основной путь.",
+                "how_it_should_be": "По умолчанию берут data binding; streaming — нишевый инструмент для огромных или потоковых JSON."
               },
               "label": "C",
               "order": 2
@@ -1569,28 +1569,16 @@
           "question_text": "Что такое Tree Model (`JsonNode`)?",
           "options": [
             {
-              "text": "Tree Model доступен только для чтения JSON; создавать или изменять дерево программно нельзя.",
+              "text": "Tree Model типизирует значения: `JsonNode` хранит точные Java-типы (`User`, `Order`) своих узлов.",
               "correct": false,
               "sections": {
-                "what_actually": "Дерево мутабельно: через `createObjectNode().put(...)` и `putArray(...)` JSON можно строить и менять программно.",
-                "source_of_confusion": "Слово «model» ассоциируется со статичным представлением входа, а не с построением вывода.",
-                "if_it_were_true": "Если бы дерево было read-only, не существовало бы `ObjectNode.put` и `ArrayNode.add`.",
-                "how_it_should_be": "`JsonNode`-дерево пригодно и для разбора, и для построения/модификации JSON."
+                "what_actually": "`JsonNode` нетипизирован по доменной модели — он хранит обобщённые JSON-значения, а доменный тип получают только через data binding.",
+                "source_of_confusion": "Подтипы `ObjectNode`/`ArrayNode` создают иллюзию строгой доменной типизации.",
+                "if_it_were_true": "Если бы дерево знало про `User`, не нужен был бы `readValue` в POJO ради типобезопасности.",
+                "how_it_should_be": "Дерево — про гибкость без типов; статическую типизацию даёт уровень data binding."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`get(...)` и `path(...)` ведут себя одинаково: оба возвращают `null` при отсутствии поля.",
-              "correct": false,
-              "sections": {
-                "what_actually": "При отсутствии узла `get(...)` возвращает `null`, а `path(...)` — `MissingNode`, что и позволяет безопасно цепочки строить.",
-                "source_of_confusion": "Оба метода «достают узел по имени», поэтому разницу в поведении на отсутствии игнорируют.",
-                "if_it_were_true": "Если бы оба давали `null`, цепочка `path(...).path(...)` падала бы NPE — но `path` спасает `MissingNode`.",
-                "how_it_should_be": "Разница принципиальна: `path` безопасен в цепочках, `get` требует проверки на `null`."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Tree Model разбирает JSON в дерево `JsonNode` (`ObjectNode`, `ArrayNode`) — удобно, когда структура заранее неизвестна или нужно точечно достать пару полей. `mapper.readTree(json)` строит дерево; `root.path(\"user\").path(\"name\").asText(\"unknown\")` безопасно навигирует. Можно и строить JSON: `createObjectNode().put(...)`.",
@@ -1602,17 +1590,29 @@
                 "edge_cases": "`get(...)` возвращает `null` при отсутствии узла, а `path(...)` — `MissingNode`, что позволяет безопасно строить цепочку; смешивание двух методов — частый источник NPE.",
                 "related": "[[java-jackson-interview#Q4]] tree среди трёх API; [[java-jackson-interview#Q5]] чтение в `Map` как альтернатива дереву; [[java-jackson-interview#Q26]] streaming для очень больших данных."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Tree Model доступен только для чтения JSON; создавать или изменять дерево программно нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дерево мутабельно: через `createObjectNode().put(...)` и `putArray(...)` JSON можно строить и менять программно.",
+                "source_of_confusion": "Слово «model» ассоциируется со статичным представлением входа, а не с построением вывода.",
+                "if_it_were_true": "Если бы дерево было read-only, не существовало бы `ObjectNode.put` и `ArrayNode.add`.",
+                "how_it_should_be": "`JsonNode`-дерево пригодно и для разбора, и для построения/модификации JSON."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Tree Model типизирует значения: `JsonNode` хранит точные Java-типы (`User`, `Order`) своих узлов.",
+              "text": "`get(...)` и `path(...)` ведут себя одинаково: оба возвращают `null` при отсутствии поля.",
               "correct": false,
               "sections": {
-                "what_actually": "`JsonNode` нетипизирован по доменной модели — он хранит обобщённые JSON-значения, а доменный тип получают только через data binding.",
-                "source_of_confusion": "Подтипы `ObjectNode`/`ArrayNode` создают иллюзию строгой доменной типизации.",
-                "if_it_were_true": "Если бы дерево знало про `User`, не нужен был бы `readValue` в POJO ради типобезопасности.",
-                "how_it_should_be": "Дерево — про гибкость без типов; статическую типизацию даёт уровень data binding."
+                "what_actually": "При отсутствии узла `get(...)` возвращает `null`, а `path(...)` — `MissingNode`, что и позволяет безопасно цепочки строить.",
+                "source_of_confusion": "Оба метода «достают узел по имени», поэтому разницу в поведении на отсутствии игнорируют.",
+                "if_it_were_true": "Если бы оба давали `null`, цепочка `path(...).path(...)` падала бы NPE — но `path` спасает `MissingNode`.",
+                "how_it_should_be": "Разница принципиальна: `path` безопасен в цепочках, `get` требует проверки на `null`."
               },
               "label": "D",
               "order": 3
@@ -1629,13 +1629,14 @@
           "question_text": "Как настроить `ObjectMapper` в Spring Boot?",
           "options": [
             {
-              "text": "Единственный способ настроить `Jackson` в Spring Boot — объявить свой `@Bean ObjectMapper`, полностью заменив авто-конфигурацию.",
-              "correct": false,
+              "text": "Три способа: (1) через `application.yml` (`spring.jackson.serialization/deserialization/...`); (2) через `Jackson2ObjectMapperBuilderCustomizer` — наименее инвазивно, не рвёт auto-configuration; (3) полная замена своим `@Bean @Primary ObjectMapper`. Рекомендуется (2): он донастраивает авто-сконфигурированный mapper, сохраняя поведение Spring Boot.",
+              "correct": true,
               "sections": {
-                "what_actually": "Есть три пути: `application.yml`, `Jackson2ObjectMapperBuilderCustomizer` и замена бина; замена — самый инвазивный, а не единственный.",
-                "source_of_confusion": "Замена бина — самый «очевидный» способ, поэтому его принимают за единственный.",
-                "if_it_were_true": "Если бы он был один, не существовало бы `spring.jackson.*` свойств и customizer-интерфейса.",
-                "how_it_should_be": "Обычно достаточно yml или customizer; полная замена нужна лишь в редких случаях полного контроля."
+                "explanation": "Spring Boot даёт три точки настройки `Jackson` — yml, customizer и замену бина — с возрастающей инвазивностью, и customizer рекомендуется как сохраняющий auto-configuration.",
+                "example": "`@Bean Jackson2ObjectMapperBuilderCustomizer c() { return b -> b.serializationInclusion(NON_NULL).featuresToDisable(WRITE_DATES_AS_TIMESTAMPS); }` точечно меняет настройки.",
+                "when_to_apply": "`application.yml` хорош для простых флагов; customizer — для большинства донастроек; полная замена бина — когда нужен полный контроль над сборкой mapper'а.",
+                "edge_cases": "Свой `@Bean ObjectMapper` отключает Spring-овскую auto-configuration `Jackson` (модули, дефолты), поэтому всё, что давало Boot, придётся восстанавливать вручную.",
+                "related": "[[java-jackson-interview#Q3]] singleton `ObjectMapper`; [[java-jackson-interview#Q6]] `fail-on-unknown-properties` в yml; [[java-jackson-interview#Q9]] `property-naming-strategy` в Spring."
               },
               "label": "A",
               "order": 0
@@ -1665,14 +1666,13 @@
               "order": 2
             },
             {
-              "text": "Три способа: (1) через `application.yml` (`spring.jackson.serialization/deserialization/...`); (2) через `Jackson2ObjectMapperBuilderCustomizer` — наименее инвазивно, не рвёт auto-configuration; (3) полная замена своим `@Bean @Primary ObjectMapper`. Рекомендуется (2): он донастраивает авто-сконфигурированный mapper, сохраняя поведение Spring Boot.",
-              "correct": true,
+              "text": "Единственный способ настроить `Jackson` в Spring Boot — объявить свой `@Bean ObjectMapper`, полностью заменив авто-конфигурацию.",
+              "correct": false,
               "sections": {
-                "explanation": "Spring Boot даёт три точки настройки `Jackson` — yml, customizer и замену бина — с возрастающей инвазивностью, и customizer рекомендуется как сохраняющий auto-configuration.",
-                "example": "`@Bean Jackson2ObjectMapperBuilderCustomizer c() { return b -> b.serializationInclusion(NON_NULL).featuresToDisable(WRITE_DATES_AS_TIMESTAMPS); }` точечно меняет настройки.",
-                "when_to_apply": "`application.yml` хорош для простых флагов; customizer — для большинства донастроек; полная замена бина — когда нужен полный контроль над сборкой mapper'а.",
-                "edge_cases": "Свой `@Bean ObjectMapper` отключает Spring-овскую auto-configuration `Jackson` (модули, дефолты), поэтому всё, что давало Boot, придётся восстанавливать вручную.",
-                "related": "[[java-jackson-interview#Q3]] singleton `ObjectMapper`; [[java-jackson-interview#Q6]] `fail-on-unknown-properties` в yml; [[java-jackson-interview#Q9]] `property-naming-strategy` в Spring."
+                "what_actually": "Есть три пути: `application.yml`, `Jackson2ObjectMapperBuilderCustomizer` и замена бина; замена — самый инвазивный, а не единственный.",
+                "source_of_confusion": "Замена бина — самый «очевидный» способ, поэтому его принимают за единственный.",
+                "if_it_were_true": "Если бы он был один, не существовало бы `spring.jackson.*` свойств и customizer-интерфейса.",
+                "how_it_should_be": "Обычно достаточно yml или customizer; полная замена нужна лишь в редких случаях полного контроля."
               },
               "label": "D",
               "order": 3
@@ -1689,31 +1689,6 @@
           "question_text": "Что такое `@JsonView` и когда его использовать?",
           "options": [
             {
-              "text": "`@JsonView` позволяет показывать **разные представления** одного объекта в разных эндпоинтах без двух DTO. Поля помечают view-интерфейсами (`Views.Public`, `Views.Internal extends Public`), а на контроллер-методе ставят `@JsonView(Views.Public.class)`, и в ответ попадут только поля этого view (и унаследованных).",
-              "correct": true,
-              "sections": {
-                "explanation": "`@JsonView` помечает поля view-интерфейсами и на контроллере отдаёт только нужный срез модели, избавляя от дублирующих DTO для близких представлений.",
-                "example": "Поле `email` с `@JsonView(Views.Internal.class)` не попадёт в ответ `@GetMapping`-метода, помеченного `@JsonView(Views.Public.class)`, но появится во `Internal`-эндпоинте.",
-                "when_to_apply": "Удобно для 2-3 представлений одной модели: публичный и внутренний срез, краткий и полный вид списка/детали.",
-                "edge_cases": "При 5+ view иерархия интерфейсов запутывается — тогда проще завести отдельные DTO с валидацией и маппингом, чем плодить view-уровни.",
-                "related": "[[java-jackson-interview#Q12]] `@JsonInclude` для пустых значений; [[java-jackson-interview#Q10]] `@JsonIgnore` для безусловного скрытия; [[java-jackson-interview#Q28]] настройка mapper в Spring."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`@JsonView` фильтрует поля по их типу данных: например показать только `String`-поля, скрыв числовые.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@JsonView` фильтрует по принадлежности поля к view-интерфейсу, а не по типу данных поля.",
-                "source_of_confusion": "Слово «view» воспринимают как «отображать поля определённого вида/типа».",
-                "if_it_were_true": "Если бы фильтрация шла по типу, нельзя было бы в одном view смешивать `String`, `Long` и другие поля одной модели.",
-                "how_it_should_be": "Критерий — членство поля в указанном view-интерфейсе; тип значения роли не играет."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`@JsonView` требует обязательно создавать отдельный DTO-класс под каждое представление.",
               "correct": false,
               "sections": {
@@ -1722,8 +1697,8 @@
                 "if_it_were_true": "Если бы нужны были отдельные DTO, `@JsonView` не давал бы никакого выигрыша над просто двумя классами.",
                 "how_it_should_be": "Один класс с view-аннотациями обслуживает несколько представлений; отдельные DTO — это альтернатива, а не требование."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`@JsonView` работает только при десериализации, ограничивая, какие поля можно прислать на вход.",
@@ -1733,6 +1708,31 @@
                 "source_of_confusion": "Любое «ограничение полей» интуитивно связывают с защитой входа.",
                 "if_it_were_true": "Если бы он касался только входа, нельзя было бы скрыть `email` в публичном ответе — а это его типовой кейс.",
                 "how_it_should_be": "Основной сценарий — управление набором полей в исходящем JSON через `@JsonView` на контроллере."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@JsonView` позволяет показывать **разные представления** одного объекта в разных эндпоинтах без двух DTO. Поля помечают view-интерфейсами (`Views.Public`, `Views.Internal extends Public`), а на контроллер-методе ставят `@JsonView(Views.Public.class)`, и в ответ попадут только поля этого view (и унаследованных).",
+              "correct": true,
+              "sections": {
+                "explanation": "`@JsonView` помечает поля view-интерфейсами и на контроллере отдаёт только нужный срез модели, избавляя от дублирующих DTO для близких представлений.",
+                "example": "Поле `email` с `@JsonView(Views.Internal.class)` не попадёт в ответ `@GetMapping`-метода, помеченного `@JsonView(Views.Public.class)`, но появится во `Internal`-эндпоинте.",
+                "when_to_apply": "Удобно для 2-3 представлений одной модели: публичный и внутренний срез, краткий и полный вид списка/детали.",
+                "edge_cases": "При 5+ view иерархия интерфейсов запутывается — тогда проще завести отдельные DTO с валидацией и маппингом, чем плодить view-уровни.",
+                "related": "[[java-jackson-interview#Q12]] `@JsonInclude` для пустых значений; [[java-jackson-interview#Q10]] `@JsonIgnore` для безусловного скрытия; [[java-jackson-interview#Q28]] настройка mapper в Spring."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@JsonView` фильтрует поля по их типу данных: например показать только `String`-поля, скрыв числовые.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@JsonView` фильтрует по принадлежности поля к view-интерфейсу, а не по типу данных поля.",
+                "source_of_confusion": "Слово «view» воспринимают как «отображать поля определённого вида/типа».",
+                "if_it_were_true": "Если бы фильтрация шла по типу, нельзя было бы в одном view смешивать `String`, `Long` и другие поля одной модели.",
+                "how_it_should_be": "Критерий — членство поля в указанном view-интерфейсе; тип значения роли не играет."
               },
               "label": "D",
               "order": 3
@@ -1761,6 +1761,18 @@
               "order": 0
             },
             {
+              "text": "`InvalidDefinitionException: no Creators` означает, что в JSON пришло лишнее поле, и лечится `@JsonIgnoreProperties`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`no Creators` — это отсутствие конструктора/фабрики для создания объекта; лишнее поле даёт другую ошибку (`UnrecognizedPropertyException`).",
+                "source_of_confusion": "Обе ошибки звучат как «проблема с маппингом», и их причины путают.",
+                "if_it_were_true": "Если бы дело было в лишнем поле, добавление no-args конструктора (реальный фикс) ничего бы не меняло.",
+                "how_it_should_be": "Фикс — добавить default-конструктор или `@JsonCreator`; `@JsonIgnoreProperties` решает совсем другую проблему."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Типовые: `UnrecognizedPropertyException` (unknown-поле → `FAIL_ON_UNKNOWN_PROPERTIES=false`); `InvalidDefinitionException ... no Creators` (нет default-конструктора → добавить no-args или `@JsonCreator`); массив вместо `LocalDateTime` (нет `JavaTimeModule`); `Infinite recursion (StackOverflowError)` на циклах (`@JsonManagedReference`/`@JsonBackReference` или `@JsonIdentityInfo`); `Could not resolve type id` (проверить `@JsonSubTypes`/`defaultImpl`).",
               "correct": true,
               "sections": {
@@ -1769,18 +1781,6 @@
                 "when_to_apply": "Этот чек-лист применяют при разборе исключений `Jackson` в логах, быстро сопоставляя текст ошибки с её типовой причиной и фиксом.",
                 "edge_cases": "Многие ошибки маскируют друг друга: например `no Creators` у immutable-класса похожа на проблему имён, но лечится конструктором или `@JsonCreator`, а не флагами.",
                 "related": "[[java-jackson-interview#Q6]] фикс `UnrecognizedPropertyException`; [[java-jackson-interview#Q24]] массив вместо `LocalDateTime`; [[java-jackson-interview#Q22]] `Could not resolve type id` в полиморфизме."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`InvalidDefinitionException: no Creators` означает, что в JSON пришло лишнее поле, и лечится `@JsonIgnoreProperties`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`no Creators` — это отсутствие конструктора/фабрики для создания объекта; лишнее поле даёт другую ошибку (`UnrecognizedPropertyException`).",
-                "source_of_confusion": "Обе ошибки звучат как «проблема с маппингом», и их причины путают.",
-                "if_it_were_true": "Если бы дело было в лишнем поле, добавление no-args конструктора (реальный фикс) ничего бы не меняло.",
-                "how_it_should_be": "Фикс — добавить default-конструктор или `@JsonCreator`; `@JsonIgnoreProperties` решает совсем другую проблему."
               },
               "label": "C",
               "order": 2
@@ -1809,18 +1809,6 @@
           "question_text": "Насколько `Jackson` быстр и когда использовать альтернативы?",
           "options": [
             {
-              "text": "`Jackson` — один из самых медленных JSON-парсеров на JVM, поэтому в продакшене его почти не используют.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Jackson` — зрелый и быстрый, де-факто стандарт в Spring и других фреймворках; миллионы операций/сек на ядре — это не «медленно».",
-                "source_of_confusion": "Богатство фич создаёт впечатление тяжеловесности и медлительности.",
-                "if_it_were_true": "Если бы он был среди самых медленных, его не делали бы дефолтом в `spring-boot-starter-web`.",
-                "how_it_should_be": "Для подавляющего большинства сервисов `Jackson` достаточно быстр; альтернативы нужны лишь при доказанном bottleneck."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Менять `Jackson` на альтернативу стоит сразу при старте любого проекта ради максимальной скорости.",
               "correct": false,
               "sections": {
@@ -1829,8 +1817,8 @@
                 "if_it_were_true": "Если бы ранняя замена была выигрышной, экосистема не строилась бы по умолчанию вокруг `Jackson`.",
                 "how_it_should_be": "Сначала измеряют профайлером; альтернативу вводят только когда JSON реально стал узким местом."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`Jackson` быстрый и зрелый: порядка миллионов операций/сек на ядре для простых POJO. Альтернативы берут точечно: `Gson` — ради простоты, `DSL-JSON` — до 2× быстрее при известной схеме, `protobuf`/`flatbuffers` — для бинарного внутреннего обмена. Для 99% backend-сервисов правильный выбор — `Jackson`; переключение оправдано только при доказанном bottleneck в профайлере.",
@@ -1842,8 +1830,8 @@
                 "edge_cases": "`fastjson2` очень быстр, но имеет историю серьёзных CVE, поэтому его берут осторожно; скорость не должна перевешивать безопасность парсера.",
                 "related": "[[java-jackson-interview#Q3]] singleton `ObjectMapper` ради производительности; [[java-jackson-interview#Q26]] streaming на больших данных; [[java-jackson-interview#Q23]] CVE как фактор выбора библиотеки."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`fastjson2` — безусловно лучший выбор: он быстрее `Jackson` и не имеет проблем с безопасностью.",
@@ -1853,6 +1841,18 @@
                 "source_of_confusion": "Высокие бенчмарки заслоняют историю уязвимостей библиотеки.",
                 "if_it_were_true": "Если бы у него не было проблем безопасности, его не отмечали бы отдельной оговоркой про CVE.",
                 "how_it_should_be": "Скорость нужно взвешивать против истории уязвимостей; для большинства задач безопаснее остаться на `Jackson`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Jackson` — один из самых медленных JSON-парсеров на JVM, поэтому в продакшене его почти не используют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jackson` — зрелый и быстрый, де-факто стандарт в Spring и других фреймворках; миллионы операций/сек на ядре — это не «медленно».",
+                "source_of_confusion": "Богатство фич создаёт впечатление тяжеловесности и медлительности.",
+                "if_it_were_true": "Если бы он был среди самых медленных, его не делали бы дефолтом в `spring-boot-starter-web`.",
+                "how_it_should_be": "Для подавляющего большинства сервисов `Jackson` достаточно быстр; альтернативы нужны лишь при доказанном bottleneck."
               },
               "label": "D",
               "order": 3

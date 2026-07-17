@@ -24,6 +24,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Сериализация — это сжатие объекта алгоритмом `Deflate` перед сохранением, JVM делает его автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сжатие — опциональная обёртка над сериализацией (`GZIPOutputStream`); объект сначала превращается в байты, и только потом их можно сжать.",
+                "source_of_confusion": "И сжатие, и сериализация уменьшают «вес» данных на диске, поэтому их объединяют в одно понятие.",
+                "if_it_were_true": "Тогда в `Redis` улетали бы автоматически сжатые 5KB вместо сырых 50KB, но JVM ничего не сжимает сама.",
+                "how_it_should_be": "Сериализация даёт сырой поток байтов; сжатие — отдельный слой, который подключают явно при необходимости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Сериализация — это компиляция `.java` в `.class`, после которой `ClassLoader` загружает байткод в JVM.",
               "correct": false,
               "sections": {
@@ -34,8 +46,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Сериализация — это deep copy объекта внутри одной JVM через рефлексию, всегда без участия потоков байтов.",
               "correct": false,
               "sections": {
@@ -43,18 +55,6 @@
                 "source_of_confusion": "Сериализацию иногда используют как трюк для глубокого копирования, и приём принимают за суть механизма.",
                 "if_it_were_true": "Тогда копирование графа из 10K узлов через `ObjectOutputStream` было бы нормой, но это даёт 200ms latency вместо 2ms через copy-constructor.",
                 "how_it_should_be": "Сериализация — это превращение объекта в поток байтов для хранения/передачи; deep copy — лишь побочное применение."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Сериализация — это сжатие объекта алгоритмом `Deflate` перед сохранением, JVM делает его автоматически.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сжатие — опциональная обёртка над сериализацией (`GZIPOutputStream`); объект сначала превращается в байты, и только потом их можно сжать.",
-                "source_of_confusion": "И сжатие, и сериализация уменьшают «вес» данных на диске, поэтому их объединяют в одно понятие.",
-                "if_it_were_true": "Тогда в `Redis` улетали бы автоматически сжатые 5KB вместо сырых 50KB, но JVM ничего не сжимает сама.",
-                "how_it_should_be": "Сериализация даёт сырой поток байтов; сжатие — отдельный слой, который подключают явно при необходимости."
               }
             }
           ]
@@ -71,18 +71,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Serializable` содержит абстрактные методы `serialize()` и `deserialize()`, которые класс обязан реализовать.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это маркерный интерфейс без единого метода; логику выполняет JVM через рефлексию, поэтому реализовывать ничего не требуется.",
-                "source_of_confusion": "По названию кажется, что «сериализуемый» интерфейс должен описывать поведение сериализации.",
-                "if_it_were_true": "Тогда написать `@Override public void serialize()` было бы обязательным, но такой код просто не компилируется.",
-                "how_it_should_be": "`Serializable` — это маркер без методов: он включает механизм, а не задаёт его реализацию."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Serializable` — маркерный интерфейс без методов из пакета `java.io`; он лишь помечает класс как пригодный к записи через `ObjectOutputStream`, иначе будет `NotSerializableException`.",
               "correct": true,
               "sections": {
@@ -94,8 +82,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Serializable` запрещает наследникам переопределять `equals()` и `hashCode()`, фиксируя их identity-реализацию.",
               "correct": false,
               "sections": {
@@ -106,8 +94,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Serializable` гарантирует, что класс безопасно передаётся между JVM любых разных версий Java.",
               "correct": false,
               "sections": {
@@ -115,6 +103,18 @@
                 "source_of_confusion": "Раз класс «сериализуем», кажется, что байты универсальны и переносимы между любыми JVM.",
                 "if_it_were_true": "Тогда миграция кэша `Hazelcast` с Java 8 на 17 проходила бы без сбоев, но на части записей возникает `InvalidClassException`.",
                 "how_it_should_be": "Совместимость обеспечивают явный `serialVersionUID` и дисциплина изменений, а не сам факт реализации `Serializable`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Serializable` содержит абстрактные методы `serialize()` и `deserialize()`, которые класс обязан реализовать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это маркерный интерфейс без единого метода; логику выполняет JVM через рефлексию, поэтому реализовывать ничего не требуется.",
+                "source_of_confusion": "По названию кажется, что «сериализуемый» интерфейс должен описывать поведение сериализации.",
+                "if_it_were_true": "Тогда написать `@Override public void serialize()` было бы обязательным, но такой код просто не компилируется.",
+                "how_it_should_be": "`Serializable` — это маркер без методов: он включает механизм, а не задаёт его реализацию."
               }
             }
           ]
@@ -191,13 +191,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Пропускается только `transient`; `static`-поля сериализуются как часть состояния объекта и переживают рестарт.",
+              "text": "Из сериализации автоматически исключаются и `transient`, и `final` поля.",
               "correct": false,
               "sections": {
-                "what_actually": "`static` — поле класса, оно одно на JVM и не привязано к экземпляру, поэтому в поток оно не пишется.",
-                "source_of_confusion": "`static`-поле физически объявлено в классе, и кажется, что оно «часть объекта».",
-                "if_it_were_true": "Тогда `static int instanceCount` переживал бы рестарт через snapshot, но после загрузки счётчик равен 0.",
-                "how_it_should_be": "В поток попадают только instance-поля без `transient`; `static` — состояние класса, не объекта."
+                "what_actually": "`final` поля сериализуются как обычные — JVM восстанавливает их через рефлексию, минуя присвоение в конструкторе.",
+                "source_of_confusion": "`final` ассоциируется с «неизменяемостью» и кажется особым случаем для сериализации.",
+                "if_it_were_true": "Тогда пароль в `final`-поле не попал бы в `Redis`, но он уезжает туда в открытом виде, и аудит фиксирует утечку.",
+                "how_it_should_be": "Исключает поле только `transient` (и `static`); `final` пишется в поток наравне с остальными."
               }
             },
             {
@@ -215,13 +215,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Из сериализации автоматически исключаются и `transient`, и `final` поля.",
+              "text": "Пропускается только `transient`; `static`-поля сериализуются как часть состояния объекта и переживают рестарт.",
               "correct": false,
               "sections": {
-                "what_actually": "`final` поля сериализуются как обычные — JVM восстанавливает их через рефлексию, минуя присвоение в конструкторе.",
-                "source_of_confusion": "`final` ассоциируется с «неизменяемостью» и кажется особым случаем для сериализации.",
-                "if_it_were_true": "Тогда пароль в `final`-поле не попал бы в `Redis`, но он уезжает туда в открытом виде, и аудит фиксирует утечку.",
-                "how_it_should_be": "Исключает поле только `transient` (и `static`); `final` пишется в поток наравне с остальными."
+                "what_actually": "`static` — поле класса, оно одно на JVM и не привязано к экземпляру, поэтому в поток оно не пишется.",
+                "source_of_confusion": "`static`-поле физически объявлено в классе, и кажется, что оно «часть объекта».",
+                "if_it_were_true": "Тогда `static int instanceCount` переживал бы рестарт через snapshot, но после загрузки счётчик равен 0.",
+                "how_it_should_be": "В поток попадают только instance-поля без `transient`; `static` — состояние класса, не объекта."
               }
             },
             {
@@ -264,18 +264,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Любое изменение класса требует смены `serialVersionUID`, иначе JVM молча теряет часть данных.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Большинство изменений (добавление поля, смена модификатора) совместимы при том же UID, а при несовместимых JVM бросает `InvalidClassException`, не теряя данные молча.",
-                "source_of_confusion": "Раз UID отвечает за версию, кажется, что любой релиз обязан его двигать.",
-                "if_it_were_true": "Тогда смена UID каждый релиз была бы нормой, но это инвалидирует весь кэш `Hazelcast` на каждом деплое.",
-                "how_it_should_be": "UID меняют только при несовместимых изменениях; совместимые правки безопасны при сохранении UID."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Добавление нового поля несовместимо: десериализатор не сможет прочитать старые объекты без этого поля.",
               "correct": false,
               "sections": {
@@ -283,6 +271,18 @@
                 "source_of_confusion": "Кажется, что «в потоке нет поля» обязательно ломает чтение.",
                 "if_it_were_true": "Тогда после добавления поля 100K сообщений в `RabbitMQ` стали бы poison pills, но они читаются с default-значением.",
                 "how_it_should_be": "Добавлять поля можно безопасно; отсутствующие в потоке поля получают значение по умолчанию."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Любое изменение класса требует смены `serialVersionUID`, иначе JVM молча теряет часть данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большинство изменений (добавление поля, смена модификатора) совместимы при том же UID, а при несовместимых JVM бросает `InvalidClassException`, не теряя данные молча.",
+                "source_of_confusion": "Раз UID отвечает за версию, кажется, что любой релиз обязан его двигать.",
+                "if_it_were_true": "Тогда смена UID каждый релиз была бы нормой, но это инвалидирует весь кэш `Hazelcast` на каждом деплое.",
+                "how_it_should_be": "UID меняют только при несовместимых изменениях; совместимые правки безопасны при сохранении UID."
               }
             },
             {
@@ -323,6 +323,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Externalizable` отличается тем, что НЕ требует no-arg конструктора — экземпляр создаётся через `Unsafe.allocateInstance`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: `Serializable` обходится без конструктора через `Unsafe`, а `Externalizable` требует public no-arg ctor и вызывает через него `readExternal`.",
+                "source_of_confusion": "Механизм `Unsafe` для `Serializable` ошибочно распространяют и на `Externalizable`.",
+                "if_it_were_true": "Тогда переход `Serializable`→`Externalizable` ради скорости проходил бы без хлопот, но даёт `InvalidClassException: no valid constructor`.",
+                "how_it_should_be": "`Externalizable` обязывает public no-arg конструктор: JVM создаёт объект им, затем вызывает `readExternal`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Externalizable extends Serializable`, добавляет `writeExternal`/`readExternal` и обязывает public no-arg конструктор; контроль ручной, `transient` игнорируется.",
               "correct": true,
               "sections": {
@@ -334,8 +346,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Externalizable` автоматически шифрует поля через JCE без явного вызова `Cipher`.",
               "correct": false,
               "sections": {
@@ -343,18 +355,6 @@
                 "source_of_confusion": "«Полный контроль над записью» путают со «встроенной защитой данных».",
                 "if_it_were_true": "Тогда PII через `Kafka` уходил бы зашифрованным сам собой, но реально он летит в plaintext.",
                 "how_it_should_be": "`Externalizable` управляет форматом записи; шифрование — отдельный слой, который нужно явно добавить."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Externalizable` отличается тем, что НЕ требует no-arg конструктора — экземпляр создаётся через `Unsafe.allocateInstance`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ровно наоборот: `Serializable` обходится без конструктора через `Unsafe`, а `Externalizable` требует public no-arg ctor и вызывает через него `readExternal`.",
-                "source_of_confusion": "Механизм `Unsafe` для `Serializable` ошибочно распространяют и на `Externalizable`.",
-                "if_it_were_true": "Тогда переход `Serializable`→`Externalizable` ради скорости проходил бы без хлопот, но даёт `InvalidClassException: no valid constructor`.",
-                "how_it_should_be": "`Externalizable` обязывает public no-arg конструктор: JVM создаёт объект им, затем вызывает `readExternal`."
               }
             }
           ]
@@ -371,30 +371,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Поля родителя сериализуются автоматически вместе с потомком, даже если родитель не `Serializable`.",
+              "text": "JVM использует `sun.misc.Unsafe.allocateInstance`, чтобы обойти отсутствие no-arg конструктора родителя.",
               "correct": false,
               "sections": {
-                "what_actually": "Поля родителя без `Serializable` не сохраняются — в поток идут только поля сериализуемого подкласса.",
-                "source_of_confusion": "Интуитивно «всё, что есть в объекте, должно сохраняться».",
-                "if_it_were_true": "Тогда `balance` из родителя `Account` пережил бы рестарт в кэше, но после восстановления он обнуляется.",
-                "how_it_should_be": "Сохраняются только поля Serializable-классов цепочки; поля несериализуемого родителя теряются."
+                "what_actually": "`Unsafe` применяется только когда родитель сам `Serializable` (тогда конструктор не вызывается); для несериализуемого родителя no-arg ctor обязателен.",
+                "source_of_confusion": "Известно, что `Serializable`-объекты создаются без конструктора, и это обобщают на любой случай.",
+                "if_it_were_true": "Тогда отсутствие no-arg ctor было бы неважно, но в Native Image с ограниченным `Unsafe` старт падает с `InvalidClassException`.",
+                "how_it_should_be": "Для несериализуемого родителя JVM вызывает именно его no-arg конструктор, а не обходит создание через `Unsafe`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Десериализация падает с `NotSerializableException`, если родитель не реализует `Serializable`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Подкласс остаётся сериализуемым; падение возможно лишь когда у родителя нет доступного no-arg конструктора (`InvalidClassException`).",
-                "source_of_confusion": "`NotSerializableException` помнят как «что-то с сериализацией пошло не так» и приписывают любому случаю.",
-                "if_it_were_true": "Тогда пришлось бы добавлять `implements Serializable` родителю, ломая чужой immutable API без no-arg ctor.",
-                "how_it_should_be": "Несериализуемый родитель допустим, нужен лишь его no-arg конструктор; иначе бросается `InvalidClassException`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Поля несериализуемого родителя НЕ сохраняются; при десериализации вызывается no-arg конструктор родителя (обязателен, иначе `InvalidClassException`).",
               "correct": true,
               "sections": {
@@ -406,15 +394,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "JVM использует `sun.misc.Unsafe.allocateInstance`, чтобы обойти отсутствие no-arg конструктора родителя.",
+              "order": 2,
+              "label": "C",
+              "text": "Десериализация падает с `NotSerializableException`, если родитель не реализует `Serializable`.",
               "correct": false,
               "sections": {
-                "what_actually": "`Unsafe` применяется только когда родитель сам `Serializable` (тогда конструктор не вызывается); для несериализуемого родителя no-arg ctor обязателен.",
-                "source_of_confusion": "Известно, что `Serializable`-объекты создаются без конструктора, и это обобщают на любой случай.",
-                "if_it_were_true": "Тогда отсутствие no-arg ctor было бы неважно, но в Native Image с ограниченным `Unsafe` старт падает с `InvalidClassException`.",
-                "how_it_should_be": "Для несериализуемого родителя JVM вызывает именно его no-arg конструктор, а не обходит создание через `Unsafe`."
+                "what_actually": "Подкласс остаётся сериализуемым; падение возможно лишь когда у родителя нет доступного no-arg конструктора (`InvalidClassException`).",
+                "source_of_confusion": "`NotSerializableException` помнят как «что-то с сериализацией пошло не так» и приписывают любому случаю.",
+                "if_it_were_true": "Тогда пришлось бы добавлять `implements Serializable` родителю, ломая чужой immutable API без no-arg ctor.",
+                "how_it_should_be": "Несериализуемый родитель допустим, нужен лишь его no-arg конструктор; иначе бросается `InvalidClassException`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Поля родителя сериализуются автоматически вместе с потомком, даже если родитель не `Serializable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поля родителя без `Serializable` не сохраняются — в поток идут только поля сериализуемого подкласса.",
+                "source_of_confusion": "Интуитивно «всё, что есть в объекте, должно сохраняться».",
+                "if_it_were_true": "Тогда `balance` из родителя `Account` пережил бы рестарт в кэше, но после восстановления он обнуляется.",
+                "how_it_should_be": "Сохраняются только поля Serializable-классов цепочки; поля несериализуемого родителя теряются."
               }
             }
           ]
@@ -443,18 +443,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Нужно явно вызвать `obj.serialize(stream)` — этот метод приходит из интерфейса `Serializable`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Serializable` не содержит методов; вся логика записи находится в `ObjectOutputStream.writeObject()`.",
-                "source_of_confusion": "Раз интерфейс называется «сериализуемый», ждут у него метод `serialize`.",
-                "if_it_were_true": "Тогда в каждый DTO писали бы `serialize()`, но это лишний boilerplate, который удаляют на ревью.",
-                "how_it_should_be": "Запись инициирует поток (`writeObject`), а класс лишь помечен маркером `Serializable`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Поток нужно обязательно закрывать вручную через `finally { fos.close() }`, иначе данные не попадут на диск.",
               "correct": false,
               "sections": {
@@ -462,6 +450,18 @@
                 "source_of_confusion": "Старые туториалы показывают ручное закрытие в `finally`, и это считают единственно верным.",
                 "if_it_were_true": "Тогда без `finally` файл всегда оставался бы пустым, но `try-with-resources` гарантирует корректное закрытие.",
                 "how_it_should_be": "Достаточно `try-with-resources`: он закрывает поток детерминированно, без ручного `close()`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Нужно явно вызвать `obj.serialize(stream)` — этот метод приходит из интерфейса `Serializable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Serializable` не содержит методов; вся логика записи находится в `ObjectOutputStream.writeObject()`.",
+                "source_of_confusion": "Раз интерфейс называется «сериализуемый», ждут у него метод `serialize`.",
+                "if_it_were_true": "Тогда в каждый DTO писали бы `serialize()`, но это лишний boilerplate, который удаляют на ревью.",
+                "how_it_should_be": "Запись инициирует поток (`writeObject`), а класс лишь помечен маркером `Serializable`."
               }
             },
             {
@@ -491,19 +491,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`writeReplace()` подменяет объект до записи в поток (например, на прокси); `readResolve()` подменяет объект после десериализации (например, возвращает единственный `INSTANCE` синглтона).",
-              "correct": true,
-              "sections": {
-                "explanation": "Без `readResolve` десериализация синглтона создаст второй экземпляр; `writeReplace` лежит в основе `Serialization Proxy Pattern`.",
-                "example": "`java.lang.Boolean.readResolve` возвращает константы `TRUE`/`FALSE`, чтобы `==` продолжал работать после десериализации.",
-                "when_to_apply": "`readResolve` применяют для синглтонов и канонических констант, `writeReplace` — для прокси и компактных представлений объекта.",
-                "edge_cases": "`writeReplace` срабатывает до записи байтов, `readResolve` — после их чтения; путаница в порядке ломает логику подмены.",
-                "related": "[[java-serialization-interview#Q13]] `Serialization Proxy Pattern`; [[java-serialization-interview#Q34]] `readResolve` и Singleton; [[java-serialization-interview#Q12]] enum-сериализация."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`writeReplace` вызывается ПОСЛЕ записи объекта в поток и нужен для логирования и аудита.",
               "correct": false,
               "sections": {
@@ -514,8 +501,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`readResolve` подменяет байты в потоке перед чтением, оставляя оригинальный объект нетронутым.",
               "correct": false,
               "sections": {
@@ -523,6 +510,19 @@
                 "source_of_confusion": "Кажется логичным, что метод с `read` в имени работает на этапе чтения байтов.",
                 "if_it_were_true": "Тогда `readResolve` был бы input-фильтром, и через него строили бы защиту, минуя `ObjectInputFilter`, пропуская gadget chain.",
                 "how_it_should_be": "`readResolve` подменяет готовый объект после чтения; за фильтрацию потока отвечает `ObjectInputFilter`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`writeReplace()` подменяет объект до записи в поток (например, на прокси); `readResolve()` подменяет объект после десериализации (например, возвращает единственный `INSTANCE` синглтона).",
+              "correct": true,
+              "sections": {
+                "explanation": "Без `readResolve` десериализация синглтона создаст второй экземпляр; `writeReplace` лежит в основе `Serialization Proxy Pattern`.",
+                "example": "`java.lang.Boolean.readResolve` возвращает константы `TRUE`/`FALSE`, чтобы `==` продолжал работать после десериализации.",
+                "when_to_apply": "`readResolve` применяют для синглтонов и канонических констант, `writeReplace` — для прокси и компактных представлений объекта.",
+                "edge_cases": "`writeReplace` срабатывает до записи байтов, `readResolve` — после их чтения; путаница в порядке ломает логику подмены.",
+                "related": "[[java-serialization-interview#Q13]] `Serialization Proxy Pattern`; [[java-serialization-interview#Q34]] `readResolve` и Singleton; [[java-serialization-interview#Q12]] enum-сериализация."
               }
             },
             {
@@ -563,6 +563,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Вызов `defaultReadObject()` не нужен — JVM делает его автоматически перед телом `readObject`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JVM не делает этого: `readObject` полностью замещает стандартное чтение, и без `defaultReadObject` non-transient поля остаются в default-состоянии.",
+                "source_of_confusion": "Кажется, что «стандартное» поведение подключается само собой.",
+                "if_it_were_true": "Тогда забытый `defaultReadObject` был бы безвреден, но все non-transient поля окажутся `null`/`0`.",
+                "how_it_should_be": "`defaultReadObject()` вызывают первой строкой `readObject` явно, чтобы прочитать стандартные поля."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Сигнатура строго `private void writeObject(ObjectOutputStream)` / `private void readObject(ObjectInputStream)`; первой строкой вызывают `defaultWriteObject`/`defaultReadObject` для совместимости.",
               "correct": true,
               "sections": {
@@ -574,8 +586,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`writeObject` должен иметь модификатор `protected`, чтобы наследники могли расширить логику записи.",
               "correct": false,
               "sections": {
@@ -583,18 +595,6 @@
                 "source_of_confusion": "Для повторного использования логики интуитивно хочется `protected` ради наследования.",
                 "if_it_were_true": "Тогда `protected` ради DRY работал бы, но JVM игнорирует метод и шифрование не выполняется.",
                 "how_it_should_be": "Метод обязан быть `private`; для подклассов пишут отдельный приватный `writeObject`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Вызов `defaultReadObject()` не нужен — JVM делает его автоматически перед телом `readObject`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "JVM не делает этого: `readObject` полностью замещает стандартное чтение, и без `defaultReadObject` non-transient поля остаются в default-состоянии.",
-                "source_of_confusion": "Кажется, что «стандартное» поведение подключается само собой.",
-                "if_it_were_true": "Тогда забытый `defaultReadObject` был бы безвреден, но все non-transient поля окажутся `null`/`0`.",
-                "how_it_should_be": "`defaultReadObject()` вызывают первой строкой `readObject` явно, чтобы прочитать стандартные поля."
               }
             }
           ]
@@ -611,18 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Валидация в `readObject` избыточна: данные приходят из доверенного потока, ранее сериализованного нашим же кодом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`readObject` — публичный конструктор из байтов: атакующий может подсунуть произвольный поток, минуя бизнес-конструктор и его проверки.",
-                "source_of_confusion": "Раз мы сами писали данные, кажется, что чтение всегда безопасно.",
-                "if_it_were_true": "Тогда не пришлось бы проверять `balance >= 0`, но атакующий через RMI прислал бы объект с `balance = -1_000_000`.",
-                "how_it_should_be": "Поток считается недоверенным: в `readObject` проверяют те же инварианты, что и в конструкторе."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Достаточно проверить `Objects.requireNonNull` для всех полей объекта.",
               "correct": false,
               "sections": {
@@ -633,8 +621,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "После `defaultReadObject` валидировать все инварианты, как в конструкторе; при нарушении бросать `InvalidObjectException`; делать defensive copy мутабельных полей.",
               "correct": true,
               "sections": {
@@ -646,8 +634,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Если бросить `IllegalArgumentException` в `readObject`, JVM проигнорирует его и вернёт частично восстановленный объект.",
               "correct": false,
               "sections": {
@@ -655,6 +643,18 @@
                 "source_of_confusion": "Кажется, что «нештатное» исключение во время чтения просто проглатывается.",
                 "if_it_were_true": "Тогда невалидный объект всё равно вернулся бы, но `IllegalArgumentException` рушит caller, ожидающий `IOException`.",
                 "how_it_should_be": "Бросать из `readObject` именно `InvalidObjectException`; исключение корректно доходит до вызывающего."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Валидация в `readObject` избыточна: данные приходят из доверенного потока, ранее сериализованного нашим же кодом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`readObject` — публичный конструктор из байтов: атакующий может подсунуть произвольный поток, минуя бизнес-конструктор и его проверки.",
+                "source_of_confusion": "Раз мы сами писали данные, кажется, что чтение всегда безопасно.",
+                "if_it_were_true": "Тогда не пришлось бы проверять `balance >= 0`, но атакующий через RMI прислал бы объект с `balance = -1_000_000`.",
+                "how_it_should_be": "Поток считается недоверенным: в `readObject` проверяют те же инварианты, что и в конструкторе."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Сериализуются все поля enum-константы, включая её дополнительные `private final` поля.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В поток пишется только имя константы; доп.поля игнорируются — они существуют в определении класса, а не в данных.",
-                "source_of_confusion": "Раз у константы есть поля, кажется, что они тоже попадают в поток.",
-                "if_it_were_true": "Тогда `String displayName` сохранялся бы в потоке, но после `valueOf` он берётся из текущего кода класса.",
-                "how_it_should_be": "Enum сериализуется по имени; значения доп.полей читаются из определения, а не из сериализованных данных."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "При десериализации enum создаётся новый экземпляр через рефлексию, поэтому `==` между ними даёт `false`.",
               "correct": false,
               "sections": {
@@ -693,8 +681,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Чтобы `enum` сериализовался, нужно явно реализовать `Serializable` и задать `serialVersionUID`.",
               "correct": false,
               "sections": {
@@ -705,8 +693,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Сериализуется только имя константы (`\"ACTIVE\"`); при чтении вызывается `Enum.valueOf(class, name)` и возвращается тот же экземпляр; кастомные `writeObject`/`readObject` игнорируются.",
               "correct": true,
               "sections": {
@@ -715,6 +703,18 @@
                 "when_to_apply": "Полагаться на enum-сериализацию стоит для констант состояния и синглтонов, которым нужна гарантированная идентичность.",
                 "edge_cases": "Доп.поля константы не пишутся в поток — их значение берётся из определения класса; `serialVersionUID` для enum игнорируется.",
                 "related": "[[java-serialization-interview#Q9]] `writeReplace`/`readResolve`; [[java-serialization-interview#Q34]] enum-Singleton; [[java-serialization-interview#Q19]] record-сериализация."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сериализуются все поля enum-константы, включая её дополнительные `private final` поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В поток пишется только имя константы; доп.поля игнорируются — они существуют в определении класса, а не в данных.",
+                "source_of_confusion": "Раз у константы есть поля, кажется, что они тоже попадают в поток.",
+                "if_it_were_true": "Тогда `String displayName` сохранялся бы в потоке, но после `valueOf` он берётся из текущего кода класса.",
+                "how_it_should_be": "Enum сериализуется по имени; значения доп.полей читаются из определения, а не из сериализованных данных."
               }
             }
           ]
@@ -731,6 +731,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Это паттерн, при котором `ObjectOutputStream` оборачивается в `ProxyOutputStream` для логирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого `ProxyOutputStream` нет: паттерн работает на уровне класса, который через `writeReplace` подменяет себя на nested-прокси.",
+                "source_of_confusion": "Слово «proxy» наводит на мысль об обёртке вокруг потока.",
+                "if_it_were_true": "Тогда stream-обёртка решала бы проблемы сериализации, но она не закрывает ни `final`-поля, ни RCE, ни инварианты.",
+                "how_it_should_be": "Прокси — это приватный класс с данными, а не обёртка над `ObjectOutputStream`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Serialization Proxy` — это просто другое название `Externalizable` для классов с `final`-полями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные механизмы: `Externalizable` требует public no-arg ctor (несовместим с immutable+final), а Proxy работает поверх `Serializable` через `writeReplace`.",
+                "source_of_confusion": "Оба про «ручной контроль» сериализации, и их объединяют в одно.",
+                "if_it_were_true": "Тогда переход на `Externalizable` заменял бы паттерн, но он ломает иммутабельность и требует no-arg ctor.",
+                "how_it_should_be": "Proxy Pattern — это nested-прокси поверх `Serializable`, а не синоним `Externalizable`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Внутри класса — приватный nested `SerializationProxy implements Serializable`; `writeReplace` возвращает прокси, `readObject` основного класса бросает `InvalidObjectException`, а `readResolve` прокси создаёт объект через публичный конструктор.",
               "correct": true,
               "sections": {
@@ -742,20 +766,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Это паттерн, при котором `ObjectOutputStream` оборачивается в `ProxyOutputStream` для логирования.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Никакого `ProxyOutputStream` нет: паттерн работает на уровне класса, который через `writeReplace` подменяет себя на nested-прокси.",
-                "source_of_confusion": "Слово «proxy» наводит на мысль об обёртке вокруг потока.",
-                "if_it_were_true": "Тогда stream-обёртка решала бы проблемы сериализации, но она не закрывает ни `final`-поля, ни RCE, ни инварианты.",
-                "how_it_should_be": "Прокси — это приватный класс с данными, а не обёртка над `ObjectOutputStream`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Это паттерн, где сам класс шифрует поля в `writeObject` через AES перед записью.",
               "correct": false,
               "sections": {
@@ -763,18 +775,6 @@
                 "source_of_confusion": "И паттерн, и шифрование позиционируют как «безопасную сериализацию».",
                 "if_it_were_true": "Тогда AES закрывал бы уязвимости десериализации, но gadget chain срабатывает до расшифровки.",
                 "how_it_should_be": "Паттерн обеспечивает безопасное восстановление через конструктор; шифрование подключают отдельным слоем."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Serialization Proxy` — это просто другое название `Externalizable` для классов с `final`-полями.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это разные механизмы: `Externalizable` требует public no-arg ctor (несовместим с immutable+final), а Proxy работает поверх `Serializable` через `writeReplace`.",
-                "source_of_confusion": "Оба про «ручной контроль» сериализации, и их объединяют в одно.",
-                "if_it_were_true": "Тогда переход на `Externalizable` заменял бы паттерн, но он ломает иммутабельность и требует no-arg ctor.",
-                "how_it_should_be": "Proxy Pattern — это nested-прокси поверх `Serializable`, а не синоним `Externalizable`."
               }
             }
           ]
@@ -791,18 +791,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главный плюс — объект становится на 50% меньше в потоке за счёт пропуска метаданных класса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Размер примерно тот же: метаданные класса всё равно записываются прокси; реальная цена — ~14% CPU-оверхеда.",
-                "source_of_confusion": "«Прокси с минимальными данными» создаёт впечатление компактности потока.",
-                "if_it_were_true": "Тогда паттерн выбирали бы ради экономии размера, но замеры разочаровывают и рефакторинг откатывают.",
-                "how_it_should_be": "Главная выгода — безопасное восстановление через конструктор, а не уменьшение размера потока."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Плюс: восстановление через конструктор (валидация + `final`-поля + защита от gadget chain). Минус: ~14% overhead, не работает с подклассами (прокси вернёт родительский тип) и с self-reference циклами.",
               "correct": true,
               "sections": {
@@ -814,8 +802,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Минус: паттерн требует Java 17+ из-за зависимости от sealed-классов.",
               "correct": false,
               "sections": {
@@ -826,8 +814,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Плюс: паттерн автоматически защищает от DoS-атак типа deserialization bomb.",
               "correct": false,
               "sections": {
@@ -835,6 +823,18 @@
                 "source_of_confusion": "Раз паттерн «безопасный», его принимают за защиту от всех видов атак.",
                 "if_it_were_true": "Тогда фильтр был бы не нужен, но без него deserialization bomb через RMI валит JVM с OOM.",
                 "how_it_should_be": "От DoS защищает `ObjectInputFilter`; паттерн закрывает инварианты и RCE через конструктор, но не bomb."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главный плюс — объект становится на 50% меньше в потоке за счёт пропуска метаданных класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер примерно тот же: метаданные класса всё равно записываются прокси; реальная цена — ~14% CPU-оверхеда.",
+                "source_of_confusion": "«Прокси с минимальными данными» создаёт впечатление компактности потока.",
+                "if_it_were_true": "Тогда паттерн выбирали бы ради экономии размера, но замеры разочаровывают и рефакторинг откатывают.",
+                "how_it_should_be": "Главная выгода — безопасное восстановление через конструктор, а не уменьшение размера потока."
               }
             }
           ]
@@ -851,18 +851,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главный риск — утечка чувствительных данных через `transient`-поля, которые JVM всё равно пишет в поток.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`transient`-поля не пишутся — в этом смысл модификатора; утечки бывают, когда поле забыли пометить `transient`, а не наоборот.",
-                "source_of_confusion": "«Утечка данных» — заметный риск, и его приписывают именно `transient`.",
-                "if_it_were_true": "Тогда отказ от `Serializable` «из-за утечек» был бы оправдан, но команда теряет стабильность ради ad-hoc формата.",
-                "how_it_should_be": "Главный риск — RCE через gadget chains; `transient` как раз исключает поле из потока."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Единственный риск — `OutOfMemoryError` при десериализации больших коллекций.",
               "correct": false,
               "sections": {
@@ -873,8 +861,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "RCE через gadget chains (Apache Commons Collections CVE-2015-7501), DoS через deserialization bomb (граф вложенных `HashSet`) и нарушение инвариантов (объекты в невалидном состоянии минуя конструктор).",
               "correct": true,
               "sections": {
@@ -886,8 +874,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Serializable` безопасен по умолчанию; риски возникают только при явном использовании `Externalizable`.",
               "correct": false,
               "sections": {
@@ -895,6 +883,18 @@
                 "source_of_confusion": "`Externalizable` с «ручным контролем» кажется более рискованным, а `Serializable` — безобидным.",
                 "if_it_were_true": "Тогда совет «ставьте `Serializable`, это безопасно» был бы верен, но без `ObjectInputFilter` это путь к breach.",
                 "how_it_should_be": "Опасен именно стандартный `Serializable`-механизм; защита — фильтры и отказ от десериализации чужих байтов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главный риск — утечка чувствительных данных через `transient`-поля, которые JVM всё равно пишет в поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`transient`-поля не пишутся — в этом смысл модификатора; утечки бывают, когда поле забыли пометить `transient`, а не наоборот.",
+                "source_of_confusion": "«Утечка данных» — заметный риск, и его приписывают именно `transient`.",
+                "if_it_were_true": "Тогда отказ от `Serializable` «из-за утечек» был бы оправдан, но команда теряет стабильность ради ad-hoc формата.",
+                "how_it_should_be": "Главный риск — RCE через gadget chains; `transient` как раз исключает поле из потока."
               }
             }
           ]
@@ -911,18 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Это последовательность шифрованных блоков в потоке, которые расшифровываются специальным gadget-классом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Никакого шифрования нет — gadget chain работает на plaintext-байтах через рефлексию и вызовы существующих методов.",
-                "source_of_confusion": "Слово «chain» и аура «хакерства» наводят на мысль о шифрованных блоках.",
-                "if_it_were_true": "Тогда TLS на RMI-endpoint решал бы проблему, но атака внутри сети всё равно проходит.",
-                "how_it_should_be": "Gadget chain — это RCE на цепочке plaintext-вызовов, защита — фильтрация классов, а не шифрование."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Атака возможна только через RMI и не работает с обычным `ObjectInputStream` из файла.",
               "correct": false,
               "sections": {
@@ -930,6 +918,19 @@
                 "source_of_confusion": "RMI — самый известный пример, и его принимают за единственный вектор.",
                 "if_it_were_true": "Тогда отключение RMI закрывало бы дыру, но атакующий загрузит `.ser` через REST upload и RCE пройдёт.",
                 "how_it_should_be": "Любая десериализация недоверенного потока опасна; ограничение только RMI не спасает."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Цепочка вызовов существующих методов библиотек на classpath (Commons Collections `InvokerTransformer`, Spring `MethodInvokeTypeProvider`), которая через `readObject` приводит к `Runtime.exec()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Атакующий не загружает свой код — он выстраивает поток так, чтобы при чтении сработала цепочка уже существующих в classpath методов; инструмент эксплуатации — `ysoserial`.",
+                "example": "`ysoserial`-payload применяли против `Jenkins`, `WebSphere`, `Oracle WebLogic` — у всех были CVE на десериализацию.",
+                "when_to_apply": "Помнить про gadget chain нужно везде, где `ObjectInputStream.readObject()` читает недоверенные данные (HTTP, RMI, файлы, кэш).",
+                "edge_cases": "Защита — `ObjectInputFilter` плюс удаление gadget-библиотек из classpath; gadget chain работает на plaintext-байтах, TLS его не останавливает.",
+                "related": "[[java-serialization-interview#Q15]] риски безопасности; [[java-serialization-interview#Q17]] `ObjectInputFilter`; [[java-serialization-interview#Q33]] OWASP и эксплойты."
               }
             },
             {
@@ -947,14 +948,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Цепочка вызовов существующих методов библиотек на classpath (Commons Collections `InvokerTransformer`, Spring `MethodInvokeTypeProvider`), которая через `readObject` приводит к `Runtime.exec()`.",
-              "correct": true,
+              "text": "Это последовательность шифрованных блоков в потоке, которые расшифровываются специальным gadget-классом.",
+              "correct": false,
               "sections": {
-                "explanation": "Атакующий не загружает свой код — он выстраивает поток так, чтобы при чтении сработала цепочка уже существующих в classpath методов; инструмент эксплуатации — `ysoserial`.",
-                "example": "`ysoserial`-payload применяли против `Jenkins`, `WebSphere`, `Oracle WebLogic` — у всех были CVE на десериализацию.",
-                "when_to_apply": "Помнить про gadget chain нужно везде, где `ObjectInputStream.readObject()` читает недоверенные данные (HTTP, RMI, файлы, кэш).",
-                "edge_cases": "Защита — `ObjectInputFilter` плюс удаление gadget-библиотек из classpath; gadget chain работает на plaintext-байтах, TLS его не останавливает.",
-                "related": "[[java-serialization-interview#Q15]] риски безопасности; [[java-serialization-interview#Q17]] `ObjectInputFilter`; [[java-serialization-interview#Q33]] OWASP и эксплойты."
+                "what_actually": "Никакого шифрования нет — gadget chain работает на plaintext-байтах через рефлексию и вызовы существующих методов.",
+                "source_of_confusion": "Слово «chain» и аура «хакерства» наводят на мысль о шифрованных блоках.",
+                "if_it_were_true": "Тогда TLS на RMI-endpoint решал бы проблему, но атака внутри сети всё равно проходит.",
+                "how_it_should_be": "Gadget chain — это RCE на цепочке plaintext-вызовов, защита — фильтрация классов, а не шифрование."
               }
             }
           ]
@@ -971,14 +971,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Whitelist классов через паттерн `\"com.example.dto.*;!*\"` или programmatic `ObjectInputFilter` с `info.depth`/`info.references`; глобально через `-Djdk.serialFilter` (JEP 290).",
-              "correct": true,
+              "text": "Фильтр настраивается только программно через `setObjectInputFilter()`; глобально задать его нельзя.",
+              "correct": false,
               "sections": {
-                "explanation": "Паттерн читается слева направо — первый матч решает; `!*` в конце означает «всё остальное отклонить», то есть deny by default.",
-                "example": "`WebLogic` 12.2.1.4+ применяет `serialFilter` по умолчанию, закрывая большинство ysoserial gadget chains.",
-                "when_to_apply": "Фильтр настраивают, когда десериализация неизбежна (legacy RMI, кэш), чтобы ограничить разрешённые классы и сложность графа.",
-                "edge_cases": "Кроме whitelist классов фильтр поддерживает `maxdepth`/`maxrefs`/`maxbytes`/`maxarray`; в Java 17+ есть `setSerialFilterFactory` для контекстных фильтров.",
-                "related": "[[java-serialization-interview#Q15]] риски безопасности; [[java-serialization-interview#Q16]] gadget chain; [[java-serialization-interview#Q18]] общая защита."
+                "what_actually": "Глобально фильтр задаётся через `-Djdk.serialFilter=\"...\"` или `Security.setProperty(\"jdk.serialFilter\", ...)` — это рекомендуемая практика на всё приложение.",
+                "source_of_confusion": "Первый знакомый способ — локальный `setObjectInputFilter`, и его считают единственным.",
+                "if_it_were_true": "Тогда фильтр ставили бы вручную в каждом месте, и новый endpoint легко забыть, оставив дыру.",
+                "how_it_should_be": "Лучше задавать фильтр глобально через системное свойство, чтобы он покрывал все точки входа."
               }
             },
             {
@@ -996,18 +995,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Фильтр настраивается только программно через `setObjectInputFilter()`; глобально задать его нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Глобально фильтр задаётся через `-Djdk.serialFilter=\"...\"` или `Security.setProperty(\"jdk.serialFilter\", ...)` — это рекомендуемая практика на всё приложение.",
-                "source_of_confusion": "Первый знакомый способ — локальный `setObjectInputFilter`, и его считают единственным.",
-                "if_it_were_true": "Тогда фильтр ставили бы вручную в каждом месте, и новый endpoint легко забыть, оставив дыру.",
-                "how_it_should_be": "Лучше задавать фильтр глобально через системное свойство, чтобы он покрывал все точки входа."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Фильтр работает только на уровне имени класса; ограничить размер потока или глубину графа невозможно.",
               "correct": false,
               "sections": {
@@ -1015,6 +1002,19 @@
                 "source_of_confusion": "Whitelist классов — самая известная функция, и фильтр сводят только к ней.",
                 "if_it_were_true": "Тогда bomb внутри разрешённых `HashSet` всё равно валила бы JVM, но лимиты глубины/ссылок это предотвращают.",
                 "how_it_should_be": "Помимо whitelist фильтр ограничивает глубину, число ссылок, размер потока и массивов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Whitelist классов через паттерн `\"com.example.dto.*;!*\"` или programmatic `ObjectInputFilter` с `info.depth`/`info.references`; глобально через `-Djdk.serialFilter` (JEP 290).",
+              "correct": true,
+              "sections": {
+                "explanation": "Паттерн читается слева направо — первый матч решает; `!*` в конце означает «всё остальное отклонить», то есть deny by default.",
+                "example": "`WebLogic` 12.2.1.4+ применяет `serialFilter` по умолчанию, закрывая большинство ysoserial gadget chains.",
+                "when_to_apply": "Фильтр настраивают, когда десериализация неизбежна (legacy RMI, кэш), чтобы ограничить разрешённые классы и сложность графа.",
+                "edge_cases": "Кроме whitelist классов фильтр поддерживает `maxdepth`/`maxrefs`/`maxbytes`/`maxarray`; в Java 17+ есть `setSerialFilterFactory` для контекстных фильтров.",
+                "related": "[[java-serialization-interview#Q15]] риски безопасности; [[java-serialization-interview#Q16]] gadget chain; [[java-serialization-interview#Q18]] общая защита."
               }
             }
           ]
@@ -1031,6 +1031,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Снизить `-Xmx` до 512MB — это автоматически предотвратит deserialization bomb.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bomb нагружает CPU вычислением хэшей, а не только память; маленький heap лишь меняет симптом с OOM на thrashing/`StackOverflow`.",
+                "source_of_confusion": "Bomb ассоциируют исключительно с переполнением памяти.",
+                "if_it_were_true": "Тогда урезание heap «для защиты» помогало бы, но при этом валятся нормальные batch-операции, а gadget chain не закрыт.",
+                "how_it_should_be": "От bomb защищает `ObjectInputFilter` с `maxdepth`/`maxrefs`, а не уменьшение heap."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Достаточно использовать HTTPS на endpoint'ах с десериализацией — TLS защищает от RCE.",
               "correct": false,
               "sections": {
@@ -1038,19 +1050,6 @@
                 "source_of_confusion": "HTTPS — привычный синоним «безопасности», его принимают за защиту от любых атак.",
                 "if_it_were_true": "Тогда TLS+mTLS закрывал бы дыру, но инсайдер с легитимным сертификатом эксплуатирует RCE через `ObjectInputStream` без фильтра.",
                 "how_it_should_be": "TLS защищает канал; от десериализации защищают фильтры, proxy и отказ от binary-формата."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Defense in depth: не использовать Java Serialization для внешних данных (JSON/Protobuf), `ObjectInputFilter` whitelist, `Serialization Proxy Pattern`, удалить gadget-библиотеки, JFR-мониторинг, RASP/WAF.",
-              "correct": true,
-              "sections": {
-                "explanation": "Серебряной пули нет — нужна многослойная защита; главное правило — избегать binary-десериализации для недоверенного ввода.",
-                "example": "OWASP Cheat Sheet «Deserialization» рекомендует именно этот стек; `Spring Security`/Boot 3.2+ активирует фильтр по умолчанию.",
-                "when_to_apply": "Подход применяют везде, где приём данных извне может попасть в `readObject`: RMI, Spring Session в Redis, JMS.",
-                "edge_cases": "Лучшая защита — вообще не десериализовать чужие байты; если нельзя — комбинировать фильтр, proxy и мониторинг.",
-                "related": "[[java-serialization-interview#Q15]] риски безопасности; [[java-serialization-interview#Q17]] `ObjectInputFilter`; [[java-serialization-interview#Q33]] OWASP и эксплойты."
               }
             },
             {
@@ -1068,13 +1067,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Снизить `-Xmx` до 512MB — это автоматически предотвратит deserialization bomb.",
-              "correct": false,
+              "text": "Defense in depth: не использовать Java Serialization для внешних данных (JSON/Protobuf), `ObjectInputFilter` whitelist, `Serialization Proxy Pattern`, удалить gadget-библиотеки, JFR-мониторинг, RASP/WAF.",
+              "correct": true,
               "sections": {
-                "what_actually": "Bomb нагружает CPU вычислением хэшей, а не только память; маленький heap лишь меняет симптом с OOM на thrashing/`StackOverflow`.",
-                "source_of_confusion": "Bomb ассоциируют исключительно с переполнением памяти.",
-                "if_it_were_true": "Тогда урезание heap «для защиты» помогало бы, но при этом валятся нормальные batch-операции, а gadget chain не закрыт.",
-                "how_it_should_be": "От bomb защищает `ObjectInputFilter` с `maxdepth`/`maxrefs`, а не уменьшение heap."
+                "explanation": "Серебряной пули нет — нужна многослойная защита; главное правило — избегать binary-десериализации для недоверенного ввода.",
+                "example": "OWASP Cheat Sheet «Deserialization» рекомендует именно этот стек; `Spring Security`/Boot 3.2+ активирует фильтр по умолчанию.",
+                "when_to_apply": "Подход применяют везде, где приём данных извне может попасть в `readObject`: RMI, Spring Session в Redis, JMS.",
+                "edge_cases": "Лучшая защита — вообще не десериализовать чужие байты; если нельзя — комбинировать фильтр, proxy и мониторинг.",
+                "related": "[[java-serialization-interview#Q15]] риски безопасности; [[java-serialization-interview#Q17]] `ObjectInputFilter`; [[java-serialization-interview#Q33]] OWASP и эксплойты."
               }
             }
           ]
@@ -1091,18 +1091,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`record` сериализуется идентично обычному классу: рефлексия по полям, а кастомные `writeObject`/`readObject` работают.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Десериализация идёт через канонический конструктор, а не рефлексией по полям; кастомные `writeObject`/`readObject` игнорируются.",
-                "source_of_confusion": "Record похож на обычный класс, и механизм считают тем же.",
-                "if_it_were_true": "Тогда добавленный в record `writeObject` шифровал бы поля, но он игнорируется и секреты пишутся в plaintext.",
-                "how_it_should_be": "Чтение record идёт через канонический ctor; для кастомной логики используют `writeReplace`/`readResolve`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`record` автоматически реализует `Serializable` без явного объявления.",
               "correct": false,
               "sections": {
@@ -1113,8 +1101,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Сериализуются только компоненты record; десериализация идёт через канонический конструктор (валидация работает автоматически); кастомные `writeObject`/`readObject` игнорируются, а `writeReplace`/`readResolve` работают.",
               "correct": true,
               "sections": {
@@ -1126,8 +1114,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "У record каждый компонент должен явно реализовать `Serializable`, иначе компилятор откажется собрать.",
               "correct": false,
               "sections": {
@@ -1135,6 +1123,18 @@
                 "source_of_confusion": "Ожидают, что строгий record даёт и compile-time проверку сериализуемости.",
                 "if_it_were_true": "Тогда ошибка ловилась бы при сборке, но реально она всплывает в проде через час после релиза.",
                 "how_it_should_be": "Сериализуемость компонентов — runtime-контракт; компилятор её не гарантирует, нужен тест на round-trip."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`record` сериализуется идентично обычному классу: рефлексия по полям, а кастомные `writeObject`/`readObject` работают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Десериализация идёт через канонический конструктор, а не рефлексией по полям; кастомные `writeObject`/`readObject` игнорируются.",
+                "source_of_confusion": "Record похож на обычный класс, и механизм считают тем же.",
+                "if_it_were_true": "Тогда добавленный в record `writeObject` шифровал бы поля, но он игнорируется и секреты пишутся в plaintext.",
+                "how_it_should_be": "Чтение record идёт через канонический ctor; для кастомной логики используют `writeReplace`/`readResolve`."
               }
             }
           ]
@@ -1151,18 +1151,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`sealed`-классы нельзя сериализовать через стандартный `Serializable` — компилятор это запрещает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Запрета нет: `sealed interface X extends Serializable permits A, B` — валидная конструкция.",
-                "source_of_confusion": "Sealed ассоциируют с жёсткими ограничениями, и их распространяют на сериализацию.",
-                "if_it_were_true": "Тогда sealed нельзя было бы использовать для доменных событий, и команда теряла бы exhaustive pattern matching.",
-                "how_it_should_be": "Sealed-иерархия сериализуется как обычная Serializable, плюс даёт исчерпывающий whitelist."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`sealed` автоматически добавляет дискриминатор типа в Jackson-JSON через `permits`.",
               "correct": false,
               "sections": {
@@ -1173,8 +1161,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`sealed` запрещает добавление новых подклассов после релиза, поэтому сериализация форвард-несовместима.",
               "correct": false,
               "sections": {
@@ -1185,8 +1173,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`sealed` работает как обычный класс при сериализации, но даёт точный whitelist для `ObjectInputFilter`: вместо `com.example.*` перечисляют только `permits`-классы; для JSON нужен `@JsonTypeInfo`.",
               "correct": true,
               "sections": {
@@ -1195,6 +1183,18 @@
                 "when_to_apply": "Sealed-иерархии полезны для доменных событий и polymorphic-payload, где нужен исчерпывающий список типов.",
                 "edge_cases": "`Jackson` не понимает `permits` сам — для JSON-полиморфизма всё равно нужен явный `@JsonTypeInfo` + `@JsonSubTypes`.",
                 "related": "[[java-serialization-interview#Q17]] `ObjectInputFilter`; [[java-serialization-interview#Q19]] record-сериализация; [[java-serialization-interview#Q23]] полиморфизм в Jackson."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`sealed`-классы нельзя сериализовать через стандартный `Serializable` — компилятор это запрещает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запрета нет: `sealed interface X extends Serializable permits A, B` — валидная конструкция.",
+                "source_of_confusion": "Sealed ассоциируют с жёсткими ограничениями, и их распространяют на сериализацию.",
+                "if_it_were_true": "Тогда sealed нельзя было бы использовать для доменных событий, и команда теряла бы exhaustive pattern matching.",
+                "how_it_should_be": "Sealed-иерархия сериализуется как обычная Serializable, плюс даёт исчерпывающий whitelist."
               }
             }
           ]
@@ -1211,19 +1211,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Центральный класс `ObjectMapper` (thread-safe singleton): сериализация — `writeValueAsString`, десериализация — `readValue`; ключевые аннотации — `@JsonProperty`, `@JsonIgnore`, `@JsonInclude(NON_NULL)`, `@JsonCreator`, `@JsonFormat`, `@JsonTypeInfo`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Jackson` — стандарт в `Spring Boot`/`Quarkus`/`Micronaut`; data-binding идёт через рефлексию плюс аннотации, настраивающие маппинг.",
-                "example": "`Netflix Eureka` и `Spring Cloud Gateway` используют `Jackson` через автоконфигурацию `Spring Boot`.",
-                "when_to_apply": "Аннотации применяют для контроля имён, игнорирования полей, формата дат и полиморфной десериализации через `@JsonTypeInfo`.",
-                "edge_cases": "`ObjectMapper` thread-safe только после конфигурации; его держат singleton-ом, а не создают per-request.",
-                "related": "[[java-serialization-interview#Q22]] Jackson vs Gson; [[java-serialization-interview#Q23]] полиморфизм в Jackson; [[java-serialization-interview#Q24]] кастомные сериализаторы."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`ObjectMapper` потоконебезопасен, поэтому нужен новый экземпляр на каждый запрос.",
               "correct": false,
               "sections": {
@@ -1234,8 +1221,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`@JsonIgnore` исключает поле только при сериализации, а при десериализации оно всё равно читается.",
               "correct": false,
               "sections": {
@@ -1246,8 +1233,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`@JsonCreator` нужен только для record-классов; для обычных классов Jackson сам находит конструктор.",
               "correct": false,
               "sections": {
@@ -1255,6 +1242,19 @@
                 "source_of_confusion": "Record и immutable-классы смешивают, отсюда обратное правило.",
                 "if_it_were_true": "Тогда Lombok `@Value` без `@JsonCreator` десериализовался бы, но даёт `400 Bad Request`.",
                 "how_it_should_be": "Для обычных immutable-классов помечают конструктор `@JsonCreator`; record работает без него."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Центральный класс `ObjectMapper` (thread-safe singleton): сериализация — `writeValueAsString`, десериализация — `readValue`; ключевые аннотации — `@JsonProperty`, `@JsonIgnore`, `@JsonInclude(NON_NULL)`, `@JsonCreator`, `@JsonFormat`, `@JsonTypeInfo`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Jackson` — стандарт в `Spring Boot`/`Quarkus`/`Micronaut`; data-binding идёт через рефлексию плюс аннотации, настраивающие маппинг.",
+                "example": "`Netflix Eureka` и `Spring Cloud Gateway` используют `Jackson` через автоконфигурацию `Spring Boot`.",
+                "when_to_apply": "Аннотации применяют для контроля имён, игнорирования полей, формата дат и полиморфной десериализации через `@JsonTypeInfo`.",
+                "edge_cases": "`ObjectMapper` thread-safe только после конфигурации; его держат singleton-ом, а не создают per-request.",
+                "related": "[[java-serialization-interview#Q22]] Jackson vs Gson; [[java-serialization-interview#Q23]] полиморфизм в Jackson; [[java-serialization-interview#Q24]] кастомные сериализаторы."
               }
             }
           ]
@@ -1271,18 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Gson` быстрее `Jackson` благодаря отсутствию аннотаций.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Gson` медленнее в большинстве бенчмарков: у `Jackson` streaming-парсинг и кэширование рефлексии; простота API не делает `Gson` быстрее.",
-                "source_of_confusion": "«Меньше аннотаций» интуитивно ассоциируют с меньшим оверхедом.",
-                "if_it_were_true": "Тогда миграция Spring Boot на `Gson` ускоряла бы p99, но латентность наоборот растёт и RPS падает.",
-                "how_it_should_be": "`Jackson` быстрее за счёт streaming-API; `Gson` проще, но не быстрее."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Jackson`: быстрее (streaming), огромная экосистема (XML/YAML/CBOR/Avro), встроен в Spring Boot, полная поддержка `record` с 2.12+, ~1.7MB. `Gson`: медленнее, только JSON, минимальные аннотации, ~250KB.",
               "correct": true,
               "sections": {
@@ -1294,8 +1282,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Gson` поддерживает `record` лучше, чем `Jackson`.",
               "correct": false,
               "sections": {
@@ -1306,8 +1294,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Gson` встроен в Spring Boot по умолчанию вместо `Jackson` начиная со Spring Boot 3.0.",
               "correct": false,
               "sections": {
@@ -1315,6 +1303,18 @@
                 "source_of_confusion": "Раз `Gson` тоже популярен, кажется, что Spring мог переключиться на него.",
                 "if_it_were_true": "Тогда добавления зависимости `Gson` хватало бы, но без явного исключения работают оба парсера и даты ломаются.",
                 "how_it_should_be": "Spring Boot по умолчанию — `Jackson`; переход на `Gson` требует ручной конфигурации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Gson` быстрее `Jackson` благодаря отсутствию аннотаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gson` медленнее в большинстве бенчмарков: у `Jackson` streaming-парсинг и кэширование рефлексии; простота API не делает `Gson` быстрее.",
+                "source_of_confusion": "«Меньше аннотаций» интуитивно ассоциируют с меньшим оверхедом.",
+                "if_it_were_true": "Тогда миграция Spring Boot на `Gson` ускоряла бы p99, но латентность наоборот растёт и RPS падает.",
+                "how_it_should_be": "`Jackson` быстрее за счёт streaming-API; `Gson` проще, но не быстрее."
               }
             }
           ]
@@ -1331,13 +1331,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Использовать `JsonTypeInfo.Id.CLASS` с `@JsonTypeInfo` — самый гибкий способ для production.",
-              "correct": false,
+              "text": "`@JsonTypeInfo(use=Id.NAME, property=\"type\")` + `@JsonSubTypes({@Type(value=Circle.class, name=\"circle\")...})` для whitelist; стратегии include: `PROPERTY`, `WRAPPER_OBJECT`, `WRAPPER_ARRAY`, `EXISTING_PROPERTY`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Id.CLASS` опасен: атакующий подсовывает `com.sun.rowset.JdbcRowSetImpl` с JNDI-payload и получает RCE; нужен `Id.NAME` + `@JsonSubTypes` whitelist.",
-                "source_of_confusion": "`Id.CLASS` действительно удобен — не надо перечислять подтипы, и его принимают за лучший выбор.",
-                "if_it_were_true": "Тогда `Id.CLASS` ставили бы ради гибкости, но это CVE-2017-7525 через user input.",
-                "how_it_should_be": "Для production используют `Id.NAME` с явным whitelist подтипов, а не `Id.CLASS`."
+                "explanation": "Whitelist через `@JsonSubTypes` гарантирует, что десериализуются только разрешённые классы, а `property=\"type\"` добавляет дискриминатор в JSON.",
+                "example": "`Spring Cloud Stream` events с polymorphic-payload — типичный DLT/event-bus сценарий, где дискриминатор обязателен.",
+                "when_to_apply": "Полиморфную десериализацию настраивают, когда один эндпоинт принимает объекты разных подтипов общей иерархии.",
+                "edge_cases": "`Id.NAME` + `@JsonSubTypes` безопасны; `Id.CLASS` для недоверенного ввода открывает RCE через произвольный класс.",
+                "related": "[[java-serialization-interview#Q21]] основы Jackson; [[java-serialization-interview#Q25]] риски JSON-десериализации; [[java-serialization-interview#Q33]] OWASP и эксплойты."
               }
             },
             {
@@ -1355,19 +1356,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@JsonTypeInfo(use=Id.NAME, property=\"type\")` + `@JsonSubTypes({@Type(value=Circle.class, name=\"circle\")...})` для whitelist; стратегии include: `PROPERTY`, `WRAPPER_OBJECT`, `WRAPPER_ARRAY`, `EXISTING_PROPERTY`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Whitelist через `@JsonSubTypes` гарантирует, что десериализуются только разрешённые классы, а `property=\"type\"` добавляет дискриминатор в JSON.",
-                "example": "`Spring Cloud Stream` events с polymorphic-payload — типичный DLT/event-bus сценарий, где дискриминатор обязателен.",
-                "when_to_apply": "Полиморфную десериализацию настраивают, когда один эндпоинт принимает объекты разных подтипов общей иерархии.",
-                "edge_cases": "`Id.NAME` + `@JsonSubTypes` безопасны; `Id.CLASS` для недоверенного ввода открывает RCE через произвольный класс.",
-                "related": "[[java-serialization-interview#Q21]] основы Jackson; [[java-serialization-interview#Q25]] риски JSON-десериализации; [[java-serialization-interview#Q33]] OWASP и эксплойты."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Каждый подкласс должен иметь свой `@JsonDeserialize(using=...)`, иначе полиморфизм не работает.",
               "correct": false,
               "sections": {
@@ -1375,6 +1363,18 @@
                 "source_of_confusion": "Полиморфизм кажется сложным, и под него подводят тяжёлую артиллерию custom-десериализаторов.",
                 "if_it_were_true": "Тогда писали бы по десятку deserializer'ов, но при добавлении подтипа их забывают регистрировать и получают `null`.",
                 "how_it_should_be": "Полиморфизм решается двумя аннотациями; custom deserializer применяют точечно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать `JsonTypeInfo.Id.CLASS` с `@JsonTypeInfo` — самый гибкий способ для production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Id.CLASS` опасен: атакующий подсовывает `com.sun.rowset.JdbcRowSetImpl` с JNDI-payload и получает RCE; нужен `Id.NAME` + `@JsonSubTypes` whitelist.",
+                "source_of_confusion": "`Id.CLASS` действительно удобен — не надо перечислять подтипы, и его принимают за лучший выбор.",
+                "if_it_were_true": "Тогда `Id.CLASS` ставили бы ради гибкости, но это CVE-2017-7525 через user input.",
+                "how_it_should_be": "Для production используют `Id.NAME` с явным whitelist подтипов, а не `Id.CLASS`."
               }
             }
           ]
@@ -1391,18 +1391,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Использовать `Function<Money, String>` через `@JsonSerialize(converter=...)` — это и есть кастомный сериализатор.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`converter=` принимает `Converter<IN,OUT>` (преобразование в другой POJO), а не `Function`; кастомная сериализация — это `JsonSerializer`.",
-                "source_of_confusion": "`converter` и `serializer` оба влияют на вывод, и их путают.",
-                "if_it_were_true": "Тогда `Function` в `converter` работал бы, но формат `Money` ломается и в JSON попадает `0.0`.",
-                "how_it_should_be": "Для кастомного формата расширяют `JsonSerializer`; `converter` решает другую задачу — смену POJO."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Достаточно реализовать `Iterable<JsonField>` в самом доменном классе.",
               "correct": false,
               "sections": {
@@ -1413,8 +1401,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Кастомный сериализатор работает только если класс реализует `Serializable`.",
               "correct": false,
               "sections": {
@@ -1425,8 +1413,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Расширить `JsonSerializer<T>`/`JsonDeserializer<T>` (методы `serialize`/`deserialize`) и зарегистрировать через `@JsonSerialize(using=...)` на классе или `SimpleModule.addSerializer()` + `mapper.registerModule(module)`.",
               "correct": true,
               "sections": {
@@ -1435,6 +1423,18 @@
                 "when_to_apply": "Кастомные сериализаторы нужны, когда стандартных аннотаций не хватает: особый формат `Money`, легаси-структуры, нестандартный JSON.",
                 "edge_cases": "На уровне класса используют `@JsonSerialize`; на уровне библиотеки — Module; `Serializable` для этого не требуется.",
                 "related": "[[java-serialization-interview#Q21]] основы Jackson; [[java-serialization-interview#Q23]] полиморфизм в Jackson; [[java-serialization-interview#Q25]] риски JSON-десериализации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать `Function<Money, String>` через `@JsonSerialize(converter=...)` — это и есть кастомный сериализатор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`converter=` принимает `Converter<IN,OUT>` (преобразование в другой POJO), а не `Function`; кастомная сериализация — это `JsonSerializer`.",
+                "source_of_confusion": "`converter` и `serializer` оба влияют на вывод, и их путают.",
+                "if_it_were_true": "Тогда `Function` в `converter` работал бы, но формат `Money` ломается и в JSON попадает `0.0`.",
+                "how_it_should_be": "Для кастомного формата расширяют `JsonSerializer`; `converter` решает другую задачу — смену POJO."
               }
             }
           ]
@@ -1451,6 +1451,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "DoS через JSON невозможен — Jackson сам всегда ограничивает глубину парсинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Защита появилась лишь в Jackson 2.15+ (`StreamReadConstraints`, max nesting=1000); до этого глубокий JSON вызывал `StackOverflowError`.",
+                "source_of_confusion": "Современный Jackson действительно лимитирует глубину, и это переносят на все версии.",
+                "if_it_were_true": "Тогда проект на Jackson 2.13 был бы защищён, но JSON со 100K вложенных `{}` валит тред `StackOverflow`.",
+                "how_it_should_be": "Лимиты глубины надо настраивать (`StreamReadConstraints`) или быть на версии, где они включены по умолчанию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Polymorphic RCE через `DefaultTyping`/`Id.CLASS` (с Jackson 2.10+ отключён по умолчанию, добавлен `PolymorphicTypeValidator`); DoS через глубоко вложенный JSON (`StackOverflowError`, лечится `StreamReadConstraints`); Billion Laughs для XML-парсеров.",
               "correct": true,
               "sections": {
@@ -1462,8 +1474,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "JSON безопасен полностью — RCE невозможен, потому что в JSON нет произвольного кода.",
               "correct": false,
               "sections": {
@@ -1471,18 +1483,6 @@
                 "source_of_confusion": "JSON — это «просто данные», поэтому кажется неспособным к выполнению кода.",
                 "if_it_were_true": "Тогда аудит JSON-десериализации был бы лишним, но CVE-2017-7525 эксплуатируется через user input.",
                 "how_it_should_be": "JSON безопаснее Java Ser., но при `DefaultTyping`/`Id.CLASS` уязвим к RCE; нужен `PolymorphicTypeValidator`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "DoS через JSON невозможен — Jackson сам всегда ограничивает глубину парсинга.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Защита появилась лишь в Jackson 2.15+ (`StreamReadConstraints`, max nesting=1000); до этого глубокий JSON вызывал `StackOverflowError`.",
-                "source_of_confusion": "Современный Jackson действительно лимитирует глубину, и это переносят на все версии.",
-                "if_it_were_true": "Тогда проект на Jackson 2.13 был бы защищён, но JSON со 100K вложенных `{}` валит тред `StackOverflow`.",
-                "how_it_should_be": "Лимиты глубины надо настраивать (`StreamReadConstraints`) или быть на версии, где они включены по умолчанию."
               }
             },
             {
@@ -1523,14 +1523,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Бинарный формат от Google со строгой схемой в `.proto`-файлах: числовые теги вместо имён полей (компактность 3-10× к JSON), кодогенерация для 10+ языков, отличная forward/backward совместимость через `reserved` теги.",
-              "correct": true,
+              "text": "Protobuf хранит имена полей в каждом сообщении, как JSON, обеспечивая самоописываемость.",
+              "correct": false,
               "sections": {
-                "explanation": "Wire-format пишет `<tag, wire_type><value>`; незнакомые теги пропускаются — это и есть основа forward compatibility. Имя поля живёт только в `.proto` и сгенерированном коде.",
-                "example": "`gRPC`, `Istio`/`Envoy`, mobile↔backend (`Twitter` для нативных клиентов) используют Protobuf ради скорости и экономии трафика.",
-                "when_to_apply": "Protobuf выбирают для gRPC, Kafka-событий со строгой схемой и внутренних API между микросервисами, где важны performance и контракт.",
-                "edge_cases": "Числовые теги навсегда: удалённые помечают `reserved`, иначе старые клиенты прочитают мусор; в proto3 примитивы без `optional` не отличают «не задано» от дефолта.",
-                "related": "[[java-serialization-interview#Q27]] Apache Avro; [[java-serialization-interview#Q29]] выбор формата; [[java-serialization-interview#Q31]] версионирование схем."
+                "what_actually": "Protobuf пишет только числовой тег (varint) + значение; имя поля живёт лишь в `.proto`, поэтому формат компактнее JSON в 3-10 раз.",
+                "source_of_confusion": "Avro может хранить схему рядом с данными, и его свойства приписывают Protobuf.",
+                "if_it_were_true": "Тогда Protobuf терял бы преимущество в размере, и его не брали бы для Kafka на 1M msg/s.",
+                "how_it_should_be": "На проводе только теги и значения; имена полей определяются по схеме и сгенерированному коду."
               }
             },
             {
@@ -1548,13 +1547,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Protobuf хранит имена полей в каждом сообщении, как JSON, обеспечивая самоописываемость.",
-              "correct": false,
+              "text": "Бинарный формат от Google со строгой схемой в `.proto`-файлах: числовые теги вместо имён полей (компактность 3-10× к JSON), кодогенерация для 10+ языков, отличная forward/backward совместимость через `reserved` теги.",
+              "correct": true,
               "sections": {
-                "what_actually": "Protobuf пишет только числовой тег (varint) + значение; имя поля живёт лишь в `.proto`, поэтому формат компактнее JSON в 3-10 раз.",
-                "source_of_confusion": "Avro может хранить схему рядом с данными, и его свойства приписывают Protobuf.",
-                "if_it_were_true": "Тогда Protobuf терял бы преимущество в размере, и его не брали бы для Kafka на 1M msg/s.",
-                "how_it_should_be": "На проводе только теги и значения; имена полей определяются по схеме и сгенерированному коду."
+                "explanation": "Wire-format пишет `<tag, wire_type><value>`; незнакомые теги пропускаются — это и есть основа forward compatibility. Имя поля живёт только в `.proto` и сгенерированном коде.",
+                "example": "`gRPC`, `Istio`/`Envoy`, mobile↔backend (`Twitter` для нативных клиентов) используют Protobuf ради скорости и экономии трафика.",
+                "when_to_apply": "Protobuf выбирают для gRPC, Kafka-событий со строгой схемой и внутренних API между микросервисами, где важны performance и контракт.",
+                "edge_cases": "Числовые теги навсегда: удалённые помечают `reserved`, иначе старые клиенты прочитают мусор; в proto3 примитивы без `optional` не отличают «не задано» от дефолта.",
+                "related": "[[java-serialization-interview#Q27]] Apache Avro; [[java-serialization-interview#Q29]] выбор формата; [[java-serialization-interview#Q31]] версионирование схем."
               }
             }
           ]
@@ -1571,13 +1571,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Avro и Protobuf — это одна и та же технология, Avro просто более ранняя версия.",
+              "text": "Avro требует генерации кода как Protobuf — без `avro-tools` нельзя ни читать, ни писать данные.",
               "correct": false,
               "sections": {
-                "what_actually": "Это независимые проекты с разной философией: Protobuf (Google) — числовые теги для RPC, Avro (Apache, для Hadoop) — schema-binding и resolution для Data Lake.",
-                "source_of_confusion": "Оба бинарные, оба требуют схему и оба применяются с Kafka.",
-                "if_it_were_true": "Тогда не было бы споров «Avro vs Protobuf», и Confluent не строил бы экосистему вокруг Avro.",
-                "how_it_should_be": "Avro и Protobuf — разные форматы, появившиеся примерно в одно время для разных задач."
+                "what_actually": "Avro поддерживает dynamic schema mode через `GenericRecord` — можно читать/писать без кодогенерации, работая с Map-подобной структурой.",
+                "source_of_confusion": "Опыт Protobuf, где `protoc` обязателен, переносят на Avro.",
+                "if_it_were_true": "Тогда `Apache NiFi`, `Kafka Connect`, `Flink SQL` не работали бы с Avro generic-способом, но они используют `GenericRecord`.",
+                "how_it_should_be": "Avro может работать без кодогенерации через `GenericRecord`, загружая схему в runtime."
               }
             },
             {
@@ -1595,6 +1595,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Avro и Protobuf — это одна и та же технология, Avro просто более ранняя версия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это независимые проекты с разной философией: Protobuf (Google) — числовые теги для RPC, Avro (Apache, для Hadoop) — schema-binding и resolution для Data Lake.",
+                "source_of_confusion": "Оба бинарные, оба требуют схему и оба применяются с Kafka.",
+                "if_it_were_true": "Тогда не было бы споров «Avro vs Protobuf», и Confluent не строил бы экосистему вокруг Avro.",
+                "how_it_should_be": "Avro и Protobuf — разные форматы, появившиеся примерно в одно время для разных задач."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Avro описывает схему в JSON; writer-schema хранится с данными (в файле) или регистрируется в Schema Registry (для Kafka), reader-schema согласуется через schema resolution — это даёт лучшую эволюцию для долгоживущих данных в Data Lake.",
               "correct": true,
               "sections": {
@@ -1603,18 +1615,6 @@
                 "when_to_apply": "Avro выбирают для Kafka event streaming, Data Lake/Lakehouse и Big Data tooling (Spark, Flink, Hive) с эволюцией схем через годы.",
                 "edge_cases": "Schema Registry — single point of failure (нужен HA и кэш); поля Avro идентифицируются по позиции в schema, поэтому reader-schema обязательна.",
                 "related": "[[java-serialization-interview#Q26]] Protobuf; [[java-serialization-interview#Q29]] выбор формата; [[java-serialization-interview#Q31]] compatibility modes Schema Registry."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Avro требует генерации кода как Protobuf — без `avro-tools` нельзя ни читать, ни писать данные.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Avro поддерживает dynamic schema mode через `GenericRecord` — можно читать/писать без кодогенерации, работая с Map-подобной структурой.",
-                "source_of_confusion": "Опыт Protobuf, где `protoc` обязателен, переносят на Avro.",
-                "if_it_were_true": "Тогда `Apache NiFi`, `Kafka Connect`, `Flink SQL` не работали бы с Avro generic-способом, но они используют `GenericRecord`.",
-                "how_it_should_be": "Avro может работать без кодогенерации через `GenericRecord`, загружая схему в runtime."
               }
             }
           ]
@@ -1643,13 +1643,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Kryo требует обязательной реализации `Serializable` и `serialVersionUID` для каждого класса.",
-              "correct": false,
+              "text": "Быстрая JVM-only библиотека (~5-10× быстрее Java Serialization); не требует `Serializable`; используется в `Apache Spark`, `Flink`, `Akka`, `Hazelcast`; не thread-safe (нужен `ThreadLocal<Kryo>` или pool); нет schema-эволюции.",
+              "correct": true,
               "sections": {
-                "what_actually": "Kryo сериализует любой POJO без `Serializable` — это одно из его ключевых преимуществ; регистрация (`kryo.register`) — отдельный механизм.",
-                "source_of_confusion": "Ассоциация со стандартной JVM-сериализацией, где `Serializable` обязателен.",
-                "if_it_were_true": "Тогда Spark не мог бы Kryo-сериализовать произвольные RDD-элементы и Scala case-классы без `Serializable`.",
-                "how_it_should_be": "Kryo работает с любым POJO через рефлексию и `Objenesis`, не требуя `Serializable`."
+                "explanation": "Модель Kryo — рефлексия с агрессивным кэшированием; регистрация классов даёт короткий integer ID и экономит байты вместо полного имени класса.",
+                "example": "В `Apache Spark` включают `spark.serializer=org.apache.spark.serializer.KryoSerializer` для ускорения shuffle.",
+                "when_to_apply": "Kryo выбирают для внутренних JVM-коммуникаций, кэширования и распределённых вычислений, где важна скорость.",
+                "edge_cases": "Каждый `Kryo` держит mutable state — shared instance из нескольких потоков ведёт к corruption; для циклов нужен `kryo.setReferences(true)`.",
+                "related": "[[java-serialization-interview#Q26]] Protobuf для cross-language; [[java-serialization-interview#Q29]] выбор формата; [[java-serialization-interview#Q39]] FST как близкий аналог."
               }
             },
             {
@@ -1667,14 +1668,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Быстрая JVM-only библиотека (~5-10× быстрее Java Serialization); не требует `Serializable`; используется в `Apache Spark`, `Flink`, `Akka`, `Hazelcast`; не thread-safe (нужен `ThreadLocal<Kryo>` или pool); нет schema-эволюции.",
-              "correct": true,
+              "text": "Kryo требует обязательной реализации `Serializable` и `serialVersionUID` для каждого класса.",
+              "correct": false,
               "sections": {
-                "explanation": "Модель Kryo — рефлексия с агрессивным кэшированием; регистрация классов даёт короткий integer ID и экономит байты вместо полного имени класса.",
-                "example": "В `Apache Spark` включают `spark.serializer=org.apache.spark.serializer.KryoSerializer` для ускорения shuffle.",
-                "when_to_apply": "Kryo выбирают для внутренних JVM-коммуникаций, кэширования и распределённых вычислений, где важна скорость.",
-                "edge_cases": "Каждый `Kryo` держит mutable state — shared instance из нескольких потоков ведёт к corruption; для циклов нужен `kryo.setReferences(true)`.",
-                "related": "[[java-serialization-interview#Q26]] Protobuf для cross-language; [[java-serialization-interview#Q29]] выбор формата; [[java-serialization-interview#Q39]] FST как близкий аналог."
+                "what_actually": "Kryo сериализует любой POJO без `Serializable` — это одно из его ключевых преимуществ; регистрация (`kryo.register`) — отдельный механизм.",
+                "source_of_confusion": "Ассоциация со стандартной JVM-сериализацией, где `Serializable` обязателен.",
+                "if_it_were_true": "Тогда Spark не мог бы Kryo-сериализовать произвольные RDD-элементы и Scala case-классы без `Serializable`.",
+                "how_it_should_be": "Kryo работает с любым POJO через рефлексию и `Objenesis`, не требуя `Serializable`."
               }
             }
           ]
@@ -1691,14 +1691,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Decision matrix по use-case: REST API → JSON (Jackson); gRPC → Protobuf; Kafka-события со schema evolution → Avro + Schema Registry; Spark/Flink shuffle → Kryo; Redis-кэш между JVM → Kryo или JSON; legacy RMI → Java Serialization с `ObjectInputFilter`.",
-              "correct": true,
+              "text": "Для микросервисов всегда нужно использовать Java Serialization — это стандарт JDK без зависимостей.",
+              "correct": false,
               "sections": {
-                "explanation": "Выбор — архитектурное решение: сначала определяют контекст (граница системы, аудитория данных), затем приоритеты (performance vs human-readable vs evolution), потом формат.",
-                "example": "Для e-commerce: external API — JSON, internal gRPC — Protobuf, order events — Avro с BACKWARD, session cache — Kryo, legacy RMI — Java Ser. с фильтром.",
-                "when_to_apply": "Матрицу применяют при архитектурном review, на старте greenfield-проекта и при миграции существующих интеграций.",
-                "edge_cases": "Нельзя смешивать форматы в одном слое (Kafka topic — единый формат); JSON не всегда дёшев — на 100K msg/s парсинг может стать bottleneck.",
-                "related": "[[java-serialization-interview#Q26]] Protobuf детали; [[java-serialization-interview#Q27]] Avro и Schema Registry; [[java-serialization-interview#Q30]] почему не Java Ser. в микросервисах."
+                "what_actually": "Java Serialization в микросервисах — анти-паттерн: привязка к JVM, несовместимость версий, RCE через gadget chains, нечитаемость.",
+                "source_of_confusion": "Эвристика «standard JDK = best practice» ошибочна — в JDK много legacy API.",
+                "if_it_were_true": "Тогда Netflix/Uber/Lyft использовали бы Java Ser. для inter-service, но все берут gRPC+Protobuf или Kafka+Avro.",
+                "how_it_should_be": "Для микросервисов выбирают JSON/Protobuf/Avro; Java Ser. остаётся в RMI и legacy."
               }
             },
             {
@@ -1728,13 +1727,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для микросервисов всегда нужно использовать Java Serialization — это стандарт JDK без зависимостей.",
-              "correct": false,
+              "text": "Decision matrix по use-case: REST API → JSON (Jackson); gRPC → Protobuf; Kafka-события со schema evolution → Avro + Schema Registry; Spark/Flink shuffle → Kryo; Redis-кэш между JVM → Kryo или JSON; legacy RMI → Java Serialization с `ObjectInputFilter`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Java Serialization в микросервисах — анти-паттерн: привязка к JVM, несовместимость версий, RCE через gadget chains, нечитаемость.",
-                "source_of_confusion": "Эвристика «standard JDK = best practice» ошибочна — в JDK много legacy API.",
-                "if_it_were_true": "Тогда Netflix/Uber/Lyft использовали бы Java Ser. для inter-service, но все берут gRPC+Protobuf или Kafka+Avro.",
-                "how_it_should_be": "Для микросервисов выбирают JSON/Protobuf/Avro; Java Ser. остаётся в RMI и legacy."
+                "explanation": "Выбор — архитектурное решение: сначала определяют контекст (граница системы, аудитория данных), затем приоритеты (performance vs human-readable vs evolution), потом формат.",
+                "example": "Для e-commerce: external API — JSON, internal gRPC — Protobuf, order events — Avro с BACKWARD, session cache — Kryo, legacy RMI — Java Ser. с фильтром.",
+                "when_to_apply": "Матрицу применяют при архитектурном review, на старте greenfield-проекта и при миграции существующих интеграций.",
+                "edge_cases": "Нельзя смешивать форматы в одном слое (Kafka topic — единый формат); JSON не всегда дёшев — на 100K msg/s парсинг может стать bottleneck.",
+                "related": "[[java-serialization-interview#Q26]] Protobuf детали; [[java-serialization-interview#Q27]] Avro и Schema Registry; [[java-serialization-interview#Q30]] почему не Java Ser. в микросервисах."
               }
             }
           ]
@@ -1751,13 +1751,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Java Serialization deprecated в Java 17 и удалён из JDK — компилятор откажется собирать код с `Serializable`.",
+              "text": "Главная причина — Java Serialization не поддерживает шифрование данных в потоке.",
               "correct": false,
               "sections": {
-                "what_actually": "Интерфейс `Serializable` не deprecated и не удалён — он жив в Java 21+; JEP 154 предлагал deprecate, но был отложен из-за объёма зависимого кода.",
-                "source_of_confusion": "Планы Oracle по вытеснению (JEP 154 + JEP 290) слышат как «уже deprecated».",
-                "if_it_were_true": "Тогда миллионы приложений с RMI, JCache, Hibernate L2 cache не собирались бы на Java 17+, но массового breakage нет.",
-                "how_it_should_be": "`Serializable` работает в современных JDK; причина избегать его — архитектурная, а не удаление из языка."
+                "what_actually": "Шифрование ортогонально формату: любой формат шифруют через `CipherOutputStream`/TLS; Protobuf тоже не имеет встроенного шифрования.",
+                "source_of_confusion": "Смешение concerns — формат сериализации и криптографию.",
+                "if_it_were_true": "Тогда и Protobuf следовало бы избегать (он тоже не шифрует), но это не так.",
+                "how_it_should_be": "Шифрование решают отдельным слоем; от Java Ser. отказываются из-за coupling, JVM-only и RCE."
               }
             },
             {
@@ -1776,6 +1776,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Java Serialization deprecated в Java 17 и удалён из JDK — компилятор откажется собирать код с `Serializable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Интерфейс `Serializable` не deprecated и не удалён — он жив в Java 21+; JEP 154 предлагал deprecate, но был отложен из-за объёма зависимого кода.",
+                "source_of_confusion": "Планы Oracle по вытеснению (JEP 154 + JEP 290) слышат как «уже deprecated».",
+                "if_it_were_true": "Тогда миллионы приложений с RMI, JCache, Hibernate L2 cache не собирались бы на Java 17+, но массового breakage нет.",
+                "how_it_should_be": "`Serializable` работает в современных JDK; причина избегать его — архитектурная, а не удаление из языка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Java Serialization медленнее JSON в 10× — это единственная причина её избегать.",
               "correct": false,
               "sections": {
@@ -1783,18 +1795,6 @@
                 "source_of_confusion": "«Performance» — простая метрика, её проще обсуждать, чем архитектурные проблемы.",
                 "if_it_were_true": "Тогда хватило бы перейти на Kryo (в 5-10× быстрее), но Kryo тоже не годится — он JVM-only.",
                 "how_it_should_be": "Скорость — лишь один из минусов; ключевые проблемы качественные (coupling, безопасность, межъязыковость)."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Главная причина — Java Serialization не поддерживает шифрование данных в потоке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Шифрование ортогонально формату: любой формат шифруют через `CipherOutputStream`/TLS; Protobuf тоже не имеет встроенного шифрования.",
-                "source_of_confusion": "Смешение concerns — формат сериализации и криптографию.",
-                "if_it_were_true": "Тогда и Protobuf следовало бы избегать (он тоже не шифрует), но это не так.",
-                "how_it_should_be": "Шифрование решают отдельным слоем; от Java Ser. отказываются из-за coupling, JVM-only и RCE."
               }
             }
           ]
@@ -1811,30 +1811,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главный способ — bumping major version в URL (`/v1/`, `/v2/`); это решает все проблемы совместимости.",
-              "correct": false,
-              "sections": {
-                "what_actually": "URL versioning — лишь один подход и только для REST; для Kafka, gRPC и Hadoop-файлов он неприменим, к тому же фрагментирует кодовую базу.",
-                "source_of_confusion": "Наглядный подход, который видно в README любого API, принимают за универсальный.",
-                "if_it_were_true": "Тогда Stripe не использовал бы date-based versioning, но они выбрали media-type из-за минусов URL.",
-                "how_it_should_be": "URL versioning — частный случай для REST; для events и RPC нужны `reserved`-теги и Schema Registry."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Все форматы обеспечивают автоматическую совместимость — достаточно не менять имена полей.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Автоматической совместимости нет: Protobuf требует `reserved`, Avro — compatibility checks, Java Ser. — `serialVersionUID`, JSON — tolerant reader.",
-                "source_of_confusion": "Маркетинговое «schema evolution» в документации создаёт иллюзию автоматизма.",
-                "if_it_were_true": "Тогда Schema Registry был бы не нужен, но Confluent инвестировал в него именно из-за отсутствия автоматизма.",
-                "how_it_should_be": "Каждый формат требует явных правил эволюции; «не менять имена» — недостаточно."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Protobuf — `reserved` теги + правила добавления полей; Avro + Confluent Schema Registry — режимы BACKWARD/FORWARD/FULL/NONE с валидацией при регистрации; JSON — URL versioning (`/api/v1/`) или media-type (`Accept: application/vnd.api.v2+json`).",
               "correct": true,
               "sections": {
@@ -1846,8 +1822,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "В микросервисах достаточно использовать аннотацию `@Version` из JPA для версионирования API.",
               "correct": false,
               "sections": {
@@ -1855,6 +1831,30 @@
                 "source_of_confusion": "Слово «version» в разных контекстах создаёт ложную связь.",
                 "if_it_were_true": "Тогда Spring Data REST автоматически давал бы versioned API, но `@Version` лишь поле entity в JSON.",
                 "how_it_should_be": "API/схемы версионируют через `reserved`-теги, Schema Registry или URL/media-type, а не `@Version`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все форматы обеспечивают автоматическую совместимость — достаточно не менять имена полей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоматической совместимости нет: Protobuf требует `reserved`, Avro — compatibility checks, Java Ser. — `serialVersionUID`, JSON — tolerant reader.",
+                "source_of_confusion": "Маркетинговое «schema evolution» в документации создаёт иллюзию автоматизма.",
+                "if_it_were_true": "Тогда Schema Registry был бы не нужен, но Confluent инвестировал в него именно из-за отсутствия автоматизма.",
+                "how_it_should_be": "Каждый формат требует явных правил эволюции; «не менять имена» — недостаточно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главный способ — bumping major version в URL (`/v1/`, `/v2/`); это решает все проблемы совместимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "URL versioning — лишь один подход и только для REST; для Kafka, gRPC и Hadoop-файлов он неприменим, к тому же фрагментирует кодовую базу.",
+                "source_of_confusion": "Наглядный подход, который видно в README любого API, принимают за универсальный.",
+                "if_it_were_true": "Тогда Stripe не использовал бы date-based versioning, но они выбрали media-type из-за минусов URL.",
+                "how_it_should_be": "URL versioning — частный случай для REST; для events и RPC нужны `reserved`-теги и Schema Registry."
               }
             }
           ]
@@ -1871,6 +1871,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Event Sourcing → Avro + Schema Registry (схема живёт годами, retention > жизни приложения); CQRS → разные форматы для read/write (JSON для команд из REST + Protobuf/Avro для internal events); Saga → обязательная forward+backward совместимость для компенсаций.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Event-Driven Architecture формат сериализации — долгосрочный контракт, а не runtime-деталь: он влияет на эволюцию, debugging, performance и retention.",
+                "example": "Event Sourcing в финтехе хранит события с retention 5-7 лет: Avro с BACKWARD compatibility в Schema Registry — индустриальный стандарт.",
+                "when_to_apply": "Связку формата и паттерна учитывают при event store, CQRS read model и saga с долгими timeout'ами.",
+                "edge_cases": "Saga может жить 30 дней, поэтому нельзя удалять поле раньше чем через 30+ дней после deploy; large events (>500KB) — claim-check pattern.",
+                "related": "[[java-serialization-interview#Q26]] Protobuf для команд; [[java-serialization-interview#Q27]] Avro для событий; [[java-serialization-interview#Q31]] версионирование схем."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Формат сериализации не влияет на messaging patterns — это ортогональные concerns.",
               "correct": false,
               "sections": {
@@ -1878,18 +1891,6 @@
                 "source_of_confusion": "В академической литературе messaging patterns обсуждают абстрактно, без deep dive в сериализацию.",
                 "if_it_were_true": "Тогда не было бы споров «Avro vs Protobuf для event store», но они активно ведутся.",
                 "how_it_should_be": "Формат — часть архитектуры messaging; он определяет, как события эволюционируют и читаются."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Все messaging patterns требуют использовать только JSON, потому что он читается человеком.",
-              "correct": false,
-              "sections": {
-                "what_actually": "JSON удобен для debugging, но в high-throughput даёт больший размер и медленный парсинг; production-messaging часто использует binary-форматы.",
-                "source_of_confusion": "Debugging-driven thinking: «если не вижу в логах, значит не работает».",
-                "if_it_were_true": "Тогда LinkedIn использовал бы JSON в Kafka, но при создании Kafka быстро столкнулись с проблемами производительности JSON.",
-                "how_it_should_be": "Для high-throughput берут binary (Avro/Protobuf), а отладку решают через Schema Registry UI и akhq."
               }
             },
             {
@@ -1907,14 +1908,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Event Sourcing → Avro + Schema Registry (схема живёт годами, retention > жизни приложения); CQRS → разные форматы для read/write (JSON для команд из REST + Protobuf/Avro для internal events); Saga → обязательная forward+backward совместимость для компенсаций.",
-              "correct": true,
+              "text": "Все messaging patterns требуют использовать только JSON, потому что он читается человеком.",
+              "correct": false,
               "sections": {
-                "explanation": "В Event-Driven Architecture формат сериализации — долгосрочный контракт, а не runtime-деталь: он влияет на эволюцию, debugging, performance и retention.",
-                "example": "Event Sourcing в финтехе хранит события с retention 5-7 лет: Avro с BACKWARD compatibility в Schema Registry — индустриальный стандарт.",
-                "when_to_apply": "Связку формата и паттерна учитывают при event store, CQRS read model и saga с долгими timeout'ами.",
-                "edge_cases": "Saga может жить 30 дней, поэтому нельзя удалять поле раньше чем через 30+ дней после deploy; large events (>500KB) — claim-check pattern.",
-                "related": "[[java-serialization-interview#Q26]] Protobuf для команд; [[java-serialization-interview#Q27]] Avro для событий; [[java-serialization-interview#Q31]] версионирование схем."
+                "what_actually": "JSON удобен для debugging, но в high-throughput даёт больший размер и медленный парсинг; production-messaging часто использует binary-форматы.",
+                "source_of_confusion": "Debugging-driven thinking: «если не вижу в логах, значит не работает».",
+                "if_it_were_true": "Тогда LinkedIn использовал бы JSON в Kafka, но при создании Kafka быстро столкнулись с проблемами производительности JSON.",
+                "how_it_should_be": "Для high-throughput берут binary (Avro/Protobuf), а отладку решают через Schema Registry UI и akhq."
               }
             }
           ]
@@ -1944,6 +1944,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`SecurityManager.setSecurityManager(custom)` — единственная официальная защита от deserialization-атак в JDK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SecurityManager` deprecated в Java 17 (JEP 411) и никогда не был специфичной защитой от десериализации; реальная защита — `ObjectInputFilter` (JEP 290).",
+                "source_of_confusion": "Старые туториалы упоминали `SecurityManager` как «защиту Java» в целом.",
+                "if_it_were_true": "Тогда OWASP Cheat Sheet рекомендовал бы `SecurityManager`, но он советует `ObjectInputFilter`, HMAC и изоляцию.",
+                "how_it_should_be": "Защищаются `ObjectInputFilter` + подписью + изоляцией процесса; `SecurityManager` устарел."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Insecure deserialization — теоретическая угроза, реальных эксплойтов в production не было.",
               "correct": false,
               "sections": {
@@ -1954,8 +1966,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Достаточно отключить `enableDefaultTyping` в Jackson — это закрывает все векторы атаки.",
               "correct": false,
               "sections": {
@@ -1963,18 +1975,6 @@
                 "source_of_confusion": "Один технический tweak — простая mental model, но реальная безопасность многоуровневая.",
                 "if_it_were_true": "Тогда после Jackson 2.10+ breach'ей не было бы, но CVE продолжают появляться в разных библиотеках.",
                 "how_it_should_be": "Нужна multi-layer defense: фильтр, подпись, изоляция, мониторинг, а не один флаг."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`SecurityManager.setSecurityManager(custom)` — единственная официальная защита от deserialization-атак в JDK.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`SecurityManager` deprecated в Java 17 (JEP 411) и никогда не был специфичной защитой от десериализации; реальная защита — `ObjectInputFilter` (JEP 290).",
-                "source_of_confusion": "Старые туториалы упоминали `SecurityManager` как «защиту Java» в целом.",
-                "if_it_were_true": "Тогда OWASP Cheat Sheet рекомендовал бы `SecurityManager`, но он советует `ObjectInputFilter`, HMAC и изоляцию.",
-                "how_it_should_be": "Защищаются `ObjectInputFilter` + подписью + изоляцией процесса; `SecurityManager` устарел."
               }
             }
           ]
@@ -2003,6 +2003,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`readResolve()` вызывается до десериализации и решает, читать ли поток вообще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`readResolve()` вызывается после полной десериализации, на готовом объекте; до этого JVM allocate-ит и читает поля, substitution — на финальном шаге.",
+                "source_of_confusion": "Парное название с `writeReplace` (который ДО записи) намекает на симметрию timing.",
+                "if_it_were_true": "Тогда валидация контента шла бы в `readResolve`, но реально она в `readObject` — тоже после, но раньше `readResolve`.",
+                "how_it_should_be": "`readResolve` отрабатывает после чтения; за решение «читать ли поток» отвечают `readObject`/`ObjectInputFilter`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`readResolve()` вызывается JVM после десериализации и возвращает объект, заменяющий десериализованный (временный собирается GC); для Singleton возвращают `INSTANCE`; сигнатура — `private Object readResolve()`. enum-Singleton предпочтительнее: JVM сама гарантирует уникальность и блокирует создание через рефлексию.",
               "correct": true,
               "sections": {
@@ -2011,18 +2023,6 @@
                 "when_to_apply": "`readResolve` нужен классическому Singleton; enum выбирают для констант и application-wide объектов, которым важна гарантированная единственность.",
                 "edge_cases": "Метод обязан быть `private` (иначе JVM игнорирует), наследники Singleton тоже должны иметь свой `readResolve`; для enum `Constructor.newInstance` бросает `IllegalArgumentException`.",
                 "related": "[[java-serialization-interview#Q9]] `writeReplace`/`readResolve`; [[java-serialization-interview#Q12]] enum-сериализация; [[java-serialization-interview#Q13]] `Serialization Proxy Pattern`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`readResolve()` вызывается до десериализации и решает, читать ли поток вообще.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`readResolve()` вызывается после полной десериализации, на готовом объекте; до этого JVM allocate-ит и читает поля, substitution — на финальном шаге.",
-                "source_of_confusion": "Парное название с `writeReplace` (который ДО записи) намекает на симметрию timing.",
-                "if_it_were_true": "Тогда валидация контента шла бы в `readResolve`, но реально она в `readObject` — тоже после, но раньше `readResolve`.",
-                "how_it_should_be": "`readResolve` отрабатывает после чтения; за решение «читать ли поток» отвечают `readObject`/`ObjectInputFilter`."
               }
             },
             {
@@ -2051,30 +2051,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`serialPersistentFields` — это аннотация для маркировки полей сериализации, аналог `@JsonProperty` в Jackson.",
+              "text": "Использование `serialPersistentFields` обязательно для всех `Serializable`-классов начиная с Java 17.",
               "correct": false,
               "sections": {
-                "what_actually": "Это поле класса (`private static final ObjectStreamField[]`), а не аннотация; Java Serialization 1997 года не использует annotation processing.",
-                "source_of_confusion": "В современном Java конфигурируют аннотациями (Jackson, JPA), и старый magic field выглядит непривычно.",
-                "if_it_were_true": "Тогда существовала бы `@SerialField(\"name\")`, но её нет; есть лишь `@java.io.Serial` для маркировки самих specials-членов.",
-                "how_it_should_be": "`serialPersistentFields` — это магически именованное поле-массив, а не аннотация на отдельных полях."
+                "what_actually": "Оно всегда опционально: большинство классов в JDK и open-source его не используют, а compiler не выдаёт warning за отсутствие.",
+                "source_of_confusion": "Изменения безопасности в Java 17 ассоциируют с «обязательными новыми механизмами».",
+                "if_it_were_true": "Тогда миграция legacy-кода на Java 17 ломала бы сборки массово, но они проходят без такого breakage.",
+                "how_it_should_be": "По умолчанию работает reflection-based механизм; `serialPersistentFields` подключают только при необходимости."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`serialPersistentFields` нужно для сериализации `static`-полей — стандартный механизм их пропускает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оно не помогает сериализовать static: static принадлежат классу, не instance, и Java Serialization их принципиально не сохраняет.",
-                "source_of_confusion": "«Static field for serialization config» звучит как «через него сериализуются static-поля».",
-                "if_it_were_true": "Тогда Hibernate L2 cache сохранял бы static-счётчики между рестартами, но они всегда инициализируются заново.",
-                "how_it_should_be": "`serialPersistentFields` декларирует instance-level «виртуальные» поля; static в поток не идут вообще."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`private static final ObjectStreamField[] serialPersistentFields` явно декларирует имена и типы «виртуальных» сериализуемых полей независимо от реальных полей класса; позволяет переименовать поля без слома формата; используется с `PutField`/`GetField` в custom `writeObject`/`readObject`.",
               "correct": true,
               "sections": {
@@ -2086,15 +2074,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Использование `serialPersistentFields` обязательно для всех `Serializable`-классов начиная с Java 17.",
+              "order": 2,
+              "label": "C",
+              "text": "`serialPersistentFields` — это аннотация для маркировки полей сериализации, аналог `@JsonProperty` в Jackson.",
               "correct": false,
               "sections": {
-                "what_actually": "Оно всегда опционально: большинство классов в JDK и open-source его не используют, а compiler не выдаёт warning за отсутствие.",
-                "source_of_confusion": "Изменения безопасности в Java 17 ассоциируют с «обязательными новыми механизмами».",
-                "if_it_were_true": "Тогда миграция legacy-кода на Java 17 ломала бы сборки массово, но они проходят без такого breakage.",
-                "how_it_should_be": "По умолчанию работает reflection-based механизм; `serialPersistentFields` подключают только при необходимости."
+                "what_actually": "Это поле класса (`private static final ObjectStreamField[]`), а не аннотация; Java Serialization 1997 года не использует annotation processing.",
+                "source_of_confusion": "В современном Java конфигурируют аннотациями (Jackson, JPA), и старый magic field выглядит непривычно.",
+                "if_it_were_true": "Тогда существовала бы `@SerialField(\"name\")`, но её нет; есть лишь `@java.io.Serial` для маркировки самих specials-членов.",
+                "how_it_should_be": "`serialPersistentFields` — это магически именованное поле-массив, а не аннотация на отдельных полях."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`serialPersistentFields` нужно для сериализации `static`-полей — стандартный механизм их пропускает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оно не помогает сериализовать static: static принадлежат классу, не instance, и Java Serialization их принципиально не сохраняет.",
+                "source_of_confusion": "«Static field for serialization config» звучит как «через него сериализуются static-поля».",
+                "if_it_were_true": "Тогда Hibernate L2 cache сохранял бы static-счётчики между рестартами, но они всегда инициализируются заново.",
+                "how_it_should_be": "`serialPersistentFields` декларирует instance-level «виртуальные» поля; static в поток не идут вообще."
               }
             }
           ]
@@ -2111,30 +2111,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Если родитель не `Serializable`, его поля автоматически сериализуются вместе с полями потомка.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Поля несериализуемого родителя не сохраняются — это частый источник silent data loss; часть состояния восстанавливается через его no-arg ctor.",
-                "source_of_confusion": "Интуитивно «всё, что в объекте, сохраняется», без учёта проверки `Serializable` вверх по иерархии.",
-                "if_it_were_true": "Тогда `balance` из родителя `Account` сохранялся бы, но `Wallet extends Account` теряет его после десериализации.",
-                "how_it_should_be": "Сохраняются только поля Serializable-классов цепочки; поля несериализуемого родителя теряются."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "При наследовании `serialVersionUID` родителя автоматически копируется в потомка — отдельно объявлять не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`serialVersionUID` — `static final long`, и, как любое static, не наследуется в смысле сериализации; каждый класс объявляет свой, иначе JVM сгенерирует hash от его структуры.",
-                "source_of_confusion": "Доступ к static через имя подкласса (`Subclass.PARENT_FIELD`) создаёт иллюзию «наследования» static.",
-                "if_it_were_true": "Тогда один UID в base покрывал бы всю иерархию, но каждый класс — независимый serialization unit.",
-                "how_it_should_be": "Каждый класс иерархии должен объявить собственный `serialVersionUID`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Abstract class не может быть `Serializable` — компилятор это запрещает.",
               "correct": false,
               "sections": {
@@ -2145,8 +2121,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "Если родитель не `Serializable`, его поля автоматически сериализуются вместе с полями потомка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поля несериализуемого родителя не сохраняются — это частый источник silent data loss; часть состояния восстанавливается через его no-arg ctor.",
+                "source_of_confusion": "Интуитивно «всё, что в объекте, сохраняется», без учёта проверки `Serializable` вверх по иерархии.",
+                "if_it_were_true": "Тогда `balance` из родителя `Account` сохранялся бы, но `Wallet extends Account` теряет его после десериализации.",
+                "how_it_should_be": "Сохраняются только поля Serializable-классов цепочки; поля несериализуемого родителя теряются."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Если родитель `Serializable` — его поля сериализуются автоматически; если НЕ `Serializable` — его поля не сохраняются, и при десериализации JVM требует доступный no-arg конструктор (иначе `InvalidClassException`); abstract class может быть `Serializable`, и каждый подкласс должен иметь свой `serialVersionUID`.",
               "correct": true,
               "sections": {
@@ -2155,6 +2143,18 @@
                 "when_to_apply": "Правила важны для иерархий DTO/JPA-сущностей с `@MappedSuperclass` и sealed-иерархий событий, где базовый класс участвует в сериализации.",
                 "edge_cases": "`serialVersionUID` не наследуется — каждый класс объявляет свой; silent data loss при non-Serializable родителе ловят тестом round-trip + assertEquals на полях родителя.",
                 "related": "[[java-serialization-interview#Q2]] маркер `Serializable`; [[java-serialization-interview#Q7]] наследование с non-Serializable родителем; [[java-serialization-interview#Q19]] record-сериализация."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При наследовании `serialVersionUID` родителя автоматически копируется в потомка — отдельно объявлять не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`serialVersionUID` — `static final long`, и, как любое static, не наследуется в смысле сериализации; каждый класс объявляет свой, иначе JVM сгенерирует hash от его структуры.",
+                "source_of_confusion": "Доступ к static через имя подкласса (`Subclass.PARENT_FIELD`) создаёт иллюзию «наследования» static.",
+                "if_it_were_true": "Тогда один UID в base покрывал бы всю иерархию, но каждый класс — независимый serialization unit.",
+                "how_it_should_be": "Каждый класс иерархии должен объявить собственный `serialVersionUID`."
               }
             }
           ]
@@ -2171,14 +2171,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`HttpMessageConverter<T>` имеет `canRead`/`canWrite` (тип + media) и `read`/`write` (преобразование); Spring Boot регистрирует конвертеры автоматически (`MappingJackson2HttpMessageConverter`, `MappingJackson2XmlHttpMessageConverter`, `ProtobufHttpMessageConverter`); content negotiation выбирает по `Accept` + `produces` + типу; кастомизация — через `WebMvcConfigurer` или `Jackson2ObjectMapperBuilderCustomizer`.",
-              "correct": true,
+              "text": "Spring выбирает конвертер только по типу возвращаемого Java-объекта — заголовок `Accept` игнорируется.",
+              "correct": false,
               "sections": {
-                "explanation": "Это Spring-абстракция bidirectional-конвертации между Java-объектом и HTTP body; auto-configuration подбирает набор конвертеров по classpath.",
-                "example": "Эндпоинт с `produces = {JSON, XML, x-protobuf}`: при `Accept: application/xml` сработает `MappingJackson2XmlHttpMessageConverter`, при `*/*` — JSON по умолчанию.",
-                "when_to_apply": "Механизм используют для multi-format public API, кастомных форматов (CSV, vendor binary) и tweaking Jackson defaults на всё приложение.",
-                "edge_cases": "Порядок конвертеров важен (первый `canWrite=true` побеждает); `extendMessageConverters` дополняет defaults, `configureMessageConverters` полностью заменяет; WebFlux использует `HttpMessageReader/Writer`.",
-                "related": "[[java-serialization-interview#Q21]] Jackson `ObjectMapper`; [[java-serialization-interview#Q22]] Jackson vs Gson; [[java-serialization-interview#Q26]] Protobuf для content negotiation."
+                "what_actually": "Spring использует content negotiation: учитывает `Accept`-заголовок клиента, `produces`-атрибут и тип объекта, выбирая лучший match.",
+                "source_of_confusion": "В простых API всегда возвращают JSON, и кажется, что `Accept` не влияет.",
+                "if_it_were_true": "Тогда нельзя было бы сделать `produces = {JSON, XML, PROTOBUF}` эндпоинт, но это типичный паттерн.",
+                "how_it_should_be": "Конвертер выбирается по комбинации `Accept` + `produces` + тип, а не только по типу объекта."
               }
             },
             {
@@ -2196,18 +2195,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Spring выбирает конвертер только по типу возвращаемого Java-объекта — заголовок `Accept` игнорируется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spring использует content negotiation: учитывает `Accept`-заголовок клиента, `produces`-атрибут и тип объекта, выбирая лучший match.",
-                "source_of_confusion": "В простых API всегда возвращают JSON, и кажется, что `Accept` не влияет.",
-                "if_it_were_true": "Тогда нельзя было бы сделать `produces = {JSON, XML, PROTOBUF}` эндпоинт, но это типичный паттерн.",
-                "how_it_should_be": "Конвертер выбирается по комбинации `Accept` + `produces` + тип, а не только по типу объекта."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`HttpMessageConverter` работает только с JSON и XML; для Protobuf нужен отдельный `GrpcInterceptor`.",
               "correct": false,
               "sections": {
@@ -2215,6 +2202,19 @@
                 "source_of_confusion": "Protobuf ассоциируют с gRPC, хотя это формат, а не RPC-фреймворк.",
                 "if_it_were_true": "Тогда документация не упоминала бы `ProtobufHttpMessageConverter`, но он officially supported для REST-style Protobuf.",
                 "how_it_should_be": "Protobuf отдают через `ProtobufHttpMessageConverter` поверх HTTP; gRPC — отдельная технология."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`HttpMessageConverter<T>` имеет `canRead`/`canWrite` (тип + media) и `read`/`write` (преобразование); Spring Boot регистрирует конвертеры автоматически (`MappingJackson2HttpMessageConverter`, `MappingJackson2XmlHttpMessageConverter`, `ProtobufHttpMessageConverter`); content negotiation выбирает по `Accept` + `produces` + типу; кастомизация — через `WebMvcConfigurer` или `Jackson2ObjectMapperBuilderCustomizer`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это Spring-абстракция bidirectional-конвертации между Java-объектом и HTTP body; auto-configuration подбирает набор конвертеров по classpath.",
+                "example": "Эндпоинт с `produces = {JSON, XML, x-protobuf}`: при `Accept: application/xml` сработает `MappingJackson2XmlHttpMessageConverter`, при `*/*` — JSON по умолчанию.",
+                "when_to_apply": "Механизм используют для multi-format public API, кастомных форматов (CSV, vendor binary) и tweaking Jackson defaults на всё приложение.",
+                "edge_cases": "Порядок конвертеров важен (первый `canWrite=true` побеждает); `extendMessageConverters` дополняет defaults, `configureMessageConverters` полностью заменяет; WebFlux использует `HttpMessageReader/Writer`.",
+                "related": "[[java-serialization-interview#Q21]] Jackson `ObjectMapper`; [[java-serialization-interview#Q22]] Jackson vs Gson; [[java-serialization-interview#Q26]] Protobuf для content negotiation."
               }
             }
           ]
@@ -2231,13 +2231,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Jackson и Gson идентичны для всех задач — выбор зависит только от личных предпочтений.",
+              "text": "Gson быстрее Jackson в 10× — Google оптимизировала его для high-performance.",
               "correct": false,
               "sections": {
-                "what_actually": "Есть конкретные production-отличия: поддержка record, мощь streaming API, Spring-интеграция, экосистема модулей и производительность в пользу Jackson.",
-                "source_of_confusion": "В простых кейсах (POJO↔JSON) обе работают одинаково, и до edge cases не доходят.",
-                "if_it_were_true": "Тогда Spring Boot не выбрал бы Jackson по умолчанию, но это сознательное решение из-за качественных отличий.",
-                "how_it_should_be": "Отличия реальны и влияют на production; выбор не сводится к вкусу."
+                "what_actually": "Jackson быстрее Gson на большинстве бенчмарков благодаря streaming API и агрессивному кэшированию; Gson проектировался для простоты, не для скорости.",
+                "source_of_confusion": "Срабатывает эвристика «раз библиотека от Google, значит она оптимизирована и работает быстро».",
+                "if_it_were_true": "Тогда Android-команды массово мигрировали бы на Gson ради CPU/батареи, но многие выбирают Moshi или kotlinx.serialization.",
+                "how_it_should_be": "Jackson обычно быстрее; Gson выигрывает простотой API и размером, а не скоростью."
               }
             },
             {
@@ -2256,18 +2256,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Gson быстрее Jackson в 10× — Google оптимизировала его для high-performance.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Jackson быстрее Gson на большинстве бенчмарков благодаря streaming API и агрессивному кэшированию; Gson проектировался для простоты, не для скорости.",
-                "source_of_confusion": "Срабатывает эвристика «раз библиотека от Google, значит она оптимизирована и работает быстро».",
-                "if_it_were_true": "Тогда Android-команды массово мигрировали бы на Gson ради CPU/батареи, но многие выбирают Moshi или kotlinx.serialization.",
-                "how_it_should_be": "Jackson обычно быстрее; Gson выигрывает простотой API и размером, а не скоростью."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Gson лучше работает с Java `record`, чем Jackson — Google добавил полную поддержку первым.",
               "correct": false,
               "sections": {
@@ -2275,6 +2263,18 @@
                 "source_of_confusion": "Хронологическая ассоциация «Google-библиотека быстрее получает новый Java».",
                 "if_it_were_true": "Тогда документация Gson продвигала бы это как key feature, но Gson реагирует на новые фичи Java медленнее.",
                 "how_it_should_be": "Record раньше и глубже поддержан в Jackson; Gson догоняет лишь базово."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Jackson и Gson идентичны для всех задач — выбор зависит только от личных предпочтений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть конкретные production-отличия: поддержка record, мощь streaming API, Spring-интеграция, экосистема модулей и производительность в пользу Jackson.",
+                "source_of_confusion": "В простых кейсах (POJO↔JSON) обе работают одинаково, и до edge cases не доходят.",
+                "if_it_were_true": "Тогда Spring Boot не выбрал бы Jackson по умолчанию, но это сознательное решение из-за качественных отличий.",
+                "how_it_should_be": "Отличия реальны и влияют на production; выбор не сводится к вкусу."
               }
             }
           ]
@@ -2315,6 +2315,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "FST — межъязыковая библиотека, работает с Java, Python и Go клиентами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "FST строго JVM-only: wire-format использует Java-специфичные семантики (Serializable hierarchy, transient, `writeObject`/`readObject`); других реализаций нет.",
+                "source_of_confusion": "Generic-название «Fast Serialization» не указывает на JVM-привязку.",
+                "if_it_were_true": "Тогда FST конкурировал бы с Protobuf и был бы в Google Cloud docs, но его применение узкое — JVM internal.",
+                "how_it_should_be": "Для cross-language берут Protobuf/Avro/MessagePack; FST оптимизирует только JVM-сериализацию."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Drop-in замена JDK Serialization (классы остаются `Serializable`), быстрее в 4-10× за счёт оптимизированной рефлексии и кэширования; API совместим (`FSTConfiguration.asByteArray`/`asObject`); JVM-only; `FSTConfiguration` shared, но instances не thread-safe — нужен ThreadLocal; типичный кейс — кэширование объектов в Redis для legacy-кода.",
               "correct": true,
               "sections": {
@@ -2323,18 +2335,6 @@
                 "when_to_apply": "FST применяют для ускорения legacy Java-приложений с `Serializable`-DTO и кэширования между JVM-нодами одного приложения.",
                 "edge_cases": "Wire-format несовместим с JDK (`ObjectInputStream` не прочитает FST-байты); record/sealed не поддерживаются; порядок `registerClass` должен совпадать у producer и consumer.",
                 "related": "[[java-serialization-interview#Q28]] Kryo как современная альтернатива; [[java-serialization-interview#Q15]] риски Java Ser.; [[java-serialization-interview#Q30]] почему предпочитать JSON/Protobuf для inter-service."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "FST — межъязыковая библиотека, работает с Java, Python и Go клиентами.",
-              "correct": false,
-              "sections": {
-                "what_actually": "FST строго JVM-only: wire-format использует Java-специфичные семантики (Serializable hierarchy, transient, `writeObject`/`readObject`); других реализаций нет.",
-                "source_of_confusion": "Generic-название «Fast Serialization» не указывает на JVM-привязку.",
-                "if_it_were_true": "Тогда FST конкурировал бы с Protobuf и был бы в Google Cloud docs, но его применение узкое — JVM internal.",
-                "how_it_should_be": "Для cross-language берут Protobuf/Avro/MessagePack; FST оптимизирует только JVM-сериализацию."
               }
             }
           ]
@@ -2351,6 +2351,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Обычный класс десериализуется рефлексией прямо в поля (минуя конструктор), а record — через вызов канонического конструктора, поэтому валидация в compact constructor выполняется при каждой десериализации; `writeObject`/`readObject` игнорируются, а `writeReplace`/`readResolve` работают.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поля record `final`, поэтому прямая запись рефлексией невозможна — JVM идёт особым путём через canonical ctor, что де-факто даёт `Serialization Proxy Pattern` из коробки.",
+                "example": "`record PositiveRange(int min, int max)` с проверкой `min > max` в compact constructor: вредоносный поток `min=-1` приведёт к `IllegalArgumentException` при десериализации.",
+                "when_to_apply": "Record выбирают, когда нужна безопасная стандартная сериализация immutable-данных с гарантированной валидацией инвариантов.",
+                "edge_cases": "`writeObject`/`readObject` и `readObjectNoData` для record не применяются; `@java.io.Serial` (Java 14+) помогает IDE проверять корректность сигнатур.",
+                "related": "[[java-serialization-interview#Q19]] record-сериализация (обзор); [[java-serialization-interview#Q13]] `Serialization Proxy Pattern`; [[java-serialization-interview#Q11]] валидация в `readObject`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "При десериализации record JVM пишет значения прямо в `final`-поля через рефлексию, как у обычного класса.",
               "correct": false,
               "sections": {
@@ -2358,18 +2371,6 @@
                 "source_of_confusion": "Механизм обычных классов (прямая запись в поля минуя ctor) переносят на record.",
                 "if_it_were_true": "Тогда валидация в compact constructor обходилась бы при десериализации, но она как раз срабатывает каждый раз.",
                 "how_it_should_be": "Record восстанавливается через canonical ctor, поэтому инварианты проверяются при каждом чтении."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Для record нужно реализовать кастомные `writeObject`/`readObject`, иначе валидация не сработает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`writeObject`/`readObject` для record игнорируются; валидация и так работает через канонический конструктор без них.",
-                "source_of_confusion": "Привычка добавлять кастомные методы для контроля десериализации обычных классов.",
-                "if_it_were_true": "Тогда без них record был бы небезопасен, но canonical ctor исполняется и проверяет инварианты сам.",
-                "how_it_should_be": "Кастомные `writeObject`/`readObject` для record не нужны и игнорируются; работают `writeReplace`/`readResolve`."
               }
             },
             {
@@ -2387,14 +2388,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Обычный класс десериализуется рефлексией прямо в поля (минуя конструктор), а record — через вызов канонического конструктора, поэтому валидация в compact constructor выполняется при каждой десериализации; `writeObject`/`readObject` игнорируются, а `writeReplace`/`readResolve` работают.",
-              "correct": true,
+              "text": "Для record нужно реализовать кастомные `writeObject`/`readObject`, иначе валидация не сработает.",
+              "correct": false,
               "sections": {
-                "explanation": "Поля record `final`, поэтому прямая запись рефлексией невозможна — JVM идёт особым путём через canonical ctor, что де-факто даёт `Serialization Proxy Pattern` из коробки.",
-                "example": "`record PositiveRange(int min, int max)` с проверкой `min > max` в compact constructor: вредоносный поток `min=-1` приведёт к `IllegalArgumentException` при десериализации.",
-                "when_to_apply": "Record выбирают, когда нужна безопасная стандартная сериализация immutable-данных с гарантированной валидацией инвариантов.",
-                "edge_cases": "`writeObject`/`readObject` и `readObjectNoData` для record не применяются; `@java.io.Serial` (Java 14+) помогает IDE проверять корректность сигнатур.",
-                "related": "[[java-serialization-interview#Q19]] record-сериализация (обзор); [[java-serialization-interview#Q13]] `Serialization Proxy Pattern`; [[java-serialization-interview#Q11]] валидация в `readObject`."
+                "what_actually": "`writeObject`/`readObject` для record игнорируются; валидация и так работает через канонический конструктор без них.",
+                "source_of_confusion": "Привычка добавлять кастомные методы для контроля десериализации обычных классов.",
+                "if_it_were_true": "Тогда без них record был бы небезопасен, но canonical ctor исполняется и проверяет инварианты сам.",
+                "how_it_should_be": "Кастомные `writeObject`/`readObject` для record не нужны и игнорируются; работают `writeReplace`/`readResolve`."
               }
             }
           ]

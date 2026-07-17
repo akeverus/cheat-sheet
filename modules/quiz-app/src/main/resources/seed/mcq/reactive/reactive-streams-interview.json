@@ -11,14 +11,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Reactive Streams` — это стандарт для асинхронной обработки потоков с неблокирующим backpressure, опубликованный в 2015 году (Netflix, Pivotal, Lightbend, Red Hat). Он задаёт общий язык из 4 интерфейсов и 43 правил, чтобы потоки разных библиотек можно было соединять между собой.",
-              "correct": true,
+              "text": "`Reactive Streams` — это протокол сетевого транспорта поверх `TCP`, который передаёт реактивные сообщения между микросервисами по сети.",
+              "correct": false,
               "sections": {
-                "explanation": "До спецификации каждая библиотека имела свои типы (`RxJava` `Observable`, `Akka` `Source`, `Reactor` `Flux`) и backpressure делала по-своему — склеить потоки было нельзя. Стандарт ввёл общий минимальный контракт интероперабельности.",
-                "example": "`Flux` из `Reactor` (это `org.reactivestreams.Publisher`) можно напрямую подписать `Subscriber` из `RxJava`, потому что обе библиотеки реализуют один и тот же набор интерфейсов.",
-                "when_to_apply": "Стандарт вспоминают, когда нужно соединить компоненты на разных реактивных библиотеках или объяснить, откуда взялись `request(n)` и backpressure в `WebFlux`.",
-                "edge_cases": "Спецификация задаёт лишь поведение интерфейсов, но не операторы (`map`, `filter`) — их каждая библиотека добавляет сама поверх общего контракта.",
-                "related": "[[reactive-streams-interview#Q2]] четыре интерфейса спецификации; [[reactive-streams-interview#Q10]] backpressure как ядро стандарта; [[reactive-streams-interview#Q21]] TCK как проверка соответствия."
+                "what_actually": "Спецификация работает внутри одной JVM на уровне вызовов методов (`onNext`, `request`), а не как сетевой протокол; сетевой реактивный транспорт — это уже `RSocket`.",
+                "source_of_confusion": "Слова «streams» и backpressure ассоциируются с сетью, поэтому стандарт путают с транспортным протоколом.",
+                "if_it_were_true": "Если бы это был сетевой протокол, понадобилась бы спецификация фреймов и сериализации, но `Reactive Streams` оперирует только Java-вызовами.",
+                "how_it_should_be": "Это внутрипроцессный контракт интерфейсов; сетевую реактивность поверх него строит отдельный протокол `RSocket`."
               }
             },
             {
@@ -36,13 +35,14 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Reactive Streams` — это протокол сетевого транспорта поверх `TCP`, который передаёт реактивные сообщения между микросервисами по сети.",
-              "correct": false,
+              "text": "`Reactive Streams` — это стандарт для асинхронной обработки потоков с неблокирующим backpressure, опубликованный в 2015 году (Netflix, Pivotal, Lightbend, Red Hat). Он задаёт общий язык из 4 интерфейсов и 43 правил, чтобы потоки разных библиотек можно было соединять между собой.",
+              "correct": true,
               "sections": {
-                "what_actually": "Спецификация работает внутри одной JVM на уровне вызовов методов (`onNext`, `request`), а не как сетевой протокол; сетевой реактивный транспорт — это уже `RSocket`.",
-                "source_of_confusion": "Слова «streams» и backpressure ассоциируются с сетью, поэтому стандарт путают с транспортным протоколом.",
-                "if_it_were_true": "Если бы это был сетевой протокол, понадобилась бы спецификация фреймов и сериализации, но `Reactive Streams` оперирует только Java-вызовами.",
-                "how_it_should_be": "Это внутрипроцессный контракт интерфейсов; сетевую реактивность поверх него строит отдельный протокол `RSocket`."
+                "explanation": "До спецификации каждая библиотека имела свои типы (`RxJava` `Observable`, `Akka` `Source`, `Reactor` `Flux`) и backpressure делала по-своему — склеить потоки было нельзя. Стандарт ввёл общий минимальный контракт интероперабельности.",
+                "example": "`Flux` из `Reactor` (это `org.reactivestreams.Publisher`) можно напрямую подписать `Subscriber` из `RxJava`, потому что обе библиотеки реализуют один и тот же набор интерфейсов.",
+                "when_to_apply": "Стандарт вспоминают, когда нужно соединить компоненты на разных реактивных библиотеках или объяснить, откуда взялись `request(n)` и backpressure в `WebFlux`.",
+                "edge_cases": "Спецификация задаёт лишь поведение интерфейсов, но не операторы (`map`, `filter`) — их каждая библиотека добавляет сама поверх общего контракта.",
+                "related": "[[reactive-streams-interview#Q2]] четыре интерфейса спецификации; [[reactive-streams-interview#Q10]] backpressure как ядро стандарта; [[reactive-streams-interview#Q21]] TCK как проверка соответствия."
               }
             },
             {
@@ -83,14 +83,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Publisher<T>` (источник, метод `subscribe`), `Subscriber<T>` (потребитель, методы `onSubscribe`/`onNext`/`onError`/`onComplete`), `Subscription` (связь, методы `request(n)`/`cancel()`) и `Processor<T,R>` (одновременно `Subscriber` и `Publisher`).",
-              "correct": true,
+              "text": "`Mono`, `Flux`, `Sinks` и `Scheduler` — четыре интерфейса, которые определяет спецификация `Reactive Streams`.",
+              "correct": false,
               "sections": {
-                "explanation": "Эти четыре интерфейса покрывают весь жизненный цикл потока: источник, потребитель, канал управления backpressure и промежуточный узел обработки. `Processor` просто наследует и `Subscriber<T>`, и `Publisher<R>`.",
-                "example": "`Subscriber` имеет ровно 4 колбэка: `onSubscribe(Subscription)` для старта, `onNext(T)` для элементов и терминальные `onError(Throwable)` / `onComplete()`.",
-                "when_to_apply": "Эти интерфейсы — основа любого вопроса о реактивных потоках на собеседовании и точка интеграции между библиотеками.",
-                "edge_cases": "`Processor<T,R>` объявлен `extends Subscriber<T>, Publisher<R>` и часто помечается deprecated в `Reactor` в пользу `Sinks`.",
-                "related": "[[reactive-streams-interview#Q5]] роль `Publisher`; [[reactive-streams-interview#Q6]] роль `Subscriber`; [[reactive-streams-interview#Q9]] зачем нужна `Subscription`."
+                "what_actually": "`Mono`, `Flux`, `Sinks`, `Scheduler` — это API `Project Reactor`, а не интерфейсы стандарта; стандарт задаёт `Publisher`/`Subscriber`/`Subscription`/`Processor`.",
+                "source_of_confusion": "`Reactor` — самая частая реализация в `Spring`, поэтому его типы путают с самим стандартом.",
+                "if_it_were_true": "Если бы `Flux` был интерфейсом спецификации, его пришлось бы реализовывать `RxJava` и `Akka`, но они используют свои типы.",
+                "how_it_should_be": "Это типы конкретной библиотеки; спецификация определяет четыре нейтральных интерфейса `org.reactivestreams.*`."
               }
             },
             {
@@ -108,13 +107,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Mono`, `Flux`, `Sinks` и `Scheduler` — четыре интерфейса, которые определяет спецификация `Reactive Streams`.",
-              "correct": false,
+              "text": "`Publisher<T>` (источник, метод `subscribe`), `Subscriber<T>` (потребитель, методы `onSubscribe`/`onNext`/`onError`/`onComplete`), `Subscription` (связь, методы `request(n)`/`cancel()`) и `Processor<T,R>` (одновременно `Subscriber` и `Publisher`).",
+              "correct": true,
               "sections": {
-                "what_actually": "`Mono`, `Flux`, `Sinks`, `Scheduler` — это API `Project Reactor`, а не интерфейсы стандарта; стандарт задаёт `Publisher`/`Subscriber`/`Subscription`/`Processor`.",
-                "source_of_confusion": "`Reactor` — самая частая реализация в `Spring`, поэтому его типы путают с самим стандартом.",
-                "if_it_were_true": "Если бы `Flux` был интерфейсом спецификации, его пришлось бы реализовывать `RxJava` и `Akka`, но они используют свои типы.",
-                "how_it_should_be": "Это типы конкретной библиотеки; спецификация определяет четыре нейтральных интерфейса `org.reactivestreams.*`."
+                "explanation": "Эти четыре интерфейса покрывают весь жизненный цикл потока: источник, потребитель, канал управления backpressure и промежуточный узел обработки. `Processor` просто наследует и `Subscriber<T>`, и `Publisher<R>`.",
+                "example": "`Subscriber` имеет ровно 4 колбэка: `onSubscribe(Subscription)` для старта, `onNext(T)` для элементов и терминальные `onError(Throwable)` / `onComplete()`.",
+                "when_to_apply": "Эти интерфейсы — основа любого вопроса о реактивных потоках на собеседовании и точка интеграции между библиотеками.",
+                "edge_cases": "`Processor<T,R>` объявлен `extends Subscriber<T>, Publisher<R>` и часто помечается deprecated в `Reactor` в пользу `Sinks`.",
+                "related": "[[reactive-streams-interview#Q5]] роль `Publisher`; [[reactive-streams-interview#Q6]] роль `Subscriber`; [[reactive-streams-interview#Q9]] зачем нужна `Subscription`."
               }
             }
           ]
@@ -131,18 +131,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`java.util.concurrent.Flow` полностью заменил `Reactive Streams`: с `JDK 9` старые интерфейсы `org.reactivestreams.*` удалены, и все библиотеки перешли на `Flow`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Старые интерфейсы не удалены и активно используются: `Reactor` и `RxJava` исторически опираются на `org.reactivestreams.*`, а не на `Flow`.",
-                "source_of_confusion": "Появление `Flow` в JDK создаёт впечатление, что внешняя зависимость стала ненужной и устарела.",
-                "if_it_were_true": "Если бы `org.reactivestreams.*` исчезли, существующие реактивные библиотеки сломались бы, но они работают.",
-                "how_it_should_be": "`Flow` — это копия тех же интерфейсов в JDK; обе версии сосуществуют, и большинство библиотек остаются на `org.reactivestreams.*`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`java.util.concurrent.Flow` и `Reactive Streams` — это разные несовместимые контракты с разным набором методов, поэтому конвертировать между ними невозможно.",
               "correct": false,
               "sections": {
@@ -153,8 +141,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "С `JDK 9` спецификация вошла в стандартную библиотеку как `java.util.concurrent.Flow` с идентичными интерфейсами (отличается лишь пакет). Конвертировать между `org.reactivestreams.*` и `Flow` можно через `FlowAdapters`, а большинство библиотек по-прежнему используют `org.reactivestreams.*`.",
               "correct": true,
               "sections": {
@@ -163,6 +151,18 @@
                 "when_to_apply": "Это важно, когда нужна реактивность без зависимости на `org.reactivestreams` или при интеграции с JDK-API (`HttpClient`), отдающими `Flow.Publisher`.",
                 "edge_cases": "`reactive-streams-flow-adapters` доступен начиная с `Java 9`; на более старых JDK `Flow` отсутствует и используется только `org.reactivestreams.*`.",
                 "related": "[[reactive-streams-interview#Q1]] что такое сам стандарт; [[reactive-streams-interview#Q2]] эти же четыре интерфейса; [[reactive-streams-interview#Q4]] реализации спецификации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`java.util.concurrent.Flow` полностью заменил `Reactive Streams`: с `JDK 9` старые интерфейсы `org.reactivestreams.*` удалены, и все библиотеки перешли на `Flow`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Старые интерфейсы не удалены и активно используются: `Reactor` и `RxJava` исторически опираются на `org.reactivestreams.*`, а не на `Flow`.",
+                "source_of_confusion": "Появление `Flow` в JDK создаёт впечатление, что внешняя зависимость стала ненужной и устарела.",
+                "if_it_were_true": "Если бы `org.reactivestreams.*` исчезли, существующие реактивные библиотеки сломались бы, но они работают.",
+                "how_it_should_be": "`Flow` — это копия тех же интерфейсов в JDK; обе версии сосуществуют, и большинство библиотек остаются на `org.reactivestreams.*`."
               }
             },
             {
@@ -191,18 +191,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Единственная реализация спецификации на JVM — `Project Reactor`; все остальные библиотеки (`RxJava`, `Akka`) лишь оборачивают его внутри.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Реализаций несколько и они независимы: `Reactor`, `RxJava`, `Akka Streams`, `SmallRye Mutiny`, JDK Flow API — ни одна не обёртка над `Reactor`.",
-                "source_of_confusion": "`Reactor` доминирует в экосистеме `Spring`, поэтому кажется единственным.",
-                "if_it_were_true": "Если бы все были обёртками над `Reactor`, они зависели бы от него в classpath, но `RxJava` и `Akka` от него не зависят.",
-                "how_it_should_be": "Существует несколько самостоятельных реализаций; `Reactor` — лишь одна из них."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "В `RxJava` все типы (`Observable`, `Single`, `Maybe`, `Completable`) полностью соответствуют `Reactive Streams` и поддерживают backpressure.",
               "correct": false,
               "sections": {
@@ -213,8 +201,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`SmallRye Mutiny` (типы `Uni`/`Multi`) — это часть `Spring WebFlux` и используется как реактивный стек в `Spring Boot`.",
               "correct": false,
               "sections": {
@@ -225,8 +213,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Основные реализации на JVM — `Project Reactor` (база `Spring WebFlux`, типы `Mono`/`Flux`), `RxJava 2/3` (от `Netflix`, спецификации соответствует `Flowable`), `Akka Streams` (на акторах, типы `Source`/`Flow`/`Sink`), `SmallRye Mutiny` (в `Quarkus`, типы `Uni`/`Multi`) и встроенный JDK Flow API.",
               "correct": true,
               "sections": {
@@ -235,6 +223,18 @@
                 "when_to_apply": "Знание реализаций нужно при выборе стека: `Reactor` для `Spring`, `Mutiny` для `Quarkus`, `Akka Streams` для актор-систем.",
                 "edge_cases": "В `RxJava` спецификации соответствует только `Flowable`; `Observable` backpressure не поддерживает и стандарту не отвечает.",
                 "related": "[[reactive-streams-interview#Q23]] взаимодействие `Reactor` и `RxJava`; [[reactive-streams-interview#Q25]] `Akka Streams` и стандарт; [[reactive-streams-interview#Q3]] JDK Flow API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственная реализация спецификации на JVM — `Project Reactor`; все остальные библиотеки (`RxJava`, `Akka`) лишь оборачивают его внутри.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реализаций несколько и они независимы: `Reactor`, `RxJava`, `Akka Streams`, `SmallRye Mutiny`, JDK Flow API — ни одна не обёртка над `Reactor`.",
+                "source_of_confusion": "`Reactor` доминирует в экосистеме `Spring`, поэтому кажется единственным.",
+                "if_it_were_true": "Если бы все были обёртками над `Reactor`, они зависели бы от него в classpath, но `RxJava` и `Akka` от него не зависят.",
+                "how_it_should_be": "Существует несколько самостоятельных реализаций; `Reactor` — лишь одна из них."
               }
             }
           ]
@@ -251,19 +251,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Publisher<T>` — источник потенциально неограниченного числа элементов типа `T` с единственным методом `subscribe(Subscriber)`. Каждый вызов `subscribe()` создаёт отдельный поток данных, и `Publisher` не шлёт элементы до `Subscription.request()`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Publisher` лишь принимает подписчика и устанавливает связь через `onSubscribe`; элементы он эмитит только после запроса. Число `onNext` не должно превышать сумму всех `request(n)`.",
-                "example": "Лямбда `subscriber -> subscriber.onSubscribe(new Subscription(){ public void request(long n){/*push*/} public void cancel(){} })` — минимальный валидный `Publisher`.",
-                "when_to_apply": "Контракт важен при ручной реализации источника или понимании, почему ничего не происходит без `subscribe()` и `request()`.",
-                "edge_cases": "После `onError`/`onComplete` `Publisher` не должен слать новых сигналов; повторный `subscribe()` запускает совершенно новый независимый поток.",
-                "related": "[[reactive-streams-interview#Q6]] парный интерфейс `Subscriber`; [[reactive-streams-interview#Q9]] управление через `Subscription`; [[reactive-streams-interview#Q18]] правила для `Publisher`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Publisher<T>` сразу при создании начинает эмитить элементы всем потенциальным подписчикам, даже если никто ещё не вызвал `subscribe()`.",
               "correct": false,
               "sections": {
@@ -274,8 +261,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Publisher<T>` имеет четыре метода — `onSubscribe`, `onNext`, `onError`, `onComplete` — через которые он сообщает подписчику о событиях.",
               "correct": false,
               "sections": {
@@ -286,8 +273,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Publisher<T>` допускает только одну подписку за всё время жизни: повторный `subscribe()` бросает `IllegalStateException`.",
               "correct": false,
               "sections": {
@@ -295,6 +282,19 @@
                 "source_of_confusion": "Поведение hot-источников (одна общая лента) обобщают на все `Publisher`.",
                 "if_it_were_true": "Если бы повторный `subscribe()` был запрещён, нельзя было бы переиспользовать `Flux` для нескольких подписчиков, а это штатно.",
                 "how_it_should_be": "`Publisher` можно подписывать много раз; ограничение «один раз» — это деталь некоторых конкретных источников, а не правило стандарта."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Publisher<T>` — источник потенциально неограниченного числа элементов типа `T` с единственным методом `subscribe(Subscriber)`. Каждый вызов `subscribe()` создаёт отдельный поток данных, и `Publisher` не шлёт элементы до `Subscription.request()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Publisher` лишь принимает подписчика и устанавливает связь через `onSubscribe`; элементы он эмитит только после запроса. Число `onNext` не должно превышать сумму всех `request(n)`.",
+                "example": "Лямбда `subscriber -> subscriber.onSubscribe(new Subscription(){ public void request(long n){/*push*/} public void cancel(){} })` — минимальный валидный `Publisher`.",
+                "when_to_apply": "Контракт важен при ручной реализации источника или понимании, почему ничего не происходит без `subscribe()` и `request()`.",
+                "edge_cases": "После `onError`/`onComplete` `Publisher` не должен слать новых сигналов; повторный `subscribe()` запускает совершенно новый независимый поток.",
+                "related": "[[reactive-streams-interview#Q6]] парный интерфейс `Subscriber`; [[reactive-streams-interview#Q9]] управление через `Subscription`; [[reactive-streams-interview#Q18]] правила для `Publisher`."
               }
             }
           ]
@@ -311,6 +311,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Subscriber<T>` может получать `onNext` параллельно из нескольких потоков одновременно, поэтому его реализация обязана быть потокобезопасной к конкурентным вызовам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Спецификация требует сериализованных, непараллельных вызовов `onNext`; одновременных вызовов из разных потоков быть не должно.",
+                "source_of_confusion": "Асинхронность потоков создаёт впечатление, что и колбэки приходят конкурентно.",
+                "if_it_were_true": "Если бы `onNext` шли параллельно, потерялся бы строгий порядок элементов и happens-before-гарантии.",
+                "how_it_should_be": "Сигналы сериализованы (хотя и не обязательно в одном потоке); конкурентных `onNext` стандарт не допускает."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Subscriber<T>` — это источник элементов, который через метод `subscribe` начинает их эмитить потребителю.",
               "correct": false,
               "sections": {
@@ -318,19 +330,6 @@
                 "source_of_confusion": "Названия `Publisher`/`Subscriber` легко перепутать местами, особенно кто кого вызывает.",
                 "if_it_were_true": "Если бы `Subscriber` был источником, ему не нужны были бы `onNext`/`onError`, которыми ему доставляют данные.",
                 "how_it_should_be": "`Subscriber` — потребитель с 4 колбэками; источник с методом `subscribe` — это `Publisher`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Subscriber<T>` — потребитель элементов с 4 методами-колбэками: `onSubscribe(Subscription)` (связь установлена, обычно здесь `s.request(N)`), `onNext(T)` (новый элемент), `onError(Throwable)` (терминальная ошибка) и `onComplete()` (терминальный успех).",
-              "correct": true,
-              "sections": {
-                "explanation": "`Subscriber` реагирует на сигналы `Publisher`: получает `Subscription` в `onSubscribe`, обрабатывает элементы в `onNext` и завершается ровно одним терминальным сигналом — `onError` либо `onComplete`.",
-                "example": "В `onSubscribe(s)` подписчик сохраняет `Subscription` и вызывает `s.request(N)`, иначе элементы никогда не придут — `Publisher` ждёт запроса.",
-                "when_to_apply": "Понимание этих колбэков нужно при ручной реализации потребителя и при отладке «почему `onNext` не приходит» (забыли `request`).",
-                "edge_cases": "`onSubscribe` вызывается ровно один раз; `onNext` — 0..N раз и не параллельно; срабатывает либо `onError`, либо `onComplete`, но не оба.",
-                "related": "[[reactive-streams-interview#Q5]] парный `Publisher`; [[reactive-streams-interview#Q7]] порядок вызова колбэков; [[reactive-streams-interview#Q19]] правила для `Subscriber`."
               }
             },
             {
@@ -348,13 +347,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Subscriber<T>` может получать `onNext` параллельно из нескольких потоков одновременно, поэтому его реализация обязана быть потокобезопасной к конкурентным вызовам.",
-              "correct": false,
+              "text": "`Subscriber<T>` — потребитель элементов с 4 методами-колбэками: `onSubscribe(Subscription)` (связь установлена, обычно здесь `s.request(N)`), `onNext(T)` (новый элемент), `onError(Throwable)` (терминальная ошибка) и `onComplete()` (терминальный успех).",
+              "correct": true,
               "sections": {
-                "what_actually": "Спецификация требует сериализованных, непараллельных вызовов `onNext`; одновременных вызовов из разных потоков быть не должно.",
-                "source_of_confusion": "Асинхронность потоков создаёт впечатление, что и колбэки приходят конкурентно.",
-                "if_it_were_true": "Если бы `onNext` шли параллельно, потерялся бы строгий порядок элементов и happens-before-гарантии.",
-                "how_it_should_be": "Сигналы сериализованы (хотя и не обязательно в одном потоке); конкурентных `onNext` стандарт не допускает."
+                "explanation": "`Subscriber` реагирует на сигналы `Publisher`: получает `Subscription` в `onSubscribe`, обрабатывает элементы в `onNext` и завершается ровно одним терминальным сигналом — `onError` либо `onComplete`.",
+                "example": "В `onSubscribe(s)` подписчик сохраняет `Subscription` и вызывает `s.request(N)`, иначе элементы никогда не придут — `Publisher` ждёт запроса.",
+                "when_to_apply": "Понимание этих колбэков нужно при ручной реализации потребителя и при отладке «почему `onNext` не приходит» (забыли `request`).",
+                "edge_cases": "`onSubscribe` вызывается ровно один раз; `onNext` — 0..N раз и не параллельно; срабатывает либо `onError`, либо `onComplete`, но не оба.",
+                "related": "[[reactive-streams-interview#Q5]] парный `Publisher`; [[reactive-streams-interview#Q7]] порядок вызова колбэков; [[reactive-streams-interview#Q19]] правила для `Subscriber`."
               }
             }
           ]
@@ -371,30 +371,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Сначала идёт серия `onNext`, и только после неё, в самом конце, вызывается `onSubscribe`, подтверждающий завершение подписки.",
+              "text": "`onComplete` и `onError` всегда вызываются оба подряд в конце потока, чтобы подписчик получил и статус успеха, и информацию об ошибке.",
               "correct": false,
               "sections": {
-                "what_actually": "`onSubscribe` всегда вызывается первым, до любого `onNext`; в конце идёт терминальный `onComplete` или `onError`.",
-                "source_of_confusion": "Кажется логичным, что «подтверждение подписки» приходит после получения данных, но контракт обратный.",
-                "if_it_were_true": "Если бы `onSubscribe` шёл последним, подписчик не имел бы `Subscription` и не мог бы вызвать `request(n)` для получения элементов.",
-                "how_it_should_be": "Порядок: `onSubscribe` → `onNext*` → (`onComplete` | `onError`)."
+                "what_actually": "Терминальный сигнал ровно один: либо `onComplete`, либо `onError`, но никогда оба.",
+                "source_of_confusion": "Привычка из try/catch (и нормальное завершение, и обработка ошибки) переносится на реактивный поток.",
+                "if_it_were_true": "Если бы вызывались оба, `Subscriber` оказался бы в противоречивом состоянии «и успех, и ошибка».",
+                "how_it_should_be": "Поток завершается единственным терминальным сигналом — `onComplete` ИЛИ `onError`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Методы могут приходить в любом порядке и параллельно, потому что реактивность асинхронна, и `Subscriber` обязан сам разбираться с любой последовательностью.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Порядок строго определён (`onSubscribe` → `onNext*` → терминальный), а сигналы сериализованы, а не параллельны.",
-                "source_of_confusion": "Слово «асинхронный» ошибочно трактуют как «без всякого порядка».",
-                "if_it_were_true": "Если бы порядок был произвольным, `Subscriber` мог бы получить `onComplete` до `onSubscribe` и не знать, что делать.",
-                "how_it_should_be": "Последовательность жёсткая и сериализованная; асинхронность касается лишь того, в каком потоке приходят сигналы."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Строгий сериализованный порядок: `onSubscribe(sub)` (один раз, здесь `sub.request(n)`) → серия `onNext(e1..eN)` до исчерпания запроса → ровно один терминальный сигнал `onComplete()` или `onError(t)`. Сигналы сериализованы, но не обязательно идут в одном потоке.",
               "correct": true,
               "sections": {
@@ -406,15 +394,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`onComplete` и `onError` всегда вызываются оба подряд в конце потока, чтобы подписчик получил и статус успеха, и информацию об ошибке.",
+              "order": 2,
+              "label": "C",
+              "text": "Методы могут приходить в любом порядке и параллельно, потому что реактивность асинхронна, и `Subscriber` обязан сам разбираться с любой последовательностью.",
               "correct": false,
               "sections": {
-                "what_actually": "Терминальный сигнал ровно один: либо `onComplete`, либо `onError`, но никогда оба.",
-                "source_of_confusion": "Привычка из try/catch (и нормальное завершение, и обработка ошибки) переносится на реактивный поток.",
-                "if_it_were_true": "Если бы вызывались оба, `Subscriber` оказался бы в противоречивом состоянии «и успех, и ошибка».",
-                "how_it_should_be": "Поток завершается единственным терминальным сигналом — `onComplete` ИЛИ `onError`."
+                "what_actually": "Порядок строго определён (`onSubscribe` → `onNext*` → терминальный), а сигналы сериализованы, а не параллельны.",
+                "source_of_confusion": "Слово «асинхронный» ошибочно трактуют как «без всякого порядка».",
+                "if_it_were_true": "Если бы порядок был произвольным, `Subscriber` мог бы получить `onComplete` до `onSubscribe` и не знать, что делать.",
+                "how_it_should_be": "Последовательность жёсткая и сериализованная; асинхронность касается лишь того, в каком потоке приходят сигналы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сначала идёт серия `onNext`, и только после неё, в самом конце, вызывается `onSubscribe`, подтверждающий завершение подписки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`onSubscribe` всегда вызывается первым, до любого `onNext`; в конце идёт терминальный `onComplete` или `onError`.",
+                "source_of_confusion": "Кажется логичным, что «подтверждение подписки» приходит после получения данных, но контракт обратный.",
+                "if_it_were_true": "Если бы `onSubscribe` шёл последним, подписчик не имел бы `Subscription` и не мог бы вызвать `request(n)` для получения элементов.",
+                "how_it_should_be": "Порядок: `onSubscribe` → `onNext*` → (`onComplete` | `onError`)."
               }
             }
           ]
@@ -431,13 +431,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Да, если `Publisher` работает в высоконагруженном режиме, он может начать слать `onNext` сразу, а `onSubscribe` доставить позже, когда освободится поток.",
-              "correct": false,
+              "text": "Нет. Правило 1.9 спецификации обязывает `Publisher` вызвать `onSubscribe` первым; иначе `Subscriber` не получит `Subscription` и не сможет управлять потоком. Получение `onNext` без предшествующего `onSubscribe` — нарушение контракта, которое ловит `TCK`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Нет: правило 1.9 обязывает `Publisher` вызвать `onSubscribe` первым при любой нагрузке; `onNext` до него — нарушение контракта.",
-                "source_of_confusion": "Высокая нагрузка ассоциируется с «гонками», поэтому кажется допустимым изменить порядок.",
-                "if_it_were_true": "Если бы `onNext` пришёл первым, у `Subscriber` не было бы `Subscription`, и он не смог бы управлять потоком.",
-                "how_it_should_be": "`onSubscribe` всегда строго первый; нагрузка порядок не меняет."
+                "explanation": "`onSubscribe` доставляет подписчику `Subscription` — без неё нельзя вызвать `request(n)`, и поток просто не запустится. Поэтому он обязан предшествовать любому `onNext`.",
+                "example": "В `onSubscribe(s)` подписчик сохраняет `s` и вызывает `s.request(N)`; приди `onNext` раньше — ссылки на `Subscription` ещё нет, и обработать элемент корректно невозможно.",
+                "when_to_apply": "Это проверяют при ручной реализации `Publisher`: `TCK`-тест `PublisherVerification` падает, если порядок нарушен.",
+                "edge_cases": "Нарушение чаще всего возникает при кривой ручной реализации источника; готовые `Flux`/`Flowable` гарантируют порядок автоматически.",
+                "related": "[[reactive-streams-interview#Q7]] полный порядок колбэков; [[reactive-streams-interview#Q9]] что даёт `Subscription`; [[reactive-streams-interview#Q21]] как `TCK` ловит такие нарушения."
               }
             },
             {
@@ -467,14 +468,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Нет. Правило 1.9 спецификации обязывает `Publisher` вызвать `onSubscribe` первым; иначе `Subscriber` не получит `Subscription` и не сможет управлять потоком. Получение `onNext` без предшествующего `onSubscribe` — нарушение контракта, которое ловит `TCK`.",
-              "correct": true,
+              "text": "Да, если `Publisher` работает в высоконагруженном режиме, он может начать слать `onNext` сразу, а `onSubscribe` доставить позже, когда освободится поток.",
+              "correct": false,
               "sections": {
-                "explanation": "`onSubscribe` доставляет подписчику `Subscription` — без неё нельзя вызвать `request(n)`, и поток просто не запустится. Поэтому он обязан предшествовать любому `onNext`.",
-                "example": "В `onSubscribe(s)` подписчик сохраняет `s` и вызывает `s.request(N)`; приди `onNext` раньше — ссылки на `Subscription` ещё нет, и обработать элемент корректно невозможно.",
-                "when_to_apply": "Это проверяют при ручной реализации `Publisher`: `TCK`-тест `PublisherVerification` падает, если порядок нарушен.",
-                "edge_cases": "Нарушение чаще всего возникает при кривой ручной реализации источника; готовые `Flux`/`Flowable` гарантируют порядок автоматически.",
-                "related": "[[reactive-streams-interview#Q7]] полный порядок колбэков; [[reactive-streams-interview#Q9]] что даёт `Subscription`; [[reactive-streams-interview#Q21]] как `TCK` ловит такие нарушения."
+                "what_actually": "Нет: правило 1.9 обязывает `Publisher` вызвать `onSubscribe` первым при любой нагрузке; `onNext` до него — нарушение контракта.",
+                "source_of_confusion": "Высокая нагрузка ассоциируется с «гонками», поэтому кажется допустимым изменить порядок.",
+                "if_it_were_true": "Если бы `onNext` пришёл первым, у `Subscriber` не было бы `Subscription`, и он не смог бы управлять потоком.",
+                "how_it_should_be": "`onSubscribe` всегда строго первый; нагрузка порядок не меняет."
               }
             }
           ]
@@ -491,6 +491,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Subscription` содержит методы `onNext` и `onComplete`, через которые `Publisher` доставляет элементы и сигнал завершения подписчику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`onNext`/`onComplete` — методы `Subscriber`; у `Subscription` только `request(n)` и `cancel()`.",
+                "source_of_confusion": "`Subscription` участвует в доставке данных, поэтому колбэки доставки ошибочно приписывают ей.",
+                "if_it_were_true": "Если бы у `Subscription` были `onNext`/`onComplete`, она дублировала бы роль `Subscriber`.",
+                "how_it_should_be": "`Subscription` — это канал управления (`request`/`cancel`); доставкой занимаются колбэки `Subscriber`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Subscription` — связь между конкретным `Publisher` и конкретным `Subscriber` с двумя методами: `request(long n)` (запросить ещё `n` элементов) и `cancel()` (разорвать подписку). Именно через неё `Subscriber` управляет backpressure.",
               "correct": true,
               "sections": {
@@ -502,8 +514,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`Subscription` — это глобальный объект, общий для всех подписчиков одного `Publisher`: через него все `Subscriber` запрашивают элементы из единой очереди.",
               "correct": false,
               "sections": {
@@ -511,18 +523,6 @@
                 "source_of_confusion": "Hot-источники с одной лентой данных наводят на мысль об общей `Subscription`.",
                 "if_it_were_true": "Если бы `Subscription` была общей, `request(n)` одного подписчика влиял бы на темп остальных, ломая независимый backpressure.",
                 "how_it_should_be": "На каждую подписку — своя `Subscription`; каждый `Subscriber` управляет своим темпом независимо."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Subscription` содержит методы `onNext` и `onComplete`, через которые `Publisher` доставляет элементы и сигнал завершения подписчику.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`onNext`/`onComplete` — методы `Subscriber`; у `Subscription` только `request(n)` и `cancel()`.",
-                "source_of_confusion": "`Subscription` участвует в доставке данных, поэтому колбэки доставки ошибочно приписывают ей.",
-                "if_it_were_true": "Если бы у `Subscription` были `onNext`/`onComplete`, она дублировала бы роль `Subscriber`.",
-                "how_it_should_be": "`Subscription` — это канал управления (`request`/`cancel`); доставкой занимаются колбэки `Subscriber`."
               }
             },
             {
@@ -551,13 +551,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Backpressure — это автоматическое сжатие данных (компрессия) на стороне `Publisher`, чтобы по каналу проходило меньше байт при перегрузке.",
+              "text": "Backpressure — это автоматический рестарт `Publisher` при падении `Subscriber`, чтобы поток продолжился с того же места.",
               "correct": false,
               "sections": {
-                "what_actually": "Backpressure — это регулирование скорости через `request(n)`, а не сжатие данных; объём элементов не уменьшается, меняется темп их выдачи.",
-                "source_of_confusion": "Слово «pressure» ассоциируется с давлением и сжатием, отсюда подмена понятий.",
-                "if_it_were_true": "Если бы это была компрессия, проблема медленного `Subscriber` не решалась бы — он всё равно не успевал бы распаковывать.",
-                "how_it_should_be": "Backpressure — это pull-based управление темпом: `Subscriber` запрашивает столько, сколько готов обработать."
+                "what_actually": "Backpressure управляет темпом, а не отказоустойчивостью; восстановление после ошибок — это retry/resume, отдельные операторы.",
+                "source_of_confusion": "И то и другое касается «проблем потока», поэтому понятия смешивают.",
+                "if_it_were_true": "Если бы backpressure делал рестарт, он дублировал бы операторы `retry()`/`onErrorResume()`.",
+                "how_it_should_be": "Backpressure — это контроль скорости через `request(n)`; восстановление потока обеспечивают другие механизмы."
               }
             },
             {
@@ -576,6 +576,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Backpressure — это автоматическое сжатие данных (компрессия) на стороне `Publisher`, чтобы по каналу проходило меньше байт при перегрузке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backpressure — это регулирование скорости через `request(n)`, а не сжатие данных; объём элементов не уменьшается, меняется темп их выдачи.",
+                "source_of_confusion": "Слово «pressure» ассоциируется с давлением и сжатием, отсюда подмена понятий.",
+                "if_it_were_true": "Если бы это была компрессия, проблема медленного `Subscriber` не решалась бы — он всё равно не успевал бы распаковывать.",
+                "how_it_should_be": "Backpressure — это pull-based управление темпом: `Subscriber` запрашивает столько, сколько готов обработать."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Backpressure — это приоритизация сообщений в очереди, при которой важные элементы обрабатываются раньше неважных.",
               "correct": false,
               "sections": {
@@ -583,18 +595,6 @@
                 "source_of_confusion": "Перегруженная очередь ассоциируется с приоритизацией, отсюда путаница.",
                 "if_it_were_true": "Если бы это была приоритизация, спецификации понадобились бы поля приоритета у элементов, но их нет.",
                 "how_it_should_be": "Backpressure регулирует скорость, а не порядок важности; приоритизация — отдельная задача прикладного уровня."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Backpressure — это автоматический рестарт `Publisher` при падении `Subscriber`, чтобы поток продолжился с того же места.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Backpressure управляет темпом, а не отказоустойчивостью; восстановление после ошибок — это retry/resume, отдельные операторы.",
-                "source_of_confusion": "И то и другое касается «проблем потока», поэтому понятия смешивают.",
-                "if_it_were_true": "Если бы backpressure делал рестарт, он дублировал бы операторы `retry()`/`onErrorResume()`.",
-                "how_it_should_be": "Backpressure — это контроль скорости через `request(n)`; восстановление потока обеспечивают другие механизмы."
               }
             }
           ]
@@ -611,30 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`request(0)` — безобидный no-op (легитимный нулевой запрос), и только `request(-1)` (строго отрицательное) обязывает вызвать `onError(IllegalArgumentException)`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Правило 3.9 говорит про `n <= 0`, а не `n < 0`: `request(0)` тоже обязан привести к `onError(IllegalArgumentException)` — нулевой запрос НЕ является легитимным no-op.",
-                "source_of_confusion": "Интуитивно ноль кажется «ничего не прошу — ничего не ломаю», но спецификация запрещает и его.",
-                "if_it_were_true": "Если бы `request(0)` был валиден, нулевой запрос из ошибочной арифметики проходил бы молча, и реализация не была бы fail-fast.",
-                "how_it_should_be": "И `request(0)`, и `request(-1)` (весь диапазон `n <= 0`) ведут к `onError(IllegalArgumentException)`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "И `request(0)`, и `request(-1)` трактуются одинаково — как запрос нуля элементов: `Publisher` ставит подписку на паузу и ждёт следующего положительного `request(n)`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: оба значения (`n <= 0`) обязаны привести к `onError(IllegalArgumentException)` по правилу 3.9 — ни одно не является молчаливым no-op.",
-                "source_of_confusion": "Оба значения «не запрашивают элементы», поэтому кажутся одинаково безобидными — но спецификация считает оба ошибкой.",
-                "if_it_were_true": "Если бы неположительный запрос был no-op, баг с арифметикой давал бы нулевой/отрицательный запрос молча, и его было бы не поймать.",
-                "how_it_should_be": "Любой `n <= 0` — явная ошибка с сигналом `onError(IllegalArgumentException)`; запрашивает элементы только `n >= 1`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "И `request(0)`, и `request(-1)` — любой `n <= 0` — обязывают `Publisher` вызвать `onError(IllegalArgumentException)`. Это правило 3.9 спецификации Reactive Streams: запрос неположительного числа (включая ноль) — сигнал ошибки, а не no-op.",
               "correct": true,
               "sections": {
@@ -646,8 +622,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`request(-1)` трактуется как «unbounded» — запрос бесконечного числа элементов, эквивалентный `request(Long.MAX_VALUE)`.",
               "correct": false,
               "sections": {
@@ -655,6 +631,30 @@
                 "source_of_confusion": "И «бесконечность», и отрицательное число — «нестандартные» значения, поэтому их смешивают.",
                 "if_it_were_true": "Если бы `-1` означал unbounded, отрицательный результат арифметики молча отключал бы backpressure.",
                 "how_it_should_be": "Unbounded задаётся очень большим положительным `n`; `-1` — это ошибка с `onError`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`request(0)` — безобидный no-op (легитимный нулевой запрос), и только `request(-1)` (строго отрицательное) обязывает вызвать `onError(IllegalArgumentException)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Правило 3.9 говорит про `n <= 0`, а не `n < 0`: `request(0)` тоже обязан привести к `onError(IllegalArgumentException)` — нулевой запрос НЕ является легитимным no-op.",
+                "source_of_confusion": "Интуитивно ноль кажется «ничего не прошу — ничего не ломаю», но спецификация запрещает и его.",
+                "if_it_were_true": "Если бы `request(0)` был валиден, нулевой запрос из ошибочной арифметики проходил бы молча, и реализация не была бы fail-fast.",
+                "how_it_should_be": "И `request(0)`, и `request(-1)` (весь диапазон `n <= 0`) ведут к `onError(IllegalArgumentException)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "И `request(0)`, и `request(-1)` трактуются одинаково — как запрос нуля элементов: `Publisher` ставит подписку на паузу и ждёт следующего положительного `request(n)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: оба значения (`n <= 0`) обязаны привести к `onError(IllegalArgumentException)` по правилу 3.9 — ни одно не является молчаливым no-op.",
+                "source_of_confusion": "Оба значения «не запрашивают элементы», поэтому кажутся одинаково безобидными — но спецификация считает оба ошибкой.",
+                "if_it_were_true": "Если бы неположительный запрос был no-op, баг с арифметикой давал бы нулевой/отрицательный запрос молча, и его было бы не поймать.",
+                "how_it_should_be": "Любой `n <= 0` — явная ошибка с сигналом `onError(IllegalArgumentException)`; запрашивает элементы только `n >= 1`."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`cancel()` гарантированно мгновенно останавливает все сигналы: сразу после его вызова ни одного `onNext` подписчик уже не получит.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Остановка не мгновенна: из-за race condition после `cancel()` может прийти ещё несколько сигналов, пока `Publisher` не среагировал.",
-                "source_of_confusion": "Слово «cancel» предполагает немедленный эффект, отсюда иллюзия мгновенности.",
-                "if_it_were_true": "Если бы остановка была мгновенной, асинхронные `Publisher` не могли бы существовать — сигнал отмены идёт через границу потоков.",
-                "how_it_should_be": "`cancel()` просит прекратить в разумное время; пара запоздалых сигналов после него допустима."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`cancel()` приостанавливает поток с возможностью продолжить его позже повторным `request(n)` без новой подписки.",
               "correct": false,
               "sections": {
@@ -690,6 +678,19 @@
                 "source_of_confusion": "`cancel` путают с «паузой», хотя это терминальное для подписки действие.",
                 "if_it_were_true": "Если бы поток возобновлялся после `cancel`, `Publisher` обязан был бы вечно держать ресурсы наготове.",
                 "how_it_should_be": "После `cancel()` подписка мертва; чтобы получать данные снова, нужно подписаться заново."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`cancel()` сообщает `Publisher`, что подписка больше не нужна: тот должен прекратить `onNext` и освободить ресурсы (закрыть соединение, отменить таймер). После `cancel()` слать `onComplete`/`onError` не требуется (но допустимо из-за гонок), а сам метод идемпотентен — повторные вызовы безопасны.",
+              "correct": true,
+              "sections": {
+                "explanation": "`cancel()` — это сигнал «мне больше не нужны данные»; `Publisher` останавливает выдачу и чистит ресурсы. Идемпотентность защищает от двойного вызова при гонках.",
+                "example": "Подписчик в `onError`-обработчике зовёт `subscription.cancel()`, чтобы освободить сетевое соединение; повторный `cancel()` (например, из cleanup) не вызывает сбоя.",
+                "when_to_apply": "`cancel()` критичен для предотвращения утечек: незакрытые подписки на бесконечные источники держат ресурсы и потоки.",
+                "edge_cases": "Из-за асинхронной гонки после `cancel()` может прийти ещё несколько сигналов — `Subscriber` обязан их безопасно игнорировать.",
+                "related": "[[reactive-streams-interview#Q9]] `cancel` как часть `Subscription`; [[reactive-streams-interview#Q20]] правила для `Subscription`; [[reactive-streams-interview#Q26]] утечки при отсутствии отмены."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`cancel()` сообщает `Publisher`, что подписка больше не нужна: тот должен прекратить `onNext` и освободить ресурсы (закрыть соединение, отменить таймер). После `cancel()` слать `onComplete`/`onError` не требуется (но допустимо из-за гонок), а сам метод идемпотентен — повторные вызовы безопасны.",
-              "correct": true,
+              "text": "`cancel()` гарантированно мгновенно останавливает все сигналы: сразу после его вызова ни одного `onNext` подписчик уже не получит.",
+              "correct": false,
               "sections": {
-                "explanation": "`cancel()` — это сигнал «мне больше не нужны данные»; `Publisher` останавливает выдачу и чистит ресурсы. Идемпотентность защищает от двойного вызова при гонках.",
-                "example": "Подписчик в `onError`-обработчике зовёт `subscription.cancel()`, чтобы освободить сетевое соединение; повторный `cancel()` (например, из cleanup) не вызывает сбоя.",
-                "when_to_apply": "`cancel()` критичен для предотвращения утечек: незакрытые подписки на бесконечные источники держат ресурсы и потоки.",
-                "edge_cases": "Из-за асинхронной гонки после `cancel()` может прийти ещё несколько сигналов — `Subscriber` обязан их безопасно игнорировать.",
-                "related": "[[reactive-streams-interview#Q9]] `cancel` как часть `Subscription`; [[reactive-streams-interview#Q20]] правила для `Subscription`; [[reactive-streams-interview#Q26]] утечки при отсутствии отмены."
+                "what_actually": "Остановка не мгновенна: из-за race condition после `cancel()` может прийти ещё несколько сигналов, пока `Publisher` не среагировал.",
+                "source_of_confusion": "Слово «cancel» предполагает немедленный эффект, отсюда иллюзия мгновенности.",
+                "if_it_were_true": "Если бы остановка была мгновенной, асинхронные `Publisher` не могли бы существовать — сигнал отмены идёт через границу потоков.",
+                "how_it_should_be": "`cancel()` просит прекратить в разумное время; пара запоздалых сигналов после него допустима."
               }
             }
           ]
@@ -731,19 +731,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Processor<T,R>` — одновременно `Subscriber<T>` и `Publisher<R>`; он используется как промежуточный узел в цепочке `upstream Publisher<T>` → `Processor<T,R>` → `downstream Subscriber<R>` для буферизации, трансформации типов и fan-out.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Processor` наследует оба интерфейса: как `Subscriber` он принимает элементы сверху, как `Publisher` отдаёт их вниз. Это естественная точка для batching, преобразования типа `T→R` и раздачи одного входа многим подписчикам.",
-                "example": "В `Reactor` `Processor` объявлен deprecated, вместо него — `Sinks`: `Sinks.Many<String> sink = Sinks.many().multicast().onBackpressureBuffer(); sink.tryEmitNext(\"hello\");`.",
-                "when_to_apply": "`Processor`/`Sinks` нужны для hot-источников (событийная шина) и для ручной эмиссии элементов в реактивный поток извне.",
-                "edge_cases": "Корректно реализовать `Processor` вручную сложно (он должен соблюдать правила и `Publisher`, и `Subscriber`), поэтому в `Reactor` его и заменили на `Sinks`.",
-                "related": "[[reactive-streams-interview#Q2]] `Processor` среди четырёх интерфейсов; [[reactive-streams-interview#Q14]] пример использования `Processor`; [[reactive-streams-interview#Q25]] аналог `Flow` в `Akka Streams`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Processor<T,R>` — это только `Subscriber<T>`, расширенный методом трансформации `map`, но `Publisher` он не реализует.",
               "correct": false,
               "sections": {
@@ -754,8 +741,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Processor<T,R>` — это пул потоков (executor), на котором выполняются операторы реактивного потока.",
               "correct": false,
               "sections": {
@@ -766,8 +753,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Processor<T,R>` всегда меняет тип элементов `T` на `R`, и использовать его с одинаковыми типами (`T == R`) запрещено.",
               "correct": false,
               "sections": {
@@ -775,6 +762,19 @@
                 "source_of_confusion": "Две параметризации `T` и `R` создают впечатление обязательной разницы типов.",
                 "if_it_were_true": "Если бы совпадение типов было запрещено, `Processor` нельзя было бы применить как простую шину одного типа.",
                 "how_it_should_be": "Трансформация типа опциональна; `Processor` свободно работает и при `T == R`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Processor<T,R>` — одновременно `Subscriber<T>` и `Publisher<R>`; он используется как промежуточный узел в цепочке `upstream Publisher<T>` → `Processor<T,R>` → `downstream Subscriber<R>` для буферизации, трансформации типов и fan-out.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Processor` наследует оба интерфейса: как `Subscriber` он принимает элементы сверху, как `Publisher` отдаёт их вниз. Это естественная точка для batching, преобразования типа `T→R` и раздачи одного входа многим подписчикам.",
+                "example": "В `Reactor` `Processor` объявлен deprecated, вместо него — `Sinks`: `Sinks.Many<String> sink = Sinks.many().multicast().onBackpressureBuffer(); sink.tryEmitNext(\"hello\");`.",
+                "when_to_apply": "`Processor`/`Sinks` нужны для hot-источников (событийная шина) и для ручной эмиссии элементов в реактивный поток извне.",
+                "edge_cases": "Корректно реализовать `Processor` вручную сложно (он должен соблюдать правила и `Publisher`, и `Subscriber`), поэтому в `Reactor` его и заменили на `Sinks`.",
+                "related": "[[reactive-streams-interview#Q2]] `Processor` среди четырёх интерфейсов; [[reactive-streams-interview#Q14]] пример использования `Processor`; [[reactive-streams-interview#Q25]] аналог `Flow` в `Akka Streams`."
               }
             }
           ]
@@ -791,18 +791,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Классический пример — холодный (cold) `Publisher`: каждый новый подписчик `Processor` получает полную историю всех ранее эмитированных элементов с самого начала.",
+              "text": "Классический пример использования `Processor` — это блокирующий вызов `flux.block()`, который превращает реактивный поток в обычное значение.",
               "correct": false,
               "sections": {
-                "what_actually": "Классический пример `Processor`/`Sinks` — это hot-источник (событийная шина): подписчики получают только элементы, эмитированные ПОСЛЕ их подписки, а не историю.",
-                "source_of_confusion": "Cold-потоки (`Flux.range`) дают каждому подписчику всё с начала, отсюда подмена.",
-                "if_it_were_true": "Если бы шина отдавала всю историю, multicast-источник должен был бы вечно хранить все события.",
-                "how_it_should_be": "`Processor` как шина — это hot-источник; новые подписчики видят лишь последующие события."
+                "what_actually": "`block()` — это терминальная операция получения значения, не имеющая отношения к `Processor` как промежуточному узлу.",
+                "source_of_confusion": "`block()` часто встречается в реактивном коде, поэтому ассоциируется со всем подряд.",
+                "if_it_were_true": "Если бы `block()` был примером `Processor`, он должен был бы реализовывать `Publisher` и `Subscriber`, но это просто метод-терминатор.",
+                "how_it_should_be": "Пример `Processor` — hot-шина через `Sinks`/`DirectProcessor`; `block()` — способ выйти из реактивного мира."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "Классический пример `Processor` — это `Flux.range(1, 10)`, который генерирует диапазон чисел и является каноничным узлом-процессором.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flux.range` — обычный cold `Publisher`-источник, а не `Processor`; `Processor` одновременно `Subscriber` и `Publisher`.",
+                "source_of_confusion": "И то и другое создаёт поток элементов, поэтому источник путают с процессором.",
+                "if_it_were_true": "Если бы `Flux.range` был `Processor`, он должен был бы и потреблять upstream, а у него входа нет.",
+                "how_it_should_be": "Пример `Processor`/`Sinks` — это hot-шина с ручной эмиссией; `Flux.range` — просто генератор-источник."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Классический пример — hot publisher (событийная шина): несколько подписчиков получают одни и те же элементы. Устаревший API — `DirectProcessor<Integer> p = DirectProcessor.create(); p.subscribe(...); p.subscribe(...); p.onNext(1);` (оба подписчика получают 1). Современный API — через `Sinks`: `Sinks.Many<Integer> sink = Sinks.many().multicast().directBestEffort(); sink.asFlux().subscribe(...); sink.tryEmitNext(1);`.",
               "correct": true,
               "sections": {
@@ -814,27 +826,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Классический пример `Processor` — это `Flux.range(1, 10)`, который генерирует диапазон чисел и является каноничным узлом-процессором.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Flux.range` — обычный cold `Publisher`-источник, а не `Processor`; `Processor` одновременно `Subscriber` и `Publisher`.",
-                "source_of_confusion": "И то и другое создаёт поток элементов, поэтому источник путают с процессором.",
-                "if_it_were_true": "Если бы `Flux.range` был `Processor`, он должен был бы и потреблять upstream, а у него входа нет.",
-                "how_it_should_be": "Пример `Processor`/`Sinks` — это hot-шина с ручной эмиссией; `Flux.range` — просто генератор-источник."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Классический пример использования `Processor` — это блокирующий вызов `flux.block()`, который превращает реактивный поток в обычное значение.",
+              "text": "Классический пример — холодный (cold) `Publisher`: каждый новый подписчик `Processor` получает полную историю всех ранее эмитированных элементов с самого начала.",
               "correct": false,
               "sections": {
-                "what_actually": "`block()` — это терминальная операция получения значения, не имеющая отношения к `Processor` как промежуточному узлу.",
-                "source_of_confusion": "`block()` часто встречается в реактивном коде, поэтому ассоциируется со всем подряд.",
-                "if_it_were_true": "Если бы `block()` был примером `Processor`, он должен был бы реализовывать `Publisher` и `Subscriber`, но это просто метод-терминатор.",
-                "how_it_should_be": "Пример `Processor` — hot-шина через `Sinks`/`DirectProcessor`; `block()` — способ выйти из реактивного мира."
+                "what_actually": "Классический пример `Processor`/`Sinks` — это hot-источник (событийная шина): подписчики получают только элементы, эмитированные ПОСЛЕ их подписки, а не историю.",
+                "source_of_confusion": "Cold-потоки (`Flux.range`) дают каждому подписчику всё с начала, отсюда подмена.",
+                "if_it_were_true": "Если бы шина отдавала всю историю, multicast-источник должен был бы вечно хранить все события.",
+                "how_it_should_be": "`Processor` как шина — это hot-источник; новые подписчики видят лишь последующие события."
               }
             }
           ]
@@ -851,13 +851,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Есть ровно две стратегии backpressure: `SYNC` (синхронная выдача) и `ASYNC` (асинхронная выдача) — они определяют модель потоков при переполнении.",
-              "correct": false,
+              "text": "Существует 5 стратегий: `BUFFER` (копить элементы в буфере, риск OOM), `DROP` (сбрасывать новые при переполнении), `LATEST` (хранить только последний элемент), `ERROR` (послать `onError` при переполнении) и `IGNORE` (игнорировать backpressure, рискованно). В `Reactor`: `Flux.create(sink -> {...}, FluxSink.OverflowStrategy.DROP)`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Стратегий пять (`BUFFER`, `DROP`, `LATEST`, `ERROR`, `IGNORE`), и они про поведение при переполнении, а не про модель потоков.",
-                "source_of_confusion": "`SYNC`/`ASYNC` существуют в других API (например, режим эмиссии в `Flux.generate`), отсюда путаница.",
-                "if_it_were_true": "Если бы стратегий было только две и про потоки, не было бы выбора между `DROP` и `LATEST` для разных задач.",
-                "how_it_should_be": "Стратегии — `BUFFER`/`DROP`/`LATEST`/`ERROR`/`IGNORE`; они описывают, что делать с лишними элементами."
+                "explanation": "Стратегии описывают, что делать с лишними элементами, когда `Publisher` быстрее `Subscriber`: копить, выбрасывать новые, хранить последний, падать с ошибкой или игнорировать давление совсем.",
+                "example": "`Flux.create(sink -> {...}, FluxSink.OverflowStrategy.LATEST)` оставит только самое свежее значение, если подписчик не успевает — удобно для котировок и состояния UI.",
+                "when_to_apply": "Выбор стратегии нужен при создании hot-источника или моста из callback-API, где темп источника невозможно регулировать через `request`.",
+                "edge_cases": "`BUFFER` по умолчанию unbounded и грозит OOM; `IGNORE` фактически отключает защиту и может привести к `MissingBackpressureException` ниже по цепочке.",
+                "related": "[[reactive-streams-interview#Q16]] детальное отличие `BUFFER`/`DROP`/`LATEST`/`ERROR`; [[reactive-streams-interview#Q17]] выбор между `DROP` и `LATEST`; [[reactive-streams-interview#Q10]] что такое backpressure."
               }
             },
             {
@@ -875,14 +876,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Существует 5 стратегий: `BUFFER` (копить элементы в буфере, риск OOM), `DROP` (сбрасывать новые при переполнении), `LATEST` (хранить только последний элемент), `ERROR` (послать `onError` при переполнении) и `IGNORE` (игнорировать backpressure, рискованно). В `Reactor`: `Flux.create(sink -> {...}, FluxSink.OverflowStrategy.DROP)`.",
-              "correct": true,
+              "text": "Есть ровно две стратегии backpressure: `SYNC` (синхронная выдача) и `ASYNC` (асинхронная выдача) — они определяют модель потоков при переполнении.",
+              "correct": false,
               "sections": {
-                "explanation": "Стратегии описывают, что делать с лишними элементами, когда `Publisher` быстрее `Subscriber`: копить, выбрасывать новые, хранить последний, падать с ошибкой или игнорировать давление совсем.",
-                "example": "`Flux.create(sink -> {...}, FluxSink.OverflowStrategy.LATEST)` оставит только самое свежее значение, если подписчик не успевает — удобно для котировок и состояния UI.",
-                "when_to_apply": "Выбор стратегии нужен при создании hot-источника или моста из callback-API, где темп источника невозможно регулировать через `request`.",
-                "edge_cases": "`BUFFER` по умолчанию unbounded и грозит OOM; `IGNORE` фактически отключает защиту и может привести к `MissingBackpressureException` ниже по цепочке.",
-                "related": "[[reactive-streams-interview#Q16]] детальное отличие `BUFFER`/`DROP`/`LATEST`/`ERROR`; [[reactive-streams-interview#Q17]] выбор между `DROP` и `LATEST`; [[reactive-streams-interview#Q10]] что такое backpressure."
+                "what_actually": "Стратегий пять (`BUFFER`, `DROP`, `LATEST`, `ERROR`, `IGNORE`), и они про поведение при переполнении, а не про модель потоков.",
+                "source_of_confusion": "`SYNC`/`ASYNC` существуют в других API (например, режим эмиссии в `Flux.generate`), отсюда путаница.",
+                "if_it_were_true": "Если бы стратегий было только две и про потоки, не было бы выбора между `DROP` и `LATEST` для разных задач.",
+                "how_it_should_be": "Стратегии — `BUFFER`/`DROP`/`LATEST`/`ERROR`/`IGNORE`; они описывают, что делать с лишними элементами."
               }
             },
             {
@@ -911,6 +911,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`BUFFER` буферизует в памяти (по умолчанию unbounded) — для коротких предсказуемых bursts. `DROP` выбрасывает новые элементы — для логов и метрик, где потеря приемлема. `LATEST` хранит последний, старые удаляет — для UI-updates, где важно текущее состояние. `ERROR` бросает `MissingBackpressureException` — для явной сигнализации о баге в топологии.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая стратегия — свой компромисс память/потеря/отказ: `BUFFER` рискует OOM, `DROP` и `LATEST` теряют данные (разные!), а `ERROR` делает проблему явной и громкой.",
+                "example": "Для потока котировок берут `LATEST` (нужна свежая цена), для DEBUG-логов — `DROP` (потеря не страшна), а `ERROR` ставят в тестах, чтобы поймать перегрузку топологии.",
+                "when_to_apply": "Выбор делают при создании источника, который нельзя притормозить через `request` (callback-API, hot-шина), исходя из ценности и свежести данных.",
+                "edge_cases": "`BUFFER` по умолчанию unbounded (отсюда OOM); существуют bounded-варианты `onBackpressureBuffer(maxSize)`, которые при заполнении сами переходят к `DROP`/`ERROR`.",
+                "related": "[[reactive-streams-interview#Q15]] полный список из 5 стратегий; [[reactive-streams-interview#Q17]] когда `DROP`, а когда `LATEST`; [[reactive-streams-interview#Q10]] зачем вообще нужен backpressure."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`BUFFER` выбрасывает новые элементы при переполнении, а `DROP`, наоборот, копит их в памяти без ограничения размера.",
               "correct": false,
               "sections": {
@@ -918,18 +931,6 @@
                 "source_of_confusion": "Названия `BUFFER`/`DROP` легко перепутать местами по смыслу.",
                 "if_it_were_true": "Если бы `BUFFER` дропал, он не давал бы риска OOM, ради которого его и обсуждают.",
                 "how_it_should_be": "`BUFFER` — накопление в памяти; `DROP` — отбрасывание новых элементов."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`LATEST` копит все элементы в неограниченном буфере, а `ERROR` хранит только последний элемент при переполнении.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Перепутано: `LATEST` хранит только последний элемент (старые удаляет), а `ERROR` бросает `MissingBackpressureException`, ничего не копя.",
-                "source_of_confusion": "`LATEST` звучит как «оставить накопленное», отсюда подмена с буфером.",
-                "if_it_were_true": "Если бы `LATEST` копил всё, он ничем не отличался бы от `BUFFER` и не экономил бы память.",
-                "how_it_should_be": "`LATEST` — только последнее значение; `ERROR` — падение с исключением при переполнении."
               }
             },
             {
@@ -947,14 +948,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`BUFFER` буферизует в памяти (по умолчанию unbounded) — для коротких предсказуемых bursts. `DROP` выбрасывает новые элементы — для логов и метрик, где потеря приемлема. `LATEST` хранит последний, старые удаляет — для UI-updates, где важно текущее состояние. `ERROR` бросает `MissingBackpressureException` — для явной сигнализации о баге в топологии.",
-              "correct": true,
+              "text": "`LATEST` копит все элементы в неограниченном буфере, а `ERROR` хранит только последний элемент при переполнении.",
+              "correct": false,
               "sections": {
-                "explanation": "Каждая стратегия — свой компромисс память/потеря/отказ: `BUFFER` рискует OOM, `DROP` и `LATEST` теряют данные (разные!), а `ERROR` делает проблему явной и громкой.",
-                "example": "Для потока котировок берут `LATEST` (нужна свежая цена), для DEBUG-логов — `DROP` (потеря не страшна), а `ERROR` ставят в тестах, чтобы поймать перегрузку топологии.",
-                "when_to_apply": "Выбор делают при создании источника, который нельзя притормозить через `request` (callback-API, hot-шина), исходя из ценности и свежести данных.",
-                "edge_cases": "`BUFFER` по умолчанию unbounded (отсюда OOM); существуют bounded-варианты `onBackpressureBuffer(maxSize)`, которые при заполнении сами переходят к `DROP`/`ERROR`.",
-                "related": "[[reactive-streams-interview#Q15]] полный список из 5 стратегий; [[reactive-streams-interview#Q17]] когда `DROP`, а когда `LATEST`; [[reactive-streams-interview#Q10]] зачем вообще нужен backpressure."
+                "what_actually": "Перепутано: `LATEST` хранит только последний элемент (старые удаляет), а `ERROR` бросает `MissingBackpressureException`, ничего не копя.",
+                "source_of_confusion": "`LATEST` звучит как «оставить накопленное», отсюда подмена с буфером.",
+                "if_it_were_true": "Если бы `LATEST` копил всё, он ничем не отличался бы от `BUFFER` и не экономил бы память.",
+                "how_it_should_be": "`LATEST` — только последнее значение; `ERROR` — падение с исключением при переполнении."
               }
             }
           ]
@@ -971,6 +971,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`LATEST` выбирают, когда важно сохранить полную историю изменений значения, а `DROP` — когда нужен только самый последний элемент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ни `LATEST`, ни `DROP` не хранят историю: `LATEST` держит лишь последнее значение, `DROP` выбрасывает новые. Полную историю даёт `BUFFER`.",
+                "source_of_confusion": "Слово «latest» путают с журналом изменений, ведущим к «последнему».",
+                "if_it_were_true": "Если бы `LATEST` хранил историю, он требовал бы неограниченной памяти, как `BUFFER`.",
+                "how_it_should_be": "За историю отвечает `BUFFER`; `LATEST` — только текущее значение, `DROP` — отбрасывание новых."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`DROP` и `LATEST` взаимозаменяемы — выбор между ними не влияет на результат, можно брать любой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Результат различается: `DROP` может застрять на устаревшем значении, а `LATEST` всегда отдаёт свежее — для котировок это разные исходы.",
+                "source_of_confusion": "Обе стратегии «теряют данные», поэтому кажутся одинаковыми.",
+                "if_it_were_true": "Если бы они были эквивалентны, не было бы смысла иметь две отдельные стратегии.",
+                "how_it_should_be": "`DROP` отбрасывает новые элементы, `LATEST` — старые; для актуального состояния разница принципиальна."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`DROP` — когда не важно, какое именно сообщение потеряно (клики по спам-кнопке, DEBUG-логи). `LATEST` — когда важно последнее актуальное значение (цена акции, позиция курсора, состояние UI), потому что он всегда сохранит самое свежее.",
               "correct": true,
               "sections": {
@@ -982,8 +1006,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`DROP` выбирают для котировок и состояния UI, потому что он всегда отдаёт самое свежее значение, а `LATEST` — для логов, где потеря неважна.",
               "correct": false,
               "sections": {
@@ -991,30 +1015,6 @@
                 "source_of_confusion": "Кажется логичным, что «свежесть» — это `DROP`, ведь он что-то выбрасывает.",
                 "if_it_were_true": "Если бы `DROP` отдавал свежее, он сохранял бы новые элементы, а он как раз их выбрасывает.",
                 "how_it_should_be": "`LATEST` — для актуального состояния (UI, цена); `DROP` — для равнозначных потерь (логи)."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`DROP` и `LATEST` взаимозаменяемы — выбор между ними не влияет на результат, можно брать любой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Результат различается: `DROP` может застрять на устаревшем значении, а `LATEST` всегда отдаёт свежее — для котировок это разные исходы.",
-                "source_of_confusion": "Обе стратегии «теряют данные», поэтому кажутся одинаковыми.",
-                "if_it_were_true": "Если бы они были эквивалентны, не было бы смысла иметь две отдельные стратегии.",
-                "how_it_should_be": "`DROP` отбрасывает новые элементы, `LATEST` — старые; для актуального состояния разница принципиальна."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`LATEST` выбирают, когда важно сохранить полную историю изменений значения, а `DROP` — когда нужен только самый последний элемент.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ни `LATEST`, ни `DROP` не хранят историю: `LATEST` держит лишь последнее значение, `DROP` выбрасывает новые. Полную историю даёт `BUFFER`.",
-                "source_of_confusion": "Слово «latest» путают с журналом изменений, ведущим к «последнему».",
-                "if_it_were_true": "Если бы `LATEST` хранил историю, он требовал бы неограниченной памяти, как `BUFFER`.",
-                "how_it_should_be": "За историю отвечает `BUFFER`; `LATEST` — только текущее значение, `DROP` — отбрасывание новых."
               }
             }
           ]
@@ -1043,6 +1043,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Главное правило `Publisher` — после `onComplete` он обязан повторно вызвать `onSubscribe`, чтобы переоткрыть поток для того же подписчика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После терминального сигнала (`onComplete`/`onError`) `Publisher` не шлёт НИКАКИХ сигналов, включая `onSubscribe`; переоткрытия потока нет.",
+                "source_of_confusion": "Идея «переподключения после завершения» кажется удобной для долгоживущих потоков.",
+                "if_it_were_true": "Если бы `onSubscribe` повторялся после `onComplete`, нарушалось бы правило «один `onSubscribe` и тишина после терминации».",
+                "how_it_should_be": "После терминации поток мёртв; новый поток создаётся отдельным `subscribe()`, а не повторным `onSubscribe`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Publisher` не должен слать больше `onNext`, чем сумма всех `request(n)`; после `onError`/`onComplete` — никаких сигналов; `request(0)` или `request(-n)` ведёт к `onError(IllegalArgumentException)`; `onSubscribe` вызывается первым и ровно один раз; сигналы сериализованы (не параллельны для одного `Subscriber`); после `cancel()` сигналы можно не слать.",
               "correct": true,
               "sections": {
@@ -1054,8 +1066,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Главное правило `Publisher` — поддерживать ровно одну подписку: после первого `subscribe()` все последующие вызовы должны бросать исключение.",
               "correct": false,
               "sections": {
@@ -1063,18 +1075,6 @@
                 "source_of_confusion": "Поведение некоторых hot-источников обобщают на правило для всех `Publisher`.",
                 "if_it_were_true": "Если бы повторная подписка запрещалась, нельзя было бы переиспользовать `Flux` для нескольких подписчиков.",
                 "how_it_should_be": "Многократная подписка штатна; ключевые правила — про request, терминацию и сериализацию сигналов."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Главное правило `Publisher` — после `onComplete` он обязан повторно вызвать `onSubscribe`, чтобы переоткрыть поток для того же подписчика.",
-              "correct": false,
-              "sections": {
-                "what_actually": "После терминального сигнала (`onComplete`/`onError`) `Publisher` не шлёт НИКАКИХ сигналов, включая `onSubscribe`; переоткрытия потока нет.",
-                "source_of_confusion": "Идея «переподключения после завершения» кажется удобной для долгоживущих потоков.",
-                "if_it_were_true": "Если бы `onSubscribe` повторялся после `onComplete`, нарушалось бы правило «один `onSubscribe` и тишина после терминации».",
-                "how_it_should_be": "После терминации поток мёртв; новый поток создаётся отдельным `subscribe()`, а не повторным `onSubscribe`."
               }
             }
           ]
@@ -1163,13 +1163,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`cancel()` обязан останавливать поток мгновенно и гарантированно: ни один сигнал после его вызова прийти не может.",
-              "correct": false,
+              "text": "`request(n)` можно вызывать из `onNext`/`onSubscribe` (но не реентрантно из `Publisher.subscribe`); `request(n)` с `n > Long.MAX_VALUE` трактуется как unbounded (backpressure отключён); `cancel()` идемпотентен и не бросает исключений; `cancel()` останавливает сигналы в разумное время, но не гарантированно мгновенно.",
+              "correct": true,
               "sections": {
-                "what_actually": "`cancel()` останавливает сигналы в разумное время, но НЕ гарантированно мгновенно — из-за гонок пара сигналов после него допустима.",
-                "source_of_confusion": "Слово «cancel» предполагает немедленный эффект.",
-                "if_it_were_true": "Если бы остановка была мгновенной, асинхронная отмена через границу потоков была бы невозможна.",
-                "how_it_should_be": "`cancel()` идемпотентен и просит остановиться вовремя, но мгновенность не гарантирует."
+                "explanation": "Правила `Subscription` балансируют гибкость и безопасность: запрашивать можно из колбэков, огромный запрос означает «без backpressure», а отмена идемпотентна и асинхронно-дружелюбна.",
+                "example": "Паттерн `onNext(e){ process(e); subscription.request(1); }` (request-by-one) валиден; `subscription.request(Long.MAX_VALUE)` отключает backpressure для unbounded-потребления.",
+                "when_to_apply": "Эти правила нужны при ручной реализации `Subscription` и при настройке стратегии запроса (по одному, пачками, unbounded).",
+                "edge_cases": "`request(Long.MAX_VALUE)` снимает защиту backpressure — при медленном потребителе это возвращает риск OOM, как при отсутствии backpressure вовсе.",
+                "related": "[[reactive-streams-interview#Q9]] что такое `Subscription`; [[reactive-streams-interview#Q11]] неположительный `request`; [[reactive-streams-interview#Q12]] идемпотентность `cancel`."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`request(n)` можно вызывать из `onNext`/`onSubscribe` (но не реентрантно из `Publisher.subscribe`); `request(n)` с `n > Long.MAX_VALUE` трактуется как unbounded (backpressure отключён); `cancel()` идемпотентен и не бросает исключений; `cancel()` останавливает сигналы в разумное время, но не гарантированно мгновенно.",
-              "correct": true,
+              "text": "`cancel()` обязан останавливать поток мгновенно и гарантированно: ни один сигнал после его вызова прийти не может.",
+              "correct": false,
               "sections": {
-                "explanation": "Правила `Subscription` балансируют гибкость и безопасность: запрашивать можно из колбэков, огромный запрос означает «без backpressure», а отмена идемпотентна и асинхронно-дружелюбна.",
-                "example": "Паттерн `onNext(e){ process(e); subscription.request(1); }` (request-by-one) валиден; `subscription.request(Long.MAX_VALUE)` отключает backpressure для unbounded-потребления.",
-                "when_to_apply": "Эти правила нужны при ручной реализации `Subscription` и при настройке стратегии запроса (по одному, пачками, unbounded).",
-                "edge_cases": "`request(Long.MAX_VALUE)` снимает защиту backpressure — при медленном потребителе это возвращает риск OOM, как при отсутствии backpressure вовсе.",
-                "related": "[[reactive-streams-interview#Q9]] что такое `Subscription`; [[reactive-streams-interview#Q11]] неположительный `request`; [[reactive-streams-interview#Q12]] идемпотентность `cancel`."
+                "what_actually": "`cancel()` останавливает сигналы в разумное время, но НЕ гарантированно мгновенно — из-за гонок пара сигналов после него допустима.",
+                "source_of_confusion": "Слово «cancel» предполагает немедленный эффект.",
+                "if_it_were_true": "Если бы остановка была мгновенной, асинхронная отмена через границу потоков была бы невозможна.",
+                "how_it_should_be": "`cancel()` идемпотентен и просит остановиться вовремя, но мгновенность не гарантирует."
               }
             }
           ]
@@ -1224,18 +1224,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`TCK` — это сама библиотека `Reactive Streams` с реализацией `Publisher` и `Subscriber`, которую подключают в production-код приложения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`TCK` — это тестовый набор (test-kit), а не production-реализация; в зависимостях он идёт как `testImplementation`, а не в основной код.",
-                "source_of_confusion": "Аббревиатура с «kit» наводит на мысль о готовых классах для использования.",
-                "if_it_were_true": "Если бы `TCK` был production-библиотекой, его не запускали бы как набор тестов через `TestNG`.",
-                "how_it_should_be": "`TCK` проверяет ЧУЖИЕ реализации тестами; сами `Publisher`/`Subscriber` поставляют `Reactor`, `RxJava` и др."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`TCK` — это инструмент бенчмаркинга, измеряющий пропускную способность и латентность реактивной реализации под нагрузкой.",
               "correct": false,
               "sections": {
@@ -1246,8 +1234,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`TCK` — это плагин IDE, который во время написания кода подсвечивает нарушения спецификации `Reactive Streams` прямо в редакторе.",
               "correct": false,
               "sections": {
@@ -1255,6 +1243,18 @@
                 "source_of_confusion": "Современные IDE богаты инспекциями, поэтому проверку соответствия принимают за плагин.",
                 "if_it_were_true": "Если бы `TCK` был плагином IDE, его не подключали бы как `testImplementation`-зависимость и не запускали как тесты.",
                 "how_it_should_be": "`TCK` исполняется как тесты в сборке; статической проверки в редакторе он не делает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TCK` — это сама библиотека `Reactive Streams` с реализацией `Publisher` и `Subscriber`, которую подключают в production-код приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TCK` — это тестовый набор (test-kit), а не production-реализация; в зависимостях он идёт как `testImplementation`, а не в основной код.",
+                "source_of_confusion": "Аббревиатура с «kit» наводит на мысль о готовых классах для использования.",
+                "if_it_were_true": "Если бы `TCK` был production-библиотекой, его не запускали бы как набор тестов через `TestNG`.",
+                "how_it_should_be": "`TCK` проверяет ЧУЖИЕ реализации тестами; сами `Publisher`/`Subscriber` поставляют `Reactor`, `RxJava` и др."
               }
             }
           ]
@@ -1271,31 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`TCK` содержит только один тип проверки — `PublisherVerification`, потому что весь контракт сводится к корректности `Publisher`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Типов несколько: `PublisherVerification`, `SubscriberBlackboxVerification`, `SubscriberWhiteboxVerification` и `IdentityProcessorVerification` — не только `Publisher`.",
-                "source_of_confusion": "`Publisher` — самый обсуждаемый интерфейс, поэтому кажется единственным проверяемым.",
-                "if_it_were_true": "Если бы проверялся только `Publisher`, нельзя было бы валидировать `Subscriber` и `Processor` на соответствие.",
-                "how_it_should_be": "`TCK` покрывает все роли: `Publisher`, `Subscriber` (black/white-box) и `Processor`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`TCK` содержит `PublisherVerification` (тесты для `Publisher`, правила 1.x), `SubscriberBlackboxVerification` (black-box тесты `Subscriber`), `SubscriberWhiteboxVerification` (white-box тесты с вмешательством в `Subscription`) и `IdentityProcessorVerification` (тесты для `Processor`). Проверяют порядок сигналов, backpressure, обработку `cancel`, fail-fast на некорректный input.",
-              "correct": true,
-              "sections": {
-                "explanation": "Каждый тип покрывает свою роль и уровень доступа: `Publisher` (правила 1.x), `Subscriber` снаружи (black-box) и изнутри (white-box, можно влиять на `Subscription`), а `Processor` — как комбинацию обоих.",
-                "example": "Для своего `Subscriber` без доступа к его внутренностям берут `SubscriberBlackboxVerification`; если нужно проверять реакцию на конкретные сигналы `Subscription` — `SubscriberWhiteboxVerification`.",
-                "when_to_apply": "Выбор типа теста зависит от того, какой интерфейс реализуется и насколько глубоко тест может вмешиваться во внутреннее состояние.",
-                "edge_cases": "White-box строже black-box: он требует от теста умения подсовывать `Subscription` и проверять точное поведение `request`/`cancel`, что не всегда возможно для сторонних `Subscriber`.",
-                "related": "[[reactive-streams-interview#Q21]] что такое `TCK` в целом; [[reactive-streams-interview#Q19]] правила `Subscriber`, проверяемые тестами; [[reactive-streams-interview#Q13]] `Processor` и `IdentityProcessorVerification`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`TCK` делит тесты по библиотекам: отдельный набор для `Reactor`, отдельный для `RxJava` и отдельный для `Akka Streams`.",
               "correct": false,
               "sections": {
@@ -1306,8 +1281,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`TCK` содержит тесты `IntegrationVerification` и `EndToEndVerification`, которые проверяют связку реальной БД, сети и брокера сообщений.",
               "correct": false,
               "sections": {
@@ -1315,6 +1290,31 @@
                 "source_of_confusion": "Слово «compatibility» ассоциируется с интеграционным тестированием всей системы.",
                 "if_it_were_true": "Если бы `TCK` требовал БД и брокер, его нельзя было бы запускать как быстрый юнит-набор на `TestNG`.",
                 "how_it_should_be": "`TCK` — это контрактные тесты интерфейсов; интеграцию с инфраструктурой проверяют отдельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`TCK` содержит только один тип проверки — `PublisherVerification`, потому что весь контракт сводится к корректности `Publisher`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Типов несколько: `PublisherVerification`, `SubscriberBlackboxVerification`, `SubscriberWhiteboxVerification` и `IdentityProcessorVerification` — не только `Publisher`.",
+                "source_of_confusion": "`Publisher` — самый обсуждаемый интерфейс, поэтому кажется единственным проверяемым.",
+                "if_it_were_true": "Если бы проверялся только `Publisher`, нельзя было бы валидировать `Subscriber` и `Processor` на соответствие.",
+                "how_it_should_be": "`TCK` покрывает все роли: `Publisher`, `Subscriber` (black/white-box) и `Processor`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TCK` содержит `PublisherVerification` (тесты для `Publisher`, правила 1.x), `SubscriberBlackboxVerification` (black-box тесты `Subscriber`), `SubscriberWhiteboxVerification` (white-box тесты с вмешательством в `Subscription`) и `IdentityProcessorVerification` (тесты для `Processor`). Проверяют порядок сигналов, backpressure, обработку `cancel`, fail-fast на некорректный input.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый тип покрывает свою роль и уровень доступа: `Publisher` (правила 1.x), `Subscriber` снаружи (black-box) и изнутри (white-box, можно влиять на `Subscription`), а `Processor` — как комбинацию обоих.",
+                "example": "Для своего `Subscriber` без доступа к его внутренностям берут `SubscriberBlackboxVerification`; если нужно проверять реакцию на конкретные сигналы `Subscription` — `SubscriberWhiteboxVerification`.",
+                "when_to_apply": "Выбор типа теста зависит от того, какой интерфейс реализуется и насколько глубоко тест может вмешиваться во внутреннее состояние.",
+                "edge_cases": "White-box строже black-box: он требует от теста умения подсовывать `Subscription` и проверять точное поведение `request`/`cancel`, что не всегда возможно для сторонних `Subscriber`.",
+                "related": "[[reactive-streams-interview#Q21]] что такое `TCK` в целом; [[reactive-streams-interview#Q19]] правила `Subscriber`, проверяемые тестами; [[reactive-streams-interview#Q13]] `Processor` и `IdentityProcessorVerification`."
               }
             }
           ]
@@ -1343,18 +1343,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "При конвертации `Flux` в `Flowable` все операторы `Reactor` (`map`, `filter`, `flatMap`) автоматически переносятся и продолжают работать в `RxJava`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Переносится только сам `Publisher`/поток данных, но НЕ операторы; после конвертации работаешь с API другой библиотеки.",
-                "source_of_confusion": "Раз поток «сохранился», кажется, что и вся цепочка операторов переехала.",
-                "if_it_were_true": "Если бы операторы переносились, библиотеки делили бы одну реализацию `map`, но у каждой она своя.",
-                "how_it_should_be": "Общий протокол — только `Publisher`/`Subscriber`; операторы у `Reactor` и `RxJava` независимы."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Оба совместимы по `org.reactivestreams.Publisher` и конвертируются в обе стороны: `Flux` → `Flowable` через `Flowable.fromPublisher(flux)`, а `Flowable` → `Flux` через `Flux.from(flowable)`. При этом операторы не переносятся — после конвертации работаешь с API другой библиотеки; общий протокол — только сам `Publisher`/`Subscriber`.",
               "correct": true,
               "sections": {
@@ -1366,8 +1354,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Соединять `Reactor` и `RxJava` можно, только если обе библиотеки одной мажорной версии; иначе конвертация бросает `IncompatibleVersionException`.",
               "correct": false,
               "sections": {
@@ -1375,6 +1363,18 @@
                 "source_of_confusion": "Опыт с несовместимостью версий зависимостей переносят на реактивный мост.",
                 "if_it_were_true": "Если бы требовалось совпадение версий, интероперабельность независимых библиотек была бы невозможна.",
                 "how_it_should_be": "Достаточно общего контракта `Publisher`; версии `Reactor` и `RxJava` могут различаться свободно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При конвертации `Flux` в `Flowable` все операторы `Reactor` (`map`, `filter`, `flatMap`) автоматически переносятся и продолжают работать в `RxJava`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Переносится только сам `Publisher`/поток данных, но НЕ операторы; после конвертации работаешь с API другой библиотеки.",
+                "source_of_confusion": "Раз поток «сохранился», кажется, что и вся цепочка операторов переехала.",
+                "if_it_were_true": "Если бы операторы переносились, библиотеки делили бы одну реализацию `map`, но у каждой она своя.",
+                "how_it_should_be": "Общий протокол — только `Publisher`/`Subscriber`; операторы у `Reactor` и `RxJava` независимы."
               }
             }
           ]
@@ -1391,13 +1391,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Чтобы использовать `Flux` в `RxJava`, его сначала нужно конвертировать в `CompletableFuture`, а затем обернуть в `Flowable.fromFuture`.",
-              "correct": false,
+              "text": "`Flux` уже является `org.reactivestreams.Publisher`, поэтому `Flowable.fromPublisher(reactorFlux)` принимает его напрямую: `Flux<String> reactorFlux = Flux.just(\"a\",\"b\",\"c\"); Flowable<String> rxFlowable = Flowable.fromPublisher(reactorFlux); rxFlowable.map(String::toUpperCase).subscribe(System.out::println);`. Обратное работает аналогично через `Flux.from(rxFlowable)`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Flux` уже является `org.reactivestreams.Publisher`, поэтому `Flowable.fromPublisher(flux)` принимает его напрямую — промежуточный `CompletableFuture` не нужен и ломал бы стриминг.",
-                "source_of_confusion": "`CompletableFuture` — привычный мост между мирами async, отсюда лишний шаг.",
-                "if_it_were_true": "Если бы требовался `CompletableFuture`, поток схлопнулся бы в одно значение, потеряв многоэлементность `Flux`.",
-                "how_it_should_be": "Напрямую: `Flowable.fromPublisher(flux)` — без `CompletableFuture`, со всеми элементами и backpressure."
+                "explanation": "Так как `Flux` реализует общий интерфейс `Publisher`, фабрика `Flowable.fromPublisher` берёт его без обёрток, сохраняя все элементы и backpressure. Дальше применяешь операторы `RxJava` (`map`).",
+                "example": "`Flowable.fromPublisher(Flux.just(\"a\",\"b\",\"c\")).map(String::toUpperCase).subscribe(System.out::println)` выведет `A`, `B`, `C` — поток `Reactor` обрабатывается операторами `RxJava`.",
+                "when_to_apply": "Это применяют при постепенной миграции или когда `Spring WebFlux` (`Flux`) отдаёт данные коду на `RxJava`, и наоборот через `Flux.from`.",
+                "edge_cases": "После `fromPublisher` доступны только операторы `RxJava`, а не `Reactor`; backpressure сохраняется, так как оба соблюдают `request(n)`.",
+                "related": "[[reactive-streams-interview#Q23]] общий принцип взаимодействия `Reactor`/`RxJava`; [[reactive-streams-interview#Q5]] `Flux` как `Publisher`; [[reactive-streams-interview#Q4]] `Flowable` как реализация спецификации."
               }
             },
             {
@@ -1427,14 +1428,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Flux` уже является `org.reactivestreams.Publisher`, поэтому `Flowable.fromPublisher(reactorFlux)` принимает его напрямую: `Flux<String> reactorFlux = Flux.just(\"a\",\"b\",\"c\"); Flowable<String> rxFlowable = Flowable.fromPublisher(reactorFlux); rxFlowable.map(String::toUpperCase).subscribe(System.out::println);`. Обратное работает аналогично через `Flux.from(rxFlowable)`.",
-              "correct": true,
+              "text": "Чтобы использовать `Flux` в `RxJava`, его сначала нужно конвертировать в `CompletableFuture`, а затем обернуть в `Flowable.fromFuture`.",
+              "correct": false,
               "sections": {
-                "explanation": "Так как `Flux` реализует общий интерфейс `Publisher`, фабрика `Flowable.fromPublisher` берёт его без обёрток, сохраняя все элементы и backpressure. Дальше применяешь операторы `RxJava` (`map`).",
-                "example": "`Flowable.fromPublisher(Flux.just(\"a\",\"b\",\"c\")).map(String::toUpperCase).subscribe(System.out::println)` выведет `A`, `B`, `C` — поток `Reactor` обрабатывается операторами `RxJava`.",
-                "when_to_apply": "Это применяют при постепенной миграции или когда `Spring WebFlux` (`Flux`) отдаёт данные коду на `RxJava`, и наоборот через `Flux.from`.",
-                "edge_cases": "После `fromPublisher` доступны только операторы `RxJava`, а не `Reactor`; backpressure сохраняется, так как оба соблюдают `request(n)`.",
-                "related": "[[reactive-streams-interview#Q23]] общий принцип взаимодействия `Reactor`/`RxJava`; [[reactive-streams-interview#Q5]] `Flux` как `Publisher`; [[reactive-streams-interview#Q4]] `Flowable` как реализация спецификации."
+                "what_actually": "`Flux` уже является `org.reactivestreams.Publisher`, поэтому `Flowable.fromPublisher(flux)` принимает его напрямую — промежуточный `CompletableFuture` не нужен и ломал бы стриминг.",
+                "source_of_confusion": "`CompletableFuture` — привычный мост между мирами async, отсюда лишний шаг.",
+                "if_it_were_true": "Если бы требовался `CompletableFuture`, поток схлопнулся бы в одно значение, потеряв многоэлементность `Flux`.",
+                "how_it_should_be": "Напрямую: `Flowable.fromPublisher(flux)` — без `CompletableFuture`, со всеми элементами и backpressure."
               }
             }
           ]
@@ -1451,31 +1451,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Akka Streams` — реализация реактивного программирования на базе актор-системы `Akka` с типами `Source[T]` (аналог `Publisher`), `Flow[In,Out]` (аналог `Processor`) и `Sink[T]` (аналог `Subscriber`). Совместимость: `Source` → `Publisher` через `.runWith(Sink.asPublisher(fanout))`, а `Sink.fromSubscriber(subscriber)` превращает `Subscriber` в `Sink`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Akka Streams` строит потоки поверх акторов, но соответствует спецификации: его `Source`/`Flow`/`Sink` маппятся на `Publisher`/`Processor`/`Subscriber`, поэтому интегрируются с `Reactor`/`RxJava` через общий контракт.",
-                "example": "`Source.from(list).runWith(Sink.asPublisher(false), materializer)` отдаёт `org.reactivestreams.Publisher`, который дальше можно подписать `Subscriber` из любой другой библиотеки.",
-                "when_to_apply": "`Akka Streams` выбирают в актор-системах и там, где нужна явная материализация графа потока и тонкий контроль над топологией.",
-                "edge_cases": "Главное отличие от `Reactor`/`RxJava` — явная материализация графа через `Materializer` и тесная интеграция с актор-моделью `Akka`.",
-                "related": "[[reactive-streams-interview#Q4]] `Akka Streams` среди реализаций; [[reactive-streams-interview#Q13]] `Flow` как аналог `Processor`; [[reactive-streams-interview#Q23]] совместимость реализаций через `Publisher`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Akka Streams` несовместим с `Reactive Streams` и работает по собственному закрытому протоколу, не поддерживающему `Publisher`/`Subscriber`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Akka Streams` соответствует спецификации: `Source` конвертируется в `Publisher`, а `Subscriber` оборачивается в `Sink`; собственного несовместимого протокола нет.",
-                "source_of_confusion": "Уникальная актор-основа `Akka` создаёт впечатление полной изоляции от стандарта.",
-                "if_it_were_true": "Если бы он был несовместим, его не относили бы к реализациям `Reactive Streams`.",
-                "how_it_should_be": "`Akka Streams` интегрируется через общий `Publisher`/`Subscriber`; актор-модель — деталь реализации, а не барьер."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "В `Akka Streams` `Sink[T]` — это источник элементов, а `Source[T]` — потребитель; роли противоположны `Reactive Streams`.",
               "correct": false,
               "sections": {
@@ -1486,8 +1461,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`Akka Streams` не требует материализации: потоки запускаются автоматически при создании `Source`, без `Materializer`.",
               "correct": false,
               "sections": {
@@ -1495,6 +1470,31 @@
                 "source_of_confusion": "Привычка `Reactor`, где запуск идёт по `subscribe`, переносится на `Akka`.",
                 "if_it_were_true": "Если бы материализация была не нужна, `Sink.asPublisher` и `runWith` не принимали бы `Materializer`.",
                 "how_it_should_be": "В `Akka Streams` граф нужно материализовать явно; это и отличает её от `Reactor`/`RxJava`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Akka Streams` несовместим с `Reactive Streams` и работает по собственному закрытому протоколу, не поддерживающему `Publisher`/`Subscriber`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Akka Streams` соответствует спецификации: `Source` конвертируется в `Publisher`, а `Subscriber` оборачивается в `Sink`; собственного несовместимого протокола нет.",
+                "source_of_confusion": "Уникальная актор-основа `Akka` создаёт впечатление полной изоляции от стандарта.",
+                "if_it_were_true": "Если бы он был несовместим, его не относили бы к реализациям `Reactive Streams`.",
+                "how_it_should_be": "`Akka Streams` интегрируется через общий `Publisher`/`Subscriber`; актор-модель — деталь реализации, а не барьер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Akka Streams` — реализация реактивного программирования на базе актор-системы `Akka` с типами `Source[T]` (аналог `Publisher`), `Flow[In,Out]` (аналог `Processor`) и `Sink[T]` (аналог `Subscriber`). Совместимость: `Source` → `Publisher` через `.runWith(Sink.asPublisher(fanout))`, а `Sink.fromSubscriber(subscriber)` превращает `Subscriber` в `Sink`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Akka Streams` строит потоки поверх акторов, но соответствует спецификации: его `Source`/`Flow`/`Sink` маппятся на `Publisher`/`Processor`/`Subscriber`, поэтому интегрируются с `Reactor`/`RxJava` через общий контракт.",
+                "example": "`Source.from(list).runWith(Sink.asPublisher(false), materializer)` отдаёт `org.reactivestreams.Publisher`, который дальше можно подписать `Subscriber` из любой другой библиотеки.",
+                "when_to_apply": "`Akka Streams` выбирают в актор-системах и там, где нужна явная материализация графа потока и тонкий контроль над топологией.",
+                "edge_cases": "Главное отличие от `Reactor`/`RxJava` — явная материализация графа через `Materializer` и тесная интеграция с актор-моделью `Akka`.",
+                "related": "[[reactive-streams-interview#Q4]] `Akka Streams` среди реализаций; [[reactive-streams-interview#Q13]] `Flow` как аналог `Processor`; [[reactive-streams-interview#Q23]] совместимость реализаций через `Publisher`."
               }
             }
           ]
@@ -1511,18 +1511,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главная ошибка — реализовать `Publisher` как ленивый (lazy) источник: на самом деле он обязан начинать эмиссию немедленно при создании, ещё до `subscribe`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ленивость — это норма, а не ошибка: `Publisher` обязан НЕ эмитить до `subscribe()` и `request()`; эмиссия при создании как раз нарушала бы контракт.",
-                "source_of_confusion": "Императивный опыт «создал — заработало» выдаёт ленивость за дефект.",
-                "if_it_were_true": "Если бы эмиссия шла при создании, нарушалось бы правило «нет `onNext` до `request`».",
-                "how_it_should_be": "Реальные ошибки — пропуск `onSubscribe`, эмиссия сверх запроса, гонки; ленивость же обязательна."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Типичные ошибки: забыть вызвать `onSubscribe` перед `onNext` (нарушение правила 1.9); эмитить больше, чем запрошено (нарушение 1.1, переполнение `Subscriber`); не сериализовать сигналы (race conditions в `onNext`); слать сигналы после `onComplete`/`onError`; бесконечный `request(Long.MAX_VALUE)` без bounded buffer (OOM); бросать исключения из `onNext`.",
               "correct": true,
               "sections": {
@@ -1534,8 +1522,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Главная ошибка — использовать готовые фабрики `Flux.create`/`Flux.generate` вместо ручной реализации `Publisher` с нуля для каждого источника.",
               "correct": false,
               "sections": {
@@ -1546,8 +1534,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Типичная ошибка — вызывать `onComplete` и `onError` оба в конце потока, чтобы подписчик получил и подтверждение успеха, и финальный статус ошибки.",
               "correct": false,
               "sections": {
@@ -1555,6 +1543,18 @@
                 "source_of_confusion": "Привычка из try/finally («и результат, и обработка») переносится на реактивный поток.",
                 "if_it_were_true": "Если бы слать можно было оба, `Subscriber` оказывался бы в противоречивом «успех-и-ошибка» состоянии.",
                 "how_it_should_be": "Поток завершается единственным терминальным сигналом; отправка обоих — ошибка реализации `Publisher`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главная ошибка — реализовать `Publisher` как ленивый (lazy) источник: на самом деле он обязан начинать эмиссию немедленно при создании, ещё до `subscribe`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ленивость — это норма, а не ошибка: `Publisher` обязан НЕ эмитить до `subscribe()` и `request()`; эмиссия при создании как раз нарушала бы контракт.",
+                "source_of_confusion": "Императивный опыт «создал — заработало» выдаёт ленивость за дефект.",
+                "if_it_were_true": "Если бы эмиссия шла при создании, нарушалось бы правило «нет `onNext` до `request`».",
+                "how_it_should_be": "Реальные ошибки — пропуск `onSubscribe`, эмиссия сверх запроса, гонки; ленивость же обязательна."
               }
             }
           ]
@@ -1571,18 +1571,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Нет, реализовать `Publisher` вручную невозможно — интерфейс `Publisher` объявлен `final` и доступен только разработчикам `Reactor` и `RxJava`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Реализовать можно: `Publisher` — обычный интерфейс с одним методом `subscribe`, и любой класс волен его реализовать; ничего `final` тут нет.",
-                "source_of_confusion": "Сложность корректной реализации создаёт миф о «закрытости» интерфейса.",
-                "if_it_were_true": "Если бы `Publisher` был закрыт, нельзя было бы писать `TCK`-тесты на собственные реализации.",
-                "how_it_should_be": "Реализовать можно, но не рекомендуется из-за сложности; интерфейс открыт для всех."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Реализовать `Publisher` вручную можно, и это даже рекомендуется как основной способ создания источников — он проще, чем `Flux.create`.",
               "correct": false,
               "sections": {
@@ -1593,8 +1581,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Нет, реализовать `Publisher` вручную невозможно — интерфейс `Publisher` объявлен `final` и доступен только разработчикам `Reactor` и `RxJava`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реализовать можно: `Publisher` — обычный интерфейс с одним методом `subscribe`, и любой класс волен его реализовать; ничего `final` тут нет.",
+                "source_of_confusion": "Сложность корректной реализации создаёт миф о «закрытости» интерфейса.",
+                "if_it_were_true": "Если бы `Publisher` был закрыт, нельзя было бы писать `TCK`-тесты на собственные реализации.",
+                "how_it_should_be": "Реализовать можно, но не рекомендуется из-за сложности; интерфейс открыт для всех."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Реализовать `Publisher` вручную можно без всяких тестов: компилятор Java сам проверяет соблюдение всех 43 правил спецификации при сборке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компилятор проверяет лишь сигнатуры методов, но не поведение (порядок сигналов, backpressure); правила контракта проверяет только `TCK` в рантайме.",
+                "source_of_confusion": "Строгая типизация Java создаёт ложное чувство, что компилятор ловит и логические ошибки.",
+                "if_it_were_true": "Если бы компилятор проверял 43 правила, `TCK` был бы не нужен.",
+                "how_it_should_be": "Соответствие правилам проверяет `TCK`-набор тестов; компилятор гарантирует только корректность сигнатур."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Можно, но не рекомендуется: корректная реализация требует ~200 строк ради всех 43 правил спецификации. Проще использовать `Flux.create`/`Flux.generate` (`Reactor`) или `Flowable.generate` (`RxJava`). Если же реализуешь вручную — обязательно покрывай `TCK`-тестами.",
               "correct": true,
               "sections": {
@@ -1603,18 +1615,6 @@
                 "when_to_apply": "Ручная реализация оправдана лишь для нестандартного источника, не выражаемого через фабрики; тогда `TCK` обязателен для проверки соответствия.",
                 "edge_cases": "Даже опытная ручная реализация часто проваливает `TCK` на гонках при `cancel` или на сериализации сигналов в асинхронном режиме.",
                 "related": "[[reactive-streams-interview#Q26]] типичные ошибки ручной реализации; [[reactive-streams-interview#Q21]] зачем `TCK`; [[reactive-streams-interview#Q5]] контракт `Publisher`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Реализовать `Publisher` вручную можно без всяких тестов: компилятор Java сам проверяет соблюдение всех 43 правил спецификации при сборке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Компилятор проверяет лишь сигнатуры методов, но не поведение (порядок сигналов, backpressure); правила контракта проверяет только `TCK` в рантайме.",
-                "source_of_confusion": "Строгая типизация Java создаёт ложное чувство, что компилятор ловит и логические ошибки.",
-                "if_it_were_true": "Если бы компилятор проверял 43 правила, `TCK` был бы не нужен.",
-                "how_it_should_be": "Соответствие правилам проверяет `TCK`-набор тестов; компилятор гарантирует только корректность сигнатур."
               }
             }
           ]
@@ -1631,30 +1631,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Java Streams` (`stream()`) — асинхронная push-модель с встроенным backpressure, а `Reactive Streams` — синхронная pull-модель без backpressure.",
-              "correct": false,
+              "text": "`Java Streams` — pull-модель, синхронная, вычисляется сразу при terminal-операции, без backpressure, одноразовая, обычно над коллекциями/массивами. `Reactive Streams` — push с backpressure (через `request(n)`), асинхронная, ленивая (стартует на `subscribe`), `Publisher` можно подписывать много раз, время жизни может быть бесконечным, источники — сеть/события/реактивные драйверы БД.",
+              "correct": true,
               "sections": {
-                "what_actually": "Всё перевёрнуто: `Java Streams` — синхронная pull-модель БЕЗ backpressure, а `Reactive Streams` — асинхронно-совместимая push-модель С backpressure через `request(n)`.",
-                "source_of_confusion": "Оба содержат слово «streams», отсюда подмена их характеристик.",
-                "if_it_were_true": "Если бы у `Java Streams` был backpressure, не понадобилась бы отдельная спецификация `Reactive Streams`.",
-                "how_it_should_be": "`Java Streams` — pull/sync без backpressure; `Reactive Streams` — push с backpressure и асинхронной совместимостью."
+                "explanation": "Ключевые оси различия: модель (pull против push+backpressure), синхронность, момент запуска, переиспользуемость и типы источников. `Reactive Streams` создавались именно для асинхронных бесконечных потоков с контролем темпа.",
+                "example": "`list.stream().map(...).collect(...)` выполнится синхронно и сразу; `Flux.fromIterable(list).map(...)` ничего не делает до `subscribe()` и поддерживает `request(n)`.",
+                "when_to_apply": "Различие важно при выборе инструмента: для обработки коллекции в памяти достаточно `Java Streams`, а для сетевого/событийного потока с контролем нагрузки нужен `Reactive Streams`.",
+                "edge_cases": "Граничный случай — `Flux.fromIterable` поверх конечного списка ведёт себя похоже на `Java Stream`, но остаётся ленивым, асинхронно-совместимым и многоразовым.",
+                "related": "[[reactive-streams-interview#Q10]] backpressure, которого нет в `Java Streams`; [[reactive-streams-interview#Q29]] синхронное выполнение реактивного потока; [[reactive-streams-interview#Q30]] push-pull модель."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Java Streams` можно подписывать много раз и переиспользовать, а реактивный `Publisher`, наоборот, одноразовый и после терминальной операции недоступен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: `Java Stream` одноразовый (после terminal op его нельзя переиспользовать), а `Publisher` можно подписывать много раз.",
-                "source_of_confusion": "Свойство «одноразовости» есть у обоих в разных смыслах, поэтому их меняют местами.",
-                "if_it_were_true": "Если бы `Java Stream` переиспользовался, не было бы `IllegalStateException: stream has already been operated upon`.",
-                "how_it_should_be": "Одноразовый — `Java Stream`; `Publisher` допускает многократную подписку."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Главное отличие в том, что `Java Streams` работают только с бесконечными источниками (сеть, события), а `Reactive Streams` — только с конечными коллекциями.",
               "correct": false,
               "sections": {
@@ -1665,16 +1654,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`Java Streams` (`stream()`) — асинхронная push-модель с встроенным backpressure, а `Reactive Streams` — синхронная pull-модель без backpressure.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё перевёрнуто: `Java Streams` — синхронная pull-модель БЕЗ backpressure, а `Reactive Streams` — асинхронно-совместимая push-модель С backpressure через `request(n)`.",
+                "source_of_confusion": "Оба содержат слово «streams», отсюда подмена их характеристик.",
+                "if_it_were_true": "Если бы у `Java Streams` был backpressure, не понадобилась бы отдельная спецификация `Reactive Streams`.",
+                "how_it_should_be": "`Java Streams` — pull/sync без backpressure; `Reactive Streams` — push с backpressure и асинхронной совместимостью."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`Java Streams` — pull-модель, синхронная, вычисляется сразу при terminal-операции, без backpressure, одноразовая, обычно над коллекциями/массивами. `Reactive Streams` — push с backpressure (через `request(n)`), асинхронная, ленивая (стартует на `subscribe`), `Publisher` можно подписывать много раз, время жизни может быть бесконечным, источники — сеть/события/реактивные драйверы БД.",
-              "correct": true,
+              "text": "`Java Streams` можно подписывать много раз и переиспользовать, а реактивный `Publisher`, наоборот, одноразовый и после терминальной операции недоступен.",
+              "correct": false,
               "sections": {
-                "explanation": "Ключевые оси различия: модель (pull против push+backpressure), синхронность, момент запуска, переиспользуемость и типы источников. `Reactive Streams` создавались именно для асинхронных бесконечных потоков с контролем темпа.",
-                "example": "`list.stream().map(...).collect(...)` выполнится синхронно и сразу; `Flux.fromIterable(list).map(...)` ничего не делает до `subscribe()` и поддерживает `request(n)`.",
-                "when_to_apply": "Различие важно при выборе инструмента: для обработки коллекции в памяти достаточно `Java Streams`, а для сетевого/событийного потока с контролем нагрузки нужен `Reactive Streams`.",
-                "edge_cases": "Граничный случай — `Flux.fromIterable` поверх конечного списка ведёт себя похоже на `Java Stream`, но остаётся ленивым, асинхронно-совместимым и многоразовым.",
-                "related": "[[reactive-streams-interview#Q10]] backpressure, которого нет в `Java Streams`; [[reactive-streams-interview#Q29]] синхронное выполнение реактивного потока; [[reactive-streams-interview#Q30]] push-pull модель."
+                "what_actually": "Наоборот: `Java Stream` одноразовый (после terminal op его нельзя переиспользовать), а `Publisher` можно подписывать много раз.",
+                "source_of_confusion": "Свойство «одноразовости» есть у обоих в разных смыслах, поэтому их меняют местами.",
+                "if_it_were_true": "Если бы `Java Stream` переиспользовался, не было бы `IllegalStateException: stream has already been operated upon`.",
+                "how_it_should_be": "Одноразовый — `Java Stream`; `Publisher` допускает многократную подписку."
               }
             }
           ]
@@ -1691,6 +1691,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Синхронное выполнение возможно, только если явно отключить backpressure через `request(Long.MAX_VALUE)`; иначе поток вынужденно асинхронен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Синхронность не зависит от величины запроса: `Flux.range(...).subscribe(...)` синхронен и при обычном backpressure; асинхронность включают `subscribeOn`/`publishOn`, а не значение `request`.",
+                "source_of_confusion": "`request` и потоки выполнения смешивают, хотя это ортогональные понятия.",
+                "if_it_were_true": "Если бы синхронность требовала unbounded-запроса, нельзя было бы синхронно потреблять поток с backpressure.",
+                "how_it_should_be": "Синхронность определяется отсутствием `subscribeOn`/`publishOn`, а не величиной `request(n)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Синхронное выполнение поддерживается только в `RxJava`, тогда как в `Reactor` любой `Flux` всегда исполняется асинхронно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "И в `Reactor` поток по умолчанию синхронен: `Flux.range(1,10).subscribe(...)` идёт в текущем потоке без `subscribeOn`.",
+                "source_of_confusion": "Различия в API библиотек создают иллюзию разной модели потоков по умолчанию.",
+                "if_it_were_true": "Если бы `Flux` всегда был асинхронным, не существовало бы синхронных реактивных конвейеров в `Reactor`.",
+                "how_it_should_be": "Обе библиотеки синхронны по умолчанию; асинхронность включается операторами планирования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Да. Спецификация требует лишь неблокирующего backpressure, но НЕ обязывает асинхронность: `Flux.range(1,10).subscribe(System.out::println)` выполнится целиком в текущем потоке. Асинхронным поток становится, только если в цепочке есть, например, `subscribeOn(Schedulers.parallel())`.",
               "correct": true,
               "sections": {
@@ -1702,8 +1726,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Нет, `Reactive Streams` всегда асинхронны по определению: любой `Publisher` обязан эмитить элементы в отдельном потоке, отличном от потока подписчика.",
               "correct": false,
               "sections": {
@@ -1711,30 +1735,6 @@
                 "source_of_confusion": "Слово «реактивный» прочно ассоциируется с асинхронностью.",
                 "if_it_were_true": "Если бы асинхронность была обязательной, синхронный `Flux.range(...).subscribe(...)` нарушал бы стандарт, а он валиден.",
                 "how_it_should_be": "Стандарт требует лишь неблокирующего backpressure; модель потоков выбирает разработчик (`subscribeOn`/`publishOn`)."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Синхронное выполнение возможно, только если явно отключить backpressure через `request(Long.MAX_VALUE)`; иначе поток вынужденно асинхронен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Синхронность не зависит от величины запроса: `Flux.range(...).subscribe(...)` синхронен и при обычном backpressure; асинхронность включают `subscribeOn`/`publishOn`, а не значение `request`.",
-                "source_of_confusion": "`request` и потоки выполнения смешивают, хотя это ортогональные понятия.",
-                "if_it_were_true": "Если бы синхронность требовала unbounded-запроса, нельзя было бы синхронно потреблять поток с backpressure.",
-                "how_it_should_be": "Синхронность определяется отсутствием `subscribeOn`/`publishOn`, а не величиной `request(n)`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Синхронное выполнение поддерживается только в `RxJava`, тогда как в `Reactor` любой `Flux` всегда исполняется асинхронно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "И в `Reactor` поток по умолчанию синхронен: `Flux.range(1,10).subscribe(...)` идёт в текущем потоке без `subscribeOn`.",
-                "source_of_confusion": "Различия в API библиотек создают иллюзию разной модели потоков по умолчанию.",
-                "if_it_were_true": "Если бы `Flux` всегда был асинхронным, не существовало бы синхронных реактивных конвейеров в `Reactor`.",
-                "how_it_should_be": "Обе библиотеки синхронны по умолчанию; асинхронность включается операторами планирования."
               }
             }
           ]
@@ -1751,13 +1751,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Push-pull означает, что `Publisher` сначала полностью \"пушит\" все элементы в буфер, а затем `Subscriber` \"пуллит\" их оттуда по одному, когда готов.",
+              "text": "Push-pull — это две независимые стратегии backpressure: `PUSH` (для быстрых подписчиков) и `PULL` (для медленных), между которыми переключаются вручную.",
               "correct": false,
               "sections": {
-                "what_actually": "Это не предварительная буферизация: push-pull — это `Subscriber.request(n)` (pull-запрос) и последующая эмиссия `onNext` до `n` элементов (push); элементы не копятся заранее в полном объёме.",
-                "source_of_confusion": "Слова «push» и «pull» наводят на мысль о двух раздельных фазах через общий буфер.",
-                "if_it_were_true": "Если бы `Publisher` пушил всё в буфер заранее, терялся бы смысл backpressure и грозил бы OOM.",
-                "how_it_should_be": "Pull-часть — это `request(n)`, push-часть — `onNext` до `n`; они чередуются, а не идут через полную предзагрузку."
+                "what_actually": "Push-pull — это единая гибридная модель работы потока, а не две отдельные стратегии backpressure; стратегии — это `BUFFER`/`DROP`/`LATEST`/`ERROR`/`IGNORE`.",
+                "source_of_confusion": "Стратегии backpressure из других вопросов путают с самой моделью передачи.",
+                "if_it_were_true": "Если бы это были стратегии, их выбирали бы при создании источника, как `OverflowStrategy`, но push-pull — встроенная механика спецификации.",
+                "how_it_should_be": "Это один гибридный механизм (request + onNext), а не переключаемые режимы; стратегии backpressure — отдельное понятие."
               }
             },
             {
@@ -1776,18 +1776,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Push-pull — это две независимые стратегии backpressure: `PUSH` (для быстрых подписчиков) и `PULL` (для медленных), между которыми переключаются вручную.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Push-pull — это единая гибридная модель работы потока, а не две отдельные стратегии backpressure; стратегии — это `BUFFER`/`DROP`/`LATEST`/`ERROR`/`IGNORE`.",
-                "source_of_confusion": "Стратегии backpressure из других вопросов путают с самой моделью передачи.",
-                "if_it_were_true": "Если бы это были стратегии, их выбирали бы при создании источника, как `OverflowStrategy`, но push-pull — встроенная механика спецификации.",
-                "how_it_should_be": "Это один гибридный механизм (request + onNext), а не переключаемые режимы; стратегии backpressure — отдельное понятие."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Push-pull означает, что `Publisher` и `Subscriber` периодически опрашивают (poll) друг друга по таймеру, чтобы синхронизировать состояние потока.",
               "correct": false,
               "sections": {
@@ -1795,6 +1783,18 @@
                 "source_of_confusion": "Слово «pull» ассоциируется с периодическим опросом (polling).",
                 "if_it_were_true": "Если бы шёл опрос по таймеру, появлялись бы задержки и лишний трафик, которых push-pull как раз избегает.",
                 "how_it_should_be": "Это событийный механизм request/onNext без таймеров; периодического опроса спецификация не предполагает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Push-pull означает, что `Publisher` сначала полностью \"пушит\" все элементы в буфер, а затем `Subscriber` \"пуллит\" их оттуда по одному, когда готов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не предварительная буферизация: push-pull — это `Subscriber.request(n)` (pull-запрос) и последующая эмиссия `onNext` до `n` элементов (push); элементы не копятся заранее в полном объёме.",
+                "source_of_confusion": "Слова «push» и «pull» наводят на мысль о двух раздельных фазах через общий буфер.",
+                "if_it_were_true": "Если бы `Publisher` пушил всё в буфер заранее, терялся бы смысл backpressure и грозил бы OOM.",
+                "how_it_should_be": "Pull-часть — это `request(n)`, push-часть — `onNext` до `n`; они чередуются, а не идут через полную предзагрузку."
               }
             }
           ]

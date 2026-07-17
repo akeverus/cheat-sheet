@@ -11,18 +11,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`flow { }` стартует уже при объявлении, складывая каждый `emit()` в буфер, поэтому первый `collect()` разом отдаёт всю историю из кеша. Второй коллектор читает те же сохранённые значения, а не перезапускает блок. Такой `Flow` ведёт себя как горячий источник с памятью прошлого.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это поведение `Channel` или hot-stream, а не `flow { }`: cold Flow ничего не выполняет до терминального оператора и не буферизует прошлое.",
-                "source_of_confusion": "Hot-источники вроде `Channel` и `SharedFlow(replay)` действительно стартуют рано и кешируют, поэтому их семантику переносят на обычный Flow.",
-                "if_it_were_true": "Тогда `flow { }` хранил бы историю и отдавал её late subscriber, но на деле второй коллектор просто перезапускает блок с нуля.",
-                "how_it_should_be": "`flow { }` — холодный suspend-источник: выполнение стартует при `collect()`, у каждого коллектора своё, буфера прошлого нет."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Kotlin Flow` — асинхронный холодный (cold) поток данных из `kotlinx.coroutines`. Код в `flow { }` запускается только при вызове терминального оператора `collect()`, и каждый новый коллектор получает собственное независимое выполнение. `emit()` вызывается из suspend-контекста коллектора, поэтому backpressure встроен в машину состояний корутин.",
               "correct": true,
               "sections": {
@@ -34,20 +22,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`collect()` под капотом поднимает отдельный поток для продюсера и гоняет `emit()` там, не завися от корутины-коллектора. Поэтому его можно вызывать из любой обычной функции без корутинного контекста. Терминальный `Flow.collect()` сам обеспечивает поток исполнения для блока `flow { }`.",
+              "order": 1,
+              "label": "B",
+              "text": "`flow { }` стартует уже при объявлении, складывая каждый `emit()` в буфер, поэтому первый `collect()` разом отдаёт всю историю из кеша. Второй коллектор читает те же сохранённые значения, а не перезапускает блок. Такой `Flow` ведёт себя как горячий источник с памятью прошлого.",
               "correct": false,
               "sections": {
-                "what_actually": "`collect` — обычная suspend-функция, она исполняется в текущем `CoroutineContext` коллектора без скрытых потоков и не создаёт собственный поток.",
-                "source_of_confusion": "Реактивные библиотеки (RxJava) умеют переключать поток подписки, и эту модель ошибочно переносят на Flow.",
-                "if_it_were_true": "Тогда `flow.collect { }` работал бы в любой Java-функции, но компилятор требует корутинный контекст и ругается на suspend вне корутины.",
-                "how_it_should_be": "`collect` исполняется в контексте коллектора; для смены контекста upstream есть `flowOn`, скрытых потоков Flow не заводит."
+                "what_actually": "Это поведение `Channel` или hot-stream, а не `flow { }`: cold Flow ничего не выполняет до терминального оператора и не буферизует прошлое.",
+                "source_of_confusion": "Hot-источники вроде `Channel` и `SharedFlow(replay)` действительно стартуют рано и кешируют, поэтому их семантику переносят на обычный Flow.",
+                "if_it_were_true": "Тогда `flow { }` хранил бы историю и отдавал её late subscriber, но на деле второй коллектор просто перезапускает блок с нуля.",
+                "how_it_should_be": "`flow { }` — холодный suspend-источник: выполнение стартует при `collect()`, у каждого коллектора своё, буфера прошлого нет."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Flow` держит все эмитнутые элементы в памяти и переотправляет их каждому новому коллектору через встроенный `replay`-буфер. Поэтому поздний `collect()` увидит значения, отправленные через `emit()` задолго до подписки. Так любой `flow { }` работает как общая лента прошлых эмиссий.",
               "correct": false,
               "sections": {
@@ -55,6 +43,18 @@
                 "source_of_confusion": "У `StateFlow` (replay = 1) и `SharedFlow(replay > 0)` действительно есть переотправка, и её приписывают всем Flow подряд.",
                 "if_it_were_true": "Тогда late subscriber в чате видел бы предыдущие сообщения, но cold Flow отдаёт только то, что эмитится после подписки.",
                 "how_it_should_be": "Историю даёт `SharedFlow(replay = N)`; cold `flow { }` переигрывает producer для каждого коллектора без кеша прошлого."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`collect()` под капотом поднимает отдельный поток для продюсера и гоняет `emit()` там, не завися от корутины-коллектора. Поэтому его можно вызывать из любой обычной функции без корутинного контекста. Терминальный `Flow.collect()` сам обеспечивает поток исполнения для блока `flow { }`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`collect` — обычная suspend-функция, она исполняется в текущем `CoroutineContext` коллектора без скрытых потоков и не создаёт собственный поток.",
+                "source_of_confusion": "Реактивные библиотеки (RxJava) умеют переключать поток подписки, и эту модель ошибочно переносят на Flow.",
+                "if_it_were_true": "Тогда `flow.collect { }` работал бы в любой Java-функции, но компилятор требует корутинный контекст и ругается на suspend вне корутины.",
+                "how_it_should_be": "`collect` исполняется в контексте коллектора; для смены контекста upstream есть `flowOn`, скрытых потоков Flow не заводит."
               }
             }
           ]
@@ -71,30 +71,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Cold `flow { }` держит один общий source и раздаёт его всем подписчикам, а hot `StateFlow`/`SharedFlow` даёт каждому коллектору собственный `emit()`-продюсер. Поэтому cold удобен для общего кеша: `flow { fetchPage() }` бьёт в API один раз и отдаёт результат всем.",
-              "correct": false,
+              "text": "Cold Flow перезапускает producer на каждый `collect()` и завершается сам, а Hot Flow (`StateFlow`/`SharedFlow`) живёт независимо от коллекторов и шарит эмиссии между подписчиками. `flow { }` — cold (run-per-collector), `StateFlow`/`SharedFlow` — hot (один producer, multicast для текущих и будущих подписчиков).",
+              "correct": true,
               "sections": {
-                "what_actually": "Всё ровно наоборот: cold пересоздаёт исполнение per-collector, а hot шарит один общий source между всеми подписчиками.",
-                "source_of_confusion": "Слово «shared» в `SharedFlow` звучит как «общий», и его свойство ошибочно приписывают cold-потокам.",
-                "if_it_were_true": "Тогда `flow { fetchPage() }` для общего кеша бил бы по API один раз на всех, но каждый клиент запускает запрос заново — счёт за внешний сервис растёт в 10×.",
-                "how_it_should_be": "Cold перезапускает producer на каждый collect, hot держит один producer и раздаёт его эмиссии всем подписчикам."
+                "explanation": "Ключевое отличие — жизненный цикл и число запусков producer. Cold = «run-per-collector», Hot = «run-once-broadcast»: один источник раздаёт значения всем подписчикам сразу.",
+                "example": "`val cold = flow { emit(Random.nextInt()) }` отдаёт двум `collect` разные числа, а `MutableStateFlow(0)` шарит общее состояние: новый коллектор сразу видит текущее `value` и последующие обновления.",
+                "when_to_apply": "Hot — для шаринга состояния между подписчиками (Android-ViewModel держит `MutableStateFlow<UiState>` для фрагментов); cold — для on-demand загрузки (`flow { fetchPage() }` в репозитории).",
+                "edge_cases": "Подмена `MutableStateFlow` на `flow { }` «для упрощения» ломает шаринг: UI перестаёт получать актуальное состояние при ротации экрана, потому что каждый collect стартует свой producer.",
+                "related": "[[kotlin-flow-interview#Q1]] cold-семантика Flow и связь с корутинами; [[kotlin-flow-interview#Q4]] StateFlow для состояния; [[kotlin-flow-interview#Q5]] SharedFlow для событий."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Cold `flow { }` складывает эмиссии во внутренний `Channel` и отдаёт их из `buffer`, а hot `StateFlow` эмитит синхронно без очереди — в этом единственное различие. Наличие `buffer` у cold как раз и позволяет медленному `collect` не тормозить продюсера.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Буферизация определяется операторами `buffer()`/`conflate()`, а не делением на cold/hot; различие cold/hot — в жизненном цикле producer.",
-                "source_of_confusion": "`channelFlow` действительно использует канал, и наличие буфера ошибочно делают определяющим признаком cold-потока.",
-                "if_it_were_true": "Тогда без `buffer()` медленный `collect` не тормозил бы продюсера, но без него producer блокируется на каждом emit и throughput падает в разы.",
-                "how_it_should_be": "Cold/hot отличаются количеством запусков producer и временем жизни; буферизация — отдельная настройка через операторы."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Cold и hot `flow { }` отличаются лишь параметром `replay`: задашь его — поток становится горячим `SharedFlow`, а без него остаётся холодным. В остальном `StateFlow` и cold `MutableStateFlow` ведут себя одинаково, поэтому заменять один на другой безопасно.",
               "correct": false,
               "sections": {
@@ -105,16 +94,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Cold `flow { }` складывает эмиссии во внутренний `Channel` и отдаёт их из `buffer`, а hot `StateFlow` эмитит синхронно без очереди — в этом единственное различие. Наличие `buffer` у cold как раз и позволяет медленному `collect` не тормозить продюсера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Буферизация определяется операторами `buffer()`/`conflate()`, а не делением на cold/hot; различие cold/hot — в жизненном цикле producer.",
+                "source_of_confusion": "`channelFlow` действительно использует канал, и наличие буфера ошибочно делают определяющим признаком cold-потока.",
+                "if_it_were_true": "Тогда без `buffer()` медленный `collect` не тормозил бы продюсера, но без него producer блокируется на каждом emit и throughput падает в разы.",
+                "how_it_should_be": "Cold/hot отличаются количеством запусков producer и временем жизни; буферизация — отдельная настройка через операторы."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Cold Flow перезапускает producer на каждый `collect()` и завершается сам, а Hot Flow (`StateFlow`/`SharedFlow`) живёт независимо от коллекторов и шарит эмиссии между подписчиками. `flow { }` — cold (run-per-collector), `StateFlow`/`SharedFlow` — hot (один producer, multicast для текущих и будущих подписчиков).",
-              "correct": true,
+              "text": "Cold `flow { }` держит один общий source и раздаёт его всем подписчикам, а hot `StateFlow`/`SharedFlow` даёт каждому коллектору собственный `emit()`-продюсер. Поэтому cold удобен для общего кеша: `flow { fetchPage() }` бьёт в API один раз и отдаёт результат всем.",
+              "correct": false,
               "sections": {
-                "explanation": "Ключевое отличие — жизненный цикл и число запусков producer. Cold = «run-per-collector», Hot = «run-once-broadcast»: один источник раздаёт значения всем подписчикам сразу.",
-                "example": "`val cold = flow { emit(Random.nextInt()) }` отдаёт двум `collect` разные числа, а `MutableStateFlow(0)` шарит общее состояние: новый коллектор сразу видит текущее `value` и последующие обновления.",
-                "when_to_apply": "Hot — для шаринга состояния между подписчиками (Android-ViewModel держит `MutableStateFlow<UiState>` для фрагментов); cold — для on-demand загрузки (`flow { fetchPage() }` в репозитории).",
-                "edge_cases": "Подмена `MutableStateFlow` на `flow { }` «для упрощения» ломает шаринг: UI перестаёт получать актуальное состояние при ротации экрана, потому что каждый collect стартует свой producer.",
-                "related": "[[kotlin-flow-interview#Q1]] cold-семантика Flow и связь с корутинами; [[kotlin-flow-interview#Q4]] StateFlow для состояния; [[kotlin-flow-interview#Q5]] SharedFlow для событий."
+                "what_actually": "Всё ровно наоборот: cold пересоздаёт исполнение per-collector, а hot шарит один общий source между всеми подписчиками.",
+                "source_of_confusion": "Слово «shared» в `SharedFlow` звучит как «общий», и его свойство ошибочно приписывают cold-потокам.",
+                "if_it_were_true": "Тогда `flow { fetchPage() }` для общего кеша бил бы по API один раз на всех, но каждый клиент запускает запрос заново — счёт за внешний сервис растёт в 10×.",
+                "how_it_should_be": "Cold перезапускает producer на каждый collect, hot держит один producer и раздаёт его эмиссии всем подписчикам."
               }
             }
           ]
@@ -131,6 +131,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`zip` и `combine` по сути синонимы. Оба ждут пары из двух потоков и на каждый `emit` пересчитывают результат одинаково через `collect`. Поэтому на дашборде «orders × users» `zip()` и `combine()` можно свободно менять местами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`zip` ждёт ровно по одному элементу из каждого потока (попарно), а `combine` пересчитывает на каждое новое значение любого из потоков.",
+                "source_of_confusion": "Оба берут «пару значений из двух потоков», поэтому их семантику ошибочно считают одинаковой.",
+                "if_it_were_true": "Тогда dashboard «orders × users» через `zip` и `combine` вёл бы себя одинаково, но при раннем завершении users-flow `zip` молча перестаёт показывать orders.",
+                "how_it_should_be": "`zip` — строгое попарное сопоставление, `combine` — реактивный пересчёт на любое изменение; это разные операторы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`flow.distinct()` сравнивает элементы по идентичности `===`. Он держит все ранее увиденные значения в кеше на JVM heap, отсеивая через `collect` любые повторы за всю историю `flow { }`. Так дедупликация работает ровно как коллекционный `distinct()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для потоков используют `distinctUntilChanged`, который сравнивает только с предыдущим элементом по `equals` и не держит полный кеш истории.",
+                "source_of_confusion": "У коллекций есть `distinct()` с полной дедупликацией, и это поведение ошибочно ждут от Flow.",
+                "if_it_were_true": "Тогда дедупликация сенсорного потока через глобальный кеш работала бы вечно, но на устройстве это привело бы к OOM после нескольких часов.",
+                "how_it_should_be": "`distinctUntilChanged` отбрасывает только повтор подряд по `equals`, без бесконечного кеша всех значений."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`map`/`filter`/`take`/`zip`/`debounce` — промежуточные (cold, lazy): возвращают новый `Flow` и ничего не выполняют. `collect`/`toList`/`first`/`reduce`/`fold` — терминальные: суспендят и вытягивают элементы. Без терминального оператора Flow «спит» — ни один промежуточный оператор не запускает выполнение.",
               "correct": true,
               "sections": {
@@ -142,8 +166,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`toList()` — промежуточный оператор: дописывает в цепочку шаг «собрать в список», но сам не суспендит. Реальный `collect()` или `first()` запустит цепочку позже. Поэтому `flow.toList().map { }` строит ленивую цепочку, безопасную даже на бесконечном `flow { }`.",
               "correct": false,
               "sections": {
@@ -151,30 +175,6 @@
                 "source_of_confusion": "`toList()` похож на коллекционные функции Kotlin (`map().toList()`), которые в обычных коллекциях ленивы только в `Sequence`.",
                 "if_it_were_true": "Тогда `flow.toList().map { }` строил бы lazy-chain, но на бесконечном SSE-потоке сервис висит и наружу уходит 504 timeout.",
                 "how_it_should_be": "`toList()` запускает выполнение и завершается списком; промежуточные — это `map`/`filter`/`take`, возвращающие новый Flow."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`zip` и `combine` по сути синонимы. Оба ждут пары из двух потоков и на каждый `emit` пересчитывают результат одинаково через `collect`. Поэтому на дашборде «orders × users» `zip()` и `combine()` можно свободно менять местами.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`zip` ждёт ровно по одному элементу из каждого потока (попарно), а `combine` пересчитывает на каждое новое значение любого из потоков.",
-                "source_of_confusion": "Оба берут «пару значений из двух потоков», поэтому их семантику ошибочно считают одинаковой.",
-                "if_it_were_true": "Тогда dashboard «orders × users» через `zip` и `combine` вёл бы себя одинаково, но при раннем завершении users-flow `zip` молча перестаёт показывать orders.",
-                "how_it_should_be": "`zip` — строгое попарное сопоставление, `combine` — реактивный пересчёт на любое изменение; это разные операторы."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`flow.distinct()` сравнивает элементы по идентичности `===`. Он держит все ранее увиденные значения в кеше на JVM heap, отсеивая через `collect` любые повторы за всю историю `flow { }`. Так дедупликация работает ровно как коллекционный `distinct()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для потоков используют `distinctUntilChanged`, который сравнивает только с предыдущим элементом по `equals` и не держит полный кеш истории.",
-                "source_of_confusion": "У коллекций есть `distinct()` с полной дедупликацией, и это поведение ошибочно ждут от Flow.",
-                "if_it_were_true": "Тогда дедупликация сенсорного потока через глобальный кеш работала бы вечно, но на устройстве это привело бы к OOM после нескольких часов.",
-                "how_it_should_be": "`distinctUntilChanged` отбрасывает только повтор подряд по `equals`, без бесконечного кеша всех значений."
               }
             }
           ]
@@ -191,13 +191,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`StateFlow` доставляет каждый отдельный `emit()` каждому коллектору по очереди и не отбрасывает повторы. Отправишь подряд два одинаковых значения — оба дойдут до подписчика через `collect`. Поэтому счётчик через `StateFlow<Int>` надёжно поймает два идентичных события `loadingEvents` подряд.",
-              "correct": false,
+              "text": "`StateFlow` — hot flow с обязательным начальным значением и conflation по `equals`, идеальный для UI-state. Новый коллектор сразу получает текущее `value`, а идентичные эмиссии (`value == currentValue`) пропускаются. Это «текущее value + skip equal», аналог Android `LiveData` без привязки к жизненному циклу.",
+              "correct": true,
               "sections": {
-                "what_actually": "`StateFlow` применяет conflation по `equals`: повторный `emit` того же значения пропускается, поэтому одинаковые значения подряд не доставляются.",
-                "source_of_confusion": "`SharedFlow` без conflation действительно шлёт каждое значение, и это поведение приписывают `StateFlow`.",
-                "if_it_were_true": "Тогда counter `loadingEvents` через `StateFlow<Int>` ловил бы два одинаковых события подряд, но они теряются — метрики времени загрузки занижены.",
-                "how_it_should_be": "`StateFlow` отбрасывает equal-эмиссии; для доставки каждого события используют `SharedFlow` без conflation."
+                "explanation": "`StateFlow` всегда хранит ровно одно текущее значение (replay = 1) и пропускает повторный `emit` того же значения по `equals` — это и есть conflation. Подходит для состояния, которое всегда имеет «сейчас».",
+                "example": "Android-ViewModel выставляет `val uiState: StateFlow<UiState>`, Compose-экран подписывается через `collectAsStateWithLifecycle()` и не перерисовывается при идентичных update, потому что equal-эмиссии отбрасываются.",
+                "when_to_apply": "Когда нужно текущее состояние с гарантией «новый подписчик сразу видит актуальное»: список заказов, статус загрузки, выбранный фильтр в ViewModel.",
+                "edge_cases": "Для one-shot navigation events `StateFlow` опасен: conflation и replay = 1 заставляют показывать первое событие при каждом открытии экрана (toast «Заказ создан» при ротации) — для событий нужен `SharedFlow`.",
+                "related": "[[kotlin-flow-interview#Q5]] отличие SharedFlow от StateFlow; [[kotlin-flow-interview#Q2]] StateFlow как hot flow; [[kotlin-flow-interview#Q14]] утечки при сборе StateFlow."
               }
             },
             {
@@ -215,14 +216,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`StateFlow` — hot flow с обязательным начальным значением и conflation по `equals`, идеальный для UI-state. Новый коллектор сразу получает текущее `value`, а идентичные эмиссии (`value == currentValue`) пропускаются. Это «текущее value + skip equal», аналог Android `LiveData` без привязки к жизненному циклу.",
-              "correct": true,
+              "text": "`StateFlow` доставляет каждый отдельный `emit()` каждому коллектору по очереди и не отбрасывает повторы. Отправишь подряд два одинаковых значения — оба дойдут до подписчика через `collect`. Поэтому счётчик через `StateFlow<Int>` надёжно поймает два идентичных события `loadingEvents` подряд.",
+              "correct": false,
               "sections": {
-                "explanation": "`StateFlow` всегда хранит ровно одно текущее значение (replay = 1) и пропускает повторный `emit` того же значения по `equals` — это и есть conflation. Подходит для состояния, которое всегда имеет «сейчас».",
-                "example": "Android-ViewModel выставляет `val uiState: StateFlow<UiState>`, Compose-экран подписывается через `collectAsStateWithLifecycle()` и не перерисовывается при идентичных update, потому что equal-эмиссии отбрасываются.",
-                "when_to_apply": "Когда нужно текущее состояние с гарантией «новый подписчик сразу видит актуальное»: список заказов, статус загрузки, выбранный фильтр в ViewModel.",
-                "edge_cases": "Для one-shot navigation events `StateFlow` опасен: conflation и replay = 1 заставляют показывать первое событие при каждом открытии экрана (toast «Заказ создан» при ротации) — для событий нужен `SharedFlow`.",
-                "related": "[[kotlin-flow-interview#Q5]] отличие SharedFlow от StateFlow; [[kotlin-flow-interview#Q2]] StateFlow как hot flow; [[kotlin-flow-interview#Q14]] утечки при сборе StateFlow."
+                "what_actually": "`StateFlow` применяет conflation по `equals`: повторный `emit` того же значения пропускается, поэтому одинаковые значения подряд не доставляются.",
+                "source_of_confusion": "`SharedFlow` без conflation действительно шлёт каждое значение, и это поведение приписывают `StateFlow`.",
+                "if_it_were_true": "Тогда counter `loadingEvents` через `StateFlow<Int>` ловил бы два одинаковых события подряд, но они теряются — метрики времени загрузки занижены.",
+                "how_it_should_be": "`StateFlow` отбрасывает equal-эмиссии; для доставки каждого события используют `SharedFlow` без conflation."
               }
             },
             {
@@ -251,13 +251,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SharedFlow(replay = 0)` при переподключении отдаёт новому подписчику все прошлые события из `replay`-буфера и `extraBufferCapacity` через `collect()`; поэтому чат-фронт после blip получает последние сообщения через `emit()` из `MutableSharedFlow`, даже при `onBufferOverflow`.",
+              "text": "`SharedFlow` и `StateFlow` различаются только именем; по поведению это один multicast hot flow. Поэтому миграция UI с `StateFlow`/`MutableStateFlow` на `SharedFlow(replay = 1)` проходит без последствий.",
               "correct": false,
               "sections": {
-                "what_actually": "`replay = 0` означает, что новый подписчик НЕ увидит прошлые события вообще — replay-буфер пуст, переотправки нет.",
-                "source_of_confusion": "Слово «shared» создаёт ощущение, что прошлое доступно всем, но без replay буфер прошлого отсутствует.",
-                "if_it_were_true": "Тогда чат-фронт после network blip получил бы последние 5 сообщений, но при `replay = 0` пользователь видит «дыру» в timeline.",
-                "how_it_should_be": "Чтобы новый подписчик видел прошлые события, нужен `replay > 0`; при `replay = 0` доставляются только эмиссии после подписки."
+                "what_actually": "У них разный contract: equality-conflation, фиксированный replay = 1 и обязательный initial value у `StateFlow`, гибкий replay и буфер у `SharedFlow`.",
+                "source_of_confusion": "Оба — multicast hot flow, и поверхностное сходство создаёт ощущение взаимозаменяемости.",
+                "if_it_were_true": "Тогда миграция UI с `StateFlow` на `SharedFlow(replay = 1)` без conflation была бы безболезненной, но рекомпозиции в Compose удваиваются, а p95 frame time прыгает с 8 ms до 24 ms.",
+                "how_it_should_be": "Это разные типы с разными гарантиями: conflation, replay и обязательность initial value отличаются — выбор зависит от state vs event."
               }
             },
             {
@@ -288,13 +288,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`SharedFlow` и `StateFlow` различаются только именем; по поведению это один multicast hot flow. Поэтому миграция UI с `StateFlow`/`MutableStateFlow` на `SharedFlow(replay = 1)` проходит без последствий.",
+              "text": "`SharedFlow(replay = 0)` при переподключении отдаёт новому подписчику все прошлые события из `replay`-буфера и `extraBufferCapacity` через `collect()`; поэтому чат-фронт после blip получает последние сообщения через `emit()` из `MutableSharedFlow`, даже при `onBufferOverflow`.",
               "correct": false,
               "sections": {
-                "what_actually": "У них разный contract: equality-conflation, фиксированный replay = 1 и обязательный initial value у `StateFlow`, гибкий replay и буфер у `SharedFlow`.",
-                "source_of_confusion": "Оба — multicast hot flow, и поверхностное сходство создаёт ощущение взаимозаменяемости.",
-                "if_it_were_true": "Тогда миграция UI с `StateFlow` на `SharedFlow(replay = 1)` без conflation была бы безболезненной, но рекомпозиции в Compose удваиваются, а p95 frame time прыгает с 8 ms до 24 ms.",
-                "how_it_should_be": "Это разные типы с разными гарантиями: conflation, replay и обязательность initial value отличаются — выбор зависит от state vs event."
+                "what_actually": "`replay = 0` означает, что новый подписчик НЕ увидит прошлые события вообще — replay-буфер пуст, переотправки нет.",
+                "source_of_confusion": "Слово «shared» создаёт ощущение, что прошлое доступно всем, но без replay буфер прошлого отсутствует.",
+                "if_it_were_true": "Тогда чат-фронт после network blip получил бы последние 5 сообщений, но при `replay = 0` пользователь видит «дыру» в timeline.",
+                "how_it_should_be": "Чтобы новый подписчик видел прошлые события, нужен `replay > 0`; при `replay = 0` доставляются только эмиссии после подписки."
               }
             }
           ]
@@ -323,18 +323,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`catch { }`, поставленный после `collect { }`, перехватывает исключения, которые возникают уже внутри самого блока коллектора, — например, `NPE` из `updateUI()`; оператор `catch` здесь работает как универсальный обработчик (наравне с `CoroutineExceptionHandler`); покрывает и upstream, и downstream ошибки и потому делает лишним любой `try/catch` вокруг тела `collect` или `onEach`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`catch` ловит ТОЛЬКО upstream-исключения; ошибки в самом `collect`-блоке не перехватываются, и `catch` после `collect` вообще не скомпилируется как intermediate-оператор.",
-                "source_of_confusion": "Имя «catch» намекает на универсальный try-catch, который ловит всё, включая downstream.",
-                "if_it_were_true": "Тогда NPE в `updateUI()` внутри `collect` ловился бы оператором catch, но краш всё равно прилетает в Crashlytics.",
-                "how_it_should_be": "`catch` ставится до `collect` и видит только upstream; ошибки в collect-лямбде ловят `try/catch` или переносят в `onEach`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`flow.catch { e -> throw e }` корректно «ремитит» пойманное исключение дальше по цепочке к `collect` и потому полностью эквивалентен отсутствию оператора `catch` перед сборкой; такой повторный `throw` внутри `catch` — обычная практика; механически перенесённая из `try/catch`, и на завершение `flow {}` она никак не влияет.",
               "correct": false,
               "sections": {
@@ -345,8 +333,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`catch { }` ставится ПЕРЕД `collect` и ловит upstream-исключения (в `flow {}`, `map`, `filter`); `retry`/`retryWhen` повторяют сборку при ошибке (с backoff в `retryWhen`); `onCompletion` вызывается всегда — и при успехе, и при ошибке. Это и есть exception-transparency: catch видит только то, что выше по цепочке.",
               "correct": true,
               "sections": {
@@ -355,6 +343,18 @@
                 "when_to_apply": "Когда нужна graceful degradation: на ошибке БД эмитнуть кешированное значение, на transient-ошибке повторить запрос, при любом завершении залогировать через `onCompletion`.",
                 "edge_cases": "`catch` ловит только upstream: исключение внутри самого блока `collect { }` не перехватывается — его надо оборачивать в `try/catch` или переносить логику в `onEach`.",
                 "related": "[[kotlin-flow-interview#Q15]] что catch ловит, а что нет; [[kotlin-flow-interview#Q9]] тестирование retry/catch; [[kotlin-flow-interview#Q1]] suspend-модель Flow."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`catch { }`, поставленный после `collect { }`, перехватывает исключения, которые возникают уже внутри самого блока коллектора, — например, `NPE` из `updateUI()`; оператор `catch` здесь работает как универсальный обработчик (наравне с `CoroutineExceptionHandler`); покрывает и upstream, и downstream ошибки и потому делает лишним любой `try/catch` вокруг тела `collect` или `onEach`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`catch` ловит ТОЛЬКО upstream-исключения; ошибки в самом `collect`-блоке не перехватываются, и `catch` после `collect` вообще не скомпилируется как intermediate-оператор.",
+                "source_of_confusion": "Имя «catch» намекает на универсальный try-catch, который ловит всё, включая downstream.",
+                "if_it_were_true": "Тогда NPE в `updateUI()` внутри `collect` ловился бы оператором catch, но краш всё равно прилетает в Crashlytics.",
+                "how_it_should_be": "`catch` ставится до `collect` и видит только upstream; ошибки в collect-лямбде ловят `try/catch` или переносят в `onEach`."
               }
             }
           ]
@@ -371,6 +371,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`collectLatest` буферизует все промежуточные элементы во внутренней очереди и обрабатывает их строго по очереди в блоке `collect`; поэтому на processing-pipeline ни один входной элемент не теряется даже при резком росте RPS; и добавлять `buffer()` перед `collectLatest` не требуется для полноты обработки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`collectLatest` именно отменяет текущий блок-обработчик при следующем элементе и не буферизует промежуточные значения.",
+                "source_of_confusion": "Слово «collect» ассоциируется с «собрать всё», поэтому ждут буферизации, а не отмены.",
+                "if_it_were_true": "Тогда «processing pipeline» на `collectLatest` обрабатывал бы каждый элемент, но при росте RPS теряет до 60% входных событий.",
+                "how_it_should_be": "`collectLatest` отменяет обработку устаревшего элемента; чтобы обработать все элементы, нужен `buffer().collect`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`buffer()` запускает producer и consumer параллельно с очередью (рост throughput); `conflate()` оставляет только последнее значение, пропуская промежуточные; `collectLatest` отменяет текущую обработку при появлении нового элемента. По умолчанию producer suspend'ится в `emit`, пока коллектор не готов — это встроенный backpressure без отдельного API.",
               "correct": true,
               "sections": {
@@ -379,18 +391,6 @@
                 "when_to_apply": "`buffer` — когда нужны все элементы и важен throughput; `conflate` — когда нужно только последнее состояние (позиция курсора, прогресс); `collectLatest` — когда обработка устаревает при новых данных.",
                 "edge_cases": "Замена `buffer(Channel.UNLIMITED)` на `conflate()` «для упрощения» теряет промежуточные события: аналитика недосчитывается ~70% событий, и метрики не сходятся с фронтом.",
                 "related": "[[kotlin-flow-interview#Q12]] collectLatest и flatMapLatest; [[kotlin-flow-interview#Q1]] suspend как встроенный backpressure; [[kotlin-flow-interview#Q8]] backpressure в channelFlow."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`buffer()`, `conflate()` и `collectLatest` — по сути синонимы; все три относятся к backpressure и дают одинаковый результат, так что выбор между ними на поведение не влияет; поэтому заменить `buffer(Channel.UNLIMITED)` на `conflate()` можно безболезненно — обработается тот же набор элементов, а аналитика соберёт все события без потерь.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`buffer` — параллелизм с очередью, `conflate` — drop-old без обработки промежуточных, `collectLatest` — отмена обработки при новом элементе; результаты разные.",
-                "source_of_confusion": "Все три относятся к backpressure, поэтому их ошибочно считают взаимозаменяемыми.",
-                "if_it_were_true": "Тогда замена `buffer(Channel.UNLIMITED)` на `conflate()` была бы безопасной, но теряется 70% событий аналитики и метрики не сходятся с фронтом.",
-                "how_it_should_be": "Это три разные стратегии: `buffer` сохраняет всё, `conflate` — только последнее, `collectLatest` отменяет устаревшую обработку."
               }
             },
             {
@@ -408,13 +408,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`collectLatest` буферизует все промежуточные элементы во внутренней очереди и обрабатывает их строго по очереди в блоке `collect`; поэтому на processing-pipeline ни один входной элемент не теряется даже при резком росте RPS; и добавлять `buffer()` перед `collectLatest` не требуется для полноты обработки.",
+              "text": "`buffer()`, `conflate()` и `collectLatest` — по сути синонимы; все три относятся к backpressure и дают одинаковый результат, так что выбор между ними на поведение не влияет; поэтому заменить `buffer(Channel.UNLIMITED)` на `conflate()` можно безболезненно — обработается тот же набор элементов, а аналитика соберёт все события без потерь.",
               "correct": false,
               "sections": {
-                "what_actually": "`collectLatest` именно отменяет текущий блок-обработчик при следующем элементе и не буферизует промежуточные значения.",
-                "source_of_confusion": "Слово «collect» ассоциируется с «собрать всё», поэтому ждут буферизации, а не отмены.",
-                "if_it_were_true": "Тогда «processing pipeline» на `collectLatest` обрабатывал бы каждый элемент, но при росте RPS теряет до 60% входных событий.",
-                "how_it_should_be": "`collectLatest` отменяет обработку устаревшего элемента; чтобы обработать все элементы, нужен `buffer().collect`."
+                "what_actually": "`buffer` — параллелизм с очередью, `conflate` — drop-old без обработки промежуточных, `collectLatest` — отмена обработки при новом элементе; результаты разные.",
+                "source_of_confusion": "Все три относятся к backpressure, поэтому их ошибочно считают взаимозаменяемыми.",
+                "if_it_were_true": "Тогда замена `buffer(Channel.UNLIMITED)` на `conflate()` была бы безопасной, но теряется 70% событий аналитики и метрики не сходятся с фронтом.",
+                "how_it_should_be": "Это три разные стратегии: `buffer` сохраняет всё, `conflate` — только последнее, `collectLatest` отменяет устаревшую обработку."
               }
             }
           ]
@@ -431,18 +431,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`callbackFlow` тянет конкурентную эмиссию через `send` из параллельных `launch` — он и задуман под fan-in множества источников. А `channelFlow` остаётся вспомогательным билдером: его берут только чтобы подписаться на один слушатель и закрыть его в `awaitClose { }`, поэтому `send` из фоновых корутин там неуместен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ровно наоборот: конкурентный `send` из дочерних корутин поддерживает `channelFlow`, а `callbackFlow` — это его узкая специализация под один callback.",
-                "source_of_confusion": "У `callbackFlow` заметный «активный» API с `send`, из-за чего его ошибочно принимают за более общий билдер, чем `channelFlow`.",
-                "if_it_were_true": "Тогда fan-in собирали бы на `callbackFlow`, но роли перепутаны: конкурентный `send` — прерогатива `channelFlow`, и выбор билдера на ревью оказывается неверным.",
-                "how_it_should_be": "Конкурентный `send` поддерживает `channelFlow`; `callbackFlow` применяют для оборачивания одного callback с `awaitClose`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`callbackFlow` позволяет просто вызвать `close()` внутри самого callback, а блок `awaitClose { }` необязателен: при отмене коллектора корутина в `channelFlow` и без него завершится, и listener отпишется автоматически. `awaitClose` нужен лишь тогда, когда требуется дополнительная очистка сторонних ресурсов помимо `unregister()`.",
               "correct": false,
               "sections": {
@@ -453,8 +441,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`channelFlow` по умолчанию создаёт `Channel` с буфером `UNLIMITED`, поэтому вызовы `send` из любой `launch` никогда не приостанавливаются и backpressure там полностью отсутствует. Чтобы ограничить скорость producer'а, приходится вручную навешивать оператор `buffer()` с нужной ёмкостью прямо поверх `channelFlow`, иначе очередь растёт бесконтрольно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию ёмкость канала RENDEZVOUS (0), `send` суспендится, пока приёмник не готов — backpressure встроен.",
+                "source_of_confusion": "Наличие внутреннего `Channel` создаёт впечатление большой буферной очереди по умолчанию.",
+                "if_it_were_true": "Тогда «безопасная» очередь не требовала бы настройки `Channel.BUFFERED`, но при burst-нагрузке producer неожиданно тормозит.",
+                "how_it_should_be": "По умолчанию канал rendezvous с суспендом на `send`; для буфера явно задают ёмкость канала."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "`callbackFlow` тянет конкурентную эмиссию через `send` из параллельных `launch` — он и задуман под fan-in множества источников. А `channelFlow` остаётся вспомогательным билдером: его берут только чтобы подписаться на один слушатель и закрыть его в `awaitClose { }`, поэтому `send` из фоновых корутин там неуместен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: конкурентный `send` из дочерних корутин поддерживает `channelFlow`, а `callbackFlow` — это его узкая специализация под один callback.",
+                "source_of_confusion": "У `callbackFlow` заметный «активный» API с `send`, из-за чего его ошибочно принимают за более общий билдер, чем `channelFlow`.",
+                "if_it_were_true": "Тогда fan-in собирали бы на `callbackFlow`, но роли перепутаны: конкурентный `send` — прерогатива `channelFlow`, и выбор билдера на ревью оказывается неверным.",
+                "how_it_should_be": "Конкурентный `send` поддерживает `channelFlow`; `callbackFlow` применяют для оборачивания одного callback с `awaitClose`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`channelFlow` поддерживает конкурентный `send` из дочерних корутин (можно делать fan-in из нескольких `launch`), а `callbackFlow` — его специализация для оборачивания callback-API с обязательным `awaitClose { }` для отписки. Внутри оба используют `Channel`, поэтому emit потокобезопасен, а `awaitClose` гарантирует cleanup listener'а при отмене коллектора.",
               "correct": true,
               "sections": {
@@ -463,18 +475,6 @@
                 "when_to_apply": "`channelFlow` — для конкурентной записи и слияния нескольких источников; `callbackFlow` — для моста между listener-based API (Firebase, WebSocket, `LocationManager`) и Flow.",
                 "edge_cases": "Без `awaitClose` корутина в `callbackFlow` завершится сразу после регистрации listener'а: WebSocket-клиент не получит `unregister`, удержит ссылки на view и даст утечку ~50 MB/час.",
                 "related": "[[kotlin-flow-interview#Q14]] awaitClose против утечек; [[kotlin-flow-interview#Q1]] почему emit ограничен в flow {}; [[kotlin-flow-interview#Q7]] backpressure канала."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`channelFlow` по умолчанию создаёт `Channel` с буфером `UNLIMITED`, поэтому вызовы `send` из любой `launch` никогда не приостанавливаются и backpressure там полностью отсутствует. Чтобы ограничить скорость producer'а, приходится вручную навешивать оператор `buffer()` с нужной ёмкостью прямо поверх `channelFlow`, иначе очередь растёт бесконтрольно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию ёмкость канала RENDEZVOUS (0), `send` суспендится, пока приёмник не готов — backpressure встроен.",
-                "source_of_confusion": "Наличие внутреннего `Channel` создаёт впечатление большой буферной очереди по умолчанию.",
-                "if_it_were_true": "Тогда «безопасная» очередь не требовала бы настройки `Channel.BUFFERED`, но при burst-нагрузке producer неожиданно тормозит.",
-                "how_it_should_be": "По умолчанию канал rendezvous с суспендом на `send`; для буфера явно задают ёмкость канала."
               }
             }
           ]
@@ -491,18 +491,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Thread.sleep(1000)` внутри `runTest` ускоряется виртуальным временем `TestCoroutineScheduler` наравне с корутинным `delay`, реального ожидания нет. Поэтому `flow.debounce(5_000)` тестируют через `Thread.sleep` вместо `advanceTimeBy`, и прогон на CI не раздувается.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`runTest` ускоряет только корутинные `delay`; `Thread.sleep` блокирует реальный поток и виртуальным временем не управляется.",
-                "source_of_confusion": "`runTest` обещает «виртуальное время», и это распространяют на любые задержки, включая блокирующие.",
-                "if_it_were_true": "Тогда `flow.debounce(5_000)` тестировался бы через `Thread.sleep` мгновенно, но прогон unit-тестов раздувается до 30 минут на CI.",
-                "how_it_should_be": "В тестах используют только корутинный `delay` (который scheduler промотает); `Thread.sleep` из тестов Flow убирают."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`runTest { }` даёт виртуальное время через `TestCoroutineScheduler` (ускоряет корутинные `delay`), а `Turbine.test { }` форсит явные ожидания `awaitItem`/`awaitComplete` и финальный `cancelAndIgnoreRemainingEvents`, исключая race-условия. Вместе они дают детерминированные тесты потоков без флака.",
               "correct": true,
               "sections": {
@@ -511,6 +499,18 @@
                 "when_to_apply": "Когда тестируешь Flow-pipeline с временем (`debounce`, `delay`) или hot-потоки: `runTest` для виртуального времени, `Turbine` для явного контроля эмиссий и завершения.",
                 "edge_cases": "`Thread.sleep` внутри `runTest` НЕ ускоряется — виртуальное время двигает только корутинные `delay`; sleep блокирует реальный поток, и прогон тестов раздувается до десятков минут на CI.",
                 "related": "[[kotlin-flow-interview#Q1]] suspend-модель Flow; [[kotlin-flow-interview#Q12]] тестирование flatMapLatest; [[kotlin-flow-interview#Q3]] терминальный toList в тестах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`StateFlow` в тесте требует `Dispatchers.Main` через `Robolectric` и обёртку `runTest` поверх него: без Android-окружения поток состояния в тесте не поднимется. Поэтому даже доменный модуль тащит `Robolectric` ради таких тестов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`StateFlow` тестируется в `runTest` без Android-зависимостей; `Dispatchers.Main` нужен только Android-UI коду, а не самому StateFlow.",
+                "source_of_confusion": "`StateFlow` часто показывают в Android-примерах с `Dispatchers.Main`, и зависимость кажется обязательной.",
+                "if_it_were_true": "Тогда домен-модуль тащил бы Robolectric «для тестов StateFlow», но из-за этого build time прыгает с 2 до 8 минут.",
+                "how_it_should_be": "`StateFlow` тестируют в чистом `runTest`; Robolectric и `Dispatchers.Main` нужны только для собственно Android-UI."
               }
             },
             {
@@ -528,13 +528,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`StateFlow` в тесте требует `Dispatchers.Main` через `Robolectric` и обёртку `runTest` поверх него: без Android-окружения поток состояния в тесте не поднимется. Поэтому даже доменный модуль тащит `Robolectric` ради таких тестов.",
+              "text": "`Thread.sleep(1000)` внутри `runTest` ускоряется виртуальным временем `TestCoroutineScheduler` наравне с корутинным `delay`, реального ожидания нет. Поэтому `flow.debounce(5_000)` тестируют через `Thread.sleep` вместо `advanceTimeBy`, и прогон на CI не раздувается.",
               "correct": false,
               "sections": {
-                "what_actually": "`StateFlow` тестируется в `runTest` без Android-зависимостей; `Dispatchers.Main` нужен только Android-UI коду, а не самому StateFlow.",
-                "source_of_confusion": "`StateFlow` часто показывают в Android-примерах с `Dispatchers.Main`, и зависимость кажется обязательной.",
-                "if_it_were_true": "Тогда домен-модуль тащил бы Robolectric «для тестов StateFlow», но из-за этого build time прыгает с 2 до 8 минут.",
-                "how_it_should_be": "`StateFlow` тестируют в чистом `runTest`; Robolectric и `Dispatchers.Main` нужны только для собственно Android-UI."
+                "what_actually": "`runTest` ускоряет только корутинные `delay`; `Thread.sleep` блокирует реальный поток и виртуальным временем не управляется.",
+                "source_of_confusion": "`runTest` обещает «виртуальное время», и это распространяют на любые задержки, включая блокирующие.",
+                "if_it_were_true": "Тогда `flow.debounce(5_000)` тестировался бы через `Thread.sleep` мгновенно, но прогон unit-тестов раздувается до 30 минут на CI.",
+                "how_it_should_be": "В тестах используют только корутинный `delay` (который scheduler промотает); `Thread.sleep` из тестов Flow убирают."
               }
             }
           ]
@@ -551,18 +551,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Flow` и `Observable` оба «холодные» и ленивые — ничего не делают до подписки, — и отменяются одинаково: терминальный `collect` возвращает `Disposable`, а остановка идёт через его `dispose()`; поэтому у `Flow`, как и в RxJava, есть собственный `CompositeDisposable`, чтобы разом снять группу активных подписок и освободить ресурсы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У них разные правила exception-transparency, отмена через корутины vs `Disposable`, встроенный backpressure у Flow против опционального `Flowable` у Rx.",
-                "source_of_confusion": "Оба — реактивные потоки с похожими операторами (`map`, `filter`), и поверхностное сходство принимают за тождество.",
-                "if_it_were_true": "Тогда миграция «один-в-один» была бы тривиальной, но обработка ошибок ломается — `onErrorResumeNext` не воспроизводится через `catch`.",
-                "how_it_should_be": "Это разные абстракции: корутинная отмена, exception-transparency и встроенный backpressure отличают Flow от Observable."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Flow` и `Observable` невозможно использовать вместе в одном модуле: между корутинами и RxJava нет ни `.asFlow()`, ни `.asObservable()`, поэтому любой смешанный код придётся целиком переписать на один из двух типов; единственный обходной путь — вручную мостить их, гоняя каждый `emit` в `callbackFlow` через промежуточный `Channel`.",
               "correct": false,
               "sections": {
@@ -573,8 +561,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Flow` не имеет встроенных аналогов `BehaviorSubject` и `PublishSubject` из RxJava, поэтому горячие многоадресные потоки с несколькими коллекторами приходится каждый раз реализовывать вручную поверх общего `Channel` и раздачи через `emit`; из коробки `Flow` умеет работать исключительно как холодный однократный источник для одного `collect`.",
               "correct": false,
               "sections": {
@@ -585,8 +573,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Flow` встроен в корутины, отменяется через `cancel()` корутины и имеет встроенный backpressure через suspend; `Observable` — отдельная JVM-библиотека с `Disposable` и без backpressure (для него нужен `Flowable`). Размер `kotlinx.coroutines` ~100 KB против ~3 MB RxJava, а экосистема Spring/Android движется в сторону Flow.",
               "correct": true,
               "sections": {
@@ -595,6 +583,18 @@
                 "when_to_apply": "Flow — для нового Kotlin-кода и интеграции с Spring/Android; RxJava оставляют, если проект уже на ней или нужна более богатая коллекция операторов.",
                 "edge_cases": "Миграция «один-в-один» из RxJava ломается на обработке ошибок: логика `onErrorResumeNext` не воспроизводится дословно через `catch` из-за разных правил exception-transparency.",
                 "related": "[[kotlin-flow-interview#Q7]] встроенный backpressure Flow; [[kotlin-flow-interview#Q13]] Flow в Spring WebFlux; [[kotlin-flow-interview#Q5]] StateFlow как аналог BehaviorSubject."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Flow` и `Observable` оба «холодные» и ленивые — ничего не делают до подписки, — и отменяются одинаково: терминальный `collect` возвращает `Disposable`, а остановка идёт через его `dispose()`; поэтому у `Flow`, как и в RxJava, есть собственный `CompositeDisposable`, чтобы разом снять группу активных подписок и освободить ресурсы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У них разные правила exception-transparency, отмена через корутины vs `Disposable`, встроенный backpressure у Flow против опционального `Flowable` у Rx.",
+                "source_of_confusion": "Оба — реактивные потоки с похожими операторами (`map`, `filter`), и поверхностное сходство принимают за тождество.",
+                "if_it_were_true": "Тогда миграция «один-в-один» была бы тривиальной, но обработка ошибок ломается — `onErrorResumeNext` не воспроизводится через `catch`.",
+                "how_it_should_be": "Это разные абстракции: корутинная отмена, exception-transparency и встроенный backpressure отличают Flow от Observable."
               }
             }
           ]
@@ -611,19 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`flowOn(Dispatcher)` переключает контекст для UPSTREAM операторов (всё, что объявлено выше по цепочке) через внутренний канал; downstream и `collect` остаются в контексте коллектора. Несколько `flowOn` создают сегменты с разными dispatcher'ами, а правило размещения — ближе к источнику. Короче: «flowOn — для всего ВЫШЕ».",
-              "correct": true,
-              "sections": {
-                "explanation": "`flowOn` влияет только на upstream и создаёт внутренний канал между двумя частями pipeline. Это отличает его от `withContext`, который суспендит и переключает контекст текущего блока кода.",
-                "example": "`flow { emit(readFile()) }.flowOn(IO).map { parse(it) }.flowOn(Default).collect { showUi(it) }` — диск на `IO`, CPU-парсинг на `Default`, отрисовка на потоке коллектора.",
-                "when_to_apply": "Когда part pipeline блокирующая или CPU-bound: вынести чтение файла на `Dispatchers.IO`, тяжёлый парсинг на `Dispatchers.Default`, оставив `collect` на UI/event-loop потоке.",
-                "edge_cases": "`flow.flowOn(IO).collect { updateUI(it) }` НЕ уводит `updateUI` в IO — downstream остаётся в контексте коллектора; путаница тут даёт лишний context switch или ошибку потока в Android.",
-                "related": "[[kotlin-flow-interview#Q1]] контекст коллектора; [[kotlin-flow-interview#Q13]] flowOn для блокирующих вызовов в WebFlux; [[kotlin-flow-interview#Q7]] стратегии backpressure."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`flowOn(Dispatchers.IO)` переключает контекст для всех DOWNSTREAM операторов и финального блока `collect`, тогда как всё, что объявлено выше по цепочке, остаётся в контексте коллектора; значит, `map` после `flowOn` уже исполняется на `Dispatchers.IO`. Правило размещения — ставить этот оператор как можно ближе к терминальному `collect`.",
               "correct": false,
               "sections": {
@@ -631,6 +618,18 @@
                 "source_of_confusion": "По аналогии с `subscribeOn`/`observeOn` из Rx кажется, что один оператор задаёт контекст всему pipeline.",
                 "if_it_were_true": "Тогда `flow.flowOn(IO).collect { updateUI(it) }` гонял бы `updateUI` в IO-пуле, но в Android это даёт `CalledFromWrongThreadException`.",
                 "how_it_should_be": "`flowOn` переключает только upstream-сегмент; контекст downstream задаёт корутина, в которой вызван `collect`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`flowOn`, вызванный в одной цепочке несколько раз, переопределяет сам себя: применяется только самый последний `flowOn(Dispatchers.Default)`, а все предыдущие сегменты полностью игнорируются рантаймом; поэтому ставить `flowOn` дважды бессмысленно. Достаточно одного вызова в конце цепочки — он и задаст контекст всему upstream.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый `flowOn` действует только на сегмент upstream до следующего `flowOn`; они не переопределяют, а накладываются по сегментам.",
+                "source_of_confusion": "Привычка к «последний setter побеждает» из императивного кода переносится на цепочку операторов.",
+                "if_it_were_true": "Тогда можно было бы оставить один `flowOn(IO)` в конце, но CPU-bound JSON-парсинг забивает IO-пул и p99 latency прыгает с 50 ms до 2 s.",
+                "how_it_should_be": "Каждый `flowOn` задаёт dispatcher своему сегменту; их ставят по числу разнотипных стадий, ближе к источнику."
               }
             },
             {
@@ -648,13 +647,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`flowOn`, вызванный в одной цепочке несколько раз, переопределяет сам себя: применяется только самый последний `flowOn(Dispatchers.Default)`, а все предыдущие сегменты полностью игнорируются рантаймом; поэтому ставить `flowOn` дважды бессмысленно. Достаточно одного вызова в конце цепочки — он и задаст контекст всему upstream.",
-              "correct": false,
+              "text": "`flowOn(Dispatcher)` переключает контекст для UPSTREAM операторов (всё, что объявлено выше по цепочке) через внутренний канал; downstream и `collect` остаются в контексте коллектора. Несколько `flowOn` создают сегменты с разными dispatcher'ами, а правило размещения — ближе к источнику. Короче: «flowOn — для всего ВЫШЕ».",
+              "correct": true,
               "sections": {
-                "what_actually": "Каждый `flowOn` действует только на сегмент upstream до следующего `flowOn`; они не переопределяют, а накладываются по сегментам.",
-                "source_of_confusion": "Привычка к «последний setter побеждает» из императивного кода переносится на цепочку операторов.",
-                "if_it_were_true": "Тогда можно было бы оставить один `flowOn(IO)` в конце, но CPU-bound JSON-парсинг забивает IO-пул и p99 latency прыгает с 50 ms до 2 s.",
-                "how_it_should_be": "Каждый `flowOn` задаёт dispatcher своему сегменту; их ставят по числу разнотипных стадий, ближе к источнику."
+                "explanation": "`flowOn` влияет только на upstream и создаёт внутренний канал между двумя частями pipeline. Это отличает его от `withContext`, который суспендит и переключает контекст текущего блока кода.",
+                "example": "`flow { emit(readFile()) }.flowOn(IO).map { parse(it) }.flowOn(Default).collect { showUi(it) }` — диск на `IO`, CPU-парсинг на `Default`, отрисовка на потоке коллектора.",
+                "when_to_apply": "Когда part pipeline блокирующая или CPU-bound: вынести чтение файла на `Dispatchers.IO`, тяжёлый парсинг на `Dispatchers.Default`, оставив `collect` на UI/event-loop потоке.",
+                "edge_cases": "`flow.flowOn(IO).collect { updateUI(it) }` НЕ уводит `updateUI` в IO — downstream остаётся в контексте коллектора; путаница тут даёт лишний context switch или ошибку потока в Android.",
+                "related": "[[kotlin-flow-interview#Q1]] контекст коллектора; [[kotlin-flow-interview#Q13]] flowOn для блокирующих вызовов в WebFlux; [[kotlin-flow-interview#Q7]] стратегии backpressure."
               }
             }
           ]
@@ -683,18 +683,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`flatMapLatest` складывает все промежуточные эмиссии outer-потока в очередь через внутренний `buffer` и обрабатывает их строго по порядку; ничего не отменяя; поэтому на аналитике кликов он гарантированно проведёт через `collect` каждый `emit`, не теряя ни события даже при частых эмиссиях подряд.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`flatMapLatest` отменяет текущий inner flow при появлении нового элемента в outer flow, ничего не буферизуя.",
-                "source_of_confusion": "Слово «flatMap» ассоциируется с обработкой всех элементов, а не с отменой устаревших.",
-                "if_it_were_true": "Тогда `flatMapLatest` для аналитики событий обрабатывал бы каждое событие, но между быстрыми эмиссиями теряется до 90%, и DAU съезжает.",
-                "how_it_should_be": "`flatMapLatest` отменяет inner на каждый новый outer-элемент; чтобы обработать все, берут `flatMapMerge` или `flatMapConcat`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`flatMapLatest` отменяет предыдущий inner flow при появлении нового outer-элемента; `flatMapMerge(concurrency)` запускает до N inner flows параллельно (без гарантии порядка); `flatMapConcat` ждёт завершения предыдущего inner flow перед следующим. Короче: «Latest — отмени старое, Merge — параллельно, Concat — в очередь».",
               "correct": true,
               "sections": {
@@ -703,6 +691,18 @@
                 "when_to_apply": "`Latest` — search-as-you-type и любое «актуально только последнее»; `Merge` — независимый fan-out параллельных запросов; `Concat` — зависимые операции, где важен порядок.",
                 "edge_cases": "`flatMapMerge` не гарантирует порядок результатов: пагинация через него может отрисовать страницы 5→2→7→1, потому что приходит тот inner flow, что завершился раньше.",
                 "related": "[[kotlin-flow-interview#Q7]] collectLatest и отмена обработки; [[kotlin-flow-interview#Q3]] flatMap среди операторов; [[kotlin-flow-interview#Q9]] тестирование с виртуальным временем."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`flatMapLatest` складывает все промежуточные эмиссии outer-потока в очередь через внутренний `buffer` и обрабатывает их строго по порядку; ничего не отменяя; поэтому на аналитике кликов он гарантированно проведёт через `collect` каждый `emit`, не теряя ни события даже при частых эмиссиях подряд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`flatMapLatest` отменяет текущий inner flow при появлении нового элемента в outer flow, ничего не буферизуя.",
+                "source_of_confusion": "Слово «flatMap» ассоциируется с обработкой всех элементов, а не с отменой устаревших.",
+                "if_it_were_true": "Тогда `flatMapLatest` для аналитики событий обрабатывал бы каждое событие, но между быстрыми эмиссиями теряется до 90%, и DAU съезжает.",
+                "how_it_should_be": "`flatMapLatest` отменяет inner на каждый новый outer-элемент; чтобы обработать все, берут `flatMapMerge` или `flatMapConcat`."
               }
             },
             {
@@ -731,13 +731,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Сам `Spring WebFlux` не понимает `Kotlin Flow` из коробки: любой контроллер, возвращающий поток, нужно вручную оборачивать в `.asPublisher()` либо `.asFlux()`, иначе Jackson не сумеет сериализовать реактивный ответ; такой шаблонный вызов оседает в каждом эндпоинте с `Flow<T>`, и без него `collect` по телу ответа не запускается.",
+              "text": "Сам `Flow` работает только в связке с `R2dbcRepository` и не может быть возвращён напрямую из `WebFlux`-контроллера; поэтому поток от БД сначала прогоняют через `.asFlux()`, оборачивают в `Flux<T>`, и клиенту через `WebClient` отдают уже готовый реактивный `Flux`, а не исходный `Flow`.",
               "correct": false,
               "sections": {
-                "what_actually": "WebFlux поддерживает Flow из коробки через `kotlinx-coroutines-reactor`, который подключается автоматически при наличии coroutines в classpath; ручная конвертация не нужна.",
-                "source_of_confusion": "В старых версиях Spring (5.0-5.2) поддержка корутин была ограниченной и требовала ручного `.asFlux()`.",
-                "if_it_were_true": "Тогда каждый контроллер с Flow заканчивался бы шаблонным `.asFlux()`, но на практике этот код живёт в интеграции библиотеки, а не в приложении.",
-                "how_it_should_be": "Spring сам конвертирует Flow в Flux через `ReactiveAdapterRegistry`; разработчик возвращает `Flow<T>` напрямую."
+                "what_actually": "Flow работает во всём reactive-стеке Spring: контроллер, сервис, репозиторий, `WebClient.bodyToFlow<T>()`, тесты — WebFlux принимает Flow в response.",
+                "source_of_confusion": "Flow часто демонстрируют именно с R2DBC, и эту связку принимают за единственный поддерживаемый случай.",
+                "if_it_were_true": "Тогда Flow от БД пришлось бы конвертировать в Flux перед отдачей клиенту, но Flow → клиент идёт прозрачно.",
+                "how_it_should_be": "Flow универсален в reactive Spring; контроллер может возвращать `Flow<T>` напрямую, не только репозиторий."
               }
             },
             {
@@ -768,13 +768,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Сам `Flow` работает только в связке с `R2dbcRepository` и не может быть возвращён напрямую из `WebFlux`-контроллера; поэтому поток от БД сначала прогоняют через `.asFlux()`, оборачивают в `Flux<T>`, и клиенту через `WebClient` отдают уже готовый реактивный `Flux`, а не исходный `Flow`.",
+              "text": "Сам `Spring WebFlux` не понимает `Kotlin Flow` из коробки: любой контроллер, возвращающий поток, нужно вручную оборачивать в `.asPublisher()` либо `.asFlux()`, иначе Jackson не сумеет сериализовать реактивный ответ; такой шаблонный вызов оседает в каждом эндпоинте с `Flow<T>`, и без него `collect` по телу ответа не запускается.",
               "correct": false,
               "sections": {
-                "what_actually": "Flow работает во всём reactive-стеке Spring: контроллер, сервис, репозиторий, `WebClient.bodyToFlow<T>()`, тесты — WebFlux принимает Flow в response.",
-                "source_of_confusion": "Flow часто демонстрируют именно с R2DBC, и эту связку принимают за единственный поддерживаемый случай.",
-                "if_it_were_true": "Тогда Flow от БД пришлось бы конвертировать в Flux перед отдачей клиенту, но Flow → клиент идёт прозрачно.",
-                "how_it_should_be": "Flow универсален в reactive Spring; контроллер может возвращать `Flow<T>` напрямую, не только репозиторий."
+                "what_actually": "WebFlux поддерживает Flow из коробки через `kotlinx-coroutines-reactor`, который подключается автоматически при наличии coroutines в classpath; ручная конвертация не нужна.",
+                "source_of_confusion": "В старых версиях Spring (5.0-5.2) поддержка корутин была ограниченной и требовала ручного `.asFlux()`.",
+                "if_it_were_true": "Тогда каждый контроллер с Flow заканчивался бы шаблонным `.asFlux()`, но на практике этот код живёт в интеграции библиотеки, а не в приложении.",
+                "how_it_should_be": "Spring сам конвертирует Flow в Flux через `ReactiveAdapterRegistry`; разработчик возвращает `Flow<T>` напрямую."
               }
             }
           ]
@@ -791,13 +791,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`GlobalScope.launch` течёт, потому что под каждого подписчика поднимает отдельный поток. После отмены этот поток не возвращается в пул, а остаётся живым. Число потоков растёт вместе с числом вызовов `collect`, и каждый удерживает связанную Activity в памяти. Лечится сбором всех подписок на общем `Dispatchers.Main.immediate` через один `SharedFlow`.",
-              "correct": false,
+              "text": "`SharedFlow` ведёт внутренний список подписчиков и держит strong reference на collector-лямбду. Лямбда захватывает `this` (Activity). При сборе в `GlobalScope` корутина живёт до конца процесса, лямбда не удаляется из subscribers, и GC не освобождает Activity со всем её ViewModel/ViewBinding. Лечится привязкой к жизненному циклу: `lifecycleScope.launch { repeatOnLifecycle(STARTED) { ... } }`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Проблема не в скорости: `GlobalScope` создаёт корутину с lifetime = время жизни приложения, не привязанную к жизненному циклу Activity, поэтому ссылка не освобождается.",
-                "source_of_confusion": "Memory leak интуитивно ассоциируется с многопоточностью и race condition'ами.",
-                "if_it_were_true": "Тогда проблему решал бы `delay()`/`yield()`, но замедление не помогает — нужно остановить корутину при `onDestroy`.",
-                "how_it_should_be": "Утечка — про lifetime mismatch: subscriber переживает publisher's scope; лечится lifecycle-aware scope, а не задержками."
+                "explanation": "Проблема не в скорости и не в типе flow, а в lifetime mismatch: subscriber переживает scope publisher'а. GC видит цепочку «GlobalScope → flow.subscribers → lambda → this» и считает Activity достижимой.",
+                "example": "`lifecycleScope.launch { repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { updateUi(it) } } }` — collector отменяется на `onStop` и пересоздаётся на `onStart`, ссылка на Activity не удерживается после `onDestroy`.",
+                "when_to_apply": "Android — всегда `lifecycleScope` + `repeatOnLifecycle` для UI-коллекторов; Spring beans с SharedFlow — отмена корутин в `@PreDestroy`; ViewModel — `viewModelScope`, отменяемый в `onCleared()`.",
+                "edge_cases": "`StateFlow.collect` никогда не завершается сам (by design), поэтому без отмены scope он держит подписку вечно; `repeatOnLifecycle` (рестарт на resume) и `flowWithLifecycle` ведут себя по-разному.",
+                "related": "[[kotlin-flow-interview#Q5]] основы SharedFlow; [[kotlin-flow-interview#Q4]] StateFlow и conflation; [[kotlin-flow-interview#Q8]] awaitClose для отписки listener'а."
               }
             },
             {
@@ -815,6 +816,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`GlobalScope.launch` течёт, потому что под каждого подписчика поднимает отдельный поток. После отмены этот поток не возвращается в пул, а остаётся живым. Число потоков растёт вместе с числом вызовов `collect`, и каждый удерживает связанную Activity в памяти. Лечится сбором всех подписок на общем `Dispatchers.Main.immediate` через один `SharedFlow`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Проблема не в скорости: `GlobalScope` создаёт корутину с lifetime = время жизни приложения, не привязанную к жизненному циклу Activity, поэтому ссылка не освобождается.",
+                "source_of_confusion": "Memory leak интуитивно ассоциируется с многопоточностью и race condition'ами.",
+                "if_it_were_true": "Тогда проблему решал бы `delay()`/`yield()`, но замедление не помогает — нужно остановить корутину при `onDestroy`.",
+                "how_it_should_be": "Утечка — про lifetime mismatch: subscriber переживает publisher's scope; лечится lifecycle-aware scope, а не задержками."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`SharedFlow.collect` держит collector-лямбду через `WeakReference`. Поэтому связанная Activity в любом случае остаётся доступной для GC, и даже сбор в `GlobalScope` не удерживает её в памяти. Значит, `repeatOnLifecycle` и привязка к `lifecycleScope` нужны исключительно для экономии CPU в фоне. На само удержание Activity в памяти они никак не влияют.",
               "correct": false,
               "sections": {
@@ -822,19 +835,6 @@
                 "source_of_confusion": "`lifecycleScope` звучит как «полное решение», и кажется, будто фреймворк сам подстрахует ссылки на collector.",
                 "if_it_were_true": "Тогда любой сбор hot-flow был бы безопасен в любом scope, и memory leak со `SharedFlow` был бы в принципе невозможен.",
                 "how_it_should_be": "Лямбда захватывает `this` сильной ссылкой; спасает только сбор в lifecycle-aware scope (`lifecycleScope` + `repeatOnLifecycle`), обрывающий корутину на `onDestroy`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`SharedFlow` ведёт внутренний список подписчиков и держит strong reference на collector-лямбду. Лямбда захватывает `this` (Activity). При сборе в `GlobalScope` корутина живёт до конца процесса, лямбда не удаляется из subscribers, и GC не освобождает Activity со всем её ViewModel/ViewBinding. Лечится привязкой к жизненному циклу: `lifecycleScope.launch { repeatOnLifecycle(STARTED) { ... } }`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Проблема не в скорости и не в типе flow, а в lifetime mismatch: subscriber переживает scope publisher'а. GC видит цепочку «GlobalScope → flow.subscribers → lambda → this» и считает Activity достижимой.",
-                "example": "`lifecycleScope.launch { repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { updateUi(it) } } }` — collector отменяется на `onStop` и пересоздаётся на `onStart`, ссылка на Activity не удерживается после `onDestroy`.",
-                "when_to_apply": "Android — всегда `lifecycleScope` + `repeatOnLifecycle` для UI-коллекторов; Spring beans с SharedFlow — отмена корутин в `@PreDestroy`; ViewModel — `viewModelScope`, отменяемый в `onCleared()`.",
-                "edge_cases": "`StateFlow.collect` никогда не завершается сам (by design), поэтому без отмены scope он держит подписку вечно; `repeatOnLifecycle` (рестарт на resume) и `flowWithLifecycle` ведут себя по-разному.",
-                "related": "[[kotlin-flow-interview#Q5]] основы SharedFlow; [[kotlin-flow-interview#Q4]] StateFlow и conflation; [[kotlin-flow-interview#Q8]] awaitClose для отписки listener'а."
               }
             }
           ]
@@ -851,19 +851,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Исключение из `flow { }` распространяется вниз до коллектора и может быть поймано `try/catch` вокруг `collect`. Оператор `.catch { }` ловит только UPSTREAM-исключения (в `flow {}`, `map`, `filter` перед ним); ошибки внутри самого `.collect { }` он НЕ перехватывает — их ловят `try/catch` вокруг collect или паттерном `.onEach { }.catch { }.collect()`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Flow exception transparency: `.catch` срабатывает только на исключения выше себя по цепочке, позволяя эмитнуть fallback или залогировать. Лямбда `collect` исполняется в потоке сборки, и её исключение уходит вверх по корутине мимо `catch` — это by design, чтобы не маскировать баги downstream.",
-                "example": "`flow.catch { e -> emit(-1) }.collect { println(it) }` напечатает `1, -1`; а `flow.onEach { if (it == 1) throw IllegalStateException() }.catch { println(\"caught\") }.collect()` корректно обработает ошибку downstream-логики в catch.",
-                "when_to_apply": "Когда нужен fallback на ошибку upstream (кешированное значение вместо БД), логирование без прерывания (`catch { log; throw }`) или конвертация ошибки в response в WebFlux endpoint.",
-                "edge_cases": "`CancellationException` не ловится `catch` (by design, чтобы не ломать cooperative cancellation); `.catch` после `.collect()` — синтаксическая ошибка, так как catch только intermediate-оператор.",
-                "related": "[[kotlin-flow-interview#Q6]] catch/retry/onCompletion; [[kotlin-flow-interview#Q14]] правильный scope при collect; [[kotlin-flow-interview#Q9]] тестирование обработки ошибок."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Оператор `.catch { }` ловит все исключения в pipeline, включая ошибки внутри блока `.collect { }`; поэтому достаточно поставить `.catch` первым в цепочке и забыть про errors в коллекторе — даже падение `updateUi(it)` внутри `collect` будет перехвачено и не уронит корутину.",
               "correct": false,
               "sections": {
@@ -871,6 +858,18 @@
                 "source_of_confusion": "Имя «catch» предполагает универсальный try-catch, ловящий всё подряд.",
                 "if_it_were_true": "Тогда можно было бы поставить `.catch` в начале pipeline и забыть про errors в collect, но баг в `updateUi(it)` падает неперехваченным и убивает корутину.",
                 "how_it_should_be": "`catch` — downstream-aware: видит только upstream; ошибки в collect ловят `try/catch` или `.onEach { }.catch { }.collect()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оператор `.catch { }` работает как глобальный exception handler по аналогии с `@RestControllerAdvice` в Spring, покрывая любой поток; поэтому один `catch` в `main()` перехватит исключения всех `Flow` сразу, и отдельная обработка каждого pipeline уже не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.catch { }` — локальный оператор одного Flow pipeline; для глобальной обработки в корутинах есть `CoroutineExceptionHandler` через `CoroutineContext`.",
+                "source_of_confusion": "Аналогия с `@RestControllerAdvice` и глобальными error handlers в HTTP-фреймворках.",
+                "if_it_were_true": "Тогда хватило бы одного catch в `main()`, но на практике нужен catch в каждом критичном pipeline плюс опционально global handler.",
+                "how_it_should_be": "Catch ставят на каждый важный pipeline; глобальный уровень покрывает `CoroutineExceptionHandler`, это разные слои."
               }
             },
             {
@@ -888,13 +887,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Оператор `.catch { }` работает как глобальный exception handler по аналогии с `@RestControllerAdvice` в Spring, покрывая любой поток; поэтому один `catch` в `main()` перехватит исключения всех `Flow` сразу, и отдельная обработка каждого pipeline уже не нужна.",
-              "correct": false,
+              "text": "Исключение из `flow { }` распространяется вниз до коллектора и может быть поймано `try/catch` вокруг `collect`. Оператор `.catch { }` ловит только UPSTREAM-исключения (в `flow {}`, `map`, `filter` перед ним); ошибки внутри самого `.collect { }` он НЕ перехватывает — их ловят `try/catch` вокруг collect или паттерном `.onEach { }.catch { }.collect()`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`.catch { }` — локальный оператор одного Flow pipeline; для глобальной обработки в корутинах есть `CoroutineExceptionHandler` через `CoroutineContext`.",
-                "source_of_confusion": "Аналогия с `@RestControllerAdvice` и глобальными error handlers в HTTP-фреймворках.",
-                "if_it_were_true": "Тогда хватило бы одного catch в `main()`, но на практике нужен catch в каждом критичном pipeline плюс опционально global handler.",
-                "how_it_should_be": "Catch ставят на каждый важный pipeline; глобальный уровень покрывает `CoroutineExceptionHandler`, это разные слои."
+                "explanation": "Flow exception transparency: `.catch` срабатывает только на исключения выше себя по цепочке, позволяя эмитнуть fallback или залогировать. Лямбда `collect` исполняется в потоке сборки, и её исключение уходит вверх по корутине мимо `catch` — это by design, чтобы не маскировать баги downstream.",
+                "example": "`flow.catch { e -> emit(-1) }.collect { println(it) }` напечатает `1, -1`; а `flow.onEach { if (it == 1) throw IllegalStateException() }.catch { println(\"caught\") }.collect()` корректно обработает ошибку downstream-логики в catch.",
+                "when_to_apply": "Когда нужен fallback на ошибку upstream (кешированное значение вместо БД), логирование без прерывания (`catch { log; throw }`) или конвертация ошибки в response в WebFlux endpoint.",
+                "edge_cases": "`CancellationException` не ловится `catch` (by design, чтобы не ломать cooperative cancellation); `.catch` после `.collect()` — синтаксическая ошибка, так как catch только intermediate-оператор.",
+                "related": "[[kotlin-flow-interview#Q6]] catch/retry/onCompletion; [[kotlin-flow-interview#Q14]] правильный scope при collect; [[kotlin-flow-interview#Q9]] тестирование обработки ошибок."
               }
             }
           ]
@@ -911,18 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`zip` и `combine` одинаково ждут по одному свежему элементу из каждого источника перед эмиссией результата, буферизуют пришедшие значения и сопоставляют их строго по порядку поступления, не переиспользуя старые. Разница между ними лишь в арности: `combine` дополнительно умеет объединять три и более источника, тогда как `zip` ограничен ровно двумя потоками.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оба объединяют, но триггерами эмиссии работают по-разному: `zip` попарно ждёт оба потока, `combine` эмитит при любом обновлении, беря последние значения.",
-                "source_of_confusion": "Оба берут «пару значений из двух потоков», и поверхностно семантика кажется одинаковой.",
-                "if_it_were_true": "Тогда выбор любого был бы безопасен, но `zip` для UI state буферизует и теряет актуальность, а `combine` для парного матчинга лжёт о соответствии записей.",
-                "how_it_should_be": "Это разные операторы: `zip` — synchronized pairing, `combine` — reactive recomputation на любое изменение."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`zip` эмитит новое значение при обновлении любого из потоков, каждый раз подставляя последние значения остальных источников, а `combine`, наоборот, сопоставляет элементы строго попарно: ждёт ровно по одному из каждого потока и завершается вместе с самым коротким. Поэтому `combine` удобен для строгого сопоставления записей один-к-одному, а `zip` — для реактивного UI-состояния поиска и фильтров.",
               "correct": false,
               "sections": {
@@ -930,6 +918,18 @@
                 "source_of_confusion": "«combine» звучит как «объединять» (ближе к pairing), а «zip» — как «zip-файл» (тоже pairing), хотя семантика обратная.",
                 "if_it_were_true": "Тогда все UI state pipelines работали бы наоборот: клик кнопки не обновлял бы список, а ждал matching-элемент из другого потока.",
                 "how_it_should_be": "`combine` пересчитывает на любое изменение, `zip` ждёт ровно по элементу из каждого потока — определения противоположны написанному."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`zip` и `combine` одинаково ждут по одному свежему элементу из каждого источника перед эмиссией результата, буферизуют пришедшие значения и сопоставляют их строго по порядку поступления, не переиспользуя старые. Разница между ними лишь в арности: `combine` дополнительно умеет объединять три и более источника, тогда как `zip` ограничен ровно двумя потоками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба объединяют, но триггерами эмиссии работают по-разному: `zip` попарно ждёт оба потока, `combine` эмитит при любом обновлении, беря последние значения.",
+                "source_of_confusion": "Оба берут «пару значений из двух потоков», и поверхностно семантика кажется одинаковой.",
+                "if_it_were_true": "Тогда выбор любого был бы безопасен, но `zip` для UI state буферизует и теряет актуальность, а `combine` для парного матчинга лжёт о соответствии записей.",
+                "how_it_should_be": "Это разные операторы: `zip` — synchronized pairing, `combine` — reactive recomputation на любое изменение."
               }
             },
             {
@@ -971,31 +971,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`scan` вычисляет результат заметно быстрее `reduce`. Компилятор Kotlin разворачивает его в простой цикл и не создаёт промежуточных объектов аккумулятора. На больших потоках разница со `reduce` по времени достигает нескольких раз.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оба используют одну accumulating-логику, производительность per element одинакова; отличается семантика — `reduce` terminal (один результат), `scan` intermediate (каждый шаг).",
-                "source_of_confusion": "`scan` для UI «кажется быстрее», потому что показывает результаты инкрементально, хотя total CPU-работа та же.",
-                "if_it_were_true": "Тогда `scan` предпочитали бы везде ради скорости, но выбор делается по семантике: нужны промежуточные значения — scan, только финал — reduce.",
-                "how_it_should_be": "Скорость одинакова; разница в том, эмитит ли оператор промежуточные шаги (`scan`) или только финал (`reduce`)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`scan` (и его синоним `runningFold`) — intermediate-оператор: эмитит каждый промежуточный аккумулятор, включая начальное значение. `reduce` — terminal-оператор: эмитит только финальный результат после завершения source flow. Total CPU-работа одинакова, разница в том, видны ли промежуточные шаги.",
-              "correct": true,
-              "sections": {
-                "explanation": "Оба накапливают значение функцией `(acc, value) -> acc'`. Но `scan` после каждого элемента отдаёт текущий накопитель, а `reduce` суспендит до конца потока и возвращает один результат. `scan`/`runningFold` идеальны для incremental UI.",
-                "example": "`flowOf(1,2,3,4,5).scan(0) { a, v -> a + v }` эмитит `0,1,3,6,10,15` (6 эмиссий), а `reduce { a, v -> a + v }` отдаёт только `15`; для прогресс-бара загрузки нужен именно `scan`.",
-                "when_to_apply": "Когда нужны промежуточные значения: running total/average, прогресс загрузки, Redux-подобные state machines (`scan(initialState) { s, e -> reducer(s, e) }`), audit-trail истории изменений.",
-                "edge_cases": "`scan(emptyList()) { acc, v -> acc + v }` растит список без границ — на длинном flow это OOM; `runningReduce` без initial падает на пустом flow (`NoSuchElementException`), тогда как `scan` с initial безопасен.",
-                "related": "[[kotlin-flow-interview#Q4]] StateFlow как альтернатива scan для UI state; [[kotlin-flow-interview#Q16]] combine для derived state; [[kotlin-flow-interview#Q3]] терминальный reduce среди операторов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`scan` накапливает все промежуточные значения во внутреннем буфере. Как и `reduce`, он эмитит их только после завершения source flow, поэтому применим лишь к конечным потокам. На бесконечном `StateFlow` он никогда не выдаст ни одного элемента.",
               "correct": false,
               "sections": {
@@ -1006,8 +981,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`scan` и `runningFold` — разные операторы. `scan` эмитит начальное значение аккумулятора первым, а `runningFold` пропускает его и начинает эмиссию только с первого применения функции. Поэтому у них заметно отличается число выданных элементов.",
               "correct": false,
               "sections": {
@@ -1015,6 +990,31 @@
                 "source_of_confusion": "Наличие двух функций намекает на различие, хотя это функциональная эквивалентность по convention.",
                 "if_it_were_true": "Тогда в документации была бы таблица различий между ними, но `runningFold` упоминается как «также известный как scan».",
                 "how_it_should_be": "`scan` и `runningFold` идентичны по поведению; выбор имени — вопрос читаемости, а не семантики."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`scan` вычисляет результат заметно быстрее `reduce`. Компилятор Kotlin разворачивает его в простой цикл и не создаёт промежуточных объектов аккумулятора. На больших потоках разница со `reduce` по времени достигает нескольких раз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба используют одну accumulating-логику, производительность per element одинакова; отличается семантика — `reduce` terminal (один результат), `scan` intermediate (каждый шаг).",
+                "source_of_confusion": "`scan` для UI «кажется быстрее», потому что показывает результаты инкрементально, хотя total CPU-работа та же.",
+                "if_it_were_true": "Тогда `scan` предпочитали бы везде ради скорости, но выбор делается по семантике: нужны промежуточные значения — scan, только финал — reduce.",
+                "how_it_should_be": "Скорость одинакова; разница в том, эмитит ли оператор промежуточные шаги (`scan`) или только финал (`reduce`)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`scan` (и его синоним `runningFold`) — intermediate-оператор: эмитит каждый промежуточный аккумулятор, включая начальное значение. `reduce` — terminal-оператор: эмитит только финальный результат после завершения source flow. Total CPU-работа одинакова, разница в том, видны ли промежуточные шаги.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оба накапливают значение функцией `(acc, value) -> acc'`. Но `scan` после каждого элемента отдаёт текущий накопитель, а `reduce` суспендит до конца потока и возвращает один результат. `scan`/`runningFold` идеальны для incremental UI.",
+                "example": "`flowOf(1,2,3,4,5).scan(0) { a, v -> a + v }` эмитит `0,1,3,6,10,15` (6 эмиссий), а `reduce { a, v -> a + v }` отдаёт только `15`; для прогресс-бара загрузки нужен именно `scan`.",
+                "when_to_apply": "Когда нужны промежуточные значения: running total/average, прогресс загрузки, Redux-подобные state machines (`scan(initialState) { s, e -> reducer(s, e) }`), audit-trail истории изменений.",
+                "edge_cases": "`scan(emptyList()) { acc, v -> acc + v }` растит список без границ — на длинном flow это OOM; `runningReduce` без initial падает на пустом flow (`NoSuchElementException`), тогда как `scan` с initial безопасен.",
+                "related": "[[kotlin-flow-interview#Q4]] StateFlow как альтернатива scan для UI state; [[kotlin-flow-interview#Q16]] combine для derived state; [[kotlin-flow-interview#Q3]] терминальный reduce среди операторов."
               }
             }
           ]

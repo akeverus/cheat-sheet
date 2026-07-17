@@ -36,18 +36,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Виртуальные потоки — это синтаксическая обёртка над reactive-стеком: чтобы их использовать, код переписывают на цепочки callback-ов, а `Executors.newVirtualThreadPerTaskExecutor()` под капотом просто разворачивает их в реактивный event-loop, где каждый `mount` соответствует одному шагу асинхронной цепочки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Главная идея VT прямо противоположна: писать привычный blocking-код без callback-ов, а non-blocking JVM делает под капотом.",
-                "source_of_confusion": "VT и reactive решают одну задачу (высокий I/O-параллелизм), поэтому их путают.",
-                "if_it_were_true": "Тогда не было бы смысла во VT вообще — reactive уже существует; VT появились именно как альтернатива callback-стилю.",
-                "how_it_should_be": "VT дают non-blocking эффект при обычном последовательном коде, без операторов и callback-ов."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Виртуальные потоки — это специальные потоки ОС, оптимизированные под CPU-параллелизм: планировщик операционной системы раздаёт их по всем ядрам через `Thread.ofVirtual()`, а `carrier thread` лишь распределяет вычислительную нагрузку, поэтому для блокирующего I/O они не предназначены.",
               "correct": false,
               "sections": {
@@ -55,6 +43,18 @@
                 "source_of_confusion": "Слово «виртуальный» наводит на мысль о вынесении исполнения куда-то наружу.",
                 "if_it_were_true": "Тогда обычный Java-код в VT не имел бы доступа к heap и привычным библиотекам JVM.",
                 "how_it_should_be": "VT — это потоки внутри JVM, исполняемые на пуле платформенных carrier-потоков."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Виртуальные потоки — это синтаксическая обёртка над reactive-стеком: чтобы их использовать, код переписывают на цепочки callback-ов, а `Executors.newVirtualThreadPerTaskExecutor()` под капотом просто разворачивает их в реактивный event-loop, где каждый `mount` соответствует одному шагу асинхронной цепочки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная идея VT прямо противоположна: писать привычный blocking-код без callback-ов, а non-blocking JVM делает под капотом.",
+                "source_of_confusion": "VT и reactive решают одну задачу (высокий I/O-параллелизм), поэтому их путают.",
+                "if_it_were_true": "Тогда не было бы смысла во VT вообще — reactive уже существует; VT появились именно как альтернатива callback-стилю.",
+                "how_it_should_be": "VT дают non-blocking эффект при обычном последовательном коде, без операторов и callback-ов."
               }
             }
           ]
@@ -83,18 +83,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Виртуальный поток создаётся через специальный класс `VirtualThread.create(runnable)`: этот фабричный метод возвращает уже смонтированный на `carrier thread` экземпляр, который затем достаточно передать в `Executors.newVirtualThreadPerTaskExecutor()` для запуска в пуле.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Публичного класса `VirtualThread` в API нет; точка входа — фабрика `Thread.ofVirtual()`.",
-                "source_of_confusion": "По аналогии с другими API ожидается отдельный класс-конструктор.",
-                "if_it_were_true": "Тогда в `java.lang` существовал бы public `VirtualThread`, но его там нет — реализация скрыта.",
-                "how_it_should_be": "Создание идёт через `Thread.ofVirtual()` или `Executors.newVirtualThreadPerTaskExecutor()`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Достаточно пометить метод аннотацией `@Virtual`, и JVM выполнит его в виртуальном потоке: процессор аннотаций на этапе компиляции оборачивает тело метода в `Thread.ofVirtual().start(...)`, а `carrier thread` подбирается автоматически из `ForkJoinPool` при первом вызове.",
               "correct": false,
               "sections": {
@@ -102,6 +90,18 @@
                 "source_of_confusion": "Декларативный стиль (как `@Async` в Spring) кажется естественным и для VT.",
                 "if_it_were_true": "Тогда выбор модели потоков был бы рассыпан по аннотациям, а не управлялся явно в месте запуска.",
                 "how_it_should_be": "VT запускают кодом: `Thread.ofVirtual().start(...)` либо virtual-executor."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Виртуальный поток создаётся через специальный класс `VirtualThread.create(runnable)`: этот фабричный метод возвращает уже смонтированный на `carrier thread` экземпляр, который затем достаточно передать в `Executors.newVirtualThreadPerTaskExecutor()` для запуска в пуле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Публичного класса `VirtualThread` в API нет; точка входа — фабрика `Thread.ofVirtual()`.",
+                "source_of_confusion": "По аналогии с другими API ожидается отдельный класс-конструктор.",
+                "if_it_were_true": "Тогда в `java.lang` существовал бы public `VirtualThread`, но его там нет — реализация скрыта.",
+                "how_it_should_be": "Создание идёт через `Thread.ofVirtual()` или `Executors.newVirtualThreadPerTaskExecutor()`."
               }
             },
             {
@@ -131,6 +131,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Carrier thread — это сам виртуальный поток после того, как он стартовал и получил имя: при вызове `Thread.ofVirtual().start()` VT переименовывается в carrier и с этого момента исполняется напрямую на ядре без участия `ForkJoinPool`, а `mount`/`unmount` к нему уже не применяются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Carrier — это платформенный поток-носитель; VT и carrier — разные сущности, VT лишь временно монтируется на carrier.",
+                "source_of_confusion": "Оба — «потоки», и в момент исполнения они работают вместе, что и путает.",
+                "if_it_were_true": "Тогда не было бы понятия монтирования/демонтирования — VT просто был бы собой.",
+                "how_it_should_be": "Carrier — отдельный платформенный поток из пула, на котором исполняется VT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Carrier thread — это персональный OS-поток, выделенный под каждый виртуальный поток на всё время его жизни: `carrier` из `ForkJoinPool` закреплён за одним VT и не может обслуживать другие, поэтому число несущих потоков равно числу созданных VT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Carrier не имеет отношения к БД — это поток-носитель JVM; пул соединений (например HikariCP) — отдельная вещь.",
+                "source_of_confusion": "В JDBC-сценариях carrier и пул соединений упоминаются рядом, отсюда смешение.",
+                "if_it_were_true": "Тогда без БД у приложения не было бы carrier-потоков, но они есть всегда.",
+                "how_it_should_be": "Carrier — платформенный поток-исполнитель VT; пул соединений ограничивает доступ к БД отдельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Carrier thread — платформенный поток (по умолчанию из `ForkJoinPool` с `parallelism = availableProcessors()`), который физически выполняет VT: JVM монтирует VT на carrier при выполнении и демонтирует при блокирующей операции, освобождая carrier для другого VT.",
               "correct": true,
               "sections": {
@@ -142,20 +166,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Carrier thread — это сам виртуальный поток после того, как он стартовал и получил имя: при вызове `Thread.ofVirtual().start()` VT переименовывается в carrier и с этого момента исполняется напрямую на ядре без участия `ForkJoinPool`, а `mount`/`unmount` к нему уже не применяются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Carrier — это платформенный поток-носитель; VT и carrier — разные сущности, VT лишь временно монтируется на carrier.",
-                "source_of_confusion": "Оба — «потоки», и в момент исполнения они работают вместе, что и путает.",
-                "if_it_were_true": "Тогда не было бы понятия монтирования/демонтирования — VT просто был бы собой.",
-                "how_it_should_be": "Carrier — отдельный платформенный поток из пула, на котором исполняется VT."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Carrier thread создаётся заново на каждое монтирование VT и уничтожается при `unmount`: JVM поднимает свежий несущий поток из `ForkJoinPool` под каждую блокирующую операцию, а после её завершения сразу освобождает его, поэтому один carrier не переиспользуется между разными VT.",
               "correct": false,
               "sections": {
@@ -163,18 +175,6 @@
                 "source_of_confusion": "Слово carrier («носитель») можно ошибочно связать с обслуживанием/утилизацией.",
                 "if_it_were_true": "Тогда carrier-ов было бы мало и они не влияли бы на параллелизм, но именно их число (`parallelism`) ограничивает одновременное исполнение VT.",
                 "how_it_should_be": "Carrier — это исполнитель кода VT, а не служебный сборщик."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Carrier thread — это персональный OS-поток, выделенный под каждый виртуальный поток на всё время его жизни: `carrier` из `ForkJoinPool` закреплён за одним VT и не может обслуживать другие, поэтому число несущих потоков равно числу созданных VT.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Carrier не имеет отношения к БД — это поток-носитель JVM; пул соединений (например HikariCP) — отдельная вещь.",
-                "source_of_confusion": "В JDBC-сценариях carrier и пул соединений упоминаются рядом, отсюда смешение.",
-                "if_it_were_true": "Тогда без БД у приложения не было бы carrier-потоков, но они есть всегда.",
-                "how_it_should_be": "Carrier — платформенный поток-исполнитель VT; пул соединений ограничивает доступ к БД отдельно."
               }
             }
           ]
@@ -191,30 +191,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Pinning — это намеренное закрепление виртуального потока за конкретным ядром CPU ради кэш-локальности и производительности: через `Thread.ofVirtual()` можно указать целевое ядро, и планировщик `ForkJoinPool` перестаёт мигрировать `carrier thread` между процессорами, снижая накладные расходы на переключение контекста.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Pinning во VT — это закрепление VT за carrier-потоком так, что он не может быть демонтирован при блокировке; это проблема, а не оптимизация, и к ядрам CPU отношения не имеет.",
-                "source_of_confusion": "Термин «pinning» в других контекстах (thread affinity) действительно означает привязку к ядру.",
-                "if_it_were_true": "Тогда pinning был бы желателен, а флаг `-Djdk.tracePinnedThreads` не имел бы смысла как диагностика проблем.",
-                "how_it_should_be": "Pinning — нежелательное прикрепление VT к carrier при блокировке внутри `synchronized`/native."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Pinning возникает при захвате любой блокировки, и избежать его невозможно — это фундаментальное свойство VT: как `synchronized`, так и `ReentrantLock` одинаково удерживают VT на `carrier thread` до полного освобождения монитора, поэтому `unmount` во время блокировки в принципе не поддерживается.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Pinning вызывает именно `synchronized` (и native-методы); `ReentrantLock` его не вызывает — VT корректно демонтируется, ожидая lock.",
-                "source_of_confusion": "Кажется, что «блокировка есть блокировка», без различия `synchronized` и `Lock`.",
-                "if_it_were_true": "Тогда `ReentrantLock` не давал бы преимущества и не рекомендовался бы как замена `synchronized` для VT.",
-                "how_it_should_be": "Заменяют `synchronized` на `ReentrantLock` — и pinning исчезает."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Pinning — это закрепление VT за carrier, из-за которого поток нельзя демонтировать при блокировке и теряются преимущества VT, а раньше это возникало в `synchronized`-блоках, поэтому советовали заменять `synchronized` на `ReentrantLock`, но в JDK 24 pinning на `synchronized` устранён и остаётся для native-методов.",
               "correct": true,
               "sections": {
@@ -226,8 +202,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Pinning — это `OutOfMemoryError`, который возникает при создании слишком большого числа виртуальных потоков: когда `Executors.newVirtualThreadPerTaskExecutor()` исчерпывает лимит `carrier thread` в `ForkJoinPool`, JVM не может смонтировать новый VT и падает с нехваткой памяти под их стеки.",
               "correct": false,
               "sections": {
@@ -235,6 +211,30 @@
                 "source_of_confusion": "И pinning, и OOM — «плохие вещи при VT», поэтому их легко спутать.",
                 "if_it_were_true": "Тогда лечением было бы ограничение числа VT, но pinning лечится заменой `synchronized` на `Lock`.",
                 "how_it_should_be": "Pinning — блокировка carrier из-за `synchronized`/native; решается `ReentrantLock`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pinning возникает при захвате любой блокировки, и избежать его невозможно — это фундаментальное свойство VT: как `synchronized`, так и `ReentrantLock` одинаково удерживают VT на `carrier thread` до полного освобождения монитора, поэтому `unmount` во время блокировки в принципе не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pinning вызывает именно `synchronized` (и native-методы); `ReentrantLock` его не вызывает — VT корректно демонтируется, ожидая lock.",
+                "source_of_confusion": "Кажется, что «блокировка есть блокировка», без различия `synchronized` и `Lock`.",
+                "if_it_were_true": "Тогда `ReentrantLock` не давал бы преимущества и не рекомендовался бы как замена `synchronized` для VT.",
+                "how_it_should_be": "Заменяют `synchronized` на `ReentrantLock` — и pinning исчезает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Pinning — это намеренное закрепление виртуального потока за конкретным ядром CPU ради кэш-локальности и производительности: через `Thread.ofVirtual()` можно указать целевое ядро, и планировщик `ForkJoinPool` перестаёт мигрировать `carrier thread` между процессорами, снижая накладные расходы на переключение контекста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pinning во VT — это закрепление VT за carrier-потоком так, что он не может быть демонтирован при блокировке; это проблема, а не оптимизация, и к ядрам CPU отношения не имеет.",
+                "source_of_confusion": "Термин «pinning» в других контекстах (thread affinity) действительно означает привязку к ядру.",
+                "if_it_were_true": "Тогда pinning был бы желателен, а флаг `-Djdk.tracePinnedThreads` не имел бы смысла как диагностика проблем.",
+                "how_it_should_be": "Pinning — нежелательное прикрепление VT к carrier при блокировке внутри `synchronized`/native."
               }
             }
           ]
@@ -251,31 +251,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "VT универсальны и превосходят платформенные потоки во всех сценариях: и для I/O-bound запросов к внешним API, и для CPU-bound вычислений, поскольку `carrier thread` из `ForkJoinPool` автоматически распараллеливает счётную нагрузку по всем ядрам без накладных расходов на переключение.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На CPU-bound нагрузке VT не дают преимущества: carrier занят счётом, и число carrier-ов всё равно ограничено ядрами CPU.",
-                "source_of_confusion": "Раз VT «лучше и дешевле», кажется, что их стоит применять везде.",
-                "if_it_were_true": "Тогда `parallelStream` и `ForkJoinPool` были бы не нужны, но для расчётов они остаются предпочтительными.",
-                "how_it_should_be": "VT выигрывают на I/O-bound; для CPU-bound используют пул по числу ядер."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "VT подходят для I/O-bound задач — HTTP-запросы к API, запросы в БД, файловый I/O — и серверов по модели «поток на запрос», но не подходят для CPU-bound вычислений (а до JDK 24 — и для кода с активным `synchronized`, где pinning сводил выигрыш на нет).",
-              "correct": true,
-              "sections": {
-                "explanation": "Выигрыш VT — в дешёвом ожидании: пока VT заблокирован на I/O, carrier обслуживает другие VT. На CPU-bound carrier постоянно занят вычислением, демонтировать нечего — VT не лучше `ForkJoinPool`.",
-                "example": "Замена `Executors.newFixedThreadPool(200)` на `newVirtualThreadPerTaskExecutor()` для сервиса, дёргающего 3–4 внешних API на запрос, убирает упор в число потоков.",
-                "when_to_apply": "Выбирают VT для blocking-серверов с высоким параллелизмом; для тяжёлых расчётов оставляют `parallelStream`/`ForkJoinPool`.",
-                "edge_cases": "В коде с большим количеством `synchronized` сначала чинят pinning (на `ReentrantLock`), иначе VT не дадут эффекта.",
-                "related": "[[java-virtual-threads-interview#Q4]] pinning; [[java-virtual-threads-interview#Q13]] почему не нужен пул; [[java-virtual-threads-interview#Q14]] VT vs reactive."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "VT предназначены исключительно для CPU-bound параллельных вычислений и должны заменить `ForkJoinPool`: планировщик Loom нарезает счётную задачу на множество виртуальных потоков и раскладывает их по `carrier thread`, тогда как для I/O-bound запросов к БД по-прежнему нужны платформенные потоки.",
               "correct": false,
               "sections": {
@@ -286,8 +261,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "VT имеют смысл только внутри реактивных фреймворков вроде `WebFlux`: они работают как замена `Reactor`-шедулера и требуют неблокирующего стека, а в классической модели «поток на запрос» на `Tomcat` виртуальные потоки не дают никакого выигрыша.",
               "correct": false,
               "sections": {
@@ -295,6 +270,31 @@
                 "source_of_confusion": "И VT, и WebFlux связывают с «высокой нагрузкой», отсюда мысль, что они идут вместе.",
                 "if_it_were_true": "Тогда VT нельзя было бы использовать в обычном Spring MVC, но именно там они и раскрываются.",
                 "how_it_should_be": "VT применяют в blocking-стеке (Spring MVC/Tomcat); в reactive они не нужны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "VT универсальны и превосходят платформенные потоки во всех сценариях: и для I/O-bound запросов к внешним API, и для CPU-bound вычислений, поскольку `carrier thread` из `ForkJoinPool` автоматически распараллеливает счётную нагрузку по всем ядрам без накладных расходов на переключение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На CPU-bound нагрузке VT не дают преимущества: carrier занят счётом, и число carrier-ов всё равно ограничено ядрами CPU.",
+                "source_of_confusion": "Раз VT «лучше и дешевле», кажется, что их стоит применять везде.",
+                "if_it_were_true": "Тогда `parallelStream` и `ForkJoinPool` были бы не нужны, но для расчётов они остаются предпочтительными.",
+                "how_it_should_be": "VT выигрывают на I/O-bound; для CPU-bound используют пул по числу ядер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "VT подходят для I/O-bound задач — HTTP-запросы к API, запросы в БД, файловый I/O — и серверов по модели «поток на запрос», но не подходят для CPU-bound вычислений (а до JDK 24 — и для кода с активным `synchronized`, где pinning сводил выигрыш на нет).",
+              "correct": true,
+              "sections": {
+                "explanation": "Выигрыш VT — в дешёвом ожидании: пока VT заблокирован на I/O, carrier обслуживает другие VT. На CPU-bound carrier постоянно занят вычислением, демонтировать нечего — VT не лучше `ForkJoinPool`.",
+                "example": "Замена `Executors.newFixedThreadPool(200)` на `newVirtualThreadPerTaskExecutor()` для сервиса, дёргающего 3–4 внешних API на запрос, убирает упор в число потоков.",
+                "when_to_apply": "Выбирают VT для blocking-серверов с высоким параллелизмом; для тяжёлых расчётов оставляют `parallelStream`/`ForkJoinPool`.",
+                "edge_cases": "В коде с большим количеством `synchronized` сначала чинят pinning (на `ReentrantLock`), иначе VT не дадут эффекта.",
+                "related": "[[java-virtual-threads-interview#Q4]] pinning; [[java-virtual-threads-interview#Q13]] почему не нужен пул; [[java-virtual-threads-interview#Q14]] VT vs reactive."
               }
             }
           ]
@@ -311,18 +311,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Автоматического переключения нет даже в Spring Boot 3.2+: свойство `spring.threads.virtual.enabled` игнорируется, а каждый `@Async`-метод и обработчик `Tomcat` нужно вручную перевести на `virtual-executor`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В Spring Boot 3.2+ одно свойство `spring.threads.virtual.enabled=true` автоматически переводит Tomcat, `@Async` и `@Scheduled` на VT.",
-                "source_of_confusion": "До Boot 3.2 действительно требовалась ручная настройка бинов, и это знание устаревает.",
-                "if_it_were_true": "Тогда флаг `spring.threads.virtual.enabled` не существовал бы как готовая опция.",
-                "how_it_should_be": "Достаточно включить `spring.threads.virtual.enabled=true`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Нужно подключить отдельный стартер `spring-boot-starter-loom`: он тянет зависимость Project Loom и регистрирует виртуальный executor для `Tomcat` и `@Async`, иначе флаг `spring.threads.virtual.enabled` не действует.",
               "correct": false,
               "sections": {
@@ -333,20 +321,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Виртуальные потоки включаются JVM-флагом `--enable-virtual-threads`: после этого Spring Boot сам переводит `Tomcat` и `@Async` на них, ничего в `application.yml` менять не нужно.",
+              "order": 1,
+              "label": "B",
+              "text": "Автоматического переключения нет даже в Spring Boot 3.2+: свойство `spring.threads.virtual.enabled` игнорируется, а каждый `@Async`-метод и обработчик `Tomcat` нужно вручную перевести на `virtual-executor`.",
               "correct": false,
               "sections": {
-                "what_actually": "В Java 21 VT — стандартная возможность, не требующая флага включения; для Spring это свойство конфигурации.",
-                "source_of_confusion": "По аналогии с preview-фичами (`--enable-preview`) ожидается отдельный флаг.",
-                "if_it_were_true": "Тогда VT нельзя было бы использовать без указания флага запуска, но `Thread.ofVirtual()` работает «из коробки».",
-                "how_it_should_be": "Никакого флага не нужно — в Spring достаточно `spring.threads.virtual.enabled=true`."
+                "what_actually": "В Spring Boot 3.2+ одно свойство `spring.threads.virtual.enabled=true` автоматически переводит Tomcat, `@Async` и `@Scheduled` на VT.",
+                "source_of_confusion": "До Boot 3.2 действительно требовалась ручная настройка бинов, и это знание устаревает.",
+                "if_it_were_true": "Тогда флаг `spring.threads.virtual.enabled` не существовал бы как готовая опция.",
+                "how_it_should_be": "Достаточно включить `spring.threads.virtual.enabled=true`."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "В Spring Boot 3.2+ достаточно выставить `spring.threads.virtual.enabled=true` — фреймворк сам переключает веб-сервер (Tomcat), `@Async` и планировщик `@Scheduled` на виртуальные потоки.",
               "correct": true,
               "sections": {
@@ -355,6 +343,18 @@
                 "when_to_apply": "Включают на новых сервисах Spring MVC с blocking I/O, чтобы снять упор в размер пула Tomcat.",
                 "edge_cases": "Требуется Java 21+ и Spring Boot 3.2+; в legacy-коде сначала проверяют pinning в `synchronized`.",
                 "related": "[[java-virtual-threads-interview#Q5]] когда VT подходят; [[java-virtual-threads-interview#Q4]] pinning; [[java-virtual-threads-interview#Q10]] VT и JDBC."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Виртуальные потоки включаются JVM-флагом `--enable-virtual-threads`: после этого Spring Boot сам переводит `Tomcat` и `@Async` на них, ничего в `application.yml` менять не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Java 21 VT — стандартная возможность, не требующая флага включения; для Spring это свойство конфигурации.",
+                "source_of_confusion": "По аналогии с preview-фичами (`--enable-preview`) ожидается отдельный флаг.",
+                "if_it_were_true": "Тогда VT нельзя было бы использовать без указания флага запуска, но `Thread.ofVirtual()` работает «из коробки».",
+                "how_it_should_be": "Никакого флага не нужно — в Spring достаточно `spring.threads.virtual.enabled=true`."
               }
             }
           ]
@@ -384,13 +384,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ThreadLocal` нельзя использовать с виртуальными потоками: любое обращение к нему на VT сразу выбрасывает `UnsupportedOperationException`, поэтому весь код с thread-local-переменными нужно заранее переписать на `ScopedValue`, иначе `Structured Concurrency`-блоки и пул-executor просто не запустятся.",
+              "text": "`ThreadLocal` при включении VT автоматически превращается в `ScopedValue`: JVM на этапе загрузки класса подменяет обращения к переменной неизменяемыми привязками, так что старый код без изменений получает эффективное наследование значений в блоках `Structured Concurrency`.",
               "correct": false,
               "sections": {
-                "what_actually": "`ThreadLocal` полностью работает с VT; вопрос лишь в масштабе — миллионы VT означают миллионы копий значений.",
-                "source_of_confusion": "Из-за рекомендации перейти на `ScopedValue` создаётся впечатление, что `ThreadLocal` запрещён.",
-                "if_it_were_true": "Тогда сломалась бы масса существующих библиотек, использующих `ThreadLocal`, при включении VT.",
-                "how_it_should_be": "`ThreadLocal` работает, но при огромном числе VT предпочтительнее `ScopedValue`."
+                "what_actually": "Автоматической конверсии нет: `ThreadLocal` и `ScopedValue` — разные API, переход делается вручную в коде.",
+                "source_of_confusion": "Раз `ScopedValue` подаётся как «замена», кажется, что замена происходит сама.",
+                "if_it_were_true": "Тогда существующий код магически менял бы семантику хранения контекста при переходе на VT.",
+                "how_it_should_be": "`ScopedValue` нужно явно объявить и использовать вместо `ThreadLocal`."
               }
             },
             {
@@ -408,13 +408,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ThreadLocal` при включении VT автоматически превращается в `ScopedValue`: JVM на этапе загрузки класса подменяет обращения к переменной неизменяемыми привязками, так что старый код без изменений получает эффективное наследование значений в блоках `Structured Concurrency`.",
+              "text": "`ThreadLocal` нельзя использовать с виртуальными потоками: любое обращение к нему на VT сразу выбрасывает `UnsupportedOperationException`, поэтому весь код с thread-local-переменными нужно заранее переписать на `ScopedValue`, иначе `Structured Concurrency`-блоки и пул-executor просто не запустятся.",
               "correct": false,
               "sections": {
-                "what_actually": "Автоматической конверсии нет: `ThreadLocal` и `ScopedValue` — разные API, переход делается вручную в коде.",
-                "source_of_confusion": "Раз `ScopedValue` подаётся как «замена», кажется, что замена происходит сама.",
-                "if_it_were_true": "Тогда существующий код магически менял бы семантику хранения контекста при переходе на VT.",
-                "how_it_should_be": "`ScopedValue` нужно явно объявить и использовать вместо `ThreadLocal`."
+                "what_actually": "`ThreadLocal` полностью работает с VT; вопрос лишь в масштабе — миллионы VT означают миллионы копий значений.",
+                "source_of_confusion": "Из-за рекомендации перейти на `ScopedValue` создаётся впечатление, что `ThreadLocal` запрещён.",
+                "if_it_were_true": "Тогда сломалась бы масса существующих библиотек, использующих `ThreadLocal`, при включении VT.",
+                "how_it_should_be": "`ThreadLocal` работает, но при огромном числе VT предпочтительнее `ScopedValue`."
               }
             }
           ]
@@ -431,30 +431,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Structured Concurrency — это просто другое название для пула виртуальных потоков: под капотом `StructuredTaskScope` оборачивает готовый `Executors.newVirtualThreadPerTaskExecutor()` и не добавляет никаких гарантий по времени жизни, вложенности или автоматической отмене дочерних задач, а лишь переиспользует потоки под нагрузкой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это не пул, а модель управления жизненным циклом параллельных задач через `StructuredTaskScope`: дочерние задачи завершаются до выхода из блока.",
-                "source_of_confusion": "Оба понятия про «организацию VT», поэтому смешиваются.",
-                "if_it_were_true": "Тогда не было бы методов `fork`/`join`/`throwIfFailed`, определяющих структуру блока.",
-                "how_it_should_be": "Structured Concurrency — это `StructuredTaskScope`, область, владеющая дочерними задачами."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Structured Concurrency — это упорядоченное использование `synchronized`-блоков для безопасной работы с общими данными: `StructuredTaskScope` расставляет неявные мониторы вокруг общих полей, чтобы несколько виртуальных потоков не конкурировали за них, то есть решает задачу взаимного исключения, а не управления жизненным циклом задач.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это про управление параллельными подзадачами как единым блоком, а не про мониторы и взаимное исключение.",
-                "source_of_confusion": "Слово «structured» ассоциируется с дисциплинированной синхронизацией.",
-                "if_it_were_true": "Тогда речь шла бы о блокировках, а не о `fork`/`join` дочерних задач.",
-                "how_it_should_be": "Structured Concurrency группирует параллельные задачи в scope с гарантией их завершения."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Structured Concurrency (`StructuredTaskScope`, Java 21+, всё ещё preview и не стандартизирована) трактует группу параллельных задач как структурированный блок: через `StructuredTaskScope` задачи запускают (`fork`), дожидаются (`join`) и обрабатывают ошибки, а при выходе из блока все дочерние задачи гарантированно завершены или отменены.",
               "correct": true,
               "sections": {
@@ -466,8 +442,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "Structured Concurrency — это просто другое название для пула виртуальных потоков: под капотом `StructuredTaskScope` оборачивает готовый `Executors.newVirtualThreadPerTaskExecutor()` и не добавляет никаких гарантий по времени жизни, вложенности или автоматической отмене дочерних задач, а лишь переиспользует потоки под нагрузкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не пул, а модель управления жизненным циклом параллельных задач через `StructuredTaskScope`: дочерние задачи завершаются до выхода из блока.",
+                "source_of_confusion": "Оба понятия про «организацию VT», поэтому смешиваются.",
+                "if_it_were_true": "Тогда не было бы методов `fork`/`join`/`throwIfFailed`, определяющих структуру блока.",
+                "how_it_should_be": "Structured Concurrency — это `StructuredTaskScope`, область, владеющая дочерними задачами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Structured Concurrency — это набор реактивных операторов (`map`, `flatMap`) для композиции виртуальных потоков: `StructuredTaskScope` строит из них конвейер по образцу `WebFlux`, где результаты дочерних задач лениво перетекают дальше по цепочке подписчиков без единого блокирующего вызова join и без общего скоупа.",
               "correct": false,
               "sections": {
@@ -475,6 +463,18 @@
                 "source_of_confusion": "И reactive, и structured concurrency «комбинируют асинхронные результаты», отсюда путаница.",
                 "if_it_were_true": "Тогда API строилось бы вокруг `Publisher`/`Subscriber`, а не вокруг `scope.fork(...)`.",
                 "how_it_should_be": "Structured Concurrency использует `fork`/`join`/`resultNow`, а не reactive-операторы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Structured Concurrency — это упорядоченное использование `synchronized`-блоков для безопасной работы с общими данными: `StructuredTaskScope` расставляет неявные мониторы вокруг общих полей, чтобы несколько виртуальных потоков не конкурировали за них, то есть решает задачу взаимного исключения, а не управления жизненным циклом задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это про управление параллельными подзадачами как единым блоком, а не про мониторы и взаимное исключение.",
+                "source_of_confusion": "Слово «structured» ассоциируется с дисциплинированной синхронизацией.",
+                "if_it_were_true": "Тогда речь шла бы о блокировках, а не о `fork`/`join` дочерних задач.",
+                "how_it_should_be": "Structured Concurrency группирует параллельные задачи в scope с гарантией их завершения."
               }
             }
           ]
@@ -491,18 +491,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "VT и корутины Kotlin идентичны: `suspend` и `launch` — синтаксический сахар, который компилятор разворачивает в вызовы `Thread.ofVirtual()`, поэтому обе модели используют один планировщик виртуальных потоков JVM.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это независимые механизмы: корутины реализованы компилятором Kotlin через continuations и существовали задолго до VT, не используя их под капотом.",
-                "source_of_confusion": "Оба решают задачу дешёвого параллелизма, поэтому кажутся одной технологией.",
-                "if_it_were_true": "Тогда корутины не работали бы на Java 8/11, где VT отсутствуют, но они работают.",
-                "how_it_should_be": "Корутины — compile-time continuations Kotlin; VT — runtime-механизм JVM; это разные подходы."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "VT — это JVM-управляемые потоки: код пишется в обычном blocking-стиле и работают любые Java-библиотеки. Корутины Kotlin построены на suspend-функциях и continuations, требуют синтаксиса `suspend`/`async`/`launch` и coroutine-aware библиотек.",
               "correct": true,
               "sections": {
@@ -511,6 +499,18 @@
                 "when_to_apply": "Выбирают VT в Java-проектах ради совместимости со всем стеком; корутины — в Kotlin-проектах, где важен предельно низкий overhead.",
                 "edge_cases": "У корутин чуть меньше накладные расходы, но отладка сложнее (нужны спец-инструменты); у VT — обычный thread dump.",
                 "related": "[[java-virtual-threads-interview#Q14]] VT vs reactive; [[java-virtual-threads-interview#Q8]] structured concurrency; [[java-virtual-threads-interview#Q1]] что такое VT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Виртуальные потоки, как и корутины Kotlin, требуют помечать блокирующие методы ключевым словом `suspend`, иначе компилятор JDK не сможет вставить точки приостановки и вызов `Thread.startVirtualThread()` завершится ошибкой на этапе компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Java нет `suspend`: код во VT — обычный последовательный Java без специальных модификаторов.",
+                "source_of_confusion": "Раз обе технологии «приостанавливаемые», кажется, что синтаксис тоже общий.",
+                "if_it_were_true": "Тогда терялось бы главное преимущество VT — работа с немодифицированным blocking-кодом.",
+                "how_it_should_be": "VT не используют `suspend`; точки приостановки определяет рантайм на блокирующих вызовах."
               }
             },
             {
@@ -528,13 +528,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Виртуальные потоки, как и корутины Kotlin, требуют помечать блокирующие методы ключевым словом `suspend`, иначе компилятор JDK не сможет вставить точки приостановки и вызов `Thread.startVirtualThread()` завершится ошибкой на этапе компиляции.",
+              "text": "VT и корутины Kotlin идентичны: `suspend` и `launch` — синтаксический сахар, который компилятор разворачивает в вызовы `Thread.ofVirtual()`, поэтому обе модели используют один планировщик виртуальных потоков JVM.",
               "correct": false,
               "sections": {
-                "what_actually": "В Java нет `suspend`: код во VT — обычный последовательный Java без специальных модификаторов.",
-                "source_of_confusion": "Раз обе технологии «приостанавливаемые», кажется, что синтаксис тоже общий.",
-                "if_it_were_true": "Тогда терялось бы главное преимущество VT — работа с немодифицированным blocking-кодом.",
-                "how_it_should_be": "VT не используют `suspend`; точки приостановки определяет рантайм на блокирующих вызовах."
+                "what_actually": "Это независимые механизмы: корутины реализованы компилятором Kotlin через continuations и существовали задолго до VT, не используя их под капотом.",
+                "source_of_confusion": "Оба решают задачу дешёвого параллелизма, поэтому кажутся одной технологией.",
+                "if_it_were_true": "Тогда корутины не работали бы на Java 8/11, где VT отсутствуют, но они работают.",
+                "how_it_should_be": "Корутины — compile-time continuations Kotlin; VT — runtime-механизм JVM; это разные подходы."
               }
             }
           ]
@@ -551,18 +551,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "JDBC принципиально несовместим с виртуальными потоками: его блокирующие вызовы намертво пиннят `carrier thread` и приводят к взаимоблокировке пула, поэтому для доступа к БД из VT обязательно нужен реактивный драйвер `r2dbc` поверх non-blocking I/O, иначе приложение не запустится.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: JDBC делает blocking I/O — ровно тот случай, для которого VT предназначены; `r2dbc` с VT не нужен.",
-                "source_of_confusion": "Раз VT «про non-blocking», кажется, что и драйвер должен быть non-blocking.",
-                "if_it_were_true": "Тогда не имело бы смысла включать VT в обычном Spring MVC с `JdbcTemplate`, но это рабочий и рекомендуемый сценарий.",
-                "how_it_should_be": "Обычный JDBC + VT даёт производительность, сопоставимую с `r2dbc`, без смены драйвера."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "При работе из виртуального потока JVM автоматически превращает блокирующие вызовы JDBC в `non-blocking`: планировщик перехватывает системный вызов на уровне `carrier thread` и переписывает его в асинхронный аналог, поэтому обычный драйвер начинает работать так же, как `r2dbc`, без единой правки кода.",
               "correct": false,
               "sections": {
@@ -573,8 +561,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Под виртуальные потоки размер пула `HikariCP` необходимо увеличивать до нескольких тысяч соединений, чтобы каждый VT удерживал собственное подключение на всё время блокирующего вызова JDBC, иначе при миллионе потоков пул мгновенно исчерпается и посыплется `OutOfMemoryError`.",
               "correct": false,
               "sections": {
@@ -585,8 +573,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "JDBC-драйверы делают blocking I/O — именно то, для чего созданы VT, поэтому обычный JDBC отлично работает с виртуальными потоками, и важно лишь не упереться в пул соединений (HikariCP), где число соединений обычно невелико, а сам `r2dbc` при этом не требуется.",
               "correct": true,
               "sections": {
@@ -595,6 +583,18 @@
                 "when_to_apply": "Подбирают размер пула по возможностям БД (CPU, max_connections), а не по числу VT.",
                 "edge_cases": "Если VT много, а пул мал, они выстраиваются в очередь за соединением — это защищает БД, но требует осознанной настройки таймаутов.",
                 "related": "[[java-virtual-threads-interview#Q13]] ограничивать ресурсы, не потоки; [[java-virtual-threads-interview#Q5]] когда VT подходят; [[java-virtual-threads-interview#Q6]] VT в Spring Boot."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JDBC принципиально несовместим с виртуальными потоками: его блокирующие вызовы намертво пиннят `carrier thread` и приводят к взаимоблокировке пула, поэтому для доступа к БД из VT обязательно нужен реактивный драйвер `r2dbc` поверх non-blocking I/O, иначе приложение не запустится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: JDBC делает blocking I/O — ровно тот случай, для которого VT предназначены; `r2dbc` с VT не нужен.",
+                "source_of_confusion": "Раз VT «про non-blocking», кажется, что и драйвер должен быть non-blocking.",
+                "if_it_were_true": "Тогда не имело бы смысла включать VT в обычном Spring MVC с `JdbcTemplate`, но это рабочий и рекомендуемый сценарий.",
+                "how_it_should_be": "Обычный JDBC + VT даёт производительность, сопоставимую с `r2dbc`, без смены драйвера."
               }
             }
           ]
@@ -611,6 +611,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "В виртуальных потоках нельзя ставить `breakpoint`: протокол `JDWP` не умеет приостанавливать VT, поэтому отладчик IDE молча проскакивает точку останова, а `jstack` в этот момент показывает только несущий `carrier thread` вместо самого виртуального потока.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отладчики (включая IDE) поддерживают breakpoint-ы во VT так же, как в обычных потоках.",
+                "source_of_confusion": "Новизна технологии порождает сомнения в поддержке инструментами.",
+                "if_it_were_true": "Тогда пошаговая отладка кода на VT была бы невозможна, что не так.",
+                "how_it_should_be": "Breakpoint-ы во VT работают штатно в современных IDE и отладчиках."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Виртуальные потоки можно профилировать исключительно платными коммерческими профайлерами: бесплатные `jstack`, `VisualVM` и async-profiler видят лишь несущие OS-потоки и не умеют разворачивать стек VT, поэтому без коммерческой лицензии снять корректный `thread dump` с виртуальными потоками невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Базовая диагностика доступна штатными средствами JDK: флаг `jdk.tracePinnedThreads`, `jstack`, `jcmd`.",
+                "source_of_confusion": "Сложность темы наводит на мысль о необходимости специнструментов.",
+                "if_it_were_true": "Тогда open-source разработка на VT была бы крайне затруднена, чего на практике нет.",
+                "how_it_should_be": "Для отладки VT хватает бесплатных JDK-инструментов и флагов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Виртуальные потоки отлаживают штатными средствами: JFR-событие `jdk.VirtualThreadPinned` фиксирует pinning (в старых релизах — флаг `-Djdk.tracePinnedThreads`, deprecated в JDK 24), `jstack`/VisualVM показывают VT, а `jcmd <pid> Thread.dump_to_file -format=json file.json` даёт полный дамп с поддержкой VT, а программно их можно отфильтровать через `Thread::isVirtual`.",
               "correct": true,
               "sections": {
@@ -622,8 +646,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Виртуальные потоки принципиально не отображаются в `thread dump`: команда `jstack` перечисляет только несущие OS-потоки, а `jcmd Thread.dump_to_file` молча их пропускает, поэтому стандартные средства диагностики для VT бесполезны и флаг `-Djdk.tracePinnedThreads` тоже ничего не печатает.",
               "correct": false,
               "sections": {
@@ -631,30 +655,6 @@
                 "source_of_confusion": "Раз VT «лёгкие и многочисленные», кажется, что их не отследить обычными средствами.",
                 "if_it_were_true": "Тогда диагностика production-проблем на VT была бы невозможна, что противоречит штатной поддержке в JDK 21.",
                 "how_it_should_be": "VT видны через `jstack`/`jcmd` и фильтр `Thread::isVirtual`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Виртуальные потоки можно профилировать исключительно платными коммерческими профайлерами: бесплатные `jstack`, `VisualVM` и async-profiler видят лишь несущие OS-потоки и не умеют разворачивать стек VT, поэтому без коммерческой лицензии снять корректный `thread dump` с виртуальными потоками невозможно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Базовая диагностика доступна штатными средствами JDK: флаг `jdk.tracePinnedThreads`, `jstack`, `jcmd`.",
-                "source_of_confusion": "Сложность темы наводит на мысль о необходимости специнструментов.",
-                "if_it_were_true": "Тогда open-source разработка на VT была бы крайне затруднена, чего на практике нет.",
-                "how_it_should_be": "Для отладки VT хватает бесплатных JDK-инструментов и флагов."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "В виртуальных потоках нельзя ставить `breakpoint`: протокол `JDWP` не умеет приостанавливать VT, поэтому отладчик IDE молча проскакивает точку останова, а `jstack` в этот момент показывает только несущий `carrier thread` вместо самого виртуального потока.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Отладчики (включая IDE) поддерживают breakpoint-ы во VT так же, как в обычных потоках.",
-                "source_of_confusion": "Новизна технологии порождает сомнения в поддержке инструментами.",
-                "if_it_were_true": "Тогда пошаговая отладка кода на VT была бы невозможна, что не так.",
-                "how_it_should_be": "Breakpoint-ы во VT работают штатно в современных IDE и отладчиках."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Создание виртуального потока обходится дороже создания OS-потока: JVM тратит дополнительные ~200 мкс на регистрацию VT у планировщика и привязку к `carrier thread`, а его стек всё равно резервируется в куче целиком, поэтому массовое `newVirtualThreadPerTaskExecutor()` только замедляет приложение.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: создание VT (~1 мкс) на порядки дешевле создания OS-потока (~100 мкс), а стек измеряется килобайтами, а не мегабайтами.",
-                "source_of_confusion": "«Дополнительный слой управления JVM» наводит на мысль о накладных расходах.",
-                "if_it_were_true": "Тогда не было бы смысла создавать миллионы VT, что является штатным сценарием.",
-                "how_it_should_be": "VT создаётся за ~1 мкс и потребляет несколько КБ стека — намного дешевле OS-потока."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Накладные расходы виртуального и платформенного потока одинаковы: оба требуют около ~100 мкс на создание через `Thread.ofVirtual()` и резервируют фиксированные ~512 КБ стека в нативной памяти, поэтому создать миллион VT так же тяжело, как миллион OS-потоков, и легко словить `OutOfMemoryError`.",
               "correct": false,
               "sections": {
@@ -693,8 +681,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Создание виртуального потока стоит около ~1 мкс (против ~100 мкс для OS-потока), а его стек занимает несколько КБ и динамически растёт/сжимается (против фиксированных ~512 КБ–8 МБ у OS-потока), поэтому создать миллион VT за ~1 секунду — нормально.",
               "correct": true,
               "sections": {
@@ -706,8 +694,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Каждый виртуальный поток фиксированно занимает ~1 МБ стека, ровно как платформенный: JVM выделяет этот блок в нативной памяти сразу при `Thread.startVirtualThread()` и не умеет его сжимать, поэтому уже на десятках тысяч VT приложение упирается в `OutOfMemoryError`.",
               "correct": false,
               "sections": {
@@ -715,6 +703,18 @@
                 "source_of_confusion": "Привычная цифра «~1 МБ на поток» переносится на VT по инерции.",
                 "if_it_were_true": "Тогда миллион VT требовал бы терабайт памяти, и массовое создание было бы невозможно.",
                 "how_it_should_be": "Стек VT — несколько КБ с динамическим ростом, что и позволяет создавать миллионы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Создание виртуального потока обходится дороже создания OS-потока: JVM тратит дополнительные ~200 мкс на регистрацию VT у планировщика и привязку к `carrier thread`, а его стек всё равно резервируется в куче целиком, поэтому массовое `newVirtualThreadPerTaskExecutor()` только замедляет приложение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: создание VT (~1 мкс) на порядки дешевле создания OS-потока (~100 мкс), а стек измеряется килобайтами, а не мегабайтами.",
+                "source_of_confusion": "«Дополнительный слой управления JVM» наводит на мысль о накладных расходах.",
+                "if_it_were_true": "Тогда не было бы смысла создавать миллионы VT, что является штатным сценарием.",
+                "how_it_should_be": "VT создаётся за ~1 мкс и потребляет несколько КБ стека — намного дешевле OS-потока."
               }
             }
           ]
@@ -743,14 +743,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Классический пул нужен по двум причинам — ограничить число дорогих OS-потоков и переиспользовать их, чтобы не платить за создание/уничтожение; у VT обе причины отпадают (создание дёшево, а искусственный лимит убивает выигрыш), поэтому используют `newVirtualThreadPerTaskExecutor()`, а ограничивают не потоки, а ресурсы (например `Semaphore` для доступа к БД).",
-              "correct": true,
+              "text": "Пул виртуальных потоков нужен, чтобы корректно работал `ThreadLocal`: значения хранятся в самом объекте потока, поэтому при создании нового VT на каждую задачу `ThreadLocal` каждый раз обнуляется и теряет контекст; фиксированный пул сохраняет одни и те же экземпляры потоков между задачами и гарантирует, что записанные данные переживут границу задачи.",
+              "correct": false,
               "sections": {
-                "explanation": "Пул VT был бы антипаттерном: он повторно вводит то самое ограничение, ради устранения которого VT и придумали. Дефицитный ресурс — это соединения к БД, файловые дескрипторы, лимиты внешних API, и ограничивать нужно именно их.",
-                "example": "`Semaphore sem = new Semaphore(100); sem.acquire(); try { db.query(...); } finally { sem.release(); }` — каждый VT берёт разрешение перед запросом к БД.",
-                "when_to_apply": "Применяют `Semaphore`/rate-limiter, когда нужно ограничить параллелизм обращений к конкретному ресурсу, не ограничивая число самих VT.",
-                "edge_cases": "`newVirtualThreadPerTaskExecutor()` сам по себе не ограничивает нагрузку на нижестоящие системы — за это отвечают семафоры и таймауты.",
-                "related": "[[java-virtual-threads-interview#Q12]] дешевизна создания; [[java-virtual-threads-interview#Q10]] пул соединений JDBC; [[java-virtual-threads-interview#Q2]] как создать VT."
+                "what_actually": "`ThreadLocal` не требует пула; наоборот, пул + `ThreadLocal` создаёт риск утечки значений между задачами. Для VT-контекста рекомендуют `ScopedValue`.",
+                "source_of_confusion": "`ThreadLocal` и пулы потоков исторически связаны, отсюда ложная зависимость.",
+                "if_it_were_true": "Тогда отказ от пула ломал бы передачу контекста, но её решает `ScopedValue`.",
+                "how_it_should_be": "Контекст во VT передают через `ScopedValue`, а пул потоков не нужен."
               }
             },
             {
@@ -768,13 +767,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Пул виртуальных потоков нужен, чтобы корректно работал `ThreadLocal`: значения хранятся в самом объекте потока, поэтому при создании нового VT на каждую задачу `ThreadLocal` каждый раз обнуляется и теряет контекст; фиксированный пул сохраняет одни и те же экземпляры потоков между задачами и гарантирует, что записанные данные переживут границу задачи.",
-              "correct": false,
+              "text": "Классический пул нужен по двум причинам — ограничить число дорогих OS-потоков и переиспользовать их, чтобы не платить за создание/уничтожение; у VT обе причины отпадают (создание дёшево, а искусственный лимит убивает выигрыш), поэтому используют `newVirtualThreadPerTaskExecutor()`, а ограничивают не потоки, а ресурсы (например `Semaphore` для доступа к БД).",
+              "correct": true,
               "sections": {
-                "what_actually": "`ThreadLocal` не требует пула; наоборот, пул + `ThreadLocal` создаёт риск утечки значений между задачами. Для VT-контекста рекомендуют `ScopedValue`.",
-                "source_of_confusion": "`ThreadLocal` и пулы потоков исторически связаны, отсюда ложная зависимость.",
-                "if_it_were_true": "Тогда отказ от пула ломал бы передачу контекста, но её решает `ScopedValue`.",
-                "how_it_should_be": "Контекст во VT передают через `ScopedValue`, а пул потоков не нужен."
+                "explanation": "Пул VT был бы антипаттерном: он повторно вводит то самое ограничение, ради устранения которого VT и придумали. Дефицитный ресурс — это соединения к БД, файловые дескрипторы, лимиты внешних API, и ограничивать нужно именно их.",
+                "example": "`Semaphore sem = new Semaphore(100); sem.acquire(); try { db.query(...); } finally { sem.release(); }` — каждый VT берёт разрешение перед запросом к БД.",
+                "when_to_apply": "Применяют `Semaphore`/rate-limiter, когда нужно ограничить параллелизм обращений к конкретному ресурсу, не ограничивая число самих VT.",
+                "edge_cases": "`newVirtualThreadPerTaskExecutor()` сам по себе не ограничивает нагрузку на нижестоящие системы — за это отвечают семафоры и таймауты.",
+                "related": "[[java-virtual-threads-interview#Q12]] дешевизна создания; [[java-virtual-threads-interview#Q10]] пул соединений JDBC; [[java-virtual-threads-interview#Q2]] как создать VT."
               }
             }
           ]
@@ -803,6 +803,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "VT и Reactive Streams — две разные модели решения одной проблемы (высокий I/O-параллелизм): reactive/WebFlux использует non-blocking I/O и цепочки операторов/callback-ов (сложнее, но предельно эффективно), а VT дают blocking-style код, где non-blocking обеспечивает JVM (проще, но чуть накладнее); для нового кода обычно выбирают `Spring MVC` + VT, а `WebFlux` — при экстремальных требованиях к throughput или работе с reactive-only библиотеками.",
+              "correct": true,
+              "sections": {
+                "explanation": "С VT не нужно осваивать `Mono`/`Flux` и переписывать логику в операторном стиле, а стектрейсы остаются читаемыми. WebFlux выигрывает там, где важна каждая капля эффективности и где экосистема уже реактивная.",
+                "example": "Новый CRUD-сервис с обращениями к БД и паре внешних API проще и дешевле сделать на Spring MVC + `spring.threads.virtual.enabled=true`, чем на WebFlux.",
+                "when_to_apply": "Берут VT для упрощения разработки blocking-сервисов; WebFlux — при очень высоком throughput или reactive-стеке (R2DBC, reactive Kafka).",
+                "edge_cases": "Смешивать модели не стоит: блокирующий вызов внутри reactive-цепочки на event-loop сводит на нет преимущества WebFlux.",
+                "related": "[[java-virtual-threads-interview#Q5]] когда VT подходят; [[java-virtual-threads-interview#Q9]] VT vs корутины; [[java-virtual-threads-interview#Q10]] VT и JDBC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Виртуальные потоки полностью заменяют реактивное программирование: с появлением Loom команда Spring объявила `WebFlux` устаревшим, а операторы `Flux`/`Mono` и механизм backpressure признали избыточными, поскольку VT дают ту же неблокирующую пропускную способность без цепочек callback-ов; поэтому реактивный стек больше не развивается, и любой новый или существующий проект рекомендуется переводить на Spring MVC поверх виртуальных потоков.",
               "correct": false,
               "sections": {
@@ -813,8 +826,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Для эффективности виртуальные потоки нужно всегда оборачивать внутрь `Mono`/`Flux`: сами по себе VT не умеют отдавать несущий поток при блокировке, и только реактивная обёртка с поддержкой backpressure заставляет JVM выполнить `unmount` во время `Thread.sleep()` или blocking I/O; без цепочки операторов `Reactor` виртуальный поток ведёт себя как обычный платформенный и держит `carrier thread` занятым.",
               "correct": false,
               "sections": {
@@ -822,19 +835,6 @@
                 "source_of_confusion": "Кажется, что «современный» код обязан быть реактивным.",
                 "if_it_were_true": "Тогда исчезло бы главное преимущество VT — отказ от операторного стиля.",
                 "how_it_should_be": "VT используют в обычном последовательном коде; reactive-обёртки не требуются."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "VT и Reactive Streams — две разные модели решения одной проблемы (высокий I/O-параллелизм): reactive/WebFlux использует non-blocking I/O и цепочки операторов/callback-ов (сложнее, но предельно эффективно), а VT дают blocking-style код, где non-blocking обеспечивает JVM (проще, но чуть накладнее); для нового кода обычно выбирают `Spring MVC` + VT, а `WebFlux` — при экстремальных требованиях к throughput или работе с reactive-only библиотеками.",
-              "correct": true,
-              "sections": {
-                "explanation": "С VT не нужно осваивать `Mono`/`Flux` и переписывать логику в операторном стиле, а стектрейсы остаются читаемыми. WebFlux выигрывает там, где важна каждая капля эффективности и где экосистема уже реактивная.",
-                "example": "Новый CRUD-сервис с обращениями к БД и паре внешних API проще и дешевле сделать на Spring MVC + `spring.threads.virtual.enabled=true`, чем на WebFlux.",
-                "when_to_apply": "Берут VT для упрощения разработки blocking-сервисов; WebFlux — при очень высоком throughput или reactive-стеке (R2DBC, reactive Kafka).",
-                "edge_cases": "Смешивать модели не стоит: блокирующий вызов внутри reactive-цепочки на event-loop сводит на нет преимущества WebFlux.",
-                "related": "[[java-virtual-threads-interview#Q5]] когда VT подходят; [[java-virtual-threads-interview#Q9]] VT vs корутины; [[java-virtual-threads-interview#Q10]] VT и JDBC."
               }
             }
           ]
@@ -851,6 +851,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Thread.sleep()` в виртуальном потоке игнорируется и работает как no-op: планировщик Loom считает сон бессмысленным для дешёвого VT и сразу возвращает управление, не выполняя `unmount` и не освобождая `carrier thread`, поэтому выполнение продолжается без паузы; чтобы реально приостановить виртуальный поток, приходится использовать `LockSupport.park()` или `Object.wait()` вместо `Thread.sleep()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sleep()` во VT реально приостанавливает виртуальный поток на заданное время — просто не занимая carrier.",
+                "source_of_confusion": "Раз carrier «не блокируется», ошибочно кажется, что и паузы нет.",
+                "if_it_were_true": "Тогда таймеры и задержки на VT не работали бы, что неверно.",
+                "how_it_should_be": "`sleep()` во VT честно выдерживает паузу, освобождая carrier на это время."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Thread.sleep()` в виртуальном потоке не блокирует carrier thread: JVM демонтирует VT на время сна, и carrier переключается на другой готовый VT; в платформенном потоке тот же `sleep()` держит OS-поток занятым. То же поведение у `Object.wait()`, `LockSupport.park()` и blocking I/O — все они корректно демонтируют VT.",
               "correct": true,
               "sections": {
@@ -859,18 +871,6 @@
                 "when_to_apply": "На это поведение полагаются, когда тысячи VT ждут таймаутов/ответов: число занятых OS-потоков остаётся маленьким.",
                 "edge_cases": "Исключение — pinning: если `sleep()` вызван внутри `synchronized`, VT не демонтируется и carrier остаётся заблокированным.",
                 "related": "[[java-virtual-threads-interview#Q4]] pinning; [[java-virtual-threads-interview#Q3]] carrier thread; [[java-virtual-threads-interview#Q1]] зачем нужны VT."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Thread.sleep()` в виртуальном потоке блокирует `carrier thread` так же, как OS-поток в платформенном: на время сна JVM не выполняет `unmount`, а оставляет VT смонтированным на несущем потоке; поэтому готовые виртуальные потоки на том же carrier простаивают до конца таймаута — ровно как `Thread.sleep()` на платформенном потоке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В VT `Thread.sleep()` демонтирует виртуальный поток с carrier, и carrier сразу берёт другой VT; OS-поток при этом не простаивает.",
-                "source_of_confusion": "Привычно, что `sleep()` «замораживает поток», и это переносят на carrier.",
-                "if_it_were_true": "Тогда `sleep()` во VT убивал бы масштабируемость, ради которой VT и созданы.",
-                "how_it_should_be": "В VT `sleep()` освобождает carrier; занятым остаётся лишь логический VT."
               }
             },
             {
@@ -888,13 +888,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Thread.sleep()` в виртуальном потоке игнорируется и работает как no-op: планировщик Loom считает сон бессмысленным для дешёвого VT и сразу возвращает управление, не выполняя `unmount` и не освобождая `carrier thread`, поэтому выполнение продолжается без паузы; чтобы реально приостановить виртуальный поток, приходится использовать `LockSupport.park()` или `Object.wait()` вместо `Thread.sleep()`.",
+              "text": "`Thread.sleep()` в виртуальном потоке блокирует `carrier thread` так же, как OS-поток в платформенном: на время сна JVM не выполняет `unmount`, а оставляет VT смонтированным на несущем потоке; поэтому готовые виртуальные потоки на том же carrier простаивают до конца таймаута — ровно как `Thread.sleep()` на платформенном потоке.",
               "correct": false,
               "sections": {
-                "what_actually": "`sleep()` во VT реально приостанавливает виртуальный поток на заданное время — просто не занимая carrier.",
-                "source_of_confusion": "Раз carrier «не блокируется», ошибочно кажется, что и паузы нет.",
-                "if_it_were_true": "Тогда таймеры и задержки на VT не работали бы, что неверно.",
-                "how_it_should_be": "`sleep()` во VT честно выдерживает паузу, освобождая carrier на это время."
+                "what_actually": "В VT `Thread.sleep()` демонтирует виртуальный поток с carrier, и carrier сразу берёт другой VT; OS-поток при этом не простаивает.",
+                "source_of_confusion": "Привычно, что `sleep()` «замораживает поток», и это переносят на carrier.",
+                "if_it_were_true": "Тогда `sleep()` во VT убивал бы масштабируемость, ради которой VT и созданы.",
+                "how_it_should_be": "В VT `sleep()` освобождает carrier; занятым остаётся лишь логический VT."
               }
             }
           ]

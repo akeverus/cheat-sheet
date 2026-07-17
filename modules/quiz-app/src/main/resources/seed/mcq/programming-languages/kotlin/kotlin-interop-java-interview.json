@@ -11,6 +11,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Свойства `Kotlin` (`val name: String`) недоступны из `Java` — для каждого нужно вручную писать `Java`-геттер в отдельном классе-адаптере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kotlin`-компилятор сам генерирует геттер `getName()` для `val` и `getName()`+`setName()` для `var`, никаких ручных адаптеров не нужно.",
+                "source_of_confusion": "В `Java` поля и геттеры пишут явно, поэтому кажется, что `Kotlin`-свойства тоже надо как-то экспортировать руками.",
+                "if_it_were_true": "Тогда любой `data class` требовал бы адаптера для `Java`, но `user.getName()` работает из коробки.",
+                "how_it_should_be": "Геттеры/сеттеры генерируются автоматически из объявления свойства; ручной код нужен только для смены имени через `@JvmName`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Kotlin` компилируется в обычный байткод `JVM`, поэтому из `Java` его вызывают как любой класс, но с нюансами: top-level функции из `Utils.kt` → `UtilsKt.funcName()`, `companion object` → `MyClass.Companion.method()`, `object` → `MyClass.INSTANCE.method()`, свойство `val name` → геттер `getName()`.",
               "correct": true,
               "sections": {
@@ -22,8 +34,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`Kotlin`-код напрямую из `Java` вызвать нельзя: нужно сначала транспилировать `.kt` в `.java`-исходники через отдельный конвертер, и уже их компилировать.",
               "correct": false,
               "sections": {
@@ -31,18 +43,6 @@
                 "source_of_confusion": "В `IntelliJ` есть конвертер `Java` → `Kotlin`, и кажется, что должен быть обратный шаг перед интеропом.",
                 "if_it_were_true": "Тогда смешанные проекты были бы невозможны без генерации `Java`-исходников, но `kotlinc` отдаёт готовый байткод, который `Java` видит напрямую.",
                 "how_it_should_be": "Обе цепочки (`kotlinc` и `javac`) дают `.class`-файлы для одной `JVM`, поэтому вызов идёт на уровне байткода без транспиляции."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Свойства `Kotlin` (`val name: String`) недоступны из `Java` — для каждого нужно вручную писать `Java`-геттер в отдельном классе-адаптере.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Kotlin`-компилятор сам генерирует геттер `getName()` для `val` и `getName()`+`setName()` для `var`, никаких ручных адаптеров не нужно.",
-                "source_of_confusion": "В `Java` поля и геттеры пишут явно, поэтому кажется, что `Kotlin`-свойства тоже надо как-то экспортировать руками.",
-                "if_it_were_true": "Тогда любой `data class` требовал бы адаптера для `Java`, но `user.getName()` работает из коробки.",
-                "how_it_should_be": "Геттеры/сеттеры генерируются автоматически из объявления свойства; ручной код нужен только для смены имени через `@JvmName`."
               }
             },
             {
@@ -71,13 +71,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@JvmStatic` нужна и в чисто `Kotlin`-проектах, без неё методы `companion object` вообще не скомпилируются и не будут видны даже из `Kotlin`-кода.",
+              "text": "`@JvmOverloads` нужна для всех `Kotlin`-функций с параметрами по умолчанию — иначе сами default-значения вообще перестанут работать, даже внутри `Kotlin`.",
               "correct": false,
               "sections": {
-                "what_actually": "В чисто `Kotlin`-проекте `@JvmStatic` не нужна; члены companion вызываются из `Kotlin` напрямую `MyClass.method()`, аннотация решает только `Java`-interop-эргономику.",
-                "source_of_confusion": "Слово `static` ассоциируется с обязательностью для статических вызовов, как в `Java`, где без него метод нестатический.",
-                "if_it_were_true": "Тогда любой companion ломал бы компиляцию без аннотации, но `Kotlin`-код прекрасно работает с companion без `@JvmStatic`.",
-                "how_it_should_be": "Аннотация добавляет удобный статический alias именно для `Java`; внутри `Kotlin` доступ к companion есть и без неё."
+                "what_actually": "В `Kotlin` default-параметры работают нативно без аннотации; `@JvmOverloads` нужна исключительно чтобы `Java` мог вызывать функцию без передачи всех аргументов.",
+                "source_of_confusion": "Связка «default-параметры + аннотация» создаёт впечатление, что аннотация включает сам механизм значений по умолчанию.",
+                "if_it_were_true": "Тогда любой `Kotlin`-код с default-значениями требовал бы `@JvmOverloads`, но он работает и без неё.",
+                "how_it_should_be": "Default-значения — фича `Kotlin`-компилятора; `@JvmOverloads` лишь генерирует дополнительные перегрузки для `Java`-стороны."
               }
             },
             {
@@ -96,6 +96,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`@JvmStatic` нужна и в чисто `Kotlin`-проектах, без неё методы `companion object` вообще не скомпилируются и не будут видны даже из `Kotlin`-кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В чисто `Kotlin`-проекте `@JvmStatic` не нужна; члены companion вызываются из `Kotlin` напрямую `MyClass.method()`, аннотация решает только `Java`-interop-эргономику.",
+                "source_of_confusion": "Слово `static` ассоциируется с обязательностью для статических вызовов, как в `Java`, где без него метод нестатический.",
+                "if_it_were_true": "Тогда любой companion ломал бы компиляцию без аннотации, но `Kotlin`-код прекрасно работает с companion без `@JvmStatic`.",
+                "how_it_should_be": "Аннотация добавляет удобный статический alias именно для `Java`; внутри `Kotlin` доступ к companion есть и без неё."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`@JvmField` делает поле `final` и неизменяемым из `Java`, гарантируя, что `Java`-клиент не сможет его переприсвоить.",
               "correct": false,
               "sections": {
@@ -103,18 +115,6 @@
                 "source_of_confusion": "Прямое поле без сеттера интуитивно ассоциируется с неизменяемостью, как `public final` в `Java`.",
                 "if_it_were_true": "Тогда `@JvmField var debugMode` нельзя было бы менять из `Java`, но `config.debugMode = true` отлично присваивается.",
                 "how_it_should_be": "Мутабельность контролирует `val`/`var`; `@JvmField` лишь меняет способ доступа (поле вместо геттера), а не изменяемость."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@JvmOverloads` нужна для всех `Kotlin`-функций с параметрами по умолчанию — иначе сами default-значения вообще перестанут работать, даже внутри `Kotlin`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `Kotlin` default-параметры работают нативно без аннотации; `@JvmOverloads` нужна исключительно чтобы `Java` мог вызывать функцию без передачи всех аргументов.",
-                "source_of_confusion": "Связка «default-параметры + аннотация» создаёт впечатление, что аннотация включает сам механизм значений по умолчанию.",
-                "if_it_were_true": "Тогда любой `Kotlin`-код с default-значениями требовал бы `@JvmOverloads`, но он работает и без неё.",
-                "how_it_should_be": "Default-значения — фича `Kotlin`-компилятора; `@JvmOverloads` лишь генерирует дополнительные перегрузки для `Java`-стороны."
               }
             }
           ]
@@ -131,6 +131,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`@JvmField` обязателен для всех `val` в `companion object`, иначе `Java` не сможет прочитать их значение вообще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@JvmField` `Kotlin` генерирует геттер `getName()`, доступный из `Java`; `@JvmField` нужен только когда клиент ожидает публичное поле вместо геттера.",
+                "source_of_confusion": "Кажется, что без аннотации поле «приватное» и недостижимое, как `private` в `Java`.",
+                "if_it_were_true": "Тогда любой `val` в companion без `@JvmField` был бы невидим, но `getDefaultPageSize()`-геттер вызывается нормально.",
+                "how_it_should_be": "По умолчанию читается через геттер; `@JvmField` — лишь способ получить прямое поле для эргономики."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`const val` и `@JvmField val` ведут себя из `Java` абсолютно одинаково: оба доступны как поля и работают с любыми типами, включая объекты и коллекции.",
               "correct": false,
               "sections": {
@@ -138,18 +150,6 @@
                 "source_of_confusion": "Оба варианта дают прямой доступ к полю из `Java`, поэтому кажутся взаимозаменяемыми.",
                 "if_it_were_true": "Тогда `const val pool = ConnectionPool()` компилировался бы, но `const` для не-примитивов запрещён компилятором.",
                 "how_it_should_be": "Для compile-time констант примитивов/строк — `const val`; для рантайм-значений любых типов — `@JvmField val`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`companion object` без `@JvmStatic` вообще недоступен из `Java`: к его методам нельзя обратиться никаким способом, пока не повесить аннотацию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без `@JvmStatic` companion доступен через `MyClass.Companion.method()`; аннотация лишь добавляет удобный статический alias, но не открывает доступ с нуля.",
-                "source_of_confusion": "Раз `@JvmStatic` явно «делает доступным из `Java`», легко решить, что без неё доступа нет совсем.",
-                "if_it_were_true": "Тогда `UserRepository.Companion.count()` не компилировался бы, но это вполне рабочий вызов.",
-                "how_it_should_be": "Доступ есть всегда через синглтон `Companion`; `@JvmStatic` лишь убирает необходимость писать `.Companion`."
               }
             },
             {
@@ -168,13 +168,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@JvmField` обязателен для всех `val` в `companion object`, иначе `Java` не сможет прочитать их значение вообще.",
+              "text": "`companion object` без `@JvmStatic` вообще недоступен из `Java`: к его методам нельзя обратиться никаким способом, пока не повесить аннотацию.",
               "correct": false,
               "sections": {
-                "what_actually": "Без `@JvmField` `Kotlin` генерирует геттер `getName()`, доступный из `Java`; `@JvmField` нужен только когда клиент ожидает публичное поле вместо геттера.",
-                "source_of_confusion": "Кажется, что без аннотации поле «приватное» и недостижимое, как `private` в `Java`.",
-                "if_it_were_true": "Тогда любой `val` в companion без `@JvmField` был бы невидим, но `getDefaultPageSize()`-геттер вызывается нормально.",
-                "how_it_should_be": "По умолчанию читается через геттер; `@JvmField` — лишь способ получить прямое поле для эргономики."
+                "what_actually": "Без `@JvmStatic` companion доступен через `MyClass.Companion.method()`; аннотация лишь добавляет удобный статический alias, но не открывает доступ с нуля.",
+                "source_of_confusion": "Раз `@JvmStatic` явно «делает доступным из `Java`», легко решить, что без неё доступа нет совсем.",
+                "if_it_were_true": "Тогда `UserRepository.Companion.count()` не компилировался бы, но это вполне рабочий вызов.",
+                "how_it_should_be": "Доступ есть всегда через синглтон `Companion`; `@JvmStatic` лишь убирает необходимость писать `.Companion`."
               }
             }
           ]
@@ -191,18 +191,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@JvmOverloads` позволяет из `Java` пропускать любой параметр по позиции, включая средние, — компилятор подставит его default-значение автоматически.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@JvmOverloads` генерирует перегрузки только отсечением справа; пропустить средний параметр невозможно — для этого пришлось бы переставить параметры в сигнатуре.",
-                "source_of_confusion": "В `Kotlin` named arguments позволяют пропускать средние параметры, и это поведение мысленно переносят на `Java`.",
-                "if_it_were_true": "Тогда `connect(\"db.local\", ssl=true)` работал бы из `Java`, но `Java` не поддерживает именованные аргументы и такой вызов невозможен.",
-                "how_it_should_be": "Из `Java` опускаются только хвостовые параметры; чтобы сделать средний опциональным, его выносят правее в объявлении."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Без `@JvmOverloads` default-параметры в `Java` работают так же, как в `Kotlin`: можно вызвать функцию с меньшим числом аргументов, остальные подставятся сами.",
               "correct": false,
               "sections": {
@@ -213,8 +201,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`@JvmOverloads` генерирует перегрузки, убирая параметры слева: первым необязательным становится самый левый параметр функции.",
               "correct": false,
               "sections": {
@@ -225,8 +213,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`@JvmOverloads` генерирует набор перегрузок, отсекая параметры справа (для функции с N default-значениями — N+1 сигнатур); без аннотации в байткоде существует только одна сигнатура со всеми параметрами, и `Java` обязан передавать каждый аргумент явно.",
               "correct": true,
               "sections": {
@@ -235,6 +223,18 @@
                 "when_to_apply": "Аннотацию ставят на `Kotlin`-функции и конструкторы с default-параметрами, которые должны удобно вызываться из `Java` без передачи всех аргументов.",
                 "edge_cases": "Перегрузки отсекают только параметры справа: пропустить средний параметр из `Java` невозможно (named arguments там нет), поэтому порядок параметров в API проектируют осознанно — самые опциональные кладут правее.",
                 "related": "[[kotlin-interop-java-interview#Q2]] @JvmOverloads среди других аннотаций; [[kotlin-interop-java-interview#Q25]] copy() data class и default-параметры; [[kotlin-interop-java-interview#Q26]] Java-friendly API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@JvmOverloads` позволяет из `Java` пропускать любой параметр по позиции, включая средние, — компилятор подставит его default-значение автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@JvmOverloads` генерирует перегрузки только отсечением справа; пропустить средний параметр невозможно — для этого пришлось бы переставить параметры в сигнатуре.",
+                "source_of_confusion": "В `Kotlin` named arguments позволяют пропускать средние параметры, и это поведение мысленно переносят на `Java`.",
+                "if_it_were_true": "Тогда `connect(\"db.local\", ssl=true)` работал бы из `Java`, но `Java` не поддерживает именованные аргументы и такой вызов невозможен.",
+                "how_it_should_be": "Из `Java` опускаются только хвостовые параметры; чтобы сделать средний опциональным, его выносят правее в объявлении."
               }
             }
           ]
@@ -251,19 +251,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Extension-функция `String.toSlug()` из `StringUtils.kt` компилируется в статический метод, где receiver — первый параметр, поэтому из `Java` вызывают `StringUtilsKt.toSlug(str)`; аннотация `@file:JvmName` меняет имя класса-обёртки.",
-              "correct": true,
-              "sections": {
-                "explanation": "Extension-функции не добавляются в сам класс-receiver, а компилируются в статические методы класса `<FileName>Kt`, принимающие объект-receiver первым аргументом.",
-                "example": "Для `fun String.toSlug(): String` в `StringUtils.kt` из `Java`: `String slug = StringUtilsKt.toSlug(\"Hello World!\")`; с `@file:JvmName(\"Strings\")` — `Strings.toSlug(\"Hello World!\")`.",
-                "when_to_apply": "Понимание этого нужно, когда extension-функции `Kotlin` (утилиты над `String`, `List` и т.п.) должны вызываться из `Java`-кода.",
-                "edge_cases": "Если несколько файлов используют одинаковый `@JvmName`, к каждому добавляют `@file:JvmMultifileClass`, иначе будет ошибка компиляции; имя класса по умолчанию — `<FileName>Kt`.",
-                "related": "[[kotlin-interop-java-interview#Q1]] таблица соответствий Kotlin→Java; [[kotlin-interop-java-interview#Q9]] @JvmName и @JvmMultifileClass; [[kotlin-interop-java-interview#Q36]] extension-функции в байткоде."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Extension-функция `String.toSlug()` из `Java` вызывается как метод экземпляра receiver: `str.toSlug()`, потому что extension добавляет метод прямо в класс `String`.",
               "correct": false,
               "sections": {
@@ -274,8 +261,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`@file:JvmName` обязателен: без него extension-функция вообще не видна из `Java`, потому что класс-обёртка не генерируется.",
               "correct": false,
               "sections": {
@@ -286,8 +273,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Несколько файлов с одинаковым `@file:JvmName` автоматически мержатся в один класс без дополнительных аннотаций.",
               "correct": false,
               "sections": {
@@ -295,6 +282,19 @@
                 "source_of_confusion": "Раз `@JvmName` задаёт одинаковое имя класса, кажется логичным, что функции сами объединятся.",
                 "if_it_were_true": "Тогда два файла с `@JvmName(\"Strings\")` собрались бы в один класс, но без `@JvmMultifileClass` это compile error.",
                 "how_it_should_be": "Для объединения top-level/extension-функций из разных файлов нужны оба: одинаковый `@JvmName` и `@JvmMultifileClass`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Extension-функция `String.toSlug()` из `StringUtils.kt` компилируется в статический метод, где receiver — первый параметр, поэтому из `Java` вызывают `StringUtilsKt.toSlug(str)`; аннотация `@file:JvmName` меняет имя класса-обёртки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Extension-функции не добавляются в сам класс-receiver, а компилируются в статические методы класса `<FileName>Kt`, принимающие объект-receiver первым аргументом.",
+                "example": "Для `fun String.toSlug(): String` в `StringUtils.kt` из `Java`: `String slug = StringUtilsKt.toSlug(\"Hello World!\")`; с `@file:JvmName(\"Strings\")` — `Strings.toSlug(\"Hello World!\")`.",
+                "when_to_apply": "Понимание этого нужно, когда extension-функции `Kotlin` (утилиты над `String`, `List` и т.п.) должны вызываться из `Java`-кода.",
+                "edge_cases": "Если несколько файлов используют одинаковый `@JvmName`, к каждому добавляют `@file:JvmMultifileClass`, иначе будет ошибка компиляции; имя класса по умолчанию — `<FileName>Kt`.",
+                "related": "[[kotlin-interop-java-interview#Q1]] таблица соответствий Kotlin→Java; [[kotlin-interop-java-interview#Q9]] @JvmName и @JvmMultifileClass; [[kotlin-interop-java-interview#Q36]] extension-функции в байткоде."
               }
             }
           ]
@@ -311,18 +311,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Platform type `String!` гарантирует non-null: `Kotlin` сам проверяет значение перед использованием и не пропустит `null` дальше.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Platform type НЕ гарантирует non-null и не проверяется компилятором; при присвоении в `String` значение `null` даст NPE без compile-time защиты.",
-                "source_of_confusion": "Отсутствие `?` в типе `String!` визуально похоже на non-null `String`, поэтому кажется, что значение безопасно.",
-                "if_it_were_true": "Тогда не было бы вообще проблемы platform types, но именно из-за отсутствия проверки они и опасны.",
-                "how_it_should_be": "Platform type — неизвестная nullability; защиту даёт явный тип (`String?`) или safe call, а не сам по себе `!`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Platform type (`String!`, `List<User>!`) — тип из `Java`-кода, для которого `Kotlin` не знает nullability; его можно присвоить и в `String` (тогда при `null` будет NPE прямо в месте присваивания), и в `String?` (безопасно). Явное указание типа и safe calls устраняют риск.",
               "correct": true,
               "sections": {
@@ -331,6 +319,18 @@
                 "when_to_apply": "Об этом помнят при вызове любого `Java`-API без `@Nullable`/`@NotNull`: всегда указывают тип явно или применяют safe calls, чтобы не словить NPE.",
                 "edge_cases": "Если присвоить platform type в non-null `String`, а значение окажется `null` — NPE возникнет сразу в месте присваивания (а не позже, как в `Java`); аннотирование `Java`-кода `@Nullable`/`@NotNull` убирает platform type вовсе.",
                 "related": "[[kotlin-interop-java-interview#Q7]] аннотации @Nullable/@NotNull; [[kotlin-interop-java-interview#Q30]] почему platform types опасны; [[kotlin-interop-java-interview#Q33]] Optional vs null safety."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Platform type не создаёт проблем, потому что `Kotlin`-компилятор всегда автоматически вставляет null-check при каждом доступе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для platform type компилятор не знает nullable/non-null и не вставляет проверок, поэтому NPE могут проскочить в runtime.",
+                "source_of_confusion": "Известно, что `Kotlin` добавляет intrinsic null-checks для non-null параметров, и это ошибочно распространяют на platform types.",
+                "if_it_were_true": "Тогда NPE из `Java`-API были бы невозможны, но они — классическая проблема platform types.",
+                "how_it_should_be": "Проверки появляются только при явном non-null типе; для platform type разработчик сам отвечает за безопасность."
               }
             },
             {
@@ -348,13 +348,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Platform type не создаёт проблем, потому что `Kotlin`-компилятор всегда автоматически вставляет null-check при каждом доступе.",
+              "text": "Platform type `String!` гарантирует non-null: `Kotlin` сам проверяет значение перед использованием и не пропустит `null` дальше.",
               "correct": false,
               "sections": {
-                "what_actually": "Для platform type компилятор не знает nullable/non-null и не вставляет проверок, поэтому NPE могут проскочить в runtime.",
-                "source_of_confusion": "Известно, что `Kotlin` добавляет intrinsic null-checks для non-null параметров, и это ошибочно распространяют на platform types.",
-                "if_it_were_true": "Тогда NPE из `Java`-API были бы невозможны, но они — классическая проблема platform types.",
-                "how_it_should_be": "Проверки появляются только при явном non-null типе; для platform type разработчик сам отвечает за безопасность."
+                "what_actually": "Platform type НЕ гарантирует non-null и не проверяется компилятором; при присвоении в `String` значение `null` даст NPE без compile-time защиты.",
+                "source_of_confusion": "Отсутствие `?` в типе `String!` визуально похоже на non-null `String`, поэтому кажется, что значение безопасно.",
+                "if_it_were_true": "Тогда не было бы вообще проблемы platform types, но именно из-за отсутствия проверки они и опасны.",
+                "how_it_should_be": "Platform type — неизвестная nullability; защиту даёт явный тип (`String?`) или safe call, а не сам по себе `!`."
               }
             }
           ]
@@ -371,13 +371,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Kotlin` распознаёт nullability-аннотации только из `JSR-305`; `@NotNull` из `JetBrains` и `@Nullable` из `Android` он игнорирует, оставляя platform type.",
-              "correct": false,
+              "text": "`@NotNull`/`@Nullable` из `JetBrains`, `JSR-305`, `Spring`, `Android`, `Eclipse`, `Lombok` распознаются `Kotlin`-компилятором и убирают platform type: аннотированный тип становится точным (`String` или `String?`); флаг `-Xjsr305=strict` делает все неаннотированные `Java`-типы nullable.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Kotlin` распознаёт аннотации из `JetBrains`, `JSR-305`, `Android`, `Spring`, `Eclipse` и `Lombok` — все эти библиотеки, а не только `JSR-305`.",
-                "source_of_confusion": "Флаг `-Xjsr305` упоминается чаще других, и кажется, что поддерживается лишь этот стандарт.",
-                "if_it_were_true": "Тогда `androidx.annotation.@NonNull` не убирал бы platform type, но `Kotlin` его учитывает.",
-                "how_it_should_be": "Поддержан широкий список библиотек; любая из них устраняет platform type для аннотированного элемента."
+                "explanation": "Когда `Java`-элемент помечен nullability-аннотацией, `Kotlin` больше не гадает: `@NotNull String` виден как `String` (non-null), `@Nullable String` — как `String?`, и platform type исчезает.",
+                "example": "Для `@NotNull String getName()` пишут `val name: String = userService.name`; для `@Nullable String getMiddleName()` — `val middle: String? = userService.middleName`; неаннотированный `getNickname()` остаётся `String!`.",
+                "when_to_apply": "Это используют при работе с `Java`-библиотеками, где есть `Spring`- или `JSR-305`-аннотации, а также включают `-Xjsr305=strict` для максимальной строгости на границе.",
+                "edge_cases": "`Kotlin` сам добавляет `@NotNull`/`@Nullable` в байткод и для своих параметров, поэтому `Java`-IDE подсветят передачу `null` в non-null `Kotlin`-метод; strict mode делает типы строже (nullable), а не наоборот.",
+                "related": "[[kotlin-interop-java-interview#Q6]] platform types; [[kotlin-interop-java-interview#Q8]] nullability-контракты Kotlin для Java; [[kotlin-interop-java-interview#Q30]] стратегии против platform types."
               }
             },
             {
@@ -395,14 +396,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@NotNull`/`@Nullable` из `JetBrains`, `JSR-305`, `Spring`, `Android`, `Eclipse`, `Lombok` распознаются `Kotlin`-компилятором и убирают platform type: аннотированный тип становится точным (`String` или `String?`); флаг `-Xjsr305=strict` делает все неаннотированные `Java`-типы nullable.",
-              "correct": true,
+              "text": "`Kotlin` распознаёт nullability-аннотации только из `JSR-305`; `@NotNull` из `JetBrains` и `@Nullable` из `Android` он игнорирует, оставляя platform type.",
+              "correct": false,
               "sections": {
-                "explanation": "Когда `Java`-элемент помечен nullability-аннотацией, `Kotlin` больше не гадает: `@NotNull String` виден как `String` (non-null), `@Nullable String` — как `String?`, и platform type исчезает.",
-                "example": "Для `@NotNull String getName()` пишут `val name: String = userService.name`; для `@Nullable String getMiddleName()` — `val middle: String? = userService.middleName`; неаннотированный `getNickname()` остаётся `String!`.",
-                "when_to_apply": "Это используют при работе с `Java`-библиотеками, где есть `Spring`- или `JSR-305`-аннотации, а также включают `-Xjsr305=strict` для максимальной строгости на границе.",
-                "edge_cases": "`Kotlin` сам добавляет `@NotNull`/`@Nullable` в байткод и для своих параметров, поэтому `Java`-IDE подсветят передачу `null` в non-null `Kotlin`-метод; strict mode делает типы строже (nullable), а не наоборот.",
-                "related": "[[kotlin-interop-java-interview#Q6]] platform types; [[kotlin-interop-java-interview#Q8]] nullability-контракты Kotlin для Java; [[kotlin-interop-java-interview#Q30]] стратегии против platform types."
+                "what_actually": "`Kotlin` распознаёт аннотации из `JetBrains`, `JSR-305`, `Android`, `Spring`, `Eclipse` и `Lombok` — все эти библиотеки, а не только `JSR-305`.",
+                "source_of_confusion": "Флаг `-Xjsr305` упоминается чаще других, и кажется, что поддерживается лишь этот стандарт.",
+                "if_it_were_true": "Тогда `androidx.annotation.@NonNull` не убирал бы platform type, но `Kotlin` его учитывает.",
+                "how_it_should_be": "Поддержан широкий список библиотек; любая из них устраняет platform type для аннотированного элемента."
               }
             },
             {
@@ -431,6 +431,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Ничего вручную делать не нужно: `Kotlin`-компилятор сам добавляет `@NotNull` в байткод для `String`-параметров и `@Nullable` для `String?`, плюс runtime-проверку на входе; передача `null` из `Java` в non-null параметр немедленно бросает `NullPointerException` на входе в метод.",
+              "correct": true,
+              "sections": {
+                "explanation": "Компилятор автоматически материализует nullability-контракт в байткоде: non-null тип → `@NotNull` + intrinsic-проверка в начале метода, nullable → `@Nullable`; разработчику не нужно расставлять аннотации руками.",
+                "example": "Для `fun process(name: String): String = name.uppercase()` вызов `UserKt.process(null)` из `Java` сразу даёт `NullPointerException: Parameter specified as non-null is null`.",
+                "when_to_apply": "На это опираются, проектируя `Kotlin`-API для `Java`-клиентов: nullability видна на той стороне без ручных аннотаций, а нарушение контракта ловится рано.",
+                "edge_cases": "Проверка срабатывает именно на входе в метод (а не позже при использовании); для публичных библиотек nullability всё равно полезно документировать, т.к. не все `Java`-IDE покажут предупреждения.",
+                "related": "[[kotlin-interop-java-interview#Q6]] platform types; [[kotlin-interop-java-interview#Q7]] распознавание аннотаций; [[kotlin-interop-java-interview#Q26]] Java-friendly API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Kotlin` помещает `@Nullable`/`@NotNull` в байткод только если разработчик явно написал эти аннотации в `Kotlin`-коде; иначе nullability не отражается.",
               "correct": false,
               "sections": {
@@ -438,18 +451,6 @@
                 "source_of_confusion": "В `Java` аннотации пишут руками, и это ожидание переносят на `Kotlin`.",
                 "if_it_were_true": "Тогда `Java`-IDE не подсвечивала бы передачу `null` в `Kotlin`-метод без ручных аннотаций, но подсветка работает.",
                 "how_it_should_be": "Nullability выводится из типа (`String` vs `String?`) и кладётся в байткод компилятором без участия разработчика."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Если `Java`-код передаст `null` в non-null `Kotlin`-параметр, `NullPointerException` возникнет позже — при первом фактическом использовании значения внутри метода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Kotlin` вставляет intrinsic-проверку на входе в метод и бросает `NullPointerException` немедленно, до использования значения.",
-                "source_of_confusion": "В `Java` NPE обычно случается при разыменовании, и эту модель переносят на `Kotlin`-методы.",
-                "if_it_were_true": "Тогда `process(null)` падал бы только на `name.uppercase()`, но он падает сразу на входе.",
-                "how_it_should_be": "Проверка стоит в начале метода; нарушение контракта обнаруживается на входе, а не отложенно."
               }
             },
             {
@@ -467,14 +468,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Ничего вручную делать не нужно: `Kotlin`-компилятор сам добавляет `@NotNull` в байткод для `String`-параметров и `@Nullable` для `String?`, плюс runtime-проверку на входе; передача `null` из `Java` в non-null параметр немедленно бросает `NullPointerException` на входе в метод.",
-              "correct": true,
+              "text": "Если `Java`-код передаст `null` в non-null `Kotlin`-параметр, `NullPointerException` возникнет позже — при первом фактическом использовании значения внутри метода.",
+              "correct": false,
               "sections": {
-                "explanation": "Компилятор автоматически материализует nullability-контракт в байткоде: non-null тип → `@NotNull` + intrinsic-проверка в начале метода, nullable → `@Nullable`; разработчику не нужно расставлять аннотации руками.",
-                "example": "Для `fun process(name: String): String = name.uppercase()` вызов `UserKt.process(null)` из `Java` сразу даёт `NullPointerException: Parameter specified as non-null is null`.",
-                "when_to_apply": "На это опираются, проектируя `Kotlin`-API для `Java`-клиентов: nullability видна на той стороне без ручных аннотаций, а нарушение контракта ловится рано.",
-                "edge_cases": "Проверка срабатывает именно на входе в метод (а не позже при использовании); для публичных библиотек nullability всё равно полезно документировать, т.к. не все `Java`-IDE покажут предупреждения.",
-                "related": "[[kotlin-interop-java-interview#Q6]] platform types; [[kotlin-interop-java-interview#Q7]] распознавание аннотаций; [[kotlin-interop-java-interview#Q26]] Java-friendly API."
+                "what_actually": "`Kotlin` вставляет intrinsic-проверку на входе в метод и бросает `NullPointerException` немедленно, до использования значения.",
+                "source_of_confusion": "В `Java` NPE обычно случается при разыменовании, и эту модель переносят на `Kotlin`-методы.",
+                "if_it_were_true": "Тогда `process(null)` падал бы только на `name.uppercase()`, но он падает сразу на входе.",
+                "how_it_should_be": "Проверка стоит в начале метода; нарушение контракта обнаруживается на входе, а не отложенно."
               }
             }
           ]
@@ -491,6 +491,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`@file:JvmMultifileClass` сам по себе объединяет файлы в один класс, даже без одинакового `@JvmName`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@JvmMultifileClass` требует одинаковый `@JvmName(\"X\")` на всех объединяемых файлах; без него — ошибка компиляции.",
+                "source_of_confusion": "Название аннотации намекает на «мультифайловый класс», и кажется, что она самодостаточна.",
+                "if_it_were_true": "Тогда хватило бы одной аннотации, но компилятор требует и совпадающее имя класса.",
+                "how_it_should_be": "Объединение работает только в паре: общий `@JvmName` плюс `@JvmMultifileClass` на каждом файле."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`@JvmName` задаёт имя элемента в байткоде (и в `Java`): переименовывает файловый класс top-level функций, разрешает конфликты сигнатур из-за type erasure, меняет имена геттеров/сеттеров; а `@file:JvmMultifileClass` объединяет top-level функции из разных файлов в один `Java`-класс.",
               "correct": true,
               "sections": {
@@ -499,18 +511,6 @@
                 "when_to_apply": "Применяют для красивых имён файловых классов, разрешения конфликтов перегрузок дженериков и правки имён геттеров (например, чтобы `isActive` остался `isActive()`).",
                 "edge_cases": "Для объединения функций из разных файлов в один класс нужны оба: одинаковый `@file:JvmName` и `@file:JvmMultifileClass` на каждом файле, иначе будет ошибка компиляции.",
                 "related": "[[kotlin-interop-java-interview#Q5]] @JvmName для extension-обёрток; [[kotlin-interop-java-interview#Q10]] @JvmSynthetic для скрытия; [[kotlin-interop-java-interview#Q19]] top-level функции и @JvmMultifileClass."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`@JvmName` меняет видимость метода, делая его внутренним (`internal`) и недоступным за пределами модуля.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@JvmName` только переименовывает элемент в байткоде и не трогает видимость; для скрытия от `Java` используют `@JvmSynthetic`.",
-                "source_of_confusion": "Изменение имени в байткоде путают с изменением области видимости.",
-                "if_it_were_true": "Тогда `@JvmName(\"Dates\")` прятал бы функции, но `Dates.parseDate()` остаётся публично вызываемым.",
-                "how_it_should_be": "Видимость задают модификаторы (`internal`, `private`) и `@JvmSynthetic`; `@JvmName` — только алиас имени."
               }
             },
             {
@@ -528,13 +528,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@file:JvmMultifileClass` сам по себе объединяет файлы в один класс, даже без одинакового `@JvmName`.",
+              "text": "`@JvmName` меняет видимость метода, делая его внутренним (`internal`) и недоступным за пределами модуля.",
               "correct": false,
               "sections": {
-                "what_actually": "`@JvmMultifileClass` требует одинаковый `@JvmName(\"X\")` на всех объединяемых файлах; без него — ошибка компиляции.",
-                "source_of_confusion": "Название аннотации намекает на «мультифайловый класс», и кажется, что она самодостаточна.",
-                "if_it_were_true": "Тогда хватило бы одной аннотации, но компилятор требует и совпадающее имя класса.",
-                "how_it_should_be": "Объединение работает только в паре: общий `@JvmName` плюс `@JvmMultifileClass` на каждом файле."
+                "what_actually": "`@JvmName` только переименовывает элемент в байткоде и не трогает видимость; для скрытия от `Java` используют `@JvmSynthetic`.",
+                "source_of_confusion": "Изменение имени в байткоде путают с изменением области видимости.",
+                "if_it_were_true": "Тогда `@JvmName(\"Dates\")` прятал бы функции, но `Dates.parseDate()` остаётся публично вызываемым.",
+                "how_it_should_be": "Видимость задают модификаторы (`internal`, `private`) и `@JvmSynthetic`; `@JvmName` — только алиас имени."
               }
             }
           ]
@@ -563,14 +563,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@JvmSynthetic` помечает элемент как `synthetic` в байткоде: он становится невидим из `Java`, но остаётся доступен из `Kotlin`. Используется для сокрытия служебных API и DSL-функций от `Java`-клиентов.",
-              "correct": true,
+              "text": "`@JvmSynthetic` обязателен для всех `operator`-функций `Kotlin`, иначе они не скомпилируются.",
+              "correct": false,
               "sections": {
-                "explanation": "В отличие от `internal` (который компилируется в `public` с name-mangling и технически достижим из `Java`), `@JvmSynthetic` полностью убирает видимость элемента со стороны `Java`.",
-                "example": "`@JvmSynthetic internal fun configure(block: Config.() -> Unit)` доступна из `Kotlin`-DSL, но `Java`-разработчик её просто не увидит в автодополнении и не сможет вызвать.",
-                "when_to_apply": "Применяют, когда функция или свойство имеют смысл только для `Kotlin`-потребителей: DSL-builders, лямбда-ориентированные методы, служебные методы для inline/operator-конструкций.",
-                "edge_cases": "`@JvmSynthetic` не меняет `Kotlin`-видимость элемента (он остаётся доступным из `Kotlin` любой видимости), а только скрывает от `Java`; это отличает её от `internal`, чьё mangled-имя теоретически достижимо.",
-                "related": "[[kotlin-interop-java-interview#Q9]] @JvmName как другой byte-code-инструмент; [[kotlin-interop-java-interview#Q26]] Java-friendly дизайн API; [[kotlin-interop-java-interview#Q18]] internal и name-mangling в свойствах."
+                "what_actually": "`@JvmSynthetic` опционален и применяется только когда нужно намеренно скрыть `Kotlin`-only API от `Java`; на компиляцию `operator`-функций он не влияет.",
+                "source_of_confusion": "Аннотация иногда упоминается рядом с inline/operator-конструкциями, и связь воспринимается как обязательная.",
+                "if_it_were_true": "Тогда без `@JvmSynthetic` `operator fun plus` ломал бы сборку, но операторы работают без неё.",
+                "how_it_should_be": "Операторы компилируются без аннотации; `@JvmSynthetic` добавляют по желанию для сокрытия от `Java`."
               }
             },
             {
@@ -588,13 +587,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@JvmSynthetic` обязателен для всех `operator`-функций `Kotlin`, иначе они не скомпилируются.",
-              "correct": false,
+              "text": "`@JvmSynthetic` помечает элемент как `synthetic` в байткоде: он становится невидим из `Java`, но остаётся доступен из `Kotlin`. Используется для сокрытия служебных API и DSL-функций от `Java`-клиентов.",
+              "correct": true,
               "sections": {
-                "what_actually": "`@JvmSynthetic` опционален и применяется только когда нужно намеренно скрыть `Kotlin`-only API от `Java`; на компиляцию `operator`-функций он не влияет.",
-                "source_of_confusion": "Аннотация иногда упоминается рядом с inline/operator-конструкциями, и связь воспринимается как обязательная.",
-                "if_it_were_true": "Тогда без `@JvmSynthetic` `operator fun plus` ломал бы сборку, но операторы работают без неё.",
-                "how_it_should_be": "Операторы компилируются без аннотации; `@JvmSynthetic` добавляют по желанию для сокрытия от `Java`."
+                "explanation": "В отличие от `internal` (который компилируется в `public` с name-mangling и технически достижим из `Java`), `@JvmSynthetic` полностью убирает видимость элемента со стороны `Java`.",
+                "example": "`@JvmSynthetic internal fun configure(block: Config.() -> Unit)` доступна из `Kotlin`-DSL, но `Java`-разработчик её просто не увидит в автодополнении и не сможет вызвать.",
+                "when_to_apply": "Применяют, когда функция или свойство имеют смысл только для `Kotlin`-потребителей: DSL-builders, лямбда-ориентированные методы, служебные методы для inline/operator-конструкций.",
+                "edge_cases": "`@JvmSynthetic` не меняет `Kotlin`-видимость элемента (он остаётся доступным из `Kotlin` любой видимости), а только скрывает от `Java`; это отличает её от `internal`, чьё mangled-имя теоретически достижимо.",
+                "related": "[[kotlin-interop-java-interview#Q9]] @JvmName как другой byte-code-инструмент; [[kotlin-interop-java-interview#Q26]] Java-friendly дизайн API; [[kotlin-interop-java-interview#Q18]] internal и name-mangling в свойствах."
               }
             }
           ]
@@ -683,18 +683,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Каждый вызов с лямбдой через SAM создаёт один и тот же экземпляр (singleton), поэтому ссылку можно безопасно использовать для `removeListener`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Каждый вызов с лямбдой создаёт новый объект; для одной и той же ссылки (например, под `removeListener`) лямбду сохраняют в переменную.",
-                "source_of_confusion": "Лямбды без захвата иногда кешируются JVM, и это обобщают на все случаи SAM-conversion.",
-                "if_it_were_true": "Тогда `addListener { }` и `removeListener { }` ссылались бы на один объект, но это разные экземпляры.",
-                "how_it_should_be": "Для стабильной ссылки лямбду присваивают переменной и передают её и в `add`, и в `remove`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "SAM-conversion применяется только к `java.lang.Runnable` и `java.util.Comparator` — для остальных интерфейсов нужен явный анонимный объект.",
               "correct": false,
               "sections": {
@@ -705,8 +693,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "SAM-conversion (Single Abstract Method) позволяет передавать `Kotlin`-лямбду вместо экземпляра `Java`-интерфейса с одним абстрактным методом (`Runnable`, `Comparator`, `Callable`, `Consumer`); для `Kotlin`-интерфейсов это работает только если они помечены `fun interface` (с `Kotlin` 1.4).",
               "correct": true,
               "sections": {
@@ -715,6 +703,18 @@
                 "when_to_apply": "SAM-conversion используют при вызове `Java`-API, принимающих функциональные интерфейсы, чтобы передавать лаконичные лямбды вместо анонимных объектов.",
                 "edge_cases": "Каждый вызов с лямбдой создаёт новый объект, поэтому для `removeListener` лямбду сохраняют в переменную; при неоднозначности перегрузок указывают тип явно: `executor.submit(Runnable { ... })`.",
                 "related": "[[kotlin-interop-java-interview#Q13]] fun interface vs Java SAM; [[kotlin-interop-java-interview#Q1]] отображение Kotlin-конструкций в Java; [[kotlin-interop-java-interview#Q5]] лямбды и статические методы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Каждый вызов с лямбдой через SAM создаёт один и тот же экземпляр (singleton), поэтому ссылку можно безопасно использовать для `removeListener`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый вызов с лямбдой создаёт новый объект; для одной и той же ссылки (например, под `removeListener`) лямбду сохраняют в переменную.",
+                "source_of_confusion": "Лямбды без захвата иногда кешируются JVM, и это обобщают на все случаи SAM-conversion.",
+                "if_it_were_true": "Тогда `addListener { }` и `removeListener { }` ссылались бы на один объект, но это разные экземпляры.",
+                "how_it_should_be": "Для стабильной ссылки лямбду присваивают переменной и передают её и в `add`, и в `remove`."
               }
             }
           ]
@@ -731,6 +731,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`fun interface` в `Kotlin` допускает несколько абстрактных методов, выбирая для SAM-conversion первый из них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`fun interface` строго запрещает больше одного абстрактного метода — это compile-time error, и именно это гарантирует однозначность SAM-conversion.",
+                "source_of_confusion": "Обычные `Kotlin`-интерфейсы могут иметь много методов, и это переносят на `fun interface`.",
+                "if_it_were_true": "Тогда два абстрактных метода в `fun interface` компилировались бы, но компилятор это запрещает.",
+                "how_it_should_be": "Ровно один абстрактный метод — обязательное условие `fun interface`; больше — ошибка компиляции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`fun interface` — `Kotlin`-аналог `Java` SAM-интерфейса (появился в `Kotlin` 1.4): он включает SAM-conversion для `Kotlin`-интерфейса, тогда как обычный `interface` без ключевого слова `fun` SAM-conversion не поддерживает, и для него нужен `object : Interface {}`.",
               "correct": true,
               "sections": {
@@ -742,32 +754,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`Kotlin` `fun interface` и `Java` SAM полностью взаимозаменяемы — между ними нет вообще никакой разницы в поведении или ограничениях.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Разница есть: `fun interface` объявляется declaration-site (один раз) и запрещает больше одного абстрактного метода на этапе компиляции, тогда как `Java` считает SAM любой интерфейс с одним методом.",
-                "source_of_confusion": "Оба дают SAM-conversion из `Kotlin`, и кажется, что они идентичны.",
-                "if_it_were_true": "Тогда обычный `Kotlin interface` с одним методом тоже поддерживал бы лямбду, но нет — нужен `fun`.",
-                "how_it_should_be": "`fun interface` — это явная пометка с проверкой одного метода; `Java` SAM определяется по факту наличия одного абстрактного метода."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`fun interface` в `Kotlin` допускает несколько абстрактных методов, выбирая для SAM-conversion первый из них.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`fun interface` строго запрещает больше одного абстрактного метода — это compile-time error, и именно это гарантирует однозначность SAM-conversion.",
-                "source_of_confusion": "Обычные `Kotlin`-интерфейсы могут иметь много методов, и это переносят на `fun interface`.",
-                "if_it_were_true": "Тогда два абстрактных метода в `fun interface` компилировались бы, но компилятор это запрещает.",
-                "how_it_should_be": "Ровно один абстрактный метод — обязательное условие `fun interface`; больше — ошибка компиляции."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`Java`-лямбды не могут реализовывать `Kotlin` `fun interface` — interop работает только в направлении `Kotlin` → `Java`.",
               "correct": false,
               "sections": {
@@ -775,6 +763,18 @@
                 "source_of_confusion": "Кажется, что `Kotlin`-специфичная конструкция недоступна для `Java`-стороны.",
                 "if_it_were_true": "Тогда `fun interface` нельзя было бы использовать в смешанных проектах из `Java`, но это работает.",
                 "how_it_should_be": "Оба языка поддерживают взаимный interop: `Java`-лямбда реализует `Kotlin` `fun interface` так же, как свой SAM."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Kotlin` `fun interface` и `Java` SAM полностью взаимозаменяемы — между ними нет вообще никакой разницы в поведении или ограничениях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разница есть: `fun interface` объявляется declaration-site (один раз) и запрещает больше одного абстрактного метода на этапе компиляции, тогда как `Java` считает SAM любой интерфейс с одним методом.",
+                "source_of_confusion": "Оба дают SAM-conversion из `Kotlin`, и кажется, что они идентичны.",
+                "if_it_were_true": "Тогда обычный `Kotlin interface` с одним методом тоже поддерживал бы лямбду, но нет — нужен `fun`.",
+                "how_it_should_be": "`fun interface` — это явная пометка с проверкой одного метода; `Java` SAM определяется по факту наличия одного абстрактного метода."
               }
             }
           ]
@@ -791,31 +791,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`out T` в `Kotlin` всегда генерирует `? super T` в `Java`-сигнатуре, потому что чтение требует супертипа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`out T` транслируется в `? extends T` (ковариантность, Producer Extends); `? super T` соответствует `in T` (контравариантность, Consumer Super).",
-                "source_of_confusion": "`out`/`in` и `extends`/`super` легко перепутать местами при сопоставлении.",
-                "if_it_were_true": "Тогда `Source<out T>` в `Java` был бы `Source<? super T>`, но компилятор даёт `? extends T`.",
-                "how_it_should_be": "`out` → `? extends` (читать), `in` → `? super` (писать) — это и есть PECS."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`out T` = Producer = `? extends T` (можно только читать `T`); `in T` = Consumer = `? super T` (можно только писать `T`); `*` = `?` (unbounded wildcard). Это один принцип PECS (Producer Extends, Consumer Super), выраженный declaration-site (`Kotlin`) и use-site (`Java`) вариантностью.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Kotlin` задаёт вариантность один раз при объявлении интерфейса (`Source<out T>`, `Sink<in T>`), а `Java` — на каждой точке использования через wildcards; при компиляции `Kotlin` транслирует `out T` в `? extends T` в `Java`-сигнатурах.",
-                "example": "`fun copy(from: Source<Any>, to: Sink<Any>)` `Java` видит как `void copy(Source<? extends Object> from, Sink<? super Object> to)`.",
-                "when_to_apply": "Это знание применяют при проектировании дженерик-API на границе языков и при чтении `Java`-сигнатур, сгенерированных из `Kotlin`-вариантных типов.",
-                "edge_cases": "Star projection `*` соответствует `?` (тип неизвестен); инвариантный `T` без модификатора остаётся `T` и допускает и чтение, и запись.",
-                "related": "[[kotlin-interop-java-interview#Q15]] @JvmSuppressWildcards/@JvmWildcard; [[kotlin-interop-java-interview#Q38]] практические примеры variance; [[kotlin-interop-java-interview#Q16]] коллекции на границе языков."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Declaration-site variance в `Kotlin` полностью идентична use-site variance в `Java`: разница только в синтаксисе записи.",
               "correct": false,
               "sections": {
@@ -826,8 +801,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`Kotlin` `out`/`in` влияет только на `Kotlin`-код; `Java` видит обычные дженерики без всяких wildcards.",
               "correct": false,
               "sections": {
@@ -835,6 +810,31 @@
                 "source_of_confusion": "Вариантность кажется внутренней деталью `Kotlin`, не выходящей в байткод.",
                 "if_it_were_true": "Тогда `Source<out T>` в `Java` был бы `Source<T>`, но реально появляется `Source<? extends T>`.",
                 "how_it_should_be": "Вариантность транслируется в `Java`-сигнатуры как wildcards, и `Java` их видит."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`out T` в `Kotlin` всегда генерирует `? super T` в `Java`-сигнатуре, потому что чтение требует супертипа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`out T` транслируется в `? extends T` (ковариантность, Producer Extends); `? super T` соответствует `in T` (контравариантность, Consumer Super).",
+                "source_of_confusion": "`out`/`in` и `extends`/`super` легко перепутать местами при сопоставлении.",
+                "if_it_were_true": "Тогда `Source<out T>` в `Java` был бы `Source<? super T>`, но компилятор даёт `? extends T`.",
+                "how_it_should_be": "`out` → `? extends` (читать), `in` → `? super` (писать) — это и есть PECS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`out T` = Producer = `? extends T` (можно только читать `T`); `in T` = Consumer = `? super T` (можно только писать `T`); `*` = `?` (unbounded wildcard). Это один принцип PECS (Producer Extends, Consumer Super), выраженный declaration-site (`Kotlin`) и use-site (`Java`) вариантностью.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Kotlin` задаёт вариантность один раз при объявлении интерфейса (`Source<out T>`, `Sink<in T>`), а `Java` — на каждой точке использования через wildcards; при компиляции `Kotlin` транслирует `out T` в `? extends T` в `Java`-сигнатурах.",
+                "example": "`fun copy(from: Source<Any>, to: Sink<Any>)` `Java` видит как `void copy(Source<? extends Object> from, Sink<? super Object> to)`.",
+                "when_to_apply": "Это знание применяют при проектировании дженерик-API на границе языков и при чтении `Java`-сигнатур, сгенерированных из `Kotlin`-вариантных типов.",
+                "edge_cases": "Star projection `*` соответствует `?` (тип неизвестен); инвариантный `T` без модификатора остаётся `T` и допускает и чтение, и запись.",
+                "related": "[[kotlin-interop-java-interview#Q15]] @JvmSuppressWildcards/@JvmWildcard; [[kotlin-interop-java-interview#Q38]] практические примеры variance; [[kotlin-interop-java-interview#Q16]] коллекции на границе языков."
               }
             }
           ]
@@ -863,6 +863,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Kotlin` `out`-интерфейсы по умолчанию видны в `Java` без wildcards, поэтому `@JvmSuppressWildcards` обычно не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `Kotlin` добавляет wildcards для `out`/`in`-вариантности; чтобы их убрать, нужна явная `@JvmSuppressWildcards`.",
+                "source_of_confusion": "Хочется верить, что `Java` видит «чистые» дженерики, как написано в `Kotlin`.",
+                "if_it_were_true": "Тогда `Dagger` сразу сопоставлял бы `List<Foo>`, и проблема инъекции не возникала бы, но wildcards добавляются автоматически.",
+                "how_it_should_be": "Wildcards присутствуют по умолчанию; их убирает именно `@JvmSuppressWildcards`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`@JvmSuppressWildcards` обязателен для всех `out`-параметров в `Kotlin`, иначе код не скомпилируется.",
               "correct": false,
               "sections": {
@@ -873,8 +885,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`@JvmSuppressWildcards` убирает автоматические wildcards (`List<T>` вместо `List<? extends T>`) — нужна когда DI-фреймворки не могут сопоставить типы; `@JvmWildcard` наоборот добавляет wildcard там, где `Kotlin` его не генерирует, для совместимости с `Java`-API.",
               "correct": true,
               "sections": {
@@ -883,18 +895,6 @@
                 "when_to_apply": "`@JvmSuppressWildcards` применяют при инъекции `out`-коллекций в `Dagger`/`Guice` или `Spring` `@Autowired List<Foo>`; `@JvmWildcard` — когда `Java`-API ожидает именно wildcard-тип.",
                 "edge_cases": "По умолчанию `Kotlin` добавляет wildcards для `out`/`in`-вариантности; чтобы их убрать или добавить точечно, нужны эти аннотации; `@JvmWildcard` используется заметно реже.",
                 "related": "[[kotlin-interop-java-interview#Q14]] in/out vs wildcards; [[kotlin-interop-java-interview#Q38]] практика variance в interop; [[kotlin-interop-java-interview#Q16]] коллекции на границе."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Kotlin` `out`-интерфейсы по умолчанию видны в `Java` без wildcards, поэтому `@JvmSuppressWildcards` обычно не требуется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию `Kotlin` добавляет wildcards для `out`/`in`-вариантности; чтобы их убрать, нужна явная `@JvmSuppressWildcards`.",
-                "source_of_confusion": "Хочется верить, что `Java` видит «чистые» дженерики, как написано в `Kotlin`.",
-                "if_it_were_true": "Тогда `Dagger` сразу сопоставлял бы `List<Foo>`, и проблема инъекции не возникала бы, но wildcards добавляются автоматически.",
-                "how_it_should_be": "Wildcards присутствуют по умолчанию; их убирает именно `@JvmSuppressWildcards`."
               }
             }
           ]
@@ -911,18 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Kotlin` `List` (read-only) полностью immutable: `Java`-код физически не может её мутировать ни через какой API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Read-only в `Kotlin` — это ограниченный интерфейс без `add`/`remove`, но в байткоде это `java.util.List`, и `Java`-код может вызвать `.add()` и мутировать коллекцию.",
-                "source_of_confusion": "«Read-only» звучит как «неизменяемый», хотя речь лишь об отсутствии мутирующих методов в интерфейсе.",
-                "if_it_were_true": "Тогда возврат `List` гарантировал бы неизменность для `Java`, но `names.add()` мутирует реальную коллекцию (или бросает `UnsupportedOperationException`).",
-                "how_it_should_be": "Read-only — это сужение интерфейса, не immutability; для настоящей неизменяемости нужна оборонительная копия или unmodifiable-обёртка."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Java` `ArrayList` и `Kotlin` `MutableList` — это разные классы в байткоде, поэтому передача между языками требует конвертации.",
               "correct": false,
               "sections": {
@@ -930,6 +918,19 @@
                 "source_of_confusion": "Разные имена типов (`MutableList` vs `ArrayList`) создают впечатление разных классов.",
                 "if_it_were_true": "Тогда `Java` не мог бы принять `Kotlin`-список без адаптера, но `List<String> x = MyKt.getMutableNames()` работает напрямую.",
                 "how_it_should_be": "`MutableList` и `ArrayList` — одна сущность в байткоде; интероп идёт без преобразований."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В байткоде `Kotlin` `List`/`MutableList` — это один и тот же `java.util.List`; read-only `List` НЕ immutable, поэтому `Java` может мутировать коллекцию через cast или прямой вызов API. `listOf()` даёт интерфейс без мутаций, но под капотом — обычный `java.util.List`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Kotlin` различает read-only (`List`) и mutable (`MutableList`) только на уровне типов; в байткоде обе иерархии используют одни и те же `Java`-классы, и read-only — это просто более узкий интерфейс без мутирующих методов.",
+                "example": "`fun getNames(): List<String> = listOf(\"Alice\")` из `Java` приходит как `java.util.List`; вызов `names.add(\"Charlie\")` компилируется, но даёт `UnsupportedOperationException`, тогда как `mutableListOf` мутируется нормально.",
+                "when_to_apply": "Об этом помнят, возвращая `List` из `Kotlin`-API в `Java`: клиент получит `java.util.List` и технически сможет вызвать `.add()`, поэтому read-only не считают защитой.",
+                "edge_cases": "Из `Java` в `Kotlin` `java.util.List` приходит как `(Mutable)List<T!>!` — platform type, и если принять как read-only `List`, а `Java` потом мутирует коллекцию, поведение будет неожиданным.",
+                "related": "[[kotlin-interop-java-interview#Q17]] Streams vs Sequences; [[kotlin-interop-java-interview#Q6]] platform types; [[kotlin-interop-java-interview#Q1]] отображение типов в Java."
               }
             },
             {
@@ -947,14 +948,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В байткоде `Kotlin` `List`/`MutableList` — это один и тот же `java.util.List`; read-only `List` НЕ immutable, поэтому `Java` может мутировать коллекцию через cast или прямой вызов API. `listOf()` даёт интерфейс без мутаций, но под капотом — обычный `java.util.List`.",
-              "correct": true,
+              "text": "`Kotlin` `List` (read-only) полностью immutable: `Java`-код физически не может её мутировать ни через какой API.",
+              "correct": false,
               "sections": {
-                "explanation": "`Kotlin` различает read-only (`List`) и mutable (`MutableList`) только на уровне типов; в байткоде обе иерархии используют одни и те же `Java`-классы, и read-only — это просто более узкий интерфейс без мутирующих методов.",
-                "example": "`fun getNames(): List<String> = listOf(\"Alice\")` из `Java` приходит как `java.util.List`; вызов `names.add(\"Charlie\")` компилируется, но даёт `UnsupportedOperationException`, тогда как `mutableListOf` мутируется нормально.",
-                "when_to_apply": "Об этом помнят, возвращая `List` из `Kotlin`-API в `Java`: клиент получит `java.util.List` и технически сможет вызвать `.add()`, поэтому read-only не считают защитой.",
-                "edge_cases": "Из `Java` в `Kotlin` `java.util.List` приходит как `(Mutable)List<T!>!` — platform type, и если принять как read-only `List`, а `Java` потом мутирует коллекцию, поведение будет неожиданным.",
-                "related": "[[kotlin-interop-java-interview#Q17]] Streams vs Sequences; [[kotlin-interop-java-interview#Q6]] platform types; [[kotlin-interop-java-interview#Q1]] отображение типов в Java."
+                "what_actually": "Read-only в `Kotlin` — это ограниченный интерфейс без `add`/`remove`, но в байткоде это `java.util.List`, и `Java`-код может вызвать `.add()` и мутировать коллекцию.",
+                "source_of_confusion": "«Read-only» звучит как «неизменяемый», хотя речь лишь об отсутствии мутирующих методов в интерфейсе.",
+                "if_it_were_true": "Тогда возврат `List` гарантировал бы неизменность для `Java`, но `names.add()` мутирует реальную коллекцию (или бросает `UnsupportedOperationException`).",
+                "how_it_should_be": "Read-only — это сужение интерфейса, не immutability; для настоящей неизменяемости нужна оборонительная копия или unmodifiable-обёртка."
               }
             }
           ]
@@ -971,6 +971,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Java Stream` можно повторно использовать после терминальной операции — достаточно вызвать `collect` ещё раз на том же объекте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Java Stream` закрывается после терминальной операции; повторное использование бросает `IllegalStateException`, тогда как `Kotlin Sequence` повторяема.",
+                "source_of_confusion": "Переменная со `Stream` остаётся в области видимости, и кажется, что объект ещё «живой».",
+                "if_it_were_true": "Тогда два `collect()` подряд возвращали бы результат, но второй вызов падает с `stream has already been operated upon`.",
+                "how_it_should_be": "`Stream` — одноразовый; для повторной обработки создают новый поток или используют `Sequence`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Kotlin Sequence` повторно используема (можно итерировать многократно) и не имеет встроенного параллелизма; `Java Stream` одноразовый (терминальная операция закрывает поток, повторное использование → `IllegalStateException`), но даёт `parallelStream()` из коробки. Обе абстракции ленивые.",
               "correct": true,
               "sections": {
@@ -982,32 +994,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`Kotlin Sequence` поддерживает `parallelStream()` для параллельной обработки прямо из коробки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Kotlin Sequence` не имеет встроенного параллелизма; для параллельной обработки нужен `Java Stream.parallelStream()` или явные корутины.",
-                "source_of_confusion": "Обе абстракции ленивые и похожи по API, поэтому возможности `Stream` приписывают `Sequence`.",
-                "if_it_were_true": "Тогда `sequence.parallelStream()` компилировался бы, но такого метода у `Sequence` нет.",
-                "how_it_should_be": "Для параллелизма берут `Java Stream`; `Sequence` обрабатывает данные последовательно."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`Java Stream` можно повторно использовать после терминальной операции — достаточно вызвать `collect` ещё раз на том же объекте.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Java Stream` закрывается после терминальной операции; повторное использование бросает `IllegalStateException`, тогда как `Kotlin Sequence` повторяема.",
-                "source_of_confusion": "Переменная со `Stream` остаётся в области видимости, и кажется, что объект ещё «живой».",
-                "if_it_were_true": "Тогда два `collect()` подряд возвращали бы результат, но второй вызов падает с `stream has already been operated upon`.",
-                "how_it_should_be": "`Stream` — одноразовый; для повторной обработки создают новый поток или используют `Sequence`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`Kotlin`-коллекции `filter`/`map` — ленивые операции, работающие так же, как `Sequence`, без создания промежуточных списков.",
               "correct": false,
               "sections": {
@@ -1015,6 +1003,18 @@
                 "source_of_confusion": "Одинаковые имена методов (`filter`, `map`) создают впечатление одинаковой (ленивой) семантики.",
                 "if_it_were_true": "Тогда `list.filter{}.map{}` не аллоцировал бы промежуточные коллекции, но он их создаёт на каждом шаге.",
                 "how_it_should_be": "Прямые операции на коллекции — eager; для ленивости явно переходят к `Sequence`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Kotlin Sequence` поддерживает `parallelStream()` для параллельной обработки прямо из коробки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kotlin Sequence` не имеет встроенного параллелизма; для параллельной обработки нужен `Java Stream.parallelStream()` или явные корутины.",
+                "source_of_confusion": "Обе абстракции ленивые и похожи по API, поэтому возможности `Stream` приписывают `Sequence`.",
+                "if_it_were_true": "Тогда `sequence.parallelStream()` компилировался бы, но такого метода у `Sequence` нет.",
+                "how_it_should_be": "Для параллелизма берут `Java Stream`; `Sequence` обрабатывает данные последовательно."
               }
             }
           ]
@@ -1031,31 +1031,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Boolean`-свойство `isActive` из `Kotlin` видно из `Java` как `getIsActive()`, по обычному JavaBean-правилу с префиксом `get`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Boolean`-свойства с is-префиксом дают геттер `isActive()` (без `get`); `Kotlin`-компилятор сохраняет is-convention для совместимости с `Java Beans`.",
-                "source_of_confusion": "Большинство свойств дают `getX()`, и это правило распространяют на `Boolean is`-свойства.",
-                "if_it_were_true": "Тогда `Jackson` сериализовал бы поле как `isActive` и искал `getIsActive()`, но реальный геттер — `isActive()`.",
-                "how_it_should_be": "Для `is`-свойств геттер называется `isActive()`; `get`-префикс к ним не добавляется."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`val name: String` → `getName()`; `var age: Int` → `getAge()` + `setAge()`; `val isActive: Boolean` (is-property) → `isActive()` (не `getIsActive()`); `@JvmField` убирает геттер и открывает поле напрямую. Свойства компилируются в приватное поле + геттер (+ сеттер для `var`).",
-              "correct": true,
-              "sections": {
-                "explanation": "`Kotlin`-свойства превращаются в стандартные JavaBean-аксессоры, при этом `Boolean`-свойства с префиксом `is` сохраняют is-convention в имени геттера для совместимости с `Java Beans`.",
-                "example": "Для класса с `val name`, `var age`, `val isActive: Boolean` из `Java`: `u.getName()`, `u.getAge()`, `u.setAge(31)`, `u.isActive()` (именно `isActive`, а не `getIsActive`).",
-                "when_to_apply": "Это знание нужно для понимания совместимости `Kotlin` `data class` с `Spring`/`Jackson`/`JPA`, которые опираются на JavaBean-аксессоры.",
-                "edge_cases": "`internal` компилируется в `public` с name-mangling; `lateinit var` даёт публичное поле + геттер/сеттер, и при доступе из `Java` к неинициализированному `lateinit` будет `null` без `UninitializedPropertyAccessException`.",
-                "related": "[[kotlin-interop-java-interview#Q2]] @JvmField/@JvmStatic; [[kotlin-interop-java-interview#Q25]] data class из Java; [[kotlin-interop-java-interview#Q29]] use-site targets для аннотаций на свойствах."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`lateinit var` при доступе из `Java` до инициализации бросает `UninitializedPropertyAccessException`, как и в `Kotlin`.",
               "correct": false,
               "sections": {
@@ -1066,8 +1041,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`internal`-модификатор генерирует приватное поле без всякого доступа из `Java`, полностью скрывая член.",
               "correct": false,
               "sections": {
@@ -1075,6 +1050,31 @@
                 "source_of_confusion": "`internal` ассоциируется с «приватностью для модуля», что путают с недоступностью из `Java`.",
                 "if_it_were_true": "Тогда `internal`-свойства были бы невидимы из `Java`, но их mangled-геттер существует и достижим.",
                 "how_it_should_be": "`internal` — это compile-time-граница `Kotlin`-модулей; для сокрытия от `Java` нужен `@JvmSynthetic`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Boolean`-свойство `isActive` из `Kotlin` видно из `Java` как `getIsActive()`, по обычному JavaBean-правилу с префиксом `get`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Boolean`-свойства с is-префиксом дают геттер `isActive()` (без `get`); `Kotlin`-компилятор сохраняет is-convention для совместимости с `Java Beans`.",
+                "source_of_confusion": "Большинство свойств дают `getX()`, и это правило распространяют на `Boolean is`-свойства.",
+                "if_it_were_true": "Тогда `Jackson` сериализовал бы поле как `isActive` и искал `getIsActive()`, но реальный геттер — `isActive()`.",
+                "how_it_should_be": "Для `is`-свойств геттер называется `isActive()`; `get`-префикс к ним не добавляется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`val name: String` → `getName()`; `var age: Int` → `getAge()` + `setAge()`; `val isActive: Boolean` (is-property) → `isActive()` (не `getIsActive()`); `@JvmField` убирает геттер и открывает поле напрямую. Свойства компилируются в приватное поле + геттер (+ сеттер для `var`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`Kotlin`-свойства превращаются в стандартные JavaBean-аксессоры, при этом `Boolean`-свойства с префиксом `is` сохраняют is-convention в имени геттера для совместимости с `Java Beans`.",
+                "example": "Для класса с `val name`, `var age`, `val isActive: Boolean` из `Java`: `u.getName()`, `u.getAge()`, `u.setAge(31)`, `u.isActive()` (именно `isActive`, а не `getIsActive`).",
+                "when_to_apply": "Это знание нужно для понимания совместимости `Kotlin` `data class` с `Spring`/`Jackson`/`JPA`, которые опираются на JavaBean-аксессоры.",
+                "edge_cases": "`internal` компилируется в `public` с name-mangling; `lateinit var` даёт публичное поле + геттер/сеттер, и при доступе из `Java` к неинициализированному `lateinit` будет `null` без `UninitializedPropertyAccessException`.",
+                "related": "[[kotlin-interop-java-interview#Q2]] @JvmField/@JvmStatic; [[kotlin-interop-java-interview#Q25]] data class из Java; [[kotlin-interop-java-interview#Q29]] use-site targets для аннотаций на свойствах."
               }
             }
           ]
@@ -1091,18 +1091,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Top-level функции `Kotlin` недоступны из `Java` без дополнительных аннотаций — без `@JvmName` или `@JvmStatic` их вызвать нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Top-level функции автоматически доступны как `<FileName>Kt.functionName()`; аннотации нужны только для переименования класса-обёртки, не для самого доступа.",
-                "source_of_confusion": "Аннотации `@Jvm*` ассоциируются с «включением» interop-доступа.",
-                "if_it_were_true": "Тогда `MathUtilsKt.factorial(5)` не компилировался бы без аннотаций, но он работает из коробки.",
-                "how_it_should_be": "Доступ есть всегда через `<FileName>Kt`; `@JvmName` лишь задаёт более удобное имя фасада."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Top-level `val PI_APPROX` виден из `Java` как прямое поле `PI_APPROX`, без геттера.",
               "correct": false,
               "sections": {
@@ -1113,8 +1101,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Top-level функции компилируются в статические методы класса с именем `<FileName>Kt` (например, `MathUtilsKt.factorial()`); `@file:JvmName(\"MathUtils\")` меняет имя класса-фасада на `MathUtils.factorial()`, а `@file:JvmMultifileClass` объединяет функции из разных файлов в один класс.",
               "correct": true,
               "sections": {
@@ -1123,6 +1111,18 @@
                 "when_to_apply": "Так вызывают утилитарные top-level функции `Kotlin` из `Java`-кода, выбирая удобное имя фасада через `@JvmName` и объединяя файлы при необходимости.",
                 "edge_cases": "Top-level `val` без `@JvmField` даёт геттер `getPI_APPROX()`, а не прямое поле; для объединения файлов в один фасад нужны и одинаковый `@JvmName`, и `@JvmMultifileClass` на каждом файле.",
                 "related": "[[kotlin-interop-java-interview#Q5]] extension-функции в Java; [[kotlin-interop-java-interview#Q9]] @JvmName и @JvmMultifileClass; [[kotlin-interop-java-interview#Q1]] таблица соответствий конструкций."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Top-level функции `Kotlin` недоступны из `Java` без дополнительных аннотаций — без `@JvmName` или `@JvmStatic` их вызвать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Top-level функции автоматически доступны как `<FileName>Kt.functionName()`; аннотации нужны только для переименования класса-обёртки, не для самого доступа.",
+                "source_of_confusion": "Аннотации `@Jvm*` ассоциируются с «включением» interop-доступа.",
+                "if_it_were_true": "Тогда `MathUtilsKt.factorial(5)` не компилировался бы без аннотаций, но он работает из коробки.",
+                "how_it_should_be": "Доступ есть всегда через `<FileName>Kt`; `@JvmName` лишь задаёт более удобное имя фасада."
               }
             },
             {
@@ -1151,6 +1151,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`value class` в `Java` виден как обычный wrapper-класс с методом `getValue()`, удобным для чтения значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из-за name-mangling `value class` в `Java` неудобен; он не виден как обычный класс, и для нормальной работы нужны явные адаптеры с underlying-типами.",
+                "source_of_confusion": "Наличие `val value` намекает, что будет сгенерирован привычный `getValue()`-доступ.",
+                "if_it_were_true": "Тогда `userId.getValue()` решал бы все проблемы интеропа, но методы с `value class` всё равно манглированы.",
+                "how_it_should_be": "Для `Java` создают фасады, принимающие/возвращающие underlying-тип; полагаться на `getValue()` нельзя."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`@JvmInline value class` полностью прозрачен для `Java`: `Java` видит `UserId` как обычный класс с конструктором и геттером, вызов `findUser(UserId)` работает напрямую.",
               "correct": false,
               "sections": {
@@ -1161,8 +1173,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`value class` никогда не боксируется — он всегда разворачивается в примитив или underlying-тип в любом контексте.",
               "correct": false,
               "sections": {
@@ -1170,18 +1182,6 @@
                 "source_of_confusion": "Главное обещание `value class` — «без аллокации», и это обобщают на все случаи.",
                 "if_it_were_true": "Тогда `fun processNullable(score: Score?)` передавал бы `int`, но `Score?` боксируется в объект `Score`.",
                 "how_it_should_be": "Unboxing гарантирован лишь для non-nullable конкретного параметра; nullable/generic/интерфейс приводят к боксингу."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`value class` в `Java` виден как обычный wrapper-класс с методом `getValue()`, удобным для чтения значения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Из-за name-mangling `value class` в `Java` неудобен; он не виден как обычный класс, и для нормальной работы нужны явные адаптеры с underlying-типами.",
-                "source_of_confusion": "Наличие `val value` намекает, что будет сгенерирован привычный `getValue()`-доступ.",
-                "if_it_were_true": "Тогда `userId.getValue()` решал бы все проблемы интеропа, но методы с `value class` всё равно манглированы.",
-                "how_it_should_be": "Для `Java` создают фасады, принимающие/возвращающие underlying-тип; полагаться на `getValue()` нельзя."
               }
             },
             {
@@ -1224,18 +1224,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`suspend`-функции вызываются из `Java` напрямую, если передать `null` в качестве параметра `Continuation`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Передача `null` как `Continuation` приводит к `NullPointerException`; suspend-функции требуют корректного `CoroutineContext`, а не заглушки `null`.",
-                "source_of_confusion": "Сигнатура `Object fetchUser(Continuation)` выглядит как обычный метод, куда можно передать `null`.",
-                "if_it_were_true": "Тогда `UserServiceKt.fetchUser(42L, null)` возвращал бы результат, но вызов упадёт с NPE.",
-                "how_it_should_be": "Для `Java` используют адаптеры (`CompletableFuture`/`Mono`), а не ручную передачу `Continuation`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`runBlocking` — рекомендуемый основной способ вызова `suspend` из `Java` в production-коде.",
               "correct": false,
               "sections": {
@@ -1246,8 +1234,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Reactor` `Mono.fromCallable()` — рекомендуемый способ обернуть `suspend`-функцию для вызова из `Java`.",
               "correct": false,
               "sections": {
@@ -1255,6 +1243,18 @@
                 "source_of_confusion": "`Mono.fromCallable` принимает лямбду, и кажется, что в неё можно поместить suspend-вызов.",
                 "if_it_were_true": "Тогда `Mono.fromCallable { fetchUser(id) }` работал бы, но suspend-вызов вне корутины не скомпилируется/не приостановится.",
                 "how_it_should_be": "Для моста с корутинами используют специальные билдеры `mono { }`/`future { }`, понимающие suspend."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`suspend`-функции вызываются из `Java` напрямую, если передать `null` в качестве параметра `Continuation`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Передача `null` как `Continuation` приводит к `NullPointerException`; suspend-функции требуют корректного `CoroutineContext`, а не заглушки `null`.",
+                "source_of_confusion": "Сигнатура `Object fetchUser(Continuation)` выглядит как обычный метод, куда можно передать `null`.",
+                "if_it_were_true": "Тогда `UserServiceKt.fetchUser(42L, null)` возвращал бы результат, но вызов упадёт с NPE.",
+                "how_it_should_be": "Для `Java` используют адаптеры (`CompletableFuture`/`Mono`), а не ручную передачу `Continuation`."
               }
             }
           ]
@@ -1271,31 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Kotlin` автоматически выбирает правильную перегрузку `Java`-метода всегда и при любых типах, без исключений.",
-              "correct": false,
-              "sections": {
-                "what_actually": "При неоднозначности (`String?` подходит и под `Object`, и под `String`) `Kotlin` выдаёт ошибку компиляции; нужен явный cast (`value as String`).",
-                "source_of_confusion": "В простых случаях резолюция «просто работает», и это обобщают на все ситуации.",
-                "if_it_were_true": "Тогда `process(value)` с `value: String?` компилировался бы, но компилятор сообщит о неоднозначности.",
-                "how_it_should_be": "Резолюция по типам работает, но при коллизии nullable/platform-типов требуется явное приведение."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Kotlin` выбирает перегрузку `Java`-метода по типам аргументов автоматически; при неоднозначности (например, `String?`, который может быть `Object` или `String`, или platform type) компилятор выдаёт ошибку, и нужен явный cast: `process(value as String)` или `process(value as Any)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Резолюция перегрузок работает по статическим типам аргументов; проблемы возникают там, где `Kotlin`-тип (nullable или platform) может соответствовать нескольким `Java`-сигнатурам сразу.",
-                "example": "Для `Java`-методов `process(Object)` и `process(String)` вызов `processor.process(value)` с `value: String?` неоднозначен; решается через `process(value as String)` или `process(value as Any)`.",
-                "when_to_apply": "Об этом помнят при вызове перегруженных `Java`-методов с nullable/platform-аргументами из `Kotlin`, где компилятор не может однозначно выбрать перегрузку.",
-                "edge_cases": "Примитивные перегрузки (`int` vs `Integer`) работают: `Kotlin` конвертирует `Int`→`int` или `Int?`→`Integer` по контексту; неоднозначность чаще всего возникает именно из-за nullable и platform types.",
-                "related": "[[kotlin-interop-java-interview#Q6]] platform types и неоднозначность; [[kotlin-interop-java-interview#Q9]] @JvmName и разрешение конфликтов; [[kotlin-interop-java-interview#Q14]] дженерики на границе."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Kotlin` не поддерживает вызов перегруженных `Java`-методов вообще — для каждого набора параметров нужен отдельный адаптер.",
               "correct": false,
               "sections": {
@@ -1306,8 +1281,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Перегрузка `Java`-методов по примитивам (`int` vs `Integer`) из `Kotlin` не работает — компилятор не различает их.",
               "correct": false,
               "sections": {
@@ -1315,6 +1290,31 @@
                 "source_of_confusion": "В `Kotlin` есть только `Int` без явного `int`/`Integer`, и кажется, что различить перегрузки нельзя.",
                 "if_it_were_true": "Тогда `format(42)` для `format(int)`/`format(Integer)` был бы неоднозначен всегда, но `Kotlin` выбирает по boxing-контексту.",
                 "how_it_should_be": "Примитивные перегрузки работают: `Int` маппится в `int`, `Int?` — в `Integer` по ситуации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Kotlin` автоматически выбирает правильную перегрузку `Java`-метода всегда и при любых типах, без исключений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При неоднозначности (`String?` подходит и под `Object`, и под `String`) `Kotlin` выдаёт ошибку компиляции; нужен явный cast (`value as String`).",
+                "source_of_confusion": "В простых случаях резолюция «просто работает», и это обобщают на все ситуации.",
+                "if_it_were_true": "Тогда `process(value)` с `value: String?` компилировался бы, но компилятор сообщит о неоднозначности.",
+                "how_it_should_be": "Резолюция по типам работает, но при коллизии nullable/platform-типов требуется явное приведение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Kotlin` выбирает перегрузку `Java`-метода по типам аргументов автоматически; при неоднозначности (например, `String?`, который может быть `Object` или `String`, или platform type) компилятор выдаёт ошибку, и нужен явный cast: `process(value as String)` или `process(value as Any)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Резолюция перегрузок работает по статическим типам аргументов; проблемы возникают там, где `Kotlin`-тип (nullable или platform) может соответствовать нескольким `Java`-сигнатурам сразу.",
+                "example": "Для `Java`-методов `process(Object)` и `process(String)` вызов `processor.process(value)` с `value: String?` неоднозначен; решается через `process(value as String)` или `process(value as Any)`.",
+                "when_to_apply": "Об этом помнят при вызове перегруженных `Java`-методов с nullable/platform-аргументами из `Kotlin`, где компилятор не может однозначно выбрать перегрузку.",
+                "edge_cases": "Примитивные перегрузки (`int` vs `Integer`) работают: `Kotlin` конвертирует `Int`→`int` или `Int?`→`Integer` по контексту; неоднозначность чаще всего возникает именно из-за nullable и platform types.",
+                "related": "[[kotlin-interop-java-interview#Q6]] platform types и неоднозначность; [[kotlin-interop-java-interview#Q9]] @JvmName и разрешение конфликтов; [[kotlin-interop-java-interview#Q14]] дженерики на границе."
               }
             }
           ]
@@ -1391,18 +1391,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Java`-компилятор сам потребует exhaustive `switch` для `Kotlin sealed`, точно так же, как `when` в `Kotlin` проверяет полноту веток.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Kotlin sealed` помечает класс как `abstract`, но в байткоде нет атрибута `PermittedSubclasses` (`Java 17+` JEP 409), поэтому `javac` не видит границ иерархии и не требует exhaustive `switch`.",
-                "source_of_confusion": "Оба языка с версии 17 имеют `sealed`, и кажется, что механизмы взаимозаменяемы.",
-                "if_it_were_true": "Тогда забытую ветку `Loading` компилятор `Java` подсветил бы, но она тихо проваливается в `default`.",
-                "how_it_should_be": "Exhaustiveness — фишка фронтенда `Kotlin`-компилятора, не байткода; в `Java` нужен явный `default`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Kotlin sealed` невозможно использовать из `Java` вообще — приходится переписывать иерархию на обычные классы.",
               "correct": false,
               "sections": {
@@ -1410,6 +1398,19 @@
                 "source_of_confusion": "`sealed` воспринимают как `Kotlin`-only-концепцию, недоступную `JVM`.",
                 "if_it_were_true": "Тогда пришлось бы дублировать иерархии для `Java` и `Kotlin`, но `instanceof Result.Success` работает напрямую.",
                 "how_it_should_be": "В байткоде это обычная иерархия; переписывать ничего не нужно, кроме exhaustive-логики."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "С `Java 17+` `instanceof` pattern matching работает для `Kotlin sealed`-классов (`case Result.Success s -> ...`), но exhaustiveness check (полнота веток) не гарантируется: `javac` не видит закрытости иерархии, поэтому `switch` требует `default`, и забытая ветка тихо проваливается в него.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Kotlin sealed` компилируется в обычный `abstract class` (или `interface`) с публичными подклассами, но без атрибута `PermittedSubclasses` в байткоде — поэтому `Java` работает с иерархией, но не знает, что она закрыта.",
+                "example": "`switch (result) { case Result.Success s -> ...; case Result.Error e -> ...; case Result.Loading l -> ...; default -> throw ... }` компилируется, но `javac` считает его non-exhaustive, и `default` обязателен.",
+                "when_to_apply": "В смешанных codebase `Kotlin sealed` из `Java` трактуют как обычную иерархию: pattern matching доступен, но exhaustive-логику оставляют в `Kotlin`-фасадах.",
+                "edge_cases": "При добавлении нового подкласса в `Kotlin` (`data class Cached : Result()`) `Java`-код тихо упадёт в `default` без предупреждения компилятора; для критичных иерархий предоставляют `accept(Visitor)`-метод.",
+                "related": "[[kotlin-interop-java-interview#Q32]] детальное сравнение Kotlin sealed vs Java 17 sealed; [[kotlin-interop-java-interview#Q25]] data class из Java; [[kotlin-interop-java-interview#Q26]] Java-friendly API."
               }
             },
             {
@@ -1427,14 +1428,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "С `Java 17+` `instanceof` pattern matching работает для `Kotlin sealed`-классов (`case Result.Success s -> ...`), но exhaustiveness check (полнота веток) не гарантируется: `javac` не видит закрытости иерархии, поэтому `switch` требует `default`, и забытая ветка тихо проваливается в него.",
-              "correct": true,
+              "text": "`Java`-компилятор сам потребует exhaustive `switch` для `Kotlin sealed`, точно так же, как `when` в `Kotlin` проверяет полноту веток.",
+              "correct": false,
               "sections": {
-                "explanation": "`Kotlin sealed` компилируется в обычный `abstract class` (или `interface`) с публичными подклассами, но без атрибута `PermittedSubclasses` в байткоде — поэтому `Java` работает с иерархией, но не знает, что она закрыта.",
-                "example": "`switch (result) { case Result.Success s -> ...; case Result.Error e -> ...; case Result.Loading l -> ...; default -> throw ... }` компилируется, но `javac` считает его non-exhaustive, и `default` обязателен.",
-                "when_to_apply": "В смешанных codebase `Kotlin sealed` из `Java` трактуют как обычную иерархию: pattern matching доступен, но exhaustive-логику оставляют в `Kotlin`-фасадах.",
-                "edge_cases": "При добавлении нового подкласса в `Kotlin` (`data class Cached : Result()`) `Java`-код тихо упадёт в `default` без предупреждения компилятора; для критичных иерархий предоставляют `accept(Visitor)`-метод.",
-                "related": "[[kotlin-interop-java-interview#Q32]] детальное сравнение Kotlin sealed vs Java 17 sealed; [[kotlin-interop-java-interview#Q25]] data class из Java; [[kotlin-interop-java-interview#Q26]] Java-friendly API."
+                "what_actually": "`Kotlin sealed` помечает класс как `abstract`, но в байткоде нет атрибута `PermittedSubclasses` (`Java 17+` JEP 409), поэтому `javac` не видит границ иерархии и не требует exhaustive `switch`.",
+                "source_of_confusion": "Оба языка с версии 17 имеют `sealed`, и кажется, что механизмы взаимозаменяемы.",
+                "if_it_were_true": "Тогда забытую ветку `Loading` компилятор `Java` подсветил бы, но она тихо проваливается в `default`.",
+                "how_it_should_be": "Exhaustiveness — фишка фронтенда `Kotlin`-компилятора, не байткода; в `Java` нужен явный `default`."
               }
             }
           ]
@@ -1451,6 +1451,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`user.copy(\"Bob\")` — `Kotlin`-компилятор сам подставит остальные значения как default, потому что у `copy()` есть значения по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Default-параметры `copy()` доступны только `Kotlin`-вызывающим; из `Java` копируется полная сигнатура `copy(String, int)`, и нужно передать ОБА параметра.",
+                "source_of_confusion": "В `Kotlin` вызов `user.copy(name = \"Bob\")` работает, отсюда соблазн думать, что overload доступен и в `Java`.",
+                "if_it_were_true": "Тогда `user.copy(\"Bob\")` компилировался бы `Java`-компилятором, но он выдаст ошибку «required: String, int; found: String».",
+                "how_it_should_be": "`data class` не даёт `@JvmOverloads` на `copy`, поэтому из `Java` передают все параметры явно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`data class` генерирует `copy(String name, int age)` с полной сигнатурой, поэтому из `Java` нужно передать ВСЕ параметры — механизма default args там нет; чтобы не дублировать неизменяемые поля, вызывают геттер текущего объекта: `user.copy(\"Bob\", user.getAge())`.",
               "correct": true,
               "sections": {
@@ -1462,32 +1474,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`user.copy(name = \"Bob\")` — из `Java` можно использовать named arguments, компилятор транслирует их в байткод и подставит остальные поля.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Java` не поддерживает named arguments — это синтаксис уровня `Kotlin`-компилятора; в байткоде их нет, и `=` внутри аргументов метода для `Java` — синтаксическая ошибка.",
-                "source_of_confusion": "Named arguments в `Kotlin` выглядят почти как обычный синтаксис, и кажется, что они доступны и из `Java`.",
-                "if_it_were_true": "Тогда мигрировать `Kotlin`-код на `Java` было бы тривиально, но именно потеря named/default-параметров — одно из главных неудобств.",
-                "how_it_should_be": "Из `Java` named arguments недоступны; передают все позиционные параметры или используют extension-обёртки."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`user.copy(\"Bob\")` — `Kotlin`-компилятор сам подставит остальные значения как default, потому что у `copy()` есть значения по умолчанию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Default-параметры `copy()` доступны только `Kotlin`-вызывающим; из `Java` копируется полная сигнатура `copy(String, int)`, и нужно передать ОБА параметра.",
-                "source_of_confusion": "В `Kotlin` вызов `user.copy(name = \"Bob\")` работает, отсюда соблазн думать, что overload доступен и в `Java`.",
-                "if_it_were_true": "Тогда `user.copy(\"Bob\")` компилировался бы `Java`-компилятором, но он выдаст ошибку «required: String, int; found: String».",
-                "how_it_should_be": "`data class` не даёт `@JvmOverloads` на `copy`, поэтому из `Java` передают все параметры явно."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`User.copy(user, \"Bob\")` — `copy()` это статический метод, где первый параметр — оригинальный объект, по аналогии с extension-функциями.",
               "correct": false,
               "sections": {
@@ -1495,6 +1483,18 @@
                 "source_of_confusion": "Extension- и top-level-функции `Kotlin` действительно вызываются из `Java` как статические методы с receiver первым.",
                 "if_it_were_true": "Тогда все методы класса можно было бы звать статически, нарушая базовую object orientation; байткод чётко различает `invokevirtual` и `invokestatic`.",
                 "how_it_should_be": "Instance-методы (включая `copy`) остаются instance-методами; статически вызываются только extension/top-level функции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`user.copy(name = \"Bob\")` — из `Java` можно использовать named arguments, компилятор транслирует их в байткод и подставит остальные поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Java` не поддерживает named arguments — это синтаксис уровня `Kotlin`-компилятора; в байткоде их нет, и `=` внутри аргументов метода для `Java` — синтаксическая ошибка.",
+                "source_of_confusion": "Named arguments в `Kotlin` выглядят почти как обычный синтаксис, и кажется, что они доступны и из `Java`.",
+                "if_it_were_true": "Тогда мигрировать `Kotlin`-код на `Java` было бы тривиально, но именно потеря named/default-параметров — одно из главных неудобств.",
+                "how_it_should_be": "Из `Java` named arguments недоступны; передают все позиционные параметры или используют extension-обёртки."
               }
             }
           ]
@@ -1511,18 +1511,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно поставить `@file:JvmName(\"MyApi\")` на всех файлах + `companion object` без других аннотаций — и `Java` получит fluent API без `Companion`.",
+              "text": "`@JvmDefault` на интерфейсах + `@JsField` на свойствах — вот комбинация для Java-friendly fluent API без `Companion`.",
               "correct": false,
               "sections": {
-                "what_actually": "`@file:JvmName` меняет только имя facade-класса для top-level функций и не влияет на companion; без `@JvmStatic` на методах companion `Java` всё равно пишет `MyClass.Companion.method()`.",
-                "source_of_confusion": "`@file:JvmName` звучит как глобальный rename, влияющий на весь класс, включая companion.",
-                "if_it_were_true": "Тогда companion'ы автоматически экспонировали бы статические методы, но это сломало бы `Kotlin`-код, где `Companion` используется как singleton.",
-                "how_it_should_be": "`@file:JvmName` — для top-level деклараций; для companion нужен `@JvmStatic` на каждом методе."
+                "what_actually": "`@JvmDefault` — узкоспециальная аннотация для default-методов интерфейсов на JVM, не для обычного API; аннотации `@JsField` вообще не существует (есть только `@JvmField`).",
+                "source_of_confusion": "`@JvmDefault` упоминается в гайдах по JVM-interop, а `@JsField` звучит как реальная аннотация по аналогии с `@JvmField`.",
+                "if_it_were_true": "Тогда существовал бы `@JsField`, но это нарушало бы naming convention (`Jvm` для JVM, `Js` для Kotlin/JS — разные платформы).",
+                "how_it_should_be": "Для constants используют `@JvmField`/`const val`; `@JvmDefault` решает отдельную задачу default-методов интерфейсов."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "Использовать `internal`-модификатор, чтобы скрыть всё лишнее из `Java` и оставить только fluent-часть API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`internal` компилируется в `public` с name-mangling (`myMethod$module`), поэтому из `Java` элемент доступен под уродливым именем; `internal` скрывает API только от других `Kotlin`-модулей.",
+                "source_of_confusion": "`internal` звучит как «приватный для модуля» и кажется, что это распространяется на всех потребителей вне модуля.",
+                "if_it_were_true": "Тогда `Kotlin`-only инкапсуляция работала бы из `Java`, но `JVM` не знает про `Kotlin`-модули — это compile-time концепция.",
+                "how_it_should_be": "Для реального сокрытия от `Java` используют `@JvmSynthetic`; `internal` действует лишь на уровне `Kotlin`-компилятора."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Базовый Java-friendly toolkit: `@JvmStatic` на функциях companion (иначе `MyClass.Companion.method()`), `@JvmField`/`const val` на константах (поле вместо геттера), `@JvmOverloads` на функциях с default-параметрами (overload'ы вместо одной полной сигнатуры). Дополнительно — `@JvmName` для конфликтов имён и `@Throws` для checked exceptions.",
               "correct": true,
               "sections": {
@@ -1534,27 +1546,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`@JvmDefault` на интерфейсах + `@JsField` на свойствах — вот комбинация для Java-friendly fluent API без `Companion`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@JvmDefault` — узкоспециальная аннотация для default-методов интерфейсов на JVM, не для обычного API; аннотации `@JsField` вообще не существует (есть только `@JvmField`).",
-                "source_of_confusion": "`@JvmDefault` упоминается в гайдах по JVM-interop, а `@JsField` звучит как реальная аннотация по аналогии с `@JvmField`.",
-                "if_it_were_true": "Тогда существовал бы `@JsField`, но это нарушало бы naming convention (`Jvm` для JVM, `Js` для Kotlin/JS — разные платформы).",
-                "how_it_should_be": "Для constants используют `@JvmField`/`const val`; `@JvmDefault` решает отдельную задачу default-методов интерфейсов."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Использовать `internal`-модификатор, чтобы скрыть всё лишнее из `Java` и оставить только fluent-часть API.",
+              "text": "Достаточно поставить `@file:JvmName(\"MyApi\")` на всех файлах + `companion object` без других аннотаций — и `Java` получит fluent API без `Companion`.",
               "correct": false,
               "sections": {
-                "what_actually": "`internal` компилируется в `public` с name-mangling (`myMethod$module`), поэтому из `Java` элемент доступен под уродливым именем; `internal` скрывает API только от других `Kotlin`-модулей.",
-                "source_of_confusion": "`internal` звучит как «приватный для модуля» и кажется, что это распространяется на всех потребителей вне модуля.",
-                "if_it_were_true": "Тогда `Kotlin`-only инкапсуляция работала бы из `Java`, но `JVM` не знает про `Kotlin`-модули — это compile-time концепция.",
-                "how_it_should_be": "Для реального сокрытия от `Java` используют `@JvmSynthetic`; `internal` действует лишь на уровне `Kotlin`-компилятора."
+                "what_actually": "`@file:JvmName` меняет только имя facade-класса для top-level функций и не влияет на companion; без `@JvmStatic` на методах companion `Java` всё равно пишет `MyClass.Companion.method()`.",
+                "source_of_confusion": "`@file:JvmName` звучит как глобальный rename, влияющий на весь класс, включая companion.",
+                "if_it_were_true": "Тогда companion'ы автоматически экспонировали бы статические методы, но это сломало бы `Kotlin`-код, где `Companion` используется как singleton.",
+                "how_it_should_be": "`@file:JvmName` — для top-level деклараций; для companion нужен `@JvmStatic` на каждом методе."
               }
             }
           ]
@@ -1571,13 +1571,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Сначала `javac` компилирует `Java`, затем `kotlinc` использует получившиеся `.class`-файлы для компиляции `Kotlin`.",
-              "correct": false,
+              "text": "`kotlinc` запускается первым: парсит `Kotlin`-файлы (и `Java`-source в read-only режиме), генерирует stubs — фейковые `Java`-source с сигнатурами `Kotlin`-классов, затем `javac` использует stubs + реальные `Kotlin` `.class`-файлы для компиляции `Java`. Это позволяет `Kotlin` вызывать `Java` и наоборот без forward-declaration.",
+              "correct": true,
               "sections": {
-                "what_actually": "Порядок обратный: `kotlinc` запускается первым и генерирует stubs, затем `javac` использует их для компиляции `Java`; иначе `Java`-файлы, ссылающиеся на `Kotlin`, не скомпилировались бы.",
-                "source_of_confusion": "Интуиция «Java фундаментальнее, должен идти первым» подсказывает обратный порядок.",
-                "if_it_were_true": "Тогда `javac` падал бы на первом же импорте `Kotlin`-класса с `cannot find symbol`, но kotlinc-first решает это через stubs.",
-                "how_it_should_be": "Первым идёт `kotlinc` (отдаёт типы через stubs), затем `javac`."
+                "explanation": "Cross-compilation на одном source-set работает через kotlinc-first-pass: `kotlinc` отдаёт `javac` информацию о типах `Kotlin`-классов в виде stubs, и финальный classpath собирается из реальных `.class` обоих компиляторов.",
+                "example": "`compileJava` явно зависит от `compileKotlin`; `Kotlin`-плагин добавляет `tasks.compileJava.dependsOn(tasks.compileKotlin)` и подмешивает каталог `Kotlin`-классов в classpath `javac`.",
+                "when_to_apply": "Это знание нужно при настройке смешанных проектов и пофайловой миграции с `Java` на `Kotlin`, а также при отладке проблем с annotation processing.",
+                "edge_cases": "`kapt` работает над stubs, а не над оригинальным `Kotlin`, поэтому Lombok-генерированный код невидим для `Kotlin` (см. Q34); циклические зависимости через generic-типы иногда требуют разнесения по модулям; `KSP` работает напрямую над `Kotlin` AST, но не поддерживает `Java`-AP.",
+                "related": "[[kotlin-interop-java-interview#Q34]] почему Lombok ломается из-за этого порядка; [[kotlin-interop-java-interview#Q22]] вызов Java overloads из Kotlin; [[kotlin-interop-java-interview#Q26]] Java-friendly API."
               }
             },
             {
@@ -1595,14 +1596,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`kotlinc` запускается первым: парсит `Kotlin`-файлы (и `Java`-source в read-only режиме), генерирует stubs — фейковые `Java`-source с сигнатурами `Kotlin`-классов, затем `javac` использует stubs + реальные `Kotlin` `.class`-файлы для компиляции `Java`. Это позволяет `Kotlin` вызывать `Java` и наоборот без forward-declaration.",
-              "correct": true,
+              "text": "Сначала `javac` компилирует `Java`, затем `kotlinc` использует получившиеся `.class`-файлы для компиляции `Kotlin`.",
+              "correct": false,
               "sections": {
-                "explanation": "Cross-compilation на одном source-set работает через kotlinc-first-pass: `kotlinc` отдаёт `javac` информацию о типах `Kotlin`-классов в виде stubs, и финальный classpath собирается из реальных `.class` обоих компиляторов.",
-                "example": "`compileJava` явно зависит от `compileKotlin`; `Kotlin`-плагин добавляет `tasks.compileJava.dependsOn(tasks.compileKotlin)` и подмешивает каталог `Kotlin`-классов в classpath `javac`.",
-                "when_to_apply": "Это знание нужно при настройке смешанных проектов и пофайловой миграции с `Java` на `Kotlin`, а также при отладке проблем с annotation processing.",
-                "edge_cases": "`kapt` работает над stubs, а не над оригинальным `Kotlin`, поэтому Lombok-генерированный код невидим для `Kotlin` (см. Q34); циклические зависимости через generic-типы иногда требуют разнесения по модулям; `KSP` работает напрямую над `Kotlin` AST, но не поддерживает `Java`-AP.",
-                "related": "[[kotlin-interop-java-interview#Q34]] почему Lombok ломается из-за этого порядка; [[kotlin-interop-java-interview#Q22]] вызов Java overloads из Kotlin; [[kotlin-interop-java-interview#Q26]] Java-friendly API."
+                "what_actually": "Порядок обратный: `kotlinc` запускается первым и генерирует stubs, затем `javac` использует их для компиляции `Java`; иначе `Java`-файлы, ссылающиеся на `Kotlin`, не скомпилировались бы.",
+                "source_of_confusion": "Интуиция «Java фундаментальнее, должен идти первым» подсказывает обратный порядок.",
+                "if_it_were_true": "Тогда `javac` падал бы на первом же импорте `Kotlin`-класса с `cannot find symbol`, но kotlinc-first решает это через stubs.",
+                "how_it_should_be": "Первым идёт `kotlinc` (отдаёт типы через stubs), затем `javac`."
               }
             },
             {
@@ -1643,18 +1643,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`point.fields[0]` — record хранит поля в массиве, и доступ возможен только по индексу.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Record хранит поля как обычные private final поля `JVM` (каждое — отдельный field в `.class`), а не в массиве; `getRecordComponents()` даёт лишь метаинформацию через рефлексию.",
-                "source_of_confusion": "Record похож на tuple в других языках (Python, Scala), где поля часто индексированы.",
-                "if_it_were_true": "Тогда доступ по имени был бы невозможен без рефлексии, но `point.x()` работает как обычный метод.",
-                "how_it_should_be": "Поля — обычные именованные private final; доступ через accessor `x()` или property `point.x`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`point.value(\"x\")` — record предоставляет универсальный `value`-метод для лукапа поля по имени.",
               "correct": false,
               "sections": {
@@ -1662,6 +1650,18 @@
                 "source_of_confusion": "Некоторые библиотеки (`Jackson`) генерируют универсальные getters для record-marshaling, и это принимают за часть JDK.",
                 "if_it_were_true": "Тогда records были бы медленнее обычных классов из-за рефлексии в hot path, но они выигрывают за счёт JIT-оптимизаций.",
                 "how_it_should_be": "Доступ к полю — через типизированный accessor `x()`/property `point.x`, не через строковый лукап."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`point.fields[0]` — record хранит поля в массиве, и доступ возможен только по индексу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Record хранит поля как обычные private final поля `JVM` (каждое — отдельный field в `.class`), а не в массиве; `getRecordComponents()` даёт лишь метаинформацию через рефлексию.",
+                "source_of_confusion": "Record похож на tuple в других языках (Python, Scala), где поля часто индексированы.",
+                "if_it_were_true": "Тогда доступ по имени был бы невозможен без рефлексии, но `point.x()` работает как обычный метод.",
+                "how_it_should_be": "Поля — обычные именованные private final; доступ через accessor `x()` или property `point.x`."
               }
             },
             {
@@ -1704,13 +1704,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@property:Column(name = \"...\")` — аннотация на свойстве в целом, и JPA сам определит, куда её применить (на поле или геттер).",
+              "text": "`@param:Column(name = \"...\")` — аннотацию вешают на параметр конструктора, и JPA подхватит её оттуда при создании entity.",
               "correct": false,
               "sections": {
-                "what_actually": "`@property:` помещает аннотацию в metadata `Kotlin`-property (видна через `Kotlin` reflection), но не транслируется на байткод-элементы; JPA работает через `Java` reflection и просто проигнорирует её.",
-                "source_of_confusion": "`@property:` звучит как «применить ко всему свойству», что логически кажется правильным выбором.",
-                "if_it_were_true": "Тогда не нужно было бы вообще задумываться о use-site target, но тогда и проблемы, требующей их, не существовало бы.",
-                "how_it_should_be": "Для JPA нужен `@field:`; `@property:` полезен только для `Kotlin`-reflection-сценариев."
+                "what_actually": "Параметры конструктора стираются в байткоде, и JPA их не видит; именно поэтому без явного `@field:` аннотация по дефолтному приоритету попадает на `param` и теряется для Hibernate.",
+                "source_of_confusion": "Поскольку property объявлено в primary constructor, кажется логичным аннотировать параметр.",
+                "if_it_were_true": "Тогда дефолтное поведение (target `param`) уже решало бы задачу, но именно из-за стирания параметров оно и не работает.",
+                "how_it_should_be": "Для JPA аннотацию переносят на backing field через `@field:`, чтобы она пережила компиляцию."
               }
             },
             {
@@ -1728,13 +1728,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@param:Column(name = \"...\")` — аннотацию вешают на параметр конструктора, и JPA подхватит её оттуда при создании entity.",
+              "text": "`@property:Column(name = \"...\")` — аннотация на свойстве в целом, и JPA сам определит, куда её применить (на поле или геттер).",
               "correct": false,
               "sections": {
-                "what_actually": "Параметры конструктора стираются в байткоде, и JPA их не видит; именно поэтому без явного `@field:` аннотация по дефолтному приоритету попадает на `param` и теряется для Hibernate.",
-                "source_of_confusion": "Поскольку property объявлено в primary constructor, кажется логичным аннотировать параметр.",
-                "if_it_were_true": "Тогда дефолтное поведение (target `param`) уже решало бы задачу, но именно из-за стирания параметров оно и не работает.",
-                "how_it_should_be": "Для JPA аннотацию переносят на backing field через `@field:`, чтобы она пережила компиляцию."
+                "what_actually": "`@property:` помещает аннотацию в metadata `Kotlin`-property (видна через `Kotlin` reflection), но не транслируется на байткод-элементы; JPA работает через `Java` reflection и просто проигнорирует её.",
+                "source_of_confusion": "`@property:` звучит как «применить ко всему свойству», что логически кажется правильным выбором.",
+                "if_it_were_true": "Тогда не нужно было бы вообще задумываться о use-site target, но тогда и проблемы, требующей их, не существовало бы.",
+                "how_it_should_be": "Для JPA нужен `@field:`; `@property:` полезен только для `Kotlin`-reflection-сценариев."
               }
             }
           ]
@@ -1751,18 +1751,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`val name = service.getName()` — компилятор `Kotlin` сам выведет nullable-тип по умолчанию для всех `Java`-вызовов, поэтому дополнительных мер не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без специальных флагов компилятор выводит platform type (`String!`), который не проверяется на null, а не `String?`; `.length` без `?.` скомпилируется и упадёт в runtime, если значение было `null`.",
-                "source_of_confusion": "Хочется верить, что `Kotlin` «защищает по умолчанию», и type inference даёт безопасный nullable.",
-                "if_it_were_true": "Тогда проблемы platform types не существовало бы вовсе, но вопрос возникает именно из-за отсутствия защиты по умолчанию.",
-                "how_it_should_be": "Для безопасности включают strict mode и/или явно объявляют тип `String?`, не полагаясь на вывод."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Использовать compiler-флаг `-Xjsr305=strict` + явные nullable-типы при чтении `Java`-значений: strict делает все неаннотированные `Java`-типы `nullable` (`T?`) вместо platform types, убирая «опасную середину», а явный тип (`val name: String? = ...`) заставляет обрабатывать `null` на compile-time.",
               "correct": true,
               "sections": {
@@ -1774,20 +1762,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Обернуть все `Java`-вызовы в `try/catch (NullPointerException)` и логировать — это даёт нужную безопасность.",
+              "order": 1,
+              "label": "B",
+              "text": "`val name = service.getName()` — компилятор `Kotlin` сам выведет nullable-тип по умолчанию для всех `Java`-вызовов, поэтому дополнительных мер не нужно.",
               "correct": false,
               "sections": {
-                "what_actually": "Это runtime-обработка, а не compile-time безопасность: NPE уже произошёл — поздно; к тому же `catch (NPE)` ловит любой NPE, скрывая баги в собственном коде.",
-                "source_of_confusion": "«Обработка ошибок» интуитивно ассоциируется с `try/catch`.",
-                "if_it_were_true": "Тогда язык не нуждался бы в системе типов с null safety — все решали бы это через `try/catch`.",
-                "how_it_should_be": "`Kotlin` null safety про предотвращение, а не поимку; используют strict mode и явные nullable-типы."
+                "what_actually": "Без специальных флагов компилятор выводит platform type (`String!`), который не проверяется на null, а не `String?`; `.length` без `?.` скомпилируется и упадёт в runtime, если значение было `null`.",
+                "source_of_confusion": "Хочется верить, что `Kotlin` «защищает по умолчанию», и type inference даёт безопасный nullable.",
+                "if_it_were_true": "Тогда проблемы platform types не существовало бы вовсе, но вопрос возникает именно из-за отсутствия защиты по умолчанию.",
+                "how_it_should_be": "Для безопасности включают strict mode и/или явно объявляют тип `String?`, не полагаясь на вывод."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Использовать `?:` (Elvis) после каждого `Java`-вызова — это статически проверяется компилятором и гарантирует безопасность.",
               "correct": false,
               "sections": {
@@ -1795,6 +1783,18 @@
                 "source_of_confusion": "Elvis выглядит как «защита от null», и хочется применять его повсюду.",
                 "if_it_were_true": "Тогда все `Java`-вызовы требовали бы Elvis, но компилятор не выдаёт warnings для platform types.",
                 "how_it_should_be": "Сначала делают тип nullable (явно или `-Xjsr305=strict`), и тогда Elvis работает по назначению."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обернуть все `Java`-вызовы в `try/catch (NullPointerException)` и логировать — это даёт нужную безопасность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это runtime-обработка, а не compile-time безопасность: NPE уже произошёл — поздно; к тому же `catch (NPE)` ловит любой NPE, скрывая баги в собственном коде.",
+                "source_of_confusion": "«Обработка ошибок» интуитивно ассоциируется с `try/catch`.",
+                "if_it_were_true": "Тогда язык не нуждался бы в системе типов с null safety — все решали бы это через `try/catch`.",
+                "how_it_should_be": "`Kotlin` null safety про предотвращение, а не поимку; используют strict mode и явные nullable-типы."
               }
             }
           ]
@@ -1811,6 +1811,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`inline`-функции — это макросы, которых в байткоде нет вообще, поэтому из `Java` сослаться не на что в принципе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`inline`-функции обычно существуют в байткоде (для non-inline путей, error reporting, stacktrace); из `Java` проблема в том, что `reified T` стирается в `Object`, делая вызов бесполезным для type-safe кода.",
+                "source_of_confusion": "«Макрос» — удобная аналогия с C-макросами, и кажется, что метода нет совсем.",
+                "if_it_were_true": "Тогда stacktrace не показывал бы имя inline-функции и debugger не ставил бы breakpoint, но и то, и другое работает.",
+                "how_it_should_be": "Метод в `.class` обычно есть, но `reified` теряется при вызове из `Java`; нужен non-inline overload с `Class<T>`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`inline` делает функцию `private` в байткоде, поэтому для доступа из `Java` достаточно добавить `@JvmStatic`.",
               "correct": false,
               "sections": {
@@ -1818,18 +1830,6 @@
                 "source_of_confusion": "`private`-сценарий — частая причина «не вижу из `Java`», и его подставляют сюда.",
                 "if_it_were_true": "Тогда `@JvmStatic` помогал бы, но с `inline`+`reified` он не решает проблему — она глубже visibility.",
                 "how_it_should_be": "Делают non-inline overload с `Class<T>`; `@JvmStatic` сам по себе reification не возвращает."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`inline`-функции компилируются как abstract-методы в специальных синтетических интерфейсах, которые `Java` не имплементирует.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`inline`-функции не имеют отношения к интерфейсам или абстрактным методам; их «отсутствие» в байткоде — эффект inlining: тело разворачивается на месте вызова.",
-                "source_of_confusion": "Идея «функция как интерфейс» возникает по аналогии с `fun interface` (SAM), которые компилируются в интерфейсы.",
-                "if_it_were_true": "Тогда компилятор генерировал бы синтетический интерфейс на каждую inline-функцию, раздувая jar.",
-                "how_it_should_be": "Inlining — это подстановка тела на callsite; для `Java` дают non-inline перегрузку с `Class<T>`."
               }
             },
             {
@@ -1848,13 +1848,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`inline`-функции — это макросы, которых в байткоде нет вообще, поэтому из `Java` сослаться не на что в принципе.",
+              "text": "`inline`-функции компилируются как abstract-методы в специальных синтетических интерфейсах, которые `Java` не имплементирует.",
               "correct": false,
               "sections": {
-                "what_actually": "`inline`-функции обычно существуют в байткоде (для non-inline путей, error reporting, stacktrace); из `Java` проблема в том, что `reified T` стирается в `Object`, делая вызов бесполезным для type-safe кода.",
-                "source_of_confusion": "«Макрос» — удобная аналогия с C-макросами, и кажется, что метода нет совсем.",
-                "if_it_were_true": "Тогда stacktrace не показывал бы имя inline-функции и debugger не ставил бы breakpoint, но и то, и другое работает.",
-                "how_it_should_be": "Метод в `.class` обычно есть, но `reified` теряется при вызове из `Java`; нужен non-inline overload с `Class<T>`."
+                "what_actually": "`inline`-функции не имеют отношения к интерфейсам или абстрактным методам; их «отсутствие» в байткоде — эффект inlining: тело разворачивается на месте вызова.",
+                "source_of_confusion": "Идея «функция как интерфейс» возникает по аналогии с `fun interface` (SAM), которые компилируются в интерфейсы.",
+                "if_it_were_true": "Тогда компилятор генерировал бы синтетический интерфейс на каждую inline-функцию, раздувая jar.",
+                "how_it_should_be": "Inlining — это подстановка тела на callsite; для `Java` дают non-inline перегрузку с `Class<T>`."
               }
             }
           ]
@@ -1871,30 +1871,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Kotlin` `when` exhaustive проверяет полноту веток как для `Kotlin sealed`, так и для `Java 17 sealed`-классов — оба механизма поддержаны одинаково.",
-              "correct": false,
+              "text": "`Kotlin sealed`-классы в байткоде НЕ имеют атрибута `PermittedSubclasses` — они компилируются как обычный `abstract class` с приватным конструктором (подклассы в том же модуле, enforcement на compile-time `Kotlin`); `Class.isSealed()` для них возвращает `false`, в отличие от `Java 17 sealed`, где есть `PermittedSubclasses` и runtime-enforcement через `JVM`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Kotlin`-компилятор НЕ распознаёт `Java 17 sealed`-иерархии для exhaustiveness; `when` над `Java sealed` требует `else`-ветку, даже если перечислены все perm-подтипы.",
-                "source_of_confusion": "Оба языка с версии 17 имеют `sealed`, и кажется, что exhaustiveness работает для обоих.",
-                "if_it_were_true": "Тогда `when` над `Java sealed Shape` не требовал бы `else`, но компилятор `Kotlin` его требует.",
-                "how_it_should_be": "Exhaustiveness `when` работает только для `Kotlin sealed`; для `Java sealed` нужен `else`."
+                "explanation": "`Kotlin sealed` (с 2016) появился до `Java 17 sealed` (2021) и реализован через convention: abstract-класс + приватный конструктор + compile-time-проверка, без байткод-атрибута закрытости иерархии.",
+                "example": "`Result::class.java.isSealed` возвращает `false` для `Kotlin sealed`, тогда как `Shape.class.isSealed()` для `Java 17 sealed` возвращает `true`, а `getPermittedSubclasses()` — `[Circle.class, Rectangle.class]`.",
+                "when_to_apply": "Для критичной runtime-проверки иерархии берут `Java sealed` (даже объявляя класс в `Java`-файле); для compile-time guarantees в `Kotlin`-only коде — `Kotlin sealed`; механизмы не смешивают в одной иерархии.",
+                "edge_cases": "Frameworks через рефлексию (`Jackson` polymorphic deserialization) часто проверяют `isSealed()` — для `Kotlin sealed` эта проверка не сработает; `sealed interface` в `Kotlin` тоже компилируется в обычный `interface` без спецатрибутов.",
+                "related": "[[kotlin-interop-java-interview#Q24]] Kotlin sealed из Java; [[kotlin-interop-java-interview#Q26]] дизайн Kotlin API для Java; [[kotlin-interop-java-interview#Q28]] @JvmRecord как пример отдельных механизмов."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Kotlin sealed` и `Java 17 sealed` полностью совместимы и взаимозаменяемы — `JetBrains` использует один и тот же `JVM`-механизм `PermittedSubclasses`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Механизмы независимы: `Java 17 sealed` использует байткод-атрибут `PermittedSubclasses` (JEP 409), а `Kotlin sealed` его не использует — реализован через приватный конструктор и compile-time-проверку.",
-                "source_of_confusion": "Обе фичи названы `sealed` и достигают одной цели, кажется, что они унифицированы.",
-                "if_it_were_true": "Тогда `Class.isSealed()` работал бы для `Kotlin sealed`, упрощая reflection-фреймворки, но он возвращает `false`.",
-                "how_it_should_be": "Это два независимых механизма; `Kotlin sealed` появился раньше и сохранил свою реализацию ради совместимости."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Kotlin sealed` запрещает наследование из `Java` напрямую — `Java`-компилятор не даст `extends` для такого класса.",
               "correct": false,
               "sections": {
@@ -1905,16 +1894,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`Kotlin` `when` exhaustive проверяет полноту веток как для `Kotlin sealed`, так и для `Java 17 sealed`-классов — оба механизма поддержаны одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kotlin`-компилятор НЕ распознаёт `Java 17 sealed`-иерархии для exhaustiveness; `when` над `Java sealed` требует `else`-ветку, даже если перечислены все perm-подтипы.",
+                "source_of_confusion": "Оба языка с версии 17 имеют `sealed`, и кажется, что exhaustiveness работает для обоих.",
+                "if_it_were_true": "Тогда `when` над `Java sealed Shape` не требовал бы `else`, но компилятор `Kotlin` его требует.",
+                "how_it_should_be": "Exhaustiveness `when` работает только для `Kotlin sealed`; для `Java sealed` нужен `else`."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`Kotlin sealed`-классы в байткоде НЕ имеют атрибута `PermittedSubclasses` — они компилируются как обычный `abstract class` с приватным конструктором (подклассы в том же модуле, enforcement на compile-time `Kotlin`); `Class.isSealed()` для них возвращает `false`, в отличие от `Java 17 sealed`, где есть `PermittedSubclasses` и runtime-enforcement через `JVM`.",
-              "correct": true,
+              "text": "`Kotlin sealed` и `Java 17 sealed` полностью совместимы и взаимозаменяемы — `JetBrains` использует один и тот же `JVM`-механизм `PermittedSubclasses`.",
+              "correct": false,
               "sections": {
-                "explanation": "`Kotlin sealed` (с 2016) появился до `Java 17 sealed` (2021) и реализован через convention: abstract-класс + приватный конструктор + compile-time-проверка, без байткод-атрибута закрытости иерархии.",
-                "example": "`Result::class.java.isSealed` возвращает `false` для `Kotlin sealed`, тогда как `Shape.class.isSealed()` для `Java 17 sealed` возвращает `true`, а `getPermittedSubclasses()` — `[Circle.class, Rectangle.class]`.",
-                "when_to_apply": "Для критичной runtime-проверки иерархии берут `Java sealed` (даже объявляя класс в `Java`-файле); для compile-time guarantees в `Kotlin`-only коде — `Kotlin sealed`; механизмы не смешивают в одной иерархии.",
-                "edge_cases": "Frameworks через рефлексию (`Jackson` polymorphic deserialization) часто проверяют `isSealed()` — для `Kotlin sealed` эта проверка не сработает; `sealed interface` в `Kotlin` тоже компилируется в обычный `interface` без спецатрибутов.",
-                "related": "[[kotlin-interop-java-interview#Q24]] Kotlin sealed из Java; [[kotlin-interop-java-interview#Q26]] дизайн Kotlin API для Java; [[kotlin-interop-java-interview#Q28]] @JvmRecord как пример отдельных механизмов."
+                "what_actually": "Механизмы независимы: `Java 17 sealed` использует байткод-атрибут `PermittedSubclasses` (JEP 409), а `Kotlin sealed` его не использует — реализован через приватный конструктор и compile-time-проверку.",
+                "source_of_confusion": "Обе фичи названы `sealed` и достигают одной цели, кажется, что они унифицированы.",
+                "if_it_were_true": "Тогда `Class.isSealed()` работал бы для `Kotlin sealed`, упрощая reflection-фреймворки, но он возвращает `false`.",
+                "how_it_should_be": "Это два независимых механизма; `Kotlin sealed` появился раньше и сохранил свою реализацию ради совместимости."
               }
             }
           ]
@@ -1944,13 +1944,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`optional.get()` всегда, потому что `Optional` гарантирует наличие значения и не бывает пустым.",
+              "text": "Использовать `Optional` везде в `Kotlin`-коде вместо `T?` — это совместимее с `Java` и проще в поддержке.",
               "correct": false,
               "sections": {
-                "what_actually": "`Optional.get()` бросает `NoSuchElementException`, если значение отсутствует (`Optional.empty()`); цель `Optional` — как раз явно представить отсутствие, а не гарантировать наличие.",
-                "source_of_confusion": "Имя `Optional` ассоциируется с «возможно есть», а метод `get()` звучит безопасно, как «просто достать».",
-                "if_it_were_true": "Тогда не было бы смысла в типе `Optional` — он совпадал бы с `T`; он существует именно потому, что отсутствие реально.",
-                "how_it_should_be": "Без проверки `.get()` — замаскированный NPE; значение разворачивают в `T?` через `orElse(null)`."
+                "what_actually": "Это анти-идиоматично и даёт overhead: каждый `Optional` — аллокация объекта, `.get()` — runtime-проверка вместо compile-time гарантии `T?.let`; смешение `Optional` и `T?` запутывает код.",
+                "source_of_confusion": "«Совместимость с `Java`» кажется преимуществом, хотя из `Java` всё равно сделают wrapper отдельно.",
+                "if_it_were_true": "Тогда `Kotlin` не имел бы null safety вообще, и все писали бы `Optional<T>`, но `T?` существует ради отказа от него.",
+                "how_it_should_be": "Внутри `Kotlin` используют `T?`, а `Optional` оставляют только на границе с `Java` через адаптеры."
               }
             },
             {
@@ -1968,13 +1968,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать `Optional` везде в `Kotlin`-коде вместо `T?` — это совместимее с `Java` и проще в поддержке.",
+              "text": "`optional.get()` всегда, потому что `Optional` гарантирует наличие значения и не бывает пустым.",
               "correct": false,
               "sections": {
-                "what_actually": "Это анти-идиоматично и даёт overhead: каждый `Optional` — аллокация объекта, `.get()` — runtime-проверка вместо compile-time гарантии `T?.let`; смешение `Optional` и `T?` запутывает код.",
-                "source_of_confusion": "«Совместимость с `Java`» кажется преимуществом, хотя из `Java` всё равно сделают wrapper отдельно.",
-                "if_it_were_true": "Тогда `Kotlin` не имел бы null safety вообще, и все писали бы `Optional<T>`, но `T?` существует ради отказа от него.",
-                "how_it_should_be": "Внутри `Kotlin` используют `T?`, а `Optional` оставляют только на границе с `Java` через адаптеры."
+                "what_actually": "`Optional.get()` бросает `NoSuchElementException`, если значение отсутствует (`Optional.empty()`); цель `Optional` — как раз явно представить отсутствие, а не гарантировать наличие.",
+                "source_of_confusion": "Имя `Optional` ассоциируется с «возможно есть», а метод `get()` звучит безопасно, как «просто достать».",
+                "if_it_were_true": "Тогда не было бы смысла в типе `Optional` — он совпадал бы с `T`; он существует именно потому, что отсутствие реально.",
+                "how_it_should_be": "Без проверки `.get()` — замаскированный NPE; значение разворачивают в `T?` через `orElse(null)`."
               }
             }
           ]
@@ -2003,14 +2003,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Lombok` генерирует код через `Java` APT, который запускается во время `javac` — после `kotlinc`. `Kotlin` компилируется первым и видит только оригинальный `Java`-source без сгенерированного `builder()`, поэтому вызов `UserRequest.builder()` из `Kotlin` падает с `cannot find symbol`.",
-              "correct": true,
+              "text": "`Lombok` нужно настроить опцией `-AlombokKotlinSupport=true` — нативная поддержка `Kotlin` есть с 2022 года.",
+              "correct": false,
               "sections": {
-                "explanation": "Это circular dependency порядка компиляции: чтобы `Kotlin` увидел Lombok-код, Lombok должен сработать первым (на `javac`), но `javac` идёт после `kotlinc`, а тот уже скомпилирован и не может сослаться на сгенерированное.",
-                "example": "При `@Builder @Data public class UserRequest {}` из `Kotlin` вызов `UserRequest.builder().name(\"Alice\").build()` не компилируется, потому что на момент `kotlinc` метода `builder()` ещё нет.",
-                "when_to_apply": "Об этом помнят при миграции с `Java+Lombok` на `Kotlin`: лучшее решение — вынести Lombok-классы в отдельный `Java`-модуль, от которого `Kotlin` зависит как от готового JAR.",
-                "edge_cases": "`MapStruct` — аналогичная проблема (тоже APT); `Dagger 2` работает через kapt с поправками; `Lombok+Kotlin` в одном модуле теоретически возможен через hack-конфигурацию `--no-stubs`, но не рекомендуется; `@Builder.Default`-фичи теряются при модульном разделении.",
-                "related": "[[kotlin-interop-java-interview#Q27]] порядок компиляции Kotlin+Java; [[kotlin-interop-java-interview#Q29]] annotation targets в Kotlin; [[kotlin-interop-java-interview#Q22]] overloaded-методы из Java."
+                "what_actually": "Такой опции не существует; у `Lombok` нет нативной интеграции с `Kotlin`-компилятором — были лишь IDE-эксперименты (IntelliJ-плагин), но это IDE-only, не compile-time.",
+                "source_of_confusion": "`Lombok` активно развивается, новые опции добавляются, и вымышленный флаг звучит правдоподобно.",
+                "if_it_were_true": "Тогда `Lombok` использовался бы в смешанных проектах без хлопот, но на практике стандарт — модульное разделение.",
+                "how_it_should_be": "Нативной поддержки нет; Lombok-классы изолируют в `Java`-модуле либо заменяют `Kotlin` `data class`."
               }
             },
             {
@@ -2028,13 +2027,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Lombok` нужно настроить опцией `-AlombokKotlinSupport=true` — нативная поддержка `Kotlin` есть с 2022 года.",
-              "correct": false,
+              "text": "`Lombok` генерирует код через `Java` APT, который запускается во время `javac` — после `kotlinc`. `Kotlin` компилируется первым и видит только оригинальный `Java`-source без сгенерированного `builder()`, поэтому вызов `UserRequest.builder()` из `Kotlin` падает с `cannot find symbol`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Такой опции не существует; у `Lombok` нет нативной интеграции с `Kotlin`-компилятором — были лишь IDE-эксперименты (IntelliJ-плагин), но это IDE-only, не compile-time.",
-                "source_of_confusion": "`Lombok` активно развивается, новые опции добавляются, и вымышленный флаг звучит правдоподобно.",
-                "if_it_were_true": "Тогда `Lombok` использовался бы в смешанных проектах без хлопот, но на практике стандарт — модульное разделение.",
-                "how_it_should_be": "Нативной поддержки нет; Lombok-классы изолируют в `Java`-модуле либо заменяют `Kotlin` `data class`."
+                "explanation": "Это circular dependency порядка компиляции: чтобы `Kotlin` увидел Lombok-код, Lombok должен сработать первым (на `javac`), но `javac` идёт после `kotlinc`, а тот уже скомпилирован и не может сослаться на сгенерированное.",
+                "example": "При `@Builder @Data public class UserRequest {}` из `Kotlin` вызов `UserRequest.builder().name(\"Alice\").build()` не компилируется, потому что на момент `kotlinc` метода `builder()` ещё нет.",
+                "when_to_apply": "Об этом помнят при миграции с `Java+Lombok` на `Kotlin`: лучшее решение — вынести Lombok-классы в отдельный `Java`-модуль, от которого `Kotlin` зависит как от готового JAR.",
+                "edge_cases": "`MapStruct` — аналогичная проблема (тоже APT); `Dagger 2` работает через kapt с поправками; `Lombok+Kotlin` в одном модуле теоретически возможен через hack-конфигурацию `--no-stubs`, но не рекомендуется; `@Builder.Default`-фичи теряются при модульном разделении.",
+                "related": "[[kotlin-interop-java-interview#Q27]] порядок компиляции Kotlin+Java; [[kotlin-interop-java-interview#Q29]] annotation targets в Kotlin; [[kotlin-interop-java-interview#Q22]] overloaded-методы из Java."
               }
             }
           ]
@@ -2051,6 +2051,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`companion object` недоступен из `Java` вообще — нужно завести отдельный `Java`-helper с `static final Duration DEFAULT_TIMEOUT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`companion object` доступен из `Java` через `Order.Companion.xxx()` или напрямую с `@JvmField`/`@JvmStatic`; отдельный `Java`-helper избыточен.",
+                "source_of_confusion": "`companion object` — `Kotlin`-специфичный концепт, и кажется, что `Java` его не понимает.",
+                "if_it_were_true": "Тогда `Kotlin` был бы непригоден для смешанных проектов, но он используется массово (Android, Spring).",
+                "how_it_should_be": "Достаточно правильно аннотировать companion-поля; дублирующий `Java`-helper создавать не нужно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Order.DEFAULT_TIMEOUT` и `Order.MAX_ITEMS` — обе доступны напрямую как `static`-поля, потому что обе объявлены в companion.",
               "correct": false,
               "sections": {
@@ -2058,18 +2070,6 @@
                 "source_of_confusion": "Оба объявлены в companion, и кажется, что они должны вести себя одинаково.",
                 "if_it_were_true": "Тогда `Duration` мог бы быть `const`, но `const` запрещает не-примитивные типы.",
                 "how_it_should_be": "`const val` — прямой доступ; обычный `val` — через `Companion`-геттер (или `@JvmField` для прямого поля)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Оба значения получают только через рефлексию: `Class.forName(\"Order\").getField(\"DEFAULT_TIMEOUT\")`, иначе из `Java` доступа нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Рефлексия работает для `Java`-видимых полей, но это путь для библиотек (Jackson, JPA), а не для обычного кода; companion `val` без `@JvmField` вообще не имеет публичного поля — только геттер, и `getField` не сработает.",
-                "source_of_confusion": "Рефлексия — универсальный механизм, и кажется единственным способом для `Kotlin`-специфичных конструкций.",
-                "if_it_were_true": "Тогда все JavaBean'ы и `Kotlin`-properties работали бы через рефлексию, но используют обычные вызовы геттеров ради эффективности.",
-                "how_it_should_be": "`const val` берут прямо как поле, обычный `val` — через геттер `Companion`; рефлексия не нужна."
               }
             },
             {
@@ -2088,13 +2088,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`companion object` недоступен из `Java` вообще — нужно завести отдельный `Java`-helper с `static final Duration DEFAULT_TIMEOUT`.",
+              "text": "Оба значения получают только через рефлексию: `Class.forName(\"Order\").getField(\"DEFAULT_TIMEOUT\")`, иначе из `Java` доступа нет.",
               "correct": false,
               "sections": {
-                "what_actually": "`companion object` доступен из `Java` через `Order.Companion.xxx()` или напрямую с `@JvmField`/`@JvmStatic`; отдельный `Java`-helper избыточен.",
-                "source_of_confusion": "`companion object` — `Kotlin`-специфичный концепт, и кажется, что `Java` его не понимает.",
-                "if_it_were_true": "Тогда `Kotlin` был бы непригоден для смешанных проектов, но он используется массово (Android, Spring).",
-                "how_it_should_be": "Достаточно правильно аннотировать companion-поля; дублирующий `Java`-helper создавать не нужно."
+                "what_actually": "Рефлексия работает для `Java`-видимых полей, но это путь для библиотек (Jackson, JPA), а не для обычного кода; companion `val` без `@JvmField` вообще не имеет публичного поля — только геттер, и `getField` не сработает.",
+                "source_of_confusion": "Рефлексия — универсальный механизм, и кажется единственным способом для `Kotlin`-специфичных конструкций.",
+                "if_it_were_true": "Тогда все JavaBean'ы и `Kotlin`-properties работали бы через рефлексию, но используют обычные вызовы геттеров ради эффективности.",
+                "how_it_should_be": "`const val` берут прямо как поле, обычный `val` — через геттер `Companion`; рефлексия не нужна."
               }
             }
           ]
@@ -2135,18 +2135,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Компилятор `Kotlin` запретит объявить одноимённые extension на классе `Animal` и подклассе `Dog` — это ошибка компиляции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Kotlin` разрешает одноимённые extension на разных типах (это overload); ошибки компиляции нет — лишь static dispatch при вызове; можно даже написать `fun Any.toString()` рядом с `Object.toString()`.",
-                "source_of_confusion": "В OOP-наследовании нельзя одноимённые методы с одинаковой сигнатурой (только override), и это правило приписывают extension.",
-                "if_it_were_true": "Тогда нельзя было бы расширять иерархии уточняющим поведением, но это популярная идиома.",
-                "how_it_should_be": "Одноимённые extension компилируются в overload'ы; при вызове выбирается версия по типу выражения статически."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`\"woof\"` — extension-функции компилируются в статические методы с receiver-первым-параметром (два overload'а `speak(Animal)` и `speak(Dog)`), а `Java` разрешает overload по compile-time типу выражения; для литерала `new Dog()` тип выражения — `Dog`, поэтому выбирается `speak(Dog)`.",
               "correct": true,
               "sections": {
@@ -2155,6 +2143,18 @@
                 "when_to_apply": "Это учитывают при проектировании иерархий extension-функций: если нужен полиморфизм — пишут обычный virtual-метод в классе, а extension оставляют для утилит, расширяющих API без модификации класса.",
                 "edge_cases": "Из extension нет доступа к `private`/`protected` членам класса; их нельзя `override`; они не часть virtual table даже для интерфейсов; одноимённые extension на классе и подклассе разрешены (это overload, не ошибка компиляции); `@JvmName` на файле задаёт имя `Java`-helper-класса.",
                 "related": "[[kotlin-interop-java-interview#Q5]] extension-функции из Java (база); [[kotlin-interop-java-interview#Q19]] top-level функции; [[kotlin-interop-java-interview#Q12]] SAM-conversion."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Компилятор `Kotlin` запретит объявить одноимённые extension на классе `Animal` и подклассе `Dog` — это ошибка компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kotlin` разрешает одноимённые extension на разных типах (это overload); ошибки компиляции нет — лишь static dispatch при вызове; можно даже написать `fun Any.toString()` рядом с `Object.toString()`.",
+                "source_of_confusion": "В OOP-наследовании нельзя одноимённые методы с одинаковой сигнатурой (только override), и это правило приписывают extension.",
+                "if_it_were_true": "Тогда нельзя было бы расширять иерархии уточняющим поведением, но это популярная идиома.",
+                "how_it_should_be": "Одноимённые extension компилируются в overload'ы; при вызове выбирается версия по типу выражения статически."
               }
             }
           ]
@@ -2171,6 +2171,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`User?` всегда быстрее `Optional<User>`, но `Spring Data` автоматически конвертирует один тип в другой, так что реального выбора нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Data` не конвертирует: метод возвращает ровно объявленный тип (`User` для `User?`, `Optional<User>` для `Optional`); это решение разработчика, а не auto-magic.",
+                "source_of_confusion": "`Spring` «делает много магии», и возникает соблазн приписать ему auto-conversion типов.",
+                "if_it_were_true": "Тогда разные потребители одного метода видели бы разный тип, нарушая Liskov substitution и систему типов.",
+                "how_it_should_be": "Return type — контракт API, который соблюдает разработчик; framework тип не подменяет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`User?` — нативный `Kotlin`-nullable, который `Spring Data` 2.x+ распознаёт и работает идиоматично без `Optional`-обёртки: возвращает `null` напрямую если запись не найдена, не аллоцирует wrapper, и уважает `Kotlin` null safety (компилятор требует обработки `null`).",
               "correct": true,
               "sections": {
@@ -2182,8 +2194,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Никак не отличаются — `User?` и `Optional<User>` идентичны на уровне байткода и сигнатур.",
               "correct": false,
               "sections": {
@@ -2194,8 +2206,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Spring Data` вообще не поддерживает `Kotlin`-nullable — для отсутствующих значений нужно использовать только `Optional`.",
               "correct": false,
               "sections": {
@@ -2203,18 +2215,6 @@
                 "source_of_confusion": "`Spring` исторически ориентирован на `Java`, и кажется, что `Kotlin`-специфичные фичи не поддержаны.",
                 "if_it_were_true": "Тогда `Kotlin` был бы непригоден для `Spring Boot`, но его, наоборот, поощряют JetBrains и Spring-команда.",
                 "how_it_should_be": "Nullable return types работают из коробки; `Optional` нужен лишь для совместимости с `Java`-стороной."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`User?` всегда быстрее `Optional<User>`, но `Spring Data` автоматически конвертирует один тип в другой, так что реального выбора нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Spring Data` не конвертирует: метод возвращает ровно объявленный тип (`User` для `User?`, `Optional<User>` для `Optional`); это решение разработчика, а не auto-magic.",
-                "source_of_confusion": "`Spring` «делает много магии», и возникает соблазн приписать ему auto-conversion типов.",
-                "if_it_were_true": "Тогда разные потребители одного метода видели бы разный тип, нарушая Liskov substitution и систему типов.",
-                "how_it_should_be": "Return type — контракт API, который соблюдает разработчик; framework тип не подменяет."
               }
             }
           ]
@@ -2231,18 +2231,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Kotlin` `out T` запрещает использование generic-интерфейса из `Java` вообще — нужно полностью переписать интерфейс без variance.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Generic-интерфейс отлично работает из `Java`; проблема только в exact type matching из-за wildcards, и `out T` остаётся возможным с `@JvmSuppressWildcards`.",
-                "source_of_confusion": "Разочарование от «несовпадение типов» толкает к радикальному выводу о полной несовместимости.",
-                "if_it_were_true": "Тогда `Kotlin` был бы непригоден для DI-фреймворков, но он массово используется в Android Dagger и Spring.",
-                "how_it_should_be": "Variance сохраняют, а wildcard убирают точечно через `@JvmSuppressWildcards`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`out T` транслируется в `Java` как `? extends T`, поэтому `Java` видит `List<? extends UserDto> findAll()`, что не совпадает с `List<UserDto>` при exact type matching в DI; решение — `@JvmSuppressWildcards`, который убирает wildcard и даёт `List<T>` в `Java`-сигнатуре.",
               "correct": true,
               "sections": {
@@ -2254,20 +2242,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`@Inject` требует `Provider<List<UserDto>>` вместо прямого `List<UserDto>` — это и есть решение проблемы wildcards.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Provider` — конструкт `Dagger` для lazy injection и scope-mismatch, не решение wildcards; с `Provider<List<UserDto>>` `Dagger` всё равно ищет binding `List<UserDto>` и встречает ту же проблему.",
-                "source_of_confusion": "`Provider` часто упоминают как решение DI-проблем, и его приписывают и к type matching.",
-                "if_it_were_true": "Тогда любой `Java`-DI требовал бы `Provider`, но они работают с прямыми типами для type-erased generics.",
-                "how_it_should_be": "Wildcard убирают `@JvmSuppressWildcards`; `Provider` решает другую категорию (lifecycle), не несовпадение типов."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Нужно использовать `Array<UserDto>` вместо `List<UserDto>`, потому что массивы в `Java` не имеют wildcards.",
               "correct": false,
               "sections": {
@@ -2275,6 +2251,30 @@
                 "source_of_confusion": "Массивы кажутся «более простыми» и без проблем с wildcards.",
                 "if_it_were_true": "Тогда все коллекции переписали бы в массивы, но от этого ушли после появления Generics в `Java 5`.",
                 "how_it_should_be": "Остаются с `List` и убирают wildcard через `@JvmSuppressWildcards`, сохраняя type safety."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Kotlin` `out T` запрещает использование generic-интерфейса из `Java` вообще — нужно полностью переписать интерфейс без variance.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Generic-интерфейс отлично работает из `Java`; проблема только в exact type matching из-за wildcards, и `out T` остаётся возможным с `@JvmSuppressWildcards`.",
+                "source_of_confusion": "Разочарование от «несовпадение типов» толкает к радикальному выводу о полной несовместимости.",
+                "if_it_were_true": "Тогда `Kotlin` был бы непригоден для DI-фреймворков, но он массово используется в Android Dagger и Spring.",
+                "how_it_should_be": "Variance сохраняют, а wildcard убирают точечно через `@JvmSuppressWildcards`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Inject` требует `Provider<List<UserDto>>` вместо прямого `List<UserDto>` — это и есть решение проблемы wildcards.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Provider` — конструкт `Dagger` для lazy injection и scope-mismatch, не решение wildcards; с `Provider<List<UserDto>>` `Dagger` всё равно ищет binding `List<UserDto>` и встречает ту же проблему.",
+                "source_of_confusion": "`Provider` часто упоминают как решение DI-проблем, и его приписывают и к type matching.",
+                "if_it_were_true": "Тогда любой `Java`-DI требовал бы `Provider`, но они работают с прямыми типами для type-erased generics.",
+                "how_it_should_be": "Wildcard убирают `@JvmSuppressWildcards`; `Provider` решает другую категорию (lifecycle), не несовпадение типов."
               }
             }
           ]
