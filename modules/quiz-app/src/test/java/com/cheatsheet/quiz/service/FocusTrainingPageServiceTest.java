@@ -10,9 +10,11 @@ import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
 import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageService;
+import com.cheatsheet.quiz.feature.interview.service.review.ReviewReasonService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
+import com.cheatsheet.quiz.persistence.ReviewStateRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +42,10 @@ class FocusTrainingPageServiceTest {
     @Mock
     TopicCatalogService topicCatalogService;
     @Mock
+    ReviewStateRepository reviewStateRepository;
+    @Mock
+    ReviewReasonService reviewReasonService;
+    @Mock
     InterviewQuestion interviewQuestion;
 
     FocusTrainingPageService service;
@@ -52,7 +58,9 @@ class FocusTrainingPageServiceTest {
                 questionRepository,
                 questionStatsRepository,
                 topicCatalogService,
-                appProperties
+                appProperties,
+                reviewStateRepository,
+                reviewReasonService
         );
     }
 

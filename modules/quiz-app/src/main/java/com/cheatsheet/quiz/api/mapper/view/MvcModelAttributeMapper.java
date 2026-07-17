@@ -59,6 +59,9 @@ public class MvcModelAttributeMapper {
         if (pageState.difficulty() != null) {
             model.addAttribute("difficulty", pageState.difficulty());
         }
+        if (pageState.reviewReason() != null) {
+            model.addAttribute("reviewReason", pageState.reviewReason());
+        }
         model.addAttribute("progressPercent", pageState.progressPercent());
         model.addAttribute("reviewMode", reviewMode);
         InterviewMode mode = pageState.surface().mode();

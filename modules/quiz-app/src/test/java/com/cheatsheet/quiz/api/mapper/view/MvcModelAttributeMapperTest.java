@@ -5,6 +5,7 @@ import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewStats;
+import com.cheatsheet.quiz.domain.ReviewReason;
 import com.cheatsheet.quiz.domain.SessionSummary;
 import com.cheatsheet.quiz.feature.interview.service.page.AnswerPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageService;
@@ -39,6 +40,7 @@ class MvcModelAttributeMapperTest {
                 null,
                 false
         );
+        ReviewReason reviewReason = new ReviewReason(ReviewReason.Type.OVERDUE, "Повторение просрочено на 3 дня");
         FocusTrainingPageService.FocusPageState pageState = new FocusTrainingPageService.FocusPageState(
                 Optional.empty(),
                 false,
@@ -48,7 +50,8 @@ class MvcModelAttributeMapperTest {
                 null,
                 null,
                 33.3,
-                surfaceState
+                surfaceState,
+                reviewReason
         );
 
         mapper.applyFocusPageState(model, pageState, true);
@@ -56,10 +59,41 @@ class MvcModelAttributeMapperTest {
         assertThat(model.getAttribute("reviewMode")).isEqualTo(true);
         assertThat(model.getAttribute("progressPercent")).isEqualTo(33.3);
         assertThat(model.getAttribute("stats")).isEqualTo(surfaceState.stats());
+        assertThat(model.getAttribute("reviewReason")).isEqualTo(reviewReason);
         assertThat(model.getAttribute("focusModeChipText")).isEqualTo("Повтор ошибок");
         assertThat(model.getAttribute("focusModeHintText")).isEqualTo("Режим review: отвечай на вопросы с ошибками.");
         assertThat(model.getAttribute("focusEmptyRetryHref")).isEqualTo("/review");
         assertThat(model.getAttribute("focusEmptyRetryText")).isEqualTo("Обновить review");
+    }
+
+    @Test
+    void omitsReviewReasonAttributeWhenNull() {
+        ExtendedModelMap model = new ExtendedModelMap();
+        FocusTrainingPageService.FocusPageState pageState = new FocusTrainingPageService.FocusPageState(
+                Optional.empty(),
+                false,
+                false,
+                false,
+                null,
+                null,
+                null,
+                0.0,
+                new FocusTrainingPageService.SurfaceState(
+                        new InterviewStats(0, 0, 0, 0, 0),
+                        List.of(),
+                        List.of(),
+                        null,
+                        new InterviewFilter(null, null, false, false, false, true),
+                        InterviewMode.TRAINING,
+                        null,
+                        false
+                ),
+                null
+        );
+
+        mapper.applyFocusPageState(model, pageState, false);
+
+        assertThat(model.getAttribute("reviewReason")).isNull();
     }
 
     @Test
@@ -82,7 +116,8 @@ class MvcModelAttributeMapperTest {
                         InterviewMode.FLASHCARD,
                         null,
                         false
-                )
+                ),
+                null
         );
         FocusTrainingPageService.FocusPageState studyState = flashcardState.toBuilder()
                 .surface(flashcardState.surface().toBuilder().mode(InterviewMode.STUDY).build())
@@ -129,7 +164,8 @@ class MvcModelAttributeMapperTest {
                         InterviewMode.TRAINING,
                         null,
                         false
-                )
+                ),
+                null
         );
 
         ExtendedModelMap model = new ExtendedModelMap();

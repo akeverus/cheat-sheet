@@ -8,13 +8,16 @@ import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewQuestion;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.InterviewStats;
+import com.cheatsheet.quiz.domain.ReviewReason;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.feature.interview.service.review.ReviewReasonService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.domain.QuestionDifficulty;
 import com.cheatsheet.quiz.domain.FlashcardPhase;
 import com.cheatsheet.quiz.domain.StudyPhase;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
+import com.cheatsheet.quiz.persistence.ReviewStateRepository;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,6 +43,8 @@ public class FocusTrainingPageService {
     QuestionStatsRepository questionStatsRepository;
     TopicCatalogService topicCatalogService;
     AppProperties appProperties;
+    ReviewStateRepository reviewStateRepository;
+    ReviewReasonService reviewReasonService;
 
     /**
      * Строит view-model для главной страницы тренировки.
@@ -72,6 +77,7 @@ public class FocusTrainingPageService {
         String diagram = null;
         String studyAnswerHtml = null;
         QuestionDifficulty difficulty = null;
+        ReviewReason reviewReason = null;
         if (current.isPresent()) {
             InterviewQuestion question = current.get();
             if (question.question().diagramMermaid() != null && !question.question().diagramMermaid().isBlank()) {
@@ -85,7 +91,16 @@ public class FocusTrainingPageService {
             if (studyLearnPhase || flashcardRevealed || clientReveal) {
                 studyAnswerHtml = facade.renderMarkdown(question.question().answerMarkdown());
             }
-            difficulty = questionStatsRepository.getDifficulty(question.question().id());
+            long questionId = question.question().id();
+            difficulty = questionStatsRepository.getDifficulty(questionId);
+            // Explainable-причина повторения (FSRS/SM-2): почему вопрос перед
+            // тобой сейчас. Считаем из уже накопленных сигналов состояния.
+            double topicAccuracy = questionStatsRepository.getTopicAccuracy(question.question().topic());
+            reviewReason = reviewReasonService.classify(
+                    reviewStateRepository.findByQuestionId(questionId),
+                    reviewStateRepository.findFsrsState(questionId),
+                    topicAccuracy
+            ).orElse(null);
         }
 
         return new FocusPageState(
@@ -97,7 +112,8 @@ public class FocusTrainingPageService {
                 studyAnswerHtml,
                 difficulty,
                 progressPercent(interviewSession),
-                surface
+                surface,
+                reviewReason
         );
     }
 
@@ -149,7 +165,8 @@ public class FocusTrainingPageService {
             String studyAnswerHtml,
             QuestionDifficulty difficulty,
             double progressPercent,
-            SurfaceState surface
+            SurfaceState surface,
+            ReviewReason reviewReason
     ) {
     }
 

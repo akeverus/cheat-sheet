@@ -85,6 +85,13 @@
         <p class="focus-question-topic"
            th:if="${current.question.topic != null and !current.question.topic.isBlank()}"
            th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(current.question.topic), '-', ' '), '_', ' '))}">Тема</p>
+        <!-- Explainable-причина повторения (FSRS/SM-2): почему вопрос сейчас перед
+             тобой. Серверный рендер, без JS. Показывается только если планировщик
+             дал явный повод (просрочка / недавняя ошибка / слабый навык). -->
+        <p class="focus-question-reason"
+           th:if="${reviewReason != null}"
+           th:attr="data-reason-type=${reviewReason.type().name()}"
+           th:text="${reviewReason.message()}">Причина повторения</p>
         <h2 class="focus-question" th:utext="${@markdownRenderService.toInlineHtml(current.question.questionText)}">Вопрос</h2>
 
         <!-- Нативный <details>: раскрытие примера кода работает без JS (раньше
