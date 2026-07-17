@@ -11,14 +11,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Functional: создать paste (текст/код/Markdown), отдать по короткой ссылке `pastebin.com/abc1234` и через raw `/raw/abc1234` для `curl`, опциональные TTL, syntax highlighting, privacy modes и auth. Non-functional: миллионы DAU, 1M+ pastes/день, read-heavy 100:1, view < 100 ms, creation < 500 ms, availability 99.9%, TB-scale хранилище.",
-              "correct": true,
+              "text": "Обязательное требование — выполнение (sandbox-execution) загруженного кода, чтобы пользователь видел вывод программы прямо в paste.",
+              "correct": false,
               "sections": {
-                "explanation": "Сервис read-heavy: один paste просматривают много раз, поэтому чтение оптимизируют агрессивнее записи. Из non-functional сразу вытекает разделение blob (большой) и metadata (маленький, индексируемый).",
-                "example": "Anonymous-пользователь кидает 10 MB лог через `curl -F`, а потом тысячи людей читают его по ссылке — отсюда требования blob-storage и CDN, а не одна строка в БД.",
-                "when_to_apply": "Эти требования проговаривают в первые 5 минут интервью, чтобы зафиксировать scope и оценить масштаб перед capacity estimation.",
-                "edge_cases": "Senior сразу отмечает, что paste бывает huge (10 MB+ логов), и это диктует отделить blob storage от metadata DB; иначе размер БД взорвётся.",
-                "related": "[[design-pastebin-interview#Q2]] capacity estimation из этих требований; [[design-pastebin-interview#Q5]] разделение blob и metadata; [[design-pastebin-interview#Q8]] raw vs view endpoints."
+                "what_actually": "Code execution / sandbox — это про `Replit`, а не `Pastebin`; в scope он явно excluded.",
+                "source_of_confusion": "Раз люди шарят код, кажется логичным сразу его запускать.",
+                "if_it_were_true": "Тогда понадобились бы изолированные контейнеры на каждый запуск и защита от RCE, что несравнимо сложнее текстового хранилища.",
+                "how_it_should_be": "`Pastebin` только хранит и показывает текст/код; запуск — отдельный класс сервисов вроде `Replit`."
               }
             },
             {
@@ -36,13 +35,14 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Обязательное требование — выполнение (sandbox-execution) загруженного кода, чтобы пользователь видел вывод программы прямо в paste.",
-              "correct": false,
+              "text": "Functional: создать paste (текст/код/Markdown), отдать по короткой ссылке `pastebin.com/abc1234` и через raw `/raw/abc1234` для `curl`, опциональные TTL, syntax highlighting, privacy modes и auth. Non-functional: миллионы DAU, 1M+ pastes/день, read-heavy 100:1, view < 100 ms, creation < 500 ms, availability 99.9%, TB-scale хранилище.",
+              "correct": true,
               "sections": {
-                "what_actually": "Code execution / sandbox — это про `Replit`, а не `Pastebin`; в scope он явно excluded.",
-                "source_of_confusion": "Раз люди шарят код, кажется логичным сразу его запускать.",
-                "if_it_were_true": "Тогда понадобились бы изолированные контейнеры на каждый запуск и защита от RCE, что несравнимо сложнее текстового хранилища.",
-                "how_it_should_be": "`Pastebin` только хранит и показывает текст/код; запуск — отдельный класс сервисов вроде `Replit`."
+                "explanation": "Сервис read-heavy: один paste просматривают много раз, поэтому чтение оптимизируют агрессивнее записи. Из non-functional сразу вытекает разделение blob (большой) и metadata (маленький, индексируемый).",
+                "example": "Anonymous-пользователь кидает 10 MB лог через `curl -F`, а потом тысячи людей читают его по ссылке — отсюда требования blob-storage и CDN, а не одна строка в БД.",
+                "when_to_apply": "Эти требования проговаривают в первые 5 минут интервью, чтобы зафиксировать scope и оценить масштаб перед capacity estimation.",
+                "edge_cases": "Senior сразу отмечает, что paste бывает huge (10 MB+ логов), и это диктует отделить blob storage от metadata DB; иначе размер БД взорвётся.",
+                "related": "[[design-pastebin-interview#Q2]] capacity estimation из этих требований; [[design-pastebin-interview#Q5]] разделение blob и metadata; [[design-pastebin-interview#Q8]] raw vs view endpoints."
               }
             },
             {
@@ -83,14 +83,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "1M × 10 KB = 10 GB/день raw, за 5 лет ~18 TB raw, после zstd 3-4× остаётся 5-7 TB compressed. Reads: 1M × 100 = 100M views/день ≈ 1200 views/sec average, peak ×5 ≈ 6000 views/sec, ~60 MB/sec egress на пике, из которых 95%+ берёт CDN. Hot-кэш в `Redis` ~10 GB.",
-              "correct": true,
+              "text": "Поскольку peak — это ×5 от average, при 1200 views/sec average origin-серверы должны держать все 6000 views/sec напрямую без CDN.",
+              "correct": false,
               "sections": {
-                "explanation": "Оценку ведут от дневного потока: размер хранилища от writes, bandwidth от reads (×100), память от hot top-1%. Сжатие и CDN — два рычага, снижающие стоимость на порядок.",
-                "example": "Из 60 MB/sec egress на пике origin видит лишь ~3 MB/sec, потому что CDN отдаёт 95%+; именно поэтому CDN — обязательный компонент, а не опция.",
-                "when_to_apply": "Эти числа называют, чтобы обосновать выбор blob-storage + CDN + Redis и прикинуть месячную стоимость ($500-1500).",
-                "edge_cases": "Metadata отдельно: ~50 байт/paste × 2B pastes ≈ 100 GB — мелочь против blob, но требует SSD и индексов под высокий QPS.",
-                "related": "[[design-pastebin-interview#Q1]] требования-источник этих чисел; [[design-pastebin-interview#Q22]] storage tiering для 5-7 TB; [[design-pastebin-interview#Q29]] cost optimization этих компонентов."
+                "what_actually": "Origin не держит 6000 views/sec: 95%+ забирает CDN, оставляя origin лишь ~3 MB/sec и сотни запросов в секунду.",
+                "source_of_confusion": "Peak-число 6000 пугает, и кажется, что вся нагрузка падает на серверы приложения.",
+                "if_it_were_true": "Без CDN это было бы 12-60 MB/sec sustained egress и $600+/месяц только на трафик.",
+                "how_it_should_be": "Реальная нагрузка на origin — peak минус CDN-hit; именно поэтому 90%+ cdn_hit_ratio — целевая метрика."
               }
             },
             {
@@ -108,13 +107,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Поскольку peak — это ×5 от average, при 1200 views/sec average origin-серверы должны держать все 6000 views/sec напрямую без CDN.",
-              "correct": false,
+              "text": "1M × 10 KB = 10 GB/день raw, за 5 лет ~18 TB raw, после zstd 3-4× остаётся 5-7 TB compressed. Reads: 1M × 100 = 100M views/день ≈ 1200 views/sec average, peak ×5 ≈ 6000 views/sec, ~60 MB/sec egress на пике, из которых 95%+ берёт CDN. Hot-кэш в `Redis` ~10 GB.",
+              "correct": true,
               "sections": {
-                "what_actually": "Origin не держит 6000 views/sec: 95%+ забирает CDN, оставляя origin лишь ~3 MB/sec и сотни запросов в секунду.",
-                "source_of_confusion": "Peak-число 6000 пугает, и кажется, что вся нагрузка падает на серверы приложения.",
-                "if_it_were_true": "Без CDN это было бы 12-60 MB/sec sustained egress и $600+/месяц только на трафик.",
-                "how_it_should_be": "Реальная нагрузка на origin — peak минус CDN-hit; именно поэтому 90%+ cdn_hit_ratio — целевая метрика."
+                "explanation": "Оценку ведут от дневного потока: размер хранилища от writes, bandwidth от reads (×100), память от hot top-1%. Сжатие и CDN — два рычага, снижающие стоимость на порядок.",
+                "example": "Из 60 MB/sec egress на пике origin видит лишь ~3 MB/sec, потому что CDN отдаёт 95%+; именно поэтому CDN — обязательный компонент, а не опция.",
+                "when_to_apply": "Эти числа называют, чтобы обосновать выбор blob-storage + CDN + Redis и прикинуть месячную стоимость ($500-1500).",
+                "edge_cases": "Metadata отдельно: ~50 байт/paste × 2B pastes ≈ 100 GB — мелочь против blob, но требует SSD и индексов под высокий QPS.",
+                "related": "[[design-pastebin-interview#Q1]] требования-источник этих чисел; [[design-pastebin-interview#Q22]] storage tiering для 5-7 TB; [[design-pastebin-interview#Q29]] cost optimization этих компонентов."
               }
             }
           ]
@@ -131,18 +131,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`paste_view_latency_p99` ставят таким же, как creation, — < 500 ms, потому что отдача и создание paste стоят одинаково по ресурсам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "View нацеливают на < 100 ms (cached), а creation — на < 500 ms; чтение из кэша/CDN кратно дешевле записи в blob + metadata.",
-                "source_of_confusion": "Кажется логичным дать одинаковый бюджет обоим путям ради простоты.",
-                "if_it_were_true": "Если бы view допускал 500 ms, read-heavy сервис ощущался бы медленным на каждом просмотре, а CDN терял бы смысл.",
-                "how_it_should_be": "View оптимизируют жёстче (< 100 ms cached), creation мягче (< 500 ms), потому что чтений в 100 раз больше."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`cdn_hit_ratio` не выносят в SLO, так как CDN — внешний сервис и его метрики не входят в зону ответственности команды.",
               "correct": false,
               "sections": {
@@ -153,8 +141,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Целевые SLO: `paste_creation_latency_p99` < 500 ms (alert > 2 сек), `paste_view_latency_p99` < 100 ms cached (alert > 500 ms), `cdn_hit_ratio` > 90% (alert < 70%), `creation_success_rate` > 99%, `expiration_gc_lag_minutes` < 60, availability 99.9%.",
               "correct": true,
               "sections": {
@@ -163,6 +151,18 @@
                 "when_to_apply": "Эти SLO фиксируют, чтобы договориться о бюджете ошибок и порогах алертов до запуска.",
                 "edge_cases": "Failure modes: blob недоступен → fail create (можно offline-буфер на retry); metadata down → 503; CDN miss + origin down → degraded mode (raw bytes прямо из S3).",
                 "related": "[[design-pastebin-interview#Q1]] требования по latency; [[design-pastebin-interview#Q28]] полный набор monitoring-метрик; [[design-pastebin-interview#Q14]] откуда берётся expiration_gc_lag."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`paste_view_latency_p99` ставят таким же, как creation, — < 500 ms, потому что отдача и создание paste стоят одинаково по ресурсам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "View нацеливают на < 100 ms (cached), а creation — на < 500 ms; чтение из кэша/CDN кратно дешевле записи в blob + metadata.",
+                "source_of_confusion": "Кажется логичным дать одинаковый бюджет обоим путям ради простоты.",
+                "if_it_were_true": "Если бы view допускал 500 ms, read-heavy сервис ощущался бы медленным на каждом просмотре, а CDN терял бы смысл.",
+                "how_it_should_be": "View оптимизируют жёстче (< 100 ms cached), creation мягче (< 500 ms), потому что чтений в 100 раз больше."
               }
             },
             {
@@ -191,18 +191,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Лучший выбор — Base62 от инкрементного counter (`base62_encode(INCR id)`), потому что он не даёт коллизий и предсказуем по длине.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Counter не даёт коллизий, но делает ID enumerable: можно сканировать `/1`, `/2`, ... — это security-проблема, поэтому `Pastebin`/`Hastebin` берут random.",
-                "source_of_confusion": "Отсутствие коллизий выглядит как явный плюс, и про enumeration-риск забывают.",
-                "if_it_were_true": "Если бы enumerable-ID был безопасен, не было бы антипаттерна «инкрементальные ID» и rate-limit на 404.",
-                "how_it_should_be": "Counter годится при невысоких требованиях к приватности; для anti-enumeration берут random Base62 7-8 символов."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Hash-based (`base62(sha256(content))[:7]`) — оптимальный универсальный выбор: одинаковый контент даёт один и тот же URL, что убирает дубликаты и упрощает дедупликацию хранилища.",
               "correct": false,
               "sections": {
@@ -213,8 +201,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "7 символов Base62 дают примерно 3.5 миллиарда комбинаций, чего едва хватает на billion-scale за 5 лет, поэтому запас берут длиной 10-12 символов.",
               "correct": false,
               "sections": {
@@ -225,8 +213,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Random Base62 на 7-8 символов: 62^7 ≈ 3.5T комбинаций, unpredictable (anti-enumeration), с UNIQUE-constraint в БД и retry 3-5 раз на конфликт, при исчерпании — bump длины до 8. `Pastebin` — 8 chars random, `Gist` — 32-char hex hash, `Hastebin` — 10 random.",
               "correct": true,
               "sections": {
@@ -235,6 +223,18 @@
                 "when_to_apply": "Этот подход выбирают, когда важна и приватность (нельзя угадать соседний paste), и масштаб на годы вперёд.",
                 "edge_cases": "Anti-enumeration усиливают rate-limit на 404-ответы: всплеск 404 = кто-то сканирует пространство ключей.",
                 "related": "[[design-pastebin-interview#Q5]] short_code как ключ в metadata; [[design-pastebin-interview#Q25]] rate-limit на 404 против сканеров; [[design-pastebin-interview#Q30]] enumerable ID как антипаттерн."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Лучший выбор — Base62 от инкрементного counter (`base62_encode(INCR id)`), потому что он не даёт коллизий и предсказуем по длине.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Counter не даёт коллизий, но делает ID enumerable: можно сканировать `/1`, `/2`, ... — это security-проблема, поэтому `Pastebin`/`Hastebin` берут random.",
+                "source_of_confusion": "Отсутствие коллизий выглядит как явный плюс, и про enumeration-риск забывают.",
+                "if_it_were_true": "Если бы enumerable-ID был безопасен, не было бы антипаттерна «инкрементальные ID» и rate-limit на 404.",
+                "how_it_should_be": "Counter годится при невысоких требованиях к приватности; для anti-enumeration берут random Base62 7-8 символов."
               }
             }
           ]
@@ -251,19 +251,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Разделять metadata (маленький, индексируемый, OLTP — в `Postgres`/`MySQL`) и blob (большой, immutable — в `S3`/`GCS`/`R2`). В таблице `pastes` лежат `short_code`, `visibility`, `expires_at`, `blob_key`; сам текст — zstd-сжатый объект по ключу `pastes/{short_code}.zst`. На read: metadata-lookup → проверка expired/visible → `s3.get(blob_key)` → decompress.",
-              "correct": true,
-              "sections": {
-                "explanation": "Metadata и blob имеют разный профиль: первое — частые мелкие индексируемые запросы (SSD, дорого/GB), второе — большой immutable массив (object storage, дёшево/GB). Разделение даёт независимое масштабирование и CDN-дружелюбный immutable blob.",
-                "example": "При billion-scale single `Postgres` с blob в `BYTEA` распухает: backup/restore становится мучительно медленным, поэтому blob выносят в `S3`, а в БД держат только `blob_key`.",
-                "when_to_apply": "Так проектируют, когда payload крупный и immutable: документы, логи, code paste — всё, что читается чаще, чем меняется.",
-                "edge_cases": "Для early-stage `Pastebin` single `Postgres` (blob в TEXT/BYTEA) работает и проще; separation обязателен именно на billion-scale.",
-                "related": "[[design-pastebin-interview#Q4]] short_code как ключ blob и строки; [[design-pastebin-interview#Q7]] zstd-сжатие blob на write; [[design-pastebin-interview#Q22]] tiering blob по Redis/S3/Glacier."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Правильно хранить и metadata, и сам текст paste в одной таблице `Postgres` в колонке `BYTEA` — так проще транзакции и одно хранилище легче эксплуатировать, чем два.",
               "correct": false,
               "sections": {
@@ -274,8 +261,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Blob в `S3` нужно делать mutable: при edit перезаписывать тот же объект по ключу, чтобы не плодить лишние версии и экономить место.",
               "correct": false,
               "sections": {
@@ -286,8 +273,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Metadata надо хранить в `S3` рядом с blob, а реляционную БД использовать только как кэш горячих записей.",
               "correct": false,
               "sections": {
@@ -295,6 +282,19 @@
                 "source_of_confusion": "Раз blob в `S3`, кажется удобным сложить туда и метаданные «в одном месте».",
                 "if_it_were_true": "Если бы metadata была в `S3`, нельзя было бы сделать `WHERE short_code=` с UNIQUE-constraint или индекс по `expires_at` для GC.",
                 "how_it_should_be": "Metadata требует индексируемого OLTP-хранилища; `S3` — только для immutable blob, а Redis — для горячего кэша."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Разделять metadata (маленький, индексируемый, OLTP — в `Postgres`/`MySQL`) и blob (большой, immutable — в `S3`/`GCS`/`R2`). В таблице `pastes` лежат `short_code`, `visibility`, `expires_at`, `blob_key`; сам текст — zstd-сжатый объект по ключу `pastes/{short_code}.zst`. На read: metadata-lookup → проверка expired/visible → `s3.get(blob_key)` → decompress.",
+              "correct": true,
+              "sections": {
+                "explanation": "Metadata и blob имеют разный профиль: первое — частые мелкие индексируемые запросы (SSD, дорого/GB), второе — большой immutable массив (object storage, дёшево/GB). Разделение даёт независимое масштабирование и CDN-дружелюбный immutable blob.",
+                "example": "При billion-scale single `Postgres` с blob в `BYTEA` распухает: backup/restore становится мучительно медленным, поэтому blob выносят в `S3`, а в БД держат только `blob_key`.",
+                "when_to_apply": "Так проектируют, когда payload крупный и immutable: документы, логи, code paste — всё, что читается чаще, чем меняется.",
+                "edge_cases": "Для early-stage `Pastebin` single `Postgres` (blob в TEXT/BYTEA) работает и проще; separation обязателен именно на billion-scale.",
+                "related": "[[design-pastebin-interview#Q4]] short_code как ключ blob и строки; [[design-pastebin-interview#Q7]] zstd-сжатие blob на write; [[design-pastebin-interview#Q22]] tiering blob по Redis/S3/Glacier."
               }
             }
           ]
@@ -311,6 +311,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Для versioning достаточно перезаписывать `pastes.blob_key`, а отдельная таблица `paste_revisions` избыточна и только дублирует данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`paste_revisions` (UNIQUE paste_id+revision_number) хранит историю всех ревизий; без неё edit терял бы старые версии, как в Gist.",
+                "source_of_confusion": "Раз `blob_key` указывает на текущий blob, кажется, что история не нужна.",
+                "if_it_were_true": "Если бы хранили только текущий blob_key, нельзя было бы показать diff между ревизиями или откатиться.",
+                "how_it_should_be": "Versioning требует отдельной таблицы ревизий; `pastes.blob_key` лишь указывает на текущую (последнюю) ревизию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Таблицу `paste_views` (аналитика просмотров) нужно держать в той же строке `pastes`, инкрементируя счётчик и складывая туда IP/UA каждого просмотра.",
               "correct": false,
               "sections": {
@@ -318,19 +330,6 @@
                 "source_of_confusion": "Кажется удобным держать «всё про paste» в одной строке.",
                 "if_it_were_true": "Если бы все просмотры писались в строку paste, на популярных paste была бы дикая row-contention и строка распухла бы.",
                 "how_it_should_be": "Просмотры — в отдельную партиционированную таблицу; в `pastes` держат лишь агрегат `views_count`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Несколько таблиц: `pastes` (основная, со `short_code` UNIQUE), `users` (id, username, oauth_provider, api_token_hash, plan), `paste_views` партиционированная по `viewed_at` (cleanup через `DROP PARTITION`), плюс `paste_revisions` (UNIQUE по paste_id+revision_number) и `paste_comments` для Gist-функций. Индексы: `short_code` UNIQUE, `user_id`, `expires_at`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Каждая таблица решает свою задачу: pastes — primary lookup, users — auth, paste_views — аналитика (отделена ради объёма), revisions — история. Партиционирование views по месяцу делает удаление старых данных операцией метаданных, а не тяжёлым DELETE.",
-                "example": "Индекс `idx_expires ON pastes(expires_at) WHERE expires_at IS NOT NULL` — частичный: он покрывает только paste с TTL, экономя место, и ускоряет GC-sweep.",
-                "when_to_apply": "Такую схему рисуют, когда нужны и быстрый lookup по коду, и аналитика, и опциональные Gist-фичи (revisions, comments).",
-                "edge_cases": "Партиционирование `paste_views` по месяцу даёт дешёвый cleanup: `DROP PARTITION` старого месяца вместо `DELETE` миллионов строк.",
-                "related": "[[design-pastebin-interview#Q5]] таблица pastes в storage-архитектуре; [[design-pastebin-interview#Q16]] paste_revisions для versioning; [[design-pastebin-interview#Q26]] users и api_token_hash для auth."
               }
             },
             {
@@ -348,13 +347,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для versioning достаточно перезаписывать `pastes.blob_key`, а отдельная таблица `paste_revisions` избыточна и только дублирует данные.",
-              "correct": false,
+              "text": "Несколько таблиц: `pastes` (основная, со `short_code` UNIQUE), `users` (id, username, oauth_provider, api_token_hash, plan), `paste_views` партиционированная по `viewed_at` (cleanup через `DROP PARTITION`), плюс `paste_revisions` (UNIQUE по paste_id+revision_number) и `paste_comments` для Gist-функций. Индексы: `short_code` UNIQUE, `user_id`, `expires_at`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`paste_revisions` (UNIQUE paste_id+revision_number) хранит историю всех ревизий; без неё edit терял бы старые версии, как в Gist.",
-                "source_of_confusion": "Раз `blob_key` указывает на текущий blob, кажется, что история не нужна.",
-                "if_it_were_true": "Если бы хранили только текущий blob_key, нельзя было бы показать diff между ревизиями или откатиться.",
-                "how_it_should_be": "Versioning требует отдельной таблицы ревизий; `pastes.blob_key` лишь указывает на текущую (последнюю) ревизию."
+                "explanation": "Каждая таблица решает свою задачу: pastes — primary lookup, users — auth, paste_views — аналитика (отделена ради объёма), revisions — история. Партиционирование views по месяцу делает удаление старых данных операцией метаданных, а не тяжёлым DELETE.",
+                "example": "Индекс `idx_expires ON pastes(expires_at) WHERE expires_at IS NOT NULL` — частичный: он покрывает только paste с TTL, экономя место, и ускоряет GC-sweep.",
+                "when_to_apply": "Такую схему рисуют, когда нужны и быстрый lookup по коду, и аналитика, и опциональные Gist-фичи (revisions, comments).",
+                "edge_cases": "Партиционирование `paste_views` по месяцу даёт дешёвый cleanup: `DROP PARTITION` старого месяца вместо `DELETE` миллионов строк.",
+                "related": "[[design-pastebin-interview#Q5]] таблица pastes в storage-архитектуре; [[design-pastebin-interview#Q16]] paste_revisions для versioning; [[design-pastebin-interview#Q26]] users и api_token_hash для auth."
               }
             }
           ]
@@ -371,30 +371,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Лучший выбор — `gzip`: он есть в стандартной библиотеке любого языка и в CDN, а его 2.5-3× сжатия достаточно для текста, так что тянуть зависимость `zstd` незачем.",
+              "text": "Часто читаемые paste выгодно пересжимать при чтении более сильным уровнем кодека — так горячий контент со временем занимает в хранилище меньше места.",
               "correct": false,
               "sections": {
-                "what_actually": "`gzip` даёт 2.5-3× и кодирует ~50 MB/s; `zstd` обгоняет его и по ratio (3-4×), и по скорости encode (~400 MB/s), поэтому выбирают `zstd`.",
-                "source_of_confusion": "`gzip` привычен и встроен везде, отсюда вывод, что он лучший.",
-                "if_it_were_true": "Если бы `gzip` был быстрее и сжимал сильнее, не существовало бы `zstd`, созданного именно ради лучшего trade-off.",
-                "how_it_should_be": "Для `Pastebin` берут `zstd`: лучший баланс ratio/скорости; `gzip` — fallback для совместимости."
+                "what_actually": "Сжимают один раз на write и хранят сжатым; на read только decompress — recompress на каждый read сжёг бы CPU впустую.",
+                "source_of_confusion": "Кажется, что «свежий кодек» на каждом чтении даёт лучшее сжатие.",
+                "if_it_were_true": "Если бы сжимали на каждый read, при 1200 views/sec CPU тратился бы на бессмысленный re-encode immutable blob.",
+                "how_it_should_be": "Write-once compress, read-only decompress: blob immutable, поэтому пересжимать его на чтении незачем."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Сжимать стоит единообразно весь контент, включая tiny pastes (< 256 байт) и уже сжатые данные, — так пайплайн проще, чем с проверкой порога и типа контента.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Tiny pastes (< 256 байт) и уже сжатый контент не сжимают: overhead заголовков превышает экономию.",
-                "source_of_confusion": "«Сжимать всегда» звучит как безопасное правило экономии.",
-                "if_it_were_true": "Если бы сжатие всегда помогало, не было бы порога 256 байт и проверки на уже сжатое.",
-                "how_it_should_be": "Сжимают только то, где есть выигрыш: текст/код > 256 байт; для мелочи и сжатого — store as-is."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`zstd` — лучший trade-off: 3-4× сжатия на код (большая избыточность), encode достаточно быстрый для real-time (< 5 ms на 10 KB), decode почти бесплатный (~800 MB/s). Сжимают один раз на write, на read — decompress в raw text. Не сжимают tiny (< 256 байт) и уже сжатый контент.",
               "correct": true,
               "sections": {
@@ -406,15 +394,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Часто читаемые paste выгодно пересжимать при чтении более сильным уровнем кодека — так горячий контент со временем занимает в хранилище меньше места.",
+              "order": 2,
+              "label": "C",
+              "text": "Сжимать стоит единообразно весь контент, включая tiny pastes (< 256 байт) и уже сжатые данные, — так пайплайн проще, чем с проверкой порога и типа контента.",
               "correct": false,
               "sections": {
-                "what_actually": "Сжимают один раз на write и хранят сжатым; на read только decompress — recompress на каждый read сжёг бы CPU впустую.",
-                "source_of_confusion": "Кажется, что «свежий кодек» на каждом чтении даёт лучшее сжатие.",
-                "if_it_were_true": "Если бы сжимали на каждый read, при 1200 views/sec CPU тратился бы на бессмысленный re-encode immutable blob.",
-                "how_it_should_be": "Write-once compress, read-only decompress: blob immutable, поэтому пересжимать его на чтении незачем."
+                "what_actually": "Tiny pastes (< 256 байт) и уже сжатый контент не сжимают: overhead заголовков превышает экономию.",
+                "source_of_confusion": "«Сжимать всегда» звучит как безопасное правило экономии.",
+                "if_it_were_true": "Если бы сжатие всегда помогало, не было бы порога 256 байт и проверки на уже сжатое.",
+                "how_it_should_be": "Сжимают только то, где есть выигрыш: текст/код > 256 байт; для мелочи и сжатого — store as-is."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Лучший выбор — `gzip`: он есть в стандартной библиотеке любого языка и в CDN, а его 2.5-3× сжатия достаточно для текста, так что тянуть зависимость `zstd` незачем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`gzip` даёт 2.5-3× и кодирует ~50 MB/s; `zstd` обгоняет его и по ratio (3-4×), и по скорости encode (~400 MB/s), поэтому выбирают `zstd`.",
+                "source_of_confusion": "`gzip` привычен и встроен везде, отсюда вывод, что он лучший.",
+                "if_it_were_true": "Если бы `gzip` был быстрее и сжимал сильнее, не существовало бы `zstd`, созданного именно ради лучшего trade-off.",
+                "how_it_should_be": "Для `Pastebin` берут `zstd`: лучший баланс ratio/скорости; `gzip` — fallback для совместимости."
               }
             }
           ]
@@ -431,13 +431,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно одного endpoint `/{short_code}` с content negotiation по заголовку `Accept`: браузер получит HTML, а `curl` с `Accept: text/plain` — сырой текст, без отдельного `/raw/`.",
-              "correct": false,
+              "text": "Два класса клиентов требуют разных ответов: браузеру — `/{short_code}` с rendered HTML, подсветкой и навигацией; скриптам (`curl`, `wget`) — `/raw/{short_code}` с `Content-Type: text/plain; charset=utf-8` и сырыми байтами. Плюс `/download/{code}` (attachment) и `/embed/{code}` (iframe). Raw кэшируют агрессивно, view — с коротким TTL.",
+              "correct": true,
               "sections": {
-                "what_actually": "`curl https://pastebin.com/abc1234` без `/raw/` получит HTML, непригодный для shell-пайплайнов; поэтому есть отдельный `/raw/{code}` с `text/plain`.",
-                "source_of_confusion": "Кажется, что один URL проще, а клиент сам разберётся с форматом.",
-                "if_it_were_true": "Если бы HTML годился для скриптов, не было бы паттерна `curl .../raw/abc1234 | bash`.",
-                "how_it_should_be": "Нужны два endpoint: `/{code}` → HTML-view с подсветкой, `/raw/{code}` → сырой `text/plain` для curl/wget."
+                "explanation": "Назначение клиентов разное: человек хочет оформление, скрипт — байты для пайплайна. Явные URL чище, чем content-negotiation по `Accept`, и предсказуемее для пользователя.",
+                "example": "Паттерн `curl https://pastebin.com/raw/abc1234 | bash` работает только потому, что raw отдаёт чистый `text/plain` без HTML-обвязки.",
+                "when_to_apply": "Разделение делают, когда у сервиса и браузерные пользователи, и programmatic-клиенты (CLI, IDE-плагины) с разными ожиданиями формата.",
+                "edge_cases": "Некоторые сервисы auto-detect User-Agent (curl/wget) и редиректят на raw ради удобства; `Pastebin` предпочитает явные URL вместо content negotiation.",
+                "related": "[[design-pastebin-interview#Q9]] API для programmatic creation теми же клиентами; [[design-pastebin-interview#Q10]] embed-endpoint для iframe; [[design-pastebin-interview#Q23]] CDN-кэш raw vs view."
               }
             },
             {
@@ -467,14 +468,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Два класса клиентов требуют разных ответов: браузеру — `/{short_code}` с rendered HTML, подсветкой и навигацией; скриптам (`curl`, `wget`) — `/raw/{short_code}` с `Content-Type: text/plain; charset=utf-8` и сырыми байтами. Плюс `/download/{code}` (attachment) и `/embed/{code}` (iframe). Raw кэшируют агрессивно, view — с коротким TTL.",
-              "correct": true,
+              "text": "Достаточно одного endpoint `/{short_code}` с content negotiation по заголовку `Accept`: браузер получит HTML, а `curl` с `Accept: text/plain` — сырой текст, без отдельного `/raw/`.",
+              "correct": false,
               "sections": {
-                "explanation": "Назначение клиентов разное: человек хочет оформление, скрипт — байты для пайплайна. Явные URL чище, чем content-negotiation по `Accept`, и предсказуемее для пользователя.",
-                "example": "Паттерн `curl https://pastebin.com/raw/abc1234 | bash` работает только потому, что raw отдаёт чистый `text/plain` без HTML-обвязки.",
-                "when_to_apply": "Разделение делают, когда у сервиса и браузерные пользователи, и programmatic-клиенты (CLI, IDE-плагины) с разными ожиданиями формата.",
-                "edge_cases": "Некоторые сервисы auto-detect User-Agent (curl/wget) и редиректят на raw ради удобства; `Pastebin` предпочитает явные URL вместо content negotiation.",
-                "related": "[[design-pastebin-interview#Q9]] API для programmatic creation теми же клиентами; [[design-pastebin-interview#Q10]] embed-endpoint для iframe; [[design-pastebin-interview#Q23]] CDN-кэш raw vs view."
+                "what_actually": "`curl https://pastebin.com/abc1234` без `/raw/` получит HTML, непригодный для shell-пайплайнов; поэтому есть отдельный `/raw/{code}` с `text/plain`.",
+                "source_of_confusion": "Кажется, что один URL проще, а клиент сам разберётся с форматом.",
+                "if_it_were_true": "Если бы HTML годился для скриптов, не было бы паттерна `curl .../raw/abc1234 | bash`.",
+                "how_it_should_be": "Нужны два endpoint: `/{code}` → HTML-view с подсветкой, `/raw/{code}` → сырой `text/plain` для curl/wget."
               }
             }
           ]
@@ -491,6 +491,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Idempotency-Key` не нужен для создания paste: повторный `POST` и так безопасен, потому что short_code генерируется случайно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `Idempotency-Key` сетевой ретрай создаёт дубль с новым `short_code`; ключ нужен, чтобы повтор вернул тот же первый paste.",
+                "source_of_confusion": "Случайный short_code наводит на мысль, что повтор «просто создаст ещё один, и ладно».",
+                "if_it_were_true": "Если бы повтор был безопасен, не было бы антипаттерна «no idempotency key on create».",
+                "how_it_should_be": "`Idempotency-Key` обязателен: он делает повторный POST идемпотентным и предотвращает дубликаты при ретраях."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "REST: `POST /api/v1/pastes` с `Authorization: Bearer <api_token>`, JSON-телом (`content`, `language`, `title`, `expires_in`, `visibility`) и заголовком `Idempotency-Key: <uuid>`; ответ возвращает `short_code`, `url`, `raw_url`, `expires_at`. Плюс `GET /api/v1/pastes/{short_code}` и `DELETE` (owner-only). API-токены генерируются в settings, хранятся хэшированными, с per-token rate-limits.",
               "correct": true,
               "sections": {
@@ -502,8 +514,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "API-токен надо хранить в БД в открытом виде, чтобы быстро сравнивать его с заголовком `Authorization` при каждом запросе.",
               "correct": false,
               "sections": {
@@ -511,18 +523,6 @@
                 "source_of_confusion": "Сравнение открытых строк кажется проще и быстрее.",
                 "if_it_were_true": "Если бы plain-хранение было ок, не было бы антипаттерна «storing api_token plain в DB».",
                 "how_it_should_be": "Хэшировать токен (sha256+salt) на запись, верифицировать повторным хэшированием входа — как с паролями."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Idempotency-Key` не нужен для создания paste: повторный `POST` и так безопасен, потому что short_code генерируется случайно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без `Idempotency-Key` сетевой ретрай создаёт дубль с новым `short_code`; ключ нужен, чтобы повтор вернул тот же первый paste.",
-                "source_of_confusion": "Случайный short_code наводит на мысль, что повтор «просто создаст ещё один, и ладно».",
-                "if_it_were_true": "Если бы повтор был безопасен, не было бы антипаттерна «no idempotency key on create».",
-                "how_it_should_be": "`Idempotency-Key` обязателен: он делает повторный POST идемпотентным и предотвращает дубликаты при ретраях."
               }
             },
             {
@@ -551,13 +551,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Embed надо отдавать с теми же привилегиями, что обычная страница: разрешить выполнение JS из содержимого paste, чтобы виджет был интерактивным.",
+              "text": "Embed-HTML нельзя кэшировать в CDN, потому что виджет должен показывать актуальный счётчик просмотров в реальном времени.",
               "correct": false,
               "sections": {
-                "what_actually": "Содержимое paste в embed показывают как plain text с экранированием HTML; выполнять JS из пользовательского контента — прямой XSS на встраивающем сайте.",
-                "source_of_confusion": "«Интерактивный виджет» наводит на мысль, что JS из paste должен исполняться.",
-                "if_it_were_true": "Если бы JS из контента исполнялся, вредоносный paste крал бы сессии на любом сайте с embed.",
-                "how_it_should_be": "Embed escape'ит HTML и применяет CSP/sandbox; код показывают подсвеченным, но не исполняемым."
+                "what_actually": "Embed-HTML кэшируют агрессивно с длинным TTL (контент immutable); счётчик просмотров в виджете не критичен и его не показывают real-time.",
+                "source_of_confusion": "Желание «свежих данных» наводит на запрет кэша.",
+                "if_it_were_true": "Если бы embed нельзя было кэшировать, каждый показ виджета на популярном блоге бил бы по origin.",
+                "how_it_should_be": "Embed-HTML и его ассеты (CSS, шрифты) кэшируют надолго; real-time счётчик в embed не нужен."
               }
             },
             {
@@ -576,6 +576,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Embed надо отдавать с теми же привилегиями, что обычная страница: разрешить выполнение JS из содержимого paste, чтобы виджет был интерактивным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Содержимое paste в embed показывают как plain text с экранированием HTML; выполнять JS из пользовательского контента — прямой XSS на встраивающем сайте.",
+                "source_of_confusion": "«Интерактивный виджет» наводит на мысль, что JS из paste должен исполняться.",
+                "if_it_were_true": "Если бы JS из контента исполнялся, вредоносный paste крал бы сессии на любом сайте с embed.",
+                "how_it_should_be": "Embed escape'ит HTML и применяет CSP/sandbox; код показывают подсвеченным, но не исполняемым."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Embed должен работать для любого paste, включая private и password-protected, чтобы владелец мог встроить свой приватный код куда угодно.",
               "correct": false,
               "sections": {
@@ -583,18 +595,6 @@
                 "source_of_confusion": "Кажется логичным, что владелец вправе встроить и приватный paste.",
                 "if_it_were_true": "Если бы private встраивался, любой, кому показали iframe, обходил бы password-защиту.",
                 "how_it_should_be": "Embed разрешён только публичным paste; приватные блокируют от встраивания на уровне заголовков фрейма."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Embed-HTML нельзя кэшировать в CDN, потому что виджет должен показывать актуальный счётчик просмотров в реальном времени.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Embed-HTML кэшируют агрессивно с длинным TTL (контент immutable); счётчик просмотров в виджете не критичен и его не показывают real-time.",
-                "source_of_confusion": "Желание «свежих данных» наводит на запрет кэша.",
-                "if_it_were_true": "Если бы embed нельзя было кэшировать, каждый показ виджета на популярном блоге бил бы по origin.",
-                "how_it_should_be": "Embed-HTML и его ассеты (CSS, шрифты) кэшируют надолго; real-time счётчик в embed не нужен."
               }
             }
           ]
@@ -611,30 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Client-side `Prism.js` лучше для SEO, потому что поисковики видят уже подсвеченный и размеченный классами код прямо в HTML.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: при client-side подсветке поисковики видят сырой HTML (highlighting добавляет JS уже в браузере), поэтому для SEO лучше server-side.",
-                "source_of_confusion": "Кажется, что «красивый» подсвеченный вид в браузере = то, что индексирует поисковик.",
-                "if_it_were_true": "Если бы client-side был хорош для SEO, GitHub не рендерил бы публичные Gist на сервере (Rouge).",
-                "how_it_should_be": "Server-side кладёт подсветку в HTML (хорошо для SEO); client-side отдаёт сырой HTML + JS, и боты видят неразмеченный код."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Server-side `Pygments` грузит браузер пользователя сильнее, потому что вся токенизация и рендеринг происходят на клиенте.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Server-side тратит CPU на сервере, а клиент получает готовый HTML; высокий CPU на клиенте — это как раз client-side (`Prism`/`highlight.js`).",
-                "source_of_confusion": "Легко перепутать, где именно происходит работа по подсветке.",
-                "if_it_were_true": "Если бы server-side грузил клиента, не было бы смысла кэшировать rendered HTML на сервере.",
-                "how_it_should_be": "Server-side: CPU на сервере, клиент получает готовое; client-side: сервер не тратит CPU, но грузит браузер."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Server-side (`Pygments`/`Rouge`/`Chroma`): токенизация → HTML с CSS-классами, кэш rendered HTML → быстрые повторные view; хорош для SEO и шире по языкам (`Pygments` 500+). Client-side (`Prism`/`highlight.js`): сырой HTML + JS-библиотека (30-50 KB), меньше payload сервера, но плох для SEO и обязателен для encrypted (`0bin`). `Gist` и `Pastebin` — server-side, `Hastebin` — client-side.",
               "correct": true,
               "sections": {
@@ -646,8 +622,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Server-side подсветку надо выполнять заново на каждый view, поскольку код мог измениться, а кэшировать rendered HTML опасно.",
               "correct": false,
               "sections": {
@@ -655,6 +631,30 @@
                 "source_of_confusion": "Опасение «вдруг устарело» толкает к рендеру на каждый запрос.",
                 "if_it_were_true": "Если бы подсветку считали каждый раз, 1200 views/sec × 50 ms = десятки серверов только под rendering.",
                 "how_it_should_be": "Подсвечивают один раз, кэшируют HTML; blob immutable, поэтому пересчёт на каждый view не нужен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Client-side `Prism.js` лучше для SEO, потому что поисковики видят уже подсвеченный и размеченный классами код прямо в HTML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: при client-side подсветке поисковики видят сырой HTML (highlighting добавляет JS уже в браузере), поэтому для SEO лучше server-side.",
+                "source_of_confusion": "Кажется, что «красивый» подсвеченный вид в браузере = то, что индексирует поисковик.",
+                "if_it_were_true": "Если бы client-side был хорош для SEO, GitHub не рендерил бы публичные Gist на сервере (Rouge).",
+                "how_it_should_be": "Server-side кладёт подсветку в HTML (хорошо для SEO); client-side отдаёт сырой HTML + JS, и боты видят неразмеченный код."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Server-side `Pygments` грузит браузер пользователя сильнее, потому что вся токенизация и рендеринг происходят на клиенте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Server-side тратит CPU на сервере, а клиент получает готовый HTML; высокий CPU на клиенте — это как раз client-side (`Prism`/`highlight.js`).",
+                "source_of_confusion": "Легко перепутать, где именно происходит работа по подсветке.",
+                "if_it_were_true": "Если бы server-side грузил клиента, не было бы смысла кэшировать rendered HTML на сервере.",
+                "how_it_should_be": "Server-side: CPU на сервере, клиент получает готовое; client-side: сервер не тратит CPU, но грузит браузер."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Markdown с inline HTML можно рендерить как есть, без санитизации, потому что пользователь сам отвечает за свой контент.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Markdown допускает inline HTML, поэтому его обязательно санитизируют (`DOMPurify` на клиенте / `Bleach` на сервере) с white-list тегов — иначе XSS.",
-                "source_of_confusion": "«Контент пользователя — его ответственность» снимает с сервиса заботу о безопасности.",
-                "if_it_were_true": "Если бы санитизация была не нужна, любой `.md` с `<script>` крал бы сессии читателей.",
-                "how_it_should_be": "Rendered Markdown всегда санитизируют: white-list разрешённых тегов, вырезание скриптов и обработчиков событий."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "GFM (GitHub Flavored Markdown) — это по сути и есть CommonMark под другим названием; по набору синтаксиса и возможностей они совпадают.",
               "correct": false,
               "sections": {
@@ -690,6 +678,19 @@
                 "source_of_confusion": "Оба «маркдауны», поэтому кажутся взаимозаменяемыми.",
                 "if_it_were_true": "Если бы они были идентичны, GitHub не выделял бы GFM как отдельный расширенный диалект.",
                 "how_it_should_be": "GFM = CommonMark + расширения (таблицы, чекбоксы, автоссылки); выбор диалекта влияет на доступный синтаксис."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поддержка Markdown (`.md` в Gist): детект расширения → рендер через CommonMark/GFM-парсер → кэш HTML. Раздельные режимы: `/{code}` → rendered (default для `.md`), `/{code}/raw` → raw markdown. Inline HTML обязательно санитизируют (`DOMPurify`/`Bleach`, white-list тегов). GFM добавляет к CommonMark task lists, таблицы, autolinks. UI даёт toggle «View source / Rendered».",
+              "correct": true,
+              "sections": {
+                "explanation": "Markdown — это вторая ось рендеринга помимо подсветки кода: для `.md` по умолчанию показывают отрендеренный вид, но всегда сохраняют доступ к исходнику и жёстко санитизируют HTML против XSS.",
+                "example": "`markdown.markdown(text, extensions=['fenced_code','tables','codehilite'])` рендерит GFM-фичи, а `Bleach` затем вырезает любой опасный inline-HTML перед отдачей.",
+                "when_to_apply": "Markdown-рендер включают, когда сервис хранит документацию/README (Gist), а не только сниппеты кода.",
+                "edge_cases": "Другие форматы обрабатывают по типу: `.txt` → plain, `.json`/`.xml` → подсветка кода, `.csv` → табличный вид у части сервисов.",
+                "related": "[[design-pastebin-interview#Q11]] подсветка кода как смежная ось рендеринга; [[design-pastebin-interview#Q10]] санитизация и CSP в embed; [[design-pastebin-interview#Q30]] XSS-риск от user content."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Поддержка Markdown (`.md` в Gist): детект расширения → рендер через CommonMark/GFM-парсер → кэш HTML. Раздельные режимы: `/{code}` → rendered (default для `.md`), `/{code}/raw` → raw markdown. Inline HTML обязательно санитизируют (`DOMPurify`/`Bleach`, white-list тегов). GFM добавляет к CommonMark task lists, таблицы, autolinks. UI даёт toggle «View source / Rendered».",
-              "correct": true,
+              "text": "Markdown с inline HTML можно рендерить как есть, без санитизации, потому что пользователь сам отвечает за свой контент.",
+              "correct": false,
               "sections": {
-                "explanation": "Markdown — это вторая ось рендеринга помимо подсветки кода: для `.md` по умолчанию показывают отрендеренный вид, но всегда сохраняют доступ к исходнику и жёстко санитизируют HTML против XSS.",
-                "example": "`markdown.markdown(text, extensions=['fenced_code','tables','codehilite'])` рендерит GFM-фичи, а `Bleach` затем вырезает любой опасный inline-HTML перед отдачей.",
-                "when_to_apply": "Markdown-рендер включают, когда сервис хранит документацию/README (Gist), а не только сниппеты кода.",
-                "edge_cases": "Другие форматы обрабатывают по типу: `.txt` → plain, `.json`/`.xml` → подсветка кода, `.csv` → табличный вид у части сервисов.",
-                "related": "[[design-pastebin-interview#Q11]] подсветка кода как смежная ось рендеринга; [[design-pastebin-interview#Q10]] санитизация и CSP в embed; [[design-pastebin-interview#Q30]] XSS-риск от user content."
+                "what_actually": "Markdown допускает inline HTML, поэтому его обязательно санитизируют (`DOMPurify` на клиенте / `Bleach` на сервере) с white-list тегов — иначе XSS.",
+                "source_of_confusion": "«Контент пользователя — его ответственность» снимает с сервиса заботу о безопасности.",
+                "if_it_were_true": "Если бы санитизация была не нужна, любой `.md` с `<script>` крал бы сессии читателей.",
+                "how_it_should_be": "Rendered Markdown всегда санитизируют: white-list разрешённых тегов, вырезание скриптов и обработчиков событий."
               }
             }
           ]
@@ -731,19 +731,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Explicit: пользователь выбирает язык из dropdown при создании, язык пишется в `pastes.language` — 100% точно, но добавляет friction для быстрого paste. Auto-detect: библиотека угадывает по содержимому (`Pygments guess_lexer()`, `highlight.js highlightAuto()`, ML-based `GitHub Linguist`), точность 80-90% на распространённых языках. Hybrid: auto по умолчанию + возможность override.",
-              "correct": true,
-              "sections": {
-                "explanation": "Это trade-off точность/удобство: явный выбор безошибочен, но требует действия; auto-detect мгновенен, но ошибается. Гибрид берёт лучшее — угадываем сразу, даём поправить.",
-                "example": "Эвристики помогают auto-detect: shebang `#!/usr/bin/env python` → Python, ключевые слова `function`/`const` → JavaScript, консистентный отступ в 4 пробела → вероятно Python.",
-                "when_to_apply": "Выбор подхода делают, исходя из аудитории: для anonymous quick-paste важнее отсутствие friction (auto), для авторских Gist — точность (explicit).",
-                "edge_cases": "Auto-detect хуже на обскурных языках (Brainfuck, COBOL) и на mixed/plain-English контенте — там fallback на plain text спасает от мусорной подсветки.",
-                "related": "[[design-pastebin-interview#Q11]] выбранный язык передаётся в подсветку; [[design-pastebin-interview#Q12]] определение `.md` для Markdown-рендера; [[design-pastebin-interview#Q30]] неверный язык ломает Pygments."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Auto-detect на распространённых языках точен, поэтому explicit-выбор можно убрать из UI и оставить лишь для редких случаев, когда пользователь сам заметит ошибку.",
               "correct": false,
               "sections": {
@@ -754,8 +741,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Shebang `#!/usr/bin/env python` бесполезен для детекта языка, потому что встречается слишком редко, чтобы на него опираться.",
               "correct": false,
               "sections": {
@@ -766,8 +753,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "При mixed-content (несколько языков, обычный текст) детектор выбирает язык с наибольшим числом совпадений и подсвечивает по нему — plain-text fallback только запутает пользователя.",
               "correct": false,
               "sections": {
@@ -775,6 +762,19 @@
                 "source_of_confusion": "Кажется, что подсветка «хоть какая-то» лучше, чем её отсутствие.",
                 "if_it_were_true": "Если бы fallback был недопустим, обычный текст рендерился бы как случайный язык с ложными токенами.",
                 "how_it_should_be": "Для неопределимого/смешанного контента корректнее plain text, чем угаданный наугад lexer."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Explicit: пользователь выбирает язык из dropdown при создании, язык пишется в `pastes.language` — 100% точно, но добавляет friction для быстрого paste. Auto-detect: библиотека угадывает по содержимому (`Pygments guess_lexer()`, `highlight.js highlightAuto()`, ML-based `GitHub Linguist`), точность 80-90% на распространённых языках. Hybrid: auto по умолчанию + возможность override.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это trade-off точность/удобство: явный выбор безошибочен, но требует действия; auto-detect мгновенен, но ошибается. Гибрид берёт лучшее — угадываем сразу, даём поправить.",
+                "example": "Эвристики помогают auto-detect: shebang `#!/usr/bin/env python` → Python, ключевые слова `function`/`const` → JavaScript, консистентный отступ в 4 пробела → вероятно Python.",
+                "when_to_apply": "Выбор подхода делают, исходя из аудитории: для anonymous quick-paste важнее отсутствие friction (auto), для авторских Gist — точность (explicit).",
+                "edge_cases": "Auto-detect хуже на обскурных языках (Brainfuck, COBOL) и на mixed/plain-English контенте — там fallback на plain text спасает от мусорной подсветки.",
+                "related": "[[design-pastebin-interview#Q11]] выбранный язык передаётся в подсветку; [[design-pastebin-interview#Q12]] определение `.md` для Markdown-рендера; [[design-pastebin-interview#Q30]] неверный язык ломает Pygments."
               }
             }
           ]
@@ -791,18 +791,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Истёкший paste достаточно удалять физически в тот же момент, когда `expires_at` прошёл, без логической проверки на read.",
+              "text": "S3 lifecycle policy для удаления истёкших blob применять нельзя: S3 не умеет автоматически удалять объекты по времени.",
               "correct": false,
               "sections": {
-                "what_actually": "Сначала работает логическое истечение на read (`expires_at > NOW()` → иначе 404), а физический delete идёт фоном с grace-окном 7-30 дней.",
-                "source_of_confusion": "«Истёк — сразу удалить» кажется самым прямым решением.",
-                "if_it_were_true": "Если бы удаляли мгновенно и без grace, случайно истёкший paste терялся бы без шанса на recovery.",
-                "how_it_should_be": "Логическое истечение — на read немедленно; физическое — отложенно (cron/S3 lifecycle), с окном восстановления."
+                "what_actually": "S3 как раз умеет lifecycle-удаление по тегам/префиксу: тег `expires=2026-06-01` → S3 сам удалит объект после даты — это один из штатных вариантов cleanup.",
+                "source_of_confusion": "Кажется, что S3 — лишь пассивное хранилище без правил жизненного цикла.",
+                "if_it_were_true": "Если бы S3 не удалял по времени, не было бы Expiration-блока в lifecycle-конфиге.",
+                "how_it_should_be": "S3 lifecycle поддерживает auto-deletion по тегам/префиксу — это валидный способ физической уборки blob."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "Single большой `DELETE FROM pastes WHERE expires_at < NOW()` без LIMIT — лучший способ уборки, потому что он атомарен и завершается за один проход.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уборку делают батчами (`LIMIT 10000`), чтобы не блокировать БД: огромный single DELETE держит долгие локи и раздувает WAL.",
+                "source_of_confusion": "Атомарность одного DELETE выглядит привлекательно.",
+                "if_it_were_true": "Если бы большой DELETE был безопасен, не было бы рекомендации батчить cleanup.",
+                "how_it_should_be": "GC-sweep батчируют (LIMIT), снижая блокировки и нагрузку; гигантский DELETE — путь к простою."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Опции: `expires_in=null` (never, default для paid), 3600 (1h), 86400 (1d), 604800 (1w), 2592000 (30d, free default), плюс `burn_after_read`. Логическое истечение на read: `WHERE expires_at IS NULL OR expires_at > NOW()` → иначе 404. Физический cleanup: cron daily sweep (batch DELETE LIMIT 10000), либо S3 lifecycle policy по тегам, либо TTL-aware БД (DynamoDB). Grace window 7-30 дней для recovery.",
               "correct": true,
               "sections": {
@@ -814,27 +826,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Single большой `DELETE FROM pastes WHERE expires_at < NOW()` без LIMIT — лучший способ уборки, потому что он атомарен и завершается за один проход.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Уборку делают батчами (`LIMIT 10000`), чтобы не блокировать БД: огромный single DELETE держит долгие локи и раздувает WAL.",
-                "source_of_confusion": "Атомарность одного DELETE выглядит привлекательно.",
-                "if_it_were_true": "Если бы большой DELETE был безопасен, не было бы рекомендации батчить cleanup.",
-                "how_it_should_be": "GC-sweep батчируют (LIMIT), снижая блокировки и нагрузку; гигантский DELETE — путь к простою."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "S3 lifecycle policy для удаления истёкших blob применять нельзя: S3 не умеет автоматически удалять объекты по времени.",
+              "text": "Истёкший paste достаточно удалять физически в тот же момент, когда `expires_at` прошёл, без логической проверки на read.",
               "correct": false,
               "sections": {
-                "what_actually": "S3 как раз умеет lifecycle-удаление по тегам/префиксу: тег `expires=2026-06-01` → S3 сам удалит объект после даты — это один из штатных вариантов cleanup.",
-                "source_of_confusion": "Кажется, что S3 — лишь пассивное хранилище без правил жизненного цикла.",
-                "if_it_were_true": "Если бы S3 не удалял по времени, не было бы Expiration-блока в lifecycle-конфиге.",
-                "how_it_should_be": "S3 lifecycle поддерживает auto-deletion по тегам/префиксу — это валидный способ физической уборки blob."
+                "what_actually": "Сначала работает логическое истечение на read (`expires_at > NOW()` → иначе 404), а физический delete идёт фоном с grace-окном 7-30 дней.",
+                "source_of_confusion": "«Истёк — сразу удалить» кажется самым прямым решением.",
+                "if_it_were_true": "Если бы удаляли мгновенно и без grace, случайно истёкший paste терялся бы без шанса на recovery.",
+                "how_it_should_be": "Логическое истечение — на read немедленно; физическое — отложенно (cron/S3 lifecycle), с окном восстановления."
               }
             }
           ]
@@ -851,13 +851,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для атомарности burn достаточно обычного `SELECT` без блокировки, потому что два одновременных читателя всё равно увидят один и тот же контент один раз.",
-              "correct": false,
+              "text": "Paste просматривается ровно раз, потом удаляется (sharing секретов/паролей/ключей). Реализация: в транзакции `SELECT ... FOR UPDATE` → если есть и не deleted → `UPDATE deleted_at = NOW()` + отложенное удаление blob (grace ~60 сек для CDN-инвалидации). `FOR UPDATE` обеспечивает атомарность (one wins). Для true E2E (`0bin`/`Privatebin`) клиент шифрует контент ключом во фрагменте URL (`#key=...`), сервер хранит только ciphertext.",
+              "correct": true,
               "sections": {
-                "what_actually": "Нужен `SELECT ... FOR UPDATE` в транзакции: row-lock гарантирует, что при конкурентных чтениях контент получит ровно один, а остальные — 404.",
-                "source_of_confusion": "Кажется, что без блокировки «оба прочитают одно и то же» — и это нормально.",
-                "if_it_were_true": "Если бы lock был не нужен, при гонке два читателя оба увидели бы секрет, что ломает one-time гарантию.",
-                "how_it_should_be": "Атомарность через `FOR UPDATE`: первый коммит помечает deleted_at, конкурентные транзакции уже не видят paste."
+                "explanation": "Burn-after-read — это атомарный one-shot доступ к секрету: блокировка строки исключает гонку, отложенное удаление blob даёт окно на CDN-инвалидацию, а опциональное E2E-шифрование защищает даже от самого сервера.",
+                "example": "Фрагмент URL `#key=base64...` не отправляется на сервер браузером, поэтому при `0bin` сервер хранит лишь ciphertext и физически не может прочитать секрет до или после burn.",
+                "when_to_apply": "Burn применяют для одноразовой передачи чувствительного: пароли, API-ключи, time-sensitive данные.",
+                "edge_cases": "Edge case: сбой сети на клиенте после view → контент потерян (жалоба пользователя); смягчают предупреждением и 60-сек окном между first view и реальным burn.",
+                "related": "[[design-pastebin-interview#Q14]] burn как частный случай TTL; [[design-pastebin-interview#Q11]] client-side подсветка для encrypted; [[design-pastebin-interview#Q25]] боты-превьюшники в anti-abuse."
               }
             },
             {
@@ -875,14 +876,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Paste просматривается ровно раз, потом удаляется (sharing секретов/паролей/ключей). Реализация: в транзакции `SELECT ... FOR UPDATE` → если есть и не deleted → `UPDATE deleted_at = NOW()` + отложенное удаление blob (grace ~60 сек для CDN-инвалидации). `FOR UPDATE` обеспечивает атомарность (one wins). Для true E2E (`0bin`/`Privatebin`) клиент шифрует контент ключом во фрагменте URL (`#key=...`), сервер хранит только ciphertext.",
-              "correct": true,
+              "text": "Для атомарности burn достаточно обычного `SELECT` без блокировки, потому что два одновременных читателя всё равно увидят один и тот же контент один раз.",
+              "correct": false,
               "sections": {
-                "explanation": "Burn-after-read — это атомарный one-shot доступ к секрету: блокировка строки исключает гонку, отложенное удаление blob даёт окно на CDN-инвалидацию, а опциональное E2E-шифрование защищает даже от самого сервера.",
-                "example": "Фрагмент URL `#key=base64...` не отправляется на сервер браузером, поэтому при `0bin` сервер хранит лишь ciphertext и физически не может прочитать секрет до или после burn.",
-                "when_to_apply": "Burn применяют для одноразовой передачи чувствительного: пароли, API-ключи, time-sensitive данные.",
-                "edge_cases": "Edge case: сбой сети на клиенте после view → контент потерян (жалоба пользователя); смягчают предупреждением и 60-сек окном между first view и реальным burn.",
-                "related": "[[design-pastebin-interview#Q14]] burn как частный случай TTL; [[design-pastebin-interview#Q11]] client-side подсветка для encrypted; [[design-pastebin-interview#Q25]] боты-превьюшники в anti-abuse."
+                "what_actually": "Нужен `SELECT ... FOR UPDATE` в транзакции: row-lock гарантирует, что при конкурентных чтениях контент получит ровно один, а остальные — 404.",
+                "source_of_confusion": "Кажется, что без блокировки «оба прочитают одно и то же» — и это нормально.",
+                "if_it_were_true": "Если бы lock был не нужен, при гонке два читателя оба увидели бы секрет, что ломает one-time гарантию.",
+                "how_it_should_be": "Атомарность через `FOR UPDATE`: первый коммит помечает deleted_at, конкурентные транзакции уже не видят paste."
               }
             },
             {
@@ -911,6 +911,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Gist-подход: каждый edit = новая revision (как Git-коммит), все ревизии retained в таблице `paste_revisions`. На create: `INSERT pastes` + `INSERT paste_revisions(revision_number=1)`; на edit: `INSERT paste_revisions(revision_number=2)` с новым blob, `pastes.blob_key` указывает на текущую. Каждая ревизия — новый immutable blob (CAS-friendly); идентичный контент → dedup (тот же blob_key). Storage растёт линейно с числом ревизий → GC после N лет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Versioning строят на immutable-ревизиях: история сохраняется как цепочка blob'ов, текущая версия — указатель в `pastes.blob_key`, а дедуп и GC сдерживают рост хранилища.",
+                "example": "При втором save с новым содержимым появляется `revision_number=2` с отдельным blob_key, а `pastes.blob_key` переключается на него — старая ревизия 1 остаётся доступной для diff.",
+                "when_to_apply": "Versioning включают, когда контент эволюционирует (Gist, конфиги, документы), а не для одноразовых сниппетов.",
+                "edge_cases": "Trade-off: стоимость хранилища линейна по числу ревизий, поэтому через несколько лет включают garbage collection старых версий.",
+                "related": "[[design-pastebin-interview#Q6]] таблица paste_revisions в схеме; [[design-pastebin-interview#Q20]] diff между ревизиями; [[design-pastebin-interview#Q5]] immutable blob в storage-архитектуре."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "При edit нужно перезаписывать тот же blob в S3, чтобы не плодить объекты и не увеличивать стоимость хранения.",
               "correct": false,
               "sections": {
@@ -918,18 +931,6 @@
                 "source_of_confusion": "Перезапись «на месте» кажется экономной по числу объектов.",
                 "if_it_were_true": "Если бы blob перезаписывался, история ревизий и diff между ними были бы невозможны.",
                 "how_it_should_be": "Каждая ревизия — новый immutable blob в S3; `pastes.blob_key` лишь указывает на текущую (последнюю)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Хранить все ревизии не нужно: достаточно держать только последнюю версию paste, как в обычном текстовом редакторе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Gist-подход хранит все ревизии (как Git-коммиты) в `paste_revisions`; без истории нельзя показать diff или откатиться.",
-                "source_of_confusion": "Кажется, что пользователю важна только текущая версия.",
-                "if_it_were_true": "Если бы хранили лишь последнюю, фичи diff/compare между ревизиями (Q20) были бы недоступны.",
-                "how_it_should_be": "Все ревизии retained в `paste_revisions`; история — суть versioning в стиле Gist."
               }
             },
             {
@@ -947,14 +948,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Gist-подход: каждый edit = новая revision (как Git-коммит), все ревизии retained в таблице `paste_revisions`. На create: `INSERT pastes` + `INSERT paste_revisions(revision_number=1)`; на edit: `INSERT paste_revisions(revision_number=2)` с новым blob, `pastes.blob_key` указывает на текущую. Каждая ревизия — новый immutable blob (CAS-friendly); идентичный контент → dedup (тот же blob_key). Storage растёт линейно с числом ревизий → GC после N лет.",
-              "correct": true,
+              "text": "Хранить все ревизии не нужно: достаточно держать только последнюю версию paste, как в обычном текстовом редакторе.",
+              "correct": false,
               "sections": {
-                "explanation": "Versioning строят на immutable-ревизиях: история сохраняется как цепочка blob'ов, текущая версия — указатель в `pastes.blob_key`, а дедуп и GC сдерживают рост хранилища.",
-                "example": "При втором save с новым содержимым появляется `revision_number=2` с отдельным blob_key, а `pastes.blob_key` переключается на него — старая ревизия 1 остаётся доступной для diff.",
-                "when_to_apply": "Versioning включают, когда контент эволюционирует (Gist, конфиги, документы), а не для одноразовых сниппетов.",
-                "edge_cases": "Trade-off: стоимость хранилища линейна по числу ревизий, поэтому через несколько лет включают garbage collection старых версий.",
-                "related": "[[design-pastebin-interview#Q6]] таблица paste_revisions в схеме; [[design-pastebin-interview#Q20]] diff между ревизиями; [[design-pastebin-interview#Q5]] immutable blob в storage-архитектуре."
+                "what_actually": "Gist-подход хранит все ревизии (как Git-коммиты) в `paste_revisions`; без истории нельзя показать diff или откатиться.",
+                "source_of_confusion": "Кажется, что пользователю важна только текущая версия.",
+                "if_it_were_true": "Если бы хранили лишь последнюю, фичи diff/compare между ревизиями (Q20) были бы недоступны.",
+                "how_it_should_be": "Все ревизии retained в `paste_revisions`; история — суть versioning в стиле Gist."
               }
             }
           ]
@@ -971,6 +971,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Public-paste индексировать поисковиками нельзя ради приватности пользователя, поэтому им тоже ставят `noindex`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Public paste как раз search-indexable по определению (Q18); `noindex` ставят unlisted, а не public.",
+                "source_of_confusion": "Желание «защитить пользователя» переносят и на публичный режим.",
+                "if_it_were_true": "Если бы public были noindex, теряли бы смысл сам публичный режим и full-text search.",
+                "how_it_should_be": "Public индексируются (и Google, и внутренний search); noindex — атрибут unlisted, не public."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Private-paste достаточно убрать из listings, но по прямому URL его всё равно может открыть любой неавторизованный пользователь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для private сервер проверяет ownership и возвращает 404/403 неаутентифицированному; прямой URL не даёт доступа чужому.",
+                "source_of_confusion": "Кажется, что «убрать из списка» — это и есть приватность.",
+                "if_it_were_true": "Если бы private открывался по URL любому, он не отличался бы от unlisted.",
+                "how_it_should_be": "Private требует auth и проверки владельца на каждый доступ; URL сам по себе доступа не даёт."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Public — виден в listings, доступен по URL, индексируется Google. Unlisted — не в listings, но доступен любому с URL (как YouTube unlisted), `<meta robots=noindex>`. Private — только владелец (сервер проверяет ownership → 403 чужому). Password-protected — URL валиден, но нужен пароль (bcrypt-hash). Контроль: `if visibility=='private' and user_id != owner → 403; if password_hash and !bcrypt.checkpw → 401`.",
               "correct": true,
               "sections": {
@@ -982,8 +1006,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Режим «unlisted» обеспечивает настоящую приватность: paste недоступен никому, кроме тех, кому владелец явно выдал доступ.",
               "correct": false,
               "sections": {
@@ -991,30 +1015,6 @@
                 "source_of_confusion": "Слово «unlisted» звучит как «скрытый и защищённый».",
                 "if_it_were_true": "Если бы unlisted = настоящая приватность, не было бы отдельного режима private с обязательной auth.",
                 "how_it_should_be": "Настоящая приватность — это private (проверка ownership) или password; unlisted лишь убирает из поиска."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Private-paste достаточно убрать из listings, но по прямому URL его всё равно может открыть любой неавторизованный пользователь.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для private сервер проверяет ownership и возвращает 404/403 неаутентифицированному; прямой URL не даёт доступа чужому.",
-                "source_of_confusion": "Кажется, что «убрать из списка» — это и есть приватность.",
-                "if_it_were_true": "Если бы private открывался по URL любому, он не отличался бы от unlisted.",
-                "how_it_should_be": "Private требует auth и проверки владельца на каждый доступ; URL сам по себе доступа не даёт."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Public-paste индексировать поисковиками нельзя ради приватности пользователя, поэтому им тоже ставят `noindex`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Public paste как раз search-indexable по определению (Q18); `noindex` ставят unlisted, а не public.",
-                "source_of_confusion": "Желание «защитить пользователя» переносят и на публичный режим.",
-                "if_it_were_true": "Если бы public были noindex, теряли бы смысл сам публичный режим и full-text search.",
-                "how_it_should_be": "Public индексируются (и Google, и внутренний search); noindex — атрибут unlisted, не public."
               }
             }
           ]
@@ -1043,6 +1043,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Размер ES-индекса примерно равен размеру raw-контента (1:1), поэтому на 5 TB текста нужно зарезервировать ещё 5 TB под индекс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ES-индекс — это ~30% от raw text (inverted index analyzed-полей): на 5 TB content ~1.5 TB индекса, а не 5 TB.",
+                "source_of_confusion": "Интуиция «индекс ≈ данные» завышает оценку.",
+                "if_it_were_true": "Если бы индекс был 1:1, ёмкость и стоимость search-кластера планировали бы вдвое больше нужного.",
+                "how_it_should_be": "Inverted index компактнее исходника (~30%): 5 TB content → ~1.5 TB ES-индекса."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Search только для public paste. Архитектура: paste created (public) → Kafka-событие `paste.created` → ES-indexer → ES index `pastes` (поля short_code, title, content, language, created_at, user). Query: `GET /search?q=...` → ES full-text (BM25) → top-K со сниппетами. Поля: `title` (boosted), `content` (primary), `language` (facet), `created_at` (time filter). Index ~30% от raw (~1.5 TB на 5 TB content), indexing lag < 30 сек, query < 200 ms.",
               "correct": true,
               "sections": {
@@ -1054,8 +1066,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Индексацию надо делать синхронно в момент создания paste, чтобы он попадал в поиск без задержки и не возникало окна, когда свежий paste ещё не находится.",
               "correct": false,
               "sections": {
@@ -1063,18 +1075,6 @@
                 "source_of_confusion": "«Сразу искабельно» подкупает мгновенной консистентностью.",
                 "if_it_were_true": "Если бы индексировали синхронно, падение ES блокировало бы создание paste целиком.",
                 "how_it_should_be": "Создание → событие в Kafka → асинхронный indexer; небольшой lag приемлем ради устойчивости и скорости create."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Размер ES-индекса примерно равен размеру raw-контента (1:1), поэтому на 5 TB текста нужно зарезервировать ещё 5 TB под индекс.",
-              "correct": false,
-              "sections": {
-                "what_actually": "ES-индекс — это ~30% от raw text (inverted index analyzed-полей): на 5 TB content ~1.5 TB индекса, а не 5 TB.",
-                "source_of_confusion": "Интуиция «индекс ≈ данные» завышает оценку.",
-                "if_it_were_true": "Если бы индекс был 1:1, ёмкость и стоимость search-кластера планировали бы вдвое больше нужного.",
-                "how_it_should_be": "Inverted index компактнее исходника (~30%): 5 TB content → ~1.5 TB ES-индекса."
               }
             }
           ]
@@ -1163,13 +1163,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для diff достаточно сравнения строк по равенству (`==`); специальные алгоритмы вроде Myers избыточны для текстовых ревизий.",
-              "correct": false,
+              "text": "Diff между ревизиями: server-side (pull двух blob → `diff` library Myers/histogram → unified или side-by-side HTML) или client-side (две raw-версии в браузер → `diff-match-patch` рендерит). API: `GET /api/v1/gists/{gist_id}/compare/{rev1}..{rev2}` → unified diff. UI: side-by-side (GitHub-style), inline (GitLab-style), word-level highlighting. Библиотеки: `difflib` (Python), `diff-match-patch` (JS), `git diff --no-index`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Diff использует алгоритмы поиска минимальных изменений (Myers, histogram) — простое `==` лишь скажет «равно/нет», но не покажет, что именно изменилось.",
-                "source_of_confusion": "«Сравнить две строки» наводит на мысль о тривиальном равенстве.",
-                "if_it_were_true": "Если бы хватало `==`, не существовало бы `difflib`/`diff-match-patch`/`git diff`.",
-                "how_it_should_be": "Diff вычисляет line/word-level изменения через Myers/histogram, а не булево равенство строк."
+                "explanation": "Diff — это сравнение двух immutable-ревизий через алгоритмы минимального редактирования; результат отдают unified-форматом или рендерят как side-by-side/inline с подсветкой изменений.",
+                "example": "`GET /api/v1/gists/{id}/compare/rev1..rev2` возвращает unified diff (как `git diff`), который UI рисует side-by-side с word-level подсветкой добавленных/удалённых фрагментов.",
+                "when_to_apply": "Diff между ревизиями нужен там, где есть versioning (Q16): показать, что изменилось между сохранениями gist.",
+                "edge_cases": "Реализацию выбирают по нагрузке: `difflib`/Myers на сервере для тяжёлых файлов, `diff-match-patch` на клиенте для лёгкого интерактива.",
+                "related": "[[design-pastebin-interview#Q16]] ревизии, между которыми считают diff; [[design-pastebin-interview#Q6]] paste_revisions как источник версий; [[design-pastebin-interview#Q9]] API gists для compare-endpoint."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Diff между ревизиями: server-side (pull двух blob → `diff` library Myers/histogram → unified или side-by-side HTML) или client-side (две raw-версии в браузер → `diff-match-patch` рендерит). API: `GET /api/v1/gists/{gist_id}/compare/{rev1}..{rev2}` → unified diff. UI: side-by-side (GitHub-style), inline (GitLab-style), word-level highlighting. Библиотеки: `difflib` (Python), `diff-match-patch` (JS), `git diff --no-index`.",
-              "correct": true,
+              "text": "Для diff достаточно сравнения строк по равенству (`==`); специальные алгоритмы вроде Myers избыточны для текстовых ревизий.",
+              "correct": false,
               "sections": {
-                "explanation": "Diff — это сравнение двух immutable-ревизий через алгоритмы минимального редактирования; результат отдают unified-форматом или рендерят как side-by-side/inline с подсветкой изменений.",
-                "example": "`GET /api/v1/gists/{id}/compare/rev1..rev2` возвращает unified diff (как `git diff`), который UI рисует side-by-side с word-level подсветкой добавленных/удалённых фрагментов.",
-                "when_to_apply": "Diff между ревизиями нужен там, где есть versioning (Q16): показать, что изменилось между сохранениями gist.",
-                "edge_cases": "Реализацию выбирают по нагрузке: `difflib`/Myers на сервере для тяжёлых файлов, `diff-match-patch` на клиенте для лёгкого интерактива.",
-                "related": "[[design-pastebin-interview#Q16]] ревизии, между которыми считают diff; [[design-pastebin-interview#Q6]] paste_revisions как источник версий; [[design-pastebin-interview#Q9]] API gists для compare-endpoint."
+                "what_actually": "Diff использует алгоритмы поиска минимальных изменений (Myers, histogram) — простое `==` лишь скажет «равно/нет», но не покажет, что именно изменилось.",
+                "source_of_confusion": "«Сравнить две строки» наводит на мысль о тривиальном равенстве.",
+                "if_it_were_true": "Если бы хватало `==`, не существовало бы `difflib`/`diff-match-patch`/`git diff`.",
+                "how_it_should_be": "Diff вычисляет line/word-level изменения через Myers/histogram, а не булево равенство строк."
               }
             }
           ]
@@ -1224,18 +1224,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "CDN кэширует статику (CSS, JS, шрифты), а запросы за контентом paste проксирует на origin к Read-сервису, потому что контент динамичен и должен приходить из БД.",
-              "correct": false,
-              "sections": {
-                "what_actually": "CDN кэширует и сам контент paste (raw + HTML-view) с 90%+ hit-ratio, а не только статику; иначе origin не выдержал бы 6000 views/sec.",
-                "source_of_confusion": "Привычная роль CDN «для ассетов» сужает его функцию.",
-                "if_it_were_true": "Если бы CDN не кэшировал контент, bandwidth-стоимость и нагрузка на Read взлетели бы (Q23).",
-                "how_it_should_be": "CDN — первая линия кэша для самого контента paste; статика — лишь часть его задач."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Search-индексация работает синхронно внутри Create-сервиса: пока paste не попал в ES, запрос на создание не завершается.",
               "correct": false,
               "sections": {
@@ -1246,8 +1234,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "GC-cron — необязательный компонент: истёкшие paste удаляются сами при попытке чтения, поэтому фоновая уборка в архитектуре не нужна.",
               "correct": false,
               "sections": {
@@ -1255,6 +1243,18 @@
                 "source_of_confusion": "Логический 404 на read создаёт иллюзию, что физика убирается сама.",
                 "if_it_were_true": "Если бы GC был не нужен, expired blob'ы за 5 лет дали бы 18 TB неоплачиваемого мусора.",
                 "how_it_should_be": "GC-cron — штатный компонент: он удаляет expired записи и blob, чего read-time проверка не делает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CDN кэширует статику (CSS, JS, шрифты), а запросы за контентом paste проксирует на origin к Read-сервису, потому что контент динамичен и должен приходить из БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CDN кэширует и сам контент paste (raw + HTML-view) с 90%+ hit-ratio, а не только статику; иначе origin не выдержал бы 6000 views/sec.",
+                "source_of_confusion": "Привычная роль CDN «для ассетов» сужает его функцию.",
+                "if_it_were_true": "Если бы CDN не кэшировал контент, bandwidth-стоимость и нагрузка на Read взлетели бы (Q23).",
+                "how_it_should_be": "CDN — первая линия кэша для самого контента paste; статика — лишь часть его задач."
               }
             }
           ]
@@ -1271,31 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Glacier-restore бесплатен и мгновенен, поэтому холодные paste можно отдавать прямо из Glacier без прогрева в горячий слой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Glacier-restore стоит денег per-retrieval и занимает минуты-часы; для первого за годы view делают pre-emptive restore, а не отдают мгновенно.",
-                "source_of_confusion": "Кажется, что чтение из Glacier ничем не отличается от S3 Standard.",
-                "if_it_were_true": "Если бы restore был мгновенным и бесплатным, не было бы смысла в trade-off дешевизны Glacier.",
-                "how_it_should_be": "Glacier дешевле в 5-10×, но restore платный и небыстрый; поэтому холодное чтение требует предварительного restore."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Три тира: hot — Redis (свежие < 24ч, частые view, TTL aligned с expiration, ~10-20 GB); warm — S3 Standard (active < 1 года, ~5-7 TB compressed); cold — S3 Glacier (> 1 года, low access, restore минуты-часы, 5-10× дешевле). S3 lifecycle: Day 30 → STANDARD_IA, Day 365 → GLACIER, Expiration Day 1825. Read flow: Redis hit → return; miss → S3 Standard → return + populate Redis; miss → Glacier → restore → return.",
-              "correct": true,
-              "sections": {
-                "explanation": "Tiering экономит, размещая данные по частоте доступа: горячее — в памяти (наносекунды, но дорого/GB), тёплое — в object storage, холодное — в архиве (дёшево/GB, но медленный restore). Lifecycle-политика перемещает blob автоматически по возрасту.",
-                "example": "Lifecycle-правило `Day 30 → STANDARD_IA, Day 365 → GLACIER` само переносит стареющий blob в более дешёвый класс без ручного вмешательства, давая ~50% экономии против all-Standard.",
-                "when_to_apply": "Tiering вводят на больших объёмах с разной температурой доступа: 70% Standard + 30% Glacier при долгом retention.",
-                "edge_cases": "Edge: Glacier-restore тарифицируется per-retrieval, поэтому при первом за годы view делают pre-emptive restore, чтобы не платить за каждое случайное обращение.",
-                "related": "[[design-pastebin-interview#Q14]] S3 lifecycle и для expiration; [[design-pastebin-interview#Q21]] Redis/S3 в read-пути; [[design-pastebin-interview#Q29]] tiering как рычаг cost optimization."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Hot-тир в Redis должен хранить все paste целиком, чтобы любой view гарантированно был cache-hit и не доходил до S3.",
               "correct": false,
               "sections": {
@@ -1306,8 +1281,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "S3 lifecycle-политику для перехода в Glacier настроить нельзя — перемещение между классами хранения делается только вручную скриптом.",
               "correct": false,
               "sections": {
@@ -1315,6 +1290,31 @@
                 "source_of_confusion": "Кажется, что смена storage-класса — ручная операция.",
                 "if_it_were_true": "Если бы lifecycle не умел transitions, в его конфиге не было бы блока `Transitions`.",
                 "how_it_should_be": "Lifecycle-policy сама переводит blob STANDARD → IA → GLACIER по дням; это декларативно, а не вручную."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Glacier-restore бесплатен и мгновенен, поэтому холодные paste можно отдавать прямо из Glacier без прогрева в горячий слой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Glacier-restore стоит денег per-retrieval и занимает минуты-часы; для первого за годы view делают pre-emptive restore, а не отдают мгновенно.",
+                "source_of_confusion": "Кажется, что чтение из Glacier ничем не отличается от S3 Standard.",
+                "if_it_were_true": "Если бы restore был мгновенным и бесплатным, не было бы смысла в trade-off дешевизны Glacier.",
+                "how_it_should_be": "Glacier дешевле в 5-10×, но restore платный и небыстрый; поэтому холодное чтение требует предварительного restore."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Три тира: hot — Redis (свежие < 24ч, частые view, TTL aligned с expiration, ~10-20 GB); warm — S3 Standard (active < 1 года, ~5-7 TB compressed); cold — S3 Glacier (> 1 года, low access, restore минуты-часы, 5-10× дешевле). S3 lifecycle: Day 30 → STANDARD_IA, Day 365 → GLACIER, Expiration Day 1825. Read flow: Redis hit → return; miss → S3 Standard → return + populate Redis; miss → Glacier → restore → return.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tiering экономит, размещая данные по частоте доступа: горячее — в памяти (наносекунды, но дорого/GB), тёплое — в object storage, холодное — в архиве (дёшево/GB, но медленный restore). Lifecycle-политика перемещает blob автоматически по возрасту.",
+                "example": "Lifecycle-правило `Day 30 → STANDARD_IA, Day 365 → GLACIER` само переносит стареющий blob в более дешёвый класс без ручного вмешательства, давая ~50% экономии против all-Standard.",
+                "when_to_apply": "Tiering вводят на больших объёмах с разной температурой доступа: 70% Standard + 30% Glacier при долгом retention.",
+                "edge_cases": "Edge: Glacier-restore тарифицируется per-retrieval, поэтому при первом за годы view делают pre-emptive restore, чтобы не платить за каждое случайное обращение.",
+                "related": "[[design-pastebin-interview#Q14]] S3 lifecycle и для expiration; [[design-pastebin-interview#Q21]] Redis/S3 в read-пути; [[design-pastebin-interview#Q29]] tiering как рычаг cost optimization."
               }
             }
           ]
@@ -1343,18 +1343,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Bandwidth считается одинаково: что 30 TB/мес напрямую с origin, что через CDN — это те же ~$600/мес, ведь CDN лишь проксирует тот же объём трафика; поэтому CDN оправдан только латентностью (edge ближе к пользователю), а не экономией egress.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без CDN egress ~30 TB/месяц ≈ $600+, а с 95% hit — $30 origin + $50-100 CDN; экономия кратная, не только латентность.",
-                "source_of_confusion": "Кажется, что CDN лишь приближает контент, не меняя счёт за трафик.",
-                "if_it_were_true": "Если бы стоимость была равной, CDN не называли бы рычагом cost optimization.",
-                "how_it_should_be": "CDN снижает и латентность, и стоимость egress на порядок за счёт 95% hit-ratio и edge-компрессии."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Зачем: 100M views/день (1200/sec avg), 95%+ с edge → origin разгружен. Cache key `(short_code, raw|view, language)`, versioned `/v1/raw/abc1234`. Поведение: raw (immutable) — агрессивный кэш; view — короткий TTL (комменты/счётчик); embed — длинный TTL. Private/password — bypass (`Cache-Control: private`). Cache busting: purge API при edit или versioned URL `/v2/...`. Bandwidth без CDN ~30 TB/мес = $600+, с CDN 95% hit — $30 origin + $50-100 CDN. Edge-компрессия (Brotli/gzip) экономит ~70%.",
               "correct": true,
               "sections": {
@@ -1366,8 +1354,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "View-endpoint (`/view/abc1234`) кэшируют тем же длинным immutable-TTL и включают в общую versioned-схему `/v1/...`, что и raw: HTML-страница отдаётся с edge как статика, поскольку сама страница paste не меняется после создания.",
               "correct": false,
               "sections": {
@@ -1375,6 +1363,18 @@
                 "source_of_confusion": "Кажется, что любая страница paste неизменна, как и его контент.",
                 "if_it_were_true": "Если бы view кэшировали как raw, пользователи видели бы устаревшие комментарии и счётчики.",
                 "how_it_should_be": "Raw — длинный TTL (immutable), view — короткий TTL/serve-stale из-за динамических элементов UI."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Bandwidth считается одинаково: что 30 TB/мес напрямую с origin, что через CDN — это те же ~$600/мес, ведь CDN лишь проксирует тот же объём трафика; поэтому CDN оправдан только латентностью (edge ближе к пользователю), а не экономией egress.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без CDN egress ~30 TB/месяц ≈ $600+, а с 95% hit — $30 origin + $50-100 CDN; экономия кратная, не только латентность.",
+                "source_of_confusion": "Кажется, что CDN лишь приближает контент, не меняя счёт за трафик.",
+                "if_it_were_true": "Если бы стоимость была равной, CDN не называли бы рычагом cost optimization.",
+                "how_it_should_be": "CDN снижает и латентность, и стоимость egress на порядок за счёт 95% hit-ratio и edge-компрессии."
               }
             }
           ]
@@ -1391,13 +1391,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Multi-region — 3 региона (US/EU/APAC), каждый full-stack, GeoDNS-routing — закладывают с самого старта любого `Pastebin`: без раскатки во все регионы сервис не выдержит даже базовую нагрузку и не пройдёт GDPR, поэтому single region как стартовая конфигурация не рассматривается.",
-              "correct": false,
+              "text": "Single region — дефолт для startup-`Pastebin`; multi-region добавляют при scale. Драйверы: latency (global users), GDPR (EU residency), DR. Архитектура: 3 региона (US/EU/APAC), каждый — full stack; metadata-репликация (Cassandra multi-DC или Postgres logical), blob — per-region + async cross-region для популярных. Routing: GeoDNS (Route 53 latency-based), user pinned к home-региону. Residency: EU-paste физически только в EU, user-controlled выбор региона. CDN — уже global, origin в ближайшем регионе для miss.",
+              "correct": true,
               "sections": {
-                "what_actually": "По умолчанию для startup-`Pastebin` достаточно single region; multi-region добавляют при scale (латентность, GDPR, DR), а не на старте.",
-                "source_of_confusion": "«Глобальный сервис = сразу мульти-регион» — преждевременная оптимизация.",
-                "if_it_were_true": "Если бы multi-region был обязателен с нуля, не было бы рекомендации single region для раннего этапа.",
-                "how_it_should_be": "Single region — дефолт для старта; multi-region вводят, когда появляются драйверы (latency, residency, disaster recovery)."
+                "explanation": "Multi-region решает три задачи (латентность, регуляторика, отказоустойчивость), но добавляется по мере роста; ключевое — async-репликация между регионами и привязка данных к географии для residency.",
+                "example": "EU-пользователь, помечающий «Store data in: EU», гарантирует, что его paste физически не покинет EU-регион — это прямое выполнение требований GDPR.",
+                "when_to_apply": "Multi-region вводят при глобальной аудитории и регуляторных требованиях, а не для MVP с пользователями в одном регионе.",
+                "edge_cases": "Cross-region: paste создан в US → async-реплика в EU (lag 5-30 сек); EU-доступ к US-paste первый раз медленнее, далее кэшируется в EU edge.",
+                "related": "[[design-pastebin-interview#Q21]] full-stack компоненты в каждом регионе; [[design-pastebin-interview#Q23]] CDN как global-слой поверх регионов; [[design-pastebin-interview#Q5]] per-region blob storage."
               }
             },
             {
@@ -1427,14 +1428,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Single region — дефолт для startup-`Pastebin`; multi-region добавляют при scale. Драйверы: latency (global users), GDPR (EU residency), DR. Архитектура: 3 региона (US/EU/APAC), каждый — full stack; metadata-репликация (Cassandra multi-DC или Postgres logical), blob — per-region + async cross-region для популярных. Routing: GeoDNS (Route 53 latency-based), user pinned к home-региону. Residency: EU-paste физически только в EU, user-controlled выбор региона. CDN — уже global, origin в ближайшем регионе для miss.",
-              "correct": true,
+              "text": "Multi-region — 3 региона (US/EU/APAC), каждый full-stack, GeoDNS-routing — закладывают с самого старта любого `Pastebin`: без раскатки во все регионы сервис не выдержит даже базовую нагрузку и не пройдёт GDPR, поэтому single region как стартовая конфигурация не рассматривается.",
+              "correct": false,
               "sections": {
-                "explanation": "Multi-region решает три задачи (латентность, регуляторика, отказоустойчивость), но добавляется по мере роста; ключевое — async-репликация между регионами и привязка данных к географии для residency.",
-                "example": "EU-пользователь, помечающий «Store data in: EU», гарантирует, что его paste физически не покинет EU-регион — это прямое выполнение требований GDPR.",
-                "when_to_apply": "Multi-region вводят при глобальной аудитории и регуляторных требованиях, а не для MVP с пользователями в одном регионе.",
-                "edge_cases": "Cross-region: paste создан в US → async-реплика в EU (lag 5-30 сек); EU-доступ к US-paste первый раз медленнее, далее кэшируется в EU edge.",
-                "related": "[[design-pastebin-interview#Q21]] full-stack компоненты в каждом регионе; [[design-pastebin-interview#Q23]] CDN как global-слой поверх регионов; [[design-pastebin-interview#Q5]] per-region blob storage."
+                "what_actually": "По умолчанию для startup-`Pastebin` достаточно single region; multi-region добавляют при scale (латентность, GDPR, DR), а не на старте.",
+                "source_of_confusion": "«Глобальный сервис = сразу мульти-регион» — преждевременная оптимизация.",
+                "if_it_were_true": "Если бы multi-region был обязателен с нуля, не было бы рекомендации single region для раннего этапа.",
+                "how_it_should_be": "Single region — дефолт для старта; multi-region вводят, когда появляются драйверы (latency, residency, disaster recovery)."
               }
             }
           ]
@@ -1451,31 +1451,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Многослойная защита: real-time content scanning (ML-классификатор spam/hate/NSFW + hash-match известного malware, блок при создании); DMCA-процесс (форма takedown + auto hash-blocklist, повторная загрузка → auto-block); malware-детект (ClamAV, подозрительные паттерны, sandbox для high-risk); credential leak detection (паттерны AWS-ключей, GitHub-токенов, SSH-ключей → auto-alert сервису + уведомление пользователю); anti-scraping (rate-limit per IP, bot-detection, CAPTCHA); user reporting + CSAM hash-matching (PhotoDNA/NCMEC, mandatory reporting).",
-              "correct": true,
-              "sections": {
-                "explanation": "Anti-abuse — это оборона в глубину: контент проверяют на входе (scanning), реагируют на жалобы правообладателей (DMCA), ловят malware и утечки секретов, ограничивают ботов и матчат запрещённый контент по хэшам. Ни один слой не достаточен в одиночку.",
-                "example": "Credential-сканер находит в paste строку вида `AKIA...` (AWS access key) и шлёт alert в AWS/GitHub, которые могут отозвать утёкший токен раньше, чем им воспользуется атакующий.",
-                "when_to_apply": "Полный стек anti-abuse строят, когда сервис публичный и анонимный — `Pastebin` исторически был дампом для leaks и malware, что несёт юридическую ответственность.",
-                "edge_cases": "CSAM-контент матчат по хэшам (NCMEC/PhotoDNA) с обязательным репортингом — это не опциональная фича, а законодательное требование.",
-                "related": "[[design-pastebin-interview#Q27]] rate-limit как часть anti-scraping; [[design-pastebin-interview#Q21]] Abuse Detection в архитектуре; [[design-pastebin-interview#Q30]] отсутствие anti-abuse как антипаттерн."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "DMCA-процесс достаточно сделать ручным: модератор по жалобе удаляет paste, а автоматический hash-blocklist не нужен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "DMCA автоматизируют hash-blocklist'ом: повторная загрузка того же контента → auto-block; ручное удаление не масштабируется против повторных аплоадов.",
-                "source_of_confusion": "Кажется, что разовых ручных takedown хватает.",
-                "if_it_were_true": "Если бы blocklist был не нужен, удалённый контент тут же заливали бы снова под новым URL.",
-                "how_it_should_be": "DMCA сочетает форму takedown и auto hash-blocklist, чтобы заблокированный контент нельзя было загрузить повторно."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Credential leak detection выходит за рамки `Pastebin`: сканировать чужой контент на секреты — это скорее задача самих провайдеров (GitHub, AWS), а не хранилища текста.",
               "correct": false,
               "sections": {
@@ -1486,8 +1461,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Anti-scraping удобнее строить вокруг CAPTCHA как основного барьера: если challenge проходит человек, то rate-limit и отдельный bot-detection добавляют поверх него мало.",
               "correct": false,
               "sections": {
@@ -1495,6 +1470,31 @@
                 "source_of_confusion": "CAPTCHA воспринимается как универсальное решение против ботов.",
                 "if_it_were_true": "Если бы хватало CAPTCHA, не было бы отдельных rate-limit и bot-detection слоёв.",
                 "how_it_should_be": "Anti-scraping комбинирует rate-limit, bot-detection и точечную CAPTCHA на подозрительных, а не challenge для всех."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DMCA-процесс достаточно сделать ручным: модератор по жалобе удаляет paste, а автоматический hash-blocklist не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DMCA автоматизируют hash-blocklist'ом: повторная загрузка того же контента → auto-block; ручное удаление не масштабируется против повторных аплоадов.",
+                "source_of_confusion": "Кажется, что разовых ручных takedown хватает.",
+                "if_it_were_true": "Если бы blocklist был не нужен, удалённый контент тут же заливали бы снова под новым URL.",
+                "how_it_should_be": "DMCA сочетает форму takedown и auto hash-blocklist, чтобы заблокированный контент нельзя было загрузить повторно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Многослойная защита: real-time content scanning (ML-классификатор spam/hate/NSFW + hash-match известного malware, блок при создании); DMCA-процесс (форма takedown + auto hash-blocklist, повторная загрузка → auto-block); malware-детект (ClamAV, подозрительные паттерны, sandbox для high-risk); credential leak detection (паттерны AWS-ключей, GitHub-токенов, SSH-ключей → auto-alert сервису + уведомление пользователю); anti-scraping (rate-limit per IP, bot-detection, CAPTCHA); user reporting + CSAM hash-matching (PhotoDNA/NCMEC, mandatory reporting).",
+              "correct": true,
+              "sections": {
+                "explanation": "Anti-abuse — это оборона в глубину: контент проверяют на входе (scanning), реагируют на жалобы правообладателей (DMCA), ловят malware и утечки секретов, ограничивают ботов и матчат запрещённый контент по хэшам. Ни один слой не достаточен в одиночку.",
+                "example": "Credential-сканер находит в paste строку вида `AKIA...` (AWS access key) и шлёт alert в AWS/GitHub, которые могут отозвать утёкший токен раньше, чем им воспользуется атакующий.",
+                "when_to_apply": "Полный стек anti-abuse строят, когда сервис публичный и анонимный — `Pastebin` исторически был дампом для leaks и malware, что несёт юридическую ответственность.",
+                "edge_cases": "CSAM-контент матчат по хэшам (NCMEC/PhotoDNA) с обязательным репортингом — это не опциональная фича, а законодательное требование.",
+                "related": "[[design-pastebin-interview#Q27]] rate-limit как часть anti-scraping; [[design-pastebin-interview#Q21]] Abuse Detection в архитектуре; [[design-pastebin-interview#Q30]] отсутствие anti-abuse как антипаттерн."
               }
             }
           ]
@@ -1511,18 +1511,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Anonymous-режим отключают: создать paste можно только после регистрации через OAuth или user/password, потому что без привязки к аккаунту нельзя ни применить rate-limit, ни вести DMCA-трекинг, ни отозвать доступ; поэтому `curl ... | pastebin` требует заранее полученный API-токен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Anonymous-создание разрешено (базовый paste без auth), но с урезанными фичами (no edit/private) и низкими квотами; полный запрет убил бы суть quick-paste.",
-                "source_of_confusion": "Контроль abuse соблазняет закрыть анонимность совсем.",
-                "if_it_were_true": "Если бы анонимность была запрещена, `curl ... | pastebin` без аккаунта не работал бы — а это ключевой сценарий.",
-                "how_it_should_be": "Anonymous остаётся (с limited features и низкими квотами); abuse контролируют rate-limit и scanning, а не запретом анонимности."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Anonymous — без auth для базового paste (limited features, низкие квоты). Auth-опции: OAuth (GitHub/Google — популярно для dev-инструментов, без паролей на стороне Pastebin); custom user/password (bcrypt-hash + email verification); API-токены (генерируются в settings, хранятся как `api_token_hash`, формат `pastebin_pat_<random>`, scopes read/write/delete). Аутентификация: сначала session-token (cookie), затем API-token из `Authorization`. Сессии: JWT + refresh, хранятся в Redis для invalidation, cookie HttpOnly+Secure+SameSite=Strict.",
               "correct": true,
               "sections": {
@@ -1534,8 +1522,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "OAuth-flow требует, чтобы `Pastebin` принимал логин и пароль от GitHub/Google, проверял их у себя и хранил в собственной БД (bcrypt-hash), чтобы затем повторно аутентифицировать пользователя без обращения к провайдеру.",
               "correct": false,
               "sections": {
@@ -1546,8 +1534,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Session-cookie достаточно пометить `Secure` (только по HTTPS): флаги `HttpOnly` и `SameSite=Strict` избыточны, ведь HTTPS уже шифрует cookie в транзите и тем самым закрывает и кражу через `document.cookie` при XSS, и отправку с чужой сессией при CSRF.",
               "correct": false,
               "sections": {
@@ -1555,6 +1543,18 @@
                 "source_of_confusion": "`Secure` кажется главным флагом, а остальные — необязательными.",
                 "if_it_were_true": "Если бы хватало `Secure`, XSS читал бы сессию через `document.cookie`, а CSRF слал бы запросы с чужой cookie.",
                 "how_it_should_be": "Все три флага обязательны: HttpOnly против XSS-кражи, Secure против перехвата, SameSite против CSRF."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Anonymous-режим отключают: создать paste можно только после регистрации через OAuth или user/password, потому что без привязки к аккаунту нельзя ни применить rate-limit, ни вести DMCA-трекинг, ни отозвать доступ; поэтому `curl ... | pastebin` требует заранее полученный API-токен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Anonymous-создание разрешено (базовый paste без auth), но с урезанными фичами (no edit/private) и низкими квотами; полный запрет убил бы суть quick-paste.",
+                "source_of_confusion": "Контроль abuse соблазняет закрыть анонимность совсем.",
+                "if_it_were_true": "Если бы анонимность была запрещена, `curl ... | pastebin` без аккаунта не работал бы — а это ключевой сценарий.",
+                "how_it_should_be": "Anonymous остаётся (с limited features и низкими квотами); abuse контролируют rate-limit и scanning, а не запретом анонимности."
               }
             }
           ]
@@ -1571,18 +1571,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Reads и writes надо лимитировать одинаково, потому что любой запрос одинаково нагружает систему независимо от типа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Writes дороже reads (запись в blob + metadata + event), поэтому у них раздельные лимиты: creates/hour жёстче, reads/min мягче.",
-                "source_of_confusion": "«Запрос есть запрос» упрощает картину до единого лимита.",
-                "if_it_were_true": "Если бы лимиты совпадали, либо чтение было бы зря зажато, либо запись недозащищена от abuse.",
-                "how_it_should_be": "Reads и writes лимитируют раздельно: запись затратнее, поэтому creates/hour ниже, чем reads/min."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Anonymous-лимит надо привязывать к user_id, как у авторизованных, а IP использовать нельзя из-за неточности.",
               "correct": false,
               "sections": {
@@ -1593,8 +1581,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Reads и writes надо лимитировать одинаково, потому что любой запрос одинаково нагружает систему независимо от типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Writes дороже reads (запись в blob + metadata + event), поэтому у них раздельные лимиты: creates/hour жёстче, reads/min мягче.",
+                "source_of_confusion": "«Запрос есть запрос» упрощает картину до единого лимита.",
+                "if_it_were_true": "Если бы лимиты совпадали, либо чтение было бы зря зажато, либо запись недозащищена от abuse.",
+                "how_it_should_be": "Reads и writes лимитируют раздельно: запись затратнее, поэтому creates/hour ниже, чем reads/min."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Shared NAT редко мешает IP-based лимитам: за одним внешним IP обычно стоит один активный пользователь, а массовый NAT — исключение, которым можно пренебречь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Shared NAT (корпорация, школа) ставит много пользователей за один IP → false positive блокировки; решение — auth/CAPTCHA вместо блока IP.",
+                "source_of_confusion": "Кажется, что IP почти всегда соответствует одному человеку.",
+                "if_it_were_true": "Если бы за IP был один пользователь, не было бы edge-case с корпоративным NAT и ложными блокировками.",
+                "how_it_should_be": "За одним IP могут быть сотни пользователей (NAT); жёсткий IP-block тут ошибочен, нужен fallback на auth/CAPTCHA."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Тиры: anonymous (IP-based) 5 creates/час, 100 reads/min; authenticated free 25/час, 500/min; paid 250/час, unlimited reads; API enterprise 10000/час. Реализация: token bucket per user_id или IP (Redis Lua), reads и writes раздельно (writes дороже), burst-allowance. Anonymous по IP (`X-Forwarded-For` от trusted proxy, `CF-Connecting-IP`), authenticated по API-токену → user_id. Ответ 429 с `Retry-After`, `X-RateLimit-Limit/Remaining/Reset`. Adaptive: подозрительным IP — ниже, доверенным — выше.",
               "correct": true,
               "sections": {
@@ -1603,18 +1615,6 @@
                 "when_to_apply": "Tiered rate-limit вводят, когда есть и анонимы, и платные клиенты с разными SLA, и нужно сдержать abuse без вреда легитимным.",
                 "edge_cases": "Edge: shared NAT (корпорация, школа) даёт много пользователей за одним IP → false positive; решение — требовать auth/CAPTCHA вместо жёсткого блока IP.",
                 "related": "[[design-pastebin-interview#Q9]] per-token rate-limits в API; [[design-pastebin-interview#Q25]] rate-limit как anti-scraping; [[design-pastebin-interview#Q26]] auth-ключ как идентификатор лимита."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Shared NAT редко мешает IP-based лимитам: за одним внешним IP обычно стоит один активный пользователь, а массовый NAT — исключение, которым можно пренебречь.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Shared NAT (корпорация, школа) ставит много пользователей за один IP → false positive блокировки; решение — auth/CAPTCHA вместо блока IP.",
-                "source_of_confusion": "Кажется, что IP почти всегда соответствует одному человеку.",
-                "if_it_were_true": "Если бы за IP был один пользователь, не было бы edge-case с корпоративным NAT и ложными блокировками.",
-                "how_it_should_be": "За одним IP могут быть сотни пользователей (NAT); жёсткий IP-block тут ошибочен, нужен fallback на auth/CAPTCHA."
               }
             }
           ]
@@ -1631,30 +1631,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно двух latency-метрик — `paste_creation_latency_p99` и `paste_view_latency_p99`: storage-срез (`blob_storage_size_tb`, `compression_ratio`) и anti-abuse (`dmca_blocks_per_day`, `malware_detections`) дублируют то, что и так проявится ростом latency, поэтому отдельно их не собирают.",
-              "correct": false,
+              "text": "Core latency: `paste_creation_latency_p99` < 500 ms, `paste_view_latency_p99` < 100 ms cached, `cdn_hit_ratio` > 90%, `syntax_highlight_latency_p99` < 50 ms. Volume: created/viewed per sec, bytes uploaded. Quality: `creation_success_rate` > 99%, `error_rate_5xx` < 0.1%, gc-lag. Anti-abuse: dmca_blocks, malware_detections, suspicious_ips, captcha_rate. Storage: blob_size_tb, compression_ratio. Business: DAU, signups, pro_conversion. Алерты по severity: page (success<95% 5мин), Slack (dmca-spike), email (gc-лаг>24ч). Tracing через OpenTelemetry.",
+              "correct": true,
               "sections": {
-                "what_actually": "Мониторят и storage (`blob_storage_size_tb`, `compression_ratio`), и abuse (`dmca_blocks_per_day`, `malware_detections`), и бизнес — latency лишь один из срезов.",
-                "source_of_confusion": "Latency — самое заметное, поэтому кажется единственно важным.",
-                "if_it_were_true": "Если бы хватало latency, нельзя было бы заметить рост хранилища или всплеск abuse до инцидента.",
-                "how_it_should_be": "Метрики покрывают latency, volume, quality, anti-abuse, storage и business — это полный observability-стек."
+                "explanation": "Метрики группируют по доменам (latency, volume, quality, abuse, storage, business), а алерты маршрутизируют по severity, чтобы критичное будило дежурного, а несрочное шло в email — это полноценная observability, а не один дашборд latency.",
+                "example": "Trace через OpenTelemetry показывает разбивку `view 80 ms = CDN hit 60 ms` против гипотетического `200 ms DB + 50 ms highlight`, делая видимым вклад каждого слоя в латентность.",
+                "when_to_apply": "Полный набор метрик задают на этапе дизайна, чтобы заранее определить SLO, пороги и каналы алертов.",
+                "edge_cases": "Anti-abuse метрики (`dmca_blocks_per_day`, `captcha_challenge_rate`) отслеживают на spike > baseline — резкий рост сигналит о новой волне злоупотреблений.",
+                "related": "[[design-pastebin-interview#Q3]] SLO как пороги для этих метрик; [[design-pastebin-interview#Q25]] anti-abuse метрики; [[design-pastebin-interview#Q23]] cdn_hit_ratio из CDN-слоя."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Все алерты — `creation_success_rate < 95%`, DMCA-spike, GC-лаг > 24ч — маршрутизируют одним каналом с одинаковым приоритетом page: разделять severity по типам метрик незачем, ведь дежурный смотрит единый дашборд и сам решит, что критично.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Severity разная: `creation_success_rate < 95%` 5 мин → page (будят дежурного), DMCA-spike → Slack, GC-лаг > 24ч → email — каждый канал под свою критичность.",
-                "source_of_confusion": "Единый канал кажется проще в настройке.",
-                "if_it_were_true": "Если бы всё было одним приоритетом, либо дежурного будили бы по мелочам, либо критичное тонуло бы в шуме.",
-                "how_it_should_be": "Алерты маршрутизируют по severity: page для критичного, Slack для важного, email для несрочного."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`compression_ratio` не мониторят: уровень `zstd` фиксируется в конфиге (например, level 3), поэтому ratio детерминирован кодеком и держится на постоянных 3-4× независимо от контента — метрика показывала бы плоскую линию без полезного сигнала.",
               "correct": false,
               "sections": {
@@ -1665,16 +1654,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно двух latency-метрик — `paste_creation_latency_p99` и `paste_view_latency_p99`: storage-срез (`blob_storage_size_tb`, `compression_ratio`) и anti-abuse (`dmca_blocks_per_day`, `malware_detections`) дублируют то, что и так проявится ростом latency, поэтому отдельно их не собирают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Мониторят и storage (`blob_storage_size_tb`, `compression_ratio`), и abuse (`dmca_blocks_per_day`, `malware_detections`), и бизнес — latency лишь один из срезов.",
+                "source_of_confusion": "Latency — самое заметное, поэтому кажется единственно важным.",
+                "if_it_were_true": "Если бы хватало latency, нельзя было бы заметить рост хранилища или всплеск abuse до инцидента.",
+                "how_it_should_be": "Метрики покрывают latency, volume, quality, anti-abuse, storage и business — это полный observability-стек."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Core latency: `paste_creation_latency_p99` < 500 ms, `paste_view_latency_p99` < 100 ms cached, `cdn_hit_ratio` > 90%, `syntax_highlight_latency_p99` < 50 ms. Volume: created/viewed per sec, bytes uploaded. Quality: `creation_success_rate` > 99%, `error_rate_5xx` < 0.1%, gc-lag. Anti-abuse: dmca_blocks, malware_detections, suspicious_ips, captcha_rate. Storage: blob_size_tb, compression_ratio. Business: DAU, signups, pro_conversion. Алерты по severity: page (success<95% 5мин), Slack (dmca-spike), email (gc-лаг>24ч). Tracing через OpenTelemetry.",
-              "correct": true,
+              "text": "Все алерты — `creation_success_rate < 95%`, DMCA-spike, GC-лаг > 24ч — маршрутизируют одним каналом с одинаковым приоритетом page: разделять severity по типам метрик незачем, ведь дежурный смотрит единый дашборд и сам решит, что критично.",
+              "correct": false,
               "sections": {
-                "explanation": "Метрики группируют по доменам (latency, volume, quality, abuse, storage, business), а алерты маршрутизируют по severity, чтобы критичное будило дежурного, а несрочное шло в email — это полноценная observability, а не один дашборд latency.",
-                "example": "Trace через OpenTelemetry показывает разбивку `view 80 ms = CDN hit 60 ms` против гипотетического `200 ms DB + 50 ms highlight`, делая видимым вклад каждого слоя в латентность.",
-                "when_to_apply": "Полный набор метрик задают на этапе дизайна, чтобы заранее определить SLO, пороги и каналы алертов.",
-                "edge_cases": "Anti-abuse метрики (`dmca_blocks_per_day`, `captcha_challenge_rate`) отслеживают на spike > baseline — резкий рост сигналит о новой волне злоупотреблений.",
-                "related": "[[design-pastebin-interview#Q3]] SLO как пороги для этих метрик; [[design-pastebin-interview#Q25]] anti-abuse метрики; [[design-pastebin-interview#Q23]] cdn_hit_ratio из CDN-слоя."
+                "what_actually": "Severity разная: `creation_success_rate < 95%` 5 мин → page (будят дежурного), DMCA-spike → Slack, GC-лаг > 24ч → email — каждый канал под свою критичность.",
+                "source_of_confusion": "Единый канал кажется проще в настройке.",
+                "if_it_were_true": "Если бы всё было одним приоритетом, либо дежурного будили бы по мелочам, либо критичное тонуло бы в шуме.",
+                "how_it_should_be": "Алерты маршрутизируют по severity: page для критичного, Slack для важного, email для несрочного."
               }
             }
           ]
@@ -1691,6 +1691,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Compression почти не влияет на итоговый счёт: storage в S3 стоит $0.023/GB, поэтому даже zstd 3-4× (−70% объёма) экономит копейки на фоне bandwidth и compute — внедрять сжатие ради storage смысла нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Compression даёт −70% storage (zstd 3-4×), что прямо снижает счёт за blob с $300-900 до $100-300 — это существенная экономия, а не мелочь.",
+                "source_of_confusion": "Дешевизна S3 за GB создаёт иллюзию, что объём не важен.",
+                "if_it_were_true": "Если бы сжатие не влияло, его не называли бы первым рычагом cost optimization.",
+                "how_it_should_be": "Compression — базовый рычаг: −70% объёма пропорционально режет и storage, и bandwidth."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Менять S3 на Cloudflare R2 или Backblaze B2 смысла нет: цена за GB у крупных провайдеров сходится к одному уровню (~$0.023/GB), а egress-fee берут все, поэтому переезд ради стоимости не даёт разницы в счёте даже на больших объёмах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "R2 ($0.015/GB) дешевле S3 ($0.023/GB), B2 ещё дешевле, плюс R2 не берёт egress-fee через Cloudflare CDN — разница в счёте ощутимая.",
+                "source_of_confusion": "Кажется, что object storage у всех стоит примерно одинаково.",
+                "if_it_were_true": "Если бы цены совпадали, смену провайдера не указывали бы среди оптимизаций.",
+                "how_it_should_be": "Провайдеры различаются и по цене за GB, и по egress: R2/B2 заметно дешевле S3 на больших объёмах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Рычаги: compression (zstd 3-4× → −70% storage); storage tiering (Standard→IA→Glacier → −50% на старых); агрессивный CDN-кэш (95% hit → origin-bandwidth в 20× дешевле); expiration cleanup (free-дефолт 30-дневный TTL); read-cache в Redis (top-1% в памяти → меньше нагрузки на DB); pre-compressed CDN (Brotli/gzip бесплатно, −70% bandwidth); cold-start квоты для anonymous; R2/B2 вместо S3 (R2 $0.015/GB vs S3 $0.023, без egress-fee через Cloudflare). Итого для 1M/день, 5 лет: blob $100-300, CDN $50-150, DB $100-500, compute $200-500 → $500-1500/мес.",
               "correct": true,
               "sections": {
@@ -1702,8 +1726,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Главный рычаг экономии — убрать CDN: edge-слой добавляет $50-100/мес сверху и лишь проксирует тот же трафик, поэтому отдача raw напрямую с origin (30 TB/мес) выходит дешевле, чем origin + CDN, а латентность закрывают несколькими origin-репликами по регионам.",
               "correct": false,
               "sections": {
@@ -1711,30 +1735,6 @@
                 "source_of_confusion": "CDN видится как дополнительный счёт провайдеру.",
                 "if_it_were_true": "Если бы CDN был чистым расходом, без него egress был бы $600+/мес вместо $30 origin + $50-100 CDN.",
                 "how_it_should_be": "CDN — рычаг экономии, а не статья перерасхода: убрать его — взвинтить bandwidth-стоимость на порядок."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Compression почти не влияет на итоговый счёт: storage в S3 стоит $0.023/GB, поэтому даже zstd 3-4× (−70% объёма) экономит копейки на фоне bandwidth и compute — внедрять сжатие ради storage смысла нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Compression даёт −70% storage (zstd 3-4×), что прямо снижает счёт за blob с $300-900 до $100-300 — это существенная экономия, а не мелочь.",
-                "source_of_confusion": "Дешевизна S3 за GB создаёт иллюзию, что объём не важен.",
-                "if_it_were_true": "Если бы сжатие не влияло, его не называли бы первым рычагом cost optimization.",
-                "how_it_should_be": "Compression — базовый рычаг: −70% объёма пропорционально режет и storage, и bandwidth."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Менять S3 на Cloudflare R2 или Backblaze B2 смысла нет: цена за GB у крупных провайдеров сходится к одному уровню (~$0.023/GB), а egress-fee берут все, поэтому переезд ради стоимости не даёт разницы в счёте даже на больших объёмах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "R2 ($0.015/GB) дешевле S3 ($0.023/GB), B2 ещё дешевле, плюс R2 не берёт egress-fee через Cloudflare CDN — разница в счёте ощутимая.",
-                "source_of_confusion": "Кажется, что object storage у всех стоит примерно одинаково.",
-                "if_it_were_true": "Если бы цены совпадали, смену провайдера не указывали бы среди оптимизаций.",
-                "how_it_should_be": "Провайдеры различаются и по цене за GB, и по egress: R2/B2 заметно дешевле S3 на больших объёмах."
               }
             }
           ]
@@ -1751,13 +1751,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Синхронный инкремент просмотров (`UPDATE pastes SET views_count = views_count + 1 WHERE id = ?` на каждый view) — нормальная практика: одна строка, одна короткая транзакция, точное значение без лага; даже на популярном paste с 1200 view/sec Postgres берёт row-lock на микросекунды, поэтому contention не возникает.",
+              "text": "Хранить большие blob прямо в колонке Postgres — оптимально: `TOAST` прозрачно выносит значения >2 KB в отдельное storage и сжимает их, поэтому основная таблица не растёт, а backup/restore остаётся быстрым независимо от объёма контента.",
               "correct": false,
               "sections": {
-                "what_actually": "Синхронный инкремент даёт row-contention на популярных paste; правильно — async через Kafka + batch update.",
-                "source_of_confusion": "Простой `UPDATE +1` выглядит безобидно и точно.",
-                "if_it_were_true": "Если бы это было ок, не было бы антипаттерна «counting views synchronously».",
-                "how_it_should_be": "Счётчик инкрементируют асинхронно (Kafka + батч), иначе горячий paste страдает от блокировок строки."
+                "what_actually": "TOAST хранит overflow, но размер БД растёт быстро, а backup/restore становится мучительно медленным; fix — blob в S3.",
+                "source_of_confusion": "Прозрачность TOAST создаёт впечатление, что проблемы нет.",
+                "if_it_were_true": "Если бы blob в Postgres был ок, не было бы антипаттерна и принципа разделения metadata/blob.",
+                "how_it_should_be": "Blob выносят в object storage; в Postgres держат только metadata и `blob_key`, иначе backup деградирует."
               }
             },
             {
@@ -1776,18 +1776,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Хранить большие blob прямо в колонке Postgres — оптимально: `TOAST` прозрачно выносит значения >2 KB в отдельное storage и сжимает их, поэтому основная таблица не растёт, а backup/restore остаётся быстрым независимо от объёма контента.",
-              "correct": false,
-              "sections": {
-                "what_actually": "TOAST хранит overflow, но размер БД растёт быстро, а backup/restore становится мучительно медленным; fix — blob в S3.",
-                "source_of_confusion": "Прозрачность TOAST создаёт впечатление, что проблемы нет.",
-                "if_it_were_true": "Если бы blob в Postgres был ок, не было бы антипаттерна и принципа разделения metadata/blob.",
-                "how_it_should_be": "Blob выносят в object storage; в Postgres держат только metadata и `blob_key`, иначе backup деградирует."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Full-text search по всем paste по умолчанию (единый Elasticsearch-индекс по public, unlisted и private) — правильное решение: максимально полный индекс полезнее для пользователей и упрощает поддержку одного поискового пайплайна.",
               "correct": false,
               "sections": {
@@ -1795,6 +1783,18 @@
                 "source_of_confusion": "«Чем полнее поиск, тем лучше» игнорирует приватность.",
                 "if_it_were_true": "Если бы это было ок, не было бы антипаттерна «full-text search ВСЕХ pastes по default».",
                 "how_it_should_be": "Индексируют лишь public-контент с уважением к privacy-флагам; приватные paste в поиск не попадают."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Синхронный инкремент просмотров (`UPDATE pastes SET views_count = views_count + 1 WHERE id = ?` на каждый view) — нормальная практика: одна строка, одна короткая транзакция, точное значение без лага; даже на популярном paste с 1200 view/sec Postgres берёт row-lock на микросекунды, поэтому contention не возникает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Синхронный инкремент даёт row-contention на популярных paste; правильно — async через Kafka + batch update.",
+                "source_of_confusion": "Простой `UPDATE +1` выглядит безобидно и точно.",
+                "if_it_were_true": "Если бы это было ок, не было бы антипаттерна «counting views synchronously».",
+                "how_it_should_be": "Счётчик инкрементируют асинхронно (Kafka + батч), иначе горячий paste страдает от блокировок строки."
               }
             }
           ]

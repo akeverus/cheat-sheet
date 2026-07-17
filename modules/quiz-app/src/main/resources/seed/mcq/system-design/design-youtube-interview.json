@@ -9,19 +9,6 @@
           "question_text": "Какие functional и non-functional requirements у системы дизайна `YouTube`?",
           "options": [
             {
-              "text": "Functional: загрузка видео (resumable), просмотр со streaming/ABR, лайки/комментарии/подписки, рекомендации, поиск, live-стриминг, монетизация. Non-functional: 2.5B MAU, 500 часов видео в минуту, 1B часов просмотра в день, start-up latency < 2s, rebuffering < 0.5%, availability 99.95% на watch path, durability 11×9 для оригиналов.",
-              "correct": true,
-              "sections": {
-                "explanation": "Functional описывают что система делает (upload, watch, engagement, recs), non-functional — масштаб и качество: latency старта, rebuffering ratio, durability оригиналов и доступность watch path.",
-                "example": "На интервью явно фиксируют SLO: start-up latency < 2s от click до first frame и rebuffering < 0.5% — это прямо диктует выбор CDN-стратегии и размера сегментов.",
-                "when_to_apply": "С requirements начинают любой system design, чтобы заскоупить разговор: проговаривают «фокус на watch path и upload, recs на верхнем уровне», иначе тонут в ML.",
-                "edge_cases": "Out of scope явно выносят billing Premium, Studio analytics, payout-механику и kids-app — иначе обсуждение расплывается на смежные продукты.",
-                "related": "[[design-youtube-interview#Q2]] capacity estimation под эти числа; [[design-youtube-interview#Q3]] high-level архитектура; [[design-youtube-interview#Q26]] trade-offs latency vs cost."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Главное требование — обеспечить strong consistency счётчика просмотров: каждый view должен мгновенно и точно отражаться в БД для всех пользователей.",
               "correct": false,
               "sections": {
@@ -30,8 +17,8 @@
                 "if_it_were_true": "Тогда каждый просмотр давал бы синхронный write в Spanner, что упёрлось бы в миллионы writes/sec и убило бы запись.",
                 "how_it_should_be": "Ключевые NFR — start-up latency, rebuffering, durability и availability watch path; счётчик просмотров приблизительный и асинхронный."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Functional requirements — это только upload и watch; рекомендации, поиск и live-стриминг к функциональным требованиям не относятся.",
@@ -41,6 +28,19 @@
                 "source_of_confusion": "Upload и watch самые очевидные, поэтому остальные фичи ошибочно считают второстепенными или инфраструктурными.",
                 "if_it_were_true": "Тогда homepage feed и Up Next не были бы частью продукта, но рекомендации — ключевой driver watch time на YouTube.",
                 "how_it_should_be": "Functional набор широкий: upload, watch, engagement, subscriptions, recommendations, search, live, monetization."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Functional: загрузка видео (resumable), просмотр со streaming/ABR, лайки/комментарии/подписки, рекомендации, поиск, live-стриминг, монетизация. Non-functional: 2.5B MAU, 500 часов видео в минуту, 1B часов просмотра в день, start-up latency < 2s, rebuffering < 0.5%, availability 99.95% на watch path, durability 11×9 для оригиналов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Functional описывают что система делает (upload, watch, engagement, recs), non-functional — масштаб и качество: latency старта, rebuffering ratio, durability оригиналов и доступность watch path.",
+                "example": "На интервью явно фиксируют SLO: start-up latency < 2s от click до first frame и rebuffering < 0.5% — это прямо диктует выбор CDN-стратегии и размера сегментов.",
+                "when_to_apply": "С requirements начинают любой system design, чтобы заскоупить разговор: проговаривают «фокус на watch path и upload, recs на верхнем уровне», иначе тонут в ML.",
+                "edge_cases": "Out of scope явно выносят billing Premium, Studio analytics, payout-механику и kids-app — иначе обсуждение расплывается на смежные продукты.",
+                "related": "[[design-youtube-interview#Q2]] capacity estimation под эти числа; [[design-youtube-interview#Q3]] high-level архитектура; [[design-youtube-interview#Q26]] trade-offs latency vs cost."
               },
               "label": "C",
               "order": 2
@@ -69,16 +69,28 @@
           "question_text": "Как сделать capacity estimation для `YouTube`: storage, bandwidth, QPS?",
           "options": [
             {
-              "text": "Storage оценивают только по транскодированным вариантам и игнорируют оригиналы, потому что оригиналы удаляются сразу после transcoding.",
+              "text": "QPS metadata-чтений примерно равен числу watch starts, потому что на каждый просмотр приходится ровно один запрос метаданных.",
               "correct": false,
               "sections": {
-                "what_actually": "Оригиналы хранят с durability 11×9 (для re-transcode под новые кодеки), и они дают ~1 EB/год до учёта вариантов.",
-                "source_of_confusion": "Кажется логичным удалять «сырьё» после генерации вариантов ради экономии, но re-encode требует оригинал.",
-                "if_it_were_true": "Тогда нельзя было бы переэнкодить каталог в AV1 без потери качества, но YouTube именно так и делает для топовых видео.",
-                "how_it_should_be": "Считают и оригиналы (~1 EB/год), и варианты (×3-5), итого 3-5 EB/год; оригиналы сохраняют durable."
+                "what_actually": "Metadata reads ~10× watch starts (страница видео, канал, рекомендации, related) → ~2M QPS против ~70K watch starts.",
+                "source_of_confusion": "Кажется, что один просмотр = один metadata-запрос, но рендер страницы тянет десятки сущностей.",
+                "if_it_were_true": "Тогда metadata-слой нагружался бы как watch path (~70K QPS) и не требовал бы агрессивного кеширования.",
+                "how_it_should_be": "Read-amplification ~10× даёт ~2M QPS на metadata — это отдельный, более горячий слой с кешами."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Egress считают по числу uploads: 500 часов в минуту загрузки определяют пиковую bandwidth, потому что upload тяжелее watch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Egress драйвят просмотры (1B часов/день), а не загрузки; watch — read-heavy ~100:1 относительно записи.",
+                "source_of_confusion": "Слово «bandwidth» ассоциируется с загрузкой больших файлов, поэтому upload путают с главным потоком трафика.",
+                "if_it_were_true": "Тогда egress был бы порядка десятков Gbps (50 активных uploads), а не сотни Tbps, и собственная CDN была бы не нужна.",
+                "how_it_should_be": "Egress = часы просмотра × средний bitrate ≈ 126 Tbps average; именно он доминирует в инфраструктурной стоимости."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Storage: 500 ч/мин → ~263M часов/год × ~4 GB/час ≈ 1 EB оригиналов/год, после transcoding ×3-5 → 3-5 EB/год. Egress: 1B часов/день при ~3 Mbps → ~126 Tbps average, ~250-400 Tbps peak. QPS: ~70K watch starts/sec avg (~200K peak), ~2M QPS metadata reads. CDN egress доминирует в стоимости — поэтому собственная CDN (GGC).",
@@ -90,29 +102,17 @@
                 "edge_cases": "Peak ×2-3 от average (prime time, viral) — закладывать запас; иначе при всплеске CDN и transcoding-очередь захлёбываются.",
                 "related": "[[design-youtube-interview#Q1]] requirements-числа; [[design-youtube-interview#Q11]] почему собственная CDN; [[design-youtube-interview#Q12]] storage tiering под EB-объёмы."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Egress считают по числу uploads: 500 часов в минуту загрузки определяют пиковую bandwidth, потому что upload тяжелее watch.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Egress драйвят просмотры (1B часов/день), а не загрузки; watch — read-heavy ~100:1 относительно записи.",
-                "source_of_confusion": "Слово «bandwidth» ассоциируется с загрузкой больших файлов, поэтому upload путают с главным потоком трафика.",
-                "if_it_were_true": "Тогда egress был бы порядка десятков Gbps (50 активных uploads), а не сотни Tbps, и собственная CDN была бы не нужна.",
-                "how_it_should_be": "Egress = часы просмотра × средний bitrate ≈ 126 Tbps average; именно он доминирует в инфраструктурной стоимости."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "QPS metadata-чтений примерно равен числу watch starts, потому что на каждый просмотр приходится ровно один запрос метаданных.",
+              "text": "Storage оценивают только по транскодированным вариантам и игнорируют оригиналы, потому что оригиналы удаляются сразу после transcoding.",
               "correct": false,
               "sections": {
-                "what_actually": "Metadata reads ~10× watch starts (страница видео, канал, рекомендации, related) → ~2M QPS против ~70K watch starts.",
-                "source_of_confusion": "Кажется, что один просмотр = один metadata-запрос, но рендер страницы тянет десятки сущностей.",
-                "if_it_were_true": "Тогда metadata-слой нагружался бы как watch path (~70K QPS) и не требовал бы агрессивного кеширования.",
-                "how_it_should_be": "Read-amplification ~10× даёт ~2M QPS на metadata — это отдельный, более горячий слой с кешами."
+                "what_actually": "Оригиналы хранят с durability 11×9 (для re-transcode под новые кодеки), и они дают ~1 EB/год до учёта вариантов.",
+                "source_of_confusion": "Кажется логичным удалять «сырьё» после генерации вариантов ради экономии, но re-encode требует оригинал.",
+                "if_it_were_true": "Тогда нельзя было бы переэнкодить каталог в AV1 без потери качества, но YouTube именно так и делает для топовых видео.",
+                "how_it_should_be": "Считают и оригиналы (~1 EB/год), и варианты (×3-5), итого 3-5 EB/год; оригиналы сохраняют durable."
               },
               "label": "D",
               "order": 3
@@ -129,18 +129,6 @@
           "question_text": "Как выглядит high-level архитектура `YouTube`?",
           "options": [
             {
-              "text": "Видеотрафик при просмотре идёт через API Gateway и backend-сервисы, которые проксируют сегменты из object store пользователю.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сегменты отдаются напрямую с CDN edge, минуя backend; API Gateway возвращает только manifest URL и метаданные.",
-                "source_of_confusion": "В типичных CRUD-сервисах весь трафик идёт через backend, поэтому ту же модель ошибочно переносят на видео.",
-                "if_it_were_true": "Тогда backend пришлось бы масштабировать на сотни Tbps egress, что технически и экономически нереально.",
-                "how_it_should_be": "Backend отдаёт manifest и подписанные URL; байты видео тянутся с edge CDN напрямую, разгружая backend."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Transcoding запускается синхронно внутри upload-запроса: пользователь ждёт завершения кодирования всех вариантов перед получением ответа об успешной загрузке.",
               "correct": false,
               "sections": {
@@ -149,8 +137,8 @@
                 "if_it_were_true": "Тогда upload-запрос висел бы минутами и таймаутился, а HTTP-соединение нельзя держать так долго.",
                 "how_it_should_be": "Upload и transcoding развязаны через Kafka; статус идёт pending→processing→ready асинхронно."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Четыре пути. Upload: API Gateway → presigned URL → object store (raw) → Kafka → transcoding workers → object store (segments) → CDN. Watch: API Gateway → metadata service → manifest URL → CDN (segments). Recommendation: offline batch генерит candidates, online ranking при запросе. Engagement: Kafka → Flink → counters в Redis. На уровне сегментов сервис read-heavy ~100:1, поэтому всё агрессивно кешируется в CDN.",
@@ -161,6 +149,18 @@
                 "when_to_apply": "High-level диаграмму рисуют после capacity, чтобы показать границы сервисов и куда уходит трафик до углубления в отдельные компоненты.",
                 "edge_cases": "Read:write на сегментах ~100:1 — поэтому CDN-кеш critical; провал кеша (cache stampede) надо гасить origin shield-ом, а не отправлять всё в origin.",
                 "related": "[[design-youtube-interview#Q4]] детали upload flow; [[design-youtube-interview#Q5]] transcoding pipeline; [[design-youtube-interview#Q11]] CDN-слой."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Видеотрафик при просмотре идёт через API Gateway и backend-сервисы, которые проксируют сегменты из object store пользователю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сегменты отдаются напрямую с CDN edge, минуя backend; API Gateway возвращает только manifest URL и метаданные.",
+                "source_of_confusion": "В типичных CRUD-сервисах весь трафик идёт через backend, поэтому ту же модель ошибочно переносят на видео.",
+                "if_it_were_true": "Тогда backend пришлось бы масштабировать на сотни Tbps egress, что технически и экономически нереально.",
+                "how_it_should_be": "Backend отдаёт manifest и подписанные URL; байты видео тянутся с edge CDN напрямую, разгружая backend."
               },
               "label": "C",
               "order": 2
@@ -201,18 +201,6 @@
               "order": 0
             },
             {
-              "text": "Resumable upload означает, что при обрыве сервер сам докачивает недостающие байты из кеша клиента без участия client-side логики.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Возобновление инициирует client: делает `HEAD`, узнаёт уже принятый offset и досылает остаток сам.",
-                "source_of_confusion": "Слово «resumable» создаёт впечатление, что сервер магически восстанавливает передачу без клиента.",
-                "if_it_were_true": "Тогда сервер хранил бы полную копию недозагруженного файла у себя и знал недостающие байты, которых у него нет.",
-                "how_it_should_be": "Resumable — это протокол Range: client запрашивает offset и возобновляет передачу с него."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Transcoding запускается напрямую из upload-запроса синхронным вызовом, а не через S3-event, чтобы гарантировать порядок шагов.",
               "correct": false,
               "sections": {
@@ -220,6 +208,18 @@
                 "source_of_confusion": "Синхронная цепочка кажется надёжнее, поэтому event-driven развязку считают избыточной.",
                 "if_it_were_true": "Тогда даже при потере соединения клиентом transcoding бы не стартовал, но S3 event запускает его независимо.",
                 "how_it_should_be": "Transcoding event-driven: S3 event надёжно стартует pipeline, развязывая upload и кодирование."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Resumable upload означает, что при обрыве сервер сам докачивает недостающие байты из кеша клиента без участия client-side логики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возобновление инициирует client: делает `HEAD`, узнаёт уже принятый offset и досылает остаток сам.",
+                "source_of_confusion": "Слово «resumable» создаёт впечатление, что сервер магически восстанавливает передачу без клиента.",
+                "if_it_were_true": "Тогда сервер хранил бы полную копию недозагруженного файла у себя и знал недостающие байты, которых у него нет.",
+                "how_it_should_be": "Resumable — это протокол Range: client запрашивает offset и возобновляет передачу с него."
               },
               "label": "C",
               "order": 2
@@ -262,18 +262,6 @@
               "order": 0
             },
             {
-              "text": "Кодирование часового видео идёт одним `ffmpeg`-процессом по всем resolutions последовательно, поэтому занимает время порядка длительности видео.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Видео распиливают на временные chunks и кодируют 100+ воркерами параллельно → час видео готов за минуты, а не за час.",
-                "source_of_confusion": "Локально ffmpeg действительно гонят одним процессом, и эту модель переносят на масштаб YouTube.",
-                "if_it_were_true": "Тогда при 500 часах видео/мин очередь transcoding копилась бы быстрее, чем обрабатывалась, и навсегда отставала.",
-                "how_it_should_be": "Работа параллелится по chunks и resolutions на сотнях K8s-воркеров, затем результаты merge-ятся."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "GOP не важен: можно ставить keyframes произвольно, потому что плеер умеет начинать декодирование с любого кадра сегмента.",
               "correct": false,
               "sections": {
@@ -281,6 +269,18 @@
                 "source_of_confusion": "Кажется, что современные плееры всеядны, но inter-кадры (P/B) бессмысленны без опорного I-кадра.",
                 "if_it_were_true": "Тогда `-g`, `-keyint_min` и `-sc_threshold` в командах были бы не нужны, но они критичны для корректного ABR.",
                 "how_it_should_be": "Фиксированный GOP с keyframe на старте каждого сегмента — обязательное условие seek и переключения качества."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Кодирование часового видео идёт одним `ffmpeg`-процессом по всем resolutions последовательно, поэтому занимает время порядка длительности видео.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Видео распиливают на временные chunks и кодируют 100+ воркерами параллельно → час видео готов за минуты, а не за час.",
+                "source_of_confusion": "Локально ffmpeg действительно гонят одним процессом, и эту модель переносят на масштаб YouTube.",
+                "if_it_were_true": "Тогда при 500 часах видео/мин очередь transcoding копилась бы быстрее, чем обрабатывалась, и навсегда отставала.",
+                "how_it_should_be": "Работа параллелится по chunks и resolutions на сотнях K8s-воркеров, затем результаты merge-ятся."
               },
               "label": "C",
               "order": 2
@@ -309,16 +309,28 @@
           "question_text": "Какие resolutions/bitrates выбирают и зачем нужен bitrate ladder?",
           "options": [
             {
-              "text": "Ladder существует только чтобы показать пользователю меню выбора качества вручную; во время воспроизведения плеер между ступенями не переключается — ABR по измеренной пропускной способности не применяют.",
+              "text": "Нижнюю ступень фиксируют на 360p, а 144p убрали: современные кодеки (AV1/VP9) ужимают 360p в те же ~100 kbps, что раньше требовались для 144p, так что отдельная 144p-ступень избыточна.",
               "correct": false,
               "sections": {
-                "what_actually": "Главная роль ladder — автоматический ABR: плеер сам переключает ступени по bandwidth, ручной выбор вторичен.",
-                "source_of_confusion": "В UI плеера видно меню качества, поэтому кажется, что ladder существует ради ручного выбора.",
-                "if_it_were_true": "Тогда при падении сети без ручного вмешательства видео буферилось бы, но ABR автоматически роняет качество.",
-                "how_it_should_be": "Ladder — это набор вариантов для автоматической adaptive bitrate-логики; ручной выбор лишь override."
+                "what_actually": "144p активно используется в развивающихся рынках (Индия, Африка), на плохом 3G и для экономии mobile data.",
+                "source_of_confusion": "С позиции пользователя с быстрым broadband низкие разрешения кажутся пережитком.",
+                "if_it_were_true": "Тогда огромный non-Western user base YouTube не мог бы смотреть видео на медленных сетях.",
+                "how_it_should_be": "Нижние ступени ladder сохраняют ради глобальной аудитории с ограниченной bandwidth."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Битрейт каждой ступени задаётся глобальной таблицей и одинаков для всех видео; per-title и content-aware encoding не применяют — talking-head и action-сцену кодируют в один и тот же битрейт на 720p.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Per-title и content-aware encoding выдают разный bitrate под сложность контента, а не единый фиксированный ladder.",
+                "source_of_confusion": "Простота фиксированной таблицы bitrate подкупает, поэтому per-title оптимизацию упускают.",
+                "if_it_were_true": "Тогда простой talking-head тратил бы те же 4 Mbps, что и action-сцена, раздувая egress впустую.",
+                "how_it_should_be": "Bitrate адаптируется per-title через двухпроходный CAE-анализ, давая VBR с peak constraints."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Bitrate ladder — набор {resolution, bitrate} от 144p (~80-100 kbps) до 2160p/4K (~16 Mbps), каждая ступень нацелена на свою bandwidth-категорию клиентов. 144p нужен для развивающихся рынков, плохого 3G и экономии mobile data. Per-title encoding даёт разный ladder под сложность контента: talking-head укладывается в 1 Mbps на 720p, action-сцена требует ~4 Mbps. Content-aware encoding (CAE) — двухпроходный анализ → VBR с peak constraints.",
@@ -330,29 +342,17 @@
                 "edge_cases": "Слишком частые ступени ladder раздувают storage и transcoding, слишком редкие — дают резкие quality-скачки в ABR; баланс подбирают под аудиторию.",
                 "related": "[[design-youtube-interview#Q5]] чем кодируют каждую ступень; [[design-youtube-interview#Q8]] как ABR выбирает ступень; [[design-youtube-interview#Q12]] storage cost вариантов ladder."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Нижнюю ступень фиксируют на 360p, а 144p убрали: современные кодеки (AV1/VP9) ужимают 360p в те же ~100 kbps, что раньше требовались для 144p, так что отдельная 144p-ступень избыточна.",
-              "correct": false,
-              "sections": {
-                "what_actually": "144p активно используется в развивающихся рынках (Индия, Африка), на плохом 3G и для экономии mobile data.",
-                "source_of_confusion": "С позиции пользователя с быстрым broadband низкие разрешения кажутся пережитком.",
-                "if_it_were_true": "Тогда огромный non-Western user base YouTube не мог бы смотреть видео на медленных сетях.",
-                "how_it_should_be": "Нижние ступени ladder сохраняют ради глобальной аудитории с ограниченной bandwidth."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Битрейт каждой ступени задаётся глобальной таблицей и одинаков для всех видео; per-title и content-aware encoding не применяют — talking-head и action-сцену кодируют в один и тот же битрейт на 720p.",
+              "text": "Ladder существует только чтобы показать пользователю меню выбора качества вручную; во время воспроизведения плеер между ступенями не переключается — ABR по измеренной пропускной способности не применяют.",
               "correct": false,
               "sections": {
-                "what_actually": "Per-title и content-aware encoding выдают разный bitrate под сложность контента, а не единый фиксированный ladder.",
-                "source_of_confusion": "Простота фиксированной таблицы bitrate подкупает, поэтому per-title оптимизацию упускают.",
-                "if_it_were_true": "Тогда простой talking-head тратил бы те же 4 Mbps, что и action-сцена, раздувая egress впустую.",
-                "how_it_should_be": "Bitrate адаптируется per-title через двухпроходный CAE-анализ, давая VBR с peak constraints."
+                "what_actually": "Главная роль ladder — автоматический ABR: плеер сам переключает ступени по bandwidth, ручной выбор вторичен.",
+                "source_of_confusion": "В UI плеера видно меню качества, поэтому кажется, что ladder существует ради ручного выбора.",
+                "if_it_were_true": "Тогда при падении сети без ручного вмешательства видео буферилось бы, но ABR автоматически роняет качество.",
+                "how_it_should_be": "Ladder — это набор вариантов для автоматической adaptive bitrate-логики; ручной выбор лишь override."
               },
               "label": "D",
               "order": 3
@@ -381,18 +381,6 @@
               "order": 0
             },
             {
-              "text": "HLS и DASH полностью взаимозаменяемы: любой плеер играет оба формата, поэтому достаточно поддерживать только один.",
-              "correct": false,
-              "sections": {
-                "what_actually": "iOS/Safari native поддерживает HLS, DASH там работает лишь через MSE-polyfill; форматы не равнозначны по нативной поддержке.",
-                "source_of_confusion": "Оба «делают streaming», поэтому кажутся взаимозаменяемыми на уровне плеера.",
-                "if_it_were_true": "Тогда не было бы нужды в CMAF для устранения дублирования между HLS и DASH экосистемами.",
-                "how_it_should_be": "Платформы различаются: HLS native на Apple, DASH — на Android/Chrome/TV; для покрытия обоих и нужен CMAF."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "HLS (Apple, 2009) — манифест `.m3u8`, исторически `.ts`-контейнер, native на iOS/Safari. DASH (MPEG, 2012) — манифест `.mpd` (XML), `.m4s`-контейнер, на Safari через MSE-polyfill. CMAF (MPEG, 2018) — общий формат: одни и те же `.cmfv`-сегменты (fragmented MP4) шарятся между HLS- и DASH-манифестами. До CMAF приходилось хранить двойной набор сегментов (TS + m4s) → 2× storage; CMAF режет CDN storage вдвое. YouTube давно на CMAF.",
               "correct": true,
               "sections": {
@@ -401,6 +389,18 @@
                 "when_to_apply": "CMAF выбирают, когда надо поддержать и iOS (HLS), и Android/TV (DASH) без удвоения storage на CDN; это дефолт для масштабных видеосервисов.",
                 "edge_cases": "Старые legacy-устройства могут не понимать CMAF-HLS (fmp4) и требуют классический `.ts`; тогда часть каталога держат в двух форматах ради совместимости.",
                 "related": "[[design-youtube-interview#Q5]] откуда берутся сегменты; [[design-youtube-interview#Q9]] формат манифестов; [[design-youtube-interview#Q26]] trade-off universal CMAF vs split."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "HLS и DASH полностью взаимозаменяемы: любой плеер играет оба формата, поэтому достаточно поддерживать только один.",
+              "correct": false,
+              "sections": {
+                "what_actually": "iOS/Safari native поддерживает HLS, DASH там работает лишь через MSE-polyfill; форматы не равнозначны по нативной поддержке.",
+                "source_of_confusion": "Оба «делают streaming», поэтому кажутся взаимозаменяемыми на уровне плеера.",
+                "if_it_were_true": "Тогда не было бы нужды в CMAF для устранения дублирования между HLS и DASH экосистемами.",
+                "how_it_should_be": "Платформы различаются: HLS native на Apple, DASH — на Android/Chrome/TV; для покрытия обоих и нужен CMAF."
               },
               "label": "C",
               "order": 2
@@ -429,28 +429,17 @@
           "question_text": "Как работает adaptive bitrate streaming (ABR)?",
           "options": [
             {
-              "text": "Сервер сам определяет качество для клиента по его IP и навязывает фиксированный bitrate на всю сессию без переключений.",
-              "correct": false,
+              "text": "ABR — клиент сам переключает качество на лету по доступной bandwidth. Плеер грузит master manifest, оценивает throughput, скачивает сегмент, замеряет фактическую скорость и решает: throughput >> bitrate → switch up, throughput < bitrate → switch down. Алгоритмы: throughput-based (наивный, скользящее среднее), buffer-based (BBA, Netflix-style, по occupancy буфера), MPC/Pensieve (RL, комбинирует сигналы). Переключение — на границе сегмента (каждые 2-6s).",
+              "correct": true,
               "sections": {
-                "what_actually": "Решение принимает клиент по фактическому throughput и буферу, переключая качество динамически на границах сегментов.",
-                "source_of_confusion": "Кажется логичным централизовать решение на сервере, который «знает» сеть, но сервер не видит реальную клиентскую bandwidth.",
-                "if_it_were_true": "Тогда при просадке сети середине видео качество не упало бы и плеер ушёл бы в бесконечный rebuffering.",
-                "how_it_should_be": "ABR — client-driven: плеер замеряет throughput/буфер и сам выбирает ступень ladder для каждого следующего сегмента."
+                "explanation": "Решение о качестве принимает клиент (а не сервер), переключаясь на границах сегментов. Buffer-based и ML-подходы стабильнее наивного throughput-based, потому что учитывают занятость буфера, а не только мгновенную скорость.",
+                "example": "Псевдокод: при `bufferSeconds > 20` берут `safetyFactor=1.0`, иначе 0.7 (консервативно); `targetBitrate = throughput × safetyFactor`, и выбирают максимальную ступень ladder ниже target.",
+                "when_to_apply": "ABR применяют всегда для VOD и live по нестабильным сетям: позволяет начать с низкого качества и подниматься, избегая rebuffering при просадке bandwidth.",
+                "edge_cases": "Наивный throughput-based бьётся об bursty network (резкие всплески/провалы); buffer-based устойчивее, но при холодном старте буфер пуст и нужен консервативный safetyFactor.",
+                "related": "[[design-youtube-interview#Q6]] из каких ступеней выбирает ABR; [[design-youtube-interview#Q9]] откуда плеер берёт список вариантов; [[design-youtube-interview#Q10]] как размер сегмента влияет на скорость адаптации."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Качество можно менять в любой момент посреди сегмента, как только изменилась bandwidth, не дожидаясь его границы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Switch происходит только на границе сегмента, потому что каждый сегмент начинается с keyframe и декодируется независимо.",
-                "source_of_confusion": "Хочется мгновенной реакции, поэтому кажется, что переключение возможно в произвольной точке.",
-                "if_it_were_true": "Тогда плеер мог бы переключаться каждую миллисекунду, но смена варианта в середине GOP сломала бы декодирование.",
-                "how_it_should_be": "Гранулярность переключения — сегмент (2-6s); короче сегмент → быстрее адаптация, но больше overhead."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Единственный возможный алгоритм ABR — throughput-based: смотреть на скользящее среднее скорости последних сегментов, других подходов нет.",
@@ -461,18 +450,29 @@
                 "if_it_were_true": "Тогда ABR всегда бился бы об bursty network, но buffer-based как раз решает эту проблему стабильностью.",
                 "how_it_should_be": "Применяют buffer-based и RL-алгоритмы, которые устойчивее наивного throughput-усреднения."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Сервер сам определяет качество для клиента по его IP и навязывает фиксированный bitrate на всю сессию без переключений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Решение принимает клиент по фактическому throughput и буферу, переключая качество динамически на границах сегментов.",
+                "source_of_confusion": "Кажется логичным централизовать решение на сервере, который «знает» сеть, но сервер не видит реальную клиентскую bandwidth.",
+                "if_it_were_true": "Тогда при просадке сети середине видео качество не упало бы и плеер ушёл бы в бесконечный rebuffering.",
+                "how_it_should_be": "ABR — client-driven: плеер замеряет throughput/буфер и сам выбирает ступень ladder для каждого следующего сегмента."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "ABR — клиент сам переключает качество на лету по доступной bandwidth. Плеер грузит master manifest, оценивает throughput, скачивает сегмент, замеряет фактическую скорость и решает: throughput >> bitrate → switch up, throughput < bitrate → switch down. Алгоритмы: throughput-based (наивный, скользящее среднее), buffer-based (BBA, Netflix-style, по occupancy буфера), MPC/Pensieve (RL, комбинирует сигналы). Переключение — на границе сегмента (каждые 2-6s).",
-              "correct": true,
+              "text": "Качество можно менять в любой момент посреди сегмента, как только изменилась bandwidth, не дожидаясь его границы.",
+              "correct": false,
               "sections": {
-                "explanation": "Решение о качестве принимает клиент (а не сервер), переключаясь на границах сегментов. Buffer-based и ML-подходы стабильнее наивного throughput-based, потому что учитывают занятость буфера, а не только мгновенную скорость.",
-                "example": "Псевдокод: при `bufferSeconds > 20` берут `safetyFactor=1.0`, иначе 0.7 (консервативно); `targetBitrate = throughput × safetyFactor`, и выбирают максимальную ступень ladder ниже target.",
-                "when_to_apply": "ABR применяют всегда для VOD и live по нестабильным сетям: позволяет начать с низкого качества и подниматься, избегая rebuffering при просадке bandwidth.",
-                "edge_cases": "Наивный throughput-based бьётся об bursty network (резкие всплески/провалы); buffer-based устойчивее, но при холодном старте буфер пуст и нужен консервативный safetyFactor.",
-                "related": "[[design-youtube-interview#Q6]] из каких ступеней выбирает ABR; [[design-youtube-interview#Q9]] откуда плеер берёт список вариантов; [[design-youtube-interview#Q10]] как размер сегмента влияет на скорость адаптации."
+                "what_actually": "Switch происходит только на границе сегмента, потому что каждый сегмент начинается с keyframe и декодируется независимо.",
+                "source_of_confusion": "Хочется мгновенной реакции, поэтому кажется, что переключение возможно в произвольной точке.",
+                "if_it_were_true": "Тогда плеер мог бы переключаться каждую миллисекунду, но смена варианта в середине GOP сломала бы декодирование.",
+                "how_it_should_be": "Гранулярность переключения — сегмент (2-6s); короче сегмент → быстрее адаптация, но больше overhead."
               },
               "label": "D",
               "order": 3
@@ -489,29 +489,16 @@
           "question_text": "Что такое manifest (m3u8/mpd), какой у него формат и как он доставляется?",
           "options": [
             {
-              "text": "Master manifest перечисляет варианты ladder (`#EXT-X-STREAM-INF` с BANDWIDTH/RESOLUTION/CODECS → ссылки на media-плейлисты), media playlist перечисляет сегменты (`#EXTINF` + URL). Доставка: master manifest почти immutable, кешируется в CDN на длинный TTL (24h); сегменты immutable → TTL до года, versioned URL; manifest URL может быть signed (`?token=...&exp=...`) для DRM/access control. Для live манифест меняется (TTL 1-2s, `#EXT-X-PART` для LL-HLS).",
-              "correct": true,
+              "text": "Master и media manifest — это одно и то же: единственный файл, где сразу перечислены и качества, и все конкретные сегменты вперемешку.",
+              "correct": false,
               "sections": {
-                "explanation": "Manifest — это «оглавление» потока: master описывает доступные качества, media-плейлист — конкретные сегменты. Для VOD он почти неизменен и долго кешируется; для live постоянно обновляется коротким TTL.",
-                "example": "В master `#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720` ведёт на `720p/playlist.m3u8`, а тот содержит `#EXTINF:6.000, 720p_0000.cmfv` — список 6-секундных сегментов.",
-                "when_to_apply": "Manifest используют как точку входа плеера: он сначала тянет master, выбирает стартовый вариант и далее ходит за сегментами по media-плейлисту.",
-                "edge_cases": "Для live манифест mutable: новые сегменты дописываются, TTL короткий (1-2s), а `#EXT-X-PART`/`#EXT-X-PRELOAD-HINT` дают LL-HLS с задержкой ~3s вместо ~30s.",
-                "related": "[[design-youtube-interview#Q8]] как плеер использует варианты из manifest; [[design-youtube-interview#Q10]] размер сегмента и число записей; [[design-youtube-interview#Q20]] live-манифест с EXT-X-PART."
+                "what_actually": "Это два уровня: master перечисляет варианты ladder, а каждый media-плейлист — сегменты конкретного качества.",
+                "source_of_confusion": "Для маленького видео разница незаметна, поэтому два уровня сливают в один.",
+                "if_it_were_true": "Тогда плеер был бы вынужден парсить сегменты всех качеств сразу, хотя ему нужен только выбранный вариант.",
+                "how_it_should_be": "Иерархия двухуровневая: master → media playlists; плеер тянет только media-плейлист выбранного качества."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Manifest и для VOD, и для live кешируется на CDN на одинаково длинный TTL (24h), потому что список сегментов всегда статичен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Live-манифест mutable и кешируется коротким TTL (1-2s): новые сегменты постоянно дописываются по ходу трансляции.",
-                "source_of_confusion": "VOD-манифест действительно почти immutable, и это свойство ошибочно распространяют на live.",
-                "if_it_were_true": "Тогда зритель live-стрима 24 часа не видел бы новых сегментов из-за устаревшего закешированного манифеста.",
-                "how_it_should_be": "VOD-манифест — длинный TTL, live-манифест — короткий TTL (1-2s) плюс `#EXT-X-PART` для низкой задержки."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Manifest содержит сами видеоданные (закодированные кадры), поэтому плеер может играть видео, скачав только manifest.",
@@ -522,17 +509,30 @@
                 "if_it_were_true": "Тогда manifest весил бы гигабайты вместо ~50 KB, и не было бы смысла в отдельных сегментах и их кешировании.",
                 "how_it_should_be": "Manifest лишь индексирует сегменты; плеер по нему скачивает реальные видеоданные отдельными запросами."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Master manifest перечисляет варианты ladder (`#EXT-X-STREAM-INF` с BANDWIDTH/RESOLUTION/CODECS → ссылки на media-плейлисты), media playlist перечисляет сегменты (`#EXTINF` + URL). Доставка: master manifest почти immutable, кешируется в CDN на длинный TTL (24h); сегменты immutable → TTL до года, versioned URL; manifest URL может быть signed (`?token=...&exp=...`) для DRM/access control. Для live манифест меняется (TTL 1-2s, `#EXT-X-PART` для LL-HLS).",
+              "correct": true,
+              "sections": {
+                "explanation": "Manifest — это «оглавление» потока: master описывает доступные качества, media-плейлист — конкретные сегменты. Для VOD он почти неизменен и долго кешируется; для live постоянно обновляется коротким TTL.",
+                "example": "В master `#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720` ведёт на `720p/playlist.m3u8`, а тот содержит `#EXTINF:6.000, 720p_0000.cmfv` — список 6-секундных сегментов.",
+                "when_to_apply": "Manifest используют как точку входа плеера: он сначала тянет master, выбирает стартовый вариант и далее ходит за сегментами по media-плейлисту.",
+                "edge_cases": "Для live манифест mutable: новые сегменты дописываются, TTL короткий (1-2s), а `#EXT-X-PART`/`#EXT-X-PRELOAD-HINT` дают LL-HLS с задержкой ~3s вместо ~30s.",
+                "related": "[[design-youtube-interview#Q8]] как плеер использует варианты из manifest; [[design-youtube-interview#Q10]] размер сегмента и число записей; [[design-youtube-interview#Q20]] live-манифест с EXT-X-PART."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Master и media manifest — это одно и то же: единственный файл, где сразу перечислены и качества, и все конкретные сегменты вперемешку.",
+              "text": "Manifest и для VOD, и для live кешируется на CDN на одинаково длинный TTL (24h), потому что список сегментов всегда статичен.",
               "correct": false,
               "sections": {
-                "what_actually": "Это два уровня: master перечисляет варианты ladder, а каждый media-плейлист — сегменты конкретного качества.",
-                "source_of_confusion": "Для маленького видео разница незаметна, поэтому два уровня сливают в один.",
-                "if_it_were_true": "Тогда плеер был бы вынужден парсить сегменты всех качеств сразу, хотя ему нужен только выбранный вариант.",
-                "how_it_should_be": "Иерархия двухуровневая: master → media playlists; плеер тянет только media-плейлист выбранного качества."
+                "what_actually": "Live-манифест mutable и кешируется коротким TTL (1-2s): новые сегменты постоянно дописываются по ходу трансляции.",
+                "source_of_confusion": "VOD-манифест действительно почти immutable, и это свойство ошибочно распространяют на live.",
+                "if_it_were_true": "Тогда зритель live-стрима 24 часа не видел бы новых сегментов из-за устаревшего закешированного манифеста.",
+                "how_it_should_be": "VOD-манифест — длинный TTL, live-манифест — короткий TTL (1-2s) плюс `#EXT-X-PART` для низкой задержки."
               },
               "label": "D",
               "order": 3
@@ -549,16 +549,28 @@
           "question_text": "Какие trade-offs у размера сегмента (2s vs 6s vs 10s)?",
           "options": [
             {
-              "text": "Чем короче сегмент, тем лучше во всех отношениях, поэтому всегда следует выбирать 2s-сегменты и для VOD, и для live.",
+              "text": "Размер сегмента не влияет на скорость ABR-адаптации, потому что плеер может переключить качество в любой момент независимо от длины сегмента.",
               "correct": false,
               "sections": {
-                "what_actually": "Короткие сегменты дают overhead запросов, TCP slow start на каждом и хуже CDN cache hit — для VOD это проигрыш.",
-                "source_of_confusion": "Быстрая адаптация выглядит безусловным плюсом, и про издержки на число запросов забывают.",
-                "if_it_were_true": "Тогда не было бы trade-off-а, но 2s-сегменты раздувают число запросов в 3 раза против 6s, нагружая CDN.",
-                "how_it_should_be": "Для VOD оптимум 5-6s (баланс), 2s оправданы для live ради низкой задержки, не для архивной раздачи."
+                "what_actually": "Переключение возможно только на границе сегмента, поэтому длина сегмента напрямую задаёт гранулярность адаптации.",
+                "source_of_confusion": "Кажется, что адаптация непрерывна, но смена варианта привязана к границам сегментов.",
+                "if_it_were_true": "Тогда 10s-сегменты адаптировались бы так же быстро, как 2s, и live latency не зависела бы от размера.",
+                "how_it_should_be": "Короче сегмент → чаще границы → быстрее ABR и ниже live latency, но больше overhead."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Низкую live-задержку получают, просто уменьшив TTL манифеста, при этом размер сегмента можно оставить 10s.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При 10s-сегментах минимальная задержка ограничена длиной сегмента; для низкой latency нужны короткие сегменты + LL-HLS parts.",
+                "source_of_confusion": "TTL манифеста влияет на свежесть списка, и его путают с фактической задержкой воспроизведения.",
+                "if_it_were_true": "Тогда любой стрим с 10s-сегментами давал бы задержку ~3s только за счёт TTL, но плеер всё равно ждёт целый сегмент.",
+                "how_it_should_be": "Низкая live-задержка достигается 2s-сегментами + parts по 200-500ms, а не одним лишь TTL манифеста."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Короткие сегменты (2s) дают быструю ABR-адаптацию и низкую live latency, но много запросов (overhead, TCP slow start на каждом, нагрузка на CDN). Длинные (10s) — меньше запросов, лучше CDN cache hit rate, но медленная адаптация и высокая live latency. 6s — баланс (default VOD). YouTube для VOD использует 5-6s, для live — 2s + LL-HLS parts по 200-500ms, что даёт end-to-end latency ~3s vs ~30s у обычного HLS.",
@@ -570,29 +582,17 @@
                 "edge_cases": "Слишком короткие сегменты бьют по CDN: каждый запрос проходит TCP slow start заново, и overhead манифест/HTTP-запросов начинает доминировать над полезной нагрузкой.",
                 "related": "[[design-youtube-interview#Q8]] почему короче сегмент = быстрее ABR; [[design-youtube-interview#Q9]] сколько записей в media-плейлисте; [[design-youtube-interview#Q20]] LL-HLS parts для live."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Размер сегмента не влияет на скорость ABR-адаптации, потому что плеер может переключить качество в любой момент независимо от длины сегмента.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Переключение возможно только на границе сегмента, поэтому длина сегмента напрямую задаёт гранулярность адаптации.",
-                "source_of_confusion": "Кажется, что адаптация непрерывна, но смена варианта привязана к границам сегментов.",
-                "if_it_were_true": "Тогда 10s-сегменты адаптировались бы так же быстро, как 2s, и live latency не зависела бы от размера.",
-                "how_it_should_be": "Короче сегмент → чаще границы → быстрее ABR и ниже live latency, но больше overhead."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Низкую live-задержку получают, просто уменьшив TTL манифеста, при этом размер сегмента можно оставить 10s.",
+              "text": "Чем короче сегмент, тем лучше во всех отношениях, поэтому всегда следует выбирать 2s-сегменты и для VOD, и для live.",
               "correct": false,
               "sections": {
-                "what_actually": "При 10s-сегментах минимальная задержка ограничена длиной сегмента; для низкой latency нужны короткие сегменты + LL-HLS parts.",
-                "source_of_confusion": "TTL манифеста влияет на свежесть списка, и его путают с фактической задержкой воспроизведения.",
-                "if_it_were_true": "Тогда любой стрим с 10s-сегментами давал бы задержку ~3s только за счёт TTL, но плеер всё равно ждёт целый сегмент.",
-                "how_it_should_be": "Низкая live-задержка достигается 2s-сегментами + parts по 200-500ms, а не одним лишь TTL манифеста."
+                "what_actually": "Короткие сегменты дают overhead запросов, TCP slow start на каждом и хуже CDN cache hit — для VOD это проигрыш.",
+                "source_of_confusion": "Быстрая адаптация выглядит безусловным плюсом, и про издержки на число запросов забывают.",
+                "if_it_were_true": "Тогда не было бы trade-off-а, но 2s-сегменты раздувают число запросов в 3 раза против 6s, нагружая CDN.",
+                "how_it_should_be": "Для VOD оптимум 5-6s (баланс), 2s оправданы для live ради низкой задержки, не для архивной раздачи."
               },
               "label": "D",
               "order": 3
@@ -609,18 +609,6 @@
           "question_text": "Какая у `YouTube` CDN-стратегия: multi-CDN, origin shield, edge cache?",
           "options": [
             {
-              "text": "YouTube отдаёт раздачу коммерческому multi-CDN: DNS-балансировщик разводит запросы между Akamai, CloudFront и Fastly по цене egress и здоровью нод, а Google платит провайдерам за трафик как обычный клиент CDN, не размещая собственных узлов внутри сетей ISP.",
-              "correct": false,
-              "sections": {
-                "what_actually": "YouTube строит собственную CDN (GGC) внутри ISP; commercial multi-CDN — это путь для не-Google сервисов.",
-                "source_of_confusion": "Большинство компаний действительно арендуют CDN, поэтому ту же модель приписывают YouTube.",
-                "if_it_were_true": "Тогда YouTube платил бы egress-fee за сотни Tbps, что экономически разорительно даже для Google.",
-                "how_it_should_be": "GGC внутри ISP даёт zero transit cost; своя CDN — структурное преимущество над арендой."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Origin shield — это выделенный публичный edge ближе к пользователю: клиент подключается к нему напрямую в обход обычных нод, а тот при промахе тянет сегмент из регионального origin, сокращая RTT последней мили.",
               "correct": false,
               "sections": {
@@ -629,8 +617,8 @@
                 "if_it_were_true": "Тогда shield принимал бы пользовательский трафик и не выполнял бы свою роль — коалесцировать miss-ы edge-нод.",
                 "how_it_should_be": "Origin shield стоит за edge-нодами и коалесцирует их промахи в один запрос к origin (request coalescing)."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "YouTube использует собственную CDN — Google Global Cache (GGC): nodes размещены внутри ISP (1500+ провайдеров), сегменты идут с сервера твоего провайдера, не выходя из его сети (edge peering, win-win). Origin shield: edge при miss идёт не в origin, а в regional shield, который делает один запрос к origin (request coalescing) против thundering herd. Edge caching: сегменты immutable, content-hashed → TTL год; master manifest — 24h; live-манифест — 1s + no-store; eviction LRU + popularity-aware.",
@@ -641,6 +629,18 @@
                 "when_to_apply": "GGC внутри ISP применяют, когда egress измеряется сотнями Tbps и transit-трафик стал бы неподъёмным; origin shield — везде, где возможен thundering herd на origin.",
                 "edge_cases": "Live-манифест нельзя кешировать надолго: TTL 1s + `Cache-Control: no-store` на верх плейлиста, иначе зрители застревают на старом списке сегментов.",
                 "related": "[[design-youtube-interview#Q2]] почему egress требует своей CDN; [[design-youtube-interview#Q13]] обработка viral-видео; [[design-youtube-interview#Q12]] tiering за пределами edge-кеша."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "YouTube отдаёт раздачу коммерческому multi-CDN: DNS-балансировщик разводит запросы между Akamai, CloudFront и Fastly по цене egress и здоровью нод, а Google платит провайдерам за трафик как обычный клиент CDN, не размещая собственных узлов внутри сетей ISP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "YouTube строит собственную CDN (GGC) внутри ISP; commercial multi-CDN — это путь для не-Google сервисов.",
+                "source_of_confusion": "Большинство компаний действительно арендуют CDN, поэтому ту же модель приписывают YouTube.",
+                "if_it_were_true": "Тогда YouTube платил бы egress-fee за сотни Tbps, что экономически разорительно даже для Google.",
+                "how_it_should_be": "GGC внутри ISP даёт zero transit cost; своя CDN — структурное преимущество над арендой."
               },
               "label": "C",
               "order": 2
@@ -669,30 +669,6 @@
           "question_text": "Как устроен storage tiering: hot / warm / cold?",
           "options": [
             {
-              "text": "Весь каталог видео держат на CDN edge, потому что storage дешёвый и так гарантируется минимальная latency для любого видео.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На edge держат только топ ~0.1% видео; long-tail из 99.9% хранят в warm/cold, иначе edge-storage разорителен.",
-                "source_of_confusion": "Желание дать всем видео минимальную latency подталкивает кешировать всё на edge.",
-                "if_it_were_true": "Тогда edge-ноды хранили бы экзабайты редко смотримого контента, что экономически невозможно.",
-                "how_it_should_be": "На edge — только популярный хвост распределения; остальное в более дешёвых tier-ах по требованию."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Распределение просмотров равномерное: каждое видео смотрят примерно одинаково, поэтому tiering по популярности не нужен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Просмотры follow power-law: ~80% watch time на ~0.1% видео, остальные 99.9% — холодный long tail.",
-                "source_of_confusion": "Интуитивно кажется, что трафик размазан ровно, но в реальности он сильно сконцентрирован.",
-                "if_it_were_true": "Тогда tiering не давал бы экономии и весь каталог стоило бы держать в одном tier.",
-                "how_it_should_be": "Power-law оправдывает tiering: горячее ядро на edge, холодный хвост в дешёвом архиве."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Cold tier (Glacier Deep Archive) обеспечивает мгновенный доступ к видео, поэтому в нём можно держать даже умеренно популярный контент.",
               "correct": false,
               "sections": {
@@ -701,8 +677,8 @@
                 "if_it_were_true": "Тогда умеренно популярное видео иногда грузилось бы 12 часов, что неприемлемо для UX.",
                 "how_it_should_be": "В cold/deep-archive — только архив с редким доступом; активный long-tail держат в warm с latency ~50-100ms."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Новый upload → hot tier (CDN edge + regional cache), после ~30d низкого watch → warm (S3 Standard/Colossus), после ~1y почти без views → cold (Glacier/Coldline); внезапный тренд возвращает в warm (restore lag 4-12h). Стоимость падает от ~$0.023/GB (S3 Standard) до ~$0.00099/GB (Deep Archive). Power-law: ~80% watch time приходится на ~0.1% видео; остальные 99.9% — long tail. YouTube не держит весь long-tail в hot CDN — только manifest + первый сегмент для fast start.",
@@ -713,6 +689,30 @@
                 "when_to_apply": "Tiering применяют при EB-объёмах, где держать весь каталог в hot-storage разорительно: данные мигрируют по tier-ам на основе свежести и частоты просмотров.",
                 "edge_cases": "Если архивное видео внезапно стало трендом, его cold→warm restore занимает 4-12h — поэтому manifest и первый сегмент держат теплее, чтобы fast start не упирался в restore.",
                 "related": "[[design-youtube-interview#Q11]] hot-слой на CDN edge; [[design-youtube-interview#Q13]] что делать при viral-всплеске; [[design-youtube-interview#Q26]] trade-off upfront vs on-demand transcoding."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Весь каталог видео держат на CDN edge, потому что storage дешёвый и так гарантируется минимальная latency для любого видео.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На edge держат только топ ~0.1% видео; long-tail из 99.9% хранят в warm/cold, иначе edge-storage разорителен.",
+                "source_of_confusion": "Желание дать всем видео минимальную latency подталкивает кешировать всё на edge.",
+                "if_it_were_true": "Тогда edge-ноды хранили бы экзабайты редко смотримого контента, что экономически невозможно.",
+                "how_it_should_be": "На edge — только популярный хвост распределения; остальное в более дешёвых tier-ах по требованию."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Распределение просмотров равномерное: каждое видео смотрят примерно одинаково, поэтому tiering по популярности не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Просмотры follow power-law: ~80% watch time на ~0.1% видео, остальные 99.9% — холодный long tail.",
+                "source_of_confusion": "Интуитивно кажется, что трафик размазан ровно, но в реальности он сильно сконцентрирован.",
+                "if_it_were_true": "Тогда tiering не давал бы экономии и весь каталог стоило бы держать в одном tier.",
+                "how_it_should_be": "Power-law оправдывает tiering: горячее ядро на edge, холодный хвост в дешёвом архиве."
               },
               "label": "D",
               "order": 3
@@ -729,14 +729,13 @@
           "question_text": "Как обрабатывать hot (viral) видео?",
           "options": [
             {
-              "text": "Pre-warm cache в большем числе PoP (push к множеству edges заранее); priority transcoding lane (приоритетный K8s queue для резко взлетевших); adaptive replication hot rows metadata в больше регионов; request coalescing на origin shield против thundering herd; premium codec (AV1, -30% bitrate) для топ-0.001% ради экономии egress; predictive caching — ML предсказывает spike по early signals (subscriber count, geographic spread первых просмотров) и пушит в CDN до пика.",
-              "correct": true,
+              "text": "Predictive caching невозможен в принципе: нельзя предсказать, какое видео станет viral, поэтому прогревают только постфактум.",
+              "correct": false,
               "sections": {
-                "explanation": "Viral-видео обрабатывают проактивно: предзагрев CDN, приоритетная очередь transcoding, репликация горячих metadata-строк и защита origin от thundering herd через coalescing. ML предсказывает всплеск заранее.",
-                "example": "ML-модель видит ранние сигналы (рост subscriber count канала, географический разброс первых просмотров) и пушит сегменты в CDN до пика, чтобы edge не миссился в момент взрыва.",
-                "when_to_apply": "Этот набор мер включают, когда видео резко набирает миллион views/час: обычной reactive-логики кеширования не хватает, нужен upfront-прогрев.",
-                "edge_cases": "При cache miss на viral-сегменте 1000 параллельных запросов идут на shield → он дедуплицирует: первый идёт в origin, остальные блокируются на short-lived lock и отвечают из кеша.",
-                "related": "[[design-youtube-interview#Q11]] origin shield и request coalescing; [[design-youtube-interview#Q12]] возврат cold→warm при тренде; [[design-youtube-interview#Q15]] spike protection для счётчика просмотров."
+                "what_actually": "ML-модель предсказывает upcoming spike по early signals (subscriber count, geographic spread первых просмотров) и пушит в CDN до пика.",
+                "source_of_confusion": "Виральность кажется чисто случайной, отсюда вывод о невозможности предсказания.",
+                "if_it_were_true": "Тогда YouTube не мог бы прогревать CDN заранее и всегда отставал бы от спайка на минуты.",
+                "how_it_should_be": "Ранние сигналы дают предиктивный прогрев: видео пушат в edges до того, как нагрузка достигнет пика."
               },
               "label": "A",
               "order": 0
@@ -766,13 +765,14 @@
               "order": 2
             },
             {
-              "text": "Predictive caching невозможен в принципе: нельзя предсказать, какое видео станет viral, поэтому прогревают только постфактум.",
-              "correct": false,
+              "text": "Pre-warm cache в большем числе PoP (push к множеству edges заранее); priority transcoding lane (приоритетный K8s queue для резко взлетевших); adaptive replication hot rows metadata в больше регионов; request coalescing на origin shield против thundering herd; premium codec (AV1, -30% bitrate) для топ-0.001% ради экономии egress; predictive caching — ML предсказывает spike по early signals (subscriber count, geographic spread первых просмотров) и пушит в CDN до пика.",
+              "correct": true,
               "sections": {
-                "what_actually": "ML-модель предсказывает upcoming spike по early signals (subscriber count, geographic spread первых просмотров) и пушит в CDN до пика.",
-                "source_of_confusion": "Виральность кажется чисто случайной, отсюда вывод о невозможности предсказания.",
-                "if_it_were_true": "Тогда YouTube не мог бы прогревать CDN заранее и всегда отставал бы от спайка на минуты.",
-                "how_it_should_be": "Ранние сигналы дают предиктивный прогрев: видео пушат в edges до того, как нагрузка достигнет пика."
+                "explanation": "Viral-видео обрабатывают проактивно: предзагрев CDN, приоритетная очередь transcoding, репликация горячих metadata-строк и защита origin от thundering herd через coalescing. ML предсказывает всплеск заранее.",
+                "example": "ML-модель видит ранние сигналы (рост subscriber count канала, географический разброс первых просмотров) и пушит сегменты в CDN до пика, чтобы edge не миссился в момент взрыва.",
+                "when_to_apply": "Этот набор мер включают, когда видео резко набирает миллион views/час: обычной reactive-логики кеширования не хватает, нужен upfront-прогрев.",
+                "edge_cases": "При cache miss на viral-сегменте 1000 параллельных запросов идут на shield → он дедуплицирует: первый идёт в origin, остальные блокируются на short-lived lock и отвечают из кеша.",
+                "related": "[[design-youtube-interview#Q11]] origin shield и request coalescing; [[design-youtube-interview#Q12]] возврат cold→warm при тренде; [[design-youtube-interview#Q15]] spike protection для счётчика просмотров."
               },
               "label": "D",
               "order": 3
@@ -789,18 +789,6 @@
           "question_text": "Как спроектировать metadata DB: схема и sharding?",
           "options": [
             {
-              "text": "Одной таблицы `video_metadata` с `video_id` в роли PK хватает на все паттерны: выборки по каналу и по подпискам обслуживают тем же PK через вторичные индексы, отдельные таблицы `channel_videos`/`subscriptions` не нужны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Разные query-shapes требуют разных partition-ключей: video-by-id, videos-by-channel, subs-by-user шардируются по своим ключам.",
-                "source_of_confusion": "В монолитной БД один автоинкрементный PK кажется универсальным решением для всего.",
-                "if_it_were_true": "Тогда channel page query сканировал бы всю таблицу в поисках видео автора вместо точечного range-scan по партиции.",
-                "how_it_should_be": "Каждая сущность шардируется по ключу своего доступа; `video_id` — hash, `channel_videos` — по `user_id`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Таблица `video_metadata` с `video_id` (11 chars) как partition key (hash-sharded), полями title/description/duration/visibility/transcoding_status/manifest_url/geo_blocked_countries и др. Storage: Spanner (globally consistent, transactional) для core metadata, Cassandra для write-heavy, BigTable для view counts. Sharding: `video_metadata` — hash by `video_id`; `channel_videos` — partition by `user_id`, sort by `upload_ts DESC`; `subscriptions` — by `subscriber_user_id`; `comments` — by `video_id` + secondary time-bucket для популярных.",
               "correct": true,
               "sections": {
@@ -810,8 +798,8 @@
                 "edge_cases": "У популярного видео миллионы комментов — одна партиция по `video_id` становится hot, поэтому добавляют secondary partition по time-bucket, чтобы размазать нагрузку.",
                 "related": "[[design-youtube-interview#Q15]] почему view counts отдельно (BigTable/Redis); [[design-youtube-interview#Q16]] хранение comments и subscriptions; [[design-youtube-interview#Q13]] adaptive replication hot rows."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`video_metadata` шардируют по `uploader_user_id`, чтобы все видео автора лежали в одной партиции рядом; lookup по `video_id` идёт scatter-запросом по всем шардам.",
@@ -822,8 +810,8 @@
                 "if_it_were_true": "Тогда канал с миллионами видео создал бы гигантскую hot-партицию, перекосив распределение и убив один шард.",
                 "how_it_should_be": "Core metadata — hash by `video_id` для равномерности; группировку по автору выносят в денормализованную `channel_videos`."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Comments шардируют по `commenter_user_id`, чтобы все комментарии одного пользователя лежали вместе; выборка комментов к конкретному видео идёт scatter-gather по всем шардам.",
@@ -833,6 +821,18 @@
                 "source_of_confusion": "JSON-поле выглядит простым способом «прицепить» комменты к видео.",
                 "if_it_were_true": "Тогда видео с миллионами комментов имело бы одну гигантскую строку, неподъёмную для чтения и записи.",
                 "how_it_should_be": "Comments — отдельный store, шардированный по `video_id`, с time-bucket-секционированием горячих видео."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Одной таблицы `video_metadata` с `video_id` в роли PK хватает на все паттерны: выборки по каналу и по подпискам обслуживают тем же PK через вторичные индексы, отдельные таблицы `channel_videos`/`subscriptions` не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разные query-shapes требуют разных partition-ключей: video-by-id, videos-by-channel, subs-by-user шардируются по своим ключам.",
+                "source_of_confusion": "В монолитной БД один автоинкрементный PK кажется универсальным решением для всего.",
+                "if_it_were_true": "Тогда channel page query сканировал бы всю таблицу в поисках видео автора вместо точечного range-scan по партиции.",
+                "how_it_should_be": "Каждая сущность шардируется по ключу своего доступа; `video_id` — hash, `channel_videos` — по `user_id`."
               },
               "label": "D",
               "order": 3
@@ -909,28 +909,17 @@
           "question_text": "Как устроены likes, comments и subscriptions feed?",
           "options": [
             {
-              "text": "Likes считают принципиально иначе, чем views: синхронным транзакционным инкрементом в Spanner на каждый клик, без стримингового слоя.",
-              "correct": false,
+              "text": "Likes — тот же паттерн что и views: Kafka → Flink → Redis-counter (eventual consistency), uniqueness через `like(user_id, video_id)` в DB. Comments — Cassandra/Spanner partition by `video_id`, cursor-based пагинация (`?after=comment_id`), сортировки top/new/controversial, threading с depth limit 2. Subscriptions feed — на pull: для user взять subscriptions → последние видео каналов → merge by time → top N; для heavy fan-out каналов (MrBeast, 200M) гибрид: pull для обычных, push для top creators.",
+              "correct": true,
               "sections": {
-                "what_actually": "Likes используют тот же паттерн, что и views: Kafka → Flink → Redis-counter с eventual consistency.",
-                "source_of_confusion": "Лайк кажется более «важным» действием, чем просмотр, поэтому ему приписывают строгую консистентность.",
-                "if_it_were_true": "Тогда при viral-видео миллионы лайков/сек создавали бы ту же write-storm, что и синхронный счётчик просмотров.",
-                "how_it_should_be": "Likes идут через тот же counter-pipeline; uniqueness обеспечивает запись `like(user_id, video_id)`."
+                "explanation": "Engagement-фичи переиспользуют counter-pipeline (likes), а comments и feed строят под свои паттерны: comments шардируют по видео с cursor-пагинацией, feed — гибрид pull/push в зависимости от размера канала.",
+                "example": "MrBeast с 200M подписчиков — heavy fan-out: pull для каждого подписчика слишком дорог, поэтому для top creators делают push (fan-out on write) с лимитом, а обычные каналы тянут pull-ом.",
+                "when_to_apply": "Гибрид pull/push применяют, когда часть каналов имеет экстремальный fan-out: чистый pull дорог для популярных, чистый push — для каналов с редкими видео.",
+                "edge_cases": "У популярного видео миллионы комментов → нельзя грузить все сразу, нужна cursor-based пагинация и threading с ограничением глубины (top-level + replies, depth 2).",
+                "related": "[[design-youtube-interview#Q15]] counter-pipeline, переиспользуемый для likes; [[design-youtube-interview#Q14]] хранение comments по `video_id`; [[design-youtube-interview#Q28]] notifications при fan-out нового видео."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Comments к популярному видео грузят все сразу одним запросом через `OFFSET/LIMIT`, потому что cursor-пагинация избыточно усложняет API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Используют cursor-based пагинацию (`?after=comment_id`); `OFFSET` на миллионах комментов деградирует и пропускает строки при вставках.",
-                "source_of_confusion": "`OFFSET/LIMIT` привычен по реляционным БД и кажется достаточным.",
-                "if_it_were_true": "Тогда глубокая страница комментов сканировала бы миллионы строк, а новые комменты сдвигали бы пагинацию.",
-                "how_it_should_be": "Cursor-пагинация по `comment_id` стабильна при вставках и не деградирует на глубоких страницах."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Subscriptions feed всегда строят через push (fan-out on write): при публикации видео его сразу разносят в feed-таблицы всех подписчиков без исключений.",
@@ -941,18 +930,29 @@
                 "if_it_were_true": "Тогда одна публикация MrBeast порождала бы 200M записей в feed-таблицы — write-amplification, не оправданный для редко заходящих.",
                 "how_it_should_be": "Гибрид pull/push: pull для регулярных пользователей, push с лимитом для каналов с экстремальным fan-out."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Comments к популярному видео грузят все сразу одним запросом через `OFFSET/LIMIT`, потому что cursor-пагинация избыточно усложняет API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используют cursor-based пагинацию (`?after=comment_id`); `OFFSET` на миллионах комментов деградирует и пропускает строки при вставках.",
+                "source_of_confusion": "`OFFSET/LIMIT` привычен по реляционным БД и кажется достаточным.",
+                "if_it_were_true": "Тогда глубокая страница комментов сканировала бы миллионы строк, а новые комменты сдвигали бы пагинацию.",
+                "how_it_should_be": "Cursor-пагинация по `comment_id` стабильна при вставках и не деградирует на глубоких страницах."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Likes — тот же паттерн что и views: Kafka → Flink → Redis-counter (eventual consistency), uniqueness через `like(user_id, video_id)` в DB. Comments — Cassandra/Spanner partition by `video_id`, cursor-based пагинация (`?after=comment_id`), сортировки top/new/controversial, threading с depth limit 2. Subscriptions feed — на pull: для user взять subscriptions → последние видео каналов → merge by time → top N; для heavy fan-out каналов (MrBeast, 200M) гибрид: pull для обычных, push для top creators.",
-              "correct": true,
+              "text": "Likes считают принципиально иначе, чем views: синхронным транзакционным инкрементом в Spanner на каждый клик, без стримингового слоя.",
+              "correct": false,
               "sections": {
-                "explanation": "Engagement-фичи переиспользуют counter-pipeline (likes), а comments и feed строят под свои паттерны: comments шардируют по видео с cursor-пагинацией, feed — гибрид pull/push в зависимости от размера канала.",
-                "example": "MrBeast с 200M подписчиков — heavy fan-out: pull для каждого подписчика слишком дорог, поэтому для top creators делают push (fan-out on write) с лимитом, а обычные каналы тянут pull-ом.",
-                "when_to_apply": "Гибрид pull/push применяют, когда часть каналов имеет экстремальный fan-out: чистый pull дорог для популярных, чистый push — для каналов с редкими видео.",
-                "edge_cases": "У популярного видео миллионы комментов → нельзя грузить все сразу, нужна cursor-based пагинация и threading с ограничением глубины (top-level + replies, depth 2).",
-                "related": "[[design-youtube-interview#Q15]] counter-pipeline, переиспользуемый для likes; [[design-youtube-interview#Q14]] хранение comments по `video_id`; [[design-youtube-interview#Q28]] notifications при fan-out нового видео."
+                "what_actually": "Likes используют тот же паттерн, что и views: Kafka → Flink → Redis-counter с eventual consistency.",
+                "source_of_confusion": "Лайк кажется более «важным» действием, чем просмотр, поэтому ему приписывают строгую консистентность.",
+                "if_it_were_true": "Тогда при viral-видео миллионы лайков/сек создавали бы ту же write-storm, что и синхронный счётчик просмотров.",
+                "how_it_should_be": "Likes идут через тот же counter-pipeline; uniqueness обеспечивает запись `like(user_id, video_id)`."
               },
               "label": "D",
               "order": 3
@@ -969,14 +969,13 @@
           "question_text": "Как работает two-stage recommendation model: candidate generation + ranking?",
           "options": [
             {
-              "text": "Two-stage: Stage 1 (Candidate Generation) из ~10⁹ видео отбирает ~10² релевантных, recall > precision; модель — two-tower neural network с user/video embeddings, при serve query = user embedding → ANN search (FAISS/ScaNN), latency < 50ms. Stage 2 (Ranking) точно ранжирует ~500 candidates → top 10-20, precision matters; deep NN с сотнями features, multi-objective (pCTR, watch time, satisfaction), latency < 100ms на батч. Embeddings offline (Spark/Beam), ranking online (TF Serving), постоянный A/B.",
-              "correct": true,
+              "text": "Stage 1 и Stage 2 оптимизируют одну и ту же метрику — точность top-1, поэтому различать recall и precision между этапами не нужно.",
+              "correct": false,
               "sections": {
-                "explanation": "Два этапа решают разные задачи: candidate generation быстро сужает миллиарды до сотен (упор на recall и ANN), ranking точно сортирует сотни кандидатов (упор на precision и богатые features).",
-                "example": "Stage 1: user embedding → ANN-поиск по миллионам video embeddings (ScaNN) даёт ~500 кандидатов за <50ms; Stage 2: deep NN скорит эти 500 по pCTR/watch-time за <100ms и берёт top 10-20.",
-                "when_to_apply": "Two-stage применяют, когда кандидатов слишком много для прямого ranking-а: невозможно прогнать тяжёлую модель по 10⁹ видео на каждый запрос, поэтому сначала дешёвый retrieval.",
-                "edge_cases": "Embeddings считают offline батчем раз в N часов — новое видео без свежего embedding-а может не попасть в ANN-кандидаты до следующего пересчёта (cold-start).",
-                "related": "[[design-youtube-interview#Q18]] какие features в ranking-модели; [[design-youtube-interview#Q19]] отдельный Learn-to-Rank для поиска; [[design-youtube-interview#Q3]] recommendation path в архитектуре."
+                "what_actually": "Stage 1 оптимизирует recall (не потерять релевантных в ~500), Stage 2 — precision (точно отсортировать эти 500).",
+                "source_of_confusion": "Обе стадии «про релевантность», поэтому их цели сливают в одну.",
+                "if_it_were_true": "Тогда candidate generation отбрасывал бы хорошие видео слишком рано, и ranking-у нечего было бы вытаскивать наверх.",
+                "how_it_should_be": "Recall-first на retrieval, precision-first на ranking — у этапов разные оптимизационные цели."
               },
               "label": "A",
               "order": 0
@@ -994,13 +993,14 @@
               "order": 1
             },
             {
-              "text": "Stage 1 и Stage 2 оптимизируют одну и ту же метрику — точность top-1, поэтому различать recall и precision между этапами не нужно.",
-              "correct": false,
+              "text": "Two-stage: Stage 1 (Candidate Generation) из ~10⁹ видео отбирает ~10² релевантных, recall > precision; модель — two-tower neural network с user/video embeddings, при serve query = user embedding → ANN search (FAISS/ScaNN), latency < 50ms. Stage 2 (Ranking) точно ранжирует ~500 candidates → top 10-20, precision matters; deep NN с сотнями features, multi-objective (pCTR, watch time, satisfaction), latency < 100ms на батч. Embeddings offline (Spark/Beam), ranking online (TF Serving), постоянный A/B.",
+              "correct": true,
               "sections": {
-                "what_actually": "Stage 1 оптимизирует recall (не потерять релевантных в ~500), Stage 2 — precision (точно отсортировать эти 500).",
-                "source_of_confusion": "Обе стадии «про релевантность», поэтому их цели сливают в одну.",
-                "if_it_were_true": "Тогда candidate generation отбрасывал бы хорошие видео слишком рано, и ranking-у нечего было бы вытаскивать наверх.",
-                "how_it_should_be": "Recall-first на retrieval, precision-first на ranking — у этапов разные оптимизационные цели."
+                "explanation": "Два этапа решают разные задачи: candidate generation быстро сужает миллиарды до сотен (упор на recall и ANN), ranking точно сортирует сотни кандидатов (упор на precision и богатые features).",
+                "example": "Stage 1: user embedding → ANN-поиск по миллионам video embeddings (ScaNN) даёт ~500 кандидатов за <50ms; Stage 2: deep NN скорит эти 500 по pCTR/watch-time за <100ms и берёт top 10-20.",
+                "when_to_apply": "Two-stage применяют, когда кандидатов слишком много для прямого ranking-а: невозможно прогнать тяжёлую модель по 10⁹ видео на каждый запрос, поэтому сначала дешёвый retrieval.",
+                "edge_cases": "Embeddings считают offline батчем раз в N часов — новое видео без свежего embedding-а может не попасть в ANN-кандидаты до следующего пересчёта (cold-start).",
+                "related": "[[design-youtube-interview#Q18]] какие features в ranking-модели; [[design-youtube-interview#Q19]] отдельный Learn-to-Rank для поиска; [[design-youtube-interview#Q3]] recommendation path в архитектуре."
               },
               "label": "C",
               "order": 2
@@ -1041,14 +1041,13 @@
               "order": 0
             },
             {
-              "text": "Video features: `video_age_hours`, `total_views`, `like_ratio`, `comment_count`, `channel_quality_score`, `topic_embedding`, `language`, `geographic_target`. User features: `watch_history_embedding` (последние 50 видео), `search_history_embedding`, `demographics`, `subscription_signal`, `time_since_last_visit`. Context: `device_type`, `time_of_day`, `day_of_week`, `referrer`, `previous_video_in_session`. Cross features (user × video). Multi-objective head предсказывает сразу p(click), E[watch_time], p(like), p(share), p(skip-within-5s).",
-              "correct": true,
+              "text": "Контекстные признаки (`device_type`, `time_of_day`, `referrer`) собирают, но на ранжирующий скор они не влияют — веса по ним заморожены, т.к. предпочтения пользователя считают контекст-независимыми.",
+              "correct": false,
               "sections": {
-                "explanation": "Features делят на три группы: про видео, про пользователя и про контекст, плюс cross-features (нелинейные взаимодействия user × video). Одна модель имеет multi-objective head, предсказывающий несколько целей сразу.",
-                "example": "Multi-objective head выдаёт p(click|impression), E[watch_time|click], p(like|watch), p(share) и p(skip-within-5s) как negative signal; финальный score — weighted combination под бизнес-метрику.",
-                "when_to_apply": "Богатый feature-набор и multi-objective используют, когда цель не сводится к одному CTR: engagement, watch time и satisfaction балансируют через веса.",
-                "edge_cases": "skip-within-5s — negative signal: без него модель училась бы максимизировать клики кликбейтом, не учитывая, что пользователь сразу ушёл.",
-                "related": "[[design-youtube-interview#Q17]] где ranking в two-stage pipeline; [[design-youtube-interview#Q19]] Learn-to-Rank features для поиска; [[design-youtube-interview#Q15]] откуда сигналы engagement."
+                "what_actually": "Context features (device_type, time_of_day, referrer, previous_video_in_session) — полноценная группа признаков ранжирования.",
+                "source_of_confusion": "Кажется, что вкусы пользователя фиксированы, и контекст игнорируют как шум.",
+                "if_it_were_true": "Тогда на TV вечером и на телефоне утром показывали бы одно и то же, хотя паттерны потребления разные.",
+                "how_it_should_be": "Контекст — важный сигнал: устройство, время и точка входа меняют, что релевантно прямо сейчас."
               },
               "label": "B",
               "order": 1
@@ -1066,13 +1065,14 @@
               "order": 2
             },
             {
-              "text": "Контекстные признаки (`device_type`, `time_of_day`, `referrer`) собирают, но на ранжирующий скор они не влияют — веса по ним заморожены, т.к. предпочтения пользователя считают контекст-независимыми.",
-              "correct": false,
+              "text": "Video features: `video_age_hours`, `total_views`, `like_ratio`, `comment_count`, `channel_quality_score`, `topic_embedding`, `language`, `geographic_target`. User features: `watch_history_embedding` (последние 50 видео), `search_history_embedding`, `demographics`, `subscription_signal`, `time_since_last_visit`. Context: `device_type`, `time_of_day`, `day_of_week`, `referrer`, `previous_video_in_session`. Cross features (user × video). Multi-objective head предсказывает сразу p(click), E[watch_time], p(like), p(share), p(skip-within-5s).",
+              "correct": true,
               "sections": {
-                "what_actually": "Context features (device_type, time_of_day, referrer, previous_video_in_session) — полноценная группа признаков ранжирования.",
-                "source_of_confusion": "Кажется, что вкусы пользователя фиксированы, и контекст игнорируют как шум.",
-                "if_it_were_true": "Тогда на TV вечером и на телефоне утром показывали бы одно и то же, хотя паттерны потребления разные.",
-                "how_it_should_be": "Контекст — важный сигнал: устройство, время и точка входа меняют, что релевантно прямо сейчас."
+                "explanation": "Features делят на три группы: про видео, про пользователя и про контекст, плюс cross-features (нелинейные взаимодействия user × video). Одна модель имеет multi-objective head, предсказывающий несколько целей сразу.",
+                "example": "Multi-objective head выдаёт p(click|impression), E[watch_time|click], p(like|watch), p(share) и p(skip-within-5s) как negative signal; финальный score — weighted combination под бизнес-метрику.",
+                "when_to_apply": "Богатый feature-набор и multi-objective используют, когда цель не сводится к одному CTR: engagement, watch time и satisfaction балансируют через веса.",
+                "edge_cases": "skip-within-5s — negative signal: без него модель училась бы максимизировать клики кликбейтом, не учитывая, что пользователь сразу ушёл.",
+                "related": "[[design-youtube-interview#Q17]] где ranking в two-stage pipeline; [[design-youtube-interview#Q19]] Learn-to-Rank features для поиска; [[design-youtube-interview#Q15]] откуда сигналы engagement."
               },
               "label": "D",
               "order": 3
@@ -1089,13 +1089,13 @@
           "question_text": "Как устроен поиск: Elasticsearch, transcripts, ranking?",
           "options": [
             {
-              "text": "На upload гонят ASR → transcript, но его склеивают в одно text-поле `transcript` целиком; поиск по содержимому работает, однако deep-link «jump to position» не поддерживается — переход всегда в начало видео, без нарезки по 30s windows.",
+              "text": "Autocomplete строят на `match_phrase_prefix` по полю `title` в реальном времени, без предпосчитанного edge-ngram индекса и без учёта popularity подсказок.",
               "correct": false,
               "sections": {
-                "what_actually": "На upload гонят ASR → transcript, который индексируют отдельным полем `transcript_chunks` для поиска по сказанному.",
-                "source_of_confusion": "Классический текстовый поиск работает по метаданным, и про ASR-транскрипты забывают.",
-                "if_it_were_true": "Тогда нельзя было бы найти момент в видео по произнесённой фразе и дать deep-link на позицию.",
-                "how_it_should_be": "Transcript из ASR расширяет индекс: поиск покрывает и метаданные, и реальную речь в видео."
+                "what_actually": "Применяют ES fuzzy + phonetic + spell correction по словарю, поэтому опечатки толерируются и выдача не пустеет.",
+                "source_of_confusion": "Базовый match действительно точный, и про typo-tolerance-надстройки забывают.",
+                "if_it_were_true": "Тогда «kubernets» вместо «kubernetes» давал бы ноль результатов, что неприемлемо для UX поиска.",
+                "how_it_should_be": "Typo tolerance (fuzzy/phonetic/spell-correction) обеспечивает находимость при ошибках ввода."
               },
               "label": "A",
               "order": 0
@@ -1113,6 +1113,18 @@
               "order": 1
             },
             {
+              "text": "На upload гонят ASR → transcript, но его склеивают в одно text-поле `transcript` целиком; поиск по содержимому работает, однако deep-link «jump to position» не поддерживается — переход всегда в начало видео, без нарезки по 30s windows.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На upload гонят ASR → transcript, который индексируют отдельным полем `transcript_chunks` для поиска по сказанному.",
+                "source_of_confusion": "Классический текстовый поиск работает по метаданным, и про ASR-транскрипты забывают.",
+                "if_it_were_true": "Тогда нельзя было бы найти момент в видео по произнесённой фразе и дать deep-link на позицию.",
+                "how_it_should_be": "Transcript из ASR расширяет индекс: поиск покрывает и метаданные, и реальную речь в видео."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "На upload параллельно гонят ASR → transcript. Индекс в Elasticsearch: `title`/`description` — text с custom analyzer (ru+en), `tags` — keyword, `transcript_chunks` — отдельный field, нарезанный по 30s windows (для deep-link «search jump to position»), `channel_name`/`category` — keyword. Query: multi-match по полям с boost по engagement (views, recency) через function_score. Ranking model — отдельная Learn-to-Rank (LambdaMART/DNN), переранжирует top-100 ES-результатов. Autocomplete — edge-ngram + popularity.",
               "correct": true,
               "sections": {
@@ -1121,18 +1133,6 @@
                 "when_to_apply": "Связку ES + Learn-to-Rank используют, когда лексического матчинга недостаточно: ES быстро отбирает кандидатов, а LTR-модель учитывает engagement и поведенческие сигналы для точного порядка.",
                 "edge_cases": "Опечатки гасят ES fuzzy + phonetic + spell correction по словарю misspellings; без typo-tolerance запрос с ошибкой давал бы пустую выдачу.",
                 "related": "[[design-youtube-interview#Q17]] чем поиск-ranking отличается от рекомендаций; [[design-youtube-interview#Q18]] features для ранжирования; [[design-youtube-interview#Q22]] ASR/Content ID на том же upload-этапе."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Autocomplete строят на `match_phrase_prefix` по полю `title` в реальном времени, без предпосчитанного edge-ngram индекса и без учёта popularity подсказок.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Применяют ES fuzzy + phonetic + spell correction по словарю, поэтому опечатки толерируются и выдача не пустеет.",
-                "source_of_confusion": "Базовый match действительно точный, и про typo-tolerance-надстройки забывают.",
-                "if_it_were_true": "Тогда «kubernets» вместо «kubernetes» давал бы ноль результатов, что неприемлемо для UX поиска.",
-                "how_it_should_be": "Typo tolerance (fuzzy/phonetic/spell-correction) обеспечивает находимость при ошибках ввода."
               },
               "label": "D",
               "order": 3
@@ -1161,13 +1161,14 @@
               "order": 0
             },
             {
-              "text": "WebRTC — лучший выбор для массового broadcast live на миллионы зрителей, потому что даёт sub-second latency.",
-              "correct": false,
+              "text": "Creator пушит RTMP (TCP, latency 5-30s) или SRT/WebRTC (UDP) на ingest server → live transcoder в реальном времени кодирует ladder (240p-1080p) на GPU/ASIC → chunked CMAF publisher → HTTP/2 push parts по 200-500ms → origin shield → CDN edge → LL-HLS player. Манифест с `#EXT-X-PART` (INDEPENDENT=YES = part с keyframe для ABR-switch), end-to-end latency 2-5s vs ~30s обычного HLS. DVR — circular buffer на 4h для перемотки. После стрима finalize в VOD asset.",
+              "correct": true,
               "sections": {
-                "what_actually": "WebRTC даёт sub-second, но плохо масштабируется (peer-based); для broadcast на миллионы используют LL-HLS.",
-                "source_of_confusion": "Минимальная задержка WebRTC выглядит решающим преимуществом и для broadcast.",
-                "if_it_were_true": "Тогда peer-based соединения масштабировались бы на миллионы зрителей, чего WebRTC архитектурно не умеет.",
-                "how_it_should_be": "WebRTC — для interactive (звонки, малые группы); broadcast-масштаб обслуживает LL-HLS через CDN."
+                "explanation": "Live pipeline стримит чанками меньше сегмента: RTMP-ingest → real-time transcode → CMAF parts по 200-500ms через HTTP/2 push. `#EXT-X-PART` режет задержку до 2-5s против ~30s классического HLS.",
+                "example": "Манифест содержит `#EXT-X-PART:DURATION=0.33` с `INDEPENDENT=YES` (part начинается с keyframe → можно сразу switch ABR) и `#EXT-X-PRELOAD-HINT` на следующий part для предзагрузки.",
+                "when_to_apply": "LL-HLS выбирают для broadcast-масштаба с низкой задержкой; WebRTC даёт sub-second, но плохо масштабируется (peer-based) и годится лишь для interactive (звонки, чат).",
+                "edge_cases": "DVR-буфер (circular, ~4h) позволяет зрителю отмотать назад во время трансляции; после окончания стрим finalize-ится в VOD asset с дополнительными кодеками (AV1).",
+                "related": "[[design-youtube-interview#Q10]] почему для live короткие сегменты + parts; [[design-youtube-interview#Q9]] live-манифест с EXT-X-PART; [[design-youtube-interview#Q11]] origin shield в live-пути."
               },
               "label": "B",
               "order": 1
@@ -1185,14 +1186,13 @@
               "order": 2
             },
             {
-              "text": "Creator пушит RTMP (TCP, latency 5-30s) или SRT/WebRTC (UDP) на ingest server → live transcoder в реальном времени кодирует ladder (240p-1080p) на GPU/ASIC → chunked CMAF publisher → HTTP/2 push parts по 200-500ms → origin shield → CDN edge → LL-HLS player. Манифест с `#EXT-X-PART` (INDEPENDENT=YES = part с keyframe для ABR-switch), end-to-end latency 2-5s vs ~30s обычного HLS. DVR — circular buffer на 4h для перемотки. После стрима finalize в VOD asset.",
-              "correct": true,
+              "text": "WebRTC — лучший выбор для массового broadcast live на миллионы зрителей, потому что даёт sub-second latency.",
+              "correct": false,
               "sections": {
-                "explanation": "Live pipeline стримит чанками меньше сегмента: RTMP-ingest → real-time transcode → CMAF parts по 200-500ms через HTTP/2 push. `#EXT-X-PART` режет задержку до 2-5s против ~30s классического HLS.",
-                "example": "Манифест содержит `#EXT-X-PART:DURATION=0.33` с `INDEPENDENT=YES` (part начинается с keyframe → можно сразу switch ABR) и `#EXT-X-PRELOAD-HINT` на следующий part для предзагрузки.",
-                "when_to_apply": "LL-HLS выбирают для broadcast-масштаба с низкой задержкой; WebRTC даёт sub-second, но плохо масштабируется (peer-based) и годится лишь для interactive (звонки, чат).",
-                "edge_cases": "DVR-буфер (circular, ~4h) позволяет зрителю отмотать назад во время трансляции; после окончания стрим finalize-ится в VOD asset с дополнительными кодеками (AV1).",
-                "related": "[[design-youtube-interview#Q10]] почему для live короткие сегменты + parts; [[design-youtube-interview#Q9]] live-манифест с EXT-X-PART; [[design-youtube-interview#Q11]] origin shield в live-пути."
+                "what_actually": "WebRTC даёт sub-second, но плохо масштабируется (peer-based); для broadcast на миллионы используют LL-HLS.",
+                "source_of_confusion": "Минимальная задержка WebRTC выглядит решающим преимуществом и для broadcast.",
+                "if_it_were_true": "Тогда peer-based соединения масштабировались бы на миллионы зрителей, чего WebRTC архитектурно не умеет.",
+                "how_it_should_be": "WebRTC — для interactive (звонки, малые группы); broadcast-масштаб обслуживает LL-HLS через CDN."
               },
               "label": "D",
               "order": 3
@@ -1209,19 +1209,6 @@
           "question_text": "Как устроена ad insertion: SSAI vs CSAI, VAST/VPAID?",
           "options": [
             {
-              "text": "Форматы: pre-roll, mid-roll, post-roll, bumper (6s non-skippable), overlay. Два способа сшивки: CSAI (Client-Side) — плеер знает про ad, ставит контент на паузу и играет ad asset (легко блокируется AdBlock-ом, rich tracking); SSAI (Server-Side) — сервер вставляет ad-сегменты прямо в manifest между content-сегментами (сложно блокировать, seamless switching, для CTV/LL-стримов). VAST (IAB XML-стандарт) описывает creative/tracking/impression. VPAID (interactive) deprecated в пользу SIMID. Frequency capping — counter в Redis per (user_id, ad_id).",
-              "correct": true,
-              "sections": {
-                "explanation": "CSAI и SSAI отличаются местом сшивки: CSAI — на клиенте (отдельный ad asset, легко блокируется), SSAI — на сервере прямо в манифесте (seamless, AdBlock-устойчиво). VAST — XML-стандарт описания рекламы от IAB.",
-                "example": "SSAI вставляет ad-сегменты в тот же `.m3u8` между content-сегментами, поэтому переключение content↔ad seamless (тот же буфер) и реклама неотличима от контента для AdBlock-а.",
-                "when_to_apply": "SSAI выбирают для Connected TV и LL-стримов (seamless, защита от блокировки), CSAI — для mobile/web, где важен rich player-aware tracking и интерактив.",
-                "edge_cases": "Frequency capping не даёт показать одну рекламу >N раз/день — counter в Redis per `(user_id, ad_id)`; без него пользователь видит один ролик десятки раз и раздражается.",
-                "related": "[[design-youtube-interview#Q9]] manifest, в который SSAI вставляет ad-сегменты; [[design-youtube-interview#Q20]] SSAI в LL-стримах; [[design-youtube-interview#Q15]] Redis-counters для frequency capping."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "SSAI (Server-Side) — это когда плеер сам подгружает ad asset и ставит контент на паузу; CSAI (Client-Side) — когда сервер вставляет ad-сегменты прямо в manifest между content-сегментами.",
               "correct": false,
               "sections": {
@@ -1230,8 +1217,8 @@
                 "if_it_were_true": "Тогда SSAI не имел бы преимущества в устойчивости к AdBlock, но именно server-side сшивка делает рекламу неотличимой.",
                 "how_it_should_be": "CSAI — сшивка на клиенте (блокируема), SSAI — на сервере в манифесте (seamless, AdBlock-устойчива)."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "VAST — это клиентский JavaScript-API, через который creative напрямую управляет плеером и собирает интерактивные события; XML-описания creative/tracking/impression он не задаёт.",
@@ -1242,8 +1229,8 @@
                 "if_it_were_true": "Тогда VAST конкурировал бы с H.264/VP9, но он лишь ссылается на MediaFile с реальным видео.",
                 "how_it_should_be": "VAST — XML-шаблон ad serving: содержит URL creative, impression- и tracking-пиксели."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Frequency capping делают на клиенте: плеер хранит cookie со счётчиком показов каждого `ad_id` и сам режет частоту, без серверного счётчика per (user_id, ad_id).",
@@ -1253,6 +1240,19 @@
                 "source_of_confusion": "Раз SSAI вставляет ad в поток, кажется, что и ограничение частоты — на уровне кодирования.",
                 "if_it_were_true": "Тогда нельзя было бы персонализировать рекламу per-user, ведь сегменты были бы общими с вшитым роликом.",
                 "how_it_should_be": "Частоту ограничивают счётчиком в Redis на показ; реклама подставляется динамически per-session."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Форматы: pre-roll, mid-roll, post-roll, bumper (6s non-skippable), overlay. Два способа сшивки: CSAI (Client-Side) — плеер знает про ad, ставит контент на паузу и играет ad asset (легко блокируется AdBlock-ом, rich tracking); SSAI (Server-Side) — сервер вставляет ad-сегменты прямо в manifest между content-сегментами (сложно блокировать, seamless switching, для CTV/LL-стримов). VAST (IAB XML-стандарт) описывает creative/tracking/impression. VPAID (interactive) deprecated в пользу SIMID. Frequency capping — counter в Redis per (user_id, ad_id).",
+              "correct": true,
+              "sections": {
+                "explanation": "CSAI и SSAI отличаются местом сшивки: CSAI — на клиенте (отдельный ad asset, легко блокируется), SSAI — на сервере прямо в манифесте (seamless, AdBlock-устойчиво). VAST — XML-стандарт описания рекламы от IAB.",
+                "example": "SSAI вставляет ad-сегменты в тот же `.m3u8` между content-сегментами, поэтому переключение content↔ad seamless (тот же буфер) и реклама неотличима от контента для AdBlock-а.",
+                "when_to_apply": "SSAI выбирают для Connected TV и LL-стримов (seamless, защита от блокировки), CSAI — для mobile/web, где важен rich player-aware tracking и интерактив.",
+                "edge_cases": "Frequency capping не даёт показать одну рекламу >N раз/день — counter в Redis per `(user_id, ad_id)`; без него пользователь видит один ролик десятки раз и раздражается.",
+                "related": "[[design-youtube-interview#Q9]] manifest, в который SSAI вставляет ad-сегменты; [[design-youtube-interview#Q20]] SSAI в LL-стримах; [[design-youtube-interview#Q15]] Redis-counters для frequency capping."
               },
               "label": "D",
               "order": 3
@@ -1269,18 +1269,6 @@
           "question_text": "Как устроена content moderation: CSAM, Content ID fingerprinting?",
           "options": [
             {
-              "text": "Content ID работает как синхронный gate публикации: загруженное видео остаётся в статусе `processing` и недоступно, пока fingerprint не сверят со всей reference DB правообладателей, и только при отсутствии совпадений ролик становится публичным.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Content ID асинхронный: publish не блокируется, claim приходит через минуты-часы; синхронно 500 часов/мин не профингерпринтить.",
-                "source_of_confusion": "Кажется надёжнее проверить всё до публикации, чтобы нарушение не попало в выдачу ни на секунду.",
-                "if_it_were_true": "Тогда каждый upload ждал бы GPU-fingerprint против огромной базы, и publish-задержка стала бы неприемлемой.",
-                "how_it_should_be": "Fingerprinting идёт async после transcoding; claim/block применяются постфактум, не задерживая публикацию."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Слои: pre-upload (CSAM detection через PhotoDNA/CSAI Match — hash-matching против известной базы, обязателен по закону; virus scan); post-transcoding (Content ID — fingerprinting audio+video против reference DB правообладателей → claim/block/monetize; ML-классификатор nudity/violence/extremism → human review); at watch-time (age-restriction, geo-block); post-publication (user reports, spam moderation). Content ID: audio fingerprint (acoustic, robust к re-encode), video fingerprint (pHash per keyframe, robust к crop). Async, не блокирует publish.",
               "correct": true,
               "sections": {
@@ -1290,20 +1278,20 @@
                 "edge_cases": "Content ID async: claim может появиться через минуты-часы после публикации, потому что fingerprint extraction для 500 часов/мин — массивный GPU/TPU pipeline, который нельзя держать синхронно.",
                 "related": "[[design-youtube-interview#Q19]] ASR на том же upload-этапе; [[design-youtube-interview#Q24]] geo-block на watch-time; [[design-youtube-interview#Q23]] DRM для premium-контента."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "CSAM-детекция и Content ID — это две настройки одного fingerprinting-движка: он строит перцептивный хеш ролика и сверяет его сразу и с базой нелегального контента, и с reference-базой правообладателей за один проход.",
+              "text": "Content ID работает как синхронный gate публикации: загруженное видео остаётся в статусе `processing` и недоступно, пока fingerprint не сверят со всей reference DB правообладателей, и только при отсутствии совпадений ролик становится публичным.",
               "correct": false,
               "sections": {
-                "what_actually": "Это разные системы: CSAM — hash-matching против известной базы (обязателен по закону), Content ID — fingerprinting против reference контента правообладателей.",
-                "source_of_confusion": "Обе «сканируют видео на нарушения», поэтому их сливают в один механизм.",
-                "if_it_were_true": "Тогда нельзя было бы выполнять обязательный CSAM-скан до upload отдельно от опционального copyright-матчинга.",
-                "how_it_should_be": "CSAM — pre-upload hash-matching (PhotoDNA), Content ID — post-transcoding fingerprinting; это разные слои."
+                "what_actually": "Content ID асинхронный: publish не блокируется, claim приходит через минуты-часы; синхронно 500 часов/мин не профингерпринтить.",
+                "source_of_confusion": "Кажется надёжнее проверить всё до публикации, чтобы нарушение не попало в выдачу ни на секунду.",
+                "if_it_were_true": "Тогда каждый upload ждал бы GPU-fingerprint против огромной базы, и publish-задержка стала бы неприемлемой.",
+                "how_it_should_be": "Fingerprinting идёт async после transcoding; claim/block применяются постфактум, не задерживая публикацию."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Content ID сверяет ролики по криптографическому хешу файла (SHA-256): при точном совпадении байтов срабатывает claim, а перекодированные или обрезанные копии считаются новым контентом и заводятся в reference DB отдельно.",
@@ -1313,6 +1301,18 @@
                 "source_of_confusion": "Hash ассоциируется с бинарным сравнением файла, отсюда вывод о хрупкости к перекодированию.",
                 "if_it_were_true": "Тогда достаточно было бы чуть перекодировать ролик, чтобы обойти claim, но perceptual fingerprint это ловит.",
                 "how_it_should_be": "Fingerprint перцептивный (звук + keyframes), поэтому устойчив к re-encode, кропу и watermark."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "CSAM-детекция и Content ID — это две настройки одного fingerprinting-движка: он строит перцептивный хеш ролика и сверяет его сразу и с базой нелегального контента, и с reference-базой правообладателей за один проход.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные системы: CSAM — hash-matching против известной базы (обязателен по закону), Content ID — fingerprinting против reference контента правообладателей.",
+                "source_of_confusion": "Обе «сканируют видео на нарушения», поэтому их сливают в один механизм.",
+                "if_it_were_true": "Тогда нельзя было бы выполнять обязательный CSAM-скан до upload отдельно от опционального copyright-матчинга.",
+                "how_it_should_be": "CSAM — pre-upload hash-matching (PhotoDNA), Content ID — post-transcoding fingerprinting; это разные слои."
               },
               "label": "D",
               "order": 3
@@ -1329,18 +1329,6 @@
           "question_text": "Как устроен DRM: Widevine, FairPlay, PlayReady?",
           "options": [
             {
-              "text": "Под каждую DRM контент шифруют своим ключом и хранят отдельно: один набор сегментов под Widevine, второй под FairPlay, третий под PlayReady, а плеер по платформе выбирает нужную зашифрованную копию с origin.",
-              "correct": false,
-              "sections": {
-                "what_actually": "CENC позволяет шифровать asset один раз: encrypted сегменты общие для всех DRM, различаются лишь license server и key delivery.",
-                "source_of_confusion": "Раз DRM-системы разные, кажется логичным держать три отдельных зашифрованных копии.",
-                "if_it_were_true": "Тогда storage на CDN утроился бы для каждого premium-видео, что противоречит экономии CMAF/CENC.",
-                "how_it_should_be": "CENC даёт единый AES-128 asset для всех DRM; отличается только license-сервер и доставка ключа."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "DRM оборачивает весь каталог YouTube, включая бесплатные ролики: каждый поток идёт через CENC-шифрование и лицензионный сервер, а ключ выдаётся плееру после проверки сессии, чтобы исключить любое скачивание.",
               "correct": false,
               "sections": {
@@ -1349,8 +1337,32 @@
                 "if_it_were_true": "Тогда каждое любительское видео требовало бы license-запроса и secure-decode, что излишне и ломало бы совместимость.",
                 "how_it_should_be": "DRM избирателен: только там, где правообладатель требует; free-контент отдаётся без шифрования."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Расшифровка и декодирование защищённого потока идут в обычной памяти процесса плеера, а от копирования спасают только обфускация JS-плеера и запрет правого клика, без аппаратной изоляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Decode/render идут в secure media path (TEE/SGX/Secure Element); screen capture блокируется или понижает качество.",
+                "source_of_confusion": "Привычная модель — софт декодирует в RAM, и про hardware-изолированный путь забывают.",
+                "if_it_were_true": "Тогда premium-контент можно было бы тривиально записать с экрана, и правообладатели не доверяли бы платформе.",
+                "how_it_should_be": "Secure media path изолирует декодирование в hardware; HDCP и capture-protection обязательны для premium."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "Под каждую DRM контент шифруют своим ключом и хранят отдельно: один набор сегментов под Widevine, второй под FairPlay, третий под PlayReady, а плеер по платформе выбирает нужную зашифрованную копию с origin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CENC позволяет шифровать asset один раз: encrypted сегменты общие для всех DRM, различаются лишь license server и key delivery.",
+                "source_of_confusion": "Раз DRM-системы разные, кажется логичным держать три отдельных зашифрованных копии.",
+                "if_it_were_true": "Тогда storage на CDN утроился бы для каждого premium-видео, что противоречит экономии CMAF/CENC.",
+                "how_it_should_be": "CENC даёт единый AES-128 asset для всех DRM; отличается только license-сервер и доставка ключа."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "DRM нужен для premium-контента (Movies, Premium streams): encryption + key management + secure decode. Три системы: Widevine (Google: Chrome/Android/TV), FairPlay (Apple: Safari/iOS/macOS), PlayReady (Microsoft: Edge/Windows/Xbox). CENC (Common Encryption) — один и тот же AES-128 encrypted asset работает со всеми DRM, отличается только license server и key delivery. Secure media path — decode/render в TEE/SGX. License policy — TTL, HDCP, offline yes/no, max resolution. Для обычных YouTube-видео DRM не используется.",
@@ -1361,18 +1373,6 @@
                 "when_to_apply": "DRM включают только для premium (Movies, music, Premium streams), где правообладатели требуют шифрования; для обычного free-контента DRM не используют.",
                 "edge_cases": "Secure media path требует decode/render в TEE/SGX/Secure Element: при отсутствии HDCP качество понижается или screen capture блокируется, чтобы защитить контент на hardware-уровне.",
                 "related": "[[design-youtube-interview#Q7]] CMAF/CENC как общий контейнер; [[design-youtube-interview#Q9]] signed manifest с key_id; [[design-youtube-interview#Q22]] Content ID vs DRM как разные защиты."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Расшифровка и декодирование защищённого потока идут в обычной памяти процесса плеера, а от копирования спасают только обфускация JS-плеера и запрет правого клика, без аппаратной изоляции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Decode/render идут в secure media path (TEE/SGX/Secure Element); screen capture блокируется или понижает качество.",
-                "source_of_confusion": "Привычная модель — софт декодирует в RAM, и про hardware-изолированный путь забывают.",
-                "if_it_were_true": "Тогда premium-контент можно было бы тривиально записать с экрана, и правообладатели не доверяли бы платформе.",
-                "how_it_should_be": "Secure media path изолирует декодирование в hardware; HDCP и capture-protection обязательны для premium."
               },
               "label": "D",
               "order": 3
@@ -1389,13 +1389,14 @@
           "question_text": "Как устроены geo-distribution и regional restrictions?",
           "options": [
             {
-              "text": "Geo-distribution делают через отдельные домены для каждого региона (us.youtube.com, eu.youtube.com), и пользователь вручную выбирает ближайший.",
-              "correct": false,
+              "text": "Geo-distribution: DNS-based — user queries `youtube.com` → closest CDN PoP (GeoDNS/Anycast); Google использует Anycast IP (один IP, BGP-маршрутизация к ближайшему ДЦ); edges в каждом регионе; storage replication 3+ регионов. Regional restrictions: per-video `geo_blocked_countries`; при watch backend резолвит страну по IP → если в blocklist → 451 (Unavailable For Legal Reasons) + alternative recs. Compliance: DMCA, GDPR (right-to-be-forgotten), local content laws. Localization: auto-captions (ASR+MT), auto-dub (TTS, beta).",
+              "correct": true,
               "sections": {
-                "what_actually": "Маршрутизация автоматическая через GeoDNS/Anycast: один домен `youtube.com`, и сеть сама ведёт к ближайшему PoP.",
-                "source_of_confusion": "Региональные поддомены — знакомый паттерн со старых сайтов, и его приписывают YouTube.",
-                "if_it_were_true": "Тогда пользователь должен был бы знать и выбирать регион сам, а при переезде менять домен вручную.",
-                "how_it_should_be": "Anycast IP + GeoDNS прозрачно направляют на ближайший дата-центр без участия пользователя."
+                "explanation": "Geo-distribution маршрутизирует пользователя к ближайшему PoP через GeoDNS/Anycast и реплицирует storage по регионам. Regional restrictions — per-video blocklist стран, проверяемый по IP на watch-time с ответом 451.",
+                "example": "Anycast IP: один публичный IP, а BGP направляет трафик к географически ближайшему дата-центру; при geo-block backend резолвит страну по IP и возвращает 451 (Unavailable For Legal Reasons) с альтернативными рекомендациями.",
+                "when_to_apply": "Geo-restrictions применяют для compliance: лицензионные ограничения, local content laws, copyright takedowns — блокировка точечная per-video и per-country.",
+                "edge_cases": "VPN bypass возможен: YouTube старается детектить через IP reputation/device fingerprint, но не блокирует радикально, чтобы не задеть легитимных пользователей за NAT/прокси.",
+                "related": "[[design-youtube-interview#Q11]] CDN PoP, к которому маршрутизирует GeoDNS; [[design-youtube-interview#Q14]] поле geo_blocked_countries в metadata; [[design-youtube-interview#Q22]] geo-block как слой модерации."
               },
               "label": "A",
               "order": 0
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "text": "Geo-distribution: DNS-based — user queries `youtube.com` → closest CDN PoP (GeoDNS/Anycast); Google использует Anycast IP (один IP, BGP-маршрутизация к ближайшему ДЦ); edges в каждом регионе; storage replication 3+ регионов. Regional restrictions: per-video `geo_blocked_countries`; при watch backend резолвит страну по IP → если в blocklist → 451 (Unavailable For Legal Reasons) + alternative recs. Compliance: DMCA, GDPR (right-to-be-forgotten), local content laws. Localization: auto-captions (ASR+MT), auto-dub (TTS, beta).",
-              "correct": true,
+              "text": "Geo-distribution делают через отдельные домены для каждого региона (us.youtube.com, eu.youtube.com), и пользователь вручную выбирает ближайший.",
+              "correct": false,
               "sections": {
-                "explanation": "Geo-distribution маршрутизирует пользователя к ближайшему PoP через GeoDNS/Anycast и реплицирует storage по регионам. Regional restrictions — per-video blocklist стран, проверяемый по IP на watch-time с ответом 451.",
-                "example": "Anycast IP: один публичный IP, а BGP направляет трафик к географически ближайшему дата-центру; при geo-block backend резолвит страну по IP и возвращает 451 (Unavailable For Legal Reasons) с альтернативными рекомендациями.",
-                "when_to_apply": "Geo-restrictions применяют для compliance: лицензионные ограничения, local content laws, copyright takedowns — блокировка точечная per-video и per-country.",
-                "edge_cases": "VPN bypass возможен: YouTube старается детектить через IP reputation/device fingerprint, но не блокирует радикально, чтобы не задеть легитимных пользователей за NAT/прокси.",
-                "related": "[[design-youtube-interview#Q11]] CDN PoP, к которому маршрутизирует GeoDNS; [[design-youtube-interview#Q14]] поле geo_blocked_countries в metadata; [[design-youtube-interview#Q22]] geo-block как слой модерации."
+                "what_actually": "Маршрутизация автоматическая через GeoDNS/Anycast: один домен `youtube.com`, и сеть сама ведёт к ближайшему PoP.",
+                "source_of_confusion": "Региональные поддомены — знакомый паттерн со старых сайтов, и его приписывают YouTube.",
+                "if_it_were_true": "Тогда пользователь должен был бы знать и выбирать регион сам, а при переезде менять домен вручную.",
+                "how_it_should_be": "Anycast IP + GeoDNS прозрачно направляют на ближайший дата-центр без участия пользователя."
               },
               "label": "D",
               "order": 3
@@ -1449,19 +1449,6 @@
           "question_text": "Как обрабатывать failed upload и failed transcoding — recovery?",
           "options": [
             {
-              "text": "Failed upload: resumable (RFC 7233) — client возобновляет с last byte; если не возобновился за 24h → cleanup job делает S3 Multipart Abort на orphan parts; если upload complete но client не закрыл сессию → backend всё равно триггерит transcoding по S3 event. Failed transcoding: K8s Job retries (3 attempts), при провале → dead-letter topic → alerting + manual investigation (часто corrupted source); UI показывает status `failed`, можно re-upload. Partial success: 720p ок, 4K упал → publish с 720p, retry 4K в background.",
-              "correct": true,
-              "sections": {
-                "explanation": "Recovery разный для двух фаз: upload восстанавливается resumable-протоколом и cleanup-job-ом orphan parts; transcoding — K8s-ретраями с DLT, причём допускается partial success (publish с готовыми качествами, retry упавших в фоне).",
-                "example": "Если 720p закодировано, а 4K-job упал → видео публикуют с 720p (доступно сразу), а 4K ретраят в background — пользователь не ждёт top quality, чтобы начать смотреть.",
-                "when_to_apply": "Resumable recovery применяют при обрывах на мобильных сетях; partial success — когда часть ladder важнее полноты: лучше отдать 720p сейчас, чем ничего до завершения 4K.",
-                "edge_cases": "После 3 неудачных K8s-ретраев job уходит в dead-letter topic → alerting + ручной разбор; частая причина — corrupted source (broken codec, неполный файл), который ретраи не починят.",
-                "related": "[[design-youtube-interview#Q4]] resumable upload протокол; [[design-youtube-interview#Q5]] transcoding jobs, которые могут падать; [[design-youtube-interview#Q27]] purge при удалении видео."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Транскодинг атомарен по видео: если хотя бы один вариант (например 4K) упал, ролик держится в статусе `failed` и скрыт от зрителей, пока весь ladder качеств не закодируется целиком; частичная публикация готовых 720p не предусмотрена.",
               "correct": false,
               "sections": {
@@ -1469,6 +1456,18 @@
                 "source_of_confusion": "Кажется логичным «всё или ничего», чтобы пользователь не видел неполный набор качеств.",
                 "if_it_were_true": "Тогда падение редкого 4K-job-а блокировало бы публикацию всего видео, ухудшая time-to-publish без причины.",
                 "how_it_should_be": "Видео публикуют с успешными вариантами, а упавшие ретраят в фоне; доступность важнее полноты ladder."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Упавший transcoding-job переотправляют в очередь с экспоненциальной паузой и ретраят до успеха без верхнего лимита попыток, полагая, что любой сбой временный, поэтому dead-letter topic и ручной разбор не заводят.",
+              "correct": false,
+              "sections": {
+                "what_actually": "K8s Job ограничен 3 попытками; после провала job уходит в dead-letter topic на alerting и ручной разбор.",
+                "source_of_confusion": "Ретраи кажутся безобидными, и про необходимость предела/эскалации забывают.",
+                "if_it_were_true": "Тогда corrupted source (broken codec) ретраился бы вечно, бесконечно жгя CPU без шанса на успех.",
+                "how_it_should_be": "Ограниченные ретраи + DLT: после 3 неудач — эскалация в alerting, а не вечный цикл."
               },
               "label": "B",
               "order": 1
@@ -1486,13 +1485,14 @@
               "order": 2
             },
             {
-              "text": "Упавший transcoding-job переотправляют в очередь с экспоненциальной паузой и ретраят до успеха без верхнего лимита попыток, полагая, что любой сбой временный, поэтому dead-letter topic и ручной разбор не заводят.",
-              "correct": false,
+              "text": "Failed upload: resumable (RFC 7233) — client возобновляет с last byte; если не возобновился за 24h → cleanup job делает S3 Multipart Abort на orphan parts; если upload complete но client не закрыл сессию → backend всё равно триггерит transcoding по S3 event. Failed transcoding: K8s Job retries (3 attempts), при провале → dead-letter topic → alerting + manual investigation (часто corrupted source); UI показывает status `failed`, можно re-upload. Partial success: 720p ок, 4K упал → publish с 720p, retry 4K в background.",
+              "correct": true,
               "sections": {
-                "what_actually": "K8s Job ограничен 3 попытками; после провала job уходит в dead-letter topic на alerting и ручной разбор.",
-                "source_of_confusion": "Ретраи кажутся безобидными, и про необходимость предела/эскалации забывают.",
-                "if_it_were_true": "Тогда corrupted source (broken codec) ретраился бы вечно, бесконечно жгя CPU без шанса на успех.",
-                "how_it_should_be": "Ограниченные ретраи + DLT: после 3 неудач — эскалация в alerting, а не вечный цикл."
+                "explanation": "Recovery разный для двух фаз: upload восстанавливается resumable-протоколом и cleanup-job-ом orphan parts; transcoding — K8s-ретраями с DLT, причём допускается partial success (publish с готовыми качествами, retry упавших в фоне).",
+                "example": "Если 720p закодировано, а 4K-job упал → видео публикуют с 720p (доступно сразу), а 4K ретраят в background — пользователь не ждёт top quality, чтобы начать смотреть.",
+                "when_to_apply": "Resumable recovery применяют при обрывах на мобильных сетях; partial success — когда часть ladder важнее полноты: лучше отдать 720p сейчас, чем ничего до завершения 4K.",
+                "edge_cases": "После 3 неудачных K8s-ретраев job уходит в dead-letter topic → alerting + ручной разбор; частая причина — corrupted source (broken codec, неполный файл), который ретраи не починят.",
+                "related": "[[design-youtube-interview#Q4]] resumable upload протокол; [[design-youtube-interview#Q5]] transcoding jobs, которые могут падать; [[design-youtube-interview#Q27]] purge при удалении видео."
               },
               "label": "D",
               "order": 3
@@ -1509,13 +1509,13 @@
           "question_text": "Какие trade-offs: transcode upfront vs on-demand, CDN cost vs latency?",
           "options": [
             {
-              "text": "On-demand transcoding всегда выгоднее upfront, поэтому YouTube транскодирует видео лениво, только при первом запросе каждого качества.",
+              "text": "Aggressive CDN caching и lean caching дают одинаковую стоимость, потому что снижение origin egress ровно компенсируется ростом edge storage в любой конфигурации.",
               "correct": false,
               "sections": {
-                "what_actually": "YouTube транскодирует всё upfront: storage дешевле UX-задержки на старте; on-demand применяют лишь точечно (часть Netflix-каталога).",
-                "source_of_confusion": "Экономия storage у on-demand выглядит безусловным плюсом, и про first-watch latency забывают.",
-                "if_it_were_true": "Тогда первый зритель каждого видео ждал бы transcode, нарушая SLO start-up latency < 2s.",
-                "how_it_should_be": "YouTube выбирает upfront ради мгновенного старта; storage дешевле задержки кодирования при просмотре."
+                "what_actually": "Баланс зависит от модели CDN: у YouTube GGC внутри ISP даёт zero transit, поэтому aggressive caching выходит существенно дешевле.",
+                "source_of_confusion": "Кажется, что edge-storage и egress всегда уравновешивают друг друга независимо от инфраструктуры.",
+                "if_it_were_true": "Тогда выбор уровня кеширования не влиял бы на cost, и оптимизировать его не имело бы смысла.",
+                "how_it_should_be": "Для GGC (zero egress-fee) aggressive caching дёшев; для commercial CDN-клиента баланс иной и требует расчёта."
               },
               "label": "A",
               "order": 0
@@ -1534,18 +1534,6 @@
               "order": 1
             },
             {
-              "text": "Aggressive CDN caching и lean caching дают одинаковую стоимость, потому что снижение origin egress ровно компенсируется ростом edge storage в любой конфигурации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Баланс зависит от модели CDN: у YouTube GGC внутри ISP даёт zero transit, поэтому aggressive caching выходит существенно дешевле.",
-                "source_of_confusion": "Кажется, что edge-storage и egress всегда уравновешивают друг друга независимо от инфраструктуры.",
-                "if_it_were_true": "Тогда выбор уровня кеширования не влиял бы на cost, и оптимизировать его не имело бы смысла.",
-                "how_it_should_be": "Для GGC (zero egress-fee) aggressive caching дёшев; для commercial CDN-клиента баланс иной и требует расчёта."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Multi-codec ladder (AV1 + VP9 + H.264) всегда дешевле single H.264, потому что меньший битрейт уменьшает все затраты сразу.",
               "correct": false,
               "sections": {
@@ -1553,6 +1541,18 @@
                 "source_of_confusion": "Меньший битрейт ассоциируется с тотальной экономией, и про рост compute на encode забывают.",
                 "if_it_were_true": "Тогда YouTube кодировал бы в AV1 весь каталог, но он делает это лишь для топ-1% видео.",
                 "how_it_should_be": "Multi-codec оправдан на популярном контенте; на long-tail дорогой AV1-encode не окупается экономией egress."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "On-demand transcoding всегда выгоднее upfront, поэтому YouTube транскодирует видео лениво, только при первом запросе каждого качества.",
+              "correct": false,
+              "sections": {
+                "what_actually": "YouTube транскодирует всё upfront: storage дешевле UX-задержки на старте; on-demand применяют лишь точечно (часть Netflix-каталога).",
+                "source_of_confusion": "Экономия storage у on-demand выглядит безусловным плюсом, и про first-watch latency забывают.",
+                "if_it_were_true": "Тогда первый зритель каждого видео ждал бы transcode, нарушая SLO start-up latency < 2s.",
+                "how_it_should_be": "YouTube выбирает upfront ради мгновенного старта; storage дешевле задержки кодирования при просмотре."
               },
               "label": "D",
               "order": 3
@@ -1569,13 +1569,14 @@
           "question_text": "Как делать CDN cache invalidation для удалённых видео?",
           "options": [
             {
-              "text": "Активный purge не нужен: сегментам заранее выставляют короткий TTL, поэтому удалённое видео вымывается из edge-кеша в пределах TTL само, без вызовов CDN purge API.",
-              "correct": false,
+              "text": "Проблема: video removed (DMCA, violation, delete), а сегменты закешированы на 1000+ edges с TTL=1y. Стратегии: active purge (CDN API `POST /purge?path=/videos/abc/*`, propagation 1-30s, но rate limits/cost); versioned URLs (immutability — не подходит для DMCA, контент доступен по прямой ссылке); manifest invalidation only (очистить ~1 KB manifest, но bypass если segment URLs скопированы); hybrid. YouTube: combination — manifest purge мгновенно, segments async cleanup, edges имеют blacklist video-IDs для немедленного 410 Gone.",
+              "correct": true,
               "sections": {
-                "what_actually": "TTL до года неприемлем для DMCA: нужен active purge + edge-blacklist, чтобы отрубить доступ немедленно, а не через год.",
-                "source_of_confusion": "Пассивное истечение TTL — самый простой механизм, и про юридическую срочность забывают.",
-                "if_it_were_true": "Тогда нелегальный или нарушающий контент оставался бы доступен на edges до года после удаления.",
-                "how_it_should_be": "Удаление требует активной инвалидации (purge + blacklist), а не ожидания естественного истечения TTL."
+                "explanation": "Инвалидация удалённого видео — комбинация быстрого и медленного: manifest purge мгновенно отрубает воспроизведение, segment purge идёт async, а edge-blacklist video-ID гарантирует немедленный 410 даже до полной очистки.",
+                "example": "При request на removed video edge сверяется с blacklist video-IDs (tombstone list) и возвращает 410 Gone сразу, не дожидаясь, пока async-cleanup физически выметет все сегменты со всех PoP.",
+                "when_to_apply": "Hybrid-подход применяют для юридически чувствительных удалений (DMCA), где недостаточно просто обновить manifest: нужен гарантированный отказ даже по прямой segment-ссылке.",
+                "edge_cases": "Versioned URLs и manifest-only invalidation не годятся для DMCA: если кто-то сохранил прямые segment URL, контент остаётся доступен до истечения TTL — поэтому нужен active purge + blacklist.",
+                "related": "[[design-youtube-interview#Q11]] immutable content-hashed URLs и их TTL; [[design-youtube-interview#Q9]] manifest, который пуржат первым; [[design-youtube-interview#Q25]] soft-delete и CDN purge при removed video."
               },
               "label": "A",
               "order": 0
@@ -1593,19 +1594,6 @@
               "order": 1
             },
             {
-              "text": "Проблема: video removed (DMCA, violation, delete), а сегменты закешированы на 1000+ edges с TTL=1y. Стратегии: active purge (CDN API `POST /purge?path=/videos/abc/*`, propagation 1-30s, но rate limits/cost); versioned URLs (immutability — не подходит для DMCA, контент доступен по прямой ссылке); manifest invalidation only (очистить ~1 KB manifest, но bypass если segment URLs скопированы); hybrid. YouTube: combination — manifest purge мгновенно, segments async cleanup, edges имеют blacklist video-IDs для немедленного 410 Gone.",
-              "correct": true,
-              "sections": {
-                "explanation": "Инвалидация удалённого видео — комбинация быстрого и медленного: manifest purge мгновенно отрубает воспроизведение, segment purge идёт async, а edge-blacklist video-ID гарантирует немедленный 410 даже до полной очистки.",
-                "example": "При request на removed video edge сверяется с blacklist video-IDs (tombstone list) и возвращает 410 Gone сразу, не дожидаясь, пока async-cleanup физически выметет все сегменты со всех PoP.",
-                "when_to_apply": "Hybrid-подход применяют для юридически чувствительных удалений (DMCA), где недостаточно просто обновить manifest: нужен гарантированный отказ даже по прямой segment-ссылке.",
-                "edge_cases": "Versioned URLs и manifest-only invalidation не годятся для DMCA: если кто-то сохранил прямые segment URL, контент остаётся доступен до истечения TTL — поэтому нужен active purge + blacklist.",
-                "related": "[[design-youtube-interview#Q11]] immutable content-hashed URLs и их TTL; [[design-youtube-interview#Q9]] manifest, который пуржат первым; [[design-youtube-interview#Q25]] soft-delete и CDN purge при removed video."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Очистки одного manifest (~1 KB) достаточно для полного удаления: плеер получает список сегментов только из manifest, поэтому без него прямые URL сегментов недостижимы.",
               "correct": false,
               "sections": {
@@ -1613,6 +1601,18 @@
                 "source_of_confusion": "Раз плеер стартует с manifest, кажется, что без него контент недостижим.",
                 "if_it_were_true": "Тогда любой, кто сохранил прямые segment-ссылки, не смог бы их открыть, но они работают в обход manifest.",
                 "how_it_should_be": "Manifest purge — быстрый первый шаг; нужен ещё async segment purge и edge-blacklist для 410 Gone."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Активный purge не нужен: сегментам заранее выставляют короткий TTL, поэтому удалённое видео вымывается из edge-кеша в пределах TTL само, без вызовов CDN purge API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL до года неприемлем для DMCA: нужен active purge + edge-blacklist, чтобы отрубить доступ немедленно, а не через год.",
+                "source_of_confusion": "Пассивное истечение TTL — самый простой механизм, и про юридическую срочность забывают.",
+                "if_it_were_true": "Тогда нелегальный или нарушающий контент оставался бы доступен на edges до года после удаления.",
+                "how_it_should_be": "Удаление требует активной инвалидации (purge + blacklist), а не ожидания естественного истечения TTL."
               },
               "label": "D",
               "order": 3
@@ -1629,18 +1629,6 @@
           "question_text": "Как устроены notifications подписчикам о новом видео?",
           "options": [
             {
-              "text": "Сервис публикации в одном синхронном вызове проходит по списку подписчиков канала и отправляет каждому push немедленно; чтобы не терять уведомления, вызов держит соединение открытым до подтверждения от APNs/FCM по всем адресатам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Fan-out батчат по 10K user_id и размазывают (smear) на 5-30 мин из-за rate limits APNs/FCM; мгновенно 200M пушей не отправить.",
-                "source_of_confusion": "«Уведомить всех сразу» звучит как очевидная цель, и про лимиты push-провайдеров забывают.",
-                "if_it_were_true": "Тогда публикация MrBeast упёрлась бы в rate limits APNs/FCM и часть пушей просто потерялась бы.",
-                "how_it_should_be": "Fan-out асинхронный, батчами по 10K и со smear по времени, чтобы уложиться в лимиты провайдеров."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Push о новом ролике уходит всем подписчикам канала одинаково: система не различает уровни подписки и рассылает уведомление каждому, кто нажал `Subscribe`, а настройка «колокольчика» влияет только на письмо, но не на push.",
               "correct": false,
               "sections": {
@@ -1648,6 +1636,19 @@
                 "source_of_confusion": "Слово «подписка» ассоциируется с автоматическим получением всех оповещений.",
                 "if_it_were_true": "Тогда популярные каналы заваливали бы пользователей пушами на каждое видео, провоцируя массовый opt-out.",
                 "how_it_should_be": "Two-tier: bell-on → push, default → feed + ML-персонализированные нотификации; не все получают push на каждое видео."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Pipeline: publish video → Kafka (`video.published`) → Notification Fan-Out Service → Subscriptions DB → filter opted-in → batch by 10K user chunks → Push (APNs/FCM) / Email (SES) / Web Push (VAPID). Challenges: fan-out scale (MrBeast 200M → 200M пушей), throttling (APNs/FCM rate limits → smear 5-30 мин), personalization (только bell-on subscribers получают push сразу). Two-tier: bell-on → push сразу, default → homepage feed + ML-notifications. Batching: 10K user_id, FCM до 500 tokens/request. Idempotency через collapse_key.",
+              "correct": true,
+              "sections": {
+                "explanation": "Нотификации — это fan-out с throttling-ом: publish → Kafka → fan-out по подписчикам, фильтр opted-in, батчинг и smear по времени из-за rate limits APNs/FCM. Two-tier: bell-on получают push сразу, default — только feed.",
+                "example": "MrBeast (200M подписчиков) — 200M пушей нельзя отправить мгновенно из-за APNs/FCM rate limits, поэтому их размазывают (smear) на 5-30 минут батчами по 10K user_id (FCM до 500 tokens/request).",
+                "when_to_apply": "Two-tier и smear применяют, когда fan-out экстремальный: слать push всем подписчикам сразу нельзя ни по rate limits, ни по релевантности — большинству хватает homepage feed.",
+                "edge_cases": "Идемпотентность важна при ретраях: message содержит `(video_id, user_id)`, а APNs/FCM дедуплицируют по `collapse_key`, чтобы повтор не дублировал пуш одному пользователю.",
+                "related": "[[design-youtube-interview#Q16]] subscriptions feed и fan-out для MrBeast; [[design-youtube-interview#Q3]] Kafka как backbone событий; [[design-youtube-interview#Q15]] eventual-consistency engagement-сигналов."
               },
               "label": "B",
               "order": 1
@@ -1665,14 +1666,13 @@
               "order": 2
             },
             {
-              "text": "Pipeline: publish video → Kafka (`video.published`) → Notification Fan-Out Service → Subscriptions DB → filter opted-in → batch by 10K user chunks → Push (APNs/FCM) / Email (SES) / Web Push (VAPID). Challenges: fan-out scale (MrBeast 200M → 200M пушей), throttling (APNs/FCM rate limits → smear 5-30 мин), personalization (только bell-on subscribers получают push сразу). Two-tier: bell-on → push сразу, default → homepage feed + ML-notifications. Batching: 10K user_id, FCM до 500 tokens/request. Idempotency через collapse_key.",
-              "correct": true,
+              "text": "Сервис публикации в одном синхронном вызове проходит по списку подписчиков канала и отправляет каждому push немедленно; чтобы не терять уведомления, вызов держит соединение открытым до подтверждения от APNs/FCM по всем адресатам.",
+              "correct": false,
               "sections": {
-                "explanation": "Нотификации — это fan-out с throttling-ом: publish → Kafka → fan-out по подписчикам, фильтр opted-in, батчинг и smear по времени из-за rate limits APNs/FCM. Two-tier: bell-on получают push сразу, default — только feed.",
-                "example": "MrBeast (200M подписчиков) — 200M пушей нельзя отправить мгновенно из-за APNs/FCM rate limits, поэтому их размазывают (smear) на 5-30 минут батчами по 10K user_id (FCM до 500 tokens/request).",
-                "when_to_apply": "Two-tier и smear применяют, когда fan-out экстремальный: слать push всем подписчикам сразу нельзя ни по rate limits, ни по релевантности — большинству хватает homepage feed.",
-                "edge_cases": "Идемпотентность важна при ретраях: message содержит `(video_id, user_id)`, а APNs/FCM дедуплицируют по `collapse_key`, чтобы повтор не дублировал пуш одному пользователю.",
-                "related": "[[design-youtube-interview#Q16]] subscriptions feed и fan-out для MrBeast; [[design-youtube-interview#Q3]] Kafka как backbone событий; [[design-youtube-interview#Q15]] eventual-consistency engagement-сигналов."
+                "what_actually": "Fan-out батчат по 10K user_id и размазывают (smear) на 5-30 мин из-за rate limits APNs/FCM; мгновенно 200M пушей не отправить.",
+                "source_of_confusion": "«Уведомить всех сразу» звучит как очевидная цель, и про лимиты push-провайдеров забывают.",
+                "if_it_were_true": "Тогда публикация MrBeast упёрлась бы в rate limits APNs/FCM и часть пушей просто потерялась бы.",
+                "how_it_should_be": "Fan-out асинхронный, батчами по 10K и со smear по времени, чтобы уложиться в лимиты провайдеров."
               },
               "label": "D",
               "order": 3

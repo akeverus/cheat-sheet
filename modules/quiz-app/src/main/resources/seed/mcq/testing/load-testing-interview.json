@@ -11,6 +11,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Load testing` — это тестирование системы за пределами её возможностей до самого момента отказа, чтобы найти breaking point.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Доведение до отказа ради breaking point — это stress testing; load testing работает именно в зоне ожидаемой нагрузки, где SLA ещё должны выполняться.",
+                "source_of_confusion": "И load, и stress нагружают систему трафиком, поэтому их легко перепутать по внешнему виду теста.",
+                "if_it_were_true": "Если бы load test обязательно ронял систему, мы не смогли бы им подтверждать SLA — а это его главная цель.",
+                "how_it_should_be": "Load test проверяет performance под expected load; поиск точки отказа выделяют в отдельный stress test."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Load testing` — это тестирование системы под ожидаемой (expected/peak) нагрузкой ради проверки performance: подтвердить SLA (например, 99% запросов < 200ms), найти bottlenecks, спланировать capacity и поймать регрессии производительности.",
               "correct": true,
               "sections": {
@@ -22,32 +34,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`Load testing` — это тестирование системы за пределами её возможностей до самого момента отказа, чтобы найти breaking point.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Доведение до отказа ради breaking point — это stress testing; load testing работает именно в зоне ожидаемой нагрузки, где SLA ещё должны выполняться.",
-                "source_of_confusion": "И load, и stress нагружают систему трафиком, поэтому их легко перепутать по внешнему виду теста.",
-                "if_it_were_true": "Если бы load test обязательно ронял систему, мы не смогли бы им подтверждать SLA — а это его главная цель.",
-                "how_it_should_be": "Load test проверяет performance под expected load; поиск точки отказа выделяют в отдельный stress test."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`Load testing` — это проверка корректности бизнес-логики одного запроса в изоляции, как расширенный unit-тест.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Корректность логики проверяют функциональные и unit-тесты; load testing меряет performance под множеством одновременных запросов, а не результат одного вызова.",
-                "source_of_confusion": "Оба вида тестов отправляют HTTP-запросы к сервису, поэтому границу между функциональным и нагрузочным легко размыть.",
-                "if_it_were_true": "Если бы load test проверял логику одного запроса, не было бы смысла в VUs, RPS и percentiles — а они его суть.",
-                "how_it_should_be": "Load test нагружает систему параллельным трафиком и смотрит latency/throughput/errors, а не правильность отдельного ответа."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`Load testing` — это исключительно мониторинг production в реальном времени через дашборды без генерации искусственного трафика.",
               "correct": false,
               "sections": {
@@ -55,6 +43,18 @@
                 "source_of_confusion": "И мониторинг, и нагрузочное тестирование оперируют метриками RPS и latency, поэтому их путают.",
                 "if_it_were_true": "Если бы load test был только пассивным мониторингом, нельзя было бы протестировать систему до запуска, когда реального трафика ещё нет.",
                 "how_it_should_be": "Load test сам создаёт нагрузку (k6, JMeter и т.п.); пассивное наблюдение за прод-трафиком — это отдельная задача observability."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Load testing` — это проверка корректности бизнес-логики одного запроса в изоляции, как расширенный unit-тест.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корректность логики проверяют функциональные и unit-тесты; load testing меряет performance под множеством одновременных запросов, а не результат одного вызова.",
+                "source_of_confusion": "Оба вида тестов отправляют HTTP-запросы к сервису, поэтому границу между функциональным и нагрузочным легко размыть.",
+                "if_it_were_true": "Если бы load test проверял логику одного запроса, не было бы смысла в VUs, RPS и percentiles — а они его суть.",
+                "how_it_should_be": "Load test нагружает систему параллельным трафиком и смотрит latency/throughput/errors, а не правильность отдельного ответа."
               }
             }
           ]
@@ -71,18 +71,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все эти виды — синонимы для одной и той же sustained-нагрузки, просто названия из разных инструментов.",
+              "text": "Stress testing проверяет performance строго в рамках SLA и никогда не доводит систему до отказа.",
               "correct": false,
               "sections": {
-                "what_actually": "У каждого свой goal и pattern: load — устойчивый нормальный трафик, stress — рост до отказа, spike — резкий всплеск, soak — часы/дни, scalability — рост нагрузки вместе со скейлингом.",
-                "source_of_confusion": "Все они нагружают систему, поэтому кажется, что разница лишь в терминологии вендоров.",
-                "if_it_were_true": "Если бы это были синонимы, не было бы смысла в отдельных executor'ах и сценариях под spike или soak.",
-                "how_it_should_be": "Это разные типы с разными целями: breaking point (stress), всплеск (spike), долгая выдержка (soak), скейлинг (scalability)."
+                "what_actually": "Stress как раз увеличивает нагрузку **до failure**, чтобы найти breaking point; проверка в рамках SLA — это про load testing.",
+                "source_of_confusion": "И load, и stress нагружают систему, поэтому цель «не сломать» ошибочно переносят на stress.",
+                "if_it_were_true": "Если бы stress не доводил до отказа, мы никогда не узнали бы breaking point, ради которого он существует.",
+                "how_it_should_be": "Stress сознательно ищет точку отказа ростом нагрузки; работа в зоне SLA — это load testing."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "Soak testing — это резкий короткий всплеск нагрузки на несколько секунд, а spike testing — это многочасовая выдержка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: spike — это sharp increase then drop (короткий всплеск), а soak (endurance) — sustained на hours/days для поиска долгих проблем вроде утечек.",
+                "source_of_confusion": "Названия soak и spike оба звучат «динамично», поэтому их паттерны легко поменять местами.",
+                "if_it_were_true": "Если бы soak был коротким всплеском, он не ловил бы memory leaks, ради которых его и держат часами.",
+                "how_it_should_be": "Spike — резкий короткий всплеск; soak — долгая устойчивая нагрузка на часы или дни."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Это разные типы по цели и паттерну нагрузки: load — устойчивый ожидаемый трафик для проверки performance; stress — рост нагрузки до breaking point; spike — резкий всплеск и спад для проверки resilience; soak (endurance) — sustained на часы/дни ради утечек; scalability — постепенный рост нагрузки с одновременным скейлингом.",
               "correct": true,
               "sections": {
@@ -94,27 +106,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Soak testing — это резкий короткий всплеск нагрузки на несколько секунд, а spike testing — это многочасовая выдержка.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: spike — это sharp increase then drop (короткий всплеск), а soak (endurance) — sustained на hours/days для поиска долгих проблем вроде утечек.",
-                "source_of_confusion": "Названия soak и spike оба звучат «динамично», поэтому их паттерны легко поменять местами.",
-                "if_it_were_true": "Если бы soak был коротким всплеском, он не ловил бы memory leaks, ради которых его и держат часами.",
-                "how_it_should_be": "Spike — резкий короткий всплеск; soak — долгая устойчивая нагрузка на часы или дни."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Stress testing проверяет performance строго в рамках SLA и никогда не доводит систему до отказа.",
+              "text": "Все эти виды — синонимы для одной и той же sustained-нагрузки, просто названия из разных инструментов.",
               "correct": false,
               "sections": {
-                "what_actually": "Stress как раз увеличивает нагрузку **до failure**, чтобы найти breaking point; проверка в рамках SLA — это про load testing.",
-                "source_of_confusion": "И load, и stress нагружают систему, поэтому цель «не сломать» ошибочно переносят на stress.",
-                "if_it_were_true": "Если бы stress не доводил до отказа, мы никогда не узнали бы breaking point, ради которого он существует.",
-                "how_it_should_be": "Stress сознательно ищет точку отказа ростом нагрузки; работа в зоне SLA — это load testing."
+                "what_actually": "У каждого свой goal и pattern: load — устойчивый нормальный трафик, stress — рост до отказа, spike — резкий всплеск, soak — часы/дни, scalability — рост нагрузки вместе со скейлингом.",
+                "source_of_confusion": "Все они нагружают систему, поэтому кажется, что разница лишь в терминологии вендоров.",
+                "if_it_were_true": "Если бы это были синонимы, не было бы смысла в отдельных executor'ах и сценариях под spike или soak.",
+                "how_it_should_be": "Это разные типы с разными целями: breaking point (stress), всплеск (spike), долгая выдержка (soak), скейлинг (scalability)."
               }
             }
           ]
@@ -131,18 +131,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Load testing нужен только чтобы заменить unit- и интеграционные тесты функциональной корректности.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Load testing решает задачи performance: detection production-like проблем, валидация SLA, отлов регрессий, right-sizing инфраструктуры — а корректность остаётся за unit/integration тестами.",
-                "source_of_confusion": "Любой автотест звучит как «проверка качества», поэтому функциональные и нагрузочные цели смешивают.",
-                "if_it_were_true": "Если бы load test заменял unit-тесты, он проверял бы бизнес-логику, но он меряет RPS, latency и ресурсы под нагрузкой.",
-                "how_it_should_be": "Load testing дополняет функциональные тесты, отвечая за performance и capacity, а не за корректность."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Load testing нужен исключительно для безопасности — поиска уязвимостей и SQL-инъекций под нагрузкой.",
               "correct": false,
               "sections": {
@@ -153,8 +141,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Load testing нужен, чтобы выявить production-like поведение (memory leaks, исчерпание соединений), валидировать SLA до launch, ловить performance-регрессии, делать right-sizing инфраструктуры, давать уверенность для деплоя и находить возможности для tuning (DB-индексы, кэширование).",
               "correct": true,
               "sections": {
@@ -166,8 +154,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Load testing нужен только разово, перед самым первым релизом, и после launch смысла в нём нет.",
               "correct": false,
               "sections": {
@@ -175,6 +163,18 @@
                 "source_of_confusion": "Кажется, что «протестировали один раз — и хватит», как с разовой приёмкой.",
                 "if_it_were_true": "Если бы хватало одного прогона, нельзя было бы ловить регрессии, появляющиеся в новых релизах.",
                 "how_it_should_be": "Load testing — повторяемая практика: baseline и регулярные прогоны нужны, чтобы замечать деградацию во времени."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Load testing нужен только чтобы заменить unit- и интеграционные тесты функциональной корректности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Load testing решает задачи performance: detection production-like проблем, валидация SLA, отлов регрессий, right-sizing инфраструктуры — а корректность остаётся за unit/integration тестами.",
+                "source_of_confusion": "Любой автотест звучит как «проверка качества», поэтому функциональные и нагрузочные цели смешивают.",
+                "if_it_were_true": "Если бы load test заменял unit-тесты, он проверял бы бизнес-логику, но он меряет RPS, latency и ресурсы под нагрузкой.",
+                "how_it_should_be": "Load testing дополняет функциональные тесты, отвечая за performance и capacity, а не за корректность."
               }
             }
           ]
@@ -191,13 +191,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главная и единственная важная метрика — это средний latency; RPS и error rate второстепенны.",
+              "text": "USE-метрики — это Users, Sessions, Endpoints, то есть характеристики трафика.",
               "correct": false,
               "sections": {
-                "what_actually": "Метрик несколько и они дополняют друг друга: RPS (throughput), latency (с percentiles), error rate, concurrent users (VUs), bandwidth, CPU/Memory — а средний latency как раз обманчив.",
-                "source_of_confusion": "Latency интуитивно «самая понятная» метрика, поэтому кажется главной.",
-                "if_it_were_true": "Если бы хватало среднего latency, не существовало бы RED-метрик (Rate, Errors, Duration) и percentiles.",
-                "how_it_should_be": "Смотрят набор метрик: RED (Rate/Errors/Duration) и USE для ресурсов, а средний latency дополняют percentiles."
+                "what_actually": "USE — это Utilization (% busy), Saturation (queue depth) и Errors для ресурсов; Users/Sessions/Endpoints — не та расшифровка.",
+                "source_of_confusion": "Слово USE наводит на «пользователей», поэтому подставляют Users/Sessions.",
+                "if_it_were_true": "Если бы USE был про пользователей, он не описывал бы насыщение ресурсов вроде очередей и утилизации CPU.",
+                "how_it_should_be": "USE = Utilization, Saturation, Errors и относится к ресурсам, а трафик описывают RED-метрики."
               }
             },
             {
@@ -215,18 +215,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "USE-метрики — это Users, Sessions, Endpoints, то есть характеристики трафика.",
-              "correct": false,
-              "sections": {
-                "what_actually": "USE — это Utilization (% busy), Saturation (queue depth) и Errors для ресурсов; Users/Sessions/Endpoints — не та расшифровка.",
-                "source_of_confusion": "Слово USE наводит на «пользователей», поэтому подставляют Users/Sessions.",
-                "if_it_were_true": "Если бы USE был про пользователей, он не описывал бы насыщение ресурсов вроде очередей и утилизации CPU.",
-                "how_it_should_be": "USE = Utilization, Saturation, Errors и относится к ресурсам, а трафик описывают RED-метрики."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Главные метрики: RPS (requests per second — throughput), latency (время ответа на запрос), error rate (% упавших запросов), concurrent users / VUs (симулированные пользователи), bandwidth (сетевой трафик) и CPU/Memory (потребление ресурсов сервера, коррелирует с request rate).",
               "correct": true,
               "sections": {
@@ -235,6 +223,18 @@
                 "when_to_apply": "Эти метрики собирают в каждом нагрузочном тесте и связывают с ресурсами: рост RPS должен коррелировать с CPU, иначе есть скрытое узкое место.",
                 "edge_cases": "Latency нельзя смотреть как среднее: его обязательно разбивают на percentiles (p50/p95/p99), иначе редкие медленные запросы прячутся за хорошим average.",
                 "related": "[[load-testing-interview#Q5]] почему важны percentiles; [[load-testing-interview#Q6]] throughput vs latency; [[load-testing-interview#Q17]] bottleneck analysis по ресурсам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главная и единственная важная метрика — это средний latency; RPS и error rate второстепенны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метрик несколько и они дополняют друг друга: RPS (throughput), latency (с percentiles), error rate, concurrent users (VUs), bandwidth, CPU/Memory — а средний latency как раз обманчив.",
+                "source_of_confusion": "Latency интуитивно «самая понятная» метрика, поэтому кажется главной.",
+                "if_it_were_true": "Если бы хватало среднего latency, не существовало бы RED-метрик (Rate, Errors, Duration) и percentiles.",
+                "how_it_should_be": "Смотрят набор метрик: RED (Rate/Errors/Duration) и USE для ресурсов, а средний latency дополняют percentiles."
               }
             }
           ]
@@ -251,6 +251,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "p99 — это среднее latency последних 99% запросов, то есть почти то же самое, что average.",
+              "correct": false,
+              "sections": {
+                "what_actually": "p99 — это значение, ниже которого лежат 99% запросов (порог хвоста), а не среднее по какой-то части; от average он отличается принципиально.",
+                "source_of_confusion": "Слова «99%» и «среднее» оба про «большинство запросов», поэтому смысл percentile подменяют средним.",
+                "if_it_were_true": "Если бы p99 был средним по 99% запросов, он сглаживал бы выбросы вместо того, чтобы их подсвечивать.",
+                "how_it_should_be": "p99 — это порог: 99% запросов быстрее него, 1% медленнее; именно эта 1% и есть болезненный хвост."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Percentiles показывают распределение latency, а средний (average) обманчив: несколько медленных запросов в нём «прячутся». p50 (median) — типичный пользователь, p95 — 5% худших случаев, p99 — 1% худших, p99.9 — экстремальный хвост. SLA обычно задают в percentiles, например «p95 < 200ms».",
               "correct": true,
               "sections": {
@@ -262,32 +274,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Percentiles нужны, потому что они всегда меньше среднего и поэтому отчёты выглядят лучше.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Percentiles не «меньше среднего» по определению: p99, наоборот, обычно сильно больше average и подсвечивает хвост, а не приукрашивает картину.",
-                "source_of_confusion": "Кажется, что раз это «проценты», то цифры должны быть скромнее, чем грубое среднее.",
-                "if_it_were_true": "Если бы p99 был меньше среднего, он не выявлял бы те самые 5000ms-выбросы, ради которых его и смотрят.",
-                "how_it_should_be": "p50 близок к типичному значению, а p95/p99 показывают худшие случаи и обычно выше среднего — в этом их ценность."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "p99 — это среднее latency последних 99% запросов, то есть почти то же самое, что average.",
-              "correct": false,
-              "sections": {
-                "what_actually": "p99 — это значение, ниже которого лежат 99% запросов (порог хвоста), а не среднее по какой-то части; от average он отличается принципиально.",
-                "source_of_confusion": "Слова «99%» и «среднее» оба про «большинство запросов», поэтому смысл percentile подменяют средним.",
-                "if_it_were_true": "Если бы p99 был средним по 99% запросов, он сглаживал бы выбросы вместо того, чтобы их подсвечивать.",
-                "how_it_should_be": "p99 — это порог: 99% запросов быстрее него, 1% медленнее; именно эта 1% и есть болезненный хвост."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Percentiles важны только для пропускной способности (throughput), а к latency отношения не имеют.",
               "correct": false,
               "sections": {
@@ -295,6 +283,18 @@
                 "source_of_confusion": "Percentiles и throughput оба «про производительность», поэтому их области применения путают.",
                 "if_it_were_true": "Если бы percentiles были про throughput, не было бы смысла в SLA вида «p95 < 200ms», заданном в миллисекундах.",
                 "how_it_should_be": "Percentiles описывают распределение latency; throughput — это RPS и измеряется иначе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Percentiles нужны, потому что они всегда меньше среднего и поэтому отчёты выглядят лучше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Percentiles не «меньше среднего» по определению: p99, наоборот, обычно сильно больше average и подсвечивает хвост, а не приукрашивает картину.",
+                "source_of_confusion": "Кажется, что раз это «проценты», то цифры должны быть скромнее, чем грубое среднее.",
+                "if_it_were_true": "Если бы p99 был меньше среднего, он не выявлял бы те самые 5000ms-выбросы, ради которых его и смотрят.",
+                "how_it_should_be": "p50 близок к типичному значению, а p95/p99 показывают худшие случаи и обычно выше среднего — в этом их ценность."
               }
             }
           ]
@@ -323,6 +323,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Capacity — это минимальный throughput, при котором система ещё отвечает хоть как-то, без оглядки на SLA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Capacity — это **максимальный** throughput, при котором latency остаётся приемлемым (в рамках SLA), а не минимальный «хоть как-то».",
+                "source_of_confusion": "Слово capacity ассоциируется с «пределом выживания», поэтому его путают с минимальным рабочим уровнем.",
+                "if_it_were_true": "Если бы capacity был минимумом, по нему нельзя было бы планировать число серверов под peak-нагрузку.",
+                "how_it_should_be": "Capacity = max throughput при приемлемом latency; ниже этого порога SLA ещё держится, выше — ломается."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Higher throughput часто означает higher latency из-за queuing (очередей), и эту связь описывает Little's Law: `Concurrency = Throughput × Latency`. Capacity — это максимальный throughput, при котором latency остаётся приемлемым.",
               "correct": true,
               "sections": {
@@ -334,8 +346,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Little's Law звучит как `Latency = Throughput × Concurrency`.",
               "correct": false,
               "sections": {
@@ -343,18 +355,6 @@
                 "source_of_confusion": "В формуле три величины, и их легко переставить, забыв, что слева стоит concurrency.",
                 "if_it_were_true": "Если бы latency равнялся произведению throughput на concurrency, единицы измерения не сошлись бы.",
                 "how_it_should_be": "Правильно: Concurrency = Throughput × Latency, отсюда и связь пропускной способности с временем ответа."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Capacity — это минимальный throughput, при котором система ещё отвечает хоть как-то, без оглядки на SLA.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Capacity — это **максимальный** throughput, при котором latency остаётся приемлемым (в рамках SLA), а не минимальный «хоть как-то».",
-                "source_of_confusion": "Слово capacity ассоциируется с «пределом выживания», поэтому его путают с минимальным рабочим уровнем.",
-                "if_it_were_true": "Если бы capacity был минимумом, по нему нельзя было бы планировать число серверов под peak-нагрузку.",
-                "how_it_should_be": "Capacity = max throughput при приемлемом latency; ниже этого порога SLA ещё держится, выше — ломается."
               }
             }
           ]
@@ -395,6 +395,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Apache JMeter — зрелый OSS-инструмент с поддержкой множества протоколов и distributed mode. Его отличительный плюс — тест-планы как компактный код на Scala DSL и богатые интерактивные HTML-отчёты из коробки. Минусы: более высокий порог входа из-за кода вместо визарда и меньше готовых GUI-компонентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scala-DSL и красивые HTML-отчёты — это про Gatling; JMeter использует verbose XML-планы (.jmx) и GUI, а отчёты у него средние.",
+                "source_of_confusion": "JMeter и Gatling часто сравнивают рядом, поэтому достоинства Gatling приписывают JMeter.",
+                "if_it_were_true": "Если бы JMeter писали на Scala, его не критиковали бы за verbose XML, плохо поддающийся diff.",
+                "how_it_should_be": "JMeter — это GUI + XML-планы; Scala-DSL и отличные HTML-отчёты — отличительная черта Gatling."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Apache JMeter — самый популярный OSS-инструмент нагрузочного тестирования (с 1998). Плюсы: GUI для drag-drop дизайна тестов, огромная экосистема плагинов, много протоколов (HTTP, JDBC, JMS, gRPC), distributed mode (master + slaves), статус индустриального стандарта в enterprise. Минусы: тяжёлый (Java-GUI тормозит), XML-планы (verbose, плохо diff-ятся), ниже производительность чем у k6/Gatling, треды дают высокий расход ресурсов на виртуального пользователя.",
               "correct": true,
               "sections": {
@@ -403,18 +415,6 @@
                 "when_to_apply": "Выбирают JMeter, когда нужен no-code GUI-дизайн, поддержка экзотических протоколов через плагины или есть существующие .jmx-наработки.",
                 "edge_cases": "GUI удобен для дизайна, но .jmx-планы в XML плохо ревьюятся в git: diff нечитаем, поэтому в командах с code review часто предпочитают code-based инструменты вроде k6 или Gatling.",
                 "related": "[[load-testing-interview#Q8]] k6 как современная альтернатива; [[load-testing-interview#Q11]] сравнение инструментов; [[load-testing-interview#Q15]] distributed load testing."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Apache JMeter — зрелый OSS-инструмент с поддержкой множества протоколов и distributed mode. Его отличительный плюс — тест-планы как компактный код на Scala DSL и богатые интерактивные HTML-отчёты из коробки. Минусы: более высокий порог входа из-за кода вместо визарда и меньше готовых GUI-компонентов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Scala-DSL и красивые HTML-отчёты — это про Gatling; JMeter использует verbose XML-планы (.jmx) и GUI, а отчёты у него средние.",
-                "source_of_confusion": "JMeter и Gatling часто сравнивают рядом, поэтому достоинства Gatling приписывают JMeter.",
-                "if_it_were_true": "Если бы JMeter писали на Scala, его не критиковали бы за verbose XML, плохо поддающийся diff.",
-                "how_it_should_be": "JMeter — это GUI + XML-планы; Scala-DSL и отличные HTML-отчёты — отличительная черта Gatling."
               }
             }
           ]
@@ -431,13 +431,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "k6 (от Grafana) — инструмент, где тесты проектируют в GUI и хранят как XML-планы, как в JMeter, а прогон уходит на облачный бэкенд. Плюсы: no-code drag-drop дизайн, богатая экосистема плагинов под экзотические протоколы. Минусы: тяжёлый GUI и verbose XML, плохо ложащийся в git-diff.",
+              "text": "k6 (от Grafana) распространяется исключительно как управляемый облачный SaaS: локального OSS-бинарника нет, тесты запускаются только на инфраструктуре вендора, а тарификация идёт по VU-часам. Плюсы: zero-setup и готовые дашборды. Минусы: нельзя гонять тесты офлайн или в закрытом контуре без интернета.",
               "correct": false,
               "sections": {
-                "what_actually": "k6-тесты пишут на JavaScript/TypeScript кодом, без GUI и XML; GUI + XML-планы — это про JMeter.",
-                "source_of_confusion": "Оба инструмента нагрузочные, поэтому GUI-подход JMeter ошибочно приписывают k6.",
-                "if_it_were_true": "Если бы k6 использовал XML-GUI, он не позиционировался бы как CI/CD-friendly и code-first.",
-                "how_it_should_be": "k6 — это JS/TS-скрипты, запускаемые из CLI; XML-планы и GUI — отличие JMeter."
+                "what_actually": "У k6 есть и open source, и cloud-версия; полностью бесплатно запускать локальные тесты можно из OSS-бинарника.",
+                "source_of_confusion": "Раз k6 принадлежит Grafana и активно продвигает облако, кажется, что он целиком платный.",
+                "if_it_were_true": "Если бы OSS-версии не было, k6 не стал бы популярен для локальных CI-прогонов без оплаты.",
+                "how_it_should_be": "k6 распространяется как OSS плюс отдельный cloud-продукт; локальные запуски бесплатны."
               }
             },
             {
@@ -455,13 +455,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "k6 (от Grafana) распространяется исключительно как управляемый облачный SaaS: локального OSS-бинарника нет, тесты запускаются только на инфраструктуре вендора, а тарификация идёт по VU-часам. Плюсы: zero-setup и готовые дашборды. Минусы: нельзя гонять тесты офлайн или в закрытом контуре без интернета.",
+              "text": "k6 (от Grafana) — инструмент, где тесты проектируют в GUI и хранят как XML-планы, как в JMeter, а прогон уходит на облачный бэкенд. Плюсы: no-code drag-drop дизайн, богатая экосистема плагинов под экзотические протоколы. Минусы: тяжёлый GUI и verbose XML, плохо ложащийся в git-diff.",
               "correct": false,
               "sections": {
-                "what_actually": "У k6 есть и open source, и cloud-версия; полностью бесплатно запускать локальные тесты можно из OSS-бинарника.",
-                "source_of_confusion": "Раз k6 принадлежит Grafana и активно продвигает облако, кажется, что он целиком платный.",
-                "if_it_were_true": "Если бы OSS-версии не было, k6 не стал бы популярен для локальных CI-прогонов без оплаты.",
-                "how_it_should_be": "k6 распространяется как OSS плюс отдельный cloud-продукт; локальные запуски бесплатны."
+                "what_actually": "k6-тесты пишут на JavaScript/TypeScript кодом, без GUI и XML; GUI + XML-планы — это про JMeter.",
+                "source_of_confusion": "Оба инструмента нагрузочные, поэтому GUI-подход JMeter ошибочно приписывают k6.",
+                "if_it_were_true": "Если бы k6 использовал XML-GUI, он не позиционировался бы как CI/CD-friendly и code-first.",
+                "how_it_should_be": "k6 — это JS/TS-скрипты, запускаемые из CLI; XML-планы и GUI — отличие JMeter."
               }
             },
             {
@@ -504,18 +504,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Gatling использует блокирующую тред-модель, где каждый VU занимает отдельный поток ОС.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Gatling построен на async non-blocking I/O, поэтому масштабируется лучше тред-модели; блокирующие треды на VU — это слабость JMeter.",
-                "source_of_confusion": "Тред-модель привычна по JMeter, и её ошибочно переносят на все JVM-инструменты.",
-                "if_it_were_true": "Если бы Gatling блокировал поток на VU, он не славился бы высокой производительностью при больших нагрузках.",
-                "how_it_should_be": "Gatling использует асинхронный неблокирующий движок; поток-на-VU — это про JMeter."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Gatling пишут тесты на Python, как Locust, поэтому он популярен в data-командах.",
               "correct": false,
               "sections": {
@@ -523,6 +511,18 @@
                 "source_of_confusion": "Оба code-based, поэтому язык одного инструмента приписывают другому.",
                 "if_it_were_true": "Если бы Gatling был на Python, он унаследовал бы ограничения GIL, а не давал высокую производительность.",
                 "how_it_should_be": "Gatling — это Scala/Java/Kotlin DSL; Python-инструмент нагрузки — это Locust."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Gatling использует блокирующую тред-модель, где каждый VU занимает отдельный поток ОС.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gatling построен на async non-blocking I/O, поэтому масштабируется лучше тред-модели; блокирующие треды на VU — это слабость JMeter.",
+                "source_of_confusion": "Тред-модель привычна по JMeter, и её ошибочно переносят на все JVM-инструменты.",
+                "if_it_were_true": "Если бы Gatling блокировал поток на VU, он не славился бы высокой производительностью при больших нагрузках.",
+                "how_it_should_be": "Gatling использует асинхронный неблокирующий движок; поток-на-VU — это про JMeter."
               }
             },
             {
@@ -563,14 +563,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Locust — Python-based, code-driven инструмент: сценарии описывают классами `HttpUser` с методами-`@task` и `wait_time = between(1, 5)`. Плюсы: Python (лёгкое освоение), web UI, distributed mode. Минусы: ниже производительность чем у k6/Gatling из-за Python GIL, менее зрелая отчётность.",
-              "correct": true,
+              "text": "Locust не поддерживает distributed mode и работает строго с одного процесса.",
+              "correct": false,
               "sections": {
-                "explanation": "Locust выигрывает простотой для Python-команд: задачи описываются как обычные методы, а вес `@task(3)` делает эндпоинт втрое более частым, моделируя реальное распределение трафика.",
-                "example": "Пример: класс `WebsiteUser(HttpUser)` с `@task def load_users(self): self.client.get(\"/users\")` и `@task(3)` для `get_user` — второй вызывается в 3 раза чаще.",
-                "when_to_apply": "Выбирают Locust в Python-командах, где важна простота написания сценариев и не нужна максимальная производительность генератора нагрузки.",
-                "edge_cases": "Из-за Python GIL один процесс Locust ограничен по числу VUs, поэтому для большой нагрузки приходится поднимать distributed-режим с несколькими worker-процессами.",
-                "related": "[[load-testing-interview#Q8]] k6 как более быстрый инструмент; [[load-testing-interview#Q9]] Gatling на JVM; [[load-testing-interview#Q11]] общее сравнение."
+                "what_actually": "У Locust есть distributed mode (master + workers), позволяющий гнать нагрузку с нескольких машин.",
+                "source_of_confusion": "Раз Locust «простой», кажется, что масштабирования на кластер в нём нет.",
+                "if_it_were_true": "Если бы Locust не умел distributed, он не справлялся бы с нагрузкой, превышающей возможности одной машины.",
+                "how_it_should_be": "Locust поддерживает распределённый режим с master и workers; ограничение одним процессом — неверно."
               }
             },
             {
@@ -588,13 +587,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Locust не поддерживает distributed mode и работает строго с одного процесса.",
-              "correct": false,
+              "text": "Locust — Python-based, code-driven инструмент: сценарии описывают классами `HttpUser` с методами-`@task` и `wait_time = between(1, 5)`. Плюсы: Python (лёгкое освоение), web UI, distributed mode. Минусы: ниже производительность чем у k6/Gatling из-за Python GIL, менее зрелая отчётность.",
+              "correct": true,
               "sections": {
-                "what_actually": "У Locust есть distributed mode (master + workers), позволяющий гнать нагрузку с нескольких машин.",
-                "source_of_confusion": "Раз Locust «простой», кажется, что масштабирования на кластер в нём нет.",
-                "if_it_were_true": "Если бы Locust не умел distributed, он не справлялся бы с нагрузкой, превышающей возможности одной машины.",
-                "how_it_should_be": "Locust поддерживает распределённый режим с master и workers; ограничение одним процессом — неверно."
+                "explanation": "Locust выигрывает простотой для Python-команд: задачи описываются как обычные методы, а вес `@task(3)` делает эндпоинт втрое более частым, моделируя реальное распределение трафика.",
+                "example": "Пример: класс `WebsiteUser(HttpUser)` с `@task def load_users(self): self.client.get(\"/users\")` и `@task(3)` для `get_user` — второй вызывается в 3 раза чаще.",
+                "when_to_apply": "Выбирают Locust в Python-командах, где важна простота написания сценариев и не нужна максимальная производительность генератора нагрузки.",
+                "edge_cases": "Из-за Python GIL один процесс Locust ограничен по числу VUs, поэтому для большой нагрузки приходится поднимать distributed-режим с несколькими worker-процессами.",
+                "related": "[[load-testing-interview#Q8]] k6 как более быстрый инструмент; [[load-testing-interview#Q9]] Gatling на JVM; [[load-testing-interview#Q11]] общее сравнение."
               }
             }
           ]
@@ -611,18 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Сравнение: язык — JMeter XML/GUI, k6 JS/TS, Gatling Scala/Java, Locust Python; но по производительности лидируют JMeter и Locust (very high), а k6 и Gatling — medium; GUI-дизайн только у JMeter.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Они заметно различаются: язык (XML/GUI, JS/TS, Scala/Java, Python), производительность (k6 и Gatling — very high; JMeter и Locust — medium), отчёты, наличие GUI-дизайна и зрелость.",
-                "source_of_confusion": "Раз все решают одну задачу, кажется, что и характеристики у них совпадают.",
-                "if_it_were_true": "Если бы они были идентичны, не было бы рекомендаций «k6 для современных, JMeter для enterprise legacy».",
-                "how_it_should_be": "Инструменты различаются по языку, производительности, отчётам и зрелости — выбор зависит от стека и задачи."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Сравнение: язык — JMeter XML/GUI, k6 JS/TS, Gatling Scala/Java, Locust Python; производительность — k6 и Gatling высокая; лучшие встроенные отчёты — у Locust, а Gatling и k6 требуют внешней Grafana; GUI-дизайн только у JMeter.",
               "correct": false,
               "sections": {
@@ -630,6 +618,18 @@
                 "source_of_confusion": "Web UI Locust и Gatling для мониторинга путают с GUI-дизайном сценариев.",
                 "if_it_were_true": "Если бы у всех был GUI-дизайн, JMeter не выделяли бы как единственный no-code вариант.",
                 "how_it_should_be": "GUI-дизайн тестов — только у JMeter; остальные пишут сценарии кодом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сравнение: язык — JMeter XML/GUI, k6 JS/TS, Gatling Scala/Java, Locust Python; но по производительности лидируют JMeter и Locust (very high), а k6 и Gatling — medium; GUI-дизайн только у JMeter.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они заметно различаются: язык (XML/GUI, JS/TS, Scala/Java, Python), производительность (k6 и Gatling — very high; JMeter и Locust — medium), отчёты, наличие GUI-дизайна и зрелость.",
+                "source_of_confusion": "Раз все решают одну задачу, кажется, что и характеристики у них совпадают.",
+                "if_it_were_true": "Если бы они были идентичны, не было бы рекомендаций «k6 для современных, JMeter для enterprise legacy».",
+                "how_it_should_be": "Инструменты различаются по языку, производительности, отчётам и зрелости — выбор зависит от стека и задачи."
               }
             },
             {
@@ -671,13 +671,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "k6-тест — это JS-модуль: импортируешь `http from 'k6/http'`, а `check`, `group`, `sleep` — из модуля `k6/core`; кастомные метрики через `Rate from 'k6/metrics'`, в `export const options` задаёшь scenarios и thresholds.",
-              "correct": false,
+              "text": "k6-тест — это JS-модуль: импортируешь `http from 'k6/http'`, `check, group, sleep from 'k6'`, кастомные метрики через `Rate from 'k6/metrics'`; в `export const options` задаёшь scenarios/executors и thresholds (`'http_req_duration': ['p(95)<200']`); `export function setup()` делает логин и возвращает токен; `export default function (data)` — основной поток (с `group`, `check`, `sleep`); `export function teardown()` чистит за собой.",
+              "correct": true,
               "sections": {
-                "what_actually": "k6-тест — это JS-модуль с `export const options` и `export default function`, запускается `k6 run script.js`; `.jmx` и `jmeter -n` — это JMeter.",
-                "source_of_confusion": "Оба про нагрузку, поэтому CLI и формат JMeter ошибочно приписывают k6.",
-                "if_it_were_true": "Если бы k6-тест был XML-планом, в нём не было бы JS-импортов `http from 'k6/http'`.",
-                "how_it_should_be": "k6-тест пишется на JavaScript и запускается `k6 run`; XML и `jmeter -n` — это JMeter."
+                "explanation": "Структура отражает жизненный цикл теста: setup один раз готовит данные (токен), default-функция повторяется на каждой итерации каждого VU, teardown выполняется в конце — это даёт реалистичные авторизованные сценарии.",
+                "example": "Пример: в `setup()` делаешь `http.post('/login')` и возвращаешь `{ token }`, в default-функции собираешь `headers: { Authorization: 'Bearer ' + data.token }`, оборачиваешь шаги в `group('User flow', ...)` и добавляешь `sleep(1)`.",
+                "when_to_apply": "Эту структуру применяют для любого реалистичного k6-сценария с авторизацией и многошаговым flow; thresholds в options делают тест pass/fail в CI.",
+                "edge_cases": "`setup()` и `teardown()` выполняются по одному разу на весь тест, а не на каждый VU, поэтому тяжёлую подготовку данных кладут туда, а не в default-функцию.",
+                "related": "[[load-testing-interview#Q8]] что такое k6; [[load-testing-interview#Q13]] stages внутри options; [[load-testing-interview#Q14]] thresholds как pass/fail."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "k6-тест — это JS-модуль: импортируешь `http from 'k6/http'`, `check, group, sleep from 'k6'`, кастомные метрики через `Rate from 'k6/metrics'`; в `export const options` задаёшь scenarios/executors и thresholds (`'http_req_duration': ['p(95)<200']`); `export function setup()` делает логин и возвращает токен; `export default function (data)` — основной поток (с `group`, `check`, `sleep`); `export function teardown()` чистит за собой.",
-              "correct": true,
+              "text": "k6-тест — это JS-модуль: импортируешь `http from 'k6/http'`, а `check`, `group`, `sleep` — из модуля `k6/core`; кастомные метрики через `Rate from 'k6/metrics'`, в `export const options` задаёшь scenarios и thresholds.",
+              "correct": false,
               "sections": {
-                "explanation": "Структура отражает жизненный цикл теста: setup один раз готовит данные (токен), default-функция повторяется на каждой итерации каждого VU, teardown выполняется в конце — это даёт реалистичные авторизованные сценарии.",
-                "example": "Пример: в `setup()` делаешь `http.post('/login')` и возвращаешь `{ token }`, в default-функции собираешь `headers: { Authorization: 'Bearer ' + data.token }`, оборачиваешь шаги в `group('User flow', ...)` и добавляешь `sleep(1)`.",
-                "when_to_apply": "Эту структуру применяют для любого реалистичного k6-сценария с авторизацией и многошаговым flow; thresholds в options делают тест pass/fail в CI.",
-                "edge_cases": "`setup()` и `teardown()` выполняются по одному разу на весь тест, а не на каждый VU, поэтому тяжёлую подготовку данных кладут туда, а не в default-функцию.",
-                "related": "[[load-testing-interview#Q8]] что такое k6; [[load-testing-interview#Q13]] stages внутри options; [[load-testing-interview#Q14]] thresholds как pass/fail."
+                "what_actually": "k6-тест — это JS-модуль с `export const options` и `export default function`, запускается `k6 run script.js`; `.jmx` и `jmeter -n` — это JMeter.",
+                "source_of_confusion": "Оба про нагрузку, поэтому CLI и формат JMeter ошибочно приписывают k6.",
+                "if_it_were_true": "Если бы k6-тест был XML-планом, в нём не было бы JS-импортов `http from 'k6/http'`.",
+                "how_it_should_be": "k6-тест пишется на JavaScript и запускается `k6 run`; XML и `jmeter -n` — это JMeter."
               }
             }
           ]
@@ -731,19 +731,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Stages — это массив этапов в `options`, каждый с `duration` и целевым числом VUs (`target`): сначала ramp-up (плавный рост к 100 VUs), затем hold (удержание), потом новый ramp к 200 VUs, снова hold и в конце ramp-down к 0. Это даёт реалистичный профиль нагрузки вместо резкого 0 → 1000.",
-              "correct": true,
-              "sections": {
-                "explanation": "Постепенный рост важен, потому что мгновенный скачок не похож на реальный трафик и мешает прогреву (JIT, connection pools); stages позволяют моделировать ramp-up, steady, spike и recovery.",
-                "example": "Пример: `stages: [{ duration: '2m', target: 100 }, { duration: '5m', target: 100 }, { duration: '2m', target: 200 }, { duration: '5m', target: 200 }, { duration: '2m', target: 0 }]` — рост, удержание, рост, удержание, спад.",
-                "when_to_apply": "Паттерны применяют по цели: ramp-up — найти зависимость performance от нагрузки, steady — soak-тест, spike — резкий рост, ramp-down — проверить recovery системы после нагрузки.",
-                "edge_cases": "Stages задают число VUs (closed model), а не arrival rate, поэтому для честного измерения хвоста под coordinated omission иногда выбирают executor `constant-arrival-rate` вместо stages.",
-                "related": "[[load-testing-interview#Q12]] options в k6-тесте; [[load-testing-interview#Q2]] soak и spike как типы; [[load-testing-interview#Q16]] постепенный рост в capacity planning."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Stages задают только thresholds (pass/fail критерии), а число VUs указывается отдельно.",
               "correct": false,
               "sections": {
@@ -754,8 +741,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Stages всегда требуют мгновенного скачка нагрузки 0 → target без плавного перехода.",
               "correct": false,
               "sections": {
@@ -763,6 +750,19 @@
                 "source_of_confusion": "Слово «этап» наводит на дискретные скачки, а не на плавную интерполяцию.",
                 "if_it_were_true": "Если бы переходы были мгновенными, не было бы смысла в отдельном ramp-up этапе с длительностью 2m.",
                 "how_it_should_be": "Stages обеспечивают постепенный ramp к target; резкий 0 → 1000 как раз считается нереалистичным."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Stages — это массив этапов в `options`, каждый с `duration` и целевым числом VUs (`target`): сначала ramp-up (плавный рост к 100 VUs), затем hold (удержание), потом новый ramp к 200 VUs, снова hold и в конце ramp-down к 0. Это даёт реалистичный профиль нагрузки вместо резкого 0 → 1000.",
+              "correct": true,
+              "sections": {
+                "explanation": "Постепенный рост важен, потому что мгновенный скачок не похож на реальный трафик и мешает прогреву (JIT, connection pools); stages позволяют моделировать ramp-up, steady, spike и recovery.",
+                "example": "Пример: `stages: [{ duration: '2m', target: 100 }, { duration: '5m', target: 100 }, { duration: '2m', target: 200 }, { duration: '5m', target: 200 }, { duration: '2m', target: 0 }]` — рост, удержание, рост, удержание, спад.",
+                "when_to_apply": "Паттерны применяют по цели: ramp-up — найти зависимость performance от нагрузки, steady — soak-тест, spike — резкий рост, ramp-down — проверить recovery системы после нагрузки.",
+                "edge_cases": "Stages задают число VUs (closed model), а не arrival rate, поэтому для честного измерения хвоста под coordinated omission иногда выбирают executor `constant-arrival-rate` вместо stages.",
+                "related": "[[load-testing-interview#Q12]] options в k6-тесте; [[load-testing-interview#Q2]] soak и spike как типы; [[load-testing-interview#Q16]] постепенный рост в capacity planning."
               }
             },
             {
@@ -791,18 +791,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Thresholds лишь печатают предупреждение в консоль, но никогда не влияют на результат теста и exit code.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Если threshold не выполнен, тест считается провалившимся (non-zero exit), и в CI/CD это ломает билд — это не просто warning.",
-                "source_of_confusion": "Многие проверки в нагрузочных инструментах информативны, поэтому и thresholds кажутся необязательными.",
-                "if_it_were_true": "Если бы thresholds не влияли на exit code, их нельзя было бы использовать как performance budget в пайплайне.",
-                "how_it_should_be": "Невыполненный threshold проваливает тест и ломает CI-сборку, а не просто пишет предупреждение."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Thresholds — это pass/fail-критерии в `options`: например `'http_req_duration': ['p(95)<500']` (p95 < 500ms), `'http_req_failed': ['rate<0.01']` (error rate < 1%), tag-specific `'http_req_duration{name:GetUser}': ['p(99)<200']`, `'iterations': ['count>1000']`. Если threshold не выполнен — тест падает, и в CI/CD это ломает билд.",
               "correct": true,
               "sections": {
@@ -814,20 +802,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Thresholds можно задавать только по среднему latency, percentiles в них не поддерживаются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Thresholds отлично работают по percentiles: `p(95)<500`, `p(99)<200` — именно так задают реалистичные SLA по хвосту latency.",
-                "source_of_confusion": "Средний latency проще, и кажется, что пороги задают именно по нему.",
-                "if_it_were_true": "Если бы percentiles не поддерживались, нельзя было бы выразить SLA вида «p95 < 200ms», а это стандарт.",
-                "how_it_should_be": "Thresholds принимают percentile-выражения вроде `p(95)<500`; ограничение средним — неверно."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Thresholds задаются как теги на отдельных запросах внутри `check()`, а не в `options`.",
               "correct": false,
               "sections": {
@@ -835,6 +811,30 @@
                 "source_of_confusion": "И thresholds, и `check()` про «проверки», поэтому их размещение путают.",
                 "if_it_were_true": "Если бы thresholds жили внутри `check()`, они не могли бы агрегировать метрику по всему прогону (p95, rate).",
                 "how_it_should_be": "Thresholds задают в `options` по агрегированным метрикам; `check()` проверяет отдельные ответы и в pass/fail напрямую не входит."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Thresholds лишь печатают предупреждение в консоль, но никогда не влияют на результат теста и exit code.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если threshold не выполнен, тест считается провалившимся (non-zero exit), и в CI/CD это ломает билд — это не просто warning.",
+                "source_of_confusion": "Многие проверки в нагрузочных инструментах информативны, поэтому и thresholds кажутся необязательными.",
+                "if_it_were_true": "Если бы thresholds не влияли на exit code, их нельзя было бы использовать как performance budget в пайплайне.",
+                "how_it_should_be": "Невыполненный threshold проваливает тест и ломает CI-сборку, а не просто пишет предупреждение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Thresholds можно задавать только по среднему latency, percentiles в них не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Thresholds отлично работают по percentiles: `p(95)<500`, `p(99)<200` — именно так задают реалистичные SLA по хвосту latency.",
+                "source_of_confusion": "Средний latency проще, и кажется, что пороги задают именно по нему.",
+                "if_it_were_true": "Если бы percentiles не поддерживались, нельзя было бы выразить SLA вида «p95 < 200ms», а это стандарт.",
+                "how_it_should_be": "Thresholds принимают percentile-выражения вроде `p(95)<500`; ограничение средним — неверно."
               }
             }
           ]
@@ -851,13 +851,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Distributed load testing — это когда саму тестируемую систему (SUT) разносят на несколько серверов, а трафик по-прежнему генерирует одна машина. Смысл — проверить, как приложение ведёт себя в распределённой топологии под нагрузкой с единственного генератора. Настраивают через кластеризацию SUT за общим балансировщиком.",
+              "text": "Distributed load testing нужно, чтобы параллельно прогнать один и тот же сценарий на нескольких машинах и сократить время прогона — как параллельные unit-тесты. Суммарный объём нагрузки при этом не растёт: каждая машина повторяет тот же трафик, а результаты потом дедуплицируют до одного прогона.",
               "correct": false,
               "sections": {
-                "what_actually": "Distributed относится к генераторам нагрузки: несколько машин совместно создают трафик, потому что один генератор не выдаёт достаточно нагрузки.",
-                "source_of_confusion": "Слово «distributed» в нагрузочном контексте путают с распределённостью самого приложения.",
-                "if_it_were_true": "Если бы речь была о тестируемой системе, не нужны были бы master/slave-генераторы и агрегация результатов.",
-                "how_it_should_be": "Distributed load testing масштабирует генераторы нагрузки (несколько load generators), а не SUT."
+                "what_actually": "Главная причина — именно увеличить суммарную нагрузку: несколько генераторов вместе выдают больше трафика, чем один.",
+                "source_of_confusion": "Кажется, что «больше машин = просто быстрее», как при параллельных unit-тестах.",
+                "if_it_were_true": "Если бы distributed не наращивал нагрузку, не было бы смысла агрегировать RPS со всех slaves.",
+                "how_it_should_be": "Distributed повышает суммарный объём генерируемой нагрузки и добавляет гео-реализм, а не просто ускоряет один прогон."
               }
             },
             {
@@ -875,6 +875,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Distributed load testing — это когда саму тестируемую систему (SUT) разносят на несколько серверов, а трафик по-прежнему генерирует одна машина. Смысл — проверить, как приложение ведёт себя в распределённой топологии под нагрузкой с единственного генератора. Настраивают через кластеризацию SUT за общим балансировщиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Distributed относится к генераторам нагрузки: несколько машин совместно создают трафик, потому что один генератор не выдаёт достаточно нагрузки.",
+                "source_of_confusion": "Слово «distributed» в нагрузочном контексте путают с распределённостью самого приложения.",
+                "if_it_were_true": "Если бы речь была о тестируемой системе, не нужны были бы master/slave-генераторы и агрегация результатов.",
+                "how_it_should_be": "Distributed load testing масштабирует генераторы нагрузки (несколько load generators), а не SUT."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Distributed load testing нужно, когда один генератор нагрузки не способен выдать достаточно трафика. В JMeter: master управляет slaves, slaves генерируют нагрузку, результаты агрегируются. В k6: Cloud-версия даёт managed distributed, OSS — через operator в K8s. В Gatling: distributed в Gatling Enterprise, в OSS — ручная настройка. Частый паттерн — генерировать нагрузку из нескольких регионов для реалистичной гео-распределённости.",
               "correct": true,
               "sections": {
@@ -883,18 +895,6 @@
                 "when_to_apply": "Применяют, когда требуемая нагрузка превышает возможности одного генератора или когда важна гео-распределённость трафика, близкая к реальным пользователям.",
                 "edge_cases": "Несколько генераторов усложняют агрегацию: результаты нужно собирать в одном месте (InfluxDB/Grafana), иначе percentiles по отдельным машинам нельзя корректно объединить простым усреднением.",
                 "related": "[[load-testing-interview#Q7]] distributed mode в JMeter; [[load-testing-interview#Q8]] k6 Cloud; [[load-testing-interview#Q21]] тест из одного региона как ошибка."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Distributed load testing нужно, чтобы параллельно прогнать один и тот же сценарий на нескольких машинах и сократить время прогона — как параллельные unit-тесты. Суммарный объём нагрузки при этом не растёт: каждая машина повторяет тот же трафик, а результаты потом дедуплицируют до одного прогона.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Главная причина — именно увеличить суммарную нагрузку: несколько генераторов вместе выдают больше трафика, чем один.",
-                "source_of_confusion": "Кажется, что «больше машин = просто быстрее», как при параллельных unit-тестах.",
-                "if_it_were_true": "Если бы distributed не наращивал нагрузку, не было бы смысла агрегировать RPS со всех slaves.",
-                "how_it_should_be": "Distributed повышает суммарный объём генерируемой нагрузки и добавляет гео-реализм, а не просто ускоряет один прогон."
               }
             }
           ]
@@ -911,18 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Capacity planning — это взять текущее число серверов на пике и умножить на коэффициент запаса (обычно ×2), заложив рост трафика год к году. Отдельные нагрузочные тесты для этого не нужны: достаточно исторической статистики по числу инстансов и правила «удвоить на всякий случай».",
-              "correct": false,
-              "sections": {
-                "what_actually": "Реальный процесс: определить SLA, постепенно наращивать нагрузку, найти max RPS где SLA держится, заложить headroom и провизионить под него; грубое «×2» не основано на измерениях.",
-                "source_of_confusion": "Хочется простой эвристики вместо измерений, поэтому capacity сводят к удвоению.",
-                "if_it_were_true": "Если бы хватало «×2», не нужны были бы load-тесты с поиском max RPS на инстанс.",
-                "how_it_should_be": "Capacity planning опирается на измеренный max RPS и заданный headroom, а не на произвольный множитель."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Capacity planning: задают SLA, гонят растущую нагрузку и находят max RPS, где SLA ещё держится, после чего провизионят инфраструктуру ровно под этот измеренный предел. Запас (headroom) закладывать не нужно: раз система подтверждённо держит max RPS, планирование впритык максимально эффективно по стоимости.",
               "correct": false,
               "sections": {
@@ -930,6 +918,19 @@
                 "source_of_confusion": "Кажется экономным брать ровно столько серверов, сколько показал тест.",
                 "if_it_were_true": "Если бы запас не закладывали, любой всплеск выше измеренного max сразу нарушал бы SLA.",
                 "how_it_should_be": "Capacity всегда планируют с headroom поверх измеренного предела, а не впритык."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Capacity planning через load testing — это процесс: 1) определить SLA (например p95 < 200ms, error rate < 1%); 2) гнать постепенно растущую нагрузку (10, 50, 100, 200, 500 RPS); 3) найти max RPS, где SLA ещё держится; 4) рассчитать headroom (например целить в 70% capacity); 5) провизионить инфраструктуру соответственно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Зная предел одного инстанса и ожидаемый peak с запасом, выводишь нужное число инстансов: если инстанс держит 100 RPS, peak 1000 RPS, а headroom 50% (нужно 1500 RPS), то требуется 15 инстансов.",
+                "example": "Пример: single instance — 100 RPS sustainable, expected peak — 1000 RPS, headroom 50% → нужно 1500 RPS capacity → 15 инстансов.",
+                "when_to_apply": "Применяют перед запуском и при росте трафика, чтобы right-size инфраструктуру под SLA с запасом, а не угадывать число серверов.",
+                "edge_cases": "Линейная экстраполяция «1 инстанс = 100 RPS, значит 15 = 1500» работает лишь до общего bottleneck: shared БД или внешний API могут не масштабироваться вместе с числом инстансов.",
+                "related": "[[load-testing-interview#Q1]] capacity planning как цель load testing; [[load-testing-interview#Q6]] capacity как max throughput при приемлемом latency; [[load-testing-interview#Q17]] bottleneck analysis."
               }
             },
             {
@@ -947,14 +948,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Capacity planning через load testing — это процесс: 1) определить SLA (например p95 < 200ms, error rate < 1%); 2) гнать постепенно растущую нагрузку (10, 50, 100, 200, 500 RPS); 3) найти max RPS, где SLA ещё держится; 4) рассчитать headroom (например целить в 70% capacity); 5) провизионить инфраструктуру соответственно.",
-              "correct": true,
+              "text": "Capacity planning — это взять текущее число серверов на пике и умножить на коэффициент запаса (обычно ×2), заложив рост трафика год к году. Отдельные нагрузочные тесты для этого не нужны: достаточно исторической статистики по числу инстансов и правила «удвоить на всякий случай».",
+              "correct": false,
               "sections": {
-                "explanation": "Зная предел одного инстанса и ожидаемый peak с запасом, выводишь нужное число инстансов: если инстанс держит 100 RPS, peak 1000 RPS, а headroom 50% (нужно 1500 RPS), то требуется 15 инстансов.",
-                "example": "Пример: single instance — 100 RPS sustainable, expected peak — 1000 RPS, headroom 50% → нужно 1500 RPS capacity → 15 инстансов.",
-                "when_to_apply": "Применяют перед запуском и при росте трафика, чтобы right-size инфраструктуру под SLA с запасом, а не угадывать число серверов.",
-                "edge_cases": "Линейная экстраполяция «1 инстанс = 100 RPS, значит 15 = 1500» работает лишь до общего bottleneck: shared БД или внешний API могут не масштабироваться вместе с числом инстансов.",
-                "related": "[[load-testing-interview#Q1]] capacity planning как цель load testing; [[load-testing-interview#Q6]] capacity как max throughput при приемлемом latency; [[load-testing-interview#Q17]] bottleneck analysis."
+                "what_actually": "Реальный процесс: определить SLA, постепенно наращивать нагрузку, найти max RPS где SLA держится, заложить headroom и провизионить под него; грубое «×2» не основано на измерениях.",
+                "source_of_confusion": "Хочется простой эвристики вместо измерений, поэтому capacity сводят к удвоению.",
+                "if_it_were_true": "Если бы хватало «×2», не нужны были бы load-тесты с поиском max RPS на инстанс.",
+                "how_it_should_be": "Capacity planning опирается на измеренный max RPS и заданный headroom, а не на произвольный множитель."
               }
             }
           ]
@@ -971,14 +971,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Bottleneck analysis ищет, что ограничивает performance: CPU (→ скейлить CPU или оптимизировать код), память (→ RAM, GC tuning), сеть (→ bandwidth, размер connection pool), БД (→ индексы, запросы, pool), disk I/O (→ SSD, async writes), внешние API (→ кэширование, async). Инструменты: APM (Datadog, New Relic, Honeycomb), профайлеры (`pprof`, async-profiler), анализ запросов (`EXPLAIN ANALYZE`), сетевой мониторинг. Работают итеративно: load test → найти узкое место → оптимизировать → повторить.",
-              "correct": true,
+              "text": "Bottleneck analysis выполняют один раз: нашёл самое узкое место, оптимизировал его — и процесс завершён; повторные прогоны load test уже ничего не меняют.",
+              "correct": false,
               "sections": {
-                "explanation": "Под нагрузкой всегда есть один лимитирующий ресурс; задача — найти его по метрикам и устранить, затем тест выявит следующий — так система последовательно «расшивается».",
-                "example": "Load test показывает рост latency при 300 RPS; APM и `EXPLAIN ANALYZE` выявляют seq scan в горячем запросе, добавляешь индекс — следующий прогон упирается уже в connection pool, который и увеличиваешь.",
-                "when_to_apply": "Применяют итеративно после каждого нагрузочного прогона: устранил одно узкое место — измеряешь снова, потому что предел сдвигается на следующий ресурс.",
-                "edge_cases": "Иногда узкое место — сам генератор нагрузки или сеть до него, а не SUT: если CPU на load-агенте упёрся в 100%, метрики latency искажаются, и нужно распределять нагрузку.",
-                "related": "[[load-testing-interview#Q4]] CPU/Memory как метрики; [[load-testing-interview#Q16]] capacity planning; [[load-testing-interview#Q3]] tuning как цель нагрузочного теста."
+                "what_actually": "Процесс итеративный: устранение одного узкого места сдвигает предел на следующий ресурс, поэтому цикл «тест → оптимизация → тест» повторяют.",
+                "source_of_confusion": "Кажется, что «расшил» один раз — и система готова навсегда.",
+                "if_it_were_true": "Если бы хватало одной итерации, нельзя было бы последовательно поднимать пропускную способность за несколько раундов.",
+                "how_it_should_be": "Bottleneck analysis повторяют итеративно, пока система не достигнет целевой нагрузки."
               }
             },
             {
@@ -996,18 +995,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Bottleneck analysis выполняют один раз: нашёл самое узкое место, оптимизировал его — и процесс завершён; повторные прогоны load test уже ничего не меняют.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Процесс итеративный: устранение одного узкого места сдвигает предел на следующий ресурс, поэтому цикл «тест → оптимизация → тест» повторяют.",
-                "source_of_confusion": "Кажется, что «расшил» один раз — и система готова навсегда.",
-                "if_it_were_true": "Если бы хватало одной итерации, нельзя было бы последовательно поднимать пропускную способность за несколько раундов.",
-                "how_it_should_be": "Bottleneck analysis повторяют итеративно, пока система не достигнет целевой нагрузки."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Для bottleneck analysis достаточно логов приложения и `EXPLAIN ANALYZE`; APM (Datadog, New Relic) и профайлеры (`pprof`, async-profiler) избыточны — по логам видно, какой ресурс упирается.",
               "correct": false,
               "sections": {
@@ -1015,6 +1002,19 @@
                 "source_of_confusion": "Логи всегда под рукой, поэтому кажется, что их хватит для диагностики.",
                 "if_it_were_true": "Если бы хватало логов, не существовало бы целого класса APM и профилирующих инструментов под нагрузку.",
                 "how_it_should_be": "Анализ опирается на APM, профайлеры и анализ запросов, а логи дают лишь часть картины."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Bottleneck analysis ищет, что ограничивает performance: CPU (→ скейлить CPU или оптимизировать код), память (→ RAM, GC tuning), сеть (→ bandwidth, размер connection pool), БД (→ индексы, запросы, pool), disk I/O (→ SSD, async writes), внешние API (→ кэширование, async). Инструменты: APM (Datadog, New Relic, Honeycomb), профайлеры (`pprof`, async-profiler), анализ запросов (`EXPLAIN ANALYZE`), сетевой мониторинг. Работают итеративно: load test → найти узкое место → оптимизировать → повторить.",
+              "correct": true,
+              "sections": {
+                "explanation": "Под нагрузкой всегда есть один лимитирующий ресурс; задача — найти его по метрикам и устранить, затем тест выявит следующий — так система последовательно «расшивается».",
+                "example": "Load test показывает рост latency при 300 RPS; APM и `EXPLAIN ANALYZE` выявляют seq scan в горячем запросе, добавляешь индекс — следующий прогон упирается уже в connection pool, который и увеличиваешь.",
+                "when_to_apply": "Применяют итеративно после каждого нагрузочного прогона: устранил одно узкое место — измеряешь снова, потому что предел сдвигается на следующий ресурс.",
+                "edge_cases": "Иногда узкое место — сам генератор нагрузки или сеть до него, а не SUT: если CPU на load-агенте упёрся в 100%, метрики latency искажаются, и нужно распределять нагрузку.",
+                "related": "[[load-testing-interview#Q4]] CPU/Memory как метрики; [[load-testing-interview#Q16]] capacity planning; [[load-testing-interview#Q3]] tuning как цель нагрузочного теста."
               }
             }
           ]
@@ -1031,18 +1031,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Нет, тестировать в production нельзя ни при каких условиях — это всегда недопустимо.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Тестировать в проде **можно**, но аккуратно: shadow traffic, canary load tests, off-hours, в связке с chaos engineering — staging никогда не совпадает с прод-условиями.",
-                "source_of_confusion": "Риск задеть реальных пользователей звучит как абсолютный запрет.",
-                "if_it_were_true": "Если бы прод-тесты были запрещены, Netflix не гонял бы постоянные нагрузочные тесты в production через chaos engineering.",
-                "how_it_should_be": "Прод-тестирование допустимо при осторожных подходах и нужно для настоящей валидации, которой staging не даёт."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Да — но осторожно. Подходы: shadow traffic (зеркалирование прод-трафика в staging), canary load tests (малый % прод-трафика), off-hours testing (когда impact ниже), комбинация с chaos engineering. Главный риск — задеть реальных пользователей. Прод-тесты важны для настоящей валидации, потому что staging никогда не совпадает с прод-условиями.",
               "correct": true,
               "sections": {
@@ -1054,20 +1042,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Прод-тестировать можно, и shadow traffic означает отправку нагрузки сразу всем реальным пользователям в полном объёме.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Shadow traffic — это **зеркалирование** прод-трафика в staging/копию без воздействия на реальных пользователей, а не удвоение нагрузки на них.",
-                "source_of_confusion": "Слово «traffic» наводит на мысль о реальных пользователях, получающих двойную нагрузку.",
-                "if_it_were_true": "Если бы shadow traffic бил по реальным пользователям, он не считался бы безопасным способом прод-валидации.",
-                "how_it_should_be": "Shadow traffic дублирует запросы в теневую среду для анализа, не затрагивая боевых пользователей."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Прод-тесты безопаснее всего запускать в пиковые часы, когда система и так под максимальной нагрузкой.",
               "correct": false,
               "sections": {
@@ -1075,6 +1051,30 @@
                 "source_of_confusion": "Кажется логичным «проверять под пиком», ведь именно его и боятся.",
                 "if_it_were_true": "Если бы пик был безопасным окном, не выделяли бы off-hours как отдельный подход к снижению риска.",
                 "how_it_should_be": "Прод-нагрузку гонят в часы низкого трафика (off-hours), а не поверх естественного пика."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Нет, тестировать в production нельзя ни при каких условиях — это всегда недопустимо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тестировать в проде **можно**, но аккуратно: shadow traffic, canary load tests, off-hours, в связке с chaos engineering — staging никогда не совпадает с прод-условиями.",
+                "source_of_confusion": "Риск задеть реальных пользователей звучит как абсолютный запрет.",
+                "if_it_were_true": "Если бы прод-тесты были запрещены, Netflix не гонял бы постоянные нагрузочные тесты в production через chaos engineering.",
+                "how_it_should_be": "Прод-тестирование допустимо при осторожных подходах и нужно для настоящей валидации, которой staging не даёт."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Прод-тестировать можно, и shadow traffic означает отправку нагрузки сразу всем реальным пользователям в полном объёме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Shadow traffic — это **зеркалирование** прод-трафика в staging/копию без воздействия на реальных пользователей, а не удвоение нагрузки на них.",
+                "source_of_confusion": "Слово «traffic» наводит на мысль о реальных пользователях, получающих двойную нагрузку.",
+                "if_it_were_true": "Если бы shadow traffic бил по реальным пользователям, он не считался бы безопасным способом прод-валидации.",
+                "how_it_should_be": "Shadow traffic дублирует запросы в теневую среду для анализа, не затрагивая боевых пользователей."
               }
             }
           ]
@@ -1091,30 +1091,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Realistic scenario — это когда все виртуальные пользователи параллельно и без пауз бьют в самый нагруженный эндпоинт: так тест воспроизводит худший случай и создаёт максимально «реальную» пиковую нагрузку. Разные эндпоинты и flow-ы только размывают картину и мешают найти узкое место.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это как раз плохой сценарий: реалистичный моделирует несколько эндпоинтов пропорционально реальному использованию, с разными данными, think time и flow-ами login → browse → action.",
-                "source_of_confusion": "Один эндпоинт проще скриптовать, поэтому его принимают за достаточный тест.",
-                "if_it_were_true": "Если бы хватало одного эндпоинта, тест не отражал бы реальную смесь нагрузки и прогрел бы лишь один кэш.",
-                "how_it_should_be": "Реалистичный сценарий распределяет нагрузку по эндпоинтам пропорционально реальному трафику, а не долбит один."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Realistic scenario моделирует несколько эндпоинтов и разные данные, но think time (`sleep`) в него включать не нужно: паузы занижают нагрузку, а цель теста — прогнать максимум запросов, поэтому VU шлёт следующий запрос сразу после ответа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Реальные пользователи делают паузы между действиями, поэтому realistic think times (`sleep`) обязательны, иначе получаешь нереалистичный burst.",
-                "source_of_confusion": "Хочется «нагрузить посильнее», поэтому паузы выбрасывают.",
-                "if_it_were_true": "Если бы think time был не нужен, тест без пауз совпадал бы с реальностью, но он создаёт искусственный всплеск.",
-                "how_it_should_be": "Realistic scenario включает think time через `sleep`, моделируя паузы реальных пользователей."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Realistic scenario моделирует реальное поведение: несколько эндпоинтов пропорционально реальному usage, реалистичные данные (разные user IDs и payloads), realistic think times (`sleep`), flow-ы login → browse → action, session state на каждый VU. Плохой сценарий — все VUs долбят один эндпоинт. Источники реализма: запись реального трафика и replay (JMeter HTTP recorder), прод-логи для вывода паттернов нагрузки, аналитика user journey для скриптования частых flow.",
               "correct": true,
               "sections": {
@@ -1126,8 +1102,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Реалистичные данные в сценарии — это фиксированный набор: один и тот же user ID и одинаковый payload на всех VUs, чтобы результаты были воспроизводимыми, а отладка теста проще. Разные ID только добавляют шум и мешают сравнивать прогоны между собой.",
               "correct": false,
               "sections": {
@@ -1135,6 +1111,30 @@
                 "source_of_confusion": "Единый ID удобнее в скрипте, поэтому его выдают за норму.",
                 "if_it_were_true": "Если бы один ID был реалистичен, прод-кэш вёл бы себя как при единственном пользователе, что неверно.",
                 "how_it_should_be": "Realistic scenario использует разнообразные ID и payloads, а одинаковый ID для всех — типичная ошибка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Realistic scenario — это когда все виртуальные пользователи параллельно и без пауз бьют в самый нагруженный эндпоинт: так тест воспроизводит худший случай и создаёт максимально «реальную» пиковую нагрузку. Разные эндпоинты и flow-ы только размывают картину и мешают найти узкое место.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это как раз плохой сценарий: реалистичный моделирует несколько эндпоинтов пропорционально реальному использованию, с разными данными, think time и flow-ами login → browse → action.",
+                "source_of_confusion": "Один эндпоинт проще скриптовать, поэтому его принимают за достаточный тест.",
+                "if_it_were_true": "Если бы хватало одного эндпоинта, тест не отражал бы реальную смесь нагрузки и прогрел бы лишь один кэш.",
+                "how_it_should_be": "Реалистичный сценарий распределяет нагрузку по эндпоинтам пропорционально реальному трафику, а не долбит один."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Realistic scenario моделирует несколько эндпоинтов и разные данные, но think time (`sleep`) в него включать не нужно: паузы занижают нагрузку, а цель теста — прогнать максимум запросов, поэтому VU шлёт следующий запрос сразу после ответа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальные пользователи делают паузы между действиями, поэтому realistic think times (`sleep`) обязательны, иначе получаешь нереалистичный burst.",
+                "source_of_confusion": "Хочется «нагрузить посильнее», поэтому паузы выбрасывают.",
+                "if_it_were_true": "Если бы think time был не нужен, тест без пауз совпадал бы с реальностью, но он создаёт искусственный всплеск.",
+                "how_it_should_be": "Realistic scenario включает think time через `sleep`, моделируя паузы реальных пользователей."
               }
             }
           ]
@@ -1151,18 +1151,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Load testing в CI/CD — это полный многочасовой нагрузочный прогон на каждый pull request: только так ловишь все регрессии до merge. Быстрые smoke-проверки не годятся, потому что не покрывают весь профиль нагрузки, поэтому тяжёлый suite вешают именно на PR-триггер.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На PR-сборках делают быстрый smoke (5-10 мин), а полный нагрузочный прогон выносят на nightly и pre-release — иначе пайплайн становится неприемлемо медленным.",
-                "source_of_confusion": "Хочется максимума проверок на каждом PR, поэтому туда тянут и тяжёлые тесты.",
-                "if_it_were_true": "Если бы полный тест шёл на каждый PR, разработчики ждали бы часы на каждый коммит.",
-                "how_it_should_be": "PR — quick smoke (5-10 мин), полный load test — nightly и pre-release; разные стадии под разный объём."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Load test в CI встраивают через готовый action, но pass/fail-критериев у него быть не должно: тест лишь собирает метрики (latency, RPS, errors) и отправляет их на дашборд для ручного анализа. Ломать сборку по порогам нельзя, иначе шум нагрузки будет постоянно валить пайплайн.",
               "correct": false,
               "sections": {
@@ -1170,6 +1158,19 @@
                 "source_of_confusion": "Кажется, что нагрузочный тест — это только сбор метрик, как мониторинг.",
                 "if_it_were_true": "Если бы порогов не было, performance-регрессия проходила бы в прод незамеченной.",
                 "how_it_should_be": "В CI load test задают thresholds, чтобы регрессия автоматически ломала сборку."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Load testing встраивают в CI/CD через готовые actions: в GitHub Actions — `grafana/k6-action` с `filename: tests/api-load-test.js` и флагами `--vus 50 --duration 5m`, а шаг при `failure()` сигналит о performance-регрессии. Паттерны: PR-сборки — быстрый smoke (5-10 мин), nightly — полный load test, pre-release — comprehensive performance suite, production — периодический synthetic monitoring.",
+              "correct": true,
+              "sections": {
+                "explanation": "CI-интеграция делает производительность частью гейта: thresholds возвращают non-zero exit, и регрессия останавливает merge так же, как падающий unit-тест, без ручного запуска.",
+                "example": "В пайплайне: на PR гоняешь `k6 run` 50 VUs / 5m как smoke; ночью — полный прогон с боевым профилем нагрузки; перед релизом — расширенный suite со всеми сценариями.",
+                "when_to_apply": "Применяют для непрерывного контроля performance: лёгкие проверки на каждый PR и тяжёлые — на nightly/pre-release, чтобы ловить деградацию до прода.",
+                "edge_cases": "Flaky-результаты ломают пайплайн: на shared CI-раннерах нагрузочный тест шумит из-за соседей, поэтому пороги делают чуть мягче или гоняют на выделенных агентах, чтобы не было ложных падений.",
+                "related": "[[load-testing-interview#Q14]] thresholds как механизм pass/fail; [[load-testing-interview#Q8]] k6 как CI/CD-friendly; [[load-testing-interview#Q18]] synthetic monitoring в production."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Load testing встраивают в CI/CD через готовые actions: в GitHub Actions — `grafana/k6-action` с `filename: tests/api-load-test.js` и флагами `--vus 50 --duration 5m`, а шаг при `failure()` сигналит о performance-регрессии. Паттерны: PR-сборки — быстрый smoke (5-10 мин), nightly — полный load test, pre-release — comprehensive performance suite, production — периодический synthetic monitoring.",
-              "correct": true,
+              "text": "Load testing в CI/CD — это полный многочасовой нагрузочный прогон на каждый pull request: только так ловишь все регрессии до merge. Быстрые smoke-проверки не годятся, потому что не покрывают весь профиль нагрузки, поэтому тяжёлый suite вешают именно на PR-триггер.",
+              "correct": false,
               "sections": {
-                "explanation": "CI-интеграция делает производительность частью гейта: thresholds возвращают non-zero exit, и регрессия останавливает merge так же, как падающий unit-тест, без ручного запуска.",
-                "example": "В пайплайне: на PR гоняешь `k6 run` 50 VUs / 5m как smoke; ночью — полный прогон с боевым профилем нагрузки; перед релизом — расширенный suite со всеми сценариями.",
-                "when_to_apply": "Применяют для непрерывного контроля performance: лёгкие проверки на каждый PR и тяжёлые — на nightly/pre-release, чтобы ловить деградацию до прода.",
-                "edge_cases": "Flaky-результаты ломают пайплайн: на shared CI-раннерах нагрузочный тест шумит из-за соседей, поэтому пороги делают чуть мягче или гоняют на выделенных агентах, чтобы не было ложных падений.",
-                "related": "[[load-testing-interview#Q14]] thresholds как механизм pass/fail; [[load-testing-interview#Q8]] k6 как CI/CD-friendly; [[load-testing-interview#Q18]] synthetic monitoring в production."
+                "what_actually": "На PR-сборках делают быстрый smoke (5-10 мин), а полный нагрузочный прогон выносят на nightly и pre-release — иначе пайплайн становится неприемлемо медленным.",
+                "source_of_confusion": "Хочется максимума проверок на каждом PR, поэтому туда тянут и тяжёлые тесты.",
+                "if_it_were_true": "Если бы полный тест шёл на каждый PR, разработчики ждали бы часы на каждый коммит.",
+                "how_it_should_be": "PR — quick smoke (5-10 мин), полный load test — nightly и pre-release; разные стадии под разный объём."
               }
             }
           ]
@@ -1211,6 +1211,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Единственная значимая ошибка нагрузочного теста — недостаточный warm-up: если прогреть JIT и connection pools, остальные факторы (think time, регион генератора, кэширование, percentiles) на результат уже не влияют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ошибок много и они разнородны: happy-path only, нереалистичные данные, отсутствие think time, тест из того же региона, искажение кэшем, отсутствие baselines и игнор percentiles.",
+                "source_of_confusion": "Хочется свести список к одной запоминающейся причине.",
+                "if_it_were_true": "Если бы дело было только в «слишком большой нагрузке», корректный тест не зависел бы от данных, региона и warm-up.",
+                "how_it_should_be": "Common mistakes — это целый набор: данные, think time, регион, кэш, baselines, percentiles, coordinated omission."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Частые ошибки: тестировать только happy path (error-сценарии тоже важны); нереалистичные данные (один user ID для всех); отсутствие think time (нереалистичный burst); тест из того же региона, что и сервер (нет network latency); искажение кэшированием (dev закэширован, prod cold); недостаточный warm-up (JIT, connection pools); отсутствие baselines (не с чем сравнивать); one-shot тесты (нужна consistency во времени); игнорирование percentiles (проверка только средних); coordinated omission.",
               "correct": true,
               "sections": {
@@ -1219,18 +1231,6 @@
                 "when_to_apply": "Этот чек-лист применяют при ревью нагрузочных тестов: проверяют данные, think time, регион, warm-up, baselines и percentiles, чтобы результаты были репрезентативны.",
                 "edge_cases": "Ошибки часто маскируют друг друга: cold cache и отсутствие warm-up завышают latency, а тест из того же региона его занижает, и в сумме результат может случайно «сойтись» с прод-числами по неверным причинам.",
                 "related": "[[load-testing-interview#Q5]] игнорирование percentiles; [[load-testing-interview#Q19]] нереалистичные сценарии; [[load-testing-interview#Q22]] coordinated omission."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Единственная значимая ошибка нагрузочного теста — недостаточный warm-up: если прогреть JIT и connection pools, остальные факторы (think time, регион генератора, кэширование, percentiles) на результат уже не влияют.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ошибок много и они разнородны: happy-path only, нереалистичные данные, отсутствие think time, тест из того же региона, искажение кэшем, отсутствие baselines и игнор percentiles.",
-                "source_of_confusion": "Хочется свести список к одной запоминающейся причине.",
-                "if_it_were_true": "Если бы дело было только в «слишком большой нагрузке», корректный тест не зависел бы от данных, региона и warm-up.",
-                "how_it_should_be": "Common mistakes — это целый набор: данные, think time, регион, кэш, baselines, percentiles, coordinated omission."
               }
             },
             {
@@ -1271,18 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Coordinated omission — это когда параллельные VU синхронизируют свои таймеры и одновременно бьют по системе всплесками, из-за чего график throughput выглядит рваным.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Coordinated omission — это когда инструмент **замедляется** вслед за медленной системой и потому **недооценивает** latency, а не дублирование запросов.",
-                "source_of_confusion": "Слово «coordinated» наводит на координацию между генераторами.",
-                "if_it_were_true": "Если бы дело было в дублях, проблема решалась бы дедупликацией, а не constant arrival rate.",
-                "how_it_should_be": "Coordinated omission — это занижение latency из-за того, что тул ждёт медленную систему, а не дубли запросов."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Coordinated omission — это когда инструмент нагрузки замедляется, если система тормозит, и из-за этого недооценивает latency. Пример: план 1000 RPS (запросы через 1 ms); система тормозит, запрос занимает 1 секунду; тул ждёт и шлёт следующий лишь через 1.001 с — и пропускает всплеск latency. В итоге percentile-latency выглядят лучше реальности. Решения: инструменты с constant arrival rate (k6 executor `constant-arrival-rate`), HdrHistogram-коррекции, синтетическая инъекция нагрузки (не ждать предыдущий запрос).",
               "correct": true,
               "sections": {
@@ -1291,6 +1279,18 @@
                 "when_to_apply": "Учитывают при выборе модели нагрузки: для честных хвостовых percentile берут constant arrival rate (open model) и HdrHistogram, а не closed-loop, ждущий предыдущий ответ.",
                 "edge_cases": "Open-model arrival rate, наоборот, может перегрузить уже упавшую систему лавиной запросов (retry storm) — это честнее отражает реальность, но требует осторожности на хрупких сервисах.",
                 "related": "[[load-testing-interview#Q5]] percentiles, которые искажает omission; [[load-testing-interview#Q21]] coordinated omission в списке ошибок; [[load-testing-interview#Q8]] k6 executor constant-arrival-rate."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Coordinated omission устраняют, увеличивая think time между запросами: давая системе больше пауз, тул успевает зафиксировать каждый медленный ответ, и хвост latency перестаёт теряться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Решение — constant arrival rate (open model, k6 `constant-arrival-rate`), HdrHistogram-коррекции и синтетическая инъекция, а не увеличение пауз.",
+                "source_of_confusion": "Кажется, что «дать системе передышку» уберёт искажение.",
+                "if_it_were_true": "Если бы помогал больший think time, проблема исчезала бы сама, но closed-loop всё равно ждал бы предыдущий ответ.",
+                "how_it_should_be": "Против omission применяют open-model нагрузку с фиксированным arrival rate и HdrHistogram, а не увеличение think time."
               }
             },
             {
@@ -1308,13 +1308,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Coordinated omission устраняют, увеличивая think time между запросами: давая системе больше пауз, тул успевает зафиксировать каждый медленный ответ, и хвост latency перестаёт теряться.",
+              "text": "Coordinated omission — это когда параллельные VU синхронизируют свои таймеры и одновременно бьют по системе всплесками, из-за чего график throughput выглядит рваным.",
               "correct": false,
               "sections": {
-                "what_actually": "Решение — constant arrival rate (open model, k6 `constant-arrival-rate`), HdrHistogram-коррекции и синтетическая инъекция, а не увеличение пауз.",
-                "source_of_confusion": "Кажется, что «дать системе передышку» уберёт искажение.",
-                "if_it_were_true": "Если бы помогал больший think time, проблема исчезала бы сама, но closed-loop всё равно ждал бы предыдущий ответ.",
-                "how_it_should_be": "Против omission применяют open-model нагрузку с фиксированным arrival rate и HdrHistogram, а не увеличение think time."
+                "what_actually": "Coordinated omission — это когда инструмент **замедляется** вслед за медленной системой и потому **недооценивает** latency, а не дублирование запросов.",
+                "source_of_confusion": "Слово «coordinated» наводит на координацию между генераторами.",
+                "if_it_were_true": "Если бы дело было в дублях, проблема решалась бы дедупликацией, а не constant arrival rate.",
+                "how_it_should_be": "Coordinated omission — это занижение latency из-за того, что тул ждёт медленную систему, а не дубли запросов."
               }
             }
           ]

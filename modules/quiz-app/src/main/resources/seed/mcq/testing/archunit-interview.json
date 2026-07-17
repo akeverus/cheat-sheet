@@ -23,18 +23,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Загруженные в JVM классы через reflection",
-              "correct": false,
-              "sections": {
-                "what_actually": "Reflection (`Class.forName`, `getDeclaredMethods`) инспектирует уже загруженные classloader-ом классы в рантайме; ArchUnit намеренно так не делает, чтобы не выполнять и не инициализировать чужой код.",
-                "source_of_confusion": "И reflection, и ArchUnit оперируют структурой классов (методы, поля, аннотации), поэтому источник данных легко перепутать.",
-                "if_it_were_true": "Тогда для анализа пришлось бы загрузить все классы в JVM, выполнять статические инициализаторы и тащить весь рантайм-classpath с зависимостями.",
-                "how_it_should_be": "ArchUnit статически разбирает `.class`-файлы своим импортёром, не загружая классы в JVM."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Скомпилированный байт-код (`.class`-файлы) проекта",
               "correct": true,
               "sections": {
@@ -46,8 +34,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Сериализованную модель из `.archunit`-файлов",
               "correct": false,
               "sections": {
@@ -55,6 +43,18 @@
                 "source_of_confusion": "FreezingArchRule действительно работает с файлом в репозитории, и легко решить, что из него же ArchUnit и берёт классы.",
                 "if_it_were_true": "Тогда модель приходилось бы заранее экспортировать в отдельный формат, и обычное правило не работало бы без предварительного снимка.",
                 "how_it_should_be": "Модель строится на лету из байт-кода при каждом запуске; файл нарушений — отдельный механизм фриза легаси."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Загруженные в JVM классы через reflection",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reflection (`Class.forName`, `getDeclaredMethods`) инспектирует уже загруженные classloader-ом классы в рантайме; ArchUnit намеренно так не делает, чтобы не выполнять и не инициализировать чужой код.",
+                "source_of_confusion": "И reflection, и ArchUnit оперируют структурой классов (методы, поля, аннотации), поэтому источник данных легко перепутать.",
+                "if_it_were_true": "Тогда для анализа пришлось бы загрузить все классы в JVM, выполнять статические инициализаторы и тащить весь рантайм-classpath с зависимостями.",
+                "how_it_should_be": "ArchUnit статически разбирает `.class`-файлы своим импортёром, не загружая классы в JVM."
               }
             }
           ]
@@ -71,19 +71,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`boolean includes(Location location)`",
-              "correct": true,
-              "sections": {
-                "explanation": "Интерфейс `ImportOption` объявляет единственный метод `boolean includes(Location location)`: для каждой локации байт-кода он возвращает `true`, если класс попадёт в модель, и `false`, если его нужно отфильтровать. Своя реализация даёт полный контроль над тем, какие `.class`-файлы импортируются.",
-                "example": "`new ClassFileImporter().withImportOption(loc -> !loc.contains(\"/generated/\")).importPackages(\"com.myapp\")` — лямбда отбрасывает локации с сегментом generated.",
-                "when_to_apply": "Когда предопределённых опций (`DO_NOT_INCLUDE_TESTS`, `DO_NOT_INCLUDE_JARS`) не хватает: исключить сгенерированный код, MapStruct-мапперы, Lombok-классы или специфичные каталоги сборки.",
-                "edge_cases": "Фильтр работает по расположению байт-кода (`Location`), а не по имени класса; если генерированные классы лежат вместе с обычными в одном каталоге, по пути их не отделить.",
-                "related": "Предопределённые `ImportOption.Predefined.*` — это готовые реализации того же интерфейса; своя опция комбинируется с ними через повторный `withImportOption(...)`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`boolean accepts(Location location)`",
               "correct": false,
               "sections": {
@@ -91,6 +78,18 @@
                 "source_of_confusion": "`accepts`/`accept` — привычное имя для предикатов-фильтров в Java, поэтому легко подставить его вместо реального `includes`.",
                 "if_it_were_true": "Если бы метод назывался `accepts`, лямбда `loc -> ...` всё равно работала бы как функциональный интерфейс, но прямая реализация через `@Override` не скомпилировалась бы против `ImportOption`.",
                 "how_it_should_be": "Реализуйте `boolean includes(Location location)` — именно это имя объявлено в `ImportOption`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`boolean includes(ImportOptions options)`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ImportOptions` — это контейнер набора опций, а не аргумент метода фильтрации; одна `ImportOption` решает судьбу одной локации и не получает на вход весь набор.",
+                "source_of_confusion": "Имена `ImportOption` и `ImportOptions` отличаются одной буквой, и легко принять множественную форму за тип параметра метода.",
+                "if_it_were_true": "Если бы метод принимал `ImportOptions`, каждая опция видела бы соседей — это смешало бы ответственность и сделало фильтры зависимыми друг от друга.",
+                "how_it_should_be": "Метод принимает `Location location` — одну локацию байт-кода; `ImportOptions` лишь агрегирует несколько `ImportOption`."
               }
             },
             {
@@ -108,13 +107,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`boolean includes(ImportOptions options)`",
-              "correct": false,
+              "text": "`boolean includes(Location location)`",
+              "correct": true,
               "sections": {
-                "what_actually": "`ImportOptions` — это контейнер набора опций, а не аргумент метода фильтрации; одна `ImportOption` решает судьбу одной локации и не получает на вход весь набор.",
-                "source_of_confusion": "Имена `ImportOption` и `ImportOptions` отличаются одной буквой, и легко принять множественную форму за тип параметра метода.",
-                "if_it_were_true": "Если бы метод принимал `ImportOptions`, каждая опция видела бы соседей — это смешало бы ответственность и сделало фильтры зависимыми друг от друга.",
-                "how_it_should_be": "Метод принимает `Location location` — одну локацию байт-кода; `ImportOptions` лишь агрегирует несколько `ImportOption`."
+                "explanation": "Интерфейс `ImportOption` объявляет единственный метод `boolean includes(Location location)`: для каждой локации байт-кода он возвращает `true`, если класс попадёт в модель, и `false`, если его нужно отфильтровать. Своя реализация даёт полный контроль над тем, какие `.class`-файлы импортируются.",
+                "example": "`new ClassFileImporter().withImportOption(loc -> !loc.contains(\"/generated/\")).importPackages(\"com.myapp\")` — лямбда отбрасывает локации с сегментом generated.",
+                "when_to_apply": "Когда предопределённых опций (`DO_NOT_INCLUDE_TESTS`, `DO_NOT_INCLUDE_JARS`) не хватает: исключить сгенерированный код, MapStruct-мапперы, Lombok-классы или специфичные каталоги сборки.",
+                "edge_cases": "Фильтр работает по расположению байт-кода (`Location`), а не по имени класса; если генерированные классы лежат вместе с обычными в одном каталоге, по пути их не отделить.",
+                "related": "Предопределённые `ImportOption.Predefined.*` — это готовые реализации того же интерфейса; своя опция комбинируется с ними через повторный `withImportOption(...)`."
               }
             }
           ]
@@ -143,18 +143,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Хотя бы один класс из множества A должен удовлетворять условию B",
-              "correct": false,
-              "sections": {
-                "what_actually": "В ArchUnit нет фабрики с семантикой «существует хотя бы один»; правила квантифицируют либо «все», либо «ни один».",
-                "source_of_confusion": "Кажется, что инверсия `no` даёт экзистенциальный квантор, но на деле она инвертирует именно ожидание, а не «все» на «существует».",
-                "if_it_were_true": "Тогда правило проходило бы при единственном совпадении и не ловило бы остальные нарушения границ.",
-                "how_it_should_be": "`noClasses()` требует, чтобы НИ ОДИН класс из A не удовлетворял B, а не чтобы один удовлетворял."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Ни один класс вне множества A не должен удовлетворять условию B",
               "correct": false,
               "sections": {
@@ -165,8 +153,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Ни один класс из множества A не должен удовлетворять условию B",
               "correct": true,
               "sections": {
@@ -175,6 +163,18 @@
                 "when_to_apply": "Когда формулируете запрет границы: «persistence не знает об api», «контроллеры не ходят в репозитории напрямую», «домен не зависит от Spring».",
                 "edge_cases": "Если `that()` не нашёл ни одного класса, в новых версиях это считается ошибкой конфигурации; снять можно через `.allowEmptyShould(true)`.",
                 "related": "Парная фабрика `classes()` задаёт противоположную семантику «все из A обязаны B»; обе живут в `ArchRuleDefinition` рядом с `methods()`, `fields()`, `constructors()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Хотя бы один класс из множества A должен удовлетворять условию B",
+              "correct": false,
+              "sections": {
+                "what_actually": "В ArchUnit нет фабрики с семантикой «существует хотя бы один»; правила квантифицируют либо «все», либо «ни один».",
+                "source_of_confusion": "Кажется, что инверсия `no` даёт экзистенциальный квантор, но на деле она инвертирует именно ожидание, а не «все» на «существует».",
+                "if_it_were_true": "Тогда правило проходило бы при единственном совпадении и не ловило бы остальные нарушения границ.",
+                "how_it_should_be": "`noClasses()` требует, чтобы НИ ОДИН класс из A не удовлетворял B, а не чтобы один удовлетворял."
               }
             }
           ]
@@ -191,18 +191,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Завершить цепочку методом `whereLayer(\"Controller\").mayOnlyBeAccessedByLayers()`",
-              "correct": false,
-              "sections": {
-                "what_actually": "`mayOnlyBeAccessedByLayers(...)` ограничивает входящие обращения перечисленными слоями-источниками и требует хотя бы один аргумент с именем слоя.",
-                "source_of_confusion": "Оба метода описывают входящие обращения к слою, поэтому их легко перепутать; разница в том, разрешён доступ кому-то или запрещён всем.",
-                "if_it_were_true": "Вызов без аргументов означал бы «доступ разрешён пустому списку слоёв» — по смыслу это и есть «никому», но в API так верхний слой не объявляют, метод ждёт имена.",
-                "how_it_should_be": "Для верхнего слоя без входящих обращений нужен `mayNotBeAccessedByAnyLayer()`; `mayOnlyBeAccessedByLayers(\"Controller\")` ставят на слои ниже, перечисляя разрешённые источники."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Завершить цепочку методом `whereLayer(\"Controller\").mayNotBeAccessedByAnyLayer()`",
               "correct": true,
               "sections": {
@@ -211,6 +199,18 @@
                 "when_to_apply": "Когда слой — точка входа (контроллеры, web-адаптеры) и архитектурно не должен быть зависимостью других слоёв; обращения к нему изнутри — это нарушение направления потока управления.",
                 "edge_cases": "Если позже появится тест-слой или планировщик, который легитимно дёргает контроллер, придётся либо переописать его как отдельный слой с доступом, либо вынести общий код вниз — `mayNotBeAccessedByAnyLayer()` исключений не допускает.",
                 "related": "Парный метод — `whereLayer(...).mayOnlyBeAccessedByLayers(...)`, перечисляющий конкретные слои-источники; вместе они задают полную матрицу разрешённых входящих обращений в `layeredArchitecture()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Завершить цепочку методом `whereLayer(\"Controller\").mayOnlyAccessLayers()`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`mayOnlyAccessLayers(...)` ограничивает исходящие зависимости слоя: к каким слоям он сам может обращаться, и принимает их имена аргументами.",
+                "source_of_confusion": "Метод реально существует в API и стоит рядом в цепочке `whereLayer`, поэтому легко взять его вместо нужного, не заметив смены направления на исходящее.",
+                "if_it_were_true": "Без аргументов это означало бы «контроллер не может обращаться ни к одному слою», что запретило бы ему звать `Service` — прямо противоположно нужной слойке.",
+                "how_it_should_be": "`mayOnlyAccessLayers(\"Service\")` применяют, когда удобнее описать исходящие связи; для верхнего слоя без входящих обращений берут `mayNotBeAccessedByAnyLayer()`."
               }
             },
             {
@@ -228,13 +228,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Завершить цепочку методом `whereLayer(\"Controller\").mayOnlyAccessLayers()`",
+              "text": "Завершить цепочку методом `whereLayer(\"Controller\").mayOnlyBeAccessedByLayers()`",
               "correct": false,
               "sections": {
-                "what_actually": "`mayOnlyAccessLayers(...)` ограничивает исходящие зависимости слоя: к каким слоям он сам может обращаться, и принимает их имена аргументами.",
-                "source_of_confusion": "Метод реально существует в API и стоит рядом в цепочке `whereLayer`, поэтому легко взять его вместо нужного, не заметив смены направления на исходящее.",
-                "if_it_were_true": "Без аргументов это означало бы «контроллер не может обращаться ни к одному слою», что запретило бы ему звать `Service` — прямо противоположно нужной слойке.",
-                "how_it_should_be": "`mayOnlyAccessLayers(\"Service\")` применяют, когда удобнее описать исходящие связи; для верхнего слоя без входящих обращений берут `mayNotBeAccessedByAnyLayer()`."
+                "what_actually": "`mayOnlyBeAccessedByLayers(...)` ограничивает входящие обращения перечисленными слоями-источниками и требует хотя бы один аргумент с именем слоя.",
+                "source_of_confusion": "Оба метода описывают входящие обращения к слою, поэтому их легко перепутать; разница в том, разрешён доступ кому-то или запрещён всем.",
+                "if_it_were_true": "Вызов без аргументов означал бы «доступ разрешён пустому списку слоёв» — по смыслу это и есть «никому», но в API так верхний слой не объявляют, метод ждёт имена.",
+                "how_it_should_be": "Для верхнего слоя без входящих обращений нужен `mayNotBeAccessedByAnyLayer()`; `mayOnlyBeAccessedByLayers(\"Controller\")` ставят на слои ниже, перечисляя разрешённые источники."
               }
             }
           ]
@@ -251,18 +251,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`onionArchitecture()` жёстко требует, чтобы зависимости были направлены наружу — от домена, который знает обо всех адаптерах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наружу направленные зависимости от домена к адаптерам — это как раз нарушение onion-архитектуры: домен оказался бы связан с инфраструктурой.",
-                "source_of_confusion": "Легко перепутать «внутрь» и «наружу», потому что слово «адаптеры по краям» создаёт впечатление, что домен тянется к ним.",
-                "if_it_were_true": "Если бы домен знал обо всех адаптерах, смысл onion терялся бы: ядро нельзя было бы тестировать и переиспользовать в отрыве от REST/persistence.",
-                "how_it_should_be": "Зависимости направлены внутрь — к домену; домен не знает ни о application, ни об адаптерах."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`onionArchitecture()` жёстко требует, чтобы зависимости были направлены сверху вниз — от домена к слою persistence.",
               "correct": false,
               "sections": {
@@ -273,8 +261,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`onionArchitecture()` жёстко требует, чтобы зависимости были направлены к application — слою, от которого домен не знает ничего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Центром onion является домен, а не application: именно `domainModels`/`domainServices` не зависят от application, а не наоборот.",
+                "source_of_confusion": "Application-сервисы пользуются доменом, поэтому кажется, будто всё сходится к application как к центру.",
+                "if_it_were_true": "Если бы центром был application, домен зависел бы от прикладного слоя и перестал бы быть независимым ядром.",
+                "how_it_should_be": "Центр — домен; application-сервисы могут пользоваться доменом, но домен от application не зависит."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "`onionArchitecture()` жёстко требует, чтобы зависимости были направлены наружу — от домена, который знает обо всех адаптерах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наружу направленные зависимости от домена к адаптерам — это как раз нарушение onion-архитектуры: домен оказался бы связан с инфраструктурой.",
+                "source_of_confusion": "Легко перепутать «внутрь» и «наружу», потому что слово «адаптеры по краям» создаёт впечатление, что домен тянется к ним.",
+                "if_it_were_true": "Если бы домен знал обо всех адаптерах, смысл onion терялся бы: ядро нельзя было бы тестировать и переиспользовать в отрыве от REST/persistence.",
+                "how_it_should_be": "Зависимости направлены внутрь — к домену; домен не знает ни о application, ни об адаптерах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`onionArchitecture()` жёстко требует, чтобы зависимости были направлены внутрь — к домену, который не знает ни о чём.",
               "correct": true,
               "sections": {
@@ -283,18 +295,6 @@
                 "when_to_apply": "Применяют в DDD / hexagonal / clean architecture, когда нужно гарантировать центральное доменное ядро без ручного описания доступа каждого слоя.",
                 "edge_cases": "Адаптеры изолированы друг от друга: если REST-контроллер напрямую дёргает persistence-класс, правило это поймает — типичная причина утечки гексагональной архитектуры.",
                 "related": "Связано с `layeredArchitecture()` (Q4), где направление зависимостей описывается вручную через `whereLayer(...).mayOnlyBeAccessedByLayers(...)`, и с jMolecules-правилом `ensureOnionSimple()` (Q15)."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`onionArchitecture()` жёстко требует, чтобы зависимости были направлены к application — слою, от которого домен не знает ничего.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Центром onion является домен, а не application: именно `domainModels`/`domainServices` не зависят от application, а не наоборот.",
-                "source_of_confusion": "Application-сервисы пользуются доменом, поэтому кажется, будто всё сходится к application как к центру.",
-                "if_it_were_true": "Если бы центром был application, домен зависел бы от прикладного слоя и перестал бы быть независимым ядром.",
-                "how_it_should_be": "Центр — домен; application-сервисы могут пользоваться доменом, но домен от application не зависит."
               }
             }
           ]
@@ -311,14 +311,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`should().beFreeOfCycles()` — падает, если между срезами есть цикл",
-              "correct": true,
+              "text": "`should().beAcyclic()` — падает, если между срезами есть цикл",
+              "correct": false,
               "sections": {
-                "explanation": "Циклы между пакетами ArchUnit ищет через slices (срезы) из SlicesRuleDefinition. Терминальный предикат beFreeOfCycles() обходит граф зависимостей между срезами и помечает нарушением любую петлю, перечисляя все рёбра, образующие цикл.",
-                "example": "slices().matching(\"com.myapp.(*)..\").should().beFreeOfCycles(): если order → payment → notification → order, тест падает и отчёт показывает полную цепочку петли.",
-                "when_to_apply": "Первое правило при разбиении монолита на модули: страхует от появления новых циклов между подпакетами, которые ломают порядок сборки и мешают выделению модулей.",
-                "edge_cases": "Поиск циклов дороже простых правил — на больших проектах сужайте срез паттерном, а не всем classpath. Цикл может быть длинным (через 4-5 пакетов), ArchUnit найдёт и его.",
-                "related": "Срезы режутся по капчер-группе (*) в matching; (**) — рекурсивная группа для вложенного уровня; .namingSlices(\"$2 of $1\") задаёт человекочитаемые имена срезам в отчёте."
+                "what_actually": "Метода beAcyclic() в SlicesRuleDefinition нет. Это правдоподобно звучащее, но несуществующее имя; реальный предикат называется beFreeOfCycles().",
+                "source_of_confusion": "«Acyclic» — точный технический термин для графа без циклов, поэтому кажется естественным именем метода. ArchUnit же выбрал описательную формулировку beFreeOfCycles().",
+                "if_it_were_true": "Код slices().matching(...).should().beAcyclic() компилировался бы и проверял ровно то же самое, что и реальный beFreeOfCycles().",
+                "how_it_should_be": "Правильное имя терминального предиката — should().beFreeOfCycles(); beAcyclic() не скомпилируется."
               }
             },
             {
@@ -336,13 +335,14 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`should().beAcyclic()` — падает, если между срезами есть цикл",
-              "correct": false,
+              "text": "`should().beFreeOfCycles()` — падает, если между срезами есть цикл",
+              "correct": true,
               "sections": {
-                "what_actually": "Метода beAcyclic() в SlicesRuleDefinition нет. Это правдоподобно звучащее, но несуществующее имя; реальный предикат называется beFreeOfCycles().",
-                "source_of_confusion": "«Acyclic» — точный технический термин для графа без циклов, поэтому кажется естественным именем метода. ArchUnit же выбрал описательную формулировку beFreeOfCycles().",
-                "if_it_were_true": "Код slices().matching(...).should().beAcyclic() компилировался бы и проверял ровно то же самое, что и реальный beFreeOfCycles().",
-                "how_it_should_be": "Правильное имя терминального предиката — should().beFreeOfCycles(); beAcyclic() не скомпилируется."
+                "explanation": "Циклы между пакетами ArchUnit ищет через slices (срезы) из SlicesRuleDefinition. Терминальный предикат beFreeOfCycles() обходит граф зависимостей между срезами и помечает нарушением любую петлю, перечисляя все рёбра, образующие цикл.",
+                "example": "slices().matching(\"com.myapp.(*)..\").should().beFreeOfCycles(): если order → payment → notification → order, тест падает и отчёт показывает полную цепочку петли.",
+                "when_to_apply": "Первое правило при разбиении монолита на модули: страхует от появления новых циклов между подпакетами, которые ломают порядок сборки и мешают выделению модулей.",
+                "edge_cases": "Поиск циклов дороже простых правил — на больших проектах сужайте срез паттерном, а не всем classpath. Цикл может быть длинным (через 4-5 пакетов), ArchUnit найдёт и его.",
+                "related": "Срезы режутся по капчер-группе (*) в matching; (**) — рекурсивная группа для вложенного уровня; .namingSlices(\"$2 of $1\") задаёт человекочитаемые имена срезам в отчёте."
               }
             },
             {
@@ -371,30 +371,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Метод `haveSimpleNameEndingWith` сопоставляет имя класса регулярным выражением.",
-              "correct": false,
+              "text": "Метод `haveNameMatching` сопоставляет имя класса регулярным выражением.",
+              "correct": true,
               "sections": {
-                "what_actually": "`haveSimpleNameEndingWith` проверяет, что ПРОСТОЕ имя класса (без пакета) оканчивается на заданную строку-литерал, никакой regex здесь не разбирается.",
-                "source_of_confusion": "Тоже фильтрует классы по имени и часто стоит рядом в правилах naming-conventions, поэтому легко принять его за универсальный матчер по шаблону.",
-                "if_it_were_true": "Тогда строка вроде `\"er\"` интерпретировалась бы как regex и матчила бы куда больше классов, чем ожидается от суффикса; правила naming стали бы непредсказуемыми.",
-                "how_it_should_be": "Для regex по полному имени нужен `haveNameMatching`; `haveSimpleNameEndingWith` оставляют для буквального суффикса простого имени, например `\"Controller\"`."
+                "explanation": "`haveNameMatching` принимает regex и применяет его к полному имени класса (вместе с пакетом), а не только к простому имени. Это единственный из базовых name-предикатов, который работает по регулярному выражению, остальные сравнивают подстроку простого имени.",
+                "example": "`classes().that().haveNameMatching(\"..*Repository\").should()...` поймает все классы, чьё полное имя оканчивается на `Repository`; точка в regex матчит и разделитель пакета, поэтому шаблон работает по FQN.",
+                "when_to_apply": "Когда суффикса/префикса недостаточно: нужно сматчить и пакет, и имя одновременно, либо задать гибкий шаблон (например, классы из определённого пакета с определённым окончанием) одним выражением.",
+                "edge_cases": "Аргумент это именно regex, а не glob: символ `.` матчит любой знак, поэтому для буквальной точки нужен `\\\\.`. Матчинг идёт по ПОЛНОМУ имени, так что `\"Repository\"` без `.*` не сработает как «оканчивается на».",
+                "related": "Для простых случаев предпочтительнее точечные предикаты `haveSimpleNameEndingWith` / `haveSimpleNameStartingWith` / `haveSimpleNameContaining` по простому имени, а условия комбинируются через `.and()`, `.or()`, `.andShould()`, `.orShould()`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Метод `haveSimpleNameStartingWith` сопоставляет имя класса регулярным выражением.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`haveSimpleNameStartingWith` проверяет, что простое имя класса начинается с заданной строки-литерала; это сравнение префикса, а не разбор регулярного выражения.",
-                "source_of_confusion": "Симметричен `haveSimpleNameEndingWith` и тоже относится к name-предикатам, поэтому его путают с гибким шаблонным матчером.",
-                "if_it_were_true": "Спецсимволы regex (`.`, `*`, `..`) в аргументе меняли бы смысл проверки префикса, и правило ловило бы неожиданные классы вместо тех, что начинаются с нужной строки.",
-                "how_it_should_be": "Регулярное выражение по полному имени задаётся через `haveNameMatching`; `haveSimpleNameStartingWith` использовать для буквального префикса простого имени, например `\"Abstract\"`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Метод `haveSimpleNameContaining` сопоставляет имя класса регулярным выражением.",
               "correct": false,
               "sections": {
@@ -405,16 +394,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Метод `haveSimpleNameStartingWith` сопоставляет имя класса регулярным выражением.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`haveSimpleNameStartingWith` проверяет, что простое имя класса начинается с заданной строки-литерала; это сравнение префикса, а не разбор регулярного выражения.",
+                "source_of_confusion": "Симметричен `haveSimpleNameEndingWith` и тоже относится к name-предикатам, поэтому его путают с гибким шаблонным матчером.",
+                "if_it_were_true": "Спецсимволы regex (`.`, `*`, `..`) в аргументе меняли бы смысл проверки префикса, и правило ловило бы неожиданные классы вместо тех, что начинаются с нужной строки.",
+                "how_it_should_be": "Регулярное выражение по полному имени задаётся через `haveNameMatching`; `haveSimpleNameStartingWith` использовать для буквального префикса простого имени, например `\"Abstract\"`."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Метод `haveNameMatching` сопоставляет имя класса регулярным выражением.",
-              "correct": true,
+              "text": "Метод `haveSimpleNameEndingWith` сопоставляет имя класса регулярным выражением.",
+              "correct": false,
               "sections": {
-                "explanation": "`haveNameMatching` принимает regex и применяет его к полному имени класса (вместе с пакетом), а не только к простому имени. Это единственный из базовых name-предикатов, который работает по регулярному выражению, остальные сравнивают подстроку простого имени.",
-                "example": "`classes().that().haveNameMatching(\"..*Repository\").should()...` поймает все классы, чьё полное имя оканчивается на `Repository`; точка в regex матчит и разделитель пакета, поэтому шаблон работает по FQN.",
-                "when_to_apply": "Когда суффикса/префикса недостаточно: нужно сматчить и пакет, и имя одновременно, либо задать гибкий шаблон (например, классы из определённого пакета с определённым окончанием) одним выражением.",
-                "edge_cases": "Аргумент это именно regex, а не glob: символ `.` матчит любой знак, поэтому для буквальной точки нужен `\\\\.`. Матчинг идёт по ПОЛНОМУ имени, так что `\"Repository\"` без `.*` не сработает как «оканчивается на».",
-                "related": "Для простых случаев предпочтительнее точечные предикаты `haveSimpleNameEndingWith` / `haveSimpleNameStartingWith` / `haveSimpleNameContaining` по простому имени, а условия комбинируются через `.and()`, `.or()`, `.andShould()`, `.orShould()`."
+                "what_actually": "`haveSimpleNameEndingWith` проверяет, что ПРОСТОЕ имя класса (без пакета) оканчивается на заданную строку-литерал, никакой regex здесь не разбирается.",
+                "source_of_confusion": "Тоже фильтрует классы по имени и часто стоит рядом в правилах naming-conventions, поэтому легко принять его за универсальный матчер по шаблону.",
+                "if_it_were_true": "Тогда строка вроде `\"er\"` интерпретировалась бы как regex и матчила бы куда больше классов, чем ожидается от суффикса; правила naming стали бы непредсказуемыми.",
+                "how_it_should_be": "Для regex по полному имени нужен `haveNameMatching`; `haveSimpleNameEndingWith` оставляют для буквального суффикса простого имени, например `\"Controller\"`."
               }
             }
           ]
@@ -431,18 +431,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING`",
-              "correct": false,
-              "sections": {
-                "what_actually": "Реальная константа `GeneralCodingRules`, но она запрещает стандартное логирование JDK (`java.util.logging`), подталкивая к SLF4J, а не к контролю инъекции зависимостей.",
-                "source_of_confusion": "Та же группа `GeneralCodingRules` и тот же префикс `NO_CLASSES_SHOULD_USE_`, поэтому имена легко перепутать на слух.",
-                "if_it_were_true": "Тогда одно правило одновременно ловило бы и `java.util.logging`, и `@Autowired`-поля — это смешало бы два независимых соглашения в одной проверке.",
-                "how_it_should_be": "За field injection отвечает `NO_CLASSES_SHOULD_USE_FIELD_INJECTION`; `NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING` берут отдельно для запрета JUL."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`NO_CLASSES_SHOULD_USE_FIELD_INJECTION`",
               "correct": true,
               "sections": {
@@ -454,20 +442,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS`",
+              "order": 1,
+              "label": "B",
+              "text": "`NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING`",
               "correct": false,
               "sections": {
-                "what_actually": "Реальная константа `GeneralCodingRules`, но она запрещает обращение к `System.out`/`System.err`, чтобы вывод шёл через логгер, а не контролирует инъекцию полей.",
-                "source_of_confusion": "Снова та же группа и общий стиль имени `NO_CLASSES_SHOULD_...`, из-за чего её принимают за правило про инъекцию.",
-                "if_it_were_true": "Тогда обращение к `System.out` и field injection считались бы одним нарушением — две разные проблемы слились бы в одну ложную проверку.",
-                "how_it_should_be": "Для field injection нужна `NO_CLASSES_SHOULD_USE_FIELD_INJECTION`; `NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS` подключают, чтобы убрать `System.out`/`System.err`."
+                "what_actually": "Реальная константа `GeneralCodingRules`, но она запрещает стандартное логирование JDK (`java.util.logging`), подталкивая к SLF4J, а не к контролю инъекции зависимостей.",
+                "source_of_confusion": "Та же группа `GeneralCodingRules` и тот же префикс `NO_CLASSES_SHOULD_USE_`, поэтому имена легко перепутать на слух.",
+                "if_it_were_true": "Тогда одно правило одновременно ловило бы и `java.util.logging`, и `@Autowired`-поля — это смешало бы два независимых соглашения в одной проверке.",
+                "how_it_should_be": "За field injection отвечает `NO_CLASSES_SHOULD_USE_FIELD_INJECTION`; `NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING` берут отдельно для запрета JUL."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`NO_CLASSES_SHOULD_THROW_GENERIC_EXCEPTIONS`",
               "correct": false,
               "sections": {
@@ -475,6 +463,18 @@
                 "source_of_confusion": "Та же группа `GeneralCodingRules` с идентичным префиксом, поэтому константу легко спутать с правилом про инъекцию.",
                 "if_it_were_true": "Тогда выброс `new RuntimeException(...)` и `@Autowired`-поле трактовались бы одним правилом — несвязанные ограничения оказались бы под одним именем.",
                 "how_it_should_be": "Field injection ловит `NO_CLASSES_SHOULD_USE_FIELD_INJECTION`; `NO_CLASSES_SHOULD_THROW_GENERIC_EXCEPTIONS` отвечает за запрет общих исключений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS`",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальная константа `GeneralCodingRules`, но она запрещает обращение к `System.out`/`System.err`, чтобы вывод шёл через логгер, а не контролирует инъекцию полей.",
+                "source_of_confusion": "Снова та же группа и общий стиль имени `NO_CLASSES_SHOULD_...`, из-за чего её принимают за правило про инъекцию.",
+                "if_it_were_true": "Тогда обращение к `System.out` и field injection считались бы одним нарушением — две разные проблемы слились бы в одну ложную проверку.",
+                "how_it_should_be": "Для field injection нужна `NO_CLASSES_SHOULD_USE_FIELD_INJECTION`; `NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS` подключают, чтобы убрать `System.out`/`System.err`."
               }
             }
           ]
@@ -491,30 +491,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`evaluate(JavaClass item, ConditionEvents events)` — добавляет вердикты в `events`",
-              "correct": false,
-              "sections": {
-                "what_actually": "Метода `evaluate` в `ArchCondition` нет; абстрактный метод называется `check`. Слово `evaluate` встречается в других API проверки правил, но не как переопределяемый метод условия.",
-                "source_of_confusion": "`evaluate` интуитивно звучит как «вычислить условие», и в ряде валидационных библиотек методы действительно так названы, поэтому имя легко подставить по аналогии.",
-                "if_it_were_true": "Если бы метод назывался `evaluate`, компилятор не считал бы ваш класс корректной реализацией `ArchCondition` — абстрактный `check` остался бы непереопределённым и класс не скомпилировался бы.",
-                "how_it_should_be": "Переопределяйте именно `check(T item, ConditionEvents events)` — это единственный абстрактный метод `ArchCondition<T>`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`check(JavaClass item, ConditionEvents events)` — возвращает `boolean` результат",
-              "correct": false,
-              "sections": {
-                "what_actually": "`check` действительно существует, но он `void`: вердикт передаётся не через возвращаемое значение, а добавлением `SimpleConditionEvent` в коллектор `events`.",
-                "source_of_confusion": "Привычка к предикатам, где «проверка» возвращает `true/false`, подталкивает считать, что и `check` отдаёт булев результат вместо записи событий.",
-                "if_it_were_true": "Будь у `check` возврат `boolean`, нельзя было бы сообщить несколько нарушений с разными сообщениями за один проход и привязать каждое к своему элементу — терялась бы детализация отчёта.",
-                "how_it_should_be": "`check` ничего не возвращает; на каждое нарушение вызывайте `events.add(SimpleConditionEvent.violated(item, message))`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`check(JavaClass item, ConditionEvents events)` — добавляет вердикты в `events`",
               "correct": true,
               "sections": {
@@ -526,8 +502,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`check(JavaClass item, ConditionEvents events)` — добавляет вердикты в `item`",
               "correct": false,
               "sections": {
@@ -535,6 +511,30 @@
                 "source_of_confusion": "Оба параметра в сигнатуре, и легко перепутать роли: показалось, что результат «прикрепляется» к проверяемому классу, а не уходит во второй аргумент-коллектор.",
                 "if_it_were_true": "Если бы события писались в `item`, нарушения нельзя было бы собрать в единый отчёт правила — ArchUnit агрегирует именно содержимое `ConditionEvents` после обхода всех элементов.",
                 "how_it_should_be": "Складывайте вердикты во второй параметр: `events.add(SimpleConditionEvent.violated(item, message))`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`check(JavaClass item, ConditionEvents events)` — возвращает `boolean` результат",
+              "correct": false,
+              "sections": {
+                "what_actually": "`check` действительно существует, но он `void`: вердикт передаётся не через возвращаемое значение, а добавлением `SimpleConditionEvent` в коллектор `events`.",
+                "source_of_confusion": "Привычка к предикатам, где «проверка» возвращает `true/false`, подталкивает считать, что и `check` отдаёт булев результат вместо записи событий.",
+                "if_it_were_true": "Будь у `check` возврат `boolean`, нельзя было бы сообщить несколько нарушений с разными сообщениями за один проход и привязать каждое к своему элементу — терялась бы детализация отчёта.",
+                "how_it_should_be": "`check` ничего не возвращает; на каждое нарушение вызывайте `events.add(SimpleConditionEvent.violated(item, message))`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`evaluate(JavaClass item, ConditionEvents events)` — добавляет вердикты в `events`",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метода `evaluate` в `ArchCondition` нет; абстрактный метод называется `check`. Слово `evaluate` встречается в других API проверки правил, но не как переопределяемый метод условия.",
+                "source_of_confusion": "`evaluate` интуитивно звучит как «вычислить условие», и в ряде валидационных библиотек методы действительно так названы, поэтому имя легко подставить по аналогии.",
+                "if_it_were_true": "Если бы метод назывался `evaluate`, компилятор не считал бы ваш класс корректной реализацией `ArchCondition` — абстрактный `check` остался бы непереопределённым и класс не скомпилировался бы.",
+                "how_it_should_be": "Переопределяйте именно `check(T item, ConditionEvents events)` — это единственный абстрактный метод `ArchCondition<T>`."
               }
             }
           ]
@@ -551,6 +551,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Поля типа `ArchRule` помечают `@ArchRule`, и расширение само вызывает для них `check()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ArchRule` — это тип правила (интерфейс), создаваемый фабриками `classes()`/`noClasses()`; аннотации `@ArchRule` в `archunit-junit5` не существует. Маркер тестового поля называется `@ArchTest`.",
+                "source_of_confusion": "Тип поля и предполагаемое имя аннотации совпали бы по слову `ArchRule`, поэтому кажется логичным, что и маркер зовётся так же.",
+                "if_it_were_true": "Тогда имя аннотации дублировало бы имя типа поля, что бессмысленно — расширению нужен отдельный маркер именно «это тест», а не повтор типа.",
+                "how_it_should_be": "Тип поля — `ArchRule`, а аннотация-маркер — `@ArchTest`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поля типа `ArchRule` помечают `@Test`, и расширение само вызывает для них `check()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Test` — это аннотация самого JUnit для тестовых методов; она не понимает полей `ArchRule` и не умеет вызывать `check()` с импортированными `JavaClasses`.",
+                "source_of_confusion": "И то и другое запускается как тест в JUnit 5, поэтому кажется, что стандартного `@Test` достаточно и без отдельного маркера ArchUnit.",
+                "if_it_were_true": "Тогда `@Test` пришлось бы вешать на метод и вручную писать `new ClassFileImporter()` и `rule.check(classes)` — ровно тот бойлерплейт, который расширение и убирает.",
+                "how_it_should_be": "Для полей `ArchRule` нужен `@ArchTest` из `archunit-junit5`, а не `@Test` из JUnit."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Поля типа `ArchRule` помечают `@ArchTest`, и расширение само вызывает для них `check()`.",
               "correct": true,
               "sections": {
@@ -562,8 +586,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Поля типа `ArchRule` помечают `@AnalyzeClasses`, и расширение само вызывает для них `check()`.",
               "correct": false,
               "sections": {
@@ -571,30 +595,6 @@
                 "source_of_confusion": "Обе аннотации из `archunit-junit5` и используются в одном тест-классе рядом, поэтому легко перепутать классовую (`@AnalyzeClasses`) и полевую (`@ArchTest`) роли.",
                 "if_it_were_true": "Тогда импорт пришлось бы объявлять на каждом поле-правиле отдельно, и не было бы единой точки настройки пакетов и кэша для всего класса.",
                 "how_it_should_be": "`@AnalyzeClasses` — на классе для импорта; поля `ArchRule` помечают `@ArchTest`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Поля типа `ArchRule` помечают `@ArchRule`, и расширение само вызывает для них `check()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ArchRule` — это тип правила (интерфейс), создаваемый фабриками `classes()`/`noClasses()`; аннотации `@ArchRule` в `archunit-junit5` не существует. Маркер тестового поля называется `@ArchTest`.",
-                "source_of_confusion": "Тип поля и предполагаемое имя аннотации совпали бы по слову `ArchRule`, поэтому кажется логичным, что и маркер зовётся так же.",
-                "if_it_were_true": "Тогда имя аннотации дублировало бы имя типа поля, что бессмысленно — расширению нужен отдельный маркер именно «это тест», а не повтор типа.",
-                "how_it_should_be": "Тип поля — `ArchRule`, а аннотация-маркер — `@ArchTest`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Поля типа `ArchRule` помечают `@Test`, и расширение само вызывает для них `check()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Test` — это аннотация самого JUnit для тестовых методов; она не понимает полей `ArchRule` и не умеет вызывать `check()` с импортированными `JavaClasses`.",
-                "source_of_confusion": "И то и другое запускается как тест в JUnit 5, поэтому кажется, что стандартного `@Test` достаточно и без отдельного маркера ArchUnit.",
-                "if_it_were_true": "Тогда `@Test` пришлось бы вешать на метод и вручную писать `new ClassFileImporter()` и `rule.check(classes)` — ровно тот бойлерплейт, который расширение и убирает.",
-                "how_it_should_be": "Для полей `ArchRule` нужен `@ArchTest` из `archunit-junit5`, а не `@Test` из JUnit."
               }
             }
           ]
@@ -611,13 +611,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ImportOption.DoNotIncludeJars`",
+              "text": "`ImportOption.OnlyIncludeTests`",
               "correct": false,
               "sections": {
-                "what_actually": "`DoNotIncludeJars` исключает классы, пришедшие из JAR-зависимостей на classpath, оставляя классы самого проекта (включая его тестовые классы).",
-                "source_of_confusion": "Это соседняя предопределённая опция из того же семейства `ImportOption`, и её часто видят рядом с `DoNotIncludeTests` в таблице опций — оба «что-то исключают».",
-                "if_it_were_true": "Если бы она исключала тесты, архитектурные правила всё равно бы анализировали зависимости из библиотек по-другому, а тестовый код проекта остался бы в модели и продолжил ложно ронять правила.",
-                "how_it_should_be": "Для исключения тестов нужна `DoNotIncludeTests`; `DoNotIncludeJars` применяют, когда не хотят тянуть в модель классы сторонних библиотек."
+                "what_actually": "`OnlyIncludeTests` — реальная встроенная опция ArchUnit, зеркальная к `DoNotIncludeTests`: она оставляет в импорте только тестовые классы и выбрасывает production-код.",
+                "source_of_confusion": "Имя содержит `Tests` и симметрично `DoNotIncludeTests`, поэтому легко перепутать, какая из опций что отсекает.",
+                "if_it_were_true": "Если передать её в `importOptions`, правила проверялись бы ровно по тестовым классам, а production-код в анализ не попал бы — это противоположность задаче.",
+                "how_it_should_be": "Чтобы исключить тесты и проверять только production, нужен `DoNotIncludeTests`; `OnlyIncludeTests`, наоборот, оставляет только тесты."
               }
             },
             {
@@ -635,18 +635,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ImportOption.OnlyIncludeTests`",
-              "correct": false,
-              "sections": {
-                "what_actually": "`OnlyIncludeTests` — реальная встроенная опция ArchUnit, зеркальная к `DoNotIncludeTests`: она оставляет в импорте только тестовые классы и выбрасывает production-код.",
-                "source_of_confusion": "Имя содержит `Tests` и симметрично `DoNotIncludeTests`, поэтому легко перепутать, какая из опций что отсекает.",
-                "if_it_were_true": "Если передать её в `importOptions`, правила проверялись бы ровно по тестовым классам, а production-код в анализ не попал бы — это противоположность задаче.",
-                "how_it_should_be": "Чтобы исключить тесты и проверять только production, нужен `DoNotIncludeTests`; `OnlyIncludeTests`, наоборот, оставляет только тесты."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`ImportOption.DoNotIncludeTests`",
               "correct": true,
               "sections": {
@@ -655,6 +643,18 @@
                 "when_to_apply": "Практически в каждом архитектурном тесте: правила пишут про границы production-слоёв, а импортёр по умолчанию тянет всё под пакетом, включая `target/test-classes` (Maven) и `build/classes/java/test` (Gradle).",
                 "edge_cases": "Фильтр работает по расположению скомпилированных классов, а не по суффиксу `Test`. Если тестовый класс случайно собрался в main-каталог, он не отфильтруется; для Kotlin синтетические/inline-классы иногда требуют дополнительной кастомной `ImportOption`.",
                 "related": "`ImportOption` — общий интерфейс с методом `boolean includes(Location location)`; рядом стоят `DoNotIncludeJars` и `DoNotIncludeArchives`, фильтрующие зависимости, а не тесты. Так настроен `LayeredArchitectureTest` в этом проекте."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ImportOption.DoNotIncludeJars`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DoNotIncludeJars` исключает классы, пришедшие из JAR-зависимостей на classpath, оставляя классы самого проекта (включая его тестовые классы).",
+                "source_of_confusion": "Это соседняя предопределённая опция из того же семейства `ImportOption`, и её часто видят рядом с `DoNotIncludeTests` в таблице опций — оба «что-то исключают».",
+                "if_it_were_true": "Если бы она исключала тесты, архитектурные правила всё равно бы анализировали зависимости из библиотек по-другому, а тестовый код проекта остался бы в модели и продолжил ложно ронять правила.",
+                "how_it_should_be": "Для исключения тестов нужна `DoNotIncludeTests`; `DoNotIncludeJars` применяют, когда не хотят тянуть в модель классы сторонних библиотек."
               }
             }
           ]
@@ -671,13 +671,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`CacheMode.PER_CLASS` — кэш переиспользуется между тест-классами через `SoftReference`",
+              "text": "`CacheMode.SOFT` — кэш переиспользуется между тест-классами через `SoftReference`",
               "correct": false,
               "sections": {
-                "what_actually": "`CacheMode.PER_CLASS` кэширует импортированные классы только в пределах одного тест-класса и НЕ переиспользует их другими тест-классами.",
-                "source_of_confusion": "Это реально существующий второй режим `cacheMode`, и он стоит рядом с FOREVER в одной таблице — легко перепутать, какой из двух является дефолтом.",
-                "if_it_were_true": "Если бы PER_CLASS был дефолтом и делил кэш между классами, разница между двумя режимами исчезла бы и параметр `cacheMode` был бы бессмысленным.",
-                "how_it_should_be": "Дефолт — `CacheMode.FOREVER`; PER_CLASS выбирают явно, когда набор локаций уникален и переиспользование невозможно."
+                "what_actually": "Режима `CacheMode.SOFT` в ArchUnit не существует: enum `CacheMode` содержит только `FOREVER` и `PER_CLASS`.",
+                "source_of_confusion": "Дефолтный режим действительно хранит классы через `SoftReference`, поэтому имя «SOFT» кажется логичным названием для этого поведения.",
+                "if_it_were_true": "Будь такой режим, в enum было бы как минимум три значения, и пришлось бы различать SOFT и FOREVER по силе ссылок.",
+                "how_it_should_be": "Поведение на `SoftReference` обеспечивает именно `CacheMode.FOREVER` — отдельного значения SOFT нет."
               }
             },
             {
@@ -696,18 +696,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`CacheMode.SOFT` — кэш переиспользуется между тест-классами через `SoftReference`",
-              "correct": false,
-              "sections": {
-                "what_actually": "Режима `CacheMode.SOFT` в ArchUnit не существует: enum `CacheMode` содержит только `FOREVER` и `PER_CLASS`.",
-                "source_of_confusion": "Дефолтный режим действительно хранит классы через `SoftReference`, поэтому имя «SOFT» кажется логичным названием для этого поведения.",
-                "if_it_were_true": "Будь такой режим, в enum было бы как минимум три значения, и пришлось бы различать SOFT и FOREVER по силе ссылок.",
-                "how_it_should_be": "Поведение на `SoftReference` обеспечивает именно `CacheMode.FOREVER` — отдельного значения SOFT нет."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`CacheMode.FOREVER` — кэш переиспользуется между тест-классами через `WeakReference`",
               "correct": false,
               "sections": {
@@ -715,6 +703,18 @@
                 "source_of_confusion": "`WeakReference` и `SoftReference` — соседние типы ссылок из `java.lang.ref`, их часто путают при описании кэшей.",
                 "if_it_were_true": "На `WeakReference` кэш вычищался бы почти сразу после первого теста, и переиспользование между классами фактически перестало бы работать.",
                 "how_it_should_be": "FOREVER удерживает классы через `SoftReference`, которые живут до реальной нехватки heap, давая переиспользование."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CacheMode.PER_CLASS` — кэш переиспользуется между тест-классами через `SoftReference`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CacheMode.PER_CLASS` кэширует импортированные классы только в пределах одного тест-класса и НЕ переиспользует их другими тест-классами.",
+                "source_of_confusion": "Это реально существующий второй режим `cacheMode`, и он стоит рядом с FOREVER в одной таблице — легко перепутать, какой из двух является дефолтом.",
+                "if_it_were_true": "Если бы PER_CLASS был дефолтом и делил кэш между классами, разница между двумя режимами исчезла бы и параметр `cacheMode` был бы бессмысленным.",
+                "how_it_should_be": "Дефолт — `CacheMode.FOREVER`; PER_CLASS выбирают явно, когда набор локаций уникален и переиспользование невозможно."
               }
             }
           ]
@@ -743,6 +743,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`./gradlew test --class \"*ArchitectureTest\"`",
+              "correct": false,
+              "sections": {
+                "what_actually": "Флага `--class` у таска `test` нет. Имя класса (в том числе по glob-паттерну) передаётся именно через `--tests`, а не через отдельный `--class`.",
+                "source_of_confusion": "Поскольку фильтруем по имени класса, кажется логичным, что и флаг должен называться `--class`; путаницу усиливает то, что значение действительно похоже на имя класса.",
+                "if_it_were_true": "Если бы `--class` существовал, он принимал бы FQN или паттерн класса; в реальности Gradle не знает такой опции и упадёт на разборе командной строки.",
+                "how_it_should_be": "Правильный флаг — `--tests \"*ArchitectureTest\"`; значение трактуется как паттерн по полному имени тест-класса."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`./gradlew test --only \"*ArchitectureTest\"`",
               "correct": false,
               "sections": {
@@ -753,8 +765,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`./gradlew test --tests \"*ArchitectureTest\"`",
               "correct": true,
               "sections": {
@@ -763,18 +775,6 @@
                 "when_to_apply": "Когда архитектурные правила хочется гонять отдельным шагом PR-пайплайна — они быстрее интеграционных, но требуют скомпилированных main-классов. Удобно держать их в классе с суффиксом `ArchitectureTest` и фильтровать по паттерну.",
                 "edge_cases": "Паттерн матчится по имени класса, а не пакета; если архитектурные тесты разбросаны по разным суффиксам, один `--tests \"*ArchitectureTest\"` их не соберёт. Альтернатива — тег `@Tag(\"architecture\")` и фильтрация через `--tests` не подойдёт, нужен JUnit-тег.",
                 "related": "Дополняет `@Tag(\"architecture\")` и сообщение `.because(...)`: тег группирует тесты, `--tests` фильтрует по имени, а because объясняет упавшему CI, какую договорённость нарушили."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`./gradlew test --class \"*ArchitectureTest\"`",
-              "correct": false,
-              "sections": {
-                "what_actually": "Флага `--class` у таска `test` нет. Имя класса (в том числе по glob-паттерну) передаётся именно через `--tests`, а не через отдельный `--class`.",
-                "source_of_confusion": "Поскольку фильтруем по имени класса, кажется логичным, что и флаг должен называться `--class`; путаницу усиливает то, что значение действительно похоже на имя класса.",
-                "if_it_were_true": "Если бы `--class` существовал, он принимал бы FQN или паттерн класса; в реальности Gradle не знает такой опции и упадёт на разборе командной строки.",
-                "how_it_should_be": "Правильный флаг — `--tests \"*ArchitectureTest\"`; значение трактуется как паттерн по полному имени тест-класса."
               }
             }
           ]
@@ -791,6 +791,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Обернуть правило в `FreezingArchRule.frozen(rule)` — первый прогон фиксирует нарушения в хранилище",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метода `frozen(rule)` в `FreezingArchRule` нет. Слово `frozen` — лишь прилагательное из документации, описывающее состояние правила после заморозки, а не имя фабричного метода.",
+                "source_of_confusion": "`freeze` и `frozen` — формы одного глагола; легко подставить причастие вместо инфинитива, особенно по аналогии с булевыми геттерами вроде `isFrozen`.",
+                "if_it_were_true": "Если бы фабрика называлась `frozen(...)`, то весь канонический пример из User Guide и существующий код перестали бы компилироваться, потому что реальная сигнатура — `freeze(ArchRule)`.",
+                "how_it_should_be": "Правильное имя статической фабрики — `FreezingArchRule.freeze(rule)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Обернуть правило в `FreezingArchRule.freeze(rule)` — первый прогон фиксирует нарушения в хранилище",
               "correct": true,
               "sections": {
@@ -799,18 +811,6 @@
                 "when_to_apply": "Когда новое правило сразу даёт сотни нарушений на зрелом проекте и «починить всё разом» нереально: долг замораживается, а новые нарушения блокируются на каждом PR.",
                 "edge_cases": "По умолчанию игнорируются номера строк — сдвинутое на другую строку нарушение не считается новым. Если старое нарушение исправили, FreezingArchRule сам удалит его из хранилища (ratchet — долг только уменьшается).",
                 "related": "Хранилище — `ViolationStore`, по умолчанию текстовый файл по пути из свойства `freeze.store.default.path`; его версионируют в Git, иначе CI «заморозит» новое состояние на чистой машине."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Обернуть правило в `FreezingArchRule.frozen(rule)` — первый прогон фиксирует нарушения в хранилище",
-              "correct": false,
-              "sections": {
-                "what_actually": "Метода `frozen(rule)` в `FreezingArchRule` нет. Слово `frozen` — лишь прилагательное из документации, описывающее состояние правила после заморозки, а не имя фабричного метода.",
-                "source_of_confusion": "`freeze` и `frozen` — формы одного глагола; легко подставить причастие вместо инфинитива, особенно по аналогии с булевыми геттерами вроде `isFrozen`.",
-                "if_it_were_true": "Если бы фабрика называлась `frozen(...)`, то весь канонический пример из User Guide и существующий код перестали бы компилироваться, потому что реальная сигнатура — `freeze(ArchRule)`.",
-                "how_it_should_be": "Правильное имя статической фабрики — `FreezingArchRule.freeze(rule)`."
               }
             },
             {
@@ -851,30 +851,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ImportOption.OnlyIncludeTests.class` — оставляет в импорте только тестовые классы",
-              "correct": false,
-              "sections": {
-                "what_actually": "`OnlyIncludeTests` — реальная инверсная опция ArchUnit: она оставляет ровно тестовые классы и выбрасывает production-код, то есть зеркало `DoNotIncludeTests`.",
-                "source_of_confusion": "Имя отличается одним префиксом (`Only`/`DoNot`) и тоже про «тесты», поэтому легко спутать направление фильтра.",
-                "if_it_were_true": "Правила `domainIsIndependent` и прочие проверяли бы только тестовый код, а реальные нарушения границ в production остались бы незамеченными.",
-                "how_it_should_be": "Для production-правил нужен `DoNotIncludeTests`, исключающий тесты, а не оставляющий только их."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`ImportOption.DoNotIncludeJars.class` — исключает классы из JAR-зависимостей",
-              "correct": false,
-              "sections": {
-                "what_actually": "`DoNotIncludeJars` — реальная опция, которая выбрасывает классы из JAR-зависимостей, но при этом тестовые классы вашего модуля остаются в импорте.",
-                "source_of_confusion": "Тоже начинается с `DoNotInclude` и тоже сужает набор классов, поэтому кажется взаимозаменяемым с фильтром тестов.",
-                "if_it_were_true": "Тестовые классы `quiz-app` всё равно попали бы в модель, и правило про границы слоёв падало бы на коде самих тестов.",
-                "how_it_should_be": "Чтобы убрать тесты, нужен `DoNotIncludeTests`; `DoNotIncludeJars` решает совсем другую задачу — отсечь чужие библиотеки."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`ImportOption.DoNotIncludeArchives.class` — исключает JAR и прочие архивы",
               "correct": false,
               "sections": {
@@ -885,8 +861,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`ImportOption.DoNotIncludeTests.class` — исключает скомпилированные тестовые классы из импорта",
               "correct": true,
               "sections": {
@@ -895,6 +871,30 @@
                 "when_to_apply": "Практически в любом архитектурном тесте: без этой опции правила (например «нет field injection») ложно падают на коде самих тестов.",
                 "edge_cases": "Фильтр работает по расположению скомпилированных классов (`build/classes/java/test`, `target/test-classes`), а не по суффиксу `Test`. Если тестовый класс случайно собрался в `main`-каталог, он не отфильтруется. Для Kotlin synthetic/inline-классы иногда требуют дополнительной кастомной `ImportOption`.",
                 "related": "В core API ту же опцию подключают через `.withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)`; проект использует чистый ArchUnit без jMolecules."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ImportOption.DoNotIncludeJars.class` — исключает классы из JAR-зависимостей",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DoNotIncludeJars` — реальная опция, которая выбрасывает классы из JAR-зависимостей, но при этом тестовые классы вашего модуля остаются в импорте.",
+                "source_of_confusion": "Тоже начинается с `DoNotInclude` и тоже сужает набор классов, поэтому кажется взаимозаменяемым с фильтром тестов.",
+                "if_it_were_true": "Тестовые классы `quiz-app` всё равно попали бы в модель, и правило про границы слоёв падало бы на коде самих тестов.",
+                "how_it_should_be": "Чтобы убрать тесты, нужен `DoNotIncludeTests`; `DoNotIncludeJars` решает совсем другую задачу — отсечь чужие библиотеки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ImportOption.OnlyIncludeTests.class` — оставляет в импорте только тестовые классы",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OnlyIncludeTests` — реальная инверсная опция ArchUnit: она оставляет ровно тестовые классы и выбрасывает production-код, то есть зеркало `DoNotIncludeTests`.",
+                "source_of_confusion": "Имя отличается одним префиксом (`Only`/`DoNot`) и тоже про «тесты», поэтому легко спутать направление фильтра.",
+                "if_it_were_true": "Правила `domainIsIndependent` и прочие проверяли бы только тестовый код, а реальные нарушения границ в production остались бы незамеченными.",
+                "how_it_should_be": "Для production-правил нужен `DoNotIncludeTests`, исключающий тесты, а не оставляющий только их."
               }
             }
           ]

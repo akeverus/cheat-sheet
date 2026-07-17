@@ -9,14 +9,13 @@
           "question_text": "Какие functional и non-functional requirements у платёжной системы Stripe-уровня?",
           "options": [
             {
-              "text": "Functional: создать платёж `POST /payments` с `idempotency_key`, authorize→capture (раздельно или auto), refund (полный/частичный), `GET /payments/{id}`, webhooks мерчантам, карты и local methods (`SEPA`, `СБП`). Non-functional: durability c `RPO=0` на ledger, strong consistency балансов, availability `99.99%` на authorize-path, идемпотентность всех mutating-endpoint, p99 authorize < 2 сек, `5-50K txn/sec`, PCI-DSS Level 1.",
-              "correct": true,
+              "text": "Functional requirements — это исключительно поддержка карт `Visa/MC/Amex`; local methods, webhooks и idempotency относятся к non-functional, так как они про инфраструктуру.",
+              "correct": false,
               "sections": {
-                "explanation": "Functional описывают что система делает, non-functional — какими качествами (durability, latency, availability, compliance) она обладает; scope-list — первая проверка senior-уровня в финтехе.",
-                "example": "Явно проговаривают excluded scope: card issuing, banking/lending, tax/invoicing, marketplace split-payouts — чтобы не утонуть в обсуждении не того продукта.",
-                "when_to_apply": "Durability — приоритет № 1: `RPO=0` именно для ledger, тогда как для read-models (analytics, dashboards) допустима eventual consistency.",
-                "edge_cases": "Edge case: для recurring/subscriptions требования отличаются — добавляются mandate и SCA-exemptions, поэтому их часто выносят в отдельный опциональный scope.",
-                "related": "[[design-payment-system-interview#Q2]] capacity estimation; [[design-payment-system-interview#Q3]] SLA по операциям; [[design-payment-system-interview#Q24]] PCI-DSS compliance."
+                "what_actually": "Webhooks, idempotency-контракт и local methods (`SEPA`, `iDEAL`, `СБП`) — это functional возможности продукта, а non-functional описывают качества вроде latency и durability.",
+                "source_of_confusion": "Idempotency и webhooks реализуются инфраструктурно, поэтому их ошибочно записывают в non-functional.",
+                "if_it_were_true": "Если бы webhooks были non-functional, их нельзя было бы перечислить в API-контракте мерчанта, но они там явно присутствуют как фича.",
+                "how_it_should_be": "Functional — это что система делает (создать платёж, вернуть refund, доставить webhook), а non-functional — насколько хорошо (p99, availability, compliance)."
               },
               "label": "A",
               "order": 0
@@ -34,13 +33,14 @@
               "order": 1
             },
             {
-              "text": "Functional requirements — это исключительно поддержка карт `Visa/MC/Amex`; local methods, webhooks и idempotency относятся к non-functional, так как они про инфраструктуру.",
-              "correct": false,
+              "text": "Functional: создать платёж `POST /payments` с `idempotency_key`, authorize→capture (раздельно или auto), refund (полный/частичный), `GET /payments/{id}`, webhooks мерчантам, карты и local methods (`SEPA`, `СБП`). Non-functional: durability c `RPO=0` на ledger, strong consistency балансов, availability `99.99%` на authorize-path, идемпотентность всех mutating-endpoint, p99 authorize < 2 сек, `5-50K txn/sec`, PCI-DSS Level 1.",
+              "correct": true,
               "sections": {
-                "what_actually": "Webhooks, idempotency-контракт и local methods (`SEPA`, `iDEAL`, `СБП`) — это functional возможности продукта, а non-functional описывают качества вроде latency и durability.",
-                "source_of_confusion": "Idempotency и webhooks реализуются инфраструктурно, поэтому их ошибочно записывают в non-functional.",
-                "if_it_were_true": "Если бы webhooks были non-functional, их нельзя было бы перечислить в API-контракте мерчанта, но они там явно присутствуют как фича.",
-                "how_it_should_be": "Functional — это что система делает (создать платёж, вернуть refund, доставить webhook), а non-functional — насколько хорошо (p99, availability, compliance)."
+                "explanation": "Functional описывают что система делает, non-functional — какими качествами (durability, latency, availability, compliance) она обладает; scope-list — первая проверка senior-уровня в финтехе.",
+                "example": "Явно проговаривают excluded scope: card issuing, banking/lending, tax/invoicing, marketplace split-payouts — чтобы не утонуть в обсуждении не того продукта.",
+                "when_to_apply": "Durability — приоритет № 1: `RPO=0` именно для ledger, тогда как для read-models (analytics, dashboards) допустима eventual consistency.",
+                "edge_cases": "Edge case: для recurring/subscriptions требования отличаются — добавляются mandate и SCA-exemptions, поэтому их часто выносят в отдельный опциональный scope.",
+                "related": "[[design-payment-system-interview#Q2]] capacity estimation; [[design-payment-system-interview#Q3]] SLA по операциям; [[design-payment-system-interview#Q24]] PCI-DSS compliance."
               },
               "label": "C",
               "order": 2
@@ -81,14 +81,13 @@
               "order": 0
             },
             {
-              "text": "Steady-state: `500M` транзакций/день ÷ 86 400 ≈ `5 800 txn/sec`; пик `×8-10` → `50 000 txn/sec` на authorize-path; с reads/webhooks (`~5` API-вызовов на транзакцию) total ≈ `250 000 req/sec`. Storage: `~1 TB/день` raw + `~1 TB/день` ledger-entries, при 7-летнем PCI-retention → `~5 PB` general и `~3 PB` ledger; vault токенов ~200 GB. Compute: `250K / 5K` на pod = `50` активных pod (×3 headroom = 150 на регион).",
-              "correct": true,
+              "text": "Compute считают как один pod на всю систему: `250K req/sec` спокойно держит одна мощная JVM-нода, горизонтальное масштабирование не нужно.",
+              "correct": false,
               "sections": {
-                "explanation": "Оценку строят снизу вверх: суточный объём → steady-state QPS → пиковый множитель → производные (storage, compute, external fan-out), на каждом шаге держа явные допущения.",
-                "example": "External fan-out: ~2.5 outbound-вызова на платёж (1 PSP + 0.3 fraud + 0.2 3DS + 1 webhook) → `~125K outbound/sec` в пик, что определяет лимиты на коннекшн-пулы к PSP.",
-                "when_to_apply": "Применяют на этапе sizing, чтобы обосновать число pod, шардирование ledger и retention-политику перед детальным дизайном компонентов.",
-                "edge_cases": "Edge case: главная статья затрат — не инфраструктура (`$5-15M/year`), а PSP interchange/scheme fees (`$100-200M/year` на `$20B GMV`); инженер должен это явно отметить.",
-                "related": "[[design-payment-system-interview#Q1]] requirements; [[design-payment-system-interview#Q3]] SLA и QPS по операциям; [[design-payment-system-interview#Q6]] storage ledger."
+                "what_actually": "Одна JVM-нода тянет `~5K req/sec`, поэтому нужно `~50` активных pod плюс `×3` headroom = 150 на регион; один pod физически не выдержит `250K req/sec`.",
+                "source_of_confusion": "Современные серверы кажутся настолько мощными, что соблазнительно предположить «одна нода справится».",
+                "if_it_were_true": "Если бы хватало одного pod, не было бы отказоустойчивости: его падение обнулило бы весь authorize-path, нарушив `99.99%` SLA.",
+                "how_it_should_be": "Compute выводят делением суммарного QPS на пропускную способность одного pod и добавляют запас на пики и отказы нод."
               },
               "label": "B",
               "order": 1
@@ -106,13 +105,14 @@
               "order": 2
             },
             {
-              "text": "Compute считают как один pod на всю систему: `250K req/sec` спокойно держит одна мощная JVM-нода, горизонтальное масштабирование не нужно.",
-              "correct": false,
+              "text": "Steady-state: `500M` транзакций/день ÷ 86 400 ≈ `5 800 txn/sec`; пик `×8-10` → `50 000 txn/sec` на authorize-path; с reads/webhooks (`~5` API-вызовов на транзакцию) total ≈ `250 000 req/sec`. Storage: `~1 TB/день` raw + `~1 TB/день` ledger-entries, при 7-летнем PCI-retention → `~5 PB` general и `~3 PB` ledger; vault токенов ~200 GB. Compute: `250K / 5K` на pod = `50` активных pod (×3 headroom = 150 на регион).",
+              "correct": true,
               "sections": {
-                "what_actually": "Одна JVM-нода тянет `~5K req/sec`, поэтому нужно `~50` активных pod плюс `×3` headroom = 150 на регион; один pod физически не выдержит `250K req/sec`.",
-                "source_of_confusion": "Современные серверы кажутся настолько мощными, что соблазнительно предположить «одна нода справится».",
-                "if_it_were_true": "Если бы хватало одного pod, не было бы отказоустойчивости: его падение обнулило бы весь authorize-path, нарушив `99.99%` SLA.",
-                "how_it_should_be": "Compute выводят делением суммарного QPS на пропускную способность одного pod и добавляют запас на пики и отказы нод."
+                "explanation": "Оценку строят снизу вверх: суточный объём → steady-state QPS → пиковый множитель → производные (storage, compute, external fan-out), на каждом шаге держа явные допущения.",
+                "example": "External fan-out: ~2.5 outbound-вызова на платёж (1 PSP + 0.3 fraud + 0.2 3DS + 1 webhook) → `~125K outbound/sec` в пик, что определяет лимиты на коннекшн-пулы к PSP.",
+                "when_to_apply": "Применяют на этапе sizing, чтобы обосновать число pod, шардирование ledger и retention-политику перед детальным дизайном компонентов.",
+                "edge_cases": "Edge case: главная статья затрат — не инфраструктура (`$5-15M/year`), а PSP interchange/scheme fees (`$100-200M/year` на `$20B GMV`); инженер должен это явно отметить.",
+                "related": "[[design-payment-system-interview#Q1]] requirements; [[design-payment-system-interview#Q3]] SLA и QPS по операциям; [[design-payment-system-interview#Q6]] storage ledger."
               },
               "label": "D",
               "order": 3
@@ -129,18 +129,6 @@
           "question_text": "Платёжная система read-heavy или write-heavy, и какие SLA на каждой операции?",
           "options": [
             {
-              "text": "Система чисто read-heavy: `GET /payments/:id` даёт `200K` QPS против `50K` на authorize, поэтому всю архитектуру строят вокруг кеша и read-replica.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Несмотря на больший read-QPS, authorize-path (write) — самый дорогой и SLO-critical, поэтому систему называют mixed: нельзя жертвовать корректностью записей ради чтения.",
-                "source_of_confusion": "`200K` reads численно больше `50K` writes, отсюда вывод «значит read-heavy».",
-                "if_it_were_true": "Если бы оптимизировали только reads, authorize при пике начал бы отваливаться, и каждый сбой означал бы напрямую потерянного клиента и revenue.",
-                "how_it_should_be": "Правильнее признать систему mixed и обеспечить strong consistency на write-path, одновременно кешируя read-path."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Все операции имеют одинаковый SLA `99.99%` и одинаковый p99-таргет, так как все они равноважны для платежей.",
               "correct": false,
               "sections": {
@@ -149,8 +137,8 @@
                 "if_it_were_true": "Если бы webhook требовал тех же `99.99%` синхронно, его пришлось бы делать блокирующим, что замедлило бы authorize-path и сломало его SLA.",
                 "how_it_should_be": "Каждой операции назначают свой SLA и latency-таргет соразмерно её критичности и допустимости задержки."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Система mixed, нельзя оптимизировать только под reads. `POST /payments` (authorize) — write, пик `50K` QPS, p99 `2 сек`, SLA `99.99%`; capture — write, `30K`, `500 мс`; refund — write, `5K`, `1 сек`, `99.95%`; `GET /payments/:id` — read, `200K`, `200 мс`; webhook outbound — async, `100K`, доставка `99.9%` за 24ч; reconciliation — batch, T+1 до 06:00 UTC. Authorize-path самый дорогой и SLO-critical.",
@@ -161,6 +149,18 @@
                 "when_to_apply": "Используют при выборе хранилищ и кеширования: reads уходят на read-replica и кеш, writes — на strongly-consistent ledger-path.",
                 "edge_cases": "Edge case: webhook и reconciliation выпадают из realtime-budget (async/batch), но имеют собственные SLA — доставка за 24ч и завершение T+1 до 06:00 UTC соответственно.",
                 "related": "[[design-payment-system-interview#Q2]] capacity и QPS; [[design-payment-system-interview#Q28]] latency budget по этапам; [[design-payment-system-interview#Q17]] reconciliation T+1."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Система чисто read-heavy: `GET /payments/:id` даёт `200K` QPS против `50K` на authorize, поэтому всю архитектуру строят вокруг кеша и read-replica.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Несмотря на больший read-QPS, authorize-path (write) — самый дорогой и SLO-critical, поэтому систему называют mixed: нельзя жертвовать корректностью записей ради чтения.",
+                "source_of_confusion": "`200K` reads численно больше `50K` writes, отсюда вывод «значит read-heavy».",
+                "if_it_were_true": "Если бы оптимизировали только reads, authorize при пике начал бы отваливаться, и каждый сбой означал бы напрямую потерянного клиента и revenue.",
+                "how_it_should_be": "Правильнее признать систему mixed и обеспечить strong consistency на write-path, одновременно кешируя read-path."
               },
               "label": "C",
               "order": 2
@@ -189,18 +189,6 @@
           "question_text": "Как устроены idempotency keys: формат, dedup window, response replay?",
           "options": [
             {
-              "text": "Idempotency-key хешируется только по URL endpoint, без request body, поэтому один ключ безопасно переиспользовать для разных операций над тем же платежом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ключ хешируют именно вместе с request body; иначе тем же ключом, что и платёж, можно случайно инициировать refund, и системы перепутают операции.",
-                "source_of_confusion": "Кажется, что endpoint однозначно определяет операцию, поэтому тела запроса в хеше как будто не нужно.",
-                "if_it_were_true": "Если бы хеш не учитывал body, повтор ключа с другим payload вернул бы cached ответ от прежней операции, и один платёж «съел» бы другой.",
-                "how_it_should_be": "Server хранит `request_hash` от тела и при mismatch отдаёт `409`, защищая от случайного reuse ключа на другой payload."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Dedup window бесконечен: ключ хранится вечно, поэтому повтор того же ключа через год гарантированно вернёт исходный ответ.",
               "correct": false,
               "sections": {
@@ -209,8 +197,8 @@
                 "if_it_were_true": "Если бы ключи хранились вечно, idempotency-store раздулся бы до петабайтов и стал бы дороже самого ledger при `500M` транзакций/день.",
                 "how_it_should_be": "Ключи живут ограниченное окно (24ч–7 дней) с TTL, а клиента предупреждают, что после экспирации тот же ключ = новый платёж."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Ключ scope-ится глобально, без `merchant_id`: один namespace на всю систему упрощает lookup и не создаёт проблем.",
@@ -221,8 +209,8 @@
                 "if_it_were_true": "Если бы scope был глобальным, платёж мерчанта B мог бы получить replay чужого ответа мерчанта A при совпадении ключей, что недопустимо.",
                 "how_it_should_be": "Хранят `(merchant_id, idempotency_key)` как составной PK, изолируя пространство ключей каждого мерчанта."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Клиент шлёт `Idempotency-Key: <UUIDv4, ≤255 chars>`, сервер хранит `(merchant_id, idempotency_key)` → `(request_hash, response_body, status)` в dedicated store с TTL. Алгоритм: lookup по `(key, merchant_id)`; если найден и `request_hash` совпал → replay cached response; если hash другой → `409 idempotency_key_mismatch`; если статус `in_flight` → `409 + Retry-After`; если не найден → `INSERT status=in_flight`, выполнить логику, `UPDATE status=completed`. Dedup window `24 часа` (Stripe).",
@@ -233,6 +221,18 @@
                 "when_to_apply": "Применяют на всех mutating-endpoint (create payment, refund), которые клиент может безопасно повторить при таймауте или 5xx.",
                 "edge_cases": "Edge case: ключ хешируют вместе с request body, не только с endpoint — иначе одним ключом можно случайно «зарепортить» refund по платежу; при истёкшем TTL повтор того же ключа создаёт новый платёж.",
                 "related": "[[design-payment-system-interview#Q5]] ledger-записи под платёж; [[design-payment-system-interview#Q15]] idempotent receivers для webhooks; [[design-payment-system-interview#Q18]] идемпотентность refunds."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Idempotency-key хешируется только по URL endpoint, без request body, поэтому один ключ безопасно переиспользовать для разных операций над тем же платежом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключ хешируют именно вместе с request body; иначе тем же ключом, что и платёж, можно случайно инициировать refund, и системы перепутают операции.",
+                "source_of_confusion": "Кажется, что endpoint однозначно определяет операцию, поэтому тела запроса в хеше как будто не нужно.",
+                "if_it_were_true": "Если бы хеш не учитывал body, повтор ключа с другим payload вернул бы cached ответ от прежней операции, и один платёж «съел» бы другой.",
+                "how_it_should_be": "Server хранит `request_hash` от тела и при mismatch отдаёт `409`, защищая от случайного reuse ключа на другой payload."
               },
               "label": "D",
               "order": 3
@@ -249,19 +249,6 @@
           "question_text": "Как работает double-entry ledger: debit/credit, инварианты, аудит?",
           "options": [
             {
-              "text": "Каждая транзакция = ≥2 записи, причём сумма debits = сумма credits, то есть `SUM(amount_minor) GROUP BY transaction_id = 0` для одной валюты. Таблица `entries` append-only (никаких `UPDATE`/`DELETE`), баланс аккаунта реконструируется как `Σ(entries WHERE account_id=X)`. Например, authorize $100: `customer_pending +10000`, `merchant_pending −10000`, sum=0. Multi-currency — раздельные entries по валюте, FX = отдельные транзакции с парой entries.",
-              "correct": true,
-              "sections": {
-                "explanation": "Double-entry — 700-летняя бухгалтерская основа (Лука Пачоли, 1494) и в цифровых платежах единственная защита от «исчезновения» денег: дисбаланс сразу виден как нарушение инварианта.",
-                "example": "Capture описывается несколькими transaction_id: перевод из pending в settled плюс отдельные entries `psp_clearing −300` и `fee_revenue +300`, и в каждой группе сумма по-прежнему ноль.",
-                "when_to_apply": "Применяют как ядро любой системы движения денег; инвариант `Σ=0` проверяют и в реальном времени, и фоновым batch-job для детекта багов.",
-                "edge_cases": "Edge case: для аудита каждая entry несёт `created_by`, `request_id`, `idempotency_key`, а опциональный hash-chain `hash_n=SHA256(prev_hash || entry_n)` обнаруживает tampering журнала.",
-                "related": "[[design-payment-system-interview#Q6]] хранилище ledger; [[design-payment-system-interview#Q4]] idempotency-key в entry; [[design-payment-system-interview#Q7]] lifecycle authorize→capture."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Double-entry означает, что баланс хранится в одной mutable-колонке `balance` и при каждом платеже его перезаписывают через `UPDATE accounts SET balance = balance + amount`.",
               "correct": false,
               "sections": {
@@ -270,8 +257,8 @@
                 "if_it_were_true": "Если бы баланс перезаписывался, потерянный или повреждённый `UPDATE` навсегда исказил бы сумму без следа, и реконсиляция стала бы невозможной.",
                 "how_it_should_be": "Балансы выводятся из неизменяемого журнала entries, а корректировки делают новыми reversal-записями, а не модификацией старых."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "В double-entry достаточно одной записи на транзакцию: фиксируешь только дебет на счёте клиента, кредит подразумевается неявно.",
@@ -282,8 +269,8 @@
                 "if_it_were_true": "Если бы хватало одной записи, нельзя было бы доказать, куда ушли деньги, и сумма по системе перестала бы сходиться к нулю.",
                 "how_it_should_be": "Каждая транзакция балансируется парой (или более) записей debit/credit, и их сумма по transaction_id строго равна нулю."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Инвариант `Σ entries = 0` проверяют один раз при запуске системы; в рантайме его не контролируют, чтобы не нагружать БД.",
@@ -293,6 +280,19 @@
                 "source_of_confusion": "Постоянная проверка кажется дорогой, поэтому соблазнительно ограничиться разовым контролем при старте.",
                 "if_it_were_true": "Если бы инвариант не мониторили в рантайме, накопленный дисбаланс обнаружился бы лишь при годовом аудите, когда исправить его уже почти невозможно.",
                 "how_it_should_be": "`ledger_invariant_check` (Σ per txn = 0) ставят как continuous background job с алертом при любом нарушении."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Каждая транзакция = ≥2 записи, причём сумма debits = сумма credits, то есть `SUM(amount_minor) GROUP BY transaction_id = 0` для одной валюты. Таблица `entries` append-only (никаких `UPDATE`/`DELETE`), баланс аккаунта реконструируется как `Σ(entries WHERE account_id=X)`. Например, authorize $100: `customer_pending +10000`, `merchant_pending −10000`, sum=0. Multi-currency — раздельные entries по валюте, FX = отдельные транзакции с парой entries.",
+              "correct": true,
+              "sections": {
+                "explanation": "Double-entry — 700-летняя бухгалтерская основа (Лука Пачоли, 1494) и в цифровых платежах единственная защита от «исчезновения» денег: дисбаланс сразу виден как нарушение инварианта.",
+                "example": "Capture описывается несколькими transaction_id: перевод из pending в settled плюс отдельные entries `psp_clearing −300` и `fee_revenue +300`, и в каждой группе сумма по-прежнему ноль.",
+                "when_to_apply": "Применяют как ядро любой системы движения денег; инвариант `Σ=0` проверяют и в реальном времени, и фоновым batch-job для детекта багов.",
+                "edge_cases": "Edge case: для аудита каждая entry несёт `created_by`, `request_id`, `idempotency_key`, а опциональный hash-chain `hash_n=SHA256(prev_hash || entry_n)` обнаруживает tampering журнала.",
+                "related": "[[design-payment-system-interview#Q6]] хранилище ledger; [[design-payment-system-interview#Q4]] idempotency-key в entry; [[design-payment-system-interview#Q7]] lifecycle authorize→capture."
               },
               "label": "D",
               "order": 3
@@ -309,6 +309,18 @@
           "question_text": "Какое хранилище выбрать для ledger: Postgres, Cassandra или custom append-only?",
           "options": [
             {
+              "text": "Все данные ledger держат вечно в одном hot-хранилище `Postgres`: разделение на hot/cold tier лишь усложняет систему без пользы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используют pattern «hot + cold»: последние 90 дней в `Postgres` ради queryability, старше — в `Iceberg/Parquet` на `S3`, иначе hot-БД распухает до петабайтов.",
+                "source_of_confusion": "Единое хранилище кажется проще в эксплуатации, чем поддержка двух tier с разной технологией.",
+                "if_it_were_true": "Если бы всё лежало в hot `Postgres`, при 7-летнем retention и `~3 PB` ledger индексы и стоимость нод стали бы неуправляемыми.",
+                "how_it_should_be": "Свежие данные держат в queryable hot tier, а исторические выносят в дешёвый cold tier на объектном хранилище для аудита."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Для ledger всегда выбирают самую быструю на запись БД, поэтому `Cassandra` с `100K+ writes/sec` — безусловно лучший выбор для любых платежей.",
               "correct": false,
               "sections": {
@@ -316,19 +328,6 @@
                 "source_of_confusion": "Цифра `100K+ writes/sec` выглядит решающим преимуществом, заслоняя вопрос транзакционной корректности.",
                 "if_it_were_true": "Если бы скорость записи решала всё, дисбаланс из-за отсутствия атомарных мульти-записей делал бы инвариант `Σ=0` недостижимым.",
                 "how_it_should_be": "Хранилище выбирают по приоритету ACID и queryability; high-throughput-вариант берут только когда транзакционные гарантии обеспечены иначе."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Выбор зависит от приоритетов: `Postgres` (sharded по `merchant_id`) даёт полный ACID, range/JOIN-запросы и понятные миграции при `5-50K writes/sec` — выбор `Stripe` и `Square`; `Cassandra` тянет `100K+ writes/sec`, но транзакции только через медленный LWT и чтение по partition-key — путь `Adyen` (собственный движок на Java + Cassandra); `TigerBeetle` — специализированная open-source БД для double-entry, миллион txn/sec на ноде через `io_uring` + batched commit.",
-              "correct": true,
-              "sections": {
-                "explanation": "Для ledger ACID и аудируемость важнее сырой пропускной способности, поэтому классический `Postgres` остаётся дефолтом, пока шардирование держит нагрузку.",
-                "example": "Pattern «hot + cold»: последние 90 дней — в `Postgres` ради queryability, старше — в `Iceberg/Parquet` на `S3` для аудита и регулятора.",
-                "when_to_apply": "Применяют осознанно: если нужны ad-hoc аналитические запросы и строгие транзакции — `Postgres`; если экстремальный write-throughput с простыми чтениями — специализированное решение.",
-                "edge_cases": "Edge case: anti-pattern — ledger в `MongoDB`/`DynamoDB` single-table без транзакций; любой потерянный write делает reconciliation mission impossible.",
-                "related": "[[design-payment-system-interview#Q5]] double-entry инварианты; [[design-payment-system-interview#Q2]] storage-оценка ledger; [[design-payment-system-interview#Q27]] multi-region репликация ledger."
               },
               "label": "B",
               "order": 1
@@ -346,13 +345,14 @@
               "order": 2
             },
             {
-              "text": "Все данные ledger держат вечно в одном hot-хранилище `Postgres`: разделение на hot/cold tier лишь усложняет систему без пользы.",
-              "correct": false,
+              "text": "Выбор зависит от приоритетов: `Postgres` (sharded по `merchant_id`) даёт полный ACID, range/JOIN-запросы и понятные миграции при `5-50K writes/sec` — выбор `Stripe` и `Square`; `Cassandra` тянет `100K+ writes/sec`, но транзакции только через медленный LWT и чтение по partition-key — путь `Adyen` (собственный движок на Java + Cassandra); `TigerBeetle` — специализированная open-source БД для double-entry, миллион txn/sec на ноде через `io_uring` + batched commit.",
+              "correct": true,
               "sections": {
-                "what_actually": "Используют pattern «hot + cold»: последние 90 дней в `Postgres` ради queryability, старше — в `Iceberg/Parquet` на `S3`, иначе hot-БД распухает до петабайтов.",
-                "source_of_confusion": "Единое хранилище кажется проще в эксплуатации, чем поддержка двух tier с разной технологией.",
-                "if_it_were_true": "Если бы всё лежало в hot `Postgres`, при 7-летнем retention и `~3 PB` ledger индексы и стоимость нод стали бы неуправляемыми.",
-                "how_it_should_be": "Свежие данные держат в queryable hot tier, а исторические выносят в дешёвый cold tier на объектном хранилище для аудита."
+                "explanation": "Для ledger ACID и аудируемость важнее сырой пропускной способности, поэтому классический `Postgres` остаётся дефолтом, пока шардирование держит нагрузку.",
+                "example": "Pattern «hot + cold»: последние 90 дней — в `Postgres` ради queryability, старше — в `Iceberg/Parquet` на `S3` для аудита и регулятора.",
+                "when_to_apply": "Применяют осознанно: если нужны ad-hoc аналитические запросы и строгие транзакции — `Postgres`; если экстремальный write-throughput с простыми чтениями — специализированное решение.",
+                "edge_cases": "Edge case: anti-pattern — ledger в `MongoDB`/`DynamoDB` single-table без транзакций; любой потерянный write делает reconciliation mission impossible.",
+                "related": "[[design-payment-system-interview#Q5]] double-entry инварианты; [[design-payment-system-interview#Q2]] storage-оценка ledger; [[design-payment-system-interview#Q27]] multi-region репликация ledger."
               },
               "label": "D",
               "order": 3
@@ -369,28 +369,16 @@
           "question_text": "Как устроен payment lifecycle: authorize → capture → settle → refund?",
           "options": [
             {
-              "text": "Authorize сразу списывает деньги со счёта плательщика; capture — это лишь повторное подтверждение того же списания для надёжности.",
+              "text": "Refund и void — одно и то же: оба возвращают деньги клиенту с одинаковыми комиссиями и сроками, выбор между ними произволен.",
               "correct": false,
               "sections": {
-                "what_actually": "Authorize только резервирует сумму (hold), реального списания нет; деньги уходят лишь после capture, а затем settlement, поэтому это два разных шага, а не дубль.",
-                "source_of_confusion": "Слова authorize и capture оба звучат как «провести платёж», поэтому кажется, что они делают одно и то же.",
-                "if_it_were_true": "Если бы authorize списывал деньги, истёкший без capture hold нельзя было бы отменить бесплатно, но именно так работает 7-дневное снятие hold.",
-                "how_it_should_be": "Authorize резервирует, capture инициирует фактическое списание — разделение и даёт возможность void до capture без движения денег."
+                "what_actually": "До capture делается `void` — мгновенно и без fees; после settlement нужен full refund, который может стоить потерянного interchange и идёт 5-10 дней — это разные операции.",
+                "source_of_confusion": "Оба «отменяют» платёж в глазах клиента, поэтому void и refund сливают в одно понятие.",
+                "if_it_were_true": "Если бы они были идентичны, не было бы смысла предпочитать void до отгрузки ради экономии комиссий и мгновенности.",
+                "how_it_should_be": "Void отменяет ещё не captured платёж без затрат, а refund возвращает уже списанные деньги с возможной потерей fees и задержкой."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Settlement происходит мгновенно в момент capture: как только мерчант сделал capture, деньги в ту же секунду на его банковском счёте.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Settlement — отдельный batch-процесс (обычно T+1): capture лишь помечает «списать», а реальное движение денег идёт через clearing file и issuer на следующий день.",
-                "source_of_confusion": "Хочется верить, что capture = деньги получены, поэтому settlement-лаг упускают.",
-                "if_it_were_true": "Если бы деньги приходили мгновенно при capture, не существовало бы T+1 settlement-окна и claw-back при chargeback после settlement был бы невозможен.",
-                "how_it_should_be": "Capture — это messaging «спиши», а settlement — реальное money movement в end-of-day batch с задержкой T+1..T+2."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`Authorize` — карточная сеть резервирует (hold) сумму на счёте плательщика, деньги ещё не списаны; hold снимается через 7 дней без capture. `Capture` — запрос «теперь спиши» на acquirer, после него платёж двигается к settlement. `Settle` — в конце дня (T+1 для US) acquirer формирует batch и шлёт в card network, issuer переводит деньги. `Refund` — обратный перевод; до capture это `void` (мгновенно, без fees), после settlement — full refund с возможной потерей interchange.",
@@ -402,17 +390,29 @@
                 "edge_cases": "Edge case: void до capture проще и дешевле refund — нет fees и мгновенно; после settlement вернуть деньги дороже, так как scheme fee может остаться у network.",
                 "related": "[[design-payment-system-interview#Q16]] settlement T+1; [[design-payment-system-interview#Q18]] refunds и окна; [[design-payment-system-interview#Q5]] ledger-записи на capture."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Settlement происходит мгновенно в момент capture: как только мерчант сделал capture, деньги в ту же секунду на его банковском счёте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Settlement — отдельный batch-процесс (обычно T+1): capture лишь помечает «списать», а реальное движение денег идёт через clearing file и issuer на следующий день.",
+                "source_of_confusion": "Хочется верить, что capture = деньги получены, поэтому settlement-лаг упускают.",
+                "if_it_were_true": "Если бы деньги приходили мгновенно при capture, не существовало бы T+1 settlement-окна и claw-back при chargeback после settlement был бы невозможен.",
+                "how_it_should_be": "Capture — это messaging «спиши», а settlement — реальное money movement в end-of-day batch с задержкой T+1..T+2."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Refund и void — одно и то же: оба возвращают деньги клиенту с одинаковыми комиссиями и сроками, выбор между ними произволен.",
+              "text": "Authorize сразу списывает деньги со счёта плательщика; capture — это лишь повторное подтверждение того же списания для надёжности.",
               "correct": false,
               "sections": {
-                "what_actually": "До capture делается `void` — мгновенно и без fees; после settlement нужен full refund, который может стоить потерянного interchange и идёт 5-10 дней — это разные операции.",
-                "source_of_confusion": "Оба «отменяют» платёж в глазах клиента, поэтому void и refund сливают в одно понятие.",
-                "if_it_were_true": "Если бы они были идентичны, не было бы смысла предпочитать void до отгрузки ради экономии комиссий и мгновенности.",
-                "how_it_should_be": "Void отменяет ещё не captured платёж без затрат, а refund возвращает уже списанные деньги с возможной потерей fees и задержкой."
+                "what_actually": "Authorize только резервирует сумму (hold), реального списания нет; деньги уходят лишь после capture, а затем settlement, поэтому это два разных шага, а не дубль.",
+                "source_of_confusion": "Слова authorize и capture оба звучат как «провести платёж», поэтому кажется, что они делают одно и то же.",
+                "if_it_were_true": "Если бы authorize списывал деньги, истёкший без capture hold нельзя было бы отменить бесплатно, но именно так работает 7-дневное снятие hold.",
+                "how_it_should_be": "Authorize резервирует, capture инициирует фактическое списание — разделение и даёт возможность void до capture без движения денег."
               },
               "label": "D",
               "order": 3
@@ -429,13 +429,14 @@
           "question_text": "Distributed transactions в платежах: saga или 2PC?",
           "options": [
             {
-              "text": "2PC — стандарт для платежей: координатор гарантирует atomicity между Stripe, банком и вашим сервисом, поэтому saga в финтехе почти не нужна.",
-              "correct": false,
+              "text": "В платежах стандарт — saga, а не 2PC. `2PC` требует coordinator + distributed lock и блокирует участников до его решения; он недоступен между разными компаниями (Stripe, Adyen, банк не запустят prepare-фазу для вас) и применим лишь внутри одной БД (XA Postgres). `Saga` — последовательность локальных транзакций, каждая со своей compensating action: при fail на шаге N выполняют компенсации шагов N-1..1. Eventual consistency, не isolated, но реально работает cross-organisation.",
+              "correct": true,
               "sections": {
-                "what_actually": "2PC недоступен cross-organisation: внешние компании не запустят prepare-фазу для вашего координатора, поэтому де-факто стандарт — saga, а 2PC unused.",
-                "source_of_confusion": "2PC даёт привлекательную полную atomicity, и кажется, что её можно распространить на внешних участников.",
-                "if_it_were_true": "Если бы 2PC работал между компаниями, Stripe должен был бы держать ресурсы залоченными по команде вашего координатора, чего ни один PSP не допустит.",
-                "how_it_should_be": "Cross-service координацию делают через saga с компенсациями, а 2PC оставляют только для транзакций внутри одной БД (XA)."
+                "explanation": "2PC даёт atomicity и isolation ценой блокировок, но падение координатора оставляет участников stuck; saga жертвует isolation, зато non-blocking и переживает межкорпоративные границы.",
+                "example": "Saga onboarding мерчанта: создать аккаунт в PG → создать Stripe Connect (compensation `Stripe.delete`) → завести KYC-кейс (compensation `KYC.cancel`) → welcome email (без компенсации).",
+                "when_to_apply": "Применяют saga всегда, когда транзакция пересекает границы сервисов/компаний и 2PC физически недоступен — то есть почти везде в реальных платежах.",
+                "edge_cases": "Edge case: idempotency обязательна на каждом шаге саги, иначе retry после сбоя дублирует эффект; сами компенсации тоже могут падать и требуют отдельной обработки.",
+                "related": "[[design-payment-system-interview#Q9]] choreography vs orchestration; [[design-payment-system-interview#Q10]] outbox для событий; [[design-payment-system-interview#Q4]] idempotency на шагах саги."
               },
               "label": "A",
               "order": 0
@@ -465,14 +466,13 @@
               "order": 2
             },
             {
-              "text": "В платежах стандарт — saga, а не 2PC. `2PC` требует coordinator + distributed lock и блокирует участников до его решения; он недоступен между разными компаниями (Stripe, Adyen, банк не запустят prepare-фазу для вас) и применим лишь внутри одной БД (XA Postgres). `Saga` — последовательность локальных транзакций, каждая со своей compensating action: при fail на шаге N выполняют компенсации шагов N-1..1. Eventual consistency, не isolated, но реально работает cross-organisation.",
-              "correct": true,
+              "text": "2PC — стандарт для платежей: координатор гарантирует atomicity между Stripe, банком и вашим сервисом, поэтому saga в финтехе почти не нужна.",
+              "correct": false,
               "sections": {
-                "explanation": "2PC даёт atomicity и isolation ценой блокировок, но падение координатора оставляет участников stuck; saga жертвует isolation, зато non-blocking и переживает межкорпоративные границы.",
-                "example": "Saga onboarding мерчанта: создать аккаунт в PG → создать Stripe Connect (compensation `Stripe.delete`) → завести KYC-кейс (compensation `KYC.cancel`) → welcome email (без компенсации).",
-                "when_to_apply": "Применяют saga всегда, когда транзакция пересекает границы сервисов/компаний и 2PC физически недоступен — то есть почти везде в реальных платежах.",
-                "edge_cases": "Edge case: idempotency обязательна на каждом шаге саги, иначе retry после сбоя дублирует эффект; сами компенсации тоже могут падать и требуют отдельной обработки.",
-                "related": "[[design-payment-system-interview#Q9]] choreography vs orchestration; [[design-payment-system-interview#Q10]] outbox для событий; [[design-payment-system-interview#Q4]] idempotency на шагах саги."
+                "what_actually": "2PC недоступен cross-organisation: внешние компании не запустят prepare-фазу для вашего координатора, поэтому де-факто стандарт — saga, а 2PC unused.",
+                "source_of_confusion": "2PC даёт привлекательную полную atomicity, и кажется, что её можно распространить на внешних участников.",
+                "if_it_were_true": "Если бы 2PC работал между компаниями, Stripe должен был бы держать ресурсы залоченными по команде вашего координатора, чего ни один PSP не допустит.",
+                "how_it_should_be": "Cross-service координацию делают через saga с компенсациями, а 2PC оставляют только для транзакций внутри одной БД (XA)."
               },
               "label": "D",
               "order": 3
@@ -489,6 +489,18 @@
           "question_text": "Saga: choreography или orchestration — что выбрать в платежах?",
           "options": [
             {
+              "text": "Choreography и orchestration требуют разных технологий и взаимоисключают друг друга: в одной системе можно применять только что-то одно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Их комбинируют в одной системе: orchestration на happy-path и choreography на side-effects сосуществуют, а Kafka и Temporal работают вместе.",
+                "source_of_confusion": "Кажется, что выбор паттерна — глобальное архитектурное решение «или-или» на всю систему.",
+                "if_it_were_true": "Если бы они исключали друг друга, нельзя было бы вести authorize через state machine и одновременно раздавать `PaymentAuthorized` подписчикам, но именно так и делают.",
+                "how_it_should_be": "Паттерны применяют пер-поток: критичное оркеструют централизованно, некритичное раздают событиями — оба в одном приложении."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "В платёжных системах де-факто стандарт — orchestration для критического happy-path (authorize→capture→settle) и choreography для side-effects (notifications, analytics, fraud-feedback). Orchestration — центральный orchestrator/state machine вызывает сервисы по очереди: явный flow, лёгкая отладка и сосредоточенная observability. Choreography — каждый сервис подписан на events и эмиттит свои (Kafka topic per event type): loose coupling и простое добавление listeners.",
               "correct": true,
               "sections": {
@@ -498,8 +510,8 @@
                 "edge_cases": "Edge case: минусы зеркальны — у choreography размазанная бизнес-логика (трудно проследить весь flow), у orchestration риск «god service», концентрирующего всю сложность.",
                 "related": "[[design-payment-system-interview#Q8]] saga vs 2PC; [[design-payment-system-interview#Q26]] orchestrator и smart routing; [[design-payment-system-interview#Q10]] outbox для событий choreography."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "В платежах всегда используют чистую choreography: центральный orchestrator — anti-pattern, поэтому весь happy-path строят только на событиях без координатора.",
@@ -509,18 +521,6 @@
                 "source_of_confusion": "Choreography звучит «современнее» и максимально decoupled, поэтому кажется единственно правильной для микросервисов.",
                 "if_it_were_true": "Если бы весь платёж шёл только событиями, проследить «где застрял платёж» пришлось бы вручную по десяткам топиков, что неприемлемо для денег.",
                 "how_it_should_be": "Денежный путь ведёт orchestrator (Temporal/Step Functions), а события используют для некритичных эффектов вроде уведомлений и аналитики."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Choreography и orchestration требуют разных технологий и взаимоисключают друг друга: в одной системе можно применять только что-то одно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Их комбинируют в одной системе: orchestration на happy-path и choreography на side-effects сосуществуют, а Kafka и Temporal работают вместе.",
-                "source_of_confusion": "Кажется, что выбор паттерна — глобальное архитектурное решение «или-или» на всю систему.",
-                "if_it_were_true": "Если бы они исключали друг друга, нельзя было бы вести authorize через state machine и одновременно раздавать `PaymentAuthorized` подписчикам, но именно так и делают.",
-                "how_it_should_be": "Паттерны применяют пер-поток: критичное оркеструют централизованно, некритичное раздают событиями — оба в одном приложении."
               },
               "label": "C",
               "order": 2
@@ -549,13 +549,13 @@
           "question_text": "Зачем нужен outbox pattern для надёжной публикации событий?",
           "options": [
             {
-              "text": "Outbox не нужен: достаточно после `db.commit()` сразу вызвать `kafka.send()` — этого хватает для надёжной доставки событий.",
+              "text": "Outbox даёт exactly-once доставку, поэтому consumers можно делать не-идемпотентными — событие гарантированно придёт ровно один раз.",
               "correct": false,
               "sections": {
-                "what_actually": "Между `commit` и `send` есть gap: если процесс упадёт после commit, но до send, событие потеряется навсегда — именно эту дыру и закрывает outbox.",
-                "source_of_confusion": "Код `commit(); send();` выглядит простым и «достаточно атомарным», поэтому кажется надёжным.",
-                "if_it_were_true": "Если бы такой порядок был безопасен, не существовало бы целого паттерна outbox, но потеря событий в gap — реальная и частая проблема.",
-                "how_it_should_be": "Событие пишут в outbox в той же транзакции, что и состояние, а в Kafka его доставляет отдельный worker с at-least-once-гарантией."
+                "what_actually": "Outbox даёт at-least-once (worker может упасть после send, но до mark `published`), поэтому consumers обязаны быть idempotent.",
+                "source_of_confusion": "Хочется верить, что транзакционный outbox автоматически решает и проблему дублей на стороне доставки.",
+                "if_it_were_true": "Если бы доставка была exactly-once, повторная отправка после падения worker создавала бы дубликат события, но consumer без идемпотентности обработал бы его дважды.",
+                "how_it_should_be": "Consumers строят идемпотентными (dedup по event_id), потому что outbox гарантирует доставку «хотя бы раз», а не «ровно раз»."
               },
               "label": "A",
               "order": 0
@@ -574,6 +574,18 @@
               "order": 1
             },
             {
+              "text": "Outbox не нужен: достаточно после `db.commit()` сразу вызвать `kafka.send()` — этого хватает для надёжной доставки событий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Между `commit` и `send` есть gap: если процесс упадёт после commit, но до send, событие потеряется навсегда — именно эту дыру и закрывает outbox.",
+                "source_of_confusion": "Код `commit(); send();` выглядит простым и «достаточно атомарным», поэтому кажется надёжным.",
+                "if_it_were_true": "Если бы такой порядок был безопасен, не существовало бы целого паттерна outbox, но потеря событий в gap — реальная и частая проблема.",
+                "how_it_should_be": "Событие пишут в outbox в той же транзакции, что и состояние, а в Kafka его доставляет отдельный worker с at-least-once-гарантией."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "Можно сначала `kafka.send()`, затем `db.commit()` — так событие точно уйдёт, даже если БД-транзакция откатится.",
               "correct": false,
               "sections": {
@@ -581,18 +593,6 @@
                 "source_of_confusion": "Кажется, что «сначала гарантированно отправить» надёжнее, ведь Kafka редко падает.",
                 "if_it_were_true": "Если бы порядок был верным, consumer мог бы создать побочный эффект (например, отгрузку) по платежу, которого в БД нет после отката.",
                 "how_it_should_be": "Правильно: запись и событие фиксируются одной транзакцией через outbox, а публикация в Kafka происходит только после успешного commit."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Outbox даёт exactly-once доставку, поэтому consumers можно делать не-идемпотентными — событие гарантированно придёт ровно один раз.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Outbox даёт at-least-once (worker может упасть после send, но до mark `published`), поэтому consumers обязаны быть idempotent.",
-                "source_of_confusion": "Хочется верить, что транзакционный outbox автоматически решает и проблему дублей на стороне доставки.",
-                "if_it_were_true": "Если бы доставка была exactly-once, повторная отправка после падения worker создавала бы дубликат события, но consumer без идемпотентности обработал бы его дважды.",
-                "how_it_should_be": "Consumers строят идемпотентными (dedup по event_id), потому что outbox гарантирует доставку «хотя бы раз», а не «ровно раз»."
               },
               "label": "D",
               "order": 3
@@ -609,30 +609,6 @@
           "question_text": "3D Secure 2.0: чем challenge отличается от frictionless?",
           "options": [
             {
-              "text": "Frictionless — это когда ACS требует доп.верификацию (SMS-OTP или биометрию), а challenge — когда ACS возвращает approved без участия держателя карты.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В обоих случаях 3DS запускается и ACS оценивает risk: frictionless — approved без user-interaction, challenge — с доп.верификацией; оба проходят через issuer.",
-                "source_of_confusion": "Слово frictionless («без трения») наводит на мысль, что проверки нет вовсе.",
-                "if_it_were_true": "Если бы frictionless обходил issuer, не было бы liability shift, ради которого 3DS и затевают, но он есть и при frictionless-исходе.",
-                "how_it_should_be": "Frictionless и challenge — два результата одной 3DS-оценки ACS, различаются лишь наличием активного шага верификации пользователя."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "После успешного 3DS liability shift переносит ответственность за fraud-chargeback на acquirer и мерчанта, а не на банк-эмитент (issuer).",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: challenge снижает fraud, но повышает cart abandonment (до 15-30% drop), поэтому его зовут выборочно только на high-risk транзакциях.",
-                "source_of_confusion": "Кажется, что лишний шаг подтверждения «успокаивает» пользователя и потому повышает конверсию.",
-                "if_it_were_true": "Если бы challenge всегда повышал конверсию, его включали бы на 100% транзакций, но из-за abandonment делают ровно наоборот — минимизируют.",
-                "how_it_should_be": "Smart 3DS балансирует: challenge срабатывает на рискованных платежах, а массовый поток идёт frictionless ради конверсии."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "3DS 2.0 проверяет cardholder через ACS (Access Control Server) банка-эмитента и даёт liability shift: если 3DS прошло, ответственность за fraud-chargeback переходит на issuer. ACS оценивает risk score по ~100 data points (device, location, history). Frictionless (~85% случаев): ACS возвращает approved без участия пользователя. Challenge (~15%): ACS требует доп.верификацию — push в banking app, SMS-OTP, биометрию. В EU по PSD2 SCA 3DS обязателен для транзакций > 30 EUR с исключениями (low-value, recurring/MIT, TRA).",
               "correct": true,
               "sections": {
@@ -642,8 +618,8 @@
                 "edge_cases": "Edge case: в EU без 3DS на > 30 EUR issuer вернёт soft decline `1A`; интеграция идёт через SDK Stripe/Adyen, который обрабатывает ACS-redirect, а результат передаётся в authorize-call.",
                 "related": "[[design-payment-system-interview#Q19]] chargebacks и liability shift; [[design-payment-system-interview#Q20]] anti-fraud и 3DS как gate; [[design-payment-system-interview#Q23]] MIT vs CIT и SCA-exemptions."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "3DS/SCA обязателен для всех card-not-present транзакций во всех регионах, включая US, без исключений вроде low-value, recurring/MIT или TRA.",
@@ -653,6 +629,30 @@
                 "source_of_confusion": "Раз 3DS повышает безопасность, кажется логичным, что регуляторы требуют его везде и всегда.",
                 "if_it_were_true": "Если бы он был обязателен глобально, US-мерчанты не могли бы принимать карты без challenge, но там SCA не действует и 3DS опционален.",
                 "how_it_should_be": "3DS обязателен по региональному регулированию (EU/SCA) с порогами и exemptions, а в юрисдикциях без SCA он добровольный."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Frictionless — это когда ACS требует доп.верификацию (SMS-OTP или биометрию), а challenge — когда ACS возвращает approved без участия держателя карты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В обоих случаях 3DS запускается и ACS оценивает risk: frictionless — approved без user-interaction, challenge — с доп.верификацией; оба проходят через issuer.",
+                "source_of_confusion": "Слово frictionless («без трения») наводит на мысль, что проверки нет вовсе.",
+                "if_it_were_true": "Если бы frictionless обходил issuer, не было бы liability shift, ради которого 3DS и затевают, но он есть и при frictionless-исходе.",
+                "how_it_should_be": "Frictionless и challenge — два результата одной 3DS-оценки ACS, различаются лишь наличием активного шага верификации пользователя."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "После успешного 3DS liability shift переносит ответственность за fraud-chargeback на acquirer и мерчанта, а не на банк-эмитент (issuer).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: challenge снижает fraud, но повышает cart abandonment (до 15-30% drop), поэтому его зовут выборочно только на high-risk транзакциях.",
+                "source_of_confusion": "Кажется, что лишний шаг подтверждения «успокаивает» пользователя и потому повышает конверсию.",
+                "if_it_were_true": "Если бы challenge всегда повышал конверсию, его включали бы на 100% транзакций, но из-за abandonment делают ровно наоборот — минимизируют.",
+                "how_it_should_be": "Smart 3DS балансирует: challenge срабатывает на рискованных платежах, а массовый поток идёт frictionless ради конверсии."
               },
               "label": "D",
               "order": 3
@@ -669,18 +669,6 @@
           "question_text": "Как организовать PSP integrations (Stripe, Adyen, Braintree) и зачем их несколько?",
           "options": [
             {
-              "text": "PSP — это сам card network (Visa/Mastercard): подключая Stripe, вы напрямую интегрируетесь с платёжной сетью без посредников.",
-              "correct": false,
-              "sections": {
-                "what_actually": "PSP — это abstraction-layer над card networks и local methods, а не сама сеть; Stripe маршрутизирует к Visa/MC за вас, оставаясь посредником.",
-                "source_of_confusion": "И PSP, и card network участвуют в проведении платежа, поэтому их роли смешивают.",
-                "if_it_were_true": "Если бы PSP был сетью, не существовало бы interchange и scheme fees, которые сеть берёт отдельно от наценки PSP.",
-                "how_it_should_be": "PSP — провайдер-агрегатор поверх сетей и методов; card networks (Visa/MC/Amex) — отдельный слой, к которому PSP подключается."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Несколько PSP подключают исключительно ради юридического требования: регулятор обязывает иметь минимум двух провайдеров.",
               "correct": false,
               "sections": {
@@ -688,6 +676,19 @@
                 "source_of_confusion": "Кажется, что раз это финтех, дублирование провайдеров — формальное требование комплаенса.",
                 "if_it_were_true": "Если бы причина была чисто регуляторной, единственному PSP-стартапу запретили бы работать, но Stripe-only-компании существуют легально.",
                 "how_it_should_be": "Второй PSP берут ради отказоустойчивости, покрытия методов и снижения комиссий — это бизнес- и надёжностные мотивы."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "PSP (Payment Service Provider) — abstraction над card networks + local methods: один API даёт карты, Apple Pay, SEPA и т.д. У каждого свой профиль: `Stripe` — DX и breadth (премиальная цена), `Adyen` — enterprise-scale (сложнее onboarding), `Braintree/PayPal` — PayPal-интеграция (стагнирующая roadmap), `Checkout.com` — tier-1 для tech-fintech. Многопровайдерная архитектура: Payment Orchestrator → Routing Engine → per-vendor адаптеры (Stripe/Adyen/Worldpay) с унифицированным внутренним API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Несколько PSP подключают ради resilience (один down → backup), cost optimization (per-region pricing), coverage (Alipay в Китае, СБП в RU) и A/B на acceptance rate того же платежа.",
+                "example": "Архитектурно перед PSP ставят orchestrator и routing engine, а каждый PSP заворачивают в адаптер за общим internal API, чтобы остальная система не знала про конкретного вендора.",
+                "when_to_apply": "Применяют multi-PSP когда нужны отказоустойчивость, географическое покрытие local methods и оптимизация комиссий; стартапу же разумно начать с одного (Stripe).",
+                "edge_cases": "Edge case: интеграция нового PSP — это 2-4 месяца engineering, поэтому большинство стартует с одного и потом мучительно мигрирует, недооценив стоимость переключения.",
+                "related": "[[design-payment-system-interview#Q13]] card networks и interchange; [[design-payment-system-interview#Q26]] smart routing между PSP; [[design-payment-system-interview#Q14]] tokenization и перенос между PSP."
               },
               "label": "B",
               "order": 1
@@ -705,14 +706,13 @@
               "order": 2
             },
             {
-              "text": "PSP (Payment Service Provider) — abstraction над card networks + local methods: один API даёт карты, Apple Pay, SEPA и т.д. У каждого свой профиль: `Stripe` — DX и breadth (премиальная цена), `Adyen` — enterprise-scale (сложнее onboarding), `Braintree/PayPal` — PayPal-интеграция (стагнирующая roadmap), `Checkout.com` — tier-1 для tech-fintech. Многопровайдерная архитектура: Payment Orchestrator → Routing Engine → per-vendor адаптеры (Stripe/Adyen/Worldpay) с унифицированным внутренним API.",
-              "correct": true,
+              "text": "PSP — это сам card network (Visa/Mastercard): подключая Stripe, вы напрямую интегрируетесь с платёжной сетью без посредников.",
+              "correct": false,
               "sections": {
-                "explanation": "Несколько PSP подключают ради resilience (один down → backup), cost optimization (per-region pricing), coverage (Alipay в Китае, СБП в RU) и A/B на acceptance rate того же платежа.",
-                "example": "Архитектурно перед PSP ставят orchestrator и routing engine, а каждый PSP заворачивают в адаптер за общим internal API, чтобы остальная система не знала про конкретного вендора.",
-                "when_to_apply": "Применяют multi-PSP когда нужны отказоустойчивость, географическое покрытие local methods и оптимизация комиссий; стартапу же разумно начать с одного (Stripe).",
-                "edge_cases": "Edge case: интеграция нового PSP — это 2-4 месяца engineering, поэтому большинство стартует с одного и потом мучительно мигрирует, недооценив стоимость переключения.",
-                "related": "[[design-payment-system-interview#Q13]] card networks и interchange; [[design-payment-system-interview#Q26]] smart routing между PSP; [[design-payment-system-interview#Q14]] tokenization и перенос между PSP."
+                "what_actually": "PSP — это abstraction-layer над card networks и local methods, а не сама сеть; Stripe маршрутизирует к Visa/MC за вас, оставаясь посредником.",
+                "source_of_confusion": "И PSP, и card network участвуют в проведении платежа, поэтому их роли смешивают.",
+                "if_it_were_true": "Если бы PSP был сетью, не существовало бы interchange и scheme fees, которые сеть берёт отдельно от наценки PSP.",
+                "how_it_should_be": "PSP — провайдер-агрегатор поверх сетей и методов; card networks (Visa/MC/Amex) — отдельный слой, к которому PSP подключается."
               },
               "label": "D",
               "order": 3
@@ -729,19 +729,6 @@
           "question_text": "Card networks (Visa/MC/Amex), interchange и scheme fees — как устроены?",
           "options": [
             {
-              "text": "Card networks (Visa, Mastercard, Amex, Discover, JCB, UnionPay) маршрутизируют authorization между acquirer мерчанта и issuer держателя и задают rules (interchange, chargeback codes) по 4-party-модели: cardholder → issuer → network → acquirer → merchant. Fee-структура (US card-not-present): interchange `1.5-2.5%` (issuer) + scheme fee `0.1-0.15%` (network) + acquirer markup `0.3-1%` → итого мерчант платит `~2.9% + $0.30` (формула Stripe). Маршрутизация считается по BIN (первые 6-8 цифр карты).",
-              "correct": true,
-              "sections": {
-                "explanation": "Комиссия мерчанта складывается из трёх слоёв с разными получателями: основную часть (interchange) забирает банк-эмитент, меньшую — сеть, остаток — acquirer/PSP.",
-                "example": "Amex — closed-loop: одновременно network, issuer и acquirer, поэтому дороже, но даёт сети полный контроль; в разных странах есть local networks (Cartes Bancaires, Bancontact, JCB).",
-                "when_to_apply": "Знание слоёв применяют при выборе pricing-модели: `interchange++` прозрачно показывает реальный interchange+scheme+markup, тогда как blended `2.9%+30¢` — flat.",
-                "edge_cases": "Edge case: маршрутизация и применимый interchange определяются по BIN, поэтому US-карта может уходить на US-acquirer ради меньшей комиссии (см. smart routing).",
-                "related": "[[design-payment-system-interview#Q12]] PSP как агрегатор сетей; [[design-payment-system-interview#Q26]] routing по BIN ради cost; [[design-payment-system-interview#Q16]] settlement через network."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Всю комиссию `~2.9%` целиком забирает card network (Visa/MC): issuer и acquirer ничего из неё не получают.",
               "correct": false,
               "sections": {
@@ -750,8 +737,8 @@
                 "if_it_were_true": "Если бы всё уходило сети, у банков-эмитентов не было бы экономического стимула выпускать карты, но именно interchange их и мотивирует.",
                 "how_it_should_be": "Комиссия делится на три слоя с разными бенефициарами: issuer (interchange), network (scheme fee), acquirer/PSP (markup)."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Amex работает по той же открытой 4-party-модели, что и Visa: отдельные issuer и acquirer, network лишь маршрутизирует.",
@@ -762,8 +749,8 @@
                 "if_it_were_true": "Если бы Amex был 4-party, его комиссии не отличались бы заметно от Visa, но closed-loop как раз объясняет его более высокую цену.",
                 "how_it_should_be": "Visa/MC — открытая 4-party-модель, а Amex — закрытая, где network сам выступает issuer и acquirer."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Маршрутизация и interchange определяются по сумме платежа: чем больше amount, тем выше класс interchange, а BIN роли не играет.",
@@ -773,6 +760,19 @@
                 "source_of_confusion": "Сумма — самый очевидный параметр платежа, поэтому кажется, что именно она задаёт тариф.",
                 "if_it_were_true": "Если бы решал только amount, нельзя было бы маршрутизировать US-карту на US-acquirer ради экономии, но routing-таблицы строят именно по BIN.",
                 "how_it_should_be": "BIN определяет сеть/страну/тип карты и тем самым маршрут и категорию interchange; сумма влияет лишь на абсолютную величину комиссии."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Card networks (Visa, Mastercard, Amex, Discover, JCB, UnionPay) маршрутизируют authorization между acquirer мерчанта и issuer держателя и задают rules (interchange, chargeback codes) по 4-party-модели: cardholder → issuer → network → acquirer → merchant. Fee-структура (US card-not-present): interchange `1.5-2.5%` (issuer) + scheme fee `0.1-0.15%` (network) + acquirer markup `0.3-1%` → итого мерчант платит `~2.9% + $0.30` (формула Stripe). Маршрутизация считается по BIN (первые 6-8 цифр карты).",
+              "correct": true,
+              "sections": {
+                "explanation": "Комиссия мерчанта складывается из трёх слоёв с разными получателями: основную часть (interchange) забирает банк-эмитент, меньшую — сеть, остаток — acquirer/PSP.",
+                "example": "Amex — closed-loop: одновременно network, issuer и acquirer, поэтому дороже, но даёт сети полный контроль; в разных странах есть local networks (Cartes Bancaires, Bancontact, JCB).",
+                "when_to_apply": "Знание слоёв применяют при выборе pricing-модели: `interchange++` прозрачно показывает реальный interchange+scheme+markup, тогда как blended `2.9%+30¢` — flat.",
+                "edge_cases": "Edge case: маршрутизация и применимый interchange определяются по BIN, поэтому US-карта может уходить на US-acquirer ради меньшей комиссии (см. smart routing).",
+                "related": "[[design-payment-system-interview#Q12]] PSP как агрегатор сетей; [[design-payment-system-interview#Q26]] routing по BIN ради cost; [[design-payment-system-interview#Q16]] settlement через network."
               },
               "label": "D",
               "order": 3
@@ -789,16 +789,28 @@
           "question_text": "Tokenization и vault: формат токенов, scope, rotation?",
           "options": [
             {
-              "text": "Tokenization — это просто шифрование PAN: токен `tok_xxx` обратимо расшифровывается в номер карты любым сервисом, у которого есть ключ.",
+              "text": "При reissue карты любой токен (и network, и local) автоматически перестаёт работать, и мерчант обязан заново собрать данные карты у клиента.",
               "correct": false,
               "sections": {
-                "what_actually": "Токен — не шифр PAN, а opaque-ссылка на запись в vault; восстановить из него карту вне vault нельзя, в этом и смысл вывода из PCI-scope.",
-                "source_of_confusion": "И шифрование, и токенизация «прячут» номер карты, поэтому их легко перепутать.",
-                "if_it_were_true": "Если бы токен был просто зашифрованным PAN, утечка ключа раскрыла бы все карты, и приложение всё равно осталось бы в PCI-scope.",
-                "how_it_should_be": "Tokenization подменяет PAN несекретной ссылкой, а реальные данные и ключи изолированы в vault на HSM — это сильнее простого шифрования."
+                "what_actually": "Network token переживает reissue — issuer сам обновляет mapping на новый PAN, и мерчант ничего не делает; обновления требует лишь local PSP-токен через Update API.",
+                "source_of_confusion": "Кажется логичным, что смена физической карты обнуляет любую привязку к ней.",
+                "if_it_were_true": "Если бы network-токены умирали при reissue, не было бы их главного преимущества — снижения churn в subscriptions, ради которого их и внедряют.",
+                "how_it_should_be": "Network-токены ротируются автоматически при reissue (issuer обновляет mapping), а local-токены устаревают и обновляются через Update API."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Токен глобален и работает в любой системе: один и тот же `tok_xxx` можно передать другому мерчанту или PSP, и он продолжит работать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Token scope-ится строго к **merchant + PSP**: перенос к другому PSP требует re-tokenization, иначе чужой токен невалиден; глобальных токенов нет.",
+                "source_of_confusion": "Opaque-строка выглядит самодостаточной, поэтому кажется, что её можно использовать где угодно.",
+                "if_it_were_true": "Если бы токены были глобальными, кража одного токена позволяла бы списывать с карты у любого мерчанта, что разрушило бы саму модель безопасности.",
+                "how_it_should_be": "Токен валиден только в пределах выдавшего его merchant+PSP; для другого провайдера выпускают новый токен (или используют network token)."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Tokenization заменяет PAN (16 цифр карты) на token, чтобы хранить и передавать его без PCI scope. Network tokenization (recommended 2025+): issuer/network (Visa Token Service, MC Digital Enablement) выдают токен, привязанный к device+merchant, и при reissue карты он остаётся valid — issuer сам обновляет mapping, снижая churn в subscriptions. Local tokenization: Stripe/Adyen хранят PAN в своём vault и возвращают opaque `tok_xxx`. Scope: token валиден только для этого merchant + этого PSP, перенос между PSP = re-tokenization.",
@@ -810,29 +822,17 @@
                 "edge_cases": "Edge case: хранить PAN в локальной БД даже encrypted переводит мерчанта в PCI Level 1 (вместо SAQ A) и удорожает compliance в ~10 раз; network-токены ротируются автоматически, local — требуют Update API.",
                 "related": "[[design-payment-system-interview#Q24]] PCI scope reduction; [[design-payment-system-interview#Q12]] перенос токенов между PSP; [[design-payment-system-interview#Q23]] network tokens в subscriptions."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Токен глобален и работает в любой системе: один и тот же `tok_xxx` можно передать другому мерчанту или PSP, и он продолжит работать.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Token scope-ится строго к **merchant + PSP**: перенос к другому PSP требует re-tokenization, иначе чужой токен невалиден; глобальных токенов нет.",
-                "source_of_confusion": "Opaque-строка выглядит самодостаточной, поэтому кажется, что её можно использовать где угодно.",
-                "if_it_were_true": "Если бы токены были глобальными, кража одного токена позволяла бы списывать с карты у любого мерчанта, что разрушило бы саму модель безопасности.",
-                "how_it_should_be": "Токен валиден только в пределах выдавшего его merchant+PSP; для другого провайдера выпускают новый токен (или используют network token)."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "При reissue карты любой токен (и network, и local) автоматически перестаёт работать, и мерчант обязан заново собрать данные карты у клиента.",
+              "text": "Tokenization — это просто шифрование PAN: токен `tok_xxx` обратимо расшифровывается в номер карты любым сервисом, у которого есть ключ.",
               "correct": false,
               "sections": {
-                "what_actually": "Network token переживает reissue — issuer сам обновляет mapping на новый PAN, и мерчант ничего не делает; обновления требует лишь local PSP-токен через Update API.",
-                "source_of_confusion": "Кажется логичным, что смена физической карты обнуляет любую привязку к ней.",
-                "if_it_were_true": "Если бы network-токены умирали при reissue, не было бы их главного преимущества — снижения churn в subscriptions, ради которого их и внедряют.",
-                "how_it_should_be": "Network-токены ротируются автоматически при reissue (issuer обновляет mapping), а local-токены устаревают и обновляются через Update API."
+                "what_actually": "Токен — не шифр PAN, а opaque-ссылка на запись в vault; восстановить из него карту вне vault нельзя, в этом и смысл вывода из PCI-scope.",
+                "source_of_confusion": "И шифрование, и токенизация «прячут» номер карты, поэтому их легко перепутать.",
+                "if_it_were_true": "Если бы токен был просто зашифрованным PAN, утечка ключа раскрыла бы все карты, и приложение всё равно осталось бы в PCI-scope.",
+                "how_it_should_be": "Tokenization подменяет PAN несекретной ссылкой, а реальные данные и ключи изолированы в vault на HSM — это сильнее простого шифрования."
               },
               "label": "D",
               "order": 3
@@ -849,13 +849,14 @@
           "question_text": "Webhooks: delivery, retry, signing, idempotent receivers?",
           "options": [
             {
-              "text": "Webhook гарантирует exactly-once и строгий ordering, поэтому receiver может обрабатывать события напрямую без дедупликации и без проверки статуса.",
-              "correct": false,
+              "text": "Webhook — HTTP POST от платёжной системы мерчанту с notification (`payment.succeeded`, `dispute.opened`). Контракт: at-least-once (Stripe гарантирует), ordering НЕ гарантировано (используй timestamp+status в payload), retry — exponential backoff 5s, 25s, 2m … до 72 часов. Signing: `Stripe-Signature: t=...,v1=<hmac_sha256>` — HMAC-SHA256 от `timestamp.body` с shared secret; receiver проверяет валидность подписи и что timestamp в окне 5 минут (replay protection). Receivers обязаны быть idempotent: таблица `processed_events(event_id)`, `INSERT ON CONFLICT DO NOTHING`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Контракт — at-least-once без гарантии порядка: событие может прийти 2-3 раза и не по порядку, поэтому receiver обязан быть idempotent и опираться на timestamp+status.",
-                "source_of_confusion": "Хочется простоты «пришло событие — обработал», поэтому exactly-once приписывают webhook по умолчанию.",
-                "if_it_were_true": "Если бы доставка была exactly-once и ordered, не понадобились бы таблица `processed_events` и проверка статуса в payload, но они обязательны.",
-                "how_it_should_be": "Receiver строят идемпотентным (dedup по event_id) и порядконезависимым, так как доставка — at-least-once без гарантии очерёдности."
+                "explanation": "Webhook доставляет события асинхронно и ненадёжно по своей природе, поэтому надёжность строят на повторах + подписи + дедупликации на стороне получателя.",
+                "example": "Sender-инфра: outbox → Kafka topic `webhooks.outbound` → worker делает POST с retry, dead-letter после 72ч, per-merchant rate limit, чтобы медленный мерчант не блокировал чужих.",
+                "when_to_apply": "Применяют webhooks вместо polling, чтобы мерчант узнавал о смене статуса push'ем; receiver best practice — вернуть 200 быстро (< 1 сек) и тяжёлую работу делать async.",
+                "edge_cases": "Edge case: webhook может прийти 2-3 раза (network blip → retry, хотя уже обработан), поэтому без idempotent-приёма получатель продублирует side-effect; replay-атаку отсекает 5-минутное окно timestamp.",
+                "related": "[[design-payment-system-interview#Q10]] outbox под webhook-доставку; [[design-payment-system-interview#Q4]] idempotency-ключи; [[design-payment-system-interview#Q8]] polling status — антипаттерн."
               },
               "label": "A",
               "order": 0
@@ -873,14 +874,13 @@
               "order": 1
             },
             {
-              "text": "Webhook — HTTP POST от платёжной системы мерчанту с notification (`payment.succeeded`, `dispute.opened`). Контракт: at-least-once (Stripe гарантирует), ordering НЕ гарантировано (используй timestamp+status в payload), retry — exponential backoff 5s, 25s, 2m … до 72 часов. Signing: `Stripe-Signature: t=...,v1=<hmac_sha256>` — HMAC-SHA256 от `timestamp.body` с shared secret; receiver проверяет валидность подписи и что timestamp в окне 5 минут (replay protection). Receivers обязаны быть idempotent: таблица `processed_events(event_id)`, `INSERT ON CONFLICT DO NOTHING`.",
-              "correct": true,
+              "text": "Webhook гарантирует exactly-once и строгий ordering, поэтому receiver может обрабатывать события напрямую без дедупликации и без проверки статуса.",
+              "correct": false,
               "sections": {
-                "explanation": "Webhook доставляет события асинхронно и ненадёжно по своей природе, поэтому надёжность строят на повторах + подписи + дедупликации на стороне получателя.",
-                "example": "Sender-инфра: outbox → Kafka topic `webhooks.outbound` → worker делает POST с retry, dead-letter после 72ч, per-merchant rate limit, чтобы медленный мерчант не блокировал чужих.",
-                "when_to_apply": "Применяют webhooks вместо polling, чтобы мерчант узнавал о смене статуса push'ем; receiver best practice — вернуть 200 быстро (< 1 сек) и тяжёлую работу делать async.",
-                "edge_cases": "Edge case: webhook может прийти 2-3 раза (network blip → retry, хотя уже обработан), поэтому без idempotent-приёма получатель продублирует side-effect; replay-атаку отсекает 5-минутное окно timestamp.",
-                "related": "[[design-payment-system-interview#Q10]] outbox под webhook-доставку; [[design-payment-system-interview#Q4]] idempotency-ключи; [[design-payment-system-interview#Q8]] polling status — антипаттерн."
+                "what_actually": "Контракт — at-least-once без гарантии порядка: событие может прийти 2-3 раза и не по порядку, поэтому receiver обязан быть idempotent и опираться на timestamp+status.",
+                "source_of_confusion": "Хочется простоты «пришло событие — обработал», поэтому exactly-once приписывают webhook по умолчанию.",
+                "if_it_were_true": "Если бы доставка была exactly-once и ordered, не понадобились бы таблица `processed_events` и проверка статуса в payload, но они обязательны.",
+                "how_it_should_be": "Receiver строят идемпотентным (dedup по event_id) и порядконезависимым, так как доставка — at-least-once без гарантии очерёдности."
               },
               "label": "C",
               "order": 2
@@ -909,6 +909,19 @@
           "question_text": "Как устроен settlement (T+1, batch files, ACH/SWIFT)?",
           "options": [
             {
+              "text": "Settlement — реальное движение денег с банка cardholder на банк merchant; authorize/capture лишь messaging, settlement — money movement. Timeline: день T транзакции captured → end of day T acquirer агрегирует и шлёт clearing file в card network → T+1 (US/EU) network форвардит issuer, issuer списывает → T+1/T+2 acquirer переводит мерчанту total minus fees. File formats: Visa BASE I/II, Mastercard IPM (бинарные, фиксированной длины). В ledger переход `merchant_available → merchant_settled`. ACH дёшев и медленен (1-2 дня, batch), SWIFT/wire дороже ($25-50) и международный.",
+              "correct": true,
+              "sections": {
+                "explanation": "Settlement отделён от authorize/capture во времени: списание у плательщика и зачисление мерчанту происходят в end-of-day batch через clearing-файлы, а не мгновенно.",
+                "example": "Instant-схемы — Faster Payments (UK), TIPS (EU SEPA Instant), FedNow (US) — дают real-time payouts, но дороже batch-ACH и применяются, когда мерчант платит за скорость.",
+                "when_to_apply": "Используют batch-settlement по умолчанию ради дешевизны и масштаба, а wire/instant — для срочных или международных выплат, где задержка ACH неприемлема.",
+                "edge_cases": "Edge case: chargeback после settlement приводит к claw back с merchant balance; если у мерчанта нет средств, он остаётся в долгу перед платёжной системой.",
+                "related": "[[design-payment-system-interview#Q7]] lifecycle до settle; [[design-payment-system-interview#Q17]] reconciliation с PSP report; [[design-payment-system-interview#Q19]] chargeback и claw back."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Settlement — это и есть момент capture: после успешного capture деньги в тот же миг зачисляются на банковский счёт мерчанта, отдельного clearing-цикла T+1 нет.",
               "correct": false,
               "sections": {
@@ -916,18 +929,6 @@
                 "source_of_confusion": "Оба шага про «получение денег мерчантом», поэтому их легко слить в одно событие.",
                 "if_it_were_true": "Если бы capture = settlement, не существовало бы claw back при chargeback после settlement и T+1-окна, но они есть именно из-за лага.",
                 "how_it_should_be": "Capture помечает платёж к списанию, а реальное движение денег происходит позже в end-of-day batch-settlement."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Settlement выполняется per-transaction в реальном времени: на каждый captured-платёж acquirer сразу шлёт отдельный clearing-message в card network, без end-of-day агрегации в batch-файл.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Settlement делают batch'ем в конце дня: acquirer агрегирует транзакции в clearing file (Visa BASE II, MC IPM), а не отправляет per-transaction в реальном времени.",
-                "source_of_confusion": "Real-time платежи на слуху (FedNow, TIPS), поэтому кажется, что и settlement идёт мгновенно по каждой сделке.",
-                "if_it_were_true": "Если бы каждая из `50K tx/sec` слала отдельный clearing-перевод, network была бы перегружена — поэтому их и батчат на end-of-day.",
-                "how_it_should_be": "Транзакции агрегируют в дневной batch и шлют одним clearing-файлом; instant-схемы используют лишь для отдельных срочных payout'ов."
               },
               "label": "B",
               "order": 1
@@ -945,14 +946,13 @@
               "order": 2
             },
             {
-              "text": "Settlement — реальное движение денег с банка cardholder на банк merchant; authorize/capture лишь messaging, settlement — money movement. Timeline: день T транзакции captured → end of day T acquirer агрегирует и шлёт clearing file в card network → T+1 (US/EU) network форвардит issuer, issuer списывает → T+1/T+2 acquirer переводит мерчанту total minus fees. File formats: Visa BASE I/II, Mastercard IPM (бинарные, фиксированной длины). В ledger переход `merchant_available → merchant_settled`. ACH дёшев и медленен (1-2 дня, batch), SWIFT/wire дороже ($25-50) и международный.",
-              "correct": true,
+              "text": "Settlement выполняется per-transaction в реальном времени: на каждый captured-платёж acquirer сразу шлёт отдельный clearing-message в card network, без end-of-day агрегации в batch-файл.",
+              "correct": false,
               "sections": {
-                "explanation": "Settlement отделён от authorize/capture во времени: списание у плательщика и зачисление мерчанту происходят в end-of-day batch через clearing-файлы, а не мгновенно.",
-                "example": "Instant-схемы — Faster Payments (UK), TIPS (EU SEPA Instant), FedNow (US) — дают real-time payouts, но дороже batch-ACH и применяются, когда мерчант платит за скорость.",
-                "when_to_apply": "Используют batch-settlement по умолчанию ради дешевизны и масштаба, а wire/instant — для срочных или международных выплат, где задержка ACH неприемлема.",
-                "edge_cases": "Edge case: chargeback после settlement приводит к claw back с merchant balance; если у мерчанта нет средств, он остаётся в долгу перед платёжной системой.",
-                "related": "[[design-payment-system-interview#Q7]] lifecycle до settle; [[design-payment-system-interview#Q17]] reconciliation с PSP report; [[design-payment-system-interview#Q19]] chargeback и claw back."
+                "what_actually": "Settlement делают batch'ем в конце дня: acquirer агрегирует транзакции в clearing file (Visa BASE II, MC IPM), а не отправляет per-transaction в реальном времени.",
+                "source_of_confusion": "Real-time платежи на слуху (FedNow, TIPS), поэтому кажется, что и settlement идёт мгновенно по каждой сделке.",
+                "if_it_were_true": "Если бы каждая из `50K tx/sec` слала отдельный clearing-перевод, network была бы перегружена — поэтому их и батчат на end-of-day.",
+                "how_it_should_be": "Транзакции агрегируют в дневной batch и шлют одним clearing-файлом; instant-схемы используют лишь для отдельных срочных payout'ов."
               },
               "label": "D",
               "order": 3
@@ -969,29 +969,16 @@
           "question_text": "Как делать reconciliation между PSP report и internal ledger?",
           "options": [
             {
-              "text": "Reconciliation — сверка internal ledger с reports PSP/acquirer/bank, чтобы поймать discrepancies (пропавшие транзакции, fees, FX). Daily flow (T+1 06:00 UTC): PSP report (CSV/JSON через SFTP/API) → S3; job грузит PSP-транзакции и internal entries за день T, делает `LEFT JOIN ON external_id` и категоризирует: в PSP но не в ledger → phantom (alert); в ledger но не в PSP → in-flight, retry завтра; amount mismatch → fee/FX difference, manual review; status mismatch → race в lifecycle. Известные паттерны (округление fees) авторезолвятся, неразрешённое → Jira/Slack.",
-              "correct": true,
+              "text": "Reconciliation выполняют в реальном времени на каждый PSP-webhook: приходит `payment.settled` → сверяем сумму вебхука с ledger-entry → расхождение закрываем сразу. Отдельный batch-прогон против дневного settlement-report не нужен — все fees, FX и итоговые суммы уже приходят в теле вебхука.",
+              "correct": false,
               "sections": {
-                "explanation": "Сверка ловит расхождения между тем, что система записала у себя, и тем, что реально провёл PSP/банк, превращая невидимые баги в конкретные тикеты.",
-                "example": "Что выявляет: баг (Stripe вернул success, мы не записали в ledger); fee-утечку (PSP взял $0.31 вместо $0.30 → на 10M tx это $100K/мес); fraud (в ledger cancelled, в PSP settled).",
-                "when_to_apply": "Применяют ежедневно как стандарт, а real-time (streaming) reconciliation через Flink — там, где расхождение критично заметить немедленно.",
-                "edge_cases": "Edge case: расхождения нельзя просто игнорировать — каждое категоризируют (phantom/in-flight/amount/status), и только известные авторезолвят; всё остальное идёт на manual review.",
-                "related": "[[design-payment-system-interview#Q16]] settlement как источник report; [[design-payment-system-interview#Q5]] internal ledger entries; [[design-payment-system-interview#Q29]] reconciliation_unresolved_count в мониторинге."
+                "what_actually": "Стандарт — daily (T+1): месячная сверка означает, что discrepancy ищется 30 дней, и к обнаружению накапливаются миллионы inquiries от мерчантов.",
+                "source_of_confusion": "Ежемесячная сверка выглядит экономной по ресурсам и кажется приемлемой.",
+                "if_it_were_true": "Если бы хватало раза в месяц, баг с пропущенной записью копился бы 30 дней, и исправить $10M-расхождение пост-фактум было бы почти невозможно.",
+                "how_it_should_be": "Сверку гоняют ежедневно с алертами, а в критичных потоках — streaming-reconciliation в реальном времени через Flink."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Daily job (T+1) грузит PSP-report и internal entries за день T, но сопоставляет их по паре `(amount, timestamp)` вместо `external_id`: совпало → ок, нет пары → in-flight (retry завтра), amount mismatch → fee/FX review. Совпадение суммы и близкого времени считается достаточным признаком одной и той же транзакции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Даже при идеальном коде PSP берёт неожиданные fees, бывают FX-различия и in-flight гонки; reconciliation ловит расхождения, которые тесты в принципе не видят.",
-                "source_of_confusion": "Кажется, что баги — единственный источник расхождений, а их устраняют тестами.",
-                "if_it_were_true": "Если бы сверка была лишней, утечка $0.31 вместо $0.30 на 10M транзакций ($100K/мес) осталась бы незамеченной до годового аудита.",
-                "how_it_should_be": "Ежедневную reconciliation делают всегда: она ловит fee-, FX- и status-расхождения между ledger и реальным движением денег у PSP."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Ежедневно берём internal ledger за день T и через `LEFT JOIN` от ledger проверяем, что каждая entry присутствует в PSP-report: нет пары → in-flight, retry завтра; amount mismatch → fee/FX difference, manual review; status mismatch → race. Транзакции, которые есть в PSP, но отсутствуют в ledger, сверка не рассматривает.",
@@ -1002,17 +989,30 @@
                 "if_it_were_true": "Если бы хватало тоталов, phantom-транзакция и потерянная транзакция на одну сумму взаимно сократились бы, и обе остались бы незамеченными.",
                 "how_it_should_be": "Reconciliation идёт построчно с категоризацией каждого расхождения, а не сравнением агрегатов, иначе встречные ошибки скрываются."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Reconciliation — сверка internal ledger с reports PSP/acquirer/bank, чтобы поймать discrepancies (пропавшие транзакции, fees, FX). Daily flow (T+1 06:00 UTC): PSP report (CSV/JSON через SFTP/API) → S3; job грузит PSP-транзакции и internal entries за день T, делает `LEFT JOIN ON external_id` и категоризирует: в PSP но не в ledger → phantom (alert); в ledger но не в PSP → in-flight, retry завтра; amount mismatch → fee/FX difference, manual review; status mismatch → race в lifecycle. Известные паттерны (округление fees) авторезолвятся, неразрешённое → Jira/Slack.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сверка ловит расхождения между тем, что система записала у себя, и тем, что реально провёл PSP/банк, превращая невидимые баги в конкретные тикеты.",
+                "example": "Что выявляет: баг (Stripe вернул success, мы не записали в ledger); fee-утечку (PSP взял $0.31 вместо $0.30 → на 10M tx это $100K/мес); fraud (в ledger cancelled, в PSP settled).",
+                "when_to_apply": "Применяют ежедневно как стандарт, а real-time (streaming) reconciliation через Flink — там, где расхождение критично заметить немедленно.",
+                "edge_cases": "Edge case: расхождения нельзя просто игнорировать — каждое категоризируют (phantom/in-flight/amount/status), и только известные авторезолвят; всё остальное идёт на manual review.",
+                "related": "[[design-payment-system-interview#Q16]] settlement как источник report; [[design-payment-system-interview#Q5]] internal ledger entries; [[design-payment-system-interview#Q29]] reconciliation_unresolved_count в мониторинге."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Reconciliation выполняют в реальном времени на каждый PSP-webhook: приходит `payment.settled` → сверяем сумму вебхука с ledger-entry → расхождение закрываем сразу. Отдельный batch-прогон против дневного settlement-report не нужен — все fees, FX и итоговые суммы уже приходят в теле вебхука.",
+              "text": "Daily job (T+1) грузит PSP-report и internal entries за день T, но сопоставляет их по паре `(amount, timestamp)` вместо `external_id`: совпало → ок, нет пары → in-flight (retry завтра), amount mismatch → fee/FX review. Совпадение суммы и близкого времени считается достаточным признаком одной и той же транзакции.",
               "correct": false,
               "sections": {
-                "what_actually": "Стандарт — daily (T+1): месячная сверка означает, что discrepancy ищется 30 дней, и к обнаружению накапливаются миллионы inquiries от мерчантов.",
-                "source_of_confusion": "Ежемесячная сверка выглядит экономной по ресурсам и кажется приемлемой.",
-                "if_it_were_true": "Если бы хватало раза в месяц, баг с пропущенной записью копился бы 30 дней, и исправить $10M-расхождение пост-фактум было бы почти невозможно.",
-                "how_it_should_be": "Сверку гоняют ежедневно с алертами, а в критичных потоках — streaming-reconciliation в реальном времени через Flink."
+                "what_actually": "Даже при идеальном коде PSP берёт неожиданные fees, бывают FX-различия и in-flight гонки; reconciliation ловит расхождения, которые тесты в принципе не видят.",
+                "source_of_confusion": "Кажется, что баги — единственный источник расхождений, а их устраняют тестами.",
+                "if_it_were_true": "Если бы сверка была лишней, утечка $0.31 вместо $0.30 на 10M транзакций ($100K/мес) осталась бы незамеченной до годового аудита.",
+                "how_it_should_be": "Ежедневную reconciliation делают всегда: она ловит fee-, FX- и status-расхождения между ledger и реальным движением денег у PSP."
               },
               "label": "D",
               "order": 3
@@ -1041,6 +1041,18 @@
               "order": 0
             },
             {
+              "text": "Flow с idempotency-key, проверкой `amount ≤ remaining` и обратными entries. Временное окно refund конечно и задаётся PSP (обычно ~180 дней): по его истечении возврат на оригинальную карту отклоняется. Отсчёт окна идёт от даты refund-запроса, поэтому давность самой транзакции на доступность возврата не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После ~60 дней многие PSP не дают refund на оригинальную карту (выпускают cheque/manual transfer), а закрытая карта требует недель manual-процесса — окна реальны.",
+                "source_of_confusion": "Хочется верить, что возврат всегда идёт «той же дорогой», что и платёж, независимо от времени.",
+                "if_it_were_true": "Если бы окон не было, не существовало бы PSD2 recall right на 8 недель и отдельной логики late refund, но они есть из-за временных ограничений.",
+                "how_it_should_be": "У refund есть временные окна: polite refund до settle прост, а поздний или на закрытую карту идёт через cheque/manual transfer с задержкой."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Flow: `POST /refunds {payment_id, amount?, idempotency_key, reason?}` → проверить, что платёж в `captured`/`settled` → проверить `amount ≤ remaining refundable` → idempotency-check → PSP refund call → записать обратные entries в ledger → webhook мерчанту. Partial разрешён (≤ оригинала, можно несколько раз). Idempotency: refund ID = `(payment_id, idempotency_key, amount)`, повтор с тем же ключом → `200` + cached refund object. Polite refund (до settle) возвращает деньги на ту же карту за 5-10 рабочих дней.",
               "correct": true,
               "sections": {
@@ -1050,8 +1062,8 @@
                 "edge_cases": "Edge case: concurrent refunds требуют row-level lock на payment, иначе два параллельных возврата превысят remaining; refund > remaining → 400; refund на закрытую карту идёт через manual process и занимает недели.",
                 "related": "[[design-payment-system-interview#Q4]] idempotency-ключи; [[design-payment-system-interview#Q5]] обратные ledger entries; [[design-payment-system-interview#Q30]] refund после chargeback — антипаттерн."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Flow с проверкой суммы (`amount ≤ remaining`), idempotency-key и записью обратных entries; partial разрешён (≤ оригинала, несколько раз). Refund можно инициировать сразу после `authorized`, не дожидаясь `captured`: PSP снимет возврат с authorization hold и вернёт деньги на карту.",
@@ -1061,18 +1073,6 @@
                 "source_of_confusion": "Полный возврат концептуально проще, поэтому кажется единственным допустимым вариантом.",
                 "if_it_were_true": "Если бы partial был запрещён, нельзя было бы вернуть деньги за один отменённый товар из заказа на пять позиций, что ломает реальные сценарии.",
                 "how_it_should_be": "Допускаются и full, и multiple partial refunds; система лишь следит, чтобы суммарный возврат не превысил оригинальную сумму."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Flow с idempotency-key, проверкой `amount ≤ remaining` и обратными entries. Временное окно refund конечно и задаётся PSP (обычно ~180 дней): по его истечении возврат на оригинальную карту отклоняется. Отсчёт окна идёт от даты refund-запроса, поэтому давность самой транзакции на доступность возврата не влияет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "После ~60 дней многие PSP не дают refund на оригинальную карту (выпускают cheque/manual transfer), а закрытая карта требует недель manual-процесса — окна реальны.",
-                "source_of_confusion": "Хочется верить, что возврат всегда идёт «той же дорогой», что и платёж, независимо от времени.",
-                "if_it_were_true": "Если бы окон не было, не существовало бы PSD2 recall right на 8 недель и отдельной логики late refund, но они есть из-за временных ограничений.",
-                "how_it_should_be": "У refund есть временные окна: polite refund до settle прост, а поздний или на закрытую карту идёт через cheque/manual transfer с задержкой."
               },
               "label": "D",
               "order": 3
@@ -1161,13 +1161,14 @@
               "order": 0
             },
             {
-              "text": "Цель fraud-системы — максимизировать catch rate: модель тюнят только на долю пойманного fraud, а false-positive (заблокированные легитимные платежи) в метрику качества не закладывают.",
-              "correct": false,
+              "text": "Многоуровневая защита: (1) rule engine (deterministic) — velocity (>5 cards с одного IP за 10 мин → block), BIN-country mismatch, blacklist, AVS decline; (2) ML model — features (amount, time, country, device fingerprint, graph-embeddings), XGBoost/DNN, output score 0..1, tuning false-positive vs catch rate; (3) device fingerprint — browser (canvas, fonts, screen, timezone, uniqueness 99.9%), mobile device ID, 3rd-party (Sift, Forter); (4) 3DS как final gate на high-risk. Архитектура: fraud-decision-service real-time < 100ms из Redis feature store + ML inference → APPROVE/REVIEW/DECLINE.",
+              "correct": true,
               "sections": {
-                "what_actually": "Over-blocking опаснее: у большинства мерчантов стоимость false-positive (потерянная выручка от честных клиентов) выше, чем стоимость самого fraud, поэтому порог тюнят.",
-                "source_of_confusion": "Кажется, что агрессивная блокировка = безопасность, а отклонённые честные платежи незаметны.",
-                "if_it_were_true": "Если бы блокировка всего была выгодна, систему настроили бы на decline-by-default, но это уничтожило бы выручку от легитимных покупателей.",
-                "how_it_should_be": "Цель — баланс catch rate и false-positive: чрезмерные блокировки приносят больше убытка, чем предотвращённый fraud."
+                "explanation": "Fraud-детект комбинирует детерминированные правила и вероятностный ML: правила ловят явные паттерны мгновенно, ML — тонкие, а 3DS закрывает остаток liability shift'ом.",
+                "example": "Feedback loop: chargeback размечает транзакцию как fraud → модель переобучают еженедельно; решение принимается в реальном времени за < 100ms через feature store в Redis.",
+                "when_to_apply": "Применяют все уровни вместе на authorize-path: rules + score + 3DS дают decision APPROVE → PSP, REVIEW → manual queue, DECLINE → 402.",
+                "edge_cases": "Edge case: over-blocking опаснее самого fraud (у большинства мерчантов false-positive cost > fraud cost), есть model drift (новые паттерны) и adversarial-атаки через residential proxies, ломающие fingerprint.",
+                "related": "[[design-payment-system-interview#Q11]] 3DS как final gate; [[design-payment-system-interview#Q19]] chargeback как метка для обучения; [[design-payment-system-interview#Q21]] AML/KYC и sanction screening."
               },
               "label": "B",
               "order": 1
@@ -1185,14 +1186,13 @@
               "order": 2
             },
             {
-              "text": "Многоуровневая защита: (1) rule engine (deterministic) — velocity (>5 cards с одного IP за 10 мин → block), BIN-country mismatch, blacklist, AVS decline; (2) ML model — features (amount, time, country, device fingerprint, graph-embeddings), XGBoost/DNN, output score 0..1, tuning false-positive vs catch rate; (3) device fingerprint — browser (canvas, fonts, screen, timezone, uniqueness 99.9%), mobile device ID, 3rd-party (Sift, Forter); (4) 3DS как final gate на high-risk. Архитектура: fraud-decision-service real-time < 100ms из Redis feature store + ML inference → APPROVE/REVIEW/DECLINE.",
-              "correct": true,
+              "text": "Цель fraud-системы — максимизировать catch rate: модель тюнят только на долю пойманного fraud, а false-positive (заблокированные легитимные платежи) в метрику качества не закладывают.",
+              "correct": false,
               "sections": {
-                "explanation": "Fraud-детект комбинирует детерминированные правила и вероятностный ML: правила ловят явные паттерны мгновенно, ML — тонкие, а 3DS закрывает остаток liability shift'ом.",
-                "example": "Feedback loop: chargeback размечает транзакцию как fraud → модель переобучают еженедельно; решение принимается в реальном времени за < 100ms через feature store в Redis.",
-                "when_to_apply": "Применяют все уровни вместе на authorize-path: rules + score + 3DS дают decision APPROVE → PSP, REVIEW → manual queue, DECLINE → 402.",
-                "edge_cases": "Edge case: over-blocking опаснее самого fraud (у большинства мерчантов false-positive cost > fraud cost), есть model drift (новые паттерны) и adversarial-атаки через residential proxies, ломающие fingerprint.",
-                "related": "[[design-payment-system-interview#Q11]] 3DS как final gate; [[design-payment-system-interview#Q19]] chargeback как метка для обучения; [[design-payment-system-interview#Q21]] AML/KYC и sanction screening."
+                "what_actually": "Over-blocking опаснее: у большинства мерчантов стоимость false-positive (потерянная выручка от честных клиентов) выше, чем стоимость самого fraud, поэтому порог тюнят.",
+                "source_of_confusion": "Кажется, что агрессивная блокировка = безопасность, а отклонённые честные платежи незаметны.",
+                "if_it_were_true": "Если бы блокировка всего была выгодна, систему настроили бы на decline-by-default, но это уничтожило бы выручку от легитимных покупателей.",
+                "how_it_should_be": "Цель — баланс catch rate и false-positive: чрезмерные блокировки приносят больше убытка, чем предотвращённый fraud."
               },
               "label": "D",
               "order": 3
@@ -1222,18 +1222,6 @@
               "order": 0
             },
             {
-              "text": "KYC, AML и sanction screening — это одно и то же: единая разовая проверка клиента при регистрации, после которой контроль не требуется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это три разных контроля с разной периодичностью: KYC при onboarding, AML — постоянный мониторинг потока, sanction screening — на каждой транзакции против списков.",
-                "source_of_confusion": "Все три — про «комплаенс и проверку клиента», поэтому их сливают в единую разовую процедуру.",
-                "if_it_were_true": "Если бы хватало разовой проверки на входе, sanctioned-лицо могло бы пройти KYC, а затем спокойно проводить запрещённые платежи без перепроверки.",
-                "how_it_should_be": "KYC проверяет identity при входе, AML мониторит транзакции непрерывно, sanction screening сверяет каждую операцию со списками — это разные процессы."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Sanction screening делают раз в год batch'ем по базе клиентов; проверять каждую транзакцию в реальном времени не нужно.",
               "correct": false,
               "sections": {
@@ -1242,8 +1230,8 @@
                 "if_it_were_true": "Если бы хватало годовой сверки, платёж в адрес попавшего под санкции контрагента прошёл бы за 11 месяцев до следующей проверки — это прямое нарушение.",
                 "how_it_should_be": "Каждую транзакцию проверяют против OFAC/EU/UN-списков в реальном времени, а batch-сверку базы делают дополнительно overnight."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "False-positive в sanction screening недопустимы: система обязана срабатывать только на 100% точные совпадения, иначе её настроили неверно.",
@@ -1253,6 +1241,18 @@
                 "source_of_confusion": "Кажется, что качественная система должна давать только идеальные матчи без ложных срабатываний.",
                 "if_it_were_true": "Если бы допускались лишь точные совпадения, злоумышленник ушёл бы от блокировки лёгкой опечаткой в имени, обойдя весь sanction-контроль.",
                 "how_it_should_be": "Screening намеренно использует fuzzy name+DOB matching с неизбежными false-positive, которые разбирает manual review, ради защиты от обхода."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "KYC, AML и sanction screening — это одно и то же: единая разовая проверка клиента при регистрации, после которой контроль не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это три разных контроля с разной периодичностью: KYC при onboarding, AML — постоянный мониторинг потока, sanction screening — на каждой транзакции против списков.",
+                "source_of_confusion": "Все три — про «комплаенс и проверку клиента», поэтому их сливают в единую разовую процедуру.",
+                "if_it_were_true": "Если бы хватало разовой проверки на входе, sanctioned-лицо могло бы пройти KYC, а затем спокойно проводить запрещённые платежи без перепроверки.",
+                "how_it_should_be": "KYC проверяет identity при входе, AML мониторит транзакции непрерывно, sanction screening сверяет каждую операцию со списками — это разные процессы."
               },
               "label": "D",
               "order": 3
@@ -1269,6 +1269,30 @@
           "question_text": "Multi-currency: FX rates, wallet, hedging?",
           "options": [
             {
+              "text": "Для денег применяют round-half-up: округление вверх удобнее и точнее, ошибки округления в финансах несущественны и не накапливаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используют round-half-even (banker's rounding): round-half-up систематически смещает суммы вверх, и на миллионах конверсий накапливается заметный дисбаланс.",
+                "source_of_confusion": "Round-half-up — школьный «привычный» способ, поэтому кажется естественным и для финансов.",
+                "if_it_were_true": "Если бы накопление было несущественным, не существовало бы требования banker's rounding, но именно систематический bias заставляет его применять.",
+                "how_it_should_be": "В финансовых расчётах округляют round-half-even, чтобы устранить накопительный bias при массовых FX-конверсиях."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "FX rate фиксируют навсегда при первом quote: курс, показанный клиенту, действует бессрочно, поэтому rate lock на секунды не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rate lock короткий (~30 секунд): курс волатилен, и держать его бессрочно означало бы взять на себя неуправляемый FX-риск при каждом quote.",
+                "source_of_confusion": "Хочется «честно» зафиксировать курс для клиента, и кажется, что чем дольше lock, тем лучше.",
+                "if_it_were_true": "Если бы курс фиксировался навсегда, клиенты исполняли бы старые выгодные quote'ы спустя дни, и treasury несла бы прямые убытки на движении рынка.",
+                "how_it_should_be": "Курс лочат на десятки секунд ради защиты клиента от surprise, а FX-exposure управляют через pre-funded balance или per-trade hedge."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Multi-currency реализуют одним wallet с единой колонкой balance, а валюту хранят рядом как метку, конвертируя на лету при каждом чтении.",
               "correct": false,
               "sections": {
@@ -1277,8 +1301,8 @@
                 "if_it_were_true": "Если бы был один balance с меткой, конверсия не оставляла бы следа в виде парных FX-entries, и аудит движения между валютами стал бы невозможен.",
                 "how_it_should_be": "Каждой валюте — свой wallet, а конверсия оформляется отдельной FX-транзакцией с парой entries в каждой валюте."
               },
-              "label": "A",
-              "order": 0
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Multi-currency wallet — owner держит balance в нескольких валютах: один owner → N wallets (по одному на валюту), каждый с `available_balance_minor` и `pending_balance_minor`. FX rate sources: Bloomberg, Refinitiv, ECB, агрегаторы (Wise, Currencylayer), refresh каждую минуту/real-time. Pricing: mid-market rate + markup (Wise 0.4%, банки 2-4%), rate lock на 30 секунд при quote. Конверсия = отдельная transaction с парой entries в каждой валюте плюс `fx_revenue`. Hedging: pre-funded balance или per-trade hedge через FX broker — задача treasury.",
@@ -1289,30 +1313,6 @@
                 "when_to_apply": "Применяют при работе с клиентами/мерчантами в разных валютах: отдельные wallets изолируют валюты, а rate lock на 30 сек защищает клиента от surprise при подтверждении.",
                 "edge_cases": "Edge case: rounding errors накапливаются, поэтому всегда round-half-even (banker's rounding), а не round-half-up; cross-currency settlement на закрытом weekend-рынке замораживает rate и даёт discrepancy.",
                 "related": "[[design-payment-system-interview#Q5]] double-entry для FX; [[design-payment-system-interview#Q16]] settlement в разных валютах; [[design-payment-system-interview#Q27]] multi-region и валютные стенды."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Для денег применяют round-half-up: округление вверх удобнее и точнее, ошибки округления в финансах несущественны и не накапливаются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Используют round-half-even (banker's rounding): round-half-up систематически смещает суммы вверх, и на миллионах конверсий накапливается заметный дисбаланс.",
-                "source_of_confusion": "Round-half-up — школьный «привычный» способ, поэтому кажется естественным и для финансов.",
-                "if_it_were_true": "Если бы накопление было несущественным, не существовало бы требования banker's rounding, но именно систематический bias заставляет его применять.",
-                "how_it_should_be": "В финансовых расчётах округляют round-half-even, чтобы устранить накопительный bias при массовых FX-конверсиях."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "FX rate фиксируют навсегда при первом quote: курс, показанный клиенту, действует бессрочно, поэтому rate lock на секунды не нужен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Rate lock короткий (~30 секунд): курс волатилен, и держать его бессрочно означало бы взять на себя неуправляемый FX-риск при каждом quote.",
-                "source_of_confusion": "Хочется «честно» зафиксировать курс для клиента, и кажется, что чем дольше lock, тем лучше.",
-                "if_it_were_true": "Если бы курс фиксировался навсегда, клиенты исполняли бы старые выгодные quote'ы спустя дни, и treasury несла бы прямые убытки на движении рынка.",
-                "how_it_should_be": "Курс лочат на десятки секунд ради защиты клиента от surprise, а FX-exposure управляют через pre-funded balance или per-trade hedge."
               },
               "label": "D",
               "order": 3
@@ -1341,18 +1341,6 @@
               "order": 0
             },
             {
-              "text": "Decline reasons требуют разной тактики: `insufficient_funds` → сразу request нового payment method (средств на карте всё равно нет), `expired_card` → retry по расписанию (карта могла автопродлиться), `lost_stolen` → НЕ retry. После N неудачных попыток → `past_due`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Тактику выбирают по reason: `insufficient_funds` ретраят к зарплате, `expired_card` — просят новый method, `lost_stolen` — НЕ ретраят (potential fraud); подход разный.",
-                "source_of_confusion": "Единый retry-алгоритм для всех кодов кажется проще в реализации.",
-                "if_it_were_true": "Если бы все коды ретраили одинаково, повторы по `lost_stolen` означали бы попытки списать с украденной карты — прямой fraud-риск.",
-                "how_it_should_be": "Retry-стратегию дифференцируют по decline reason, чтобы спасать временные отказы и не трогать fraud-сигналы вроде `lost_stolen`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Recurring billing flow: cron/scheduler триггерит billing на границе периода → выбираются active subscriptions due today → для каждой charge сохранённого payment method (token) → success: extend period + invoice; failure: dunning. Dunning — обработка failed payments через retry. Stripe Smart Retries: ML выбирает optimal retry times (день/время по issuer), default 3/5/7 дней; после N попыток (4-7) → mark past_due → optionally cancel. Decline reasons требуют разной тактики: `insufficient_funds` retry, `expired_card` — request новый method, `lost_stolen` — НЕ retry.",
               "correct": true,
               "sections": {
@@ -1362,8 +1350,8 @@
                 "edge_cases": "Edge case: для EU SCA различают CIT (нужно 3DS) и MIT (recurring exempt от SCA, если первый CIT прошёл 3DS и сохранён mandate); `lost_stolen` НЕ ретраят — это потенциальный fraud.",
                 "related": "[[design-payment-system-interview#Q14]] network tokens против churn; [[design-payment-system-interview#Q11]] 3DS для CIT; [[design-payment-system-interview#Q4]] idempotency при retry billing."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Network tokens повышают success rate подписок: при reissue или продлении карты токен автоматически обновляется на стороне сети, и charge проходит без участия клиента. Механизм работает одинаково для любых карт и всех эмитентов, независимо от участия банка в token-программе.",
@@ -1373,6 +1361,18 @@
                 "source_of_confusion": "Кажется, что любая смена физической карты неизбежно разрывает recurring-привязку.",
                 "if_it_were_true": "Если бы токены не помогали, не было бы смысла внедрять network tokenization ради subscriptions, но именно снижение churn — её ключевая выгода.",
                 "how_it_should_be": "Network-токены переживают reissue (issuer/network обновляют mapping), что критично поднимает success rate долгоживущих подписок."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Decline reasons требуют разной тактики: `insufficient_funds` → сразу request нового payment method (средств на карте всё равно нет), `expired_card` → retry по расписанию (карта могла автопродлиться), `lost_stolen` → НЕ retry. После N неудачных попыток → `past_due`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тактику выбирают по reason: `insufficient_funds` ретраят к зарплате, `expired_card` — просят новый method, `lost_stolen` — НЕ ретраят (potential fraud); подход разный.",
+                "source_of_confusion": "Единый retry-алгоритм для всех кодов кажется проще в реализации.",
+                "if_it_were_true": "Если бы все коды ретраили одинаково, повторы по `lost_stolen` означали бы попытки списать с украденной карты — прямой fraud-риск.",
+                "how_it_should_be": "Retry-стратегию дифференцируют по decline reason, чтобы спасать временные отказы и не трогать fraud-сигналы вроде `lost_stolen`."
               },
               "label": "D",
               "order": 3
@@ -1389,13 +1389,14 @@
           "question_text": "PCI-DSS compliance: SAQ A vs D, scope reduction?",
           "options": [
             {
-              "text": "PCI-DSS обязателен только для крупных компаний уровня Level 1; небольшим мерчантам с малым объёмом транзакций он не требуется вовсе.",
-              "correct": false,
+              "text": "PCI-DSS обязателен для всех, кто обрабатывает/хранит/передаёт PAN. Levels по объёму: Level 1 (>6M txn/year) → annual on-site audit от QSA; Level 2 (1-6M) → SAQ + quarterly scan; Level 3-4 → self-assessment. SAQ типы: A (полный outsource на PCI-compliant PSP, redirect, ~22 вопроса, низкая сложность), A-EP (iframe, ~191), B (POS), C (payment app), D (тебе показывают PAN, ~329 вопросов, очень высокая). Главный приём — scope reduction: iframe/hosted fields PSP (Stripe.js) → PAN не касается твоего сервера → SAQ A.",
+              "correct": true,
               "sections": {
-                "what_actually": "PCI-DSS обязателен для всех, кто работает с PAN, независимо от объёма; отличается лишь форма проверки — от self-assessment (SAQ) у мелких до on-site audit у Level 1.",
-                "source_of_confusion": "Level 1 с его дорогим аудитом самый заметный, поэтому кажется, что стандарт только для гигантов.",
-                "if_it_were_true": "Если бы мелкие были освобождены, любой маленький магазин мог бы хранить PAN как угодно, но и для них действует SAQ-самооценка.",
-                "how_it_should_be": "Стандарт распространяется на всех обработчиков карт; масштаб влияет только на уровень (Level 1-4) и форму валидации, а не на сам факт обязательности."
+                "explanation": "PCI-DSS — обязательный стандарт, а его «стоимость» зависит от того, касается ли PAN твоих систем: чем меньше scope, тем проще SAQ и дешевле compliance.",
+                "example": "Стоимость различается на порядок: SAQ A ~$10-50K/год (vendor tools + scan), а SAQ D / Level 1 audit — $100-500K/год плюс месяцы engineering на remediation.",
+                "when_to_apply": "Применяют scope reduction всегда, когда возможно: hosted fields и tokenization из PSP-vault держат PAN вне твоей инфраструктуры, оставляя у тебя только токены.",
+                "edge_cases": "Edge case: если PAN всё же нужен (proprietary terminals) — segmented network, HSM, P2PE и SAQ D; annual-обязанности включают pentest, ASV quarterly external scan и retention access-логов (90 дней online, 1 год archive).",
+                "related": "[[design-payment-system-interview#Q14]] tokenization для scope reduction; [[design-payment-system-interview#Q21]] прочий compliance (AML/KYC); [[design-payment-system-interview#Q30]] PAN в логах — антипаттерн."
               },
               "label": "A",
               "order": 0
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "text": "PCI-DSS обязателен для всех, кто обрабатывает/хранит/передаёт PAN. Levels по объёму: Level 1 (>6M txn/year) → annual on-site audit от QSA; Level 2 (1-6M) → SAQ + quarterly scan; Level 3-4 → self-assessment. SAQ типы: A (полный outsource на PCI-compliant PSP, redirect, ~22 вопроса, низкая сложность), A-EP (iframe, ~191), B (POS), C (payment app), D (тебе показывают PAN, ~329 вопросов, очень высокая). Главный приём — scope reduction: iframe/hosted fields PSP (Stripe.js) → PAN не касается твоего сервера → SAQ A.",
-              "correct": true,
+              "text": "PCI-DSS обязателен только для крупных компаний уровня Level 1; небольшим мерчантам с малым объёмом транзакций он не требуется вовсе.",
+              "correct": false,
               "sections": {
-                "explanation": "PCI-DSS — обязательный стандарт, а его «стоимость» зависит от того, касается ли PAN твоих систем: чем меньше scope, тем проще SAQ и дешевле compliance.",
-                "example": "Стоимость различается на порядок: SAQ A ~$10-50K/год (vendor tools + scan), а SAQ D / Level 1 audit — $100-500K/год плюс месяцы engineering на remediation.",
-                "when_to_apply": "Применяют scope reduction всегда, когда возможно: hosted fields и tokenization из PSP-vault держат PAN вне твоей инфраструктуры, оставляя у тебя только токены.",
-                "edge_cases": "Edge case: если PAN всё же нужен (proprietary terminals) — segmented network, HSM, P2PE и SAQ D; annual-обязанности включают pentest, ASV quarterly external scan и retention access-логов (90 дней online, 1 год archive).",
-                "related": "[[design-payment-system-interview#Q14]] tokenization для scope reduction; [[design-payment-system-interview#Q21]] прочий compliance (AML/KYC); [[design-payment-system-interview#Q30]] PAN в логах — антипаттерн."
+                "what_actually": "PCI-DSS обязателен для всех, кто работает с PAN, независимо от объёма; отличается лишь форма проверки — от self-assessment (SAQ) у мелких до on-site audit у Level 1.",
+                "source_of_confusion": "Level 1 с его дорогим аудитом самый заметный, поэтому кажется, что стандарт только для гигантов.",
+                "if_it_were_true": "Если бы мелкие были освобождены, любой маленький магазин мог бы хранить PAN как угодно, но и для них действует SAQ-самооценка.",
+                "how_it_should_be": "Стандарт распространяется на всех обработчиков карт; масштаб влияет только на уровень (Level 1-4) и форму валидации, а не на сам факт обязательности."
               },
               "label": "D",
               "order": 3
@@ -1449,17 +1449,28 @@
           "question_text": "Как выглядит high-level architecture платёжной системы (gateway, orchestrator, ledger, risk)?",
           "options": [
             {
-              "text": "Поток: client → Edge/WAF/Rate-limit → API Gateway → Payment Orchestrator, который вызывает Risk/Fraud, Token Vault, PSP Adapters и Ledger Service, пишет в Postgres payments, Redis idempotency и Kafka, откуда Webhook Dispatcher шлёт уведомления; Reconciliation Job сверяет S3 PSP reports с Ledger DB. Service boundaries: Gateway (auth, rate-limit), Orchestrator (state machine на Temporal), Risk (fraud + sanctions), Token Vault (PCI-isolated, mTLS only), PSP Adapters (per-vendor, унифицированный API), Ledger (double-entry, sharded по merchant_id).",
-              "correct": true,
+              "text": "Token Vault доступен любому сервису по обычному HTTP из shared-сети; PCI-isolation и mTLS-only доступ к нему не требуются, раз PAN уже токенизирован.",
+              "correct": false,
               "sections": {
-                "explanation": "Архитектуру строят как набор чётко разграниченных сервисов вокруг центрального orchestrator'а, где деньги (ledger) и карты (vault) изолированы сильнее всего.",
-                "example": "Data tiering: Postgres hot (< 90 дней), BigQuery/Snowflake warm (analytics), S3 + Glacier cold (> 1 года, PCI 7-year retention); inter-service sync — gRPC + mTLS, async — Kafka events.",
-                "when_to_apply": "Применяют такую декомпозицию, чтобы PCI-scope ограничить vault'ом, критичный flow вести через durable orchestrator, а события (PaymentAuthorized, ChargebackOpened) раздавать через Kafka.",
-                "edge_cases": "Edge case: outbox pattern ставят везде, где событие порождается записью в БД, иначе between commit и publish теряются события; vault доступен только по mTLS из конкретного сервиса.",
-                "related": "[[design-payment-system-interview#Q26]] orchestrator и smart routing; [[design-payment-system-interview#Q10]] outbox в архитектуре; [[design-payment-system-interview#Q14]] token vault и mTLS."
+                "what_actually": "Vault — PCI-isolated и доступен только по mTLS из конкретного сервиса; открытый HTTP-доступ к нему расширил бы PCI-scope на всех вызывающих.",
+                "source_of_confusion": "Vault выглядит как очередной микросервис, поэтому к нему применяют те же правила доступа, что и к остальным.",
+                "if_it_were_true": "Если бы vault был открыт любому компоненту, токены/PAN могли бы утечь через скомпрометированный соседний сервис, разрушив scope reduction.",
+                "how_it_should_be": "Доступ к vault жёстко ограничивают mTLS и конкретным сервисом-потребителем, держа его в изолированной PCI-зоне."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Все взаимодействия между сервисами — синхронные REST-вызовы; Kafka, event-стриминг и async Webhook Dispatcher в потоке платежа не участвуют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inter-service связь смешанная: sync через gRPC+mTLS на критичном пути и async через Kafka events (PaymentAuthorized, PaymentSettled) для side-effects и webhook-доставки.",
+                "source_of_confusion": "Синхронный REST привычнее и нагляднее, поэтому кажется единственным способом связи.",
+                "if_it_were_true": "Если бы всё было синхронным REST, webhook-доставка и reconciliation блокировали бы authorize-path, а outbox-паттерн был бы не нужен — но он центральный в дизайне.",
+                "how_it_should_be": "Критичный flow ведут синхронно (gRPC+mTLS), а события раздают асинхронно через Kafka с outbox, комбинируя оба стиля."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Gateway, orchestrator, ledger и risk — модули одного монолитного сервиса с общей БД; отдельные service boundaries, per-service хранилища и mTLS между компонентами не нужны.",
@@ -1470,29 +1481,18 @@
                 "if_it_were_true": "Если бы всё было в одном процессе с единой БД, PCI-scope охватил бы всю систему, а не только vault, удорожив compliance на порядок.",
                 "how_it_should_be": "Компоненты разносят по сервисам с собственными хранилищами и mTLS-границами, чтобы изолировать PCI-scope и масштабировать части независимо."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Token Vault доступен любому сервису по обычному HTTP из shared-сети; PCI-isolation и mTLS-only доступ к нему не требуются, раз PAN уже токенизирован.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Vault — PCI-isolated и доступен только по mTLS из конкретного сервиса; открытый HTTP-доступ к нему расширил бы PCI-scope на всех вызывающих.",
-                "source_of_confusion": "Vault выглядит как очередной микросервис, поэтому к нему применяют те же правила доступа, что и к остальным.",
-                "if_it_were_true": "Если бы vault был открыт любому компоненту, токены/PAN могли бы утечь через скомпрометированный соседний сервис, разрушив scope reduction.",
-                "how_it_should_be": "Доступ к vault жёстко ограничивают mTLS и конкретным сервисом-потребителем, держа его в изолированной PCI-зоне."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Все взаимодействия между сервисами — синхронные REST-вызовы; Kafka, event-стриминг и async Webhook Dispatcher в потоке платежа не участвуют.",
-              "correct": false,
+              "text": "Поток: client → Edge/WAF/Rate-limit → API Gateway → Payment Orchestrator, который вызывает Risk/Fraud, Token Vault, PSP Adapters и Ledger Service, пишет в Postgres payments, Redis idempotency и Kafka, откуда Webhook Dispatcher шлёт уведомления; Reconciliation Job сверяет S3 PSP reports с Ledger DB. Service boundaries: Gateway (auth, rate-limit), Orchestrator (state machine на Temporal), Risk (fraud + sanctions), Token Vault (PCI-isolated, mTLS only), PSP Adapters (per-vendor, унифицированный API), Ledger (double-entry, sharded по merchant_id).",
+              "correct": true,
               "sections": {
-                "what_actually": "Inter-service связь смешанная: sync через gRPC+mTLS на критичном пути и async через Kafka events (PaymentAuthorized, PaymentSettled) для side-effects и webhook-доставки.",
-                "source_of_confusion": "Синхронный REST привычнее и нагляднее, поэтому кажется единственным способом связи.",
-                "if_it_were_true": "Если бы всё было синхронным REST, webhook-доставка и reconciliation блокировали бы authorize-path, а outbox-паттерн был бы не нужен — но он центральный в дизайне.",
-                "how_it_should_be": "Критичный flow ведут синхронно (gRPC+mTLS), а события раздают асинхронно через Kafka с outbox, комбинируя оба стиля."
+                "explanation": "Архитектуру строят как набор чётко разграниченных сервисов вокруг центрального orchestrator'а, где деньги (ledger) и карты (vault) изолированы сильнее всего.",
+                "example": "Data tiering: Postgres hot (< 90 дней), BigQuery/Snowflake warm (analytics), S3 + Glacier cold (> 1 года, PCI 7-year retention); inter-service sync — gRPC + mTLS, async — Kafka events.",
+                "when_to_apply": "Применяют такую декомпозицию, чтобы PCI-scope ограничить vault'ом, критичный flow вести через durable orchestrator, а события (PaymentAuthorized, ChargebackOpened) раздавать через Kafka.",
+                "edge_cases": "Edge case: outbox pattern ставят везде, где событие порождается записью в БД, иначе between commit и publish теряются события; vault доступен только по mTLS из конкретного сервиса.",
+                "related": "[[design-payment-system-interview#Q26]] orchestrator и smart routing; [[design-payment-system-interview#Q10]] outbox в архитектуре; [[design-payment-system-interview#Q14]] token vault и mTLS."
               },
               "label": "D",
               "order": 3
@@ -1509,18 +1509,6 @@
           "question_text": "Payment orchestrator и smart routing между PSP — как выбрать оптимальный PSP?",
           "options": [
             {
-              "text": "Smart routing сводится к статической cost-таблице: PSP выбирается только по минимальной комиссии для данного BIN, а real-time PSP health (latency/error rate, circuit breaker) и historical acceptance rate на выбор не влияют.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Routing управляется сигналами — BIN, amount, merchant preferences, PSP health и 3DS result — ради оптимизации cost и acceptance rate, а не равномерной раздачи нагрузки.",
-                "source_of_confusion": "Round-robin — простейшая балансировка, поэтому кажется естественным дефолтом и для PSP-выбора.",
-                "if_it_were_true": "Если бы выбор был случайным, нельзя было бы направить US-карту на дешёвый US-acquirer или обойти упавший PSP, но routing делает именно это по сигналам.",
-                "how_it_should_be": "PSP выбирают по набору сигналов (BIN/amount/health/3DS) под цель cost или acceptance optimization, а не круговым перебором."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Smart routing — выбор оптимального PSP per transaction по сигналам: card BIN (US-card → US-acquirer для lower fee), amount (> $X → PSP с лучшим acceptance), merchant preferences (contractual discounts), real-time PSP health (latency/error rate, circuit breaker → fallback), authentication (3DS result). Strategies: cost optimization (static routing table per BIN), acceptance rate optimization (ML выбирает PSP с highest historical success), failover retry (PSP-A decline → PSP-B, если reason recoverable), hedge (для high-value параллельно на 2 PSP, accept first, void second). Orchestrator — durable state machine на Temporal.",
               "correct": true,
               "sections": {
@@ -1530,8 +1518,8 @@
                 "edge_cases": "Edge case: failover ретраит только recoverable-decline; на `lost_stolen` повтор недопустим (fraud); hedge на 2 PSP параллельно требует обязательного void второй авторизации, иначе двойной hold.",
                 "related": "[[design-payment-system-interview#Q12]] PSP integrations и адаптеры; [[design-payment-system-interview#Q13]] routing по BIN ради interchange; [[design-payment-system-interview#Q9]] orchestration саги."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Failover retry переключает платёж на другой PSP при любом decline-коде, включая hard declines `lost_stolen` и `pickup_card`: любой отказ трактуется как recoverable-сбой PSP-A и повторяется на PSP-B.",
@@ -1542,8 +1530,8 @@
                 "if_it_were_true": "Если бы ретраили `lost_stolen`, система обходила бы fraud-блокировку issuer-а, провоцируя chargeback'и и санкции сетей.",
                 "how_it_should_be": "Failover применяют выборочно по reason: recoverable-отказы ретраят на backup-PSP, а fraud-коды (`lost_stolen`) сразу терминальны."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Orchestrator хранит состояние workflow только в памяти процесса, а durability обеспечивает клиентский retry поверх idempotency-key, а не durable execution log Temporal.",
@@ -1553,6 +1541,18 @@
                 "source_of_confusion": "Большинство сервисов stateless, поэтому durable-природу workflow-движка упускают.",
                 "if_it_were_true": "Если бы состояние терялось при рестарте, многошаговая saga прерывалась бы на любом деплое, оставляя платёж в незавершённом и неотслеживаемом виде.",
                 "how_it_should_be": "Workflow-движок (Temporal/Cadence) хранит состояние долговечно, восстанавливая сагу после сбоев и рестартов без потери прогресса."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Smart routing сводится к статической cost-таблице: PSP выбирается только по минимальной комиссии для данного BIN, а real-time PSP health (latency/error rate, circuit breaker) и historical acceptance rate на выбор не влияют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Routing управляется сигналами — BIN, amount, merchant preferences, PSP health и 3DS result — ради оптимизации cost и acceptance rate, а не равномерной раздачи нагрузки.",
+                "source_of_confusion": "Round-robin — простейшая балансировка, поэтому кажется естественным дефолтом и для PSP-выбора.",
+                "if_it_were_true": "Если бы выбор был случайным, нельзя было бы направить US-карту на дешёвый US-acquirer или обойти упавший PSP, но routing делает именно это по сигналам.",
+                "how_it_should_be": "PSP выбирают по набору сигналов (BIN/amount/health/3DS) под цель cost или acceptance optimization, а не круговым перебором."
               },
               "label": "D",
               "order": 3
@@ -1569,18 +1569,6 @@
           "question_text": "Multi-region: data residency, failover, regulatory?",
           "options": [
             {
-              "text": "Multi-region нужен исключительно для снижения latency за счёт близости к пользователю; data residency и disaster recovery решаются в пределах одного датацентра и от географического распределения не зависят.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Multi-region решает три задачи разом — latency, DR (failover за 5-15 мин) и data residency (RU PD-152, India RBI); residency и DR часто и есть главные драйверы.",
-                "source_of_confusion": "Latency — самая интуитивная причина «поставить сервер ближе», поэтому остальные цели упускают.",
-                "if_it_were_true": "Если бы дело было только в latency, не пришлось бы заводить отдельный RU-стек ради PD-152, но регуляторика прямо требует географической изоляции данных.",
-                "how_it_should_be": "Географию выбирают исходя из latency, отказоустойчивости и юридических требований к месту хранения данных одновременно."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Sensitive-данные (PAN, токены) реплицируют во все регионы наравне с транзакциями — единый global vault повышает доступность и упрощает cross-region reads.",
               "correct": false,
               "sections": {
@@ -1589,8 +1577,32 @@
                 "if_it_were_true": "Если бы карты реплицировались во все регионы, утечка в одном датацентре раскрыла бы глобальный vault и нарушила data residency для PAN.",
                 "how_it_should_be": "Чувствительные данные изолируют per-region (отдельный vault), а реплицируют только non-sensitive, чтобы не расширять поверхность атаки и не нарушать residency."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Multi-region нужен исключительно для снижения latency за счёт близости к пользователю; data residency и disaster recovery решаются в пределах одного датацентра и от географического распределения не зависят.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-region решает три задачи разом — latency, DR (failover за 5-15 мин) и data residency (RU PD-152, India RBI); residency и DR часто и есть главные драйверы.",
+                "source_of_confusion": "Latency — самая интуитивная причина «поставить сервер ближе», поэтому остальные цели упускают.",
+                "if_it_were_true": "Если бы дело было только в latency, не пришлось бы заводить отдельный RU-стек ради PD-152, но регуляторика прямо требует географической изоляции данных.",
+                "how_it_should_be": "Географию выбирают исходя из latency, отказоустойчивости и юридических требований к месту хранения данных одновременно."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "Записи в ledger реплицируют cross-region синхронно (2-phase commit по всем датацентрам), чтобы любой регион всегда видел строго актуальный баланс без eventual consistency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cross-region writes дают 100+ms latency и ломают SLA, а конкуренция за primary грозит split-brain; поэтому writes делают per-region controlled, а cross-region — async.",
+                "source_of_confusion": "Синхронная глобальная запись кажется способом «всегда иметь согласованный баланс везде».",
+                "if_it_were_true": "Если бы каждый ledger-write шёл синхронно во все регионы, p99 authorize вырос бы на сотни миллисекунд, а split-brain привёл бы к divergence балансов.",
+                "how_it_should_be": "Записи привязывают к региональному primary с async cross-region репликацией, а глобально-синхронных ledger-writes избегают ради latency и согласованности."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Цели: latency < 100ms из любой geo, DR (regional outage → failover за 5-15 мин), compliance с data residency (RU PD-152, EU GDPR, India RBI). Варианты: active-active (US-east + EU-west + APAC, каждый регион — full stack, customer pinned на home region, cross-region replication async, eventual consistency для cross-region reads) или active-passive (один primary, остальные read-only standby, failover RTO ~5 мин, дешевле но больше downtime). Sensitive (PAN, токены) НЕ реплицируют cross-region — per-region vault; non-sensitive (transactions) — multi-DC replication.",
@@ -1601,18 +1613,6 @@
                 "when_to_apply": "Применяют active-active для low-latency и быстрого failover крупных систем, active-passive — когда экономия важнее, а больший RTO при отказе primary приемлем.",
                 "edge_cases": "Edge case: cross-region writes для ledger дают 100+ms latency и могут сломать SLA, а split-brain (оба региона считают себя primary) ведёт к ledger divergence — поэтому reads автоматические, writes per-region controlled.",
                 "related": "[[design-payment-system-interview#Q21]] AML/sanctions по регионам; [[design-payment-system-interview#Q6]] ledger storage и репликация; [[design-payment-system-interview#Q28]] latency budget."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Записи в ledger реплицируют cross-region синхронно (2-phase commit по всем датацентрам), чтобы любой регион всегда видел строго актуальный баланс без eventual consistency.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Cross-region writes дают 100+ms latency и ломают SLA, а конкуренция за primary грозит split-brain; поэтому writes делают per-region controlled, а cross-region — async.",
-                "source_of_confusion": "Синхронная глобальная запись кажется способом «всегда иметь согласованный баланс везде».",
-                "if_it_were_true": "Если бы каждый ledger-write шёл синхронно во все регионы, p99 authorize вырос бы на сотни миллисекунд, а split-brain привёл бы к divergence балансов.",
-                "how_it_should_be": "Записи привязывают к региональному primary с async cross-region репликацией, а глобально-синхронных ledger-writes избегают ради latency и согласованности."
               },
               "label": "D",
               "order": 3
@@ -1629,28 +1629,17 @@
           "question_text": "Latency budget: p99 на authorize, capture, refund?",
           "options": [
             {
-              "text": "Основной вклад в latency authorize вносит ledger write: запись в БД занимает большую часть из 2 секунд, а PSP-call почти мгновенен.",
-              "correct": false,
+              "text": "Authorize (p99 < 2 сек) разбивается: TLS+auth 30ms, idempotency lookup 5ms, risk service (rules+ML) 100ms, token resolve (vault) 20ms, PSP call 800-1500ms, ledger write 30ms, outbox+response 20ms → total ~1.2 сек без 3DS challenge (challenge 5-30 сек идёт async, вне RT-budget). PSP — bottleneck, с ним ничего не сделаешь. Capture (p99 < 500ms): lookup 5 + PSP capture 300 + ledger 30 + outbox 20. Refund (< 1 сек) похож на capture плюс validation. Status fetch (< 200ms): DB read с replica 30ms + cache 2ms.",
+              "correct": true,
               "sections": {
-                "what_actually": "Bottleneck — PSP call (800-1500ms), а ledger write лишь ~30ms; именно внешний вызов доминирует в бюджете, и с ним почти ничего не сделать.",
-                "source_of_confusion": "БД интуитивно кажется «медленной частью», поэтому ledger-запись подозревают первой.",
-                "if_it_were_true": "Если бы тормозил ledger, оптимизировали бы БД, но реально ускоряют PSP через per-region routing, потому что именно он съедает >80% времени.",
-                "how_it_should_be": "Доминирующий этап authorize — внешний PSP-call; внутренние шаги (ledger, idempotency, outbox) занимают десятки миллисекунд."
+                "explanation": "Latency budget — это разложение целевого p99 на этапы, где сразу видно, что доминирует внешний PSP-call, а внутренние шаги дёшевы.",
+                "example": "Status fetch держат < 200ms за счёт read-replica и cache, но если платёж в pending — приходится refresh из PSP (300ms), что выбивается из бюджета и требует отдельной обработки.",
+                "when_to_apply": "Применяют budget для приоритизации оптимизаций: раз PSP — bottleneck, ускоряют его per-region routing (US → US Stripe edge), а внутренние шаги параллелят.",
+                "edge_cases": "Edge case: 3DS challenge (5-30 сек) намеренно выносят из realtime-budget как async — иначе он один сорвал бы p99; response streaming возвращает challenge URL до завершения операции.",
+                "related": "[[design-payment-system-interview#Q3]] SLA и latency-таргеты; [[design-payment-system-interview#Q11]] 3DS challenge async; [[design-payment-system-interview#Q26]] per-region PSP routing."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "3DS challenge включают в realtime latency budget authorize: его 5-30 секунд учитывают в целевом p99 < 2 сек.",
-              "correct": false,
-              "sections": {
-                "what_actually": "3DS challenge (5-30 сек) выносят из RT-budget как async; включить его в p99 означало бы заведомо сорвать таргет < 2 сек на каждой challenge-транзакции.",
-                "source_of_confusion": "Challenge — часть authorize-флоу, поэтому кажется, что его время должно входить в общий бюджет.",
-                "if_it_were_true": "Если бы challenge учитывался в p99, метрика мгновенно превысила бы 2 сек на ~15% транзакций, и SLA был бы недостижим.",
-                "how_it_should_be": "Длинный 3DS challenge обрабатывают асинхронно (response streaming с challenge URL), не включая его в realtime latency budget authorize."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Все операции имеют одинаковый latency budget p99 = 2 сек: capture, refund и status-fetch так же тяжелы, как authorize.",
@@ -1661,18 +1650,29 @@
                 "if_it_were_true": "Если бы у status-fetch был бюджет 2 сек, не имело бы смысла гонять его через read-replica и cache ради 200ms, но именно это и делают.",
                 "how_it_should_be": "Каждой операции задают свой p99-бюджет соразмерно её работе: authorize самый дорогой, status-fetch — самый лёгкий."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Основной вклад в latency authorize вносит ledger write: запись в БД занимает большую часть из 2 секунд, а PSP-call почти мгновенен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bottleneck — PSP call (800-1500ms), а ledger write лишь ~30ms; именно внешний вызов доминирует в бюджете, и с ним почти ничего не сделать.",
+                "source_of_confusion": "БД интуитивно кажется «медленной частью», поэтому ledger-запись подозревают первой.",
+                "if_it_were_true": "Если бы тормозил ledger, оптимизировали бы БД, но реально ускоряют PSP через per-region routing, потому что именно он съедает >80% времени.",
+                "how_it_should_be": "Доминирующий этап authorize — внешний PSP-call; внутренние шаги (ledger, idempotency, outbox) занимают десятки миллисекунд."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Authorize (p99 < 2 сек) разбивается: TLS+auth 30ms, idempotency lookup 5ms, risk service (rules+ML) 100ms, token resolve (vault) 20ms, PSP call 800-1500ms, ledger write 30ms, outbox+response 20ms → total ~1.2 сек без 3DS challenge (challenge 5-30 сек идёт async, вне RT-budget). PSP — bottleneck, с ним ничего не сделаешь. Capture (p99 < 500ms): lookup 5 + PSP capture 300 + ledger 30 + outbox 20. Refund (< 1 сек) похож на capture плюс validation. Status fetch (< 200ms): DB read с replica 30ms + cache 2ms.",
-              "correct": true,
+              "text": "3DS challenge включают в realtime latency budget authorize: его 5-30 секунд учитывают в целевом p99 < 2 сек.",
+              "correct": false,
               "sections": {
-                "explanation": "Latency budget — это разложение целевого p99 на этапы, где сразу видно, что доминирует внешний PSP-call, а внутренние шаги дёшевы.",
-                "example": "Status fetch держат < 200ms за счёт read-replica и cache, но если платёж в pending — приходится refresh из PSP (300ms), что выбивается из бюджета и требует отдельной обработки.",
-                "when_to_apply": "Применяют budget для приоритизации оптимизаций: раз PSP — bottleneck, ускоряют его per-region routing (US → US Stripe edge), а внутренние шаги параллелят.",
-                "edge_cases": "Edge case: 3DS challenge (5-30 сек) намеренно выносят из realtime-budget как async — иначе он один сорвал бы p99; response streaming возвращает challenge URL до завершения операции.",
-                "related": "[[design-payment-system-interview#Q3]] SLA и latency-таргеты; [[design-payment-system-interview#Q11]] 3DS challenge async; [[design-payment-system-interview#Q26]] per-region PSP routing."
+                "what_actually": "3DS challenge (5-30 сек) выносят из RT-budget как async; включить его в p99 означало бы заведомо сорвать таргет < 2 сек на каждой challenge-транзакции.",
+                "source_of_confusion": "Challenge — часть authorize-флоу, поэтому кажется, что его время должно входить в общий бюджет.",
+                "if_it_were_true": "Если бы challenge учитывался в p99, метрика мгновенно превысила бы 2 сек на ~15% транзакций, и SLA был бы недостижим.",
+                "how_it_should_be": "Длинный 3DS challenge обрабатывают асинхронно (response streaming с challenge URL), не включая его в realtime latency budget authorize."
               },
               "label": "D",
               "order": 3
@@ -1689,31 +1689,6 @@
           "question_text": "Monitoring, observability и операционные runbooks?",
           "options": [
             {
-              "text": "Core metrics: `payment_success_rate` per merchant/PSP/card-type/hour, `authorize_latency_p99` per PSP/region, `fraud_score_distribution` (drift), `chargeback_ratio` per merchant, `webhook_delivery_lag_p99`, `reconciliation_unresolved_count`, `ledger_invariant_check` (Σ entries per txn = 0). Tracing: OpenTelemetry/Datadog APM, trace ID через sync calls + Kafka headers. Logging: structured JSON, correlation_id/payment_id, mask PAN/CVV/API keys. Alerting: page on success_rate drop > 1% за 5 мин, Slack на chargeback ratio > 0.5%. Runbooks: PSP outage → routing failover; reconciliation gap > $1M → freeze payouts.",
-              "correct": true,
-              "sections": {
-                "explanation": "Наблюдаемость строят на доменных метриках (success rate, chargeback ratio, ledger invariant), а не только на CPU/RAM, плюс трейсинг и runbooks под типовые инциденты.",
-                "example": "Trace ID пробрасывают через все sync-вызовы и Kafka headers, чтобы увидеть: «платёж за 1.7 сек прошёл fraud (110ms) → vault (15ms) → Stripe (1.5 сек)» — это и есть end-to-end observability.",
-                "when_to_apply": "Применяют для раннего детекта деградаций: alert на падение success_rate > 1% за 5 минут пейджит on-call, а ежедневный reconciliation-отчёт ловит финансовые расхождения.",
-                "edge_cases": "Edge case: PAN/CVV/API keys обязательно маскируют regex'ом в логах (хранить нельзя), а runbooks дают готовый план (reconciliation gap > $1M → freeze merchant payouts), чтобы не импровизировать в инциденте.",
-                "related": "[[design-payment-system-interview#Q5]] ledger invariant check; [[design-payment-system-interview#Q17]] reconciliation_unresolved метрика; [[design-payment-system-interview#Q30]] PAN в логах — антипаттерн."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Core metrics по домену: `payment_success_rate` per merchant/PSP, `authorize_latency_p99`, `chargeback_ratio`, `webhook_delivery_lag_p99`. Alerting строят на едином глобальном absolute-пороге (page при success_rate < 95%), без разреза per merchant/PSP — один порог применяется ко всем мерчантам сразу.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Нужны именно доменные метрики (success_rate, chargeback_ratio, ledger_invariant_check): CPU/RAM не покажут, что Σ entries сломался или success_rate упал на конкретном PSP.",
-                "source_of_confusion": "Инфраструктурный мониторинг универсален и привычен, поэтому кажется достаточным и для платежей.",
-                "if_it_were_true": "Если бы хватало CPU/RAM, баг, ломающий инвариант ledger при нормальной нагрузке, остался бы невидимым до $10M-расхождения.",
-                "how_it_should_be": "Платёжную систему мониторят бизнес-метриками (success rate, chargeback ratio, invariant) поверх инфраструктурных, иначе финансовые сбои незаметны."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Logging: structured JSON, correlation_id/payment_id; в application-логах PAN, CVV и API keys маскируются. В distributed-трейсах (OpenTelemetry/Datadog spans) полный PAN оставляют атрибутом span'а — это удобно для сквозной корреляции платежа и внутри периметра нарушением не считается.",
               "correct": false,
               "sections": {
@@ -1722,8 +1697,8 @@
                 "if_it_were_true": "Если бы PAN в логах был допустим, утечка лог-файла раскрыла бы карты клиентов, и мерчант мгновенно провалил бы PCI-audit.",
                 "how_it_should_be": "Чувствительные данные маскируют в structured-логах, оставляя для трассировки только correlation_id/payment_id, но не сам PAN/CVV."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Runbooks — заранее заготовленные процедуры на типовые инциденты (PSP outage → routing failover; reconciliation gap > $1M → freeze payouts). Их пишут один раз при запуске сервиса и далее не обновляют: набор инцидентов в платёжной системе фиксирован, поэтому пересматривать процедуры после новых кейсов не требуется.",
@@ -1733,6 +1708,31 @@
                 "source_of_confusion": "Кажется, что опытный инженер и так разберётся, поэтому формализованные runbooks выглядят бюрократией.",
                 "if_it_were_true": "Если бы импровизация была лучше, не существовало бы практики runbooks, но при $1M-расхождении в 3 часа ночи готовый план критичен для скорости.",
                 "how_it_should_be": "Под частые инциденты держат runbooks с конкретными действиями, чтобы on-call реагировал по плану, а не выдумывал решение на ходу."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Core metrics: `payment_success_rate` per merchant/PSP/card-type/hour, `authorize_latency_p99` per PSP/region, `fraud_score_distribution` (drift), `chargeback_ratio` per merchant, `webhook_delivery_lag_p99`, `reconciliation_unresolved_count`, `ledger_invariant_check` (Σ entries per txn = 0). Tracing: OpenTelemetry/Datadog APM, trace ID через sync calls + Kafka headers. Logging: structured JSON, correlation_id/payment_id, mask PAN/CVV/API keys. Alerting: page on success_rate drop > 1% за 5 мин, Slack на chargeback ratio > 0.5%. Runbooks: PSP outage → routing failover; reconciliation gap > $1M → freeze payouts.",
+              "correct": true,
+              "sections": {
+                "explanation": "Наблюдаемость строят на доменных метриках (success rate, chargeback ratio, ledger invariant), а не только на CPU/RAM, плюс трейсинг и runbooks под типовые инциденты.",
+                "example": "Trace ID пробрасывают через все sync-вызовы и Kafka headers, чтобы увидеть: «платёж за 1.7 сек прошёл fraud (110ms) → vault (15ms) → Stripe (1.5 сек)» — это и есть end-to-end observability.",
+                "when_to_apply": "Применяют для раннего детекта деградаций: alert на падение success_rate > 1% за 5 минут пейджит on-call, а ежедневный reconciliation-отчёт ловит финансовые расхождения.",
+                "edge_cases": "Edge case: PAN/CVV/API keys обязательно маскируют regex'ом в логах (хранить нельзя), а runbooks дают готовый план (reconciliation gap > $1M → freeze merchant payouts), чтобы не импровизировать в инциденте.",
+                "related": "[[design-payment-system-interview#Q5]] ledger invariant check; [[design-payment-system-interview#Q17]] reconciliation_unresolved метрика; [[design-payment-system-interview#Q30]] PAN в логах — антипаттерн."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Core metrics по домену: `payment_success_rate` per merchant/PSP, `authorize_latency_p99`, `chargeback_ratio`, `webhook_delivery_lag_p99`. Alerting строят на едином глобальном absolute-пороге (page при success_rate < 95%), без разреза per merchant/PSP — один порог применяется ко всем мерчантам сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужны именно доменные метрики (success_rate, chargeback_ratio, ledger_invariant_check): CPU/RAM не покажут, что Σ entries сломался или success_rate упал на конкретном PSP.",
+                "source_of_confusion": "Инфраструктурный мониторинг универсален и привычен, поэтому кажется достаточным и для платежей.",
+                "if_it_were_true": "Если бы хватало CPU/RAM, баг, ломающий инвариант ledger при нормальной нагрузке, остался бы невидимым до $10M-расхождения.",
+                "how_it_should_be": "Платёжную систему мониторят бизнес-метриками (success rate, chargeback ratio, invariant) поверх инфраструктурных, иначе финансовые сбои незаметны."
               },
               "label": "D",
               "order": 3
@@ -1749,13 +1749,13 @@
           "question_text": "Какие антипаттерны и подводные камни в платёжных системах?",
           "options": [
             {
-              "text": "Ключевые антипаттерны: (1) float/`double` для денег — fix: хранить в `double`, но округлять до 2 знаков через `Math.round` перед каждой записью; (2) single PSP без fallback — fix: multi-PSP routing; (3) PAN в логах — fix: маскирование. Округление `double` перед записью снимает проблему точности денег.",
+              "text": "Антипаттерны: (1) 2PC между PSP и internal DB — fix: обернуть оба вызова в один `@Transactional`, чтобы rollback БД срабатывал при ошибке PSP; (2) `UPDATE`/`DELETE` на ledger — fix: append-only + reversal; (3) idempotency key без body hash — fix: key + hash → `409`. Единый транзакционный блок гарантирует консистентность PSP и БД.",
               "correct": false,
               "sections": {
-                "what_actually": "Float недопустим для денег: `double balance = 100.10 - 100.00` не даёт ровно `0.10` из-за binary-представления, fix — integer minor units (`BIGINT amount_minor` в центах).",
-                "source_of_confusion": "`double` кажется «достаточно точным» для повседневных вычислений, и проблему binary float недооценивают.",
-                "if_it_were_true": "Если бы float был безопасен, не существовало бы повсеместного правила хранить деньги в minor units, но накопленная погрешность ломает баланс ledger.",
-                "how_it_should_be": "Все денежные суммы хранят и считают в целочисленных minor units (центах), полностью исключая float из финансовых расчётов."
+                "what_actually": "Single PSP без fallback — антипаттерн: даже Stripe падает, и 2-часовой outage = 100% revenue loss; fix — multi-PSP routing с health-based switch.",
+                "source_of_confusion": "Высокая репутация надёжности крупного PSP создаёт ложное ощущение, что резерв не нужен.",
+                "if_it_were_true": "Если бы один PSP не падал, не было бы реальных Stripe/Adyen-инцидентов, но именно из-за них critical-системы держат backup-провайдера.",
+                "how_it_should_be": "Подключают несколько PSP с автоматическим failover по health, чтобы outage одного не обнулял весь revenue."
               },
               "label": "A",
               "order": 0
@@ -1774,18 +1774,6 @@
               "order": 1
             },
             {
-              "text": "Антипаттерны: (1) 2PC между PSP и internal DB — fix: обернуть оба вызова в один `@Transactional`, чтобы rollback БД срабатывал при ошибке PSP; (2) `UPDATE`/`DELETE` на ledger — fix: append-only + reversal; (3) idempotency key без body hash — fix: key + hash → `409`. Единый транзакционный блок гарантирует консистентность PSP и БД.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Single PSP без fallback — антипаттерн: даже Stripe падает, и 2-часовой outage = 100% revenue loss; fix — multi-PSP routing с health-based switch.",
-                "source_of_confusion": "Высокая репутация надёжности крупного PSP создаёт ложное ощущение, что резерв не нужен.",
-                "if_it_were_true": "Если бы один PSP не падал, не было бы реальных Stripe/Adyen-инцидентов, но именно из-за них critical-системы держат backup-провайдера.",
-                "how_it_should_be": "Подключают несколько PSP с автоматическим failover по health, чтобы outage одного не обнулял весь revenue."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Антипаттерны: (1) idempotency key без request hash → повтор с тем же ключом и другим телом молча проходит — fix: заменить key на уникальный индекс `(amount, timestamp)`; (2) synchronous webhook — fix: outbox; (3) storing CVV — прямой PCI violation. Уникальный индекс `(amount, timestamp)` надёжно отсекает дубликаты платежей.",
               "correct": false,
               "sections": {
@@ -1793,6 +1781,18 @@
                 "source_of_confusion": "Каждая операция по отдельности выглядит легитимной, поэтому их сочетание не воспринимают как двойную выплату.",
                 "if_it_were_true": "Если бы это было безопасно, не нужен был бы state-machine guard на refund в спорных статусах, но без него мерчант теряет сумму дважды.",
                 "how_it_should_be": "State-machine блокирует refund для платежей в `disputed`/`chargeback_lost`, не допуская наложения manual refund поверх уже выполненного chargeback."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Ключевые антипаттерны: (1) float/`double` для денег — fix: хранить в `double`, но округлять до 2 знаков через `Math.round` перед каждой записью; (2) single PSP без fallback — fix: multi-PSP routing; (3) PAN в логах — fix: маскирование. Округление `double` перед записью снимает проблему точности денег.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Float недопустим для денег: `double balance = 100.10 - 100.00` не даёт ровно `0.10` из-за binary-представления, fix — integer minor units (`BIGINT amount_minor` в центах).",
+                "source_of_confusion": "`double` кажется «достаточно точным» для повседневных вычислений, и проблему binary float недооценивают.",
+                "if_it_were_true": "Если бы float был безопасен, не существовало бы повсеместного правила хранить деньги в minor units, но накопленная погрешность ломает баланс ledger.",
+                "how_it_should_be": "Все денежные суммы хранят и считают в целочисленных minor units (центах), полностью исключая float из финансовых расчётов."
               },
               "label": "D",
               "order": 3

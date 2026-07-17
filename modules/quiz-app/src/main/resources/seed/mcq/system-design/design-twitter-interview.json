@@ -11,19 +11,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Post tweet (текст ≤ 280 символов, опционально media), follow/unfollow, home timeline (feed подписок), user timeline, retweet/reply/like/mention/hashtag, search по тексту и хэштегам, trends (top-K за N минут), notifications. Ads, DMs, spaces и monetization обычно out of scope.",
-              "correct": true,
-              "sections": {
-                "explanation": "Functional requirements фиксируют наблюдаемое поведение системы: что юзер может сделать (запостить твит, подписаться, прочитать ленту, искать). Это рамка, внутри которой дальше обсуждают capacity и архитектуру.",
-                "example": "Подтверждение «text ≤ 280, до 4 картинок или 1 видео ≤ 2:20» сразу влияет на оценку размера твита (~1 KB metadata) и на дизайн media-pipeline.",
-                "when_to_apply": "Это первый шаг любого system design интервью: за 2-3 минуты сузить scope, чтобы не проектировать DMs и ads, когда спросили про timeline.",
-                "edge_cases": "Если интервьюер хочет добавить DMs или ads — это меняет storage и privacy-модель, поэтому такие фичи лучше явно вынести за рамки или обсудить отдельно.",
-                "related": "[[design-twitter-interview#Q2]] non-functional requirements и SLA; [[design-twitter-interview#Q4]] какими API закрываются эти функции; [[design-twitter-interview#Q3]] capacity-оценка под эти функции."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Достаточно подтвердить только post tweet и home timeline; follow-граф, search и trends считаются деталями реализации и на этапе requirements не обсуждаются.",
               "correct": false,
               "sections": {
@@ -31,6 +18,18 @@
                 "source_of_confusion": "Post и home timeline — самые заметные функции, поэтому кажется, что остальное приложится само.",
                 "if_it_were_true": "Тогда не пришлось бы проектировать Elasticsearch и Flink-pipeline, но интервьюер именно их и спросит как часть scope.",
                 "how_it_should_be": "Все ключевые user-facing функции (включая follow, search, trends, notifications) фиксируются в requirements, а реализация обсуждается позже."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DMs и monetization обязательно входят в functional requirements Twitter, так как без личных сообщений и рекламы продукт неполон.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На интервью DMs (отдельная система) и monetization обычно явно выносят out of scope, чтобы не раздувать дизайн.",
+                "source_of_confusion": "В реальном продукте X есть и DMs, и ads, поэтому кажется, что их надо проектировать.",
+                "if_it_were_true": "Тогда пришлось бы добавлять отдельную privacy-модель и платёжную CP-подсистему, и времени на timeline не осталось бы.",
+                "how_it_should_be": "DMs и monetization упоминают как out of scope; фокус интервью — timeline, fan-out, search и trends."
               }
             },
             {
@@ -48,13 +47,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "DMs и monetization обязательно входят в functional requirements Twitter, так как без личных сообщений и рекламы продукт неполон.",
-              "correct": false,
+              "text": "Post tweet (текст ≤ 280 символов, опционально media), follow/unfollow, home timeline (feed подписок), user timeline, retweet/reply/like/mention/hashtag, search по тексту и хэштегам, trends (top-K за N минут), notifications. Ads, DMs, spaces и monetization обычно out of scope.",
+              "correct": true,
               "sections": {
-                "what_actually": "На интервью DMs (отдельная система) и monetization обычно явно выносят out of scope, чтобы не раздувать дизайн.",
-                "source_of_confusion": "В реальном продукте X есть и DMs, и ads, поэтому кажется, что их надо проектировать.",
-                "if_it_were_true": "Тогда пришлось бы добавлять отдельную privacy-модель и платёжную CP-подсистему, и времени на timeline не осталось бы.",
-                "how_it_should_be": "DMs и monetization упоминают как out of scope; фокус интервью — timeline, fan-out, search и trends."
+                "explanation": "Functional requirements фиксируют наблюдаемое поведение системы: что юзер может сделать (запостить твит, подписаться, прочитать ленту, искать). Это рамка, внутри которой дальше обсуждают capacity и архитектуру.",
+                "example": "Подтверждение «text ≤ 280, до 4 картинок или 1 видео ≤ 2:20» сразу влияет на оценку размера твита (~1 KB metadata) и на дизайн media-pipeline.",
+                "when_to_apply": "Это первый шаг любого system design интервью: за 2-3 минуты сузить scope, чтобы не проектировать DMs и ads, когда спросили про timeline.",
+                "edge_cases": "Если интервьюер хочет добавить DMs или ads — это меняет storage и privacy-модель, поэтому такие фичи лучше явно вынести за рамки или обсудить отдельно.",
+                "related": "[[design-twitter-interview#Q2]] non-functional requirements и SLA; [[design-twitter-interview#Q4]] какими API закрываются эти функции; [[design-twitter-interview#Q3]] capacity-оценка под эти функции."
               }
             }
           ]
@@ -83,19 +83,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "~500M DAU, ~6K tweets/sec average и ~12-25K на peak, read:write ≈ 1000:1, home timeline p99 < 200 ms, post tweet p99 < 500 ms, availability 99.99%, eventual consistency для timeline и strong для user/auth, без потери опубликованных твитов. По CAP для timeline выбираем AP.",
-              "correct": true,
-              "sections": {
-                "explanation": "Non-functional requirements задают цели качества: масштаб, latency, доступность и модель консистентности. Именно они диктуют шардинг, кэш и async fan-out.",
-                "example": "Read:write ≈ 1000:1 означает ~12M reads/sec против ~12K writes/sec — поэтому оптимизируем чтение (precomputed timeline в Redis), а не запись.",
-                "when_to_apply": "Эти цифры формулируют сразу после functional requirements, чтобы обосновать выбор AP, кэширования и горизонтального масштабирования.",
-                "edge_cases": "Peak во время World Cup или NYE поднимает tweets/sec в 2-4 раза, поэтому ёмкость считают с запасом 3x, а не на average.",
-                "related": "[[design-twitter-interview#Q3]] откуда берутся эти числа (capacity); [[design-twitter-interview#Q27]] где жертвуем consistency по CAP; [[design-twitter-interview#Q1]] функции, которым нужны эти SLA."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Read:write ratio близок к 1:1, поэтому систему оптимизируют симметрично — одинаково под запись и под чтение.",
               "correct": false,
               "sections": {
@@ -106,8 +93,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Availability в 90% (несколько часов downtime в день) приемлема для Twitter, так как лента — некритичный сервис.",
               "correct": false,
               "sections": {
@@ -115,6 +102,19 @@
                 "source_of_confusion": "Раз timeline eventual, кажется, что и доступность можно сильно понизить.",
                 "if_it_were_true": "Тогда продукт терял бы пользователей при ежедневных многочасовых простоях, что несовместимо с 500M DAU.",
                 "how_it_should_be": "Availability 99.99%; eventual consistency не означает низкую доступность — это разные оси."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "~500M DAU, ~6K tweets/sec average и ~12-25K на peak, read:write ≈ 1000:1, home timeline p99 < 200 ms, post tweet p99 < 500 ms, availability 99.99%, eventual consistency для timeline и strong для user/auth, без потери опубликованных твитов. По CAP для timeline выбираем AP.",
+              "correct": true,
+              "sections": {
+                "explanation": "Non-functional requirements задают цели качества: масштаб, latency, доступность и модель консистентности. Именно они диктуют шардинг, кэш и async fan-out.",
+                "example": "Read:write ≈ 1000:1 означает ~12M reads/sec против ~12K writes/sec — поэтому оптимизируем чтение (precomputed timeline в Redis), а не запись.",
+                "when_to_apply": "Эти цифры формулируют сразу после functional requirements, чтобы обосновать выбор AP, кэширования и горизонтального масштабирования.",
+                "edge_cases": "Peak во время World Cup или NYE поднимает tweets/sec в 2-4 раза, поэтому ёмкость считают с запасом 3x, а не на average.",
+                "related": "[[design-twitter-interview#Q3]] откуда берутся эти числа (capacity); [[design-twitter-interview#Q27]] где жертвуем consistency по CAP; [[design-twitter-interview#Q1]] функции, которым нужны эти SLA."
               }
             }
           ]
@@ -131,30 +131,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Storage метаданных растёт примерно на 50 PB в год, поэтому даже текст твитов хранят в S3, а не в БД.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В ~50+ PB/год растёт media, а не метаданные: текстовые метаданные — лишь ~1 KB/твит ≈ ~365 TB/год и спокойно живут в Cassandra/Manhattan.",
-                "source_of_confusion": "Цифру media-storage (55 PB/год) ошибочно переносят на метаданные.",
-                "if_it_were_true": "Тогда поиск и timeline пришлось бы строить поверх объектного хранилища, что убило бы latency запросов.",
-                "how_it_should_be": "Метаданные ~365 TB/год — в wide-column БД; в S3 уходит только media (~55 PB/год)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Read:write ratio не влияет на оценку, поэтому reads/sec не считают — достаточно знать только writes/sec.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Reads/sec — ключевая цифра: 1000:1 даёт ~12M reads/sec, и именно она диктует кэш и precomputed feed.",
-                "source_of_confusion": "Кажется, что «нагрузка = сколько пишут», а чтение бесплатно.",
-                "if_it_were_true": "Тогда не нужны были бы Redis-кэш timeline и CDN, но без них 12M reads/sec не выдержать.",
-                "how_it_should_be": "Reads/sec считают обязательно: они на три порядка больше writes и определяют read-path."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "500M DAU × ~2 твита/день ≈ 1B твитов/день ≈ ~12K tweets/sec; metadata ~1 KB/твит → ~1 TB/день и ~365 TB/год метаданных; ~30% твитов с media по ~500 KB → ~150 TB/день media (S3-класс). Read:write 1000:1 → ~12M reads/sec. Fan-out: 6K × ~200 avg followers ≈ 1.2M timeline writes/sec.",
               "correct": true,
               "sections": {
@@ -166,8 +142,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Fan-out нагрузку считают как tweets/sec без умножения на число фолловеров, потому что один твит — это одна запись.",
               "correct": false,
               "sections": {
@@ -175,6 +151,30 @@
                 "source_of_confusion": "«Один твит = один INSERT» верно для pull, но fan-out на write умножает на followers.",
                 "if_it_were_true": "Тогда fan-out был бы тривиален и не требовал бы Kafka и батчинга, но реально это самая тяжёлая запись.",
                 "how_it_should_be": "Fan-out writes = tweets/sec × среднее число фолловеров; отсюда и берётся ~1.2M/sec."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Read:write ratio не влияет на оценку, поэтому reads/sec не считают — достаточно знать только writes/sec.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reads/sec — ключевая цифра: 1000:1 даёт ~12M reads/sec, и именно она диктует кэш и precomputed feed.",
+                "source_of_confusion": "Кажется, что «нагрузка = сколько пишут», а чтение бесплатно.",
+                "if_it_were_true": "Тогда не нужны были бы Redis-кэш timeline и CDN, но без них 12M reads/sec не выдержать.",
+                "how_it_should_be": "Reads/sec считают обязательно: они на три порядка больше writes и определяют read-path."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Storage метаданных растёт примерно на 50 PB в год, поэтому даже текст твитов хранят в S3, а не в БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В ~50+ PB/год растёт media, а не метаданные: текстовые метаданные — лишь ~1 KB/твит ≈ ~365 TB/год и спокойно живут в Cassandra/Manhattan.",
+                "source_of_confusion": "Цифру media-storage (55 PB/год) ошибочно переносят на метаданные.",
+                "if_it_were_true": "Тогда поиск и timeline пришлось бы строить поверх объектного хранилища, что убило бы latency запросов.",
+                "how_it_should_be": "Метаданные ~365 TB/год — в wide-column БД; в S3 уходит только media (~55 PB/год)."
               }
             }
           ]
@@ -191,18 +191,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все взаимодействия, включая real-time notifications, делают через обычный REST polling — WebSocket не нужен, клиент просто опрашивает /notifications каждые несколько секунд.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для real-time доставки используют WebSocket/SSE (server push), а polling каждые секунды на 500M DAU создал бы лишнюю нагрузку и задержку.",
-                "source_of_confusion": "REST универсален, поэтому кажется, что им можно закрыть и push-сценарии.",
-                "if_it_were_true": "Тогда badge непрочитанных обновлялся бы с задержкой polling-интервала и грузил бы gateway миллионами пустых запросов.",
-                "how_it_should_be": "REST для CRUD, но real-time notifications — через WebSocket/SSE с server-side push."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Пагинация timeline делается через offset/limit (page=N), потому что это проще всего реализовать поверх SQL LIMIT OFFSET.",
               "correct": false,
               "sections": {
@@ -213,20 +201,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Между внутренними сервисами тоже используют публичный REST поверх HTTP/1.1, потому что один протокол на всю систему проще поддерживать.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Внутри обычно gRPC (HTTP/2, бинарный protobuf): ниже latency и накладные расходы, чем у публичного REST; REST оставляют для клиентов.",
-                "source_of_confusion": "Единый протокол кажется проще, поэтому REST тянут и во внутренние вызовы.",
-                "if_it_were_true": "Тогда межсервисные вызовы несли бы лишний JSON-overhead и не использовали бы стриминг HTTP/2.",
-                "how_it_should_be": "Клиенты — REST + WebSocket; internal — gRPC ради производительности и контрактов protobuf."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "REST + WebSocket (real-time notifications), gRPC внутри. Tweets: POST/GET/DELETE /tweets, like/retweet/reply. Timelines: GET /timeline/home и /timeline/user/{id}. Social graph: follow/unfollow, followers, following. Search и trends: /search?q=&type=, /trends?region=. Media: POST /media → media_id. Пагинация cursor-based по (timestamp, tweet_id), не offset.",
               "correct": true,
               "sections": {
@@ -235,6 +211,30 @@
                 "when_to_apply": "API проектируют после высокоуровневых функций, чтобы каждая functional requirement имела конкретный эндпоинт и формат ответа.",
                 "edge_cases": "Offset-пагинация деградирует на больших данных и «съезжает» при вставке новых твитов в начало, поэтому для бесконечной ленты берут cursor.",
                 "related": "[[design-twitter-interview#Q1]] функции, которые закрывают эти эндпоинты; [[design-twitter-interview#Q5]] какие сервисы стоят за API; [[design-twitter-interview#Q20]] WebSocket для доставки notifications."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все взаимодействия, включая real-time notifications, делают через обычный REST polling — WebSocket не нужен, клиент просто опрашивает /notifications каждые несколько секунд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для real-time доставки используют WebSocket/SSE (server push), а polling каждые секунды на 500M DAU создал бы лишнюю нагрузку и задержку.",
+                "source_of_confusion": "REST универсален, поэтому кажется, что им можно закрыть и push-сценарии.",
+                "if_it_were_true": "Тогда badge непрочитанных обновлялся бы с задержкой polling-интервала и грузил бы gateway миллионами пустых запросов.",
+                "how_it_should_be": "REST для CRUD, но real-time notifications — через WebSocket/SSE с server-side push."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Между внутренними сервисами тоже используют публичный REST поверх HTTP/1.1, потому что один протокол на всю систему проще поддерживать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутри обычно gRPC (HTTP/2, бинарный protobuf): ниже latency и накладные расходы, чем у публичного REST; REST оставляют для клиентов.",
+                "source_of_confusion": "Единый протокол кажется проще, поэтому REST тянут и во внутренние вызовы.",
+                "if_it_were_true": "Тогда межсервисные вызовы несли бы лишний JSON-overhead и не использовали бы стриминг HTTP/2.",
+                "how_it_should_be": "Клиенты — REST + WebSocket; internal — gRPC ради производительности и контрактов protobuf."
               }
             }
           ]
@@ -251,6 +251,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Все функции (твиты, timeline, search, notifications) реализуют в одном монолитном сервисе с общей БД — так проще обеспечить консистентность между ними.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Twitter-масштаб требует декомпозиции на независимо масштабируемые сервисы с разными хранилищами; монолит с одной БД не выдержит 12M reads/sec и разнородные нагрузки.",
+                "source_of_confusion": "Монолит проще на старте и не требует распределённых транзакций.",
+                "if_it_were_true": "Тогда write-heavy timeline и read-heavy search конкурировали бы за одну БД, и масштабировать пришлось бы всё разом.",
+                "how_it_should_be": "Отдельные сервисы (tweet/timeline/user/search/media/notification) каждый со своим хранилищем под свой паттерн нагрузки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "API Gateway хранит сессии в памяти и сам держит состояние пользователей, поэтому масштабировать его горизонтально нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway держат stateless (сессии/токены — в Redis), что и позволяет масштабировать его горизонтально за load balancer.",
+                "source_of_confusion": "Auth и rate limit ассоциируются с состоянием, поэтому Gateway кажется stateful.",
+                "if_it_were_true": "Тогда Gateway стал бы single point с ограниченным масштабом и потерей сессий при рестарте.",
+                "how_it_should_be": "Gateway stateless, состояние выносят в Redis → линейное горизонтальное масштабирование."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Client → CDN (media/static) и LB → API Gateway (auth, rate limit, routing) → набор сервисов: tweet-service (приём твита, запись, событие в Kafka), timeline-service (home/user из Redis с fallback в Cassandra, hybrid merge), user-service (профили, follow-граф), search-service (Elasticsearch), notification-service, media-service. Kafka соединяет fan-out workers, indexer, trends-pipeline и notifications.",
               "correct": true,
               "sections": {
@@ -262,20 +286,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Все функции (твиты, timeline, search, notifications) реализуют в одном монолитном сервисе с общей БД — так проще обеспечить консистентность между ними.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Twitter-масштаб требует декомпозиции на независимо масштабируемые сервисы с разными хранилищами; монолит с одной БД не выдержит 12M reads/sec и разнородные нагрузки.",
-                "source_of_confusion": "Монолит проще на старте и не требует распределённых транзакций.",
-                "if_it_were_true": "Тогда write-heavy timeline и read-heavy search конкурировали бы за одну БД, и масштабировать пришлось бы всё разом.",
-                "how_it_should_be": "Отдельные сервисы (tweet/timeline/user/search/media/notification) каждый со своим хранилищем под свой паттерн нагрузки."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Fan-out выполняется синхронно внутри tweet-service до возврата ответа клиенту, чтобы твит гарантированно был во всех timeline к моменту ответа.",
               "correct": false,
               "sections": {
@@ -283,18 +295,6 @@
                 "source_of_confusion": "Синхронный fan-out кажется надёжнее («всё готово к ответу»).",
                 "if_it_were_true": "Тогда post latency у автора с миллионом фолловеров измерялся бы секундами и нарушал p99 < 500ms.",
                 "how_it_should_be": "tweet-service публикует событие в Kafka и сразу отвечает; fan-out — async downstream."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "API Gateway хранит сессии в памяти и сам держит состояние пользователей, поэтому масштабировать его горизонтально нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Gateway держат stateless (сессии/токены — в Redis), что и позволяет масштабировать его горизонтально за load balancer.",
-                "source_of_confusion": "Auth и rate limit ассоциируются с состоянием, поэтому Gateway кажется stateful.",
-                "if_it_were_true": "Тогда Gateway стал бы single point с ограниченным масштабом и потерей сессий при рестарте.",
-                "how_it_should_be": "Gateway stateless, состояние выносят в Redis → линейное горизонтальное масштабирование."
               }
             }
           ]
@@ -311,13 +311,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "tweet_id генерируют как обычный auto-increment в одной центральной БД, чтобы гарантировать строгую глобальную монотонность.",
+              "text": "Follow-граф хранят одной таблицей followers(user_id, follower_id), и оба запроса — «кто меня фолловит» и «кого я фолловлю» — обслуживаются ею одинаково эффективно.",
               "correct": false,
               "sections": {
-                "what_actually": "Используют Snowflake: distributed ID без единого координатора; центральный auto-increment стал бы bottleneck и single point на 12K tweets/sec.",
-                "source_of_confusion": "Auto-increment привычен по реляционным БД и тоже монотонен.",
-                "if_it_were_true": "Тогда генерация id упёрлась бы в один узел и не пережила бы его падение или нагрузку.",
-                "how_it_should_be": "Snowflake (timestamp+machine+sequence) даёт сортируемость по времени и уникальность без координации."
+                "what_actually": "Одна таблица эффективна лишь для одного направления; обратный запрос требует scatter-gather, поэтому держат две таблицы followers и following с разными PK.",
+                "source_of_confusion": "Ребро графа логически одно, поэтому кажется, что хватит одной таблицы.",
+                "if_it_were_true": "Тогда запрос «кого я фолловлю» сканировал бы все партиции по follower_id вместо single-partition чтения.",
+                "how_it_should_be": "Денормализуем в две таблицы: followers(user_id PK) и following(follower_id PK) под оба направления."
               }
             },
             {
@@ -336,13 +336,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Follow-граф хранят одной таблицей followers(user_id, follower_id), и оба запроса — «кто меня фолловит» и «кого я фолловлю» — обслуживаются ею одинаково эффективно.",
+              "text": "tweet_id генерируют как обычный auto-increment в одной центральной БД, чтобы гарантировать строгую глобальную монотонность.",
               "correct": false,
               "sections": {
-                "what_actually": "Одна таблица эффективна лишь для одного направления; обратный запрос требует scatter-gather, поэтому держат две таблицы followers и following с разными PK.",
-                "source_of_confusion": "Ребро графа логически одно, поэтому кажется, что хватит одной таблицы.",
-                "if_it_were_true": "Тогда запрос «кого я фолловлю» сканировал бы все партиции по follower_id вместо single-partition чтения.",
-                "how_it_should_be": "Денормализуем в две таблицы: followers(user_id PK) и following(follower_id PK) под оба направления."
+                "what_actually": "Используют Snowflake: distributed ID без единого координатора; центральный auto-increment стал бы bottleneck и single point на 12K tweets/sec.",
+                "source_of_confusion": "Auto-increment привычен по реляционным БД и тоже монотонен.",
+                "if_it_were_true": "Тогда генерация id упёрлась бы в один узел и не пережила бы его падение или нагрузку.",
+                "how_it_should_be": "Snowflake (timestamp+machine+sequence) даёт сортируемость по времени и уникальность без координации."
               }
             },
             {
@@ -371,18 +371,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Под все данные используют одну PostgreSQL-инсталляцию с read-репликами: реляционная БД покрывает и твиты, и timeline, и search, и trends.",
-              "correct": false,
-              "sections": {
-                "what_actually": "PostgreSQL не вытягивает write-heavy timeline, full-text search на терабайтах и top-K real-time; для этого берут Cassandra, Elasticsearch и Redis соответственно.",
-                "source_of_confusion": "Одна знакомая БД проще в эксплуатации и не требует синхронизации между хранилищами.",
-                "if_it_were_true": "Тогда fan-out 1.2M writes/sec и 12M reads/sec упёрлись бы в один реляционный движок и его репликацию.",
-                "how_it_should_be": "Polyglot persistence: SQL для identity, Cassandra для твитов/timeline, ES для search, Redis для hot-данных."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Trends хранят в Elasticsearch, так как top-K хэштегов — это разновидность full-text поиска по тексту твитов.",
               "correct": false,
               "sections": {
@@ -393,8 +381,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Media-файлы (картинки и видео) хранят как BLOB прямо в Cassandra рядом с твитом, чтобы не плодить отдельное хранилище.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Media кладут в объектное хранилище (S3/GCS) за CDN; в твите хранится только media_id, а не сам файл.",
+                "source_of_confusion": "«Всё рядом с твитом» кажется удобным и атомарным.",
+                "if_it_were_true": "Тогда 150 TB/день видео раздували бы партиции Cassandra и убивали бы compaction и репликацию.",
+                "how_it_should_be": "Media — в S3/GCS + CDN; БД хранит только ссылку (media_id), отдача идёт с edge."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Под все данные используют одну PostgreSQL-инсталляцию с read-репликами: реляционная БД покрывает и твиты, и timeline, и search, и trends.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PostgreSQL не вытягивает write-heavy timeline, full-text search на терабайтах и top-K real-time; для этого берут Cassandra, Elasticsearch и Redis соответственно.",
+                "source_of_confusion": "Одна знакомая БД проще в эксплуатации и не требует синхронизации между хранилищами.",
+                "if_it_were_true": "Тогда fan-out 1.2M writes/sec и 12M reads/sec упёрлись бы в один реляционный движок и его репликацию.",
+                "how_it_should_be": "Polyglot persistence: SQL для identity, Cassandra для твитов/timeline, ES для search, Redis для hot-данных."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "User profile/auth — PostgreSQL/MySQL (strong, OLTP, JOIN-ы). Tweet content — Manhattan/Cassandra (write-heavy, eventual, шардинг из коробки). Follow-граф — MySQL/graph + кэш в Redis. Home timeline — Cassandra + Redis-кэш (top-N в ZSET, cold tail в Cassandra). Search — Elasticsearch (inverted index). Trends — Redis sorted set (top-K, TTL). Media — S3/GCS + CDN. Counters — Redis INCR с flush в Manhattan.",
               "correct": true,
               "sections": {
@@ -403,18 +415,6 @@
                 "when_to_apply": "Выбор хранилищ обосновывают после data models, связывая каждую таблицу с её нагрузкой (OLTP vs write-heavy vs top-K vs full-text).",
                 "edge_cases": "Counters в Redis с периодическим flush допускают потерю последних N инкрементов при сбое — для likes это приемлемо, для платежей нет.",
                 "related": "[[design-twitter-interview#Q6]] схемы данных под эти хранилища; [[design-twitter-interview#Q17]] как считают counters в Redis; [[design-twitter-interview#Q18]] почему search идёт в Elasticsearch."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Media-файлы (картинки и видео) хранят как BLOB прямо в Cassandra рядом с твитом, чтобы не плодить отдельное хранилище.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Media кладут в объектное хранилище (S3/GCS) за CDN; в твите хранится только media_id, а не сам файл.",
-                "source_of_confusion": "«Всё рядом с твитом» кажется удобным и атомарным.",
-                "if_it_were_true": "Тогда 150 TB/день видео раздували бы партиции Cassandra и убивали бы compaction и репликацию.",
-                "how_it_should_be": "Media — в S3/GCS + CDN; БД хранит только ссылку (media_id), отдача идёт с edge."
               }
             }
           ]
@@ -455,18 +455,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Pull обеспечивает идеальную свежесть, но при этом write становится дорогим, так как каждый твит нужно записать в тысячи лент.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У pull write как раз дешёвый (один INSERT в tweets); дорогой write с записью в тысячи лент — это push.",
-                "source_of_confusion": "Первая половина (идеальная свежесть) верна для pull, и к ней по инерции приклеивают дорогой write.",
-                "if_it_were_true": "Тогда pull не имел бы преимущества дешёвой записи и проигрывал бы push по всем осям.",
-                "how_it_should_be": "Pull: дешёвый write + идеальная свежесть, ценой дорогого read; дорогой write — у push."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Timeline ничего не хранит: при запросе /timeline/home собираем последние твиты из таблиц всех, на кого подписан юзер, merge + sort по времени, отдаём top-N. Плюсы: дешёвый write (один INSERT), идеальная свежесть, меньше storage, простота. Минусы: дорогой read (для 1000 подписок — 1000 запросов / scatter-gather), latency растёт с числом подписок, взрыв нагрузки на tweet store в peak.",
               "correct": true,
               "sections": {
@@ -475,6 +463,18 @@
                 "when_to_apply": "Pull подходит для юзеров с редкими сессиями или для тех, кто подписан на селебрити (много подписок, мало входов), и как pull-ветка гибрида.",
                 "edge_cases": "В holiday peak миллионы concurrent reads × fan-in 1000 дают взрыв нагрузки на tweet store — чистый pull нарушает p99 < 200ms.",
                 "related": "[[design-twitter-interview#Q9]] противоположная стратегия push; [[design-twitter-interview#Q10]] hybrid, объединяющий оба; [[design-twitter-interview#Q3]] почему 12M reads/sec делают чистый pull дорогим."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Pull обеспечивает идеальную свежесть, но при этом write становится дорогим, так как каждый твит нужно записать в тысячи лент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У pull write как раз дешёвый (один INSERT в tweets); дорогой write с записью в тысячи лент — это push.",
+                "source_of_confusion": "Первая половина (идеальная свежесть) верна для pull, и к ней по инерции приклеивают дорогой write.",
+                "if_it_were_true": "Тогда pull не имел бы преимущества дешёвой записи и проигрывал бы push по всем осям.",
+                "how_it_should_be": "Pull: дешёвый write + идеальная свежесть, ценой дорогого read; дорогой write — у push."
               }
             }
           ]
@@ -504,6 +504,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Push идеально подходит именно для селебрити с десятками миллионов фолловеров, так как один write мгновенно доставит твит всем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для селебрити push катастрофичен: один твит = десятки миллионов INSERT-ов (Justin Bieber problem), поэтому их выносят в pull-only.",
+                "source_of_confusion": "«Мгновенная доставка всем» звучит как плюс именно для популярных аккаунтов.",
+                "if_it_were_true": "Тогда не понадобился бы hybrid и threshold по числу фолловеров — push покрывал бы всех.",
+                "how_it_should_be": "Push — для обычных юзеров (≤ ~1M followers); селебрити обслуживают через pull-ветку гибрида."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Push собирает ленту на лету при каждом чтении из таблиц всех подписок, поэтому write дёшев, а read дорог и растёт с числом подписок.",
               "correct": false,
               "sections": {
@@ -514,8 +526,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Главное преимущество push — экономия storage: твит хранится ровно в одной таблице, а ленты не дублируются.",
               "correct": false,
               "sections": {
@@ -523,18 +535,6 @@
                 "source_of_confusion": "Кажется, что precompute «оптимизирует» хранение, хотя он его умножает.",
                 "if_it_were_true": "Тогда у push не было бы минуса взрыва storage и capping ZSET до 800 был бы не нужен.",
                 "how_it_should_be": "Push расходует storage на N копий ленты; экономия места — свойство pull."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Push идеально подходит именно для селебрити с десятками миллионов фолловеров, так как один write мгновенно доставит твит всем.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для селебрити push катастрофичен: один твит = десятки миллионов INSERT-ов (Justin Bieber problem), поэтому их выносят в pull-only.",
-                "source_of_confusion": "«Мгновенная доставка всем» звучит как плюс именно для популярных аккаунтов.",
-                "if_it_were_true": "Тогда не понадобился бы hybrid и threshold по числу фолловеров — push покрывал бы всех.",
-                "how_it_should_be": "Push — для обычных юзеров (≤ ~1M followers); селебрити обслуживают через pull-ветку гибрида."
               }
             }
           ]
@@ -551,18 +551,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Hybrid означает, что для каждого твита одновременно делают и push, и pull: твит и размножается по всем лентам, и собирается заново при чтении — для надёжности.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Hybrid выбирает одну стратегию per author по threshold (push для обычных, pull для celeb), а не дублирует обе для одного твита.",
-                "source_of_confusion": "Слово «hybrid» наводит на мысль «делаем и то, и другое сразу».",
-                "if_it_were_true": "Тогда система несла бы стоимость обоих подходов одновременно — и взрыв fan-out, и дорогой read, что бессмысленно.",
-                "how_it_should_be": "Per-author развилка по числу фолловеров: push ИЛИ pull, а на чтении они лишь мерджатся."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Threshold-based выбор per author: автор с < ~1M followers → push (fan-out on write); celebrity с ≥ ~1M followers → pull-only (его твиты не размножаются). На чтении: достаём precomputed home timeline из Redis (только не-celeb), параллельно тянем последние твиты celebrities из tweet store (обычно ≤ 50 человек) и делаем merge by timestamp → top-50.",
               "correct": true,
               "sections": {
@@ -571,6 +559,18 @@
                 "when_to_apply": "Hybrid — дефолтный продакшн-ответ для Twitter: он один укладывается и в p99 чтения, и в ограничения fan-out на хвосте распределения фолловеров.",
                 "edge_cases": "Threshold считают по активным фолловерам, а не общему числу; слишком низкий гонит многих в дорогой pull, слишком высокий — fan-out в десятки миллионов лент.",
                 "related": "[[design-twitter-interview#Q8]] pull-ветка гибрида; [[design-twitter-interview#Q9]] push-ветка гибрида; [[design-twitter-interview#Q13]] hot users, ради которых нужен hybrid."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В hybrid целебрити обслуживают через push, а обычных пользователей — через pull, потому что у обычных юзеров мало подписок и pull для них дёшев.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: celebrity → pull-only (избежать взрыва fan-out), обычные авторы → push (дешёвый read для массы).",
+                "source_of_confusion": "Логика «мало подписок = дёшев pull» путает направление: проблема не в подписках читателя, а в фолловерах автора.",
+                "if_it_were_true": "Тогда push размножал бы твит celeb по десяткам миллионов лент — ровно то, что hybrid и устраняет.",
+                "how_it_should_be": "Обычные авторы → push, celebrity → pull; развилка по числу фолловеров автора, а не подписок читателя."
               }
             },
             {
@@ -588,13 +588,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В hybrid целебрити обслуживают через push, а обычных пользователей — через pull, потому что у обычных юзеров мало подписок и pull для них дёшев.",
+              "text": "Hybrid означает, что для каждого твита одновременно делают и push, и pull: твит и размножается по всем лентам, и собирается заново при чтении — для надёжности.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё наоборот: celebrity → pull-only (избежать взрыва fan-out), обычные авторы → push (дешёвый read для массы).",
-                "source_of_confusion": "Логика «мало подписок = дёшев pull» путает направление: проблема не в подписках читателя, а в фолловерах автора.",
-                "if_it_were_true": "Тогда push размножал бы твит celeb по десяткам миллионов лент — ровно то, что hybrid и устраняет.",
-                "how_it_should_be": "Обычные авторы → push, celebrity → pull; развилка по числу фолловеров автора, а не подписок читателя."
+                "what_actually": "Hybrid выбирает одну стратегию per author по threshold (push для обычных, pull для celeb), а не дублирует обе для одного твита.",
+                "source_of_confusion": "Слово «hybrid» наводит на мысль «делаем и то, и другое сразу».",
+                "if_it_were_true": "Тогда система несла бы стоимость обоих подходов одновременно — и взрыв fan-out, и дорогой read, что бессмысленно.",
+                "how_it_should_be": "Per-author развилка по числу фолловеров: push ИЛИ pull, а на чтении они лишь мерджатся."
               }
             }
           ]
@@ -611,18 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Fan-out worker должен синхронно дождаться записи во все timeline фолловеров, прежде чем Kafka закоммитит offset и tweet-service ответит клиенту.",
-              "correct": false,
-              "sections": {
-                "what_actually": "tweet-service отвечает клиенту сразу после persist; fan-out идёт асинхронно в отдельной consumer group и не блокирует ответ автору.",
-                "source_of_confusion": "Хочется гарантировать «твит уже у всех», поэтому fan-out кажется частью синхронного запроса.",
-                "if_it_were_true": "Тогда post latency автора зависела бы от размножения по миллионам лент, ломая p99 < 500ms.",
-                "how_it_should_be": "Публикация в Kafka + ack клиенту синхронны; ZADD по лентам — async работа воркеров."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Каждому фолловеру fan-out делает отдельный round-trip ZADD в Redis без батчинга, потому что pipeline нарушает атомарность записи.",
               "correct": false,
               "sections": {
@@ -633,8 +621,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "tweet-service пишет твит в Manhattan и публикует событие в топик tweets.created (партиционирован по author_id). Fan-out workers (consumer group) читают события, получают список активных фолловеров из Redis-кэша/графа и для каждого делают ZADD timeline:{follower_id} в Redis (+ batch-запись в Cassandra). Большие fan-out батчатся (chunked по 5-10K, Redis pipeline); для celeb fan-out пропускается. Топик: partitions=256, replication=3, retention 24h, compression lz4.",
               "correct": true,
               "sections": {
@@ -646,8 +634,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Топик tweets.created делают с retention 0 (немедленное удаление после доставки), чтобы не хранить события и экономить диск.",
               "correct": false,
               "sections": {
@@ -655,6 +643,18 @@
                 "source_of_confusion": "Экономия диска кажется выгодной, раз событие уже «доставлено».",
                 "if_it_were_true": "Тогда упавший на час fan-out worker потерял бы все твиты за это время, и ленты остались бы неполными.",
                 "how_it_should_be": "retention.ms ~24h позволяет догнать отставание; нулевой retention делает систему хрупкой к сбоям консьюмеров."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Fan-out worker должен синхронно дождаться записи во все timeline фолловеров, прежде чем Kafka закоммитит offset и tweet-service ответит клиенту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "tweet-service отвечает клиенту сразу после persist; fan-out идёт асинхронно в отдельной consumer group и не блокирует ответ автору.",
+                "source_of_confusion": "Хочется гарантировать «твит уже у всех», поэтому fan-out кажется частью синхронного запроса.",
+                "if_it_were_true": "Тогда post latency автора зависела бы от размножения по миллионам лент, ломая p99 < 500ms.",
+                "how_it_should_be": "Публикация в Kafka + ack клиенту синхронны; ZADD по лентам — async работа воркеров."
               }
             }
           ]
@@ -671,13 +671,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для timeline лучше Redis List (LPUSH/LRANGE): список сохраняет порядок вставки, поэтому top-N достаётся быстрее, чем из sorted set.",
-              "correct": false,
+              "text": "ZSET идеально ложится на задачу «top-N по времени»: score = tweet_id (Snowflake уже отсортирован по времени). ZADD timeline:{user} вставляет за O(log N), ZREVRANGE 0 49 отдаёт top-50, ZREMRANGEBYRANK обрезает ленту до 500-800 (cold tail подгружают из Cassandra). Memory math: ~50 байт/entry × 500 × 500M users ≈ ~12 TB RAM — это Redis Cluster на 100+ инстансов.",
+              "correct": true,
               "sections": {
-                "what_actually": "List не умеет score-упорядочивания и дедупликации по члену; ZSET даёт O(log N) вставку по score (tweet_id) и корректный порядок при out-of-order доставке.",
-                "source_of_confusion": "List кажется проще и «естественнее» для ленты как последовательности.",
-                "if_it_were_true": "Тогда твит, доставленный fan-out с опозданием, встал бы не на своё место по времени, и дедуп ретвитов был бы невозможен.",
-                "how_it_should_be": "ZSET со score = tweet_id корректно сортирует по времени и дедуплицирует; List этого не гарантирует."
+                "explanation": "Sorted set хранит элементы упорядоченными по score, поэтому top-N по времени достаётся одним диапазонным запросом без сортировки на лету. Snowflake-id как score даёт хронологический порядок бесплатно.",
+                "example": "ZREVRANGE timeline:{user_id} 0 49 возвращает 50 самых свежих tweet_id за O(log N + M), что и обеспечивает p99 чтения в единицы миллисекунд.",
+                "when_to_apply": "ZSET применяют для hot top-N лент и любых ranked-выборок (trends, unread notifications), где нужен быстрый диапазон по убыванию score.",
+                "edge_cases": "Без capping (ZREMRANGEBYRANK) лента растёт неограниченно и съедает RAM; неактивным юзерам ставят TTL 30 дней и материализуют лениво при возврате.",
+                "related": "[[design-twitter-interview#Q11]] кто пишет в ZSET (fan-out); [[design-twitter-interview#Q15]] cold tail в Cassandra; [[design-twitter-interview#Q19]] ZSET для trends."
               }
             },
             {
@@ -695,6 +696,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Для timeline лучше Redis List (LPUSH/LRANGE): список сохраняет порядок вставки, поэтому top-N достаётся быстрее, чем из sorted set.",
+              "correct": false,
+              "sections": {
+                "what_actually": "List не умеет score-упорядочивания и дедупликации по члену; ZSET даёт O(log N) вставку по score (tweet_id) и корректный порядок при out-of-order доставке.",
+                "source_of_confusion": "List кажется проще и «естественнее» для ленты как последовательности.",
+                "if_it_were_true": "Тогда твит, доставленный fan-out с опозданием, встал бы не на своё место по времени, и дедуп ретвитов был бы невозможен.",
+                "how_it_should_be": "ZSET со score = tweet_id корректно сортирует по времени и дедуплицирует; List этого не гарантирует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "В качестве score в ZSET используют случайное число, а сортировку по времени выполняют отдельным запросом после ZRANGE.",
               "correct": false,
               "sections": {
@@ -702,19 +715,6 @@
                 "source_of_confusion": "Кажется, что score — произвольный идентификатор, не связанный с порядком.",
                 "if_it_were_true": "Тогда ZREVRANGE возвращал бы твиты в случайном порядке и требовал бы дорогой сортировки на каждом чтении.",
                 "how_it_should_be": "score = Snowflake tweet_id → диапазонный ZREVRANGE отдаёт ленту уже отсортированной по времени."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "ZSET идеально ложится на задачу «top-N по времени»: score = tweet_id (Snowflake уже отсортирован по времени). ZADD timeline:{user} вставляет за O(log N), ZREVRANGE 0 49 отдаёт top-50, ZREMRANGEBYRANK обрезает ленту до 500-800 (cold tail подгружают из Cassandra). Memory math: ~50 байт/entry × 500 × 500M users ≈ ~12 TB RAM — это Redis Cluster на 100+ инстансов.",
-              "correct": true,
-              "sections": {
-                "explanation": "Sorted set хранит элементы упорядоченными по score, поэтому top-N по времени достаётся одним диапазонным запросом без сортировки на лету. Snowflake-id как score даёт хронологический порядок бесплатно.",
-                "example": "ZREVRANGE timeline:{user_id} 0 49 возвращает 50 самых свежих tweet_id за O(log N + M), что и обеспечивает p99 чтения в единицы миллисекунд.",
-                "when_to_apply": "ZSET применяют для hot top-N лент и любых ranked-выборок (trends, unread notifications), где нужен быстрый диапазон по убыванию score.",
-                "edge_cases": "Без capping (ZREMRANGEBYRANK) лента растёт неограниченно и съедает RAM; неактивным юзерам ставят TTL 30 дней и материализуют лениво при возврате.",
-                "related": "[[design-twitter-interview#Q11]] кто пишет в ZSET (fan-out); [[design-twitter-interview#Q15]] cold tail в Cassandra; [[design-twitter-interview#Q19]] ZSET для trends."
               }
             }
           ]
@@ -731,14 +731,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Fan-out на 100M фолловеров убивает воркеры. Решения: (1) threshold + pull-only для celebrities (главное, см. Q10); (2) replicated celeb cache в каждом регионе (топ-1000 в local Redis); (3) pre-fetch merged-вида на 30-60 сек; (4) общий sharded celeb_tweets:{author_id} ZSET вместо 100M персональных копий; (5) backpressure на Kafka при росте lag.",
-              "correct": true,
+              "text": "Hot users problem и hot read (миллион лайков на один твит) — это одна и та же проблема, решаемая одним механизмом fan-out.",
+              "correct": false,
               "sections": {
-                "explanation": "Проблема в хвосте распределения фолловеров: один твит мега-аккаунта порождает десятки миллионов timeline-записей, забивая fan-out и задерживая обычные посты. Лечится тем, что такие авторы не размножаются, а доклеиваются на чтении.",
-                "example": "Вместо 100M персональных ZADD держат один celeb_tweets:{author_id} ZSET, который читают все подписчики этого селебрити — одна копия вместо ста миллионов.",
-                "when_to_apply": "Эти приёмы включают, когда у автора миллионы активных фолловеров и push становится дороже, чем pull-доклейка на чтении.",
-                "edge_cases": "Hot read (твит звезды лайкает миллион человек) — это уже проблема counters, а не fan-out; её решают отдельно через Redis INCR и sharded counters (Q17).",
-                "related": "[[design-twitter-interview#Q10]] threshold + pull-only как главное решение; [[design-twitter-interview#Q9]] push, который и упирается в hot users; [[design-twitter-interview#Q17]] hot read counters как смежная проблема."
+                "what_actually": "Это разные проблемы: hot users — про fan-out на запись (распространение твита), hot read — про counters лайков; решения у них разные.",
+                "source_of_confusion": "Оба связаны с популярными аккаунтами и словом «hot», поэтому их объединяют.",
+                "if_it_were_true": "Тогда threshold/pull-only чинил бы и счётчики лайков, но для них нужны Redis INCR и sharded counters.",
+                "how_it_should_be": "Hot users → pull-only/shared cache; hot read counters → Redis INCR + sharded/approximate counters (Q17)."
               }
             },
             {
@@ -756,6 +755,19 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Fan-out на 100M фолловеров убивает воркеры. Решения: (1) threshold + pull-only для celebrities (главное, см. Q10); (2) replicated celeb cache в каждом регионе (топ-1000 в local Redis); (3) pre-fetch merged-вида на 30-60 сек; (4) общий sharded celeb_tweets:{author_id} ZSET вместо 100M персональных копий; (5) backpressure на Kafka при росте lag.",
+              "correct": true,
+              "sections": {
+                "explanation": "Проблема в хвосте распределения фолловеров: один твит мега-аккаунта порождает десятки миллионов timeline-записей, забивая fan-out и задерживая обычные посты. Лечится тем, что такие авторы не размножаются, а доклеиваются на чтении.",
+                "example": "Вместо 100M персональных ZADD держат один celeb_tweets:{author_id} ZSET, который читают все подписчики этого селебрити — одна копия вместо ста миллионов.",
+                "when_to_apply": "Эти приёмы включают, когда у автора миллионы активных фолловеров и push становится дороже, чем pull-доклейка на чтении.",
+                "edge_cases": "Hot read (твит звезды лайкает миллион человек) — это уже проблема counters, а не fan-out; её решают отдельно через Redis INCR и sharded counters (Q17).",
+                "related": "[[design-twitter-interview#Q10]] threshold + pull-only как главное решение; [[design-twitter-interview#Q9]] push, который и упирается в hot users; [[design-twitter-interview#Q17]] hot read counters как смежная проблема."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Для каждого фолловера селебрити создают персональную копию его твитов в отдельном ZSET, чтобы чтение было максимально быстрым.",
               "correct": false,
               "sections": {
@@ -763,18 +775,6 @@
                 "source_of_confusion": "Персональные копии ассоциируются с быстрым чтением (как в push), поэтому кажутся решением.",
                 "if_it_were_true": "Тогда один твит селебрити снова порождал бы 100M записей — ровно то, что hot users problem и описывает.",
                 "how_it_should_be": "Один shared ZSET на селебрити, читаемый всеми подписчиками; персональные копии — это сама проблема."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Hot users problem и hot read (миллион лайков на один твит) — это одна и та же проблема, решаемая одним механизмом fan-out.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это разные проблемы: hot users — про fan-out на запись (распространение твита), hot read — про counters лайков; решения у них разные.",
-                "source_of_confusion": "Оба связаны с популярными аккаунтами и словом «hot», поэтому их объединяют.",
-                "if_it_were_true": "Тогда threshold/pull-only чинил бы и счётчики лайков, но для них нужны Redis INCR и sharded counters.",
-                "how_it_should_be": "Hot users → pull-only/shared cache; hot read counters → Redis INCR + sharded/approximate counters (Q17)."
               }
             }
           ]
@@ -791,6 +791,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "У селебрити главная проблема шардинга — hot write partition, потому что они физически пишут очень много твитов в секунду в один partition.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один человек не пишет много twits/sec, поэтому write-hot не главная боль; у celeb hot именно reads, и их сглаживают репликами и кэшем.",
+                "source_of_confusion": "«Популярный аккаунт» интуитивно ассоциируется с большим объёмом записи.",
+                "if_it_were_true": "Тогда проблему решали бы пере-шардированием записи, но reads-hot так не лечится.",
+                "how_it_should_be": "У celeb hot — это reads; помогают read-реплики и кэш, а не смена write-ключа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Tweet store удобнее всего шардировать по tweet_id, потому что Snowflake равномерно распределяет нагрузку и убирает hot partitions.",
               "correct": false,
               "sections": {
@@ -801,8 +813,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Tweet store: partition key = user_id (все твиты автора в одном partition → быстрый user_timeline), clustering key = tweet_id DESC. Home timeline: partition key = follower_id (владелец ленты), clustering tweet_id DESC → запись = маленький INSERT, чтение = single-partition scan. Follow-граф: две шардированные таблицы по PK (consistent hashing). Search: по hash(tweet_id) или time-based индексам. Антипаттерн: шардить tweet store по tweet_id (ломает user_timeline через scatter-gather).",
               "correct": true,
               "sections": {
@@ -814,8 +826,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Home timeline нужно шардировать по author_id (автору твита), чтобы все твиты одного автора лежали вместе в ленте.",
               "correct": false,
               "sections": {
@@ -823,18 +835,6 @@
                 "source_of_confusion": "Кажется логичным группировать ленту вокруг авторов, как tweet store.",
                 "if_it_were_true": "Тогда чтение собственной ленты требовало бы собирать куски с разных шардов по каждому автору подписки.",
                 "how_it_should_be": "Партиционируем home_timeline по follower_id → чтение своей ленты = single-partition scan."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "У селебрити главная проблема шардинга — hot write partition, потому что они физически пишут очень много твитов в секунду в один partition.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Один человек не пишет много twits/sec, поэтому write-hot не главная боль; у celeb hot именно reads, и их сглаживают репликами и кэшем.",
-                "source_of_confusion": "«Популярный аккаунт» интуитивно ассоциируется с большим объёмом записи.",
-                "if_it_were_true": "Тогда проблему решали бы пере-шардированием записи, но reads-hot так не лечится.",
-                "how_it_should_be": "У celeb hot — это reads; помогают read-реплики и кэш, а не смена write-ключа."
               }
             }
           ]
@@ -851,18 +851,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Bucket в PK нужен исключительно для географического шардинга — он указывает датацентр, в котором лежит лента пользователя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Bucket (yyyymm) — это временной ключ против unbounded partition; за geo-распределение отвечает NetworkTopologyStrategy и RF на DC, а не bucket.",
-                "source_of_confusion": "Слово «bucket» ассоциируется с распределением по узлам/регионам.",
-                "if_it_were_true": "Тогда без multi-region у bucket не было бы смысла, но он нужен и в одном DC — ради размера партиции.",
-                "how_it_should_be": "Bucket режет партицию по времени; geo-репликацию задаёт NetworkTopologyStrategy с RF per DC."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Чтобы избежать больших партиций, достаточно использовать PRIMARY KEY (user_id, tweet_id) без bucket — Cassandra сама дробит большие партиции на сегменты.",
               "correct": false,
               "sections": {
@@ -873,8 +861,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "KEYSPACE с NetworkTopologyStrategy (RF=3 на DC). timelines.home: PRIMARY KEY ((user_id, bucket), tweet_id), CLUSTERING ORDER BY tweet_id DESC, default_time_to_live ~30 дней. bucket (yyyymm) в составном partition key предотвращает unbounded partition. Читают/пишут с LOCAL_QUORUM. TTL авто-чистит старые записи без tombstone-hell.",
               "correct": true,
               "sections": {
@@ -886,8 +874,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Старые записи из timeline удаляют ручным batch-job DELETE по расписанию, потому что Cassandra не поддерживает автоматическое истечение строк.",
               "correct": false,
               "sections": {
@@ -895,6 +883,18 @@
                 "source_of_confusion": "Привычка чистить старьё кроном переносится на Cassandra по аналогии с реляционками.",
                 "if_it_were_true": "Тогда пришлось бы держать отдельный сервис очистки и бороться с массовыми DELETE-tombstones.",
                 "how_it_should_be": "default_time_to_live авто-истекает старые записи; ручной cleanup излишен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Bucket в PK нужен исключительно для географического шардинга — он указывает датацентр, в котором лежит лента пользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bucket (yyyymm) — это временной ключ против unbounded partition; за geo-распределение отвечает NetworkTopologyStrategy и RF на DC, а не bucket.",
+                "source_of_confusion": "Слово «bucket» ассоциируется с распределением по узлам/регионам.",
+                "if_it_were_true": "Тогда без multi-region у bucket не было бы смысла, но он нужен и в одном DC — ради размера партиции.",
+                "how_it_should_be": "Bucket режет партицию по времени; geo-репликацию задаёт NetworkTopologyStrategy с RF per DC."
               }
             }
           ]
@@ -923,6 +923,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Объекты — в S3/GCS, перед ними CDN (CloudFront/Akamai/Fastly). Upload: media-service выдаёт presigned PUT URL в S3 → async pipeline. Image: resize в несколько размеров, конвертация в AVIF + WebP + JPEG fallback, EXIF strip, NSFW-чек. Video: transcode (FFmpeg) в HLS chunks (240p-1080p), thumbnail, audio normalize. В твите хранится только media_id, mapping media_id → URLs — в отдельной таблице. URL-ы подписывают на 24h для приватных аккаунтов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Media — это крупные иммутабельные блобы, поэтому их место в object storage за CDN, а не в БД. Транскодинг и ресайз выносят в асинхронный pipeline после загрузки.",
+                "example": "Картинку отдают как AVIF/WebP с fallback в JPEG по Accept-заголовку, а видео — как HLS chunks разного качества; в БД лежит лишь media_id.",
+                "when_to_apply": "Такой подход применяют для любого user-generated media в read-heavy системе, где раздача должна идти с edge, а не из origin.",
+                "edge_cases": "Для приватных аккаунтов URL-ы подписывают (CDN signed cookies на 24h); иммутабельный URL с хэшем контента в имени даёт unlimited cache без инвалидации.",
+                "related": "[[design-twitter-interview#Q7]] media в S3 как выбор хранилища; [[design-twitter-interview#Q21]] CDN перед S3 и edge-преимущества; [[design-twitter-interview#Q3]] объём media в capacity-оценке."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Транскодинг видео и ресайз картинок выполняют синхронно в момент POST /media, прежде чем вернуть клиенту media_id.",
               "correct": false,
               "sections": {
@@ -933,8 +946,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Для каждого запроса картинки CDN заново ходит в origin S3, поэтому media-URL делают изменяемым и часто инвалидируют кэш.",
               "correct": false,
               "sections": {
@@ -942,19 +955,6 @@
                 "source_of_confusion": "Привычка инвалидировать кэш переносится на иммутабельный media-контент.",
                 "if_it_were_true": "Тогда CDN не давал bandwidth offload и каждый просмотр бил бы по origin S3.",
                 "how_it_should_be": "Иммутабельный URL = вечный edge-кэш; инвалидация не нужна, новый контент = новый URL."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Объекты — в S3/GCS, перед ними CDN (CloudFront/Akamai/Fastly). Upload: media-service выдаёт presigned PUT URL в S3 → async pipeline. Image: resize в несколько размеров, конвертация в AVIF + WebP + JPEG fallback, EXIF strip, NSFW-чек. Video: transcode (FFmpeg) в HLS chunks (240p-1080p), thumbnail, audio normalize. В твите хранится только media_id, mapping media_id → URLs — в отдельной таблице. URL-ы подписывают на 24h для приватных аккаунтов.",
-              "correct": true,
-              "sections": {
-                "explanation": "Media — это крупные иммутабельные блобы, поэтому их место в object storage за CDN, а не в БД. Транскодинг и ресайз выносят в асинхронный pipeline после загрузки.",
-                "example": "Картинку отдают как AVIF/WebP с fallback в JPEG по Accept-заголовку, а видео — как HLS chunks разного качества; в БД лежит лишь media_id.",
-                "when_to_apply": "Такой подход применяют для любого user-generated media в read-heavy системе, где раздача должна идти с edge, а не из origin.",
-                "edge_cases": "Для приватных аккаунтов URL-ы подписывают (CDN signed cookies на 24h); иммутабельный URL с хэшем контента в имени даёт unlimited cache без инвалидации.",
-                "related": "[[design-twitter-interview#Q7]] media в S3 как выбор хранилища; [[design-twitter-interview#Q21]] CDN перед S3 и edge-преимущества; [[design-twitter-interview#Q3]] объём media в capacity-оценке."
               }
             }
           ]
@@ -984,13 +984,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Лучший способ — синхронный UPDATE tweets SET likes = likes + 1 в реляционной БД на каждый лайк: так счётчик всегда точен и консистентен.",
+              "text": "Sharded counter решает hot key тем, что хранит счётчик в одном ключе, но в нескольких репликах Redis для надёжности.",
               "correct": false,
               "sections": {
-                "what_actually": "Миллион одновременных UPDATE по одной строке создаёт write-conflict/lock contention; инкременты принимают в Redis и батч-флашат, жертвуя точностью ±N.",
-                "source_of_confusion": "Синхронный UPDATE даёт идеальную точность, что кажется правильным по умолчанию.",
-                "if_it_were_true": "Тогда вирусный твит с миллионом лайков/мин клал бы строку в lock contention и ронял запись.",
-                "how_it_should_be": "INCR в Redis (миллионы ops/sec) + периодический flush в БД; точность ±N для лайков допустима."
+                "what_actually": "Sharded counter разбивает значение на K отдельных ключей likes:{id}:0..K-1 и пишет в случайный; реплики — про надёжность, а не про разгрузку hot key.",
+                "source_of_confusion": "«Sharded» и «реплицированный» смешивают: и то, и другое про распределение.",
+                "if_it_were_true": "Тогда все записи всё равно шли бы в один логический ключ, и hot key никуда бы не делся.",
+                "how_it_should_be": "Counter дробят на K ключей-шардов (write в случайный, read = сумма) — это и размазывает горячую запись."
               }
             },
             {
@@ -1008,13 +1008,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Sharded counter решает hot key тем, что хранит счётчик в одном ключе, но в нескольких репликах Redis для надёжности.",
+              "text": "Лучший способ — синхронный UPDATE tweets SET likes = likes + 1 в реляционной БД на каждый лайк: так счётчик всегда точен и консистентен.",
               "correct": false,
               "sections": {
-                "what_actually": "Sharded counter разбивает значение на K отдельных ключей likes:{id}:0..K-1 и пишет в случайный; реплики — про надёжность, а не про разгрузку hot key.",
-                "source_of_confusion": "«Sharded» и «реплицированный» смешивают: и то, и другое про распределение.",
-                "if_it_were_true": "Тогда все записи всё равно шли бы в один логический ключ, и hot key никуда бы не делся.",
-                "how_it_should_be": "Counter дробят на K ключей-шардов (write в случайный, read = сумма) — это и размазывает горячую запись."
+                "what_actually": "Миллион одновременных UPDATE по одной строке создаёт write-conflict/lock contention; инкременты принимают в Redis и батч-флашат, жертвуя точностью ±N.",
+                "source_of_confusion": "Синхронный UPDATE даёт идеальную точность, что кажется правильным по умолчанию.",
+                "if_it_were_true": "Тогда вирусный твит с миллионом лайков/мин клал бы строку в lock contention и ронял запись.",
+                "how_it_should_be": "INCR в Redis (миллионы ops/sec) + периодический flush в БД; точность ±N для лайков допустима."
               }
             }
           ]
@@ -1031,18 +1031,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Полнотекстовый поиск строят прямо на SASI-индексах Cassandra по колонке `text`: SASI даёт токенизацию, `LIKE`-запросы и работает на тех же нодах, что и tweet store, поэтому отдельный Elasticsearch-кластер не разворачивают, а выдачу сортируют по `created_at` на стороне Cassandra.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Cassandra не имеет inverted index; ALLOW FILTERING — это full-scan партиций. Для full-text с ranking берут Elasticsearch/Lucene.",
-                "source_of_confusion": "Раз твиты уже в Cassandra, кажется логичным искать в ней же.",
-                "if_it_were_true": "Тогда каждый поиск сканировал бы терабайты данных и не дал бы ни fuzzy, ни BM25-ранжирования.",
-                "how_it_should_be": "Твиты индексируют в Elasticsearch (inverted index, BM25); Cassandra остаётся primary store, не поисковиком."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Отдельный Elasticsearch cluster (или Lucene-custom, как Earlybird у Twitter). Pipeline: tweets.created Kafka topic → indexer → ES bulk API, твит индексируется за секунды (eventually). Индексы раздельные по времени (tweets-2026-05), старые уходят в cold/frozen tier. Запросы: full-text по text + фильтры (user_id, created_at, lang), ranking BM25 + signals (likes, recency, authority), пагинация search_after. Real-time окно (1-2 недели) — in-memory inverted index (Earlybird), хвост — холодные ES-индексы.",
               "correct": true,
               "sections": {
@@ -1054,8 +1042,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Глубокую пагинацию выдачи реализуют через `from`/`size` с растущим `offset`: клиент увеличивает `size` по мере прокрутки, ES отдаёт срез начиная с указанного смещения, а дальние страницы получают, просто задавая больший `from`.",
               "correct": false,
               "sections": {
@@ -1063,6 +1051,18 @@
                 "source_of_confusion": "from/size — самый знакомый способ пагинации в ES для первых страниц.",
                 "if_it_were_true": "Тогда переход на 1000-ю страницу заставлял бы каждый шард материализовать десятки тысяч документов.",
                 "how_it_should_be": "Глубокую пагинацию делают через search_after по sort-значениям последнего документа."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Полнотекстовый поиск строят прямо на SASI-индексах Cassandra по колонке `text`: SASI даёт токенизацию, `LIKE`-запросы и работает на тех же нодах, что и tweet store, поэтому отдельный Elasticsearch-кластер не разворачивают, а выдачу сортируют по `created_at` на стороне Cassandra.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra не имеет inverted index; ALLOW FILTERING — это full-scan партиций. Для full-text с ranking берут Elasticsearch/Lucene.",
+                "source_of_confusion": "Раз твиты уже в Cassandra, кажется логичным искать в ней же.",
+                "if_it_were_true": "Тогда каждый поиск сканировал бы терабайты данных и не дал бы ни fuzzy, ни BM25-ранжирования.",
+                "how_it_should_be": "Твиты индексируют в Elasticsearch (inverted index, BM25); Cassandra остаётся primary store, не поисковиком."
               }
             },
             {
@@ -1103,18 +1103,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Готовый список трендов хранят в Elasticsearch и на каждый запрос /trends выполняют агрегацию terms по хэштегам за окно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Top-K снапшотят в Redis ZSET и читают за миллисекунду; тяжёлая ES-агрегация на каждый запрос /trends не нужна и слишком дорога.",
-                "source_of_confusion": "ES умеет terms-агрегации, поэтому кажется естественным считать тренды там.",
-                "if_it_were_true": "Тогда популярный эндпоинт /trends гонял бы дорогую агрегацию вместо чтения готового ZSET.",
-                "how_it_should_be": "Stream-pipeline считает top-K заранее, кладёт в Redis ZSET (TTL 5 мин); /trends = ZREVRANGE."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Sliding window top-K по hashtag count за последние 5-15 минут. Pipeline: tweets.created → Flink job (или Kafka Streams) → парсинг и нормализация хэштегов → Count-Min Sketch + sliding window (approx counts на стриме без точного хранения) → Top-K через Space-Saving algorithm (heap топ-100) → каждые ~30 сек snapshot в Redis ZSET trends:global / trends:{region} с TTL 5 минут. API /trends читает ZREVRANGE за миллисекунду. Anti-spam: dedupe по author_id в окне.",
               "correct": true,
               "sections": {
@@ -1126,8 +1114,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Анти-спам в трендах не нужен: если одно слово повторяется тысячи раз от одного бота, это и есть настоящий тренд.",
               "correct": false,
               "sections": {
@@ -1135,6 +1123,18 @@
                 "source_of_confusion": "«Много упоминаний = тренд» без учёта, что они от одного источника.",
                 "if_it_were_true": "Тогда любой бот выводил бы произвольное слово в топ простым повтором.",
                 "how_it_should_be": "Dedupe по author_id в окне отсекает накрутку: тренд считают по разным авторам, а не повторам одного."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Готовый список трендов хранят в Elasticsearch и на каждый запрос /trends выполняют агрегацию terms по хэштегам за окно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Top-K снапшотят в Redis ZSET и читают за миллисекунду; тяжёлая ES-агрегация на каждый запрос /trends не нужна и слишком дорога.",
+                "source_of_confusion": "ES умеет terms-агрегации, поэтому кажется естественным считать тренды там.",
+                "if_it_were_true": "Тогда популярный эндпоинт /trends гонял бы дорогую агрегацию вместо чтения готового ZSET.",
+                "how_it_should_be": "Stream-pipeline считает top-K заранее, кладёт в Redis ZSET (TTL 5 мин); /trends = ZREVRANGE."
               }
             }
           ]
@@ -1151,13 +1151,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "notification-service должен сам периодически опрашивать таблицу твитов (polling) и искать новые mentions, не подписываясь на Kafka.",
+              "text": "Real-time доставку в открытое приложение делают регулярным REST-поллингом /notifications, потому что WebSocket для нотификаций избыточен.",
               "correct": false,
               "sections": {
-                "what_actually": "Нотификации строят на event-driven consume из Kafka (tweets.created); polling по таблице твитов масштабируется плохо и добавляет задержку.",
-                "source_of_confusion": "Polling проще понять, чем подписку на шину событий.",
-                "if_it_were_true": "Тогда сервис постоянно сканировал бы таблицу твитов, создавая нагрузку и задержку доставки.",
-                "how_it_should_be": "notification-service — consumer Kafka: реагирует на событие твита, а не опрашивает БД."
+                "what_actually": "Real-time доставку делают через WebSocket/SSE с server-side push (fanout pub-sub); poller на 500M клиентов создал бы лишнюю нагрузку и задержку.",
+                "source_of_confusion": "REST-поллинг проще реализовать, чем поддерживать постоянные соединения.",
+                "if_it_were_true": "Тогда бейдж обновлялся бы раз в polling-интервал и миллионы пустых запросов били бы по gateway.",
+                "how_it_should_be": "WebSocket/SSE + pub-sub доставляют нотификацию в открытое приложение мгновенно, без поллинга."
               }
             },
             {
@@ -1175,13 +1175,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Real-time доставку в открытое приложение делают регулярным REST-поллингом /notifications, потому что WebSocket для нотификаций избыточен.",
+              "text": "notification-service должен сам периодически опрашивать таблицу твитов (polling) и искать новые mentions, не подписываясь на Kafka.",
               "correct": false,
               "sections": {
-                "what_actually": "Real-time доставку делают через WebSocket/SSE с server-side push (fanout pub-sub); poller на 500M клиентов создал бы лишнюю нагрузку и задержку.",
-                "source_of_confusion": "REST-поллинг проще реализовать, чем поддерживать постоянные соединения.",
-                "if_it_were_true": "Тогда бейдж обновлялся бы раз в polling-интервал и миллионы пустых запросов били бы по gateway.",
-                "how_it_should_be": "WebSocket/SSE + pub-sub доставляют нотификацию в открытое приложение мгновенно, без поллинга."
+                "what_actually": "Нотификации строят на event-driven consume из Kafka (tweets.created); polling по таблице твитов масштабируется плохо и добавляет задержку.",
+                "source_of_confusion": "Polling проще понять, чем подписку на шину событий.",
+                "if_it_were_true": "Тогда сервис постоянно сканировал бы таблицу твитов, создавая нагрузку и задержку доставки.",
+                "how_it_should_be": "notification-service — consumer Kafka: реагирует на событие твита, а не опрашивает БД."
               }
             },
             {
@@ -1211,6 +1211,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Главное преимущество CDN — георепликация origin: каждый edge-PoP хранит полную durable-копию media-бакета и работает как distributed backup, поэтому при отказе S3 отдача не прерывается, а сам CDN выступает вторым источником истины для файлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главные преимущества CDN — снижение latency (edge ближе к юзеру) и bandwidth offload (90%+ трафика минует S3), а не бэкап origin.",
+                "source_of_confusion": "Кэш ассоциируют с «копией на всякий случай», а не с близостью к пользователю.",
+                "if_it_were_true": "Тогда CDN не экономил бы egress и не ускорял бы раздачу, и его ставили бы только ради отказоустойчивости.",
+                "how_it_should_be": "CDN режет RTT и egress за счёт edge-кэша; отказоустойчивость — приятный, но не главный эффект."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "TLS-трафик CDN проксирует до origin в режиме pass-through без расшифровки на edge: терминация хендшейка и вся криптографическая нагрузка остаются на origin-серверах, а PoP лишь форвардит зашифрованные пакеты ближе к пользователю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CDN терминирует TLS на edge, снимая CPU-нагрузку с origin и ускоряя handshake ближе к пользователю.",
+                "source_of_confusion": "Кажется, что шифрование «должно» заканчиваться только на конечном сервере.",
+                "if_it_were_true": "Тогда origin нёс бы всю TLS-нагрузку, а handshake шёл бы через весь путь до origin.",
+                "how_it_should_be": "TLS termination на edge разгружает origin по CPU и сокращает latency рукопожатия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Edge caching: статика отдаётся с PoP в стране пользователя (RTT 20-50ms вместо 150-300ms до origin). Bandwidth offload: 90%+ media-трафика не доходит до S3 (экономия egress). TLS termination на edge → меньше CPU на origin. DDoS mitigation: CDN держит SYN/L7 floods. Image optimization on the fly (Cloudflare Polish/Fastly Image Opto) по Accept. Video chunked delivery: HLS chunks перекэшируются, старт < 1сек. Cache key — immutable URL (хэш контента) → unlimited lifetime без инвалидации.",
               "correct": true,
               "sections": {
@@ -1222,20 +1246,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Главное преимущество CDN — георепликация origin: каждый edge-PoP хранит полную durable-копию media-бакета и работает как distributed backup, поэтому при отказе S3 отдача не прерывается, а сам CDN выступает вторым источником истины для файлов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Главные преимущества CDN — снижение latency (edge ближе к юзеру) и bandwidth offload (90%+ трафика минует S3), а не бэкап origin.",
-                "source_of_confusion": "Кэш ассоциируют с «копией на всякий случай», а не с близостью к пользователю.",
-                "if_it_were_true": "Тогда CDN не экономил бы egress и не ускорял бы раздачу, и его ставили бы только ради отказоустойчивости.",
-                "how_it_should_be": "CDN режет RTT и egress за счёт edge-кэша; отказоустойчивость — приятный, но не главный эффект."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Media-URL кэшируют с коротким TTL (единицы минут) и регулярно инвалидируют на edge: так при замене или обновлении картинки пользователи сразу получают свежую версию, а не устаревшую копию из кэша PoP.",
               "correct": false,
               "sections": {
@@ -1243,18 +1255,6 @@
                 "source_of_confusion": "Привычка к коротким TTL и инвалидации из мира изменяемого контента.",
                 "if_it_were_true": "Тогда CDN постоянно ходил бы в origin за «свежей» версией неизменного файла, теряя bandwidth offload.",
                 "how_it_should_be": "Иммутабельный URL = вечный кэш; обновление контента — это новый URL, а не инвалидация."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "TLS-трафик CDN проксирует до origin в режиме pass-through без расшифровки на edge: терминация хендшейка и вся криптографическая нагрузка остаются на origin-серверах, а PoP лишь форвардит зашифрованные пакеты ближе к пользователю.",
-              "correct": false,
-              "sections": {
-                "what_actually": "CDN терминирует TLS на edge, снимая CPU-нагрузку с origin и ускоряя handshake ближе к пользователю.",
-                "source_of_confusion": "Кажется, что шифрование «должно» заканчиваться только на конечном сервере.",
-                "if_it_were_true": "Тогда origin нёс бы всю TLS-нагрузку, а handshake шёл бы через весь путь до origin.",
-                "how_it_should_be": "TLS termination на edge разгружает origin по CPU и сокращает latency рукопожатия."
               }
             }
           ]
@@ -1283,19 +1283,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Delete: soft-delete (deleted=true) в tweet store (оригинал хранится для audit/GDPR-delay), publish tweets.deleted в Kafka. Consumers: search-indexer → DELETE из ES; fan-out → ZREM из timeline активных фолловеров; notification-service помечает связанные нотификации obsolete. На read timeline-service фильтрует deleted=true (read-time страховка). Edit (X feature): новая ревизия, привязанная к оригинальному tweet_id (edits[] с timestamp), ограничение по времени (30 мин, до 5 правок), re-index в search, позиция в timeline не меняется, метка 'edited'.",
-              "correct": true,
-              "sections": {
-                "explanation": "Delete и edit пропагируют через ту же event-шину: соответствующие консьюмеры обновляют search, timeline и notifications. Read-time фильтр deleted страхует от лагов async-распространения.",
-                "example": "При удалении публикуется tweets.deleted: ES делает DELETE, fan-out — ZREM из лент активных фолловеров, а на чтении timeline-service ещё раз отфильтровывает deleted=true.",
-                "when_to_apply": "Такой dual-подход (event propagation + read-time filter) применяют, когда async-распространение может отставать, но показывать удалённый твит недопустимо.",
-                "edge_cases": "Для неактивных фолловеров ZREM не делают (лень/стоимость) — их закрывает read-time фильтр; edit не перешафливает timeline, твит остаётся на старой позиции с меткой.",
-                "related": "[[design-twitter-interview#Q18]] re-index в search при edit; [[design-twitter-interview#Q11]] fan-out, который делает ZREM; [[design-twitter-interview#Q12]] ZREM из ZSET ленты."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Редактирование реализуют как новый твит: генерируется свежий `tweet_id`, старая версия помечается `deleted`, отредактированный твит заново фан-аутится фолловерам и встаёт новой публикацией вверху ленты.",
               "correct": false,
               "sections": {
@@ -1306,8 +1293,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "После удаления полагаются только на async-распространение `tweets.deleted` по consumer'ам: раз событие рано или поздно вычистит копии из ES и timeline активных фолловеров, read-time фильтр `deleted=true` считают избыточным и не делают.",
               "correct": false,
               "sections": {
@@ -1315,6 +1302,19 @@
                 "source_of_confusion": "Кажется, что раз событие отправлено, удаление везде применится надёжно.",
                 "if_it_were_true": "Тогда при лаге fan-out удалённый твит висел бы в ленте до завершения распространения.",
                 "how_it_should_be": "Event propagation + read-time фильтр вместе: фильтр закрывает окна, где async ещё не догнал."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Delete: soft-delete (deleted=true) в tweet store (оригинал хранится для audit/GDPR-delay), publish tweets.deleted в Kafka. Consumers: search-indexer → DELETE из ES; fan-out → ZREM из timeline активных фолловеров; notification-service помечает связанные нотификации obsolete. На read timeline-service фильтрует deleted=true (read-time страховка). Edit (X feature): новая ревизия, привязанная к оригинальному tweet_id (edits[] с timestamp), ограничение по времени (30 мин, до 5 правок), re-index в search, позиция в timeline не меняется, метка 'edited'.",
+              "correct": true,
+              "sections": {
+                "explanation": "Delete и edit пропагируют через ту же event-шину: соответствующие консьюмеры обновляют search, timeline и notifications. Read-time фильтр deleted страхует от лагов async-распространения.",
+                "example": "При удалении публикуется tweets.deleted: ES делает DELETE, fan-out — ZREM из лент активных фолловеров, а на чтении timeline-service ещё раз отфильтровывает deleted=true.",
+                "when_to_apply": "Такой dual-подход (event propagation + read-time filter) применяют, когда async-распространение может отставать, но показывать удалённый твит недопустимо.",
+                "edge_cases": "Для неактивных фолловеров ZREM не делают (лень/стоимость) — их закрывает read-time фильтр; edit не перешафливает timeline, твит остаётся на старой позиции с меткой.",
+                "related": "[[design-twitter-interview#Q18]] re-index в search при edit; [[design-twitter-interview#Q11]] fan-out, который делает ZREM; [[design-twitter-interview#Q12]] ZREM из ZSET ленты."
               }
             }
           ]
@@ -1331,30 +1331,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно одного глобального лимита на весь сервис (например, N req/sec суммарно), чтобы защититься от спама и абуза.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Нужен многоуровневый лимит по разным ключам (IP, user, app, endpoint): один глобальный лимит либо душит всех, либо не ловит конкретного абьюзера.",
-                "source_of_confusion": "Глобальный лимит проще настроить, чем матрицу лимитов по ключам.",
-                "if_it_were_true": "Тогда один бот, укладывающийся в глобальный лимит, всё равно спамил бы follow/tweets без персонального ограничения.",
-                "how_it_should_be": "Лимиты применяют per IP / per user / per app / per endpoint, комбинируя их."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Token bucket в Redis можно реализовать обычной последовательностью GET-вычисление-SET без Lua, потому что Redis и так однопоточный.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Между GET и SET от другого инстанса проходят гонки; атомарность обеспечивают единым Lua-скриптом (read+refill+decrement+EXPIRE в одной операции).",
-                "source_of_confusion": "«Redis однопоточный» ошибочно трактуют как «любая последовательность команд атомарна».",
-                "if_it_were_true": "Тогда два gateway одновременно прочитали бы одинаковый tokens и оба пропустили бы запрос сверх лимита.",
-                "how_it_should_be": "Логику bucket упаковывают в Lua-скрипт — он выполняется атомарно как единая операция."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Многоуровневый rate limiting: per IP (1000 req/min, Redis token bucket), per user (300 tweets/3h, 1000 follows/day), per app key (OAuth tier-based), per endpoint (sliding window). Token bucket реализуют атомарным Lua-скриптом в Redis (tokens + refill_rate, EXPIRE). Anti-spam сверху — ML classifier на content + behavioural сигналы (burst follow, repeated content, IP reputation, device fingerprint).",
               "correct": true,
               "sections": {
@@ -1366,8 +1342,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно одного глобального лимита на весь сервис (например, N req/sec суммарно), чтобы защититься от спама и абуза.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужен многоуровневый лимит по разным ключам (IP, user, app, endpoint): один глобальный лимит либо душит всех, либо не ловит конкретного абьюзера.",
+                "source_of_confusion": "Глобальный лимит проще настроить, чем матрицу лимитов по ключам.",
+                "if_it_were_true": "Тогда один бот, укладывающийся в глобальный лимит, всё равно спамил бы follow/tweets без персонального ограничения.",
+                "how_it_should_be": "Лимиты применяют per IP / per user / per app / per endpoint, комбинируя их."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Rate limiting сам по себе полностью решает проблему спама: ML-классификатор и behavioural-сигналы не нужны.",
               "correct": false,
               "sections": {
@@ -1375,6 +1363,18 @@
                 "source_of_confusion": "Кажется, что «ограничил частоту = остановил спам».",
                 "if_it_were_true": "Тогда спамер, аккуратно укладывающийся в лимиты, был бы неотличим от обычного пользователя.",
                 "how_it_should_be": "Rate limiting + ML-anti-spam (burst follow, repeated content, IP reputation, fingerprint) работают вместе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Token bucket в Redis можно реализовать обычной последовательностью GET-вычисление-SET без Lua, потому что Redis и так однопоточный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Между GET и SET от другого инстанса проходят гонки; атомарность обеспечивают единым Lua-скриптом (read+refill+decrement+EXPIRE в одной операции).",
+                "source_of_confusion": "«Redis однопоточный» ошибочно трактуют как «любая последовательность команд атомарна».",
+                "if_it_were_true": "Тогда два gateway одновременно прочитали бы одинаковый tokens и оба пропустили бы запрос сверх лимита.",
+                "how_it_should_be": "Логику bucket упаковывают в Lua-скрипт — он выполняется атомарно как единая операция."
               }
             }
           ]
@@ -1391,18 +1391,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Multi-region строят по схеме active-passive: вся запись и чтение идут в один primary-регион, остальные держат холодный standby с отложенной репликой данных и включаются DNS-failover'ом только при аварии primary.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Используют active-active: каждый регион обслуживает локальный трафик (read локально, write в home region), а не простаивает как passive standby.",
-                "source_of_confusion": "Active-passive проще: нет конфликтов записи и одна точка истины.",
-                "if_it_were_true": "Тогда пользователи далёких регионов всегда ходили бы в один primary с RTT в сотни мс, теряя смысл geo-distribution.",
-                "how_it_should_be": "Active-active: локальная обработка в каждом регионе; failover лишь переключает трафик, а не «будит» standby."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "follow/unfollow обрабатывают с eventual consistency в любом регионе: граф подписок всё равно сойдётся через async cross-region репликацию, поэтому sticky-роутинг к home DC для этих операций не нужен, а краткая рассинхронизация подписки незаметна.",
               "correct": false,
               "sections": {
@@ -1413,8 +1401,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Kafka держат по одному изолированному кластеру на регион без зеркалирования: cross-region доставку обеспечивает сам tweet-service, синхронно дублируя запись `tweets.created` в Kafka каждого удалённого DC при публикации твита.",
               "correct": false,
               "sections": {
@@ -1425,8 +1413,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Multi-region active-active: каждый регион держит полную копию stateless-сервисов и read-реплики данных. User profile / follow-граф — async-replicated cross-region (пишем в home region пользователя, читаем локально, read-after-write локальный, strong для follow/unfollow). Tweet store / timeline — replicated cross-DC (NetworkTopologyStrategy, RF=3 per DC, LOCAL_QUORUM), eventual (твит в EU через 1-2 сек после публикации в US). Kafka — MirrorMaker 2 зеркалит tweets.created cross-region. DNS-routing (Route53/Cloudflare Geo). Failover — DNS на ближайший живой регион.",
               "correct": true,
               "sections": {
@@ -1435,6 +1423,18 @@
                 "when_to_apply": "Multi-region active-active выбирают, когда latency и availability стоят дополнительной операционной сложности репликации и разрешения конфликтов.",
                 "edge_cases": "follow/unfollow требует strong (иначе unfollow «откатится»), поэтому его пишут в home region; при падении региона DNS переключает на ближайший живой с прогретым кэшем.",
                 "related": "[[design-twitter-interview#Q21]] CDN edge как часть geo; [[design-twitter-interview#Q11]] Kafka cross-region для fan-out; [[design-twitter-interview#Q27]] CAP-выбор по подсистемам в multi-region."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Multi-region строят по схеме active-passive: вся запись и чтение идут в один primary-регион, остальные держат холодный standby с отложенной репликой данных и включаются DNS-failover'ом только при аварии primary.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используют active-active: каждый регион обслуживает локальный трафик (read локально, write в home region), а не простаивает как passive standby.",
+                "source_of_confusion": "Active-passive проще: нет конфликтов записи и одна точка истины.",
+                "if_it_were_true": "Тогда пользователи далёких регионов всегда ходили бы в один primary с RTT в сотни мс, теряя смысл geo-distribution.",
+                "how_it_should_be": "Active-active: локальная обработка в каждом регионе; failover лишь переключает трафик, а не «будит» standby."
               }
             }
           ]
@@ -1451,6 +1451,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Для всех данных, включая auth и payments, выбирают eventual consistency (AP), потому что доступность важнее консистентности во всей системе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AP берут для feed-related (timeline, counters, search), но identity (auth, follow) и money — CP; деньги никогда не делают AP.",
+                "source_of_confusion": "Раз система в целом AP, кажется, что и identity/money можно ослабить.",
+                "if_it_were_true": "Тогда login-state и платежи теряли бы атомарность, что недопустимо для безопасности и денег.",
+                "how_it_should_be": "Timeline/feed — AP; auth, follow, payments — CP. Граница проходит по identity и money."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Fan-out, индексацию в search и нотификации делают синхронно, чтобы избежать сложности Kafka и гарантировать немедленную согласованность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти пути сознательно async через Kafka: синхронность привязала бы post latency к самому медленному downstream и нарушила бы p99.",
+                "source_of_confusion": "Синхронность кажется проще и «надёжнее» с точки зрения согласованности.",
+                "if_it_were_true": "Тогда публикация твита ждала бы fan-out по миллионам лент, индексацию и push — секунды задержки.",
+                "how_it_should_be": "Async (Kafka) изолирует post latency от fan-out/search/notifications; это осознанный размен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Push vs Pull → Hybrid (push для большинства, pull для celeb). Денормализация (timeline, counters) ради read-heavy/AP. Eventual для timeline/feeds (1-2 сек ок), strong для follow/unfollow/profile/auth. NoSQL для tweets/timeline, SQL для users. In-memory Redis для top-N timeline и counters. Async (Kafka) для fan-out, search index, notifications. Multi-region active-active. Counters approximate (Redis + flush). Каждый размен — обмен консистентности/точности на масштаб и latency.",
               "correct": true,
               "sections": {
@@ -1462,8 +1486,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Главный размен — выбрать строго push ИЛИ строго pull для всех пользователей одинаково; гибрид считается усложнением без выгоды.",
               "correct": false,
               "sections": {
@@ -1471,30 +1495,6 @@
                 "source_of_confusion": "Одна стратегия для всех кажется проще и «чище» архитектурно.",
                 "if_it_were_true": "Тогда чистый push умирал бы на селебрити, а чистый pull — на p99 чтения обычных юзеров.",
                 "how_it_should_be": "Hybrid — это и есть ключевой trade-off; per-author развилка обходит слабости обоих чистых подходов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Для всех данных, включая auth и payments, выбирают eventual consistency (AP), потому что доступность важнее консистентности во всей системе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "AP берут для feed-related (timeline, counters, search), но identity (auth, follow) и money — CP; деньги никогда не делают AP.",
-                "source_of_confusion": "Раз система в целом AP, кажется, что и identity/money можно ослабить.",
-                "if_it_were_true": "Тогда login-state и платежи теряли бы атомарность, что недопустимо для безопасности и денег.",
-                "how_it_should_be": "Timeline/feed — AP; auth, follow, payments — CP. Граница проходит по identity и money."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Fan-out, индексацию в search и нотификации делают синхронно, чтобы избежать сложности Kafka и гарантировать немедленную согласованность.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Эти пути сознательно async через Kafka: синхронность привязала бы post latency к самому медленному downstream и нарушила бы p99.",
-                "source_of_confusion": "Синхронность кажется проще и «надёжнее» с точки зрения согласованности.",
-                "if_it_were_true": "Тогда публикация твита ждала бы fan-out по миллионам лент, индексацию и push — секунды задержки.",
-                "how_it_should_be": "Async (Kafka) изолирует post latency от fan-out/search/notifications; это осознанный размен."
               }
             }
           ]
@@ -1536,18 +1536,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Число серверов API tier масштабируют по writes/sec: запись твита с последующим фан-аутом дороже чтения из кэша, поэтому именно поток записи определяет размер stateless-слоя, а reads обслуживаются попутно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "API tier считают по reads/sec (~12M), а не writes: read:write ≈ 1000:1, и именно чтение определяет основное число серверов.",
-                "source_of_confusion": "Запись кажется «активным» действием, создающим нагрузку, в отличие от чтения.",
-                "if_it_were_true": "Тогда оценка занижала бы парк серверов в ~1000 раз и система не выдержала бы реального read-трафика.",
-                "how_it_should_be": "API tier масштабируют под reads/sec (~12M) с запасом на peak; writes на три порядка меньше."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Мощность считают ровно под average-нагрузку без запаса: дневные и вирусные пики сглаживает буферная очередь Kafka перед обработкой, поэтому 3x headroom по серверам закладывать не требуется.",
               "correct": false,
               "sections": {
@@ -1555,6 +1543,18 @@
                 "source_of_confusion": "Кажется, что буферизация в очереди заменяет запас по железу.",
                 "if_it_were_true": "Тогда в новогодний пик система упёрлась бы в потолок ресурсов, и latency/доступность деградировали бы.",
                 "how_it_should_be": "Sizing считают с запасом ~3x на peak, а не ровно под average."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Число серверов API tier масштабируют по writes/sec: запись твита с последующим фан-аутом дороже чтения из кэша, поэтому именно поток записи определяет размер stateless-слоя, а reads обслуживаются попутно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API tier считают по reads/sec (~12M), а не writes: read:write ≈ 1000:1, и именно чтение определяет основное число серверов.",
+                "source_of_confusion": "Запись кажется «активным» действием, создающим нагрузку, в отличие от чтения.",
+                "if_it_were_true": "Тогда оценка занижала бы парк серверов в ~1000 раз и система не выдержала бы реального read-трафика.",
+                "how_it_should_be": "API tier масштабируют под reads/sec (~12M) с запасом на peak; writes на три порядка меньше."
               }
             }
           ]
@@ -1571,18 +1571,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Twitter проектируют как единую CP-систему: все подсистемы, включая home timeline, search и счётчики лайков, работают на strong consistency, жертвуя доступностью при сетевых разделах ради единообразия гарантий.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Twitter — преимущественно AP: timeline, counters, search, trends — eventual/approximate; CP оставляют точечно для auth и money.",
-                "source_of_confusion": "Strong consistency кажется «правильным» дефолтом для всей системы.",
-                "if_it_were_true": "Тогда при сетевом разделении лента и счётчики становились бы недоступны ради консистентности, что недопустимо для 500M DAU.",
-                "how_it_should_be": "Большинство подсистем — AP/eventual; CP — только identity (auth) и money."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Notifications доставляют exactly-once на уровне брокера, поэтому идемпотентность по `event_id` на стороне consumer не нужна: дубликаты исключены самой системой доставки, и обработчик может применять событие без дедупликации.",
               "correct": false,
               "sections": {
@@ -1593,8 +1581,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Платежи и монетизацию делают AP/eventual, как timeline и счётчики лайков: единая модель консистентности во всех подсистемах упрощает архитектуру, а любые расхождения в балансе сходятся асинхронно через reconciliation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Деньги — всегда CP: payments/monetization требуют strong consistency и атомарности; их никогда не делают AP, даже в AP-системе.",
+                "source_of_confusion": "Стремление к единой модели consistency по всей системе.",
+                "if_it_were_true": "Тогда баланс мог бы расходиться между репликами, и двойное списание/начисление стало бы возможным.",
+                "how_it_should_be": "Payments — CP с атомарностью; AP допустим для feed-данных, но не для денег."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Twitter проектируют как единую CP-систему: все подсистемы, включая home timeline, search и счётчики лайков, работают на strong consistency, жертвуя доступностью при сетевых разделах ради единообразия гарантий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Twitter — преимущественно AP: timeline, counters, search, trends — eventual/approximate; CP оставляют точечно для auth и money.",
+                "source_of_confusion": "Strong consistency кажется «правильным» дефолтом для всей системы.",
+                "if_it_were_true": "Тогда при сетевом разделении лента и счётчики становились бы недоступны ради консистентности, что недопустимо для 500M DAU.",
+                "how_it_should_be": "Большинство подсистем — AP/eventual; CP — только identity (auth) и money."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "User profile/auth → CP (strong): нельзя терять login state. Follow-граф → eventual (AP) с read-your-writes (после follow юзер сразу видит себя, sticky to home DC). Tweet store → AP, eventual (твит в другом DC с задержкой 1-2 сек). Home timeline → AP, eventual. Counters (likes) → AP, eventual + approximate. Search → AP, eventual (индексация 1-5 сек). Trends → AP, approximate (CMS, ±5%). Notifications → AP, at-least-once (idempotency by event_id). Payments (out of scope) → CP. Правило: timeline/feed — AP, identity и money — CP.",
               "correct": true,
               "sections": {
@@ -1603,18 +1615,6 @@
                 "when_to_apply": "Эту разбивку приводят в финале, чтобы для каждой подсистемы явно назвать её точку на CAP и обосновать, почему C ослаблена или сохранена.",
                 "edge_cases": "Notifications — at-least-once: дубль push лучше потери, поэтому нужна идемпотентность по event_id; follow-граф AP, но с read-your-writes, чтобы юзер сразу видел свой follow.",
                 "related": "[[design-twitter-interview#Q2]] откуда eventual для timeline в SLA; [[design-twitter-interview#Q25]] CAP как сквозной trade-off; [[design-twitter-interview#Q24]] CAP-выбор в multi-region."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Платежи и монетизацию делают AP/eventual, как timeline и счётчики лайков: единая модель консистентности во всех подсистемах упрощает архитектуру, а любые расхождения в балансе сходятся асинхронно через reconciliation.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Деньги — всегда CP: payments/monetization требуют strong consistency и атомарности; их никогда не делают AP, даже в AP-системе.",
-                "source_of_confusion": "Стремление к единой модели consistency по всей системе.",
-                "if_it_were_true": "Тогда баланс мог бы расходиться между репликами, и двойное списание/начисление стало бы возможным.",
-                "how_it_should_be": "Payments — CP с атомарностью; AP допустим для feed-данных, но не для денег."
               }
             }
           ]

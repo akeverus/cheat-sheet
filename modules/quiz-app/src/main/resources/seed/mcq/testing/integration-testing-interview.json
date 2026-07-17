@@ -24,6 +24,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Интеграционное тестирование проверяет UI и пользовательские сценарии через браузер, то есть это синоним `E2E`-тестов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`E2E` через браузер — отдельный, самый верхний уровень пирамиды; интеграционный тест проверяет взаимодействие компонентов на уровне кода (Service+Repository+БД), без браузера.",
+                "source_of_confusion": "И интеграционные, и `E2E` тесты «соединяют» части системы, из-за чего их термины смешивают.",
+                "if_it_were_true": "Если бы интеграционные тесты были `E2E` через UI, их нельзя было бы писать как `@SpringBootTest` с `MockMvc` без поднятия фронтенда.",
+                "how_it_should_be": "Интеграционный уровень — это связка backend-компонентов с инфраструктурой; `E2E` — сквозной путь через весь стек включая UI, и это разные слои."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Интеграционное тестирование отличается от `unit`-теста только окружением запуска: те же тесты гоняют в `CI`, а не локально, при неизменном scope и наборе зависимостей.",
               "correct": false,
               "sections": {
@@ -34,8 +46,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Интеграционное тестирование заменяет зависимости in-memory аналогами (`H2`, embedded-брокер), чтобы прогон оставался таким же быстрым, как у `unit`-тестов.",
               "correct": false,
               "sections": {
@@ -43,18 +55,6 @@
                 "source_of_confusion": "В интеграционных тестах часть зависимостей всё же мокируют (например внешний `EmailService`), и это путают с «все зависимости — моки».",
                 "if_it_were_true": "Если бы все зависимости были моками, тест не отличался бы от `unit` и не ловил бы реальные SQL- и конфигурационные ошибки.",
                 "how_it_should_be": "В интеграционных тестах реальны критичные зависимости (БД, брокер), а мокируют лишь то, что неудобно поднимать; это компромисс, а не сплошные моки."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Интеграционное тестирование проверяет UI и пользовательские сценарии через браузер, то есть это синоним `E2E`-тестов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`E2E` через браузер — отдельный, самый верхний уровень пирамиды; интеграционный тест проверяет взаимодействие компонентов на уровне кода (Service+Repository+БД), без браузера.",
-                "source_of_confusion": "И интеграционные, и `E2E` тесты «соединяют» части системы, из-за чего их термины смешивают.",
-                "if_it_were_true": "Если бы интеграционные тесты были `E2E` через UI, их нельзя было бы писать как `@SpringBootTest` с `MockMvc` без поднятия фронтенда.",
-                "how_it_should_be": "Интеграционный уровень — это связка backend-компонентов с инфраструктурой; `E2E` — сквозной путь через весь стек включая UI, и это разные слои."
               }
             }
           ]
@@ -71,18 +71,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Существует ровно один тип интеграционного тестирования — `Big Bang`, когда все компоненты интегрируются и тестируются одновременно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Big Bang` — лишь одна из стратегий; есть также `Top-Down`, `Bottom-Up`, `Sandwich/Hybrid` и `Component Integration`, рекомендуемая для `Spring`.",
-                "source_of_confusion": "`Big Bang` проще всего описать, поэтому его иногда подают как единственный подход к интеграции.",
-                "if_it_were_true": "Если бы существовал только `Big Bang`, не было бы смысла в test slices `Spring` (`@WebMvcTest`, `@DataJpaTest`), которые тестируют срезы, а не всё сразу.",
-                "how_it_should_be": "Стратегий несколько, и они различаются порядком интеграции и использованием `stub`; для `Spring` чаще выбирают `Component Integration`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Основные стратегии: `Big Bang` (всё сразу — просто, но трудно локализовать ошибку), `Top-Down` (сверху вниз со `stub` для нижних слоёв), `Bottom-Up` (снизу вверх, без `stub`), `Sandwich/Hybrid` (комбинация) и `Component Integration` — тестирование группы связанных компонентов как блока, рекомендуемое для `Spring`.",
               "correct": true,
               "sections": {
@@ -94,8 +82,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Типы интеграционного тестирования — это `MOCK`, `RANDOM_PORT`, `DEFINED_PORT` и `NONE`.",
               "correct": false,
               "sections": {
@@ -106,8 +94,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Существуют только два типа: ручное и автоматизированное интеграционное тестирование.",
               "correct": false,
               "sections": {
@@ -115,6 +103,18 @@
                 "source_of_confusion": "Деление «руками или автоматом» универсально для любых тестов, поэтому его принимают за классификацию именно интеграционных.",
                 "if_it_were_true": "Если бы это был полный список типов, нельзя было бы объяснить, почему `Bottom-Up` не требует `stub`, а `Top-Down` требует.",
                 "how_it_should_be": "Способ выполнения и стратегия интеграции — разные оси; интеграционные стратегии описывают, в каком порядке и с какими заглушками собираются компоненты."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Существует ровно один тип интеграционного тестирования — `Big Bang`, когда все компоненты интегрируются и тестируются одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Big Bang` — лишь одна из стратегий; есть также `Top-Down`, `Bottom-Up`, `Sandwich/Hybrid` и `Component Integration`, рекомендуемая для `Spring`.",
+                "source_of_confusion": "`Big Bang` проще всего описать, поэтому его иногда подают как единственный подход к интеграции.",
+                "if_it_were_true": "Если бы существовал только `Big Bang`, не было бы смысла в test slices `Spring` (`@WebMvcTest`, `@DataJpaTest`), которые тестируют срезы, а не всё сразу.",
+                "how_it_should_be": "Стратегий несколько, и они различаются порядком интеграции и использованием `stub`; для `Spring` чаще выбирают `Component Integration`."
               }
             }
           ]
@@ -191,13 +191,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Test Slices` — это способ разбить один большой тестовый метод на несколько мелких через `@Nested`-классы.",
+              "text": "Полноценный slice — это `@WebMvcTest`; репозитории и JSON-сериализацию тестируют на `@SpringBootTest` с сужением автоконфигурации, а не отдельными аннотациями.",
               "correct": false,
               "sections": {
-                "what_actually": "`Test Slices` — это аннотации (`@WebMvcTest`, `@DataJpaTest` и др.), поднимающие только нужный срез контекста; `@Nested` — про структуру тестового класса, а не про срез контекста.",
-                "source_of_confusion": "Слово «slice» ассоциируется с делением на части, поэтому его путают с разбиением тестов на вложенные группы.",
-                "if_it_were_true": "Если бы slices были про `@Nested`, они не ускоряли бы старт контекста — а главная их польза именно в том, что грузится меньше бинов.",
-                "how_it_should_be": "`Test Slices` поднимают подмножество `ApplicationContext` (только JPA, только web и т.д.); деление методов на `@Nested` к контексту отношения не имеет."
+                "what_actually": "Slices много: `@WebMvcTest`, `@DataJpaTest`, `@DataJdbcTest`, `@JdbcTest`, `@DataMongoTest`, `@DataRedisTest`, `@JsonTest`, `@RestClientTest`, `@WebFluxTest`.",
+                "source_of_confusion": "`@WebMvcTest` — самый известный slice, поэтому остальные иногда не замечают.",
+                "if_it_were_true": "Если бы был только `@WebMvcTest`, не существовало бы способа изолированно протестировать слой репозитория или JSON-сериализацию.",
+                "how_it_should_be": "Каждый slice заточен под свой слой; для репозиториев — `@DataJpaTest`, для JSON — `@JsonTest`, для REST-клиентов — `@RestClientTest`."
               }
             },
             {
@@ -215,13 +215,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Полноценный slice — это `@WebMvcTest`; репозитории и JSON-сериализацию тестируют на `@SpringBootTest` с сужением автоконфигурации, а не отдельными аннотациями.",
+              "text": "`Test Slices` — это способ разбить один большой тестовый метод на несколько мелких через `@Nested`-классы.",
               "correct": false,
               "sections": {
-                "what_actually": "Slices много: `@WebMvcTest`, `@DataJpaTest`, `@DataJdbcTest`, `@JdbcTest`, `@DataMongoTest`, `@DataRedisTest`, `@JsonTest`, `@RestClientTest`, `@WebFluxTest`.",
-                "source_of_confusion": "`@WebMvcTest` — самый известный slice, поэтому остальные иногда не замечают.",
-                "if_it_were_true": "Если бы был только `@WebMvcTest`, не существовало бы способа изолированно протестировать слой репозитория или JSON-сериализацию.",
-                "how_it_should_be": "Каждый slice заточен под свой слой; для репозиториев — `@DataJpaTest`, для JSON — `@JsonTest`, для REST-клиентов — `@RestClientTest`."
+                "what_actually": "`Test Slices` — это аннотации (`@WebMvcTest`, `@DataJpaTest` и др.), поднимающие только нужный срез контекста; `@Nested` — про структуру тестового класса, а не про срез контекста.",
+                "source_of_confusion": "Слово «slice» ассоциируется с делением на части, поэтому его путают с разбиением тестов на вложенные группы.",
+                "if_it_were_true": "Если бы slices были про `@Nested`, они не ускоряли бы старт контекста — а главная их польза именно в том, что грузится меньше бинов.",
+                "how_it_should_be": "`Test Slices` поднимают подмножество `ApplicationContext` (только JPA, только web и т.д.); деление методов на `@Nested` к контексту отношения не имеет."
               }
             },
             {
@@ -264,18 +264,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`MockMvc` поднимает реальный встроенный `Tomcat` на случайном порту и шлёт настоящие HTTP-запросы по сети.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`MockMvc` работает in-process через `DispatcherServlet` без поднятия сервера и без сетевого стека; реальный `Tomcat` на порту даёт `RANDOM_PORT` + `TestRestTemplate`.",
-                "source_of_confusion": "`MockMvc` имитирует HTTP-семантику (`get`, `post`, статусы), из-за чего кажется, что под капотом реальный сервер.",
-                "if_it_were_true": "Если бы `MockMvc` поднимал `Tomcat`, его тесты не были бы быстрее `@SpringBootTest` с реальным сервером, а они быстрее именно из-за отсутствия сети.",
-                "how_it_should_be": "`MockMvc` гоняет запрос через `DispatcherServlet` в памяти; реальный HTTP-сервер нужен только для `TestRestTemplate`/`WebTestClient` с `RANDOM_PORT`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "При использовании `@WebMvcTest` зависимости контроллера подтягиваются автоматически как реальные бины, мокировать их не нужно.",
               "correct": false,
               "sections": {
@@ -283,6 +271,18 @@
                 "source_of_confusion": "В `@SpringBootTest` бины действительно реальны, и это поведение ошибочно переносят на `@WebMvcTest`.",
                 "if_it_were_true": "Если бы `@WebMvcTest` поднимал реальные сервисы, он не был бы лёгким срезом и тащил бы за собой БД и всю инфраструктуру.",
                 "how_it_should_be": "В `@WebMvcTest` всё, кроме web-слоя, отсутствует, поэтому зависимости контроллера подменяют моками через `@MockBean`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`MockMvc` поднимает реальный встроенный `Tomcat` на случайном порту и шлёт настоящие HTTP-запросы по сети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MockMvc` работает in-process через `DispatcherServlet` без поднятия сервера и без сетевого стека; реальный `Tomcat` на порту даёт `RANDOM_PORT` + `TestRestTemplate`.",
+                "source_of_confusion": "`MockMvc` имитирует HTTP-семантику (`get`, `post`, статусы), из-за чего кажется, что под капотом реальный сервер.",
+                "if_it_were_true": "Если бы `MockMvc` поднимал `Tomcat`, его тесты не были бы быстрее `@SpringBootTest` с реальным сервером, а они быстрее именно из-за отсутствия сети.",
+                "how_it_should_be": "`MockMvc` гоняет запрос через `DispatcherServlet` в памяти; реальный HTTP-сервер нужен только для `TestRestTemplate`/`WebTestClient` с `RANDOM_PORT`."
               }
             },
             {
@@ -323,6 +323,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`@SpringBootTest` + `MockMvc` быстрее, чем `@WebMvcTest`, потому что не поднимает web-слой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SpringBootTest` медленнее (5–15 сек), так как поднимает весь контекст; `@WebMvcTest` быстрый (<1 сек), потому что грузит только web-слой.",
+                "source_of_confusion": "Оба используют `MockMvc` и пишутся похоже, из-за чего скорость путают.",
+                "if_it_were_true": "Если бы `@SpringBootTest` был быстрее, не было бы смысла в test slices, созданных ради ускорения за счёт меньшего контекста.",
+                "how_it_should_be": "`@WebMvcTest` быстрее из-за минимального среза; `@SpringBootTest` медленнее, зато даёт реальные сервисы и БД для сквозного теста."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`@WebMvcTest` + `MockMvc` поднимает только web-слой, сервисы — `@MockBean` (моки), БД нет, тест быстрый (<1 сек) и проверяет контроллер в изоляции. `@SpringBootTest` + `MockMvc` (с `@AutoConfigureMockMvc`) поднимает полный `ApplicationContext` с реальными бинами и реальной БД (`Testcontainers`), медленнее (5–15 сек) и даёт полный сквозной тест через HTTP.",
               "correct": true,
               "sections": {
@@ -334,8 +346,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`@WebMvcTest` подключает реальную БД через `Testcontainers`, тогда как `@SpringBootTest` по умолчанию довольствуется встроенным `H2`.",
               "correct": false,
               "sections": {
@@ -343,18 +355,6 @@
                 "source_of_confusion": "`@DataJpaTest` по умолчанию использует `H2`, и это свойство ошибочно приписывают `@SpringBootTest`.",
                 "if_it_were_true": "Если бы `@WebMvcTest` поднимал `Testcontainers`-БД, он не был бы лёгким web-срезом за доли секунды.",
                 "how_it_should_be": "`@WebMvcTest` — без БД, с моками сервисов; `@SpringBootTest` — с реальными бинами и при желании реальной `Testcontainers`-БД."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@SpringBootTest` + `MockMvc` быстрее, чем `@WebMvcTest`, потому что не поднимает web-слой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@SpringBootTest` медленнее (5–15 сек), так как поднимает весь контекст; `@WebMvcTest` быстрый (<1 сек), потому что грузит только web-слой.",
-                "source_of_confusion": "Оба используют `MockMvc` и пишутся похоже, из-за чего скорость путают.",
-                "if_it_were_true": "Если бы `@SpringBootTest` был быстрее, не было бы смысла в test slices, созданных ради ускорения за счёт меньшего контекста.",
-                "how_it_should_be": "`@WebMvcTest` быстрее из-за минимального среза; `@SpringBootTest` медленнее, зато даёт реальные сервисы и БД для сквозного теста."
               }
             }
           ]
@@ -371,30 +371,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`WebTestClient` работает только с реактивными `WebFlux`-приложениями и не применим к обычному `Spring MVC`.",
+              "text": "`WebTestClient` не поддерживает реактивные типы `Mono` и `Flux` — для них нужен отдельный `StepVerifier`.",
               "correct": false,
               "sections": {
-                "what_actually": "Начиная со Spring Boot 2.4+ `WebTestClient` поддерживает и реактивные, и блокирующие `Spring MVC`-приложения, в том числе с реальным сервером через `RANDOM_PORT`.",
-                "source_of_confusion": "`WebTestClient` пришёл из `Spring WebFlux`, поэтому его считают пригодным только для реактивного стека.",
-                "if_it_were_true": "Если бы он работал только с `WebFlux`, его нельзя было бы `@Autowired`-ить в `@SpringBootTest(RANDOM_PORT)` обычного MVC-приложения, а это штатный сценарий.",
-                "how_it_should_be": "`WebTestClient` универсален: тестирует HTTP-эндпоинты и MVC, и WebFlux; реактивность зависит от приложения, а не от клиента."
+                "what_actually": "`WebTestClient` как раз умеет работать с реактивными типами и streaming — это одно из его ключевых преимуществ перед `TestRestTemplate`.",
+                "source_of_confusion": "`StepVerifier` действительно используют для проверки `Mono`/`Flux` в чистом reactor-коде, и это смешивают с тестированием HTTP-эндпоинтов.",
+                "if_it_were_true": "Если бы `WebTestClient` не поддерживал реактивные типы, его не позиционировали бы как инструмент для тестирования `WebFlux`-эндпоинтов.",
+                "how_it_should_be": "`WebTestClient` поддерживает реактивные ответы напрямую; `StepVerifier` — для unit-проверки reactive-потоков, а не HTTP-эндпоинтов."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`WebTestClient` работает in-process через `MockMvc` и не открывает реального сетевого соединения — как обычный slice-тест контроллера.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`WebTestClient` умеет и in-process (bind-to-controller), и реальный HTTP — в `@SpringBootTest(webEnvironment = RANDOM_PORT)` он шлёт настоящие запросы на поднятый сервер.",
-                "source_of_confusion": "`WebTestClient` и `MockMvc` оба тестируют контроллеры, из-за чего их режимы смешивают.",
-                "if_it_were_true": "Если бы `WebTestClient` всегда был in-process, не было бы смысла комбинировать его с `RANDOM_PORT` и `Testcontainers` для сквозного теста.",
-                "how_it_should_be": "`WebTestClient` поддерживает оба режима; для сквозного интеграционного теста его используют с реальным сервером на случайном порту."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`WebTestClient` — клиент из `Spring WebFlux` для тестирования HTTP-эндпоинтов, работающий и с реактивными, и с блокирующими `Spring MVC`-приложениями (с Spring Boot 2.4+). В `@SpringBootTest(webEnvironment = RANDOM_PORT)` он `@Autowired`-ится и шлёт реальные запросы fluent-API: `webTestClient.post().uri(...).bodyValue(...).exchange().expectStatus().isCreated()`.",
               "correct": true,
               "sections": {
@@ -406,15 +394,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`WebTestClient` не поддерживает реактивные типы `Mono` и `Flux` — для них нужен отдельный `StepVerifier`.",
+              "order": 2,
+              "label": "C",
+              "text": "`WebTestClient` работает in-process через `MockMvc` и не открывает реального сетевого соединения — как обычный slice-тест контроллера.",
               "correct": false,
               "sections": {
-                "what_actually": "`WebTestClient` как раз умеет работать с реактивными типами и streaming — это одно из его ключевых преимуществ перед `TestRestTemplate`.",
-                "source_of_confusion": "`StepVerifier` действительно используют для проверки `Mono`/`Flux` в чистом reactor-коде, и это смешивают с тестированием HTTP-эндпоинтов.",
-                "if_it_were_true": "Если бы `WebTestClient` не поддерживал реактивные типы, его не позиционировали бы как инструмент для тестирования `WebFlux`-эндпоинтов.",
-                "how_it_should_be": "`WebTestClient` поддерживает реактивные ответы напрямую; `StepVerifier` — для unit-проверки reactive-потоков, а не HTTP-эндпоинтов."
+                "what_actually": "`WebTestClient` умеет и in-process (bind-to-controller), и реальный HTTP — в `@SpringBootTest(webEnvironment = RANDOM_PORT)` он шлёт настоящие запросы на поднятый сервер.",
+                "source_of_confusion": "`WebTestClient` и `MockMvc` оба тестируют контроллеры, из-за чего их режимы смешивают.",
+                "if_it_were_true": "Если бы `WebTestClient` всегда был in-process, не было бы смысла комбинировать его с `RANDOM_PORT` и `Testcontainers` для сквозного теста.",
+                "how_it_should_be": "`WebTestClient` поддерживает оба режима; для сквозного интеграционного теста его используют с реальным сервером на случайном порту."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`WebTestClient` работает только с реактивными `WebFlux`-приложениями и не применим к обычному `Spring MVC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Начиная со Spring Boot 2.4+ `WebTestClient` поддерживает и реактивные, и блокирующие `Spring MVC`-приложения, в том числе с реальным сервером через `RANDOM_PORT`.",
+                "source_of_confusion": "`WebTestClient` пришёл из `Spring WebFlux`, поэтому его считают пригодным только для реактивного стека.",
+                "if_it_were_true": "Если бы он работал только с `WebFlux`, его нельзя было бы `@Autowired`-ить в `@SpringBootTest(RANDOM_PORT)` обычного MVC-приложения, а это штатный сценарий.",
+                "how_it_should_be": "`WebTestClient` универсален: тестирует HTTP-эндпоинты и MVC, и WebFlux; реактивность зависит от приложения, а не от клиента."
               }
             }
           ]
@@ -443,18 +443,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`TestRestTemplate` бросает исключение при ответах 4xx/5xx, как обычный `RestTemplate`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`TestRestTemplate` НЕ бросает исключения на 4xx/5xx — возвращает `ResponseEntity` со статусом, что удобно для проверки ошибочных сценариев.",
-                "source_of_confusion": "Обычный `RestTemplate` действительно кидает `HttpClientErrorException`/`HttpServerErrorException`, и это поведение ошибочно переносят на тестовый вариант.",
-                "if_it_were_true": "Если бы `TestRestTemplate` бросал исключения, нельзя было бы просто `assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode())` без try/catch.",
-                "how_it_should_be": "`TestRestTemplate` специально не выбрасывает ошибок на 4xx/5xx, чтобы тест мог напрямую проверить статус и тело ошибки."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`TestRestTemplate` не поддерживает аутентификацию и не умеет отправлять `Basic Auth`.",
               "correct": false,
               "sections": {
@@ -462,6 +450,18 @@
                 "source_of_confusion": "Кажется, что тестовая обёртка урезана по функциональности, поэтому её считают неспособной к auth.",
                 "if_it_were_true": "Если бы `withBasicAuth` не существовало, нельзя было бы протестировать защищённые эндпоинты через реальный HTTP без ручной сборки заголовков.",
                 "how_it_should_be": "`TestRestTemplate` умеет `Basic Auth` через `withBasicAuth(...)` и работу с заголовками, как полноценный HTTP-клиент."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`TestRestTemplate` бросает исключение при ответах 4xx/5xx, как обычный `RestTemplate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TestRestTemplate` НЕ бросает исключения на 4xx/5xx — возвращает `ResponseEntity` со статусом, что удобно для проверки ошибочных сценариев.",
+                "source_of_confusion": "Обычный `RestTemplate` действительно кидает `HttpClientErrorException`/`HttpServerErrorException`, и это поведение ошибочно переносят на тестовый вариант.",
+                "if_it_were_true": "Если бы `TestRestTemplate` бросал исключения, нельзя было бы просто `assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode())` без try/catch.",
+                "how_it_should_be": "`TestRestTemplate` специально не выбрасывает ошибок на 4xx/5xx, чтобы тест мог напрямую проверить статус и тело ошибки."
               }
             },
             {
@@ -491,19 +491,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Testcontainers` — Java-библиотека, запускающая `Docker`-контейнеры прямо в `JUnit`-тестах, что позволяет тестировать с реальными базами, очередями и сервисами (`PostgreSQL`, `Redis`, `Kafka`) вместо in-memory заменителей. Преимущество перед `H2`: идентичная production SQL-совместимость, поддержка специфичных фич (`JSONB`, `ARRAY`) и ловля реальных багов — ценой старта контейнера 2–5 сек и необходимости `Docker`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Библиотека управляет жизненным циклом контейнера (старт, остановка, маппинг портов), а тест подключается к нему через `@DynamicPropertySource` или `@ServiceConnection`.",
-                "example": "`@Container static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(\"postgres:16-alpine\")` + `findByAttributesContaining(\"cpu\", \"Intel\")` проверяет реальный `JSONB`-запрос, который `H2` не воспроизвёл бы.",
-                "when_to_apply": "Применяют, когда нужна точность production-БД: специфичный SQL, `JSONB`/`ARRAY`, оконные функции, или когда `H2` рискует пропустить баг из-за отличий в диалекте.",
-                "edge_cases": "Старт контейнера занимает секунды, поэтому без переиспользования (singleton, `withReuse`) набор тестов сильно замедляется; в `CI` нужен доступный `Docker`-демон.",
-                "related": "[[integration-testing-interview#Q10]] подключение через `@DynamicPropertySource`; [[integration-testing-interview#Q11]] `@ServiceConnection`; [[integration-testing-interview#Q12]] переиспользование контейнеров."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Testcontainers` — это in-memory эмулятор баз данных, написанный на чистой Java, который не требует `Docker`.",
               "correct": false,
               "sections": {
@@ -514,8 +501,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Testcontainers` подходит только для `PostgreSQL` и не умеет запускать другие сервисы.",
               "correct": false,
               "sections": {
@@ -523,6 +510,19 @@
                 "source_of_confusion": "В примерах чаще всего фигурирует `PostgreSQLContainer`, поэтому остальные контейнеры остаются незамеченными.",
                 "if_it_were_true": "Если бы он умел только `PostgreSQL`, нельзя было бы поднять `Redis` через `GenericContainer` или `Kafka` через `KafkaContainer` в одном тесте.",
                 "how_it_should_be": "`Testcontainers` универсален: есть специализированные контейнеры и `GenericContainer` для любого `Docker`-образа."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Testcontainers` — Java-библиотека, запускающая `Docker`-контейнеры прямо в `JUnit`-тестах, что позволяет тестировать с реальными базами, очередями и сервисами (`PostgreSQL`, `Redis`, `Kafka`) вместо in-memory заменителей. Преимущество перед `H2`: идентичная production SQL-совместимость, поддержка специфичных фич (`JSONB`, `ARRAY`) и ловля реальных багов — ценой старта контейнера 2–5 сек и необходимости `Docker`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Библиотека управляет жизненным циклом контейнера (старт, остановка, маппинг портов), а тест подключается к нему через `@DynamicPropertySource` или `@ServiceConnection`.",
+                "example": "`@Container static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(\"postgres:16-alpine\")` + `findByAttributesContaining(\"cpu\", \"Intel\")` проверяет реальный `JSONB`-запрос, который `H2` не воспроизвёл бы.",
+                "when_to_apply": "Применяют, когда нужна точность production-БД: специфичный SQL, `JSONB`/`ARRAY`, оконные функции, или когда `H2` рискует пропустить баг из-за отличий в диалекте.",
+                "edge_cases": "Старт контейнера занимает секунды, поэтому без переиспользования (singleton, `withReuse`) набор тестов сильно замедляется; в `CI` нужен доступный `Docker`-демон.",
+                "related": "[[integration-testing-interview#Q10]] подключение через `@DynamicPropertySource`; [[integration-testing-interview#Q11]] `@ServiceConnection`; [[integration-testing-interview#Q12]] переиспользование контейнеров."
               }
             },
             {
@@ -563,6 +563,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`@DynamicPropertySource` работает только с `PostgreSQL` и не годится для `Redis` или других сервисов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@DynamicPropertySource` универсален: в одном методе регистрируют свойства любых контейнеров — `PostgreSQL`, `Redis`, `Kafka` через их method references.",
+                "source_of_confusion": "Примеры чаще показывают datasource-свойства, поэтому механизм считают БД-специфичным.",
+                "if_it_were_true": "Если бы он работал только с `PostgreSQL`, нельзя было бы прописать `spring.data.redis.host`/`port` для `GenericContainer` с `Redis`.",
+                "how_it_should_be": "`@DynamicPropertySource` подходит для любых свойств любых контейнеров; ограничений по типу сервиса у него нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`@DynamicPropertySource` позволяет задать `Spring`-свойства динамически ПОСЛЕ старта контейнера, когда порт и хост ещё не были известны заранее. Метод должен быть `static` и принимать `DynamicPropertyRegistry`; в нём регистрируют свойства через method reference: `registry.add(\"spring.datasource.url\", postgres::getJdbcUrl)`.",
               "correct": true,
               "sections": {
@@ -574,8 +586,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Метод с `@DynamicPropertySource` может быть нестатическим (instance-методом), так как Spring создаёт экземпляр теста заранее.",
               "correct": false,
               "sections": {
@@ -583,18 +595,6 @@
                 "source_of_confusion": "Большинство тестовых методов нестатические, из-за чего ожидают того же от `@DynamicPropertySource`.",
                 "if_it_were_true": "Если бы метод был instance-уровня, он вызывался бы слишком поздно — после создания контекста, когда свойства уже не повлияют на `DataSource`.",
                 "how_it_should_be": "`@DynamicPropertySource`-метод всегда `static` и принимает `DynamicPropertyRegistry`, чтобы успеть задать свойства до старта контекста."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@DynamicPropertySource` работает только с `PostgreSQL` и не годится для `Redis` или других сервисов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@DynamicPropertySource` универсален: в одном методе регистрируют свойства любых контейнеров — `PostgreSQL`, `Redis`, `Kafka` через их method references.",
-                "source_of_confusion": "Примеры чаще показывают datasource-свойства, поэтому механизм считают БД-специфичным.",
-                "if_it_were_true": "Если бы он работал только с `PostgreSQL`, нельзя было бы прописать `spring.data.redis.host`/`port` для `GenericContainer` с `Redis`.",
-                "how_it_should_be": "`@DynamicPropertySource` подходит для любых свойств любых контейнеров; ограничений по типу сервиса у него нет."
               }
             }
           ]
@@ -611,18 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@ServiceConnection` — это аннотация для проверки доступности внешнего сервиса перед запуском теста (health check).",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@ServiceConnection` автоматически конфигурирует свойства подключения к контейнеру `Testcontainers` без ручного `@DynamicPropertySource`; это не health check.",
-                "source_of_confusion": "Слово «connection» наводит на мысль о проверке соединения, отсюда путаница с health-проверкой.",
-                "if_it_were_true": "Если бы это был health check, аннотация не заменяла бы блок `registry.add(...)` и не настраивала бы `DataSource` сама.",
-                "how_it_should_be": "`@ServiceConnection` (Spring Boot 3.1+) через `ConnectionDetails` SPI сам прописывает url/credentials контейнера в контекст."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`@ServiceConnection` — давняя аннотация Spring Boot, которая с ранних версий служит стандартным способом подключить тест к БД.",
               "correct": false,
               "sections": {
@@ -633,8 +621,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`@ServiceConnection` (Spring Boot 3.1+) АВТОМАТИЧЕСКИ конфигурирует свойства подключения к контейнеру без ручного `@DynamicPropertySource`. Достаточно поставить её на `@Container`-поле: `@Container @ServiceConnection static PostgreSQLContainer<?> postgres = ...` — Spring Boot сам настроит `DataSource` через `ConnectionDetails` SPI.",
               "correct": true,
               "sections": {
@@ -646,8 +634,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`@ServiceConnection` поддерживает только `PostgreSQL`, для остальных сервисов всё равно нужен ручной `@DynamicPropertySource`.",
               "correct": false,
               "sections": {
@@ -655,6 +643,18 @@
                 "source_of_confusion": "`PostgreSQL` — самый частый пример, поэтому поддержку остальных не замечают.",
                 "if_it_were_true": "Если бы поддерживался только `PostgreSQL`, аннотацию нельзя было бы поставить на `KafkaContainer` или `GenericContainer` с `Redis`, а это рабочие сценарии.",
                 "how_it_should_be": "`@ServiceConnection` охватывает широкий список сервисов; ручной `@DynamicPropertySource` нужен лишь для неподдерживаемых случаев."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@ServiceConnection` — это аннотация для проверки доступности внешнего сервиса перед запуском теста (health check).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@ServiceConnection` автоматически конфигурирует свойства подключения к контейнеру `Testcontainers` без ручного `@DynamicPropertySource`; это не health check.",
+                "source_of_confusion": "Слово «connection» наводит на мысль о проверке соединения, отсюда путаница с health-проверкой.",
+                "if_it_were_true": "Если бы это был health check, аннотация не заменяла бы блок `registry.add(...)` и не настраивала бы `DataSource` сама.",
+                "how_it_should_be": "`@ServiceConnection` (Spring Boot 3.1+) через `ConnectionDetails` SPI сам прописывает url/credentials контейнера в контекст."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "По умолчанию `Testcontainers` уже переиспользует один контейнер на все тестовые классы, ничего настраивать не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию каждый класс с `@Container` запускает НОВЫЙ контейнер — это медленно; переиспользование настраивают явно (singleton-базовый класс или `withReuse`).",
-                "source_of_confusion": "Spring кеширует `ApplicationContext`, и это поведение ошибочно переносят на контейнеры.",
-                "if_it_were_true": "Если бы контейнер переиспользовался по умолчанию, не было бы рекомендаций про singleton-паттерн и `withReuse(true)`.",
-                "how_it_should_be": "Чтобы один контейнер обслуживал много классов, нужен явный singleton (статический старт в базовом классе) либо `withReuse(true)`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Достаточно объявить контейнер с модификатором `static` в каждом классе — и Spring сам сделает его общим для всех.",
               "correct": false,
               "sections": {
@@ -693,8 +681,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`withReuse(true)` рекомендуется для `CI`, потому что ускоряет каждый прогон pipeline.",
               "correct": false,
               "sections": {
@@ -705,8 +693,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Два основных способа: (1) singleton-паттерн — абстрактный базовый класс со `static`-полем и ручным `POSTGRES.start()` в `static`-блоке, который запускает контейнер ОДИН раз на все наследующие тесты; (2) reusable containers — `withReuse(true)` (Testcontainers 1.19+, плюс `testcontainers.reuse.enable=true`), когда контейнер НЕ удаляется после тестов и переиспользуется при следующем запуске.",
               "correct": true,
               "sections": {
@@ -715,6 +703,18 @@
                 "when_to_apply": "Singleton-базовый класс берут для общего контейнера на весь прогон, а `withReuse` — для быстрой локальной итерации без перезапуска контейнера.",
                 "edge_cases": "`withReuse(true)` не рекомендуется для `CI` (риск грязного состояния между запусками), поэтому там предпочитают singleton с чистой инициализацией данных.",
                 "related": "[[integration-testing-interview#Q9]] зачем нужен `Testcontainers`; [[integration-testing-interview#Q29]] ускорение тестов singleton-контейнерами; [[integration-testing-interview#Q11]] `@ServiceConnection` на статическом контейнере."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "По умолчанию `Testcontainers` уже переиспользует один контейнер на все тестовые классы, ничего настраивать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию каждый класс с `@Container` запускает НОВЫЙ контейнер — это медленно; переиспользование настраивают явно (singleton-базовый класс или `withReuse`).",
+                "source_of_confusion": "Spring кеширует `ApplicationContext`, и это поведение ошибочно переносят на контейнеры.",
+                "if_it_were_true": "Если бы контейнер переиспользовался по умолчанию, не было бы рекомендаций про singleton-паттерн и `withReuse(true)`.",
+                "how_it_should_be": "Чтобы один контейнер обслуживал много классов, нужен явный singleton (статический старт в базовом классе) либо `withReuse(true)`."
               }
             }
           ]
@@ -731,6 +731,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "В одном тестовом классе можно объявить только один `@Container`, поэтому несколько сервисов тестируют только по отдельности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В классе допускается сколько угодно `@Container`-полей — `PostgreSQL`, `Kafka`, `Redis` могут стартовать вместе в одном тесте.",
+                "source_of_confusion": "Каждый контейнер пишут отдельным полем, из-за чего кажется, что их должно быть по одному на класс.",
+                "if_it_were_true": "Если бы допускался только один контейнер, нельзя было бы протестировать сценарий «заказ в БД + событие в Kafka + кеш в Redis» одним тестом.",
+                "how_it_should_be": "Полей `@Container` может быть несколько; ограничения на количество контейнеров в классе нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При нескольких контейнерах нужно вручную задавать им сетевые алиасы, иначе они не запустятся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отдельные контейнеры для подключения из теста не требуют общей `Docker`-сети и алиасов — каждый доступен по своему mapped-порту через method reference.",
+                "source_of_confusion": "Сетевые алиасы реально нужны, когда контейнеры общаются ДРУГ С ДРУГОМ внутри одной `Docker`-сети, и это переносят на обычный случай.",
+                "if_it_were_true": "Если бы алиасы были обязательны всегда, простой тест с `PostgreSQL` + `Redis` не запускался бы без ручной настройки `Network`.",
+                "how_it_should_be": "Для подключения теста к контейнерам хватает mapped-портов; общая сеть и алиасы нужны лишь для меж-контейнерного взаимодействия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Объявляют несколько `@Container`-полей в одном классе и подключают их по-разному: для поддерживаемых сервисов — `@ServiceConnection` (`PostgreSQLContainer`, `KafkaContainer`), для остальных — `@DynamicPropertySource` (например `GenericContainer` с `Redis`). В одном `@SpringBootTest` так совмещают `PostgreSQL` для хранения, `Kafka` для событий и `Redis` для кеша.",
               "correct": true,
               "sections": {
@@ -742,20 +766,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "В одном тестовом классе можно объявить только один `@Container`, поэтому несколько сервисов тестируют только по отдельности.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В классе допускается сколько угодно `@Container`-полей — `PostgreSQL`, `Kafka`, `Redis` могут стартовать вместе в одном тесте.",
-                "source_of_confusion": "Каждый контейнер пишут отдельным полем, из-за чего кажется, что их должно быть по одному на класс.",
-                "if_it_were_true": "Если бы допускался только один контейнер, нельзя было бы протестировать сценарий «заказ в БД + событие в Kafka + кеш в Redis» одним тестом.",
-                "how_it_should_be": "Полей `@Container` может быть несколько; ограничения на количество контейнеров в классе нет."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Все контейнеры в классе обязаны подключаться одним и тем же способом — либо все через `@ServiceConnection`, либо все через `@DynamicPropertySource`.",
               "correct": false,
               "sections": {
@@ -763,18 +775,6 @@
                 "source_of_confusion": "Единообразие выглядит аккуратнее, поэтому считают, что смешивать нельзя.",
                 "if_it_were_true": "Если бы смешивание было запрещено, неподдерживаемый `@ServiceConnection`-ом `GenericContainer` нельзя было бы использовать рядом с `@ServiceConnection`-контейнером.",
                 "how_it_should_be": "Подходы свободно сочетаются; выбирают `@ServiceConnection` там, где он работает, и `@DynamicPropertySource` для прочих контейнеров."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "При нескольких контейнерах нужно вручную задавать им сетевые алиасы, иначе они не запустятся.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Отдельные контейнеры для подключения из теста не требуют общей `Docker`-сети и алиасов — каждый доступен по своему mapped-порту через method reference.",
-                "source_of_confusion": "Сетевые алиасы реально нужны, когда контейнеры общаются ДРУГ С ДРУГОМ внутри одной `Docker`-сети, и это переносят на обычный случай.",
-                "if_it_were_true": "Если бы алиасы были обязательны всегда, простой тест с `PostgreSQL` + `Redis` не запускался бы без ручной настройки `Network`.",
-                "how_it_should_be": "Для подключения теста к контейнерам хватает mapped-портов; общая сеть и алиасы нужны лишь для меж-контейнерного взаимодействия."
               }
             }
           ]
@@ -791,18 +791,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для тестов с БД берут `H2` in-memory в режиме `MODE=PostgreSQL` — этого достаточно, чтобы воспроизвести поведение реальной `PostgreSQL` без `Docker`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`H2` — это НЕ реальная production-БД: она отличается поведением SQL, не поддерживает `JSONB`/`ARRAY` и может пропустить баг; реальную БД даёт `Testcontainers`.",
-                "source_of_confusion": "`H2` удобна и быстра, из-за чего её ошибочно считают полноценной заменой `PostgreSQL`.",
-                "if_it_were_true": "Если бы `H2` была эквивалентна `PostgreSQL`, не было бы рекомендации использовать `Testcontainers` для БД-специфичных фич.",
-                "how_it_should_be": "Реальную БД обеспечивает `Testcontainers`; `H2` берут лишь для быстрых тестов с простым, неспецифичным SQL."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Подход выбирают по задаче: `H2` in-memory — для быстрых тестов с простым SQL без БД-специфики; `Testcontainers` — для интеграционных тестов с БД-специфичными фичами; `@DataJpaTest` + `H2` — unit-тест репозитория; `@DataJpaTest` + `Testcontainers` — интеграционный тест репозитория; `@SpringBootTest` + `Testcontainers` — полный сквозной тест.",
               "correct": true,
               "sections": {
@@ -814,8 +802,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`@DataJpaTest` по умолчанию использует реальную БД из конфигурации приложения, а не `H2`.",
               "correct": false,
               "sections": {
@@ -826,8 +814,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`@SpringBootTest` не рассчитан на реальную БД в сквозном тесте: `Testcontainers` подключают только к срезу `@DataJpaTest`, а не к полному контексту.",
               "correct": false,
               "sections": {
@@ -835,6 +823,18 @@
                 "source_of_confusion": "`@DataJpaTest` ограничивает срез, и это ограничение ошибочно приписывают `@SpringBootTest`.",
                 "if_it_were_true": "Если бы `@SpringBootTest` не работал с `Testcontainers`, нельзя было бы протестировать всю цепочку Controller→Service→Repository на production-БД.",
                 "how_it_should_be": "`@SpringBootTest` прекрасно сочетается с `Testcontainers` и используется именно для сквозных интеграционных тестов с реальной БД."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для тестов с БД берут `H2` in-memory в режиме `MODE=PostgreSQL` — этого достаточно, чтобы воспроизвести поведение реальной `PostgreSQL` без `Docker`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`H2` — это НЕ реальная production-БД: она отличается поведением SQL, не поддерживает `JSONB`/`ARRAY` и может пропустить баг; реальную БД даёт `Testcontainers`.",
+                "source_of_confusion": "`H2` удобна и быстра, из-за чего её ошибочно считают полноценной заменой `PostgreSQL`.",
+                "if_it_were_true": "Если бы `H2` была эквивалентна `PostgreSQL`, не было бы рекомендации использовать `Testcontainers` для БД-специфичных фич.",
+                "how_it_should_be": "Реальную БД обеспечивает `Testcontainers`; `H2` берут лишь для быстрых тестов с простым, неспецифичным SQL."
               }
             }
           ]
@@ -851,18 +851,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Чтобы проверить rollback, нужно пометить тестовый метод `@Transactional` — тогда Spring сам откатит и это и будет тестом отката бизнес-логики.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Transactional` на тесте откатывает ВСЁ после теста ради изоляции, но это НЕ проверяет rollback самой бизнес-логики; для проверки отката сервиса тест должен быть без `@Transactional`.",
-                "source_of_confusion": "И транзакция теста, и транзакция сервиса делают rollback, из-за чего их роли смешивают.",
-                "if_it_were_true": "Если бы `@Transactional` на тесте проверял откат логики, нельзя было бы отличить откат сервиса от автоотката теста.",
-                "how_it_should_be": "Откат бизнес-логики проверяют тестом без `@Transactional`, ассертя что данные НЕ сохранились (`countByUserId == 0`) после исключения сервиса."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Транзакции — внутренняя деталь `Spring`, поэтому наблюдать в тесте сам откат или коммит не получится; проверить можно только итоговый ответ метода.",
               "correct": false,
               "sections": {
@@ -873,8 +861,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Транзакции проверяют через наблюдаемый результат в БД: для rollback вызывают `@Transactional`-метод сервиса так, чтобы он бросил исключение (`assertThrows(PaymentException.class, ...)`), и ассертят, что данные НЕ сохранились (`orderRepository.countByUserId(...) == 0`); для commit — что данные сохранены (`findById(...).isPresent()`). Важно: если сам тестовый метод помечен `@Transactional`, Spring откатывает его после теста — это удобно для изоляции, но СКРЫВАЕТ баги.",
               "correct": true,
               "sections": {
@@ -886,8 +874,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Для теста транзакций обязательно мокировать `PlatformTransactionManager`, иначе откат не сработает.",
               "correct": false,
               "sections": {
@@ -895,6 +883,18 @@
                 "source_of_confusion": "Раз транзакции управляются менеджером, кажется логичным его подменить, но это убивает смысл интеграционного теста.",
                 "if_it_were_true": "Если бы менеджер мокировали, реальный rollback не происходил бы, и тест ничего бы не проверял.",
                 "how_it_should_be": "Транзакции тестируют на реальном `PlatformTransactionManager` и реальной БД, наблюдая фактический commit/rollback по данным."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы проверить rollback, нужно пометить тестовый метод `@Transactional` — тогда Spring сам откатит и это и будет тестом отката бизнес-логики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Transactional` на тесте откатывает ВСЁ после теста ради изоляции, но это НЕ проверяет rollback самой бизнес-логики; для проверки отката сервиса тест должен быть без `@Transactional`.",
+                "source_of_confusion": "И транзакция теста, и транзакция сервиса делают rollback, из-за чего их роли смешивают.",
+                "if_it_were_true": "Если бы `@Transactional` на тесте проверял откат логики, нельзя было бы отличить откат сервиса от автоотката теста.",
+                "how_it_should_be": "Откат бизнес-логики проверяют тестом без `@Transactional`, ассертя что данные НЕ сохранились (`countByUserId == 0`) после исключения сервиса."
               }
             }
           ]
@@ -911,18 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Sql(scripts=\"/test-data/users.sql\")` грузит данные перед тестовым методом, но параметр `executionPhase` управляет лишь порядком внутри фазы `BEFORE_TEST_METHOD`; удалить данные после теста самим `@Sql` нельзя — для очистки вешают ручной `@AfterEach`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Sql` умеет оба этапа через `executionPhase`: `BEFORE_TEST_METHOD` для загрузки и `AFTER_TEST_METHOD` для очистки.",
-                "source_of_confusion": "Чаще показывают загрузку данных перед тестом, из-за чего about-after сценарий не замечают.",
-                "if_it_were_true": "Если бы `@Sql` не умел AFTER, нельзя было бы декларативно подключить `cleanup.sql` после метода.",
-                "how_it_should_be": "`@Sql(scripts=\"/test-data/cleanup.sql\", executionPhase=AFTER_TEST_METHOD)` выполняет очистку после теста — это штатная возможность."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Тестовые данные кладут прямо в версионные миграции `Flyway` рядом со схемой (`V2__seed_users.sql`), тогда они применяются автоматически в каждом окружении, а `@Sql` оставляют только для разовой очистки после теста.",
               "correct": false,
               "sections": {
@@ -930,6 +918,19 @@
                 "source_of_confusion": "И миграции, и тестовые данные — это SQL, поэтому возникает соблазн положить их вместе.",
                 "if_it_were_true": "Если бы тестовые данные жили в production-миграциях, прод-БД наполнилась бы фейковыми пользователями и заказами.",
                 "how_it_should_be": "Схему держат во `Flyway`-миграциях, а тестовые данные — отдельно (`@Sql` или `classpath:db/testdata`), не смешивая их с продом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Sql` — декларативная загрузка SQL-данных: `@Sql(scripts=\"/test-data/users.sql\", executionPhase=BEFORE_TEST_METHOD)` грузит данные перед тестом, а `executionPhase=AFTER_TEST_METHOD` с `cleanup.sql` очищает после. `Flyway` в тестах применяет миграции автоматически при старте (например указав `spring.flyway.locations=classpath:db/migration,classpath:db/testdata`). Рекомендация: `Flyway` — для схемы, `@Sql` — для тестовых данных; не мешать тестовые данные в production-миграции.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Sql` декларативно привязывает SQL к фазам теста, а `Flyway` отвечает за версионированную схему; разделение ролей держит прод чистым.",
+                "example": "`@Sql` с `users.sql`/`cleanup.sql` управляет данными отдельного теста, а `@TestPropertySource` с дополнительной `db/testdata` locations добавляет тестовый seed через `Flyway`.",
+                "when_to_apply": "`@Sql` применяют для точечных данных конкретного теста, а `Flyway` — для общей схемы и стабильного начального состояния БД.",
+                "edge_cases": "Главный риск — положить тестовые данные в production-миграции: они уедут в прод; поэтому тестовый seed держат в отдельной locations-папке или в `@Sql`.",
+                "related": "[[integration-testing-interview#Q14]] реальная БД и `Testcontainers`; [[integration-testing-interview#Q15]] транзакции в тестах; [[integration-testing-interview#Q35]] best practices изоляции данных."
               }
             },
             {
@@ -947,14 +948,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@Sql` — декларативная загрузка SQL-данных: `@Sql(scripts=\"/test-data/users.sql\", executionPhase=BEFORE_TEST_METHOD)` грузит данные перед тестом, а `executionPhase=AFTER_TEST_METHOD` с `cleanup.sql` очищает после. `Flyway` в тестах применяет миграции автоматически при старте (например указав `spring.flyway.locations=classpath:db/migration,classpath:db/testdata`). Рекомендация: `Flyway` — для схемы, `@Sql` — для тестовых данных; не мешать тестовые данные в production-миграции.",
-              "correct": true,
+              "text": "`@Sql(scripts=\"/test-data/users.sql\")` грузит данные перед тестовым методом, но параметр `executionPhase` управляет лишь порядком внутри фазы `BEFORE_TEST_METHOD`; удалить данные после теста самим `@Sql` нельзя — для очистки вешают ручной `@AfterEach`.",
+              "correct": false,
               "sections": {
-                "explanation": "`@Sql` декларативно привязывает SQL к фазам теста, а `Flyway` отвечает за версионированную схему; разделение ролей держит прод чистым.",
-                "example": "`@Sql` с `users.sql`/`cleanup.sql` управляет данными отдельного теста, а `@TestPropertySource` с дополнительной `db/testdata` locations добавляет тестовый seed через `Flyway`.",
-                "when_to_apply": "`@Sql` применяют для точечных данных конкретного теста, а `Flyway` — для общей схемы и стабильного начального состояния БД.",
-                "edge_cases": "Главный риск — положить тестовые данные в production-миграции: они уедут в прод; поэтому тестовый seed держат в отдельной locations-папке или в `@Sql`.",
-                "related": "[[integration-testing-interview#Q14]] реальная БД и `Testcontainers`; [[integration-testing-interview#Q15]] транзакции в тестах; [[integration-testing-interview#Q35]] best practices изоляции данных."
+                "what_actually": "`@Sql` умеет оба этапа через `executionPhase`: `BEFORE_TEST_METHOD` для загрузки и `AFTER_TEST_METHOD` для очистки.",
+                "source_of_confusion": "Чаще показывают загрузку данных перед тестом, из-за чего about-after сценарий не замечают.",
+                "if_it_were_true": "Если бы `@Sql` не умел AFTER, нельзя было бы декларативно подключить `cleanup.sql` после метода.",
+                "how_it_should_be": "`@Sql(scripts=\"/test-data/cleanup.sql\", executionPhase=AFTER_TEST_METHOD)` выполняет очистку после теста — это штатная возможность."
               }
             }
           ]
@@ -971,14 +971,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Transactional` на тесте откатывает транзакцию после каждого теста (изоляция), но СКРЫВАЕТ реальное поведение: (1) `lazy loading` работает в тесте в одной транзакции, а в production падает `LazyInitializationException`; (2) данные могут не достичь БД без `flush`, и SQL-ошибки не проявятся до коммита; (3) границы `@Transactional(propagation = REQUIRES_NEW)` внутри сервиса не тестируются корректно. Рекомендация: не ставить `@Transactional` на тест, а чистить данные в `@AfterEach`.",
-              "correct": true,
+              "text": "Главный минус `@Transactional` на тесте — он немного замедляет прогон из-за отката после каждого метода; на корректность результатов это не влияет.",
+              "correct": false,
               "sections": {
-                "explanation": "Открытая транзакция теста маскирует баги, которые в проде проявляются на границах транзакций и при ленивой инициализации.",
-                "example": "Тест с `@Transactional`, дёргающий `user.getOrders()`, проходит (одна транзакция держит сессию открытой), но в production тот же код вне сессии бросает `LazyInitializationException`.",
-                "when_to_apply": "Если хочется детерминированной изоляции без `@Transactional`, чистят данные в `@AfterEach` (`deleteAll()`) или поднимают чистый `Testcontainers`-контейнер.",
-                "edge_cases": "Особенно коварен случай с `flush`: без него SQL-ограничения (`unique`, `not null`) не отрабатывают до коммита, и тест ложно зелёный, хотя в проде вставка упадёт.",
-                "related": "[[integration-testing-interview#Q15]] как тестировать транзакции правильно; [[integration-testing-interview#Q35]] best practices без `@Transactional`; [[integration-testing-interview#Q14]] чистый контейнер для изоляции."
+                "what_actually": "Главные риски — не скорость, а сокрытие багов: `LazyInitializationException`, отсутствие `flush`, неверная проверка `REQUIRES_NEW`.",
+                "source_of_confusion": "Про скорость тестов говорят часто, поэтому её принимают за основную проблему и здесь.",
+                "if_it_were_true": "Если бы дело было только в скорости, не предупреждали бы, что прод падает там, где тест зелёный.",
+                "how_it_should_be": "`@Transactional` на тесте опасен корректностью: он прячет реальные ошибки транзакционных границ и ленивой загрузки."
               }
             },
             {
@@ -996,18 +995,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Главный минус `@Transactional` на тесте — он немного замедляет прогон из-за отката после каждого метода; на корректность результатов это не влияет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Главные риски — не скорость, а сокрытие багов: `LazyInitializationException`, отсутствие `flush`, неверная проверка `REQUIRES_NEW`.",
-                "source_of_confusion": "Про скорость тестов говорят часто, поэтому её принимают за основную проблему и здесь.",
-                "if_it_were_true": "Если бы дело было только в скорости, не предупреждали бы, что прод падает там, где тест зелёный.",
-                "how_it_should_be": "`@Transactional` на тесте опасен корректностью: он прячет реальные ошибки транзакционных границ и ленивой загрузки."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`@Transactional` на тесте делает `commit` после каждого теста, поэтому данные накапливаются и ломают следующие тесты.",
               "correct": false,
               "sections": {
@@ -1015,6 +1002,19 @@
                 "source_of_confusion": "Звучит логично, что транзакция завершается коммитом, но в тестовом контексте Spring специально откатывает.",
                 "if_it_were_true": "Если бы был `commit`, не возникало бы проблемы сокрытия багов из-за отсутствия `flush` и отката — данные бы реально писались.",
                 "how_it_should_be": "Spring откатывает транзакцию теста по умолчанию; проблема не в накоплении данных, а в маскировке реального поведения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Transactional` на тесте откатывает транзакцию после каждого теста (изоляция), но СКРЫВАЕТ реальное поведение: (1) `lazy loading` работает в тесте в одной транзакции, а в production падает `LazyInitializationException`; (2) данные могут не достичь БД без `flush`, и SQL-ошибки не проявятся до коммита; (3) границы `@Transactional(propagation = REQUIRES_NEW)` внутри сервиса не тестируются корректно. Рекомендация: не ставить `@Transactional` на тест, а чистить данные в `@AfterEach`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Открытая транзакция теста маскирует баги, которые в проде проявляются на границах транзакций и при ленивой инициализации.",
+                "example": "Тест с `@Transactional`, дёргающий `user.getOrders()`, проходит (одна транзакция держит сессию открытой), но в production тот же код вне сессии бросает `LazyInitializationException`.",
+                "when_to_apply": "Если хочется детерминированной изоляции без `@Transactional`, чистят данные в `@AfterEach` (`deleteAll()`) или поднимают чистый `Testcontainers`-контейнер.",
+                "edge_cases": "Особенно коварен случай с `flush`: без него SQL-ограничения (`unique`, `not null`) не отрабатывают до коммита, и тест ложно зелёный, хотя в проде вставка упадёт.",
+                "related": "[[integration-testing-interview#Q15]] как тестировать транзакции правильно; [[integration-testing-interview#Q35]] best practices без `@Transactional`; [[integration-testing-interview#Q14]] чистый контейнер для изоляции."
               }
             }
           ]
@@ -1031,6 +1031,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`WireMock` запускается только как standalone-процесс в unit-тестах и несовместим с `@SpringBootTest`: поднятый Spring-контекст занимает порт и не даёт серверу-заглушке стартовать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WireMock` штатно используется в `@SpringBootTest` через `@AutoConfigureWireMock`, который интегрирует его в контекст и подставляет порт в свойства.",
+                "source_of_confusion": "`WireMock` можно поднять и вручную как отдельный сервер, и это создаёт впечатление несовместимости со Spring.",
+                "if_it_were_true": "Если бы он не работал с `@SpringBootTest`, нельзя было бы инжектить реальный `PaymentClient` и проверять его поведение против стаба.",
+                "how_it_should_be": "`WireMock` отлично живёт внутри `@SpringBootTest`; `@AutoConfigureWireMock` автоматически настраивает сервер и порт."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`WireMock` подменяет Java-бины HTTP-клиента внутри `ApplicationContext` через `@MockBean`, перехватывая вызовы на уровне метода, а не сети, поэтому реальные HTTP-запросы наружу не уходят и порт заглушке не нужен.",
               "correct": false,
               "sections": {
@@ -1038,19 +1050,6 @@
                 "source_of_confusion": "И `@MockBean`, и `WireMock` называют «моками», из-за чего их уровень действия путают.",
                 "if_it_were_true": "Если бы `WireMock` подменял бины, не нужно было бы задавать `payment.service.url=http://localhost:${wiremock.server.port}` и проверять реальные запросы через `verify(postRequestedFor(...))`.",
                 "how_it_should_be": "`WireMock` — это HTTP-уровень: он отвечает на реальные запросы клиента стабами; подмена Java-бина — это `@MockBean`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`WireMock` — инструмент для мокирования HTTP API: он поднимает реальный HTTP-сервер-заглушку, на который клиент ходит по сети. Spring Cloud Contract даёт `@AutoConfigureWireMock(port = 0)` для автонастройки на случайном порту; URL клиента указывают через `payment.service.url=http://localhost:${wiremock.server.port}`. Стабы задают через `stubFor(post(urlEqualTo(...)).willReturn(aResponse().withStatus(200).withBody(...)))`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Поскольку сервер настоящий, тестируется весь HTTP-стек клиента: сериализация запроса, парсинг ответа, заголовки, коды — без зависимости от реального внешнего сервиса.",
-                "example": "`stubFor(post(urlEqualTo(\"/api/charge\")).withRequestBody(matchingJsonPath(\"$.amount\", equalTo(\"100.00\"))).willReturn(...))` плюс `verify(postRequestedFor(urlEqualTo(\"/api/charge\")))` проверяет и ответ, и сам факт вызова.",
-                "when_to_apply": "Применяют, когда нужно протестировать HTTP-клиент к внешнему сервису, не поднимая сам сервис: платёжный шлюз, сторонний API, партнёрскую интеграцию.",
-                "edge_cases": "Стаб живёт на реальном порту, поэтому при параллельных тестах используют `port = 0` (случайный порт), иначе порт может быть занят и тесты станут flaky.",
-                "related": "[[integration-testing-interview#Q20]] `WireMock` для ошибок и задержек; [[integration-testing-interview#Q23]] стабы из `Spring Cloud Contract`; [[integration-testing-interview#Q40]] `@RestClientTest` как лёгкая альтернатива."
               }
             },
             {
@@ -1068,13 +1067,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`WireMock` запускается только как standalone-процесс в unit-тестах и несовместим с `@SpringBootTest`: поднятый Spring-контекст занимает порт и не даёт серверу-заглушке стартовать.",
-              "correct": false,
+              "text": "`WireMock` — инструмент для мокирования HTTP API: он поднимает реальный HTTP-сервер-заглушку, на который клиент ходит по сети. Spring Cloud Contract даёт `@AutoConfigureWireMock(port = 0)` для автонастройки на случайном порту; URL клиента указывают через `payment.service.url=http://localhost:${wiremock.server.port}`. Стабы задают через `stubFor(post(urlEqualTo(...)).willReturn(aResponse().withStatus(200).withBody(...)))`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`WireMock` штатно используется в `@SpringBootTest` через `@AutoConfigureWireMock`, который интегрирует его в контекст и подставляет порт в свойства.",
-                "source_of_confusion": "`WireMock` можно поднять и вручную как отдельный сервер, и это создаёт впечатление несовместимости со Spring.",
-                "if_it_were_true": "Если бы он не работал с `@SpringBootTest`, нельзя было бы инжектить реальный `PaymentClient` и проверять его поведение против стаба.",
-                "how_it_should_be": "`WireMock` отлично живёт внутри `@SpringBootTest`; `@AutoConfigureWireMock` автоматически настраивает сервер и порт."
+                "explanation": "Поскольку сервер настоящий, тестируется весь HTTP-стек клиента: сериализация запроса, парсинг ответа, заголовки, коды — без зависимости от реального внешнего сервиса.",
+                "example": "`stubFor(post(urlEqualTo(\"/api/charge\")).withRequestBody(matchingJsonPath(\"$.amount\", equalTo(\"100.00\"))).willReturn(...))` плюс `verify(postRequestedFor(urlEqualTo(\"/api/charge\")))` проверяет и ответ, и сам факт вызова.",
+                "when_to_apply": "Применяют, когда нужно протестировать HTTP-клиент к внешнему сервису, не поднимая сам сервис: платёжный шлюз, сторонний API, партнёрскую интеграцию.",
+                "edge_cases": "Стаб живёт на реальном порту, поэтому при параллельных тестах используют `port = 0` (случайный порт), иначе порт может быть занят и тесты станут flaky.",
+                "related": "[[integration-testing-interview#Q20]] `WireMock` для ошибок и задержек; [[integration-testing-interview#Q23]] стабы из `Spring Cloud Contract`; [[integration-testing-interview#Q40]] `@RestClientTest` как лёгкая альтернатива."
               }
             }
           ]
@@ -1091,18 +1091,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@MockBean` оборачивает реальный бин и по умолчанию вызывает его настоящие методы, а `@SpyBean` заменяет бин заглушкой, возвращающей `null`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё ровно наоборот: `@MockBean` ПОЛНОСТЬЮ заменяет бин (по умолчанию возвращает `null`/`0`/`false`), а `@SpyBean` оборачивает РЕАЛЬНЫЙ бин и по умолчанию вызывает его настоящие методы.",
-                "source_of_confusion": "Названия `mock` и `spy` легко перепутать, отсюда инверсия их поведения.",
-                "if_it_were_true": "Если бы `@MockBean` вызывал реальные методы, он не давал бы полной изоляции от зависимости, ради которой его и берут.",
-                "how_it_should_be": "`@MockBean` — полная замена (дефолтные пустые ответы), `@SpyBean` — частичный мок поверх реального бина."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`@MockBean` и `@SpyBean` не влияют на кеш `ApplicationContext`, поэтому ими можно пользоваться сколько угодно без потери скорости.",
               "correct": false,
               "sections": {
@@ -1113,8 +1101,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`@MockBean` ПОЛНОСТЬЮ заменяет бин заглушкой и по умолчанию возвращает `null`/`0`/`false` — нужен для полной изоляции от зависимости (например `EmailService`, чтобы не слать реальные письма). `@SpyBean` ОБОРАЧИВАЕТ реальный бин и по умолчанию вызывает его настоящие методы — нужен, когда требуется реальная логика плюс перехват части вызовов (например `AuditService`).",
               "correct": true,
               "sections": {
@@ -1126,8 +1114,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`@SpyBean` по умолчанию возвращает `null` для всех методов, ровно как `@MockBean`.",
               "correct": false,
               "sections": {
@@ -1135,6 +1123,18 @@
                 "source_of_confusion": "Обе аннотации создают «не совсем настоящий» бин, из-за чего их дефолтное поведение путают.",
                 "if_it_were_true": "Если бы `@SpyBean` возвращал `null`, не было бы смысла в его существовании отдельно от `@MockBean`.",
                 "how_it_should_be": "`@SpyBean` исполняет реальную логику по умолчанию; застабить можно лишь отдельные методы, остальное работает как у настоящего бина."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@MockBean` оборачивает реальный бин и по умолчанию вызывает его настоящие методы, а `@SpyBean` заменяет бин заглушкой, возвращающей `null`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё ровно наоборот: `@MockBean` ПОЛНОСТЬЮ заменяет бин (по умолчанию возвращает `null`/`0`/`false`), а `@SpyBean` оборачивает РЕАЛЬНЫЙ бин и по умолчанию вызывает его настоящие методы.",
+                "source_of_confusion": "Названия `mock` и `spy` легко перепутать, отсюда инверсия их поведения.",
+                "if_it_were_true": "Если бы `@MockBean` вызывал реальные методы, он не давал бы полной изоляции от зависимости, ради которой его и берут.",
+                "how_it_should_be": "`@MockBean` — полная замена (дефолтные пустые ответы), `@SpyBean` — частичный мок поверх реального бина."
               }
             }
           ]
@@ -1151,18 +1151,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`WireMock` не умеет имитировать задержки ответа, поэтому таймауты клиента тестируют только реальным внешним сервисом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`WireMock` умеет задержки через `aResponse().withFixedDelay(5000)`, что позволяет воспроизвести таймаут и проверить `PaymentTimeoutException`.",
-                "source_of_confusion": "Задержки выглядят как чисто сетевой эффект, из-за чего кажется, что заглушка их не воспроизведёт.",
-                "if_it_were_true": "Если бы `WireMock` не умел задержки, нельзя было бы детерминированно протестировать поведение клиента при медленном ответе.",
-                "how_it_should_be": "`withFixedDelay(...)` искусственно тормозит ответ стаба, и клиент с коротким таймаутом штатно падает — это и проверяет тест."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Чтобы вернуть ошибку 500, нужно реально уронить `WireMock`-сервер во время теста.",
               "correct": false,
               "sections": {
@@ -1173,8 +1161,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`WireMock` не поддерживает stateful-сценарии, поэтому смоделировать разные ответы на первый и повторный запрос (для retry) не получится.",
               "correct": false,
               "sections": {
@@ -1185,8 +1173,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`WireMock` моделирует негативные сценарии декларативно: задержку — `aResponse().withFixedDelay(5000)` (проверяем `PaymentTimeoutException`); серверную ошибку — `aResponse().withStatus(500)` (проверяем `PaymentServiceException`); а stateful-поведение для retry — через `WireMock Scenarios`: первый запрос `whenScenarioStateIs(STARTED)` отдаёт 503 и `willSetStateTo(\"RECOVERED\")`, второй (`RECOVERED`) — 200.",
               "correct": true,
               "sections": {
@@ -1195,6 +1183,18 @@
                 "when_to_apply": "Применяют для проверки таймаутов, обработки 5xx, retry-логики и circuit breaker — критичных путей надёжности интеграции с внешними API.",
                 "edge_cases": "Задержка занимает реальное время теста (`withFixedDelay(5000)` — 5 секунд), поэтому таймаут клиента ставят ниже задержки, иначе тест либо зависнет, либо станет flaky.",
                 "related": "[[integration-testing-interview#Q18]] базовый `WireMock`; [[integration-testing-interview#Q26]] `Awaitility` для асинхронных проверок; [[integration-testing-interview#Q31]] борьба с flaky из-за таймаутов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`WireMock` не умеет имитировать задержки ответа, поэтому таймауты клиента тестируют только реальным внешним сервисом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WireMock` умеет задержки через `aResponse().withFixedDelay(5000)`, что позволяет воспроизвести таймаут и проверить `PaymentTimeoutException`.",
+                "source_of_confusion": "Задержки выглядят как чисто сетевой эффект, из-за чего кажется, что заглушка их не воспроизведёт.",
+                "if_it_were_true": "Если бы `WireMock` не умел задержки, нельзя было бы детерминированно протестировать поведение клиента при медленном ответе.",
+                "how_it_should_be": "`withFixedDelay(...)` искусственно тормозит ответ стаба, и клиент с коротким таймаутом штатно падает — это и проверяет тест."
               }
             }
           ]
@@ -1211,19 +1211,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Контрактное тестирование (`Contract Testing`) проверяет соблюдение контрактов (интерфейсов) между сервисами: Consumer определяет свои ожидания к API, а Provider верифицирует соответствие им. Это даёт раннее обнаружение breaking changes до деплоя, независимость команд (не нужен общий staging), актуальную документацию API и скорость выше `E2E`. Два основных инструмента: `Pact` (language-agnostic, consumer-driven, JSON) и `Spring Cloud Contract` (Groovy/YAML DSL, генерация тестов).",
-              "correct": true,
-              "sections": {
-                "explanation": "Идея в том, что согласован именно контракт взаимодействия, а не запущены оба сервиса целиком: каждая сторона проверяет свою половину контракта независимо.",
-                "example": "Consumer (`OrderService`) генерирует контракт-ожидание «GET `/api/users/123` вернёт id/name/email», а Provider (`UserService`) в своём тесте подтверждает, что его API это отдаёт.",
-                "when_to_apply": "Применяют между микросервисами, чтобы ловить рассинхрон API раньше и дешевле, чем сквозными `E2E`, и не блокировать команды общим окружением.",
-                "edge_cases": "Контракт проверяет форму взаимодействия, но не сквозную бизнес-логику всей системы, поэтому минимальный набор `E2E` для критичных путей всё равно нужен.",
-                "related": "[[integration-testing-interview#Q22]] `Pact` consumer-driven; [[integration-testing-interview#Q23]] `Spring Cloud Contract`; [[integration-testing-interview#Q24]] тестирование микросервисов в изоляции."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Контрактное тестирование проверяет, что Provider выдерживает оговорённый в SLA-контракте объём трафика: Consumer задаёт целевой RPS, а нагрузочный прогон верифицирует, что latency и error rate укладываются в соглашение.",
               "correct": false,
               "sections": {
@@ -1234,8 +1221,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Контрактное тестирование требует одновременного запуска Consumer и Provider в общем staging-окружении: контракт проверяется живым сквозным вызовом между сервисами, поэтому обе команды деплоят свои версии вместе.",
               "correct": false,
               "sections": {
@@ -1246,8 +1233,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Контрактное тестирование заменяет unit- и интеграционные тесты: проверив контракт между Consumer и Provider, остальные уровни пирамиды можно не писать — контракт покрывает и внутреннюю логику сервиса.",
               "correct": false,
               "sections": {
@@ -1255,6 +1242,19 @@
                 "source_of_confusion": "Его польза для микросервисов велика, отсюда соблазн объявить его универсальной заменой.",
                 "if_it_were_true": "Если бы оно заменяло всё, не нужны были бы `@DataJpaTest` для SQL и unit-тесты бизнес-логики, которые контракт не покрывает.",
                 "how_it_should_be": "Контракт проверяет лишь границы между сервисами; логику и инфраструктуру по-прежнему покрывают unit и интеграционные тесты."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Контрактное тестирование (`Contract Testing`) проверяет соблюдение контрактов (интерфейсов) между сервисами: Consumer определяет свои ожидания к API, а Provider верифицирует соответствие им. Это даёт раннее обнаружение breaking changes до деплоя, независимость команд (не нужен общий staging), актуальную документацию API и скорость выше `E2E`. Два основных инструмента: `Pact` (language-agnostic, consumer-driven, JSON) и `Spring Cloud Contract` (Groovy/YAML DSL, генерация тестов).",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея в том, что согласован именно контракт взаимодействия, а не запущены оба сервиса целиком: каждая сторона проверяет свою половину контракта независимо.",
+                "example": "Consumer (`OrderService`) генерирует контракт-ожидание «GET `/api/users/123` вернёт id/name/email», а Provider (`UserService`) в своём тесте подтверждает, что его API это отдаёт.",
+                "when_to_apply": "Применяют между микросервисами, чтобы ловить рассинхрон API раньше и дешевле, чем сквозными `E2E`, и не блокировать команды общим окружением.",
+                "edge_cases": "Контракт проверяет форму взаимодействия, но не сквозную бизнес-логику всей системы, поэтому минимальный набор `E2E` для критичных путей всё равно нужен.",
+                "related": "[[integration-testing-interview#Q22]] `Pact` consumer-driven; [[integration-testing-interview#Q23]] `Spring Cloud Contract`; [[integration-testing-interview#Q24]] тестирование микросервисов в изоляции."
               }
             }
           ]
@@ -1271,18 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Pact` контракт формирует Provider на своей стороне, а Consumer скачивает готовый контракт и проверяет против него своего клиента.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В Consumer-Driven подходе контракт определяет именно CONSUMER (его ожидания к API), а Provider затем ВЕРИФИЦИРУЕТ, что соответствует им.",
-                "source_of_confusion": "Кажется логичным, что владелец API (Provider) и задаёт контракт, но в CDC инициатива у потребителя.",
-                "if_it_were_true": "Если бы контракт писал Provider, подход не назывался бы Consumer-Driven, и Provider не запускал бы верификацию чужого Pact-файла.",
-                "how_it_should_be": "Consumer описывает ожидания и генерирует Pact-файл; Provider проверяет своё API против этого файла."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "В `Pact` Consumer-side тест (`@PactConsumerTestExt`, `@PactTestFor`) описывает ожидания через `@Pact`-метод (`given(...).uponReceiving(...).willRespondWith().status(200).body(...)`) и проверяет своего клиента против mock-сервера; при этом генерируется Pact-файл (JSON). Provider-side тест (`@Provider`, `@PactFolder`) подготавливает состояние через `@State` и верифицирует, что его реальное API соответствует контракту (`context.verifyInteraction()`).",
               "correct": true,
               "sections": {
@@ -1294,8 +1282,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Pact` поднимает оба сервиса (Consumer и Provider) одновременно и гоняет реальный трафик между ними.",
               "correct": false,
               "sections": {
@@ -1306,8 +1294,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Pact` — это инструмент только для Java и не подходит для контрактов между сервисами на разных языках.",
               "correct": false,
               "sections": {
@@ -1315,6 +1303,18 @@
                 "source_of_confusion": "Примеры на Java создают впечатление Java-only инструмента.",
                 "if_it_were_true": "Если бы `Pact` был Java-only, его не выбирали бы для контрактов между, скажем, Node-consumer и Java-provider.",
                 "how_it_should_be": "`Pact` кросс-языковой: JSON-контракт понимают реализации `Pact` на разных платформах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Pact` контракт формирует Provider на своей стороне, а Consumer скачивает готовый контракт и проверяет против него своего клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Consumer-Driven подходе контракт определяет именно CONSUMER (его ожидания к API), а Provider затем ВЕРИФИЦИРУЕТ, что соответствует им.",
+                "source_of_confusion": "Кажется логичным, что владелец API (Provider) и задаёт контракт, но в CDC инициатива у потребителя.",
+                "if_it_were_true": "Если бы контракт писал Provider, подход не назывался бы Consumer-Driven, и Provider не запускал бы верификацию чужого Pact-файла.",
+                "how_it_should_be": "Consumer описывает ожидания и генерирует Pact-файл; Provider проверяет своё API против этого файла."
               }
             }
           ]
@@ -1331,13 +1331,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring Cloud Contract` Provider-тест нужно писать вручную — фреймворк только хранит контракты.",
-              "correct": false,
+              "text": "`Spring Cloud Contract` использует Groovy/YAML DSL для контракта (`Contract.make { request {...} response {...} }`), из которого АВТОМАТИЧЕСКИ генерирует Provider-тест и WireMock-стабы. Стабы публикуются как Maven-артефакт; Consumer подключает их через `@AutoConfigureStubRunner(ids = \"...:stubs:8082\", stubsMode = LOCAL)` и тестирует свой клиент против них.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Spring Cloud Contract` АВТОМАТИЧЕСКИ генерирует тестовый класс Provider из контракта (Groovy/YAML DSL), вручную его писать не нужно.",
-                "source_of_confusion": "Кажется, что раз контракт описан, тест всё равно пишет разработчик, но здесь его генерирует плагин.",
-                "if_it_were_true": "Если бы тест писали вручную, терялось бы ключевое удобство `Spring Cloud Contract` — генерация проверок из единого DSL.",
-                "how_it_should_be": "Provider-тест генерируется из контракта плагином сборки; разработчик пишет лишь сам контракт и base-класс."
+                "explanation": "Один контракт порождает обе проверки: тест на стороне Provider (что API соответствует) и стаб на стороне Consumer (против которого гоняется клиент).",
+                "example": "Контракт `Contract.make { request { method 'GET'; url '/api/users/123' } response { status 200; body(id:123, name:\"John Doe\") } }` даёт Provider-тест и стаб, а Consumer через `@AutoConfigureStubRunner` зовёт `userClient.getUser(123L)` и проверяет id/name.",
+                "when_to_apply": "Берут в Spring-экосистеме, когда хочется единый источник правды (контракт), из которого автоматически рождаются и provider-тесты, и consumer-стабы.",
+                "edge_cases": "Consumer тестируется против сгенерированных стабов, а не живого Provider, поэтому корректность стабов зависит от того, что Provider реально верифицирует контракт у себя.",
+                "related": "[[integration-testing-interview#Q21]] идея контрактного тестирования; [[integration-testing-interview#Q22]] `Pact` как consumer-driven альтернатива; [[integration-testing-interview#Q18]] `WireMock`, на котором строятся стабы."
               }
             },
             {
@@ -1355,19 +1356,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Cloud Contract` использует Groovy/YAML DSL для контракта (`Contract.make { request {...} response {...} }`), из которого АВТОМАТИЧЕСКИ генерирует Provider-тест и WireMock-стабы. Стабы публикуются как Maven-артефакт; Consumer подключает их через `@AutoConfigureStubRunner(ids = \"...:stubs:8082\", stubsMode = LOCAL)` и тестирует свой клиент против них.",
-              "correct": true,
-              "sections": {
-                "explanation": "Один контракт порождает обе проверки: тест на стороне Provider (что API соответствует) и стаб на стороне Consumer (против которого гоняется клиент).",
-                "example": "Контракт `Contract.make { request { method 'GET'; url '/api/users/123' } response { status 200; body(id:123, name:\"John Doe\") } }` даёт Provider-тест и стаб, а Consumer через `@AutoConfigureStubRunner` зовёт `userClient.getUser(123L)` и проверяет id/name.",
-                "when_to_apply": "Берут в Spring-экосистеме, когда хочется единый источник правды (контракт), из которого автоматически рождаются и provider-тесты, и consumer-стабы.",
-                "edge_cases": "Consumer тестируется против сгенерированных стабов, а не живого Provider, поэтому корректность стабов зависит от того, что Provider реально верифицирует контракт у себя.",
-                "related": "[[integration-testing-interview#Q21]] идея контрактного тестирования; [[integration-testing-interview#Q22]] `Pact` как consumer-driven альтернатива; [[integration-testing-interview#Q18]] `WireMock`, на котором строятся стабы."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`Spring Cloud Contract` работает только с `Pact`-файлами и не имеет собственного DSL.",
               "correct": false,
               "sections": {
@@ -1375,6 +1363,18 @@
                 "source_of_confusion": "Оба относятся к контрактному тестированию, из-за чего их форматы смешивают.",
                 "if_it_were_true": "Если бы он работал только с `Pact`-файлами, не было бы Groovy-контрактов в `src/test/resources/contracts`.",
                 "how_it_should_be": "`Spring Cloud Contract` использует свой DSL и генерирует тесты/стабы из него; `Pact` — это отдельная экосистема."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Spring Cloud Contract` Provider-тест нужно писать вручную — фреймворк только хранит контракты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Cloud Contract` АВТОМАТИЧЕСКИ генерирует тестовый класс Provider из контракта (Groovy/YAML DSL), вручную его писать не нужно.",
+                "source_of_confusion": "Кажется, что раз контракт описан, тест всё равно пишет разработчик, но здесь его генерирует плагин.",
+                "if_it_were_true": "Если бы тест писали вручную, терялось бы ключевое удобство `Spring Cloud Contract` — генерация проверок из единого DSL.",
+                "how_it_should_be": "Provider-тест генерируется из контракта плагином сборки; разработчик пишет лишь сам контракт и base-класс."
               }
             }
           ]
@@ -1391,18 +1391,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Изолированно протестировать микросервис невозможно — придётся поднять весь граф его сервисов-зависимостей, иначе тест не будет репрезентативным.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Микросервис тестируют изолированно через Component Testing: поднимают сам сервис + его БД (`Testcontainers`), а другие сервисы заменяют моками (`@MockBean`).",
-                "source_of_confusion": "Раз сервис зависит от других, кажется, что без них он не протестируется.",
-                "if_it_were_true": "Если бы нужны были все зависимости, исчезла бы изоляция и это был бы `E2E`, а не component-тест.",
-                "how_it_should_be": "Component Testing поднимает один сервис с его БД и мокирует внешние сервисы, обеспечивая изоляцию."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Для изоляции в тесте `Eureka` и `Spring Cloud Config` оставляют включёнными (`eureka.client.enabled=true`), чтобы сервис поднимался точно как в production.",
               "correct": false,
               "sections": {
@@ -1413,8 +1401,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "В component-тесте внешние сервисы вызывают по-настоящему, а базу данных, наоборот, подменяют мок-репозиторием через `@MockBean`.",
               "correct": false,
               "sections": {
@@ -1425,8 +1413,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Микросервис тестируют в изоляции через Component Testing: `@SpringBootTest(RANDOM_PORT)` поднимает сам сервис, реальную БД через `@Testcontainers`/`@ServiceConnection`, отключает внешнюю инфраструктуру (`eureka.client.enabled=false`, `spring.cloud.config.enabled=false`) и мокирует другие сервисы через `@MockBean` (например `EmailService`). Общая стратегия: unit (логика без Spring) → component (сервис + БД, моки соседей) → contract (API между сервисами) → минимум `E2E`.",
               "correct": true,
               "sections": {
@@ -1435,6 +1423,18 @@
                 "when_to_apply": "Применяют для проверки одного микросервиса целиком (от HTTP до его БД) без зависимости от поднятых соседей и общего окружения.",
                 "edge_cases": "Моки соседних сервисов не ловят рассинхрон их реальных API, поэтому Component Testing дополняют контрактными тестами, иначе интеграция между сервисами останется непроверенной.",
                 "related": "[[integration-testing-interview#Q21]] контрактное тестирование как дополнение; [[integration-testing-interview#Q19]] `@MockBean` для соседних сервисов; [[integration-testing-interview#Q3]] `@SpringBootTest` с `RANDOM_PORT`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Изолированно протестировать микросервис невозможно — придётся поднять весь граф его сервисов-зависимостей, иначе тест не будет репрезентативным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Микросервис тестируют изолированно через Component Testing: поднимают сам сервис + его БД (`Testcontainers`), а другие сервисы заменяют моками (`@MockBean`).",
+                "source_of_confusion": "Раз сервис зависит от других, кажется, что без них он не протестируется.",
+                "if_it_were_true": "Если бы нужны были все зависимости, исчезла бы изоляция и это был бы `E2E`, а не component-тест.",
+                "how_it_should_be": "Component Testing поднимает один сервис с его БД и мокирует внешние сервисы, обеспечивая изоляцию."
               }
             }
           ]
@@ -1451,6 +1451,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`@EmbeddedKafka` и `Testcontainers Kafka` эквивалентны по поведению, поэтому выбор между ними — вопрос личных предпочтений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они различаются: `@EmbeddedKafka` быстрее (без `Docker`), но менее realistic; `Testcontainers Kafka` ближе к production (реальный брокер).",
+                "source_of_confusion": "Оба поднимают «какой-то Kafka» для теста, отсюда впечатление эквивалентности.",
+                "if_it_were_true": "Если бы они были эквивалентны, не было бы рекомендации брать `Testcontainers` ради близости к проду.",
+                "how_it_should_be": "`@EmbeddedKafka` — быстрый и упрощённый, `Testcontainers Kafka` — медленнее, но точнее воспроизводит production-поведение брокера."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Поднимают `@Container @ServiceConnection static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse(\"confluentinc/cp-kafka:7.5.0\"))` в `@SpringBootTest`, отправляют событие через `KafkaTemplate` и проверяют обработку консьюмером с помощью `Awaitility` (`await().atMost(Duration.ofSeconds(10)).untilAsserted(...)`), потому что доставка асинхронна. Альтернатива без `Docker` — `@EmbeddedKafka` из `spring-kafka-test`: быстрее, но менее realistic.",
               "correct": true,
               "sections": {
@@ -1462,8 +1474,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "После `kafkaTemplate.send(...)` сообщение обрабатывается синхронно, поэтому результат можно ассертить в следующей строке теста без ожидания.",
               "correct": false,
               "sections": {
@@ -1471,18 +1483,6 @@
                 "source_of_confusion": "В тесте `send` и проверка идут рядом по коду, из-за чего кажется, что обработка мгновенна.",
                 "if_it_were_true": "Если бы обработка была синхронной, не понадобился бы `await().atMost(...)` и тесты не были бы flaky из-за гонок.",
                 "how_it_should_be": "Между отправкой и обработкой есть задержка; результат проверяют через `Awaitility`, а не сразу после `send`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`@EmbeddedKafka` и `Testcontainers Kafka` эквивалентны по поведению, поэтому выбор между ними — вопрос личных предпочтений.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Они различаются: `@EmbeddedKafka` быстрее (без `Docker`), но менее realistic; `Testcontainers Kafka` ближе к production (реальный брокер).",
-                "source_of_confusion": "Оба поднимают «какой-то Kafka» для теста, отсюда впечатление эквивалентности.",
-                "if_it_were_true": "Если бы они были эквивалентны, не было бы рекомендации брать `Testcontainers` ради близости к проду.",
-                "how_it_should_be": "`@EmbeddedKafka` — быстрый и упрощённый, `Testcontainers Kafka` — медленнее, но точнее воспроизводит production-поведение брокера."
               }
             },
             {
@@ -1523,14 +1523,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Awaitility` — стандарт ожидания асинхронных результатов: `await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(500)).untilAsserted(() -> { ... assertEquals(...); })`. Для `CompletableFuture` используют `assertTimeout(Duration.ofSeconds(5), () -> future.get())`. Главное правило: НИКОГДА не использовать `Thread.sleep()` — только `Awaitility`, `CompletableFuture.get(timeout)` или `CountDownLatch`.",
-              "correct": true,
+              "text": "`Awaitility` сам по себе выполняет асинхронную операцию, поэтому её не нужно запускать отдельно перед `await`.",
+              "correct": false,
               "sections": {
-                "explanation": "`Awaitility` периодически перепроверяет условие до выполнения или таймаута, поэтому тест и не зависает на лишнем sleep, и не падает из-за гонки.",
-                "example": "После `orderService.createOrder(...)` async-обработчик создаёт уведомление, и `await().untilAsserted(() -> assertEquals(1, notificationRepository.findByOrderId(order.getId()).size()))` дожидается его появления.",
-                "when_to_apply": "Применяют для любых async-сценариев: события `Kafka`, `@Async`-методы, отложенная запись в БД, фоновые джобы — везде, где результат появляется не сразу.",
-                "edge_cases": "Слишком короткий `atMost` сделает тест flaky на медленной машине/`CI`, а слишком длинный замедлит прогон при реальном сбое — таймаут подбирают с разумным запасом.",
-                "related": "[[integration-testing-interview#Q25]] `Awaitility` для `Kafka`; [[integration-testing-interview#Q27]] message-driven тесты; [[integration-testing-interview#Q31]] flaky из-за race conditions."
+                "what_actually": "`Awaitility` ничего не запускает — он лишь ОПРАШИВАЕТ условие; операцию (например `createOrder`) запускают сами до `await`.",
+                "source_of_confusion": "Поскольку `await()` стоит в начале блока ожидания, кажется, что он и инициирует действие.",
+                "if_it_were_true": "Если бы `Awaitility` запускал операцию, не нужно было бы вызывать `orderService.createOrder(...)` до блока `await`.",
+                "how_it_should_be": "Сначала запускают async-действие, затем `Awaitility` ждёт его наблюдаемого результата, периодически перепроверяя условие."
               }
             },
             {
@@ -1548,13 +1547,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Awaitility` сам по себе выполняет асинхронную операцию, поэтому её не нужно запускать отдельно перед `await`.",
-              "correct": false,
+              "text": "`Awaitility` — стандарт ожидания асинхронных результатов: `await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(500)).untilAsserted(() -> { ... assertEquals(...); })`. Для `CompletableFuture` используют `assertTimeout(Duration.ofSeconds(5), () -> future.get())`. Главное правило: НИКОГДА не использовать `Thread.sleep()` — только `Awaitility`, `CompletableFuture.get(timeout)` или `CountDownLatch`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Awaitility` ничего не запускает — он лишь ОПРАШИВАЕТ условие; операцию (например `createOrder`) запускают сами до `await`.",
-                "source_of_confusion": "Поскольку `await()` стоит в начале блока ожидания, кажется, что он и инициирует действие.",
-                "if_it_were_true": "Если бы `Awaitility` запускал операцию, не нужно было бы вызывать `orderService.createOrder(...)` до блока `await`.",
-                "how_it_should_be": "Сначала запускают async-действие, затем `Awaitility` ждёт его наблюдаемого результата, периодически перепроверяя условие."
+                "explanation": "`Awaitility` периодически перепроверяет условие до выполнения или таймаута, поэтому тест и не зависает на лишнем sleep, и не падает из-за гонки.",
+                "example": "После `orderService.createOrder(...)` async-обработчик создаёт уведомление, и `await().untilAsserted(() -> assertEquals(1, notificationRepository.findByOrderId(order.getId()).size()))` дожидается его появления.",
+                "when_to_apply": "Применяют для любых async-сценариев: события `Kafka`, `@Async`-методы, отложенная запись в БД, фоновые джобы — везде, где результат появляется не сразу.",
+                "edge_cases": "Слишком короткий `atMost` сделает тест flaky на медленной машине/`CI`, а слишком длинный замедлит прогон при реальном сбое — таймаут подбирают с разумным запасом.",
+                "related": "[[integration-testing-interview#Q25]] `Awaitility` для `Kafka`; [[integration-testing-interview#Q27]] message-driven тесты; [[integration-testing-interview#Q31]] flaky из-за race conditions."
               }
             }
           ]
@@ -1571,13 +1571,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для message-driven архитектуры достаточно одного `E2E`-теста через реальный брокер — он покрывает и продюсера, и консьюмера, остальные уровни избыточны.",
+              "text": "Тест идемпотентности в message-driven архитектуре избыточен: брокер (`Kafka`) сам гарантирует exactly-once, поэтому повторной обработки не бывает.",
               "correct": false,
               "sections": {
-                "what_actually": "Стратегия многоуровневая: тест продюсера, тест консьюмера, `E2E`, тест идемпотентности и тест DLQ — каждый покрывает свой аспект.",
-                "source_of_confusion": "`E2E` кажется самым «полным», отсюда соблазн ограничиться им одним.",
-                "if_it_were_true": "Если бы хватало `E2E`, нельзя было бы дёшево и точечно проверить идемпотентность или попадание в DLQ.",
-                "how_it_should_be": "Помимо `E2E` нужны отдельные тесты продюсера, консьюмера, идемпотентности и DLQ — они быстрее и точнее локализуют дефект."
+                "what_actually": "Большинство брокеров дают at-least-once (возможны дубликаты), поэтому идемпотентность обработки обязательно проверяют отдельным тестом (одно сообщение дважды → одна обработка).",
+                "source_of_confusion": "Маркетинговый термин «exactly-once» создаёт ложную уверенность, что дубликатов не бывает.",
+                "if_it_were_true": "Если бы дубликатов не было, не понадобился бы тест идемпотентности, который явно входит в стратегию.",
+                "how_it_should_be": "Дубликаты реальны при at-least-once, поэтому тест идемпотентности — отдельный обязательный пункт стратегии."
               }
             },
             {
@@ -1595,6 +1595,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Для message-driven архитектуры достаточно одного `E2E`-теста через реальный брокер — он покрывает и продюсера, и консьюмера, остальные уровни избыточны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стратегия многоуровневая: тест продюсера, тест консьюмера, `E2E`, тест идемпотентности и тест DLQ — каждый покрывает свой аспект.",
+                "source_of_confusion": "`E2E` кажется самым «полным», отсюда соблазн ограничиться им одним.",
+                "if_it_were_true": "Если бы хватало `E2E`, нельзя было бы дёшево и точечно проверить идемпотентность или попадание в DLQ.",
+                "how_it_should_be": "Помимо `E2E` нужны отдельные тесты продюсера, консьюмера, идемпотентности и DLQ — они быстрее и точнее локализуют дефект."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Стратегия для message-driven архитектуры многоуровневая: (1) тест ПРОДЮСЕРА — отправляем сообщение, проверяем, что оно попало в топик; (2) тест КОНСЬЮМЕРА — кладём сообщение в топик, проверяем обработку (данные в БД, вызов сервиса); (3) `E2E` — полная цепочка через реальный брокер; (4) тест идемпотентности — отправляем одно сообщение дважды, проверяем единичную обработку; (5) тест DLQ — отправляем невалидное сообщение, проверяем попадание в dead letter queue.",
               "correct": true,
               "sections": {
@@ -1603,18 +1615,6 @@
                 "when_to_apply": "Эту раскладку применяют для event-driven систем на `Kafka`/`RabbitMQ`, чтобы покрыть и happy-path, и дубликаты, и ядовитые сообщения.",
                 "edge_cases": "Асинхронность означает, что все проверки результата идут через `Awaitility` с таймаутом, иначе гонки между отправкой и обработкой сделают тесты flaky.",
                 "related": "[[integration-testing-interview#Q25]] `Kafka` с `Testcontainers`; [[integration-testing-interview#Q26]] `Awaitility` для async; [[integration-testing-interview#Q31]] борьба с flaky в async-тестах."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Тест идемпотентности в message-driven архитектуре избыточен: брокер (`Kafka`) сам гарантирует exactly-once, поэтому повторной обработки не бывает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Большинство брокеров дают at-least-once (возможны дубликаты), поэтому идемпотентность обработки обязательно проверяют отдельным тестом (одно сообщение дважды → одна обработка).",
-                "source_of_confusion": "Маркетинговый термин «exactly-once» создаёт ложную уверенность, что дубликатов не бывает.",
-                "if_it_were_true": "Если бы дубликатов не было, не понадобился бы тест идемпотентности, который явно входит в стратегию.",
-                "how_it_should_be": "Дубликаты реальны при at-least-once, поэтому тест идемпотентности — отдельный обязательный пункт стратегии."
               }
             }
           ]
@@ -1643,13 +1643,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для `Testcontainers` в `CI` зависимости объявляют через `services:` в pipeline (например `services: postgres`), а тест подключается к ним по фиксированному хосту, как при ручной настройке интеграционного окружения.",
-              "correct": false,
+              "text": "Интеграционные тесты в `CI/CD` разделяют по стадиям с fail-fast: unit (1–2 мин) → integration (5–10 мин) → contract (2–3 мин) → E2E (10–20 мин), причём падение ранней стадии останавливает pipeline. В Gradle их выносят в отдельную задачу: `tasks.register('integrationTest', Test) { useJUnitPlatform { includeTags 'integration' }; shouldRunAfter test }` и `check.dependsOn integrationTest`. `Testcontainers` упрощает настройку — `Docker` доступен в `GitHub Actions` из коробки, поднимать `services:` вручную не нужно.",
+              "correct": true,
               "sections": {
-                "what_actually": "Преимущество `Testcontainers` в том, что НЕ нужно поднимать `services:` в pipeline — контейнеры стартуют автоматически из кода тестов (нужен лишь доступный `Docker`).",
-                "source_of_confusion": "Привычка декларировать `services:` для БД в `CI` переносится и на `Testcontainers`.",
-                "if_it_were_true": "Если бы сервисы требовалось поднимать вручную, терялось бы ключевое удобство `Testcontainers` — самодостаточность теста.",
-                "how_it_should_be": "`Testcontainers` сам управляет контейнерами; в `CI` (например `GitHub Actions`) `Docker` доступен из коробки, ручной `services:` не нужен."
+                "explanation": "Стадийность экономит время (дешёвые тесты отсекают сборку раньше), а отдельная задача `integrationTest` даёт гибкость запуска по тегам и стадиям.",
+                "example": "`GitHub Actions` с `setup-java` и `./gradlew integrationTest` запускает интеграционные тесты, а `Testcontainers` сам поднимает `PostgreSQL`/`Kafka` без декларации `services:`.",
+                "when_to_apply": "Такую организацию применяют, чтобы быстрые тесты гонять на каждый коммит, а медленные интеграционные/E2E — на PR или nightly, не блокируя разработчиков.",
+                "edge_cases": "Интеграционные тесты требуют `Docker`-демона в `CI` и заметно дольше unit, поэтому их изолируют в отдельную стадию, а не мешают с быстрыми проверками.",
+                "related": "[[integration-testing-interview#Q29]] ускорение интеграционных тестов; [[integration-testing-interview#Q34]] smoke-тесты после деплоя; [[integration-testing-interview#Q9]] `Testcontainers` и `Docker`."
               }
             },
             {
@@ -1667,14 +1668,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Интеграционные тесты в `CI/CD` разделяют по стадиям с fail-fast: unit (1–2 мин) → integration (5–10 мин) → contract (2–3 мин) → E2E (10–20 мин), причём падение ранней стадии останавливает pipeline. В Gradle их выносят в отдельную задачу: `tasks.register('integrationTest', Test) { useJUnitPlatform { includeTags 'integration' }; shouldRunAfter test }` и `check.dependsOn integrationTest`. `Testcontainers` упрощает настройку — `Docker` доступен в `GitHub Actions` из коробки, поднимать `services:` вручную не нужно.",
-              "correct": true,
+              "text": "Для `Testcontainers` в `CI` зависимости объявляют через `services:` в pipeline (например `services: postgres`), а тест подключается к ним по фиксированному хосту, как при ручной настройке интеграционного окружения.",
+              "correct": false,
               "sections": {
-                "explanation": "Стадийность экономит время (дешёвые тесты отсекают сборку раньше), а отдельная задача `integrationTest` даёт гибкость запуска по тегам и стадиям.",
-                "example": "`GitHub Actions` с `setup-java` и `./gradlew integrationTest` запускает интеграционные тесты, а `Testcontainers` сам поднимает `PostgreSQL`/`Kafka` без декларации `services:`.",
-                "when_to_apply": "Такую организацию применяют, чтобы быстрые тесты гонять на каждый коммит, а медленные интеграционные/E2E — на PR или nightly, не блокируя разработчиков.",
-                "edge_cases": "Интеграционные тесты требуют `Docker`-демона в `CI` и заметно дольше unit, поэтому их изолируют в отдельную стадию, а не мешают с быстрыми проверками.",
-                "related": "[[integration-testing-interview#Q29]] ускорение интеграционных тестов; [[integration-testing-interview#Q34]] smoke-тесты после деплоя; [[integration-testing-interview#Q9]] `Testcontainers` и `Docker`."
+                "what_actually": "Преимущество `Testcontainers` в том, что НЕ нужно поднимать `services:` в pipeline — контейнеры стартуют автоматически из кода тестов (нужен лишь доступный `Docker`).",
+                "source_of_confusion": "Привычка декларировать `services:` для БД в `CI` переносится и на `Testcontainers`.",
+                "if_it_were_true": "Если бы сервисы требовалось поднимать вручную, терялось бы ключевое удобство `Testcontainers` — самодостаточность теста.",
+                "how_it_should_be": "`Testcontainers` сам управляет контейнерами; в `CI` (например `GitHub Actions`) `Docker` доступен из коробки, ручной `services:` не нужен."
               }
             }
           ]
@@ -1691,14 +1691,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Ключевые техники: (1) переиспользование `ApplicationContext` — Spring кеширует контекст между тестами с одинаковой конфигурацией, а `@MockBean` ломает кеш, поэтому его минимизируют; (2) singleton-контейнеры (`Testcontainers` стартует один раз на все тесты); (3) parallel execution через `junit-platform.properties`; (4) test slices (`@WebMvcTest`, `@DataJpaTest`) вместо `@SpringBootTest`; (5) lazy-initialization в тестовом профиле. Экономия ощутимая: кеш контекста 40–60%, singleton-контейнеры 30–50%, slices 50–70%.",
-              "correct": true,
+              "text": "Test slices (`@WebMvcTest`, `@DataJpaTest`) медленнее `@SpringBootTest`, поэтому для скорости берут полный контекст.",
+              "correct": false,
               "sections": {
-                "explanation": "Главные потери времени — повторный старт контекста и контейнеров; устранение пересозданий даёт наибольший выигрыш.",
-                "example": "`AbstractIntegrationTest` со `static { POSTGRES.start(); }` поднимает контейнер раз, а минимизация `@MockBean` сохраняет кеш контекста между классами.",
-                "when_to_apply": "Эти приёмы применяют, когда набор интеграционных тестов разрастается и прогон в `CI` становится узким местом.",
-                "edge_cases": "Параллельность ускоряет, но требует изоляции данных (уникальные `UUID`, отдельные схемы), иначе тесты начнут мешать друг другу и станут flaky.",
-                "related": "[[integration-testing-interview#Q12]] singleton-контейнеры; [[integration-testing-interview#Q19]] `@MockBean` ломает кеш контекста; [[integration-testing-interview#Q30]] параллельное выполнение."
+                "what_actually": "Test slices БЫСТРЕЕ `@SpringBootTest` (50–70% экономии на отдельных тестах), так как поднимают меньше бинов.",
+                "source_of_confusion": "Срез выглядит «дополнительной обвязкой», отсюда ошибочное ощущение, что он тяжелее.",
+                "if_it_were_true": "Если бы slices были медленнее, их не рекомендовали бы как способ ускорения вместо полного контекста.",
+                "how_it_should_be": "Slices грузят только нужный слой и стартуют быстрее; полный `@SpringBootTest` берут лишь когда нужен весь контекст."
               }
             },
             {
@@ -1728,13 +1727,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Test slices (`@WebMvcTest`, `@DataJpaTest`) медленнее `@SpringBootTest`, поэтому для скорости берут полный контекст.",
-              "correct": false,
+              "text": "Ключевые техники: (1) переиспользование `ApplicationContext` — Spring кеширует контекст между тестами с одинаковой конфигурацией, а `@MockBean` ломает кеш, поэтому его минимизируют; (2) singleton-контейнеры (`Testcontainers` стартует один раз на все тесты); (3) parallel execution через `junit-platform.properties`; (4) test slices (`@WebMvcTest`, `@DataJpaTest`) вместо `@SpringBootTest`; (5) lazy-initialization в тестовом профиле. Экономия ощутимая: кеш контекста 40–60%, singleton-контейнеры 30–50%, slices 50–70%.",
+              "correct": true,
               "sections": {
-                "what_actually": "Test slices БЫСТРЕЕ `@SpringBootTest` (50–70% экономии на отдельных тестах), так как поднимают меньше бинов.",
-                "source_of_confusion": "Срез выглядит «дополнительной обвязкой», отсюда ошибочное ощущение, что он тяжелее.",
-                "if_it_were_true": "Если бы slices были медленнее, их не рекомендовали бы как способ ускорения вместо полного контекста.",
-                "how_it_should_be": "Slices грузят только нужный слой и стартуют быстрее; полный `@SpringBootTest` берут лишь когда нужен весь контекст."
+                "explanation": "Главные потери времени — повторный старт контекста и контейнеров; устранение пересозданий даёт наибольший выигрыш.",
+                "example": "`AbstractIntegrationTest` со `static { POSTGRES.start(); }` поднимает контейнер раз, а минимизация `@MockBean` сохраняет кеш контекста между классами.",
+                "when_to_apply": "Эти приёмы применяют, когда набор интеграционных тестов разрастается и прогон в `CI` становится узким местом.",
+                "edge_cases": "Параллельность ускоряет, но требует изоляции данных (уникальные `UUID`, отдельные схемы), иначе тесты начнут мешать друг другу и станут flaky.",
+                "related": "[[integration-testing-interview#Q12]] singleton-контейнеры; [[integration-testing-interview#Q19]] `@MockBean` ломает кеш контекста; [[integration-testing-interview#Q30]] параллельное выполнение."
               }
             }
           ]
@@ -1751,13 +1751,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Параллельное выполнение в `JUnit 5` включено по умолчанию — движок сам распараллеливает тесты, отдельная конфигурация не нужна.",
+              "text": "Параллельность настраивается в `application.yml` как обычное свойство Spring Boot — движок `JUnit` читает его при старте контекста.",
               "correct": false,
               "sections": {
-                "what_actually": "Параллельность нужно явно включить в `junit-platform.properties` (`junit.jupiter.execution.parallel.enabled=true` и параметры режима/стратегии); по умолчанию она выключена.",
-                "source_of_confusion": "Современные раннеры часто параллелят сборку, отсюда ожидание, что и тесты идут параллельно сами.",
-                "if_it_were_true": "Если бы она была включена по умолчанию, не пришлось бы задавать `parallel.enabled=true` и `config.fixed.parallelism`.",
-                "how_it_should_be": "`JUnit 5` исполняет тесты последовательно, пока в `junit-platform.properties` явно не включить параллельный режим."
+                "what_actually": "Параллельность `JUnit 5` настраивается в `junit-platform.properties` (свойства `junit.jupiter.execution.parallel.*`), а не в `application.yml`.",
+                "source_of_confusion": "Любые свойства проекта ассоциируются с `application.yml`, отсюда путаница в месте настройки.",
+                "if_it_were_true": "Если бы настройка жила в `application.yml`, `JUnit` не подхватил бы её — он читает именно `junit-platform.properties`.",
+                "how_it_should_be": "Параметры параллельного запуска задают в `junit-platform.properties`; `application.yml` к конфигурации раннера `JUnit` отношения не имеет."
               }
             },
             {
@@ -1776,6 +1776,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Параллельное выполнение в `JUnit 5` включено по умолчанию — движок сам распараллеливает тесты, отдельная конфигурация не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параллельность нужно явно включить в `junit-platform.properties` (`junit.jupiter.execution.parallel.enabled=true` и параметры режима/стратегии); по умолчанию она выключена.",
+                "source_of_confusion": "Современные раннеры часто параллелят сборку, отсюда ожидание, что и тесты идут параллельно сами.",
+                "if_it_were_true": "Если бы она была включена по умолчанию, не пришлось бы задавать `parallel.enabled=true` и `config.fixed.parallelism`.",
+                "how_it_should_be": "`JUnit 5` исполняет тесты последовательно, пока в `junit-platform.properties` явно не включить параллельный режим."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "При параллельном запуске тесты могут спокойно использовать общие фиксированные данные: `JUnit 5` создаёт отдельную копию тестовых данных для каждого потока.",
               "correct": false,
               "sections": {
@@ -1783,18 +1795,6 @@
                 "source_of_confusion": "Кажется, что раз потоки разные, то и данные автоматически разделены.",
                 "if_it_were_true": "Если бы данные изолировались автоматически, не нужна была бы рекомендация про уникальные идентификаторы и отдельные схемы.",
                 "how_it_should_be": "Изоляцию данных обеспечивает сам тест (уникальные `UUID`/схемы), а не `JUnit`; общие фиксированные данные приведут к flakiness."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Параллельность настраивается в `application.yml` как обычное свойство Spring Boot — движок `JUnit` читает его при старте контекста.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Параллельность `JUnit 5` настраивается в `junit-platform.properties` (свойства `junit.jupiter.execution.parallel.*`), а не в `application.yml`.",
-                "source_of_confusion": "Любые свойства проекта ассоциируются с `application.yml`, отсюда путаница в месте настройки.",
-                "if_it_were_true": "Если бы настройка жила в `application.yml`, `JUnit` не подхватил бы её — он читает именно `junit-platform.properties`.",
-                "how_it_should_be": "Параметры параллельного запуска задают в `junit-platform.properties`; `application.yml` к конфигурации раннера `JUnit` отношения не имеет."
               }
             }
           ]
@@ -1811,30 +1811,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Flaky-тест — это тест, который падает при каждом запуске; его помечают `@Disabled`, пока не найдётся время разобраться с причиной падения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Flaky-тест то ПРОХОДИТ, то ПАДАЕТ без изменений кода (нестабильный), а не всегда падает; и решение — устранить причину, а не отключать `@Disabled`.",
-                "source_of_confusion": "И нестабильный, и всегда падающий тест «красные» в `CI`, отсюда смешение понятий.",
-                "if_it_were_true": "Если бы flaky всегда падал, его нельзя было бы охарактеризовать процентом прохождения (<99%), как это делают при мониторинге.",
-                "how_it_should_be": "Flaky нестабилен по природе; его чинят, устраняя причину (изоляция данных, `Awaitility`, `Clock`, `RANDOM_PORT`), а не пряча `@Disabled`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Зависимость теста от текущего времени устраняют вызовом `Thread.sleep` перед проверкой, чтобы системные часы успели догнать ожидаемое значение.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Зависимость от времени лечат инъекцией `Clock` и мокированием времени (фиксированный `Instant`), а не `Thread.sleep`, который сам провоцирует флакость.",
-                "source_of_confusion": "Sleep кажется универсальным средством «подождать/синхронизировать», отсюда ошибочное применение.",
-                "if_it_were_true": "Если бы `sleep` решал проблему времени, тест всё равно зависел бы от реальных часов и оставался бы недетерминированным.",
-                "how_it_should_be": "Время делают детерминированным через инъекцию `Clock` и `when(testClock.instant()).thenReturn(fixedInstant)`, что убирает зависимость от now()."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Flaky-тест — тест, который то проходит, то падает без изменений кода. Причины и решения: зависимость от порядка → изоляция данных и очистка в `@AfterEach`; таймауты (сеть, `Docker`) → увеличить timeout, использовать `Awaitility`; зависимость от времени → инжектить `Clock` и мокировать его; занятый порт → `RANDOM_PORT`; shared state → уникальные данные (`UUID`), отдельные схемы; race conditions → `Awaitility` вместо `Thread.sleep`, `@ResourceLock`. Мониторинг: тест с прохождением <99% запусков считается flaky и требует исправления.",
               "correct": true,
               "sections": {
@@ -1846,8 +1822,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Надёжнее всего бороться с flaky-тестами автоматическим `retry` упавшего теста (до трёх попыток) в `CI`: если хотя бы раз прошёл — тест считается зелёным.",
               "correct": false,
               "sections": {
@@ -1855,6 +1831,30 @@
                 "source_of_confusion": "Retry быстро «озеленяет» pipeline, отсюда соблазн считать его решением.",
                 "if_it_were_true": "Если бы retry решал проблему, не было бы рекомендации мониторить процент прохождения и чинить тесты с <99%.",
                 "how_it_should_be": "Retry прячет симптом; flaky чинят устранением причины — изоляцией данных, `Awaitility`, инъекцией `Clock` и `RANDOM_PORT`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Зависимость теста от текущего времени устраняют вызовом `Thread.sleep` перед проверкой, чтобы системные часы успели догнать ожидаемое значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Зависимость от времени лечат инъекцией `Clock` и мокированием времени (фиксированный `Instant`), а не `Thread.sleep`, который сам провоцирует флакость.",
+                "source_of_confusion": "Sleep кажется универсальным средством «подождать/синхронизировать», отсюда ошибочное применение.",
+                "if_it_were_true": "Если бы `sleep` решал проблему времени, тест всё равно зависел бы от реальных часов и оставался бы недетерминированным.",
+                "how_it_should_be": "Время делают детерминированным через инъекцию `Clock` и `when(testClock.instant()).thenReturn(fixedInstant)`, что убирает зависимость от now()."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Flaky-тест — это тест, который падает при каждом запуске; его помечают `@Disabled`, пока не найдётся время разобраться с причиной падения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Flaky-тест то ПРОХОДИТ, то ПАДАЕТ без изменений кода (нестабильный), а не всегда падает; и решение — устранить причину, а не отключать `@Disabled`.",
+                "source_of_confusion": "И нестабильный, и всегда падающий тест «красные» в `CI`, отсюда смешение понятий.",
+                "if_it_were_true": "Если бы flaky всегда падал, его нельзя было бы охарактеризовать процентом прохождения (<99%), как это делают при мониторинге.",
+                "how_it_should_be": "Flaky нестабилен по природе; его чинят, устраняя причину (изоляция данных, `Awaitility`, `Clock`, `RANDOM_PORT`), а не пряча `@Disabled`."
               }
             }
           ]
@@ -1869,6 +1869,19 @@
           "question_text": "Что такое Test Fixtures и как их организовать?",
           "options": [
             {
+              "text": "Test Fixtures — это подготовка фиксированного окружения и данных для тестов, организуемая через паттерны Builder и Object Mother, с разделением по фазам: `@BeforeAll` для дорогой инициализации, `@BeforeEach` для данных и очистки, базовые классы для общей конфигурации и `@Sql` для декларативной загрузки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Фикстура — это любое фиксированное состояние, от которого отталкивается тест. Builder даёт гибкую сборку объектов, Object Mother — фабрику типовых сущностей, а фазы жизненного цикла JUnit распределяют дорогую и дешёвую подготовку, чтобы тесты были быстрыми и изолированными.",
+                "example": "`TestUserBuilder` строит пользователя с нужными полями, `TestData.premiumUser()` отдаёт готового premium-пользователя, контейнер поднимается в `@BeforeAll`, а seed данных и их очистка выполняются в `@BeforeEach` или через `@Sql`.",
+                "when_to_apply": "Применять как только в тестах появляется дублирование при создании объектов или повторная дорогая инициализация — вынос в билдеры, фабрики и базовые классы убирает копипасту и ускоряет прогон.",
+                "edge_cases": "Чрезмерно сложные фикстуры с глубокими графами объектов делают тесты хрупкими и непонятными; общее мутабельное состояние между тестами без очистки в `@BeforeEach` приводит к flaky-эффекту.",
+                "related": "[[integration-testing-interview#Q16]] загрузка данных через `@Sql` и `Flyway`; [[integration-testing-interview#Q12]] базовый класс с общим контейнером; [[integration-testing-interview#Q35]] best practices и `Given-When-Then`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Test Fixtures — это исключительно SQL-скрипты в каталоге `src/test/resources`, которые Spring выполняет перед каждым классом тестов через аннотацию `@Sql`.",
               "correct": false,
               "sections": {
@@ -1876,18 +1889,6 @@
                 "source_of_confusion": "Аннотация `@Sql` — частый и наглядный способ задать фикстуру, поэтому её ошибочно отождествляют с понятием фикстуры целиком.",
                 "if_it_were_true": "Тогда builder-классы вроде `TestUserBuilder` и Object Mother нельзя было бы назвать фикстурами, хотя они служат той же цели — готовить состояние для теста.",
                 "how_it_should_be": "Test Fixture — это любая фиксированная подготовка состояния перед тестом; `@Sql` лишь один из инструментов наряду с билдерами и фабриками."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Test Fixtures работают только в `@BeforeEach` и не могут использовать `@BeforeAll`, потому что дорогая инициализация в тестах запрещена.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Фикстуры распределяют по фазам: `@BeforeAll` — для дорогой инициализации один раз на класс (запуск контейнеров), `@BeforeEach` — для данных и очистки между тестами.",
-                "source_of_confusion": "Совет минимизировать дорогую работу в каждом тесте путают с запретом на `@BeforeAll`, хотя именно `@BeforeAll` и спасает от повторов.",
-                "if_it_were_true": "Тогда контейнер `Testcontainers` пришлось бы поднимать перед каждым тестовым методом, что сделало бы прогон в разы медленнее.",
-                "how_it_should_be": "Дорогую инициализацию выносят в `@BeforeAll` или статический блок базового класса, а в `@BeforeEach` оставляют только seed и очистку данных."
               },
               "label": "B",
               "order": 1
@@ -1905,14 +1906,13 @@
               "order": 2
             },
             {
-              "text": "Test Fixtures — это подготовка фиксированного окружения и данных для тестов, организуемая через паттерны Builder и Object Mother, с разделением по фазам: `@BeforeAll` для дорогой инициализации, `@BeforeEach` для данных и очистки, базовые классы для общей конфигурации и `@Sql` для декларативной загрузки.",
-              "correct": true,
+              "text": "Test Fixtures работают только в `@BeforeEach` и не могут использовать `@BeforeAll`, потому что дорогая инициализация в тестах запрещена.",
+              "correct": false,
               "sections": {
-                "explanation": "Фикстура — это любое фиксированное состояние, от которого отталкивается тест. Builder даёт гибкую сборку объектов, Object Mother — фабрику типовых сущностей, а фазы жизненного цикла JUnit распределяют дорогую и дешёвую подготовку, чтобы тесты были быстрыми и изолированными.",
-                "example": "`TestUserBuilder` строит пользователя с нужными полями, `TestData.premiumUser()` отдаёт готового premium-пользователя, контейнер поднимается в `@BeforeAll`, а seed данных и их очистка выполняются в `@BeforeEach` или через `@Sql`.",
-                "when_to_apply": "Применять как только в тестах появляется дублирование при создании объектов или повторная дорогая инициализация — вынос в билдеры, фабрики и базовые классы убирает копипасту и ускоряет прогон.",
-                "edge_cases": "Чрезмерно сложные фикстуры с глубокими графами объектов делают тесты хрупкими и непонятными; общее мутабельное состояние между тестами без очистки в `@BeforeEach` приводит к flaky-эффекту.",
-                "related": "[[integration-testing-interview#Q16]] загрузка данных через `@Sql` и `Flyway`; [[integration-testing-interview#Q12]] базовый класс с общим контейнером; [[integration-testing-interview#Q35]] best practices и `Given-When-Then`."
+                "what_actually": "Фикстуры распределяют по фазам: `@BeforeAll` — для дорогой инициализации один раз на класс (запуск контейнеров), `@BeforeEach` — для данных и очистки между тестами.",
+                "source_of_confusion": "Совет минимизировать дорогую работу в каждом тесте путают с запретом на `@BeforeAll`, хотя именно `@BeforeAll` и спасает от повторов.",
+                "if_it_were_true": "Тогда контейнер `Testcontainers` пришлось бы поднимать перед каждым тестовым методом, что сделало бы прогон в разы медленнее.",
+                "how_it_should_be": "Дорогую инициализацию выносят в `@BeforeAll` или статический блок базового класса, а в `@BeforeEach` оставляют только seed и очистку данных."
               },
               "label": "D",
               "order": 3
@@ -1944,6 +1944,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Eviction кеша при обновлении в тесте не проверяют — это считается деталью реализации `Spring Cache`, а не логикой приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eviction проверяется наблюдаемо: после `updatePrice` следующий `findById` снова идёт в БД, и `verify(..., times(2))` это подтверждает.",
+                "source_of_confusion": "Инвалидация выглядит скрытой механикой, отсюда вывод о её непроверяемости.",
+                "if_it_were_true": "Если бы eviction нельзя было проверить, не существовало бы теста `shouldEvictCacheOnUpdate`.",
+                "how_it_should_be": "`@CacheEvict`-логику тестируют по эффекту: обновление сбрасывает кеш, и счётчик обращений к БД растёт на следующем чтении."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Тестируя кеш, нужно проверять внутреннее устройство `Redis`/`Caffeine` — что ключи реально лежат в хранилище в нужном формате.",
               "correct": false,
               "sections": {
@@ -1954,8 +1966,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Попадание в кеш проверяют через `@MockBean` на репозитории — заглушка подменяет метод, и по числу её вызовов судят о работе кеша.",
               "correct": false,
               "sections": {
@@ -1963,18 +1975,6 @@
                 "source_of_confusion": "`@MockBean` и `@SpyBean` похожи, отсюда выбор не той аннотации.",
                 "if_it_were_true": "Если бы использовали `@MockBean`, нельзя было бы отличить «реальный первый поход в БД» от «второй из кеша» — оба были бы заглушкой.",
                 "how_it_should_be": "Кеш тестируют со `@SpyBean`, считая реальные вызовы `findById`; `@MockBean` тут разрушил бы сам сценарий."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Eviction кеша при обновлении в тесте не проверяют — это считается деталью реализации `Spring Cache`, а не логикой приложения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Eviction проверяется наблюдаемо: после `updatePrice` следующий `findById` снова идёт в БД, и `verify(..., times(2))` это подтверждает.",
-                "source_of_confusion": "Инвалидация выглядит скрытой механикой, отсюда вывод о её непроверяемости.",
-                "if_it_were_true": "Если бы eviction нельзя было проверить, не существовало бы теста `shouldEvictCacheOnUpdate`.",
-                "how_it_should_be": "`@CacheEvict`-логику тестируют по эффекту: обновление сбрасывает кеш, и счётчик обращений к БД растёт на следующем чтении."
               }
             }
           ]
@@ -2003,6 +2003,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Smoke test` запускают локально на машине разработчика перед коммитом как быструю проверку, что сборка не сломана; после деплоя на стенд их уже не гоняют, чтобы не нагружать окружение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Smoke-тесты запускают в pipeline ПОСЛЕ деплоя для быстрой проверки развёрнутого приложения; локальный pre-commit прогон — это другая стадия.",
+                "source_of_confusion": "Любые «быстрые проверки» ассоциируются с локальным запуском, отсюда путаница места.",
+                "if_it_were_true": "Если бы smoke был только локальным, он не мог бы инициировать rollback или алерт по результату деплоя.",
+                "how_it_should_be": "Smoke выполняется после деплоя в pipeline, проверяя именно развёрнутый экземпляр, а не локальную сборку."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Smoke test` — минимальный набор проверок после деплоя: приложение запустилось (поднялся контекст), БД доступна, ключевые эндпоинты отвечают. Пишут как `@SpringBootTest(RANDOM_PORT)` с `@Tag(\"smoke\")`: проверяют, что контекст поднялся, что `/actuator/health` отдаёт `UP`, что главная страница отвечает `200`. Smoke-тесты быстрые (секунды), запускаются в pipeline после каждого деплоя; при падении — rollback или алерт. Они НЕ заменяют полные интеграционные тесты.",
               "correct": true,
               "sections": {
@@ -2011,18 +2023,6 @@
                 "when_to_apply": "Применяют сразу после деплоя в pipeline для быстрого решения «катить дальше или откатывать», как дешёвый health-gate.",
                 "edge_cases": "Smoke покрывает лишь критичный минимум, поэтому глубокие баги логики и интеграций он не ловит — для этого остаются полноценные интеграционные тесты.",
                 "related": "[[integration-testing-interview#Q28]] smoke-стадия в `CI/CD`; [[integration-testing-interview#Q8]] `TestRestTemplate` для проверки эндпоинтов; [[integration-testing-interview#Q35]] best practices тестирования."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Smoke test` запускают локально на машине разработчика перед коммитом как быструю проверку, что сборка не сломана; после деплоя на стенд их уже не гоняют, чтобы не нагружать окружение.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Smoke-тесты запускают в pipeline ПОСЛЕ деплоя для быстрой проверки развёрнутого приложения; локальный pre-commit прогон — это другая стадия.",
-                "source_of_confusion": "Любые «быстрые проверки» ассоциируются с локальным запуском, отсюда путаница места.",
-                "if_it_were_true": "Если бы smoke был только локальным, он не мог бы инициировать rollback или алерт по результату деплоя.",
-                "how_it_should_be": "Smoke выполняется после деплоя в pipeline, проверяя именно развёрнутый экземпляр, а не локальную сборку."
               }
             },
             {
@@ -2051,30 +2051,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Лучшая практика — заменить `Testcontainers` на `H2`: in-memory база в режиме `PostgreSQL`-совместимости точно воспроизводит поведение production-СУБД, зато тесты обходятся без `Docker`.",
+              "text": "Интеграционные тесты должны заново прогонять все ветки бизнес-логики, уже покрытые unit-тестами, — так итоговое покрытие надёжнее.",
               "correct": false,
               "sections": {
-                "what_actually": "Best practice ровно обратная: использовать `Testcontainers` вместо `H2`, потому что реальная БД ловит реальные баги, а `H2` отличается в SQL, `JSONB`, оконных функциях.",
-                "source_of_confusion": "`H2` быстра и удобна, отсюда ошибочное представление о её точности.",
-                "if_it_were_true": "Если бы `H2` была точнее, не рекомендовали бы `Testcontainers` ради совместимости с production.",
-                "how_it_should_be": "Рекомендуют `Testcontainers` для близости к проду; `H2` оставляют лишь для быстрых тестов с простым SQL."
+                "what_actually": "Best practice — НЕ дублировать unit-покрытие: интеграционные тесты проверяют ВЗАИМОДЕЙСТВИЕ, а логику покрывают unit-тестами.",
+                "source_of_confusion": "Кажется надёжнее «проверить всё дважды», отсюда соблазн дублирования.",
+                "if_it_were_true": "Если бы дублирование рекомендовалось, медленные интеграционные тесты разрослись бы и замедлили pipeline без новой ценности.",
+                "how_it_should_be": "Интеграционные тесты фокусируются на связках и контрактах; бизнес-логику оставляют быстрым unit-тестам."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Хорошая практика — помечать каждый интеграционный тест `@Transactional`: автоматический откат транзакции после теста надёжно изолирует данные и убирает ручную очистку.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Best practice — НЕ ставить `@Transactional` на интеграционные тесты: он скрывает `LazyInitializationException` и не тестирует транзакционные границы.",
-                "source_of_confusion": "Автооткат действительно удобен для изоляции, отсюда соблазн ставить аннотацию повсюду.",
-                "if_it_were_true": "Если бы `@Transactional` на тесте был best practice, не предупреждали бы о сокрытии багов (см. Q17).",
-                "how_it_should_be": "Изоляцию обеспечивают очисткой в `@AfterEach` или уникальными данными, а не `@Transactional`, искажающим поведение."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Ключевые best practices: (1) `Testcontainers` вместо `H2` — реальная БД ловит реальные баги; (2) НЕ ставить `@Transactional` на интеграционные тесты (скрывает `LazyInitializationException`); (3) изолировать тесты (`@AfterEach` или уникальные данные); (4) минимизировать `@MockBean` (каждый набор ломает кеш контекста); (5) использовать test slices; (6) разделять unit и integration по source set; (7) не дублировать unit-покрытие; (8) мониторить flaky; (9) быстрая обратная связь (fast на коммит, slow на PR); (10) читаемость через `Given-When-Then`.",
               "correct": true,
               "sections": {
@@ -2086,15 +2074,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Интеграционные тесты должны заново прогонять все ветки бизнес-логики, уже покрытые unit-тестами, — так итоговое покрытие надёжнее.",
+              "order": 2,
+              "label": "C",
+              "text": "Лучшая практика — заменить `Testcontainers` на `H2`: in-memory база в режиме `PostgreSQL`-совместимости точно воспроизводит поведение production-СУБД, зато тесты обходятся без `Docker`.",
               "correct": false,
               "sections": {
-                "what_actually": "Best practice — НЕ дублировать unit-покрытие: интеграционные тесты проверяют ВЗАИМОДЕЙСТВИЕ, а логику покрывают unit-тестами.",
-                "source_of_confusion": "Кажется надёжнее «проверить всё дважды», отсюда соблазн дублирования.",
-                "if_it_were_true": "Если бы дублирование рекомендовалось, медленные интеграционные тесты разрослись бы и замедлили pipeline без новой ценности.",
-                "how_it_should_be": "Интеграционные тесты фокусируются на связках и контрактах; бизнес-логику оставляют быстрым unit-тестам."
+                "what_actually": "Best practice ровно обратная: использовать `Testcontainers` вместо `H2`, потому что реальная БД ловит реальные баги, а `H2` отличается в SQL, `JSONB`, оконных функциях.",
+                "source_of_confusion": "`H2` быстра и удобна, отсюда ошибочное представление о её точности.",
+                "if_it_were_true": "Если бы `H2` была точнее, не рекомендовали бы `Testcontainers` ради совместимости с production.",
+                "how_it_should_be": "Рекомендуют `Testcontainers` для близости к проду; `H2` оставляют лишь для быстрых тестов с простым SQL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Хорошая практика — помечать каждый интеграционный тест `@Transactional`: автоматический откат транзакции после теста надёжно изолирует данные и убирает ручную очистку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Best practice — НЕ ставить `@Transactional` на интеграционные тесты: он скрывает `LazyInitializationException` и не тестирует транзакционные границы.",
+                "source_of_confusion": "Автооткат действительно удобен для изоляции, отсюда соблазн ставить аннотацию повсюду.",
+                "if_it_were_true": "Если бы `@Transactional` на тесте был best practice, не предупреждали бы о сокрытии багов (см. Q17).",
+                "how_it_should_be": "Изоляцию обеспечивают очисткой в `@AfterEach` или уникальными данными, а не `@Transactional`, искажающим поведение."
               }
             }
           ]
@@ -2111,30 +2111,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@DataJpaTest` поднимает весь `ApplicationContext` — контроллеры, сервисы и репозитории, как `@SpringBootTest`, но дополнительно оборачивает каждый тест в откатываемую транзакцию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@DataJpaTest` — это test slice, поднимающий ТОЛЬКО слой JPA (`EntityManager`, репозитории, миграции); контроллеры и `@Service`-бины он не загружает.",
-                "source_of_confusion": "Оба тестируют что-то с БД, отсюда смешение объёма поднимаемого контекста.",
-                "if_it_were_true": "Если бы `@DataJpaTest` грузил весь контекст, он не был бы быстрее и не отличался бы от `@SpringBootTest`.",
-                "how_it_should_be": "`@DataJpaTest` грузит лишь JPA-срез; полный контекст с контроллерами и сервисами даёт `@SpringBootTest`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`@DataJpaTest` по умолчанию подключается к реальной БД из `application.yml`, поэтому для изоляции тестов её вручную заменяют на `H2` через `@AutoConfigureTestDatabase(replace = ANY)`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию `@DataJpaTest` ЗАМЕНЯЕТ `DataSource` на встроенную `H2`; для реальной БД нужен `@AutoConfigureTestDatabase(replace = NONE)` + `Testcontainers`.",
-                "source_of_confusion": "Кажется логичным, что slice берёт ту же БД, что и приложение, отсюда заблуждение.",
-                "if_it_were_true": "Если бы он по умолчанию шёл в реальную БД, аннотация `replace = NONE` была бы излишней.",
-                "how_it_should_be": "`@DataJpaTest` по умолчанию идёт на `H2`; реальную БД включают явным `replace = NONE`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`TestEntityManager` — это стандартный JPA `EntityManager` под тестовым именем; методы `persist` и `flush` у него те же, а `persistAndFlush` — просто их последовательный вызов, отдельного тестового API он не добавляет.",
               "correct": false,
               "sections": {
@@ -2145,8 +2121,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "`@DataJpaTest` поднимает весь `ApplicationContext` — контроллеры, сервисы и репозитории, как `@SpringBootTest`, но дополнительно оборачивает каждый тест в откатываемую транзакцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@DataJpaTest` — это test slice, поднимающий ТОЛЬКО слой JPA (`EntityManager`, репозитории, миграции); контроллеры и `@Service`-бины он не загружает.",
+                "source_of_confusion": "Оба тестируют что-то с БД, отсюда смешение объёма поднимаемого контекста.",
+                "if_it_were_true": "Если бы `@DataJpaTest` грузил весь контекст, он не был бы быстрее и не отличался бы от `@SpringBootTest`.",
+                "how_it_should_be": "`@DataJpaTest` грузит лишь JPA-срез; полный контекст с контроллерами и сервисами даёт `@SpringBootTest`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`@DataJpaTest` — test slice, поднимающий только JPA-слой: `EntityManager`, репозитории и Flyway/Liquibase-миграции; контроллеры и сервисы не загружаются. По умолчанию использует `H2`, поэтому для реальной БД добавляют `@AutoConfigureTestDatabase(replace = NONE)` + `@Testcontainers`. В тестах инжектят `TestEntityManager` (обёртка с `persistAndFlush`/`clear`) и сам репозиторий, после чего проверяют запросы вроде `findByEmail` через `assertThat(found).isPresent()`.",
               "correct": true,
               "sections": {
@@ -2155,6 +2143,18 @@
                 "when_to_apply": "Берут для изолированного теста слоя репозитория: derived-queries, native-запросы, маппинг сущностей — без поднятия всего приложения.",
                 "edge_cases": "По умолчанию `@DataJpaTest` подменяет БД на `H2`, что может скрыть БД-специфичные баги; для production-точности обязательно `replace = NONE` и `Testcontainers`.",
                 "related": "[[integration-testing-interview#Q4]] что такое test slices; [[integration-testing-interview#Q14]] `@DataJpaTest` + `Testcontainers`; [[integration-testing-interview#Q37]] `@JsonTest` как другой slice."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@DataJpaTest` по умолчанию подключается к реальной БД из `application.yml`, поэтому для изоляции тестов её вручную заменяют на `H2` через `@AutoConfigureTestDatabase(replace = ANY)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `@DataJpaTest` ЗАМЕНЯЕТ `DataSource` на встроенную `H2`; для реальной БД нужен `@AutoConfigureTestDatabase(replace = NONE)` + `Testcontainers`.",
+                "source_of_confusion": "Кажется логичным, что slice берёт ту же БД, что и приложение, отсюда заблуждение.",
+                "if_it_were_true": "Если бы он по умолчанию шёл в реальную БД, аннотация `replace = NONE` была бы излишней.",
+                "how_it_should_be": "`@DataJpaTest` по умолчанию идёт на `H2`; реальную БД включают явным `replace = NONE`."
               }
             }
           ]
@@ -2171,14 +2171,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@JsonTest` загружает только конфигурацию `Jackson` (или Gson/JSONB) без MVC-слоя и БД — быстрый способ проверить `@JsonComponent`, кастомные сериализаторы и формат DTO. В тест инжектят `JacksonTester<OrderDto>` и проверяют сериализацию (`json.write(order)` + `assertThat(result).hasJsonPathStringValue(\"$.customerName\", \"Alice\")`) и десериализацию (`json.parse(...)` + `usingRecursiveComparison()`).",
-              "correct": true,
+              "text": "Для проверки JSON через `@JsonTest` сериализацию делают вручную через `new ObjectMapper()`, инжектить ничего не нужно.",
+              "correct": false,
               "sections": {
-                "explanation": "Slice грузит лишь сериализационный слой, поэтому тест проверяет именно маппинг DTO ↔ JSON: имена полей, формат дат, включение/исключение null.",
-                "example": "`json.write(order)` даёт `JsonContent`, и `assertThat(result).hasJsonPathStringValue(\"$.createdAt\", \"2026-04-13T12:00:00\")` проверяет формат даты, а `doesNotHaveJsonPathValue(\"$.internalField\")` — что поле скрыто.",
-                "when_to_apply": "Применяют для проверки контракта JSON в изоляции: кастомные сериализаторы, `@JsonInclude`, формат `LocalDateTime` — без поднятия контроллеров и БД.",
-                "edge_cases": "`@JsonTest` проверяет только сериализацию, но не HTTP-маршрутизацию и статусы; для endpoint-уровня берут `@WebMvcTest` с `MockMvc`.",
-                "related": "[[integration-testing-interview#Q4]] `@JsonTest` среди test slices; [[integration-testing-interview#Q5]] `@WebMvcTest` для endpoint-уровня; [[integration-testing-interview#Q36]] `@DataJpaTest` как другой slice."
+                "what_actually": "`@JsonTest` предоставляет готовый `JacksonTester<T>` (с тем же `ObjectMapper`, что и в приложении), который и инжектят; ручной `new ObjectMapper()` не использует конфигурацию приложения.",
+                "source_of_confusion": "Создать `ObjectMapper` вручную привычно, отсюда соблазн обойтись без инъекции.",
+                "if_it_were_true": "Если бы мапили вручную, тест не учитывал бы кастомные `@JsonComponent` и настройки `Jackson` из контекста.",
+                "how_it_should_be": "В `@JsonTest` инжектят `JacksonTester`, использующий реальную конфигурацию `Jackson`; ручной маппер обошёл бы её."
               }
             },
             {
@@ -2196,18 +2195,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для проверки JSON через `@JsonTest` сериализацию делают вручную через `new ObjectMapper()`, инжектить ничего не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@JsonTest` предоставляет готовый `JacksonTester<T>` (с тем же `ObjectMapper`, что и в приложении), который и инжектят; ручной `new ObjectMapper()` не использует конфигурацию приложения.",
-                "source_of_confusion": "Создать `ObjectMapper` вручную привычно, отсюда соблазн обойтись без инъекции.",
-                "if_it_were_true": "Если бы мапили вручную, тест не учитывал бы кастомные `@JsonComponent` и настройки `Jackson` из контекста.",
-                "how_it_should_be": "В `@JsonTest` инжектят `JacksonTester`, использующий реальную конфигурацию `Jackson`; ручной маппер обошёл бы её."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`@JsonTest` умеет только сериализацию (object → JSON) и не поддерживает обратный разбор JSON в объект.",
               "correct": false,
               "sections": {
@@ -2215,6 +2202,19 @@
                 "source_of_confusion": "Чаще показывают `write`, отсюда впечатление, что `parse` недоступен.",
                 "if_it_were_true": "Если бы десериализации не было, нельзя было бы проверить корректность чтения JSON в DTO через `json.parse(...)`.",
                 "how_it_should_be": "`@JsonTest` тестирует и запись, и чтение JSON; `JacksonTester` даёт `write` и `parse` для обоих направлений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@JsonTest` загружает только конфигурацию `Jackson` (или Gson/JSONB) без MVC-слоя и БД — быстрый способ проверить `@JsonComponent`, кастомные сериализаторы и формат DTO. В тест инжектят `JacksonTester<OrderDto>` и проверяют сериализацию (`json.write(order)` + `assertThat(result).hasJsonPathStringValue(\"$.customerName\", \"Alice\")`) и десериализацию (`json.parse(...)` + `usingRecursiveComparison()`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Slice грузит лишь сериализационный слой, поэтому тест проверяет именно маппинг DTO ↔ JSON: имена полей, формат дат, включение/исключение null.",
+                "example": "`json.write(order)` даёт `JsonContent`, и `assertThat(result).hasJsonPathStringValue(\"$.createdAt\", \"2026-04-13T12:00:00\")` проверяет формат даты, а `doesNotHaveJsonPathValue(\"$.internalField\")` — что поле скрыто.",
+                "when_to_apply": "Применяют для проверки контракта JSON в изоляции: кастомные сериализаторы, `@JsonInclude`, формат `LocalDateTime` — без поднятия контроллеров и БД.",
+                "edge_cases": "`@JsonTest` проверяет только сериализацию, но не HTTP-маршрутизацию и статусы; для endpoint-уровня берут `@WebMvcTest` с `MockMvc`.",
+                "related": "[[integration-testing-interview#Q4]] `@JsonTest` среди test slices; [[integration-testing-interview#Q5]] `@WebMvcTest` для endpoint-уровня; [[integration-testing-interview#Q36]] `@DataJpaTest` как другой slice."
               }
             }
           ]
@@ -2231,13 +2231,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RestAssured` выполняет запросы in-process поверх `DispatcherServlet`, как `MockMvc`, не открывая реальный TCP-порт.",
+              "text": "`RestAssured` проверяет только HTTP-статус и заголовки; для валидации тела ответа его приходится комбинировать с отдельным `JsonPath`-парсером вручную.",
               "correct": false,
               "sections": {
-                "what_actually": "`RestAssured` тестирует РЕАЛЬНЫЙ HTTP-стек: его запускают с `@SpringBootTest(RANDOM_PORT)`, задают `RestAssured.port = port` и шлют настоящие запросы; in-process — это `MockMvc`.",
-                "source_of_confusion": "Оба используют `given-when-then`-стиль, отсюда смешение их способа доставки запроса.",
-                "if_it_were_true": "Если бы `RestAssured` работал in-process, не нужен был бы `@LocalServerPort` и `RANDOM_PORT`.",
-                "how_it_should_be": "`RestAssured` ходит по реальной сети к поднятому серверу; для in-process тестов контроллера берут `MockMvc`."
+                "what_actually": "`RestAssured` богато проверяет тело через JSON-path: `.body(\"status\", equalTo(\"PENDING\"))`, `.body(\"id\", notNullValue())`, `.body(\"content\", hasSize(...))` и заголовки.",
+                "source_of_confusion": "Статус-код — самая заметная проверка, отсюда недооценка работы с телом.",
+                "if_it_were_true": "Если бы тело не проверялось, нельзя было бы ассертить `error == \"Order not found\"` или поля созданного заказа.",
+                "how_it_should_be": "`RestAssured` проверяет и статус, и заголовки, и тело по JSON-path — полноценные ассерты ответа."
               }
             },
             {
@@ -2256,18 +2256,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`RestAssured` проверяет только HTTP-статус и заголовки; для валидации тела ответа его приходится комбинировать с отдельным `JsonPath`-парсером вручную.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`RestAssured` богато проверяет тело через JSON-path: `.body(\"status\", equalTo(\"PENDING\"))`, `.body(\"id\", notNullValue())`, `.body(\"content\", hasSize(...))` и заголовки.",
-                "source_of_confusion": "Статус-код — самая заметная проверка, отсюда недооценка работы с телом.",
-                "if_it_were_true": "Если бы тело не проверялось, нельзя было бы ассертить `error == \"Order not found\"` или поля созданного заказа.",
-                "how_it_should_be": "`RestAssured` проверяет и статус, и заголовки, и тело по JSON-path — полноценные ассерты ответа."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`RestAssured` и `MockMvc` под капотом используют один и тот же тестовый механизм Spring, поэтому выбор между ними — чисто вопрос синтаксиса DSL.",
               "correct": false,
               "sections": {
@@ -2275,6 +2263,18 @@
                 "source_of_confusion": "Похожий `given-when-then`-DSL создаёт впечатление эквивалентности.",
                 "if_it_were_true": "Если бы они были идентичны, не было бы таблицы различий (реальный HTTP, скорость, middleware) между ними.",
                 "how_it_should_be": "`RestAssured` — для `E2E` через реальный HTTP, `MockMvc` — для быстрых слайс-тестов контроллера in-process; это разные инструменты."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`RestAssured` выполняет запросы in-process поверх `DispatcherServlet`, как `MockMvc`, не открывая реальный TCP-порт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RestAssured` тестирует РЕАЛЬНЫЙ HTTP-стек: его запускают с `@SpringBootTest(RANDOM_PORT)`, задают `RestAssured.port = port` и шлют настоящие запросы; in-process — это `MockMvc`.",
+                "source_of_confusion": "Оба используют `given-when-then`-стиль, отсюда смешение их способа доставки запроса.",
+                "if_it_were_true": "Если бы `RestAssured` работал in-process, не нужен был бы `@LocalServerPort` и `RANDOM_PORT`.",
+                "how_it_should_be": "`RestAssured` ходит по реальной сети к поднятому серверу; для in-process тестов контроллера берут `MockMvc`."
               }
             }
           ]
@@ -2315,6 +2315,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Проверить `401` для неаутентифицированного запроса в `@WebMvcTest` нельзя: security-фильтры в этом срезе не подключаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@WebMvcTest` поднимает `Spring Security`-фильтры, поэтому неаутентифицированный запрос штатно даёт `401` (`status().isUnauthorized()`).",
+                "source_of_confusion": "Срез выглядит «урезанным», отсюда вывод, что security в нём отключён.",
+                "if_it_were_true": "Если бы фильтры не работали, тест `shouldReturn401WhenNotAuthenticated` не мог бы существовать.",
+                "how_it_should_be": "`@WebMvcTest` включает security-слой; правила доступа и `401`/`403` в нём полноценно проверяются через `MockMvc`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Spring Security` тестируют в `@WebMvcTest` через `MockMvc` и аннотации контекста: без аутентификации запрос даёт `401` (`status().isUnauthorized()`), `@WithMockUser(roles={\"USER\"})` — `200` для разрешённого и `403` для запрещённого по роли, `@WithMockUser(roles={\"ADMIN\"})` — доступ к admin-операции. Для JWT пишут кастомную аннотацию с `@WithSecurityContext(factory = ...)`, где фабрика собирает `JwtAuthenticationToken` со scope-ами.",
               "correct": true,
               "sections": {
@@ -2323,18 +2335,6 @@
                 "when_to_apply": "Применяют для проверки правил доступа (`401`/`403`/`200`), ролей и scope-ов JWT в изоляции web-слоя, без поднятия реального провайдера аутентификации.",
                 "edge_cases": "`@WithMockUser` не воспроизводит реальную валидацию токена/пароля, поэтому сам механизм аутентификации (выдача и проверка JWT) тестируют отдельно, а не через эти аннотации.",
                 "related": "[[integration-testing-interview#Q5]] `MockMvc` для web-слоя; [[integration-testing-interview#Q4]] `@WebMvcTest` как slice; [[integration-testing-interview#Q35]] best practices интеграционного тестирования."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Проверить `401` для неаутентифицированного запроса в `@WebMvcTest` нельзя: security-фильтры в этом срезе не подключаются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@WebMvcTest` поднимает `Spring Security`-фильтры, поэтому неаутентифицированный запрос штатно даёт `401` (`status().isUnauthorized()`).",
-                "source_of_confusion": "Срез выглядит «урезанным», отсюда вывод, что security в нём отключён.",
-                "if_it_were_true": "Если бы фильтры не работали, тест `shouldReturn401WhenNotAuthenticated` не мог бы существовать.",
-                "how_it_should_be": "`@WebMvcTest` включает security-слой; правила доступа и `401`/`403` в нём полноценно проверяются через `MockMvc`."
               }
             }
           ]
@@ -2351,6 +2351,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`@RestClientTest` — test slice для тестирования компонентов на `RestTemplate`/`RestClient`: он загружает только конфигурацию HTTP-клиентов и автоматически создаёт `MockRestServiceServer`. Это аналог `@WebMvcTest`, но для ИСХОДЯЩИХ вызовов: `mockServer.expect(requestTo(url + \"/charge\")).andExpect(method(POST)).andRespond(withSuccess(...))`, затем вызывают клиент и `mockServer.verify()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Slice изолирует клиент от реальных внешних сервисов и проверяет маппинг запросов/ответов без поднятия полного контекста и реальной сети.",
+                "example": "`mockServer.expect(requestTo(gatewayUrl + \"/charge\")).andRespond(withSuccess(\"{...}\", JSON))` + `client.charge(...)` проверяет `transactionId`/`status`, а `andRespond(withServerError())` — обработку ошибки шлюза.",
+                "when_to_apply": "Берут для теста HTTP-клиента (`PaymentGatewayClient`): корректность URL, метода, тела запроса и парсинга ответа — быстро и без внешних зависимостей.",
+                "edge_cases": "`MockRestServiceServer` мокирует на уровне `RestTemplate` без реальной сети, поэтому сетевые нюансы (реальные таймауты, TLS) `@RestClientTest` не проверяет — для этого нужен `WireMock` или реальный HTTP.",
+                "related": "[[integration-testing-interview#Q18]] `WireMock` для реального HTTP-мока; [[integration-testing-interview#Q4]] `@RestClientTest` среди test slices; [[integration-testing-interview#Q20]] сценарии ошибок исходящих вызовов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`@RestClientTest` тестирует входящие HTTP-запросы к контроллерам, как `@WebMvcTest`.",
               "correct": false,
               "sections": {
@@ -2358,18 +2371,6 @@
                 "source_of_confusion": "Оба слайса связаны с HTTP, отсюда путаница направления (входящий vs исходящий).",
                 "if_it_were_true": "Если бы `@RestClientTest` тестировал контроллеры, в нём не было бы `MockRestServiceServer` для мокирования внешнего сервиса.",
                 "how_it_should_be": "`@RestClientTest` — для клиентов исходящих вызовов; для входящих эндпоинтов берут `@WebMvcTest` с `MockMvc`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "В `@RestClientTest` внешний сервис мокируют через `WireMock`, поднимая реальный HTTP-сервер.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@RestClientTest` использует `MockRestServiceServer` (мокирование на уровне `RestTemplate`, без реальной сети), а не `WireMock` с реальным сервером.",
-                "source_of_confusion": "И то, и другое мокирует внешний HTTP, отсюда смешение инструментов.",
-                "if_it_were_true": "Если бы нужен был `WireMock`, аннотация не создавала бы автоматически `MockRestServiceServer`.",
-                "how_it_should_be": "`@RestClientTest` мокирует ответы через `MockRestServiceServer` внутри клиента; `WireMock` — это отдельный реальный сервер-заглушка."
               }
             },
             {
@@ -2387,14 +2388,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@RestClientTest` — test slice для тестирования компонентов на `RestTemplate`/`RestClient`: он загружает только конфигурацию HTTP-клиентов и автоматически создаёт `MockRestServiceServer`. Это аналог `@WebMvcTest`, но для ИСХОДЯЩИХ вызовов: `mockServer.expect(requestTo(url + \"/charge\")).andExpect(method(POST)).andRespond(withSuccess(...))`, затем вызывают клиент и `mockServer.verify()`.",
-              "correct": true,
+              "text": "В `@RestClientTest` внешний сервис мокируют через `WireMock`, поднимая реальный HTTP-сервер.",
+              "correct": false,
               "sections": {
-                "explanation": "Slice изолирует клиент от реальных внешних сервисов и проверяет маппинг запросов/ответов без поднятия полного контекста и реальной сети.",
-                "example": "`mockServer.expect(requestTo(gatewayUrl + \"/charge\")).andRespond(withSuccess(\"{...}\", JSON))` + `client.charge(...)` проверяет `transactionId`/`status`, а `andRespond(withServerError())` — обработку ошибки шлюза.",
-                "when_to_apply": "Берут для теста HTTP-клиента (`PaymentGatewayClient`): корректность URL, метода, тела запроса и парсинга ответа — быстро и без внешних зависимостей.",
-                "edge_cases": "`MockRestServiceServer` мокирует на уровне `RestTemplate` без реальной сети, поэтому сетевые нюансы (реальные таймауты, TLS) `@RestClientTest` не проверяет — для этого нужен `WireMock` или реальный HTTP.",
-                "related": "[[integration-testing-interview#Q18]] `WireMock` для реального HTTP-мока; [[integration-testing-interview#Q4]] `@RestClientTest` среди test slices; [[integration-testing-interview#Q20]] сценарии ошибок исходящих вызовов."
+                "what_actually": "`@RestClientTest` использует `MockRestServiceServer` (мокирование на уровне `RestTemplate`, без реальной сети), а не `WireMock` с реальным сервером.",
+                "source_of_confusion": "И то, и другое мокирует внешний HTTP, отсюда смешение инструментов.",
+                "if_it_were_true": "Если бы нужен был `WireMock`, аннотация не создавала бы автоматически `MockRestServiceServer`.",
+                "how_it_should_be": "`@RestClientTest` мокирует ответы через `MockRestServiceServer` внутри клиента; `WireMock` — это отдельный реальный сервер-заглушка."
               }
             }
           ]
