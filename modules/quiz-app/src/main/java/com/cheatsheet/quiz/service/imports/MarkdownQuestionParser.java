@@ -48,8 +48,16 @@ public class MarkdownQuestionParser {
     /** Паттерн заголовка вопроса: {@code ## Q<число>[.] <текст>}. */
     private static final Pattern QUESTION_PATTERN = Pattern.compile("^##\\s+Q(\\d+)\\.?\\s*(.*)$");
 
-    /** Regex для извлечения code block: {@code ```lang ... ```}. */
-    private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("```[a-zA-Z]*\\s*([\\s\\S]*?)```", Pattern.MULTILINE);
+    /**
+     * Regex для извлечения fenced-блока: {@code ```lang ... ```}.
+     * group(1) — language-тег (может быть пустым), group(2) — тело блока.
+     * Тег больше НЕ отбрасывается: он нужен, чтобы отличить ```mermaid (диаграмма
+     * → diagram_mermaid) от обычного кода (```java/```sql/… → code_snippet).
+     */
+    private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("```([a-zA-Z]*)\\s*([\\s\\S]*?)```", Pattern.MULTILINE);
+
+    /** Language-тег fenced-блока, обозначающий Mermaid-диаграмму. */
+    private static final String MERMAID_LANG = "mermaid";
 
     /** Regex для удаления устаревшего маркера важности (case-insensitive): (важно). */
     private static final String REGEX_LEGACY_IMPORTANT = "(?iu)\\(важно\\)";
@@ -148,6 +156,7 @@ public class MarkdownQuestionParser {
      * @param important      {@code true} если помечен как ВАЖНО
      * @param questionType   тип вопроса (TEXT или CODE)
      * @param codeSnippet    первый блок кода из ответа (для типа CODE)
+     * @param diagramMermaid первый ```mermaid-блок из ответа (диаграмма условия, nullable)
      */
     @Builder(toBuilder = true)
     public record ParsedQuestion(
@@ -157,30 +166,47 @@ public class MarkdownQuestionParser {
             String rawAnswer,
             boolean important,
             QuestionType questionType,
-            String codeSnippet
+            String codeSnippet,
+            String diagramMermaid
     ) {}
 
     /**
-     * Определяет тип вопроса и извлекает блок кода из answer_markdown.
-     * CODE — если есть блок ``` длиной > 50 символов.
+     * Определяет тип вопроса и извлекает из answer_markdown первый блок кода и первую
+     * Mermaid-диаграмму.
+     *
+     * <p>Fenced-блоки с тегом {@code mermaid} — это диаграммы: их тело идёт в
+     * {@code diagramMermaid} (рендерится mermaid.js как SVG), а НЕ в {@code codeSnippet}.
+     * Раньше тег отбрасывался, и mermaid-блок попадал в {@code codeSnippet} как
+     * {@code QuestionType.CODE} → на экране вопроса рисовался экранированный текст графа
+     * с литеральными {@code <br/>} вместо диаграммы. CODE — если есть НЕ-mermaid блок
+     * длиной ≥ {@code minCodeBlockLength}. Mermaid берётся независимо от длины.</p>
      */
     private CodeExtractionResult extractCodeAndType(String answerMarkdown) {
         if (answerMarkdown == null || answerMarkdown.isBlank()) {
-            return new CodeExtractionResult(QuestionType.TEXT, null);
+            return new CodeExtractionResult(QuestionType.TEXT, null, null);
         }
+        int minLen = appProperties.getImportSettings().getMinCodeBlockLength();
         Matcher m = CODE_BLOCK_PATTERN.matcher(answerMarkdown);
-        if (m.find()) {
-            String code = m.group(1).trim();
-            int minLen = appProperties.getImportSettings().getMinCodeBlockLength();
-            if (code.length() >= minLen) {
-                return new CodeExtractionResult(QuestionType.CODE, code);
+        QuestionType type = QuestionType.TEXT;
+        String codeSnippet = null;
+        String diagramMermaid = null;
+        while ((codeSnippet == null || diagramMermaid == null) && m.find()) {
+            String lang = m.group(1) == null ? "" : m.group(1).trim().toLowerCase();
+            String body = m.group(2).trim();
+            if (MERMAID_LANG.equals(lang)) {
+                if (diagramMermaid == null && !body.isBlank()) {
+                    diagramMermaid = body;
+                }
+            } else if (codeSnippet == null && body.length() >= minLen) {
+                codeSnippet = body;
+                type = QuestionType.CODE;
             }
         }
-        return new CodeExtractionResult(QuestionType.TEXT, null);
+        return new CodeExtractionResult(type, codeSnippet, diagramMermaid);
     }
 
     @Builder(toBuilder = true)
-    private record CodeExtractionResult(QuestionType type, String codeSnippet) {}
+    private record CodeExtractionResult(QuestionType type, String codeSnippet, String diagramMermaid) {}
 
     /** Внутренний builder для ParsedQuestion (для накопления answer). */
     private class ParsedQuestionBuilder {
@@ -206,7 +232,7 @@ public class MarkdownQuestionParser {
                     answerMarkdown,
                     answerMarkdown,
                     important,
-                    extraction.type(), extraction.codeSnippet());
+                    extraction.type(), extraction.codeSnippet(), extraction.diagramMermaid());
         }
     }
 }

@@ -206,7 +206,8 @@ public class QuestionImportService {
         if (existing.isEmpty()) {
             Question question = Question.forImport(slug, relativePath, topic,
                     parsed.questionText(), parsed.answerMarkdown(), parsed.important(), sourceHash,
-                    parsed.questionType(), parsed.codeSnippet());
+                    parsed.questionType(), parsed.codeSnippet())
+                    .toBuilder().diagramMermaid(parsed.diagramMermaid()).build();
             long id = questionRepository.insert(question);
             reviewStateRepository.insertIfAbsent(id, clock.instant().getEpochSecond());
             questionRevisionRepository.append(id, sourceHash, clock.instant().getEpochSecond());
@@ -216,9 +217,11 @@ public class QuestionImportService {
 
         if (!existing.get().sourceHash().equals(sourceHash)) {
             Question current = existing.get();
+            // diagramMermaid перечитываем из parsed (контент изменился → диаграмма
+            // могла появиться/исчезнуть/поменяться), а не сохраняем старое current-значение.
             Question updatedQuestion = new Question(current.id(), current.slug(), current.sourceSlug(), relativePath, topic,
                     parsed.questionText(), parsed.answerMarkdown(), parsed.important(), sourceHash,
-                    parsed.questionType(), parsed.codeSnippet(), current.diagramMermaid(), current.regenCount(), current.takeaway());
+                    parsed.questionType(), parsed.codeSnippet(), parsed.diagramMermaid(), current.regenCount(), current.takeaway());
             questionRepository.update(updatedQuestion);
             answerOptionRepository.deleteByQuestionId(current.id());
             optionCache.invalidate(current.id());

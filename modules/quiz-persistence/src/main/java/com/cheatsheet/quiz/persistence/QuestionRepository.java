@@ -197,12 +197,13 @@ public class QuestionRepository {
     public void update(Question question) {
         jdbcTemplate.update(
                 "UPDATE questions SET source_slug = ?, file_path = ?, topic = ?, question_text = ?, answer_markdown = ?, " +
-                        "is_important = ?, source_hash = ?, question_type = ?, code_snippet = ?, difficulty = ?, short_explanation = ?, " +
+                        "is_important = ?, source_hash = ?, question_type = ?, code_snippet = ?, diagram_mermaid = ?, difficulty = ?, short_explanation = ?, " +
                         "detailed_explanation = ?, common_mistake = ?, tags = ? WHERE id = ?",
                 question.sourceSlug() != null ? question.sourceSlug() : question.slug(),
                 question.filePath(), question.topic(), question.questionText(),
                 question.answerMarkdown(), question.important() ? 1 : 0,
                 question.sourceHash(), questionTypeOrDefault(question), question.codeSnippet(),
+                stripNul(question.diagramMermaid()),
                 question.difficulty() == null ? Difficulty.MEDIUM.name() : question.difficulty().name(),
                 question.shortExplanation(),
                 question.detailedExplanation(),

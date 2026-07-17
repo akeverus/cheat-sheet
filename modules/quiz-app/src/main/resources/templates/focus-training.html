@@ -109,6 +109,19 @@
             </details>
         </div>
 
+        <!-- P0.2: Mermaid-диаграмма условия. Источник — ```mermaid fence в cheatsheet;
+             парсер кладёт его в diagram_mermaid (не в code_snippet), поэтому здесь это
+             отдельное поле. mermaid-init (head includeMermaid=true) рисует .mermaid по
+             textContent → SVG. Раньше mermaid попадал в code_snippet и рендерился как
+             экранированный текст графа с литеральными <br/>. Обёртка .question-diagram
+             нужна guard-логике mermaid-init: при ошибке рендера снимается весь блок, а
+             не остаётся сырой код. th:text (не th:utext) — mermaid читает textContent,
+             экранирование корректно. -->
+        <div class="question-diagram question-diagram-wrap"
+             th:if="${current.question.diagramMermaid() != null and !current.question.diagramMermaid().isBlank()}">
+            <pre class="mermaid" th:text="${current.question.diagramMermaid()}"></pre>
+        </div>
+
         <div th:if="${flashcardMode}" class="flashcard-phase"
              th:with="sessionFlashcard=${interviewSession != null and interviewSession.mode != null and interviewSession.mode.name() == 'FLASHCARD'}">
             <div class="flashcard-badge">Флешкарта — вспомни ответ до раскрытия</div>

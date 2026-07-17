@@ -54,6 +54,60 @@ class MarkdownQuestionParserTest {
     }
 
     @Test
+    void routesMermaidFenceToDiagramNotCodeSnippet() throws IOException {
+        Path file = tempDir.resolve("mermaid.md");
+        Files.writeString(file, """
+                ## Q1. Как устроены ACID-свойства транзакции?
+                Транзакция обладает свойствами ACID.
+
+                ```mermaid
+                graph LR
+                    A[Atomicity] --> C[Consistency]
+                    C --> I[Isolation]
+                    I --> D[Durability]
+                ```
+                """);
+
+        List<MarkdownQuestionParser.ParsedQuestion> questions = parser().parse(file);
+
+        assertThat(questions).hasSize(1);
+        MarkdownQuestionParser.ParsedQuestion q = questions.get(0);
+        // mermaid-блок — диаграмма, не код: тело идёт в diagramMermaid, а не в codeSnippet.
+        assertThat(q.questionType()).isEqualTo(QuestionType.TEXT);
+        assertThat(q.codeSnippet()).isNull();
+        assertThat(q.diagramMermaid()).contains("graph LR").contains("Atomicity");
+    }
+
+    @Test
+    void extractsBothMermaidDiagramAndCodeSnippet() throws IOException {
+        Path file = tempDir.resolve("mixed.md");
+        Files.writeString(file, """
+                ## Q1. Что выведет код и как устроен поток?
+                Разбор ниже.
+
+                ```mermaid
+                graph TD
+                    Start --> Finish
+                ```
+
+                ```java
+                for (int i = 0; i < 10; i++) {
+                    System.out.println(i);
+                }
+                ```
+                """);
+
+        List<MarkdownQuestionParser.ParsedQuestion> questions = parser().parse(file);
+
+        assertThat(questions).hasSize(1);
+        MarkdownQuestionParser.ParsedQuestion q = questions.get(0);
+        // Оба блока извлекаются независимо: mermaid → диаграмма, java → код.
+        assertThat(q.diagramMermaid()).contains("graph TD");
+        assertThat(q.questionType()).isEqualTo(QuestionType.CODE);
+        assertThat(q.codeSnippet()).contains("for (int i = 0; i < 10; i++)").doesNotContain("graph TD");
+    }
+
+    @Test
     void parsesMarkdownWithoutMcqBlocks() throws IOException {
         Path file = tempDir.resolve("clean.md");
         Files.writeString(file, """
