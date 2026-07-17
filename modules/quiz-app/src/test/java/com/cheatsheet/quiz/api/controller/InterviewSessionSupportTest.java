@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.api.controller;
 import com.cheatsheet.quiz.domain.AnswerDisplayMode;
 import com.cheatsheet.quiz.domain.AnswerOption;
 import com.cheatsheet.quiz.domain.AnswerResult;
+import com.cheatsheet.quiz.domain.AttemptOutcome;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
@@ -13,6 +14,7 @@ import com.cheatsheet.quiz.domain.ReviewState;
 import com.cheatsheet.quiz.feature.interview.controller.HttpSessionStateService;
 import com.cheatsheet.quiz.feature.interview.controller.InterviewSessionSupport;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
+import com.cheatsheet.quiz.feature.interview.service.review.AttemptRecorder;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +44,8 @@ class InterviewSessionSupportTest {
     @Mock
     private HttpSessionStateService httpSessionStateService;
     @Mock
+    private AttemptRecorder attemptRecorder;
+    @Mock
     private HttpSession session;
     @Mock
     private InterviewSession interviewSession;
@@ -49,7 +54,7 @@ class InterviewSessionSupportTest {
 
     @BeforeEach
     void setUp() {
-        support = new InterviewSessionSupport(interviewService, httpSessionStateService);
+        support = new InterviewSessionSupport(interviewService, httpSessionStateService, attemptRecorder);
     }
 
     @Test
@@ -77,6 +82,8 @@ class InterviewSessionSupportTest {
         verify(interviewSession).registerAnswer(false, "java");
         verify(interviewService).addExamPenaltyQuestions(interviewSession);
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
+        // Фаза 2: реальный сабмит пишет попытку (WRONG, грейд=уверенность, выбранный вариант).
+        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.WRONG), eq(4), eq(3L), isNull(), any());
     }
 
     @Test
@@ -177,6 +184,8 @@ class InterviewSessionSupportTest {
         verify(interviewSession, never()).registerAnswer(anyBoolean(), anyString());
         verify(interviewService, never()).addExamPenaltyQuestions(any());
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
+        // FLOW-02: устаревший дубль НЕ пишет вторую попытку.
+        verify(attemptRecorder, never()).record(anyLong(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -196,6 +205,8 @@ class InterviewSessionSupportTest {
         verify(interviewSession).registerUnknown("java");
         verify(interviewService).addExamPenaltyQuestions(interviewSession);
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
+        // «Не знаю» логируется как UNKNOWN, грейд 0, без выбранного варианта.
+        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.UNKNOWN), eq(0), isNull(), isNull(), any());
     }
 
     @Test
@@ -229,6 +240,7 @@ class InterviewSessionSupportTest {
         verify(interviewSession, never()).registerUnknown(anyString());
         verify(interviewService, never()).addExamPenaltyQuestions(any());
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
+        verify(attemptRecorder, never()).record(anyLong(), any(), any(), any(), any(), any());
     }
 
     @Test

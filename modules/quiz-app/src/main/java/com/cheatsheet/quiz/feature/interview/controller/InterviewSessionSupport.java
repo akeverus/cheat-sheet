@@ -3,27 +3,32 @@ package com.cheatsheet.quiz.feature.interview.controller;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import com.cheatsheet.quiz.domain.AnswerResult;
+import com.cheatsheet.quiz.domain.AttemptOutcome;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
+import com.cheatsheet.quiz.feature.interview.service.review.AttemptRecorder;
 import com.cheatsheet.quiz.common.util.FilterUtils;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Component;
 import lombok.Builder;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Общая логика работы с HTTP-сессией интервью, используемая обоими контроллерами
  * (API и MVC) для устранения дублирования.
  */
 @Component
+@Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class InterviewSessionSupport {
     InterviewService interviewService;
     HttpSessionStateService httpSessionStateService;
+    AttemptRecorder attemptRecorder;
 
     public InterviewSession getSession(HttpSession session) {
         return httpSessionStateService.getInterviewSession(session);
@@ -66,6 +71,15 @@ public class InterviewSessionSupport {
                 submission.confidence()
         );
         applySessionProgress(interviewSession, result, session);
+        // Построчный лог попытки (Фаза 2). Не критичный путь — журнал не должен
+        // ронять ответ, поэтому обёрнут в try/catch. response_time пока не измеряется
+        // (появится вместе с метрикой avg-response-time).
+        recordAttempt(
+                submission.questionId(),
+                AttemptOutcome.ofCorrect(result.correctAnswer()),
+                submission.confidence(),
+                submission.optionId(),
+                session);
 
         return new AnswerContext(result, filter, interviewSession);
     }
@@ -114,7 +128,28 @@ public class InterviewSessionSupport {
             interviewSession.switchToLearnPhase();
         }
         httpSessionStateService.setInterviewSession(session, interviewSession);
+        // Лог попытки «не знаю» (UNKNOWN, грейд 0, без выбранного варианта).
+        recordAttempt(questionId, AttemptOutcome.UNKNOWN, 0, null, session);
         return interviewSession;
+    }
+
+    /**
+     * Пишет попытку в журнал, изолируя сбой записи от пользовательского флоу:
+     * ответ уже применён (SM-2 + сессия), поэтому исключение журнала лишь логируем.
+     */
+    private void recordAttempt(long questionId, AttemptOutcome outcome, Integer memoryGrade,
+                               Long selectedOptionId, HttpSession session) {
+        try {
+            attemptRecorder.record(
+                    questionId,
+                    outcome,
+                    memoryGrade,
+                    selectedOptionId,
+                    null,
+                    session.getId());
+        } catch (Exception e) {
+            log.warn("Не удалось записать attempt для вопроса id={}: {}", questionId, e.getMessage());
+        }
     }
 
     private InterviewFilter resolveFilter(
