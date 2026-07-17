@@ -94,13 +94,17 @@
            th:text="${reviewReason.message()}">Причина повторения</p>
         <h2 class="focus-question" th:utext="${@markdownRenderService.toInlineHtml(current.question.questionText)}">Вопрос</h2>
 
-        <!-- Нативный <details>: раскрытие примера кода работает без JS (раньше
-             #toggle-code-btn был мёртвой кнопкой, без скриптов пример недоступен).
-             summary стилизован под .btn, треугольник заменён на ▸/▾ как в sm2-details. -->
+        <!-- #7: код — часть условия вопроса, а не «необязательный пример». Поэтому
+             <details open> (раскрыт по умолчанию, свернуть можно), а summary — код-
+             аффорданс (mono + иконка ⟨⟩), НЕ нейтральная secondary-кнопка. Нативный
+             <details> раскрывается без JS; ▸/▾ показывают состояние. -->
         <div class="question-code-wrap"
              th:if="${current.question.codeSnippet() != null and !current.question.codeSnippet().isBlank()}">
-            <details class="question-code-details">
-                <summary class="btn secondary-btn question-code-summary">Пример кода</summary>
+            <details class="question-code-details" open>
+                <summary class="question-code-summary">
+                    <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg>
+                    <span>Код к вопросу</span>
+                </summary>
                 <pre class="question-code"><code th:text="${current.question.codeSnippet()}"></code></pre>
             </details>
         </div>

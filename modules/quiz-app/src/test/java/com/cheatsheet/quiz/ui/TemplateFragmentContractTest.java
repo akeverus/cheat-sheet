@@ -518,8 +518,10 @@ class TemplateFragmentContractTest {
         // иначе на узком экране ячейка теряет подпись столбца. Гвард против
         // STA-20-класса рассинхрона (R0.128 снял колонку «Сброшено», сдвинул data-col
         // 5→4 — правка структуры таблицы легко рвёт пары label↔header). App не нужен.
-        // summary-table и .data-table (coverage-gaps) НЕ card-view (scroll/обычная
-        // узкая) → data-label им не нужны, из инварианта исключены атрибутами.
+        // summary-table (итоги) теперь ТОЖЕ card-view на мобиле (#6, data-label на
+        // td), но без сортируемых столбцов — этот инвариант про пары th↔td у
+        // сортировки topic-table, поэтому summary-table в него не входит. .data-table
+        // (coverage-gaps) — обычная узкая, data-label не нужен. Тест читает stats.html.
         String stats = readTemplate("templates/stats.html");
 
         Matcher sortLabelMatcher = Pattern.compile("data-sort-label=\"([^\"]+)\"").matcher(stats);

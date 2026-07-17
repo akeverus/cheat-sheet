@@ -225,9 +225,12 @@ html[data-design] ::selection {
   color: var(--color-text-primary);
 }
 
-/* Видимый фокус только для клавиатуры */
+/* Видимый фокус только для клавиатуры. #4: отдельный --color-focus-ring (сильнее
+   рамки выбора) + отступающий контур (outline-offset) — фокус отличается от
+   выбранного MCQ (flush-рамка + wash) и от action-кнопки (заливка) формой, не
+   только цветом. */
 html[data-design] :focus-visible {
-  outline: 2px solid var(--color-border-focus);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 html[data-design] :focus:not(:focus-visible) { outline: none; }
@@ -814,13 +817,26 @@ html[data-design] .question-code-wrap { margin-bottom: var(--space-5); }
    потомок details = wrap, а старый `> pre` не матчил → зазор пропадал, CLEAN-01B). */
 html[data-design] .question-code-details > pre,
 html[data-design] .question-code-details > .code-copy-wrap { margin-top: var(--space-3); }
-/* summary выглядит кнопкой (.btn .secondary-btn): гасим нативный треугольник,
-   состояние показываем ▸/▾ как в .sm2-details. .btn даёт inline-flex+gap —
-   ::before встаёт отдельным flex-элементом со штатным отступом. */
-html[data-design] .question-code-summary { list-style: none; }
+/* #7: summary — код-аффорданс (mono-лейбл + иконка ⟨⟩), НЕ нейтральная кнопка.
+   Читается как заголовок код-блока, а не «необязательное действие». Гасим
+   нативный треугольник; состояние раскрытия — ▸/▾ (как в .sm2-details). */
+html[data-design] .question-code-summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+html[data-design] .question-code-summary:hover { color: var(--color-text-primary); }
+html[data-design] .question-code-summary .ed-icon { width: 1em; height: 1em; color: var(--color-text-tertiary); }
 html[data-design] .question-code-summary::-webkit-details-marker { display: none; }
-html[data-design] .question-code-summary::before { content: "▸"; color: var(--color-text-tertiary); font-size: var(--font-size-sm); }
-html[data-design] .question-code-details[open] .question-code-summary::before { content: "▾"; }
+html[data-design] .question-code-summary::after { content: "▸"; color: var(--color-text-tertiary); font-size: var(--font-size-sm); margin-inline-start: auto; }
+html[data-design] .question-code-details[open] .question-code-summary::after { content: "▾"; }
 
 /* Варианты MCQ — editorial-строки с буквенным маркером */
 html[data-design] #interview-options { counter-reset: opt; display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-6); max-width: var(--max-width-options); }
@@ -882,7 +898,7 @@ html[data-design] #interview-options label:has(input:checked)::before {
    выбор — глушим; клавиатурный ринг идёт через :has(input:focus-visible). */
 html[data-design] #interview-options label:focus-within { outline: none; }
 html[data-design] #interview-options label:has(input:focus-visible) {
-  outline: 2px solid var(--color-border-focus);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 /* Пост-ответные состояния вариантов (app.js навешивает классы) */
@@ -1799,7 +1815,7 @@ html[data-design] .stats-page input:focus {
    design/theme-aware). R1.62. */
 html[data-design] input[type="checkbox"]:focus-visible,
 html[data-design] input[type="radio"]:focus-visible {
-  outline: 2px solid var(--color-border-focus);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 html[data-design] .stats-page .search-input { flex: 1 1 160px; min-width: 0; }
@@ -2039,7 +2055,7 @@ html[data-design] .stats-page .topic-table th.sortable[aria-sort="none"]::after 
 html[data-design] .stats-page .topic-table th.sortable[aria-sort="none"]:hover::after { color: var(--color-text-secondary); }
 html[data-design] .stats-page .topic-table th[aria-sort="ascending"]::after { content: " ▲"; }
 html[data-design] .stats-page .topic-table th[aria-sort="descending"]::after { content: " ▼"; }
-html[data-design] .stats-page .topic-table th.sortable:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: -2px; }
+html[data-design] .stats-page .topic-table th.sortable:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: -2px; }
 html[data-design] .stats-page .topic-table .text-center { text-align: center; }
 html[data-design] .stats-page .topic-table td:not(.topic-name) { font-variant-numeric: tabular-nums; }
 /* topic-name — row-header (<th scope="row">, семантика: имя строки для SR). UA
@@ -2351,6 +2367,57 @@ html[data-design="instrument"] .summary-page .summary-mistake-item {
 html[data-design="instrument"] .summary-page .summary-mistake-item:hover {
   background: var(--color-bg-primary);
   border-color: var(--color-accent-strong);
+}
+
+/* #6 — итоги по темам на мобиле: horizontal-scroll таблица → stacked-карточки
+   (тот же паттерн, что topic-table в аналитике). Каждая строка — карточка: тема-
+   заголовок сверху, метрики строками «ЛЕЙБЛ значение» через data-label. На 375px
+   overflow-x:auto резал колонку «Точность» за краем. Блок стоит ПОСЛЕ десктопных
+   правил .summary-table (C6, выше) — при равной специфичности выигрывает по
+   порядку; иначе десктопные padding/border/text-align перебили бы стопку. */
+@media (max-width: 760px) {
+  html[data-design] .summary-page .summary-table { display: block; overflow-x: visible; }
+  html[data-design] .summary-page .summary-table thead,
+  html[data-design] .summary-page .summary-table tbody,
+  html[data-design] .summary-page .summary-table tr,
+  html[data-design] .summary-page .summary-table th,
+  html[data-design] .summary-page .summary-table td { display: block; }
+  /* thead с подписями клипаем — их несут data-label ячеек. */
+  html[data-design] .summary-page .summary-table thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  html[data-design] .summary-page .summary-table tbody {
+    display: grid; gap: var(--space-3);
+  }
+  html[data-design] .summary-page .summary-table tbody tr {
+    display: grid; gap: var(--space-2); padding: var(--space-4);
+    border: var(--rule-weight) solid var(--color-border-primary);
+    border-radius: var(--border-radius-md); background: var(--color-bg-primary);
+  }
+  html[data-design] .summary-page .summary-table th,
+  html[data-design] .summary-page .summary-table td {
+    padding: 0; border-bottom: 0; text-align: left;
+  }
+  /* Тема (role=rowheader, первая ячейка) — заголовок карточки с разделителем. */
+  html[data-design] .summary-page .summary-table td[role="rowheader"] {
+    padding-bottom: var(--space-2);
+    border-bottom: var(--rule-weight) solid var(--color-border-secondary);
+  }
+  html[data-design] .summary-page .summary-table td[role="rowheader"] .summary-topic-link {
+    font-weight: var(--font-weight-semibold); overflow-wrap: anywhere;
+  }
+  /* Метрики: «ЛЕЙБЛ  значение» в две колонки, значение прижато вправо. */
+  html[data-design] .summary-page .summary-table td[data-label] {
+    display: grid; grid-template-columns: minmax(90px, 0.42fr) minmax(0, 1fr);
+    gap: var(--space-3); align-items: baseline; text-align: right;
+  }
+  html[data-design] .summary-page .summary-table td[data-label]::before {
+    content: attr(data-label);
+    font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+    color: var(--color-text-secondary); text-align: left;
+  }
 }
 
 /* =============================================================================
